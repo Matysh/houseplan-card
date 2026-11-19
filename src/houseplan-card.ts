@@ -13758,7 +13758,8 @@ export class HouseplanCard extends LitElement {
             ${iso && (!maskFloorShadows || isoFrame?.shadowClip != null) ? svg`<g class="iso-floor-shadow-plane" aria-hidden="true" pointer-events="none">
               <defs>
                 ${isoFloorShadowGradient}
-                ${disp.showNames ? svg`<filter id="hp-iso-label-penumbra" color-interpolation-filters="sRGB">
+                ${disp.showNames ? svg`<filter id="hp-iso-label-penumbra" color-interpolation-filters="sRGB"
+                  x="-50%" y="-100%" width="200%" height="300%">
                   <feGaussianBlur stdDeviation=${floorShadowUnit * .08}></feGaussianBlur>
                 </filter>` : nothing}
                 ${maskFloorShadows && isoScene ? svg`
@@ -13782,7 +13783,7 @@ export class HouseplanCard extends LitElement {
                       camera: floorCamera, diameter: floorShadowUnit * .62,
                     })}
                   </g>
-                  ${disp.showNames ? svg`<g filter="url(#hp-iso-label-penumbra)">
+                  ${disp.showNames ? svg`<g>
                     ${space.rooms.map(r => this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r), {
                       camera: floorCamera, diameter: floorShadowUnit * .5,
                     }))}

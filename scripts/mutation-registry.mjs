@@ -434,7 +434,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_ui_lab_grid.mjs',
     because: '#1081 AC10: real presented grid pixels must cover the incoming camera edge in all three editors. Registered only; execution belongs to nightly.',
     patches: [{ file: 'src/live-viewport.ts',
-      find: 'return { x: view.x - view.w * .25, y: view.y - view.h * .25, w: view.w * 1.5, h: view.h * 1.5 };',
+      find: 'return viewportExposure(view, {});',
       replace: 'return { ...view };' }],
   },
   {
@@ -2170,8 +2170,8 @@ const MUTANT_DEFINITIONS = [
     "patches": [
       {
         "file": "src/houseplan-card.ts",
-        "find": "    this._abandonViewInput();\n    this._sunFadeReset();\n    clearTimeout(this._reloadRetry);",
-        "replace": "    this._abandonViewInput();\n    clearTimeout(this._reloadRetry);"
+        "find": "    this._abandonViewInput();\n    this._sunFadeReset();\n    this._isoLight.clear();",
+        "replace": "    this._abandonViewInput();\n    this._isoLight.clear();"
       }
     ]
   },
@@ -3283,7 +3283,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="#871" test/live-viewport.test.mjs',
     because: '#871 AC5: passive SVG rebases its bounded paint window without taking another camera transform.',
     patches: [{ file: 'src/live-viewport.ts',
-      find: 'const clip = inheritedSceneClip(painted.view, next.frame.view);',
+      find: 'const clip = next.markerClip ??= exposureClip(markerView, next.coverage);',
       replace: 'const clip = "none";',
     }],
   },
@@ -7749,8 +7749,8 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '    this._activateSafeDayCycleOutline();\n'
-        + '    this._cameraTransitionFit = { ...fit };\n',
-      replace: '    this._cameraTransitionFit = { ...fit };\n',
+        + "    if (!this._cameraTransition.active && this._mode === 'view') this._clearPointerHover();\n",
+      replace: "    if (!this._cameraTransition.active && this._mode === 'view') this._clearPointerHover();\n",
     }],
   },
   {
@@ -7892,8 +7892,8 @@ const MUTANT_DEFINITIONS = [
       + 'every intermediate transition frame (#152 AC10)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'const label = this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r));',
-      replace: 'const label = this._renderRoomLabel(r, space, this._cameraTransition.target?.viewBox || view, disp, isoOverlays?.rooms.get(r));',
+      find: '? space.rooms.map(r => this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r)))',
+      replace: '? space.rooms.map(r => this._renderRoomLabel(r, space, this._cameraTransition.target?.viewBox || view, disp, isoOverlays?.rooms.get(r)))',
     }],
   },
   {
@@ -8146,13 +8146,12 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'iso-tile-shadow-layer-above',
-    guard: 'node demo/smoke_iso_tiles.mjs',
-    because: '#649 AC4: floor shadows live in one layer under every marker; above them a shadow '
-      + 'lands on the neighbour tile (attachment 09, Kitchen & Living column)',
+    guard: 'node demo/smoke_isometric_live_touch.mjs',
+    because: '#649 AC4: the floor shadow SVG stays underneath the live marker layer.',
     patches: [{
-      file: 'src/styles/iso-tiles.styles.ts',
-      find: '    pointer-events: none;\n    z-index: -1;',
-      replace: '    pointer-events: none;\n    z-index: 10;',
+      file: 'src/styles/plan.styles.ts',
+      find: '.iso-scene-surface { position:absolute; inset:0; z-index:1; }',
+      replace: '.iso-scene-surface { position:absolute; inset:0; z-index:10; }',
     }],
   },
   {
@@ -11428,8 +11427,8 @@ const MUTANT_DEFINITIONS = [
       + 'forcing an HTML room card solely because the space has no backdrop',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '            ${disp.showNames || this._markup\n',
-      replace: '            ${disp.showNames || (iso && !space.bg) || this._markup\n',
+      find: '              : disp.showNames || this._markup\n',
+      replace: '              : disp.showNames || (iso && !space.bg) || this._markup\n',
     }],
   },
   {
@@ -11498,8 +11497,8 @@ const MUTANT_DEFINITIONS = [
       + 'the actual LED computed-ancestor oracle rejects applying the ordinary whole-marker fade to it',
     patches: [{
       file: 'src/styles/devices.styles.ts',
-      find: '    .dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }',
-      replace: '    .dev.unavail:not(.iso-tile-shadow) { opacity:0.35; }',
+      find: '    .dev.unavail:not(.led-badge) { opacity:0.35; }',
+      replace: '    .dev.unavail { opacity:0.35; }',
     }],
   },
   {
@@ -13652,8 +13651,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_zigbee_led_topology.mjs',
     because: '#1004 replacing the hovered strip with its differently positioned icon must retire the old native pointer ownership without another tick.',
     patches: [{ file: 'src/hp-zigbee-topology-overlay.ts',
-      find: "        if (childrenChanged || records.some((record) => record.attributeName === 'data-hp-device-hover')) this._adoptPointerHover();",
-      replace: "        if (records.some((record) => record.attributeName === 'data-hp-device-hover')) this._adoptPointerHover();",
+      find: "        if (childrenChanged || relevant.some(record => record.attributeName === 'data-hp-device-hover')) {",
+      replace: "        if (relevant.some(record => record.attributeName === 'data-hp-device-hover')) {",
     }],
   },
   {
@@ -14569,7 +14568,7 @@ const MUTANT_DEFINITIONS = [
       + 'is what guarantees the skipped tick is replayed afterwards (#451, #458)',
     patches: [{
       file: 'src/live-interaction-runtime.ts',
-      find: "    const defer = change === 'state' && this.active()\n      && !contactValueFrameChanged(this.host,this.contacts,before,after);",
+      find: "    const defer = change === 'state' && this.active(false)\n      && !contactValueFrameChanged(this.host,this.contacts,before,after);",
       replace: '    const defer = false;',
     }],
   },
@@ -14640,8 +14639,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/live-viewport.ts",
-    "find": "    || !finiteView(base.frame.floor) || (!options.lockSceneAnchor && needsViewBoxRefresh(base, current, now));",
-    "replace": "    || !finiteView(base.frame.floor) || true;"
+    "find": "    || (!options.lockSceneAnchor && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));",
+    "replace": "    || !options.lockSceneAnchor;"
   }
 ],
   },
@@ -14660,16 +14659,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'live-pan-shift-threshold-ignored',
     guard: 'node --test test/live-viewport.test.mjs',
-    because: '#531: временного бюджета мало — за 100 мс рывка план уезжает на пол-экрана, и '
-      + 'на набегающем крае остаётся пустая полоса. Сдвиговый порог существует ровно ради '
-      + 'этого случая и обязан срабатывать раньше времени',
+    because: '#531/#1478: a move towards incoming plan content needs a new anchor before existing coverage ends.',
     patches: [{
-      file: 'src/live-viewport.ts',
-      find: '  if (Math.abs(after.x - before.x) >= after.w * LIVE_VIEWBOX_REFRESH_SHIFT)'
-        + ' return true;\n'
-        + '  if (Math.abs(after.y - before.y) >= after.h * LIVE_VIEWBOX_REFRESH_SHIFT)'
-        + ' return true;\n',
-      replace: '',
+      file: 'src/viewport-exposure.ts',
+      find: '    return requested > -safety + 1e-6;',
+      replace: '    return false;',
     }],
   },
   // #635: индекс ревью — база знаний; молчаливо неполный индекс хуже отсутствующего.
@@ -15223,10 +15217,8 @@ const MUTANT_DEFINITIONS = [
       + 'replicated for every face or marker (#570)',
     patches: [{
       file: 'src/iso-scene-render.ts',
-      find: '          return svg`<path class="iso-wall-top" d=${face.d} data-component=${face.component}\n'
-        + '            fill-rule="evenodd"></path>${layers.materialNuance',
-      replace: '          return svg`${renderIsoDefs(layers, \'walls\', cellCm)}<path class="iso-wall-top" d=${face.d} data-component=${face.component}\n'
-        + '            fill-rule="evenodd"></path>${layers.materialNuance',
+      find: 'return svg`<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures',
+      replace: 'return svg`${renderIsoDefs(layers, \'walls\', cellCm)}<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures',
     }],
   },
   {
@@ -17525,8 +17517,8 @@ const MUTANT_DEFINITIONS = [
       + 'a helper unit cannot prove real custom-element wiring or painted band count',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (active) this.setAttribute('data-led-zoom-quality', 'coarse');",
-      replace: "    if (active) this.setAttribute('data-led-zoom-quality', 'full');",
+      find: "    if (active && this._renderProjection !== 'iso') this.setAttribute('data-led-zoom-quality', 'coarse');",
+      replace: "    if (active && this._renderProjection !== 'iso') this.setAttribute('data-led-zoom-quality', 'full');",
     }],
   },
   {
@@ -19619,11 +19611,11 @@ const approvedUi1119Cases = [
     because:'#1119 AC6: a real on-source positive control remains visible in View/Devices and is hidden only in Plan/Background.',
     patches:[{file:'src/styles/plan.styles.ts',find:'.stage.mode-decor:not(.mode-transition) .glow-pools-frame,',replace:'.stage:not(.stage) .glow-pools-frame,'}]},
   {id:'ordinary-offline-fades-floor-shadow-1119',guard:'node demo/smoke_device_offline.mjs',
-    because:'#1119 AC7: the real marker fades, but its distinct floor-shadow twin retains ordinary opacity and ink; the natural pre-fix render fails this existing oracle.',
-    patches:[{file:'src/styles/devices.styles.ts',find:'.dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }',replace:'.dev.unavail:not(.led-badge) { opacity:0.35; }'}]},
+    because:'#1119 AC7: the real marker fades while its SVG floor shadow retains ordinary opacity and ink.',
+    patches:[{file:'src/iso-floor-shadows.ts',find:'transform=${shadowPlane(placement, shadow.camera)}>',replace:'transform=${shadowPlane(placement, shadow.camera)} opacity=${presentation?.offline ? .35 : 1}>'}]},
   {id:'ordinary-offline-content-only-1119',guard:'node demo/smoke_device_offline.mjs',
     because:'#1119 AC7: ordinary own-unavailable fades the whole marker once while LED and foreign-quality gates remain distinct.',
-    patches:[{file:'src/styles/devices.styles.ts',find:'.dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }',replace:'.dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:1; }'}]},
+    patches:[{file:'src/styles/devices.styles.ts',find:'.dev.unavail:not(.led-badge) { opacity:0.35; }',replace:'.dev.unavail:not(.led-badge) { opacity:1; }'}]},
 ];
 
 // #1120 declarations only. No mutant has been executed in the task.

@@ -29,6 +29,11 @@ const aligned=({labels})=>labels.length===8&&labels.every(row=>row.error<=1&&row
 try {
   const original=await snapshot();
   check('eight raised room labels stay readable above walls and furniture',aligned(original));
+  check('each caption shadow blurs inside its own paint bounds', await page.evaluate(() => {
+    const shadows = [...window.__isoPaint.renderRoot.querySelectorAll('.iso-room-label-shadow')];
+    return shadows.length === 8 && shadows.every(node => node.getAttribute('filter') === 'url(#hp-iso-label-penumbra)'
+      && !node.parentElement.hasAttribute('filter'));
+  }));
   check('lit walls mount beside the original floor light',original.wallLights>0);
   for(const rotation of [0,90,180,270]) {
     await zoomIsoPaint(page,1);

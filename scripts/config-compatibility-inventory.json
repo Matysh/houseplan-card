@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "d5502aef2dd4f98bb1f71dbe80045cd101e8cfc29f18db15ed6fd879e0caf352",
+  "matchesSha256": "c3cd24e43551eff328d8f456943f8c2c05f92d19110899bc7b383a1cee472bcb",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -5377,6 +5377,26 @@
       "kind": "branch",
       "owner": "layout-owner-repair",
       "reason": "Persisted representation: grp_<HA-area> and old/missing space references. A missing HA roster or ambiguous owner prevents a total migration. Current f1 hint alone is not ownership; keep refusal/proof paths."
+    },
+    {
+      "id": "46e76df46d5d993fc5004a83",
+      "path": "src/iso-floor-shadows.ts",
+      "line": 2,
+      "text": "import { legacySupplementalMetrics } from './device-face';",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "marker-value-presentation",
+      "reason": "The floor shadow includes the same supplemental badge slots as the corresponding legacy marker."
+    },
+    {
+      "id": "af2fcbb5dc2a81601aa09706",
+      "path": "src/iso-floor-shadows.ts",
+      "line": 43,
+      "text": ": presentation ? legacySupplementalMetrics(presentation).map(() => 1.05 * core) : [];",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "marker-value-presentation",
+      "reason": "The floor shadow includes the same supplemental badge slots as the corresponding legacy marker."
     },
     {
       "id": "fd67cfa0ef231a8f8c69f414",

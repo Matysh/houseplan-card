@@ -1,6 +1,6 @@
 import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor,
   type ViewportExposureLimits } from './viewport-exposure';
-import { IsoCameraRaster } from './iso-camera-raster';
+import { IsoCameraRaster, type RasterStyle } from './iso-camera-raster';
 
 export interface LiveViewBox {
   x: number;
@@ -27,6 +27,8 @@ interface LiveViewportState {
   limits?: ViewportExposureLimits;
   basis?: { key: string; view: LiveViewBox; retained: boolean };
   raster?: IsoCameraRaster;
+  rasterStyle?: { scene: SVGSVGElement; key: string; values: RasterStyle };
+  rasterStyleFrame?: number;
 }
 
 /** World coordinates represented by the currently prepared scene. */
@@ -352,18 +354,52 @@ const frameOf = (host: LiveViewportHost, view = host._viewOr(host._baseVb())): L
     ...(host._renderProjection !== 'iso' && host._planVisibleRect ? { grid: host._planVisibleRect(view) } : {}) };
 };
 
-function paintCameraRaster(host: LiveViewportHost, state: LiveViewportState, frame: LiveViewportFrame): void {
-  const stageSize = host._lastValidStageSize;
+function rasterScene(host: LiveViewportHost, state: LiveViewportState): SVGSVGElement | undefined {
   const svg = state.nodes?.camera[0] as SVGSVGElement | undefined;
   // On smaller surfaces the vector renderer finishes before the cost of
   // preparing a bitmap pays back. Enable the cache for large raster loads.
-  if ((state.limits?.pixelArea ?? 0) >= 6_000_000 && host._renderProjection === 'iso' && frame.target &&
-      stageSize && !host._modeSceneClip && svg &&
+  if ((state.limits?.pixelArea ?? 0) >= 6_000_000 && host._renderProjection === 'iso' &&
+      !host._modeSceneClip && svg &&
       svg.matches('.iso-scene-surface > svg[data-projection="iso"]:not([data-hp-retained-light])') &&
       svg.parentElement?.childElementCount === 1 && svg.closest('.stage.mode-view:not(.mode-transition)')) {
+    return svg;
+  }
+}
+
+const rasterStyleKey = (svg: SVGSVGElement) => {
+  const stage = svg.closest('.stage');
+  const theme = stage?.classList.contains('theme-dark') ? 'dark'
+    : stage?.classList.contains('theme-light') ? 'light' : '';
+  return `${theme}|${stage?.getAttribute('style')}`;
+};
+
+/** Resolve inherited themes after an exact paint, outside camera input and
+ * bitmap preparation. A fresh or changed source keeps its vector paint until
+ * this style snapshot becomes available. */
+function prepareRasterStyle(host: LiveViewportHost, state: LiveViewportState): void {
+  const svg = rasterScene(host, state);
+  if (!svg || state.rasterStyleFrame !== undefined) return;
+  const key = rasterStyleKey(svg);
+  if (state.rasterStyle?.scene === svg && state.rasterStyle.key === key) return;
+  state.rasterStyleFrame = requestAnimationFrame(() => {
+    state.rasterStyleFrame = undefined;
+    if (!svg.isConnected || rasterScene(host, state) !== svg || host._liveViewportTarget?.()) return;
+    const style = getComputedStyle(svg);
+    const values = [...style].filter(property => property.startsWith('--') ||
+      ['color', 'color-scheme', 'font-size', 'font-family'].includes(property))
+      .map(property => [property, style.getPropertyValue(property)] as const);
+    state.rasterStyle = { scene: svg, key: rasterStyleKey(svg), values };
+  });
+}
+
+function paintCameraRaster(host: LiveViewportHost, state: LiveViewportState, frame: LiveViewportFrame): void {
+  const stageSize = host._lastValidStageSize;
+  const svg = frame.target && rasterScene(host, state);
+  const style = state.rasterStyle;
+  if (svg && stageSize && frame.target && style?.scene === svg && style.key === rasterStyleKey(svg)) {
     (state.raster ??= new IsoCameraRaster()).paint(svg, frame.view, frame.target, {
       ...state.limits, stageSize, dpr: svg.ownerDocument.defaultView?.devicePixelRatio || 1,
-    });
+    }, style.values);
   } else state.raster?.clear();
 }
 
@@ -440,6 +476,7 @@ export function commitHouseplanViewport(value: object, keepSceneLayer = false): 
     sceneExposureClip: host._modeSceneClip ?? undefined, nodes: state.nodes, limits: host._liveViewportLimits?.(),
   });
   state.raster?.clear();
+  prepareRasterStyle(host, state);
 }
 
 /** A compositor-owned surface can retire without a Lit update. */
@@ -452,6 +489,7 @@ export function refreshHouseplanViewportNodes(host: object): void {
 export function disposeHouseplanViewport(host: object): void {
   const state = states.get(host);
   if (state?.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
+  if (state?.rasterStyleFrame !== undefined) cancelAnimationFrame(state.rasterStyleFrame);
   state?.raster?.clear();
   states.delete(host);
 }

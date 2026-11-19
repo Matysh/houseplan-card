@@ -112,6 +112,10 @@ try {
       cancelable: true,
     }));
     await window.__hpTest.settled();
+    // A wheel session can retain its viewBox during motion. Measure through
+    // the terminal camera frame within the existing 500 ms budget.
+    while (card._cameraTransition.active && performance.now() - cameraStarted < 500) await frame();
+    await card.updateComplete;
     await frame();
     const cameraMs = performance.now() - cameraStarted;
     const cameraLongTasks = await cameraTasks.stop();

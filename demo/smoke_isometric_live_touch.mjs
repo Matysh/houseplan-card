@@ -296,6 +296,7 @@ const out = await page.evaluate(async () => {
       )),
     overlaysStayAboveWallsWithoutDebugGrounds: !!overlay && !!wallSvg
       && Boolean(wallSvg.compareDocumentPosition(overlay) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && Number(getComputedStyle(overlay).zIndex) > Number(getComputedStyle(wallSvg.closest('.iso-scene-surface')).zIndex)
       && !root(original).querySelector(
         '.iso-overlay-ground, .iso-overlay-tether, #hp-iso-overlay-ground',
       ),

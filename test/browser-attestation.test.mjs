@@ -238,11 +238,11 @@ test('#827 AC2: общий launch судит уже запущенный бра�
   const pinned = serveLaunch({ require: 'smoke_unit', version: 'pinned' });
   assert.match(pinned.output, /browser-attestation ok \(ok\) \[smoke_unit\]/);
   assert.match(pinned.output, /REJECTED CONTEXT_REACHED/, 'совпавший браузер идёт дальше, к странице');
-  assert.deepEqual(pinned.state, { contexts: 1, closed: 0 });
+  assert.deepEqual(pinned.state, { contexts: 1, closed: 1 });
   // Без объявления — прежнее поведение: смоки вне задачи не судятся.
   const plain = serveLaunch({ require: null, version: '0.0.0.1' });
   assert.doesNotMatch(plain.output, /browser-attestation/);
-  assert.deepEqual(plain.state, { contexts: 1, closed: 0 });
+  assert.deepEqual(plain.state, { contexts: 1, closed: 1 });
 });
 
 test('#827/#942: declared pinned-browser smokes have no environment bypass', () => {

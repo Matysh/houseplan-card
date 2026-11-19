@@ -60,9 +60,8 @@ not establish the 300 ms exact-frame requirement.
   0.05–0.35% of pixels by more than eight levels in any RGB channel.
   The owner accepted the shown 16 pairs and the midpoint of the light fade.
   Saved baseline images were not part of that approval.
-- The RTX 2060 Max-Q trace and the rendering-layer/resource criteria remain
-  open. The hardware benchmark and the controlled captures are documented
-  in TESTING.md.
+- The hardware benchmark and the controlled captures are documented in
+  TESTING.md.
 
 ## Raster cache follow-up
 
@@ -103,10 +102,10 @@ frame budget. A separate light diagnostic held the two SVGs at 250 ms, crossed
 a wheel anchor and verified equal viewBoxes and masonry on both surfaces.
 It does not prove the full timed, presented frame sequence during a fade.
 
-`demo/performance/iso-live-camera-probe.js` observes the actual owner plan
-without making Home Assistant requests. AC7, AC8, AC15, AC17 and the laptop
-portion of AC18 still need a trace from the RTX 2060 Max-Q. The final S6 run
-and code review remain open.
+`demo/performance/iso-live-camera-probe.js` observes camera input and paints
+on the actual plan. The owner removed RTX 2060 Max-Q acceptance from scope.
+The decision covers AC7, AC8, AC17 and the laptop portions of AC15 and AC18.
+The RTX 4090 and synthetic requirements still apply.
 
 The final targeted build passed 138 Node cases. Chromium checks passed for
 pan coverage, room labels, touch, projection round trips, light fade, LED
@@ -114,3 +113,38 @@ quality during wheel input and internal mode endpoints. The earlier full S6
 on `b60b227ca` completed 1228 checks with 21 failures. The targeted reruns
 replace individual results and do not establish a green full run for the
 new candidate.
+
+At 1408×952, DPR 2, Chrome's presented-frame trace showed the first
+stage image pixel-equivalent to the fresh exact reference at 294 ms for
+zoom-in and 247 ms for zoom-out. This comparison used the DevTools trace's
+600 px screenshots. In a separate memory-only trace, the isolated Chrome
+GPU process reported about 645 MB of compositor resources and 1022 MB
+of shared images during zoom-out. These counters may count shared backing
+stores across categories. They are upper bounds from the dedicated GPU
+process and leave the tab's 350 MB budget unverified.
+
+## Bounded label shadows and outstanding checks
+
+Applying the room-label blur to each label bounded its intermediate texture.
+The follow-up zoom-out trace at the same resolution recorded about 135 MB of
+compositor resources and 328 MB of shared images in the isolated GPU process.
+These counters overlap. They describe the process at the sampled times.
+Four settled quarter-turn pairs differed by more than eight levels in at
+least one RGB channel on 0.039–0.065% of pixels.
+
+The 4K physical trace received 14 events in each direction and recorded two
+bitmap replacements in each series. The controlled PNG run verified the wall
+paint and matched the exact terminal PNG in both directions. Capturing at full
+resolution split zoom-out into multiple sessions, so this combination covers
+range and replacement separately and leaves continuous 4K capture open.
+
+The LayerTree probe attributed most remaining allocations to HTML devices and
+room captions promoted where they overlap. A stage-sized paint-containment
+experiment cut the count from 21 to 2, but clipped markers outside the anchor
+rectangle. Restoring the full paint reserve preserved the pixels and restored
+those layer allocations. The experiment was discarded.
+
+The pinned grid-scale witness also reported a dark-theme difference on this
+branch. The equivalent dev comparison passed. The closed-door pixel witness
+and the old marker-overlap witness reproduced failures on the exact dev base.
+These results leave full S6 and the compositor criteria open.

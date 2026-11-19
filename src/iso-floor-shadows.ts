@@ -66,9 +66,11 @@ export function renderIsoLabelFloorShadow(owner: string, placement: FloorAnchor,
   name: string, metrics: readonly string[], nameFont: number, metricFont: number, opacity: number,
 ): TemplateResult {
   const [a] = camera ? isoFloorMatrix(camera) : [1];
+  // Blur each label in its own bounds. Filtering their common group makes
+  // the browser allocate an intermediate spanning the entire floor.
   return svg`<g class="iso-room-label-shadow" data-room-shadow-of=${owner} pointer-events="none"
-    aria-hidden="true" transform=${shadowPlane(placement, camera)} fill="#1c2026" fill-opacity=${opacity * .3}>
-    <g transform=${a < 0 ? 'rotate(180)' : ''} text-anchor="middle">
+    aria-hidden="true" fill="#1c2026" fill-opacity=${opacity * .3} filter="url(#hp-iso-label-penumbra)">
+    <g transform=${shadowPlane(placement, camera) + (a < 0 ? ' rotate(180)' : '')} text-anchor="middle">
       <text font-weight="700" dominant-baseline="central" font-size=${nameFont}>${name}</text>
       ${metrics.length ? svg`<text font-weight="600" y=${nameFont * .75 + metricFont * .5}
         dominant-baseline="central" font-size=${metricFont}>${metrics.join('  ')}</text>` : ''}

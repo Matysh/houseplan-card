@@ -6,6 +6,8 @@ export interface RasterViewport extends ViewportExposureLimits {
   dpr: number;
 }
 
+export type RasterStyle = readonly (readonly [string, string])[];
+
 const enoughPixels = 1_200_000;
 const imageViewBox = 'hp-raster-view-box';
 const namespace = 'http://www.w3.org/2000/svg';
@@ -28,7 +30,8 @@ export function rasterSize({ stageSize: [w, h], dpr }: RasterViewport): readonly
   return [Math.max(1, Math.floor(w * scale)), Math.max(1, Math.floor(h * scale))];
 }
 
-function rasterSource(scene: SVGSVGElement, stage: Element, width: number, height: number): string | undefined {
+function rasterSource(scene: SVGSVGElement, stage: Element, width: number, height: number,
+  inherited: RasterStyle): string | undefined {
   // SVG image documents can't load external resources. If the live scene
   // depends on them, leave it on the vector path for the entire gesture.
   const resources = [...scene.querySelectorAll('image, feImage, use')];
@@ -46,12 +49,7 @@ function rasterSource(scene: SVGSVGElement, stage: Element, width: number, heigh
   const context = doc.createElementNS(namespace, 'g');
   context.setAttribute('class', stage.className);
   if (stage.hasAttribute('data-hp-iso-floor-markers')) context.setAttribute('data-hp-iso-floor-markers', 'true');
-  const computed = getComputedStyle(scene);
-  for (const property of computed) {
-    if (property.startsWith('--') || ['color', 'color-scheme', 'font-size', 'font-family'].includes(property)) {
-      context.style.setProperty(property, computed.getPropertyValue(property));
-    }
-  }
+  for (const [property, value] of inherited) context.style.setProperty(property, value);
   const css = doc.createElementNS(namespace, 'style');
   css.textContent = [...root.styleSheets, ...root.adoptedStyleSheets]
     .flatMap(sheet => [...sheet.cssRules].map(rule => rule.cssText)).join('\n')
@@ -75,6 +73,7 @@ interface RasterSession {
   canvas: HTMLCanvasElement;
   renderer: ImageBitmapRenderingContext;
   limits: RasterViewport;
+  inherited: RasterStyle;
   observer: MutationObserver;
   view: LiveViewBox;
   target: LiveViewBox;
@@ -91,11 +90,13 @@ export class IsoCameraRaster {
   private preparing?: HTMLImageElement;
   private timer?: number;
 
-  public paint(scene: SVGSVGElement, view: LiveViewBox, target: LiveViewBox, limits: RasterViewport): void {
+  public paint(scene: SVGSVGElement, view: LiveViewBox, target: LiveViewBox, limits: RasterViewport,
+    inherited: RasterStyle): void {
     const current = this.session;
     if (current && (current.scene !== scene || current.limits.stageSize[0] !== limits.stageSize[0] ||
-        current.limits.stageSize[1] !== limits.stageSize[1] || current.limits.dpr !== limits.dpr)) this.clear();
-    const session = this.session ?? this.open(scene, view, target, limits);
+        current.limits.stageSize[1] !== limits.stageSize[1] || current.limits.dpr !== limits.dpr ||
+        current.inherited !== inherited)) this.clear();
+    const session = this.session ?? this.open(scene, view, target, limits, inherited);
     if (!session) return;
     session.view = view;
     session.target = target;
@@ -114,7 +115,7 @@ export class IsoCameraRaster {
   }
 
   private open(scene: SVGSVGElement, view: LiveViewBox, target: LiveViewBox,
-    limits: RasterViewport): RasterSession | undefined {
+    limits: RasterViewport, inherited: RasterStyle): RasterSession | undefined {
     if (this.unsupportedScene === scene || typeof createImageBitmap !== 'function') return;
     const surface = scene.parentElement;
     const stage = surface?.closest('.stage');
@@ -132,7 +133,7 @@ export class IsoCameraRaster {
     observer.observe(scene, { attributes: true, childList: true, subtree: true, characterData: true });
     observer.observe(surface, { attributes: true, attributeFilter: ['data-hp-light-mixing'], childList: true });
     observer.observe(stage, { attributes: true, attributeFilter: ['class', 'style'] });
-    return this.session = { scene, surface, stage, canvas, renderer, view, target, limits, observer };
+    return this.session = { scene, surface, stage, canvas, renderer, view, target, limits, inherited, observer };
   }
 
   private async prepare(session: RasterSession): Promise<void> {
@@ -146,7 +147,7 @@ export class IsoCameraRaster {
     let url: string | undefined;
     let frame: ImageBitmap | undefined;
     try {
-      session.source ??= rasterSource(scene, stage, canvas.width, canvas.height);
+      session.source ??= rasterSource(scene, stage, canvas.width, canvas.height, session.inherited);
       if (!session.source) { session.failed = true; return; }
       const { x, y, w, h } = bounds;
       const xml = session.source.replace(`viewBox="${imageViewBox}"`, `viewBox="${x} ${y} ${w} ${h}"`);

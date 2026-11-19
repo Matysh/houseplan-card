@@ -89,14 +89,17 @@ async function verifySingleFrameControl() {
   }
 }
 
-async function startMeasurement() {
-  await page.evaluate(() => {
+async function startMeasurement(notifyDelivery) {
+  await page.evaluate(notifyDelivery => {
     const card = window.__isoPaint, root = card.renderRoot, stage = root.querySelector('.stage');
     const wheel = [], gaps = [], anchorWrites = [], commits = [], saves = [];
     const baseGeometry = card._isoStructuralBuildCount;
     const markStart = performance.now();
     const onWheel = event => {
-      if (event.isTrusted) wheel.push({ eventAt: event.timeStamp, receivedAt: performance.now(), delta: event.deltaY });
+      if (event.isTrusted) {
+        wheel.push({ eventAt: event.timeStamp, receivedAt: performance.now(), delta: event.deltaY });
+        if (notifyDelivery) window.__hpEdgeWheelDelivered('wheel');
+      }
     };
     stage.addEventListener('wheel', onWheel, { capture: true, passive: true });
     const observer = new MutationObserver(records => anchorWrites.push({
@@ -136,6 +139,22 @@ async function startMeasurement() {
         zoom: card._zoom, view: { ...card._view },
         structuralBuilds: card._isoStructuralBuildCount - baseGeometry, writes: window.__isoPaintWrites.length };
     };
+  }, notifyDelivery);
+}
+
+function nextWheelDelivery(cdp) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      cdp.off('Runtime.bindingCalled', delivered);
+      reject(Error('The controlled browser did not deliver the wheel event'));
+    }, 10_000);
+    function delivered(event) {
+      if (event.name !== '__hpEdgeWheelDelivered') return;
+      clearTimeout(timer);
+      cdp.off('Runtime.bindingCalled', delivered);
+      resolve();
+    }
+    cdp.on('Runtime.bindingCalled', delivered);
   });
 }
 
@@ -151,23 +170,25 @@ try {
     await verifySingleFrameControl();
   }
   const cdp = await page.context().newCDPSession(page);
+  if (capture) await cdp.send('Runtime.addBinding', { name: '__hpEdgeWheelDelivered' });
   for (const direction of ['in', 'out']) {
     const zoom = direction === 'in' ? 1.1 : 6;
     const step = direction === 'in' ? 1 : -1;
     await zoomIsoPaint(page, zoom);
     await page.mouse.move(x, y);
     await delay(250);
-    await startMeasurement();
+    await startMeasurement(capture);
     compositor?.capture();
     const sent = [];
     const start = performance.now();
     for (let i = 0; i < steps; i++) {
       if (i > 0) await delay(Math.max(0, start + i * interval - performance.now()));
+      const delivered = capture ? nextWheelDelivery(cdp) : null;
       const request = cdp.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x, y, deltaX: 0, deltaY: -step * 80 });
-      // Measure native input at its offered cadence. For the visual pass,
-      // keep each input distinct even if encoding PNGs slows this browser.
-      if (capture) await request;
-      else sent.push(request);
+      sent.push(request);
+      // Serialise the delivered events, independently of compositor acks
+      // that can be delayed by the full-size PNG capture.
+      if (delivered) await Promise.race([delivered, request.then(() => delivered)]);
     }
     await Promise.all(sent);
     await settleIsoPaint(page);
