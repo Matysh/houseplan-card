@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16550,
+  "revision": 16551,
   "nextTicket": 535,
   "nextFence": 535,
   "tasks": {
@@ -5465,18 +5465,12 @@
       }
     },
     "1475": {
-      "requestId": "spec:1475:8a6ab5b8d64c595f07501b9c6734ccc55e6a8b4d4a5cfcdbdf819f307c14ed8e",
-      "contextDigest": "8a6ab5b8d64c595f07501b9c6734ccc55e6a8b4d4a5cfcdbdf819f307c14ed8e",
+      "requestId": "spec:1475:67f6991aafbbbe6c4659e8f39277402c317d2662b22b6ac298b4049417f27a75",
+      "contextDigest": "67f6991aafbbbe6c4659e8f39277402c317d2662b22b6ac298b4049417f27a75",
       "base": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795086099743,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44510015865",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795086232689
     }
   },
   "reviewPublications": {
@@ -5519,6 +5513,19 @@
         "occurredAt": "2026-11-19T10:42:14.012Z"
       },
       "runId": 44508138259
+    },
+    "spec:1475:spec:1475:67f6991aafbbbe6c4659e8f39277402c317d2662b22b6ac298b4049417f27a75": {
+      "issue": 1475,
+      "kind": "spec",
+      "requestId": "spec:1475:67f6991aafbbbe6c4659e8f39277402c317d2662b22b6ac298b4049417f27a75",
+      "materialSha": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+      "expectedBase": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+      "patchId": "67f6991aafbbbe6c4659e8f39277402c317d2662b22b6ac298b4049417f27a75",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-19T11:03:52.689Z"
+      }
     }
   },
   "waiting": [],
@@ -5563,6 +5570,26 @@
     "github:44510968591:1:completions:report:60a43b9ae80c7d4730d32ab17def6788f0cbc6a140aa78644145e542916c77b6": {
       "digest": "8178dfe68fbc208cea6373189bbe1c3da4c64ccfab93e2657c7ea1e0baa993c6",
       "issue": 1475
+    },
+    "github:44511339319:1:spec:1475:spec-request": {
+      "digest": "c8354c8440ca354aa42835362fd000b6d505d4145b0ee081df5d2fb2d95dca5c",
+      "issue": 1475
+    },
+    "github:44511339319:1:spec:1475:spec-request:spec-resubmitted:1475": {
+      "digest": "c8354c8440ca354aa42835362fd000b6d505d4145b0ee081df5d2fb2d95dca5c",
+      "issue": 1475,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1475,
+        "at": 1795086232689,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1475:67f6991aafbbbe6c4659e8f39277402c317d2662b22b6ac298b4049417f27a75",
+        "reviewChanges": "На текущем dev проверены точки входа: propertiesOpeningSides с выборкой по нормали, openingLeafOriginOffset и отдельные пути Flat/PDF и iso-openings. Для внешней стены общий расчёт выбирает базовую сторону комнаты, а петля распахивается по знаку локального Y; крутить существующий flip для компенсации нельзя, потому что он уже определяет направление. closed-door-light использует тот же helper и передаёт тип представления, поэтому предложено сохранить его прежнюю оптическую семантику, выделив новый расчёт только для изображения. Авторские решения для уточняемых случаев — держать ручной выбор неактивным при slide и показывать то же положение в печатном плоском символе. Раунд 1 вернул ТЗ из-за несовпадения между описанным и действующим контролом slide и риска противоположной подписи у наружной стены. Сохранил флажок диалога, в боковой панели привязал позиционные подписи к фактическим граням при тех же flip_v. Зафиксировал отдельные позиционные переводы, условие принадлежности наружному контуру, исключение swing_position из физического/оптического ключа и транспорт для обычной двери без opening_features. Убрал дополнительное слияние пропущенного поля на сервере: штатные обновления существующей двери уже сохраняют неизвестные поля. Сервер отбрасывает известное значение при смене типа, валидирует перечисление и принимает восстановленный документ как есть.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
+      }
     }
   },
   "devWebhook": {
