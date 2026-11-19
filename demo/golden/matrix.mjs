@@ -274,6 +274,8 @@ export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
     fillMode: 'custom', customFill: { c: '#eee8de', a: 1 },
     glowEnabled: false, sunRays: false,
     hoverDevice: 'golden-light-two',
+    // This SVG-mask raster fixture must not inherit preceding scenes' paint history.
+    isolatedCapture: true,
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage,
   },
 

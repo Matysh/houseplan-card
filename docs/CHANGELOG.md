@@ -4,6 +4,7 @@
 
 ## v1.85.3-beta.2 — 2026-11-19
 
+- Capture the reviewed ISO hover raster scene in its own browser, preventing preceding SVG-mask paint history from changing room-label pixels; keep the accepted PNG, semantic assertions and pixel tolerances unchanged (#1451).
 - Judge the retained dense ISO golden scenes against the accepted floor-aligned marker plane, retaining finite-coordinate, no-nudge and missing-overlay negative controls; remove only the superseded wall-top lift oracle (#1451).
 - Await actual live/empty surfaces in golden and performance fixtures; accept worker/cache ISO geometry only with ready painted masonry rather than mandatory main-thread builds. Keep pending/inert negative controls and measure floor switches through readiness (#1467).
 
