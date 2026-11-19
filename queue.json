@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16140,
+  "revision": 16141,
   "nextTicket": 526,
   "nextFence": 526,
   "tasks": {
@@ -5101,7 +5101,28 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795074693534,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "0d129fcfb00fa9dc989c480a3a907cba69668e4a",
+      "changedFiles": [
+        "demo/benchmark_iso_paint.mjs",
+        "demo/fixtures/iso-paint.mjs",
+        "demo/helpers/iso-paint-scene.mjs",
+        "demo/smoke_iso_label_bounds.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/ISOMETRIC.md",
+        "docs/evidence/1470-paint-performance.json",
+        "docs/evidence/1470-paint-performance.md",
+        "docs/release-ledger/v1.85.0/1470.json",
+        "process-next/lib/task-selection.mjs",
+        "process-next/test/task-selection.test.mjs",
+        "src/houseplan-card.ts",
+        "src/iso-lab-furniture-render.ts",
+        "src/iso-room-furniture-overlap.ts",
+        "src/iso-room-label-bounds.ts",
+        "src/styles/iso-lab-markers.styles.ts",
+        "test/iso-room-label-bounds.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5534,10 +5555,11 @@
     "token": "525:finish:a726cb58-f0d2-4887-9e3f-ba9cd085f6bd:finish:1:admit",
     "fence": 525,
     "materialSha": "e143f8591f471e31fcd40c3d7bdc0eb6ca5f49c7",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+    "phase": "testing",
     "admittedAt": 1795074697309,
-    "expiresAt": 1795074997309
+    "expiresAt": 1795075003432,
+    "patchId": "0d129fcfb00fa9dc989c480a3a907cba69668e4a"
   },
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5715,6 +5737,10 @@
     "github:44482334374:1:completions:metadata:ea61bb49-fda5-4755-9e0e-6bfcb263fb4b:task-notice:1469::": {
       "digest": "c72869cc41a3250c052a619651e09bb31348a80b0a3176385584f13b2f5e8f91",
       "issue": 1469
+    },
+    "finish:a726cb58-f0d2-4887-9e3f-ba9cd085f6bd:finish:2:synchronized": {
+      "digest": "20cf589a544e9900bbc4a50edbd7b5a9d4b2c5b4b10ed6a5aa2e94327c24334d",
+      "issue": 1470
     },
     "github:44472051036:1:label:spec-request:spec-resubmitted:1470": {
       "digest": "10aa67c67df712216e7f225fc653ba581c5fd36f6038a16dbf85103b2e53d0bb",
