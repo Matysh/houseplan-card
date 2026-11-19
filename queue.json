@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16132,
+  "revision": 16133,
   "nextTicket": 525,
   "nextFence": 525,
   "tasks": {
@@ -5688,6 +5688,10 @@
       "digest": "a87dfa061b2c0b50be0050135d11487e8ed90fb1e06a7b41a6d189c7c0e0e169",
       "issue": 1469
     },
+    "github:44481566584:1:completions:message:f1565b3b49bfb070d226aca9c44e02dc27f5be59fc13270a1b8996c459491bb9": {
+      "digest": "094e3e8c60987e8e667d127811443b31d4c20983e7f8bb02949475f247b4cd89",
+      "issue": 1469
+    },
     "github:44472051036:1:label:spec-request:spec-resubmitted:1470": {
       "digest": "10aa67c67df712216e7f225fc653ba581c5fd36f6038a16dbf85103b2e53d0bb",
       "issue": 1470,
@@ -5810,7 +5814,8 @@
         "reviewChanges": "### Решение и альтернативы\n\nРеализован handoff через существующий `_restoreZoom`/`_refitView`: до первого показанного плана `_convertProjectionView` не создаёт квадратный fallback, а восстанавливает per-space scalar только после измерения обеих осей stage. Показанная/warm камера сохраняет прежний physical-camera путь. Zero-size отвергается и в отложенном восстановлении.\n\nДополнительно bare kiosk без bootveil больше не объявляет пустой/preparing Flat shell показанной камерой и не публикует из него L1 preview, пока ISO first-frame readiness ещё pending. Используется существующий readiness guard, в том числе повторная проверка после paint barrier; формат кэша и геометрия не менялись. Отдельного observer, camera state, таймера, forced wheel или unconditional Fit нет.\n\n### Риски и места для внимания\n\nProducer подтверждён: `_convertProjectionView` вызывал `_applyView` до stage, а поздние config intake/первый refit считали ненулевой `_view` уже принятым. При delayed runtime измеренный, но скрытый Flat frame дополнительно перекодировал saved zoom. В kiosk ранняя отметка `_projectionShown` и публикация preview обходили смысл first-frame barrier. Особенно полезно проверить совместимость восстановления с `_adoptViewPlane`, screen reference, warm camera и safe Flat fallback. Принятая геометрия/рисунок #1451 не меняются; эталоны не обновлялись.\n\n### Проверки и ограничения\n\nНа исходной beta.2 ошибка воспроизведена и публичной синтетической сценой (107/107 и 106/106 наблюдаемых кадров со сдвигом для обычного/summary View). Адресные pure camera tests — 14/14 PASS. Новый native smoke — PASS: шесть сочетаний panel/Lovelace/kiosk, wide/narrow, quarter turns 0/90/180/270, 165%/218%, summary on/off; настоящий cold document и reload с disk hit, passive preview и delayed worker/runtime; скрытый начальный stage; первый live frame до wheel/pan/fit согласован не хуже 1 CSS px, saved zoom/storage и счётчики WS/service writes не меняются.\n\nКоманды: `npm run build`, `node scripts/bundle-sync.mjs`, `node --test test/projection-view-camera.test.mjs`, `node demo/smoke_projection_cold_view_camera.mjs`. Локальные результаты: `output/1469-addressed-build.log`, `output/1469-camera-unit.log`, `output/1469-cold-native.log`. Финальный S6 выполняется штатным `finish`; его отчёт не подменяется этими адресными прогонами. В выборку включены native pan, room-fit/no-op resize, summary/warm camera, ISO safe actions и failure fallback. Companion-потребность: https://github.com/Matysh/houseplan-e2e/issues/81 . Частный owner fixture/сырой трейс не публикуются, реальный HA не изменялся. GPU-приёмки владельцем нет.\n\nПервый S6 `20261119T071452132-265886bc` завершён: единственный отказ — unit-fixture `floor-cache-publication`, извлекавший реальный метод без нового readiness port; остальные 673 пункта прошли/переиспользованы. Fixture дополнен этим портом и поведенческим negative-control: ISO pending до входа и появившийся во время paint await запрещает capture/publication и не теряет editor intent; после readiness обычный путь снова работает. Адресный `node --test test/floor-cache-publication.test.mjs` — 15/15 PASS (`output/1469-publication-unit.log`). Продуктовый код после зелёного native не менялся. Следующий `finish` подтвердит S6 с применимым reuse; модельное код-ревью ещё не запускалось.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
