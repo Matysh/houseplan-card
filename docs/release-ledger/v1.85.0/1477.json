@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1477,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "The shared minimum radius affects mixed-size device outlines in the stable Flat view and the current 2.5D view.",
+  "summary": {
+    "ru": "Обводка группы устройств учитывает размеры отдельных значков в 2D и 2.5D.",
+    "en": "Grouped device outlines follow individual icon sizes in 2D and 2.5D."
+  }
+}

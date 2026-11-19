@@ -244,11 +244,15 @@ export function contactContourShapes(shapes: readonly ContactShape[]): ContactSh
       if(!shapes[i].walls.right) boxes[i].right=right;
     }
   }
-  const radii=shapes.map(s=>s.radius), low=Math.min(...radii), high=Math.max(...radii);
-  const radius=high-low<=Math.min(...shapes.map(s=>s.marker.diameter))*.02 ? high : low;
+  const radii = shapes.map(s => s.radius), low = Math.min(...radii), high = Math.max(...radii);
+  const diameter = Math.min(...shapes.map(s => s.marker.diameter));
+  // Keep the established rounding for equal-size markers, including value badges.
+  const commonRadius = high - low <= diameter * .02 ? high
+    : shapes.every(s => near(s.marker.diameter, diameter)) ? low : undefined;
   return shapes.map((s,i)=>{
     const p=contactRotate([s.marker.x,s.marker.y],-angle), b=boxes[i];
-    return {...s, box:{left:b.left-p[0],right:b.right-p[0],top:b.top-p[1],bottom:b.bottom-p[1]}, radius};
+    return {...s, box:{left:b.left-p[0],right:b.right-p[0],top:b.top-p[1],bottom:b.bottom-p[1]},
+      radius: commonRadius ?? s.radius};
   });
 }
 
@@ -288,6 +292,19 @@ export function contactOutline(shapes: readonly ContactShape[], stroke = false):
   const rects: Geom[] = boxes.map((b) => [[[b.left, b.top], [b.right, b.top], [b.right, b.bottom], [b.left, b.bottom], [b.left, b.top]]]);
   const polygons = union(rects[0], ...rects.slice(1));
   const radius = Math.min(...shapes.map((s) => s.radius));
+  const uniformRadius = shapes.every(s => s.radius === radius);
+  // Each convex vertex of the union comes from a member's corner. If
+  // corners coincide, the smaller radius fills more of the shared corner.
+  const cornerRadius = ([x, y]: number[]) => {
+    if (uniformRadius) return radius;
+    let local = Infinity;
+    for (const [index, box] of boxes.entries()) {
+      if ((near(x, box.left) || near(x, box.right)) && (near(y, box.top) || near(y, box.bottom))) {
+        local = Math.min(local, shapes[index].radius);
+      }
+    }
+    return Number.isFinite(local) ? local : radius;
+  };
   const wallCorner = (p: number[]) => shapes.some((s, index) => {
     const b = boxes[index];
     return (s.walls.left && near(p[0], b.left)) || (s.walls.right && near(p[0], b.right))
@@ -303,7 +320,7 @@ export function contactOutline(shapes: readonly ContactShape[], stroke = false):
       const prev = points[(i + points.length - 1) % points.length], next = points[(i + 1) % points.length];
       const u: ContactPoint = [p[0] - prev[0], p[1] - prev[1]], v: ContactPoint = [next[0] - p[0], next[1] - p[1]];
       const lu = Math.hypot(...u), lv = Math.hypot(...v);
-      const r = u[0] * v[1] - u[1] * v[0] > 0 && !wallCorner(p) ? Math.min(radius, lu / 2, lv / 2) : 0;
+      const r = u[0] * v[1] - u[1] * v[0] > 0 && !wallCorner(p) ? Math.min(cornerRadius(p), lu / 2, lv / 2) : 0;
       const entry: ContactPoint = [p[0] - u[0] * r / lu, p[1] - u[1] * r / lu];
       const exit: ContactPoint = [p[0] + v[0] * r / lv, p[1] + v[1] * r / lv];
       return {entry,exit,r};

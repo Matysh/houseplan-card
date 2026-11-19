@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Round each exposed corner of a shared device outline to suit its icon size in 2D and 2.5D (#1477).
 - Preview the saved swing-door position when rebinding an opening to a replacement wall (#1476).
 - Place swing doors at the opening-side wall face by default in Flat and 2.5D. Door properties can also fix either face or the centre. The sliding-door placement labels match its existing panel locations (#1475).
 - Repair the nightly render/layout AST guard to recognize the room-label directive's explicit post-render measurements without exempting synchronous render/update reads or pure ISO helpers; retain the existing mutation witnesses (#1473).
