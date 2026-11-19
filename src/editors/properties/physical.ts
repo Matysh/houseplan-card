@@ -5,6 +5,10 @@ import { resolveOpeningDimensions, type OpeningDimension, type OpeningDimensionC
 import type { OpeningPlacementCore } from '../../opening-placement';
 import { materializePartitionOpening, resolvePartitionOpeningCompat, resolvePartitionOpeningStrict } from '../../partition-openings';
 import { resolveRoomOpeningHost } from '../../wall-segment-model';
+import { openingAxisRotation } from '../../opening-orientation';
+import { resolveOpeningWallCandidates, type OpeningWallIndex } from '../../wall-thickness';
+import type { I18nKey } from '../../i18n';
+import type { ResolvedPartitionOpening } from '../../partition-openings';
 
 type Segment = { id: string; a: number[]; b: number[] };
 const EPS = 1e-8;
@@ -56,6 +60,7 @@ export function patchPartitionEndpoint(
     if (Math.abs(cross(d, e)) < EPS && Math.abs(cross(offset, d)) < EPS) return null;
   }
   const rendered = { ...next, a: next.a.map(x => x * NORM_W), b: next.b.map(x => x * NORM_W) };
+  const rotation = openingAxisRotation(wall.a, wall.b, next.a, next.b);
   const updated: OpeningCfg[] = [];
   for (const opening of openings) {
     if (opening.host?.kind !== 'partition' || opening.host.id !== wall.id) { updated.push(opening); continue; }
@@ -64,7 +69,7 @@ export function patchPartitionEndpoint(
     const candidate = { ...opening, host: { kind: opening.host.kind, id: opening.host.id, t } };
     const resolved = resolvePartitionOpeningStrict(candidate, [rendered], NORM_W, cellCm, GRID_PITCH).resolved;
     if (!resolved) return null;
-    updated.push(materializePartitionOpening(candidate, resolved, NORM_W));
+    updated.push(materializePartitionOpening(candidate, resolved, NORM_W, opening.angle + rotation));
   }
   return { wall: next, openings: updated };
 }
@@ -83,7 +88,8 @@ export function propertiesContourRooms(wall: WallSegmentEntry, rooms: readonly R
 }
 /** No guessed declension, nearest-room search or conflation of a gate's face with invert. */
 export function propertiesOpeningSides(
-  core: PropertiesOpeningCore, rooms: readonly RoomCfg[], signs: readonly [number, number] = [-1, 1],
+  core: Pick<PropertiesOpeningCore, 'x' | 'y' | 'angle'> & { target: { physicalHalfWidth: number } },
+  rooms: readonly RoomCfg[], signs: readonly [number, number] = [-1, 1],
 ): [OpeningSideName, OpeningSideName] {
   const radians = core.angle * Math.PI / 180;
   const normal = [-Math.sin(radians), Math.cos(radians)];
@@ -96,6 +102,29 @@ export function propertiesOpeningSides(
   if (owners.some(list => list.length > 1 || list.length && !list[0].name?.trim()) || owners.every(list => !list.length)
     || owners[0][0] && owners[1][0] && (owners[0][0].id === owners[1][0].id || owners[0][0].name === owners[1][0].name)) return fallback;
   return owners.map(list => list[0]?.name?.trim() ? {kind:'room',name:list[0].name} : {kind:'outside'}) as [OpeningSideName,OpeningSideName];
+}
+
+/** Shared positional labels for the dialog and the sidebar. */
+export function openingPlacementSideLabels(
+  opening: { x: number; y: number; angle: number; length: number; partitionHost?: ResolvedPartitionOpening },
+  rooms: readonly RoomCfg[],
+  index: OpeningWallIndex,
+  signs: readonly [-1 | 1, -1 | 1],
+  t: (key: I18nKey, vars?: Record<string, string | number>) => string,
+): [string, string] {
+  const candidates = opening.partitionHost ? [] : resolveOpeningWallCandidates(index, opening);
+  const physicalHalfWidth = opening.partitionHost ? opening.partitionHost.depth / 2
+    : Math.max(0, ...candidates.flatMap(candidate => candidate.pieces.map(piece => piece.half)));
+  const sides = propertiesOpeningSides({ ...opening, target: { physicalHalfWidth } }, rooms, signs);
+  const room = sides.find(side => side.kind === 'room');
+  const exterior = sides.some(side => side.kind === 'outside');
+  const provenExterior = exterior && room?.kind === 'room' && candidates.length === 1 && candidates[0].full
+    && rooms.some(item => item.id === candidates[0].roomId && item.name === room.name);
+  return sides.map((side, i) => {
+    if (provenExterior) return t(side.kind === 'outside' ? 'opening.features.outside_face' : 'opening.features.inside_face');
+    if (!exterior && side.kind === 'room') return t('opening.features.room_face', { room: side.name });
+    return t(signs[i] < 0 ? 'opening.features.face_a' : 'opening.features.face_b');
+  }) as [string, string];
 }
 
 export function openingPropertiesCore(

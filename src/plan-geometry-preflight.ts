@@ -7,6 +7,7 @@
  */
 import { distToSegment, roomPoly, sharedBoundary } from './logic';
 import { resolveOpenCuts, type OpenSpanEntry } from './open-spans';
+import { swingDoorPositionInBasis } from './opening-symbol-placement';
 import {
   partitionOpeningCut,
   partitionOpeningHasCompositeRoomWall,
@@ -239,6 +240,8 @@ export function geometryOpenings(
       ry: resolution.resolved.center[1],
       rlen: resolution.resolved.length,
       angle: resolution.resolved.angle,
+      ...(opening.swing_position !== undefined ? { swing_position: swingDoorPositionInBasis(
+        opening.swing_position, opening.angle, resolution.resolved.angle) } : {}),
       partitionHost: resolution.resolved,
     }];
   });

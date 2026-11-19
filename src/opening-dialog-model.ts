@@ -15,6 +15,7 @@ export interface OpeningDialogDraft {
   lockFilter?: string;
   invert: boolean;
   lightTransparent?: boolean;
+  swingPosition?: OpeningCfg['swing_position'];
   flipH: boolean;
   flipV: boolean;
   host?: OpeningHost;

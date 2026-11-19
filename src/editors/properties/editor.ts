@@ -28,7 +28,9 @@ import { propertiesCatalog, resolvePropertiesTarget, type PropertiesTarget, type
 import { propertiesIcon, renderPropertiesSurface, type PropertiesField, type PropertiesSurface } from './surface';
 import { propertiesT, type PropertiesString } from './strings';
 import { canonicalPropertiesAngle } from './transforms';
-import { openingPropertiesCore, selectOpeningReference, refreshOpeningReference, propertiesOpeningSides } from './physical';
+import { openingPropertiesCore, selectOpeningReference, refreshOpeningReference, propertiesOpeningSides, openingPlacementSideLabels } from './physical';
+import { motionOpeningFeatures } from '../../opening-features';
+import { swingDoorPositionInBasis } from '../../opening-symbol-placement';
 import { patchPropertiesTarget, propertiesColor } from './patch';
 import { renderPropertiesSelection } from './selection';
 import { PropertiesSectionMotion } from './section-motion';
@@ -475,6 +477,30 @@ export class PropertiesEditor {
   private model(identity = this.identity): PropertiesSurface {
     const target = this.target(identity), host = this.host;
     const openingSides = this.openingSides(target);
+    let placementSides: [string, string] | undefined;
+    if (target?.kind === 'opening' && target.value.type === 'door') {
+      const opening = host._openingsR.find(o => o.id === target.value.id && !o.orphanReason);
+      const model = host._spaceModel();
+      const translate = (key: Parameters<typeof host._t>[0], vars?: Record<string, string | number>) => host._t(key, vars);
+      if (opening && model) {
+        const index = host._openingWallIndexFor(model, host._openCuts()).value;
+        let signs: [-1 | 1, -1 | 1] = swingDoorPositionInBasis(
+          'negative', target.value.angle, opening.angle) === 'positive' ? [1, -1] : [-1, 1];
+        if (motionOpeningFeatures(opening)?.mechanism === 'slide') {
+          const face = host._openingFace(opening, index, false);
+          const angle = opening.angle * Math.PI / 180;
+          const normal = face.oy * Math.cos(angle) - face.ox * Math.sin(angle);
+          const side = normal === 0 ? face.side : normal > 0 ? 1 : -1;
+          signs = side === -1 ? [-1, 1] : [1, -1];
+        }
+        placementSides = openingPlacementSideLabels({
+          x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen, partitionHost: opening.partitionHost,
+        }, model.rooms, index, signs, translate);
+      } else {
+        placementSides = [translate('opening.features.face_a'),
+          translate('opening.features.face_b')];
+      }
+    }
     return propertiesCatalog(target, {
       space: host._curSpaceCfg as PropertiesSpace, cellCm: host._cellCm, t: this.t,
       position: d => { const raw=host._livePos(d),p=host._deviceContacts?.position(d.id,raw)??raw; return { x: p.x / NORM_W, y: p.y / NORM_W }; },
@@ -485,7 +511,7 @@ export class PropertiesEditor {
         const entity = /\{([a-z_]+\.[\w]+)(?::[^}]*)?\}/i.exec(shape.text)?.[1];
         return entity ? String(host.planHost.environment.states[entity]?.attributes?.friendly_name || this.t('text')) : shape.text.split('\n')[0];
       },
-      openingReference: this.reference(target), openingSides: openingSides.labels, openingRooms: openingSides.rooms,
+      openingReference: this.reference(target), openingSides: openingSides.labels, openingPlacementSides: placementSides, openingRooms: openingSides.rooms,
       openingFeaturesEditable: host._haOpeningFeaturesApi === 1, ratioLocked: this.ratioLocked,
       stairFallback: { color: host._decorStyle.color, opacity: host._decorStyle.opacity, fillColor: host._decorStyle.color, fillOpacity: 0 },
     });

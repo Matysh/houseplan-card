@@ -67,7 +67,7 @@ Zigbee topology are intentionally excluded.
 
 Extended openings (#1024) keep architectural, state-free notation: a window
 shows its saved 1–4 leaf divisions, and a sliding door/gate shows one full-width
-panel in its saved direction and physical face. Live contact states, manual
+panel in its saved direction and physical face. A swing door uses the selected visual face or centre, following the opening direction by default (#1475). Live contact states, manual
 opening positions and per-leaf shade states do not change the PDF; they remain
 part of the current-view SVG instead.
 

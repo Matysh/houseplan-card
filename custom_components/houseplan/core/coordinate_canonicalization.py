@@ -155,8 +155,9 @@ def canonicalize_config_geometry(config: Any) -> Any:
                 _lattice_point(segment.get("b"))
 
         opening_basis = copy.deepcopy(space) if any(
-            isinstance(opening.get("opening_features"), dict)
-            and opening["opening_features"].get("version") == 1
+            (isinstance(opening.get("opening_features"), dict)
+             and opening["opening_features"].get("version") == 1)
+            or (opening.get("type") == "door" and opening.get("swing_position") in ("negative", "positive"))
             for opening in _records(space.get("openings"))
         ) else None
         opening_angle_changed = False

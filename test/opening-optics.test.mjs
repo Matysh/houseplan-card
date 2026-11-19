@@ -1,3 +1,4 @@
+import { floorCacheKeys } from '../test-build/floor-cache-key.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { computeSunRays, rayRimEdges } from '../test-build/sun.js';
@@ -97,4 +98,33 @@ test('#1024 live shade mask changes Glow control points, not the structural fing
   assert.equal(contains(unmasked,[150,70]),true);
   assert.equal(contains(masked,[150,30]),true,'the first leaf still passes artificial light');
   assert.equal(contains(masked,[150,70]),false,'the closed second leaf blocks artificial light');
+});
+
+test('#1475 a visual edit invalidates the 2.5D leaf while preserving the closed-door barrier and both optical keys', () => {
+  const room = { id: 'hall', poly: [[0,0],[200,0],[200,100],[0,100]] };
+  const space = { id: 's', rooms: [room], partitions: [], wall_columns: [] };
+  const walls = [{ a: [0,0], b: [200,0], key: wallKey([0,0],[200,0],1), cm: 30 }];
+  const door = { id: 'd', type: 'door', rx: 100, ry: 0, rlen: 36, x: 100, y: 0, length: 36, angle: 0,
+    contact: 'binary_sensor.door', invert: true };
+  for (const closedDoorPlacement of ['flat','iso-volume']) {
+    const inspect = (opening) => {
+      const raw = { ...space, walls, openings: [opening] };
+      const revision = resolveLightBarrierRevision({ rawSpaceConfig: raw, space, openings: [opening],
+        closedDoorPlacement, cellCm: 5, gridPitch: 5, openingAmount: () => 0 });
+      const scene = buildLightBarrierScene({ space, revision, walls,
+        zeroWalls: { contour: [], barriers: [], transmissive: [] }, wallKeyPitch: 1,
+        cellCm: 5, gridPitch: 5, coordScale: 1, physicalBodies: () => [] });
+      return { revision, scene, keys: floorCacheKeys(raw, raw, 5, 5) };
+    };
+    const auto = inspect(door);
+    assert.equal(auto.revision.passageStates[0].closedDoor, true);
+    for (const swing_position of ['auto','negative','positive','center']) {
+      const manual = inspect({ ...door, swing_position });
+      assert.equal(manual.revision.geometryFingerprint, auto.revision.geometryFingerprint);
+      assert.equal(manual.revision.fingerprint, auto.revision.fingerprint);
+      assert.deepEqual(manual.scene, auto.scene);
+      assert.equal(manual.keys.geometry, auto.keys.geometry);
+      assert.equal(manual.keys.iso === auto.keys.iso, swing_position === 'auto');
+    }
+  }
 });

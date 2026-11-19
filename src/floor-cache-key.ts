@@ -1,3 +1,5 @@
+import type { OpeningCfg } from './types';
+import { effectiveSwingDoorPosition } from './opening-symbol-placement';
 /** Persistent keys describe inputs, never a particular mounted card/connection. */
 import { sha256 } from './sha256';
 import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
@@ -56,11 +58,11 @@ export function floorCacheKeys(model: unknown, current: unknown, cellCm: number,
   const salt = [FLOOR_CACHE_FORMAT, FLOOR_CACHE_ALGORITHM, ENTRY_BUILD_FINGERPRINT, cellCm, gridPitch];
   const physicalKey = cacheSha256([salt, pair(physical)]);
   const cleanKey = cacheSha256([salt, pair(clean)]);
-  // V1 opening features do not change masonry, but do change the canonical
-  // isometric opening basis (leaves/frames). They have their own dependency.
+  // Opening presentation changes the cached 2.5D basis (leaves/frames)
+  // independently of the masonry and optical geometry.
   const features = (record: unknown) => record && typeof record === 'object'
-    ? (record as { openings?: unknown[] }).openings?.map(opening => opening && typeof opening === 'object'
-      ? [(opening as { id?: unknown }).id, (opening as { opening_features?: unknown }).opening_features] : opening) : undefined;
+    ? (record as { openings?: OpeningCfg[] }).openings?.map(opening => opening && typeof opening === 'object'
+      ? [opening.id, opening.opening_features, effectiveSwingDoorPosition(opening)] : opening) : undefined;
   return { physical: physicalKey, clean: cleanKey, iso: cacheSha256([physicalKey, pair(features)]),
     geometry: cacheSha256([physicalKey, cleanKey]) };
 }

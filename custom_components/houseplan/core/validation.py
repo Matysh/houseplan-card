@@ -36,6 +36,7 @@ from .led_strips import config_led_strip_links as config_led_strip_links
 from .led_strips import preserve_led_strips as preserve_led_strips
 from .marker_alerts import valid_marker_alerts as valid_marker_alerts
 from .opening_features import OPENING_FEATURES_SCHEMA as OPENING_FEATURES_SCHEMA
+from .opening_features import SWING_POSITION_SCHEMA
 from .opening_features import validate_opening_features as validate_opening_features
 from .partition_promotion import (
     same_partition_wall_chain_promotion as same_partition_wall_chain_promotion,
@@ -975,24 +976,22 @@ def validate_partition_opening_hosts(
                 # carrier back into a room wall. This is not Optimize's broader
                 # rehost permission and cannot transfer or reshape a carrier.
                 promotion_old = old
-                if old_space is not None and old.get("opening_features"):
-                    # Compare against a server-computed basis transfer, never
-                    # ignore nested settings or trust the submitted flip flag.
+                if old_space is not None and (old.get("opening_features")
+                        or old.get("swing_position") in ("negative", "positive")):
+                    # Compare against the server's own transfer of basis-dependent fields.
                     from .opening_orientation import transport_opening_orientations
                     expected = copy.deepcopy(opening)
-                    expected["opening_features"] = copy.deepcopy(old["opening_features"])
-                    if "flip_v" in old:
-                        expected["flip_v"] = old["flip_v"]
-                    else:
-                        expected.pop("flip_v", None)
+                    basis_fields = ("opening_features", "flip_v", "swing_position")
+                    for key in basis_fields:
+                        if key in old:
+                            expected[key] = copy.deepcopy(old[key])
+                        else:
+                            expected.pop(key, None)
                     transport_opening_orientations(
                         old_space, {**space, "openings": [expected]}, {opening_id: 0},
                     )
-                    promotion_old = {**old, "opening_features": expected["opening_features"]}
-                    if "flip_v" in expected:
-                        promotion_old["flip_v"] = expected["flip_v"]
-                    else:
-                        promotion_old.pop("flip_v", None)
+                    promotion_old = {key: value for key, value in old.items() if key not in basis_fields}
+                    promotion_old.update({key: expected[key] for key in basis_fields if key in expected})
                 same_wall = (
                     allow_room_wall_promotion and old_space is not None and isinstance(host, dict)
                     and host.get("kind") == "wall"
@@ -2281,6 +2280,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
                     vol.Optional("lock"): vol.Any(str, None),
                     vol.Optional("invert"): bool,
                     vol.Optional("light_transparent"): bool,
+                    vol.Optional("swing_position"): SWING_POSITION_SCHEMA,
                     vol.Optional("flip_h"): bool,
                     vol.Optional("flip_v"): bool,
                     vol.Optional("opening_features"): OPENING_FEATURES_SCHEMA,

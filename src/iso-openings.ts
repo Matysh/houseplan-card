@@ -27,6 +27,7 @@ export interface IsoOpeningInput {
   flipH: boolean;
   flipV: boolean;
   face: IsoOpeningFace;
+  swingDepth?: number;
   handleSides?: readonly [boolean, boolean];
   opening_features?: OpeningFeatures;
   /** Physical 20cm converted with this space's grid, not a visual constant. */
@@ -269,19 +270,17 @@ function leafBasis(
   turnDeg: number,
   bottom: number,
   top: number,
+  swingDepth?: number,
 ): IsoOpeningLeafBasis {
   const sx = input.flipH ? -1 : 1;
   // Gate flip_v is represented by its resolved face.side/turnDeg. Mirroring
   // the structural basis as well would cancel that direction on shared and
   // partition hosts, just like a nested scaleY in the flat renderer.
   const sy = input.type === 'gate' ? 1 : input.flipV ? -1 : 1;
-  // Flat symbols stay on the saved centreline (#250). A volumetric door/gate
-  // has a physical host face, however: centring its prism inside the masonry
-  // makes half of the leaf look embedded in the wall. Only the derived Iso
-  // leaf moves to that selected face; saved coordinates and the Flat symbol do
-  // not change. Windows keep their frame/sash centred across the reveal.
   const offset = openingLeafOriginOffset(input.type, input.face, 'iso-volume');
-  const origin: PlanPoint = [input.x + offset.ox, input.y + offset.oy];
+  const translation = swingDepth === undefined ? [offset.ox, offset.oy]
+    : transformVector([0, swingDepth], input.angle, 1, 1);
+  const origin: PlanPoint = [input.x + translation[0], input.y + translation[1]];
   const hinge = add(origin, transformVector(localHinge, input.angle, sx, sy));
   const closedVector = transformVector(localVector, input.angle, sx, sy);
   const quarterVector = transformVector(
@@ -304,7 +303,7 @@ export function buildIsoOpeningBasis(
   const faceCm = input.face.cm ?? 0;
   if (!finite([
     input.x, input.y, input.angle, input.length,
-    input.face.ox, input.face.oy, faceCm, wallHeight, profileReferenceHeight,
+    input.face.ox, input.face.oy, faceCm, wallHeight, profileReferenceHeight, input.swingDepth ?? 0,
   ]) || !(input.length > 0) || !(wallHeight > 0) || !(profileReferenceHeight > 0)
       || (input.face.side !== -1 && input.face.side !== 1) || faceCm < 0) {
     throw new Error('invalid isometric opening input');
@@ -395,8 +394,9 @@ export function buildIsoOpeningBasis(
         wallHeight * policy.windowSashTopRatio),
     ];
   } else {
+    const depth = input.swingDepth ?? (input.flipV ? 1 : -1) * Math.hypot(input.face.ox, input.face.oy);
     leaves = [leafBasis(input, 0, [-half, 0], [input.length, 0], -policy.doorTurnDeg, 0,
-      wallHeight * policy.doorTopRatio)];
+      wallHeight * policy.doorTopRatio, depth)];
   }
   const windowProfile = input.type === 'window' ? Object.freeze({
     handleSides: Object.freeze([...(input.handleSides ?? [false,false])]) as readonly [boolean, boolean],

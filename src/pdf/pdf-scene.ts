@@ -5,7 +5,7 @@ import { canonicalFurnitureId } from '../furniture-id';
 import { formatArea } from '../area-format';
 import { roomPoly } from '../logic';
 import { windowOpeningFeatures, motionOpeningFeatures, openingSlideDirection } from '../opening-features';
-import { openingSlidePlacement, type OpeningFaceOffset } from '../opening-symbol-placement';
+import { openingSlidePlacement, openingSwingDepth, type OpeningFaceOffset } from '../opening-symbol-placement';
 import { partitionOpeningFace } from '../partition-openings';
 import { hasPaintableRingArea } from '../polygon-paint';
 import {
@@ -190,7 +190,8 @@ function rotatedRectRing(x: number, y: number, w: number, h: number, rotationDeg
   ].map(([dx, dy]) => [cx + c * dx - s * dy, cy + s * dx + c * dy]);
 }
 
-function openingLines(opening: GeometryOpeningProjection, face: OpeningFaceOffset, cellCm: number): number[][][] {
+function openingLines(opening: GeometryOpeningProjection, face: OpeningFaceOffset,
+  cellCm: number, swingDepth: number): number[][][] {
   if (opening.type === 'passage') return [];
   const half = opening.rlen / 2;
   const depth = face.cm > 0 ? face.cm / cellCm * GRID_PITCH / 2 : 2;
@@ -230,13 +231,13 @@ function openingLines(opening: GeometryOpeningProjection, face: OpeningFaceOffse
   } else {
     const direction = opening.flip_v ? 1 : -1;
     const hinge = opening.flip_h ? half : -half;
-    const leafEnd = [hinge, direction * opening.rlen];
-    local.push([[hinge, 0], leafEnd]);
+    const leafEnd = [hinge, swingDepth + direction * opening.rlen];
+    local.push([[hinge, swingDepth], leafEnd]);
     const arc: number[][] = [];
     for (let index = 0; index <= 16; index++) {
       const angle = direction * index / 16 * Math.PI / 2;
       const sign = opening.flip_h ? -1 : 1;
-      arc.push([hinge + sign * Math.cos(angle) * opening.rlen, Math.sin(angle) * opening.rlen]);
+      arc.push([hinge + sign * Math.cos(angle) * opening.rlen, swingDepth + Math.sin(angle) * opening.rlen]);
     }
     local.push(arc);
   }
@@ -450,7 +451,8 @@ function buildPdfCandidate(
         ? openingInnerFaceOffset(input.space.rooms, { ...opening, flip_v:faceFlip }, built.walls,
             GRID_STEP_N, built.cellCm, GRID_PITCH, NORM_W, built.zero.contour)
         : { ox:0, oy:0, side:-1 as const, cm:0 };
-    for (const line of openingLines(opening, face, built.cellCm)) commands.push({
+    const swingDepth = openingSwingDepth(opening, wallIndexGeometry) ?? 0;
+    for (const line of openingLines(opening, face, built.cellCm, swingDepth)) commands.push({
       kind: 'line', points: line.map(pt), stroke: INK, width: 0.3 * MM,
     });
   }

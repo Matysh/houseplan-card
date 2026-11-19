@@ -1,6 +1,6 @@
 /**
  * Wall thickness (docs/WALL-THICKNESS.md): tool, hatch body, floor area drops
- * with thickness, opening cuts, centred/default and flipped door symbols,
+ * with thickness, opening cuts, automatic and flipped door placement,
  * shared once, zero→line,
  * degrade/rekey, safe Resize rejects a mixed-thickness shared wall.
  */
@@ -168,10 +168,14 @@ const res = await page.evaluate(async () => {
     .querySelector('[data-hp="opening"][data-kind="door"] > g[transform^="scale("]'
       + ' > g[transform^="translate("]')
     ?.getAttribute('transform') || '';
-  out.doorDefaultCentered = /^translate\(0 0\)$/.test(doorBodyTransform());
+  const localSwingDepth = () => Number(doorBodyTransform().split(' ')[1]?.replace(')', ''));
+  const expectedHalfDepth = 25 / c._cellCm * c._gridPitch / 2;
+  out.doorDefaultAtSwingFace = Math.abs(localSwingDepth() + expectedHalfDepth) < 1e-6;
   await authored({ kind: 'openings', ids: ['wt1'] }, space => { space.openings[0].flip_v = true; });
   out.openingMetadataPreserved = JSON.stringify(sp().openings[0].future_opening) === JSON.stringify(opaque);
-  out.doorSavedFlipStaysCentered = /^translate\(\s*0\s+0\s*\)$/.test(doorBodyTransform());
+  out.doorMirroredSymbolKeepsLocalOffset = Math.abs(localSwingDepth() + expectedHalfDepth) < 1e-6;
+  await authored({ kind: 'openings', ids: ['wt1'] }, space => { space.openings[0].swing_position = 'center'; });
+  out.doorCenterOverride = localSwingDepth() === 0;
 
   const firstGateTurn = (id) => {
     const transform = sr().querySelector(

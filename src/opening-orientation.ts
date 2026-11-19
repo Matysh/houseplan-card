@@ -3,6 +3,7 @@ import type { OpeningCfg, RoomCfg, WallEntry, PartitionCfg } from './types';
 import { roomPoly } from './logic';
 import { openingInnerFaceOffset } from './wall-thickness';
 import { motionOpeningFeatures, reparameterizeOpeningFeatures } from './opening-features';
+import { swingDoorPositionInBasis } from './opening-symbol-placement';
 
 type Point = readonly number[];
 export type OpeningOrientationSpace = { rooms?: Partial<RoomCfg>[]; walls?: WallEntry[];
@@ -50,11 +51,15 @@ export function transportOpeningOrientations<T extends Space>(before: Space, aft
   for (const opening of Array.isArray(after.openings) ? after.openings : []) {
     if (!validOpening(opening)) continue;
     const source = old.get(opening.id);
-    if (source?.opening_features?.version !== 1 || source.type !== opening.type) continue;
-    // Invalid documents still belong to the strict schema, not a geometry
-    // reader exception before that schema can explain the malformed import.
-    if (source.type === 'window' && (!('leaves' in source.opening_features)
-      || !Array.isArray(source.opening_features.leaves))) continue;
+    if (!source || source.type !== opening.type) continue;
+    const features = source.opening_features;
+    const swingPosition = source.type === 'door' ? source.swing_position : undefined;
+    const manualSide = swingPosition === 'negative' || swingPosition === 'positive';
+    const extended = features?.version === 1;
+    if (!extended && !manualSide) continue;
+    // Malformed imported extensions belong to schema validation.
+    if (extended && source.type === 'window' && (!('leaves' in features)
+      || !Array.isArray(features.leaves))) continue;
     let delta = rotations.get(opening.id);
     if (delta === undefined) {
       delta = opening.angle - source.angle;
@@ -62,10 +67,13 @@ export function transportOpeningOrientations<T extends Space>(before: Space, aft
     }
     const expected = source.angle + delta;
     const intended = opening.angle + 180 * Math.round((expected - opening.angle) / 180);
-    const transformed = reparameterizeOpeningFeatures(source, intended);
-    opening.angle = transformed.angle;
-    opening.opening_features = transformed.opening_features;
-    if (motionOpeningFeatures(source)?.mechanism !== 'slide') continue;
+    if (extended) {
+      const transformed = reparameterizeOpeningFeatures(source, intended);
+      opening.angle = transformed.angle;
+      opening.opening_features = transformed.opening_features;
+    }
+    if (manualSide) opening.swing_position = swingDoorPositionInBasis(swingPosition, intended, opening.angle);
+    if (!extended || motionOpeningFeatures(source)?.mechanism !== 'slide') continue;
     const previous = openingFaceNormal(before, source), radians = delta * Math.PI / 180;
     const desired = [previous[0] * Math.cos(radians) - previous[1] * Math.sin(radians),
       previous[0] * Math.sin(radians) + previous[1] * Math.cos(radians)];

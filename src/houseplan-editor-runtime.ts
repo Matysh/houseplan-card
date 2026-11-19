@@ -24,7 +24,8 @@ import { resolveOpeningVisual, openingWindowHandleSides, motionOpeningFeatures, 
 import { acceptOpeningLeafDraft, openingDraftObject, draftWindowFeatures, type OpeningDialogDraft } from './opening-dialog-model';
 import { openingFeatureFields, type OpeningFeatureFieldOptions } from './editors/opening-features-fields';
 import { transportOpeningOrientations } from './opening-orientation';
-import { openingPropertiesCore, propertiesOpeningSides } from './editors/properties/physical';
+import { openingPropertiesCore, propertiesOpeningSides, openingPlacementSideLabels } from './editors/properties/physical';
+import { openingSwingDepth, swingDoorPositionInBasis } from './opening-symbol-placement';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -247,6 +248,7 @@ import {
   hostedOpeningIntervalsOverlap, materializePartitionOpening, partitionOpeningJambMargin,
   partitionOpeningNeedsStrictValidation, partitionOpeningFace, partitionPlacementIntervals,
   resolvePartitionOpeningCompat, resolvePartitionOpeningStrict,
+  type ResolvedPartitionOpening,
 } from './partition-openings';
 import {
   buildHiddenWallDiagnosticGeometry, buildPlanSnapGeometry,
@@ -6213,6 +6215,7 @@ public _resolveOpeningPlacement(raw: readonly number[]): OpeningPlacementCandida
     if (!core) return null;
     const faceFlipV = core.type === 'gate' ? !core.flipV : core.flipV;
     let face: OpeningFaceOffset;
+    let partitionHost: ResolvedPartitionOpening | undefined;
     if (core.host) {
       const hosted = resolvePartitionOpeningCompat({
         id: 'preview', type: core.type,
@@ -6220,6 +6223,7 @@ public _resolveOpeningPlacement(raw: readonly number[]): OpeningPlacementCandida
         angle: core.angle, length: core.renderedLength / NORM_W,
         host: core.host,
       }, space.partitions, NORM_W, this.host._cellCm, this.host._gridPitch).resolved;
+      partitionHost = hosted ?? undefined;
       face = hosted
         ? partitionOpeningFace(hosted, faceFlipV)
         : { ox: 0, oy: 0, cm: 0, side: -1 };
@@ -6242,7 +6246,9 @@ public _resolveOpeningPlacement(raw: readonly number[]): OpeningPlacementCandida
       text: formatLength((dimension.distance / this.host._gridPitch) * this.host._cellCm, imperial),
       dimension,
     }));
-    return { ...core, face, measure: { labels, guide: core.measure.guide } };
+    const swingDepth = openingSwingDepth({ type: core.type, angle: core.angle, flip_v: core.flipV,
+      rx: core.x, ry: core.y, rlen: core.renderedLength, partitionHost }, wallIndex.value);
+    return { ...core, face, swingDepth, measure: { labels, guide: core.measure.guide } };
   }
 
 public _activateOpeningPlacement(type: OpeningPlacementType): void {
@@ -6306,6 +6312,7 @@ public _openingClick(raw: number[]): void {
         contact: rebound.contact || '', lock: rebound.lock || '',
         invert: !!rebound.invert, lightTransparent: rebound.light_transparent === true, flipH: !!rebound.flip_h, flipV: !!rebound.flip_v,
         ...(rebound.opening_features ? { openingFeatures: structuredClone(rebound.opening_features) } : {}),
+        swingPosition: rebound.swing_position,
       } : {
         type: place.type, lengthCm: place.lengthCm, contact: '', lock: '',
         invert: false, lightTransparent: false, flipH: place.flipH, flipV: place.flipV,
@@ -6313,13 +6320,14 @@ public _openingClick(raw: number[]): void {
       ...(place.host ? { host: place.host } : {}),
       x: place.x, y: place.y, angle: place.angle,
     };
-    if (rebound?.opening_features) {
+    if (rebound && (rebound.opening_features || rebound.swing_position !== undefined)) {
       const sp = this.host._curSpaceCfg!;
       const draft = this.host._openingDialog;
       const target = { ...rebound, x: place.x / NORM_W, y: place.y / this.host._spaceH,
         angle: place.angle, host: place.host };
       transportOpeningOrientations(sp, { ...sp, openings: [target] });
       draft.openingFeatures = structuredClone(target.opening_features);
+      draft.swingPosition = target.swing_position;
       draft.flipV = !!target.flip_v;
       draft.angle = target.angle;
     }
@@ -6344,6 +6352,7 @@ public _editOpening(o: RenderOpening): void {
       lock: o.lock || '',
       invert: !!o.invert,
       lightTransparent: o.light_transparent === true,
+      swingPosition: o.swing_position,
       flipH: !!o.flip_h,
       flipV: !!o.flip_v,
       ...(o.opening_features ? { openingFeatures: structuredClone(o.opening_features) } : {}),
@@ -6724,6 +6733,9 @@ public _saveOpening(): void {
     }
     if (d.type === 'door' && d.lightTransparent === true) o.light_transparent = true;
     else delete o.light_transparent;
+    if (d.type === 'door' && d.swingPosition !== undefined) {
+      o.swing_position = swingDoorPositionInBasis(d.swingPosition, d.angle, o.angle);
+    } else delete o.swing_position;
     if (d.type === 'passage') {
       // The canonical passage record contains geometry only. Delete keys
       // instead of writing null/false so imports and old broken records have
@@ -6751,7 +6763,7 @@ public _saveOpening(): void {
     // The draft owns newly configured leaf settings. Transfer its basis only
     // after host materialization, rather than resurrecting the old settings.
     if (o.opening_features && o.angle !== d.angle) {
-      const intended = { ...o, angle: d.angle };
+      const intended = { ...o, angle: d.angle, swing_position: d.swingPosition };
       transportOpeningOrientations({ ...sp, openings: [intended] }, { ...sp, openings: [o] });
     }
     try { assertOpeningFeatures(o); }
@@ -6788,6 +6800,7 @@ private async _changeOpeningType(type: OpeningCfg['type']): Promise<void> {
     }
     this.host._openingDialog = { ...d, type, lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm(type),
       openingFeatures: compatibleMotion ? d.openingFeatures : undefined,
+      swingPosition: type === 'door' ? d.swingPosition : undefined,
       featuresTouched: d.featuresTouched || !!d.openingFeatures,
       ...(type === 'gate' ? { flipH: false } : {}), contactOpen: false, lockOpen: false };
   }
@@ -10904,6 +10917,7 @@ public _renderOpeningPlacementPreview(): TemplateResult {
       cellCm: this.host._cellCm,
       gridPitch: this.host._gridPitch,
       face: candidate.face,
+      swingDepth: candidate.swingDepth,
     };
     const passageGeometry = candidate.type === 'passage'
       ? passagePlacementPreviewGeometry(
@@ -10927,6 +10941,24 @@ public _renderOpeningPlacementPreview(): TemplateResult {
       cx=${candidate.x} cy=${candidate.y}
       r=${gridVisualUnits(this.host._gridPitch * 0.18, this.host._cellCm)}></circle>` as unknown as TemplateResult;
   }
+
+private _swingDoorPositionField(draft: OpeningDialogDraft, model: SpaceModel | undefined,
+    length: number, partitionHost?: ResolvedPartitionOpening): TemplateResult {
+    const t = (key: I18nKey, vars?: Record<string, string | number>) => this.host._t(key, vars);
+    const labels = model ? openingPlacementSideLabels({
+      x: draft.x, y: draft.y, angle: draft.angle, length, partitionHost,
+    }, model.rooms, this.host._openingWallIndexFor(model, this.host._openCuts()).value, [-1, 1], t)
+      : [t('opening.features.face_a'), t('opening.features.face_b')];
+    return html`<label for="opening-swing-position">${t('opening.features.swing_position')}</label>
+      ${selectControl({ name: 'opening-swing-position', value: draft.swingPosition ?? 'auto', options: [
+        { value: 'auto', label: t('opening.features.swing_auto') },
+        { value: 'negative', label: labels[0] },
+        { value: 'positive', label: labels[1] },
+        { value: 'center', label: t('opening.features.swing_center') },
+      ], onChange: swingPosition => {
+        if (this.host._openingDialog === draft) this.host._openingDialog = { ...draft, swingPosition };
+      } })}`;
+}
 
 public _renderOpeningDialog(): TemplateResult {
     const d = this.host._openingDialog!;
@@ -10978,6 +11010,10 @@ public _renderOpeningDialog(): TemplateResult {
         : side?.kind === 'outside' ? this.host._t('opening.features.outside')
           : this.host._t('opening.features.side', { side: index ? 'B' : 'A' }) };
     });
+    const swingPositionField = !leafEdit && d.type === 'door'
+        && motionOpeningFeatures(openingDraftObject(d))?.mechanism !== 'slide'
+      ? this._swingDoorPositionField(d, model, dialogOpening.length * NORM_W, hostResolution?.resolved ?? undefined)
+      : nothing;
     let preview = html``;
     if (leafEdit && model) {
       const features = draftWindowFeatures(d);
@@ -11126,6 +11162,7 @@ public _renderOpeningDialog(): TemplateResult {
             : nothing}
 
           ${positionFields}
+          ${swingPositionField}
           ${this.host.planHost.capabilities.devices && !leafEdit && (d.type === 'door' || d.type === 'gate')
             ? html`<label>${this.host._t('opening.lock_label')}</label>
                 ${picker('lock', this._lockCandidates())}`

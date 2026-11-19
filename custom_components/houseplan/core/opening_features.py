@@ -49,8 +49,16 @@ MOTION_FEATURES_SCHEMA = vol.Schema({
 OPENING_FEATURES_SCHEMA = vol.Any(WINDOW_FEATURES_SCHEMA, MOTION_FEATURES_SCHEMA)
 
 
+SWING_POSITION_SCHEMA = vol.Any("auto", "negative", "positive", "center")
+
+
 def validate_opening_features(opening: dict) -> dict:
     """Select the strict schema by parent type, rejecting mixed legacy fields."""
+    if "swing_position" in opening:
+        SWING_POSITION_SCHEMA(opening["swing_position"])
+        if opening.get("type") != "door":
+            # Previous clients preserve extra keys even when replacing the type.
+            opening = {key: value for key, value in opening.items() if key != "swing_position"}
     if "opening_features" not in opening:
         return opening
     features = opening["opening_features"]

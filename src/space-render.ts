@@ -35,6 +35,7 @@ import { renderDayCycleEnvironment } from './day-cycle-render';
 import type { DevItem, ServerConfig } from './types';
 import { floorMinusBodies, physicalBodyParts, polyclipPathD } from './physical-geometry';
 import { partitionOpeningFace } from './partition-openings';
+import { openingSwingDepth } from './opening-symbol-placement';
 import {
   openingVisibleBounds, renderOpeningVisibleGeometry, type OpeningVisibleSpec,
 } from './render/opening-symbol';
@@ -481,7 +482,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       handleSides: openingWindowHandleSides(opening, space.rooms, face.cm, cellCm, GRID_PITCH),
       sensorDriven: !!opening.contact,
       amount, flipH: !!opening.flip_h, flipV: !!opening.flip_v,
-      base, tone, cellCm, gridPitch: GRID_PITCH, face };
+      base, tone, cellCm, gridPitch: GRID_PITCH, face,
+      swingDepth: openingSwingDepth(opening, openingIndex) };
   };
   const openingBounds = disp.hideOpenings ? [] : projectedOpenings.flatMap((opening) => {
     const bounds = openingVisibleBounds(visibleSpec(opening, 0), [opening.rx, opening.ry]);

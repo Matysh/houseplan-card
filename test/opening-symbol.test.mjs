@@ -208,3 +208,21 @@ test('shared renderer centres every flip while preserving opening direction', ()
     'flip_v reverses the first-leaf turn instead of cancelling in scaleY',
   );
 });
+
+test('#1475 the hinge and arc share the signed paint origin while the fitting envelope stays state-independent', () => {
+  for (const flipV of [false, true]) for (const flipH of [false, true]) {
+    const center = spec({ flipV, flipH, swingDepth: 0 });
+    const sameDirection = spec({ flipV, flipH, swingDepth: flipV ? 19 : -19 });
+    for (const amount of [0,.35,1]) {
+      const markup = templateText(renderOpeningVisibleGeometry({ ...sameDirection, amount }));
+      const translated = markup.split('translate(0 -19)');
+      assert.equal(translated.length, 2, 'the swing uses exactly one translation');
+      assert.match(translated[1], /op-arc[\s\S]*op-leaf/, 'the arc and the moving body share the translated group');
+      assert.deepEqual(openingVisibleBounds({ ...sameDirection, amount }), openingVisibleBounds(sameDirection));
+    }
+    const centeredBounds = openingVisibleBounds(center);
+    const shiftedBounds = openingVisibleBounds(sameDirection);
+    assert.equal(flipV ? shiftedBounds.maxY - centeredBounds.maxY : centeredBounds.minY - shiftedBounds.minY, 19);
+    assert.equal(openingVisibleMetrics(sameDirection).jambHalf, openingVisibleMetrics(center).jambHalf);
+  }
+});

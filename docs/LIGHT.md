@@ -91,7 +91,8 @@ input is only a v8 read projection and migrates to ordinary `cm:0` atoms.
 A proven **closed opaque door** is different (#1421): its physical slot is cut
 through the masonry, then sealed at the drawn leaf. The source-side pocket is
 lit up to that leaf; the other side stays dark. Flat swing leaves seal the wall axis;
-an actually rendered Iso volume seals its selected physical face (#1449).
+an actually rendered Iso volume seals its room-relative physical face (#1449).
+The visual swing placement can be set independently of this barrier (#1475).
 Both consume the renderer's pure ground-plane leaf-placement authority. This
 changes only the closed leaf inside its proven bounded wall slot: masonry,
 tunnel floor and the common visibility algorithm remain shared. Pan, zoom and

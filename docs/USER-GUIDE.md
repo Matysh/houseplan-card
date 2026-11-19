@@ -862,6 +862,8 @@ lovelace:
 
 &emsp;&emsp;Each leaf can have curtains, blinds or shutters with its own source and manual position. Confirmed closed shades block only their share of light; open, partly open and unknown shades allow it. A sun, crossed-out sun or `?` indicates the state. Shades have no physical panels. Glass-leaf position changes only the symbol, not light transmission.
 
+&emsp;&emsp;Use **Position in the opening** in the swing-door properties to choose where the leaf sits in the wall. Flat and 2.5D place it at the face it opens towards by default. Choose either face or the centre to keep the leaf there when the opening direction changes. For a sliding door, the sidebar’s **Placement side** shows which face the panel uses.
+
 &emsp;&emsp;Doors and gates offer swing or one full-width sliding panel with an axis-local direction. These settings never send commands. Sensor-driven guides use the HA accent; manual guides use the symbol colour. Merely opening or saving an old window does not materialize independent-leaf settings.
 
 &emsp;&emsp;Nested **Done** changes only the draft; outer **Save** writes it. Cancel, close and Escape discard the current nested draft. Space Copy clears all leaf/shade bindings, including disabled shades, but keeps manual positions. Backup transfer preserves bindings. Update both the card and integration and reload before editing.

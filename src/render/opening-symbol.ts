@@ -3,7 +3,7 @@ import { mdiWeatherSunny, mdiWeatherSunnyOff } from '@mdi/js';
 import type { OpeningCfg } from '../types';
 import { resolveOpeningVisual, type ResolvedOpeningVisual } from '../opening-features';
 import { gridVisualScale, gridVisualUnits } from '../grid-scale';
-import { openingSlidePlacement, openingSymbolOffset, type OpeningFaceOffset } from '../opening-symbol-placement';
+import { openingSlidePlacement, type OpeningFaceOffset } from '../opening-symbol-placement';
 
 export type { OpeningFaceOffset } from '../opening-symbol-placement';
 
@@ -26,6 +26,7 @@ export interface OpeningVisibleSpec {
   cellCm: number;
   gridPitch: number;
   face: OpeningFaceOffset;
+  swingDepth?: number;
 }
 
 export interface OpeningVisibleMetrics {
@@ -139,6 +140,7 @@ export function openingVisibleMetrics(spec: OpeningVisibleSpec): OpeningVisibleM
   const jambHalf = spec.face.cm > 0
     ? ((spec.face.cm / spec.cellCm) * spec.gridPitch) / 2
     : gridVisualUnits(4, spec.cellCm);
+  const swingDepth = Math.abs(spec.swingDepth ?? 0);
   const gateDepth = spec.type === 'gate' ? Math.sin((10 * Math.PI) / 180) * half : 0;
   return {
     half,
@@ -146,12 +148,12 @@ export function openingVisibleMetrics(spec: OpeningVisibleSpec): OpeningVisibleM
     gateDepth,
     outlineHalf: Math.max(
       gridVisualUnits(16, spec.cellCm),
-      jambHalf + gridVisualUnits(8, spec.cellCm),
+      Math.max(jambHalf, swingDepth) + gridVisualUnits(8, spec.cellCm),
       gateDepth + gridVisualUnits(8, spec.cellCm),
     ),
     hitHalf: Math.max(
       gridVisualUnits(20, spec.cellCm),
-      jambHalf + gridVisualUnits(10, spec.cellCm),
+      Math.max(jambHalf, swingDepth) + gridVisualUnits(10, spec.cellCm),
       gateDepth + gridVisualUnits(12, spec.cellCm),
     ),
   };
@@ -198,18 +200,9 @@ function addSweptRect(
 }
 
 function bodyTranslation(spec: OpeningVisibleSpec): [number, number] {
-  const visualOffset = openingSymbolOffset(
-    spec.type, spec.flipV, spec.angle, spec.face,
-  );
-  if (!visualOffset.ox && !visualOffset.oy) return [0, 0];
-  const rad = (-spec.angle * Math.PI) / 180;
-  const c = Math.cos(rad), s = Math.sin(rad);
-  const sx = spec.flipH ? -1 : 1;
-  const sy = spec.flipV ? -1 : 1;
-  return [
-    (visualOffset.ox * c - visualOffset.oy * s) * sx,
-    (visualOffset.ox * s + visualOffset.oy * c) * sy,
-  ];
+  // The symbol sits under scaleY(flipV). Undo it for the physical offset.
+  const depth = spec.type === 'door' ? spec.swingDepth ?? 0 : 0;
+  return [0, depth ? depth * (spec.flipV ? -1 : 1) : 0];
 }
 
 /**

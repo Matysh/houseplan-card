@@ -345,6 +345,8 @@ export interface MotionOpeningFeatures {
 }
 export type OpeningFeatures = WindowOpeningFeatures | MotionOpeningFeatures;
 
+export type SwingDoorPosition = 'auto' | 'negative' | 'positive' | 'center';
+
 export interface OpeningCfg {
   id: string;
   type: OpeningType;
@@ -357,6 +359,8 @@ export interface OpeningCfg {
   invert?: boolean;
   /** Door glass: optical transmission only; never the live/drawn opening state. */
   light_transparent?: boolean;
+  /** Visual swing origin in the opening basis. Absent means automatic. */
+  swing_position?: SwingDoorPosition;
   flip_h?: boolean; // hinge on the other jamb
   flip_v?: boolean; // opens to the other side of the wall
   /** Leaf presentation/optics, independent of the structural graph version. */

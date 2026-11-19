@@ -354,7 +354,8 @@ export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
       }
     }
 
-    const openingBasis = records(space.openings).some(opening => opening.opening_features?.version === 1)
+    const openingBasis = records(space.openings).some(opening => opening.opening_features?.version === 1
+      || opening.type === 'door' && (opening.swing_position === 'negative' || opening.swing_position === 'positive'))
       ? cloneJson(space) : null;
     let openingAngleChanged = false;
     for (const opening of records(space.openings)) {

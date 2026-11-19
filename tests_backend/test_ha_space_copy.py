@@ -312,3 +312,20 @@ async def test_ordinary_space_creation_survives_an_uncopyable_source(hass, hass_
     assert saved["rev"] == 8
     assert saved["config"]["spaces"][1]["id"] == "snew"
     assert len(saved["config"]["spaces"][0]["partitions"]) == 1997
+
+
+def test_swing_door_position_round_trips_through_portable_copy_and_old_writer_shape():
+    source = source_fixture()
+    door = source["spaces"][0]["openings"][0]
+    door.update(swing_position="negative", lock="lock.hall", contact="binary_sensor.hall")
+    source = CONFIG_SCHEMA(source)
+    from_browser = frontend_copy(source, "swingplacement")
+    from_server = space_copy_candidate(source, "source", "Copy", "swingplacement")
+    assert from_browser == from_server
+    assert is_saved_space_copy(normalize_room_appearance(CONFIG_SCHEMA(from_browser)), source)
+    copied = CONFIG_SCHEMA(from_browser)["spaces"][1]["openings"][0]
+    assert copied["swing_position"] == "negative"
+    assert "contact" not in copied and "lock" not in copied
+    edited = copy.deepcopy(source)
+    edited["spaces"][0]["openings"][0]["type"] = "window"
+    assert "swing_position" not in CONFIG_SCHEMA(edited)["spaces"][0]["openings"][0]

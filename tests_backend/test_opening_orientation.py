@@ -145,3 +145,16 @@ def test_scalar_cleanup_across_positive_boundary_is_once_only_and_matches_ts(typ
     reply = subprocess.run(["node", "--input-type=module", "-e", script], cwd=ROOT,
                            input=json.dumps(cfg), text=True, capture_output=True, check=True)
     assert json.loads(reply.stdout) == result
+
+
+def test_swing_door_without_extended_features_keeps_its_side_after_basis_reversal():
+    from custom_components.houseplan.core.opening_orientation import transport_opening_orientations
+
+    door = {"id": "door", "type": "door", "x": .5, "y": 0, "angle": 89, "length": .2,
+            "swing_position": "positive", "flip_h": True, "contact": "binary_sensor.door"}
+    original = {"openings": [door]}
+    candidate = {"openings": [{**door, "angle": -89}]}
+    for _ in range(2):
+        transport_opening_orientations(original, candidate, {"door": 2})
+        assert candidate["openings"][0] == {**door, "angle": -89, "swing_position": "negative"}
+    assert door["swing_position"] == "positive"

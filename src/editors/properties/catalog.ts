@@ -1,5 +1,6 @@
 import { CANVAS_LIMIT, GRID_PITCH, NORM_W } from '../../canvas-constants';
 import { windowOpeningFeatures, motionOpeningFeatures } from '../../opening-features';
+import { effectiveSwingDoorPosition } from '../../opening-symbol-placement';
 import { planRect } from '../../space-geometry';
 import type { DevItem, LedStripModel, Marker, OpeningCfg, PartitionCfg, RoomCfg, WallColumnCfg, WallSegmentEntry } from '../../types';
 import type { DecorShape } from '../decor/types';
@@ -80,6 +81,7 @@ export interface PropertiesCatalogContext {
   textName?(shape: DecorShape): string;
   openingReference: OpeningDimension | null;
   openingSides: [string, string];
+  openingPlacementSides?: [string, string];
   openingRooms?: readonly string[];
   openingFeaturesEditable?: boolean;
   stairFallback?: StairVisualStyle;
@@ -156,10 +158,21 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
       if (opening.type !== 'passage') {
         featureTitle = opening.type === 'door' ? 'door_features' : opening.type;
         if (opening.type === 'door') features.push({ key: 'light_transparent', label: 'light_transparent', value: opening.light_transparent === true, control: 'toggle', wide: true });
-        if (opening.type === 'door' && motionOpeningFeatures(opening)?.mechanism !== 'slide') features.push({ key: 'flip_h', label: 'hinge', value: opening.flip_h === true, control: 'toggle', icon: 'swap', wide: true });
+        const swing = effectiveSwingDoorPosition(opening);
+        const slidingDoor = opening.type === 'door' && motionOpeningFeatures(opening)?.mechanism === 'slide';
+        const placement = context.openingPlacementSides ?? context.openingSides;
+        if (swing !== undefined) features.push({ key: 'flip_h', label: 'hinge', value: opening.flip_h === true, control: 'toggle', icon: 'swap', wide: true });
         const window = windowOpeningFeatures(opening);
-        features.push(choice('flip_v', 'opening_side', window ? window.side === 'positive' : opening.flip_v === true,
-          context.openingSides.map((label, i) => ({ value: String(!!i), label }))));
+        features.push(choice('flip_v', slidingDoor ? 'placement_side' : 'opening_side',
+          window ? window.side === 'positive' : opening.flip_v === true,
+          (slidingDoor ? placement : context.openingSides).map((label, i) => ({ value: String(!!i), label }))));
+        if (swing !== undefined) features.push({ key: 'swing_position', label: 'swing_position', value: swing,
+          control: 'select', wide: true, options: [
+            { value: 'auto', label: t('swing_auto') },
+            { value: 'negative', label: placement[0] },
+            { value: 'positive', label: placement[1] },
+            { value: 'center', label: t('swing_center') },
+          ] });
       }
     } else if (target.kind === 'stair') {
       const stair = target.value; kind = stair.kind;

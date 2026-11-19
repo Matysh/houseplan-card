@@ -4684,9 +4684,8 @@ function centrePiece(side: OpeningWallSide): OpeningWallPiece {
 }
 
 /**
- * Physical half-depth and direction for an opening. Visible symbol placement
- * is resolved separately and is always centred; flip_v changes only the
- * opening direction (#250).
+ * Existing room-relative face used by the physical reveal, sliding leaves
+ * and the closed-door light barrier. Swing drawing resolves its own origin.
  */
 export function openingInnerFaceOffset(
   rooms: any[],
@@ -4730,6 +4729,17 @@ export function openingInnerFaceOffsetFromIndex(
     cm: piece.cm,
     side: selectedSide,
   };
+}
+
+/** Half-depth at a specific wall face in the oriented opening basis. */
+export function openingWallFaceHalfDepth(
+  index: OpeningWallIndex,
+  opening: { x: number; y: number; angle: number; length: number },
+  side: -1 | 1,
+): number {
+  const { negative, positive } = resolveOpeningWallAssociation(index, opening);
+  const owner = (side === -1 ? negative : positive) ?? negative ?? positive;
+  return owner ? centrePiece(owner).half : 0;
 }
 
 /** One half of a room-coloured opening tunnel, in opening-local coordinates. */

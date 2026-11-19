@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1475,
+  "baseStable": "v1.85.0",
+  "category": "major",
+  "rationale": "A new per-door drawing control independently chooses the swing leaf position in Flat and 2.5D.",
+  "summary": {
+    "ru": "Распашное полотно следует направлению открывания, либо его можно закрепить у любой грани или по центру проёма.",
+    "en": "A swing leaf follows the opening direction or can be fixed at either wall face or the centre."
+  }
+}

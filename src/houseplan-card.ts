@@ -206,6 +206,7 @@ import {
   polyclipPathD, physicalBodyParts, type PartitionOpeningCut,
 } from './physical-geometry';
 import { partitionOpeningFace, resolvePartitionOpeningCompat } from './partition-openings';
+import { openingSwingDepth, swingDoorPositionInBasis } from './opening-symbol-placement';
 import {
   type HiddenWallDiagnosticGeometry, type PlanSnapCandidate, type PlanSnapEndpoint,
   type PlanSnapGeometry,
@@ -7903,6 +7904,7 @@ export class HouseplanCard extends LitElement {
           const face = this._openingFace(o, index, o.type === 'gate' ? !o.flip_v : !!o.flip_v);
           const bounds = openingVisibleBounds({ type:o.type, length:o.rlen, angle:o.angle,
             amount:0, flipH:!!o.flip_h, flipV:!!o.flip_v, base:'', tone:'', face,
+            swingDepth: openingSwingDepth(o, index),
             cellCm:this._cellCm, gridPitch:this._gridPitch,
             visual:resolveOpeningVisual(o, () => null, 0) }, [o.rx,o.ry]);
           if (bounds) { extra.push(bounds); continue; }
@@ -10193,6 +10195,8 @@ export class HouseplanCard extends LitElement {
         rx, ry,
         rlen: resolution.resolved.length,
         angle: resolution.resolved.angle,
+        ...(o.swing_position !== undefined ? { swing_position: swingDoorPositionInBasis(
+          o.swing_position, o.angle, resolution.resolved.angle) } : {}),
         partitionHost: resolution.resolved,
       }];
     });
@@ -15056,6 +15060,7 @@ export class HouseplanCard extends LitElement {
         tone,
         sensorActive: active,
         sensorDriven: !!o.contact,
+        swingDepth: openingSwingDepth(o, openingWallIndex),
         cellCm: this._cellCm,
         gridPitch: this._gridPitch,
         face,

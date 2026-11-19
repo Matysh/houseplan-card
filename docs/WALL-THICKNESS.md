@@ -603,11 +603,11 @@ keeps its flat cap. This topology is render-only: a T does not split or rewrite
 the saved target segment. The live open-outline/rubber-band preview calls the
 same primitive with saved per-segment thicknesses plus the current field value.
 
-Openings cut the body full-depth and jambs cap the whole cut. By default the
-complete visible door/window/gate group is always centred on the wall axis,
-including window glass. `flip_v` changes only the direction of door/window
-geometry or the gate's 10° turn; it never translates the symbol toward a wall
-face.
+Openings cut the body full-depth and jambs cap the whole cut. The swing door's
+painted leaf, hinge and arc follow the opening-side wall face by default.
+The door setting can instead choose either face or the centre (#1475).
+The wall cut, its jambs, and the optical barrier use their physical geometry.
+Window and swing gate symbols retain their existing axis placement.
 Association uses wall direction ≈ opening angle (mod 180°), then nearest span —
 never a perpendicular neighbour at a T. One atomic `OpeningWallIndex` is
 authoritative for physical depth/direction, wall cut and coloured tunnel, while

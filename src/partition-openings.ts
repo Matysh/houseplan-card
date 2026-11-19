@@ -1,5 +1,6 @@
 /** Pure host resolution shared by editor, renderers and backend-facing projections. */
 import { wallCmToUnits, type WallInterval } from './wall-thickness';
+import { swingDoorPositionInBasis } from './opening-symbol-placement';
 import { graphOpeningRun, graphOpeningRunCenter, copyGraphOpeningRun } from './graph-opening-run';
 import type {
   OpeningCfg, PartitionCfg, PartitionOpeningHost,
@@ -256,12 +257,14 @@ export function hostedOpeningIntervalsOverlap(
 
 /** Update compatibility fields after a host move without changing host semantics. */
 export function materializePartitionOpening(
-  opening: OpeningCfg, resolved: ResolvedPartitionOpening, coordScale: number,
+  opening: OpeningCfg, resolved: ResolvedPartitionOpening, coordScale: number, intendedAngle = opening.angle,
 ): OpeningCfg {
   return {
     ...opening,
     x: resolved.center[0] / coordScale,
     y: resolved.center[1] / coordScale,
     angle: resolved.angle,
+    ...(opening.swing_position !== undefined
+      ? { swing_position: swingDoorPositionInBasis(opening.swing_position, intendedAngle, resolved.angle) } : {}),
   };
 }

@@ -22,6 +22,9 @@ def source():
         spaces.append({"id": f"floor{index}", "title": "Floor", "view_box": [0, 0, 2, 2],
             "rooms": [{"id": "room", "name": f"Room {index}", "area": "private-ha-area",
                        "poly": [[0, 0], [2, 0], [2, 2], [0, 2]]}],
+            "walls": [{"key": "240:0:0", "cm": 30, "a": [0, 0], "b": [2, 0]}],
+            "openings": [{"id": "door", "type": "door", "x": .5, "y": 0, "angle": 0, "length": .2,
+                          "swing_position": "center", "contact": "binary_sensor.hall"}],
             "stairs": [{"id": "stair", "kind": "straight", "x": .5, "y": .5,
                         "angle": 0, "direction": "forward",
                         "target_space_id": f"floor{(index + 1) % 3}", "length": .3, "width": .2}],
@@ -55,6 +58,8 @@ def test_projection_keeps_every_floor_and_scoped_stairs_without_ha_or_globals():
     assert [space["id"] for space in payload["config"]["spaces"]] == ["floor0", "floor1", "floor2"]
     for index, space in enumerate(payload["config"]["spaces"]):
         assert space["rooms"][0].get("area") is None
+        assert space["openings"][0]["swing_position"] == "center"
+        assert "contact" not in space["openings"][0]
         assert space["stairs"][0]["target_space_id"] == f"floor{(index + 1) % 3}"
         assert space["led_strips"][0].get("marker") is None
         assert "sensor.private" not in space["decor"][0]["text"]
@@ -90,6 +95,7 @@ def test_additive_merge_scopes_duplicate_local_ids_and_does_not_repair_target_or
     assert len({space["rooms"][0]["id"] for space in added}) == 3
     for index, space in enumerate(added):
         assert space["stairs"][0]["target_space_id"] == added[(index + 1) % 3]["id"]
+        assert space["openings"][0]["swing_position"] == "center"
         assert space["rooms"][0]["name"] == f"Room {index}"
     room = added[1]["rooms"][0]["id"]
     assert positions["rl_" + room] == {"s": added[1]["id"], "x": .3, "y": .4, "k": 1.2}

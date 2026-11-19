@@ -95,11 +95,16 @@ def transport_opening_orientations(before, after, rotations=None):
     old = {opening["id"]: opening for opening in records(before)}
     for opening in records(after):
         source = old.get(opening["id"])
-        if (not source or not isinstance(source.get("opening_features"), dict)
-                or type(source["opening_features"].get("version")) is not int
-                or source["opening_features"]["version"] != 1 or source.get("type") != opening.get("type")):
+        if not source or source.get("type") != opening.get("type"):
             continue
-        if source.get("type") == "window" and not isinstance(source["opening_features"].get("leaves"), list):
+        features = source.get("opening_features")
+        extended = (isinstance(features, dict) and type(features.get("version")) is int
+                    and features["version"] == 1)
+        swing_position = source.get("swing_position") if source.get("type") == "door" else None
+        manual_side = swing_position in ("negative", "positive")
+        if not extended and not manual_side:
+            continue
+        if extended and source.get("type") == "window" and not isinstance(features.get("leaves"), list):
             continue
         delta = rotations.get(opening["id"])
         if delta is None:
@@ -107,10 +112,15 @@ def transport_opening_orientations(before, after, rotations=None):
             delta -= 180 * math.floor((delta + 90) / 180)
         expected = source["angle"] + delta
         intended = opening["angle"] + 180 * math.floor((expected - opening["angle"]) / 180 + .5)
-        transformed = reparameterize_opening_features(source, intended)
-        opening["angle"] = transformed["angle"]
-        opening["opening_features"] = transformed["opening_features"]
-        if source["type"] not in ("door", "gate") or source["opening_features"].get("mechanism") != "slide":
+        if extended:
+            transformed = reparameterize_opening_features(source, intended)
+            opening["angle"] = transformed["angle"]
+            opening["opening_features"] = transformed["opening_features"]
+        if manual_side:
+            if math.cos(math.radians(opening["angle"] - intended)) < 0:
+                swing_position = "positive" if swing_position == "negative" else "negative"
+            opening["swing_position"] = swing_position
+        if not extended or source["type"] not in ("door", "gate") or features.get("mechanism") != "slide":
             continue
         previous = opening_face_normal(before, source)
         radians = math.radians(delta)

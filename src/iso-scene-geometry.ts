@@ -38,6 +38,7 @@ import {
   wallBodiesGeometry,
   type OpeningWallIndex, type WallEntry,
 } from './wall-thickness';
+import { effectiveSwingDoorPosition, openingSwingDepth } from './opening-symbol-placement';
 import { partitionOpeningFace } from './partition-openings';
 import { openingLockFloorPlacement } from './opening-symbol-placement';
 import { physicalBodyParts, type PartitionOpeningCut } from './physical-geometry';
@@ -445,6 +446,7 @@ export type IsoSourceOpening = {
   flipH: boolean;
   flipV: boolean;
   opening_features?: OpeningFeatures;
+  swingPosition?: RenderOpening['swing_position'];
 };
 
 export function isoSourceOpenings(
@@ -460,6 +462,7 @@ export function isoSourceOpenings(
     length: opening.rlen > 0 ? opening.rlen : 0.9 * coordinateScale,
     flipH: !!opening.flip_h,
     flipV: !!opening.flip_v,
+    swingPosition: effectiveSwingDoorPosition(opening),
     ...(opening.opening_features ? { opening_features: opening.opening_features } : {}),
   }]);
 }
@@ -594,7 +597,8 @@ export function createIsoStructuralSource(
             : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
         const handleSides = opening.type === 'window' ? openingWindowHandleSides(
           input.openings[opening.sourceIndex], input.space.rooms, face.cm, input.cellCm, input.gridPitch) : undefined;
-        return buildIsoOpeningBasis({ ...opening, face, handleSides,
+        const swingDepth = openingSwingDepth(input.openings[opening.sourceIndex], openingIndex);
+        return buildIsoOpeningBasis({ ...opening, face, handleSides, swingDepth,
           topShift: 20 / input.cellCm * input.gridPitch }, wallHeight, openingGeometryPolicy, referenceHeight);
       });
       const frozenBases = Object.freeze(openingBases);

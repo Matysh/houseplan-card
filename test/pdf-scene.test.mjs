@@ -909,3 +909,26 @@ test('current 20-room large-house space builds from the visible geometry cache u
   assert.equal(areaCacheReads, largeSpace.rooms.length);
   assert.ok(elapsedMs < 200, `PDF scene build used ${elapsedMs.toFixed(1)} ms of CPU`);
 });
+
+test('#1475 the state-free PDF door shifts by the wall depth and keeps its architectural swing', () => {
+  const raw = structuredClone(sharedRaw);
+  const options = { dimensions:false, roomNames:false, decor:false, backdrop:false };
+  const door = { id:'swing', type:'door', x:.3, y:.1, angle:0, length:.2 };
+  raw.openings = [door];
+  const page = (swing_position, flip_v = false) => buildRawPage({
+    ...raw, openings: [{ ...door, swing_position, flip_v }],
+  }, options);
+  const center = page('center');
+  const exterior = page('negative');
+  const interior = page('positive');
+  const arc = sheet => sheet.commands.find(c => c.kind === 'line' && c.points.length === 17);
+  const y = sheet => arc(sheet).points[0][1] - Math.min(...sheet.commands
+    .filter(c => c.kind === 'path' && c.rings)
+    .flatMap(c => c.rings.flatMap(r => r.map(point => point[1]))));
+  assert.ok(y(exterior) < y(center) && y(center) < y(interior));
+  assert.ok(Math.abs(y(exterior) + y(interior) - 2*y(center)) < 1e-8);
+  assert.deepEqual(arc(page(undefined)), arc(exterior));
+  assert.deepEqual(arc(page(undefined, true)), arc(page('positive', true)));
+  const swing = sheet => arc(sheet).points.at(-1)[1] - arc(sheet).points[0][1];
+  assert.ok(Math.abs(swing(exterior) - swing(interior)) < 1e-8, 'the two positions draw the same swing');
+});

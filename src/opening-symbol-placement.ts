@@ -1,4 +1,7 @@
-import type { OpeningCfg } from './types';
+import type { OpeningCfg, SwingDoorPosition } from './types';
+import { motionOpeningFeatures } from './opening-features';
+import type { ResolvedPartitionOpening } from './partition-openings';
+import { openingWallFaceHalfDepth, type OpeningWallIndex } from './wall-thickness';
 import { gridVisualUnits } from './grid-scale';
 
 export interface OpeningFaceOffset {
@@ -15,14 +18,52 @@ export interface OpeningSymbolOffset {
 
 export type OpeningLeafPresentation = 'flat' | 'iso-volume';
 
-/** Ground-plane origin of the actual leaf, independent of camera and state.
- * Flat swing symbols retain #250's axis; sliding and volumetric leaves use
- * the already-resolved host face. This never moves saved opening geometry. */
+/** Existing slide, gate and optical origins. The closed-door barrier keeps
+ * its Flat axis and room-relative 2.5D face when swing paint moves. */
 export function openingLeafOriginOffset(type: OpeningCfg['type'],
   face: Pick<OpeningFaceOffset, 'ox' | 'oy'>,
   presentation: OpeningLeafPresentation = 'flat', sliding = false): OpeningSymbolOffset {
   return (type === 'door' || type === 'gate') && (sliding || presentation === 'iso-volume')
     ? { ox: face.ox, oy: face.oy } : { ox: 0, oy: 0 };
+}
+
+export function swingDoorPosition(value: unknown): value is SwingDoorPosition {
+  return value === 'negative' || value === 'positive' || value === 'center' || value === 'auto';
+}
+
+export function swingDoorPositionInBasis(position: SwingDoorPosition | undefined,
+  fromAngle: number, toAngle: number): SwingDoorPosition | undefined {
+  if ((position === 'negative' || position === 'positive')
+      && Math.cos((toAngle - fromAngle) * Math.PI / 180) < 0) {
+    return position === 'negative' ? 'positive' : 'negative';
+  }
+  return position;
+}
+
+export function effectiveSwingDoorPosition(
+  opening: Pick<OpeningCfg, 'type' | 'opening_features' | 'swing_position'>,
+): SwingDoorPosition | undefined {
+  return opening.type === 'door' && motionOpeningFeatures(opening)?.mechanism !== 'slide'
+    ? opening.swing_position ?? 'auto' : undefined;
+}
+
+/** Drawing-only, signed distance along the normal of the rendered axis. */
+export function openingSwingDepth(
+  opening: Pick<OpeningCfg, 'type' | 'opening_features' | 'swing_position' | 'angle' | 'flip_v'> & {
+    rx: number; ry: number; rlen: number; partitionHost?: ResolvedPartitionOpening;
+  },
+  index: OpeningWallIndex | null | undefined,
+): number | undefined {
+  const position = effectiveSwingDoorPosition(opening);
+  if (position === undefined) return undefined;
+  if (position === 'center') return 0;
+  const side = position === 'auto' ? (opening.flip_v ? 1 : -1)
+    : position === 'positive' ? 1 : -1;
+  const half = opening.partitionHost ? opening.partitionHost.depth / 2
+    : index ? openingWallFaceHalfDepth(index, {
+      x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+    }, side) : 0;
+  return half > 0 ? half * side : 0;
 }
 
 /** One physical slide placement for plan symbols and print geometry. */
@@ -47,20 +88,6 @@ export type OpeningLockFloorPlacement = [
   floorAnchor: [number, number],
   negativeSide: boolean,
 ];
-
-/**
- * Resolve only the visible symbol translation. Every opening symbol stays on
- * the saved wall centreline: wall-face direction/depth and flip direction are
- * separate inputs and must never move its origin (#250).
- */
-export function openingSymbolOffset(
-  type: OpeningCfg['type'],
-  _flipV: boolean,
-  _angle: number,
-  face: Pick<OpeningFaceOffset, 'ox' | 'oy'>,
-): OpeningSymbolOffset {
-  return openingLeafOriginOffset(type, face);
-}
 
 /** One Flat/Iso authority for an opening lock's immutable floor placement. */
 export function openingLockFloorPlacement(

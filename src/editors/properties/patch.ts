@@ -1,5 +1,6 @@
 import { CANVAS_LIMIT } from '../../canvas-constants';
 import { windowOpeningFeatures } from '../../opening-features';
+import { effectiveSwingDoorPosition, swingDoorPosition } from '../../opening-symbol-placement';
 import { normalizeHexColor } from '../../color-picker';
 import type { DecorShape } from '../decor/types';
 import { styleDecorSelection, type DecorGroupStylePatch } from '../decor/group-edit';
@@ -83,6 +84,9 @@ export function patchPropertiesTarget(
     else if (field === 'light_transparent' && opening.type === 'door' && typeof value === 'boolean') {
       patch = { ...opening };
       if (value) patch.light_transparent = true; else delete patch.light_transparent;
+    }
+    else if (field === 'swing_position' && effectiveSwingDoorPosition(opening) !== undefined && swingDoorPosition(value)) {
+      patch = { ...opening, swing_position: value };
     }
     else if (finite(value) && (field === 'length' || field === 'gap')) {
       const core = openingPropertiesCore(opening, space.partitions ?? [], space.wall_segments ?? [], cellCm);

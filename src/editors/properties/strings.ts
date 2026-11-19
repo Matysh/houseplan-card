@@ -3,6 +3,8 @@ import { subst } from '../../logic';
 import { t, langOf, type I18nKey } from '../../i18n';
 const reused = {title:'btn.properties',copy:'btn.copy',delete:'btn.delete',cancel:'btn.cancel',
   opening_features_unavailable:'opening.features.unavailable',
+  swing_position:'opening.features.swing_position', swing_auto:'opening.features.swing_auto',
+  swing_center:'opening.features.swing_center', placement_side:'opening.features.placement_side',
   light_transparent:'opening.light_transparent',fill:'decor.fill',line:'decor.line',rect:'decor.rect',ellipse:'decor.ellipse',furniture:'decor.furniture'} as const satisfies Record<string,I18nKey>;
 const en = {
   opening_features_unavailable: 'Update House Plan and reload before editing an extended opening.',
@@ -43,6 +45,8 @@ const en = {
   device_hint: 'Position of the icon centre on the plan.', device_size_hint: 'The icon is scaled proportionally.',
   text_center_hint: 'Position of the text frame centre.', text_size_hint: 'Dimensions are calculated from the text and font.',
   image_hint: 'Position of the image frame centre.', led_hint: 'Change the strip shape using points on the plan.',
+  swing_position: 'Position in the opening', swing_auto: 'Follow opening direction',
+  swing_center: 'Centre', placement_side: 'Placement side',
   light_transparent: 'Lets light through', hinge: 'Swap hinges', opening_side: 'Opening direction', side_a: 'Towards side A', side_b: 'Towards side B',
   into_room: 'Into room “{name}”', outside: 'Outside',
   direction: 'Direction', up: 'Up', down: 'Down', clockwise: 'Clockwise', counterclockwise: 'Counter-clockwise',
@@ -101,6 +105,8 @@ const ru: Record<Key, string> = {
   device_hint: 'Положение центра значка на плане.', device_size_hint: 'Размер значка меняется пропорционально.',
   text_center_hint: 'Положение центра рамки текста.', text_size_hint: 'Габариты вычисляются по тексту и шрифту.',
   image_hint: 'Положение центра рамки изображения.', led_hint: 'Перемещайте точки ленты на плане.',
+  swing_position: 'Положение в проёме', swing_auto: 'По направлению открывания',
+  swing_center: 'Посередине', placement_side: 'Сторона размещения',
   light_transparent: 'Пропускает свет', hinge: 'Переставить петли', opening_side: 'Открывание', side_a: 'К стороне A', side_b: 'К стороне B',
   into_room: 'В комнату «{name}»', outside: 'Наружу',
   direction: 'Направление', up: 'Вверх', down: 'Вниз', clockwise: 'По часовой стрелке', counterclockwise: 'Против часовой стрелки',

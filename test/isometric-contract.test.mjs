@@ -5,7 +5,6 @@ import { readAllStylesSource } from './styles-source.mjs';
 import { createIsoStructuralSource, renderIsoWalls, resolveIsoFramePresentation, resolveIsoOpeningPanels,
   resolveIsoScene } from '../test-build/iso-scene-render.js';
 import { ISO_OPENING_GEOMETRY_POLICY, buildIsoOpeningBasis } from '../test-build/iso-openings.js';
-import { openingSymbolOffset } from '../test-build/opening-symbol-placement.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
@@ -233,9 +232,9 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
       const basis=buildIsoOpeningBasis({id:'placement-contract',sourceIndex:0,type,
         x:50,y:50,angle:0,length:100,flipH:false,flipV:false,face});
       assert.deepEqual(basis.axis.center,[50,50]);
-      assert.deepEqual(basis.leaves[0].hinge,type==='window'?[0,50]:[face.ox,50+face.oy],
-        'door/gate volume uses selected host face; window remains centred');
-      assert.deepEqual(openingSymbolOffset(type,false,0,face),{ox:0,oy:0},'Flat remains on the saved axis');
+      const hinge = type === 'window' ? [0,50] : type === 'door' ? [0,30] : [face.ox,50+face.oy];
+      assert.deepEqual(basis.leaves[0].hinge, hinge,
+        'the door swings toward negative Y, the gate uses its existing face and the window stays centred');
     }
   }
   assert.match(openings, /policy\.gateTurnDeg[\s\S]*?policy\.gateTopRatio/);

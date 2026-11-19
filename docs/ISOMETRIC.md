@@ -87,7 +87,7 @@ positions come from the ordinary opening resolver, including manual states,
 entity availability and inversion. Unknown bound leaves keep their neutral
 unknown indication rather than a fabricated open position. Supported states:
 
-- doors: one swing leaf at up to 50 degrees, or the existing translated slide;
+- doors: one swing leaf at up to 50 degrees, or the existing translated slide. A swing leaf defaults to the face it opens towards and can be placed at either face or the centre. The reveal and the optical barrier keep their own physical inputs (#1475);
 - gates: paired leaves up to 90 degrees, or the supported slide;
 - windows: 1–4 independent leaves with side opening up to 65 degrees;
 - existing `hinge:top`: the accepted 2.5D depiction tilts up to 30 degrees

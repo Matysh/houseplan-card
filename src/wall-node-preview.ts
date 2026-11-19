@@ -8,6 +8,7 @@ import { innerContourForRoom, polyclipToPathD, wallBodiesGeometry, wallBodiesGeo
 import { cleanFloorForRoom } from './clean-floor';
 import { gridVisualUnits } from './grid-scale';
 import { partitionOpeningFace } from './partition-openings';
+import { openingSwingDepth } from './opening-symbol-placement';
 import { openingInnerFaceOffsetFromIndex } from './wall-thickness';
 import { renderOpeningVisibleGeometry } from './render/opening-symbol';
 import { openingWindowHandleSides, type ResolvedOpeningVisual } from './opening-features';
@@ -190,6 +191,7 @@ export function nodePreviewScene(before: NodePreviewGeometry, next: NodePreviewG
             handleSides: openingWindowHandleSides(o, model.rooms, face.cm, input.cellCm, GRID_PITCH),
             flipH: !!o.flip_h, flipV: !!o.flip_v, base: options.color, tone: options.color,
             cellCm: input.cellCm, gridPitch: GRID_PITCH, face,
+            swingDepth: openingSwingDepth(o, geometry.openingIndex),
           })}</g>`;
       })}</g>`,
     roomIds: model.rooms.flatMap(r => r.id ? [r.id] : []),

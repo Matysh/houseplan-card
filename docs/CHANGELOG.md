@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Place swing doors at the opening-side wall face by default in Flat and 2.5D. Door properties can also fix either face or the centre. The sliding-door placement labels match its existing panel locations (#1475).
 - Repair the nightly render/layout AST guard to recognize the room-label directive's explicit post-render measurements without exempting synchronous render/update reads or pure ISO helpers; retain the existing mutation witnesses (#1473).
 - Bring the accepted 2.5D View into the product: raised devices, labels, LEDs and locks; two readable glyph orientations, floor-masked shadows, shared stair/furniture material, vertical wall lighting and separate opening accents with backup support (#1474).
 - Defer cold projection fitting and saved-zoom restoration until both stage dimensions are measured, keeping the first cached 2.5D frame aligned with HTML devices and labels without a wheel/fit workaround (#1469).

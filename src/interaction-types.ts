@@ -25,6 +25,7 @@ export interface OpMeasure {
 
 export type OpeningPlacementCandidate = Omit<OpeningPlacementCore, 'measure'> & {
   face: OpeningFaceOffset;
+  swingDepth?: number;
   measure: OpMeasure;
 };
 

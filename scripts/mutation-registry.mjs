@@ -12946,18 +12946,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'opening-symbol-flip-restores-edge-offset',
+    id: 'swing-door-auto-always-uses-negative-face-1475',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/opening-symbol-placement.test.mjs '
-      + 'test/opening-symbol.test.mjs test/iso-openings.test.mjs',
-    because: 'a saved flip changes only opening direction; restoring the released #242 '
-      + 'door/window edge translation moves the symbol off the wall centreline (#250)',
+      + '&& node --test test/opening-symbol-placement.test.mjs',
+    because: 'automatic visual placement follows a saved vertical flip even at a wall with one room',
     patches: [{
       file: 'src/opening-symbol-placement.ts',
-      find: '  return openingLeafOriginOffset(type, face);',
-      replace: "  if (_flipV && (type === 'door' || type === 'window'))\n"
-        + "    return { ox: 0, oy: Math.hypot(face.ox, face.oy) };\n"
-        + '  return openingLeafOriginOffset(type, face);',
+      find: "  const side = position === 'auto' ? (opening.flip_v ? 1 : -1)",
+      replace: "  const side = position === 'auto' ? -1",
     }],
   },
   {

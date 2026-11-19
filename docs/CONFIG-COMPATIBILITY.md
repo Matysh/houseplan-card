@@ -137,6 +137,13 @@ enabled/manual/contact/invert. Explicit windows forbid parent contact/invert/
 flip_h/flip_v. Doors/gates hold swing/slide, retained slide_direction and manual;
 their parent contact/invert/lock remain authoritative.
 
+Doors may also store the optional top-level visual field
+swing_position (#1475). The values are auto, negative, positive and center.
+With no field the swing leaf follows its opening direction. A manual sign
+follows the oriented physical opening basis. The choice is retained while
+sliding and survives plan copies and transfers. Ordinary saves and reads
+keep an absent field absent until the user selects a position.
+
 Absence keeps the implicit old representation. Reads, an untouched dialog and
 ordinary Save do not materialize it. Explicit leaf edits copy the old contact/
 invert to two outer-hinged leaves before removing forbidden parent fields.

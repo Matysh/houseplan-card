@@ -132,3 +132,17 @@ def test_copy_preserves_ids_manual_settings_and_removes_all_contacts():
         assert leaf["manual"] == "closed"
     assert copied["opening_features"]["leaves"][0]["shade"]["enabled"] is False
     assert original == before
+
+
+def test_swing_position_validation_keeps_absence_and_cleans_previous_type_changes():
+    original = {"id": "door", "type": "door"}
+    assert "swing_position" not in validate_opening_features(original)
+    for position in ("negative", "positive", "center", "auto"):
+        door = {**original, "swing_position": position}
+        assert validate_opening_features(door) == door
+        changed = {**door, "type": "window"}
+        assert validate_opening_features(changed) == {**original, "type": "window"}
+        assert changed["swing_position"] == position
+    for invalid in (None, True, [], "outside"):
+        with pytest.raises(vol.Invalid):
+            validate_opening_features({**original, "swing_position": invalid})

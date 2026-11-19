@@ -1218,6 +1218,23 @@
       "opaque": "<function _version>",
       "required": true
     },
+    "config.spaces[].openings[].swing_position": {
+      "required": false,
+      "variants": [
+        {
+          "const": "auto"
+        },
+        {
+          "const": "negative"
+        },
+        {
+          "const": "positive"
+        },
+        {
+          "const": "center"
+        }
+      ]
+    },
     "config.spaces[].openings[].type": {
       "required": true,
       "variants": [

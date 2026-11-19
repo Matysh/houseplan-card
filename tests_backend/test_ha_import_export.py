@@ -3917,7 +3917,7 @@ def test_current_space_transfer_remaps_graph_and_exact_host_without_reconstructi
 
 @pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
 @pytest.mark.parametrize("value", [None, False, True])
-def test_issue1348_glass_door_survives_transfer(tmp_path, kind, plan_only, value):
+def test_glass_and_swing_door_placement_survive_transfer(tmp_path, kind, plan_only, value):
     config = _config()
     space = config["spaces"][0]
     wall = next(w for w in space["wall_segments"]
@@ -3927,6 +3927,7 @@ def test_issue1348_glass_door_survives_transfer(tmp_path, kind, plan_only, value
         "contact": "binary_sensor.door", "lock": "lock.door"}
     if value is not None:
         door["light_transparent"] = value
+        door["swing_position"] = "positive" if value else "center"
     space["openings"] = [door]
     from custom_components.houseplan.plan_graph import project_graph_space
     next(edge for edge in space["plan_graph"]["edges"] if edge["id"] == wall["id"])["cm"] = 20
@@ -3937,6 +3938,8 @@ def test_issue1348_glass_door_survives_transfer(tmp_path, kind, plan_only, value
     parsed = parse_document(json.dumps(document).encode())
     restored = parsed["payload"]["config"]["spaces"][0]["openings"][0]
     assert restored.get("light_transparent") is value
+    assert restored.get("swing_position") == door.get("swing_position")
+    assert ("swing_position" in restored) is (value is not None)
     assert restored["type"] == "door"
     if not plan_only:
         assert restored["contact"] == door["contact"]
@@ -3946,4 +3949,5 @@ def test_issue1348_glass_door_survives_transfer(tmp_path, kind, plan_only, value
     preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
     imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), current, {}, confirm_missing_content=True)
-    assert any(o.get("light_transparent") is value for s in imported["spaces"] for o in s.get("openings", []))
+    assert any(o.get("light_transparent") is value and o.get("swing_position") == door.get("swing_position")
+               for s in imported["spaces"] for o in s.get("openings", []))

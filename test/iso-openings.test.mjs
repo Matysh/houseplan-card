@@ -60,8 +60,8 @@ test('door basis is immutable and live amount preserves the exact jamb anchor', 
   assert.match(closed.d, new RegExp(`^M ${hinge.replace('.', '\\.')}`));
   assert.match(open.d, new RegExp(`^M ${hinge.replace('.', '\\.')}`));
   assert.notEqual(open.d, closed.d);
-  assert.deepEqual(basis.leaves[0].hinge, basis.face.selectedStart,
-    'the derived volume pivots on the selected physical wall face, not inside masonry');
+  assert.deepEqual(basis.leaves[0].hinge, basis.face.oppositeStart,
+    'the derived swing opens toward the negative face independently of the old reveal face');
   assert.equal(basis.leaves[0].top, ISO_WALL_HEIGHT * 0.92);
   assert.equal(basis.leaves[0].turnDeg, -50);
 });
@@ -218,30 +218,29 @@ test('paired window leaves open toward their resolved exterior face in every ori
   }
 });
 
-test('isometric door and gate volumes follow the selected host face without changing saved axes', () => {
+test('door swing position and gate face selection leave the saved axes unchanged', () => {
   const selected = buildIsoOpeningBasis(opening());
   const oppositeResolvedFace = buildIsoOpeningBasis(opening({
     face: { ox: 0, oy: -5, side: -1 },
   }));
   assert.deepEqual(selected.axis, oppositeResolvedFace.axis,
     'the saved centreline axis remains canonical');
-  assert.deepEqual(selected.leaves[0].hinge, selected.face.selectedStart);
-  assert.deepEqual(oppositeResolvedFace.leaves[0].hinge,
-    oppositeResolvedFace.face.selectedStart);
-  assert.notDeepEqual(oppositeResolvedFace.leaves, selected.leaves,
-    'the derived volume moves to the resolved physical face');
+  assert.deepEqual(selected.leaves[0].hinge, selected.face.oppositeStart);
+  assert.deepEqual(oppositeResolvedFace.leaves[0].hinge, oppositeResolvedFace.face.selectedStart);
+  assert.deepEqual(oppositeResolvedFace.leaves, selected.leaves,
+    'automatic swing uses the same negative face for either reveal reference');
 
   const flippedPositive = buildIsoOpeningBasis(opening({ flipV: true }));
   const flippedNegative = buildIsoOpeningBasis(opening({
     flipV: true, face: { ox: 0, oy: -5, side: -1 },
   }));
   assert.deepEqual(flippedPositive.leaves[0].hinge, flippedPositive.face.selectedStart);
-  assert.deepEqual(flippedNegative.leaves[0].hinge, flippedNegative.face.selectedStart);
+  assert.deepEqual(flippedNegative.leaves[0].hinge, flippedNegative.face.oppositeStart);
   assert.deepEqual(flippedPositive.leaves[0].closedVector, selected.leaves[0].closedVector);
   assert.equal(
     flippedPositive.leaves[0].quarterVector[1],
     -selected.leaves[0].quarterVector[1],
-    'flip mirrors the opening direction without moving its origin',
+    'flip mirrors the direction and automatic placement follows it',
   );
 
   const gate = buildIsoOpeningBasis(opening({ type: 'gate' }));
@@ -271,9 +270,11 @@ test('door and gate face matrix keeps every live state on the selected physical 
             face: { ox: normal[0] * 5 * side, oy: normal[1] * 5 * side, side },
           }));
           for (const leaf of basis.leaves) {
-            const expected = flipH
-              ? leaf.leaf === 0 ? basis.face.selectedEnd : basis.face.selectedStart
-              : leaf.leaf === 0 ? basis.face.selectedStart : basis.face.selectedEnd;
+            const atEnd = flipH === (leaf.leaf === 0);
+            const opposite = type === 'door' && side === 1;
+            const expected = opposite
+              ? atEnd ? basis.face.oppositeEnd : basis.face.oppositeStart
+              : atEnd ? basis.face.selectedEnd : basis.face.selectedStart;
             assert.deepEqual(leaf.hinge, expected,
               `${type} angle=${angle} side=${side} flipH=${flipH} leaf=${leaf.leaf}`);
           }
@@ -331,10 +332,10 @@ test('flipH and flipV independently mirror their exact structural axes', () => {
     };
   };
   assert.deepEqual(signature(normal), {
-    hinge: [70, 85], closedVector: [60, 0], quarterVector: [0, 60],
+    hinge: [70, 75], closedVector: [60, 0], quarterVector: [0, 60],
   });
   assert.deepEqual(signature(horizontal), {
-    hinge: [130, 85], closedVector: [-60, 0], quarterVector: [0, 60],
+    hinge: [130, 75], closedVector: [-60, 0], quarterVector: [0, 60],
   });
   assert.deepEqual(signature(vertical), {
     hinge: [70, 85], closedVector: [60, 0], quarterVector: [0, -60],
@@ -396,4 +397,26 @@ test('#1451 opening faces use the accepted orthographic projector depth', () => 
   const yaw = ISO_CAMERA.rotDeg*Math.PI/180;
   const former = (mean[0]*Math.sin(yaw)+mean[1]*Math.cos(yaw))*Math.sin(ISO_CAMERA.tiltDeg*Math.PI/180)+leaf.top;
   assert.ok(Math.abs(top.cameraDepth-former)>1e-3,'unit Z coefficient would reintroduce the obsolete oblique policy');
+});
+
+test('#1475 a diagonal swing retains the selected physical origin and direction with either hinge on all four views', () => {
+  const angle = 37, radians = angle * Math.PI / 180, depth = 21;
+  const close = (a,b) => assert.ok(Math.abs(a-b) < 1e-8, String([a,b]));
+  for (const flipV of [false,true]) for (const flipH of [false,true]) for (const swingDepth of [-depth,0,depth]) {
+    const face = { ox: -Math.sin(radians)*depth, oy: Math.cos(radians)*depth, cm: 42, side: 1 };
+    const input = opening({ angle, flipH, flipV, face, swingDepth });
+    const basis = buildIsoOpeningBasis(input);
+    assert.deepEqual(basis.reveals, buildIsoOpeningBasis({ ...input, swingDepth: 0 }).reveals);
+    const hinge = basis.leaves[0].hinge;
+    close((hinge[0]-input.x)*basis.axis.normal[0]+(hinge[1]-input.y)*basis.axis.normal[1],swingDepth);
+    const leaf = basis.leaves[0];
+    const direction = leaf.turnDeg * (leaf.quarterVector[0]*basis.axis.normal[0]+leaf.quarterVector[1]*basis.axis.normal[1]);
+    assert.equal(Math.sign(direction), flipV ? 1 : -1);
+    for (const rotation of [0,90,180,270]) {
+      const camera = { ...ISO_CAMERA, rotDeg: rotation };
+      assert.notDeepEqual(projectIsoOpening(basis,0,camera),projectIsoOpening(basis,.5,camera));
+      const origin = projectPlanPoint(hinge,0,camera).map(v=>Number(v.toFixed(4))).join(' ');
+      assert.ok(projectIsoOpening(basis,.5,camera)[0].d.startsWith('M '+origin+' '), 'the pivot stays fixed');
+    }
+  }
 });
