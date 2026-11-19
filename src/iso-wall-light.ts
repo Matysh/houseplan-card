@@ -84,6 +84,29 @@ export function isoFurnitureLightSampler(sources: readonly IsoWallLightSource[])
   });
 }
 
+/** Preserve the sampled gradient to within one alpha level while dropping
+ * long runs of zero or linearly changing stops. */
+export function isoLightStops(values: readonly number[]): readonly [number, number][] {
+  if (values.length < 2) return values.map(value => [0, value]);
+  const end = values.length - 1;
+  const keep = [0, end];
+  const ranges: [number, number][] = [[0, end]];
+  while (ranges.length) {
+    const [start, finish] = ranges.pop()!;
+    const slope = (values[finish] - values[start]) / (finish - start);
+    let error = 1 / 255;
+    let split = -1;
+    for (let i = start + 1; i < finish; i++) {
+      const delta = Math.abs(values[i] - (values[start] + (i - start) * slope));
+      if (delta > error) { split = i; error = delta; }
+    }
+    if (split < 0) continue;
+    keep.push(split);
+    ranges.push([start, split], [split, finish]);
+  }
+  return keep.sort((a, b) => a - b).map(index => [index / end, values[index]]);
+}
+
 export function isoWallLightPainter(
   sources: readonly IsoWallLightSource[], camera: IsoCamera, cellCm: number, geometry: IsoWallGeometry,
 ) {
@@ -144,7 +167,7 @@ export function isoWallLightPainter(
         if (!values.some(value => value > .0001)) return nothing;
         const source = sources[index], id = `hp-wall-light-${faceIndex}-${index}`;
         return svg`<defs><linearGradient id=${id} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0" gradientTransform=${transform}>
-          ${values.map((alpha, i) => svg`<stop offset=${i / (values.length - 1)} stop-color=${source.color} stop-opacity=${alpha}></stop>`)}
+          ${isoLightStops(values).map(([offset, alpha]) => svg`<stop offset=${offset} stop-color=${source.color} stop-opacity=${alpha}></stop>`)}
         </linearGradient></defs><path class="glow-spot ${source.entering ? 'is-entering' : ''} ${source.leaving ? 'is-leaving' : ''}"
           data-wall-light-source=${source.key} d=${d} fill=${`url(#${id})`} fill-rule="evenodd" style="mix-blend-mode:screen"></path>`;
       })}

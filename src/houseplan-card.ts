@@ -2083,8 +2083,10 @@ export class HouseplanCard extends LitElement {
     for (const layer of this.renderRoot.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
       if (layer.style.transform && layer.style.transform !== 'none') owner.set(layer, 'transform', 'none');
       if (raster) { owner.set(layer, 'width', raster[0] + 'px'); owner.set(layer, 'height', raster[1] + 'px'); }
-      if (reposition) for (const child of layer.children) {
-        const node = child as HTMLElement, left = node.style?.left, top = node.style?.top;
+      if (reposition) for (const node of layer.querySelectorAll<HTMLElement>(
+        ':scope > [style], :scope > .iso-room-label-plane > .roomlabel',
+      )) {
+        const left = node.style.left, top = node.style.top;
         if (!left?.endsWith('%') || !top?.endsWith('%')) continue;
         owner.set(node, 'left', (parseFloat(left) * projection.scaleX + projection.translateXPercent) + '%');
         owner.set(node, 'top', (parseFloat(top) * projection.scaleY + projection.translateYPercent) + '%');
@@ -13758,39 +13760,41 @@ export class HouseplanCard extends LitElement {
             <g class="iso-led-plane" transform=${this._floorTransform} pointer-events="none">
               ${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'body') ?? nothing}
             </g>
-            ${iso ? svg`<g class="iso-floor-shadow-plane" aria-hidden="true" pointer-events="none">
+            ${iso && (!maskFloorShadows || isoFrame?.shadowClip != null) ? svg`<g class="iso-floor-shadow-plane" aria-hidden="true" pointer-events="none">
               <defs>
                 ${isoFloorShadowGradient}
                 ${disp.showNames ? svg`<filter id="hp-iso-label-penumbra" color-interpolation-filters="sRGB">
                   <feGaussianBlur stdDeviation=${floorShadowUnit * .08}></feGaussianBlur>
                 </filter>` : nothing}
-                ${maskFloorShadows && isoScene ? svg`<mask id="hp-floor-shadow-mask" maskUnits="objectBoundingBox" maskContentUnits="userSpaceOnUse"
-                  x="0" y="0" width="1" height="1" style="mask-type:luminance">
-                  <path d=${isoScene.floor.footprintPath} fill="white" fill-rule="evenodd"></path>
-                  <g data-hp-floor-shadow-structure fill="black">${isoFrame?.shadowSilhouette ?? nothing}</g>
-                </mask>` : nothing}
+                ${maskFloorShadows && isoScene ? svg`
+                  <clipPath id="hp-iso-shadow-footprint"><path d=${isoScene.floor.footprintPath} clip-rule="evenodd"></path></clipPath>
+                  <clipPath id="hp-iso-shadow-visible"><path d=${isoFrame?.shadowClip ?? ''} clip-rule="evenodd"></path></clipPath>
+                ` : nothing}
               </defs>
-              <g mask=${maskFloorShadows ? 'url(#hp-floor-shadow-mask)' : nothing}>
-                <g class="iso-tile-shadows">
-                  ${repeat(devs, (d) => d.id, (d) => {
-                    const placement = isoOverlays?.devices.get(d.id);
-                    if (placement?.occluded) return nothing;
-                    const presentation = this._devicePresentation(d, showLqi), pos = this._pos(d);
-                    const anchor = placement || { floorScene: turnPoint([pos.x, pos.y], this._rotation) };
-                    const diameter = placement?.deviceSize ?? deviceBasePct * iconUnit(space) * this._effectiveKioskScale.icon * presentation.scale / 100;
-                    return renderIsoMarkerFloorShadow(d.id, 'device', anchor, { camera: floorCamera, diameter }, presentation);
-                  })}
-                  ${this._renderOpeningLocks(view, isoOverlays?.locks, {
-                    camera: floorCamera, diameter: floorShadowUnit * .62,
-                  })}
-                </g>
-                ${disp.showNames ? svg`<g filter="url(#hp-iso-label-penumbra)">
-                  ${space.rooms.map(r => this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r), {
-                    camera: floorCamera, diameter: floorShadowUnit * .5,
-                  }))}
-                </g>` : nothing}
-                <g class="iso-led-shadow-plane" transform=${this._floorTransform}>
-                  ${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'shadow') ?? nothing}
+              <g clip-path=${maskFloorShadows ? 'url(#hp-iso-shadow-footprint)' : nothing}>
+                <g clip-path=${maskFloorShadows ? 'url(#hp-iso-shadow-visible)' : nothing}>
+                  <g class="iso-tile-shadows">
+                    ${repeat(devs, (d) => d.id, (d) => {
+                      const placement = isoOverlays?.devices.get(d.id);
+                      if (placement?.occluded) return nothing;
+                      const presentation = this._devicePresentation(d, showLqi), pos = this._pos(d);
+                      const anchor = placement || { floorScene: turnPoint([pos.x, pos.y], this._rotation) };
+                      const diameter = placement?.deviceSize
+                        ?? deviceBasePct * iconUnit(space) * this._effectiveKioskScale.icon * presentation.scale / 100;
+                      return renderIsoMarkerFloorShadow(d.id, 'device', anchor, { camera: floorCamera, diameter }, presentation);
+                    })}
+                    ${this._renderOpeningLocks(view, isoOverlays?.locks, {
+                      camera: floorCamera, diameter: floorShadowUnit * .62,
+                    })}
+                  </g>
+                  ${disp.showNames ? svg`<g filter="url(#hp-iso-label-penumbra)">
+                    ${space.rooms.map(r => this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r), {
+                      camera: floorCamera, diameter: floorShadowUnit * .5,
+                    }))}
+                  </g>` : nothing}
+                  <g class="iso-led-shadow-plane" transform=${this._floorTransform}>
+                    ${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'shadow') ?? nothing}
+                  </g>
                 </g>
               </g>
             </g>` : nothing}
@@ -13824,13 +13828,12 @@ export class HouseplanCard extends LitElement {
             ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view, isoOverlays?.locks)}
-            ${disp.showNames || this._markup
-              ? space.rooms.map((r) => {
-                  const label = this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r));
-                  return raiseRoomLabels && label !== nothing
-                    ? html`<div class="iso-room-label-plane">${label}</div>` : label;
-                })
-              : nothing}
+            ${raiseRoomLabels
+              ? html`<div class="iso-room-label-plane">${space.rooms.map(r =>
+                  this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r)))}</div>`
+              : disp.showNames || this._markup
+                ? space.rooms.map(r => this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r)))
+                : nothing}
             ${this._editorRuntime && this._canEdit && !this._kiosk ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
             ${this._renderHaZigbeeTopology(space.id, view)}
           </div>

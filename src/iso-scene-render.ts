@@ -8,7 +8,7 @@
 // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
-import { union, type Geom } from 'polyclip-ts';
+import { difference, union, type Geom } from 'polyclip-ts';
 import { ISO_LAB_OPENINGS } from './iso-lab-camera';
 import { clipIsoOpeningDepthQueue, deviceWallOcclusion, furnitureOcclusion } from './iso-lab-visibility';
 import { isoWallLightPainter, type IsoWallLightSource } from './iso-wall-light';
@@ -46,6 +46,40 @@ function continuousWallCut(scene:IsoRenderScene,queue:ReturnType<typeof buildIso
   wallCutPaint.set(queue,result);return result;
 }
 
+const shadowClips = new WeakMap<object, string | null>();
+
+function shadowVisibility(scene: IsoRenderScene, queue: ReturnType<typeof buildIsoWallDepthQueue>): string | null {
+  if (!scene.camera || !scene.frame) return null;
+  const existing = shadowClips.get(queue);
+  if (existing !== undefined) return existing;
+  const camera = scene.camera;
+  const ring = (points: readonly (readonly number[])[]): [number, number][] =>
+    points.map(([x, y]) => [Number(x.toFixed(5)), Number(y.toFixed(5))]);
+  const silhouettes: Geom[] = [];
+  for (const entry of queue) {
+    if (entry.layer === 'wall-top' && entry.face.projectedRings) {
+      silhouettes.push(entry.face.projectedRings.map(ring));
+    } else if (entry.layer === 'wall-side' && entry.face.points?.length > 2) {
+      silhouettes.push([ring(entry.face.points)]);
+    } else if (entry.layer === 'opening' && entry.surface.points && entry.surface.points.length > 2) {
+      silhouettes.push([ring(entry.surface.points.map(({point,z}) => projectPlanPoint(point,z,camera)))]);
+    }
+  }
+  const {x,y,w,h} = scene.frame;
+  const bounds: Geom = [[[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]]];
+  // One opaque clip shared by all floor shadows. Boundaries and holes are
+  // computed in projected coordinates, outside the live camera path.
+  try {
+    const visible = difference(bounds, ...silhouettes);
+    const clip = visible.flatMap(poly => poly.map(points => `M ${points.map(p => p.join(' ')).join(' L ')} Z`)).join(' ');
+    shadowClips.set(queue, clip);
+    return clip;
+  } catch {
+    shadowClips.set(queue, null);
+    return null;
+  }
+}
+
 export interface IsoFramePresentation {
   layers: IsoDecorationLayers;
   panels: readonly IsoOpeningPanel[];
@@ -54,7 +88,7 @@ export interface IsoFramePresentation {
   shadows: TemplateResult;
   walls: TemplateResult;
   foreground: TemplateResult | typeof nothing;
-  shadowSilhouette: TemplateResult;
+  shadowClip: string | null;
 }
 
 export interface IsoFurniturePaint {
@@ -90,7 +124,7 @@ export function resolveIsoFramePresentation(input: {
       shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
       walls: svg`${structure.walls}${structure.foreground === nothing ? indicators : nothing}`,
       foreground: structure.foreground === nothing ? nothing : svg`${structure.foreground}${indicators}`,
-      shadowSilhouette: structure.shadowSilhouette,
+      shadowClip: structure.shadowClip,
     };
   };
   try { return render(layers); } catch (error) {
@@ -231,8 +265,8 @@ function renderIsoStructure(
   furniture: readonly IsoFurniturePaint[] = [],
   overlays: IsoOverlayRenderScene | null = null,
   wallLights: readonly IsoWallLightSource[] = [],
-): Pick<IsoFramePresentation,'walls'|'foreground'|'shadowSilhouette'> {
-  if (projection !== 'iso' || !layers.structural || !scene) return {walls:emptySvg(), foreground:nothing, shadowSilhouette:emptySvg()};
+): Pick<IsoFramePresentation,'walls'|'foreground'|'shadowClip'> {
+  if (projection !== 'iso' || !layers.structural || !scene) return {walls:emptySvg(), foreground:nothing, shadowClip:null};
   const openingSurfaces: IsoOpeningRenderSurface[] = layers.panels ? [
     ...scene.openingSurfaces,
     ...panels.flatMap((panel) => panel.surfaces.map((surface) => ({
@@ -373,10 +407,5 @@ function renderIsoStructure(
           <g clip-path=${clip !== null ? 'url(#'+id+')' : nothing}>${item.body}</g>
           ${entries.filter(({index})=>glassSlots.get(index)===slot).map(paintEntry)}`;
       })}</g>` : nothing;
-  // Own these paths inside the shadow mask. A <use> of the independently
-  // promoted wall SVG can retain stale clipping during live camera rebases.
-  const shadowSilhouette = svg`<g fill-rule="evenodd">${depthQueue.map(entry =>
-    svg`<path d=${entry.layer === 'opening' ? entry.surface.d : entry.face.d}
-      stroke="black" stroke-width=".5" stroke-linejoin="round"></path>`)}</g>`;
-  return {walls,foreground,shadowSilhouette};
+  return {walls,foreground,shadowClip:shadowVisibility(scene,depthQueue)};
 }

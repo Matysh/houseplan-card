@@ -9,6 +9,7 @@ import {
   parseCssColor, parseHexColor,
 } from '../test-build/iso-materials.js';
 import { IsoFirstFrameState, isoPaperContext } from '../test-build/iso-first-frame.js';
+import { isoLightStops } from '../test-build/iso-wall-light.js';
 import {
   ISO_ICON_SCALE, ISO_STATE_BODIES, ISO_TILE, isoEdgeColor, isoTileShadow, isoTileStateCss,
 } from '../test-build/iso-tiles.js';
@@ -351,4 +352,20 @@ test('#649 AC7 the 2.5D beam is cut by the same physical bodies as Flat, on the 
   assert.ok(!lit(cut, [200, 250]), 'behind the body, away from the sun, the floor is in shadow');
   assert.ok(lit(cut, [170, 250]), 'beside the shadow the beam goes on');
   assert.ok(area(cut) < area(open) - 20 * 50, 'the shadow runs along the whole remaining beam');
+});
+
+test('#1478 wall light keeps cutoff edges and approximates the dense sample within one alpha level', () => {
+  const samples = Array.from({ length: 129 }, (_, i) => i < 18 || i > 105 ? 0 : .7 * (1 - (i - 18) / 88) ** 2);
+  const stops = isoLightStops(samples);
+  assert.ok(stops.length < samples.length / 3);
+  assert.deepEqual(stops[0], [0, 0]);
+  assert.deepEqual(stops.at(-1), [1, 0]);
+  let segment = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const at = i / (samples.length - 1);
+    while (segment < stops.length - 2 && stops[segment + 1][0] < at) segment++;
+    const [[a, before], [b, after]] = stops.slice(segment, segment + 2);
+    const interpolated = before + (after - before) * (at - a) / (b - a);
+    assert.ok(Math.abs(samples[i] - interpolated) <= 1 / 255 + 1e-12);
+  }
 });

@@ -144,8 +144,8 @@ A nearer wall dims covered parts of device bodies, badges and common frames.
 The room captions and their metrics and Area links are painted over masonry
 and furniture. Their room-fit and Area link inputs retain the native keyboard
 and touch policy. Filled shadows project directly underneath onto the floor.
-Shadows are SVG geometry inside a floor-and-structure mask in world
-coordinates. The mask and the geometry share the authored scene view box. The lock card and its confirmation own lock
+Shadows are SVG geometry clipped to the floor and visible structure in world
+coordinates. The clips and geometry share the authored scene view box. The lock card and its confirmation own lock
 actuation. LED light remains on the floor while the tape and its hit target
 use the raised plane.
 
