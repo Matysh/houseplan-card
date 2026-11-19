@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16105,
+  "revision": 16106,
   "nextTicket": 524,
   "nextFence": 524,
   "tasks": {
@@ -5044,7 +5044,18 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795072476078,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "741994a593654e1b0c73887069f3cdb75804d381",
+      "changedFiles": [
+        "demo/smoke_projection_cold_view_camera.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/ISOMETRIC.md",
+        "docs/release-ledger/v1.85.0/1469.json",
+        "src/houseplan-card.ts",
+        "src/projection-view-camera.ts",
+        "test/projection-view-camera.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5477,10 +5488,11 @@
     "token": "523:finish:b36cf078-c598-40bb-a099-292e93e914c3:finish:1:admit",
     "fence": 523,
     "materialSha": "9e6d5c0c3f304c8b75c6dc0551997a330938b684",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+    "phase": "testing",
     "admittedAt": 1795072480114,
-    "expiresAt": 1795072780114
+    "expiresAt": 1795072785725,
+    "patchId": "741994a593654e1b0c73887069f3cdb75804d381"
   },
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5550,6 +5562,10 @@
     "github:44472398750:1:completions:report:bb43c8a21cde35cfa25feabd5fb6bc8622f380bcbb1bb5c3090e6c044feb1956": {
       "digest": "4837ab4ceeac5a2248d71ba9b976652dae41aafeac77638285e716e075a32dbe",
       "issue": 1470
+    },
+    "finish:b36cf078-c598-40bb-a099-292e93e914c3:finish:2:synchronized": {
+      "digest": "a7be6ea89f6af172de9b671b83239f3d05e7d7d58b747f0b9dabf31b9d52e430",
+      "issue": 1469
     },
     "github:44472051036:1:label:spec-request:spec-resubmitted:1470": {
       "digest": "10aa67c67df712216e7f225fc653ba581c5fd36f6038a16dbf85103b2e53d0bb",
