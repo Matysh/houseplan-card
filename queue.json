@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16828,
+  "revision": 16829,
   "nextTicket": 541,
   "nextFence": 541,
   "tasks": {
@@ -5231,7 +5231,17 @@
         "test/live-viewport.test.mjs",
         "test/mutation-browser-offload.test.mjs",
         "test/viewport-transition.test.mjs"
-      ]
+      ],
+      "reason": "executor-admission-expired",
+      "notice": {
+        "key": "1:executor-admission-expired",
+        "reason": "executor-admission-expired",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795132002288,
+        "entry": 1,
+        "eventId": "finish:cea817d2-249c-44de-af6d-7d11ffb24998:finish:1:expire:return:1478"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5700,18 +5710,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1478,
-    "worker": "finish",
-    "token": "540:finish:56661060-8bcd-4408-86e4-f9c6123918c2:finish:1:admit",
-    "fence": 540,
-    "materialSha": "f77fe172da83cebf5efd7087abbb1e62a04d90e6",
-    "expectedBase": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
-    "phase": "testing",
-    "admittedAt": 1795130195545,
-    "expiresAt": 1795130501486,
-    "patchId": "c19a7ae53a973d66fff9876c14ff6acd5e1c3c6e"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5866,6 +5865,25 @@
         "materialSha": "f77fe172da83cebf5efd7087abbb1e62a04d90e6",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:cea817d2-249c-44de-af6d-7d11ffb24998:finish:1:expire:return:1478": {
+      "digest": "4e0f890c99be411c9c8f9ea66333e3083c29678381bb1a0bb1b8a0d42684f11a",
+      "issue": 1478,
+      "message": {
+        "kind": "return",
+        "issue": 1478,
+        "at": 1795132002288,
+        "entry": 1,
+        "notice": {
+          "key": "1:executor-admission-expired",
+          "reason": "executor-admission-expired",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795132002288,
+          "entry": 1,
+          "eventId": "finish:cea817d2-249c-44de-af6d-7d11ffb24998:finish:1:expire:return:1478"
+        }
       }
     }
   },
