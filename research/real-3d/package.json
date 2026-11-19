@@ -1,0 +1,19 @@
+{
+  "name": "houseplan-real-3d-research",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node server.mjs",
+    "measure": "node measure.mjs"
+  },
+  "dependencies": {
+    "@babylonjs/core": "9.37.1",
+    "esbuild": "0.27.0",
+    "houseplan-card": "file:../..",
+    "ogl": "1.0.11",
+    "playcanvas": "2.24.2",
+    "playwright": "1.62.0",
+    "three": "0.187.0"
+  }
+}

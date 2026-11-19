@@ -1,0 +1,101 @@
+[
+  {
+    "url": "https://remplanner.ru/planner/visual/",
+    "title": "3d визуализация интерьера",
+    "canvases": 0,
+    "three": null,
+    "babylon": null,
+    "scripts": [
+      "https://remplanner.ru/files/min/?f=jquery-3.1.1.min.js,jquery.fancybox.js,jquery.autocomplete.js,front.js,design.js,structure.js,v2/chat.js&b=files/js&v=1788959696",
+      "https://remplanner.ru/files/visual/js/ConsoleCatcher.min.js?1788959696",
+      "https://remplanner.ru/files/js/v2/subprojects.js?1788959696",
+      "https://remplanner.ru/files/js/render.js?1788959696",
+      "https://remplanner.ru/files/js/fancybox/fancybox.umd.js",
+      "https://remplanner.ru/files/js/v2/app/planner.visual___57___1793609603.js?1788959696"
+    ],
+    "assets": [
+      {
+        "url": "https://remplanner.ru/files/js/v2/app/planner.visual___57___1793609603.js?1788959696",
+        "status": 200,
+        "bytes": 2232709,
+        "sha256": "4797b08bc691864172f70af43193ae7a92259dc9ed1e43aea3ba4a1fbf35d254",
+        "fingerprints": {
+          "three": false,
+          "babylon": false,
+          "webgl": false
+        },
+        "viewerUrls": []
+      }
+    ],
+    "errors": [
+      "https://mdd.yandex.net/ net::ERR_CERT_AUTHORITY_INVALID"
+    ]
+  },
+  {
+    "url": "https://planner5d.com/auth/email",
+    "title": "Create your dream home now @Planner5d",
+    "canvases": 0,
+    "three": null,
+    "babylon": null,
+    "scripts": [
+      "https://static.planner5d.com/web/js/2.10.7/6/fastboot.js",
+      "https://static.planner5d.com/web/js/2.10.7/6/vendors/jquery-3.6.0.min.js",
+      "https://static.planner5d.com/web/js/2.10.7/build/old.js",
+      "https://static.planner5d.com/web/js/2.10.7/build/app.js",
+      "https://static.planner5d.com/web/js/2.10.7/6/vendors/popper.min.js",
+      "https://static.planner5d.com/web/js/2.10.7/6/vendors/tippy.min.js",
+      "https://static.planner5d.com/web/js/2.10.7/build/payments.js",
+      "https://static.planner5d.com/web/js/2.10.7/6/vendors/hammer-2.0.8.min.js",
+      "https://static.planner5d.com/web/js/2.10.7/6/vendors/jquery.images-compare-0.2.4.min.js"
+    ],
+    "assets": [
+      {
+        "url": "https://static.planner5d.com/web/js/2.10.7/build/app.js",
+        "status": 200,
+        "bytes": 15869923,
+        "sha256": "212cd15a18cc8510d7b1f8d351d964d9a33f64f70dcc1825ee804b6c1587c3c6",
+        "fingerprints": {
+          "three": true,
+          "babylon": false,
+          "webgl": true
+        },
+        "viewerUrls": [
+          "https://copilot.planner5d.com",
+          "https://\\u2026/chair.jpg\\\\",
+          "https://files.example.com/chair.glb\\\\",
+          "http://www.w3.org/1999/xlink",
+          "http://www.w3.org/1999/xhtml",
+          "https://discourse.threejs.org/t/updates-to-lighting-in-three-js-r155/53733.",
+          "https://static.planner5d.com/web/js/2.10.7/build/assets/pdf.worker.mjs",
+          "https://planner5d.com",
+          "https://planner5d.pro",
+          "https://beta.planner5d.pro",
+          "https://tool.planner5d.com",
+          "https://ab.planner5d.com"
+        ]
+      }
+    ],
+    "errors": [
+      "https://www.google.com/ccm/collect net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/704136808/ net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/363841287/ net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/16698902712/ net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/11349566251/ net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/363841287/ net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/704136808/ net::ERR_ABORTED",
+      "https://www.google.com/ccm/collect net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/11349566251/ net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/16698902712/ net::ERR_ABORTED",
+      "https://ad.doubleclick.net/ccm/s/collect net::ERR_ABORTED",
+      "https://region1.analytics.google.com/g/collect net::ERR_ABORTED",
+      "https://region1.analytics.google.com/g/collect net::ERR_ABORTED",
+      "https://region1.analytics.google.com/g/collect net::ERR_ABORTED",
+      "https://region1.analytics.google.com/measurement/conversion net::ERR_ABORTED",
+      "https://www.google.com/ccm/collect net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/363841287/ net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/704136808/ net::ERR_ABORTED",
+      "https://www.google.com/ccm/collect net::ERR_ABORTED",
+      "https://www.google.com/rmkt/collect/11349566251/ net::ERR_ABORTED"
+    ]
+  }
+]

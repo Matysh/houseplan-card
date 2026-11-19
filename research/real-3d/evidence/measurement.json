@@ -1,0 +1,996 @@
+{
+  "date": "2026-11-19T07:46:24.523Z",
+  "source": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+  "browser": "151.0.7922.34",
+  "platform": "win32",
+  "cpu": "Local high-end desktop CPU; exact environment retained privately",
+  "method": "Sequential isolated pages; same physical geometry and DOM labels, 120 rAF pan+zoom frames, every 10th frame local state tick, 3 runs. SVG control is a minimal laboratory renderer, NOT the complete production 2.5D. CPU submission is not GPU duration. No gl.finish or tracing in timed series.",
+  "rows": [
+    {
+      "viewport": {
+        "width": 1480,
+        "height": 1080
+      },
+      "size": "home",
+      "engine": "three",
+      "info": {
+        "mode": "three",
+        "kind": "home",
+        "builds": 1,
+        "renderCount": 3,
+        "occlusionBuilds": 1,
+        "staticFaces": 2062,
+        "openingFaces": 624,
+        "svgPaths": 2686,
+        "dom": 2803,
+        "geometry": {
+          "geometries": 19,
+          "textures": 0
+        },
+        "calls": 20,
+        "triangles": 8812,
+        "contextLost": false,
+        "firstFrameMs": 301.7000000178814,
+        "buildMs": 99.90000000596046,
+        "gpu": "Hardware NVIDIA / ANGLE D3D11; exact adapter retained privately",
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "runs": [
+        {
+          "intervalMs": {
+            "median": 8.300000000000068,
+            "p95": 8.400000000000091,
+            "max": 9.300000000000182
+          },
+          "cpuSubmissionMs": {
+            "median": 0.3999999761581421,
+            "p95": 0.5999999940395355,
+            "max": 0.7999999821186066
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 153,
+            "occlusionBuilds": 1,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 8812,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000091,
+            "max": 9.099999999999909
+          },
+          "cpuSubmissionMs": {
+            "median": 0.4000000059604645,
+            "p95": 0.5999999940395355,
+            "max": 0.7000000178813934
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 303,
+            "occlusionBuilds": 1,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 8812,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.300000000000182,
+            "p95": 8.5,
+            "max": 9.5
+          },
+          "cpuSubmissionMs": {
+            "median": 0.4000000059604645,
+            "p95": 0.699999988079071,
+            "max": 1
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 453,
+            "occlusionBuilds": 1,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 8812,
+            "contextLost": false
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1480,
+        "height": 1080
+      },
+      "size": "home",
+      "engine": "svg",
+      "info": {
+        "mode": "svg",
+        "kind": "home",
+        "builds": 1,
+        "renderCount": 3,
+        "occlusionBuilds": 0,
+        "staticFaces": 2062,
+        "openingFaces": 624,
+        "svgPaths": 2686,
+        "dom": 2803,
+        "geometry": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "calls": 0,
+        "triangles": 0,
+        "contextLost": false,
+        "firstFrameMs": 123.2999999821186,
+        "buildMs": 102.09999999403954,
+        "gpu": "Hardware NVIDIA / ANGLE D3D11; exact adapter retained privately",
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "runs": [
+        {
+          "intervalMs": {
+            "median": 8.399999999999864,
+            "p95": 16.700000000000045,
+            "max": 25
+          },
+          "cpuSubmissionMs": {
+            "median": 0.19999998807907104,
+            "p95": 0.4000000059604645,
+            "max": 0.5
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 153,
+            "occlusionBuilds": 0,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.399999999999636,
+            "p95": 16.700000000000273,
+            "max": 16.799999999999727
+          },
+          "cpuSubmissionMs": {
+            "median": 0.19999998807907104,
+            "p95": 0.4000000059604645,
+            "max": 0.5
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 303,
+            "occlusionBuilds": 0,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.399999999999636,
+            "p95": 16.700000000000728,
+            "max": 17.5
+          },
+          "cpuSubmissionMs": {
+            "median": 0.19999998807907104,
+            "p95": 0.4000000059604645,
+            "max": 0.7999999821186066
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 453,
+            "occlusionBuilds": 0,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1480,
+        "height": 1080
+      },
+      "size": "dense",
+      "engine": "three",
+      "info": {
+        "mode": "three",
+        "kind": "dense",
+        "builds": 1,
+        "renderCount": 3,
+        "occlusionBuilds": 1,
+        "staticFaces": 8212,
+        "openingFaces": 2003,
+        "svgPaths": 10215,
+        "dom": 10470,
+        "geometry": {
+          "geometries": 19,
+          "textures": 0
+        },
+        "calls": 20,
+        "triangles": 34154,
+        "contextLost": false,
+        "firstFrameMs": 571.2000000178814,
+        "buildMs": 348.80000001192093,
+        "gpu": "Hardware NVIDIA / ANGLE D3D11; exact adapter retained privately",
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "runs": [
+        {
+          "intervalMs": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000091,
+            "max": 9.099999999999909
+          },
+          "cpuSubmissionMs": {
+            "median": 0.5,
+            "p95": 0.800000011920929,
+            "max": 1.0999999940395355
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 153,
+            "occlusionBuilds": 1,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 34154,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.300000000000182,
+            "p95": 8.5,
+            "max": 9.199999999999818
+          },
+          "cpuSubmissionMs": {
+            "median": 0.5,
+            "p95": 0.800000011920929,
+            "max": 1
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 303,
+            "occlusionBuilds": 1,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 34154,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000091,
+            "max": 9.5
+          },
+          "cpuSubmissionMs": {
+            "median": 0.5,
+            "p95": 0.9000000059604645,
+            "max": 1
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 453,
+            "occlusionBuilds": 1,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 34154,
+            "contextLost": false
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1480,
+        "height": 1080
+      },
+      "size": "dense",
+      "engine": "svg",
+      "info": {
+        "mode": "svg",
+        "kind": "dense",
+        "builds": 1,
+        "renderCount": 3,
+        "occlusionBuilds": 0,
+        "staticFaces": 8212,
+        "openingFaces": 2003,
+        "svgPaths": 10215,
+        "dom": 10470,
+        "geometry": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "calls": 0,
+        "triangles": 0,
+        "contextLost": false,
+        "firstFrameMs": 389,
+        "buildMs": 353.5,
+        "gpu": "Hardware NVIDIA / ANGLE D3D11; exact adapter retained privately",
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "runs": [
+        {
+          "intervalMs": {
+            "median": 33.30000000000018,
+            "p95": 41.69999999999982,
+            "max": 42.5
+          },
+          "cpuSubmissionMs": {
+            "median": 0.30000001192092896,
+            "p95": 0.800000011920929,
+            "max": 1.2999999821186066
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 153,
+            "occlusionBuilds": 0,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 33.399999999999636,
+            "p95": 41.69999999999982,
+            "max": 50.099999999999454
+          },
+          "cpuSubmissionMs": {
+            "median": 0.30000001192092896,
+            "p95": 0.800000011920929,
+            "max": 1.0999999940395355
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 303,
+            "occlusionBuilds": 0,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 33.399999999999636,
+            "p95": 50,
+            "max": 50.100000000000364
+          },
+          "cpuSubmissionMs": {
+            "median": 0.30000001192092896,
+            "p95": 0.8999999761581421,
+            "max": 1.2999999821186066
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 453,
+            "occlusionBuilds": 0,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "size": "home",
+      "engine": "three",
+      "info": {
+        "mode": "three",
+        "kind": "home",
+        "builds": 1,
+        "renderCount": 3,
+        "occlusionBuilds": 1,
+        "staticFaces": 2062,
+        "openingFaces": 624,
+        "svgPaths": 2686,
+        "dom": 2803,
+        "geometry": {
+          "geometries": 19,
+          "textures": 0
+        },
+        "calls": 20,
+        "triangles": 8812,
+        "contextLost": false,
+        "firstFrameMs": 183.09999999403954,
+        "buildMs": 119.80000001192093,
+        "gpu": "Hardware NVIDIA / ANGLE D3D11; exact adapter retained privately",
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "runs": [
+        {
+          "intervalMs": {
+            "median": 8.300000000000011,
+            "p95": 8.5,
+            "max": 9.299999999999955
+          },
+          "cpuSubmissionMs": {
+            "median": 0.30000001192092896,
+            "p95": 0.5,
+            "max": 0.7000000178813934
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 153,
+            "occlusionBuilds": 1,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 8812,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000091,
+            "max": 8.600000000000364
+          },
+          "cpuSubmissionMs": {
+            "median": 0.30000001192092896,
+            "p95": 0.5,
+            "max": 0.6000000238418579
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 303,
+            "occlusionBuilds": 1,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 8812,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000091,
+            "max": 9.399999999999636
+          },
+          "cpuSubmissionMs": {
+            "median": 0.4000000059604645,
+            "p95": 0.5999999940395355,
+            "max": 0.7999999821186066
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 453,
+            "occlusionBuilds": 1,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 8812,
+            "contextLost": false
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "size": "home",
+      "engine": "svg",
+      "info": {
+        "mode": "svg",
+        "kind": "home",
+        "builds": 1,
+        "renderCount": 3,
+        "occlusionBuilds": 0,
+        "staticFaces": 2062,
+        "openingFaces": 624,
+        "svgPaths": 2686,
+        "dom": 2803,
+        "geometry": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "calls": 0,
+        "triangles": 0,
+        "contextLost": false,
+        "firstFrameMs": 133,
+        "buildMs": 109.5,
+        "gpu": "Hardware NVIDIA / ANGLE D3D11; exact adapter retained privately",
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "runs": [
+        {
+          "intervalMs": {
+            "median": 8.400000000000091,
+            "p95": 16.700000000000045,
+            "max": 24.999999999999886
+          },
+          "cpuSubmissionMs": {
+            "median": 0.19999998807907104,
+            "p95": 0.4000000059604645,
+            "max": 0.5
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 153,
+            "occlusionBuilds": 0,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.400000000000091,
+            "p95": 16.700000000000273,
+            "max": 16.800000000000182
+          },
+          "cpuSubmissionMs": {
+            "median": 0.19999998807907104,
+            "p95": 0.4000000059604645,
+            "max": 0.699999988079071
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 303,
+            "occlusionBuilds": 0,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.5,
+            "p95": 16.700000000000728,
+            "max": 16.800000000000182
+          },
+          "cpuSubmissionMs": {
+            "median": 0.20000001788139343,
+            "p95": 0.5,
+            "max": 0.6000000238418579
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "home",
+            "builds": 1,
+            "renderCount": 453,
+            "occlusionBuilds": 0,
+            "staticFaces": 2062,
+            "openingFaces": 624,
+            "svgPaths": 2686,
+            "dom": 2803,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "size": "dense",
+      "engine": "three",
+      "info": {
+        "mode": "three",
+        "kind": "dense",
+        "builds": 1,
+        "renderCount": 3,
+        "occlusionBuilds": 1,
+        "staticFaces": 8212,
+        "openingFaces": 2003,
+        "svgPaths": 10215,
+        "dom": 10470,
+        "geometry": {
+          "geometries": 19,
+          "textures": 0
+        },
+        "calls": 20,
+        "triangles": 34154,
+        "contextLost": false,
+        "firstFrameMs": 581.1999999880791,
+        "buildMs": 355.39999997615814,
+        "gpu": "Hardware NVIDIA / ANGLE D3D11; exact adapter retained privately",
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "runs": [
+        {
+          "intervalMs": {
+            "median": 8.299999999999955,
+            "p95": 8.400000000000091,
+            "max": 9.200000000000045
+          },
+          "cpuSubmissionMs": {
+            "median": 0.5,
+            "p95": 0.9000000059604645,
+            "max": 1.300000011920929
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 153,
+            "occlusionBuilds": 1,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 34154,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000091,
+            "max": 9
+          },
+          "cpuSubmissionMs": {
+            "median": 0.5,
+            "p95": 1,
+            "max": 2.300000011920929
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 303,
+            "occlusionBuilds": 1,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 34154,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000546,
+            "max": 9.5
+          },
+          "cpuSubmissionMs": {
+            "median": 0.5999999940395355,
+            "p95": 1,
+            "max": 1.4000000059604645
+          },
+          "stats": {
+            "mode": "three",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 453,
+            "occlusionBuilds": 1,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 19,
+              "textures": 0
+            },
+            "calls": 20,
+            "triangles": 34154,
+            "contextLost": false
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "size": "dense",
+      "engine": "svg",
+      "info": {
+        "mode": "svg",
+        "kind": "dense",
+        "builds": 1,
+        "renderCount": 3,
+        "occlusionBuilds": 0,
+        "staticFaces": 8212,
+        "openingFaces": 2003,
+        "svgPaths": 10215,
+        "dom": 10470,
+        "geometry": {
+          "geometries": 0,
+          "textures": 0
+        },
+        "calls": 0,
+        "triangles": 0,
+        "contextLost": false,
+        "firstFrameMs": 377.59999999403954,
+        "buildMs": 342.7999999821186,
+        "gpu": "Hardware NVIDIA / ANGLE D3D11; exact adapter retained privately",
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "runs": [
+        {
+          "intervalMs": {
+            "median": 33.40000000000009,
+            "p95": 41.70000000000073,
+            "max": 50.100000000000364
+          },
+          "cpuSubmissionMs": {
+            "median": 0.30000001192092896,
+            "p95": 0.800000011920929,
+            "max": 1.100000023841858
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 153,
+            "occlusionBuilds": 0,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 41.599999999998545,
+            "p95": 50,
+            "max": 50.100000000000364
+          },
+          "cpuSubmissionMs": {
+            "median": 0.3999999761581421,
+            "p95": 0.800000011920929,
+            "max": 1.199999988079071
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 303,
+            "occlusionBuilds": 0,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "intervalMs": {
+            "median": 33.400000000001455,
+            "p95": 41.80000000000109,
+            "max": 58.30000000000109
+          },
+          "cpuSubmissionMs": {
+            "median": 0.3999999761581421,
+            "p95": 0.7999999821186066,
+            "max": 0.800000011920929
+          },
+          "stats": {
+            "mode": "svg",
+            "kind": "dense",
+            "builds": 1,
+            "renderCount": 453,
+            "occlusionBuilds": 0,
+            "staticFaces": 8212,
+            "openingFaces": 2003,
+            "svgPaths": 10215,
+            "dom": 10470,
+            "geometry": {
+              "geometries": 0,
+              "textures": 0
+            },
+            "calls": 0,
+            "triangles": 0,
+            "contextLost": false
+          }
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "idle-three": true,
+    "cameraMaxError": 4.547473508864641E-13,
+    "deviceNoGeometryRebuild": true,
+    "openingDisposal": true,
+    "contextLossFallback": true,
+    "idle-svg": true
+  },
+  "errors": [],
+  "status": "passed"
+}

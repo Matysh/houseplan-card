@@ -1,0 +1,115 @@
+{
+  "date": "2026-11-19",
+  "repositories": [
+    {
+      "repo": "therealMRBK/NextFloor",
+      "tree": "bcf7fd1599aa254184e358fe2da03c7a9871ec87",
+      "files": [
+        {
+          "path": "frontend/package.json",
+          "blobSha": "1e18031fdab0e6b36d5dffe89276a7aae9b12d4c",
+          "url": "https://github.com/therealMRBK/NextFloor/blob/main/frontend/package.json"
+        },
+        {
+          "path": "LICENSE",
+          "blobSha": "654293b42278bece78da6ba50c19545ffe0be02b",
+          "url": "https://github.com/therealMRBK/NextFloor/blob/main/LICENSE"
+        },
+        {
+          "path": "frontend/src/viewer/viewer3d.ts",
+          "blobSha": "20ad19439569bfc3ae981c576ed1b47cea543ac6",
+          "url": "https://github.com/therealMRBK/NextFloor/blob/main/frontend/src/viewer/viewer3d.ts"
+        },
+        {
+          "path": "frontend/src/viewer/quality-governor.ts",
+          "blobSha": "e25de51743ff83d197b9a27def411f80856b90d9",
+          "url": "https://github.com/therealMRBK/NextFloor/blob/main/frontend/src/viewer/quality-governor.ts"
+        },
+        {
+          "path": "frontend/src/viewer/scene/labels.ts",
+          "blobSha": "8bed8e713d11bc07b5ea2310eaa00d3c07ca8f20",
+          "url": "https://github.com/therealMRBK/NextFloor/blob/main/frontend/src/viewer/scene/labels.ts"
+        },
+        {
+          "path": "frontend/src/viewer/geo.ts",
+          "blobSha": "466fbb87c43238df89d1b02ccd61e9e023fa1166",
+          "url": "https://github.com/therealMRBK/NextFloor/blob/main/frontend/src/viewer/geo.ts"
+        }
+      ]
+    },
+    {
+      "repo": "headtr1ck/homeslice",
+      "tree": "31d3068fb0a71e6c30114d170e13e4371d729bc2",
+      "files": [
+        {
+          "path": "package.json",
+          "blobSha": "0e4b8910f126a766d03854db306a55495ad86d0f",
+          "url": "https://github.com/headtr1ck/homeslice/blob/main/package.json"
+        }
+      ]
+    },
+    {
+      "repo": "adizanni/floor3d-card",
+      "files": [
+        {
+          "path": "package.json",
+          "blobSha": "982592e5f79c923c627a01a867f90645d27a360b",
+          "url": "https://github.com/adizanni/floor3d-card/blob/master/package.json"
+        }
+      ]
+    },
+    {
+      "repo": "Steven-D-Morgan/hass-3d-floorplan",
+      "tree": "d79732e74978fc475339e274783b543ece070204",
+      "files": [
+        {
+          "path": "package.json",
+          "blobSha": "4152bf7901cce58926cdf51e6c3c2f78ada8b3eb",
+          "url": "https://github.com/Steven-D-Morgan/hass-3d-floorplan/blob/master/package.json"
+        }
+      ]
+    },
+    {
+      "repo": "tentone/dt3d-ha",
+      "tree": "5fff5a234c13cd56ebcb1d5a2301b60377c653b8",
+      "files": [
+        {
+          "path": "frontend/package.json",
+          "blobSha": "d5bb1bf534fdd0d2518545f593f181b957418aef",
+          "url": "https://github.com/tentone/dt3d-ha/blob/main/frontend/package.json"
+        },
+        {
+          "path": "frontend/src/editor/renderer.ts",
+          "blobSha": "3ae3d778df0423b3131fd36cfe6d838c1967c85d",
+          "url": "https://github.com/tentone/dt3d-ha/blob/main/frontend/src/editor/renderer.ts"
+        },
+        {
+          "path": "LICENSE",
+          "blobSha": "a82221e77fded8f233dfc7c5bbdaf9c87e81a22b",
+          "url": "https://github.com/tentone/dt3d-ha/blob/main/LICENSE"
+        }
+      ]
+    },
+    {
+      "repo": "MestrieEsteban/ha-owlnest",
+      "tree": "c2985bd5995c9ca8bfedc35a6c0e820d96cad0f4",
+      "files": [
+        {
+          "path": "package.json",
+          "blobSha": "db38fd7dfbbce1a842a03ba48ce59066c215d0f7",
+          "url": "https://github.com/MestrieEsteban/ha-owlnest/blob/main/package.json"
+        },
+        {
+          "path": "src/cards/renderer.ts",
+          "blobSha": "96f831fa2001352e88cd18c44b203fb139ba8268",
+          "url": "https://github.com/MestrieEsteban/ha-owlnest/blob/main/src/cards/renderer.ts"
+        },
+        {
+          "path": "LICENSE",
+          "blobSha": "d25bb575c43c231803feb652bf2302117ab1c0e1",
+          "url": "https://github.com/MestrieEsteban/ha-owlnest/blob/main/LICENSE"
+        }
+      ]
+    }
+  ]
+}

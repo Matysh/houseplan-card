@@ -1,0 +1,13 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Houseplan · Исследование настоящего 3D</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101a23;color:#e3ebf2;font:14px system-ui}header{padding:18px 24px;border-bottom:1px solid #324352;display:flex;gap:18px;align-items:center;flex-wrap:wrap}h1{font-size:19px;margin:0}small{color:#97adbf}button,select,input{font:inherit}button,select{border:1px solid #4c6274;background:#21313f;color:#e3ebf2;border-radius:7px;padding:8px 12px;cursor:pointer}button:hover,button.active{border-color:#45d5c8;background:#214e51}label{display:inline-flex;align-items:center;gap:7px}#viewport{position:relative;width:100vw;height:calc(100vh - 160px);overflow:hidden;background:radial-gradient(ellipse at center,#304553,#172732);touch-action:none}#viewport>canvas,#viewport>svg{width:100%;height:100%;position:absolute;inset:0}#overlays{position:absolute;inset:0;pointer-events:none}.device{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;min-width:44px;min-height:44px;padding:5px 8px;border-radius:12px;background:#283f50ee;color:#dfecf4;border:1px solid #7894a8;box-shadow:0 2px 6px #0004;white-space:nowrap;font-size:12px}.device.on{color:#fff4bb;border-color:#ffcc66;background:#62552bee}.room{position:absolute;transform:translate(-50%,-50%);font-size:13px;font-weight:600;color:#34444b;text-shadow:0 1px 2px #fff9;white-space:nowrap}.occluded{opacity:.5}footer{padding:12px 24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap}#status{font-variant-numeric:tabular-nums;font-size:12px;color:#a9bfcd}#tip{position:fixed;right:20px;bottom:20px;max-width:360px;background:#243a48;border:1px solid #56c5b6;padding:12px;border-radius:10px;display:none}a{color:#7ee5d8}
+</style>
+<header><div><h1>Houseplan · настоящий 3D</h1><small>Исследование #1471 · отдельный MVP · синтетический план</small></div>
+<button id="three">WebGL / Three.js</button><button id="svg">SVG-контроль</button>
+<select id="size"><option value="home">Дом · 6 комнат / 80 устройств</option><option value="dense">Большой план · 24 комнаты / 200 устройств</option></select>
+<button id="turn">Повернуть 90°</button><button id="fit">Вписать</button>
+<label><input type="checkbox" id="dark">Тёмная тема</label><label>Проёмы <input id="opening" type="range" min="0" max="1" step=".01" value=".55"></label></header>
+<main id="viewport"><div id="overlays"></div></main>
+<footer><span>Перетаскивание — сдвиг · колесо — масштаб · устройство — локальное состояние</span><span id="status">Загрузка…</span></footer>
+<div id="tip" role="status"></div><script type="module" src="out/viewer.js"></script></html>

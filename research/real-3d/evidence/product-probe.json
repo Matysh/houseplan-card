@@ -1,0 +1,87 @@
+{
+  "source": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+  "browser": "151.0.7922.34",
+  "rows": [
+    {
+      "iso": false,
+      "setup": {
+        "rooms": 6,
+        "dom": 659,
+        "paths": 36,
+        "devices": 80,
+        "iso": false
+      },
+      "runs": [
+        {
+          "pointerSeriesMs": 452.5917000000004,
+          "frames": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000091,
+            "count": 49
+          },
+          "cameraMoved": true
+        },
+        {
+          "pointerSeriesMs": 403.03250000000025,
+          "frames": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000091,
+            "count": 47
+          },
+          "cameraMoved": true
+        },
+        {
+          "pointerSeriesMs": 398.1464000000001,
+          "frames": {
+            "median": 8.300000000000182,
+            "p95": 8.400000000000091,
+            "count": 47
+          },
+          "cameraMoved": true
+        }
+      ]
+    },
+    {
+      "iso": true,
+      "setup": {
+        "rooms": 6,
+        "dom": 2355,
+        "paths": 1120,
+        "devices": 108,
+        "iso": true
+      },
+      "runs": [
+        {
+          "pointerSeriesMs": 493.35320000000047,
+          "frames": {
+            "median": 8.300000000000182,
+            "p95": 16.700000000000273,
+            "count": 52
+          },
+          "cameraMoved": true
+        },
+        {
+          "pointerSeriesMs": 452.10399999999936,
+          "frames": {
+            "median": 8.300000000000182,
+            "p95": 8.599999999999909,
+            "count": 50
+          },
+          "cameraMoved": true
+        },
+        {
+          "pointerSeriesMs": 470.9917000000005,
+          "frames": {
+            "median": 8.300000000000182,
+            "p95": 16.699999999999818,
+            "count": 50
+          },
+          "cameraMoved": true
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "method": "Unchanged product demo harness, same canonical synthetic rooms/openings/furniture; virtual icons differ from MVP numeric DOM badges. 45 real pointer moves per pan, 3 series. Diagnostic, not an equivalent scene/FPS ratio.",
+  "status": "passed"
+}

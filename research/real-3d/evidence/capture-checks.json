@@ -1,0 +1,94 @@
+[
+  {
+    "turn": 0,
+    "stats": {
+      "mode": "three",
+      "kind": "home",
+      "builds": 1,
+      "renderCount": 4,
+      "occlusionBuilds": 2,
+      "staticFaces": 2062,
+      "openingFaces": 624,
+      "svgPaths": 2686,
+      "dom": 2804,
+      "geometry": {
+        "geometries": 19,
+        "textures": 0
+      },
+      "calls": 20,
+      "triangles": 8812,
+      "contextLost": false
+    }
+  },
+  {
+    "turn": 90,
+    "stats": {
+      "mode": "three",
+      "kind": "home",
+      "builds": 1,
+      "renderCount": 5,
+      "occlusionBuilds": 3,
+      "staticFaces": 2062,
+      "openingFaces": 624,
+      "svgPaths": 2686,
+      "dom": 2804,
+      "geometry": {
+        "geometries": 19,
+        "textures": 0
+      },
+      "calls": 20,
+      "triangles": 8812,
+      "contextLost": false
+    }
+  },
+  {
+    "turn": 180,
+    "stats": {
+      "mode": "three",
+      "kind": "home",
+      "builds": 1,
+      "renderCount": 6,
+      "occlusionBuilds": 4,
+      "staticFaces": 2062,
+      "openingFaces": 624,
+      "svgPaths": 2686,
+      "dom": 2804,
+      "geometry": {
+        "geometries": 19,
+        "textures": 0
+      },
+      "calls": 20,
+      "triangles": 8812,
+      "contextLost": false
+    }
+  },
+  {
+    "turn": 270,
+    "stats": {
+      "mode": "three",
+      "kind": "home",
+      "builds": 1,
+      "renderCount": 7,
+      "occlusionBuilds": 5,
+      "staticFaces": 2062,
+      "openingFaces": 624,
+      "svgPaths": 2686,
+      "dom": 2804,
+      "geometry": {
+        "geometries": 19,
+        "textures": 0
+      },
+      "calls": 20,
+      "triangles": 8812,
+      "contextLost": false
+    }
+  },
+  {
+    "mobileWidth": 390,
+    "horizontalOverflow": false,
+    "note": "Desktop hardware; viewport check, not mobile GPU performance"
+  },
+  {
+    "noExternalNetwork": true
+  }
+]

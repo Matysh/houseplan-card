@@ -1,0 +1,26 @@
+{
+  "three": {
+    "raw": 533360,
+    "gzip": 133205,
+    "scope": "named minimal renderer/camera/mesh/picking imports; capabilities are not identical"
+  },
+  "babylon": {
+    "raw": 1481653,
+    "gzip": 345251,
+    "scope": "named minimal renderer/camera/mesh/picking imports; capabilities are not identical"
+  },
+  "playcanvas": {
+    "raw": 2104097,
+    "gzip": 542552,
+    "scope": "named minimal renderer/camera/mesh/picking imports; capabilities are not identical"
+  },
+  "ogl": {
+    "raw": 56102,
+    "gzip": 16389,
+    "scope": "named minimal renderer/camera/mesh/picking imports; capabilities are not identical"
+  },
+  "mvp": {
+    "raw": 863007,
+    "gzip": 236473
+  }
+}
