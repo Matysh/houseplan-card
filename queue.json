@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16277,
+  "revision": 16278,
   "nextTicket": 529,
   "nextFence": 529,
   "tasks": {
@@ -5046,7 +5046,7 @@
       "ownerDecision": null,
       "ticket": 528,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1795077659410,
       "reviewEntry": 3,
       "patchId": "77afca1ac8f6a834bf45ef766cfdceb0275ca20d",
@@ -5074,13 +5074,13 @@
         "test/iso-room-label-bounds.test.mjs"
       ],
       "notice": {
-        "key": "2:executor-admission-expired",
-        "reason": "executor-admission-expired",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795077589929,
-        "entry": 2,
-        "eventId": "finish:22a60490-4b93-4bab-88ca-454a177f0f58:finish:1:expire:return:1470"
+        "key": "3:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1795078777443,
+        "entry": 3,
+        "requestId": "review:1470:3:77afca1ac8f6a834bf45ef766cfdceb0275ca20d:7d1e756b122790a51466a8670096a5e06773ee85"
       },
       "s6": {
         "id": "20261119T084120293-42f507e9",
@@ -5104,6 +5104,11 @@
         "at": 1795078383671,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1470:3:77afca1ac8f6a834bf45ef766cfdceb0275ca20d:7d1e756b122790a51466a8670096a5e06773ee85",
+        "at": 1795078777443
       }
     }
   },
@@ -5559,19 +5564,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1470,
-    "worker": "finish",
-    "token": "528:finish:fc613888-d1d2-430c-b87b-f69dde97ab4f:finish:1:admit",
-    "fence": 528,
-    "materialSha": "f10e0e7126fec31be6603c8be66c50bb13523073",
-    "expectedBase": "7d1e756b122790a51466a8670096a5e06773ee85",
-    "phase": "review",
-    "admittedAt": 1795077663805,
-    "expiresAt": 1795081961159,
-    "patchId": "77afca1ac8f6a834bf45ef766cfdceb0275ca20d",
-    "reviewRequest": "review:1470:3:77afca1ac8f6a834bf45ef766cfdceb0275ca20d:7d1e756b122790a51466a8670096a5e06773ee85"
-  },
+  "active": null,
   "events": {
     "github:44471079007:1:label:spec-request": {
       "digest": "74159ceb50f4362cfd27b63623e240b79b57082a586eb65f4c3caafff437d99a",
@@ -5791,6 +5784,10 @@
     },
     "github:44492292052:1:tick:0:review-presentation": {
       "digest": "c8086ae98364670e68b011e66e7d081b7408d407c713fd41c0983b3197512d1f",
+      "issue": 1470
+    },
+    "github:44492292052:1:tick:0:return": {
+      "digest": "3918e2aace501f89a11d9de622614030a72b6141ba2f4c4af96e603a811cf98d",
       "issue": 1470
     },
     "github:44472051036:1:label:spec-request:spec-resubmitted:1470": {
