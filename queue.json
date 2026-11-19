@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16103,
-  "nextTicket": 523,
+  "revision": 16104,
+  "nextTicket": 524,
   "nextFence": 523,
   "tasks": {
     "1024": {
@@ -5031,6 +5031,20 @@
         "status": "published",
         "sourceSha": "f4f474cf489015af967bbd6fa03cda62c07bc975"
       }
+    },
+    "1469": {
+      "issue": 1469,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1469-cold-iso-camera",
+      "materialSha": "9e6d5c0c3f304c8b75c6dc0551997a330938b684",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 523,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795072476078,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5456,7 +5470,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1469
+  ],
   "active": null,
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5542,6 +5558,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:b36cf078-c598-40bb-a099-292e93e914c3": {
+      "digest": "b01d7b2d80827888a62c5c4e9a741edf71fd518f7cb08bc0dd83ca8ea20f7fb6",
+      "issue": 1469,
+      "message": {
+        "kind": "queued",
+        "issue": 1469,
+        "at": 1795072476078,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "9e6d5c0c3f304c8b75c6dc0551997a330938b684"
       }
     }
   },
