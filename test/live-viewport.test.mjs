@@ -440,3 +440,20 @@ test('#1478 scene and marker anchors rebase together without restarting their vi
   assert.equal(root.layer.style.transform, root.camera.style.transform);
   assert.equal(root.camera.attrs.viewBox, '200 100 500 250');
 });
+
+test('#1478 prepares a reachable zoom-out target without changing the visible camera', () => {
+  const root = fakeRoot(), initial = frame(0, 0);
+  root.layer.style.getPropertyValue = () => '';
+  const options = { keepSceneLayer: true, keepMarkerLayer: true };
+  const first = paintLiveViewport(root, initial, initial, null, options);
+  const target = frame(-465, -50, 1150, 575).view;
+  const current = { ...frame(-350, 0), target };
+  const next = paintLiveViewport(root, initial, current, first, options);
+  assert.deepEqual(next.frame.view, target);
+  assert.equal(root.camera.attrs.viewBox, '-465 -50 1150 575');
+  assert.equal(root.camera.style.transform, 'translate(-11.5%,-10%) scale(1.15,1.15)');
+  assert.equal(root.layer.style.transform, root.camera.style.transform);
+  const writes = root.camera.writes;
+  paintLiveViewport(root, initial, { ...frame(-465, -50, 1150, 575), target }, next, options);
+  assert.equal(root.camera.writes, writes);
+});

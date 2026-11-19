@@ -214,6 +214,22 @@ function rebaseMarkerPositions(nodes: ViewportNodes, from: LiveViewBox, view: Li
   for (const svg of nodes.inherited) setViewBox(svg, liveViewBoxText(view));
 }
 
+function nextViewportAnchor(frame: LiveViewportFrame, limits: ViewportExposureLimits,
+  prepareTarget: boolean): LiveViewportAnchor {
+  const target = frame.target;
+  if (prepareTarget && target && target.w > frame.view.w && target.w < frame.view.w * 1.5) {
+    const coverage = viewportExposure(target, limits);
+    const view = frame.view;
+    // A zoom-out can reserve at its accepted target before the visible frame
+    // arrives there. Keep the old view inside the newer frame's exposed area.
+    if (coverage.x <= view.x && coverage.y <= view.y &&
+        coverage.x + coverage.w >= view.x + view.w && coverage.y + coverage.h >= view.y + view.h) {
+      return { frame: { ...frame, view: target, floor: target }, coverage, target };
+    }
+  }
+  return { frame, coverage: viewportExposure(frame.view, limits), target };
+}
+
 /** Synchronously publish one camera frame. DOM discovery belongs to the commit,
  * while motion uses the cached nodes and rebases only at a coverage boundary. */
 export function paintLiveViewport(
@@ -232,12 +248,11 @@ export function paintLiveViewport(
     ? forecastExposure(current.view, current.target) : current.view;
   const refresh = options.force === true || !anchor || !finiteView(base.frame.view) || !finiteView(base.frame.floor)
     || (!options.lockSceneAnchor && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));
-  const next: LiveViewportAnchor = refresh
-    ? { frame: current, coverage: viewportExposure(current.view, limits), target: current.target } : base;
+  const next = refresh ? nextViewportAnchor(current, limits, !!options.keepMarkerLayer && !options.force) : base;
   const sceneClip = options.sceneExposureClip ?? (next.clip ??= exposureClip(next.frame.view, next.coverage));
   if (refresh) {
-    const viewBox = liveViewBoxText(current.view);
-    const floorBox = liveViewBoxText(current.floor);
+    const viewBox = liveViewBoxText(next.frame.view);
+    const floorBox = liveViewBoxText(next.frame.floor);
     for (const svg of nodes.camera) {
       setViewBox(svg, viewBox);
     }
@@ -284,8 +299,8 @@ export function paintLiveViewport(
   }
   const rebaseMarkers = options.keepMarkerLayer && !options.lockSceneAnchor && !options.sceneExposureClip;
   const markerBasis = (!options.authored && base.markerView) || painted.view;
-  if (rebaseMarkers && refresh) rebaseMarkerPositions(nodes, markerBasis, current.view);
-  if (rebaseMarkers) next.markerView = refresh ? current.view : markerBasis;
+  if (rebaseMarkers && refresh) rebaseMarkerPositions(nodes, markerBasis, next.frame.view);
+  if (rebaseMarkers) next.markerView = refresh ? next.frame.view : markerBasis;
   const markerView = rebaseMarkers ? next.markerView ?? painted.view : painted.view;
   const projection = liveLayerProjection(markerView, current.view);
   // The enclosing HTML layer is the sole camera owner of these SVGs.
