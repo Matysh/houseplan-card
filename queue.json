@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16653,
+  "revision": 16654,
   "nextTicket": 538,
   "nextFence": 538,
   "tasks": {
@@ -5091,7 +5091,17 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795089858806,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "1c32e4850728a69ddbfd9f11fc3f54e9f1e98791",
+      "changedFiles": [
+        "demo/smoke_partition_openings.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.85.0/1476.json",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5580,10 +5590,11 @@
     "token": "537:finish:897f2d7e-c292-4252-8d4f-f2f07d3a4803:finish:1:admit",
     "fence": 537,
     "materialSha": "3ab955f133610ea40e7e41c7cc4f5a3288346413",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "8a9cd979795b857b22af3cff5ae3fb282cc8caa0",
+    "phase": "testing",
     "admittedAt": 1795089866115,
-    "expiresAt": 1795090166115
+    "expiresAt": 1795090174309,
+    "patchId": "1c32e4850728a69ddbfd9f11fc3f54e9f1e98791"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5605,6 +5616,10 @@
     "github:44491001936:1:completions:report:8071fbf39359a730797d1dcdd1ffafd592dad5f37e29ed1abe73fe643be11d2f": {
       "digest": "4d6dc68b361be1330b0ccf9b978cae8842d0e6a20e6faffa5bf02667c95e2c3b",
       "issue": 1472
+    },
+    "finish:897f2d7e-c292-4252-8d4f-f2f07d3a4803:finish:2:synchronized": {
+      "digest": "70fd38b65d9480634df7872f3357d25e1b6ca903fc6f62c3618408dd225afc84",
+      "issue": 1476
     },
     "finish:897f2d7e-c292-4252-8d4f-f2f07d3a4803": {
       "digest": "bdbb360cd6cc57a88b8da543b556a4ff94bbc78b5df5a0eafce0233590a26821",
