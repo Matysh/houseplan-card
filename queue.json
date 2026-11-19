@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16385,
-  "nextTicket": 531,
+  "revision": 16386,
+  "nextTicket": 532,
   "nextFence": 531,
   "tasks": {
     "1024": {
@@ -5178,6 +5178,20 @@
         "publicationPending": true,
         "expectedBase": "fbfbdea4442539a5e6aadc46c16d2645165e449e"
       }
+    },
+    "1474": {
+      "issue": 1474,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1474-accepted-isometry",
+      "materialSha": "d61bce02cfe5cb0eb894e2415d0801fc97f4e3f5",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 531,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795082054659,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5631,7 +5645,9 @@
       "runId": 44500260892
     }
   },
-  "waiting": [],
+  "waiting": [
+    1474
+  ],
   "active": {
     "issue": 1473,
     "worker": "finish",
@@ -5759,6 +5775,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:a8d99469-b763-4dc7-9e24-e5b892c2dc7b": {
+      "digest": "a03c07aa551707b08d373fb0f2f6193f185d6dffe2178eec0a99a6f30d3e7a2e",
+      "issue": 1474,
+      "message": {
+        "kind": "queued",
+        "issue": 1474,
+        "at": 1795082054659,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d61bce02cfe5cb0eb894e2415d0801fc97f4e3f5"
       }
     }
   },
