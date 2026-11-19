@@ -16,6 +16,7 @@ function harness(){
   const card=new exports.Fixture(),authority={},raw={},runtime={pending:false,publicationNeeded:true,paintToken:'same',publish(){publications++;}};
   Object.assign(card,{_floorPreparation:runtime,_floorPublishing:false,_loadOk:true,_mode:'view',_canEdit:true,_kiosk:false,_floorPendingMode:{mode:'plan',animate:false,warm:true},
     _booting:false,_bootFading:false,_modeTransitionBusy:false,_continuity:{state:'steady',hasCompleteFrame:true},
+    _isoFirstFrame:{pending:()=>false},_desiredProjection:'flat',_isoSceneRuntime:null,
     _continuityAssetsReady:()=>true,_curSpaceCfg:raw,_space:'floor',planHost:{authorityKey:authority},isConnected:true,
     _floorCacheSelection:()=>({fitKey:'key'}),_rotationMotion:{running:false},_floorSourceAccepted:()=>false,
     updateComplete:Promise.resolve(),requestUpdate(){},_setMode(mode){this.entered=mode;}});
@@ -38,6 +39,23 @@ test('#1454 a changed fit/paint token cannot capture or consume an intent under 
 test('#1454 a fresh read-only answer discards a previously queued direct editor command',async()=>{
   const h=harness();h.card._publishFloorCacheAfterPaint();h.card._canEdit=false;await h.paint();
   assert.equal(h.card.entered,undefined);assert.equal(h.card._floorPendingMode,null);assert.equal(h.publications(),0);
+});
+
+test('#1469 a pending ISO first frame blocks preview publication before and after the paint await',async()=>{
+  for(const pendingAtEntry of [true,false]) {
+    const h=harness();let pending=pendingAtEntry;
+    Object.assign(h.card,{_desiredProjection:'iso',_isoSceneRuntime:{},_isoFirstFrame:{pending:()=>pending},
+      _floorSourceAccepted:()=>true,_baseVb:()=>[0,0,1000,1000],_frameOf:()=>({x:0,y:0,w:1000,h:1000}),
+      _displayBase:()=>({x:0,y:0,w:1000,h:1000}),_renderProjection:'iso',_rotation:0,renderRoot:{}});
+    h.card._publishFloorCacheAfterPaint();
+    if(pendingAtEntry)assert.equal(h.card._floorPublishing,false,'do not schedule an unready frame');
+    pending=true;await h.paint();
+    assert.equal(h.publications(),0,'an interim Flat shell is never captured as an ISO preview');
+    assert.equal(h.card.entered,undefined);assert.ok(h.card._floorPendingMode);
+    pending=false;h.card._publishFloorCacheAfterPaint();await h.paint();
+    assert.equal(h.publications(),2,'readiness permits the ordinary capture and publication');
+    assert.equal(h.card.entered,'plan');assert.equal(h.card._floorPendingMode,null);
+  }
 });
 
 function modeHarness(){
