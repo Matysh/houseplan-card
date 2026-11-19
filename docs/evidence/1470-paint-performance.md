@@ -84,7 +84,7 @@ critical core and related Ask selections; explicit area tests only add witnesses
 No separate HA E2E is needed: transport/permissions/services/persistence are
 unchanged. Recorded in Matysh/houseplan-e2e#82; existing release E2E remain intact.
 
-## Final addressed results
+## First-review results (historical)
 
 The machine-readable [evidence](1470-paint-performance.json) retains every timed
 sample, content hashes, browser provenance, comparisons and scene IDs.
@@ -118,3 +118,43 @@ differs by 79.9%. Its published-base actual and fixed actual, captured with the
 same golden harness/options, are pixel-identical (max delta 0, ratio 0): this is
 the explicitly informational, pre-#1451 oracle, not a repair regression. Its
 baseline is not changed. No private plan, screenshots or raw traces are published.
+
+## Current results after first code review
+
+The current candidate's source hashes, samples and comparisons are in
+`afterCodeReview` in the JSON evidence. The preceding section is retained
+history, not evidence that the modified directive has its former content hash.
+
+Review found that an animated camera's terminal Lit commit could remove the
+camera-layer transform before the directive's next rAF. Old pixel anchors then
+overrode the fresh percentage placement for one painted frame. On camera/visual
+basis change the directive now synchronously releases its bounded styles and
+local mask override: native percentage placement and the existing full wall
+mask are correct immediately. The next rAF restores the bounded allocation.
+An unchanged box signature also avoids redundant style/mask writes. This is
+per-label transient state, not a new scene cache or camera owner.
+
+The native regression explicitly enables ordinary motion and observes the first
+settled animation frame, before the directive's deferred rAF. Zoom button, Fit
+and room Fit all failed before the fix (maximum anchor error 1239.77 CSS px).
+All three now pass with nonzero animation durations of 180/220/220 ms and
+maximum error 0.0152 CSS px. The following settled frame restores all eight
+bounded resources. All 17 native cases and the addressed 69 Node cases pass.
+
+Repeated performance checks against the same frozen published base, with the
+same environment and sampling rule:
+
+| 4K / 218% | Published base | Current fix | Change |
+| --- | ---: | ---: | ---: |
+| Native drag median | 37.337 s (5 samples) | 14.578 s (5 samples) | −61.0% |
+| Median series p95 rAF gap | 900 ms | 383.3 ms | −57.4% |
+| Flat drag median | 1.849 s (5 samples) | 1.796 s (3 samples) | −2.9% |
+
+All eight AC2 interaction comparisons pass. The largest positive difference is
+Fit hover +16.95 ms (29.41 → 46.36 ms); it is within the agreed absolute 50 ms
+tolerance, not claimed as a relative improvement. HA-change at 218% is now
+31.21 ms versus base 34.23 ms. All 19 paired whole frames and 152 label entries
+still pass; geometry/alpha agreement and threshold-plus-ratio policy are
+unchanged. No visual baseline was updated. The earlier nine accepted-golden
+results remain historical results; the normal after-review S6 supplies the
+applicable selected checks on the final material.

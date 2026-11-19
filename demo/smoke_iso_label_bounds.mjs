@@ -75,4 +75,42 @@ try {
   await page.evaluate(()=>document.getElementById('host').append(window.__isoPaint));await settleIsoPaint(page);
   const reconnected=await snapshot();
   check('reconnect resumes observers without duplicating masks',reconnected.resources===8&&reconnected.labels.every(label=>label.inside));
+
+  // Do not reduce motion here: settle runs inside rAF, and a newly scheduled
+  // directive rAF is too late for that paint. Observe before that deferred work.
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.waitForFunction(()=>!window.__isoPaint._reducedMotion);
+  await zoomIsoPaint(page,2.18);
+  await page.evaluate(()=>{
+    const c=window.__isoPaint,settle=c._settleCameraTransition;
+    window.__isoAnimatedSettles=[];
+    c._settleCameraTransition=function(state) {
+      settle.call(this,state);
+      requestAnimationFrame(()=>{
+        const layer=c.renderRoot.querySelector('.devlayer').getBoundingClientRect();
+        const rows=[...c.renderRoot.querySelectorAll('.iso-room-label-plane')].map(plane=>{
+          const label=plane.querySelector('.roomlabel'),r=label.getBoundingClientRect();
+          const x=layer.left+parseFloat(label.style.left)*layer.width/100;
+          const y=layer.top+parseFloat(label.style.top)*layer.height/100;
+          return {error:Math.max(Math.abs((r.left+r.right)/2-x),Math.abs((r.top+r.bottom)/2-y)),
+            bounded:plane.hasAttribute('data-hp-label-bounded')};
+        });
+        window.__isoAnimatedSettles.push({reason:state.reason,duration:state.duration,rows});
+      });
+    };
+  });
+  for(const [index,command] of ['zoom','fit','room'].entries()) {
+    if(command==='zoom')await page.locator('[data-hp="zoom-in"]').first().click();
+    if(command==='fit')await page.locator('[data-hp="zoom-fit"]').first().click();
+    if(command==='room') {
+      await page.locator('.roomlabel .rlfit').first().focus();await page.keyboard.press('Enter');
+    }
+    await page.waitForFunction(count=>window.__isoAnimatedSettles.length>count,index);
+    const frame=await page.evaluate(index=>window.__isoAnimatedSettles[index],index);
+    check(`animated ${command}: first settled frame has current anchors`,frame.duration>0&&frame.rows.length===8
+      &&frame.rows.every(row=>row.error<=1));
+    console.log('animated-first-frame',JSON.stringify({command,...frame}));
+    await settleIsoPaint(page);
+  }
+  check('animated commands return to eight bounded resources',(await snapshot()).labels.every(label=>label.bounded&&label.inside));
 } finally {await finish(browser,{});}

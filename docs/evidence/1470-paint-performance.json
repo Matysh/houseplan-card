@@ -825,5 +825,793 @@
   },
   "e2eDecision": "https://github.com/Matysh/houseplan-e2e/issues/82",
   "privateArtifactsPublished": false,
-  "baselineAcceptancePerformed": false
+  "baselineAcceptancePerformed": false,
+  "afterCodeReview": {
+    "generatedAt": "2026-11-19T09:20:03.574Z",
+    "previousReport": "https://github.com/Matysh/houseplan-card/issues/1470#issuecomment-7004511507",
+    "baseBeforeAuthorCommit": "f10e0e7126fec31be6603c8be66c50bb13523073",
+    "meaning": "Current candidate after terminal animated-camera frame repair. Earlier top-level results are retained historical first-review evidence, not hashes of this modified source.",
+    "testedContentSha256": {
+      "src/iso-room-label-bounds.ts": "150234f9f1184688b784e6290b0bc13263520bbea14a5ffb80fed61e130c41f6",
+      "src/iso-room-furniture-overlap.ts": "a003ffb70ddda2033b6d652be74051be78ed28db9fb9118eac327fdeb25c31c6",
+      "src/iso-lab-furniture-render.ts": "1081030edecf11b0a720eecf712a637cb7b57f9549174a4428fc78fb8f06d96f",
+      "src/styles/iso-lab-markers.styles.ts": "b447c9b89eff68aeefbf8068cc7717cf6b1b0ef044340c246a570a7c1d13ac11",
+      "demo/fixtures/iso-paint.mjs": "78ca7a0d65aadac292a2448ba42a4ad9bc18a7397f77b02c3cf0e010a372c167",
+      "demo/helpers/iso-paint-scene.mjs": "dc5e172c0c93bdfa2e9c512fdf3001f8fb264dad2c341a837e12dc7a96506af9",
+      "demo/benchmark_iso_paint.mjs": "5164e8ccb33cd69d2518ed827d91b9a95b331f39d4ec1e3db50665d508845d6b",
+      "demo/smoke_iso_label_bounds.mjs": "b1e0fa89b7998944d2ea58952fbd3f519ff49c46998e8b879855a10dc14d0fda"
+    },
+    "buildFingerprint": "a3a9da9e62e55611caf6b128257933573a503dbba8ce847508376bb82348f966",
+    "performance": {
+      "width": 3840,
+      "height": 2160,
+      "counts": {
+        "labels": 8,
+        "markers": 74,
+        "furniture": 0,
+        "stage": [
+          3840,
+          2087
+        ]
+      },
+      "records": [
+        {
+          "mode": "iso",
+          "samples": [
+            {
+              "duration": 14138.827347,
+              "p95": 383.2999999999993,
+              "frames": 90
+            },
+            {
+              "duration": 18408.719521000003,
+              "p95": 500,
+              "frames": 100
+            },
+            {
+              "duration": 14577.773542000003,
+              "p95": 383.40000000000146,
+              "frames": 91
+            },
+            {
+              "duration": 14448.200916000009,
+              "p95": 366.6999999999971,
+              "frames": 95
+            },
+            {
+              "duration": 15497.94692599999,
+              "p95": 383.3000000000029,
+              "frames": 101
+            }
+          ],
+          "counts": {
+            "labels": 8,
+            "markers": 74,
+            "furniture": 15
+          },
+          "median": 14577.773542000003,
+          "p95": 383.3000000000029
+        },
+        {
+          "mode": "flat",
+          "samples": [
+            {
+              "duration": 1865.2885340000066,
+              "p95": 50,
+              "frames": 68
+            },
+            {
+              "duration": 1795.7834869999933,
+              "p95": 50,
+              "frames": 61
+            },
+            {
+              "duration": 1713.562579000005,
+              "p95": 49.89999999999418,
+              "frames": 64
+            }
+          ],
+          "counts": {
+            "labels": 8,
+            "markers": 74,
+            "furniture": 0
+          },
+          "median": 1795.7834869999933,
+          "p95": 50
+        }
+      ],
+      "provenance": {
+        "browser": "151.0.7922.34",
+        "node": "v22.23.4",
+        "viewport": {
+          "width": 3840,
+          "height": 2160
+        },
+        "dpr": 1,
+        "pinnedBrowserAttested": true
+      },
+      "reference": null,
+      "comparison": [
+        {
+          "mode": "iso",
+          "durationRatio": 0.39043611072607615,
+          "p95Ratio": 0.42588888888889215,
+          "pass": true
+        },
+        {
+          "mode": "flat",
+          "durationRatio": 0.9711317267192037,
+          "p95Ratio": 1,
+          "pass": true
+        }
+      ]
+    },
+    "interactions": {
+      "width": 1920,
+      "height": 1080,
+      "records": [
+        {
+          "zoom": 1,
+          "action": "pan",
+          "samples": [
+            1130.7059660000004,
+            1111.8161710000004,
+            1130.9757900000004
+          ],
+          "median": 1130.7059660000004
+        },
+        {
+          "zoom": 1,
+          "action": "wheel",
+          "samples": [
+            131.05317900000045,
+            131.37215300000025,
+            131.72856199999842
+          ],
+          "median": 131.37215300000025
+        },
+        {
+          "zoom": 1,
+          "action": "hover",
+          "samples": [
+            46.35585100000026,
+            46.18546900000001,
+            46.61198599999989
+          ],
+          "median": 46.35585100000026
+        },
+        {
+          "zoom": 1,
+          "action": "ha-change",
+          "samples": [
+            31.203890000000683,
+            31.149373999998716,
+            31.37749199999962
+          ],
+          "median": 31.203890000000683
+        },
+        {
+          "zoom": 2.18,
+          "action": "pan",
+          "samples": [
+            3022.0366810000014,
+            3030.650744999999,
+            3297.670447999997
+          ],
+          "median": 3030.650744999999
+        },
+        {
+          "zoom": 2.18,
+          "action": "wheel",
+          "samples": [
+            148.03319199999896,
+            147.57257799999934,
+            147.28188299999965
+          ],
+          "median": 147.57257799999934
+        },
+        {
+          "zoom": 2.18,
+          "action": "hover",
+          "samples": [
+            31.968275999999605,
+            29.569471999999223,
+            46.733956000000035
+          ],
+          "median": 31.968275999999605
+        },
+        {
+          "zoom": 2.18,
+          "action": "ha-change",
+          "samples": [
+            31.180985999999393,
+            31.55847999999969,
+            31.205229999999574
+          ],
+          "median": 31.205229999999574
+        }
+      ],
+      "provenance": {
+        "browser": "151.0.7922.34",
+        "node": "v22.23.4",
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "dpr": 1,
+        "pinnedBrowserAttested": true
+      },
+      "reference": null,
+      "comparison": [
+        {
+          "zoom": 1,
+          "action": "pan",
+          "ratio": 0.7856613192445925,
+          "pass": true
+        },
+        {
+          "zoom": 1,
+          "action": "wheel",
+          "ratio": 1.147381172250801,
+          "pass": true
+        },
+        {
+          "zoom": 1,
+          "action": "hover",
+          "ratio": 1.5763480852729577,
+          "pass": true
+        },
+        {
+          "zoom": 1,
+          "action": "ha-change",
+          "ratio": 0.9938121566739287,
+          "pass": true
+        },
+        {
+          "zoom": 2.18,
+          "action": "pan",
+          "ratio": 0.6240738395608594,
+          "pass": true
+        },
+        {
+          "zoom": 2.18,
+          "action": "wheel",
+          "ratio": 0.9323341192593296,
+          "pass": true
+        },
+        {
+          "zoom": 2.18,
+          "action": "hover",
+          "ratio": 1.0988713394946943,
+          "pass": true
+        },
+        {
+          "zoom": 2.18,
+          "action": "ha-change",
+          "ratio": 0.911760229484328,
+          "pass": true
+        }
+      ]
+    },
+    "visual": {
+      "channelThreshold": 10,
+      "maxDiffRatio": 0.0005,
+      "frames": 19,
+      "labelsChecked": 152,
+      "maxFrameRatio": 0.000015673225308641976,
+      "maxLabelRatio": 0.0001722197983880227,
+      "maxLabelGeometryDelta": 0.015625,
+      "alphaMatches": true,
+      "matrix": [
+        {
+          "id": "dark-0-1",
+          "frame": {
+            "maxChannelDelta": 11,
+            "diffRatioAbove10": 1.2056327160493827e-7,
+            "pixelsAbove10": 1,
+            "pass": true
+          },
+          "worstLabelRatio": 0,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "dark-0-2.18",
+          "frame": {
+            "maxChannelDelta": 43,
+            "diffRatioAbove10": 0.00001109182098765432,
+            "pixelsAbove10": 92,
+            "pass": true
+          },
+          "worstLabelRatio": 0.0001722197983880227,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "dark-180-1",
+          "frame": {
+            "maxChannelDelta": 11,
+            "diffRatioAbove10": 2.4112654320987655e-7,
+            "pixelsAbove10": 2,
+            "pass": true
+          },
+          "worstLabelRatio": 0,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "dark-180-2.18",
+          "frame": {
+            "maxChannelDelta": 62,
+            "diffRatioAbove10": 0.000007836612654320988,
+            "pixelsAbove10": 65,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00012629451881788332,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "dark-270-1",
+          "frame": {
+            "maxChannelDelta": 13,
+            "diffRatioAbove10": 0.0000014467592592592592,
+            "pixelsAbove10": 12,
+            "pass": true
+          },
+          "worstLabelRatio": 0,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "dark-270-2.18",
+          "frame": {
+            "maxChannelDelta": 26,
+            "diffRatioAbove10": 0.00000626929012345679,
+            "pixelsAbove10": 52,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00009629272989889263,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "dark-90-1",
+          "frame": {
+            "maxChannelDelta": 11,
+            "diffRatioAbove10": 3.616898148148148e-7,
+            "pixelsAbove10": 3,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00005568548836173293,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "dark-90-2.18",
+          "frame": {
+            "maxChannelDelta": 72,
+            "diffRatioAbove10": 0.000015673225308641976,
+            "pixelsAbove10": 130,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00013540411357697047,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "light-0-1",
+          "frame": {
+            "maxChannelDelta": 14,
+            "diffRatioAbove10": 4.822530864197531e-7,
+            "pixelsAbove10": 4,
+            "pass": true
+          },
+          "worstLabelRatio": 0,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "light-0-2.18",
+          "frame": {
+            "maxChannelDelta": 26,
+            "diffRatioAbove10": 0.00000349633487654321,
+            "pixelsAbove10": 29,
+            "pass": true
+          },
+          "worstLabelRatio": 0,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "light-180-1",
+          "frame": {
+            "maxChannelDelta": 11,
+            "diffRatioAbove10": 2.4112654320987655e-7,
+            "pixelsAbove10": 2,
+            "pass": true
+          },
+          "worstLabelRatio": 0,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "light-180-2.18",
+          "frame": {
+            "maxChannelDelta": 26,
+            "diffRatioAbove10": 0.0000036168981481481483,
+            "pixelsAbove10": 30,
+            "pass": true
+          },
+          "worstLabelRatio": 0.000011481319892534846,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "light-270-1",
+          "frame": {
+            "maxChannelDelta": 13,
+            "diffRatioAbove10": 0.0000014467592592592592,
+            "pixelsAbove10": 12,
+            "pass": true
+          },
+          "worstLabelRatio": 0,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "light-270-2.18",
+          "frame": {
+            "maxChannelDelta": 26,
+            "diffRatioAbove10": 0.000002652391975308642,
+            "pixelsAbove10": 22,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00005777563793933558,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "light-90-1",
+          "frame": {
+            "maxChannelDelta": 11,
+            "diffRatioAbove10": 3.616898148148148e-7,
+            "pixelsAbove10": 3,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00005568548836173293,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "light-90-2.18",
+          "frame": {
+            "maxChannelDelta": 28,
+            "diffRatioAbove10": 0.000008801118827160494,
+            "pixelsAbove10": 73,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00008162313432835821,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "overlap-long-focus",
+          "frame": {
+            "maxChannelDelta": 11,
+            "diffRatioAbove10": 2.4112654320987655e-7,
+            "pixelsAbove10": 2,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00004160079873533572,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "overlap-long-hover",
+          "frame": {
+            "maxChannelDelta": 11,
+            "diffRatioAbove10": 2.4112654320987655e-7,
+            "pixelsAbove10": 2,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00004160079873533572,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        },
+        {
+          "id": "overlap-long-idle",
+          "frame": {
+            "maxChannelDelta": 11,
+            "diffRatioAbove10": 2.4112654320987655e-7,
+            "pixelsAbove10": 2,
+            "pass": true
+          },
+          "worstLabelRatio": 0.00004160079873533572,
+          "maxGeometryDelta": 0.015625,
+          "allAlphaMatch": true,
+          "pass": true
+        }
+      ],
+      "pass": true
+    },
+    "native": {
+      "file": "demo/smoke_iso_label_bounds.mjs",
+      "executed": 17,
+      "pass": true,
+      "normalMotion": {
+        "before": [
+          {
+            "command": "zoom",
+            "reason": "button",
+            "duration": 180,
+            "rows": [
+              {
+                "error": 275.0176676293945,
+                "bounded": true
+              },
+              {
+                "error": 115.24753525878907,
+                "bounded": true
+              },
+              {
+                "error": 44.539694482421964,
+                "bounded": true
+              },
+              {
+                "error": 204.30986499999995,
+                "bounded": true
+              },
+              {
+                "error": 364.0785250000001,
+                "bounded": true
+              },
+              {
+                "error": 414.87619000000007,
+                "bounded": true
+              },
+              {
+                "error": 255.09043262939454,
+                "bounded": true
+              },
+              {
+                "error": 114.28081600000007,
+                "bounded": true
+              }
+            ]
+          },
+          {
+            "command": "fit",
+            "reason": "fit",
+            "duration": 220,
+            "rows": [
+              {
+                "error": 647.19983,
+                "bounded": true
+              },
+              {
+                "error": 271.223665,
+                "bounded": true
+              },
+              {
+                "error": 104.75250000000005,
+                "bounded": true
+              },
+              {
+                "error": 480.72866499999986,
+                "bounded": true
+              },
+              {
+                "error": 856.7204549999999,
+                "bounded": true
+              },
+              {
+                "error": 976.283115,
+                "bounded": true
+              },
+              {
+                "error": 600.2913249999999,
+                "bounded": true
+              },
+              {
+                "error": 268.9021449999999,
+                "bounded": true
+              }
+            ]
+          },
+          {
+            "command": "room",
+            "reason": "room",
+            "duration": 220,
+            "rows": [
+              {
+                "error": 315.40623474121094,
+                "bounded": true
+              },
+              {
+                "error": 546.5060694824219,
+                "bounded": true
+              },
+              {
+                "error": 777.590294482422,
+                "bounded": true
+              },
+              {
+                "error": 1008.681919482422,
+                "bounded": true
+              },
+              {
+                "error": 1239.7744000000002,
+                "bounded": true
+              },
+              {
+                "error": 490.2333349999999,
+                "bounded": true
+              },
+              {
+                "error": 594.2458799999999,
+                "bounded": true
+              },
+              {
+                "error": 698.2533900000001,
+                "bounded": true
+              }
+            ]
+          }
+        ],
+        "after": [
+          {
+            "command": "zoom",
+            "reason": "button",
+            "duration": 180,
+            "rows": [
+              {
+                "error": 0.010257599999995648,
+                "bounded": false
+              },
+              {
+                "error": 0.009259999999983393,
+                "bounded": false
+              },
+              {
+                "error": 0.012362258789153202,
+                "bounded": false
+              },
+              {
+                "error": 0.012989999999945212,
+                "bounded": false
+              },
+              {
+                "error": 0.003903000000036627,
+                "bounded": false
+              },
+              {
+                "error": 0.008025258789075451,
+                "bounded": false
+              },
+              {
+                "error": 0.012300000000010414,
+                "bounded": false
+              },
+              {
+                "error": 0.015191000000072563,
+                "bounded": false
+              }
+            ]
+          },
+          {
+            "command": "fit",
+            "reason": "fit",
+            "duration": 220,
+            "rows": [
+              {
+                "error": 0.012330000000019936,
+                "bounded": false
+              },
+              {
+                "error": 0.004914999999982683,
+                "bounded": false
+              },
+              {
+                "error": 0.01312499999994543,
+                "bounded": false
+              },
+              {
+                "error": 0.005710000000135551,
+                "bounded": false
+              },
+              {
+                "error": 0.013920000000098298,
+                "bounded": false
+              },
+              {
+                "error": 0.007088999999950829,
+                "bounded": false
+              },
+              {
+                "error": 0.010074999999972079,
+                "bounded": false
+              },
+              {
+                "error": 0.00410500000009506,
+                "bounded": false
+              }
+            ]
+          },
+          {
+            "command": "room",
+            "reason": "room",
+            "duration": 220,
+            "rows": [
+              {
+                "error": 0.006115000000022519,
+                "bounded": false
+              },
+              {
+                "error": 0.0061000000000603904,
+                "bounded": false
+              },
+              {
+                "error": 0.012200000000120781,
+                "bounded": false
+              },
+              {
+                "error": 0.010136035156392609,
+                "bounded": false
+              },
+              {
+                "error": 0.01497500000027685,
+                "bounded": false
+              },
+              {
+                "error": 0.014615517578022263,
+                "bounded": false
+              },
+              {
+                "error": 0.011504999999942811,
+                "bounded": false
+              },
+              {
+                "error": 0.0033900000000812724,
+                "bounded": false
+              }
+            ]
+          }
+        ],
+        "allowedAnchorErrorCssPx": 1,
+        "maxErrorBeforeCssPx": 1239.7744000000002,
+        "maxErrorAfterCssPx": 0.015191000000072563,
+        "restoredEightBoundedResources": true
+      }
+    },
+    "addressedNode": {
+      "files": [
+        "test/iso-room-label-bounds.test.mjs",
+        "test/iso-projection.test.mjs",
+        "test/styles-split.test.mjs",
+        "process-next/test/task-selection.test.mjs"
+      ],
+      "executed": 69,
+      "pass": true
+    },
+    "baselineAcceptancePerformed": false
+  }
 }

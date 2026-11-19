@@ -59,6 +59,8 @@ class RoomFurnitureOverlap extends AsyncDirective {
   private observedRows = new Set<HTMLElement>();
   private observedLabel?: HTMLElement;
   private observedViewport?: HTMLElement;
+  private paintedBasis = '';
+  private paintedBox = '';
 
   render(_anchor: PlanPoint | undefined, _width: number, _items: readonly Occluder[],
     _view?: ViewRect, _visual?: PlanPoint) { return nothing; }
@@ -70,6 +72,10 @@ class RoomFurnitureOverlap extends AsyncDirective {
     this.items = items;
     this.view = view;
     this.visual = visual;
+    // A Lit commit can run inside the terminal camera rAF. Do not keep old px
+    // anchors while waiting for our next rAF: the native percentage placement
+    // and full wall mask are already correct for the newly committed camera.
+    if (this.paintedBasis && this.paintedBasis !== this.paintBasis()) this.releaseBounds();
     this.schedule();
     return nothing;
   }
@@ -122,6 +128,20 @@ class RoomFurnitureOverlap extends AsyncDirective {
     });
   };
 
+  private paintBasis() {
+    const view = this.view, visual = this.visual;
+    return view && visual ? [view.x,view.y,view.w,view.h,...visual].join('|') : '';
+  }
+
+  private releaseBounds() {
+    this.paintedBasis = this.paintedBox = '';
+    const plane = this.plane;
+    if (!plane?.hasAttribute('data-hp-label-bounded')) return;
+    plane.removeAttribute('data-hp-label-bounded');
+    for (const name of ['inset','left','top','width','height','--hp-label-left','--hp-label-top','--hp-room-wall-mask'])
+      plane.style.removeProperty(name);
+  }
+
   private boundPaint(plane: HTMLElement, label: HTMLElement, viewport: HTMLElement) {
     if (!this.view || !this.visual) return;
     const style = getComputedStyle(label), transform = new DOMMatrixReadOnly(style.transform);
@@ -144,6 +164,10 @@ class RoomFurnitureOverlap extends AsyncDirective {
       [label.offsetWidth,label.offsetHeight],[transform.a,transform.b,transform.c,transform.d,transform.e,transform.f],
       [origin[0],origin[1]],content);
     if (!box) return;
+    const signature = [box.left,box.top,box.width,box.height,box.labelX,box.labelY,
+      box.scene.x,box.scene.y,box.scene.w,box.scene.h].join('|');
+    this.paintedBasis = this.paintBasis();
+    if (signature === this.paintedBox && this.mask) return;
     if (!this.mask) {
       const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns,'svg');
       svg.setAttribute('width','0'); svg.setAttribute('height','0'); svg.setAttribute('aria-hidden','true');
@@ -158,15 +182,16 @@ class RoomFurnitureOverlap extends AsyncDirective {
       use.setAttribute('href','#hp-room-wall-silhouette'); use.setAttribute('fill','#4d4d4d');
       mask.append(rect,use); svg.append(mask); plane.append(svg);
       this.mask = mask; this.maskUse = use;
-      plane.style.setProperty('--hp-room-wall-mask',`url(#${mask.id})`);
     }
     const rect = box.scene;
+    plane.style.setProperty('--hp-room-wall-mask',`url(#${this.mask.id})`);
     this.maskUse!.setAttribute('transform',`scale(${1/rect.w} ${1/rect.h}) translate(${-rect.x} ${-rect.y})`);
     plane.style.inset = 'auto';
     for (const name of ['left','top','width','height'] as const) plane.style[name] = `${box[name]}px`;
     plane.style.setProperty('--hp-label-left',`${box.labelX}px`);
     plane.style.setProperty('--hp-label-top',`${box.labelY}px`);
     plane.dataset.hpLabelBounded = '';
+    this.paintedBox = signature;
   }
 
   disconnected() {
@@ -177,7 +202,7 @@ class RoomFurnitureOverlap extends AsyncDirective {
     cancelAnimationFrame(this.frame);
     this.frame = 0;
   }
-  reconnected() { this.schedule(); }
+  reconnected() { this.releaseBounds(); this.schedule(); }
 }
 
 export const roomFurnitureOverlap = directive(RoomFurnitureOverlap);
