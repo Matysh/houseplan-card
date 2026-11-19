@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 981,
+  "revision": 982,
   "active": "1.85.3-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -121784,14 +121784,14 @@
       "kind": "beta",
       "branch": "release/1.85.3-beta.2",
       "sourceSha": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-      "sha": "8c5fb654195356e161d78da56bccb4abf3b67655",
+      "sha": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "8c5fb654195356e161d78da56bccb4abf3b67655",
+        "candidate": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
         "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
         "issues": [
           {
@@ -122263,6 +122263,12 @@
         {
           "from": "503a34e70eadec042391d463abf05b334af2e24e",
           "to": "8c5fb654195356e161d78da56bccb4abf3b67655",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "8c5fb654195356e161d78da56bccb4abf3b67655",
+          "to": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -127905,7 +127911,8 @@
     "beta1853-2-approved-r4-report": "76a2041603ac385375cc0dc15e1763e24d005f6d691cde67fd0867b566245008",
     "beta1853-2-approved-r4-metrics": "a010f0d427300eacd6e97d96e7cf8a6aeef3d977590f5a608d3d2537235578a9",
     "beta1853-2-20261119-owner-metrics": "ec017d55b9e3bb97408a692e88a46ae7eb889b96c29eec970554434856eecd61",
-    "beta1853-2-20261119-supplemental-hover-approved": "916e667f390b0f98cfee9fb97d9e4252be6dbdfe420b03b69bec9ae6b8b288fb"
+    "beta1853-2-20261119-supplemental-hover-approved": "916e667f390b0f98cfee9fb97d9e4252be6dbdfe420b03b69bec9ae6b8b288fb",
+    "beta1853-2-20261119-isolated-hover-capture": "4eaa3297ff77dbfcd753fce8cd680e2a06add2ceccdd92e0f007ad81e867c5d6"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
