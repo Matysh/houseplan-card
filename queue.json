@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16052,
+  "revision": 16053,
   "nextTicket": 523,
   "nextFence": 523,
   "tasks": {
@@ -5405,7 +5405,13 @@
       "base": "f4f474cf489015af967bbd6fa03cda62c07bc975",
       "round": 1,
       "status": "pending",
-      "updatedAt": 1795069082947
+      "updatedAt": 1795069082947,
+      "retry": {
+        "eventId": "1470-spec-20261119-r1:spec-retry",
+        "at": 1795069094202,
+        "runId": null,
+        "runAttempt": null
+      }
     }
   },
   "reviewPublications": {
@@ -5454,6 +5460,10 @@
   "events": {
     "github:44471079007:1:label:spec-request": {
       "digest": "74159ceb50f4362cfd27b63623e240b79b57082a586eb65f4c3caafff437d99a",
+      "issue": 1470
+    },
+    "1470-spec-20261119-r1:spec-retry": {
+      "digest": "8dd9cbcd0c4db7a985637902cefb3501d99b83db52e93eba5c776b2ffede13d9",
       "issue": 1470
     }
   },
