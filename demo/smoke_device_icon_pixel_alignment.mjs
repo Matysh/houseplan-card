@@ -32,8 +32,9 @@ for (const dpr of dprs) {
     for (const node of layer.children) {
       if (node !== marker) node.style.display = 'none';
     }
-    for (const node of layer.parentElement.children) {
-      if (node !== layer) node.style.visibility = 'hidden';
+    const markerSurface = layer.closest('[data-hp-live-marker-surface]') || layer;
+    for (const node of markerSurface.parentElement.children) {
+      if (node !== markerSurface) node.style.visibility = 'hidden';
     }
     marker.className = 'dev theme-light';
     marker.style.left = '50%';

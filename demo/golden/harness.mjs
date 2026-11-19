@@ -30,7 +30,7 @@ import { makeStaticWallOpeningsFixture } from '../fixtures/static-wall-openings.
 import { prepareStaticWallOpenings } from './static-wall-openings.mjs';
 import { makeResizeJunctionFixture } from '../fixtures/resize-junctions.mjs';
 import { prepareResizeJunctions } from './resize-junctions.mjs';
-import { testSurfaceReady, renderedIsoReady, floorAlignedIsoOverlaysReady } from '../helpers/test-surface-ready.mjs';
+import { testSurfaceReady, renderedIsoReady, raisedIsoOverlaysReady } from '../helpers/test-surface-ready.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -678,6 +678,7 @@ export function prepareGoldenFixture(scenario) {
         id: opening.id, type: opening.type,
         x: opening.at, y: 0.50, angle: 0, length: opening.length,
         flip_v: opening.flipV,
+        ...(opening.type === 'door' && opening.offset === 'center' ? { swing_position: 'center' } : {}),
       }));
     } else {
       if (!Array.isArray(contract.a) || !Array.isArray(contract.b)
@@ -698,6 +699,7 @@ export function prepareGoldenFixture(scenario) {
         x: a[0] + (b[0] - a[0]) * opening.at,
         y: a[1] + (b[1] - a[1]) * opening.at,
         angle, length: opening.length, flip_v: opening.flipV,
+        ...(opening.type === 'door' && opening.offset === 'center' ? { swing_position: 'center' } : {}),
         host: { kind: 'partition', id: 'golden-opening-partition', t: opening.at },
       }));
     }
@@ -1126,7 +1128,7 @@ async function preparePlanKeyboardCapture(page, scenario) {
 
 export async function prepareGoldenScenario(page, scenario) {
   await stableEnvironment(page, scenario);
-  await page.addScriptTag({ content: `window.__hpTestSurfaceReady=${testSurfaceReady.toString()};window.__hpRenderedIsoReady=${renderedIsoReady.toString()};window.__hpFloorAlignedIsoOverlaysReady=${floorAlignedIsoOverlaysReady.toString()};` });
+  await page.addScriptTag({ content: `window.__hpTestSurfaceReady=${testSurfaceReady.toString()};window.__hpRenderedIsoReady=${renderedIsoReady.toString()};window.__hpRaisedIsoOverlaysReady=${raisedIsoOverlaysReady.toString()};` });
   {
     // Default capture entry is pointer input, independent of the preceding
     // scene's Tab history. Explicit keyboard/device-focus scenes establish
@@ -1677,10 +1679,8 @@ export async function prepareGoldenScenario(page, scenario) {
             || raisedRoots.some((root) => root.getAttribute('data-hp-iso-raised') !== 'true')) {
           throw new Error(`Stage 4 golden lost the corrected low visual plane: ${scenario.id}`);
         }
-        // Retain the historical scene selector, but judge the accepted #1451
-        // floor-aligned placement, not the superseded 84*sin(20) raised plane.
-        if (contract.requireOneRise && !window.__hpFloorAlignedIsoOverlaysReady(card))
-          throw new Error(`Stage 4 golden lost the accepted floor-aligned plane (#1451): ${scenario.id}`);
+        if (contract.requireOneRise && !window.__hpRaisedIsoOverlaysReady(card))
+          throw new Error(`Stage 4 golden lost the shared 140 cm wall-cut plane (#1474): ${scenario.id}`);
       }
       const materialDefs = card.renderRoot.querySelectorAll('[data-hp-iso-material-def]').length;
       if (contract.requireMaterialDefs
@@ -3004,7 +3004,7 @@ export async function prepareGoldenScenario(page, scenario) {
     };
   }, { fixture, scenario, cardVersion, attemptKey: VERSION_RELOAD_ATTEMPT_KEY });
   if (scenario.rotation !== undefined) {
-    result.rotation = await page.evaluate((expected) => {
+    result.rotation = await page.evaluate(({ expected, isIso }) => {
       const root = window.__goldenCard.renderRoot;
       const layer = root.querySelector('.decorlayer'), matrix = layer?.getScreenCTM();
       if (!matrix || !layer.children.length) throw Error('rotation frame has no painted decor');
@@ -3012,11 +3012,15 @@ export async function prepareGoldenScenario(page, scenario) {
       const b = new DOMPoint(100, 0).matrixTransform(matrix);
       const length = Math.hypot(b.x - a.x, b.y - a.y);
       const direction = [(b.x - a.x) / length, (b.y - a.y) / length];
-      const axis = {0: [1, 0], 90: [0, 1], 180: [-1, 0], 270: [0, -1]}[expected];
+      const angle = (expected + (isIso ? 35 : 0)) * Math.PI / 180;
+      const x = Math.cos(angle);
+      const y = Math.sin(angle) * (isIso ? Math.sin(40 * Math.PI / 180) : 1);
+      const expectedLength = Math.hypot(x, y);
+      const axis = [x / expectedLength, y / expectedLength];
       if (!(length > 1) || direction.some((value, i) => Math.abs(value - axis[i]) > .001))
         throw Error(`painted plan axis does not follow ${expected}: ${direction}`);
       return { expected, direction, length };
-    }, scenario.rotation);
+    }, { expected: scenario.rotation, isIso: scenario.projection === 'iso' });
   }
   if (scenario.id.startsWith('plan-rotation-phone-')) {
     result.phoneHeader = await page.evaluate((scenario) => {

@@ -400,9 +400,12 @@ try {
         const root = window.__card.shadowRoot;
         root.querySelector('[data-hp-live-tip]')?.style.setProperty('visibility', 'hidden');
         const overlay = root.querySelector('hp-zigbee-topology-overlay');
-        const layer = overlay.getBoundingClientRect();
-        const sx = layer.width / overlay.clientWidth, sy = layer.height / overlay.clientHeight;
-        const toViewport = (x, y) => ({ x: layer.left + x * sx, y: layer.top + y * sy });
+        const toViewport = (element, x, y) => {
+          const matrix = element.getScreenCTM();
+          if (!matrix) throw new Error('Zigbee route has no screen transform');
+          const point = new DOMPoint(x, y).matrixTransform(matrix);
+          return { x: point.x, y: point.y };
+        };
         const polygon = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]');
         const line = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-line"]');
         const badge = root.querySelector('[data-hp="device"][data-id="d_leak"] .value-badge').getBoundingClientRect();
@@ -412,9 +415,9 @@ try {
         const core = root.querySelector('[data-hp="device"][data-id="d_leak"] .device-core').getBoundingClientRect();
         return {
           arrow: polygon.getAttribute('points').trim().split(/\s+/)
-            .map(pair => pair.split(',').map(Number)).map(([x, y]) => toViewport(x, y)),
-          line: [toViewport(Number(line.getAttribute('x1')), Number(line.getAttribute('y1'))),
-            toViewport(Number(line.getAttribute('x2')), Number(line.getAttribute('y2')))],
+            .map(pair => pair.split(',').map(Number)).map(([x, y]) => toViewport(polygon, x, y)),
+          line: [toViewport(line, Number(line.getAttribute('x1')), Number(line.getAttribute('y1'))),
+            toViewport(line, Number(line.getAttribute('x2')), Number(line.getAttribute('y2')))],
           badge: { x: badge.x, y: badge.y, right: badge.right, bottom: badge.bottom,
             width: badge.width, height: badge.height,
             radius: Number.isFinite(radius) ? Math.min(radius, badge.height / 2) : badge.height / 2 },
@@ -498,7 +501,16 @@ try {
           const painted = at(a, x, y), routeShows = changed(painted, at(hidden, x, y));
           if (inBadge(x, y, 2) && !inArrow(x, y, -3)) {
             lineSamples++;
-            if (routeShows && arrowInk(painted)) lineOver++;
+            // At a device-pixel boundary the compositor may paint the opaque
+            // stroke in the adjacent pixel. Check the actual stroke band.
+            const opaqueStroke = [-1, 0, 1].some(offset => {
+              const sx = x - (q.y - p.y) / length * offset / devicePixelRatio;
+              const sy = y + (q.x - p.x) / length * offset / devicePixelRatio;
+              if (!inBadge(sx, sy, 1) || inArrow(sx, sy, -2)) return false;
+              const pixel = at(a, sx, sy);
+              return changed(pixel, at(hidden, sx, sy)) && arrowInk(pixel);
+            });
+            if (opaqueStroke) lineOver++;
           } else if (inCore(x, y)) {
             coreSamples++;
             if (routeShows) coreChanged++;

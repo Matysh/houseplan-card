@@ -3815,7 +3815,12 @@ export class HouseplanCard extends LitElement {
       const camera = this._modeTransitionVisual?.viewport
         ?? physicalViewCamera(this._view, this._zoom, this._viewFrame);
       const next = canonicalPhysicalCamera(camera, target);
-      this._view = next.viewBox; this._zoom = next.zoom;
+      this._view = next.viewBox;
+      // A passive cache preview can have a different fit reference for the
+      // same painted rectangle. Keep the adopted warm zoom through that
+      // handoff while the saved viewport still matches the displayed one.
+      const warm = this._warmCameraAdopted ? this._warmVp : null;
+      this._zoom = warm && warmCameraUnchanged(next.viewBox, warm) ? warm.zoom : next.zoom;
     }
     this._viewPlane = plane; this._viewPlaneKnown = !!target;
     this._viewFrame = target; this._viewFrameSpace = this._space;
@@ -13293,6 +13298,9 @@ export class HouseplanCard extends LitElement {
       this._isoProjectionSnapshot = 'flat'; this._view = null;
       this._viewPlane = null; this._viewPlaneKnown = true;
       this._isoLight.clear();
+      // The same Lit pass rendered the raised leaf's light barriers before
+      // Iso failed. The Flat fallback must resolve its own optical plane.
+      this._lightBarrierPass.invalidate(space);
       useFurnitureVolume = false; furnitureShadows = nothing;
       stairVolumes = undefined; isoGlowLayer = undefined; isoLedField = undefined;
       view = this._authoredView(this._viewOr(this._baseVb('flat', null)), 'flat');

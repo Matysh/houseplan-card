@@ -1,7 +1,7 @@
 // #649 п.1 (docs/ISOMETRIC.md, Stage 6): device markers are raised tiles in the
 // 2.5D View — no ring, rounded body, solid edge below, 1.12 × Flat, the whole
-// marker lifted, one floor-shadow layer under every marker (theme × floor
-// table of the ТЗ), a frame that hugs tile and edge with the icon-package
+// marker lifted, a floor-shadow layer under the markers, a frame that
+// hugs tile and edge with the icon-package
 // colours and priority, forced colours without edge and shadow. Flat keeps its
 // circles; editors stay Flat.
 //
@@ -30,10 +30,16 @@ const read = (ids) => page.evaluate(([white, tinted]) => {
   const marker = (id) => root.querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${id}"]`);
   const twin = (id) => root.querySelector(`.iso-tile-shadows .iso-tile-shadow[data-shadow-of="${id}"]`);
   const shadow = (id) => {
-    const s = twin(id);
-    const m = s && getComputedStyle(s).boxShadow
-      .match(/rgba?\(28, 32, 28(?:, ([\d.]+))?\) (-?[\d.]+)px (-?[\d.]+)px ([\d.]+)px (-?[\d.]+)px/);
-    return m ? { a: Number(m[1] ?? 1), dx: +m[2], dy: +m[3], blur: +m[4], spread: +m[5] } : null;
+    const ellipse = twin(id)?.querySelector('ellipse');
+    const matrix = ellipse?.getScreenCTM();
+    if (!ellipse || !matrix) return null;
+    const p = new DOMPoint(ellipse.cx.baseVal.value, ellipse.cy.baseVal.value).matrixTransform(matrix);
+    const stops = [...root.querySelectorAll('#hp-iso-marker-penumbra stop')]
+      .map(stop => [Number(stop.getAttribute('offset')), Number(stop.getAttribute('stop-opacity'))]);
+    return {
+      y: p.y, rx: ellipse.rx.baseVal.value, ry: ellipse.ry.baseVal.value,
+      gradient: ellipse.getAttribute('fill'), stops,
+    };
   };
   const tile = (id) => {
     const dev = marker(id);
@@ -43,15 +49,15 @@ const read = (ids) => page.evaluate(([white, tinted]) => {
     const edge = cs.boxShadow.match(/^(rgba?\([^)]*\)) 0px ([\d.]+)px 0px/);
     const frame = dev.querySelector('.device-shell-frame');
     const rect = core.getBoundingClientRect();
-    const twinCore = twin(id)?.getBoundingClientRect();
+    const floorShadow = shadow(id);
     return {
       w: rect.width, h: rect.height, top: rect.top,
       radius: px(cs.borderTopLeftRadius), bg: cs.backgroundColor,
       edgeColor: edge?.[1] ?? null, edgeDepth: edge ? +edge[2] : 0,
       ring: frame ? getComputedStyle(frame).borderTopColor : null,
-      lift: twinCore ? twinCore.top - rect.top : null,
+      lift: floorShadow ? floorShadow.y - (rect.top + rect.height / 2) : null,
       floorLight: dev.classList.contains('iso-floor-light'),
-      shadow: shadow(id),
+      shadow: floorShadow,
       frameColor: getComputedStyle(core, '::after').borderTopColor,
       hit: (() => { const b = getComputedStyle(dev, '::before'); return [px(b.width), px(b.height)]; })(),
     };
@@ -65,9 +71,9 @@ const read = (ids) => page.evaluate(([white, tinted]) => {
     twinsInLayerOnly: [...root.querySelectorAll('.iso-tile-shadow')].every((s) => s.parentElement === shadows),
     twinsInert: [...root.querySelectorAll('.iso-tile-shadow')].every((s) => getComputedStyle(s).pointerEvents === 'none'
       && s.getAttribute('aria-hidden') === 'true' && !s.hasAttribute('tabindex')),
-    twinsGeometryOnly: [...root.querySelectorAll('.iso-tile-shadows .dev.iso-tile-shadow')]
-      .every((s) => !s.querySelector('ha-icon, .device-pulse, .activity-dot, .newdot, .habadge, .lqi')
-        && (s.querySelector('.value-badge') || s.childElementCount === 0)),
+    twinsGeometryOnly: [...root.querySelectorAll('.iso-tile-shadows .iso-tile-shadow')]
+      .every(s => s.namespaceURI === 'http://www.w3.org/2000/svg'
+        && s.childElementCount > 0 && [...s.children].every(child => child.localName === 'ellipse')),
     badgeGap: (() => {
       const dev = marker('d_temp');
       const core = dev?.querySelector('.device-core')?.getBoundingClientRect();
@@ -81,7 +87,7 @@ const read = (ids) => page.evaluate(([white, tinted]) => {
       return b ? getComputedStyle(b).boxShadow.match(/0px ([\d.]+)px 0px/)?.[1] ?? null : null;
     })(),
     markerCount: root.querySelectorAll('.devlayer .dev:not(.iso-tile-shadow)').length,
-    twinCount: root.querySelectorAll('.iso-tile-shadows .dev.iso-tile-shadow').length,
+    twinCount: root.querySelectorAll('.iso-tile-shadows [data-shadow-kind="device"]').length,
   };
 }, ids);
 const setTheme = (dark) => page.evaluate(async (isDark) => {
@@ -128,24 +134,21 @@ res.hitTarget44 = iso.white.hit[0] >= 44 && iso.white.hit[1] >= 44;
 res.oneShadowLayer = iso.layer && iso.twinsInLayerOnly && iso.twinCount === iso.markerCount;
 res.shadowsInert = iso.twinsInert;
 res.shadowTwinsAreGeometryOnly = iso.twinsGeometryOnly;
-const TABLE = {
-  'light-dark': { dy: 0.375, sigma: 0.275, white: 0.34, tinted: 0.5 },
-  'light-light': { dy: 0.425, sigma: 0.1375, white: 0.3, tinted: 0.42 },
-  'dark-dark': { dy: 0.375, sigma: 0.275, white: 0.4, tinted: 0.4 },
-  'dark-light': { dy: 0.425, sigma: 0.1375, white: 0.4, tinted: 0.4 },
-};
-const shadowMatches = (s, row, a) => !!s && near(s.a, a, 0.005) && near(s.dx, 0.1 * D, 0.05)
-  && near(s.dy, (row.dy + 0.1) * D, 0.05) && near(s.blur, 2 * row.sigma * D, 0.05)
-  && near(s.spread, -0.0375 * D, 0.05);
+const TABLE = ['light-dark', 'light-light', 'dark-dark', 'dark-light'];
+const shadowMatches = shadow => !!shadow && shadow.rx > 0 && shadow.ry > 0
+  && shadow.gradient === 'url(#hp-iso-marker-penumbra)'
+  && shadow.stops.length >= 3 && shadow.stops[0][0] === 0
+  && shadow.stops[0][1] > 0 && shadow.stops.at(-1).every((value, i) => value === (i ? 0 : 1))
+  && shadow.stops.every((stop, i, all) => !i || stop[0] > all[i - 1][0] && stop[1] < all[i - 1][1]);
 const combos = {};
-for (const [key, row] of Object.entries(TABLE)) {
+for (const key of TABLE) {
   const [theme, floor] = key.split('-');
   await setTheme(theme === 'dark');
   await setFloor(floor === 'light' ? '#eee8de' : '#737777');
   const now = await read([WHITE, TINTED]);
   combos[key] = now;
   res[`shadow_${key}`] = now.white.floorLight === (floor === 'light')
-    && shadowMatches(now.white.shadow, row, row.white) && shadowMatches(now.tinted.shadow, row, row.tinted);
+    && shadowMatches(now.white.shadow) && shadowMatches(now.tinted.shadow);
 }
 // Light floor: lighter edge brightness(.82) saturate(.8) → #d1d1d1; dark theme → #4a4a4a.
 res.edgeLightFloor = combos['light-light'].white.edgeColor === 'rgb(209, 209, 209)';
@@ -292,9 +295,10 @@ await page.evaluate(() => {
 await page.evaluate(async () => { await window.__hpTest.setVolumetricView(true); });
 // Two ordinary markers next to each other in tab order; the later one paints
 // over the earlier one when both share a layer.
-const pair = await page.evaluate(() => [...window.__card.renderRoot
+const tabPair = () => page.evaluate(() => [...window.__card.renderRoot
   .querySelectorAll('.devlayer .dev:not(.iso-tile-shadow)[tabindex="0"]')].slice(0, 2).map((dev) => dev.dataset.id));
-const [under, over] = pair;
+let pair = await tabPair();
+let [under, over] = pair;
 const coreBox = (id) => page.evaluate((markerId) => {
   const r = window.__card.renderRoot
     .querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${markerId}"] .device-core`).getBoundingClientRect();
@@ -308,8 +312,8 @@ const placePair = (dx) => page.evaluate(([a, b, offset]) => window.__hpTest.setL
 await placePair(0.02);
 {
   const [a, b] = [await coreBox(under), await coreBox(over)];
-  // the neighbour's core starts in the middle of the focused one
-  await placePair(0.02 * (a.width / 2) / Math.max(1, b.left - a.left));
+  // Keep enough shared opaque interior after excluding both rounded edges.
+  await placePair(0.02 * (a.width * .38) / Math.max(1, b.left - a.left));
 }
 const focusable = () => page.evaluate(([a, b]) => {
   const root = window.__card.renderRoot;
@@ -372,7 +376,7 @@ const overlapChange = async () => {
     for (let y = 0; y < one.height; y++) {
       for (let x = 0; x < one.width; x++) {
         const px = clip.x + x + 0.5, py = clip.y + y + 0.5;
-        if (!inside(a, px, py, 2) || !inside(b, px, py, 2)) continue;
+        if (!inside(a, px, py, 4) || !inside(b, px, py, 4)) continue;
         const i = (y * one.width + x) * 4;
         total++;
         if ([0, 1, 2].some((k) => Math.abs(one.data[i + k] - two.data[i + k]) > 12)) changed++;
@@ -421,6 +425,11 @@ res.focusActsOnNothing = await page.evaluate(() => window.__hpServiceCalls === 0
     mode: window.__card.renderRoot.querySelector('ha-card')?.dataset.hpMode }));
 // Control: Flat keeps its focus layer.
 await page.evaluate(async () => { await window.__hpTest.setVolumetricView(false); });
+pair = await tabPair();
+[under, over] = pair;
+await placePair(.012);
+await blurAll();
+res.flatFocusFixtureOverlaps = underneath(await overlapChange());
 await keyboardFocusUnder();
 const flatFocus = await overlapChange();
 focusLayers.flat = { ...(await focusable()), ...flatFocus };

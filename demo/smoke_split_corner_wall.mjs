@@ -114,6 +114,11 @@ const res = await page.evaluate(async () => {
   await window.__hpHarnessProjection(c, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(c);
   await update();
+  // The runtime can be loaded while this floor still computes its solid body.
+  // Observe the committed wall before checking the canonical source below.
+  const isoDeadline = performance.now() + 3000;
+  while (!sr().querySelector('.iso-walls .iso-wall-top') && performance.now() < isoDeadline)
+    await new Promise(requestAnimationFrame);
   out.isoUsesCanonicalBody = !!sr().querySelector('.iso-walls .iso-wall-top')
     && c._isoSource().build().walls.flat(2).length > 0;
   await window.__hpHarnessProjection(c, 'flat');

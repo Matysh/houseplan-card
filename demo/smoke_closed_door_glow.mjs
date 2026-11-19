@@ -86,6 +86,23 @@ try {
     evidence.pixels.push({ name, deltas });
     return result;
   };
+  const halfTurn = async () => {
+    for (let n = 0; n < 2; n++) {
+      await page.locator('houseplan-card [data-hp="rotate-right"]').click();
+      await settle();
+    }
+  };
+  const isoPixelProof = async (fixture, name, sourceOnRight = false) => {
+    // The default camera looks through the leaf from the right-hand room,
+    // which hides the lamp-side floor pocket when the source is on the left.
+    // Observe the same physical probe from the lamp side in that case.
+    if (!sourceOnRight) await halfTurn();
+    try {
+      return await pixelProof(fixture, name);
+    } finally {
+      if (!sourceOnRight) await halfTurn();
+    }
+  };
   const fixture = await seed();
   const stored = () => page.evaluate(() => JSON.stringify([window.__card._serverCfg, window.__card._layout,
     window.__card._cfgRev, window.__card._layoutRev]));
@@ -100,19 +117,24 @@ try {
   // Changing the view preference intentionally persists that preference, unlike
   // live contact/light updates; it is not a read-only camera operation.
   await page.evaluate(() => window.__hpTest.setVolumetricView(true)); await settle();
-  const iso = await pixelProof(fixture, 'iso');
+  const iso = await isoPixelProof(fixture, 'iso');
   assert.notDeepEqual(iso.clip, flat.clip, 'Iso closes at its selected face, Flat at the saved axis');
-  const renderedLeaf = async f => {
-    const plane = await page.evaluate(() => {
-      const root=window.__card.shadowRoot;
-      return ['leaf-front','leaf-back'].map(surface=>{
-        const path=root.querySelector(`[data-id="closed-door"][data-surface="${surface}"]`);
-        if(!path) throw Error('actual rendered closed door leaf missing');
-        const numbers=path.getAttribute('d').match(/-?\d+(?:\.\d+)?/g).map(Number);
-        return numbers[0]; // First vertex is the unchanged z=0 ground hinge.
-      }).reduce((a,b)=>a+b)/2;
-    });
-    assert.ok(Math.abs(plane-f.doorLightIsoPanelX*1000)<.001,'light probe plane matches actual rendered leaf, not the wall axis');
+  const renderedLeaf = async (f, flipV = false) => {
+    if (flipV) await halfTurn();
+    try {
+      const leaf = await page.evaluate(() => {
+        const card = window.__card;
+        const basis = card._isoSource().build().openings.find(item => item.id === 'closed-door');
+        const face = card.shadowRoot.querySelector(
+          '[data-id="closed-door"][data-surface="leaf-front"], [data-id="closed-door"][data-surface="leaf-back"]');
+        return { plane: basis?.leaves[0]?.hinge[0], painted: !!face?.getAttribute('d') };
+      });
+      assert.ok(leaf.painted, 'the camera facing the selected wall face must paint the closed leaf');
+      assert.ok(Math.abs(leaf.plane - f.doorLightIsoPanelX * 1000) < .001,
+        `light probe plane must match the door mesh at the selected face: ${JSON.stringify(leaf)}`);
+    } finally {
+      if (flipV) await halfTurn();
+    }
   };
   await renderedLeaf(fixture);
   const isoStored=await stored();
@@ -132,7 +154,7 @@ try {
     const f=await seed({wallCm,right,flipV,flipH});
     const expectedFlat=(await prepareClosedDoorLight(page,f)).clip;
     await page.evaluate(()=>window.__hpTest.setVolumetricView(true)); await settle();
-    await pixelProof(f,`iso-${wallCm}-${right}-${flipV}-${flipH}`); await renderedLeaf(f);
+    await isoPixelProof(f,`iso-${wallCm}-${right}-${flipV}-${flipH}`,right); await renderedLeaf(f, flipV);
     const retained=(await prepareClosedDoorLight(page,f)).clip;
     await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{cfg.spaces[0].settings.hide_openings=true;})); await settle();
     assert.deepEqual((await prepareClosedDoorLight(page,f)).clip,retained,'hiding opening paint never changes Glow');

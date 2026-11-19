@@ -113,6 +113,10 @@ export class LightBarrierPass {
     finally { this.scenes.clear(); lightPass.map = this.scenes = previous; }
   }
 
+  invalidate(space: SpaceModel): void {
+    this.scenes?.delete(space);
+  }
+
   read(space: SpaceModel, build: () => LightBarrierScene): LightBarrierScene {
     const retained = this.scenes?.get(space);
     if (retained) return retained;
