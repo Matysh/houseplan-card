@@ -152,10 +152,14 @@ const hold = async (session) => {
   return { opened, heldMs };
 };
 
-/** The plan's own frame: a zoom or a pan of the plan changes it. */
-const planViewBox = (page) => page.evaluate((selector) => {
+/** The painted pose includes the camera's retained transform during a pan. */
+const planPose = (page) => page.evaluate((selector) => {
   const card = document.querySelector(selector);
-  return (card.shadowRoot || card.renderRoot).querySelector('.zoomwrap > svg')?.getAttribute('viewBox') || '';
+  const plan = (card.shadowRoot || card.renderRoot)
+    .querySelector('.zoomwrap svg.plan-svg[data-hp-live-viewbox]:not([data-hp-retained-light])');
+  const matrix = plan?.getScreenCTM();
+  if (!matrix) throw new Error('kiosk plan has no screen pose');
+  return JSON.stringify([matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f]);
 }, KIOSK);
 
 /** Every real pointerup of a press, and whether the dialog or the stage received it. */
@@ -254,7 +258,7 @@ const jitterDialog = async (session, type, closeVia = 'pointer') => {
       }
     }, true);
   }, KIOSK);
-  const before = await kioskState(page), frame = await planViewBox(page);
+  const before = await kioskState(page), frame = await planPose(page);
   const started = Date.now();
   const touch = (kind, point = p) => cdp.send('Input.dispatchTouchEvent', {
     type: kind, touchPoints: kind === 'touchEnd' ? [] : [{ ...point, id: 31 }],
@@ -300,7 +304,7 @@ const jitterDialog = async (session, type, closeVia = 'pointer') => {
   } else { await button.focus(); await page.keyboard.press(closeVia); }
   await page.locator(DIALOG).waitFor({state:'detached'});
   out[`${name}FreshInputClosesDialog`] = !(await kioskState(page)).open;
-  out[`${name}HoldNeverChangesPlanFrame`] = (await planViewBox(page)) === frame;
+  out[`${name}HoldNeverChangesPlanFrame`] = (await planPose(page)) === frame;
   out[`${name}UsesTrustedInput`] = await page.evaluate(({ type, pointer }) => {
     const events = window.__hpJitterEvents.filter(e => e.type === type && e.trusted);
     return events.some(e => e.kind === 'pointermove')
@@ -333,7 +337,7 @@ await kiosk.page.evaluate((selector) => {
   });
 }, KIOSK);
 for (const type of ['mouse', 'touch']) {
-  const p = await emptyStagePoint(kiosk.page), original = await planViewBox(kiosk.page);
+  const p = await emptyStagePoint(kiosk.page), original = await planPose(kiosk.page);
   const send = (kind, dx = 0, dy = 0) => kiosk.cdp.send('Input.dispatchTouchEvent', {
     type: kind, touchPoints: kind === 'touchEnd' ? [] : [{ x: p.x + dx, y: p.y + dy, id: 9 }],
   });
@@ -343,7 +347,7 @@ for (const type of ['mouse', 'touch']) {
   if (type === 'mouse') await kiosk.page.mouse.move(p.x + 25, p.y + 20, { steps: 3 });
   else await send('touchMove', 25, 20);
   await kiosk.page.waitForTimeout(HOLD_MS);
-  out[`${type}SlowPanActuallyMovesPlan`] = (await planViewBox(kiosk.page)) !== original;
+  out[`${type}SlowPanActuallyMovesPlan`] = (await planPose(kiosk.page)) !== original;
   out[`${type}SlowPanNeverOpensHold`] = !(await kioskState(kiosk.page)).open;
   if (type === 'mouse') await kiosk.page.mouse.move(p.x, p.y, { steps: 3 });
   else await send('touchMove');
@@ -437,14 +441,14 @@ await kiosk.page.evaluate((selector) => {
     return hass.callService(...args);
   } };
 }, KIOSK);
-const mouseBefore = { viewBox: await planViewBox(kiosk.page), state: await kioskState(kiosk.page) };
+const mouseBefore = { pose: await planPose(kiosk.page), state: await kioskState(kiosk.page) };
 const rounds = [];
 for (let round = 0; round < 3; round += 1) {
   const result = await mouseHold(kiosk, round === 0);
-  result.viewBox = await planViewBox(kiosk.page);
+  result.pose = await planPose(kiosk.page);
   result.closed = await closeDialog(kiosk.page);
   await kiosk.page.waitForTimeout(300);
-  result.viewBoxAfterClose = await planViewBox(kiosk.page);
+  result.poseAfterClose = await planPose(kiosk.page);
   rounds.push(result);
 }
 const roundsSeen = rounds.map((round) => ({
@@ -458,9 +462,9 @@ out.mouseReleaseIsDeliveredToTheOpenDialog = rounds.every((round) => round.relea
   || JSON.stringify(roundsSeen);
 out.dialogStaysOpenUntilClosed = rounds.every((round) => round.openAfterRelease && round.closed)
   || JSON.stringify(roundsSeen);
-out.mouseHoldsNeverZoomThePlan = rounds.every((round) => round.viewBox === mouseBefore.viewBox
-  && round.viewBoxAfterClose === mouseBefore.viewBox)
-  || JSON.stringify({ before: mouseBefore.viewBox, after: rounds.map((round) => round.viewBoxAfterClose) });
+out.mouseHoldsNeverZoomThePlan = rounds.every((round) => round.pose === mouseBefore.pose
+  && round.poseAfterClose === mouseBefore.pose)
+  || JSON.stringify({ before: mouseBefore.pose, after: rounds.map((round) => round.poseAfterClose) });
 const mouseAfter = await kioskState(kiosk.page);
 out.mouseHoldsKeepTheSavedScale = same(
   { iconSize: mouseBefore.state.iconSize, labelFont: mouseBefore.state.labelFont, stored: mouseBefore.state.stored },

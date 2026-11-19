@@ -144,7 +144,17 @@ experiment cut the count from 21 to 2, but clipped markers outside the anchor
 rectangle. Restoring the full paint reserve preserved the pixels and restored
 those layer allocations. The experiment was discarded.
 
-The pinned grid-scale witness also reported a dark-theme difference on this
-branch. The equivalent dev comparison passed. The closed-door pixel witness
-and the old marker-overlap witness reproduced failures on the exact dev base.
-These results leave full S6 and the compositor criteria open.
+The grid-scale witness exposed a thin seam on a clipped door face in the
+dark scene. Computing the cuts in reference-scale units fixed the pair at
+both grid sizes. The existing native probe recorded zero pixels beyond two
+levels of per-channel change in each theme. The kiosk and room-fit probes now
+compare the screen pose so the retained SVG transform is included.
+
+On Windows at 1920×1080, DPR 1, the 45-step pan median was 2.961 s on
+`e5c56c0e4`, 0.817 s with the bounded label shadows and 0.774 s in Flat on
+the same candidate. This is 3.62× faster than the pinned 2.5D baseline and
+1.06× the time of Flat. The 20% baseline target remains open.
+
+The closed-door pixel witness and the old marker-overlap witness reproduced
+failures on the exact dev base. Full S6 and the compositor criteria remain
+open.

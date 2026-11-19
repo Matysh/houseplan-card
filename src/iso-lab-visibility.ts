@@ -10,6 +10,7 @@ type Polygon = Point[][];
 type Multi = Polygon[];
 type Plane = [number,number,number];
 type Face = { entry: IsoWallDepthQueueEntry; geom: Multi; plane: Plane; bounds: number[]; opaque: boolean };
+type ClipCoordinates = { point: (p: Point) => Point; height: (z: number) => number };
 // Keep calculations at full precision. Rounding a face before comparing it
 // with its own height plane creates false self-occlusion at shared edges.
 const DEPTH_EPS=1e-5;
@@ -82,10 +83,10 @@ function convexParts(poly:Polygon):Multi {
   }
   return out;
 }
-const path=(geom:Multi)=>geom.flatMap(poly=>poly.map(ring=>
-  `M ${ring.map(p=>p.map(v=>Number(v.toFixed(4))).join(' ')).join(' ')} Z`)).join(' ');
+const path=(geom:Multi, restore?: (p: Point) => Point)=>geom.flatMap(poly=>poly.map(ring=>
+  `M ${ring.map(p=>(restore ? restore(p) : p).map(v=>Number(v.toFixed(4))).join(' ')).join(' ')} Z`)).join(' ');
 
-function faceOf(entry:IsoWallDepthQueueEntry,camera:IsoCamera):Face|null {
+function faceOf(entry:IsoWallDepthQueueEntry,camera:IsoCamera, coordinates?: ClipCoordinates):Face|null {
   let geom:Multi,vertices:number[][],opaque=true;
   if(entry.layer==='wall-top') {
     const f=entry.face;if(!f.projectedRings||f.height===undefined)return null;
@@ -100,6 +101,10 @@ function faceOf(entry:IsoWallDepthQueueEntry,camera:IsoCamera):Face|null {
     vertices=s.points.map(p=>[...projectPlanPoint(p.point,p.z,camera),p.z]);
     geom=[[vertices.map(p=>[p[0],p[1]] as Point)]];
     opaque=!['glass-side','glass-top','glass-over-fabric','light-window'].includes(s.material);
+  }
+  if (coordinates) {
+    vertices = vertices.map(([x,y,z]) => [...coordinates.point([x,y]), coordinates.height(z)]);
+    geom = geom.map(poly => poly.map(ring => ring.map(coordinates.point)));
   }
   const plane=heightPlane(vertices);if(!plane)return null;
   geom=geom.flatMap(convexParts);
@@ -286,12 +291,21 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
 }
 
 let lastKey='',lastResult:readonly IsoWallDepthQueueEntry[]=[];
-export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry[],camera:IsoCamera):readonly IsoWallDepthQueueEntry[] {
-  const key=JSON.stringify(camera)+entries.map(e=>e.layer==='opening'
+export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry[],camera:IsoCamera,scale = 1):readonly IsoWallDepthQueueEntry[] {
+  const key=JSON.stringify(camera)+`:${scale}:`+entries.map(e=>e.layer==='opening'
     ? [e.surface.id,e.surface.kind,e.surface.material,e.surface.leaf,e.surface.d].join(':')
     : e.layer+e.face.d).join('|');
   if(key===lastKey)return lastResult;
-  const faces=entries.map(e=>faceOf(e,camera));
+  // Resolve coincident edges in the same physical coordinate system for
+  // coarse and fine grids. Subpixel differences otherwise create fragments.
+  const [x0,y0]=projectPlanPoint([0,0],0,camera);
+  const normalize = (value: number) => Math.round(value / scale * 1e6) / 1e6;
+  const coordinates: ClipCoordinates = {
+    point: ([x,y]) => [normalize(x-x0), normalize(y-y0)],
+    height: normalize,
+  };
+  const restore = ([x,y]:Point): Point => [x*scale+x0,y*scale+y0];
+  const faces=entries.map(e=>faceOf(e,camera,coordinates));
   const result=entries.flatMap((entry,i)=>{
     // Structural caps share H, the highest plane in this model. Keep their
     // original even-odd contours; their trapezoids are only used as occluders.
@@ -317,7 +331,7 @@ export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry
       }
     }
     if(!visible.length)return [];
-    const d=path(visible);
+    const d=path(visible,restore);
     return [entry.layer==='opening'?{...entry,surface:{...entry.surface,d}}:{...entry,face:{...entry.face,d}}] as IsoWallDepthQueueEntry[];
   });
   // Transparent faces have already been clipped by every nearer opaque

@@ -281,7 +281,8 @@ function renderIsoStructure(
   ] : scene.openingSurfaces.filter(surface => surface.material === 'wall-side' || surface.material === 'wall-top');
   const ordered = buildIsoWallDepthQueue(scene.geometry, openingSurfaces,
     (scene.camera?.floorScaleY ?? 1) !== 1);
-  const depthQueue = ISO_LAB_OPENINGS && scene.camera ? clipIsoOpeningDepthQueue(ordered,scene.camera) : ordered;
+  const depthQueue = ISO_LAB_OPENINGS && scene.camera
+    ? clipIsoOpeningDepthQueue(ordered,scene.camera,gridVisualScale(cellCm)) : ordered;
   const wallCut = ISO_LAB_OPENINGS ? continuousWallCut(scene,depthQueue) : '';
   if (scene.camera && overlays) for (const placement of overlays.devices.values()) {
     placement.wallMask = deviceWallOcclusion(depthQueue,scene.camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));

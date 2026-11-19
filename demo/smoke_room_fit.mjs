@@ -97,17 +97,17 @@ const out = await page.evaluate(async () => {
     const position = [c._labelPos(room(), 'fit-floor').x, c._labelPos(room(), 'fit-floor').y];
     const expectedLeft = ((position[0] - activeView.x) / activeView.w) * 100;
     const expectedTop = ((position[1] - activeView.y) / activeView.h) * 100;
-    const actualView = activeSvg?.getAttribute('viewBox')?.trim().split(/\s+/).map(Number) || [];
+    const matrix = activeSvg?.getScreenCTM();
+    const paintedPosition = matrix && new DOMPoint(...position).matrixTransform(matrix);
     const labelRect = activeLabel?.getBoundingClientRect();
     const stageRect = root.querySelector('.stage')?.getBoundingClientRect();
-    syncFrames.push(actualView.length === 4
-      && actualView.every((value, index) => Math.abs(value
-        - [activeView.x, activeView.y, activeView.w, activeView.h][index]) < 1e-6)
-      && !!labelRect && !!stageRect
+    syncFrames.push(!!paintedPosition && !!labelRect && !!stageRect
+      && Math.abs(paintedPosition.x - (stageRect.left + stageRect.width * expectedLeft / 100)) < 1
+      && Math.abs(paintedPosition.y - (stageRect.top + stageRect.height * expectedTop / 100)) < 1
       && Math.abs(labelRect.left + labelRect.width / 2
-        - (stageRect.left + stageRect.width * expectedLeft / 100)) < 1
+        - paintedPosition.x) < 1
       && Math.abs(labelRect.top + labelRect.height / 2
-        - (stageRect.top + stageRect.height * expectedTop / 100)) < 1);
+        - paintedPosition.y) < 1);
   }
   result.svgAndHtmlShareTweenFrames = tweenStarted
     && syncFrames.length === 1 && syncFrames.every(Boolean);
