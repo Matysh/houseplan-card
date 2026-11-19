@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16216,
+  "revision": 16217,
   "nextTicket": 529,
   "nextFence": 529,
   "tasks": {
@@ -5041,7 +5041,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1470-iso-performance",
-      "materialSha": "e21faac27bab22d35b03b488bb2e52ced4ccf2b2",
+      "materialSha": "f10e0e7126fec31be6603c8be66c50bb13523073",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 528,
@@ -5049,12 +5049,13 @@
       "status": "S6-in-progress",
       "readyAt": 1795077659410,
       "reviewEntry": 3,
-      "patchId": "0d129fcfb00fa9dc989c480a3a907cba69668e4a",
+      "patchId": "77afca1ac8f6a834bf45ef766cfdceb0275ca20d",
       "changedFiles": [
         "demo/benchmark_iso_paint.mjs",
         "demo/fixtures/iso-paint.mjs",
         "demo/helpers/iso-paint-scene.mjs",
         "demo/smoke_iso_label_bounds.mjs",
+        "demo/smoke_iso_theme_walls.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/ISOMETRIC.md",
@@ -5068,6 +5069,8 @@
         "src/iso-room-furniture-overlap.ts",
         "src/iso-room-label-bounds.ts",
         "src/styles/iso-lab-markers.styles.ts",
+        "test/bundle-assets.test.mjs",
+        "test/fixtures/845-wall-corpus-current-identities.json",
         "test/iso-room-label-bounds.test.mjs"
       ],
       "notice": {
@@ -5510,11 +5513,12 @@
     "worker": "finish",
     "token": "528:finish:fc613888-d1d2-430c-b87b-f69dde97ab4f:finish:1:admit",
     "fence": 528,
-    "materialSha": "e21faac27bab22d35b03b488bb2e52ced4ccf2b2",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "f10e0e7126fec31be6603c8be66c50bb13523073",
+    "expectedBase": "7d1e756b122790a51466a8670096a5e06773ee85",
+    "phase": "testing",
     "admittedAt": 1795077663805,
-    "expiresAt": 1795077963805
+    "expiresAt": 1795077973124,
+    "patchId": "77afca1ac8f6a834bf45ef766cfdceb0275ca20d"
   },
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5623,6 +5627,10 @@
     },
     "github:44487483633:1:completions:notice:10e3af5ee088282f333f58144120d875d9856a0abfefcf797f2af16908d48434": {
       "digest": "12e7187a6b8e2ca5d3b960dc20d5af8b42cbd28a7abadfd5ded186c0dd254fa0",
+      "issue": 1470
+    },
+    "finish:fc613888-d1d2-430c-b87b-f69dde97ab4f:finish:2:synchronized": {
+      "digest": "56caec154acf31a60078f203013d4c4a57e3144116730d8051637ab78278eb5c",
       "issue": 1470
     },
     "github:44472051036:1:label:spec-request:spec-resubmitted:1470": {
