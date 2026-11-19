@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16725,
+  "revision": 16726,
   "nextTicket": 540,
   "nextFence": 540,
   "tasks": {
@@ -5132,6 +5132,15 @@
         "entry": 1,
         "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/room-write-python.test.mjs: failed; Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_coordinate_canonicalization.py: failed; Backend: tests_backend/test_coordinate_canonicalization_pure.py: failed; Backend: tests_backend/test_geometry_cleanup_842.py: failed; Backend: tests_backend/test_graph_host_continuity.py: failed; Backend: tests_backend/test_graph_node_write.py: failed; Backend: tests_backend/test_graph_write.py: failed; Backend: tests_backend/test_ha_node_save_validation.py: failed; Backend: tests_backend/test_ha_plan_graph.py: failed; Backend: tests_backend/test_ha_portable_recovery.py: failed; Backend: tests_backend/test_ha_room_contact_grid.py: failed; Backend: tests_backend/test_ha_room_contact_storage.py: failed; Backend: tests_backend/test_ha_room_opening_host.py: failed; Backend: tests_backend/test_ha_signal_visibility_low.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_ha_wall_node_attach.py: failed; Backend: tests_backend/test_ha_wall_node_delete.py: failed; Backend: tests_backend/test_ha_wall_node_dependency_carrier.py: failed; Backend: tests_backend/test_ha_wall_node_merge.py: failed; Backend: tests_backend/test_ha_wall_node_move_baseline.py: failed; Backend: tests_backend/test_ha_wall_removal_limits.py: failed; Backend: tests_backend/test_junction_limits.py: failed; Backend: tests_backend/test_junction_parity.py: failed; Backend: tests_backend/test_led_strips.py: failed; Backend: tests_backend/test_node_save_validation.py: failed; Backend: tests_backend/test_plan_graph.py: failed; Backend: tests_backend/test_plan_graph_migration.py: failed; Backend: tests_backend/test_plan_graph_source.py: failed; Backend: tests_backend/test_plan_graph_support.py: failed; Backend: tests_backend/test_portable_recovery.py: failed; Backend: tests_backend/test_radar_geometry.py: failed; Backend: tests_backend/test_room_appearance.py: failed; Backend: tests_backend/test_room_contact_grid.py: failed; Backend: tests_backend/test_room_opening_host.py: failed; Backend: tests_backend/test_settings_moon.py: failed; Backend: tests_backend/test_settings_signal_visibility.py: failed; Backend: tests_backend/test_virtual_lights.py: failed; Backend: tests_backend/test_wall_contact_storage.py: failed; Backend: tests_backend/test_wall_face_lineage.py: failed; Backend: tests_backend/test_wall_node_attach.py: failed; Backend: tests_backend/test_wall_node_connected.py: failed; Backend: tests_backend/test_wall_node_delete.py: failed; Backend: tests_backend/test_wall_node_dependency_carrier.py: failed; Backend: tests_backend/test_wall_node_merge.py: failed; Backend: tests_backend/test_wall_node_move.py: failed; Backend: tests_backend/test_wall_node_parity.py: failed; Backend: tests_backend/test_wall_removal_proof.py: failed; Backend: tests_backend/test_wall_segment_model.py: failed; Браузер: standalone entry: failed",
         "eventId": "finish:31aaec15-9c29-4507-8b13-9f34c8a216e9:finish:3:return:return:1477"
+      },
+      "s6": {
+        "id": "20261119T143757120-01e84776",
+        "name": "Тесты для задачи #1477 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T143757120-01e84776/report.json",
+        "materialSha": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
+        "status": "passed",
+        "finishedAt": "2026-11-19T14:40:29.291Z",
+        "failures": []
       }
     }
   },
@@ -5622,9 +5631,9 @@
     "fence": 539,
     "materialSha": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
     "expectedBase": "3ab955f133610ea40e7e41c7cc4f5a3288346413",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795099064654,
-    "expiresAt": 1795099483418,
+    "expiresAt": 1795102830661,
     "patchId": "122fc2a34328a06ea9acb79681ee64e6ae0b96c3"
   },
   "events": {
@@ -5710,6 +5719,10 @@
     },
     "finish:8f676956-f12e-4d2f-a61f-d4815101231d": {
       "digest": "a397fe310e64f96bc58b0ecc8065f6ce476c06b74e77cad6e115561a499d0fe7",
+      "issue": 1477
+    },
+    "finish:ee374d55-29a3-48b9-b332-983ea4ee8a0f:finish:3:s6-complete": {
+      "digest": "b1e2d38e400d9ce3e39296ca4756636ca3c13481fb55b9a6128f1eb5d263dc8b",
       "issue": 1477
     },
     "finish:31aaec15-9c29-4507-8b13-9f34c8a216e9": {
