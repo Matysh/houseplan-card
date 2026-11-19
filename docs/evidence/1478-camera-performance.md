@@ -186,3 +186,19 @@ Node cases. Subsequent fixes restore pointer hover after wheel zoom with no
 new mouse movement and keep the vacuum route's paint window bounded during
 pinch. The pinned Zigbee tooltip and vacuum camera checks passed with those
 fixes, together with 32 addressed Node cases and static guard checks.
+
+### Live marker surface
+
+The live HTML markers now paint into one padded surface. The 50% reserve per
+side fits inside its paint bounds, with the devices and labels still using
+the stage-sized inner plane and their original hit targets. At 1408×952 and
+DPR 2 on RTX 4090, the same 24-notch wheel probe went from 21 new drawing
+layers to one at the centre and from 33 to zero at the edge. The one centre
+layer was the scale badge appearing as zoom crossed 100%. The final
+implementation reproduced these counts.
+
+In the 4K physical trace with the new surface both series delivered 14 notches
+and replaced the cached frame twice. All sampled viewport images contained
+wall paint. Zoom-out matched the exact reference at 298 ms. The closest
+zoom-in frame before the fresh reference appeared at 359 ms, with 39 sampled
+pixels differing by up to two RGB levels. The 300 ms target remains open.

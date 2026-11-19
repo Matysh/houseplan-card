@@ -29,6 +29,13 @@ const aligned=({labels})=>labels.length===8&&labels.every(row=>row.error<=1&&row
 try {
   const original=await snapshot();
   check('eight raised room labels stay readable above walls and furniture',aligned(original));
+  check('the padded marker surface owns the projection while labels stay live',await page.evaluate(()=>{
+    const root=window.__isoPaint.renderRoot;
+    const surface=root.querySelector('[data-hp-marker-surface-active]');
+    const layer=surface?.querySelector('.devlayer');
+    return !!surface?.style.transform && !!layer && !layer.style.transform
+      && getComputedStyle(surface).contain==='paint';
+  }));
   check('each caption shadow blurs inside its own paint bounds', await page.evaluate(() => {
     const shadows = [...window.__isoPaint.renderRoot.querySelectorAll('.iso-room-label-shadow')];
     return shadows.length === 8 && shadows.every(node => node.getAttribute('filter') === 'url(#hp-iso-label-penumbra)'

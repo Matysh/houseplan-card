@@ -4088,7 +4088,7 @@ export class HouseplanCard extends LitElement {
           if (record.attributeName !== 'style') return true;
           const target = record.target as Element;
           return !target.hasAttribute('data-hp-live-layer') && !target.hasAttribute('data-hp-live-viewbox')
-            && !target.hasAttribute('data-hp-live-scene');
+            && !target.hasAttribute('data-hp-live-scene') && !target.hasAttribute('data-hp-live-marker-surface');
         }) : records;
         if (deviceLayerMutated(nodes, (node) => this._syncPointerHoverSubtree(node))) {
           this._invalidateDeviceHitGeometry();
@@ -13810,7 +13810,7 @@ export class HouseplanCard extends LitElement {
                  space-card, so the two renderers agree. The compatibility
                  base is resolved before `iconCqw`; only the per-device and
                  kiosk multipliers still feed --dev-size. */}
-          <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
+          <div data-hp-live-marker-surface><div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
             ${renderRadarLive(
               [...this._radarLive.frames.values()].filter((frame) => {
                 const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);
@@ -13836,7 +13836,7 @@ export class HouseplanCard extends LitElement {
                 : nothing}
             ${this._editorRuntime && this._canEdit && !this._kiosk ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
             ${this._renderHaZigbeeTopology(space.id, view)}
-          </div>
+          </div></div>
           <div data-hp-live-editor-html></div>
           `}
           </div>

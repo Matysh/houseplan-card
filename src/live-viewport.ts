@@ -116,10 +116,18 @@ const projectionText = (projection: LiveLayerProjection): string =>
 export function liveGridBounds(view: LiveViewBox): LiveViewBox { return viewportExposure(view, {}); }
 
 const sceneExposureClips = new WeakMap<ElementCSSInlineStyle, { input: string; value: string }>();
+function setExposureClip(layer: ElementCSSInlineStyle, clip: string): void {
+  const style = layer.style;
+  const previous = sceneExposureClips.get(layer);
+  if (previous?.input === clip && previous.value === style.clipPath) return;
+  style.clipPath = clip;
+  sceneExposureClips.set(layer, { input: clip, value: style.clipPath });
+}
+
 const setLayerProjection = (
   layer: ElementCSSInlineStyle,
   projection: LiveLayerProjection | null,
-  options: { exposeSceneOverflow?: boolean; exposureClip?: string } = {},
+  options: { exposeSceneOverflow?: boolean; exposureClip?: string; origin?: string } = {},
 ): void => {
   const style = layer.style;
   const expose = options.exposeSceneOverflow === true;
@@ -152,18 +160,14 @@ const setLayerProjection = (
   if (expose && style.overflow !== 'visible') {
     style.overflow = 'visible';
   }
-  if (expose) {
-    const clip = options.exposureClip ?? 'inset(0)';
-    const previous = sceneExposureClips.get(layer);
-    if (previous?.input !== clip || previous.value !== style.clipPath) style.clipPath = clip;
-    sceneExposureClips.set(layer, { input: clip, value: style.clipPath });
-  }
+  if (expose) setExposureClip(layer, options.exposureClip ?? 'inset(0)');
   const text = projectionText(projection);
   // Promotion is gesture-scoped, not a per-frame hint (#579). Avoid even
   // equal writes while the projection changes: WebViews may treat them as
   // compositor lifecycle changes rather than harmless string assignments.
-  if (style.transformOrigin !== '0 0' && style.transformOrigin !== '0px 0px') {
-    style.transformOrigin = '0 0';
+  const origin = options.origin ?? '0 0';
+  if (style.transformOrigin !== origin && !(origin === '0 0' && style.transformOrigin === '0px 0px')) {
+    style.transformOrigin = origin;
   }
   // A mode surface owns opacity as well as this camera's transform. Do not
   // alternate its promotion hint on every frame.
@@ -188,6 +192,7 @@ const findViewportNodes = (root: ParentNode) => {
   ]);
   return {
     camera, cameraLayers, markerLayer, markerPositions,
+    markerSurface: root.querySelector<HTMLElement>('[data-hp-live-marker-surface]'),
     floor: [...root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')],
     grid: [...root.querySelectorAll<SVGElement>('[data-hp-live-grid]')],
     floorScene: [...root.querySelectorAll<HTMLElement>('[data-hp-live-scene="floor"]')],
@@ -325,7 +330,24 @@ export function paintLiveViewport(
   } else {
     for (const svg of nodes.inherited) if (svg.style.clipPath) svg.style.removeProperty('clip-path');
   }
+  const surface = nodes.markerSurface;
+  if (surface) {
+    if (surface.hasAttribute('data-hp-marker-surface-active') !== !!rebaseMarkers)
+      surface.toggleAttribute('data-hp-marker-surface-active', !!rebaseMarkers);
+    // The surface is twice the stage size. Its origin is the inner marker
+    // layer's top left, and a stage-percent translation takes half as much.
+    setLayerProjection(surface, rebaseMarkers ? {
+      ...projection,
+      translateXPercent: projection.translateXPercent / 2,
+      translateYPercent: projection.translateYPercent / 2,
+    } : null, { origin: '25% 25%' });
+  }
   for (const layer of nodes.markerLayer) {
+    if (rebaseMarkers && surface && layer.parentElement === surface) {
+      if (layer.style.transform) setLayerProjection(layer, null);
+      setExposureClip(layer, next.markerClip ??= exposureClip(markerView, next.coverage));
+      continue;
+    }
     const still = isIdentityLiveLayerProjection(projection) && !options.keepMarkerLayer;
     const markerExposure = options.keepMarkerLayer
       ? { exposeSceneOverflow: true, exposureClip: next.markerClip ??= exposureClip(markerView, next.coverage) } : undefined;

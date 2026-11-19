@@ -8445,8 +8445,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/live-viewport.ts",
-    "find": "    if (previous?.input !== clip || previous.value !== style.clipPath) style.clipPath = clip;",
-    "replace": "    style.clipPath = 'none';"
+    "find": "  style.clipPath = clip;\n  sceneExposureClips.set(layer, {",
+    "replace": "  style.clipPath = 'none';\n  sceneExposureClips.set(layer, {"
   }
 ],
   },

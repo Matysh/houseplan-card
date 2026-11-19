@@ -1507,6 +1507,14 @@ export const planStyles = css`
       pointer-events: none;
       z-index: 6;
     }
+    [data-hp-live-marker-surface]:not([data-hp-marker-surface-active]) { display:contents; }
+    /* Group intersecting markers into a single paint surface. Its padding
+       contains the camera reserve while the children still use stage units. */
+    [data-hp-marker-surface-active] {
+      display:block; position:absolute; inset:-50%; z-index:6;
+      contain:paint; overflow:clip; pointer-events:none;
+    }
+    [data-hp-marker-surface-active] > .devlayer { inset:25%; }
     .radar-target {
       position: absolute;
       width: 8px;
