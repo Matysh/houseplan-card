@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 987,
+  "revision": 988,
   "active": "1.85.3-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -122136,7 +122136,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.85.3-beta.2",
         "candidate": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
         "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
         "issues": [
@@ -129961,6 +129961,458 @@
         "source": "chat",
         "sourceRef": "chat:call_7deead69108a4df68b36afe21b5df1be/1",
         "decisionText": "Владелец явно принял для 1.85.3-beta.2 ZIP 5,38 МБ (+7,3%), весь frontend gzip 2,23 МБ (+6,6%), начальную загрузку 469 КБ (+9,4%) и публикацию после фиксации согласованных 14 эталонов: Да, принять размеры и выпустить бету. Дополнительно принял hover PNG 4c766. Финальный кандидат добавляет только согласованные PNG, их метаданные и изоляцию тестовой hover-съёмки, без изменения продукта или допусков сравнения. Временные замеры завершены, но со старым измерителем несопоставимы."
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.85.3-beta.2",
+          "candidate": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
+          "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+          "issues": [
+            {
+              "number": 1391,
+              "commits": [
+                "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+                "e41de4e50ce602989b92f320e814719530a90520"
+              ]
+            },
+            {
+              "number": 1392,
+              "commits": [
+                "193dcb853202ed8d6abbb85105aef7b12f9c6f8e",
+                "1b7b3f9bb7e774410424f0dc37dcf933d8d8dcff",
+                "1b90acd62450da2efcf0e75ee4d6c507e00d78a4",
+                "3108fed9e23905a23044453c85be4e158dabaadc",
+                "5a4752ee353842a669001a2cb66ade87d4f00871",
+                "68e97385b0900ceff9cd3df0233c94b22d6f64f7",
+                "7f9d64dc162d236e6e2792fad77c3c8a3f5fec63",
+                "80b559f8a51d21668c245f0fd00eda82e8375b03",
+                "fabc65d2e96e39a722420af290732758e50a06d4",
+                "fee2d3e988bdee9537920a0b083e289329275413"
+              ]
+            },
+            {
+              "number": 1393,
+              "commits": [
+                "759ff053090317b430cdee3dca12fba18892de4b"
+              ]
+            },
+            {
+              "number": 1394,
+              "commits": [
+                "0dc2a4683f90a8005c08f1618575c2c1c40539c9",
+                "11e2e7c19478818e151c0584cfcdcac8144dafd9",
+                "2357f3f362481a2ec12afdc6e60126c7c499ed8d",
+                "9ed0f88801ada63035ccafa464683960da8104e9",
+                "edb1b3ece1127906ce58477afe0f08d650377eac",
+                "f9a7e70dee75cc9dae22cff2ed81391f02ef13dd"
+              ]
+            },
+            {
+              "number": 1395,
+              "commits": [
+                "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
+                "3832620122b454c2b1ed1b9cdc64ae4263616c06",
+                "4c9221465557971947ea98dfdb81fbb2ce4021cd"
+              ]
+            },
+            {
+              "number": 1415,
+              "commits": [
+                "746c8b9c77268d3e809c51221ccbfb46c5072499"
+              ]
+            },
+            {
+              "number": 1421,
+              "commits": [
+                "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1",
+                "c0724ea4179e2c6971033c383ef37a441983960f"
+              ]
+            },
+            {
+              "number": 1422,
+              "commits": [
+                "5169c189d8807db00348b15ddd3723006ca9c993",
+                "a927fbd3bbcb856542cb0ff4cd4061ddf187df07"
+              ]
+            },
+            {
+              "number": 1423,
+              "commits": [
+                "17e097cc5028767c96277023575ac2052d59ef8b",
+                "46eed6c62d78fc18d8fe52119affe06b7a9d2638",
+                "57b416aaa549042855b0e99c54fc2affb109398c"
+              ]
+            },
+            {
+              "number": 1424,
+              "commits": [
+                "a9e4a01420c02318a725157c49d4b9b2e23599c4"
+              ]
+            },
+            {
+              "number": 1425,
+              "commits": [
+                "4423d4dc9c725b24fe4a3d231bd0b72cadccff62"
+              ]
+            },
+            {
+              "number": 1426,
+              "commits": [
+                "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0"
+              ]
+            },
+            {
+              "number": 1427,
+              "commits": [
+                "861880273ebcd36fd891537c15a4c3e85ccebd25",
+                "dc739d2fee27c257627e15739094135a7c306bc0"
+              ]
+            },
+            {
+              "number": 1428,
+              "commits": [
+                "320c48e40d18eca987efff4a432813fb47e01277",
+                "3ddd7b5d8ef9d7c5f16037135528f45a8483bb3a",
+                "54d3917034a0d13ea680b0ea182b086c732e9067",
+                "9c96a09c629d3343773783ba3398569099f68854",
+                "e695dfdf80d916eb8b445450189f96a396b08926"
+              ]
+            },
+            {
+              "number": 1429,
+              "commits": [
+                "e48eb720d353d31ce86848211e8063fc46334bab"
+              ]
+            },
+            {
+              "number": 1430,
+              "commits": [
+                "e756b482350cf5589228d4d282642e5d8c03ced5"
+              ]
+            },
+            {
+              "number": 1431,
+              "commits": [
+                "1728c928b3b7efe869adbe3bb1b05da8bc5f365d",
+                "1e83119d95d0acabbb45de022d9dac0756d085ce"
+              ]
+            },
+            {
+              "number": 1432,
+              "commits": [
+                "11a99eea7f7eb193c3c9985dd32d2814c66a4f6e",
+                "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172"
+              ]
+            },
+            {
+              "number": 1433,
+              "commits": [
+                "9ac718166c29162576bfff6c0ce6907dcacf4469",
+                "b29f59a34cea0e60fd984af21cdfbf94e40785ae"
+              ]
+            },
+            {
+              "number": 1434,
+              "commits": [
+                "4cf51781e2ccfbf18406be02abcd2676edebdabc",
+                "891bdbb8d7153de0d5eb6ba7f864622332849878"
+              ]
+            },
+            {
+              "number": 1435,
+              "commits": [
+                "0c828e730a564f5489ec217bb77f8a5f52a7085a",
+                "45faf4e7c16d5feb2e0f30727784d69a52429960"
+              ]
+            },
+            {
+              "number": 1436,
+              "commits": [
+                "8f7b0ffcf9ae282e2af24ee8d4dd7bd78b50591e",
+                "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7"
+              ]
+            },
+            {
+              "number": 1437,
+              "commits": [
+                "9f5ffe2b99c5c9432b03ae7e0647eb014ca3064a",
+                "c5d7a23892c69ad0504cf3048589344e03525810"
+              ]
+            },
+            {
+              "number": 1438,
+              "commits": [
+                "662309e6efe19b5187841aa0eeaca0b6047f0388",
+                "88f4ccddd0f71e703a627b97c54ae1ca21be0c5b"
+              ]
+            },
+            {
+              "number": 1439,
+              "commits": [
+                "5bd501fa75658b97b4d18608dec89984cfba21a6",
+                "b7a01fee27860d87e087d3220ed76b372e0c4a0d"
+              ]
+            },
+            {
+              "number": 1440,
+              "commits": [
+                "13232743353ca326fb8bfa6dd0904347ea7cdfe4",
+                "23f03a74108fe62e800c07627c22458701c572f0",
+                "e6dab650a19cd3d26db88e43b6d2ba0f42d68cc3",
+                "e8ced3a76cb20bca2a710a858d55348d7ca471c8"
+              ]
+            },
+            {
+              "number": 1441,
+              "commits": [
+                "9765111e4dc5d4ec24c8820cc4a307e1b4f73999",
+                "a08a3cac4940c2042442421ce88830f6a6685d5c"
+              ]
+            },
+            {
+              "number": 1442,
+              "commits": [
+                "00700679c90fda1d58fe537122b8dc81c9aa4e9e",
+                "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6"
+              ]
+            },
+            {
+              "number": 1443,
+              "commits": [
+                "56f51be8175594bb994bc9c5af159ab071dd0999",
+                "b656e79faf2344aafd031fae8373fc5bb3d834ed"
+              ]
+            },
+            {
+              "number": 1444,
+              "commits": [
+                "75925bfe1019b343cfa0b04891b08dd1074abc7e",
+                "a6a0806b9bb4326582691f6587f3d8a76d1c5e8e"
+              ]
+            },
+            {
+              "number": 1445,
+              "commits": [
+                "434018592fe8896e02b2d66d77ecea92e5e7d869",
+                "84c62b8a9aeca6d362a303fae292b37ac3b61cae"
+              ]
+            },
+            {
+              "number": 1446,
+              "commits": [
+                "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
+                "2ec0b71a8a409e10d4bb5770c7df03187537eebe"
+              ]
+            },
+            {
+              "number": 1447,
+              "commits": [
+                "5414cb9ed1be824251e1974d254c81a740ba873f",
+                "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
+                "71845cd91214f206117af4a1d27e6d98856db1ab",
+                "cc435c07eacd939f3f53a4067b087d9918f13e6d"
+              ]
+            },
+            {
+              "number": 1448,
+              "commits": [
+                "551cd6468e30003a29c70f2dd4d65d9e3fd4af31",
+                "98ceda7f4d6517050c929536263c426f0dfbac1d"
+              ]
+            },
+            {
+              "number": 1449,
+              "commits": [
+                "2adee31b34799943d8e5d613b18dc40f426148f7",
+                "58716f60ba507550a24f7286a1b00e92e6c8d6f4",
+                "8814cc56d1a75a5b4b4a49087195799aceffe9eb",
+                "d4f163e3a451dbacec1d19ee594b29b071c34c46"
+              ]
+            },
+            {
+              "number": 1450,
+              "commits": [
+                "98806c06ec8eb601c8e8774ceeb748e1a4511982"
+              ]
+            },
+            {
+              "number": 1451,
+              "commits": [
+                "108635e83cde6c9914f15f829fe20204a406fa62",
+                "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
+                "60f6eeb34695c616ba10343dab390e5cfce202ff",
+                "8b9044dff26c65919618fdb0a4707a55499d5f03",
+                "95f215489e77db0ca20edc6d9b2d46ef4d323163",
+                "9ba7f47dfe3ef949596e30fa52bef295c8c6df80",
+                "a11073ebf2f8c89433196c51adb8a2a06f2a3536",
+                "a8683a623e0d3dd8ba6c5efcabb4548e91f354dd",
+                "aa810067f77c41b8b8f12e0f873a77541e69802f",
+                "b084dfed22a9fa381d4a56c42e40bed8cc97aee0",
+                "d7f65198e07b8c84f32927cd0cd30d9178e82539",
+                "e44a5cbf01acd339cb792fd2319860cca882d554",
+                "fac0ba5fe8df4a4c7b7a0bb809fc9b4932820c52"
+              ]
+            },
+            {
+              "number": 1453,
+              "commits": [
+                "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
+                "86e7623726ca67a9c0bb00e8d2e7a423b33c5465"
+              ]
+            },
+            {
+              "number": 1454,
+              "commits": [
+                "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
+                "65e2eee71de1723d8c994e56aca750548cc58ea4",
+                "663f66a40b9a664e1394bf9079b590a863dc9242",
+                "80caf71b7573175e353cae0f1d35feeb8bf17819",
+                "a8940ad06e5664140c31499ecf3b6ba5fa4854c9",
+                "c5ff604c1ea1372203c9009299cf6d18a23f358d",
+                "cc234a7a869d3853e474c6689001ad3c9e6890ee",
+                "cf27c73e693676613ffa9c75fd33455bc7c20e69",
+                "e0db883ec8d581a3116e604586fa0e1277380f2e",
+                "e113183c2f03278d97e384caf4a7161a7b5034ca"
+              ]
+            },
+            {
+              "number": 1455,
+              "commits": [
+                "0a4d1f3091d227234150a7eb4cc981b9bcd250de",
+                "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa",
+                "4fce3b56bf721db88c490b7dcedc088182d77197",
+                "963d82fc82b4f940985c6bf173b96e38fd908432",
+                "adedf58a4ac0c728cc8474c9d9fec30893d0ebc4"
+              ]
+            },
+            {
+              "number": 1456,
+              "commits": [
+                "09f5f5082ce065406e1d5d275255875e082c6d34",
+                "68455343c9b82cd44f07a99c4a9cd46ddabb1de8"
+              ]
+            },
+            {
+              "number": 1457,
+              "commits": [
+                "40523e47bf1842fd80ad0948693b2a96b6f7d713",
+                "6d28743ea061ad639f508675d0c48fe22865cb5c",
+                "80307b4726b0857dcd94196e2ba6b8e27e1af47a",
+                "8c15c683f5193238e792bd1170b3441776c249f7"
+              ]
+            },
+            {
+              "number": 1458,
+              "commits": [
+                "1eae56d95c687b22d9498231a00dfe50db2edce3",
+                "36b3147da112e55a8e08f3dc4b5aa03d65db7afd",
+                "41f0340b38eea86f6c8feb5527893bd15024086a",
+                "492d78bda1daa9e97aa6f6f17cc848d2bf0babd7",
+                "4a6cd83f2e1fe40c3e8e7ec95ec588e412052ad3",
+                "748823ff6339636de729caf1a00b7d846da25a3c",
+                "828799ea93002e56dbc38161dc7c2a91441a18e1",
+                "bdc4a72d0aa742fbbd085e172ccb3a04845d624e",
+                "cb3780b4ff79e999cee372ea8c53d822e789924d",
+                "db2469dd8360c2954386943a48caea13c1fac912"
+              ]
+            },
+            {
+              "number": 1460,
+              "commits": [
+                "738039eaac5360c6d44bd6999a12b8ad72be2ffc",
+                "9f7721bdeb8a14e8d0120ef7301a884b2c2575cb",
+                "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
+                "f017641b56fd78679cd5dc029663361110d40fee",
+                "f9f74e1f83720246e9de17001846fac5b2331d2f"
+              ]
+            },
+            {
+              "number": 1464,
+              "commits": [
+                "1756607d709841ba0e215520d153fc243bc862e6",
+                "3faa728b1d372b3082c4944eec053d80b527bf88",
+                "46c8b6a510f882687a1fa00f0fb74e707481e0cc",
+                "7a22f0cfd89d621b92e8c5f37c373ec43d795727",
+                "86f01d480e0b4e58a8e32ee33deda1c74bad0ede",
+                "8b9c5eee054be9ddce20fb3a81e17d9a2f002a7a",
+                "cb6eaf9002826e932f1b9eae687fc865c350ccab",
+                "de6b4077363166eac6844d5679a4bf5e937f5681"
+              ]
+            },
+            {
+              "number": 1466,
+              "commits": [
+                "1d4dc0d42d3b8c6c2a4674a08937fc45d271efc8",
+                "673f588054c24a51652b8bdf8d9190d608921ea9",
+                "d108e0dfc158ce0a00a22173a95292eff40fe13a"
+              ]
+            },
+            {
+              "number": 1467,
+              "commits": [
+                "68fb9d6ec311e669bd7a9299022173d6a551e599",
+                "bb9f9b13c5ddbee1eef3a6d7ac28f4bfd7dc1ab7"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1391,
+          1392,
+          1393,
+          1394,
+          1395,
+          1415,
+          1421,
+          1422,
+          1423,
+          1424,
+          1425,
+          1426,
+          1427,
+          1428,
+          1429,
+          1430,
+          1431,
+          1432,
+          1433,
+          1434,
+          1435,
+          1436,
+          1437,
+          1438,
+          1439,
+          1440,
+          1441,
+          1442,
+          1443,
+          1444,
+          1445,
+          1446,
+          1447,
+          1448,
+          1449,
+          1450,
+          1451,
+          1453,
+          1454,
+          1455,
+          1456,
+          1457,
+          1458,
+          1460,
+          1464,
+          1466,
+          1467
+        ],
+        "version": "1.85.3-beta.2",
+        "body": "<!-- release: v1.85.3-beta.2 -->\n<!-- base: v1.85.2 -->\n<!-- language: ru -->\n## Houseplan 1.85.3-beta.2\n\nИзменения после beta.1:\n\n- Новый наклонный 2.5D-вид: проработанные стены и проёмы, 60 объёмных моделей мебели и связь компьютера со столом. Редакторы остаются плоскими. 2.5D пока находится в разработке; у существующего верхнего открывания окна меняется только объёмное изображение — створка наклоняется с неподвижным нижним краем, сохранённая настройка и датчики не меняются. [#1451](https://github.com/Matysh/houseplan-card/issues/1451)\n- Подготовленная геометрия этажей сохраняется в локальном кэше. При загрузке может показываться пассивная архитектурная основа, пока готовятся актуальные данные; старые состояния устройств не выдаются за текущие. [#1454](https://github.com/Matysh/houseplan-card/issues/1454)\n- Контекстное меню комнаты в редакторе плана объединяет настройки, изменение размера, разделение, объединение и удаление. [#1453](https://github.com/Matysh/houseplan-card/issues/1453)\n- Отдельный ZIP планировки всего дома переносит этажи, лестницы и изображения без устройств и HA-привязок. Импорт добавляет планировку, не заменяя общие настройки принимающей установки. Полный бэкап остаётся отдельной операцией. [#1464](https://github.com/Matysh/houseplan-card/issues/1464)\n\nПеред обновлением сохраните резервную копию. После установки перезапустите Home Assistant и перезагрузите страницы Houseplan.\n\n<!-- language: en -->\n## Houseplan 1.85.3-beta.2\n\nChanges since beta.1:\n\n- New angled 2.5D presentation with refined walls and openings, 60 volume furniture models and desk/computer links. Editors remain flat. 2.5D is still under development. Existing top-opening windows change their volume appearance only: the sash tilts around its fixed bottom edge; saved settings and sensors are unchanged. [#1451](https://github.com/Matysh/houseplan-card/issues/1451)\n- Prepared floor geometry is retained in a local cache. A passive architectural preview can appear while current data is prepared; stale device states are not presented as live. [#1454](https://github.com/Matysh/houseplan-card/issues/1454)\n- A room context menu in the plan editor brings together settings, resize, split, merge and delete actions. [#1453](https://github.com/Matysh/houseplan-card/issues/1453)\n- A separate whole-house plan ZIP transfers floors, stairs and images without devices or HA bindings. Import appends the plan without replacing the destination's global settings. Full backup remains a separate operation. [#1464](https://github.com/Matysh/houseplan-card/issues/1464)\n\nBack up your plan before updating. Restart Home Assistant after installation and reload Houseplan pages.\n",
+        "technical": {
+          "ru": "## v1.85.3-beta.2 — 2026-11-19\n\n- Согласованный ISO hover-кадр снимается в отдельном браузере, чтобы история отрисовки SVG-масок предыдущих сцен не меняла пиксели подписей комнат; принятый PNG, смысловые проверки и пиксельные допуски сохранены (#1451).\n- Плотные ISO golden-сцены проверяют согласованную плоскость значков на полу с отрицательными контролями координат, nudging и отсутствующих значков; убран только отменённый оракул подъёма к верху стен (#1451).\n- Golden и бенчмарк ждут настоящую готовую или явно пустую поверхность; ISO из Worker/кэша проверяется по нарисованной кладке, а не обязательной сборке основного потока. Сохранены отрицательные pending/inert-контроли, смена этажа измеряется до готовности (#1467).\n\n- Восстановлены пять ночных мутационных проверок полномочий, отложенных событий, автофокуса, вытеснения подготовленного кеша и инструмента «Линия»; ротация разделена на семь ночей при прежнем лимите времени (#1466).\n- Перенесён принятый наклонный 2.5D-вид в обычный Просмотр: общая камера main/worker, проработанные стены и проёмы, 60 объёмных моделей, согласованные перекрытия живых слоёв и безопасный полный Flat при сбое. Связь стола и компьютера сохраняется в истории, копиях, экспорте/импорте и печати; старые вкладки не могут молча разрушить её (#1451).\n\n- Добавлен отдельный ZIP планировки всего дома для редакторов: этажи, межэтажные лестницы и изображения добавляются атомарно без устройств/HA-привязок, исправления старых ссылок или замены общих настроек; общий механизм работает и для автономного хоста, прежние JSON и полный бэкап сохранены (#1464).\n\n- Команды плана, операции с файлами и временными импортами вынесены в общий слой для HA и автономных хостов; подготовлены самостоятельные wheel/sdist ядра и проверки адаптера без изменения формата данных и публикации сервиса (#1460).\n- Добавлен локальный автономный импорт архитектурного IFC2x3/IFC4 через конвертер: выбор этажей, редактируемые стены, комнаты и проёмы, предпросмотр и явный отчёт о потерях; совместимость КОМПАС проверяется отдельно (#1458).\n- Восстановлена чувствительность ночных проверок счётчика построений при вытеснении из полного LRU во время Resize и перехвата правой кнопки узловым редактором; сохранены восстановление готовой геометрии и защита сцены от панорамирования, актуализирован браузерный реестр, проверки touch/киоска и холодного View ждут готовности активного этажа (#1457).\n- Восстановлен ночной запуск проверки TS/Python через модуль без зависимости от PYTHONPATH; диагностическая сборка сохраняет точные карты исходников изолированного Worker, включая подстановки адресов ресурсов (#1456).\n- Восстановлены ночные мутационные проверки: подготовка учитывает транзитивные импорты браузерных фикстур, а мутация позднего подключения HA — оба независимых пути восстановления; добавлена проверка окраски ворот при отсутствующем датчике (#1455).\n- Добавлен адресный постоянный кэш геометрии этажей и фоновая подготовка при промахе; пассивная архитектурная основа отделена от актуальных устройств, состояний проёмов и подтверждения свежих серверных данных (#1454).\n- У настройки 2.5D добавлена видимая пометка о стадии разработки и возможных недочётах отображения на всех поддерживаемых языках (#1450).\n- В редакторе плана добавлено контекстное меню комнаты: настройки, Resize, разделение, объединение и удаление; в настройках комнаты появилась кнопка удаления с прежним выбором сохранения стен (#1453).",
+          "en": "## v1.85.3-beta.2 — 2026-11-19\n\n- Capture the reviewed ISO hover raster scene in its own browser, preventing preceding SVG-mask paint history from changing room-label pixels; keep the accepted PNG, semantic assertions and pixel tolerances unchanged (#1451).\n- Judge the retained dense ISO golden scenes against the accepted floor-aligned marker plane, retaining finite-coordinate, no-nudge and missing-overlay negative controls; remove only the superseded wall-top lift oracle (#1451).\n- Await actual live/empty surfaces in golden and performance fixtures; accept worker/cache ISO geometry only with ready painted masonry rather than mandatory main-thread builds. Keep pending/inert negative controls and measure floor switches through readiness (#1467).\n\n- Restore five nightly mutation witnesses for stale authority, queued subscriptions, autofocus, prepared-cache eviction and Line input; run seven smaller nightly parts over a week with the same time limit (#1466).\n- Integrate the accepted angled 2.5D presentation into ordinary View: shared main/worker camera, refined masonry and openings, 60 matching volume models, occlusion-aware live overlays and safe complete Flat fallback. Persist desk/computer links through history, copies, plan-only/full/house transfer and top-view printing, with an optional older-writer fence (#1451).\n\n- Add a separate writer-only whole-house plan ZIP: all floors, scoped stairs and image bytes append atomically without devices/HA bindings, target orphan repair or global-setting replacement; share projection/commands with standalone hosts and retain old JSON/full-backup contracts (#1464).\n\n- Share plan command, content/upload and preview/staging orchestration between HA and standalone hosts; prepare a self-contained Python wheel/sdist and adapter conformance suite without changing saved formats or publishing a service (#1460).\n- Add local offline IFC2x3/IFC4 conversion for architectural Archicad/Revit plans, with storey selection, editable walls/rooms/openings, previews and explicit loss reports; keep KOMPAS compatibility separately unconfirmed (#1458).\n- Restore nightly witnesses for full-LRU union build accounting during Resize and right-button consumption at the node editor boundary; retain prepared-floor restores and the stage's no-pan guard, update the browser inventory and wait for active-floor readiness in touch/kiosk and cold-View smokes (#1457).\n- Restore the nightly junction parity module entry without PYTHONPATH and compose final diagnostic source maps for the isolated floor Worker, including generated asset URLs (#1456).\n- Restore nightly mutation witnesses: prepare compiled fixtures reached through browser helper imports and model both independent late-HA recovery paths, and verify missing-contact gate paint (#1455).\n- Reuse scoped persistent floor geometry and prepare cache misses in a module worker; keep passive architectural previews separate from current devices, opening states and fresh-server readiness (#1454).\n- Mark the 2.5D option as under development with a visible rendering-quality note in all supported languages (#1450).\n- Add a room context menu in Plan for settings, Resize, Split, Merge and deletion, plus a Delete room button in room settings using the existing wall-retention choices (#1453)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -135599,7 +136051,8 @@
     "beta1853-2-20261119-isolated-metrics": "d00aa3c0c9f4898c90db644f11f0c385f5b1f65d16038408dfe23533626d3dac",
     "beta1853-2-20261119-owner-metrics-isolated": "609fa88a32f8370459cf1628e3168633a4142e5f412d3421ee99484a0ac56041",
     "beta1853-2-20261119-publish-approved:runner-report": "10d0038393129c21b1c63ca4dd269b749ab28e5e4bc8b0f79449f8a3d6aa1ca2",
-    "beta1853-2-20261119-publish-approved:metrics": "ff2e23306947442c2f72267ba2d04fb1f69f19f3dcd85a95a0ddbc820d320714"
+    "beta1853-2-20261119-publish-approved:metrics": "ff2e23306947442c2f72267ba2d04fb1f69f19f3dcd85a95a0ddbc820d320714",
+    "beta1853-2-20261119-publish-approved:prepared:18183216-3407-475a-bdd3-052420656ea3": "4d00db1b23fc177013f90ebc545c89d8d98706a5d2bc72fd208d1ecadd8d4c85"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
