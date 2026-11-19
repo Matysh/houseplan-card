@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16461,
+  "revision": 16462,
   "nextTicket": 534,
   "nextFence": 534,
   "tasks": {
@@ -5146,15 +5146,16 @@
         "tests_backend/test_support_config_projection.py"
       ],
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795084233355,
-        "entry": 2,
-        "detail": "Браузер: isometric contract: failed",
-        "eventId": "finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:3:return:return:1474"
-      }
+        "at": 1795084774317,
+        "entry": 3,
+        "detail": "Браузер: floor persistent cache isometric: failed",
+        "eventId": "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:3:return:return:1474"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -5609,18 +5610,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1474,
-    "worker": "finish",
-    "token": "533:finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:1:admit",
-    "fence": 533,
-    "materialSha": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
-    "expectedBase": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-    "phase": "testing",
-    "admittedAt": 1795084251357,
-    "expiresAt": 1795085071062,
-    "patchId": "57398169c5589c66ba05189870936f1a8fb329df"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5838,6 +5828,10 @@
       "digest": "cfaf0479ebcb7a3f057adb485ea2173f552aae2ab4506b22d0a9bd7841eb4381",
       "issue": 1474
     },
+    "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:3:return": {
+      "digest": "3a369ca5cc802d648d2a43e134d7257f71d999b4622d07857d0a740f2041bfb1",
+      "issue": 1474
+    },
     "finish:a8d99469-b763-4dc7-9e24-e5b892c2dc7b": {
       "digest": "a03c07aa551707b08d373fb0f2f6193f185d6dffe2178eec0a99a6f30d3e7a2e",
       "issue": 1474,
@@ -5959,6 +5953,26 @@
         "layer": "product",
         "materialSha": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
         "phase": "sync"
+      }
+    },
+    "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:3:return:return:1474": {
+      "digest": "3a369ca5cc802d648d2a43e134d7257f71d999b4622d07857d0a740f2041bfb1",
+      "issue": 1474,
+      "message": {
+        "kind": "return",
+        "issue": 1474,
+        "at": 1795084774317,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795084774317,
+          "entry": 3,
+          "detail": "Браузер: floor persistent cache isometric: failed",
+          "eventId": "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:3:return:return:1474"
+        }
       }
     }
   },
