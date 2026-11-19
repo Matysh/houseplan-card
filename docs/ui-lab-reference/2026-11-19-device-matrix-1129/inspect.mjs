@@ -1,0 +1,32 @@
+import {writeFile} from 'node:fs/promises';
+import {dirname,resolve} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+const here=dirname(fileURLToPath(import.meta.url));
+const {chromium}=await import(pathToFileURL(resolve(process.cwd(),'node_modules/playwright/index.mjs')));
+const browser=await chromium.launch({headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1920,height:1080}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(process.argv[2]||'http://localhost:8892/');
+ await page.waitForFunction(()=>window.__matrix1129,{timeout:60000});
+ await page.waitForTimeout(7000);
+ const initial=await page.evaluate(()=>{const c=window.__lab.card,r=c.shadowRoot;return {space:c._space,view:c._view,groups:window.__matrix1129.groupsAligned,groupedContours:r.querySelectorAll('.device-contact-contour.grouped').length,groupExamples:['mx_07g','mx_07h'].map(id=>({id,layout:c._layout[id],neighbor:c._layout[id+'_neighbor'],shape:c._deviceContacts.scene.shapes.get(id),component:c._deviceContacts.scene.component(id)})),pins:window.__matrix1129.matrix.cells.filter(x=>['new','hidden','hover','selected','focus'].includes(x.key)&&x.column==='A').map(x=>{const el=r.querySelector('[data-id="'+x.id+'"]');return {code:x.code,html:el?.outerHTML.slice(0,1500),core:el?getComputedStyle(el.querySelector('.device-core')).backgroundColor:null};}),stage:r.querySelector('.stage')?.getBoundingClientRect().toJSON(),report:window.__matrix1129.report()};});
+ await page.screenshot({path:resolve(here,'overview.png')});
+ await page.evaluate(()=>window.__matrix1129.focusRows(6));await page.waitForTimeout(700);
+ await page.screenshot({path:resolve(here,'alarms.png')});
+ await page.evaluate(()=>window.__matrix1129.focusRows(21));await page.waitForTimeout(500);
+ await page.screenshot({path:resolve(here,'interactions.png')});
+ await page.locator('[data-mx=motion]').click();await page.waitForTimeout(300);
+ const reduced=await page.evaluate(()=>({enabled:window.__lab.card._reducedMotion,pulse:window.__matrix1129.report().find(x=>x.code==='02A').pulse}));
+ await page.locator('[data-mx=motion]').click();
+ await page.locator('[data-mx=live]').click();await page.waitForTimeout(500);
+ const liveOff=await page.evaluate(()=>({enabled:window.__lab.card._config.live_states,pulse:window.__matrix1129.report().find(x=>x.code==='02A').pulse}));
+ await page.locator('[data-mx=live]').click();
+ await page.locator('[data-mx=theme]').click();await page.waitForTimeout(500);
+ const light=await page.evaluate(()=>({theme:document.documentElement.dataset.theme,card:window.__lab.card.hass.themes.darkMode}));
+ await page.evaluate(()=>window.__matrix1129.focusRows(26));await page.waitForTimeout(300);
+ await page.screenshot({path:resolve(here,'diagnostics-light.png')});
+ const checks={reduced,liveOff,light};
+ await writeFile(resolve(here,'report.json'),JSON.stringify({initial,checks,errors},null,2));
+ console.log(JSON.stringify({space:initial.space,groupedContours:initial.groupedContours,pins:initial.pins.map(({code,core})=>({code,core})),visible:initial.report.filter(x=>x.visible).length,checks,errors}));
+}finally{await browser.close();}
