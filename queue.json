@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16450,
-  "nextTicket": 533,
+  "revision": 16451,
+  "nextTicket": 534,
   "nextFence": 533,
   "tasks": {
     "1024": {
@@ -5064,14 +5064,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1474-accepted-isometry",
-      "materialSha": "4e110b40238efd322aafcbb11a4402d2c830fd1d",
+      "materialSha": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 532,
-      "queued": false,
+      "ticket": 533,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795082884051,
-      "reviewEntry": 2,
+      "readyAt": 1795084247176,
+      "reviewEntry": 3,
       "patchId": "c0e0cc6b9bc75820607dfdf4ff266675b55081ba",
       "changedFiles": [
         "custom_components/houseplan/core/import_export.py",
@@ -5154,8 +5154,7 @@
         "entry": 2,
         "detail": "Браузер: isometric contract: failed",
         "eventId": "finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:3:return:return:1474"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5609,7 +5608,9 @@
       "runId": 44500260892
     }
   },
-  "waiting": [],
+  "waiting": [
+    1474
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5886,6 +5887,19 @@
           "detail": "Браузер: isometric contract: failed",
           "eventId": "finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:3:return:return:1474"
         }
+      }
+    },
+    "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb": {
+      "digest": "ba564b4e3d5b690dc24f864b5972bcb6b891a016474ff5a95c59e69b1ff6d802",
+      "issue": 1474,
+      "message": {
+        "kind": "queued",
+        "issue": 1474,
+        "at": 1795084247176,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de"
       }
     }
   },
