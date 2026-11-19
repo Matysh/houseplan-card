@@ -42,4 +42,3 @@ try{
  report.status=report.errors.length?'failed':'passed';
 }catch(e){report.status='failed';report.failure=e.stack;console.error(e);process.exitCode=1;}
 finally{await writeFile('evidence/product-probe.json',JSON.stringify(report,null,2));await browser.close();await new Promise(done=>server.close(done));}
-

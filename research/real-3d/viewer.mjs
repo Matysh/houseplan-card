@@ -104,7 +104,3 @@ view.addEventListener('pointerup',()=>pointer=null);view.addEventListener('point
 view.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.4,Math.min(5,zoom*Math.exp(-e.deltaY*.001)));invalidate();},{passive:false});
 new ResizeObserver(invalidate).observe(view);
 render();window.lab.firstFrameMs=performance.now()-start;window.lab.ready=true;
-
-
-
-
