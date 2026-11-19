@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16720,
-  "nextTicket": 539,
+  "revision": 16721,
+  "nextTicket": 540,
   "nextFence": 539,
   "tasks": {
     "1024": {
@@ -5110,11 +5110,11 @@
       "materialSha": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 538,
-      "queued": false,
+      "ticket": 539,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795098475665,
-      "reviewEntry": 1,
+      "readyAt": 1795099060328,
+      "reviewEntry": 2,
       "patchId": "122fc2a34328a06ea9acb79681ee64e6ae0b96c3",
       "changedFiles": [
         "demo/smoke_device_contact_mixed_radius.mjs",
@@ -5123,7 +5123,6 @@
         "docs/release-ledger/v1.85.0/1477.json",
         "src/device-contact-geometry.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5615,7 +5614,9 @@
       "runId": 44519175690
     }
   },
-  "waiting": [],
+  "waiting": [
+    1477
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5737,6 +5738,19 @@
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/room-write-python.test.mjs: failed; Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_coordinate_canonicalization.py: failed; Backend: tests_backend/test_coordinate_canonicalization_pure.py: failed; Backend: tests_backend/test_geometry_cleanup_842.py: failed; Backend: tests_backend/test_graph_host_continuity.py: failed; Backend: tests_backend/test_graph_node_write.py: failed; Backend: tests_backend/test_graph_write.py: failed; Backend: tests_backend/test_ha_node_save_validation.py: failed; Backend: tests_backend/test_ha_plan_graph.py: failed; Backend: tests_backend/test_ha_portable_recovery.py: failed; Backend: tests_backend/test_ha_room_contact_grid.py: failed; Backend: tests_backend/test_ha_room_contact_storage.py: failed; Backend: tests_backend/test_ha_room_opening_host.py: failed; Backend: tests_backend/test_ha_signal_visibility_low.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_ha_wall_node_attach.py: failed; Backend: tests_backend/test_ha_wall_node_delete.py: failed; Backend: tests_backend/test_ha_wall_node_dependency_carrier.py: failed; Backend: tests_backend/test_ha_wall_node_merge.py: failed; Backend: tests_backend/test_ha_wall_node_move_baseline.py: failed; Backend: tests_backend/test_ha_wall_removal_limits.py: failed; Backend: tests_backend/test_junction_limits.py: failed; Backend: tests_backend/test_junction_parity.py: failed; Backend: tests_backend/test_led_strips.py: failed; Backend: tests_backend/test_node_save_validation.py: failed; Backend: tests_backend/test_plan_graph.py: failed; Backend: tests_backend/test_plan_graph_migration.py: failed; Backend: tests_backend/test_plan_graph_source.py: failed; Backend: tests_backend/test_plan_graph_support.py: failed; Backend: tests_backend/test_portable_recovery.py: failed; Backend: tests_backend/test_radar_geometry.py: failed; Backend: tests_backend/test_room_appearance.py: failed; Backend: tests_backend/test_room_contact_grid.py: failed; Backend: tests_backend/test_room_opening_host.py: failed; Backend: tests_backend/test_settings_moon.py: failed; Backend: tests_backend/test_settings_signal_visibility.py: failed; Backend: tests_backend/test_virtual_lights.py: failed; Backend: tests_backend/test_wall_contact_storage.py: failed; Backend: tests_backend/test_wall_face_lineage.py: failed; Backend: tests_backend/test_wall_node_attach.py: failed; Backend: tests_backend/test_wall_node_connected.py: failed; Backend: tests_backend/test_wall_node_delete.py: failed; Backend: tests_backend/test_wall_node_dependency_carrier.py: failed; Backend: tests_backend/test_wall_node_merge.py: failed; Backend: tests_backend/test_wall_node_move.py: failed; Backend: tests_backend/test_wall_node_parity.py: failed; Backend: tests_backend/test_wall_removal_proof.py: failed; Backend: tests_backend/test_wall_segment_model.py: failed; Браузер: standalone entry: failed",
           "eventId": "finish:31aaec15-9c29-4507-8b13-9f34c8a216e9:finish:3:return:return:1477"
         }
+      }
+    },
+    "finish:ee374d55-29a3-48b9-b332-983ea4ee8a0f": {
+      "digest": "d846db620a2e0e97f85fa6233333907b8e83b15a972921f48977789654bdb49f",
+      "issue": 1477,
+      "message": {
+        "kind": "queued",
+        "issue": 1477,
+        "at": 1795099060328,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2"
       }
     }
   },
