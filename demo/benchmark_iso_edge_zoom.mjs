@@ -12,13 +12,15 @@ const viewportWidth = Number(process.env.HP_EDGE_WIDTH || 1920);
 const viewportHeight = viewportWidth === 3840 ? 2160 : 1080;
 const capture = process.env.HP_EDGE_CAPTURE === '1';
 const requireRaster = process.env.HP_EDGE_REQUIRE_RASTER === '1';
+const enableGpu = process.env.HP_EDGE_GPU === '1';
 const output = process.env.HP_EDGE_OUTPUT || 'artifacts/1478/edge';
 const referenceRoot = process.env.HP_ISO_PAINT_REFERENCE;
 const compositor = capture ? controlledCompositor() : null;
 const { PNG } = createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 const { browser, page, provenance } = await startIsoPaintScene({
   width: viewportWidth, height: viewportHeight, referenceRoot,
-  browserArgs: compositor?.browserArgs, createPage: compositor?.createPage,
+  browserArgs: [...(compositor?.browserArgs ?? []), ...(enableGpu ? ['--enable-gpu'] : [])],
+  createPage: compositor?.createPage,
 });
 
 const interval = 140, steps = 14, stepScale = 1.15;
@@ -220,7 +222,7 @@ try {
   }).trim();
   const mode = capture ? 'pixels' : 'timing';
   await writeFile(output + '/' + viewportWidth + '-' + mode + '.json',
-    JSON.stringify({ revision, provenance, mode, stage, rows }, null, 2));
+    JSON.stringify({ revision, provenance, mode, enableGpu, stage, rows }, null, 2));
   if (requireRaster && rows.some(row => row.rasterSwaps < 2 || row.measurements.rasterRemaining ||
       (capture && (row.emptyWallFrames || !row.exactPngFrame)))) {
     throw Error('The raster cache must replace at least two frames, preserve walls and release to the exact camera');

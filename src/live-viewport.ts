@@ -426,7 +426,10 @@ export function commitHouseplanViewport(value: object, keepSceneLayer = false): 
     paintCameraRaster(host, state, current);
     return;
   }
-  state.painted = basis ? frameOf(host, basis.view) : current;
+  // Mode-transition endpoints apply their own HTML rebase immediately after
+  // this commit. A camera basis captured by an earlier Lit frame must not
+  // leave a temporary transform on that endpoint.
+  state.painted = basis?.retained ? frameOf(host, basis.view) : current;
   // A full Lit frame may arrive while a pointer or programmatic camera is still
   // active. It becomes the new exact anchor, but must not demote the scene in
   // the middle of that session (#579). The terminal Lit frame passes false and

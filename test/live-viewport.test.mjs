@@ -432,6 +432,21 @@ test('#1478 Lit updates during camera motion retain the published basis', () => 
   disposeHouseplanViewport(host);
 });
 
+test('#1478 an exact mode endpoint does not promote HTML from an earlier authored viewport', () => {
+  const root = fakeRoot();
+  let view = frame(0, 0).view;
+  const host = { renderRoot: root, _zoom: 1, _baseVb: () => [], _viewOr: () => view, _floorView: v => v,
+    _modeSceneClip: 'inset(0)' };
+  authoredHouseplanViewport(host, view, 'floor', false);
+  commitHouseplanViewport(host);
+  view = frame(100, 10, 800, 400).view;
+  commitHouseplanViewport(host);
+  assert.equal(root.camera.attrs.viewBox, '100 10 800 400');
+  assert.ok(!root.layer.style.transform);
+  assert.ok(!root.layer.style.willChange);
+  disposeHouseplanViewport(host);
+});
+
 test('#1478 scene and marker anchors rebase together without restarting their visual layers', () => {
   const root = fakeRoot(), initial = frame(0, 0);
   const marker = { style: { left: '40%', top: '25%' } };

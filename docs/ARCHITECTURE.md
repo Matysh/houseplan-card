@@ -2560,37 +2560,33 @@ Keyboard tooltips retain their own path. Pointer departure/disconnect disposes
 the active layout observer/frame; remote caption wrapping updates its short
 arrow endpoint in the same post-render pass.
 
-## Live viewport: a transform per frame, a `viewBox` on a budget (#531, #579)
+## Live viewport and bounded exposure (#531, #579, #1478)
 
-Rewriting the SVG `viewBox` re-rasterises the whole scene, so per-frame writes
-made panning crawl. `paintLiveViewport` keeps an anchor (the `viewBox` in the DOM
-and when it was written) and moves scene nodes each frame with the HTML layers'
-projective transform (`liveLayerProjection`, `transform-origin: 0 0`);
-`needsViewBoxRefresh` rewrites the anchor only after `LIVE_VIEWBOX_REFRESH_MS`
-(100 ms) or a `LIVE_VIEWBOX_REFRESH_SHIFT` (15 %) shift/scale change — module
-constants, not settings. Scene nodes project from the anchor, HTML layers from
-the last settled Lit frame; both land on the current view, keeping #451's
-one-CSS-pixel marker contract on every frame. `.stage` stays the outer clip, but
-a transformed scene SVG gets inline `overflow: visible` so rasterised content
-covers the incoming edge, even with the pointer held still (#544); HTML layers
-never do. The exposure is bounded by an inline `clip-path: inset(-25%)`
-(`LIVE_SCENE_EXPOSURE_CLIP`) set and removed with it — beyond the 15 % refresh
-threshold, but never the whole plan: unbounded, a promoted scene grew with
-zoom² and at 800 % × DPR 2 exhausted GPU memory (white frames, #689).
-From the first live paint to the terminal commit a scene SVG stays in
-one compositor lifecycle: a refresh or Lit frame may replace its anchor but never
-demote/re-promote it — HA Companion WebView shows that as a blank frame (#579).
-The clipped-outline SVG and its exclusive exposure exception are removed (#1092).
-The main Flat scene retains its floor projection and the same bounded exposure.
-Unchanged values are never rewritten, so idle frames stay byte-identical;
-`commitHouseplanViewport` removes the transforms and forces the final `viewBox`.
+`paintLiveViewport` keeps the SVG `viewBox` as an anchor and projects it to
+the visible camera using `liveLayerProjection`. `viewport-exposure.ts`
+computes a reserve from the stage, device pixel budget and scene bounds.
+The anchor moves when the current view or near wheel target would expose
+content outside that reserve, or when the scale crosses a factor of two.
+The outer `.stage` clips the surfaces. Their exposed paint fits a bounded
+`clip-path` to avoid the high-zoom memory growth seen in #689.
 
-The vacuum SVG is a passive exception inside a live HTML layer (#871):
-`data-hp-live-inherited-scene="camera"` rebases only its bounded paint window
-via `inheritedSceneClip`, around the same anchor and with the same exposure.
-Its `viewBox` and camera transform are not written by this pass. Giving it
-`data-hp-live-viewbox="camera"` as well would double-project the trail. This
-layout preserves the device/hover/lock/Zigbee stacking context unchanged.
+In 2.5D, the SVG scene and the HTML device layer share the new anchor.
+Marker positions, sizes and inherited SVG overlays rebase with it. Flat
+keeps its floor projection. Mode transitions retain their own clip and
+publish their exact endpoint through the shared viewport. A retained Lit
+update during a camera gesture uses the published basis. The terminal
+wheel commit publishes the exact camera once after the quiet period.
+
+At large device pixel sizes, `iso-camera-raster.ts` can prepare a bitmap of
+the passive SVG. It publishes a complete replacement over the same world
+region and returns to the vector surface at the exact commit. The bitmap
+has no input targets. Devices, overlays and interactive SVG retain their
+ordinary elements throughout the gesture.
+
+The vacuum SVG inside the HTML device layer inherits that layer's camera
+once (#871). The 2.5D rebase updates its `viewBox` alongside marker
+coordinates. Its clip uses the same bounded reserve. An independent camera
+transform on the trail would apply the camera a second time.
 
 ## English and Russian ship whole (#400)
 

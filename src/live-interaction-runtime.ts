@@ -28,7 +28,7 @@ interface LiveRuntimeHost {
   _cellCm: number;
   _gridPitch: number;
   _pointers: { size: number };
-  _cameraTransition: { active: boolean };
+  _cameraTransition: { active: boolean; state?: { reason: string; duration: number } | null };
   _deviceDrag?: unknown;
   _editorRuntime?: {
     readonly stairs?: { readonly dragging: boolean };
@@ -85,7 +85,7 @@ export class LiveRuntime {
     intake: () => void,
   ): boolean {
     const change = classifyHassRenderChange(before, after, dependencies);
-    const defer = change === 'state' && this.active()
+    const defer = change === 'state' && this.active(false)
       && !contactValueFrameChanged(this.host,this.contacts,before,after);
     if (defer) this.deferredHass = true;
     const render = change !== 'none' && !defer;
@@ -119,9 +119,13 @@ export class LiveRuntime {
   public deviceFocusActive(): boolean { return deviceFocusTipActive(this.host); }
   /** Existing card lifecycle entry: discard both pending and displayed hover. */
   public clearDeviceFocus(): void { clearDeviceFocusTip(this.host); resetHouseplanHover(this.host); }
-  public active(): boolean {
+  public active(includeQuietWheel = true): boolean {
     const host = this.host as LiveRuntimeHost;
-    return host._pointers.size > 0 || host._cameraTransition.active || !!host._deviceDrag
+    const camera = host._cameraTransition;
+    // A reduced-motion wheel applies its pose immediately. The quiet period
+    // groups persistence but must not hold HA colour, brightness or off state.
+    const quietWheel = camera.state?.reason === 'wheel' && camera.state.duration === 0;
+    return host._pointers.size > 0 || (camera.active && (includeQuietWheel || !quietWheel)) || !!host._deviceDrag
       || !!host._editorRuntime?.physicalGesture?.active || !!host._decorMove
       || !!host._decorDraft || !!host._dtDrag || !!host._editorRuntime?.backdropGesture?.active || !!host._opDrag
       || !!host._resize?.dragging || !!host._editorRuntime?.stairs?.dragging || !!host._ledEditor?.dragging;

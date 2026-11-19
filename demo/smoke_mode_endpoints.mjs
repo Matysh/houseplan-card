@@ -50,6 +50,13 @@ async function compare(a, b) {
 try {
   await page.clock.setFixedTime(new Date('2026-11-07T12:00:00Z'));
   await page.emulateMedia({ reducedMotion:'no-preference' });
+  // This fixture compares a switch between settled modes. Initial chrome
+  // can still animate the stage height briefly after the boot veil lifts.
+  await page.waitForFunction(() => {
+    const card = window.__card;
+    return !card._booting && !card._bootSoft
+      && !card._stageEl?.getAnimations().some(animation => animation.transitionProperty === 'height');
+  });
   results.exactTerminalGeometry=await page.evaluate(()=>{
     const card=window.__card, owner=card._modePresentation, probe=document.createElement('div');
     probe.style.cssText='position:absolute;visibility:hidden;height:1px;left:0;top:0';

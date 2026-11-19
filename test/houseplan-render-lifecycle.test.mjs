@@ -120,6 +120,17 @@ test('a relevant HA tick is deferred only while a continuous interaction is acti
   assert.equal(live.environment(after, final, { entityIds: ['light.plan'] }, () => {}), true);
 });
 
+test('#1478 a reduced-motion wheel quiet period groups commits while current HA state can render', () => {
+  const host = liveHost(new RenderLifecycle());
+  const live = new LiveRuntime(host);
+  const before = base();
+  const after = { ...before, states: { ...before.states, 'light.plan': row('on') } };
+  host._cameraTransition = { active: true, state: { reason: 'wheel', duration: 0 } };
+  assert.equal(live.active(), true);
+  assert.equal(live.environment(before, after, { entityIds: ['light.plan'] }, () => {}), true);
+  assert.equal(live.take(), false);
+});
+
 test('gesture reconciliation is last-wins and a normal full update subsumes it', () => {
   const lifecycle = new RenderLifecycle();
   const host = liveHost(lifecycle);

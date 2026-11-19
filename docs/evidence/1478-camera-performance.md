@@ -107,3 +107,10 @@ It does not prove the full timed, presented frame sequence during a fade.
 without making Home Assistant requests. AC7, AC8, AC15, AC17 and the laptop
 portion of AC18 still need a trace from the RTX 2060 Max-Q. The final S6 run
 and code review remain open.
+
+The final targeted build passed 138 Node cases. Chromium checks passed for
+pan coverage, room labels, touch, projection round trips, light fade, LED
+quality during wheel input and internal mode endpoints. The earlier full S6
+on `b60b227ca` completed 1228 checks with 21 failures. The targeted reruns
+replace individual results and do not establish a green full run for the
+new candidate.
