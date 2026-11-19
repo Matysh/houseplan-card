@@ -359,6 +359,10 @@
       "configs": 1
     },
     {
+      "file": "demo/fixtures/iso-paint.mjs",
+      "configs": 1
+    },
+    {
       "file": "demo/fixtures/large-house.mjs",
       "configs": 1
     },
@@ -24110,6 +24114,224 @@
         }
       ],
       "fullConfigSha256": "f3ab40d9f9adaf22f36ead6bc158149d6a1ba2cc7c3ee7a582c7f6f7f6ad85b3"
+    },
+    {
+      "label": "demo/fixtures/iso-paint.mjs:makeIsoPaintFixture/config",
+      "fingerprint": "b2245d74cbeac7e316ffc7291177847390bfa9e89dee5879c9a2c29d7c99bf60",
+      "ok": true,
+      "identity": [
+        {
+          "space": "perf-floor-1",
+          "catalogue": [
+            "wall-2tlu5peyp4uwelbvcitq",
+            "wall-6criuzkf7ofniyyf3tqj",
+            "wall-6hrhvqe6u52yysh2jhiz",
+            "wall-7zjyc57sgihawe3d76k7",
+            "wall-dium3htnopnfyyj34q4j",
+            "wall-dlffeaqhkv72k3mexq55",
+            "wall-gmbuc6iymkfskbnwcaww",
+            "wall-hbhjgziituzot2frrwtc",
+            "wall-hsjb5wdcx7rfwy5r2wyz",
+            "wall-iymvzuzl56cl3kak2hjy",
+            "wall-mdxkh4sbvodielsieruu",
+            "wall-mgpy4co4yo7auvmnnqph",
+            "wall-mp7velvxgl6ak6kdlyab",
+            "wall-orolkxvpa5da7ih47ylw",
+            "wall-psqlfingdd7nakfybqpn",
+            "wall-rz44afixo77kdr2gwayj",
+            "wall-tcd5qby5os2e76gpyuax",
+            "wall-ujyh42p7swkcgdbqkotu",
+            "wall-vs63aocst3srzzqrl4bz",
+            "wall-y4ctrpjrfao3kubafasi",
+            "wall-y7exsobihjork6k6y72d",
+            "wall-yc526x7q4sn7hqtfcrkp",
+            "wall-zk3qyvbyyquaqieen3kl"
+          ],
+          "rooms": [
+            {
+              "id": "perf-room-0-0",
+              "walls": [
+                "wall-y4ctrpjrfao3kubafasi",
+                "wall-iymvzuzl56cl3kak2hjy",
+                "wall-rz44afixo77kdr2gwayj",
+                "wall-mp7velvxgl6ak6kdlyab"
+              ]
+            },
+            {
+              "id": "perf-room-0-1",
+              "walls": [
+                "wall-7zjyc57sgihawe3d76k7",
+                "wall-psqlfingdd7nakfybqpn",
+                "wall-ujyh42p7swkcgdbqkotu",
+                "wall-iymvzuzl56cl3kak2hjy"
+              ]
+            },
+            {
+              "id": "perf-room-0-2",
+              "walls": [
+                "wall-zk3qyvbyyquaqieen3kl",
+                "wall-2tlu5peyp4uwelbvcitq",
+                "wall-gmbuc6iymkfskbnwcaww",
+                "wall-psqlfingdd7nakfybqpn"
+              ]
+            },
+            {
+              "id": "perf-room-0-3",
+              "walls": [
+                "wall-tcd5qby5os2e76gpyuax",
+                "wall-dlffeaqhkv72k3mexq55",
+                "wall-y7exsobihjork6k6y72d",
+                "wall-2tlu5peyp4uwelbvcitq"
+              ]
+            },
+            {
+              "id": "perf-room-0-4",
+              "walls": [
+                "wall-vs63aocst3srzzqrl4bz",
+                "wall-dium3htnopnfyyj34q4j",
+                "wall-hbhjgziituzot2frrwtc",
+                "wall-dlffeaqhkv72k3mexq55"
+              ]
+            },
+            {
+              "id": "perf-room-0-5",
+              "walls": [
+                "wall-rz44afixo77kdr2gwayj",
+                "wall-6criuzkf7ofniyyf3tqj",
+                "wall-yc526x7q4sn7hqtfcrkp",
+                "wall-6hrhvqe6u52yysh2jhiz"
+              ]
+            },
+            {
+              "id": "perf-room-0-6",
+              "walls": [
+                "wall-ujyh42p7swkcgdbqkotu",
+                "wall-mdxkh4sbvodielsieruu",
+                "wall-mgpy4co4yo7auvmnnqph",
+                "wall-6criuzkf7ofniyyf3tqj"
+              ]
+            },
+            {
+              "id": "perf-room-0-7",
+              "walls": [
+                "wall-gmbuc6iymkfskbnwcaww",
+                "wall-orolkxvpa5da7ih47ylw",
+                "wall-hsjb5wdcx7rfwy5r2wyz",
+                "wall-mdxkh4sbvodielsieruu"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "perf-opening-0-0",
+              "host": {
+                "kind": "wall",
+                "id": "wall-y4ctrpjrfao3kubafasi"
+              }
+            },
+            {
+              "id": "perf-opening-0-1",
+              "host": {
+                "kind": "wall",
+                "id": "wall-iymvzuzl56cl3kak2hjy"
+              }
+            },
+            {
+              "id": "perf-opening-0-2",
+              "host": {
+                "kind": "wall",
+                "id": "wall-rz44afixo77kdr2gwayj"
+              }
+            },
+            {
+              "id": "perf-opening-0-3",
+              "host": {
+                "kind": "wall",
+                "id": "wall-mp7velvxgl6ak6kdlyab"
+              }
+            },
+            {
+              "id": "perf-opening-0-4",
+              "host": {
+                "kind": "wall",
+                "id": "wall-7zjyc57sgihawe3d76k7"
+              }
+            },
+            {
+              "id": "perf-opening-0-5",
+              "host": {
+                "kind": "wall",
+                "id": "wall-psqlfingdd7nakfybqpn"
+              }
+            },
+            {
+              "id": "perf-opening-0-6",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ujyh42p7swkcgdbqkotu"
+              }
+            },
+            {
+              "id": "perf-opening-0-7",
+              "host": {
+                "kind": "wall",
+                "id": "wall-zk3qyvbyyquaqieen3kl"
+              }
+            },
+            {
+              "id": "perf-opening-0-8",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2tlu5peyp4uwelbvcitq"
+              }
+            },
+            {
+              "id": "perf-opening-0-9",
+              "host": {
+                "kind": "wall",
+                "id": "wall-gmbuc6iymkfskbnwcaww"
+              }
+            },
+            {
+              "id": "perf-opening-0-10",
+              "host": {
+                "kind": "wall",
+                "id": "wall-tcd5qby5os2e76gpyuax"
+              }
+            },
+            {
+              "id": "perf-opening-0-11",
+              "host": {
+                "kind": "wall",
+                "id": "wall-dlffeaqhkv72k3mexq55"
+              }
+            },
+            {
+              "id": "perf-opening-0-12",
+              "host": {
+                "kind": "wall",
+                "id": "wall-y7exsobihjork6k6y72d"
+              }
+            },
+            {
+              "id": "perf-opening-0-13",
+              "host": {
+                "kind": "wall",
+                "id": "wall-vs63aocst3srzzqrl4bz"
+              }
+            },
+            {
+              "id": "perf-opening-0-14",
+              "host": {
+                "kind": "wall",
+                "id": "wall-dium3htnopnfyyj34q4j"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ],
+      "fullConfigSha256": "edcc5384bc472dc8e6f933fba588d2916db5015823e33e1e2aded000f5543f55"
     },
     {
       "label": "demo/fixtures/resize-junctions.mjs:makeResizeJunctionFixture/config",

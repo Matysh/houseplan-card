@@ -1,6 +1,7 @@
 // #649 п.3 (docs/ISOMETRIC.md, Stage 6): the 2.5D View paints walls in the
 // user's wall colour, the theme never repaints walls, openings, the floor edge
-// or room labels, and furniture keeps its Flat line width (3a).
+// or room labels. #1451's accepted volumetric furniture keeps its own paint
+// recipe across themes; Flat furniture retains its native non-scaling stroke.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
@@ -40,6 +41,10 @@ const snapshot = () => page.evaluate(() => {
   };
   const top = root.querySelector('.iso-wall-top');
   const furn = root.querySelector('.dfurn[data-id="tw-sofa"]');
+  const volume = root.querySelector('[data-hp-furniture-volume][data-id="tw-sofa"]');
+  const volumeStrokes = volume ? [...volume.querySelectorAll('path')]
+    .filter(path => !path.closest('defs') && getComputedStyle(path).stroke !== 'none')
+    .map(path => [path.getAttribute('d'),Number(path.getAttribute('stroke-width')),getComputedStyle(path).stroke]) : [];
   const label = root.querySelector('.roomlabel');
   return {
     iso: root.querySelector('.stage')?.classList.contains('projection-iso') ?? false,
@@ -50,6 +55,7 @@ const snapshot = () => page.evaluate(() => {
     label: label ? [getComputedStyle(label).color, getComputedStyle(label).textShadow] : null,
     furnitureStroke: furn ? Number(furn.getAttribute('stroke-width')) : NaN,
     furnitureVector: furn?.getAttribute('vector-effect') ?? null,
+    volumeStrokes,
     stageSize: (() => { const s = root.querySelector('.stage'); return [s.clientWidth, s.clientHeight]; })(),
   };
 });
@@ -92,11 +98,14 @@ res.colourSchemeKeepsWalls = JSON.stringify(light.sig) === JSON.stringify(scheme
 res.themeKeepsStops = JSON.stringify(light.stops) === JSON.stringify(dark.stops);
 // Labels: the Flat label colour of the theme, not a 2.5D override.
 res.labelsLikeFlat = !!light.label && light.label[0] === flat.label?.[0];
-// 3a: the same stage → the same furniture line width in CSS px as Flat.
-res.furnitureSameWidth = Number.isFinite(flat.furnitureStroke)
-  && Math.abs(light.furnitureStroke - flat.furnitureStroke) <= 0.05
+// Flat glyphs are not the accepted #1451 volume model. Check the actual painted
+// volume paths, excluding clip definitions, without reinstating the old oracle.
+res.furnitureUsesAcceptedVolume = Number.isFinite(flat.furnitureStroke)
+  && light.volumeStrokes.length > 0 && light.volumeStrokes.every(([,width]) => Number.isFinite(width) && width > 0)
   && JSON.stringify(light.stageSize) === JSON.stringify(flat.stageSize);
-res.furnitureNonScaling = light.furnitureVector === 'non-scaling-stroke';
+res.furnitureThemeStable = JSON.stringify(light.volumeStrokes) === JSON.stringify(dark.volumeStrokes)
+  && JSON.stringify(light.volumeStrokes) === JSON.stringify(scheme.volumeStrokes);
+res.flatFurnitureNonScaling = flat.furnitureVector === 'non-scaling-stroke';
 
 // Flat is untouched: back to Flat, the same wall opacity var and label.
 await setTheme(false);

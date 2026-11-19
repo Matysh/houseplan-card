@@ -1400,14 +1400,19 @@ test('#438 historical manual budget CLI applies its synthetic fixture limits', (
 
 test('#792 absolute initial View wall accepts equality and rejects the next byte independently of the ratchet', () => {
   const base = shippedManifest();
+  // The entry may be only a tiny loader after splitting. Adjust a real sizeable
+  // initial chunk, not a loader which the synthetic delta could make negative.
+  const adjustable = base.files.filter(file => base.initialViewFiles.includes(file.path))
+    .sort((a,b) => b.gzipBytes-a.gzipBytes)[0];
   const withBytes = (bytes) => {
     const delta = bytes - base.initialViewGzipBytes;
+    assert.ok(adjustable.gzipBytes + delta > 0, 'boundary fixture retains a valid positive gzip size');
     return {
       ...base,
       initialViewGzipBytes: bytes,
       initialPanelGzipBytes: base.initialPanelGzipBytes
-        + (base.initialPanelFiles.includes(base.entry) ? delta : 0),
-      files: base.files.map(file => file.path === base.entry
+        + (base.initialPanelFiles.includes(adjustable.path) ? delta : 0),
+      files: base.files.map(file => file.path === adjustable.path
         ? { ...file, gzipBytes: file.gzipBytes + delta } : file),
     };
   };
