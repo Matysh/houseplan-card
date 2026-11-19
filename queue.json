@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16157,
+  "revision": 16158,
   "nextTicket": 527,
   "nextFence": 527,
   "tasks": {
@@ -5045,7 +5045,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795075978727,
       "reviewEntry": 3,
-      "patchId": "5db93bbfa27dd3c80a48d48d871d8cf16068cd4e",
+      "patchId": "a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c",
       "changedFiles": [
         "demo/smoke_projection_cold_view_camera.mjs",
         "docs/CHANGELOG.md",
@@ -5559,10 +5559,11 @@
     "token": "526:finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:1:admit",
     "fence": 526,
     "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+    "phase": "testing",
     "admittedAt": 1795075982832,
-    "expiresAt": 1795076282832
+    "expiresAt": 1795076288867,
+    "patchId": "a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c"
   },
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5800,6 +5801,10 @@
     "finish:a726cb58-f0d2-4887-9e3f-ba9cd085f6bd:finish:3:return": {
       "digest": "9fe634278dda978194c002b5772bfe4b9cd5bdb8c70965302e02ce72ab144209",
       "issue": 1470
+    },
+    "finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:2:synchronized": {
+      "digest": "c0c5884a23a929abd22d7d38dd5fa20cd0ae49c36dc4078d2e93eddebdb154c3",
+      "issue": 1469
     },
     "github:44472051036:1:label:spec-request:spec-resubmitted:1470": {
       "digest": "10aa67c67df712216e7f225fc653ba581c5fd36f6038a16dbf85103b2e53d0bb",
