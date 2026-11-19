@@ -154,14 +154,14 @@ async function launchInternal(
   entry = '/demo.html',
   waitForCard = true,
 ) {
-  const browser = await chromium.launch({ args: ['--no-sandbox', ...browserArgs] });
+  const { createPage, launchOptions, ...browserContextOptions } = contextOptions;
+  const browser = await chromium.launch({ ...launchOptions, args: ['--no-sandbox', ...browserArgs] });
   try {
     await enforcePinnedBrowser(browser);
   } catch (error) {
     await browser.close().catch(() => {});
     throw error;
   }
-  const { createPage, ...browserContextOptions } = contextOptions;
   let page;
   try {
     const context = await browser.newContext({

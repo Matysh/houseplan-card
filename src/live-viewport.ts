@@ -1,3 +1,6 @@
+import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor,
+  type ViewportExposureLimits } from './viewport-exposure';
+
 export interface LiveViewBox {
   x: number;
   y: number;
@@ -10,6 +13,7 @@ interface LiveViewportFrame {
   floor: LiveViewBox;
   grid?: LiveViewBox;
   zoom: number;
+  target?: LiveViewBox;
   badge?: { percent: number; hidden: boolean };
 }
 
@@ -18,21 +22,17 @@ interface LiveViewportState {
   pending: LiveViewportFrame | null;
   raf: number;
   anchor: LiveViewportAnchor | null;
+  nodes?: ViewportNodes;
+  limits?: ViewportExposureLimits;
+  basis?: { key: string; view: LiveViewBox; retained: boolean };
 }
 
-/**
- * Кадр, чей `viewBox` сейчас записан в сцену, и момент записи (#531).
- *
- * Перезапись `viewBox` — это инвалидация растеризации всего плана: слой нельзя
- * сдвинуть, его надо нарисовать заново. Профиль владельца на панораме: краска
- * заканчивается, и до композиции проходит 94 мс медианы при незагруженном GPU,
- * а драйвер пропускает 124–144 тика в секунду с пометкой «ждём краску».
- * Поэтому кадр жеста двигает сцену трансформом, а `viewBox` переписывается по
- * бюджету — иначе на набегающем крае осталась бы пустая полоса.
- */
+/** World coordinates represented by the currently prepared scene. */
 export interface LiveViewportAnchor {
   frame: LiveViewportFrame;
-  at: number;
+  coverage: LiveViewBox;
+  clip?: string;
+  target?: LiveViewBox;
 }
 
 interface LiveViewportHost {
@@ -41,6 +41,9 @@ interface LiveViewportHost {
   _floorView: (view: LiveViewBox) => LiveViewBox;
   _planVisibleRect?: (view: LiveViewBox) => LiveViewBox;
   _zoom: number;
+  _liveViewportTarget?: () => LiveViewBox | undefined;
+  _liveViewportLimits?: () => ViewportExposureLimits;
+  readonly _renderProjection?: 'iso' | 'flat';
   readonly _zoomBadge?: { percent: number; hidden: boolean };
   readonly _modeSceneClip?: string | null;
   _editorRuntime?: {wallDimensions?: {paintCamera(view:LiveViewBox):void}} | null;
@@ -93,28 +96,6 @@ export const isIdentityLiveLayerProjection = (projection: LiveLayerProjection): 
   && projection.scaleX === 1
   && projection.scaleY === 1;
 
-/** Как часто сцена догоняет жест содержимым, а не сдвигом пикселей. */
-export const LIVE_VIEWBOX_REFRESH_MS = 100;
-/** Доля видимой области, после которой ждать бюджет времени уже поздно. */
-export const LIVE_VIEWBOX_REFRESH_SHIFT = 0.15;
-
-/**
- * Пора ли записать новый `viewBox`. Два условия, оба нужны: по времени —
- * обычное перетаскивание, по сдвигу — рывок, за который план уезжает на
- * полэкрана раньше, чем истечёт бюджет времени.
- */
-export function needsViewBoxRefresh(
-  anchor: LiveViewportAnchor, current: LiveViewportFrame, now: number,
-): boolean {
-  if (now - anchor.at >= LIVE_VIEWBOX_REFRESH_MS) return true;
-  const before = anchor.frame.view;
-  const after = current.view;
-  if (Math.abs(after.x - before.x) >= after.w * LIVE_VIEWBOX_REFRESH_SHIFT) return true;
-  if (Math.abs(after.y - before.y) >= after.h * LIVE_VIEWBOX_REFRESH_SHIFT) return true;
-  const scale = before.w / after.w;
-  return Math.abs(1 - scale) >= LIVE_VIEWBOX_REFRESH_SHIFT;
-}
-
 const finiteView = (view: LiveViewBox): boolean =>
   [view.x, view.y, view.w, view.h].every(Number.isFinite) && view.w > 0 && view.h > 0;
 
@@ -122,32 +103,8 @@ const projectionText = (projection: LiveLayerProjection): string =>
   `translate(${projection.translateXPercent}%,${projection.translateYPercent}%)`
   + ` scale(${projection.scaleX},${projection.scaleY})`;
 
-/**
- * #689: how far an exposed scene may paint beyond its own viewport box while
- * it is projected. The budgeted `viewBox` refresh fires at a 15 % shift or
- * scale change (`LIVE_VIEWBOX_REFRESH_SHIFT`), so 25 % covers every incoming
- * edge #544 needs. Unbounded `overflow: visible` let a promoted scene layer
- * grow with zoom² — 15.9× the stage at ~460 %, hundreds of MB of GPU memory at
- * 800 % × DPR 2 — and the page flashed white.
- */
-export const LIVE_SCENE_EXPOSURE_CLIP = 'inset(-25%)';
-
-/** Grid paint uses precisely the bounded exposure allowed to the camera scene. */
-export function liveGridBounds(view: LiveViewBox): LiveViewBox {
-  return { x: view.x - view.w * .25, y: view.y - view.h * .25, w: view.w * 1.5, h: view.h * 1.5 };
-}
-
-/** A passive SVG inherits the HTML camera, including its last Lit basis.
- * Rebase only its paint window, not its viewBox or camera transform (#871).
- * The window is the same 25% scene exposure around the budgeted anchor.
- */
-export function inheritedSceneClip(painted: LiveViewBox, anchor: LiveViewBox): string {
-  const x = (anchor.x - painted.x) / painted.w * 100;
-  const y = (anchor.y - painted.y) / painted.h * 100;
-  const w = anchor.w / painted.w * 100;
-  const h = anchor.h / painted.h * 100;
-  return `inset(${y - h * .25}% ${100 - x - w * 1.25}% ${100 - y - h * 1.25}% ${x - w * .25}%)`;
-}
+/** Grid paint covers the same maximum reserve as the plan. */
+export function liveGridBounds(view: LiveViewBox): LiveViewBox { return viewportExposure(view, {}); }
 
 const sceneExposureClips = new WeakMap<ElementCSSInlineStyle, { input: string; value: string }>();
 const setLayerProjection = (
@@ -162,13 +119,13 @@ const setLayerProjection = (
     // `.stage` remains the outer clip, while removing these inline values
     // keeps the settled DOM and filter/compositing path byte-equivalent to
     // #531. The bound (#689) leaves together with the exposure it bounds.
-    if (expose && style.overflow === 'visible') {
+    if (sceneExposureClips.has(layer) && style.overflow === 'visible') {
       style.removeProperty('overflow');
     }
-    if (expose && style.clipPath === (sceneExposureClips.get(layer)?.value ?? LIVE_SCENE_EXPOSURE_CLIP)) {
+    if (style.clipPath && style.clipPath === sceneExposureClips.get(layer)?.value) {
       style.removeProperty('clip-path');
     }
-    if (expose) sceneExposureClips.delete(layer);
+    sceneExposureClips.delete(layer);
     // #531: снимать только то, что стоит. Лишняя запись в стиль — это
     // инвалидация, а тихий кадр обязан оставлять DOM нетронутым.
     if (style.transform) {
@@ -187,7 +144,7 @@ const setLayerProjection = (
     style.overflow = 'visible';
   }
   if (expose) {
-    const clip = options.exposureClip ?? LIVE_SCENE_EXPOSURE_CLIP;
+    const clip = options.exposureClip ?? 'inset(0)';
     const previous = sceneExposureClips.get(layer);
     if (previous?.input !== clip || previous.value !== style.clipPath) style.clipPath = clip;
     sceneExposureClips.set(layer, { input: clip, value: style.clipPath });
@@ -211,42 +168,59 @@ const setViewBox = (svg: SVGElement, text: string): void => {
   if (svg.getAttribute('viewBox') !== text) svg.setAttribute('viewBox', text);
 };
 
-/**
- * Один атомарный кадр живого вьюпорта (#451, #531).
- *
- * Каждый кадр сцена едет трансформом от своего якоря, а слои устройств и
- * подписей — от последнего осевшего кадра Lit: базы у них разные, потому что
- * содержимое слоёв спозиционировано в процентах осевшего вида. Новый `viewBox`
- * пишется только когда наступил бюджет (`needsViewBoxRefresh`) либо когда
- * вызывающий требует этого явно (терминальное примирение). Возвращается якорь,
- * который после этого кадра действительно записан в DOM.
- */
+const findViewportNodes = (root: ParentNode) => {
+  const camera = [...root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="camera"]')];
+  const cameraLayers = [...new Set(camera.map(svg =>
+    svg.closest?.<HTMLElement>('[data-hp-live-scene="camera"]') ?? svg))];
+  return {
+    camera, cameraLayers,
+    floor: [...root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')],
+    grid: [...root.querySelectorAll<SVGElement>('[data-hp-live-grid]')],
+    floorScene: [...root.querySelectorAll<HTMLElement>('[data-hp-live-scene="floor"]')],
+    inherited: [...root.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]')],
+    markerLayer: [...root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')],
+    badge: root.querySelector<HTMLElement>('[data-hp-live-zoom]'),
+    badgeValue: root.querySelector<HTMLElement>('[data-hp-live-zoom-value]'),
+  };
+};
+type ViewportNodes = ReturnType<typeof findViewportNodes>;
+
+function sameViewport(a: LiveViewBox | undefined, b: LiveViewBox | undefined): boolean {
+  return a === b || !!a && !!b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
+}
+
+/** Synchronously publish one camera frame. DOM discovery belongs to the commit,
+ * while motion uses the cached nodes and rebases only at a coverage boundary. */
 export function paintLiveViewport(
   root: ParentNode,
   painted: LiveViewportFrame,
   current: LiveViewportFrame,
   anchor?: LiveViewportAnchor | null,
-  options: { now?: number; force?: boolean; keepSceneLayer?: boolean; sceneExposureClip?: string; lockSceneAnchor?: boolean } = {},
+  options: { force?: boolean; keepSceneLayer?: boolean; sceneExposureClip?: string; lockSceneAnchor?: boolean;
+    nodes?: ViewportNodes; limits?: ViewportExposureLimits; keepMarkerLayer?: boolean } = {},
 ): LiveViewportAnchor {
-  const now = options.now ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  const base: LiveViewportAnchor = anchor ?? { frame: painted, at: -Infinity };
-  if (!finiteView(painted.view) || !finiteView(current.view) || !finiteView(current.floor)) {
-    return base;
-  }
-  const refresh = options.force === true || !finiteView(base.frame.view)
-    || !finiteView(base.frame.floor) || (!options.lockSceneAnchor && needsViewBoxRefresh(base, current, now));
-  const next: LiveViewportAnchor = refresh ? { frame: current, at: now } : base;
+  const limits = options.limits ?? {};
+  const nodes = options.nodes ?? findViewportNodes(root);
+  const base = anchor ?? { frame: painted, coverage: viewportExposure(painted.view, limits) };
+  if (!finiteView(painted.view) || !finiteView(current.view) || !finiteView(current.floor)) return base;
+  const forecast = current.target && !sameViewport(current.target, base.target)
+    ? forecastExposure(current.view, current.target) : current.view;
+  const refresh = options.force === true || !anchor || !finiteView(base.frame.view) || !finiteView(base.frame.floor)
+    || (!options.lockSceneAnchor && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));
+  const next: LiveViewportAnchor = refresh
+    ? { frame: current, coverage: viewportExposure(current.view, limits), target: current.target } : base;
+  const sceneClip = options.sceneExposureClip ?? (next.clip ??= exposureClip(next.frame.view, next.coverage));
   if (refresh) {
     const viewBox = liveViewBoxText(current.view);
     const floorBox = liveViewBoxText(current.floor);
-    for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="camera"]')) {
+    for (const svg of nodes.camera) {
       setViewBox(svg, viewBox);
     }
-    for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
+    for (const svg of nodes.floor) {
       setViewBox(svg, floorBox);
     }
     const grid = liveGridBounds(current.grid || current.view);
-    for (const rect of root.querySelectorAll<SVGElement>('[data-hp-live-grid]')) {
+    for (const rect of nodes.grid) {
       for (const [name, value] of [['x', grid.x], ['y', grid.y], ['width', grid.w], ['height', grid.h]] as const) {
         const text = String(value);
         if (rect.getAttribute(name) !== text) rect.setAttribute(name, text);
@@ -259,28 +233,28 @@ export function paintLiveViewport(
   const sceneCamera = liveLayerProjection(next.frame.view, current.view);
   const sceneFloor = liveLayerProjection(next.frame.floor, current.floor);
   const keepSceneLayer = options.keepSceneLayer === true;
-  for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="camera"]')) {
+  for (const layer of nodes.cameraLayers) {
     setLayerProjection(
-      svg,
+      layer,
       isIdentityLiveLayerProjection(sceneCamera) && !keepSceneLayer ? null : sceneCamera,
-      { exposeSceneOverflow: true, exposureClip: options.sceneExposureClip },
+      { exposeSceneOverflow: true, exposureClip: sceneClip },
     );
   }
-  const floorScenes = options.sceneExposureClip ? [] : [...root.querySelectorAll<HTMLElement>('[data-hp-live-scene="floor"]')];
+  const floorScenes = options.sceneExposureClip ? [] : nodes.floorScene;
   const floorProjection = isIdentityLiveLayerProjection(sceneFloor) && !keepSceneLayer ? null : sceneFloor;
   for (const scene of floorScenes) {
     const exposed = floorProjection !== null;
     if (scene.hasAttribute('data-hp-live-scene-exposed') !== exposed) scene.toggleAttribute('data-hp-live-scene-exposed', exposed);
-    setLayerProjection(scene, floorProjection, { exposeSceneOverflow:true, exposureClip:options.sceneExposureClip });
+    setLayerProjection(scene, floorProjection, { exposeSceneOverflow:true, exposureClip:sceneClip });
   }
-  for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
+  for (const svg of nodes.floor) {
     // One bounded camera surface promotes the contiguous scene during gestures.
     // Opacity surfaces remain independent for mode transitions.
     if (floorScenes.some(scene => scene.contains(svg))) continue;
     setLayerProjection(
       svg,
       isIdentityLiveLayerProjection(sceneFloor) && (!keepSceneLayer || !!options.sceneExposureClip) ? null : sceneFloor,
-      { exposeSceneOverflow: true, exposureClip: options.sceneExposureClip },
+      { exposeSceneOverflow: true, exposureClip: sceneClip },
     );
   }
   const projection = liveLayerProjection(painted.view, current.view);
@@ -288,46 +262,46 @@ export function paintLiveViewport(
   // HTML layer is their sole camera owner. Moving a bounded clip on the usual
   // anchor budget exposes incoming content without double projection or a
   // promoted unbounded route surface. The idle DOM remains unchanged.
-  for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]')) {
+  for (const svg of nodes.inherited) {
+    if (!refresh && keepSceneLayer && svg.style.clipPath) continue;
     const active = keepSceneLayer || !isIdentityLiveLayerProjection(projection);
     if (active) {
-      const clip = inheritedSceneClip(painted.view, next.frame.view);
+      const clip = exposureClip(painted.view, next.coverage);
       if (svg.style.clipPath !== clip) svg.style.clipPath = clip;
     } else if (svg.style.clipPath) svg.style.removeProperty('clip-path');
   }
-  // Keep the shadow mask's raster window bounded to the same exposed viewport.
-  // Its paths and HTML shadows retain the painted basis and move together;
-  // only these four bounds change on the existing scene-anchor budget.
-  const maskX = (next.frame.view.x - painted.view.x) / painted.view.w;
-  const maskY = (next.frame.view.y - painted.view.y) / painted.view.h;
-  const maskW = next.frame.view.w / painted.view.w, maskH = next.frame.view.h / painted.view.h;
-  for (const mask of root.querySelectorAll<SVGElement>('[data-hp-live-mask="camera"]')) {
-    for (const [name, value] of [['x',maskX-maskW*.25],['y',maskY-maskH*.25],['width',maskW*1.5],['height',maskH*1.5]] as const) {
-      const text = String(value);
-      if (mask.getAttribute(name) !== text) mask.setAttribute(name, text);
-    }
+  for (const layer of nodes.markerLayer) {
+    const still = isIdentityLiveLayerProjection(projection) && !options.keepMarkerLayer;
+    const markerExposure = options.keepMarkerLayer
+      ? { exposeSceneOverflow: true, exposureClip: exposureClip(painted.view, next.coverage) } : undefined;
+    setLayerProjection(layer, still ? null : projection, markerExposure);
   }
-  for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
-    // Keeping an identity transform after terminal reconciliation changes the
-    // browser compositing path and therefore the settled raster by a few colour
-    // levels. The fast path must leave byte-equivalent DOM/CSS when it is idle.
-    setLayerProjection(layer, isIdentityLiveLayerProjection(projection) ? null : projection);
-  }
-  const badge = root.querySelector<HTMLElement>('[data-hp-live-zoom]');
+  const badge = nodes.badge;
   if (badge) {
     const hidden = current.badge?.hidden ?? current.zoom <= 1;
     if (badge.hidden !== hidden) badge.hidden = hidden;
-    const value = badge.querySelector<HTMLElement>('[data-hp-live-zoom-value]');
+    const value = nodes.badgeValue;
     const text = `${current.badge?.percent ?? Math.round(current.zoom * 100)}%`;
     if (value && value.textContent !== text) value.textContent = text;
   }
   return next;
 }
 
-const frameOf = (host: LiveViewportHost): LiveViewportFrame => {
-  const view = host._viewOr(host._baseVb());
+/** Frame supplied to Lit. HA updates during movement keep the authored basis.
+ * The displayed camera remains the synchronous owner of hit testing. */
+export function authoredHouseplanViewport(host: object, current: LiveViewBox, key: string, active: boolean): LiveViewBox {
+  const state = stateOf(host);
+  const previous = state.basis;
+  const retained = active && previous?.key === key && !!state.painted;
+  const view = retained ? state.painted!.view : current;
+  state.basis = { key, view, retained };
+  return view;
+}
+
+const frameOf = (host: LiveViewportHost, view = host._viewOr(host._baseVb())): LiveViewportFrame => {
   return { view: { ...view }, floor: { ...host._floorView(view) }, zoom: host._zoom, badge: host._zoomBadge,
-    ...(host._planVisibleRect ? { grid: host._planVisibleRect(view) } : {}) };
+    target: host._liveViewportTarget?.(),
+    ...(host._renderProjection !== 'iso' && host._planVisibleRect ? { grid: host._planVisibleRect(view) } : {}) };
 };
 
 /** Coalesce camera input into one lightweight paint per animation frame. */
@@ -340,7 +314,8 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     state.raf = 0; state.pending = null;
     if (!state.painted) state.painted = next;
     state.anchor = paintLiveViewport(
-      host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true, force, sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip },
+      host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true, keepMarkerLayer: host._renderProjection === 'iso', force, sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip,
+        nodes: state.nodes ??= findViewportNodes(host.renderRoot), limits: state.limits ??= host._liveViewportLimits?.() ?? {} },
     );
     host._editorRuntime?.wallDimensions?.paintCamera(next.view);
     return;
@@ -355,7 +330,8 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     if (!next || !root) return;
     if (!state.painted) state.painted = next;
     state.anchor = paintLiveViewport(
-      root, state.painted, next, state.anchor, { keepSceneLayer: true, sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip },
+      root, state.painted, next, state.anchor, { keepSceneLayer: true, keepMarkerLayer: host._renderProjection === 'iso', sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip,
+        nodes: state.nodes ??= findViewportNodes(host.renderRoot), limits: state.limits ??= host._liveViewportLimits?.() ?? {} },
     );
     host._editorRuntime?.wallDimensions?.paintCamera(next.view);
   });
@@ -368,19 +344,39 @@ export function commitHouseplanViewport(value: object, keepSceneLayer = false): 
   if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
   state.raf = 0;
   state.pending = null;
-  state.painted = frameOf(host);
+  const current = frameOf(host);
+  const basis = state.basis;
   const root = host.renderRoot as ParentNode | undefined;
   if (!root) return;
-  for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
-    setLayerProjection(layer, null);
+  const previous = state.nodes;
+  const nodes = state.nodes = findViewportNodes(root);
+  state.limits = host._liveViewportLimits?.() ?? {};
+  if (basis?.retained && state.painted && state.anchor && previous
+    && nodes.camera.length === previous.camera.length && nodes.camera.every((node, i) => node === previous.camera[i])
+    && nodes.floor.length === previous.floor.length && nodes.floor.every((node, i) => node === previous.floor[i])) {
+    state.anchor = paintLiveViewport(root, state.painted, current, state.anchor, {
+      keepSceneLayer: true, keepMarkerLayer: host._renderProjection === 'iso', nodes, limits: state.limits, lockSceneAnchor: !!host._modeSceneClip,
+      sceneExposureClip: host._modeSceneClip ?? undefined,
+    });
+    return;
   }
+  state.painted = basis ? frameOf(host, basis.view) : current;
   // A full Lit frame may arrive while a pointer or programmatic camera is still
   // active. It becomes the new exact anchor, but must not demote the scene in
   // the middle of that session (#579). The terminal Lit frame passes false and
   // restores the authored, transform-free idle DOM.
-  state.anchor = paintLiveViewport(root, state.painted, state.painted, state.anchor, {
-    force: true, keepSceneLayer, sceneExposureClip: host._modeSceneClip ?? undefined,
+  state.anchor = paintLiveViewport(root, state.painted, current, state.anchor, {
+    force: true, keepSceneLayer: keepSceneLayer || host._renderProjection === 'iso',
+    keepMarkerLayer: host._renderProjection === 'iso',
+    sceneExposureClip: host._modeSceneClip ?? undefined, nodes: state.nodes, limits: host._liveViewportLimits?.(),
   });
+}
+
+/** A compositor-owned surface can retire without a Lit update. */
+export function refreshHouseplanViewportNodes(host: object): void {
+  const state = states.get(host);
+  const root = (host as LiveViewportHost).renderRoot;
+  if (state && root) state.nodes = findViewportNodes(root);
 }
 
 export function disposeHouseplanViewport(host: object): void {

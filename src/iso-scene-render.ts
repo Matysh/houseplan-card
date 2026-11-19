@@ -12,6 +12,7 @@ import { union, type Geom } from 'polyclip-ts';
 import { ISO_LAB_OPENINGS } from './iso-lab-camera';
 import { clipIsoOpeningDepthQueue, deviceWallOcclusion, furnitureOcclusion } from './iso-lab-visibility';
 import { isoWallLightPainter, type IsoWallLightSource } from './iso-wall-light';
+export { isoFurnitureLightSampler } from './iso-wall-light';
 import type { ResolvedOpeningVisual } from './opening-features';
 import type { SpaceDisplay } from './logic';
 import { isoDisplayWallHeight, projectPlanPoint, type PlanPoint } from './iso-projection';
@@ -366,13 +367,10 @@ function renderIsoStructure(
     </g></g>`;
   const foreground = furniture.length ? svg`<g class="iso-walls" ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
       ${furniture.map((item,slot)=>{
-        const {mask,box} = visibility[slot];
+        const {clip} = visibility[slot];
         const id = 'hp-furniture-foreground-'+slot;
-        return svg`${mask ? svg`<mask id=${id} maskUnits="userSpaceOnUse" x=${box[0]} y=${box[1]}
-          width=${box[2]-box[0]} height=${box[3]-box[1]}>
-          <rect x=${box[0]} y=${box[1]} width=${box[2]-box[0]} height=${box[3]-box[1]} fill="white"></rect>
-          <path d=${mask} fill="black"></path></mask>` : nothing}
-          <g mask=${mask ? 'url(#'+id+')' : nothing}>${item.body}</g>
+        return svg`${clip !== null ? svg`<defs><clipPath id=${id}><path d=${clip}></path></clipPath></defs>` : nothing}
+          <g clip-path=${clip !== null ? 'url(#'+id+')' : nothing}>${item.body}</g>
           ${entries.filter(({index})=>glassSlots.get(index)===slot).map(paintEntry)}`;
       })}</g>` : nothing;
   // Own these paths inside the shadow mask. A <use> of the independently

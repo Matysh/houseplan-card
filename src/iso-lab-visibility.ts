@@ -125,8 +125,8 @@ export function transparentSurface(entry:IsoWallDepthQueueEntry) {
 let cachedQueue: readonly IsoWallDepthQueueEntry[] | undefined;
 let cachedCamera: IsoCamera | undefined;
 let cachedFaces: (Face | null)[] = [];
-interface FurnitureMask {box:number[]; mask:string; frontGlass:number[]}
-let masks = new WeakMap<readonly PlanPoint[],{height:number; result:FurnitureMask}>();
+interface FurnitureVisibility {clip:string | null; frontGlass:number[]}
+let masks = new WeakMap<readonly PlanPoint[],{height:number; result:FurnitureVisibility}>();
 /** At a common screen x, compare floor depth on a line inside the furniture
  * footprint with floor depth reconstructed from each structural face. A long
  * wall can cross the item's screen bounds while standing entirely behind it. */
@@ -165,7 +165,12 @@ export function furnitureOcclusion(queue: readonly IsoWallDepthQueueEntry[], cam
       opaque.push([near]);
     }
   });
-  const result = {box, mask:path(opaque), frontGlass};
+  // Cut each occluder out of the same visible set. Unlike an even-odd
+  // compound of overlapping silhouettes, the clip never reopens an overlap.
+  const [x0,y0,x1,y1] = box;
+  let visible: Multi = [[[[x0,y0],[x1,y0],[x1,y1],[x0,y1]]]];
+  for (const [cover] of opaque) visible = visible.flatMap(([ring]) => subtractConvex(ring, cover));
+  const result = {clip: opaque.length ? path(visible) : null, frontGlass};
   masks.set(footprint,{height,result});
   return result;
 }

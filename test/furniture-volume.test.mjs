@@ -14,9 +14,9 @@ test('Annotated SVG registry reproduces 96 accepted meshes exactly, including mi
  for(const c of cases){
   const before=structuredClone(c.shape),mesh=furnitureMesh(c.shape,1000,800,c.camera);
   const {parts,shadow,lightBox}=mesh;
-  const geometry={parts:parts.map(({lightOffset,...geometry})=>{
-   assert.equal(lightOffset.length,2);
-   assert.ok(lightOffset.every(Number.isFinite));
+  const geometry={parts:parts.map(({lightPoint,...geometry})=>{
+   assert.equal(lightPoint.length,2);
+   assert.ok(lightPoint.every(Number.isFinite));
    return geometry;
   }),shadow};
   assert.ok(lightBox.every(Number.isFinite) && lightBox[2]>0 && lightBox[3]>0);

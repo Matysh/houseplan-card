@@ -72,6 +72,18 @@ a no-op delivery. A one-shot kiosk recovery memo stays owned until the measured
 stage and destination runtime are ready, and is adopted in that destination
 plane rather than reinterpreted as the temporary Flat shell.
 
+During a gesture the live camera projects from an authored view box and
+reuses its scene while the current and incoming views stay inside the
+available margin. The margin extends toward plan content, is limited by
+the device-pixel budget, and is recalculated after a reanchor. The stage
+clips overflow. The camera publishes the exact final view after the last
+input, including a quiet window for a wheel series.
+
+Architecture, floor lighting, furniture, LED strips and floor shadows
+share one projected SVG. Device faces, labels and locks remain live HTML
+on the matching camera. Routes and vacuum trails keep their native
+interaction and draw order.
+
 ## Physical construction and openings
 
 The canonical wall footprint, physical junctions and opening hosts remain the
@@ -132,8 +144,8 @@ A nearer wall dims covered parts of device bodies, badges and common frames.
 The room captions and their metrics and Area links are painted over masonry
 and furniture. Their room-fit and Area link inputs retain the native keyboard
 and touch policy. Filled shadows project directly underneath onto the floor.
-The floor-and-structure mask follows the live camera during a gesture, then
-matches the committed frame. The lock card and its confirmation own lock
+Shadows are SVG geometry inside a floor-and-structure mask in world
+coordinates. The mask and the geometry share the authored scene view box. The lock card and its confirmation own lock
 actuation. LED light remains on the floor while the tape and its hit target
 use the raised plane.
 
@@ -146,10 +158,16 @@ materials.
 
 ## Caches and safe failure
 
-Furniture lighting references the same room-light field through isolated
-silhouette clips and a transparent screen-blend backdrop. Furniture and stairs
-ascending from this floor share the material opacity multiplier .65, including
-the .52 room-light layer. Downstairs retain the Flat symbol.
+Furniture materials sample the room-light field per part. Visible regions of
+furniture are clipped against the foreground masonry. Furniture and stairs
+ascending from this floor share the material opacity multiplier .65. Downstairs
+retain the Flat symbol.
+
+When the light target changes, the previous complete SVG and the incoming
+one share a 500 ms opacity transition. They use distinct SVG IDs and blend
+inside an isolated group. The latest target received during a transition
+can start the next transition after the current one finishes. Camera changes
+continue through that interval. Reduced-motion presentation updates directly.
 
 Physical geometry and projected variants stay separate. The structural LRU
 remains bounded at eight entries; variants are keyed by saved quarter turns,

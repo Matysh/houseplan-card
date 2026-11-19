@@ -88,7 +88,7 @@ export function furnitureVolumeFaces(p: FurniturePart, w: number, h: number, hei
   return faces;
 }
 
-export interface FurnitureMeshPart { name: string; top: string; side: string; depth: number; lightOffset: PlanPoint; }
+export interface FurnitureMeshPart { name: string; top: string; side: string; depth: number; lightPoint: PlanPoint; }
 export interface FurnitureMesh { parts: FurnitureMeshPart[]; shadow: string; lightBox: readonly [number,number,number,number]; }
 interface FurnitureVolume { mesh:FurnitureMesh; footprint:PlanPoint[]; height:number; }
 
@@ -184,8 +184,7 @@ export function furnitureVolume(shape: FurnitureSubject,
   while(meshes.length){
     const ready=meshes.findIndex(m=>!meshes.some(other=>other!==m && supports(other.part,m.part)));
     const [{part:source,...mesh}]=meshes.splice(ready<0?0:ready,1);
-    const z = (source.bottom + source.top) * scale / 2;
-    ordered.push({...mesh, lightOffset: atHeight([0,0],z)});
+    ordered.push({...mesh, lightPoint: transform([source.x + source.w / 2, source.y + source.h / 2])});
   }
   // One compound silhouette avoids doubled opacity where parts overlap. Vertical
   // profiles cast their floor footprint, not an ellipse in the wrong plane.

@@ -405,8 +405,7 @@ export const devicesStyles = css`
     .stage.projection-iso.mode-view .dev[data-hp-zigbee-topology-endpoint] {
       z-index: 8;
     }
-    /* UI-007 fades the visible marker; its separate floor-shadow twin keeps ordinary ink. */
-    .dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }
+    .dev.unavail:not(.led-badge) { opacity:0.35; }
     .dev.led-badge.unavail .device-core > ha-icon,
     .dev.led-badge.unavail .device-core > .valtext,
     .dev.led-badge.unavail .value-badge-content {

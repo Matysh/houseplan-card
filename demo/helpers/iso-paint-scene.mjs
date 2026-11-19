@@ -3,10 +3,11 @@ import { makeIsoPaintFixture } from '../fixtures/iso-paint.mjs';
 import { currentGraphFixture } from './graph-fixture.mjs';
 import { join } from 'node:path';
 
-export async function startIsoPaintScene({width=1480,height=1080,referenceRoot,browserArgs=[],createPage}={}) {
-  requirePinnedBrowser('#1470 paired paint/raster evidence');
+export async function startIsoPaintScene({width=1480,height=1080,referenceRoot,browserArgs=[],createPage,
+  dpr=1, launchOptions, reducedMotion='reduce'}={}) {
+  if (!launchOptions) requirePinnedBrowser('#1470 paired paint/raster evidence');
   const fixture=makeIsoPaintFixture();fixture.config=currentGraphFixture(fixture.config);
-  const args=[{width,height},1,browserArgs,{reducedMotion:'reduce',createPage}];
+  const args=[{width,height},dpr,browserArgs,{reducedMotion,createPage,launchOptions}];
   if(referenceRoot)args.push(join(referenceRoot,'demo/srv'),referenceRoot);
   const env=await launch(...args);
   try {
@@ -48,8 +49,8 @@ export async function startIsoPaintScene({width=1480,height=1080,referenceRoot,b
       if(window.__isoPaintWrites.length)throw Error('Paint fixture attempted a write during startup');
     },fixture);
     await settleIsoPaint(env.page);
-    env.provenance={browser:env.browser.version(),node:process.version,viewport:{width,height},dpr:1,
-      pinnedBrowserAttested:true};
+    env.provenance={browser:env.browser.version(),node:process.version,viewport:{width,height},dpr,
+      pinnedBrowserAttested:!launchOptions};
     return env;
   } catch(error) {await env.browser.close();throw error;}
 }

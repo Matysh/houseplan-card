@@ -25,10 +25,10 @@ export function stairVolume(stair:Stair,cellCm:number,camera:IsoCamera):StairVol
     const area=screen.reduce((sum,p,i)=>{const q=screen[(i+1)%screen.length];return sum+p[0]*q[1]-q[0]*p[1];},0);
     if(area<=1e-8)return;
     const ink=path(screen.map(p=>unprojectFloorPoint(p,camera)));
-    const z=vertices.reduce((sum,p)=>sum+p[2],0)/vertices.length;
+    const center = (axis: 0 | 1) => vertices.reduce((sum, p) => sum + p[axis], 0) / vertices.length;
     parts.push({name,top:cap?ink:'',side:cap?'':ink,
       depth:vertices.reduce((sum,[x,y,z])=>sum+isoCameraDepth([x,y],z,camera),0)/vertices.length,
-      lightOffset:unprojectFloorPoint(projectPlanPoint([0,0],z,camera),camera)});
+      lightPoint: [center(0), center(1)]});
   };
   let steps:number;
   if(stair.kind==='straight'){

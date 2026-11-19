@@ -25,8 +25,8 @@ const isoTilesStatic = css`
     box-shadow: none;
   }
   /* The whole marker floats: tile, badges, edge, frame and satellites. */
-  .stage.projection-iso.mode-view .dev:not(.iso-tile-shadow) > *,
-  .stage.projection-iso.mode-view .oplock:not(.iso-tile-shadow) > .oplock-shell {
+  .stage.projection-iso.mode-view .dev > *,
+  .stage.projection-iso.mode-view .oplock > .oplock-shell {
     translate: 0 calc(var(--iso-lift) * -1);
   }
   .stage.projection-iso.mode-view .dev .device-core {
@@ -47,7 +47,7 @@ const isoTilesStatic = css`
     position: relative;
   }
   /* Hover / focus / selected frame hugs the tile and its edge (lab .marker-halo--tile). */
-  .stage.projection-iso.mode-view .dev:not(.iso-tile-shadow) .device-core::after {
+  .stage.projection-iso.mode-view .dev .device-core::after {
     content: '';
     position: absolute;
     box-sizing: border-box;
@@ -67,46 +67,6 @@ const isoTilesStatic = css`
   :host([data-pointer-hover]) .stage.projection-iso.mode-view .dev.alarm[data-hp-device-hover]:not(.sel):not(:focus-visible),
   .stage.projection-iso.mode-view .dev.alarm.sel,
   .stage.projection-iso.mode-view .dev.alarm:focus-visible { --iso-frame: #F0410C; }
-  /* One shadow layer under every marker and lock: .devlayer is a stacking
-     context, so a negative z-index paints the layer below every marker there
-     although it follows them in DOM order. */
-  .stage.projection-iso.mode-view .iso-tile-shadows {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-    /* This absolute layer has no layout influence outside itself. Isolating
-       style/layout keeps a 200-marker shadow tree out of the rest of the
-       stage's toggle recalculation without clipping the deliberately
-       overflowing blur at individual marker bounds. */
-    contain: layout style;
-  }
-  /* The twin's root already has exactly the core/lock box. Paint its shadow
-     there instead of creating two hidden descendants for every marker. Badge
-     twins retain only the flex spacer and their extra value boxes. */
-  .stage.projection-iso.mode-view .iso-tile-shadow {
-    pointer-events: none;
-    contain: layout style;
-    border-radius: var(--iso-radius);
-    box-shadow: var(--iso-sh-dx) calc(var(--iso-sh-dy) + var(--iso-depth)) var(--iso-sh-blur)
-      calc(var(--iso-shadow-inset) * -1) rgb(28 32 28 / var(--iso-sh-a));
-  }
-  .stage.projection-iso.mode-view .iso-tile-shadow::before { display: none; }
-  .stage.projection-iso.mode-view .iso-tile-shadow > :not(.device-shell):not(.oplock-shell),
-  .stage.projection-iso.mode-view .iso-tile-shadow .device-shell-frame,
-  .stage.projection-iso.mode-view .iso-tile-shadow ha-icon { visibility: hidden; }
-  .stage.projection-iso.mode-view .iso-tile-shadow .device-core,
-  .stage.projection-iso.mode-view .iso-tile-shadow .oplock-core {
-    background: transparent;
-    color: transparent;
-    box-shadow: none;
-  }
-  .stage.projection-iso.mode-view .iso-tile-shadow .value-badge {
-    background: transparent;
-    color: transparent;
-    box-shadow: var(--iso-sh-dx) calc(var(--iso-sh-dy) + var(--iso-depth)) var(--iso-sh-blur)
-      calc(var(--iso-shadow-inset) * -1) rgb(28 32 28 / var(--iso-sh-a-white));
-  }
   /* forced colours or no filter: no edge and no shadow; size and frames stay. */
   @media (forced-colors: active) {
     .stage.projection-iso.mode-view .iso-tile-shadows { display: none; }

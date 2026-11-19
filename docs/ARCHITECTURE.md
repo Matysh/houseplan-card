@@ -392,7 +392,7 @@ created before the dirty baseline; a session-owned plan-list reader updates
 availability without resetting the draft. Device menu commands retain the
 existing config/revision/binding guards and shared visibility/delete writers.
 Furniture mouse placement extends the existing delayed press and stage camera;
-live grid bounds refresh only on that camera's existing viewBox budget.
+live grid bounds refresh when the camera reanchors beyond its prepared margin.
 
 Device structural history (#1073) uses the existing Devices `CommandStack`.
 Copy and Delete add one server-confirmed command; their Undo/Redo confirms its

@@ -13,7 +13,6 @@
  * Flat never reaches this module: every selector is scoped to
  * `.stage.projection-iso.mode-view`.
  */
-import { html, nothing, type TemplateResult } from 'lit';
 import { colorLuma, parseHexColor, type Rgb } from './iso-materials';
 
 export const ISO_ICON_SCALE = 1.12;
@@ -123,20 +122,6 @@ export function isoTileStateCss(): string {
     rules.push(`${S} .oplock.${cls} { --iso-edge: ${edge(body, 'light', false)}; }`);
     rules.push(`${S} .oplock.${cls}.iso-floor-light { --iso-edge: ${edge(body, 'light', true)}; }`);
   }
-  // Floor shadows, theme × floor (a later rule of equal weight wins: dark last).
-  const tinted = ':is(.on, .open, .lock-locked, .lock-unlocked, .alarm, .locked, .unlocked)';
-  const shadow = (sel: string, s: IsoTileShadow, white = true) => `${sel} {`
-    + ` --iso-sh-dx: ${u(s.dx)}; --iso-sh-dy: ${u(s.dy)}; --iso-sh-blur: ${u(s.sigma * 2)};`
-    + ` --iso-sh-a: ${white ? s.opacityWhite : s.opacityTinted}; --iso-sh-a-white: ${s.opacityWhite}; }`;
-  const G = `${S} .iso-tile-shadow`;
-  rules.push(shadow(G, isoTileShadow('light', false)));
-  rules.push(shadow(`${G}${tinted}`, isoTileShadow('light', false), false));
-  rules.push(shadow(`${G}.iso-floor-light`, isoTileShadow('light', true)));
-  rules.push(shadow(`${G}.iso-floor-light${tinted}`, isoTileShadow('light', true), false));
-  rules.push(shadow(`${G}.theme-dark.theme-dark`, isoTileShadow('dark', false)));
-  rules.push(shadow(`${G}.theme-dark.theme-dark.iso-floor-light`, isoTileShadow('dark', true)));
-  rules.push(shadow(`${G}.theme-dark.theme-dark${tinted}`, isoTileShadow('dark', false), false));
-  rules.push(shadow(`${G}.theme-dark.theme-dark.iso-floor-light${tinted}`, isoTileShadow('dark', true), false));
   return rules.join('\n');
 }
 
@@ -154,16 +139,4 @@ ${S} .dev { --iso-radius: min(${u(ISO_TILE.radius)}, calc(var(--dev-size) * ${IS
 ${S} .dev .value-badge { --iso-badge-radius: min(${u(ISO_TILE.radius)}, calc(var(--dev-size) * .7875 * ${ISO_TILE.radiusOfHeight})); }
 ${S} .dev .device-shell.with-values { gap: ${u(ISO_TILE.badgeGap)}; }
 ${S} .oplock { --iso-radius: min(${u(ISO_TILE.radius)}, calc(var(--oplock-core-size) * ${ISO_TILE.radiusOfHeight})); }`;
-}
-
-/**
- * The floor-shadow twin of a marker or lock: the same classes and geometry,
- * painted only as the inset, blurred box-shadow of its bodies. It lives in one
- * layer under every marker, so a shadow never lands on a neighbour's tile.
- */
-export function renderIsoTileShadow(kind: 'dev' | 'oplock', owner: string, classes: string, style: string,
-  face: TemplateResult | typeof nothing): TemplateResult {
-  /* css-uses {"owner":"renderIsoTileShadow","kind":"class","values":["static-icon","alarm","unavail","power-off","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2","theme-light","theme-dark","iso-floor-light","locked","unlocked"],"reason":"Two real ghost callers forward presentationClasses, deviceThemeClass and floor-light, or the opening lock state"} */
-  return html`<div class="${kind} iso-tile-shadow ${classes}" data-shadow-of=${owner} style=${style}
-    aria-hidden="true">${face}</div>`;
 }

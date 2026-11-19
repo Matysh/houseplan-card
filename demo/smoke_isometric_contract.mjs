@@ -27,7 +27,7 @@ const out = await page.evaluate(async () => {
       && b.right <= a.right + tolerance && b.bottom <= a.bottom + tolerance;
   };
   const sceneToClient = (point) => {
-    const svg = root().querySelector('.iso-overlays-svg');
+    const svg = root().querySelector('.plan-svg[data-projection="iso"]');
     if (!svg) return [NaN, NaN];
     const rect = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
     const scale = Math.min(rect.width / vb.width, rect.height / vb.height);
@@ -133,11 +133,11 @@ const out = await page.evaluate(async () => {
   result.isoRendered = !!root().querySelector('[data-hp="iso-underlay"] .iso-floor-side')
     && !!root().querySelector('[data-hp="iso-walls"] .iso-wall-top');
   result.stage4RevisionAdvertised = stage?.getAttribute('data-hp-iso-stage') === '4';
-  result.sharedProjectionSnapshot = [
-    '.iso-underlay-svg', '.plan-svg', '.iso-shadows-svg', '.iso-walls-svg', '.iso-overlays-svg',
-  ]
-    .map((selector) => root().querySelector(selector)?.getAttribute('viewBox'))
-    .every((value, _index, values) => !!value && value === values[0]);
+  const projectionRoot = root().querySelector('.plan-svg[data-projection="iso"]');
+  result.sharedProjectionSnapshot = root().querySelectorAll('[data-hp-live-viewbox="camera"]').length === 1
+    && Boolean(projectionRoot?.hasAttribute('viewBox'))
+    && ['.iso-underlay-svg', '.iso-floor-scene', '.iso-shadows-svg', '.iso-walls-svg', '.iso-led-plane']
+      .every((selector) => projectionRoot?.querySelector(selector)?.ownerSVGElement === projectionRoot);
   const materialDefs = [...root().querySelectorAll('[data-hp-iso-material-def]')];
   const requiredDefs = [
     'hp-iso-wall-side', 'hp-iso-wall-top', 'hp-iso-wall-texture',

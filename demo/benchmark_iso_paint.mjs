@@ -68,13 +68,27 @@ try {
   } else if(process.env.HP_ISO_PAINT_CAPTURE) {
     for(const dark of [false,true]) for(const rotation of [0,90,180,270]) {
       await page.evaluate(async dark=>{const c=window.__isoPaint;c.hass={...c.hass,themes:{darkMode:dark}};await c.updateComplete;},dark);
-      for(const zoom of [1,2.18]) {
+      if (process.env.HP_ISO_PAINT_LIGHT_SWEEP) {
+        await zoomIsoPaint(page,1);await page.mouse.move(5,5);
+        for (const state of ['off','on']) {
+          await page.evaluate(async state => {
+            const card = window.__isoPaint;
+            const states = Object.fromEntries(Object.entries(card.hass.states).map(([id, row]) =>
+              [id, id.startsWith('light.') ? { ...row, state } : row]));
+            card.hass = { ...card.hass, states };
+            await card.updateComplete;
+          }, state);
+          await page.waitForTimeout(700);
+          await capture(`${dark?'dark':'light'}-${rotation}-${state}`);
+        }
+      } else for(const zoom of [1,2.18]) {
         await zoomIsoPaint(page,zoom);await page.mouse.move(5,5);await page.waitForTimeout(700);
         const name=`${dark?'dark':'light'}-${rotation}-${zoom}`;
         await capture(name);
       }
       await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);
     }
+    if (!process.env.HP_ISO_PAINT_LIGHT_SWEEP) {
     await page.evaluate(async()=>{
       const c=window.__isoPaint,next=structuredClone(c._serverCfg),space=next.spaces[0];
       space.rooms[0].name='A long fictional room title overlapping its neighbour';
@@ -89,6 +103,7 @@ try {
     if(box){await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await capture('overlap-long-hover');}
     await page.mouse.move(5,5);await page.locator('.roomlabel .rlfit').first().focus();
     await capture('overlap-long-focus');
+    }
   } else {
     for(const mode of (process.env.HP_ISO_PAINT_MODES||'iso,flat').split(',')) {
       await page.evaluate(async mode=>{const c=window.__isoPaint;c._serverCfg.settings.volumetric_view=mode!=='flat';c.requestUpdate();await c.updateComplete;},mode);

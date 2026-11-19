@@ -182,6 +182,11 @@ const out = await page.evaluate(async () => {
     },
   };
   await window.__hpTest.settled();
+  const fadeDeadline = performance.now() + 1800;
+  while (root(original).querySelector('[data-hp-retained-light]')) {
+    if (performance.now() >= fadeDeadline) throw Error('The retained light frame never retired');
+    await frame();
+  }
   const after = layers();
   window.__isoTouchLayerDiagnostics = {flat,before,after};
   const afterSpillParts = [...root(original).querySelectorAll('.glow-pool')]
@@ -208,10 +213,9 @@ const out = await page.evaluate(async () => {
     root(original).querySelector('.sunlayer'),
     root(original).querySelector('.iso-shadows-svg'),
     root(original).querySelector('.iso-walls-svg'),
-    root(original).querySelector('.iso-overlays-svg'),
     root(original).querySelector('.vacpuck'),
   ];
-  const overlaySvg = root(original).querySelector('.iso-overlays-svg');
+  const overlay = root(original).querySelector('.devlayer');
   const wallSvg = root(original).querySelector('.iso-walls-svg');
   const doorResolved = original._openingsR.find((opening) => opening.id === 'iso-door');
   const windowResolved = original._openingsR.find((opening) => opening.id === 'iso-window');
@@ -290,8 +294,8 @@ const out = await page.evaluate(async () => {
       && ordered.slice(1).every((node, index) => Boolean(
         ordered[index].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING
       )),
-    overlaysStayAboveWallsWithoutDebugGrounds: !!overlaySvg && !!wallSvg
-      && Boolean(wallSvg.compareDocumentPosition(overlaySvg) & Node.DOCUMENT_POSITION_FOLLOWING)
+    overlaysStayAboveWallsWithoutDebugGrounds: !!overlay && !!wallSvg
+      && Boolean(wallSvg.compareDocumentPosition(overlay) & Node.DOCUMENT_POSITION_FOLLOWING)
       && !root(original).querySelector(
         '.iso-overlay-ground, .iso-overlay-tether, #hp-iso-overlay-ground',
       ),
@@ -369,7 +373,7 @@ const out = await page.evaluate(async () => {
     && !root(original).querySelector('[data-hp="iso-shadows"]')
     && !root(original).querySelector('[data-hp="iso-raised-overlays"]')
     && !root(original).querySelector('[data-hp="iso-overlay-grounds"]')
-    && !root(original).querySelector('.iso-overlays-svg')
+    && !root(original).querySelector('.plan-svg[data-projection="iso"]')
     && !root(original).querySelector('[data-hp-iso-raised="true"]');
   result.noBordersSkipsHiddenTopology = hiddenTopologyRequests === 0
     && hiddenTopologyBuilds === 0 && original._effectiveProjection() === 'iso';

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Reuse the painted 2.5D plan during pan and zoom, with SVG floor shadows and a shared lighting fade (#1478).
 - Round each exposed corner of a shared device outline to suit its icon size in 2D and 2.5D (#1477).
 - Preview the saved swing-door position when rebinding an opening to a replacement wall (#1476).
 - Place swing doors at the opening-side wall face by default in Flat and 2.5D. Door properties can also fix either face or the centre. The sliding-door placement labels match its existing panel locations (#1475).

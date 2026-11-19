@@ -113,11 +113,16 @@ test('every browser smoke that explicitly selects Iso waits for its lazy runtime
     'the shared helper must await load and a painted settled frame');
 });
 
-test('Stage 4 composes ordered inert SVG surfaces below screen-facing HTML', () => {
-  assert.match(card, /<svg class="iso-underlay-svg"/);
-  assert.match(card, /<svg class="iso-shadows-svg"/);
-  assert.match(card, /<svg class="iso-walls-svg"/);
-  assert.match(card, /<svg class="iso-overlays-svg"/);
+test('Stage 4 composes ordered inert SVG groups below screen-facing HTML', () => {
+  const projection = section(card, '<div class="iso-scene-surface"', '</svg></div>');
+  let previous = -1;
+  for (const selector of ['iso-underlay-svg', 'iso-floor-scene', 'iso-shadows-svg', 'iso-walls-svg',
+    'iso-furniture-foreground', 'iso-led-plane', 'iso-floor-shadow-plane']) {
+    const position = projection.indexOf(selector);
+    assert.ok(position > previous, selector);
+    previous = position;
+  }
+  assert.equal([...projection.matchAll(/<svg\b/g)].length, 1, 'architecture and floor share one authored SVG');
   assert.match(sceneRender, /class="iso-wall-top"/);
   assert.match(sceneRender, /class="iso-wall-side"/);
   assert.match(sceneRender, /class="iso-opening-panel iso-\$\{surface\.type\} iso-opening-\$\{surface\.kind\} iso-material-\$\{surface\.material\}"/);
@@ -146,18 +151,9 @@ test('Stage 4 composes ordered inert SVG surfaces below screen-facing HTML', () 
   assert.match(sceneRender, /entry\.layer === 'wall-top'[\s\S]*?fill-rule="evenodd"/,
     'each independently sorted wall component must retain evenodd hole semantics');
   assert.match(sceneRender, /aria-hidden="true" pointer-events="none"/);
-  assert.match(styles, /\.iso-underlay-svg\s*\{\s*z-index:\s*0/);
-  assert.match(styles, /\.plan-svg\s*\{\s*z-index:\s*1/);
-  assert.match(styles, /\.iso-shadows-svg\s*\{\s*z-index:\s*3/);
-  assert.match(styles, /\.iso-walls-svg\s*\{[\s\S]*?z-index:\s*4/);
-  assert.match(styles, /\.iso-overlays-svg\s*\{\s*z-index:\s*5/);
+  assert.match(styles, /\.iso-scene-surface\s*\{[^}]*z-index:\s*1/);
   assert.match(styles, /\.devlayer\s*\{[\s\S]*?z-index:\s*6/);
-  // #732: the overlay surface stays as the inert camera-viewBox layer the
-  // screen-facing HTML is measured against; nothing renders into it, and the
-  // two renderers that returned an empty SVG are gone with the ground radius.
-  const overlaySurface = section(card, '<svg class="iso-overlays-svg"', '</svg>');
-  assert.match(overlaySurface, /pointer-events="none">$/);
-  assert.doesNotMatch(overlaySurface, /\$\{isoFrame/);
+  assert.doesNotMatch(card, /<foreignObject|data-hp-live-mask|iso-overlays-svg/);
   const frameResolver = section(sceneRender, 'export function resolveIsoFramePresentation', 'const emptySvg');
   assert.doesNotMatch(frameResolver, /grounds|raised/);
   assert.doesNotMatch(sceneRender, /renderIsoOverlayGrounds|renderIsoRaisedOverlays|groundRadius/);
@@ -174,9 +170,11 @@ test('2.5D treats wall-cut overlays and their floor shadows as separate visual p
     '_renderSunRays(space)', '_renderOpenings(disp)',
     '_renderVacuums(this._renderVacuumDevices, view, space.id)',
   ]) assert.ok(card.includes(renderer), `missing ${renderer}`);
-  assert.match(card, /isoPlacement\.floorScene : isoPlacement\.visualScene\s*:\s*\[pos\.x, pos\.y\]/);
-  assert.match(card, /isoPlacement\.floorScene : isoPlacement\.visualScene : \[p\.x, p\.y\]/);
-  assert.match(card, /isoPlacement\.floorScene : isoPlacement\.visualScene\s*:\s*floorAnchor/);
+  const floorShadows = readFileSync(new URL('../src/iso-floor-shadows.ts', import.meta.url), 'utf8');
+  assert.match(floorShadows, /const \[x, y\] = placement.floorScene/);
+  assert.match(card, /isoPlacement\.visualScene\s*:\s*\[pos\.x, pos\.y\]/);
+  assert.match(card, /isoPlacement \? isoPlacement\.visualScene : \[p\.x, p\.y\]/);
+  assert.match(card, /isoPlacement\.visualScene\s*:\s*floorAnchor/);
   assert.doesNotMatch(card, /_scenePoint/);
   assert.doesNotMatch(readFileSync(new URL('../src/live-editor.ts', import.meta.url), 'utf8'), /_scenePoint/,
     'the live editor paints a dragged marker at its Flat point too');
@@ -275,8 +273,7 @@ test('show_borders:false keeps the Flat floor plane and removes every volume cue
   assert.match(card, /<svg class="plan-svg"[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
   // The browser parity test compares the painted plane, fit and input at all four turns.
   assert.match(card, /class=\$\{iso \? 'iso-floor-scene' : nothing\} transform=\$\{this\._floorTransform\}/);
-  assert.match(card,
-    /\$\{litCache\(iso && isoLayers\?\.structural \? svg`<svg class="iso-shadows-svg"/);
+  assert.match(card, /isoLayers\?\.structural \? svg`[\s\S]*?<g class="iso-shadows-svg"/);
   assert.match(card, /if \(!runtime \|\| !layers\?\.structural \|\| !structural\) return null/);
   const baseView = section(card, 'private _baseVb(', '/** How many objects');
   const effective = section(card, 'private _effectiveProjection()', 'private _floorView');
@@ -363,7 +360,7 @@ test('low-plane DOM roots expose one floor/visual identity and preserve existing
     assert.match(raisedHit, /(?:min-)?width:\s*(?:44px|max\(44px,)/, selector);
     assert.match(raisedHit, /(?:min-)?height:\s*(?:44px|max\(44px,)/, selector);
   }
-  assert.match(styles, /\.iso-overlays-svg,[\s\S]*?pointer-events:\s*none/);
+  assert.match(styles, /\.iso-walls-svg,[\s\S]*?pointer-events:\s*none/);
 });
 
 test('Stage 4 materials are bounded and capability-safe; #649 walls follow the user colour, not the theme', () => {

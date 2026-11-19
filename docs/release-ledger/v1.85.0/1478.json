@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1478,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Addresses the 2.5D pan and zoom regression in the angled presentation introduced on the current beta line.",
+  "summary": {
+    "ru": "Панорама и зум 2.5D дольше используют готовый кадр. Свет на полу, стенах и мебели меняется вместе.",
+    "en": "2.5D pan and zoom reuse prepared frames. Floor, wall and furniture lighting fade together."
+  }
+}

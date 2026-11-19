@@ -60,7 +60,9 @@ async function observe({ volumetric = true, kiosk = false, delay = 0, fail = fal
       const shadow = stage?.querySelector('.iso-tile-shadow');
       records.push({ visible, iso, light, readiness: stage?.dataset.hpIsoReadiness || '',
         veil: !!stage?.querySelector('.bootveil:not(.off)'),
-        shadowOpacity: shadow ? getComputedStyle(shadow).opacity : null });
+        shadowOpacity: shadow ? getComputedStyle(shadow).opacity : null,
+        shadowPlane: !!stage?.querySelector('.iso-floor-shadow-plane'),
+        markerPlacement: stage?.querySelector('.dev')?.getAttribute('data-hp-iso-floor') || null });
       return records.at(-1);
     };
     const deadline = performance.now() + 7000;
@@ -101,4 +103,4 @@ const out = {
 };
 
 checkAll(out);
-await finish(null, out);
+await finish(null, { checks: out, ordinary: ordinary.firstVisible, kiosk: kiosk.firstVisible });

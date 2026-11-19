@@ -182,6 +182,7 @@ export const planStyles = css`
     .hp-mode-scene-camera { position:absolute; inset:0; z-index:1; pointer-events:none; }
     .hp-mode-scene-camera > svg,
     .zoomwrap > svg,
+    .iso-scene-surface > svg,
     .hp-mode-crossfade > svg {
       position: absolute;
       inset: 0;
@@ -206,17 +207,14 @@ export const planStyles = css`
     [data-hp-live-scene-exposed] .hp-mode-scene-svg { overflow:visible; }
     .hp-mode-crossfade { position:absolute; inset:0; z-index:1; pointer-events:none; }
     .plan-svg { z-index: 1; }
-    .iso-underlay-svg { z-index: 0; overflow: visible; }
-    .iso-shadows-svg { z-index: 3; overflow: visible; }
-    .iso-walls-svg {
-      z-index: 4;
-      overflow: visible;
-    }
-    .iso-overlays-svg { z-index: 5; overflow: visible; }
+    .iso-scene-surface { position:absolute; inset:0; z-index:1; }
+    .iso-scene-surface > svg { overflow:visible; }
+    .iso-scene-surface[data-hp-light-mixing] { isolation:isolate; }
+    .iso-scene-surface[data-hp-light-mixing] > svg { mix-blend-mode:plus-lighter; }
+    .iso-scene-surface > svg[data-hp-retained-light] { pointer-events:none; }
     .iso-underlay-svg,
     .iso-shadows-svg,
     .iso-walls-svg,
-    .iso-overlays-svg,
     .iso-underlay,
     .iso-walls,
     .iso-openings {

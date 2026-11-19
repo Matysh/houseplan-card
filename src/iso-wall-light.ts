@@ -68,6 +68,22 @@ function falloff(fraction: number): number {
   return 0;
 }
 
+/** One world-space sample per furniture part, sharing the wall optical field. */
+export function isoFurnitureLightSampler(sources: readonly IsoWallLightSource[]) {
+  if (typeof Path2D === 'undefined' || !sources.length) return undefined;
+  context ??= document.createElement('canvas').getContext('2d');
+  const ctx = context;
+  if (!ctx) return undefined;
+  const field = sources.map(source => ({
+    source, visible: pathOf(source.visible.join(' ')), floor: source.floorClip?.map(pathOf),
+  }));
+  return ([x, y]: PlanPoint) => field.flatMap(({ source, visible, floor }) => {
+    const alpha = source.alpha * falloff(distance(source.points, x, y) / source.radius);
+    return alpha > .0001 && ctx.isPointInPath(visible, x, y, source.rule ?? 'evenodd')
+      && (!floor || floor.some(path => ctx.isPointInPath(path, x, y, 'evenodd'))) ? [{ source, alpha }] : [];
+  });
+}
+
 export function isoWallLightPainter(
   sources: readonly IsoWallLightSource[], camera: IsoCamera, cellCm: number, geometry: IsoWallGeometry,
 ) {

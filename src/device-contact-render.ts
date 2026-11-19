@@ -260,17 +260,36 @@ export class DeviceContactRenderer {
     return result;
   }
 
-  private paintWallMasks(nodes:ReadonlyMap<string,HTMLElement>):void {
-    if(!this.plane)return;
-    for(const node of nodes.values()){
-      const mask=(node as HTMLElement&{hpIsoWallMask?:IsoDeviceWallMask}).hpIsoWallMask;
-      const faces=this.faces.get(metricKey(node.querySelector('.device-shell')));
-      if(!mask||!faces)continue;
-      const body=mask.bodyMask(faces);
-      for(const [selector,value] of [['[data-hp-wall-body]',body.body],['[data-hp-wall-body-hidden]',body.occluded]]){
-        const path=node.querySelector(selector);
-        if(path&&path.getAttribute('d')!==value)path.setAttribute('d',value);
+  private readonly wallPaint = new WeakMap<SVGSVGElement, [IsoDeviceWallMask, readonly IsoDeviceFace[]]>();
+
+  private paintWallMasks(nodes: ReadonlyMap<string, HTMLElement>): void {
+    if (!this.plane) return;
+    for (const [id, node] of nodes) {
+      const mask = (node as HTMLElement & { hpIsoWallMask?: IsoDeviceWallMask }).hpIsoWallMask;
+      const slot = node.querySelector<SVGSVGElement>('[data-hp-wall-mask-slot]');
+      const faces = this.faces.get(metricKey(node.querySelector('.device-shell')));
+      if (!mask || !slot || !faces?.length) {
+        node.removeAttribute('data-hp-device-occlusion');
+        continue;
       }
+      const previous = this.wallPaint.get(slot);
+      if (previous?.[0] === mask && previous[1] === faces) continue;
+      this.wallPaint.set(slot, [mask, faces]);
+      const { occluded } = mask.bodyMask(faces);
+      node.toggleAttribute('data-hp-device-occlusion', !!occluded);
+      if (!occluded) { render(nothing, slot); continue; }
+      // Include the local shell and satellites without allocating a viewport
+      // for every marker. Coordinates are in units of the measured core.
+      const x = Math.min(...faces.map(face => face.left)) + .15;
+      const y = Math.min(...faces.map(face => face.top)) + .15;
+      const width = Math.max(...faces.map(face => face.right)) - x + 1;
+      const height = Math.max(...faces.map(face => face.bottom)) - y + 1.45;
+      render(svg`<defs><mask id=${'hp-device-wall-' + encodeURIComponent(id)}
+        maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox"
+        x=${x} y=${y} width=${width} height=${height} style="mask-type:luminance">
+        <rect x=${x} y=${y} width=${width} height=${height} fill="white"></rect>
+        <path d=${occluded} transform=${mask.transform} fill="#4d4d4d"></path>
+      </mask></defs>`, slot);
     }
   }
 

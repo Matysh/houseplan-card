@@ -25,8 +25,8 @@ test('A wall directly behind every catalog footprint reveals the body; a wall in
       const shape={symbol:symbol.id,x:.25,y:.40,w:symbol.width_cm/1000,h:symbol.depth_cm/1000};
       const mesh=furnitureVolume(shape,1000,1000,view);
       const mid=(shape.y+shape.h/2)*1000, offset=forward*(shape.h*500+4);
-      assert.equal(furnitureOcclusion(wall(mid-offset),view,mesh.footprint,mesh.height).mask,'',symbol.id+' rear '+rotDeg);
-      assert.ok(furnitureOcclusion(wall(mid+offset),view,mesh.footprint,mesh.height).mask,symbol.id+' front '+rotDeg);
+      assert.equal(furnitureOcclusion(wall(mid-offset),view,mesh.footprint,mesh.height).clip,null,symbol.id+' rear '+rotDeg);
+      assert.ok(furnitureOcclusion(wall(mid+offset),view,mesh.footprint,mesh.height).clip !== null,symbol.id+' front '+rotDeg);
     }
   }
 });

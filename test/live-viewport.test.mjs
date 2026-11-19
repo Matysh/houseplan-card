@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  LIVE_SCENE_EXPOSURE_CLIP,
   isIdentityLiveLayerProjection,
   liveLayerProjection,
   liveViewBoxText,
-  inheritedSceneClip,
+  authoredHouseplanViewport,
   liveGridBounds,
   paintLiveViewport, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, disposeHouseplanViewport,
 } from '../test-build/live-viewport.js';
+import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor } from '../test-build/viewport-exposure.js';
 
 test('live viewport projects pan and zoom from the last complete frame', () => {
   assert.deepEqual(
@@ -110,19 +110,19 @@ test('#1397 screen-space dimensions paint after the same immediate/coalesced cam
   assert.equal(queued.size,0,'a retired camera cannot repaint dimensions later');
 });
 
-test('#1081 grid exposure covers incoming edges and changes only on the existing viewBox budget', () => {
+test('#1081 grid exposure covers incoming edges and changes with its anchor', () => {
   const root = fakeRoot(), painted = frame(0, 0);
-  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0 });
-  assert.deepEqual(liveGridBounds(painted.view), { x: -250, y: -125, w: 1500, h: 750 });
+  let anchor = paintLiveViewport(root, painted, painted, null);
+  assert.deepEqual(liveGridBounds(painted.view), { x: -500, y: -250, w: 2000, h: 1000 });
   const writes = root.grid.writes;
-  anchor = paintLiveViewport(root, painted, frame(100, 40), anchor, { now: 20 });
+  anchor = paintLiveViewport(root, painted, frame(100, 40), anchor);
   assert.equal(root.grid.writes, writes, 'no grid mutation on each lightweight camera move');
   const bounds = root.grid.attrs;
   assert.ok(Number(bounds.x) <= 100 && Number(bounds.x) + Number(bounds.width) >= 1100);
-  anchor = paintLiveViewport(root, painted, frame(-700, 150, 500, 250), anchor, { now: 40 });
-  assert.equal(root.grid.attrs.x, '-825'); assert.equal(root.grid.attrs.width, '750');
+  anchor = paintLiveViewport(root, painted, frame(-700, 150, 500, 250), anchor);
+  assert.equal(root.grid.attrs.x, '-950'); assert.equal(root.grid.attrs.width, '1000');
   const refreshed = root.grid.writes;
-  paintLiveViewport(root, painted, frame(-700, 150, 500, 250), anchor, { now: 50 });
+  paintLiveViewport(root, painted, frame(-700, 150, 500, 250), anchor);
   assert.equal(root.grid.writes, refreshed, 'quiet grid writes nothing');
 });
 
@@ -130,34 +130,32 @@ test('#1070 rotated viewport refresh keeps the SVG in display coordinates and gr
   const root = fakeRoot();
   const rotated = { view: { x:500,y:100,w:300,h:600 }, floor: { x:500,y:100,w:300,h:600 },
     grid: { x:100,y:200,w:600,h:300 }, zoom:1 };
-  paintLiveViewport(root, rotated, rotated, null, { now:0, force:true });
+  paintLiveViewport(root, rotated, rotated, null, {  force:true });
   assert.equal(root.floor.attrs.viewBox, '500 100 300 600');
-  assert.deepEqual(root.grid.attrs, { x:'-50',y:'125',width:'900',height:'450' });
+  assert.deepEqual(root.grid.attrs, { x:'-200',y:'50',width:'1200',height:'600' });
 });
 
 test('#871 passive nested scene inherits one camera and rebases only a bounded paint window', () => {
   const root=fakeRoot(); const painted=frame(0,0);
-  let anchor=paintLiveViewport(root,painted,painted,null,{now:0});
-  anchor=paintLiveViewport(root,painted,frame(35,0),anchor,{now:20,keepSceneLayer:true});
+  let anchor=paintLiveViewport(root,painted,painted,null);
+  anchor=paintLiveViewport(root,painted,frame(35,0),anchor,{ keepSceneLayer:true});
   assert.equal(root.inherited.attrs.viewBox,'0 0 1000 500');
   assert.equal(root.inherited.style.transform,undefined,'not a second camera');
-  assert.equal(root.inherited.style.clipPath,'inset(-25% -25% -25% -25%)');
+  assert.equal(root.inherited.style.clipPath,'inset(-50% -50% -50% -50%)');
   const writes=root.inherited.styleWrites;
-  anchor=paintLiveViewport(root,painted,frame(70,10),anchor,{now:30,keepSceneLayer:true});
-  assert.equal(root.inherited.styleWrites,writes,'clip uses the same 100ms/15% budget');
-  anchor=paintLiveViewport(root,painted,frame(350,60,500,250),anchor,{now:40,keepSceneLayer:true});
+  anchor=paintLiveViewport(root,painted,frame(70,10),anchor,{ keepSceneLayer:true});
+  assert.equal(root.inherited.styleWrites,writes,'clip stays on the current anchor');
+  anchor=paintLiveViewport(root,painted,frame(350,60,500,250),anchor,{ keepSceneLayer:true});
   assert.equal(root.inherited.attrs.viewBox,'0 0 1000 500','HTML Lit basis is immutable');
-  assert.equal(root.inherited.style.clipPath,inheritedSceneClip(painted.view,anchor.frame.view));
-  // 1.5 times the current camera in local coordinates, not the whole route.
-  assert.equal(root.inherited.style.clipPath,'inset(-0.5% 2.5% 25.5% 22.5%)');
-  paintLiveViewport(root,frame(350,60,500,250),frame(350,60,500,250),anchor,{now:55,force:true});
+  assert.equal(root.inherited.style.clipPath,exposureClip(painted.view,anchor.coverage));
+  paintLiveViewport(root,frame(350,60,500,250),frame(350,60,500,250),anchor,{ force:true});
   assert.equal(root.inherited.style.clipPath,undefined,'terminal paint restores idle DOM');
 });
 
 test('#531 AC1: кадр жеста двигает сцену трансформом и не трогает viewBox', () => {
   const root = fakeRoot();
   const painted = frame(0, 0);
-  let anchor = paintLiveViewport(root, painted, painted, null, { now: 1000 });
+  let anchor = paintLiveViewport(root, painted, painted, null);
   const writesAfterAnchor = root.camera.writes;
   for (let step = 1; step <= 5; step += 1) {
     anchor = paintLiveViewport(root, painted, frame(step * 10, 0), anchor, { now: 1000 + step * 10 });
@@ -172,15 +170,15 @@ test('#531 AC1: кадр жеста двигает сцену трансформ
   assert.equal(root.layer.style.overflow, undefined, 'HTML layers do not inherit SVG overflow handling');
 });
 
-test('#531 AC2: по истечении бюджета viewBox пишется один раз, трансформ снимается', () => {
+test('#1478 incoming plan content moves the anchor and the exact frame removes the transform', () => {
   const root = fakeRoot();
   const painted = frame(0, 0);
-  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0 });
-  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor, { now: 50 });
+  let anchor = paintLiveViewport(root, painted, painted, null);
+  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor);
   const before = root.camera.writes;
-  anchor = paintLiveViewport(root, painted, frame(20, 0), anchor, { now: 100 });
+  anchor = paintLiveViewport(root, painted, frame(415, 0), anchor);
   assert.equal(root.camera.writes, before + 1, 'ровно одна перезапись');
-  assert.equal(root.camera.attrs.viewBox, '20 0 1000 500');
+  assert.equal(root.camera.attrs.viewBox, '415 0 1000 500');
   assert.equal(root.camera.style.transform, undefined, 'сцена вернулась в тождество');
   assert.equal(root.camera.style.overflow, undefined, 'refresh removes temporary scene overflow');
   assert.equal(root.cameraPeer.style.overflow, undefined, 'refresh cleans every camera scene');
@@ -191,8 +189,7 @@ test('#531 AC2: по истечении бюджета viewBox пишется о
 test('#579 a live session keeps one promoted scene layer across budget refreshes', () => {
   const root = fakeRoot();
   const painted = frame(0, 0);
-  let anchor = paintLiveViewport(root, painted, painted, null, {
-    now: 0, keepSceneLayer: true,
+  let anchor = paintLiveViewport(root, painted, painted, null, {  keepSceneLayer: true,
   });
   const scenes = [root.camera, root.cameraPeer, root.floor];
   for (const scene of scenes) {
@@ -202,15 +199,13 @@ test('#579 a live session keeps one promoted scene layer across budget refreshes
     assert.equal(scene.style.overflow, 'visible');
   }
 
-  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor, {
-    now: 50, keepSceneLayer: true,
+  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor, {  keepSceneLayer: true,
   });
   const removalsBeforeRefresh = scenes.map((scene) => scene.styleRemovals.length);
   const viewBoxWritesBeforeRefresh = root.camera.writes;
-  anchor = paintLiveViewport(root, painted, frame(20, 0), anchor, {
-    now: 100, keepSceneLayer: true,
+  anchor = paintLiveViewport(root, painted, frame(415, 0), anchor, {  keepSceneLayer: true,
   });
-  assert.equal(root.camera.writes, viewBoxWritesBeforeRefresh + 1, 'budget refresh still lands');
+  assert.equal(root.camera.writes, viewBoxWritesBeforeRefresh + 1, 'one reserve-boundary refresh lands');
   for (const [index, scene] of scenes.entries()) {
     assert.equal(scene.style.transform, 'translate(0%,0%) scale(1,1)');
     assert.equal(scene.style.transformOrigin, '0 0');
@@ -221,14 +216,13 @@ test('#579 a live session keeps one promoted scene layer across budget refreshes
   }
 
   const styleWrites = scenes.reduce((sum, scene) => sum + scene.styleWrites, 0);
-  anchor = paintLiveViewport(root, painted, frame(20, 0), anchor, {
-    now: 101, keepSceneLayer: true,
+  anchor = paintLiveViewport(root, painted, frame(415, 0), anchor, {  keepSceneLayer: true,
   });
   assert.equal(scenes.reduce((sum, scene) => sum + scene.styleWrites, 0), styleWrites,
     'an unchanged promoted frame writes no style');
 
-  const settled = frame(20, 0);
-  paintLiveViewport(root, settled, settled, anchor, { now: 110, force: true });
+  const settled = frame(415, 0);
+  paintLiveViewport(root, settled, settled, anchor, {  force: true });
   for (const scene of scenes) {
     assert.equal(scene.style.transform, undefined);
     assert.equal(scene.style.transformOrigin, undefined);
@@ -237,27 +231,23 @@ test('#579 a live session keeps one promoted scene layer across budget refreshes
   }
 });
 
-test('#531 AC2а: рывок переписывает viewBox сразу, не дожидаясь бюджета времени', () => {
-  const root = fakeRoot();
-  const painted = frame(0, 0);
-  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0 });
+test('#1478 a quiet or small pan keeps the authored viewBox across frames', () => {
+  const root = fakeRoot(), painted = frame(0, 0);
+  const anchor = paintLiveViewport(root, painted, painted);
   const before = root.camera.writes;
-  // 14 % видимой ширины — меньше порога: едем трансформом.
-  anchor = paintLiveViewport(root, painted, frame(140, 0), anchor, { now: 5 });
-  assert.equal(root.camera.writes, before, 'ниже порога сдвига — без перезаписи');
-  // 15 % — порог достигнут, время не истекло.
-  anchor = paintLiveViewport(root, painted, frame(150, 0), anchor, { now: 10 });
-  assert.equal(root.camera.writes, before + 1);
-  assert.equal(root.camera.attrs.viewBox, '150 0 1000 500');
+  for (let position = 1; position <= 250; position++) {
+    assert.equal(paintLiveViewport(root, painted, frame(position, 0), anchor), anchor);
+  }
+  assert.equal(root.camera.writes, before);
 });
 
 test('#531 AC3: повторная покраска тем же кадром не пишет в DOM ничего', () => {
   const root = fakeRoot();
   const painted = frame(0, 0);
-  let anchor = paintLiveViewport(root, painted, frame(10, 0), null, { now: 0 });
+  let anchor = paintLiveViewport(root, painted, frame(10, 0), null);
   const writes = root.camera.writes + root.floor.writes;
   const styles = root.camera.styleWrites + root.floor.styleWrites + root.layer.styleWrites;
-  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor, { now: 1 });
+  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor);
   assert.equal(root.camera.writes + root.floor.writes, writes, 'атрибуты не переписаны');
   assert.equal(
     root.camera.styleWrites + root.floor.styleWrites + root.layer.styleWrites, styles,
@@ -268,10 +258,10 @@ test('#531 AC3: повторная покраска тем же кадром н�
 test('#531 AC4: терминальное примирение пишет окончательный viewBox и снимает трансформы', () => {
   const root = fakeRoot();
   const painted = frame(0, 0);
-  let anchor = paintLiveViewport(root, painted, frame(30, 0), null, { now: 0 });
-  anchor = paintLiveViewport(root, painted, frame(60, 0), anchor, { now: 10 });
+  let anchor = paintLiveViewport(root, painted, frame(30, 0), null);
+  anchor = paintLiveViewport(root, painted, frame(60, 0), anchor);
   const settled = frame(60, 0);
-  anchor = paintLiveViewport(root, settled, settled, anchor, { now: 20, force: true });
+  anchor = paintLiveViewport(root, settled, settled, anchor, {  force: true });
   assert.equal(root.camera.attrs.viewBox, '60 0 1000 500');
   assert.equal(root.camera.style.transform, undefined);
   assert.equal(root.camera.style.overflow, undefined);
@@ -279,7 +269,7 @@ test('#531 AC4: терминальное примирение пишет око�
   assert.equal(root.floor.style.overflow, undefined);
   assert.equal(root.layer.style.transform, undefined);
   const writes = root.camera.writes;
-  paintLiveViewport(root, settled, settled, anchor, { now: 21, force: true });
+  paintLiveViewport(root, settled, settled, anchor, {  force: true });
   assert.equal(root.camera.writes, writes, 'повторное примирение ничего не пишет');
 });
 
@@ -295,15 +285,15 @@ const isoFrame = (x, y, floorX, floorW) => ({
 test('#531 изометрия: камера и пол проецируются раздельно и оседают вместе', () => {
   const root = fakeRoot();
   const painted = isoFrame(0, 0, 0, 800);
-  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0 });
-  anchor = paintLiveViewport(root, painted, isoFrame(100, 40, 60, 800), anchor, { now: 10 });
+  let anchor = paintLiveViewport(root, painted, painted, null);
+  anchor = paintLiveViewport(root, painted, isoFrame(100, 40, 60, 800), anchor);
   assert.equal(root.camera.style.transform, 'translate(-10%,-8%) scale(1,1)');
   assert.equal(root.floor.style.transform, 'translate(-7.5%,-5%) scale(1,1)');
   assert.notEqual(root.camera.style.transform, root.floor.style.transform,
     'у пола свой вид, и подменять его видом камеры нельзя');
-  anchor = paintLiveViewport(root, painted, isoFrame(200, 80, 120, 800), anchor, { now: 200 });
-  assert.equal(root.camera.attrs.viewBox, '200 80 1000 500');
-  assert.equal(root.floor.attrs.viewBox, '120 40 800 400');
+  anchor = paintLiveViewport(root, painted, isoFrame(450, 80, 270, 800), anchor);
+  assert.equal(root.camera.attrs.viewBox, '450 80 1000 500');
+  assert.equal(root.floor.attrs.viewBox, '270 40 800 400');
   assert.equal(root.camera.style.transform, undefined);
   assert.equal(root.floor.style.transform, undefined);
 });
@@ -315,15 +305,14 @@ test('#531 изометрия: камера и пол проецируются �
 test('#689 AC3: exposure is bounded by a clip that leaves together with it', () => {
   const root = fakeRoot();
   const painted = frame(0, 0);
-  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0 });
-  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor, { now: 10 });
-  assert.equal(LIVE_SCENE_EXPOSURE_CLIP, 'inset(-25%)');
+  let anchor = paintLiveViewport(root, painted, painted, null);
+  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor);
   for (const scene of [root.camera, root.cameraPeer, root.floor]) {
     assert.equal(scene.style.overflow, 'visible', 'the incoming edge is still exposed (#544)');
-    assert.equal(scene.style.clipPath, LIVE_SCENE_EXPOSURE_CLIP, 'but only within the bound');
+    assert.equal(scene.style.clipPath, 'inset(-50% -50% -50% -50%)', 'but only within the bound');
   }
   assert.equal(root.layer.style.clipPath, undefined, 'HTML layers get no scene clip');
-  paintLiveViewport(root, painted, painted, anchor, { now: 20, force: true });
+  paintLiveViewport(root, painted, painted, anchor, {  force: true });
   for (const scene of [root.camera, root.cameraPeer, root.floor]) {
     assert.equal(scene.style.overflow, undefined, 'idle DOM keeps no exposure (#531)');
     assert.equal(scene.style.clipPath, undefined, 'idle DOM keeps no clip (#531)');
@@ -335,24 +324,24 @@ test('#689 AC3: exposure is bounded by a clip that leaves together with it', () 
 test('#1344 camera frames preserve the opacity owner promotion until terminal cleanup', () => {
   const root = fakeRoot(), painted = frame(0, 0);
   for (const svg of [root.camera, root.cameraPeer, root.floor]) svg.style.willChange = 'transform, opacity';
-  let anchor = paintLiveViewport(root, painted, painted, null, {now:0,keepSceneLayer:true});
+  let anchor = paintLiveViewport(root, painted, painted, null, { keepSceneLayer:true});
   const writes = root.camera.styleWrites;
-  anchor = paintLiveViewport(root, painted, painted, anchor, {now:16,keepSceneLayer:true});
+  anchor = paintLiveViewport(root, painted, painted, anchor, { keepSceneLayer:true});
   assert.equal(root.camera.style.willChange, 'transform, opacity');
   assert.equal(root.camera.styleWrites, writes, 'no promotion ping-pong on an unchanged frame');
-  paintLiveViewport(root, painted, painted, anchor, {now:32,force:true});
+  paintLiveViewport(root, painted, painted, anchor, { force:true});
   assert.equal(root.camera.style.willChange, undefined);
   assert.equal(root.camera.style.transform, undefined);
 });
 
 test('#1344 bounded mode exposure stays quiet and is removed at the terminal commit', () => {
   const root=fakeRoot(),painted=frame(0,0),clip='inset(-25% -34%)';
-  let anchor=paintLiveViewport(root,painted,painted,null,{now:0,keepSceneLayer:true,sceneExposureClip:clip});
+  let anchor=paintLiveViewport(root,painted,painted,null,{ keepSceneLayer:true,sceneExposureClip:clip});
   assert.equal(root.camera.style.clipPath,clip);
   const writes=root.camera.styleWrites;
-  anchor=paintLiveViewport(root,painted,painted,anchor,{now:16,keepSceneLayer:true,sceneExposureClip:clip});
+  anchor=paintLiveViewport(root,painted,painted,anchor,{ keepSceneLayer:true,sceneExposureClip:clip});
   assert.equal(root.camera.styleWrites,writes);
-  paintLiveViewport(root,painted,painted,anchor,{now:32,force:true});
+  paintLiveViewport(root,painted,painted,anchor,{ force:true});
   assert.equal(root.camera.style.clipPath,undefined);
 });
 
@@ -372,18 +361,57 @@ test('#1344 mode completion reads the actual HTML baseline after a mid-motion co
   assert.equal(paintedHouseplanViewBox(host),null);
 });
 
-test('#1344 bounded mode raster keeps its anchor across the gesture refresh budget', () => {
+test('#1344 mode raster retains its own clip and locks the anchor against a large move', () => {
   const root=fakeRoot(),painted=frame(0,0);
-  let anchor=paintLiveViewport(root,painted,painted,null,{now:0,force:true,keepSceneLayer:true});
+  let anchor=paintLiveViewport(root,painted,painted,null,{ force:true,keepSceneLayer:true});
   const writes=root.camera.writes;
-  const moved=frame(0,.5);
-  anchor=paintLiveViewport(root,painted,moved,anchor,{now:200,keepSceneLayer:true,lockSceneAnchor:true,sceneExposureClip:'inset(-25%)'});
+  const moved=frame(0,220);
+  anchor=paintLiveViewport(root,painted,moved,anchor,{ keepSceneLayer:true,lockSceneAnchor:true,sceneExposureClip:'inset(-25%)'});
   assert.equal(root.camera.writes,writes,'mode uses its precomputed bounded exposure without repainting SVG');
   assert.notEqual(root.camera.style.transform,undefined);
-  anchor=paintLiveViewport(root,painted,moved,anchor,{now:201,force:true});
-  assert.equal(root.camera.attrs.viewBox,'0 0.5 1000 500','terminal commit still publishes exact coordinates');
+  anchor=paintLiveViewport(root,painted,moved,anchor,{ force:true});
+  assert.equal(root.camera.attrs.viewBox,'0 220 1000 500','terminal commit still publishes exact coordinates');
   assert.equal(root.camera.style.transform,undefined);
   assert.equal(root.camera.style.clipPath,undefined);
-  paintLiveViewport(root,moved,frame(0,1),anchor,{now:401});
-  assert.equal(root.camera.attrs.viewBox,'0 1 1000 500','ordinary gestures retain their refresh budget');
+  paintLiveViewport(root,moved,frame(0,450),anchor);
+  assert.equal(root.camera.attrs.viewBox,'0 450 1000 500','an ordinary gesture renews coverage when needed');
+});
+
+test('#1478 coverage includes the camera and fits the device-pixel budget', () => {
+  const view = frame(0, 0).view;
+  const coverage = viewportExposure(view, { pixelArea: 16_000_000 });
+  assert.ok(coverage.w >= view.w && coverage.h >= view.h);
+  assert.ok(16_000_000 * coverage.w * coverage.h / view.w / view.h <= 32_000_001);
+  assert.deepEqual(viewportExposure(view, { pixelArea: 40_000_000 }), view);
+});
+
+test('#1478 a vacant edge never forces a repaint, but an expanding camera anticipates ink', () => {
+  const view = frame(0, 0).view;
+  const limits = { content: { x: -420, y: 40, w: 1320, h: 400 } };
+  const coverage = viewportExposure(view, limits);
+  const emptySide = frame(190, 0).view;
+  assert.equal(viewportNeedsAnchor(view, coverage, emptySide, limits), false);
+  const horizon = viewportExposure(view, {});
+  const target = frame(-320, -15, 1400, 700).view;
+  assert.equal(viewportNeedsAnchor(view, horizon, view, {}), false);
+  assert.equal(viewportNeedsAnchor(view, horizon, view, {}, forecastExposure(view, target)), true);
+});
+
+test('#1478 Lit updates during camera motion retain the published basis', () => {
+  const root = fakeRoot();
+  const initial = frame(0, 0).view;
+  let view = initial;
+  const host = { renderRoot: root, _zoom: 1, _baseVb: () => [], _viewOr: () => view, _floorView: v => v };
+  authoredHouseplanViewport(host, view, 'floor', false);
+  commitHouseplanViewport(host);
+  const writes = root.camera.writes;
+  view = frame(100, 10).view;
+  assert.deepEqual(authoredHouseplanViewport(host, view, 'floor', true), initial);
+  commitHouseplanViewport(host, true);
+  assert.equal(root.camera.writes, writes);
+  assert.equal(root.layer.style.transform, 'translate(-10%,-2%) scale(1,1)');
+  assert.deepEqual(authoredHouseplanViewport(host, view, 'floor', false), view);
+  commitHouseplanViewport(host);
+  assert.equal(root.camera.attrs.viewBox, '100 10 1000 500');
+  disposeHouseplanViewport(host);
 });

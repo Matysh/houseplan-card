@@ -2,15 +2,6 @@
 import { css } from 'lit';
 
 export const isoLabMarkersStyles = css`
-  .stage.projection-iso.mode-view .iso-led-plane,
-  .stage.projection-iso.mode-view .iso-led-shadow-plane {
-    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none;
-  }
-  .stage.projection-iso.mode-view .iso-led-plane { z-index: 1; }
-  .stage.projection-iso.mode-view .iso-floor-shadow-plane {
-    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
-    pointer-events: none; z-index: -4;
-  }
   /* Keep the name centred on its saved anchor. Its metrics and Area action
      share the same scene plane; the invisible touch floor stays screen-sized. */
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel {
@@ -27,9 +18,8 @@ export const isoLabMarkersStyles = css`
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane {
     position: absolute; inset: 0; pointer-events: none; z-index: 0;
   }
-  /* One shallow extrusion, about one bold glyph stroke thick. The inverse
-     camera vector keeps its sides vertical at every quarter turn. Eight
-     sharp slices form a solid edge, without the old blurred text shadow. */
+  /* A shallow glyph edge in the inverse camera direction. Text paints its
+     slices directly so the browser need not composite a filter per caption. */
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlname,
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlmetrics,
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi,
@@ -38,12 +28,19 @@ export const isoLabMarkersStyles = css`
     --hp-glyph-x: calc(var(--hp-glyph-depth) * var(--hp-iso-edge-unit-x) / .22);
     --hp-glyph-y: calc(var(--hp-glyph-depth) * var(--hp-iso-edge-unit-y) / .22);
     --hp-glyph-side: #808080;
-    text-shadow: none;
-    filter:
-      drop-shadow(calc(var(--hp-glyph-x) * .125) calc(var(--hp-glyph-y) * .125) 0 var(--hp-glyph-side))
-      drop-shadow(calc(var(--hp-glyph-x) * .125) calc(var(--hp-glyph-y) * .125) 0 var(--hp-glyph-side))
-      drop-shadow(calc(var(--hp-glyph-x) * .25) calc(var(--hp-glyph-y) * .25) 0 var(--hp-glyph-side))
-      drop-shadow(calc(var(--hp-glyph-x) * .5) calc(var(--hp-glyph-y) * .5) 0 var(--hp-glyph-side));
+    text-shadow:
+      calc(var(--hp-glyph-x) * .125) calc(var(--hp-glyph-y) * .125) var(--hp-glyph-side),
+      calc(var(--hp-glyph-x) * .25) calc(var(--hp-glyph-y) * .25) var(--hp-glyph-side),
+      calc(var(--hp-glyph-x) * .375) calc(var(--hp-glyph-y) * .375) var(--hp-glyph-side),
+      calc(var(--hp-glyph-x) * .5) calc(var(--hp-glyph-y) * .5) var(--hp-glyph-side),
+      calc(var(--hp-glyph-x) * .625) calc(var(--hp-glyph-y) * .625) var(--hp-glyph-side),
+      calc(var(--hp-glyph-x) * .75) calc(var(--hp-glyph-y) * .75) var(--hp-glyph-side),
+      calc(var(--hp-glyph-x) * .875) calc(var(--hp-glyph-y) * .875) var(--hp-glyph-side),
+      var(--hp-glyph-x) var(--hp-glyph-y) var(--hp-glyph-side);
+  }
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel ha-icon,
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
+    filter: drop-shadow(var(--hp-glyph-x) var(--hp-glyph-y) 0 var(--hp-glyph-side));
   }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi,
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
@@ -67,10 +64,6 @@ export const isoLabMarkersStyles = css`
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi {
     /* Keep the centring translation outside the glyph's local rotation. */
     transform: translateX(-50%) rotate(var(--hp-iso-content-turn));
-  }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-furniture-foreground {
-    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
-    pointer-events: none; z-index: -2;
   }
   :host([data-pointer-hover]) .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane:hover,
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane:focus-within {
@@ -168,62 +161,8 @@ export const isoLabMarkersStyles = css`
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .device-shell-frame,
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-shell { box-shadow: none; }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .device-contact-contour { filter: none; }
-  /* Reuse the shared inert layer so shadows never cover another icon in a stack. */
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadows {
-    position: absolute; inset: 0; z-index: -4;
-    pointer-events: none; contain: layout style;
-    /* The enclosing SVG group owns the structural mask, including overflow. */
-  }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow,
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow * {
-    pointer-events: none;
-  }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow::before { display: none; }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow { box-shadow: none; }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .device-core,
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .value-badge,
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .oplock-core {
-    position: relative;
-    translate: none;
-    background: transparent; color: transparent;
-    box-shadow: none;
-    filter: none;
-  }
-  /* A box-shadow clips out its source box. Raised bodies need a complete
-     silhouette on the floor, including the area under their old position. */
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow :is(.device-core, .value-badge, .oplock-core)::before,
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow :is(.device-core, .value-badge, .oplock-core)::after {
-    content: ''; position: absolute; border-radius: inherit;
-    translate: none;
-    pointer-events: none;
-  }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow :is(.device-core, .value-badge, .oplock-core)::before {
-    inset: calc(var(--hp-iso-d) * .12);
-    background: rgb(28 32 38 / 26%);
-    filter: blur(calc(var(--hp-iso-d) * .135));
-  }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow :is(.device-core, .value-badge, .oplock-core)::after {
-    inset: calc(var(--hp-iso-d) * .04);
-    background: rgb(28 32 38 / 14%);
-    filter: blur(calc(var(--hp-iso-d) * .26));
-  }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .oplock-shell { border-color: transparent; translate: none; }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .valtext,
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .value-badge-content {
-    visibility: hidden;
-  }
-  /* Names and their metrics cast the same floor-only, vertically aligned
-     shadow as devices. Reuse the label geometry, without its solid edges. */
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-shadow {
-    filter: blur(.16em);
-    pointer-events: none;
-  }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-shadow *,
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-shadow :is(.rlname, .rlmetrics) {
-    filter: none; text-shadow: none; pointer-events: none;
-  }
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-shadow::before {
-    display: none;
+  .stage.projection-iso.mode-view .dev[data-hp-device-occlusion] {
+    mask: var(--hp-device-wall-mask); mask-clip: no-clip;
   }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] [data-hp-iso-occluded] {
     opacity: .3;
@@ -238,8 +177,9 @@ export const isoLabMarkersStyles = css`
     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlname,
     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlmetrics,
     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi,
-    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon { filter: none; }
-    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadows { display: none; }
+    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel ha-icon,
+    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon { filter: none; text-shadow: none; }
+    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-floor-shadow-plane { display: none; }
     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .device-core,
     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .value-badge,
     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-core { box-shadow: none; background-image: none; translate: none; }

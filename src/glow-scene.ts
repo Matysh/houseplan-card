@@ -555,6 +555,21 @@ function cancelGlowFade(state: GlowRuntimeState, host: GlowRuntimeHost, key: str
   state.fadeTimers.delete(key);
 }
 
+/** The 2.5D compositor owns the crossfade of the complete scene. */
+export function settledGlowSource(
+  state: GlowRuntimeState, host: GlowRuntimeHost, key: string, active: boolean,
+): { domId: number; entering: false; leaving: false } | null {
+  if (!active) {
+    forgetGlowSource(state, host, key);
+    return null;
+  }
+  cancelGlowFade(state, host, key);
+  forgetGlowEntry(state, host, key);
+  const domId = state.renderedSources.get(key) ?? ++state.sourceSeq;
+  state.renderedSources.set(key, domId);
+  return { domId, entering: false, leaving: false };
+}
+
 export function transitionGlowSource(
   state: GlowRuntimeState,
   host: GlowRuntimeHost,

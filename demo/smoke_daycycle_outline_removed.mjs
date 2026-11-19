@@ -40,7 +40,7 @@ try{
   await page.evaluate(async()=>{await window.__hpTest.setVolumetricView(true);await window.__hpTest.settled();});
   await page.waitForFunction(()=>{
     const root=window.__card.renderRoot;
-    return !!root.querySelector('.iso-overlays-svg')&&!root.querySelector('.stage.hpiso-pending');
+    return !!root.querySelector('.plan-svg[data-projection="iso"]')&&!root.querySelector('.stage.hpiso-pending');
   },null,{timeout:9000});
   const iso=await read();
   out.isometricKeepsEnvironmentAndPaper=iso.iso&&iso.environment&&iso.paperCount>0;
@@ -63,7 +63,7 @@ try{
 }catch(error){
   console.error('Outline smoke state:',await page.evaluate(()=>{
     const c=window.__card,r=c.renderRoot;
-    return{stage:r.querySelector('.stage')?.className,isoSvg:!!r.querySelector('.iso-overlays-svg'),
+    return{stage:r.querySelector('.stage')?.className,isoSvg:!!r.querySelector('.plan-svg[data-projection="iso"]'),
       desired:c._desiredProjection,runtime:c._isoSceneRuntimeLoader?.state,
       structural:c._serverCfg.spaces.find(s=>s.id===c._space)?.settings};
   }));

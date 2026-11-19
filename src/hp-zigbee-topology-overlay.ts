@@ -350,9 +350,20 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     this._eventRoot.addEventListener('pointerdown', this._pointerDown, true);
     if (typeof MutationObserver !== 'undefined') {
       this._markerObserver = new MutationObserver((records) => {
-        const childrenChanged = records.some((record) => record.type === 'childList');
+        // Camera roots and the zoom badge can mutate on every frame. Their
+        // transform already moves the routes, including copied LED geometry.
+        const relevant = records.filter(record => {
+          const target = record.target as Element;
+          return (target !== parent && parent.contains(target))
+            || (target === parent && record.type === 'childList')
+            || target.matches?.('.led-hit, .led-strip, .iso-led-plane');
+        });
+        if (!relevant.length) return;
+        const childrenChanged = relevant.some(record => record.type === 'childList');
         if (childrenChanged) this._syncEndpointOwnership();
-        if (childrenChanged || records.some((record) => record.attributeName === 'data-hp-device-hover')) this._adoptPointerHover();
+        if (childrenChanged || relevant.some(record => record.attributeName === 'data-hp-device-hover')) {
+          this._adoptPointerHover();
+        }
         this._scheduleLayout();
       });
       this._markerObserver.observe(this._eventRoot, { childList: true, attributes: true, subtree: true,

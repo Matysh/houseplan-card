@@ -213,10 +213,6 @@ test('#649 п.1 shadow table: all four theme × floor combinations (SPEC-REVIEW-
   assert.deepEqual(row('light', true), [34, 11, 0.3, 0.42]);
   assert.deepEqual(row('dark', false), [30, 22, 0.4, 0.4]);
   assert.deepEqual(row('dark', true), [34, 11, 0.4, 0.4]);
-  const css = isoTileStateCss();
-  const dark = css.indexOf('.iso-tile-shadow.theme-dark.theme-dark {');
-  const floorTinted = css.indexOf('.iso-tile-shadow.iso-floor-light:is(');
-  assert.ok(floorTinted > 0 && dark > floorTinted, 'the dark-theme opacity rule comes after the floor rules');
 });
 
 test('#649 п.2 light depth: lab length curve in wall heights, low sun = long', () => {
