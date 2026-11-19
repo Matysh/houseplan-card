@@ -2,11 +2,12 @@
 import { css } from 'lit';
 
 export const isoLabMarkersStyles = css`
-  .iso-led-plane, .iso-led-shadow-plane {
+  .stage.projection-iso.mode-view .iso-led-plane,
+  .stage.projection-iso.mode-view .iso-led-shadow-plane {
     position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none;
   }
-  .iso-led-plane { z-index: 1; }
-  .iso-floor-shadow-plane {
+  .stage.projection-iso.mode-view .iso-led-plane { z-index: 1; }
+  .stage.projection-iso.mode-view .iso-floor-shadow-plane {
     position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
     pointer-events: none; z-index: -4;
   }
@@ -21,8 +22,8 @@ export const isoLabMarkersStyles = css`
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel::before {
     transform: translate(-50%, -50%) var(--hp-iso-room-hit-plane);
   }
-  /* The mask and label share the camera layer during live pan and zoom.
-     Names, Area links and the metrics below them all cross the same edge. */
+  /* Raised labels share the live camera with their floor shadows.
+     Their text and Area link stay readable above masonry. */
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane {
     position: absolute; inset: 0; pointer-events: none; z-index: 0;
   }

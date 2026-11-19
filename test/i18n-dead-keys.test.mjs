@@ -79,7 +79,7 @@ test('help accessibility copy is derived from every literal help consumer', () =
   // отображения, размер и поворот) — 34 → 38.
   // #948 removes the three redundant fill/backup/maintenance help popups.
   // #945 v7 restores field-specific help; keep every accessible name counted.
-  assert.equal(consumers.derivedHelpAria.size, 35, '#1000 adds device-alert help and its accessible name after #1081 removes duplicate catalog visibility help');
+  assert.equal(consumers.derivedHelpAria.size, 36, '#1474 adds opening-accent help and its accessible name');
   for (const key of consumers.derivedHelpAria) {
     assert.equal(typeof dictionary[key], 'string', `${key} must accompany its .help consumer`);
   }

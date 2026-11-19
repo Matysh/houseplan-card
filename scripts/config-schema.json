@@ -1653,6 +1653,20 @@
       "opaque": "<function _north_deg>",
       "required": false
     },
+    "config.spaces[].settings.opening_accent_3d": {
+      "allowExtra": true,
+      "required": false
+    },
+    "config.spaces[].settings.opening_accent_3d.a": {
+      "max": 1.0,
+      "min": 0.0,
+      "opaque": "<function _finite_number>",
+      "required": true
+    },
+    "config.spaces[].settings.opening_accent_3d.c": {
+      "opaque": "Match('\\\\A#[0-9a-fA-F]{6}\\\\Z', msg=None)",
+      "required": true
+    },
     "config.spaces[].settings.room_color": {
       "opaque": "Match('\\\\A#[0-9a-fA-F]{6}\\\\Z', msg=None)",
       "required": false

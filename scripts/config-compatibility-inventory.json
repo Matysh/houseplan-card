@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "90d5b95c8abc25d2b7fb776bf60417342e5557d950a8448e90c665e58e4003eb",
+  "matchesSha256": "d5502aef2dd4f98bb1f71dbe80045cd101e8cfc29f18db15ed6fd879e0caf352",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -5387,6 +5387,16 @@
       "kind": "exclusion",
       "owner": "current-feature",
       "reason": "Historical prototype function arguments are ignored by the pure fixed production profile; this does not decode any persisted configuration representation."
+    },
+    {
+      "id": "e723049f72378aea3b0d23e0",
+      "path": "src/iso-materials.ts",
+      "line": 7,
+      "text": "*   legacy material with darker side faces.",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "word-only",
+      "reason": "#1474 describes the default wall-side palette; this comment does not read or migrate stored data."
     },
     {
       "id": "ce0960f4741e0358604c7f6d",

@@ -813,8 +813,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_room_appearance.mjs',
     because: '#1037: actual computed CSS of the mounted Lit room caption and metric children must follow the independent caption picker rather than wall paint, across preview/Save and Flat/2.5D; a pure resolver cannot prove the renderer consumed it.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: 'color:${nameColor.c};opacity:${op};--rl-scale:',
-      replace: 'color:${disp.color};opacity:${op};--rl-scale:',
+      find: '${labelGeometry};color:${nameColor.c};opacity:${op}',
+      replace: '${labelGeometry};color:${disp.color};opacity:${op}',
     }],
   },
   {
@@ -8239,10 +8239,10 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'iso-wall-top-constant',
     guard: 'node demo/smoke_iso_theme_walls.mjs',
-    because: '#649 AC9: the wall top is the user\'s fill_colors.wall_fill, not a constant',
+    because: '#649 AC9: the wall top is the configured room_color',
     patches: [{
       file: 'src/iso-materials.ts',
-      find: '  const base = parseHexColor(wallFill) ?? [255, 255, 255];',
+      find: '  const base = parseHexColor(topColor) ?? [255, 255, 255];',
       replace: '  const base = parseHexColor(\'#ffffff\') ?? [255, 255, 255];',
     }],
   },
@@ -11387,13 +11387,13 @@ const MUTANT_DEFINITIONS = [
       + 'the smoke must reject the legacy centred SVG substitute independently of compact and iso',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '            ${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}',
+      find: '            ${glowLayerVisible ? isoGlowLayer ?? this._renderGlowLayer(space, disp, view) : nothing}',
       replace: '            ${!space.bg && !disp.showNames && !this._markup ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '              const center = this._roomCenter(room);\n'
         + '              return svg`<text class="rlabel" data-hp="room-label" data-id=${room.id || nothing}\n'
         + '                data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'
         + '            })}</g>` : nothing}\n'
-        + '            ${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}',
+        + '            ${glowLayerVisible ? isoGlowLayer ?? this._renderGlowLayer(space, disp, view) : nothing}',
     }],
   },
   {
@@ -14311,8 +14311,8 @@ const MUTANT_DEFINITIONS = [
       + 'painter, which finds the dragged marker by that attribute (#525 AC2)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '            ${keyed(space.id, repeat(devs, (d) => d.id, (d) => this._renderDevice(',
-      replace: '            ${keyed(space.id, devs.map((d) => this._renderDevice(',
+      find: '            ${keyed(space.id, repeat(isoOverlays ? [...devs].sort((a,b) =>\n              (isoOverlays.devices.get(a.id)?.floorScene[1] ?? 0) - (isoOverlays.devices.get(b.id)?.floorScene[1] ?? 0)\n                || a.id.localeCompare(b.id)) : devs, (d) => d.id, (d) => this._renderDevice(',
+      replace: '            ${keyed(space.id, (isoOverlays ? [...devs].sort((a,b) =>\n              (isoOverlays.devices.get(a.id)?.floorScene[1] ?? 0) - (isoOverlays.devices.get(b.id)?.floorScene[1] ?? 0)\n                || a.id.localeCompare(b.id)) : devs).map((d) => this._renderDevice(',
     }],
   },
   {
@@ -15077,15 +15077,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'iso-room-labels-lift-with-devices',
+    id: 'iso-room-labels-stay-on-the-floor',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="room names stay on their projected floor point" test/iso-scene-render.test.mjs',
-    because: '#1451 keeps room names on their projected floor anchor independently of '
-      + 'the optional explicit device lift; a room label never inherits wall height.',
+      + '&& node --test --test-name-pattern="room names and devices share the wall-cut height" test/iso-scene-render.test.mjs',
+    because: '#1474 places room names and devices at the same wall-cut height while preserving their saved anchors.',
     patches: [{
       file: 'src/iso-scene-geometry.ts',
-      find: "    const visualOffset = kind === 'room-label' || input.floorAlignedMarkers ? 0 : wallHeight;",
-      replace: '    const visualOffset = input.floorAlignedMarkers ? 0 : wallHeight;',
+      find: '    const visualOffset = wallHeight;',
+      replace: "    const visualOffset = kind === 'room-label' ? 0 : wallHeight;",
     }],
   },
   {
@@ -15149,7 +15148,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stage3-w3-vacuum-raised-with-devices',
-    guard: 'node --test --test-name-pattern="Stage 4 keeps device" test/isometric-contract.test.mjs',
+    guard: 'node --test --test-name-pattern="wall-cut overlays" test/isometric-contract.test.mjs',
     because: 'W3: the live vacuum puck/trail stays on the floor even while device, room and lock '
       + 'roots are raised (#160)',
     patches: [{
@@ -17283,8 +17282,8 @@ const MUTANT_DEFINITIONS = [
       + 'that regression independently of formatting or comments',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "import { isoWallMaterialVars, parseCssColor } from './iso-materials';",
-      replace: "import { isoWallMaterialVars, parseCssColor, memoIsoLightFloorRooms } from './iso-materials';",
+      find: "import { isoWallMaterialVars, isoOpeningMaterialVars, parseCssColor } from './iso-materials';",
+      replace: "import { isoWallMaterialVars, isoOpeningMaterialVars, parseCssColor, memoIsoLightFloorRooms } from './iso-materials';",
     }, {
       file: 'src/houseplan-card.ts',
       find: 'this._isoFirstFrame.lightFloors(roomFills.byId)',
