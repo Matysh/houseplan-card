@@ -179,3 +179,10 @@ source of v1.85.2 (`eeab22dee`) and `390a6849f`, five measured samples each.
 The closed-door light, legacy marker overlap, stair arrival and narrow-space
 settings tests reproduced failures on the exact dev base. Full S6 and the
 compositor criteria remain open.
+
+The earlier WSL run on `7d61ec23f` executed all 1242 selected checks and
+reported 18 failed groups. The addressed WSL rerun on `e1ba645b0` passed 185
+Node cases. Subsequent fixes restore pointer hover after wheel zoom with no
+new mouse movement and keep the vacuum route's paint window bounded during
+pinch. The pinned Zigbee tooltip and vacuum camera checks passed with those
+fixes, together with 32 addressed Node cases and static guard checks.

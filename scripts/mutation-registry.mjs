@@ -3283,7 +3283,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="#871" test/live-viewport.test.mjs',
     because: '#871 AC5: passive SVG rebases its bounded paint window without taking another camera transform.',
     patches: [{ file: 'src/live-viewport.ts',
-      find: 'const clip = next.markerClip ??= exposureClip(markerView, next.coverage);',
+      find: 'const clip = exposureClip(markerView, coverage);',
       replace: 'const clip = "none";',
     }],
   },

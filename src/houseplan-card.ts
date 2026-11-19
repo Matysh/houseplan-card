@@ -3574,7 +3574,7 @@ export class HouseplanCard extends LitElement {
   private _capturedSnapshotTrailFormat = 0;
   private _lastValidStageSize: [number, number] | null = null;
   private _gestureStage: { rect: DOMRect; width: number; height: number } | null = null;
-  private _gestureHover: PointerEvent | null = null;
+  private _gestureHover: PointerEvent | WheelEvent | null = null;
 
   private get _cameraGestureActive(): boolean {
     return this._cameraTransition.active || this._panLock === 'pan' || !!this._pinchStart;
@@ -7639,7 +7639,7 @@ export class HouseplanCard extends LitElement {
     );
   }
 
-  private _showDeviceTip(ev: PointerEvent, d: DevItem): void {
+  private _showDeviceTip(ev: PointerEvent | WheelEvent, d: DevItem): void {
     if (this._liveRt) this._liveRt.devicePointerTip(ev, d);
     else this._viewRuntimes.withLive(runtime => runtime.devicePointerTip(ev, d));
   }
@@ -8791,9 +8791,8 @@ export class HouseplanCard extends LitElement {
     const result = this._cameraTargetAt(
       ev.clientX - r.left, ev.clientY - r.top, baseZoom * factor, true,
     );
-    if (result) this._startCameraTransition(
-      result.target, result.fit, 'wheel', CAMERA_WHEEL_MS,
-    );
+    if (result && this._startCameraTransition(result.target, result.fit, 'wheel', CAMERA_WHEEL_MS)
+        && this._pointerModality.hoverEnabled) this._gestureHover = ev;
   }
 
   private _stepZoom(delta: number): void {

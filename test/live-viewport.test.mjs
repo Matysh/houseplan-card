@@ -157,13 +157,15 @@ test('#871 passive nested scene inherits one camera and rebases only a bounded p
   anchor=paintLiveViewport(root,painted,frame(35,0),anchor,{ keepSceneLayer:true});
   assert.equal(root.inherited.attrs.viewBox,'0 0 1000 500');
   assert.equal(root.inherited.style.transform,undefined,'not a second camera');
-  assert.equal(root.inherited.style.clipPath,'inset(-50% -50% -50% -50%)');
+  assert.equal(root.inherited.style.clipPath,exposureClip(painted.view,anchor.inheritedCoverage));
+  assert.equal(anchor.inheritedCoverage.w,1800);
   const writes=root.inherited.styleWrites;
   anchor=paintLiveViewport(root,painted,frame(70,10),anchor,{ keepSceneLayer:true});
   assert.equal(root.inherited.styleWrites,writes,'clip stays on the current anchor');
   anchor=paintLiveViewport(root,painted,frame(350,60,500,250),anchor,{ keepSceneLayer:true});
   assert.equal(root.inherited.attrs.viewBox,'0 0 1000 500','HTML Lit basis is immutable');
-  assert.equal(root.inherited.style.clipPath,exposureClip(painted.view,anchor.coverage));
+  assert.equal(root.inherited.style.clipPath,exposureClip(painted.view,anchor.inheritedCoverage));
+  assert.equal(anchor.inheritedCoverage.w,900);
   paintLiveViewport(root,frame(350,60,500,250),frame(350,60,500,250),anchor,{ force:true});
   assert.equal(root.inherited.style.clipPath,undefined,'terminal paint restores idle DOM');
 });

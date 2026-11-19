@@ -7,11 +7,10 @@ export interface ViewportExposureLimits {
 }
 
 const maxSurfacePixels = 32_000_000;
-const margin = .5;
 const right = (box: LiveViewBox) => box.x + box.w;
 const bottom = (box: LiveViewBox) => box.y + box.h;
 
-export function viewportExposure(view: LiveViewBox, limits: ViewportExposureLimits): LiveViewBox {
+export function viewportExposure(view: LiveViewBox, limits: ViewportExposureLimits, margin = .5): LiveViewBox {
   const scale = limits.pixelArea && limits.pixelArea > 0
     ? Math.min(1 + 2 * margin, Math.max(1, Math.sqrt(maxSurfacePixels / limits.pixelArea)))
     : 1 + 2 * margin;

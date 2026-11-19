@@ -39,6 +39,7 @@ export interface LiveViewportAnchor {
   target?: LiveViewBox;
   markerView?: LiveViewBox;
   markerClip?: string;
+  inheritedCoverage?: LiveViewBox;
 }
 
 interface LiveViewportHost {
@@ -308,17 +309,21 @@ export function paintLiveViewport(
   if (rebaseMarkers) next.markerView = refresh ? next.frame.view : markerBasis;
   const markerView = rebaseMarkers ? next.markerView ?? painted.view : painted.view;
   const projection = liveLayerProjection(markerView, current.view);
-  // The enclosing HTML layer is the sole camera owner of these SVGs.
-  // Moving a bounded clip on the scene anchor
-  // anchor budget exposes incoming content without double projection or a
-  // promoted unbounded route surface. The idle DOM remains unchanged.
-  for (const svg of nodes.inherited) {
-    if (!refresh && keepSceneLayer && svg.style.clipPath) continue;
-    const active = keepSceneLayer || !isIdentityLiveLayerProjection(projection);
-    if (active) {
-      const clip = next.markerClip ??= exposureClip(markerView, next.coverage);
+  // The route inherits the HTML camera. Limit its raster window in current
+  // screen units, including when pinch makes the retained anchor larger.
+  if (nodes.inherited.length && (keepSceneLayer || !isIdentityLiveLayerProjection(projection))) {
+    const view = current.view;
+    const covered = next.inheritedCoverage;
+    const coverage = !covered || covered.w > view.w * 1.85 || covered.h > view.h * 1.85
+      || viewportNeedsAnchor(next.frame.view, covered, view, limits)
+      ? viewportExposure(view, limits, .4) : covered;
+    next.inheritedCoverage = coverage;
+    const clip = exposureClip(markerView, coverage);
+    for (const svg of nodes.inherited) {
       if (svg.style.clipPath !== clip) svg.style.clipPath = clip;
-    } else if (svg.style.clipPath) svg.style.removeProperty('clip-path');
+    }
+  } else {
+    for (const svg of nodes.inherited) if (svg.style.clipPath) svg.style.removeProperty('clip-path');
   }
   for (const layer of nodes.markerLayer) {
     const still = isIdentityLiveLayerProjection(projection) && !options.keepMarkerLayer;

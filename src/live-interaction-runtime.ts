@@ -108,7 +108,7 @@ export class LiveRuntime {
   public prepareContacts(): void { this.contacts.prepare((this.host as { renderRoot: ParentNode }).renderRoot); }
   public syncContacts(): void { syncHouseplanDeviceContacts(this.host, this.contacts); }
   public hover(): void { syncHouseplanHover(this.host); }
-  public devicePointerTip(event: PointerEvent, device: DevItem): void {
+  public devicePointerTip(event: PointerEvent | WheelEvent, device: DevItem): void {
     showDevicePointerTip(this.host, event, device);
   }
   public deviceFocusTip(target: HTMLElement | null, device: DevItem): void {

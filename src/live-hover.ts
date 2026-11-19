@@ -135,9 +135,9 @@ const deviceTipContent = (
     battery: metricText(battery), status };
 };
 
-export function showDevicePointerTip(value: object, event: PointerEvent, device: DevItem): void {
+export function showDevicePointerTip(value: object, event: PointerEvent | WheelEvent, device: DevItem): void {
   const host = value as DeviceTipHost;
-  host._notePointer(event);
+  if ('pointerType' in event) host._notePointer(event);
   if (!host._pointerModality.hoverEnabled) {
     cancelPointerTip(host);
     host._deviceHits.hover(host.renderRoot, null);
