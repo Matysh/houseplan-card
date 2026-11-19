@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16478,
+  "revision": 16479,
   "nextTicket": 535,
   "nextFence": 535,
   "tasks": {
@@ -5931,6 +5931,10 @@
       "digest": "4fc7adc9706e12d9409f09f812c4253a35a07e541389dbe712a21bbeba941f10",
       "issue": 1474
     },
+    "github:44508092973:1:completions:message:5c34a10c423b9f78712bceead73679dcd48a6e3effb676401838862ec10dd3e6": {
+      "digest": "fc9196ad7e2bd59b678ebd146a47c02a8236815877adf39ee5e400d4206da59b",
+      "issue": 1474
+    },
     "finish:a8d99469-b763-4dc7-9e24-e5b892c2dc7b": {
       "digest": "a03c07aa551707b08d373fb0f2f6193f185d6dffe2178eec0a99a6f30d3e7a2e",
       "issue": 1474,
@@ -6027,7 +6031,8 @@
           "entry": 2,
           "detail": "Браузер: isometric contract: failed",
           "eventId": "finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:3:return:return:1474"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb": {
