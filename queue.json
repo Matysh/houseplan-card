@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16214,
-  "nextTicket": 528,
+  "revision": 16215,
+  "nextTicket": 529,
   "nextFence": 528,
   "tasks": {
     "1024": {
@@ -5044,11 +5044,11 @@
       "materialSha": "e21faac27bab22d35b03b488bb2e52ced4ccf2b2",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 527,
-      "queued": false,
+      "ticket": 528,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795077198946,
-      "reviewEntry": 2,
+      "readyAt": 1795077659410,
+      "reviewEntry": 3,
       "patchId": "0d129fcfb00fa9dc989c480a3a907cba69668e4a",
       "changedFiles": [
         "demo/benchmark_iso_paint.mjs",
@@ -5078,8 +5078,7 @@
         "at": 1795077589929,
         "entry": 2,
         "eventId": "finish:22a60490-4b93-4bab-88ca-454a177f0f58:finish:1:expire:return:1470"
-      },
-      "reason": "executor-admission-expired"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5505,7 +5504,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1470
+  ],
   "active": null,
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5739,6 +5740,19 @@
           "entry": 2,
           "eventId": "finish:22a60490-4b93-4bab-88ca-454a177f0f58:finish:1:expire:return:1470"
         }
+      }
+    },
+    "finish:fc613888-d1d2-430c-b87b-f69dde97ab4f": {
+      "digest": "3b5c334fa6b54fb063458f849271a8d55e7d9f5dc744a9aac039081fc864e909",
+      "issue": 1470,
+      "message": {
+        "kind": "queued",
+        "issue": 1470,
+        "at": 1795077659410,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "e21faac27bab22d35b03b488bb2e52ced4ccf2b2"
       }
     }
   },
