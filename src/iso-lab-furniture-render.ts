@@ -21,12 +21,16 @@ export function renderIsoLabFurniture(mesh: FurnitureMesh, id: string, symbol: s
         stroke-opacity=".34" stroke-width=${.7*visualScale}></path>
       <path d=${p.top} fill="none" stroke="#ffffff" stroke-opacity=".4"
         stroke-width=${.3*visualScale}></path>
-      ${lightSlot === undefined ? null : svg`<defs><pattern id=${'hp-surface-light-'+lightSlot+'-'+i}
-          patternUnits="userSpaceOnUse" x=${mesh.lightBox[0]} y=${mesh.lightBox[1]}
-          width=${mesh.lightBox[2]} height=${mesh.lightBox[3]} viewBox=${mesh.lightBox.join(' ')}>
+      ${lightSlot === undefined ? null : svg`<defs><clipPath id=${'hp-surface-light-'+lightSlot+'-'+i}>
+          <path d=${p.side}></path><path d=${p.top}></path>
+        </clipPath></defs><g clip-path=${'url(#hp-surface-light-'+lightSlot+'-'+i+')'}
+          opacity=".8" stroke="none" style="isolation:isolate">
+          ${''/* #1470: project the same light field once through the part's
+            silhouette, rather than rasterising a repeating full-field pattern
+            per side/top. Isolation preserves the pattern's transparent backdrop
+            for screen blending; the .8 group alpha remains unchanged. */}
           <use href="#hp-room-light-pools" transform=${'translate('+p.lightOffset.join(' ')+')'}></use>
-        </pattern></defs><g fill=${'url(#hp-surface-light-'+lightSlot+'-'+i+')'} opacity=".8" stroke="none">
-          <path d=${p.side}></path><path d=${p.top}></path></g>`}
+        </g>`}
     </g>`)}
   </g>`;
 }

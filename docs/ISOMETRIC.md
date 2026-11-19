@@ -127,13 +127,26 @@ target. Solid and dashed outlines remain distinct, and one common contact
 shell does not merge members' actions. Forced colours retain meaningful targets
 without depending on decorative filters.
 
-Furniture masks only the overlapping paint of a room label. The room-fit
+Walls dim only the covered label pixels through a luminance mask. Furniture
+instead dims the entire individual label when its existing 64×16 row probe
+finds alpha above 64: `opacity = 1 - .7 * coveredOpacity`. It does not apply
+that opacity to neighbouring labels. The room-fit
 target and Area link retain their existing mouse/keyboard policy; touch keeps
 the established Area-link safety contract. The ordinary lock card and its
 confirmation remain the only sanctioned lock actuation surface. Rendering,
 occlusion and hover never create a service call.
 
 ## Caches and safe failure
+
+Room-label wall masks are paint-bounded to the transformed name, absolute
+metrics row and touch/focus padding, not one full-viewport surface per room
+(#1470). Mask transforms use that local scene rectangle; furniture probes still
+use the viewport pixel scale. A scene-owned ResizeObserver/rAF updates bounds
+after text/font/viewport changes and disconnects with the label. Native hit
+targets and each label's independent hover/focus unmasking remain intact.
+Furniture lighting references the same room-light field through isolated
+silhouette clips, retaining its transparent screen-blend backdrop and .8 alpha
+without generating a repeating light-pattern tile for each part.
 
 Physical geometry and projected variants stay separate. The structural LRU
 remains bounded at eight entries; variants are keyed by saved quarter turns,

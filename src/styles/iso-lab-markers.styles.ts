@@ -15,7 +15,11 @@ export const isoLabMarkersStyles = css`
      Names, Area links and the metrics below them all cross the same edge. */
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane {
     position: absolute; inset: 0; pointer-events: none; z-index: -3;
-    mask-image: url(#hp-room-wall-mask);
+    mask-image: var(--hp-room-wall-mask, url(#hp-room-wall-mask));
+  }
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane[data-hp-label-bounded] > .roomlabel {
+    left: var(--hp-label-left) !important;
+    top: var(--hp-label-top) !important;
   }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-furniture-foreground {
     position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;

@@ -13634,7 +13634,7 @@ export class HouseplanCard extends LitElement {
               ? space.rooms.map((r) => {
                   const label = this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r));
                   return maskRoomLabels && label !== nothing
-                    ? html`<div class="iso-room-label-plane" ${roomFurnitureOverlap(isoOverlays?.rooms.get(r)?.floorAnchor, view.w, labelOccluders)}>${label}</div>` : label;
+                    ? html`<div class="iso-room-label-plane" ${roomFurnitureOverlap(isoOverlays?.rooms.get(r)?.floorAnchor, view.w, labelOccluders, view, isoOverlays?.rooms.get(r)?.visualScene)}>${label}</div>` : label;
                 })
               : nothing}
             ${this._editorRuntime && this._canEdit && !this._kiosk ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}

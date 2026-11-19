@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1470,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Repairs the paint/raster performance regression introduced by the angled 2.5D presentation in the current 1.85.3 beta line; retains the accepted design and is not a new user feature or a repair of the preceding stable.",
+  "summary": {
+    "ru": "Ускорено панорамирование 2.5D без отключения масок подписей, света и объёмной мебели.",
+    "en": "Faster 2.5D panning without disabling label masks, lighting or volume furniture."
+  }
+}

@@ -25,6 +25,21 @@ async function fixture(files, run) {
     }
 }
 const select = (root, options = {}) => selectTaskTests({ root, inventory, track: 'ship', layer: 'product', ...options });
+test('#1470 paint sources select the classified native bounds contract without areaTests', async () => fixture({
+    'src/iso-room-furniture-overlap.ts': '',
+    'test/iso-room-label-bounds.test.mjs': '',
+    'demo/smoke_iso_label_bounds.mjs': '',
+    'demo/smoke_isometric_live_touch.mjs': '',
+}, async dir => {
+    const catalog = await testCatalog(dir, inventory);
+    const selected = await select(dir, {track:'ask',changedFiles:['src/iso-room-furniture-overlap.ts']});
+    const path = 'demo/smoke_iso_label_bounds.mjs', row = catalog.rows.find(row=>row.path===path);
+    assert.equal(row.layer,'product'); assert.equal(row.importance,'regression');
+    assert.ok(row.domains.includes('isometry')); assert.ok(row.domains.includes('presentation'));
+    assert.ok(selected.files.includes(path));
+    assert.ok(selected.explanation.reasons[path].includes('Сквозной native-контракт области isometry'));
+    assert.ok(selected.files.includes('test/iso-room-label-bounds.test.mjs'));
+}));
 test('#1451 workstation storage and product projection select their addressed witnesses', async () => fixture({
     'custom_components/houseplan/core/furniture_workstation.py': '',
     'src/iso-lab-workstation.ts': '',

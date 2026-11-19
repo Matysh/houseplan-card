@@ -1,0 +1,829 @@
+{
+  "schema": 1,
+  "issue": 1470,
+  "generatedAt": "2026-11-19T07:46:46.334Z",
+  "baselinePublishedCommit": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
+  "gitHeadBeforeAuthorCommit": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+  "testedContentSha256": {
+    "src/iso-room-label-bounds.ts": "150234f9f1184688b784e6290b0bc13263520bbea14a5ffb80fed61e130c41f6",
+    "src/iso-room-furniture-overlap.ts": "fef66a97af0b84fb125e69cbd074907892cea5e97a6858ca938b5ef94ce88944",
+    "src/iso-lab-furniture-render.ts": "1081030edecf11b0a720eecf712a637cb7b57f9549174a4428fc78fb8f06d96f",
+    "src/styles/iso-lab-markers.styles.ts": "b447c9b89eff68aeefbf8068cc7717cf6b1b0ef044340c246a570a7c1d13ac11",
+    "demo/fixtures/iso-paint.mjs": "78ca7a0d65aadac292a2448ba42a4ad9bc18a7397f77b02c3cf0e010a372c167",
+    "demo/helpers/iso-paint-scene.mjs": "dc5e172c0c93bdfa2e9c512fdf3001f8fb264dad2c341a837e12dc7a96506af9",
+    "demo/benchmark_iso_paint.mjs": "5164e8ccb33cd69d2518ed827d91b9a95b331f39d4ec1e3db50665d508845d6b"
+  },
+  "cardCall": "? html`<div class=\"iso-room-label-plane\" ${roomFurnitureOverlap(isoOverlays?.rooms.get(r)?.floorAnchor, view.w, labelOccluders, view, isoOverlays?.rooms.get(r)?.visualScene)}>${label}</div>` : label;",
+  "buildFingerprint": "21c808d280065f58385cf69a878baa64391ca7a6d79e217b7f93c960c668d34f",
+  "environment": {
+    "browser": "151.0.7922.34",
+    "node": "v22.23.4",
+    "viewport": {
+      "width": 3840,
+      "height": 2160
+    },
+    "dpr": 1,
+    "pinnedBrowserAttested": true,
+    "platform": "WSL Ubuntu 24.04 linux x64",
+    "gpuCompositing": false,
+    "rasterThreads": 4,
+    "viewportStage": [
+      3840,
+      2087
+    ],
+    "zoom": 2.18,
+    "nativeDrag": {
+      "from": [
+        40,
+        180
+      ],
+      "to": [
+        840,
+        430
+      ],
+      "steps": 45
+    }
+  },
+  "performance": {
+    "baseline": [
+      {
+        "mode": "iso",
+        "samples": [
+          {
+            "duration": 34132.16708099999,
+            "p95": 816.6000000000058,
+            "frames": 88
+          },
+          {
+            "duration": 40172.36107100001,
+            "p95": 966.5,
+            "frames": 86
+          },
+          {
+            "duration": 37428.551402,
+            "p95": 916.7000000000116,
+            "frames": 92
+          },
+          {
+            "duration": 35253.35547099999,
+            "p95": 833.2999999999884,
+            "frames": 80
+          },
+          {
+            "duration": 37337.154893,
+            "p95": 900,
+            "frames": 88
+          }
+        ],
+        "counts": {
+          "labels": 8,
+          "markers": 74,
+          "furniture": 15
+        },
+        "median": 37337.154893,
+        "p95": 900
+      },
+      {
+        "mode": "flat",
+        "samples": [
+          {
+            "duration": 1631.0660869999847,
+            "p95": 50,
+            "frames": 54
+          },
+          {
+            "duration": 1711.431436999992,
+            "p95": 50.10000000000582,
+            "frames": 50
+          },
+          {
+            "duration": 2504.909365999978,
+            "p95": 83.39999999999418,
+            "frames": 66
+          },
+          {
+            "duration": 1860.3588479999744,
+            "p95": 50,
+            "frames": 66
+          },
+          {
+            "duration": 1849.165708000015,
+            "p95": 50,
+            "frames": 63
+          }
+        ],
+        "counts": {
+          "labels": 8,
+          "markers": 74,
+          "furniture": 0
+        },
+        "median": 1849.165708000015,
+        "p95": 50
+      },
+      {
+        "mode": "no-mask",
+        "samples": [
+          {
+            "duration": 28386.499150000047,
+            "p95": 816.7000000000116,
+            "frames": 85
+          },
+          {
+            "duration": 30419.08467100002,
+            "p95": 816.7000000000116,
+            "frames": 93
+          },
+          {
+            "duration": 32646.419710999995,
+            "p95": 816.6000000000349,
+            "frames": 95
+          }
+        ],
+        "counts": {
+          "labels": 8,
+          "markers": 74,
+          "furniture": 15
+        },
+        "median": 30419.08467100002,
+        "p95": 816.7000000000116
+      }
+    ],
+    "candidate": [
+      {
+        "mode": "iso",
+        "samples": [
+          {
+            "duration": 17087.939452,
+            "p95": 483.40000000000146,
+            "frames": 91
+          },
+          {
+            "duration": 19898.282753,
+            "p95": 516.6999999999971,
+            "frames": 100
+          },
+          {
+            "duration": 15293.393813000002,
+            "p95": 400,
+            "frames": 92
+          },
+          {
+            "duration": 15536.225873000003,
+            "p95": 416.59999999999127,
+            "frames": 90
+          },
+          {
+            "duration": 15172.642611999996,
+            "p95": 399.90000000000873,
+            "frames": 94
+          }
+        ],
+        "counts": {
+          "labels": 8,
+          "markers": 74,
+          "furniture": 15
+        },
+        "median": 15536.225873000003,
+        "p95": 416.59999999999127
+      },
+      {
+        "mode": "flat",
+        "samples": [
+          {
+            "duration": 1889.498483999996,
+            "p95": 50,
+            "frames": 70
+          },
+          {
+            "duration": 1715.4390170000115,
+            "p95": 50,
+            "frames": 60
+          },
+          {
+            "duration": 1668.448126999996,
+            "p95": 50,
+            "frames": 60
+          }
+        ],
+        "counts": {
+          "labels": 8,
+          "markers": 74,
+          "furniture": 0
+        },
+        "median": 1715.4390170000115,
+        "p95": 50
+      }
+    ],
+    "comparison": [
+      {
+        "mode": "iso",
+        "durationRatio": 0.4161063133364976,
+        "p95Ratio": 0.4628888888888792,
+        "pass": true
+      },
+      {
+        "mode": "flat",
+        "durationRatio": 0.9276826893222906,
+        "p95Ratio": 1,
+        "pass": true
+      }
+    ],
+    "interactions": {
+      "baseline": [
+        {
+          "zoom": 1,
+          "action": "pan",
+          "samples": [
+            1347.345695,
+            1439.1773379999995,
+            1467.194105999999
+          ],
+          "median": 1439.1773379999995
+        },
+        {
+          "zoom": 1,
+          "action": "wheel",
+          "samples": [
+            114.40907200000038,
+            114.49739299999965,
+            114.66792600000008
+          ],
+          "median": 114.49739299999965
+        },
+        {
+          "zoom": 1,
+          "action": "hover",
+          "samples": [
+            29.407116000000315,
+            29.315926000001127,
+            29.777917000001253
+          ],
+          "median": 29.407116000000315
+        },
+        {
+          "zoom": 1,
+          "action": "ha-change",
+          "samples": [
+            40.878099999999904,
+            31.398177000000942,
+            31.23742999999922
+          ],
+          "median": 31.398177000000942
+        },
+        {
+          "zoom": 2.18,
+          "action": "pan",
+          "samples": [
+            4856.237440000001,
+            4740.771984000003,
+            4878.609557000003
+          ],
+          "median": 4856.237440000001
+        },
+        {
+          "zoom": 2.18,
+          "action": "wheel",
+          "samples": [
+            158.28293199999462,
+            163.4368340000001,
+            149.90869299999758
+          ],
+          "median": 158.28293199999462
+        },
+        {
+          "zoom": 2.18,
+          "action": "hover",
+          "samples": [
+            29.091918999998597,
+            45.64841200000228,
+            28.749586999998428
+          ],
+          "median": 29.091918999998597
+        },
+        {
+          "zoom": 2.18,
+          "action": "ha-change",
+          "samples": [
+            31.64637600000424,
+            34.225258999998914,
+            37.75769299999956
+          ],
+          "median": 34.225258999998914
+        }
+      ],
+      "candidate": [
+        {
+          "zoom": 1,
+          "action": "pan",
+          "samples": [
+            1246.9324650000008,
+            1183.3318090000002,
+            1240.729178999999
+          ],
+          "median": 1240.729178999999
+        },
+        {
+          "zoom": 1,
+          "action": "wheel",
+          "samples": [
+            130.82588399999986,
+            131.8702720000001,
+            131.16642300000058
+          ],
+          "median": 131.16642300000058
+        },
+        {
+          "zoom": 1,
+          "action": "hover",
+          "samples": [
+            28.9613849999987,
+            29.172936000000846,
+            29.56184200000098
+          ],
+          "median": 29.172936000000846
+        },
+        {
+          "zoom": 1,
+          "action": "ha-change",
+          "samples": [
+            30.38031299999966,
+            31.209893999999622,
+            33.5753339999992
+          ],
+          "median": 31.209893999999622
+        },
+        {
+          "zoom": 2.18,
+          "action": "pan",
+          "samples": [
+            2793.800070000001,
+            3022.4047040000005,
+            3525.2467939999988
+          ],
+          "median": 3022.4047040000005
+        },
+        {
+          "zoom": 2.18,
+          "action": "wheel",
+          "samples": [
+            180.52377999999953,
+            164.68362699999852,
+            163.36687000000165
+          ],
+          "median": 164.68362699999852
+        },
+        {
+          "zoom": 2.18,
+          "action": "hover",
+          "samples": [
+            22.53099199999997,
+            28.856512999998813,
+            28.597130000001926
+          ],
+          "median": 28.597130000001926
+        },
+        {
+          "zoom": 2.18,
+          "action": "ha-change",
+          "samples": [
+            47.4321259999997,
+            47.8292990000009,
+            47.87189600000056
+          ],
+          "median": 47.8292990000009
+        }
+      ],
+      "comparison": [
+        {
+          "zoom": 1,
+          "action": "pan",
+          "ratio": 0.8621100028744334,
+          "pass": true
+        },
+        {
+          "zoom": 1,
+          "action": "wheel",
+          "ratio": 1.1455843627810895,
+          "pass": true
+        },
+        {
+          "zoom": 1,
+          "action": "hover",
+          "ratio": 0.9920366213402407,
+          "pass": true
+        },
+        {
+          "zoom": 1,
+          "action": "ha-change",
+          "ratio": 0.9940033779667745,
+          "pass": true
+        },
+        {
+          "zoom": 2.18,
+          "action": "pan",
+          "ratio": 0.6223758087083979,
+          "pass": true
+        },
+        {
+          "zoom": 2.18,
+          "action": "wheel",
+          "ratio": 1.0404383145998592,
+          "pass": true
+        },
+        {
+          "zoom": 2.18,
+          "action": "hover",
+          "ratio": 0.9829922185608762,
+          "pass": true
+        },
+        {
+          "zoom": 2.18,
+          "action": "ha-change",
+          "ratio": 1.3974853776855982,
+          "pass": true
+        }
+      ]
+    }
+  },
+  "visual": {
+    "channelThreshold": 10,
+    "maxDiffRatio": 0.0005,
+    "frames": 19,
+    "labelsChecked": 152,
+    "labelCrops": 142,
+    "offscreenBoundsChecks": 10,
+    "maxFrameRatio": 0.000015673225308641976,
+    "maxLabelRatio": 0.0001722197983880227,
+    "maxLabelGeometryDelta": 0.015625,
+    "alphaMatches": true,
+    "matrix": [
+      {
+        "id": "dark-0-1",
+        "frame": {
+          "maxChannelDelta": 11,
+          "diffRatioAbove10": 1.2056327160493827e-7,
+          "pixelsAbove10": 1,
+          "pass": true
+        },
+        "worstLabelRatio": 0,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "dark-0-2.18",
+        "frame": {
+          "maxChannelDelta": 43,
+          "diffRatioAbove10": 0.00001109182098765432,
+          "pixelsAbove10": 92,
+          "pass": true
+        },
+        "worstLabelRatio": 0.0001722197983880227,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "dark-180-1",
+        "frame": {
+          "maxChannelDelta": 11,
+          "diffRatioAbove10": 2.4112654320987655e-7,
+          "pixelsAbove10": 2,
+          "pass": true
+        },
+        "worstLabelRatio": 0,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "dark-180-2.18",
+        "frame": {
+          "maxChannelDelta": 62,
+          "diffRatioAbove10": 0.000007836612654320988,
+          "pixelsAbove10": 65,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00012629451881788332,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "dark-270-1",
+        "frame": {
+          "maxChannelDelta": 13,
+          "diffRatioAbove10": 0.0000014467592592592592,
+          "pixelsAbove10": 12,
+          "pass": true
+        },
+        "worstLabelRatio": 0,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "dark-270-2.18",
+        "frame": {
+          "maxChannelDelta": 26,
+          "diffRatioAbove10": 0.00000626929012345679,
+          "pixelsAbove10": 52,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00009629272989889263,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "dark-90-1",
+        "frame": {
+          "maxChannelDelta": 11,
+          "diffRatioAbove10": 3.616898148148148e-7,
+          "pixelsAbove10": 3,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00005568548836173293,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "dark-90-2.18",
+        "frame": {
+          "maxChannelDelta": 72,
+          "diffRatioAbove10": 0.000015673225308641976,
+          "pixelsAbove10": 130,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00013540411357697047,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "light-0-1",
+        "frame": {
+          "maxChannelDelta": 14,
+          "diffRatioAbove10": 4.822530864197531e-7,
+          "pixelsAbove10": 4,
+          "pass": true
+        },
+        "worstLabelRatio": 0,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "light-0-2.18",
+        "frame": {
+          "maxChannelDelta": 26,
+          "diffRatioAbove10": 0.00000349633487654321,
+          "pixelsAbove10": 29,
+          "pass": true
+        },
+        "worstLabelRatio": 0,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "light-180-1",
+        "frame": {
+          "maxChannelDelta": 11,
+          "diffRatioAbove10": 2.4112654320987655e-7,
+          "pixelsAbove10": 2,
+          "pass": true
+        },
+        "worstLabelRatio": 0,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "light-180-2.18",
+        "frame": {
+          "maxChannelDelta": 26,
+          "diffRatioAbove10": 0.0000036168981481481483,
+          "pixelsAbove10": 30,
+          "pass": true
+        },
+        "worstLabelRatio": 0.000011481319892534846,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "light-270-1",
+        "frame": {
+          "maxChannelDelta": 13,
+          "diffRatioAbove10": 0.0000014467592592592592,
+          "pixelsAbove10": 12,
+          "pass": true
+        },
+        "worstLabelRatio": 0,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "light-270-2.18",
+        "frame": {
+          "maxChannelDelta": 26,
+          "diffRatioAbove10": 0.000002652391975308642,
+          "pixelsAbove10": 22,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00005777563793933558,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "light-90-1",
+        "frame": {
+          "maxChannelDelta": 11,
+          "diffRatioAbove10": 3.616898148148148e-7,
+          "pixelsAbove10": 3,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00005568548836173293,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "light-90-2.18",
+        "frame": {
+          "maxChannelDelta": 28,
+          "diffRatioAbove10": 0.000008801118827160494,
+          "pixelsAbove10": 73,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00008162313432835821,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "overlap-long-focus",
+        "frame": {
+          "maxChannelDelta": 11,
+          "diffRatioAbove10": 2.4112654320987655e-7,
+          "pixelsAbove10": 2,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00004160079873533572,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "overlap-long-hover",
+        "frame": {
+          "maxChannelDelta": 11,
+          "diffRatioAbove10": 2.4112654320987655e-7,
+          "pixelsAbove10": 2,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00004160079873533572,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      },
+      {
+        "id": "overlap-long-idle",
+        "frame": {
+          "maxChannelDelta": 11,
+          "diffRatioAbove10": 2.4112654320987655e-7,
+          "pixelsAbove10": 2,
+          "pass": true
+        },
+        "worstLabelRatio": 0.00004160079873533572,
+        "maxGeometryDelta": 0.015625,
+        "allAlphaMatch": true,
+        "pass": true
+      }
+    ],
+    "pass": true
+  },
+  "native": {
+    "file": "demo/smoke_iso_label_bounds.mjs",
+    "executed": 13,
+    "checks": [
+      "all resources belong to the disconnected scene",
+      "camera 0: bounded masks remain aligned without structural rebuild",
+      "camera 180: bounded masks remain aligned without structural rebuild",
+      "camera 270: bounded masks remain aligned without structural rebuild",
+      "camera 90: bounded masks remain aligned without structural rebuild",
+      "eight independent bounded labels/masks",
+      "floor change retires old label planes and mask resources",
+      "live long label grows its paint bounds without leaking masks",
+      "native focus unmasks only its own label",
+      "paint/navigation never changes persisted layout or invokes writers",
+      "reconnect resumes observers without duplicating masks",
+      "returning to the floor recreates only its eight bounded resources",
+      "uncovered label never inherits furniture alpha from its neighbours"
+    ],
+    "pass": true
+  },
+  "addressedNode": {
+    "files": [
+      "test/iso-room-label-bounds.test.mjs",
+      "test/iso-projection.test.mjs",
+      "test/styles-split.test.mjs",
+      "process-next/test/task-selection.test.mjs"
+    ],
+    "executed": 69,
+    "pass": true
+  },
+  "golden": {
+    "acceptedCurrent": [
+      {
+        "id": "panel-isometric-geometry-view-light",
+        "status": "passed",
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "actualSha256": "7132b48c910c4efddd90fbd088b1c39df754eda874b9adc19b4b1555caaaf488",
+        "baselineSha256": "7132b48c910c4efddd90fbd088b1c39df754eda874b9adc19b4b1555caaaf488"
+      },
+      {
+        "id": "panel-isometric-large-warm-remount-dark",
+        "status": "passed",
+        "diffRatio": 0,
+        "maxObservedDelta": 5,
+        "actualSha256": "15b47db9e24a35610daff250ca96990550b97b4e4a855a1096ed973cec20886b",
+        "baselineSha256": "1d122b4c6af6c82ba19533f681d6f26e4bc5e1a47536d4b98ad1123cc88e5e4b"
+      },
+      {
+        "id": "panel-isometric-opening-symbol-parity-dark",
+        "status": "passed",
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "actualSha256": "fb88fe6daefe5cd4ed2c2bcbe5942fd0f1bb3e5c94aac958079d04113dd7d765",
+        "baselineSha256": "fb88fe6daefe5cd4ed2c2bcbe5942fd0f1bb3e5c94aac958079d04113dd7d765"
+      },
+      {
+        "id": "panel-isometric-stage3-forced-colors-dark",
+        "status": "passed",
+        "diffRatio": 0,
+        "maxObservedDelta": 4,
+        "actualSha256": "7835222d5fee141921fd4d36bd136726036727f5857d63563385f84c91c7a49f",
+        "baselineSha256": "bafe4c4fbf9394c301188ae8d9d6de1cc6a4e35473787f6fb96245a37c0fa069"
+      },
+      {
+        "id": "panel-isometric-stage3-overlays-dark",
+        "status": "passed",
+        "diffRatio": 0.0000023894862604540023,
+        "maxObservedDelta": 12,
+        "actualSha256": "b61499f4a33736e43e7ca018c492fb78622156c8caed9f40033bb3aff0d2fb24",
+        "baselineSha256": "d346278facd14350c295ae59c61ddb5b86e62c0b33333b19f2db95ff31180d1f"
+      },
+      {
+        "id": "panel-isometric-stage6-hover-light",
+        "status": "passed",
+        "diffRatio": 0,
+        "maxObservedDelta": 2,
+        "actualSha256": "3b01ab1473611792016cf9e4f158dc81e7d125aacdb84c4381579e34d715df1c",
+        "baselineSha256": "4c766b13e83c6fadde04f8ff0910081f4f5e107247028aa6ed94fb01e4679935"
+      },
+      {
+        "id": "panel-stairs-isometric-dark",
+        "status": "passed",
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "actualSha256": "41aa185dc5e387ef72db5a84ec07e8c62c8e3c6d8d6f113661609dfff67f6f62",
+        "baselineSha256": "41aa185dc5e387ef72db5a84ec07e8c62c8e3c6d8d6f113661609dfff67f6f62"
+      },
+      {
+        "id": "device-alert-maintenance-iso",
+        "status": "passed",
+        "diffRatio": 0,
+        "maxObservedDelta": 2,
+        "actualSha256": "a4d67fb28fe230590bf2c044a8ee6b71e67140ab28b3ba695dc34a4d0df76cac",
+        "baselineSha256": "c3262842d0a881b563e3bcf9c7e93c8f786d97629762738ea23f7ab34ffc614c"
+      },
+      {
+        "id": "panel-narrow-kiosk-fixed",
+        "status": "passed",
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "actualSha256": "1757cc5b13457525e99f1cd913cb9f7c0b14757338e9677cdffbe9b709f4f5ae",
+        "baselineSha256": "1757cc5b13457525e99f1cd913cb9f7c0b14757338e9677cdffbe9b709f4f5ae"
+      }
+    ],
+    "historical": {
+      "id": "lighting-closed-door-panel-iso-dark",
+      "storedPngDiffRatio": 0.7990142621519356,
+      "publishedBaseVersusCandidate": {
+        "maxObservedDelta": 0,
+        "diffRatio": 0
+      },
+      "baselineUpdated": false,
+      "meaning": "Historical pre-1451 stored PNG, not a regression; base/fix actual frames are pixel-identical."
+    }
+  },
+  "e2eDecision": "https://github.com/Matysh/houseplan-e2e/issues/82",
+  "privateArtifactsPublished": false,
+  "baselineAcceptancePerformed": false
+}
