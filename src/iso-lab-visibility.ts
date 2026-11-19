@@ -322,7 +322,7 @@ export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry
       // Prefer the reveal finish only in that overlap, from sill upward.
       if(entry.layer==='wall-side'&&other.entry.layer==='opening'
         &&other.entry.surface.kind==='jamb-reveal'
-        &&Math.abs(delta[0])<1e-8&&Math.abs(delta[1])<1e-8&&Math.abs(delta[2])<DEPTH_EPS)
+        &&other.geom.every(([ring])=>ring.every(point=>Math.abs(at(delta,point))<DEPTH_EPS)))
         delta=[0,0,1];
       const region=nearerRegion(overlap,delta);if(region.length<3)continue;
       for(const poly of other.geom) {

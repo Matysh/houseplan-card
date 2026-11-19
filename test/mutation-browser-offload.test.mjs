@@ -62,11 +62,12 @@ test('#659 common dialogs and keyboard markers keep their source-level wiring', 
 test('#659 2.5D CSS and generated material contracts stay unit-testable strings', () => {
   contains('src/styles/iso-tiles.styles.ts',
     '.stage.projection-iso.mode-view .dev .device-shell-frame {\n    border-color: transparent;',
-    'pointer-events: none;\n    z-index: -1;',
     '.dev.sel:not(:focus-visible) { --iso-frame: #F0A00C; }',
     '.stage.projection-iso.mode-view .iso-tile-shadows { display: none; }',
     '@media (forced-colors: active) {\n    .stage.projection-iso.mode-view .iso-tile-shadows { display: none; }',
   );
+  contains('src/styles/plan.styles.ts', '.iso-scene-surface { position:absolute; inset:0; z-index:1; }');
+  contains('src/houseplan-card.ts', '<g class="iso-floor-shadow-plane" aria-hidden="true" pointer-events="none">');
   contains('src/iso-tiles.ts', '${S} .dev .device-shell.with-values { gap:');
   contains('src/iso-sun.ts',
     'const streaks = beam.lightFloor ? [inset / length, 1 - inset / length] : [];');

@@ -133,16 +133,23 @@ Four settled quarter-turn pairs differed by more than eight levels in at
 least one RGB channel on 0.039–0.065% of pixels.
 
 The 4K physical trace received 14 events in each direction and recorded two
-bitmap replacements in each series. The controlled PNG run verified the wall
-paint and matched the exact terminal PNG in both directions. Capturing at full
-resolution split zoom-out into multiple sessions, so this combination covers
-range and replacement separately and leaves continuous 4K capture open.
+bitmap replacements on zoom-in and three on zoom-out on `390a6849f`. The
+first sampled frames identical to the exact reference arrived at 375 ms and
+329 ms. All 300 images sampled from the first event to the exact reference
+contained wall paint. The full-size controlled
+PNG run also matched the exact terminal PNG in each direction. Its capture
+overhead split zoom-out into several sessions, leaving the full per-frame
+continuity criterion open.
 
 The LayerTree probe attributed most remaining allocations to HTML devices and
 room captions promoted where they overlap. A stage-sized paint-containment
 experiment cut the count from 21 to 2, but clipped markers outside the anchor
 rectangle. Restoring the full paint reserve preserved the pixels and restored
 those layer allocations. The experiment was discarded.
+
+On the RTX 4090 at 1408×952 and DPR 2, `390a6849f` measured 117.4–119.6 rAF/s
+in the pan, and 103.6–110.3 rAF/s across lit and unlit wheel series. The four
+wheel series still created 13–18 drawing layers.
 
 The grid-scale witness exposed a thin seam on a clipped door face in the
 dark scene. Computing the cuts in reference-scale units fixed the pair at
@@ -155,6 +162,16 @@ On Windows at 1920×1080, DPR 1, the 45-step pan median was 2.961 s on
 the same candidate. This is 3.62× faster than the pinned 2.5D baseline and
 1.06× the time of Flat. The 20% baseline target remains open.
 
-The closed-door pixel witness and the old marker-overlap witness reproduced
-failures on the exact dev base. Full S6 and the compositor criteria remain
-open.
+The paired `large-house-v1` run used Chromium 151 on Windows with the exact
+source of v1.85.2 (`eeab22dee`) and `390a6849f`, five measured samples each.
+
+| Scenario | Stable median, ms | Candidate median, ms |
+| --- | ---: | ---: |
+| First stable frame | 1057.3 | 761.8 |
+| Space switch | 555.6 | 347.7 |
+| One zoom step | 34.0 | 33.0 |
+| State update | 27.1 | 18.5 |
+
+The closed-door light, legacy marker overlap, stair arrival and narrow-space
+settings tests reproduced failures on the exact dev base. Full S6 and the
+compositor criteria remain open.
