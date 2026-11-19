@@ -63,7 +63,8 @@ export function physicalSpaceRecord(record: unknown, ...nonStructural: readonly 
       const value = opening as Record<string, unknown> | null;
       const features = value?.opening_features as { version?: unknown } | undefined;
       if (features?.version === 1) return physicalRecord(value, ['opening_features', 'swing_position']);
-      return value && 'swing_position' in value ? physicalRecord(value, ['swing_position']) : opening;
+      return value && typeof value === 'object' && 'swing_position' in value
+        ? physicalRecord(value, ['swing_position']) : opening;
     }) } : {}),
   };
 }

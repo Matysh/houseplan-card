@@ -927,7 +927,7 @@ lovelace:
 
 &emsp;&emsp;Artificial lamp and LED light passes through an internal window between two rooms even when its contact reports closed glass. Jambs, walls, columns and the light radius still limit the beam. No extra setting is needed. Exterior windows and the exterior portion of a mixed aperture remain opaque. View, 2.5D and supported Static Glow use the same rule.
 
-&emsp;&emsp;At a closed opaque door, artificial light fills the source-side tunnel up to the drawn leaf and stops there. Swing and sliding doors use the same rule in room walls and partitions, from either side. An exterior closed door lights only its bounded pocket, never the outdoors. Partial opening and **Passes light** retain their existing behavior.
+&emsp;&emsp;At a closed opaque door, artificial light fills the source-side tunnel up to the light barrier and stops there. Swing and sliding doors use the same rule in room walls and partitions, from either side. An exterior closed door lights only its bounded pocket, never the outdoors. Partial opening and **Passes light** retain their existing behavior.
 
 &emsp;&emsp;The opening cuts the full masonry depth and keeps visible jambs. Door, window and gate symbols stay centred on the wall; **Opens the other way** mirrors only the leaf direction, not the symbol position. Internal light passes through a door, gate or passage along the tunnel and is clipped by its reveals. A sun ray starts at the inner or outer window-tunnel corners according to General settings (inner is the default).
 

@@ -3879,9 +3879,8 @@ function centrePiece(side) {
     })[0];
 }
 /**
- * Physical half-depth and direction for an opening. Visible symbol placement
- * is resolved separately and is always centred; flip_v changes only the
- * opening direction (#250).
+ * Existing room-relative face used by the physical reveal, sliding leaves
+ * and the closed-door light barrier. Swing drawing resolves its own origin.
  */
 function openingInnerFaceOffset(rooms, opening, walls, pitch, cellCm, gridPitch, coordScale = 1, openCuts = []) {
     const index = openingWallIndex(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
@@ -3951,6 +3950,14 @@ function reparameterizeOpeningFeatures(opening, intendedAngle) {
     return result;
 }
 
+function swingDoorPositionInBasis(position, fromAngle, toAngle) {
+    if ((position === 'negative' || position === 'positive')
+        && Math.cos((toAngle - fromAngle) * Math.PI / 180) < 0) {
+        return position === 'negative' ? 'positive' : 'negative';
+    }
+    return position;
+}
+
 const validOpening = (value) => !!value && typeof value.id === 'string'
     && [value.x, value.y, value.angle, value.length].every(item => typeof item === 'number' && Number.isFinite(item));
 /** Use the real type-specific symbol resolver; do not blindly toggle flip_v. */
@@ -3988,12 +3995,17 @@ function transportOpeningOrientations(before, after, rotations = new Map()) {
         if (!validOpening(opening))
             continue;
         const source = old.get(opening.id);
-        if (source?.opening_features?.version !== 1 || source.type !== opening.type)
+        if (!source || source.type !== opening.type)
             continue;
-        // Invalid documents still belong to the strict schema, not a geometry
-        // reader exception before that schema can explain the malformed import.
-        if (source.type === 'window' && (!('leaves' in source.opening_features)
-            || !Array.isArray(source.opening_features.leaves)))
+        const features = source.opening_features;
+        const swingPosition = source.type === 'door' ? source.swing_position : undefined;
+        const manualSide = swingPosition === 'negative' || swingPosition === 'positive';
+        const extended = features?.version === 1;
+        if (!extended && !manualSide)
+            continue;
+        // Malformed imported extensions belong to schema validation.
+        if (extended && source.type === 'window' && (!('leaves' in features)
+            || !Array.isArray(features.leaves)))
             continue;
         let delta = rotations.get(opening.id);
         if (delta === undefined) {
@@ -4002,10 +4014,14 @@ function transportOpeningOrientations(before, after, rotations = new Map()) {
         }
         const expected = source.angle + delta;
         const intended = opening.angle + 180 * Math.round((expected - opening.angle) / 180);
-        const transformed = reparameterizeOpeningFeatures(source, intended);
-        opening.angle = transformed.angle;
-        opening.opening_features = transformed.opening_features;
-        if (motionOpeningFeatures(source)?.mechanism !== 'slide')
+        if (extended) {
+            const transformed = reparameterizeOpeningFeatures(source, intended);
+            opening.angle = transformed.angle;
+            opening.opening_features = transformed.opening_features;
+        }
+        if (manualSide)
+            opening.swing_position = swingDoorPositionInBasis(swingPosition, intended, opening.angle);
+        if (!extended || motionOpeningFeatures(source)?.mechanism !== 'slide')
             continue;
         const previous = openingFaceNormal(before, source), radians = delta * Math.PI / 180;
         const desired = [previous[0] * Math.cos(radians) - previous[1] * Math.sin(radians),
@@ -4104,7 +4120,8 @@ function canonicalizeConfigGeometryInPlace(config) {
                 latticePoint(segment.b);
             }
         }
-        const openingBasis = records(space.openings).some(opening => opening.opening_features?.version === 1)
+        const openingBasis = records(space.openings).some(opening => opening.opening_features?.version === 1
+            || opening.type === 'door' && (opening.swing_position === 'negative' || opening.swing_position === 'positive'))
             ? cloneJson(space) : null;
         let openingAngleChanged = false;
         for (const opening of records(space.openings)) {
