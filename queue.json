@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16823,
-  "nextTicket": 540,
+  "revision": 16824,
+  "nextTicket": 541,
   "nextFence": 540,
   "tasks": {
     "1024": {
@@ -5153,6 +5153,20 @@
         "status": "published",
         "sourceSha": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2"
       }
+    },
+    "1478": {
+      "issue": 1478,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1478-camera-performance",
+      "materialSha": "f77fe172da83cebf5efd7087abbb1e62a04d90e6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 540,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795130191617,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5620,7 +5634,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1478
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5735,6 +5751,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:56661060-8bcd-4408-86e4-f9c6123918c2": {
+      "digest": "214b0b8a659bff63d6a07fce284b3eb7f05ac71cfe6f55959f4105c7e82e28d0",
+      "issue": 1478,
+      "message": {
+        "kind": "queued",
+        "issue": 1478,
+        "at": 1795130191617,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "f77fe172da83cebf5efd7087abbb1e62a04d90e6"
       }
     }
   },
