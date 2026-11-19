@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16271,
+  "revision": 16272,
   "nextTicket": 529,
   "nextFence": 529,
   "tasks": {
@@ -5046,7 +5046,7 @@
       "ownerDecision": null,
       "ticket": 528,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795077659410,
       "reviewEntry": 3,
       "patchId": "77afca1ac8f6a834bf45ef766cfdceb0275ca20d",
@@ -5081,6 +5081,15 @@
         "at": 1795077589929,
         "entry": 2,
         "eventId": "finish:22a60490-4b93-4bab-88ca-454a177f0f58:finish:1:expire:return:1470"
+      },
+      "s6": {
+        "id": "20261119T084120293-42f507e9",
+        "name": "Тесты для задачи #1470 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T084120293-42f507e9/report.json",
+        "materialSha": "f10e0e7126fec31be6603c8be66c50bb13523073",
+        "status": "passed",
+        "finishedAt": "2026-11-19T08:52:39.946Z",
+        "failures": []
       }
     }
   },
@@ -5529,9 +5538,9 @@
     "fence": 528,
     "materialSha": "f10e0e7126fec31be6603c8be66c50bb13523073",
     "expectedBase": "7d1e756b122790a51466a8670096a5e06773ee85",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795077663805,
-    "expiresAt": 1795078622200,
+    "expiresAt": 1795081961159,
     "patchId": "77afca1ac8f6a834bf45ef766cfdceb0275ca20d"
   },
   "events": {
@@ -5878,6 +5887,34 @@
         "materialSha": "e21faac27bab22d35b03b488bb2e52ced4ccf2b2",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:fc613888-d1d2-430c-b87b-f69dde97ab4f:finish:3:s6-complete": {
+      "digest": "1e7f8f0adad92741445daf8d6a94a43218ad2efdb576c7e133ea9067ccf68690",
+      "issue": 1470,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1470,
+        "at": 1795078361159,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "f10e0e7126fec31be6603c8be66c50bb13523073",
+        "phase": "review",
+        "evidence": {
+          "id": "20261119T084120293-42f507e9",
+          "name": "Тесты для задачи #1470 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T084120293-42f507e9/report.json",
+          "materialSha": "f10e0e7126fec31be6603c8be66c50bb13523073",
+          "status": "passed",
+          "finishedAt": "2026-11-19T08:52:39.946Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и решение\n\nМатериал реализации: `f4f474cf4890 → e143f8591`, ветка `codex/1470-iso-performance`. ТЗ принято во втором раунде ([44472113853](https://github.com/Matysh/houseplan-card/actions/runs/44472113853)); само ТЗ не меняется. Исправляем paint/raster-регрессию #1451, не дизайн.\n\n- Индивидуальная luminance-маска комнаты ограничена transformed name + абсолютной строкой metrics + padding; её координаты пересчитаны в локальный scene box. Furniture probe по-прежнему использует pixel-scale полного viewport и прежний порог/opacity всей одной подписи.\n- Свет мебели использует тот же translated light field через изолированный silhouette clip с прежней alpha .8, вместо повторных pattern tiles для деталей.\n- Маски принадлежат DOM подписи; ResizeObserver/rAF освобождаются при замене/отключении и восстанавливаются при reconnect. Новый кэш, raster snapshot, camera owner, gesture budget, модель или HA API не вводились.\n- Камерный ремонт #1469 независим; эту ветку актуализирует обычная очередь.\n\n### Риски и ограничения\n\nСохранены маски, мебель, тени, свет, позиция/права/нативные действия и Flat fallback. Частные owner fixture/traces не публикуются. Публичная сцена преднамеренно тяжёлая по live-light: результаты headless/CPU не обещают 60 FPS на всех GPU. Временные DOM-only ablation-пробы не входят в продукт.\n\nНаблюдатели явно unobserve предыдущие label/viewport; disconnect очищает их ссылки/rows и отменяет rAF. Проверены far-away uncovered label (не наследует opacity соседей), смена этажа туда/обратно и reconnect без дублирования масок.\n\n### Проверки\n\nДоказательная база: [метод и разбор](https://github.com/Matysh/houseplan-card/blob/codex/1470-iso-performance/docs/evidence/1470-paint-performance.md), [все samples/хэши/матрица](https://github.com/Matysh/houseplan-card/blob/codex/1470-iso-performance/docs/evidence/1470-paint-performance.json). Финальная чистая mock-сцена имеет API flags и seeded known/filter/Area metadata; только read allowlist, writers/services запрещены. Начальные пробы с неполным mock — лишь диагностика, не итоговые числа.\n\n- AC1: 4K/218%, 8 комнат / 74 маркера / 15 проёмов / 15 объёмной мебели, тот же native45-step drag. ISO median **37.337 → 15.536 с (−58.4%)**, p95 rAF **900 → 416.6 мс (−53.7%)**; по5 retained samples. Flat **1.849 → 1.715 с (−7.2%)**. Все сравнения PASS. Baseline ISO/Flat20.2×; mask ablation30.419 с (−18.5%) сама по себе недостаточна, эффекты в продукте не отключены.\n- AC2: все8 paired1920px Fit/218% pan/wheel/hover/HA-change PASS; структурных rebuild0. Наибольшие прибавки: wheel +16.7 мс и HA-change +13.6 мс — в согласованном абсолютном допуске50 мс.\n- AC4: **19 whole4K frames**,152 label entries = **142 видимых crop +10 offscreen bounds/alpha checks**, все PASS. Channel threshold10 + maxDiffRatio0.0005; worst whole-frame ratio0.00001567 (130/8.29M), worst crop0.00017222, geometry≤1/64px; alpha совпадает. Единичный max channel delta72 локализован на AA-кромках света: это не утверждение «все delta≤10» и не принятие нового эталона.\n- **9 актуальных принятых golden PASS** (включая narrow fixed kiosk), без обновления PNG. Дополнительный исторический `lighting-closed-door-panel-iso-dark` отличается от старого PNG на79.9%; опубликованный base actual и fix actual по тому же golden harness **попиксельно идентичны (maxDelta0, ratio0)**. Этот явно информационный остаток не принимаем/не ремонтируем в #1470.\n- Адресно **69 Node cases +13 именованных native cases PASS**. Центральная isometry-область теперь сама выбирает новый native witness без `areaTests`; отдельный selection test PASS. Штатную широкую S6 выполняет `finish`; её окончательный отчёт будет отдельным материалом конвейера.\n- Решение по реальному HA E2E: [houseplan-e2e#82](https://github.com/Matysh/houseplan-e2e/issues/82), отдельный сценарий не нужен (transport/права/сохранение не менялись). Выпускные E2E остаются.\n\n### Исправления по предыдущему ревью\n\nНа S4 исправлены два замечания раунда1: основной оракул стал paired base/fix вместо исторически непереснятых ISO PNG; контракт уточняет whole-label furniture dim отдельно от попиксельной стеновой маски. Раунд2 ТЗ принят. Содержательного код-ревью этой реализации ещё не было.\n\n### Устранение отказов первого S6\n\nПолный S6 `20261119T075150640-eafb02cd` завершился с тремя адресными отказами. Содержательного код-ревью ещё не было. Исправления сохранены в `e21faac27bab22d35b03b488bb2e52ced4ccf2b2` поверх продуктового `e143f8591`; продуктовые исходники, fixture измерений, visual evidence, геометрия и PNG не менялись.\n\n- `bundle-assets` #792: synthetic equality/+1 test вычитал весь delta только из маленького entry-loader, получая неположительный gzip size ещё до проверки границы. Теперь корректируется самый большой initial chunk и соответствующая panel-сумма. Проверяется положительность размера; старый helper-budget и обе equality/+1 assertions сохранены. Никакого нового byte-ограничения к текущему продукту и повышения лимита нет.\n- `wall-identity-corpus`: новая публичная `demo/fixtures/iso-paint.mjs` честно вошла в полный corpus, но её строки ещё не было в текущем паспорте. Механически добавлены ровно один source inventory entry и один полный документ. Перед записью все старые outcomes/полные хэши/порядок независимо deep-compared; оригинальные 229 inputs, архив и frozen legacy oracle побайтно не менялись. Никакие fixtures не исключались и инварианты не ослаблялись.\n- `smoke_iso_theme_walls`: прежний witness требовал `.dfurn` Flat-symbol и его non-scaling stroke в ISO, хотя принятый #1451 уже рисует объёмную модель с собственной paint recipe. Проверка теперь требует настоящий непустой painted volume, конечные положительные штрихи и неизменность этих путей/цветов/ширин между светлой, тёмной и browser-scheme темой. Flat non-scaling stroke, возврат в Flat и исходные стены/цвет/подписи по-прежнему проверяются. Производственные штрихи и эталоны не менялись.\n\nАдресно после ремонта: `node --test test/bundle-assets.test.mjs test/wall-identity-corpus.test.mjs` — **58/58 PASS**; свежая сборка, синхронизация demo и `node demo/smoke_iso_theme_walls.mjs` — **PASS**. Локальные логи: `output/1470-s6-repair-unit.log`, `output/1470-s6-repair-build.log`, `output/1470-s6-repair-native.log`. Финальные performance/paired pixel результаты выше применимы: продуктовый paint-код и их входы не изменились. Следующий штатный finish актуализирует ветку на dev и подтвердит полный S6 с применимым reuse, затем впервые передаст код на независимое ревью.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
