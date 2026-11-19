@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16480,
+  "revision": 16481,
   "nextTicket": 535,
   "nextFence": 535,
   "tasks": {
@@ -5939,6 +5939,10 @@
       "digest": "8ae49d9f119c5be6bd4f525d778862d0e56a7819622864b87ff21796fb947550",
       "issue": 1474
     },
+    "github:44508092973:1:completions:message:73ec6219a6c2e7079d96be31eb7f8cf45944727fe3da81c85ee4d443666ae91a": {
+      "digest": "d736659d3583aed3ffba535f2290e494b5c17b05bb74bba742e82d7a4950a2d1",
+      "issue": 1474
+    },
     "finish:a8d99469-b763-4dc7-9e24-e5b892c2dc7b": {
       "digest": "a03c07aa551707b08d373fb0f2f6193f185d6dffe2178eec0a99a6f30d3e7a2e",
       "issue": 1474,
@@ -6085,7 +6089,8 @@
           "entry": 3,
           "detail": "Браузер: floor persistent cache isometric: failed",
           "eventId": "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:3:return:return:1474"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:260b90c9-aed8-4b34-a837-5b9f592d8c23": {
