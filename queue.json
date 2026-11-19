@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16462,
-  "nextTicket": 534,
+  "revision": 16463,
+  "nextTicket": 535,
   "nextFence": 534,
   "tasks": {
     "1024": {
@@ -5067,11 +5067,11 @@
       "materialSha": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 533,
-      "queued": false,
+      "ticket": 534,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795084247176,
-      "reviewEntry": 3,
+      "readyAt": 1795084786054,
+      "reviewEntry": 4,
       "patchId": "57398169c5589c66ba05189870936f1a8fb329df",
       "changedFiles": [
         "custom_components/houseplan/core/import_export.py",
@@ -5154,8 +5154,7 @@
         "entry": 3,
         "detail": "Браузер: floor persistent cache isometric: failed",
         "eventId": "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:3:return:return:1474"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5609,7 +5608,9 @@
       "runId": 44500260892
     }
   },
-  "waiting": [],
+  "waiting": [
+    1474
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5973,6 +5974,19 @@
           "detail": "Браузер: floor persistent cache isometric: failed",
           "eventId": "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:3:return:return:1474"
         }
+      }
+    },
+    "finish:260b90c9-aed8-4b34-a837-5b9f592d8c23": {
+      "digest": "9e70455504982ac982a8389e0ef94d5ff56e4a202dd3e07629e6b6a8da511ac9",
+      "issue": 1474,
+      "message": {
+        "kind": "queued",
+        "issue": 1474,
+        "at": 1795084786054,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de"
       }
     }
   },
