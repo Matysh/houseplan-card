@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16123,
-  "nextTicket": 524,
+  "revision": 16124,
+  "nextTicket": 525,
   "nextFence": 524,
   "tasks": {
     "1024": {
@@ -5037,14 +5037,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1469-cold-iso-camera",
-      "materialSha": "9e6d5c0c3f304c8b75c6dc0551997a330938b684",
+      "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 523,
-      "queued": false,
+      "ticket": 524,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795072476078,
-      "reviewEntry": 1,
+      "readyAt": 1795073986124,
+      "reviewEntry": 2,
       "patchId": "741994a593654e1b0c73887069f3cdb75804d381",
       "changedFiles": [
         "demo/smoke_projection_cold_view_camera.mjs",
@@ -5056,7 +5056,6 @@
         "src/projection-view-camera.ts",
         "test/projection-view-camera.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5492,7 +5491,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1469
+  ],
   "active": null,
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5688,6 +5689,19 @@
           "eventId": "finish:b36cf078-c598-40bb-a099-292e93e914c3:finish:3:return:return:1469"
         },
         "delivered": true
+      }
+    },
+    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db": {
+      "digest": "62a5e591f88a3b7fa5d6a7b0172951f01cc7abe79abeb9828c7e261f3fa509ab",
+      "issue": 1469,
+      "message": {
+        "kind": "queued",
+        "issue": 1469,
+        "at": 1795073986124,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e"
       }
     }
   },
