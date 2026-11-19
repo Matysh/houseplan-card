@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16771,
+  "revision": 16772,
   "nextTicket": 540,
   "nextFence": 540,
   "tasks": {
@@ -2044,39 +2044,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "d67d7fd3b6d77aafd8c84f3e82d4890d59039d15"
-      }
-    },
-    "1382": {
-      "issue": 1382,
-      "branch": "codex/history0-mutation-diagnostic-timing",
-      "track": "show",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "412f1993843b72adf9311f908f552e7a419c4530",
-      "mergedSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-      "mergedAt": 1794384063902,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1382:1:176b7ae90dd1120bbaf10efecc0d6274ebec644a:412f1993843b72adf9311f908f552e7a419c4530",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1383": {
@@ -5124,10 +5091,24 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 15
+        },
+        "commentCurrent": true,
+        "commentDigest": "d1c65df9ac3a3cbebb03",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "published",
