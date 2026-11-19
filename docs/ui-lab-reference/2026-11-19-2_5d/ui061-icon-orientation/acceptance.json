@@ -1,0 +1,10 @@
+{
+  "id": "UI-061",
+  "issue": 1474,
+  "status": "owner-approved",
+  "approvedOn": "2026-11-19",
+  "fingerprint": "6def7ab0f52046a1e462a2c1661df519da7f5d5a5351130e820de422b5b2c343",
+  "extends": "UI-060",
+  "priorReference": "c0e7b3d7c2b4256ff20d0f7bf343cec8b660b816",
+  "productImplemented": false
+}

@@ -1,0 +1,609 @@
+{
+  "observations": [
+    {
+      "rotation": 0,
+      "degrees": 0,
+      "matrixError": 0,
+      "contents": [
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-core > ha-icon",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-core > .valtext",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "block",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "block",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .value-badge-content",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "block",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-battery-icon",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".oplock-core > ha-icon",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        }
+      ],
+      "lqi": [
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        },
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        },
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        },
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        },
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        }
+      ],
+      "roomEdgeX": "0.1963118362825416",
+      "roomEdgeY": "0.28036235768679607"
+    },
+    {
+      "rotation": 90,
+      "degrees": 180,
+      "matrixError": 3.3306690738754696e-16,
+      "contents": [
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-core > ha-icon",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-core > .valtext",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "block",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "block",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .value-badge-content",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "block",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-battery-icon",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".oplock-core > ha-icon",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        }
+      ],
+      "lqi": [
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        },
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        },
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        },
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        },
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        }
+      ],
+      "roomEdgeX": "-0.280362357686796",
+      "roomEdgeY": "0.1963118362825416"
+    },
+    {
+      "rotation": 180,
+      "degrees": 180,
+      "matrixError": 2.220446049250313e-16,
+      "contents": [
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-core > ha-icon",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-core > .valtext",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "block",
+              "transform": "none"
+            },
+            {
+              "rotate": "180deg",
+              "display": "block",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .value-badge-content",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "block",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-battery-icon",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".oplock-core > ha-icon",
+          "items": [
+            {
+              "rotate": "180deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        }
+      ],
+      "lqi": [
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        },
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        },
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        },
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        },
+        {
+          "a": -1,
+          "b": 0,
+          "c": 0,
+          "d": -1,
+          "edgeX": "0.1963118362825416",
+          "edgeY": "0.28036235768679607"
+        }
+      ],
+      "roomEdgeX": "0.1963118362825416",
+      "roomEdgeY": "0.28036235768679607"
+    },
+    {
+      "rotation": 270,
+      "degrees": 0,
+      "matrixError": 1.1102230246251565e-16,
+      "contents": [
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-core > ha-icon",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-core > .valtext",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "block",
+              "transform": "none"
+            },
+            {
+              "rotate": "0deg",
+              "display": "block",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .value-badge-content",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "block",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".dev:not(.iso-tile-shadow) .device-battery-icon",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "selector": ".oplock-core > ha-icon",
+          "items": [
+            {
+              "rotate": "0deg",
+              "display": "flex",
+              "transform": "none"
+            }
+          ]
+        }
+      ],
+      "lqi": [
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        },
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        },
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        },
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        },
+        {
+          "a": 1,
+          "b": 0,
+          "c": 0,
+          "d": 1,
+          "edgeX": "-0.280362357686796",
+          "edgeY": "0.1963118362825416"
+        }
+      ],
+      "roomEdgeX": "-0.280362357686796",
+      "roomEdgeY": "0.1963118362825416"
+    }
+  ],
+  "errors": []
+}

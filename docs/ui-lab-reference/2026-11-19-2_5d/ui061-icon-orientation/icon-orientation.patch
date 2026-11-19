@@ -1,0 +1,46 @@
+diff --git a/src/houseplan-card.ts b/src/houseplan-card.ts
+old mode 100755
+new mode 100644
+index 487d9588e..b25d48307
+--- a/src/houseplan-card.ts
++++ b/src/houseplan-card.ts
+@@ -13457,6 +13457,8 @@ export class HouseplanCard extends LitElement {
+             '--hp-iso-marker-plane': markerCamera ? isoFloorLinearCss(markerCamera) : undefined,
+             '--hp-iso-marker-hit-plane': markerCamera ? isoFloorLinearCss(markerCamera, true) : undefined,
+             '--hp-iso-room-plane': roomLabelCamera ? isoFloorLinearCss(roomLabelCamera) : undefined,
++            '--hp-iso-content-turn': roomLabelCamera && markerCamera
++              ? `${((roomLabelCamera.rotDeg - markerCamera.rotDeg) % 360 + 360) % 360}deg` : undefined,
+             '--hp-iso-room-hit-plane': roomLabelCamera ? isoFloorLinearCss(roomLabelCamera, true) : undefined,
+             '--hp-iso-room-edge-x': roomLabelDepth?.['--hp-iso-edge-unit-x'],
+             '--hp-iso-room-edge-y': roomLabelDepth?.['--hp-iso-edge-unit-y'],
+diff --git a/src/styles/iso-lab-markers.styles.ts b/src/styles/iso-lab-markers.styles.ts
+index fdb681ccb..d9728dc88 100644
+--- a/src/styles/iso-lab-markers.styles.ts
++++ b/src/styles/iso-lab-markers.styles.ts
+@@ -47,10 +47,26 @@ export const isoLabMarkersStyles = css`
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi,
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
+     --hp-glyph-side: color-mix(in srgb, currentColor 65%, #30343a);
++    --hp-iso-edge-unit-x: var(--hp-iso-room-edge-x);
++    --hp-iso-edge-unit-y: var(--hp-iso-room-edge-y);
+   }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
+     --hp-glyph-depth: calc(var(--battery-frame) * .15);
+   }
++  /* Read glyphs in the same two orientations as room labels. Rotate only
++     their contents: bodies, contact frames and badge anchors stay in place.
++     Independent rotate also preserves a device icon's configured angle. */
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core > ha-icon,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core > .valtext,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .value-badge-content,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-core > ha-icon {
++    rotate: var(--hp-iso-content-turn);
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi {
++    /* Keep the centring translation outside the glyph's local rotation. */
++    transform: translateX(-50%) rotate(var(--hp-iso-content-turn));
++  }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-furniture-foreground {
+     position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+     pointer-events: none; z-index: -2;
