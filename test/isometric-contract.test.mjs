@@ -117,7 +117,7 @@ test('Stage 4 composes ordered inert SVG groups below screen-facing HTML', () =>
   const projection = section(card, '<div class="iso-scene-surface"', '</svg></div>');
   let previous = -1;
   for (const selector of ['iso-underlay-svg', 'iso-floor-scene', 'iso-shadows-svg', 'iso-walls-svg',
-    'iso-furniture-foreground', 'iso-led-plane', 'iso-floor-shadow-plane']) {
+    'iso-floor-shadow-plane', 'iso-furniture-foreground', 'iso-led-plane']) {
     const position = projection.indexOf(selector);
     assert.ok(position > previous, selector);
     previous = position;

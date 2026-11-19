@@ -13755,11 +13755,6 @@ export class HouseplanCard extends LitElement {
               <g class="iso-shadows-svg" aria-hidden="true" pointer-events="none">${isoFrame?.shadows ?? nothing}</g>
               <g class="iso-walls-svg" aria-hidden="true" pointer-events="none">${isoFrame?.walls ?? nothing}</g>
             ` : nothing}
-            ${isoFrame && isoFrame.foreground !== nothing ? svg`<g class="iso-furniture-foreground"
-              aria-hidden=${stairVolumes?.size ? nothing : 'true'} pointer-events="none">${isoFrame.foreground}</g>` : nothing}
-            <g class="iso-led-plane" transform=${this._floorTransform} pointer-events="none">
-              ${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'body') ?? nothing}
-            </g>
             ${iso && (!maskFloorShadows || isoFrame?.shadowClip != null) ? svg`<g class="iso-floor-shadow-plane" aria-hidden="true" pointer-events="none">
               <defs>
                 ${isoFloorShadowGradient}
@@ -13798,6 +13793,11 @@ export class HouseplanCard extends LitElement {
                 </g>
               </g>
             </g>` : nothing}
+            ${isoFrame && isoFrame.foreground !== nothing ? svg`<g class="iso-furniture-foreground"
+              aria-hidden=${stairVolumes?.size ? nothing : 'true'} pointer-events="none">${isoFrame.foreground}</g>` : nothing}
+            <g class="iso-led-plane" transform=${this._floorTransform} pointer-events="none">
+              ${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'body') ?? nothing}
+            </g>
           </svg></div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always

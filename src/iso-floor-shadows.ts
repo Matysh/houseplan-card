@@ -9,9 +9,9 @@ type FloorAnchor = Pick<IsoOverlayPlacement, 'floorScene'>;
 
 /** Shared penumbra. Each shadow is ordinary SVG geometry on the floor plane. */
 export const isoFloorShadowGradient = svg`<radialGradient id="hp-iso-marker-penumbra">
-  <stop offset="0" stop-color="#1c2026" stop-opacity=".37"></stop>
-  <stop offset=".43" stop-color="#1c2026" stop-opacity=".32"></stop>
-  <stop offset=".71" stop-color="#1c2026" stop-opacity=".13"></stop>
+  <stop offset="0" stop-color="#1c2026" stop-opacity=".29"></stop>
+  <stop offset=".43" stop-color="#1c2026" stop-opacity=".24"></stop>
+  <stop offset=".71" stop-color="#1c2026" stop-opacity=".095"></stop>
   <stop offset="1" stop-color="#1c2026" stop-opacity="0"></stop>
 </radialGradient>`;
 
