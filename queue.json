@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16649,
-  "nextTicket": 537,
+  "revision": 16650,
+  "nextTicket": 538,
   "nextFence": 537,
   "tasks": {
     "1024": {
@@ -5077,6 +5077,20 @@
       "devBuild": {
         "status": "pending"
       }
+    },
+    "1476": {
+      "issue": 1476,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1476-swing-rebind-preview",
+      "materialSha": "3ab955f133610ea40e7e41c7cc4f5a3288346413",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 537,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795089858806,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5558,7 +5572,9 @@
       "runId": 44519175690
     }
   },
-  "waiting": [],
+  "waiting": [
+    1476
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5580,6 +5596,19 @@
     "github:44491001936:1:completions:report:8071fbf39359a730797d1dcdd1ffafd592dad5f37e29ed1abe73fe643be11d2f": {
       "digest": "4d6dc68b361be1330b0ccf9b978cae8842d0e6a20e6faffa5bf02667c95e2c3b",
       "issue": 1472
+    },
+    "finish:897f2d7e-c292-4252-8d4f-f2f07d3a4803": {
+      "digest": "bdbb360cd6cc57a88b8da543b556a4ff94bbc78b5df5a0eafce0233590a26821",
+      "issue": 1476,
+      "message": {
+        "kind": "queued",
+        "issue": 1476,
+        "at": 1795089858806,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "3ab955f133610ea40e7e41c7cc4f5a3288346413"
+      }
     }
   },
   "devWebhook": {
