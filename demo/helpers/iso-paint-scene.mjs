@@ -3,10 +3,10 @@ import { makeIsoPaintFixture } from '../fixtures/iso-paint.mjs';
 import { currentGraphFixture } from './graph-fixture.mjs';
 import { join } from 'node:path';
 
-export async function startIsoPaintScene({width=1480,height=1080,referenceRoot}={}) {
+export async function startIsoPaintScene({width=1480,height=1080,referenceRoot,browserArgs=[],createPage}={}) {
   requirePinnedBrowser('#1470 paired paint/raster evidence');
   const fixture=makeIsoPaintFixture();fixture.config=currentGraphFixture(fixture.config);
-  const args=[{width,height},1,[],{reducedMotion:'reduce'}];
+  const args=[{width,height},1,browserArgs,{reducedMotion:'reduce',createPage}];
   if(referenceRoot)args.push(join(referenceRoot,'demo/srv'),referenceRoot);
   const env=await launch(...args);
   try {

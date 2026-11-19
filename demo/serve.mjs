@@ -161,9 +161,17 @@ async function launchInternal(
     await browser.close().catch(() => {});
     throw error;
   }
-  const page = await (await browser.newContext({
-    viewport, deviceScaleFactor: scale, ...contextOptions,
-  })).newPage();
+  const { createPage, ...browserContextOptions } = contextOptions;
+  let page;
+  try {
+    const context = await browser.newContext({
+      viewport, deviceScaleFactor: scale, ...browserContextOptions,
+    });
+    page = createPage ? await createPage(context, browser) : await context.newPage();
+  } catch (error) {
+    await browser.close().catch(() => {});
+    throw error;
+  }
   await installUiKitCapture(page);
   // audit T1: an exception inside the card used to be logged and ignored.
   // Подписка и регистрация — одной функцией: разъехавшись, они дали бы

@@ -170,3 +170,17 @@ and measurement/metrics path outside primary readiness. Addressed trace events
 and actual endpoint captures provide presentation evidence; the smoke does not
 add a cadence gate. Compare timings on the same browser/machine without another
 benchmark or a test-build preparation running concurrently.
+
+### Длинный зум 2.5D у края (#1478)
+
+`node demo/benchmark_iso_edge_zoom.mjs` использует синтетический этаж iso-paint.
+Оба направления используют 14 нативных шагов колеса у края, номинально через
+140 мс. Отчёт различает отправленные события, события, доставленные браузером,
+и конечную камеру. `HP_EDGE_WIDTH=3840` включает 4K.
+
+В отдельном прогоне `HP_EDGE_CAPTURE=1` управляет выпуском кадров Chromium
+headless shell. PNG сопоставляется с каждым выпущенным изменившимся кадром.
+Контроль скрывает кладку ровно на один кадр. После жеста выполняется точная
+повторная отрисовка той же камеры и сравнивается с захваченными кадрами.
+Съёмка PNG влияет на длительность. Замеры производительности берутся из
+обычного прогона и трассы реального браузера. Эталоны этот стенд не меняет.
