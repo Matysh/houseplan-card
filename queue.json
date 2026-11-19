@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16452,
+  "revision": 16453,
   "nextTicket": 534,
   "nextFence": 534,
   "tasks": {
@@ -5072,7 +5072,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795084247176,
       "reviewEntry": 3,
-      "patchId": "c0e0cc6b9bc75820607dfdf4ff266675b55081ba",
+      "patchId": "57398169c5589c66ba05189870936f1a8fb329df",
       "changedFiles": [
         "custom_components/houseplan/core/import_export.py",
         "custom_components/houseplan/core/room_appearance.py",
@@ -5615,10 +5615,11 @@
     "token": "533:finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:1:admit",
     "fence": 533,
     "materialSha": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
+    "phase": "testing",
     "admittedAt": 1795084251357,
-    "expiresAt": 1795084551357
+    "expiresAt": 1795084559714,
+    "patchId": "57398169c5589c66ba05189870936f1a8fb329df"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5799,6 +5800,10 @@
     },
     "finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:3:return": {
       "digest": "f3b2e53c584d2a92dfa5feff54fd08182e2d5c721bf56ffabfb097d874c57a80",
+      "issue": 1474
+    },
+    "finish:e3e0c255-8703-42ef-bf03-90f9549cf1fb:finish:2:synchronized": {
+      "digest": "40864c23893dc185471e32d11cb61b86ef50b8120353fd48a49061ed6258413f",
       "issue": 1474
     },
     "finish:a8d99469-b763-4dc7-9e24-e5b892c2dc7b": {
