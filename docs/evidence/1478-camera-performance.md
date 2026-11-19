@@ -136,10 +136,12 @@ The 4K physical trace received 14 events in each direction and recorded two
 bitmap replacements on zoom-in and three on zoom-out on `390a6849f`. The
 first sampled frames identical to the exact reference arrived at 375 ms and
 329 ms. All 300 images sampled from the first event to the exact reference
-contained wall paint. The full-size controlled
-PNG run also matched the exact terminal PNG in each direction. Its capture
-overhead split zoom-out into several sessions, leaving the full per-frame
-continuity criterion open.
+contained wall paint. The full-size controlled PNG run also matched the exact
+terminal PNG in each direction. A controlled JPEG diagnostic on `e1ba645b0`
+captured all 75 emitted frames, reached both target zooms, recorded two
+replacements in each direction and found wall paint in all 75. Capture
+overhead still split zoom-out into three sessions. The single-session 4K
+continuity criterion remains open.
 
 The LayerTree probe attributed most remaining allocations to HTML devices and
 room captions promoted where they overlap. A stage-sized paint-containment
@@ -160,7 +162,9 @@ compare the screen pose so the retained SVG transform is included.
 On Windows at 1920×1080, DPR 1, the 45-step pan median was 2.961 s on
 `e5c56c0e4`, 0.817 s with the bounded label shadows and 0.774 s in Flat on
 the same candidate. This is 3.62× faster than the pinned 2.5D baseline and
-1.06× the time of Flat. The 20% baseline target remains open.
+1.06× the time of Flat. A paired WSL run on `390a6849f` measured 4.122 s on
+the frozen baseline and 0.864 s on the candidate, with 0.784 s in Flat.
+The candidate took 21.0% of the WSL baseline against a 20% target.
 
 The paired `large-house-v1` run used Chromium 151 on Windows with the exact
 source of v1.85.2 (`eeab22dee`) and `390a6849f`, five measured samples each.
