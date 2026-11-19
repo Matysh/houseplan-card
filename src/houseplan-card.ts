@@ -339,7 +339,7 @@ import {
   isoDisplayWallHeight, isoCameraFor, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
-import {acceptedViewFrame, canonicalPhysicalCamera, physicalViewCamera, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
+import {acceptedViewFrame, canonicalPhysicalCamera, hasMeasuredViewSize, physicalViewCamera, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
 import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume } from './iso-lab-furniture';
 import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
 import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
@@ -3791,10 +3791,12 @@ export class HouseplanCard extends LitElement {
     // Only a camera that was on screen is kept; a cold 2.5D start opens home.
     if (this._projectionShown === from) this._rezoom();
     else {
-      const oldView = this._view;
-      const center = oldView && {x: oldView.x + oldView.w / 2, y: oldView.y + oldView.h / 2};
+      // A missing stage or a measured-but-veiled Flat shell is not a user's
+      // physical camera. Let the existing restore/refit owner take the first
+      // real size and the saved per-space zoom, not square fallback bounds or
+      // the interim plane's re-encoded scale (#1469).
       this._view = null;
-      this._applyView(this._zoom, center?.x, center?.y);
+      this._restoreZoom();
     }
     this._warmPatch({ vp: this._warmViewportState() });
     this.requestUpdate();
@@ -5168,6 +5170,7 @@ export class HouseplanCard extends LitElement {
     if (!runtime || runtime.pending || this._floorPublishing || !this._loadOk || this._mode !== 'view'
       || !runtime.publicationNeeded && !this._floorPendingMode
       || this._booting || this._bootFading || this._modeTransitionBusy || this._continuity.state !== 'steady'
+      || this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)
       || !this._continuity.hasCompleteFrame || !this._continuityAssetsReady()) return;
     const raw = this._curSpaceCfg, space = this._space, owner = this.planHost.authorityKey;
     const selection = this._floorCacheSelection(); if (!selection) return;
@@ -5176,6 +5179,7 @@ export class HouseplanCard extends LitElement {
       return this.isConnected && this.planHost.authorityKey === owner && this._space === space && this._mode === 'view'
         && runtime === this._floorPreparation && runtime.paintToken === paintToken
         && this._loadOk && !this._modeTransitionBusy
+        && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)
         && !this._rotationMotion.running
         && !this._settingsDialog && !this._spaceDialog && !this._markerDialog && !this._roomDialog
         && this._curSpaceCfg === raw;
@@ -5854,7 +5858,11 @@ export class HouseplanCard extends LitElement {
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
     this._syncRadarLive();
-    if (!this._booting && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) this._projectionShown = this._renderProjection;
+    // A bare kiosk has no boot veil. Its empty/preparing Flat shell is not a
+    // presented camera that a later ISO runtime should physically re-encode.
+    if (this._spaceModel() && !this._floorPassive && !this._floorPreparation?.pending
+      && !this._booting && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime))
+      this._projectionShown = this._renderProjection;
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
     // Decor selection cannot exist before the lazy editor runtime is ready.
     if (this._editorRuntime) this._dtMeasure();
@@ -8758,7 +8766,7 @@ export class HouseplanCard extends LitElement {
     }
     if (carousel) this._saveZoom();
     const stage = this._stageEl;
-    if (stage && stage.clientHeight) {
+    if (stage && hasMeasuredViewSize([stage.clientWidth, stage.clientHeight])) {
       // HP-1551: the stage is already measured — apply the view NOW, before
       // the next paint. The unconditional rAF here used to let one frame
       // (or a whole server round-trip worth of frames, via the updated()
@@ -8773,7 +8781,8 @@ export class HouseplanCard extends LitElement {
     // correct) _zoom on the first layout, then center on the plan
     this._view = null;
     requestAnimationFrame(() => {
-      if (!this._stageEl) return;
+      const stage = this._stageEl;
+      if (!stage || !hasMeasuredViewSize([stage.clientWidth, stage.clientHeight])) return;
       const vb = this._baseVb();
       this._applyView(z, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2);
       this.requestUpdate();

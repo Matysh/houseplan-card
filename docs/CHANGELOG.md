@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Defer cold projection fitting and saved-zoom restoration until both stage dimensions are measured, keeping the first cached 2.5D frame aligned with HTML devices and labels without a wheel/fit workaround (#1469).
+
 ## v1.85.3-beta.2 — 2026-11-19
 
 - Capture the reviewed ISO hover raster scene in its own browser, preventing preceding SVG-mask paint history from changing room-label pixels; keep the accepted PNG, semantic assertions and pixel tolerances unchanged (#1451).

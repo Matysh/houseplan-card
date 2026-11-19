@@ -1,11 +1,16 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {physicalViewCamera, canonicalPhysicalCamera,
-  presentedView, shouldRebaseViewFrame, acceptedViewFrame, presentedViewPlane} from '../test-build/projection-view-camera.js';
+  presentedView, shouldRebaseViewFrame, acceptedViewFrame, hasMeasuredViewSize, presentedViewPlane} from '../test-build/projection-view-camera.js';
 import {isoCameraFor, unprojectFloorPoint, projectedFrame} from '../test-build/iso-projection.js';
 import {turnRect, turnPoint, inversePlanRotation} from '../test-build/view-frame.js';
 
 const close = (a,b) => assert.ok(Math.abs(a-b)<1e-8, `${a} != ${b}`);
+test('#1469 a cold camera cannot accept an absent, zero-axis or non-finite stage',()=>{
+  for(const size of [null,undefined,[0,655],[1280,0],[-1,655],[NaN,655],[1280,Infinity]])
+    assert.equal(hasMeasuredViewSize(size),false,JSON.stringify(size));
+  for(const size of [[1280,655],[430,755],[.5,.5]])assert.equal(hasMeasuredViewSize(size),true);
+});
 test('#1451 passive preview plane follows the painted packet rather than desired/lazy geometry',()=>{
   const live=isoCameraFor(0),preview={projection:'iso',rotation:90};
   assert.strictEqual(presentedViewPlane(preview,true,null),isoCameraFor(90));

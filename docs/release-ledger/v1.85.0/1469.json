@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "issue": 1469,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "introducedBy": 1451,
+  "rationale": "Repair cold cached-camera adoption in the new #1451 2.5D presentation first delivered in 1.85.3-beta.2; this is an internal beta-line correction, not a new user-facing feature or a repair of the previous stable presentation."
+}

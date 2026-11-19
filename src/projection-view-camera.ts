@@ -25,11 +25,16 @@ export interface ProjectionViewFrame {
   size: readonly [number, number];
 }
 
+/** Scene-unit fallback bounds are not an observed viewport, including one zero axis. */
+export function hasMeasuredViewSize(pixels: readonly [number, number] | null | undefined): pixels is readonly [number, number] {
+  return !!pixels && pixels.every(value => Number.isFinite(value) && value > 0);
+}
+
 /** Placeholder fit dimensions are scene units, never an observed pixel size.
  * Only an accepted stage (or its trusted warm memo) can establish a camera. */
 export function acceptedViewFrame(view: ViewRect | null, frame: ProjectionViewFrame,
   pixels: readonly [number,number] | null | undefined): ProjectionViewFrame | null {
-  if (!view || !pixels || ![...pixels,view.w,view.h].every(value=>Number.isFinite(value)&&value>0)) return null;
+  if (!view || !hasMeasuredViewSize(pixels) || ![view.w,view.h].every(value=>Number.isFinite(value)&&value>0)) return null;
   return {...frame,size:[pixels[0],pixels[1]]};
 }
 

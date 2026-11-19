@@ -60,6 +60,13 @@ normalized zoom is read against the new frame. Active quarter turns use the
 same compressed-plane camera algebra in `view-frame.ts`. Warm viewport state
 records its actual plane separately from the desired preference.
 
+A cold projection handoff cannot accept scene-unit fallback bounds as a
+measured viewport. Both stage dimensions must be positive before fitting;
+the existing restore/refit owner completes a hidden or not-yet-mounted stage.
+A measured but still veiled interim Flat frame does not replace the saved
+scalar zoom with its re-encoded physical scale. Accepted visible/warm cameras
+continue to preserve their physical centre and pixels per unit.
+
 ## Physical construction and openings
 
 The canonical wall footprint, physical junctions and opening hosts remain the
