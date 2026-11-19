@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16091,
+  "revision": 16092,
   "nextTicket": 523,
   "nextFence": 523,
   "tasks": {
@@ -5414,24 +5414,12 @@
       }
     },
     "1470": {
-      "requestId": "spec:1470:a18683c930e94fbdb36b75d7e10dd85058a6569e842f9b111baa6497f679adb9",
-      "contextDigest": "a18683c930e94fbdb36b75d7e10dd85058a6569e842f9b111baa6497f679adb9",
+      "requestId": "spec:1470:64d5cbc5cc93463a2daed570c3eace5b57586046f543a7ac9a0aa302cd2e41df",
+      "contextDigest": "64d5cbc5cc93463a2daed570c3eace5b57586046f543a7ac9a0aa302cd2e41df",
       "base": "f4f474cf489015af967bbd6fa03cda62c07bc975",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795069386075,
-      "retry": {
-        "eventId": "1470-spec-20261119-r1:spec-retry",
-        "at": 1795069094202,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44471177658",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795069544167
     }
   },
   "reviewPublications": {
@@ -5459,6 +5447,19 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
+      }
+    },
+    "spec:1470:spec:1470:64d5cbc5cc93463a2daed570c3eace5b57586046f543a7ac9a0aa302cd2e41df": {
+      "issue": 1470,
+      "kind": "spec",
+      "requestId": "spec:1470:64d5cbc5cc93463a2daed570c3eace5b57586046f543a7ac9a0aa302cd2e41df",
+      "materialSha": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+      "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+      "patchId": "64d5cbc5cc93463a2daed570c3eace5b57586046f543a7ac9a0aa302cd2e41df",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-19T06:25:44.167Z"
       }
     }
   },
@@ -5512,6 +5513,26 @@
     "github:44471843883:1:completions:report:9b79d40a2c0c87611ff996794102c530093d52e2ae91ca30d1a18250da998ea6": {
       "digest": "dfd2e6ab83bf6a9df33ccb303385ce69cfea4159e400a0591f1845fed1fd7045",
       "issue": 1469
+    },
+    "github:44472051036:1:label:spec-request": {
+      "digest": "10aa67c67df712216e7f225fc653ba581c5fd36f6038a16dbf85103b2e53d0bb",
+      "issue": 1470
+    },
+    "github:44472051036:1:label:spec-request:spec-resubmitted:1470": {
+      "digest": "10aa67c67df712216e7f225fc653ba581c5fd36f6038a16dbf85103b2e53d0bb",
+      "issue": 1470,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1470,
+        "at": 1795069544167,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1470:64d5cbc5cc93463a2daed570c3eace5b57586046f543a7ac9a0aa302cd2e41df",
+        "reviewChanges": "### Цель и решение\n\nИсправляем P1 регрессию View после #1451, не меняя принятый дизайн. Начальное направление — сократить площадь/повтор полноэкранных label-mask surfaces и неизменный paint, затем измерить результат. Конкретная эквивалентная компоновка уточняется адресными синтетическими пробами; растровый gesture snapshot намеренно исключён как существенно более сложный lifecycle. Маски, мебель, свет и скрытие стен не отключаются в продукте.\n\n### Риски и ограничения\n\nОсобое внимание: alpha для накладывающихся подписей, mask coordinate space после поворота/zoom, native hit targets, смена света/створки, bounded ресурсы. Исходная приватная аналитика показала вклад масок около 29%, но сама по себе не доказывает достаточность единственной правки. AC1 требует большего итогового результата на публичной синтетической сцене; AC4 не позволяет купить его визуальной деградацией. Камерные методы параллельной #1469 не входят в этот ремонт.\n\n### Проверки\n\nДля S4 продуктовых проверок и реализации ещё нет. Исходные измерения и границы приведены в аналитике; авторский spec-check проверяет форму именно этого ТЗ. На S6 автор дополнит этот контекст фактическими SHA, результатами и ограничениями.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: [workflow 44471177658](https://github.com/Matysh/houseplan-card/actions/runs/44471177658), вердикт «нужны исправления», статус возвращён на S3.\n\n- Оракул вида → основным стал парный base/fix захват всей сцены и crop каждой подписи с явными pixel-допусками, четырьмя поворотами/темами/overlap/hover/focus. Старые непанельные кадры не используются для оправдания регрессий. При этом уточнение факта истории: на текущем base f4f474c уже есть возврат опубликованной beta.2; панельные ISO PNG обновлены owner-approved коммитами 503a34e70/8c5fb6541 после #1451. Указанная ревьюером дата старых непанельных PNG не описывает принятый панельный набор. Это не отменяет усиления парного оракула.\n- Мебельное перекрытие → контракт теперь явно сохраняет **приглушение всей одной подписи** с текущим коэффициентом/порогом, отдельно от попиксельной стеновой маски. Нет нового мебельного masking и распространения opacity на соседей.\n- Возможные улучшения → добавлены явная остановка без самовольного снижения AC1/деградации, baseline ISO/Flat и ablation для репрезентативности сцены, hover/HA-change в «не хуже» замере и кандидаты дополнительных paint-оптимизаций без выключения эффектов.\n\nМатериал повторной передачи — редакция ТЗ 2. Продуктовые исходники не менялись. Локальные DOM-only диагностические пробы crop/anchor не являются реализацией и не публикуют частные данные.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
+      }
     }
   },
   "devWebhook": {
