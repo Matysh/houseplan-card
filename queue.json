@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16122,
+  "revision": 16123,
   "nextTicket": 524,
   "nextFence": 524,
   "tasks": {
@@ -5686,7 +5686,8 @@
           "entry": 1,
           "detail": "Поведение: test/floor-cache-publication.test.mjs: failed",
           "eventId": "finish:b36cf078-c598-40bb-a099-292e93e914c3:finish:3:return:return:1469"
-        }
+        },
+        "delivered": true
       }
     }
   },
