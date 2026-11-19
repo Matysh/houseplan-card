@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Repair the nightly render/layout AST guard to recognize the room-label directive's explicit post-render measurements without exempting synchronous render/update reads or pure ISO helpers; retain the existing mutation witnesses (#1473).
 - Defer cold projection fitting and saved-zoom restoration until both stage dimensions are measured, keeping the first cached 2.5D frame aligned with HTML devices and labels without a wheel/fit workaround (#1469).
 - Reduce 2.5D paint/raster work with label-sized wall masks and isolated, silhouette-clipped furniture lighting instead of repeated light-pattern tiles; retain the accepted projection, text, occlusion, light and native interactions (#1470).
 

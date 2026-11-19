@@ -17,6 +17,7 @@ const forbiddenReads = new Set([
   'scrollWidth', 'scrollHeight',
 ]);
 const SUMMARY_MEASURE_METHODS = new Set(['measureLayout', 'measurePanelBox']);
+const ISO_LABEL_MEASURE_FILE = 'iso-room-furniture-overlap.ts';
 
 const source = (path, text) => ts.createSourceFile(
   path, text,
@@ -45,6 +46,35 @@ const layoutReads = (node, skip = () => false) => {
   };
   visit(node);
   return found;
+};
+
+// The label directive is a DOM measurement owner, not a pure ISO helper.
+// Only inline native rAF callbacks and their explicit measurement method may
+// read layout. A synchronous reference to that method must still fail, even
+// through a helper/getter or an immediate map callback during update/render.
+const deferredFrame = node => (ts.isArrowFunction(node) || ts.isFunctionExpression(node))
+  && ts.isCallExpression(node.parent) && ts.isIdentifier(node.parent.expression)
+  && node.parent.expression.text === 'requestAnimationFrame' && node.parent.arguments[0] === node;
+const labelMeasurement = node => ts.isMethodDeclaration(node) && methodName(node) === 'boundPaint'
+  && ts.isClassDeclaration(node.parent) && node.parent.name?.text === 'RoomFurnitureOverlap';
+const inspectIsoLabelReads = (file, text) => {
+  const tree = source(`src/${file}`, text), problems = [];
+  let owners = 0;
+  const reads = layoutReads(tree, node => {
+    if (labelMeasurement(node)) { owners++; return true; }
+    return deferredFrame(node);
+  });
+  if (owners !== 1) problems.push(`${file}: expected one post-render measurement method boundPaint, found ${owners}`);
+  if (reads.length) problems.push(`${file} forces layout outside post-render measurement: ${reads.join(', ')}`);
+  const visit = node => {
+    if (labelMeasurement(node) || deferredFrame(node)) return;
+    if ((ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node))
+      && node.expression.kind === ts.SyntaxKind.ThisKeyword && readName(node) === 'boundPaint')
+      problems.push(`${file} synchronously references post-render measurement: boundPaint`);
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return problems;
 };
 
 export function inspectLayoutReads({ cardText, summaryText, isoTexts = [] }) {
@@ -116,6 +146,10 @@ export function inspectLayoutReads({ cardText, summaryText, isoTexts = [] }) {
   for (const entry of ['render', 'layout', 'willUpdate']) follow(entry, [], new Set());
 
   for (const [file, text] of isoTexts) {
+    if (file === ISO_LABEL_MEASURE_FILE) {
+      problems.push(...inspectIsoLabelReads(file, text));
+      continue;
+    }
     const reads = layoutReads(source(`src/${file}`, text));
     if (reads.length) problems.push(`${file} forces layout: ${reads.join(', ')}`);
   }
