@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16364,
+  "revision": 16365,
   "nextTicket": 531,
   "nextFence": 531,
   "tasks": {
@@ -5542,6 +5542,10 @@
       "digest": "2867bc9d2dede950b57fade739b15940c1599179b56dff881191d0940c167e8b",
       "issue": 1473
     },
+    "github:44500182424:1:tick:0:label": {
+      "digest": "794189661e7a91dae55fe8fc8749b4fde18c6e94fe20861c679136f0c8372dc7",
+      "issue": 1473
+    },
     "finish:3b9da799-c271-4ef5-829b-478fb7598980": {
       "digest": "ded1cce7284f98f5493dcbb616a05425d7cc322f62274d25e3b889551d8e047d",
       "issue": 1473,
@@ -5594,7 +5598,8 @@
         "resubmission": false,
         "reviewChanges": "Материал: `fbfbdea44425 → 94bb2d3c6`, ветка `codex/1473-render-layout-read`, инфраструктурный show. Продуктовые исходники, реестр мутантов, PNG и лимиты не менялись.\n\nВ `iso-room-furniture-overlap.ts` разрешены только inline callback настоящего `requestAnimationFrame` и единственный измерительный метод `RoomFurnitureOverlap.boundPaint`. Весь остальной код файла всё ещё проверяется. Любое синхронное обращение `this.boundPaint` вне отложенного callback запрещено, включая helper/getter, строковый доступ, взятие ссылки и map callback. Отсутствующий/дублированный измерительный владелец — ошибка. Чистые ISO helpers, четыре защищённых метода card и прежний summary-контракт остались строгими. Это уточнение существующего гарда, не исключение файла и не новый этап продуктовых задач.\n\nПроверено на текущем материале:\n\n- `node --test test/render-layout-read.test.mjs`: **21/21 PASS**. Включает существующие summary/card контроли, новые фазовые отрицательные контроли и запуск настоящего CLI на текущих исходниках.\n- `node scripts/render-layout-read.mjs`: чистый код PASS (до изменения воспроизводился FAIL с перечислением измерений директивы).\n- Штатный `scripts/mutation-gate.mjs --id=<id> --execute-nightly`: все **3/3** существующих мутанта этого гарда пойманы, каждый после успешного чистого гарда: `iso-first-frame-reads-paper-during-render`, `iso-scene-reads-stage-box-during-render`, `summary-layout-reads-safe-insets-during-render`. Это реальные применения мутаций, не статический поиск якорей; сборка для AST-гарда не требуется.\n- Классификация `test/render-layout-read.test.mjs` уже infrastructure/addressed/render-layout-guard; этот файл импортирует изменённый механизм и должен входить в S6 именно по этой связи. Новые кейсы не добавляются к каждой продуктовой задаче.\n\nОграничения: весь ночной шард 1/7 повторно не запускался; исправлен и адресно подтверждён единственный красный чистый guard из его отчёта. Это не утверждение о зелёных всех семи частях или JS/TS coverage. Перед ревью обычный finish проверит синтаксис и адресный механизм через центральный профиль infra; продуктовую сборку не добавляем без причины.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
