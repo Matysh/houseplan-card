@@ -136,16 +136,19 @@ export class CameraTransitionController {
     toInput: CameraState,
     reason: CameraTransitionReason,
     duration: number,
+    minimumSettleMs = 0,
   ): number {
     this.cancel(false);
     const token = ++this._token;
     const from = cloneCameraState(fromInput);
     const to = cloneCameraState(toInput);
-    const canAnimate = duration > 0 && validCameraState(from) && validCameraState(to);
+    const valid = validCameraState(from) && validCameraState(to);
+    const canAnimate = duration > 0 && valid;
+    const settleAfter = valid ? Math.max(canAnimate ? duration : 0, minimumSettleMs) : 0;
     const now = this._clock.now();
     const state: CameraTransitionState = {
       token,
-      phase: canAnimate ? 'running' : 'settling',
+      phase: settleAfter > 0 ? 'running' : 'settling',
       from,
       to,
       presented: canAnimate ? cloneCameraState(from) : cloneCameraState(to),
@@ -155,20 +158,25 @@ export class CameraTransitionController {
     };
     this._state = state;
     this._hooks.frame(state);
-    if (!canAnimate) {
+    if (settleAfter <= 0) {
       this._settle(token);
       return token;
     }
     const tick = (time: number): void => {
       const current = this._state;
       if (!current || current.token !== token) return;
-      const raw = Math.max(0, Math.min(1, (time - current.startedAt) / current.duration));
-      current.presented = raw >= 1
-        ? cloneCameraState(current.to)
-        : interpolateCameraState(current.from, current.to, raw);
-      current.phase = raw >= 1 ? 'settling' : 'running';
-      this._hooks.frame(current);
-      if (raw >= 1) {
+      const elapsed = time - current.startedAt;
+      const settled = elapsed >= settleAfter;
+      current.phase = settled ? 'settling' : 'running';
+      if (canAnimate) {
+        const progress = Math.max(0, Math.min(1, elapsed / current.duration));
+        const presented = interpolateCameraState(current.from, current.to, progress);
+        if (!sameCameraState(current.presented, presented) || settled) {
+          current.presented = presented;
+          this._hooks.frame(current);
+        }
+      }
+      if (settled) {
         this._raf = null;
         this._settle(token);
         return;
@@ -179,8 +187,10 @@ export class CameraTransitionController {
     this._raf = this._clock.requestFrame(tick);
     if (this._raf === null) {
       state.phase = 'settling';
-      state.presented = cloneCameraState(to);
-      this._hooks.frame(state);
+      if (canAnimate) {
+        state.presented = cloneCameraState(to);
+        this._hooks.frame(state);
+      }
       this._settle(token);
     }
     return token;

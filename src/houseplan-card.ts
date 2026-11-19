@@ -1741,7 +1741,7 @@ export class HouseplanCard extends LitElement {
     this._activateSafeDayCycleOutline();
     this._cameraTransitionFit = { ...fit };
     this._cameraTransition.start(current, target, reason,
-      this._reducedMotion ? 0 : duration);
+      this._reducedMotion ? 0 : duration, reason === 'wheel' ? CAMERA_WHEEL_MS : 0);
     return true;
   }
   private _cssColor(value: string | null | undefined, fallback: string): string {

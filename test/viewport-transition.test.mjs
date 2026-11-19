@@ -82,6 +82,48 @@ test('controller settles exactly and owns one RAF', () => {
   assert.equal(fake.callbacks.size, 0);
 });
 
+test('#1478 reduced-motion wheel steps publish immediately and settle once after the last input', () => {
+  const fake = fakeClock();
+  const frames = [], settled = [];
+  const controller = new CameraTransitionController({
+    frame: (state) => frames.push(state.presented),
+    settled: (state) => settled.push(state.presented),
+  }, fake.clock);
+  const from = camera(1, 0, 0, 800, 600);
+  const first = camera(2, 200, 150, 400, 300);
+  const second = camera(4, 300, 225, 200, 150);
+
+  controller.start(from, first, 'wheel', 0, 160);
+  assert.deepEqual(frames, [first]);
+  assert.deepEqual(settled, []);
+  fake.step(140);
+  controller.start(first, second, 'wheel', 0, 160);
+  fake.step(299);
+  assert.equal(controller.active, true);
+  assert.deepEqual(frames, [first, second], 'idle callbacks do not repaint the camera');
+  assert.deepEqual(settled, []);
+  fake.step(300);
+  assert.deepEqual(settled, [second]);
+  assert.equal(controller.active, false);
+  assert.equal(fake.callbacks.size, 0);
+});
+
+test('#1478 wheel interpolation and quiet time use one deadline', () => {
+  const fake = fakeClock();
+  const from = camera(1, 0, 0, 800, 600);
+  const to = camera(2, 200, 150, 400, 300);
+  const settled = [];
+  const controller = new CameraTransitionController({
+    frame: () => {},
+    settled: (state) => settled.push(state.presented),
+  }, fake.clock);
+  controller.start(from, to, 'wheel', 160, 160);
+  fake.step(159);
+  assert.deepEqual(settled, []);
+  fake.step(160);
+  assert.deepEqual(settled, [to]);
+});
+
 test('retarget starts from presented state and cancels the obsolete RAF', () => {
   const fake = fakeClock();
   const frames = [];
