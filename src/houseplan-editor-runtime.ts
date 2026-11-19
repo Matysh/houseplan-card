@@ -6246,8 +6246,17 @@ public _resolveOpeningPlacement(raw: readonly number[]): OpeningPlacementCandida
       text: formatLength((dimension.distance / this.host._gridPitch) * this.host._cellCm, imperial),
       dimension,
     }));
+    const rebindId = this.host._openingRebindId;
+    const original = rebindId
+      ? this.host._curSpaceCfg?.openings?.find((opening: OpeningCfg) => opening.id === rebindId) : undefined;
+    let swingPosition: OpeningCfg['swing_position'];
+    if (original?.type === 'door' && motionOpeningFeatures(original)?.mechanism !== 'slide') {
+      const rebound = { ...original, angle: core.angle };
+      transportOpeningOrientations({ openings: [original] }, { openings: [rebound] });
+      swingPosition = swingDoorPositionInBasis(rebound.swing_position, rebound.angle, core.angle);
+    }
     const swingDepth = openingSwingDepth({ type: core.type, angle: core.angle, flip_v: core.flipV,
-      rx: core.x, ry: core.y, rlen: core.renderedLength, partitionHost }, wallIndex.value);
+      rx: core.x, ry: core.y, rlen: core.renderedLength, partitionHost, swing_position: swingPosition }, wallIndex.value);
     return { ...core, face, swingDepth, measure: { labels, guide: core.measure.guide } };
   }
 

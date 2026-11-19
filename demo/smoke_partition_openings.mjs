@@ -212,25 +212,32 @@ const out = await page.evaluate(async () => {
 
   // This separate witness starts with a genuinely stored, degraded legacy
   // host. It is not a malformed edit to an accepted current graph.
-  card._serverCfg.model_version = 10;
-  for (const stored of card._serverCfg.spaces) delete stored.plan_graph;
-  space.partitions = [{ id: 'replacement', a: [0.3, 0.6], b: [0.7, 0.6], cm: 15 }];
-  space.openings = [{
-    id: 'orphan', type: 'door', x: 0.5, y: 0.6, angle: 0, length: 0.1,
-    host: { kind: 'partition', id: 'missing', t: 0.5 },
-  }];
-  card._saveConfig();
-  await update();
-  card._editOpening(card._openingsR[0]);
-  card._rebindPartitionOpening();
-  result.orphanRebindSessionKeepsOriginalIdentity = card._openingRebindId === 'orphan';
-  card._openingClick([500, 600]);
-  card._saveOpening();
-  await update();
-  space = card._curSpaceCfg;
-  result.orphanRebindReplacesHostWithoutDuplicate = space.openings.length === 1
-    && space.openings[0].id === 'orphan'
-    && space.openings[0].host?.id === 'replacement';
+  for (const position of ['center', 'positive']) {
+    card._serverCfg.model_version = 10;
+    for (const stored of card._serverCfg.spaces) delete stored.plan_graph;
+    space.partitions = [{ id: 'replacement', a: [0.3, 0.6], b: [0.7, 0.6], cm: 15 }];
+    space.openings = [{
+      id: 'orphan', type: 'door', x: 0.5, y: 0.6, angle: 180, length: 0.1,
+      swing_position: position, host: { kind: 'partition', id: 'missing', t: 0.5 },
+    }];
+    card._saveConfig();
+    await update();
+    card._editOpening(card._openingsR[0]);
+    card._rebindPartitionOpening();
+    const preview = card._resolveOpeningPlacement([500, 600]);
+    const depth = position === 'center' ? 0 : -15 / 2 / card._cellCm * card._gridPitch;
+    const savedPosition = position === 'center' ? 'center' : 'negative';
+    const keepIdentity = card._openingRebindId === 'orphan';
+    card._openingClick([500, 600]);
+    const draftPosition = card._openingDialog?.swingPosition;
+    card._saveOpening();
+    await update();
+    space = card._curSpaceCfg;
+    result['orphanRebindPreserves_' + position] = keepIdentity && draftPosition === savedPosition
+      && Math.abs(preview?.swingDepth - depth) < 1e-8
+      && space.openings.length === 1 && space.openings[0].id === 'orphan'
+      && space.openings[0].host?.id === 'replacement' && space.openings[0].swing_position === savedPosition;
+  }
 
   // Production-bundle regression for #185: a legacy room-wall opening does
   // not cut the structural segment consumed by #173 room-face detection.

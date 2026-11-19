@@ -929,7 +929,7 @@ lovelace:
 
 &emsp;&emsp;At a closed opaque door, artificial light fills the source-side tunnel up to the light barrier and stops there. Swing and sliding doors use the same rule in room walls and partitions, from either side. An exterior closed door lights only its bounded pocket, never the outdoors. Partial opening and **Passes light** retain their existing behavior.
 
-&emsp;&emsp;The opening cuts the full masonry depth and keeps visible jambs. Door, window and gate symbols stay centred on the wall; **Opens the other way** mirrors only the leaf direction, not the symbol position. Internal light passes through a door, gate or passage along the tunnel and is clipped by its reveals. A sun ray starts at the inner or outer window-tunnel corners according to General settings (inner is the default).
+&emsp;&emsp;The opening cuts the full masonry depth and keeps visible jambs. A swing door uses **Position in the opening**. The automatic setting places the leaf at the face it opens towards. Windows and swing gates keep their centred symbols. Internal light passes through a door, gate or passage along the tunnel and is clipped by its reveals. A sun ray starts at the inner or outer window-tunnel corners according to General settings (inner is the default).
 
 &emsp;&emsp;Solar access comes from exterior windows or windows exposed by an exterior-connected chain of rooms marked **Lets sunlight through**; an isolated interior window or independent-wall window has no sun ray.
 

@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "issue": 1476,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "introducedBy": 1475,
+  "rationale": "The replacement-wall preview now follows the per-door swing position introduced in issue 1475."
+}
