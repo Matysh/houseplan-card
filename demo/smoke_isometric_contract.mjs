@@ -171,7 +171,7 @@ const out = await page.evaluate(async () => {
     ['iso-flipped-window', 'window-glass', 'glass-side'],
     ['iso-centred-gate', 'jamb-reveal', 'reveal'],
   ].every(([id, surface, material]) => hasOpeningSurface(id, surface, material))
-    && !!root().querySelector('[data-hp="iso-openings"] [data-id="iso-centred-gate"].iso-material-matte-leaf')
+    && !!root().querySelector('[data-hp="iso-openings"] [data-id="iso-centred-gate"].iso-material-gate-panel')
     && !root().querySelector('[data-hp="iso-openings"] .iso-material-dark-glass');
   // #1474: devices, locks and captions share the 140 cm wall cut.
   const isoLift = 140 / card._cellCm * card._gridPitch * Math.cos(40 * Math.PI / 180);
