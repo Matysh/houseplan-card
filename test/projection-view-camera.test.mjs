@@ -1,11 +1,35 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
 import {physicalViewCamera, canonicalPhysicalCamera,
   presentedView, shouldRebaseViewFrame, acceptedViewFrame, hasMeasuredViewSize, presentedViewPlane} from '../test-build/projection-view-camera.js';
 import {isoCameraFor, unprojectFloorPoint, projectedFrame} from '../test-build/iso-projection.js';
 import {turnRect, turnPoint, inversePlanRotation} from '../test-build/view-frame.js';
 
 const close = (a,b) => assert.ok(Math.abs(a-b)<1e-8, `${a} != ${b}`);
+test('#1469 same measured size completes a missing camera but never interrupts an existing command',()=>{
+  const source=ts.createSourceFile('houseplan-card.ts',readFileSync(new URL('../src/houseplan-card.ts',import.meta.url),'utf8'),ts.ScriptTarget.Latest,true);
+  let method;
+  const find=node=>{
+    if(ts.isMethodDeclaration(node)&&node.name.getText(source)==='_refitView')method=node.getText(source);
+    ts.forEachChild(node,find);
+  };
+  find(source);assert.ok(method);
+  const code=ts.transpileModule(`export class Fixture { ${method} }`,{
+    compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
+  const exports={};new Function('exports','document',code)(exports,{visibilityState:'visible'});
+  const card=new exports.Fixture(),applied=[];let cancellations=0;
+  Object.assign(card,{_recoveryViewport:null,_warmViewportPending:null,_floorPreparation:{pending:false},
+    _modeTransitionBusy:false,_warmModeRequest:null,_usesScreenCamera:false,_bootSoft:false,
+    _stageEl:{clientWidth:1280,clientHeight:655},_lastValidStageSize:[1280,655],_zoom:2.18,_view:null,
+    _cancelCameraTransition(){cancellations++;},_applyView(zoom){applied.push(zoom);this._view={x:1,y:2,w:3,h:4};}});
+  card._refitView();assert.deepEqual(applied,[2.18]);assert.ok(card._view);
+  const accepted=card._view;card._cameraTransition={active:true};
+  card._refitView();assert.strictEqual(card._view,accepted);
+  assert.deepEqual(applied,[2.18]);assert.equal(cancellations,0);
+  assert.equal(card._cameraTransition.active,true);
+});
 test('#1469 a cold camera cannot accept an absent, zero-axis or non-finite stage',()=>{
   for(const size of [null,undefined,[0,655],[1280,0],[-1,655],[NaN,655],[1280,Infinity]])
     assert.equal(hasMeasuredViewSize(size),false,JSON.stringify(size));

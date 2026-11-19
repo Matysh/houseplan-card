@@ -66,6 +66,11 @@ the existing restore/refit owner completes a hidden or not-yet-mounted stage.
 A measured but still veiled interim Flat frame does not replace the saved
 scalar zoom with its re-encoded physical scale. Accepted visible/warm cameras
 continue to preserve their physical centre and pixels per unit.
+If a hidden-stage restore cleared the camera, a same-size ResizeObserver
+delivery must still complete that restore; an existing camera/command remains
+a no-op delivery. A one-shot kiosk recovery memo stays owned until the measured
+stage and destination runtime are ready, and is adopted in that destination
+plane rather than reinterpreted as the temporary Flat shell.
 
 ## Physical construction and openings
 

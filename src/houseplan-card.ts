@@ -3780,6 +3780,15 @@ export class HouseplanCard extends LitElement {
   }
 
   private _convertProjectionView(from: 'flat' | 'iso', to: 'flat' | 'iso'): void {
+    if (this._recoveryViewport && this._restoreKioskViewport()) {
+      // The one-shot memo is already encoded for the destination presentation,
+      // not the temporary Flat shell used while its runtime was loading. Adopt
+      // that trusted camera once; neither rebase it from Flat nor cold-fit it.
+      this._viewPlaneKnown = false; this._viewFrame = null;
+      this._adoptViewPlane(this._presentedViewPlane(to));
+      this.requestUpdate();
+      return;
+    }
     this._adoptViewPlane(this._presentedViewPlane(to));
     if (from === to) return;
     // Intake can discover the requested projection after a warm camera has
@@ -5432,11 +5441,12 @@ export class HouseplanCard extends LitElement {
     this._floorRestoreZoom = null;
     this._zoom = memo.zoom; this._view = { ...memo.view };
     this._screenRecoveredCamera = this._hasScreenProfile;
-    // Cold authority arrives before the first stage. Keep the exact camera
-    // until updated() can fit it against the real placement, not _baseVb's
-    // fallback aspect. The first resize delivery otherwise blesses that fit.
+    // Keep the exact camera until both the real stage and its destination
+    // projection exist. Consuming the memo on a temporary Flat shell lets a
+    // late ISO handoff mistake it for a cold fit and replace the promised view.
     const stage = this._stageEl;
     if (!this._loadOk || !this._floorCacheSelection() || !this._ensureFloorPreparation() || this._floorPassive
+      || this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)
       || !stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return true;
     this._recoveryViewport = null;
     this._applyView(memo.zoom, memo.view.x + memo.view.w / 2, memo.view.y + memo.view.h / 2);
@@ -5858,10 +5868,9 @@ export class HouseplanCard extends LitElement {
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
     this._syncRadarLive();
-    // A bare kiosk has no boot veil. Its empty/preparing Flat shell is not a
+    // A bare kiosk has no boot veil. Its empty shell without a model is not a
     // presented camera that a later ISO runtime should physically re-encode.
-    if (this._spaceModel() && !this._floorPassive && !this._floorPreparation?.pending
-      && !this._booting && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime))
+    if (this._spaceModel() && !this._booting && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime))
       this._projectionShown = this._renderProjection;
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
     // Decor selection cannot exist before the lazy editor runtime is ready.
@@ -8586,6 +8595,9 @@ export class HouseplanCard extends LitElement {
     // A no-op delivery must not cancel a camera command just started by input.
     if (sameSize) {
       this._pendingRefitSize = null;
+      // A hidden-stage restore can deliberately leave no camera. The size is
+      // familiar, but its first valid delivery still has to finish that restore.
+      if (!this._view) this._applyView(this._zoom);
       return;
     }
     // A real resize is structural and owns the new stage geometry.

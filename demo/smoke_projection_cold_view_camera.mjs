@@ -13,6 +13,8 @@ const cases = [
   {host:'panel',width:430,height:820,rotation:270,zoom:1.65,center:true},
   {host:'card',width:1180,height:920,rotation:0,zoom:1.65,center:false},
   {host:'kiosk',width:430,height:820,rotation:90,zoom:2.18,center:false},
+  {host:'kiosk',width:1180,height:920,rotation:270,zoom:1.65,center:false,profile:true},
+  {host:'kiosk',width:1024,height:820,rotation:180,zoom:2.18,center:false,earlyRuntime:true},
 ];
 for(const scenario of cases) {
   const {page,browser}=await launchPanelCold({width:scenario.width,height:scenario.height});
@@ -23,11 +25,17 @@ for(const scenario of cases) {
     fixture.config.spaces.sort((a,b)=>Number(b.id==='golden-lighting')-Number(a.id==='golden-lighting'));
     fixture.config.settings={...fixture.config.settings,volumetric_view:true,center_summary:scenario.center,
       filter_seeded:true,known_devices:Object.keys(fixture.devices),new_device_ids:[]};
+    if(scenario.profile)fixture.config.settings.external_screens={version:2,next_id:2,screens:[{
+      id:1,space:null,cycle:0,idle:0,space_views:{},default_view:{rotation:scenario.rotation,zoom:scenario.zoom,
+        summary:'hide',center_summary:false,icon_scale:null,font_scale:null}}]};
     const html=readFileSync(new URL('./srv/demo.html',import.meta.url),'utf8');
     await page.route(url=>url.pathname==='/houseplan',route=>route.fulfill({contentType:'text/html',body:html}));
-    let delayed=0;
+    let delayed=0,restoringRuntime=false;
     await page.route(/\/(?:iso-scene-(?:geometry|render)|furniture-volume\.generated|floor-worker)-[^/]+\.js$/,async route=>{
-      delayed++;await new Promise(resolve=>setTimeout(resolve,120));await route.fallback();
+      delayed++;
+      const wait=scenario.host==='kiosk'&&!scenario.earlyRuntime&&restoringRuntime
+        &&route.request().url().includes('/iso-scene-render-')?2200:120;
+      await new Promise(resolve=>setTimeout(resolve,wait));await route.fallback();
     });
     const mount=(restoring=false)=>page.evaluate(async({fixture,scenario,restoring})=>{
       const zoomKey='houseplan_card_zoom_v1';
@@ -54,8 +62,8 @@ for(const scenario of cases) {
         callWS:async message=>{
           wire.push(message.type);
           if(message.type==='houseplan/config/get') {
-            if(restoring)await new Promise(resolve=>setTimeout(resolve,800));
-            return{config:structuredClone(fixture.config),rev:1,can_write:false};
+            if(restoring&&!scenario.earlyRuntime)await new Promise(resolve=>setTimeout(resolve,800));
+            return{config:structuredClone(fixture.config),rev:1,can_write:false,external_screens_api:1,summary_panel_api:1};
           }
           if(message.type==='houseplan/layout/get')return{layout:structuredClone(fixture.layout),rev:1};
           if(message.type==='config/device_registry/list')return Object.values(fixture.devices);
@@ -66,11 +74,23 @@ for(const scenario of cases) {
       const host=document.getElementById('host');host.style.cssText='width:100%;height:100vh;margin:0;padding:0';
       const hiddenStart=!restoring&&scenario.host==='panel'&&scenario.rotation===0;
       if(hiddenStart)host.style.display='none';
-      let card,panel;
+      let card,panel,earlyRecovery=false,heldRecovery=false;
       if(scenario.host==='card'||scenario.host==='kiosk') {
         await import('/assets/houseplan-card.js');
-        card=document.createElement('houseplan-card');card.setConfig({type:'custom:houseplan-card',rotation:scenario.rotation,
+        card=document.createElement('houseplan-card');
+        if(scenario.profile) {card.panelHost=true;card.routeKiosk={enabled:true,position:null,profile:1};}
+        card.setConfig({type:'custom:houseplan-card',rotation:scenario.rotation,
           ...(scenario.host==='kiosk'?{kiosk:true}:{})});
+        if(restoring&&scenario.host==='kiosk') {
+          const restore=card._restoreKioskViewport.bind(card);
+          card._restoreKioskViewport=(...args)=>{
+            const result=restore(...args);
+            if(result&&!card._isoSceneRuntime) {
+              earlyRecovery=true;heldRecovery||=!!card._recoveryViewport;
+            }
+            return result;
+          };
+        }
         host.replaceChildren(card);card.hass=hass;
       } else {
         await import('/assets/houseplan-panel.js');
@@ -112,14 +132,20 @@ for(const scenario of cases) {
         }
         if(!count)continue;
         maxError=Math.max(maxError,aspectError,anchorError);visible++;
-        first??={viewBox:[vb.x,vb.y,vb.width,vb.height],size:[rect.width,rect.height],zoom:card._zoom};
+        const base=card._baseVb(),bounds=card._rotation?card._displayBase(base):{w:base[2],h:base[3]};
+        const visibleZoom=Math.max(bounds.w,bounds.h*rect.width/rect.height)/vb.width;
+        first??={viewBox:[vb.x,vb.y,vb.width,vb.height],size:[rect.width,rect.height],zoom:card._zoom,visibleZoom,
+          referenceZoom:card._screenReference?.camera.zoom};
         if(visible>=8)break;
       }
       window.__coldCamera=card;
       const writes=wire.filter(type=>/^houseplan\/(?:config|layout)\/(?:set|update|patch|commit)/.test(type));
-      return{visible,maxError,first,preview,hiddenRejected,persistedZoomUnchanged:localStorage.getItem(zoomKey)===saved,
+      return{visible,maxError,first,preview,hiddenRejected,earlyRecovery,heldRecovery,
+        recoveryConsumed:!card?._recoveryViewport,view:card?._view,
+        persistedZoomUnchanged:localStorage.getItem(zoomKey)===saved,
         cache:structuredClone(card?._floorPreparation?.diagnostic),
         noWrites:writes.length===0&&services.length===0,hasSummaryReference:!scenario.center||!!card?._screenReference,
+        hasScreenProfile:card?._hasScreenProfile,
         actualRotation:card?._rotation,space:card?._space,
         state:visible?null:{load:card?._loadOk,mode:card?._mode,boot:card?._booting,fading:card?._bootFading,
           pending:card?._floorPreparation?.pending,passive:card?._floorPassive,continuity:card?._continuity.state,
@@ -130,22 +156,57 @@ for(const scenario of cases) {
     await assertFreshDemoBundle(page);
     // Await the ordinary post-paint cache publication, then start a genuinely new document.
     await page.waitForFunction(()=>window.__coldCamera?._floorPreparation?.diagnostic.store.writes>0);
-    await page.reload({waitUntil:'domcontentloaded'});
+    let recovery;
+    if(scenario.host==='kiosk') {
+      await page.mouse.move(25,25);await page.mouse.down();await page.mouse.move(80,65,{steps:5});await page.mouse.up();
+      await page.mouse.wheel(0,-180);await page.waitForTimeout(350);
+      recovery=await page.evaluate(()=>({zoom:window.__coldCamera._zoom,view:{...window.__coldCamera._view}}));
+      restoringRuntime=true;
+      await Promise.all([page.waitForEvent('framenavigated'),page.evaluate(()=>window.__coldCamera._reloadDocument())]);
+      await page.waitForLoadState('domcontentloaded');
+    } else await page.reload({waitUntil:'domcontentloaded'});
     const restored=await mount(true);
     const name=`${scenario.host}-${scenario.width}-${scenario.rotation}-${scenario.center?'summary':'ordinary'}`;
     const out={};
     for(const [phase,row] of [['cold',cold],['restored',restored]]) {
       out[`${name}-${phase}-first-visible-camera`]=row.visible>0&&row.maxError<=1;
       out[`${name}-${phase}-no-write`]=row.noWrites&&row.persistedZoomUnchanged;
-      out[`${name}-${phase}-saved-zoom`]=Math.abs(row.first?.zoom-scenario.zoom)<.001;
+      const expected=phase==='restored'&&recovery?recovery.zoom:scenario.profile?row.first?.referenceZoom:scenario.zoom;
+      out[`${name}-${phase}-saved-zoom`]=Math.abs(row.first?.zoom-expected)<.001
+        &&Math.abs(row.first?.visibleZoom-expected)<.001;
       out[`${name}-${phase}-rotation`]=row.actualRotation===scenario.rotation;
       out[`${name}-${phase}-screen-reference`]=row.hasSummaryReference;
+      out[`${name}-${phase}-profile-policy`]=row.hasScreenProfile===!!scenario.profile;
       out[`${name}-${phase}-hidden-stage-rejected`]=row.hiddenRejected;
     }
     out[`${name}-real-delayed-ISO-runtime`]=delayed>0;
     out[`${name}-cold-cache-miss`]=cold.cache.misses>0&&cold.cache.diskHits===0;
-    out[`${name}-persistent-preview-to-live`]=restored.preview&&restored.cache.diskHits>0
+    if(scenario.profile) {
+      // The exact one-shot profile camera may not have a matching L1 fit key;
+      // L2 reuse is independent. Other six cases require a painted passive L1.
+      out[`${name}-persistent-geometry-reuse`]=restored.cache.diskHits>0&&restored.visible>0;
+    } else out[`${name}-persistent-preview-to-live`]=restored.preview&&restored.cache.diskHits>0
       &&restored.cache.firstPreview>0&&restored.visible>0;
+    if(recovery) {
+      out[`${name}-recovery-before-late-ISO`]=restored.earlyRecovery;
+      out[`${name}-recovery-held-until-ISO`]=restored.heldRecovery&&restored.recoveryConsumed;
+      out[`${name}-recovered-camera-retained`]=!!restored.view&&['x','y','w','h'].every(
+        key=>Math.abs(restored.view[key]-recovery.view[key])<.001);
+    }
+    if(scenario.host==='panel'&&scenario.rotation===0) {
+      out[`${name}-same-size-hidden-restore`]=await page.evaluate(async()=>{
+        const card=window.__coldCamera,host=document.getElementById('host'),before=[...card._lastValidStageSize];
+        host.style.display='none';card._restoreZoom();
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        const rejected=card._view===null;host.style.removeProperty('display');
+        const end=performance.now()+2000;
+        while(!card._view&&performance.now()<end)await new Promise(resolve=>requestAnimationFrame(resolve));
+        const svg=card.renderRoot.querySelector('.plan-svg'),vb=svg.viewBox.baseVal,stage=card._stageEl;
+        const base=card._baseVb(),zoom=Math.max(base[2],base[3]*stage.clientWidth/stage.clientHeight)/vb.width;
+        return rejected&&!!card._view&&before[0]===stage.clientWidth&&before[1]===stage.clientHeight
+          &&Math.abs(zoom-card._zoom)<.001;
+      });
+    }
     console.log(JSON.stringify({scenario,cold,restored}));
     checkAll(out);await finish(browser,out);
   } catch(error) {await browser.close();throw error;}
