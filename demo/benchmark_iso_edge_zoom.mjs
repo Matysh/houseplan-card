@@ -11,6 +11,7 @@ import { settleIsoPaint, startIsoPaintScene, zoomIsoPaint } from './helpers/iso-
 const viewportWidth = Number(process.env.HP_EDGE_WIDTH || 1920);
 const viewportHeight = viewportWidth === 3840 ? 2160 : 1080;
 const capture = process.env.HP_EDGE_CAPTURE === '1';
+const requireRaster = process.env.HP_EDGE_REQUIRE_RASTER === '1';
 const output = process.env.HP_EDGE_OUTPUT || 'artifacts/1478/edge';
 const referenceRoot = process.env.HP_ISO_PAINT_REFERENCE;
 const compositor = capture ? controlledCompositor() : null;
@@ -91,6 +92,7 @@ async function startMeasurement() {
     const card = window.__isoPaint, root = card.renderRoot, stage = root.querySelector('.stage');
     const wheel = [], gaps = [], anchorWrites = [], commits = [], saves = [];
     const baseGeometry = card._isoStructuralBuildCount;
+    const markStart = performance.now();
     const onWheel = event => {
       if (event.isTrusted) wheel.push({ eventAt: event.timeStamp, receivedAt: performance.now(), delta: event.deltaY });
     };
@@ -125,6 +127,10 @@ async function startMeasurement() {
       card._saveZoom = save;
       delete window.__finishIsoEdgeMeasurement;
       return { wheel, gaps, anchorWrites, commits, saves, timeOrigin: performance.timeOrigin,
+        raster: performance.getEntriesByType('mark').filter(mark =>
+          mark.startTime >= markStart && mark.name.startsWith('houseplan.iso.raster.'))
+          .map(({ name, startTime, detail }) => ({ event: name.split('.').at(-1), at: startTime, detail })),
+        rasterRemaining: root.querySelectorAll('[data-hp-iso-raster]').length,
         zoom: card._zoom, view: { ...card._view },
         structuralBuilds: card._isoStructuralBuildCount - baseGeometry, writes: window.__isoPaintWrites.length };
     };
@@ -198,6 +204,8 @@ try {
       capturedFrames: pixels?.length ?? null, emptyWallFrames: pixels?.filter(f => f.pixels === 0).length ?? null,
       exactPngFrame: equalFrame?.sequence ?? null,
       exactPngReadyAfterInputMs: equalFrame ? equalFrame.readyAt - lastInputUtc : null,
+      rasterSwaps: measurements.raster.filter(mark => mark.event === 'swap').length,
+      rasterEvents: measurements.raster.map(mark => mark.event).join(','),
     };
     console.log(JSON.stringify(result));
     for (const frame of pixels?.filter(entry => entry.pixels === 0) ?? []) {
@@ -213,6 +221,10 @@ try {
   const mode = capture ? 'pixels' : 'timing';
   await writeFile(output + '/' + viewportWidth + '-' + mode + '.json',
     JSON.stringify({ revision, provenance, mode, stage, rows }, null, 2));
+  if (requireRaster && rows.some(row => row.rasterSwaps < 2 || row.measurements.rasterRemaining ||
+      (capture && (row.emptyWallFrames || !row.exactPngFrame)))) {
+    throw Error('The raster cache must replace at least two frames, preserve walls and release to the exact camera');
+  }
 } finally {
   await compositor?.stop();
   await browser.close();

@@ -10,6 +10,22 @@ import {
   paintLiveViewport, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, disposeHouseplanViewport,
 } from '../test-build/live-viewport.js';
 import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor } from '../test-build/viewport-exposure.js';
+import { rasterCovers, rasterSize } from '../test-build/iso-camera-raster.js';
+
+test('#1478 each raster buffer has a fixed pixel ceiling, even at 4K/DPR 2', () => {
+  assert.deepEqual(rasterSize({ stageSize: [1280, 720], dpr: 1 }), [1280, 720]);
+  const [width, height] = rasterSize({ stageSize: [3840, 2160], dpr: 2 });
+  assert.ok(width * height <= 1_200_000);
+  assert.ok(Math.abs(width / height - 3840 / 2160) < .01);
+});
+
+test('#1478 a pending raster may hide the SVG only when it covers all visible plan content', () => {
+  const bounds = { x: 5, y: 5, w: 50, h: 50 };
+  const content = { x: 0, y: 0, w: 55, h: 55 };
+  assert.equal(rasterCovers(bounds, { x: 20, y: 20, w: 60, h: 60 }, content), true);
+  assert.equal(rasterCovers(bounds, { x: 4, y: 4, w: 60, h: 60 }, content), false);
+  assert.equal(rasterCovers(bounds, { x: 60, y: 60, w: 60, h: 60 }, content), true);
+});
 
 test('live viewport projects pan and zoom from the last complete frame', () => {
   assert.deepEqual(

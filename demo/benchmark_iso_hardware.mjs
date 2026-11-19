@@ -24,10 +24,17 @@ const width = +(process.env.HP_ISO_HARDWARE_WIDTH || 1408);
 const height = +(process.env.HP_ISO_HARDWARE_HEIGHT || 952);
 const dpr = +(process.env.HP_ISO_HARDWARE_DPR || 2);
 const output = process.env.HP_ISO_HARDWARE_OUTPUT || 'artifacts/1478/hardware';
+const vectorOnly = process.env.HP_ISO_VECTORS === '1';
 const { page, browser, provenance } = await startIsoPaintScene({ width, height, dpr,
   reducedMotion: 'no-preference', launchOptions: { executablePath, headless: false },
   referenceRoot: process.env.HP_ISO_PAINT_REFERENCE,
   browserArgs: ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding'],
+});
+if (vectorOnly) await page.evaluate(() => {
+  const getContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+    return type === 'bitmaprenderer' ? null : getContext.call(this, type, ...args);
+  };
 });
 const browserProtocol = await browser.newBrowserCDPSession();
 const protocol = await page.context().newCDPSession(page);
@@ -45,6 +52,7 @@ await protocol.send('LayerTree.enable');
 const record = async (action) => {
   await page.evaluate(() => {
     const rows = [];
+    const start = performance.now();
     let first, raf;
     function tick(now) {
       if (first !== undefined) rows.push(now - first);
@@ -52,20 +60,25 @@ const record = async (action) => {
       raf = requestAnimationFrame(tick);
     }
     raf = requestAnimationFrame(tick);
-    window.__isoHardwareFrames = () => { cancelAnimationFrame(raf); return rows; };
+    window.__isoHardwareFrames = () => {
+      cancelAnimationFrame(raf);
+      return { gaps: rows, raster: performance.getEntriesByType('mark')
+        .filter(mark => mark.startTime >= start && mark.name.startsWith('houseplan.iso.raster.'))
+        .map(({name, startTime, detail}) => ({ event: name.split('.').at(-1), at: startTime - start, detail })) };
+    };
   });
   seen = new Set(activeLayers.filter(layer => layer.drawsContent).map(layer => layer.layerId));
   created = 0;
   const start = performance.now();
   await action();
   const elapsed = performance.now() - start;
-  const gaps = await page.evaluate(() => window.__isoHardwareFrames());
+  const { gaps, raster } = await page.evaluate(() => window.__isoHardwareFrames());
   const layersCreated = created;
   seen = null;
   const sorted = [...gaps].sort((a,b) => a-b);
   return { elapsed, frames: gaps.length, fps: gaps.length * 1000 / elapsed,
     p95Ms: sorted[Math.ceil(sorted.length * .95) - 1], maxMs: sorted.at(-1),
-    layersCreated, gaps };
+    layersCreated, gaps, raster };
 };
 
 try {
@@ -77,7 +90,7 @@ try {
     throw Error('The expected visible, GPU-accelerated viewport is unavailable: ' + JSON.stringify({ visibility, gpu: gpu.featureStatus }));
   }
   const idle = await record(() => sleep(1500));
-  const results = { provenance, stage, visibility, gpu: { devices: gpu.devices, featureStatus: gpu.featureStatus,
+  const results = { provenance, stage, visibility, vectorOnly, gpu: { devices: gpu.devices, featureStatus: gpu.featureStatus,
     renderer: gpu.auxAttributes?.glRenderer, processId: gpuProcess?.id }, idle, runs: [], processMemory: [] };
   const memory = async label => results.processMemory.push({ label, bytes: await gpuMemory(gpuProcess?.id) });
   await memory('idle');

@@ -169,6 +169,15 @@ inside an isolated group. The latest target received during a transition
 can start the next transition after the current one finishes. Camera changes
 continue through that interval. Reduced-motion presentation updates directly.
 
+During wheel zoom on a 2.5D surface of at least six million device pixels,
+the camera can reuse a bitmap of the passive SVG. It prepares the next view
+while the current frame remains visible and replaces it once the bitmap
+covers the visible part of the plan. Device and room controls stay live.
+Views with unsupported image resources, a light transition, or a camera
+position beyond the available bitmap use the SVG immediately. The exact
+wheel commit takes over from the cached image. A bitmap is limited to 1.2
+million pixels, and the renderer holds one shown and one pending bitmap.
+
 Physical geometry and projected variants stay separate. The structural LRU
 remains bounded at eight entries; variants are keyed by saved quarter turns,
 not yaw. The fingerprint includes the physical source, camera/profile and

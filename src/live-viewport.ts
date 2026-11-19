@@ -1,5 +1,6 @@
 import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor,
   type ViewportExposureLimits } from './viewport-exposure';
+import { IsoCameraRaster } from './iso-camera-raster';
 
 export interface LiveViewBox {
   x: number;
@@ -25,6 +26,7 @@ interface LiveViewportState {
   nodes?: ViewportNodes;
   limits?: ViewportExposureLimits;
   basis?: { key: string; view: LiveViewBox; retained: boolean };
+  raster?: IsoCameraRaster;
 }
 
 /** World coordinates represented by the currently prepared scene. */
@@ -48,6 +50,7 @@ interface LiveViewportHost {
   readonly _renderProjection?: 'iso' | 'flat';
   readonly _zoomBadge?: { percent: number; hidden: boolean };
   readonly _modeSceneClip?: string | null;
+  readonly _lastValidStageSize?: readonly [number, number] | null;
   _editorRuntime?: {wallDimensions?: {paintCamera(view:LiveViewBox):void}} | null;
   renderRoot: ParentNode;
 }
@@ -349,6 +352,21 @@ const frameOf = (host: LiveViewportHost, view = host._viewOr(host._baseVb())): L
     ...(host._renderProjection !== 'iso' && host._planVisibleRect ? { grid: host._planVisibleRect(view) } : {}) };
 };
 
+function paintCameraRaster(host: LiveViewportHost, state: LiveViewportState, frame: LiveViewportFrame): void {
+  const stageSize = host._lastValidStageSize;
+  const svg = state.nodes?.camera[0] as SVGSVGElement | undefined;
+  // On smaller surfaces the vector renderer finishes before the cost of
+  // preparing a bitmap pays back. Enable the cache for large raster loads.
+  if ((state.limits?.pixelArea ?? 0) >= 6_000_000 && host._renderProjection === 'iso' && frame.target &&
+      stageSize && !host._modeSceneClip && svg &&
+      svg.matches('.iso-scene-surface > svg[data-projection="iso"]:not([data-hp-retained-light])') &&
+      svg.parentElement?.childElementCount === 1 && svg.closest('.stage.mode-view:not(.mode-transition)')) {
+    (state.raster ??= new IsoCameraRaster()).paint(svg, frame.view, frame.target, {
+      ...state.limits, stageSize, dpr: svg.ownerDocument.defaultView?.devicePixelRatio || 1,
+    });
+  } else state.raster?.clear();
+}
+
 /** Coalesce camera input into one lightweight paint per animation frame. */
 export function scheduleHouseplanViewport(value: object, now = false, force = false): void {
   const host = value as LiveViewportHost;
@@ -362,6 +380,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
       host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true, keepMarkerLayer: host._renderProjection === 'iso', force, sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip,
         nodes: state.nodes ??= findViewportNodes(host.renderRoot), limits: state.limits ??= host._liveViewportLimits?.() ?? {} },
     );
+    paintCameraRaster(host, state, next);
     host._editorRuntime?.wallDimensions?.paintCamera(next.view);
     return;
   }
@@ -378,6 +397,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
       root, state.painted, next, state.anchor, { keepSceneLayer: true, keepMarkerLayer: host._renderProjection === 'iso', sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip,
         nodes: state.nodes ??= findViewportNodes(host.renderRoot), limits: state.limits ??= host._liveViewportLimits?.() ?? {} },
     );
+    paintCameraRaster(host, state, next);
     host._editorRuntime?.wallDimensions?.paintCamera(next.view);
   });
 }
@@ -403,6 +423,7 @@ export function commitHouseplanViewport(value: object, keepSceneLayer = false): 
       keepSceneLayer: true, keepMarkerLayer: host._renderProjection === 'iso', nodes, limits: state.limits, lockSceneAnchor: !!host._modeSceneClip,
       sceneExposureClip: host._modeSceneClip ?? undefined,
     });
+    paintCameraRaster(host, state, current);
     return;
   }
   state.painted = basis ? frameOf(host, basis.view) : current;
@@ -415,6 +436,7 @@ export function commitHouseplanViewport(value: object, keepSceneLayer = false): 
     keepMarkerLayer: host._renderProjection === 'iso', authored: true,
     sceneExposureClip: host._modeSceneClip ?? undefined, nodes: state.nodes, limits: host._liveViewportLimits?.(),
   });
+  state.raster?.clear();
 }
 
 /** A compositor-owned surface can retire without a Lit update. */
@@ -427,5 +449,6 @@ export function refreshHouseplanViewportNodes(host: object): void {
 export function disposeHouseplanViewport(host: object): void {
   const state = states.get(host);
   if (state?.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
+  state?.raster?.clear();
   states.delete(host);
 }

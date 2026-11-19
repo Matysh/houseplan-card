@@ -212,6 +212,12 @@ export const planStyles = css`
     .iso-scene-surface[data-hp-light-mixing] { isolation:isolate; }
     .iso-scene-surface[data-hp-light-mixing] > svg { mix-blend-mode:plus-lighter; }
     .iso-scene-surface > svg[data-hp-retained-light] { pointer-events:none; }
+    .iso-scene-surface[data-hp-raster-display] { opacity:0; }
+    .hp-iso-raster {
+      position:absolute; top:0; left:0; z-index:1; pointer-events:none;
+      transform-origin:0 0; will-change:transform;
+    }
+    .hp-iso-raster[data-hp-iso-raster="waiting"] { opacity:0; }
     .iso-underlay-svg,
     .iso-shadows-svg,
     .iso-walls-svg,
