@@ -162,4 +162,4 @@ from .core.constants import (
     SUPPORT_RELAY_URL as SUPPORT_RELAY_URL,
 )
 
-VERSION = '1.85.3-beta.1'
+VERSION = '1.85.3-beta.2'

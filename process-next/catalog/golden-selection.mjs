@@ -1,6 +1,13 @@
 import { BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN,
   PANEL_GOLDEN_SOURCES, selectExact } from './selections.mjs';
 
+/** Keep explicitly isolated raster fixtures independent of prior SVG paint history. */
+export function goldenBrowserSurfaceKey(scene) {
+  const surface = scene.isolatedCapture ? `isolated:${scene.id}`
+    : scene.staticWallOpenings ? 'static' : 'interactive';
+  return `${surface}:${scene.deviceScaleFactor || 1}`;
+}
+
 /** Canonical matrix selection; reviewed PNGs are changed only by explicit acceptance. */
 export function prepareGoldenSelection(candidates) {
   const sources = selectExact(candidates, PANEL_GOLDEN_SOURCES.map(id => ({ id })), scene => scene.id);

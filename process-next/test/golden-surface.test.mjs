@@ -1,0 +1,29 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
+import { goldenBrowserSurfaceKey, goldenRunSelection } from '../catalog/golden-selection.mjs';
+
+test('golden surfaces preserve shared hosts, Static isolation and DPR separation', () => {
+  assert.equal(goldenBrowserSurfaceKey({ id: 'first' }), 'interactive:1');
+  assert.equal(goldenBrowserSurfaceKey({ id: 'second', panelHost: true }), 'interactive:1');
+  assert.equal(goldenBrowserSurfaceKey({ staticWallOpenings: true }), 'static:1');
+  assert.equal(goldenBrowserSurfaceKey({ deviceScaleFactor: 2 }), 'interactive:2');
+  assert.equal(goldenBrowserSurfaceKey({ staticWallOpenings: true, deviceScaleFactor: 2 }), 'static:2');
+});
+
+test('isolated captures cannot share a browser with another scene or DPR', () => {
+  const scene = { id: 'hover', isolatedCapture: true };
+  assert.equal(goldenBrowserSurfaceKey(scene), 'isolated:hover:1');
+  assert.notEqual(goldenBrowserSurfaceKey(scene), goldenBrowserSurfaceKey({ id: 'hover' }));
+  assert.notEqual(goldenBrowserSurfaceKey(scene), goldenBrowserSurfaceKey({ ...scene, id: 'other' }));
+  assert.notEqual(goldenBrowserSurfaceKey(scene), goldenBrowserSurfaceKey({ ...scene, deviceScaleFactor: 2 }));
+});
+
+test('beta keeps all 78 scenes and isolates only the reviewed hover raster fixture', () => {
+  const { scenarios } = goldenRunSelection(GOLDEN_SCENARIOS, ['--selection=beta']);
+  assert.equal(scenarios.length, 78);
+  const isolated = scenarios.filter(scene => scene.isolatedCapture);
+  assert.deepEqual(isolated.map(scene => scene.id), ['panel-isometric-stage6-hover-light']);
+  assert.equal(goldenBrowserSurfaceKey(isolated[0]), 'isolated:panel-isometric-stage6-hover-light:1');
+  assert.equal(isolated[0].sourceSceneId, 'isometric-stage6-hover-light');
+});

@@ -2,7 +2,7 @@
 import { inspectTunnelContinuity } from './golden-floor-continuity.mjs';
 // One capture/verification implementation for tasks, releases and diagnostics.
 // Preserve pixel and semantic assertions for every selected scene.
-import { goldenRunSelection, goldenHarnessScenario } from './golden-selection.mjs';
+import { goldenRunSelection, goldenHarnessScenario, goldenBrowserSurfaceKey } from './golden-selection.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -885,7 +885,7 @@ const chromium = await browser.version();
 const results = [];
 // Static replaces the shared host with a different card. Keep its page separate
 // from panel/Lovelace scenes, including on the pre-#1181 preparation base.
-const pageKey = scenario => `${scenario.staticWallOpenings ? 'static' : 'interactive'}:${scenario.deviceScaleFactor || 1}`;
+const pageKey = goldenBrowserSurfaceKey;
 const pagesBySurface = new Map([['interactive:1', primaryPage]]);
 const extraBrowsers = [];
 for (const scenario of scenarios) {
