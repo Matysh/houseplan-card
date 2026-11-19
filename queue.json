@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16211,
-  "nextTicket": 527,
+  "revision": 16212,
+  "nextTicket": 528,
   "nextFence": 527,
   "tasks": {
     "1024": {
@@ -5041,14 +5041,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1470-iso-performance",
-      "materialSha": "e143f8591f471e31fcd40c3d7bdc0eb6ca5f49c7",
+      "materialSha": "e21faac27bab22d35b03b488bb2e52ced4ccf2b2",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 525,
-      "queued": false,
+      "ticket": 527,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795074693534,
-      "reviewEntry": 1,
+      "readyAt": 1795077198946,
+      "reviewEntry": 2,
       "patchId": "0d129fcfb00fa9dc989c480a3a907cba69668e4a",
       "changedFiles": [
         "demo/benchmark_iso_paint.mjs",
@@ -5070,7 +5070,6 @@
         "src/styles/iso-lab-markers.styles.ts",
         "test/iso-room-label-bounds.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5506,7 +5505,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1470
+  ],
   "active": null,
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5694,6 +5695,19 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85"
+      }
+    },
+    "finish:8f0a1c33-bab4-4502-91e9-58bf3fc4b318": {
+      "digest": "29a360eb6047b035e9dd1c68cd61c9155d2f79314db3445f18e933f9f057bb4c",
+      "issue": 1470,
+      "message": {
+        "kind": "queued",
+        "issue": 1470,
+        "at": 1795077198946,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "e21faac27bab22d35b03b488bb2e52ced4ccf2b2"
       }
     }
   },
