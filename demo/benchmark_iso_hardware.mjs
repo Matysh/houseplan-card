@@ -1,6 +1,22 @@
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { startIsoPaintScene, settleIsoPaint, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
+
+const run = promisify(execFile);
+
+async function gpuMemory(pid) {
+  if (process.platform !== 'win32' || !Number.isInteger(pid)) return null;
+  const query = 'Get-CimInstance Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory'
+    + ` | Where-Object Name -Like 'pid_${pid}_*'`
+    + ' | Select-Object DedicatedUsage,SharedUsage,TotalCommitted | ConvertTo-Json -Compress';
+  const { stdout } = await run('powershell.exe', ['-NoProfile','-NonInteractive','-Command',query], { windowsHide: true });
+  if (!stdout.trim()) return null;
+  const raw = JSON.parse(stdout), rows = Array.isArray(raw) ? raw : [raw];
+  return Object.fromEntries(['DedicatedUsage','SharedUsage','TotalCommitted']
+    .map(key => [key, rows.reduce((total,row) => total + Number(row[key] || 0),0)]));
+}
 
 const executablePath = process.env.HP_ISO_CHROME;
 if (!executablePath) throw Error('Set HP_ISO_CHROME to the real GPU browser executable.');
@@ -62,7 +78,9 @@ try {
   }
   const idle = await record(() => sleep(1500));
   const results = { provenance, stage, visibility, gpu: { devices: gpu.devices, featureStatus: gpu.featureStatus,
-    renderer: gpu.auxAttributes?.glRenderer, processId: gpuProcess?.id }, idle, runs: [] };
+    renderer: gpu.auxAttributes?.glRenderer, processId: gpuProcess?.id }, idle, runs: [], processMemory: [] };
+  const memory = async label => results.processMemory.push({ label, bytes: await gpuMemory(gpuProcess?.id) });
+  await memory('idle');
   for (const light of ['off','on']) {
     await page.evaluate(async light => {
       const card = window.__isoPaint;
@@ -85,6 +103,7 @@ try {
     });
     await page.mouse.up();
     await settleIsoPaint(page);
+    await memory(light + '-pan');
 
     const zoom = {};
     for (const direction of ['in','out']) {
@@ -102,6 +121,7 @@ try {
         await settleIsoPaint(page);
       });
       zoom[direction].finalZoom = await page.evaluate(() => window.__isoPaint._zoom);
+      await memory(light + '-' + direction);
     }
     results.runs.push({ light, pan, zoom });
     console.log(JSON.stringify({ light, panFps: pan.fps, panP95: pan.p95Ms,

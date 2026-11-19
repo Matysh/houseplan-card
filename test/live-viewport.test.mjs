@@ -415,3 +415,28 @@ test('#1478 Lit updates during camera motion retain the published basis', () => 
   assert.equal(root.camera.attrs.viewBox, '100 10 1000 500');
   disposeHouseplanViewport(host);
 });
+
+test('#1478 scene and marker anchors rebase together without restarting their visual layers', () => {
+  const root = fakeRoot(), initial = frame(0, 0);
+  const marker = { style: { left: '40%', top: '25%' } };
+  root.layer.querySelectorAll = selector => selector.includes('roomlabel') ? [marker] : [];
+  root.layer.style['--icon-size'] = '2.5cqw';
+  root.layer.style.getPropertyValue = name => root.layer.style[name] || '';
+  root.layer.style.setProperty = (name, value) => { root.layer.style[name] = value; };
+  const options = { keepSceneLayer: true, keepMarkerLayer: true };
+  let anchor = paintLiveViewport(root, initial, initial, null, options);
+  const closer = frame(200, 100, 500, 250);
+  anchor = paintLiveViewport(root, initial, closer, anchor, options);
+  assert.deepEqual(anchor.markerView, closer.view);
+  assert.equal(root.camera.attrs.viewBox, '200 100 500 250');
+  assert.equal(root.inherited.attrs.viewBox, root.camera.attrs.viewBox);
+  assert.deepEqual(marker.style, { left: '40%', top: '10%' });
+  assert.equal(root.layer.style['--icon-size'], '5cqw');
+  assert.equal(root.layer.style.willChange, 'transform');
+
+  const nearby = frame(205, 100, 500, 250);
+  paintLiveViewport(root, initial, nearby, anchor, options);
+  assert.deepEqual(marker.style, { left: '40%', top: '10%' });
+  assert.equal(root.layer.style.transform, root.camera.style.transform);
+  assert.equal(root.camera.attrs.viewBox, '200 100 500 250');
+});
