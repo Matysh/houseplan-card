@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 989,
+  "revision": 990,
   "active": "1.85.3-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -130418,7 +130418,7 @@
         "sha": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
         "requestId": "ship-review:72d00013c5c02294d3b029f041eac21b0b85f253af4ce246aa0093c8e561edf7",
         "selectionDigest": "60bab812a602fd2d6d69d9901b86fa1201b9b67b96d6923e697d82e293d63c06",
-        "status": "pending",
+        "status": "not-required",
         "inventoryComplete": true
       }
     }
@@ -136060,7 +136060,8 @@
     "beta1853-2-20261119-publish-approved:runner-report": "10d0038393129c21b1c63ca4dd269b749ab28e5e4bc8b0f79449f8a3d6aa1ca2",
     "beta1853-2-20261119-publish-approved:metrics": "ff2e23306947442c2f72267ba2d04fb1f69f19f3dcd85a95a0ddbc820d320714",
     "beta1853-2-20261119-publish-approved:prepared:18183216-3407-475a-bdd3-052420656ea3": "4d00db1b23fc177013f90ebc545c89d8d98706a5d2bc72fd208d1ecadd8d4c85",
-    "ship-review:prepare:46b5ec47-f958-4663-99f5-00964108f1d6": "0d1e07ddc7ad2ef6b3769736198f0ac358cb688bcb8edd0a2699aed8fc536724"
+    "ship-review:prepare:46b5ec47-f958-4663-99f5-00964108f1d6": "0d1e07ddc7ad2ef6b3769736198f0ac358cb688bcb8edd0a2699aed8fc536724",
+    "ship-review:result:42eb6623-4e48-4a2d-9033-28ce9f8543e7": "26831da91ed4061d81935bd36eb00ecd3a828a4fdd11c4159b16fd6aa8060ea6"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -151834,7 +151835,17 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "kind": "ship-batch",
+        "requestId": "ship-review:72d00013c5c02294d3b029f041eac21b0b85f253af4ce246aa0093c8e561edf7",
+        "candidateId": "1.85.3-beta.2",
+        "materialSha": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
+        "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+        "selectionDigest": "60bab812a602fd2d6d69d9901b86fa1201b9b67b96d6923e697d82e293d63c06",
+        "verdict": "not-required",
+        "createdAt": "2026-11-19T05:15:56.687Z",
+        "markdown": "Пакетное ревью ship перед v1.85.3-beta.2: новых непросмотренных изменений нет.\n\nЗадач ship в кандидате: 18; засчитано прежних принятых результатов: 18."
+      }
     }
   }
 }
