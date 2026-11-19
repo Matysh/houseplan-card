@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16174,
+  "revision": 16175,
   "nextTicket": 527,
   "nextFence": 527,
   "tasks": {
@@ -5882,6 +5882,10 @@
       "digest": "12e7187a6b8e2ca5d3b960dc20d5af8b42cbd28a7abadfd5ded186c0dd254fa0",
       "issue": 1470
     },
+    "github:44487483633:1:completions:message:10e3af5ee088282f333f58144120d875d9856a0abfefcf797f2af16908d48434": {
+      "digest": "1b764a1a42b4452fdb7ffe5909729737ef8652f1ea23599d7898155d82a97e81",
+      "issue": 1469
+    },
     "github:44472051036:1:label:spec-request:spec-resubmitted:1470": {
       "digest": "10aa67c67df712216e7f225fc653ba581c5fd36f6038a16dbf85103b2e53d0bb",
       "issue": 1470,
@@ -6054,7 +6058,8 @@
           "entry": 1,
           "detail": "Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: iso theme walls: failed",
           "eventId": "finish:a726cb58-f0d2-4887-9e3f-ba9cd085f6bd:finish:3:return:return:1470"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:219aa181-afbc-4ad3-be51-d30015b55512": {
