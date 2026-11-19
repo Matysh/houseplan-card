@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16363,
+  "revision": 16364,
   "nextTicket": 531,
   "nextFence": 531,
   "tasks": {
@@ -5046,7 +5046,7 @@
       "ownerDecision": null,
       "ticket": 530,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795081864415,
       "reviewEntry": 1,
       "patchId": "67c5c04450a45a45960581124030b410d8f5ba9e",
@@ -5055,7 +5055,16 @@
         "docs/CHANGELOG.ru.md",
         "scripts/render-layout-read.mjs",
         "test/render-layout-read.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261119T095119810-d0648062",
+        "name": "Тесты для задачи #1473 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T095119810-d0648062/report.json",
+        "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
+        "status": "passed",
+        "finishedAt": "2026-11-19T09:51:21.022Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5503,9 +5512,9 @@
     "fence": 530,
     "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
     "expectedBase": "fbfbdea4442539a5e6aadc46c16d2645165e449e",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795081868310,
-    "expiresAt": 1795082174722,
+    "expiresAt": 1795085481822,
     "patchId": "67c5c04450a45a45960581124030b410d8f5ba9e"
   },
   "events": {
@@ -5558,6 +5567,34 @@
         "layer": "infra",
         "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
         "phase": "sync"
+      }
+    },
+    "finish:3b9da799-c271-4ef5-829b-478fb7598980:finish:3:s6-complete": {
+      "digest": "895fbd9b9eb86e71556ed6d499740e171a4987cf10761122bd18486289390b4d",
+      "issue": 1473,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1473,
+        "at": 1795081881822,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
+        "phase": "review",
+        "evidence": {
+          "id": "20261119T095119810-d0648062",
+          "name": "Тесты для задачи #1473 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T095119810-d0648062/report.json",
+          "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
+          "status": "passed",
+          "finishedAt": "2026-11-19T09:51:21.022Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Материал: `fbfbdea44425 → 94bb2d3c6`, ветка `codex/1473-render-layout-read`, инфраструктурный show. Продуктовые исходники, реестр мутантов, PNG и лимиты не менялись.\n\nВ `iso-room-furniture-overlap.ts` разрешены только inline callback настоящего `requestAnimationFrame` и единственный измерительный метод `RoomFurnitureOverlap.boundPaint`. Весь остальной код файла всё ещё проверяется. Любое синхронное обращение `this.boundPaint` вне отложенного callback запрещено, включая helper/getter, строковый доступ, взятие ссылки и map callback. Отсутствующий/дублированный измерительный владелец — ошибка. Чистые ISO helpers, четыре защищённых метода card и прежний summary-контракт остались строгими. Это уточнение существующего гарда, не исключение файла и не новый этап продуктовых задач.\n\nПроверено на текущем материале:\n\n- `node --test test/render-layout-read.test.mjs`: **21/21 PASS**. Включает существующие summary/card контроли, новые фазовые отрицательные контроли и запуск настоящего CLI на текущих исходниках.\n- `node scripts/render-layout-read.mjs`: чистый код PASS (до изменения воспроизводился FAIL с перечислением измерений директивы).\n- Штатный `scripts/mutation-gate.mjs --id=<id> --execute-nightly`: все **3/3** существующих мутанта этого гарда пойманы, каждый после успешного чистого гарда: `iso-first-frame-reads-paper-during-render`, `iso-scene-reads-stage-box-during-render`, `summary-layout-reads-safe-insets-during-render`. Это реальные применения мутаций, не статический поиск якорей; сборка для AST-гарда не требуется.\n- Классификация `test/render-layout-read.test.mjs` уже infrastructure/addressed/render-layout-guard; этот файл импортирует изменённый механизм и должен входить в S6 именно по этой связи. Новые кейсы не добавляются к каждой продуктовой задаче.\n\nОграничения: весь ночной шард 1/7 повторно не запускался; исправлен и адресно подтверждён единственный красный чистый guard из его отчёта. Это не утверждение о зелёных всех семи частях или JS/TS coverage. Перед ревью обычный finish проверит синтаксис и адресный механизм через центральный профиль infra; продуктовую сборку не добавляем без причины.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
