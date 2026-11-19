@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16497,
+  "revision": 16498,
   "nextTicket": 535,
   "nextFence": 535,
   "tasks": {
@@ -2004,44 +2004,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "5d522469dd04bb0630f3a890652e32e94fe02c2e"
-      }
-    },
-    "1380": {
-      "issue": 1380,
-      "branch": "codex/issue-1380-witness-repairs",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "a05e6437f7a062f67c67200842698aef8987439f",
-      "mergedSha": "f1a94ef30fc1b8e24574de4d4cc9fcb65aa12caa",
-      "mergedAt": 1794329749353,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1380:3:b2537c8c370adb5d9cc351402a47d236f367f98b:a05e6437f7a062f67c67200842698aef8987439f",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 15,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "f05541086a4cb3bf0fd7",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 15
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "f1a94ef30fc1b8e24574de4d4cc9fcb65aa12caa"
       }
     },
     "1381": {
@@ -5050,10 +5012,20 @@
       "removedToRelease": false,
       "reviewRequest": "review:1473:1:67c5c04450a45a45960581124030b410d8f5ba9e:fbfbdea4442539a5e6aadc46c16d2645165e449e",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
