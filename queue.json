@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17519,
+  "revision": 17520,
   "nextTicket": 555,
   "nextFence": 555,
   "tasks": {
@@ -5271,7 +5271,18 @@
         "src/styles/plan.styles.ts",
         "src/viewport-exposure.ts",
         "test/live-viewport.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795164700081,
+        "entry": 1,
+        "detail": "Браузер: iso theme walls: failed",
+        "eventId": "finish:c6215d8f-a5d8-412c-9c5d-a37693c8f0b4:finish:3:return:return:1485"
+      }
     },
     "1486": {
       "issue": 1486,
@@ -5792,18 +5803,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1485,
-    "worker": "finish",
-    "token": "554:finish:c6215d8f-a5d8-412c-9c5d-a37693c8f0b4:finish:1:admit",
-    "fence": 554,
-    "materialSha": "8d7eeab5591a3d14f6d9f652a81e77b26b5cebd9",
-    "expectedBase": "54a8148959ffb71f0737532924c05b0a65de8b4a",
-    "phase": "testing",
-    "admittedAt": 1795164382822,
-    "expiresAt": 1795164981960,
-    "patchId": "462635914ca4566a19125d294a407752da58ebcc"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5909,6 +5909,10 @@
       "digest": "19f3ed4393a6b85dc059c6dd584c6b7f9140240c7742882b2a9912746fff4761",
       "issue": 1485
     },
+    "finish:c6215d8f-a5d8-412c-9c5d-a37693c8f0b4:finish:3:return": {
+      "digest": "a528cc6ab5150c97838aae7abf97306a4079fd2507395c41ae619bcc8c174693",
+      "issue": 1485
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -5992,6 +5996,26 @@
         "layer": "product",
         "materialSha": "8d7eeab5591a3d14f6d9f652a81e77b26b5cebd9",
         "phase": "sync"
+      }
+    },
+    "finish:c6215d8f-a5d8-412c-9c5d-a37693c8f0b4:finish:3:return:return:1485": {
+      "digest": "a528cc6ab5150c97838aae7abf97306a4079fd2507395c41ae619bcc8c174693",
+      "issue": 1485,
+      "message": {
+        "kind": "return",
+        "issue": 1485,
+        "at": 1795164700081,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795164700081,
+          "entry": 1,
+          "detail": "Браузер: iso theme walls: failed",
+          "eventId": "finish:c6215d8f-a5d8-412c-9c5d-a37693c8f0b4:finish:3:return:return:1485"
+        }
       }
     }
   },
