@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18395,
-  "nextTicket": 572,
+  "revision": 18396,
+  "nextTicket": 573,
   "nextFence": 572,
   "tasks": {
     "1024": {
@@ -5283,14 +5283,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1495-architectural-light",
-      "materialSha": "fb467be6ea44837dc5010eafdf4d95c98b12e86d",
+      "materialSha": "5b93fe660a1b4d090a77c7588b9d0ffd9ed9a12c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 570,
-      "queued": false,
+      "ticket": 572,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795201738449,
-      "reviewEntry": 1,
+      "readyAt": 1795202497545,
+      "reviewEntry": 2,
       "patchId": "75a604bf5f7a56f6fd7e00a61312a291c2d8ce94",
       "changedFiles": [
         "demo/smoke_iso_raster_materials.mjs",
@@ -5312,7 +5312,6 @@
         "src/styles/plan.styles.ts",
         "test/iso-architectural-tone.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6075,7 +6074,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1495
+  ],
   "active": {
     "issue": 1500,
     "worker": "finish",
@@ -6305,6 +6306,19 @@
         "layer": "product",
         "materialSha": "3faf584e02e4b2bfca92b14dd1eaa27774ce9f40",
         "phase": "sync"
+      }
+    },
+    "finish:372e6aeb-987d-4872-9687-079400fbf01d": {
+      "digest": "5fc70babda0b8265782c25f2d17ce8f20e297b6e5b6f816d58d336c5e70310e1",
+      "issue": 1495,
+      "message": {
+        "kind": "queued",
+        "issue": 1495,
+        "at": 1795202497545,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "5b93fe660a1b4d090a77c7588b9d0ffd9ed9a12c"
       }
     }
   },
