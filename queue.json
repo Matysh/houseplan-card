@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18689,
+  "revision": 18690,
   "nextTicket": 577,
   "nextFence": 577,
   "tasks": {
@@ -6109,6 +6109,10 @@
       "digest": "5ff583e1b3f19359ad22d7b0fad5476f22c84cfc1c2a3ea8d8c3bc091e6cb2a6",
       "issue": 1503
     },
+    "github:44823480295:1:completions:message:91a1f41b687320ec38d2e16019109dbcd8446740ae873972689c2bfbe476979a": {
+      "digest": "d296aa51ca7f491bf5c9b1af3fa1c8afb7b31f18f8be9c66b6fb4a2c11666abb",
+      "issue": 1503
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6184,7 +6188,8 @@
           "entry": 1,
           "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
           "eventId": "finish:1e1b7423-0b0e-4f9e-ad71-d5cbdbe2f69f:finish:3:return:return:1503"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:fc471e1d-1f56-40be-921d-10cbea12729f": {
