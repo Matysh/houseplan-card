@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1164,
+  "revision": 1165,
   "active": "1.86.0-beta.4-20261121",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -176517,7 +176517,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "0ce2161adfb8fe0448a676f4a5b9528cb4ae0e89",
       "portToDev": [
         {
           "from": "c5d1b6e0b47a2d3ebfe01a2e544703df923bc6cf",
@@ -176533,6 +176533,13 @@
         "selectionDigest": "63d2cb3826d2b266b822e19e1a4883720641129f6f303f96675bf112f234d5d6",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "metricsDecision": {
+        "decisionId": "codex-owner-20261121-release-v1.86.0-sizes",
+        "source": "chat",
+        "sourceRef": "Codex Houseplan, 2026-11-21, запрос выпуска stable 1.86.0 с #1503 и #1504",
+        "decisionText": "«Выпусти стабильный релиз 1.86.0 (включая 1503 и 1504). Не останавливайся до конца выпуска, эталоны и размеры бандлов подтверждаю.»",
+        "recordedBy": "Codex"
       }
     }
   },
@@ -182331,7 +182338,8 @@
     "beta1860-4-20261121-prepared": "7ffe195834bd73cc14342fd4110f1a09dabbe58d68d92fa43be475aecb5255df",
     "ship-review:prepare:d5a39c3d-da69-4eee-b4de-740b41f7b9f7": "e55cb31dddb85d898a5deb69bd15cb1f6d69c3065e2e1eb43ec75684ff379229",
     "ship-review:result:081fb9a8-1b80-44b3-b153-e8ad1e42880a": "0632a38e39d9f4a041c2bb31520367d844f091808656fd3a23345f4660c13f07",
-    "beta1860-4-20261121-publish:metrics": "04f1c87eff4763fbd73b3c9fd5171e31b6f3577ce81565b1d110a6035d13f842"
+    "beta1860-4-20261121-publish:metrics": "04f1c87eff4763fbd73b3c9fd5171e31b6f3577ce81565b1d110a6035d13f842",
+    "beta1860-4-20261121-owner-size": "a46652cfdca4b293fd49cd4320d0ee38fca67ecaa3e6c6da39454bfd593f67a4"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
