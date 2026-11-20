@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17688,
+  "revision": 17689,
   "nextTicket": 558,
   "nextFence": 558,
   "tasks": {
@@ -5237,83 +5237,24 @@
     "1488": {
       "issue": 1488,
       "branch": "issue/1488-release-return-4b3b5b501a3b",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "4b3b5b501a3bc73ce4bafc5761c5b142d81cd09a",
-      "releaseTag": "v1.86.0-beta.1",
-      "materialSha": "365df93ee67a75d71dc47c26e262ede8136fe027",
-      "ownerDecision": null,
-      "ticket": 557,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795171232013,
-      "reviewEntry": 1,
-      "patchId": "1eeb247ef36c34b2270f504cd0b644a92ddd6505",
-      "review": {
-        "source": "published-release",
-        "sourceSha": "4b3b5b501a3bc73ce4bafc5761c5b142d81cd09a",
-        "tag": "v1.86.0-beta.1",
-        "verdict": "accepted",
-        "patchId": "1eeb247ef36c34b2270f504cd0b644a92ddd6505",
-        "materialSha": "365df93ee67a75d71dc47c26e262ede8136fe027"
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "3e5f3deaeb36612fd1ed50679cc6fe6f8d79025b",
+      "mergedSha": "365df93ee67a75d71dc47c26e262ede8136fe027",
+      "mergedAt": 1795172319493,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/device-alert-alarm-flat.png",
-        "demo/golden/baselines/device-alert-maintenance-iso.png",
-        "demo/golden/baselines/geometry-plan-editor-dark.png",
-        "demo/golden/baselines/geometry-view-light-fit.png",
-        "demo/golden/baselines/panel-day-cycle-dawn-dark.png",
-        "demo/golden/baselines/panel-day-cycle-night-moon-gibbous-dark.png",
-        "demo/golden/baselines/panel-device-icon-state-table-dark.png",
-        "demo/golden/baselines/panel-device-icon-state-table-light.png",
-        "demo/golden/baselines/panel-furniture-transform-dark.png",
-        "demo/golden/baselines/panel-geometry-decor-editor-dark.png",
-        "demo/golden/baselines/panel-geometry-devices-editor-dark.png",
-        "demo/golden/baselines/panel-hidden-devices-view-light.png",
-        "demo/golden/baselines/panel-isometric-geometry-view-light.png",
-        "demo/golden/baselines/panel-isometric-large-warm-remount-dark.png",
-        "demo/golden/baselines/panel-isometric-opening-symbol-parity-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-forced-colors-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
-        "demo/golden/baselines/panel-isometric-stage6-hover-light.png",
-        "demo/golden/baselines/panel-large-house-warm-remount-dark.png",
-        "demo/golden/baselines/panel-lighting-glow-sun-dark.png",
-        "demo/golden/baselines/panel-lighting-led-strip-glow-dark.png",
-        "demo/golden/baselines/panel-lighting-opaque-glow-two-doorways-dark.png",
-        "demo/golden/baselines/panel-lighting-temp-glow-light.png",
-        "demo/golden/baselines/panel-narrow-kiosk-fixed.png",
-        "demo/golden/baselines/panel-opening-placement-door-thick-wall-dark.png",
-        "demo/golden/baselines/panel-room-co2-flat-light.png",
-        "demo/golden/baselines/panel-room-label-parity-plan-dark.png",
-        "demo/golden/baselines/panel-stairs-flat-normal-light.png",
-        "demo/golden/baselines/panel-stairs-isometric-dark.png",
-        "demo/golden/baselines/panel-vacuum-trail-smoothing-dark.png",
-        "demo/golden/baselines/panel-version-mismatch-touch-light-ru.png",
-        "demo/golden/baselines/panel-wide-plan-editor-dark-en.png",
-        "demo/golden/baselines/safe-resize-handles-clamp-dark.png",
-        "demo/golden/baselines/static-wall-openings-house-phone-light.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "docs/release-ledger/cycle.json",
-        "package-lock.json",
-        "package.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "s6": {
-        "id": "20261120T104055313-1152c13f",
-        "name": "Тесты для задачи #1488 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T104055313-1152c13f/report.json",
-        "materialSha": "365df93ee67a75d71dc47c26e262ede8136fe027",
-        "status": "passed",
-        "finishedAt": "2026-11-20T10:58:26.969Z",
-        "failures": []
+      "releaseTag": "v1.86.0-beta.1",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -5797,18 +5738,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1488,
-    "worker": "finish",
-    "token": "557:release-return-finish:a36e2977-a455-4994-a2f5-64c692da3a84:finish:1:admit",
-    "fence": 557,
-    "materialSha": "365df93ee67a75d71dc47c26e262ede8136fe027",
-    "expectedBase": "3e5f3deaeb36612fd1ed50679cc6fe6f8d79025b",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795171237058,
-    "expiresAt": 1795175910613,
-    "patchId": "1eeb247ef36c34b2270f504cd0b644a92ddd6505"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5849,82 +5779,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "release-return-finish:a36e2977-a455-4994-a2f5-64c692da3a84:finish:2:synchronized": {
-      "digest": "f839746edc85214549ecf1cf9767d6cf7a71539af65437a45f956d1b4503cb7f",
-      "issue": 1488
-    },
-    "finish:02a6fd72-a6d4-4e7a-aea6-7cf684ab559a": {
-      "digest": "ddf05f878ba14af0391fbc806fbe3c23857f47e7048f81a95693925d79bececd",
-      "issue": 1488
-    },
-    "finish:737a54d0-2bf8-4897-bcba-650029afddde": {
-      "digest": "94279635d12163962f9d6670076ee28d3a07b5bbb316f524a8d86e3f399084bd",
-      "issue": 1488
-    },
-    "finish:623f75a3-05b4-4af5-b262-830c6e435c2f": {
-      "digest": "d132d2c1617c5e0fba95676fe4598477317b324cbe4a3a77d8bcab002a19e019",
-      "issue": 1488
-    },
-    "finish:867996b0-507f-47a4-b8a5-f40e23939e1d": {
-      "digest": "5146226a52869faf0c49ed23f8dcfaa746602ce9856973435031340bb579984f",
-      "issue": 1488
-    },
-    "finish:d0ec96b3-58db-40f2-9272-d734d30b71c1": {
-      "digest": "62697ec1948580c3484f3e5e28e0d64c72c203116d7e7b8c78dc3526e4c62293",
-      "issue": 1488
-    },
-    "finish:fae20484-5879-4fe4-adc1-b808cc35769f": {
-      "digest": "dc539e57242b18e886d83d15650bc75c9900f656238b6cb76ac16bf522d6a03f",
-      "issue": 1488
-    },
-    "finish:82882a7e-3068-4c59-9dba-488d2ba4366d": {
-      "digest": "f1b9f949ac00b0aec3ef5e2444277bd4c224280b2dfbe1df8f7639f93c0435cd",
-      "issue": 1488
-    },
-    "finish:bf76e2ed-eec7-4d2b-8d4b-0a5426a17ebf": {
-      "digest": "072ee70409b05ba9ea1d169fd8f499df1b99330e3e91ddb0e674c99ca898a5dd",
-      "issue": 1488
-    },
-    "finish:742d8811-7dc0-4217-8c6c-ade55032123c": {
-      "digest": "0db8915fd12a4a1c361d9b4ffeff56c8cb1ce94226c7d3528eaece9662b738f6",
-      "issue": 1488
-    },
-    "finish:2cc7efa7-6f5c-425b-9db5-558e80e8efca": {
-      "digest": "65620668bf91fbecee252ddbd89508923deb29a9ff429607e51442bd9e29c5f5",
-      "issue": 1488
-    },
-    "finish:fc42c6d4-2f0c-4c25-aa48-08a0efa44a51": {
-      "digest": "fbdd39800e7ddb13ff585920b47831b30e0abbf00cb6574c2f2b4b58c4bea991",
-      "issue": 1488
-    },
-    "finish:2d7da9f4-e4d6-4978-aee0-dbf6323cefdd": {
-      "digest": "e7ba7dac3297c098742b86bd138cb82856e66707cb162d1b63aba8d9cfd120a9",
-      "issue": 1488
-    },
-    "finish:361d58d9-ac15-4ae8-8b00-e0e30c62632e": {
-      "digest": "db810c133d9ef1c617e2f71caee3e5b7cd38ba0730477d0dd7a8391de62d0ab4",
-      "issue": 1488
-    },
-    "finish:e84cf3ae-c701-40cb-9df3-5f43c690071d": {
-      "digest": "658b434d59b9b1bf87ccc27aa622fb13b49ce86970adb4563ec315b0e30b7965",
-      "issue": 1488
-    },
-    "finish:67dcc7ee-96a5-4bbd-91cc-c52527816575": {
-      "digest": "8c8d3cbbe24566198246121aff051b85c25f3f3d7d6c06448a4c0bfce620210d",
-      "issue": 1488
-    },
-    "finish:9a90c2bd-fd52-4da7-9e16-def763d10114": {
-      "digest": "ece737566571d23671269bd691ca4b8cc1dd35f7d490d90411b64b3742a28939",
-      "issue": 1488
-    },
-    "release-return-finish:a36e2977-a455-4994-a2f5-64c692da3a84:finish:3:s6-complete": {
-      "digest": "5364f25b4f2fb4d6979a2992aec49d67c2c5e9443c783211d151a73a94738b53",
-      "issue": 1488
-    },
-    "finish:0996db03-5fe7-4613-846b-cad56e5b6ab7": {
-      "digest": "d5542495d2af8cf38bc66090b8a64928ba5cdbd0749d1bbbea69ea15b12a1037",
-      "issue": 1488
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
