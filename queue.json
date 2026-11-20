@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16920,
+  "revision": 16921,
   "nextTicket": 544,
   "nextFence": 544,
   "tasks": {
@@ -6203,6 +6203,10 @@
       "digest": "ba9b582554918994046739ace8144f89e6a9129165029ff53ba222cbd9aa7d02",
       "issue": 1478
     },
+    "github:44650059759:1:completions:message:f249a8605657644954cd449cb3239c4721547c47409f32b6ad93015fafe3a502": {
+      "digest": "80b1ff5bf7243093c3d5d6e842aa2602e49e152fe62917246434bd9525858b62",
+      "issue": 1478
+    },
     "github:44567305558:1:label:spec-request:spec-resubmitted:1478": {
       "digest": "26b88ce75a52e974684590bab2e22abfcac675f43a2c17bc4845dcfa6f1e24bb",
       "issue": 1478,
@@ -6332,7 +6336,8 @@
           "entry": 2,
           "detail": "Браузер: approved ui 1207: failed; Браузер: room metrics alignment: failed; Браузер: settings polish 955: failed; Браузер: stair arrival: failed; Браузер: svg export: failed; Браузер: ui polish 963 reference: failed",
           "eventId": "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:3:return:return:1478"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1": {
