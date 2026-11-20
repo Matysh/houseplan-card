@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18301,
-  "nextTicket": 569,
+  "revision": 18302,
+  "nextTicket": 570,
   "nextFence": 569,
   "tasks": {
     "1024": {
@@ -5370,6 +5370,20 @@
       "devBuild": {
         "status": "pending"
       }
+    },
+    "1499": {
+      "issue": 1499,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1499-fit-zoom-badge",
+      "materialSha": "f073d89e52438d84f3a149743d735392b46d6145",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 569,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795200980384,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5865,7 +5879,9 @@
       "runId": 44795149057
     }
   },
-  "waiting": [],
+  "waiting": [
+    1499
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5935,6 +5951,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:79690b9e-36de-41a7-a83a-0cf9b600ca2c": {
+      "digest": "4829aa9c19c6d8cc4051605940f7e7de2048171c5ebacb1c1946dc234d28d01c",
+      "issue": 1499,
+      "message": {
+        "kind": "queued",
+        "issue": 1499,
+        "at": 1795200980384,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "f073d89e52438d84f3a149743d735392b46d6145"
       }
     }
   },
