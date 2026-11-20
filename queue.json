@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18055,
+  "revision": 18056,
   "nextTicket": 564,
   "nextFence": 564,
   "tasks": {
@@ -5244,6 +5244,105 @@
         "at": 1795191832144,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1492,
+        "requestId": "review:1492:1:50a3ab86deeb176cfcb8f7f4c1167fca9d9564e4:e322c679addbb6b28277410d945db0a2bfc8e6b6",
+        "kind": "code",
+        "base": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
+        "materialSha": "31b6052234aed5e6d7160ec7fe08844f221fc135",
+        "patchId": "50a3ab86deeb176cfcb8f7f4c1167fca9d9564e4",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1492,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1492",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Оба сбежавших мутанта разобраны по существу, исправления подходят под их причины. Для `stage3-w8-material-defs-created-per-face` не хватало свидетеля среди перенесённых unit-guard: добавлен детерминированный unit-тест. Он проверяет, что общие SVG-определения материалов стен встречаются ровно один раз при нескольких гранях. `vacuum-trail-double-camera-owner` стал эквивалентным мутантом после рефакторинга `findViewportNodes` в b60b227ca: camera-SVG внутри marker layer теперь сам по себе считается inherited, поэтому старая подмена атрибута больше не воспроизводит баг. Мутант переписан на точку, где реально возникает вторая live-проекция: inherited-маршрут попадает в `cameraLayers`. Блокеров нет. Ограничение одно: в материалах нет прямого результата `mutation-gate` по двум id. Квитанция S6 говорит только об успешном наборе тестов перед ревью, а вывод «мутанты краснеют» сделан по исходникам.",
+          "understanding": "Проблема: ночной шард 2/7 мутационного набора нашёл два мутанта, на которых guard остался зелёным.\n1) `stage3-w8-material-defs-created-per-face` добавляет `renderIsoDefs(layers, 'walls', cellCm)` в шаблон каждой грани `iso-wall-side`. По таблице `unitGuard` (scripts/mutation-registry.mjs:18778–18781) его guard — `test/iso-scene-render.test.mjs` + `test/iso-stage6.test.mjs`, а не браузерный smoke из `guard`. В этих unit-тестах не было проверки, что определения материалов не дублируются по граням.\n2) `vacuum-trail-double-camera-owner` раньше заменял в `src/houseplan-card.ts` атрибут `.vactrail` с `data-hp-live-inherited-scene=\"camera\"` на `data-hp-live-viewbox=\"camera\"`. `.vactrail` рисуется внутри `.devlayer[data-hp-live-layer=\"camera\"]` (houseplan-card.ts:13850, 13865, 14561). После b60b227ca `findViewportNodes` исключает camera-SVG внутри marker layer из `camera` (live-viewport.ts:196–197) и добавляет их в `inherited` (210–211). Поэтому для `paintLiveViewport` старая мутация почти эквивалентна оригиналу, и это объясняет «сбежавший» мутант.\n\nПосле изменения:\n- новый тест `#1492 wall faces share one set of SVG material definitions` вызывает `renderIsoWalls` на двух стенах и обходит Lit-фрагменты, включая вложенные значения. Он требует, чтобы граней было больше одной, а id с `data-hp-iso-material-def` были ровно `hp-iso-wall-side`, `hp-iso-wall-texture`, `hp-iso-wall-top`;\n- мутант 2 теперь патчит `src/live-viewport.ts:198`: в `cameraLayers` попадают и узлы `[data-hp-live-inherited-scene=\"camera\"]`, поэтому `setLayerProjection` пишет `transform` прямо на `.vactrail` поверх проекции marker layer или surface. Это и есть двойная проекция из #871.\n\nРазобранные пути: `findViewportNodes` / `paintLiveViewport` (live-viewport.ts:194–445), `_rebaseModeHtml` (houseplan-card.ts:2089–2109), рендер `.vactrail`, `renderIsoDefs` / `renderIsoStructure` (iso-scene-render.ts:190–417), проверки `demo/smoke_vacuum_camera.mjs` (`noDoubleCamera`, `landmarks`).",
+          "analysis": [
+            {
+              "topic": "Причина побега мутанта vacuum-trail-double-camera-owner и выбор новой точки мутации",
+              "assessment": "Диагноз верный: старая мутация стала эквивалентной из-за рефакторинга, а не из-за ослабления свидетеля. Если бы её оставили, она так и висела бы как ложный сигнал. Новая мутация бьёт ровно в инвариант #871: у inherited-маршрута не должно быть собственного владельца камеры. Патч находит уникальную строку и после замены остаётся корректным TS. Spread `NodeListOf` уже используется в строке 210, `closest('[data-hp-live-scene=\"camera\"]')` для `.vactrail` вернёт null, и узел станет отдельным camera layer. Во время жеста `setLayerProjection` запишет `style.transform` на `.vactrail`. Именно это проверяет `noDoubleCamera` (`e.samples.every(s=>!s.sceneTransform)`), а смещённая геометрия должна дополнительно уронить `landmarks`.",
+              "evidence": "src/live-viewport.ts:196–199, 210–211, 335–341, 425–435; src/houseplan-card.ts:13850/13865/14561; demo/smoke_vacuum_camera.mjs:110, 123, 127; blame строк 196–197/210–211 — b60b227ca (2026-11-19)."
+            },
+            {
+              "topic": "Новый свидетель для stage3-w8-material-defs-created-per-face",
+              "assessment": "Тест детерминированный, быстрый, и проверяет инвариант W8 «O(1) определений на сцену», а не детали форматирования. Под мутантом каждая грань `iso-wall-side`, отрисованная через `paintEntry` в `iso-wall-side-fill`, получит ещё три id, и `deepEqual` упадёт. Отдельная проверка `class=\"iso-wall-side\"` > 1 защищает от вырождения фикстуры, при котором тест стал бы бессильным, — это удачное решение. Регулярка `class=\"iso-wall-side\"` с закрывающей кавычкой не цепляет `iso-wall-side-fill`. При `ISO_LAB_OPENINGS = true` грани по-прежнему рисуются через `paintEntry` (строка 392), так что мутированная строка действительно исполняется.",
+              "evidence": "test/iso-scene-render.test.mjs (новый тест после строки 800); src/iso-scene-render.ts:196–221, 347–349, 374–375, 389–393; src/iso-lab-camera.ts:25; scripts/mutation-registry.mjs:15212–15221, 18778–18781."
+            },
+            {
+              "topic": "Ручной обход Lit-фрагментов в тесте",
+              "assessment": "`staticSvg` склеивает `strings` и рекурсивно `values`. Для `nothing` и примитивных значений возвращается пустая строка, поэтому атрибуты-значения (например `d=${face.d}`) теряются, но статические id материалов остаются в `strings` и находятся. Для этой проверки этого достаточно. Есть хрупкость: если id определений станут динамическими (`id=${...}`), тест молча найдёт ноль id и упадёт уже на исходном коде, а не останется ложно-зелёным. Это приемлемый режим отказа.",
+              "evidence": "Новый тест, функция `staticSvg`; src/iso-scene-render.ts:198, 201, 204."
+            },
+            {
+              "topic": "Остаточная разница старой мутации",
+              "assessment": "Старая подмена атрибута не была эквивалентна полностью: `_rebaseModeHtml` переписывает viewBox только у `[data-hp-live-inherited-scene=\"camera\"]`, поэтому при смене режима вне жеста у `.vactrail` перестал бы обновляться viewBox. `smoke_vacuum_camera.mjs` эти переходы не проверяет, так что для заявленного guard замена мутанта правильная. Этот путь просто остаётся без мутационного покрытия; к задаче он не относится.",
+              "evidence": "src/houseplan-card.ts:2103–2106."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Приложить к задаче или в следующий прогон короткий результат `node scripts/mutation-gate.mjs --id=stage3-w8-material-defs-created-per-face` и `--id=vacuum-trail-double-camera-owner`. По исходникам оба мутанта должны краснеть, но прямое подтверждение снимет вопрос дёшево, не дожидаясь ночного шарда.",
+            "В `because` мутанта 2 стоит явно сказать, почему точка перенесена: «camera-SVG внутри marker layer уже трактуется как inherited (b60b227ca), поэтому подмена атрибута эквивалентна». Без этого следующий читатель может вернуть старую, более «естественную» мутацию."
+          ],
+          "boundaries": "Изучено по исходникам на head 31b6052: diff, `src/live-viewport.ts` (findViewportNodes, paintLiveViewport), рендер `.vactrail` и `_rebaseModeHtml` в `src/houseplan-card.ts`, `src/iso-scene-render.ts` (renderIsoDefs, renderIsoStructure), `demo/smoke_vacuum_camera.mjs`, таблица unitGuard в `scripts/mutation-registry.mjs`, blame live-viewport.ts. Сам я ничего не запускал: ни тесты, ни mutation-gate, ни сборку. Из S6 есть только квитанция 20261120T162108252-4f40f584 «Тесты для задачи #1492 (перед ревью)» со статусом passed и без отказов. Её состав мне не виден, поэтому не могу утверждать, что в неё входили прогоны мутантов. Вывод, что оба мутанта краснеют на guard, сделан по исходникам. Контекст исполнителя не предоставлен.",
+          "outsideFindings": []
+        },
+        "usage": {
+          "input_tokens": 32,
+          "cache_creation_input_tokens": 77950,
+          "cache_read_input_tokens": 725775,
+          "output_tokens": 10492,
+          "output_tokens_details": {
+            "thinking_tokens": 3998
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 77950,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 905,
+              "cache_read_input_tokens": 71082,
+              "cache_creation_input_tokens": 11072,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 11072
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nОба сбежавших мутанта разобраны по существу, исправления подходят под их причины. Для `stage3-w8-material-defs-created-per-face` не хватало свидетеля среди перенесённых unit-guard: добавлен детерминированный unit-тест. Он проверяет, что общие SVG-определения материалов стен встречаются ровно один раз при нескольких гранях. `vacuum-trail-double-camera-owner` стал эквивалентным мутантом после рефакторинга `findViewportNodes` в b60b227ca: camera-SVG внутри marker layer теперь сам по себе считается inherited, поэтому старая подмена атрибута больше не воспроизводит баг. Мутант переписан на точку, где реально возникает вторая live-проекция: inherited-маршрут попадает в `cameraLayers`. Блокеров нет. Ограничение одно: в материалах нет прямого результата `mutation-gate` по двум id. Квитанция S6 говорит только об успешном наборе тестов перед ревью, а вывод «мутанты краснеют» сделан по исходникам.\n\n## Понимание решения\n\nПроблема: ночной шард 2/7 мутационного набора нашёл два мутанта, на которых guard остался зелёным.\n1) `stage3-w8-material-defs-created-per-face` добавляет `renderIsoDefs(layers, 'walls', cellCm)` в шаблон каждой грани `iso-wall-side`. По таблице `unitGuard` (scripts/mutation-registry.mjs:18778–18781) его guard — `test/iso-scene-render.test.mjs` + `test/iso-stage6.test.mjs`, а не браузерный smoke из `guard`. В этих unit-тестах не было проверки, что определения материалов не дублируются по граням.\n2) `vacuum-trail-double-camera-owner` раньше заменял в `src/houseplan-card.ts` атрибут `.vactrail` с `data-hp-live-inherited-scene=\"camera\"` на `data-hp-live-viewbox=\"camera\"`. `.vactrail` рисуется внутри `.devlayer[data-hp-live-layer=\"camera\"]` (houseplan-card.ts:13850, 13865, 14561). После b60b227ca `findViewportNodes` исключает camera-SVG внутри marker layer из `camera` (live-viewport.ts:196–197) и добавляет их в `inherited` (210–211). Поэтому для `paintLiveViewport` старая мутация почти эквивалентна оригиналу, и это объясняет «сбежавший» мутант.\n\nПосле изменения:\n- новый тест `#1492 wall faces share one set of SVG material definitions` вызывает `renderIsoWalls` на двух стенах и обходит Lit-фрагменты, включая вложенные значения. Он требует, чтобы граней было больше одной, а id с `data-hp-iso-material-def` были ровно `hp-iso-wall-side`, `hp-iso-wall-texture`, `hp-iso-wall-top`;\n- мутант 2 теперь патчит `src/live-viewport.ts:198`: в `cameraLayers` попадают и узлы `[data-hp-live-inherited-scene=\"camera\"]`, поэтому `setLayerProjection` пишет `transform` прямо на `.vactrail` поверх проекции marker layer или surface. Это и есть двойная проекция из #871.\n\nРазобранные пути: `findViewportNodes` / `paintLiveViewport` (live-viewport.ts:194–445), `_rebaseModeHtml` (houseplan-card.ts:2089–2109), рендер `.vactrail`, `renderIsoDefs` / `renderIsoStructure` (iso-scene-render.ts:190–417), проверки `demo/smoke_vacuum_camera.mjs` (`noDoubleCamera`, `landmarks`).\n\n## Разбор решения\n\n### Причина побега мутанта vacuum-trail-double-camera-owner и выбор новой точки мутации\n\nДиагноз верный: старая мутация стала эквивалентной из-за рефакторинга, а не из-за ослабления свидетеля. Если бы её оставили, она так и висела бы как ложный сигнал. Новая мутация бьёт ровно в инвариант #871: у inherited-маршрута не должно быть собственного владельца камеры. Патч находит уникальную строку и после замены остаётся корректным TS. Spread `NodeListOf` уже используется в строке 210, `closest('[data-hp-live-scene=\"camera\"]')` для `.vactrail` вернёт null, и узел станет отдельным camera layer. Во время жеста `setLayerProjection` запишет `style.transform` на `.vactrail`. Именно это проверяет `noDoubleCamera` (`e.samples.every(s=>!s.sceneTransform)`), а смещённая геометрия должна дополнительно уронить `landmarks`.\n\nОснование: src/live-viewport.ts:196–199, 210–211, 335–341, 425–435; src/houseplan-card.ts:13850/13865/14561; demo/smoke_vacuum_camera.mjs:110, 123, 127; blame строк 196–197/210–211 — b60b227ca (2026-11-19).\n\n### Новый свидетель для stage3-w8-material-defs-created-per-face\n\nТест детерминированный, быстрый, и проверяет инвариант W8 «O(1) определений на сцену», а не детали форматирования. Под мутантом каждая грань `iso-wall-side`, отрисованная через `paintEntry` в `iso-wall-side-fill`, получит ещё три id, и `deepEqual` упадёт. Отдельная проверка `class=\"iso-wall-side\"` > 1 защищает от вырождения фикстуры, при котором тест стал бы бессильным, — это удачное решение. Регулярка `class=\"iso-wall-side\"` с закрывающей кавычкой не цепляет `iso-wall-side-fill`. При `ISO_LAB_OPENINGS = true` грани по-прежнему рисуются через `paintEntry` (строка 392), так что мутированная строка действительно исполняется.\n\nОснование: test/iso-scene-render.test.mjs (новый тест после строки 800); src/iso-scene-render.ts:196–221, 347–349, 374–375, 389–393; src/iso-lab-camera.ts:25; scripts/mutation-registry.mjs:15212–15221, 18778–18781.\n\n### Ручной обход Lit-фрагментов в тесте\n\n`staticSvg` склеивает `strings` и рекурсивно `values`. Для `nothing` и примитивных значений возвращается пустая строка, поэтому атрибуты-значения (например `d=${face.d}`) теряются, но статические id материалов остаются в `strings` и находятся. Для этой проверки этого достаточно. Есть хрупкость: если id определений станут динамическими (`id=${...}`), тест молча найдёт ноль id и упадёт уже на исходном коде, а не останется ложно-зелёным. Это приемлемый режим отказа.\n\nОснование: Новый тест, функция `staticSvg`; src/iso-scene-render.ts:198, 201, 204.\n\n### Остаточная разница старой мутации\n\nСтарая подмена атрибута не была эквивалентна полностью: `_rebaseModeHtml` переписывает viewBox только у `[data-hp-live-inherited-scene=\"camera\"]`, поэтому при смене режима вне жеста у `.vactrail` перестал бы обновляться viewBox. `smoke_vacuum_camera.mjs` эти переходы не проверяет, так что для заявленного guard замена мутанта правильная. Этот путь просто остаётся без мутационного покрытия; к задаче он не относится.\n\nОснование: src/houseplan-card.ts:2103–2106.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Приложить к задаче или в следующий прогон короткий результат `node scripts/mutation-gate.mjs --id=stage3-w8-material-defs-created-per-face` и `--id=vacuum-trail-double-camera-owner`. По исходникам оба мутанта должны краснеть, но прямое подтверждение снимет вопрос дёшево, не дожидаясь ночного шарда.\n- В `because` мутанта 2 стоит явно сказать, почему точка перенесена: «camera-SVG внутри marker layer уже трактуется как inherited (b60b227ca), поэтому подмена атрибута эквивалентна». Без этого следующий читатель может вернуть старую, более «естественную» мутацию.\n\n## Границы анализа\n\nИзучено по исходникам на head 31b6052: diff, `src/live-viewport.ts` (findViewportNodes, paintLiveViewport), рендер `.vactrail` и `_rebaseModeHtml` в `src/houseplan-card.ts`, `src/iso-scene-render.ts` (renderIsoDefs, renderIsoStructure), `demo/smoke_vacuum_camera.mjs`, таблица unitGuard в `scripts/mutation-registry.mjs`, blame live-viewport.ts. Сам я ничего не запускал: ни тесты, ни mutation-gate, ни сборку. Из S6 есть только квитанция 20261120T162108252-4f40f584 «Тесты для задачи #1492 (перед ревью)» со статусом passed и без отказов. Её состав мне не виден, поэтому не могу утверждать, что в неё входили прогоны мутантов. Вывод, что оба мутанта краснеют на guard, сделан по исходникам. Контекст исполнителя не предоставлен.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: e322c679addbb6b28277410d945db0a2bfc8e6b6 → 31b6052234aed5e6d7160ec7fe08844f221fc135\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-20T16:26:42.451Z",
+        "artifactId": 14647439552,
+        "runId": 44772961672,
+        "runAttempt": 1,
+        "completedAt": "2026-11-20T16:26:47Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44772961672",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "e322c679addbb6b28277410d945db0a2bfc8e6b6"
       }
     },
     "1493": {
@@ -5786,9 +5885,9 @@
     "fence": 563,
     "materialSha": "31b6052234aed5e6d7160ec7fe08844f221fc135",
     "expectedBase": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1795191655726,
-    "expiresAt": 1795195409109,
+    "expiresAt": 1795195630278,
     "patchId": "50a3ab86deeb176cfcb8f7f4c1167fca9d9564e4",
     "reviewRequest": "review:1492:1:50a3ab86deeb176cfcb8f7f4c1167fca9d9564e4:e322c679addbb6b28277410d945db0a2bfc8e6b6"
   },
@@ -5871,6 +5970,10 @@
     },
     "github:44773476696:1:tick:0:review-presentation": {
       "digest": "c726303aef1cf4baaa890e7e91eb495f6b1b152013244e13db35a675aad324a6",
+      "issue": 1492
+    },
+    "github:44773476696:1:tick:0:review-complete": {
+      "digest": "bbc9649bdff75e3e5679ae980e8e03cb5367a710814eac2c6dff58e3c793ea54",
       "issue": 1492
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
