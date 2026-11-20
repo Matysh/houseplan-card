@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18451,
-  "nextTicket": 573,
+  "revision": 18452,
+  "nextTicket": 574,
   "nextFence": 573,
   "tasks": {
     "1024": {
@@ -5490,6 +5490,20 @@
       "devBuild": {
         "status": "pending"
       }
+    },
+    "1501": {
+      "issue": 1501,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1501-stage6-isolation",
+      "materialSha": "5ff404df4ce3a8d8cdb20ddf79fb45e2cc0c6efe",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 573,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795202980384,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5985,7 +5999,9 @@
       "runId": 44801882533
     }
   },
-  "waiting": [],
+  "waiting": [
+    1501
+  ],
   "active": {
     "issue": 1495,
     "worker": "github-coordinator",
@@ -6215,6 +6231,19 @@
         "layer": "product",
         "materialSha": "5b93fe660a1b4d090a77c7588b9d0ffd9ed9a12c",
         "phase": "sync"
+      }
+    },
+    "finish:71ea07fb-006d-4e15-ab34-92c0bac0dc15": {
+      "digest": "d7d4d16a4f48d71c803e3c3dda83bf5f85554cf2bedad393047f5274dc55c5d3",
+      "issue": 1501,
+      "message": {
+        "kind": "queued",
+        "issue": 1501,
+        "at": 1795202980384,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "5ff404df4ce3a8d8cdb20ddf79fb45e2cc0c6efe"
       }
     }
   },
