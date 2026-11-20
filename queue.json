@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18692,
+  "revision": 18693,
   "nextTicket": 577,
   "nextFence": 577,
   "tasks": {
@@ -5549,6 +5549,15 @@
         "entry": 1,
         "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
         "eventId": "finish:1e1b7423-0b0e-4f9e-ad71-d5cbdbe2f69f:finish:3:return:return:1503"
+      },
+      "s6": {
+        "id": "20261120T214856051-eab8f5db",
+        "name": "Тесты для задачи #1503 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-stable-audit-1860-beta3/.git/process-next/runs/20261120T214856051-eab8f5db/report.json",
+        "materialSha": "c4cb576ca6e1e19b6836fb3863657e174d174877",
+        "status": "passed",
+        "finishedAt": "2026-11-20T21:49:17.179Z",
+        "failures": []
       }
     }
   },
@@ -6039,9 +6048,9 @@
     "fence": 576,
     "materialSha": "c4cb576ca6e1e19b6836fb3863657e174d174877",
     "expectedBase": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795211323212,
-    "expiresAt": 1795211630357,
+    "expiresAt": 1795214958289,
     "patchId": "92d6e0a21da8e65434c41ba6b4f7b83cb30fbe78"
   },
   "events": {
@@ -6119,6 +6128,10 @@
     },
     "github:44823480295:1:completions:message:78eaf421b95cefb63847d86bc3b7a16efbe341dd562f1cff0158a4038686181e": {
       "digest": "5dbe1cb976129457af59a8e9ec2dc6a39f4af6081e261a5d3f6c8fef21fe4a11",
+      "issue": 1503
+    },
+    "finish:fc471e1d-1f56-40be-921d-10cbea12729f:finish:3:s6-complete": {
+      "digest": "fd1d836f8fdcb24591ba5ac4e03c2f7411a79260a903407e1df2a5e5044b2ed4",
       "issue": 1503
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
