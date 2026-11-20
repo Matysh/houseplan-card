@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17859,
+  "revision": 17860,
   "nextTicket": 561,
   "nextFence": 561,
   "tasks": {
@@ -5255,7 +5255,18 @@
         "src/iso-raster-source.ts",
         "src/live-viewport.ts",
         "src/styles/plan.styles.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795174253782,
+        "entry": 1,
+        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
+        "eventId": "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:2:return:return:1489"
+      }
     },
     "1490": {
       "issue": 1490,
@@ -5799,18 +5810,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1489,
-    "worker": "github-coordinator",
-    "token": "560:github:44727185591:1:tick:2:admit",
-    "fence": 560,
-    "materialSha": "ed66b74e43f7393a0e653f64ecaacbfb6908424d",
-    "expectedBase": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-    "phase": "testing",
-    "admittedAt": 1795173836849,
-    "expiresAt": 1795174550331,
-    "patchId": "d058ae45e10745be7c59de29f2834b4cd4c8bce2"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5896,6 +5896,10 @@
       "digest": "c9e6478bda2569bedc30b49d4d7d50fe2aca1c2c0188bde89e8d0920f00cc395",
       "issue": 1489
     },
+    "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:2:return": {
+      "digest": "83a5d919275fb66e4a555d6e08679a76977eeefbf52fa94caadea539023c33e6",
+      "issue": 1489
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -5952,6 +5956,26 @@
         "materialSha": "230756c2e3afe2c71ab2ace1db597835721ff3b0",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:2:return:return:1489": {
+      "digest": "83a5d919275fb66e4a555d6e08679a76977eeefbf52fa94caadea539023c33e6",
+      "issue": 1489,
+      "message": {
+        "kind": "return",
+        "issue": 1489,
+        "at": 1795174253782,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795174253782,
+          "entry": 1,
+          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
+          "eventId": "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:2:return:return:1489"
+        }
       }
     }
   },
