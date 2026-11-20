@@ -13,6 +13,12 @@ interface Surface {
   revision?: number;
 }
 
+interface RasterHandoff {
+  layer: HTMLElement;
+  incoming: Animation;
+  outgoing: Animation;
+}
+
 interface RasterSession {
   scene: SVGSVGElement;
   surface: HTMLElement;
@@ -27,6 +33,7 @@ interface RasterSession {
   view: LiveViewBox;
   vector: IsoRasterFrame;
   input?: IsoRasterInput;
+  handoff?: RasterHandoff;
   failed: boolean;
   sunFading?: boolean;
   revision: number;
@@ -38,6 +45,14 @@ interface RasterSession {
   requested?: IsoRasterFrame;
   newestTarget?: { view: LiveViewBox; at: number };
   prepared?: { frame: IsoRasterFrame; bitmap: ImageBitmap; revision: number };
+}
+
+const rasterHandoffMs = 200;
+
+function rasterInkChanged(scene: SVGSVGElement, records: MutationRecord[]): boolean {
+  return records.some(({ target, attributeName }) =>
+    (target !== scene || attributeName !== 'viewBox') &&
+    !(target instanceof Element && target.matches(isoRasterHoverSelector)));
 }
 
 const samePose = (a: LiveViewBox, b: LiveViewBox) =>
@@ -139,9 +154,7 @@ export class IsoCameraRaster {
     const underlay = makeSurface(doc, 'hp-iso-gesture-underlay');
     if (!sceneImage || !underlay) { this.unsupported = doc; return; }
     const observer = new MutationObserver(records => {
-      if (records.some(({ target, attributeName }) =>
-        (target !== scene || attributeName !== 'viewBox') &&
-        !(target instanceof Element && target.matches(isoRasterHoverSelector)))) this.invalidate(session);
+      if (rasterInkChanged(scene, records)) this.invalidate(session);
     });
     const session: RasterSession = {
       scene, surface, stage, win, limits, authority, styleKey, observer, sceneImage, underlay,
@@ -157,10 +170,13 @@ export class IsoCameraRaster {
     if (!session) return;
     if (!session.input && samePose(view, session.view) && samePose(coverage, session.vector.bounds)) return;
     session.view = view;
-    session.vector = vectorFrame(view, coverage, session.limits);
-    session.requested = session.forecast = session.newestTarget = undefined;
+    session.requested = undefined;
     session.job?.abort();
-    this.pause();
+    // The exact commit can change scale-dependent scene ink. Rebuild future
+    // snapshots for that revision, while the current image finishes its job.
+    if (rasterInkChanged(session.scene, session.observer.takeRecords())) this.invalidate(session);
+    if (!this.beginHandoff(session)) this.pause();
+    session.vector = vectorFrame(view, coverage, session.limits);
     this.queue(session);
   }
 
@@ -171,13 +187,15 @@ export class IsoCameraRaster {
   }
 
   public get hasActiveImage(): boolean {
-    return this.session?.sceneImage.canvas.isConnected === true;
+    const session = this.session;
+    return !!session?.input && session.sceneImage.canvas.isConnected;
   }
 
   public paint(view: LiveViewBox, target: LiveViewBox, input: IsoRasterInput, anchor: LiveViewBox,
     coverage: LiveViewBox): void {
     const session = this.session;
     if (!session || session.failed) return;
+    this.endHandoff(session);
     session.view = view;
     if (!session.input) session.vector = vectorFrame(anchor, coverage, session.limits);
     session.input = input;
@@ -194,7 +212,7 @@ export class IsoCameraRaster {
   }
 
   private queue(session: RasterSession): void {
-    if (this.session !== session || session.failed || session.sunFading || session.timer !== undefined ||
+    if (this.session !== session || session.failed || session.sunFading || session.handoff || session.timer !== undefined ||
         session.surface.hasAttribute('data-hp-light-mixing')) return;
     session.timer = session.win.setTimeout(() => {
       session.timer = undefined;
@@ -230,7 +248,7 @@ export class IsoCameraRaster {
   }
 
   private async prepare(session: RasterSession): Promise<void> {
-    if (this.session !== session || !session.scene.isConnected || session.failed) return;
+    if (this.session !== session || !session.scene.isConnected || session.failed || session.handoff) return;
     if (!session.source) {
       const sun = session.scene.querySelector('.iso-sunwash');
       const fades = sun?.getAnimations().filter(fade => fade.pending || fade.playState === 'running');
@@ -373,8 +391,61 @@ export class IsoCameraRaster {
     } else sceneImage.canvas.remove();
   }
 
+  private beginHandoff(session: RasterSession): boolean {
+    const { scene, surface, sceneImage, underlay, win } = session;
+    if (!session.input || session.input === 'pan' || !sceneImage.canvas.isConnected ||
+        win.matchMedia('(prefers-reduced-motion: reduce)').matches || !CSS.supports('mix-blend-mode', 'plus-lighter')) {
+      return false;
+    }
+    // Map the cached image and its edge reserve onto the exact final camera
+    // before showing the two endpoints together.
+    this.display(session);
+    if (!sceneImage.canvas.isConnected) return false;
+
+    const layer = scene.ownerDocument.createElement('div');
+    layer.className = 'hp-iso-raster-handoff';
+    layer.inert = true;
+    layer.setAttribute('aria-hidden', 'true');
+    if (underlay.canvas.isConnected) layer.append(underlay.canvas);
+    layer.append(sceneImage.canvas);
+    surface.append(layer);
+    surface.setAttribute('data-hp-raster-handoff', '');
+    surface.removeAttribute('data-hp-raster-display');
+    this.resetInput(session);
+    const timing: KeyframeAnimationOptions = { duration: rasterHandoffMs, easing: 'ease-out', fill: 'both' };
+    const incoming = scene.animate([{ opacity: 0 }, { opacity: 1 }], timing);
+    const outgoing = layer.animate([{ opacity: 1 }, { opacity: 0 }], timing);
+    session.handoff = { layer, incoming, outgoing };
+    performance.mark('houseplan.iso.raster.handoff');
+    outgoing.onfinish = () => {
+      if (session.handoff?.outgoing !== outgoing) return;
+      this.endHandoff(session);
+      this.queue(session);
+    };
+    return true;
+  }
+
+  private endHandoff(session: RasterSession): void {
+    const handoff = session.handoff;
+    if (!handoff) return;
+    session.handoff = undefined;
+    handoff.layer.remove();
+    handoff.incoming.cancel();
+    handoff.outgoing.cancel();
+    session.surface.removeAttribute('data-hp-raster-handoff');
+    performance.mark('houseplan.iso.raster.release');
+  }
+
+  private resetInput(session: RasterSession): void {
+    session.input = undefined;
+    session.newestTarget = session.forecast = undefined;
+    session.prepared?.bitmap.close();
+    session.prepared = undefined;
+  }
+
   private invalidate(session: RasterSession): void {
     if (this.session !== session) return;
+    this.endHandoff(session);
     session.revision++;
     session.source = undefined;
     session.requested = undefined;
@@ -388,10 +459,8 @@ export class IsoCameraRaster {
   public pause(lightMix = false): void {
     const session = this.session;
     if (!session) return;
-    session.input = undefined;
-    session.newestTarget = session.forecast = undefined;
-    session.prepared?.bitmap.close();
-    session.prepared = undefined;
+    this.endHandoff(session);
+    this.resetInput(session);
     if (session.surface.hasAttribute('data-hp-raster-display')) session.surface.removeAttribute('data-hp-raster-display');
     if (session.surface.style.getPropertyValue('--hp-iso-gesture-blur'))
       session.surface.style.removeProperty('--hp-iso-gesture-blur');

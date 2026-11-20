@@ -470,9 +470,11 @@ const frameOf = (host: LiveViewportHost, view = host._viewOr(host._baseVb())): L
 
 function rasterScene(host: LiveViewportHost, state: LiveViewportState): SVGSVGElement | undefined {
   const svg = state.nodes?.camera[0] as SVGSVGElement | undefined;
+  const surface = svg?.parentElement;
   if (host._renderProjection === 'iso' && !host._modeSceneClip && svg &&
       svg.matches('.iso-scene-surface > svg[data-projection="iso"]:not([data-hp-retained-light])') &&
-      svg.parentElement?.childElementCount === 1 && !svg.parentElement.hasAttribute('data-hp-light-mixing') && svg.closest('.stage.mode-view:not(.mode-transition)')) {
+      surface && surface.childElementCount === (surface.hasAttribute('data-hp-raster-handoff') ? 2 : 1) &&
+      !surface.hasAttribute('data-hp-light-mixing') && svg.closest('.stage.mode-view:not(.mode-transition)')) {
     return svg;
   }
 }

@@ -201,6 +201,13 @@ so the browser can paint the exact SVG at the new scale. A bitmap carries
 the settled sunlight without restarting its CSS animation. The live SVG
 continues to own the two-second fade across the solar threshold.
 
+After zoom, the precise commit exposes the SVG and blends it with the last
+bitmap at the same camera for 200 ms. The 300 ms target applies to the exact
+commit. The fade starts after that commit and has its own 200 ms duration.
+The scene uses complementary opacity and additive blending in isolation,
+with devices and labels above the blend. A new gesture cancels the fade.
+Reduced motion or an uncovered final view shows the exact frame immediately.
+
 Physical geometry and projected variants stay separate. The structural LRU
 remains bounded at eight entries; variants are keyed by saved quarter turns,
 not yaw. The fingerprint includes the physical source, camera/profile and

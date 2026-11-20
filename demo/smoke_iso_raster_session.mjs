@@ -96,6 +96,7 @@ try {
     check('the raster path returns during the same gesture', result.rasterAfterLight);
     check('the exact frame contains the new light state', result.finalLightMatches);
   }
+  await page.locator('houseplan-card .hp-iso-raster').first().waitFor({ state: 'detached' });
   check('the exact frame releases the attached raster', await page.locator('houseplan-card .hp-iso-raster').count(), 0);
   check('exact SVG is visible', await page.locator('houseplan-card .iso-scene-surface[data-hp-raster-display]').count(), 0);
   check('settled SVG does not retain the gesture transform hint', await page.locator(

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1493,
+  "baseStable": "v1.85.2",
+  "category": "line-fix",
+  "rationale": "Completes the raster zoom presentation introduced on the current 1.86 beta line.",
+  "summary": {
+    "ru": "После зума 2.5D плавно заменяет растровый кадр точным SVG за 200 мс.",
+    "en": "After 2.5D zoom, the exact SVG blends in over 200 ms."
+  }
+}

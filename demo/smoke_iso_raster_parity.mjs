@@ -141,5 +141,6 @@ async function checkLargeZoomSettles(page, stage) {
       Math.abs(box.width - w) < 1e-4 && Math.abs(box.height - h) < 1e-4;
   });
   check('a large zoom round trip restores the exact SVG without the scaling hint', exact);
+  await stage.locator('.hp-iso-raster').first().waitFor({ state: 'detached' });
   check('a settled large zoom shows no bitmap', await stage.locator('.hp-iso-raster').count(), 0);
 }

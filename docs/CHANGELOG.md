@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Blend the final 2.5D zoom bitmap into the exact SVG over 200 ms after the SVG is ready (#1493).
 - Keep 2.5D wall cuts opaque. The wall hatch opacity blends the cut colour with white (#1491).
 - Keep the day/night background during floor preparation and omit the simplified 2.5D loading silhouette while retaining cached geometry and camera hints (#1490).
 
