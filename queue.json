@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 17860,
-  "nextTicket": 561,
+  "revision": 17861,
+  "nextTicket": 562,
   "nextFence": 561,
   "tasks": {
     "1024": {
@@ -5235,14 +5235,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1489-iso-zoom-visual",
-      "materialSha": "ed66b74e43f7393a0e653f64ecaacbfb6908424d",
+      "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 560,
-      "queued": false,
+      "ticket": 561,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795173587176,
-      "reviewEntry": 1,
+      "readyAt": 1795174399656,
+      "reviewEntry": 2,
       "patchId": "d058ae45e10745be7c59de29f2834b4cd4c8bce2",
       "changedFiles": [
         "demo/smoke_iso_raster_parity.mjs",
@@ -5256,7 +5256,6 @@
         "src/live-viewport.ts",
         "src/styles/plan.styles.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5809,7 +5808,9 @@
       "runId": 44726760788
     }
   },
-  "waiting": [],
+  "waiting": [
+    1489
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5976,6 +5977,19 @@
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:2:return:return:1489"
         }
+      }
+    },
+    "finish:22a3df88-8668-4421-be32-3c8997a8f31a": {
+      "digest": "fc3adbf180e3af6be3dcc29ebb21a99bd6683b59dcf15280b9b314bf5f2d9dad",
+      "issue": 1489,
+      "message": {
+        "kind": "queued",
+        "issue": 1489,
+        "at": 1795174399656,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85"
       }
     }
   },
