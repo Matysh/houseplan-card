@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17035,
+  "revision": 17036,
   "nextTicket": 547,
   "nextFence": 547,
   "tasks": {
@@ -5248,7 +5248,8 @@
         "package.json",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "reason": "owner-stopped"
     }
   },
   "ownerDecisions": {},
@@ -5731,18 +5732,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1479,
-    "worker": "finish",
-    "token": "546:release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:1:admit",
-    "fence": 546,
-    "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
-    "expectedBase": "0ee3ec9b8c63e170dea24f8f24ca8d278e880f12",
-    "phase": "testing",
-    "admittedAt": 1795150048337,
-    "expiresAt": 1795150408608,
-    "patchId": "1479cded9be9f43c9102e60040037e34507e5e4b"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5778,6 +5768,10 @@
     },
     "finish:946c1672-d790-4bbe-bfe0-296f3e8f0650": {
       "digest": "145d6fa23a12cad09d9315a51c1ff9d994ad5e99e9e91b5751bf9f1ee0accfde",
+      "issue": 1479
+    },
+    "owner-stopped-beta3-return-1479-586f70394": {
+      "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
