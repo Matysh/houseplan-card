@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17294,
+  "revision": 17295,
   "nextTicket": 551,
   "nextFence": 551,
   "tasks": {
@@ -5246,7 +5246,16 @@
         "docs/TESTING.md",
         "docs/release-ledger/v1.85.0/1483.json",
         "src/mode-presentation.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261120T063234094-578221da",
+        "name": "Тесты для задачи #1483 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261120T063234094-578221da/report.json",
+        "materialSha": "b6676f11465eeaafdcd66cae36621acf6c339116",
+        "status": "passed",
+        "finishedAt": "2026-11-20T06:35:34.519Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5722,9 +5731,9 @@
     "fence": 550,
     "materialSha": "b6676f11465eeaafdcd66cae36621acf6c339116",
     "expectedBase": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795156339492,
-    "expiresAt": 1795156818498,
+    "expiresAt": 1795160135807,
     "patchId": "287819f10c018691ad490f8324431b2d6de099bd"
   },
   "events": {
@@ -5790,6 +5799,10 @@
     },
     "finish:b238fdb7-d411-46be-80b2-1ac0310cd067": {
       "digest": "c45b829e4c9f03949428414f97f5664efbef3189d41ab284bfd85f778fec7e65",
+      "issue": 1483
+    },
+    "finish:8bf7ad81-e499-431f-9d38-0af9845eb06b:finish:3:s6-complete": {
+      "digest": "64bebc5c811c9d901d1c37fad484cab450814ccc42da2078ae73a0ed72e0f3e4",
       "issue": 1483
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
