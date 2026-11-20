@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1031,
+  "revision": 1032,
   "active": "1.85.3-beta.3",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -131434,7 +131434,7 @@
         "sha": "586f70394437e34496566bff512737aa33f179e1",
         "requestId": "ship-review:2c531ee9adad2773888198e5a6fd0d9d1c6478354f111b4aad704cc5ae7731c5",
         "selectionDigest": "bf917b40dba0b598b68fb256852924d991a446b6af6b2fae1bccd14e2b54de8a",
-        "status": "pending",
+        "status": "not-required",
         "inventoryComplete": true
       }
     }
@@ -137094,7 +137094,8 @@
     "beta3-runner-51cf7cfad-9c4c1a56": "782f2bac24f916049f591cbe13150ad4c5152b7c9a0e06b83e62a0baf72404f9",
     "beta3-metrics-51cf7cfad-9c4c1a56": "c10baba2e1acdb19697eb2a16a661f70b8b747bd11085c0dc9ea72e10e6d2b06",
     "beta3-accepted-frames-586f70394": "6c72c0f85408eef001ddda889332dba987f38c0f990bae1498e3c75d5d9e2678",
-    "ship-review:prepare:38f98c64-9a3f-439b-af22-9e0409000cda": "210e265575121ee0a857771e4d68143562672e49c927ccaf8b523d937306f4d8"
+    "ship-review:prepare:38f98c64-9a3f-439b-af22-9e0409000cda": "210e265575121ee0a857771e4d68143562672e49c927ccaf8b523d937306f4d8",
+    "ship-review:result:e5613006-cc0f-4014-9b21-06e28b0ee87f": "95741e919753c06264fef317c8f11cc27933996385d3d4c0f5b9810533f4136b"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -153715,7 +153716,17 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "kind": "ship-batch",
+        "requestId": "ship-review:2c531ee9adad2773888198e5a6fd0d9d1c6478354f111b4aad704cc5ae7731c5",
+        "candidateId": "1.85.3-beta.3",
+        "materialSha": "586f70394437e34496566bff512737aa33f179e1",
+        "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+        "selectionDigest": "bf917b40dba0b598b68fb256852924d991a446b6af6b2fae1bccd14e2b54de8a",
+        "verdict": "not-required",
+        "createdAt": "2026-11-20T04:37:23.178Z",
+        "markdown": "Пакетное ревью ship перед v1.85.3-beta.3: новых непросмотренных изменений нет.\n\nЗадач ship в кандидате: 20; засчитано прежних принятых результатов: 20."
+      }
     }
   }
 }
