@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17446,
+  "revision": 17447,
   "nextTicket": 553,
   "nextFence": 553,
   "tasks": {
@@ -5274,7 +5274,18 @@
         "docs/release-ledger/v1.85.0/1486.json",
         "src/iso-camera-raster.ts",
         "src/live-viewport.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795161213881,
+        "entry": 1,
+        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Backend: tests_backend/test_external_screens.py: failed; Backend: tests_backend/test_ha_external_screens_websocket.py: failed; Backend: tests_backend/test_ha_panel_registration.py: failed; Backend: tests_backend/test_ha_space_delete_executor.py: failed; Backend: tests_backend/test_ha_space_delete_routes.py: failed; Backend: tests_backend/test_summary_panel.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed; Браузер: standalone entry: failed",
+        "eventId": "finish:d4e010c4-a650-484a-a038-6e9c8745227d:finish:4:return:return:1486"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5764,18 +5775,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1486,
-    "worker": "finish",
-    "token": "552:finish:d4e010c4-a650-484a-a038-6e9c8745227d:finish:1:admit",
-    "fence": 552,
-    "materialSha": "94b2d0d966b393c904fd3075631ba475faef711f",
-    "expectedBase": "98a386f42de5f465e2be7067957659c157839c53",
-    "phase": "testing",
-    "admittedAt": 1795160589231,
-    "expiresAt": 1795161487700,
-    "patchId": "3edaa136a48b01a08960d3d3fea9336d364619df"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5869,6 +5869,10 @@
       "digest": "c1a0aaa912a6cafa4541f2a1aed21584fd020b575d5b232a47ced9bfe0da03ef",
       "issue": 1486
     },
+    "finish:d4e010c4-a650-484a-a038-6e9c8745227d:finish:4:return": {
+      "digest": "f96ca1f4d2d7841b27955e91643f5a7f42e8b3f71d7dc085db7a8edfccba4938",
+      "issue": 1486
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -5925,6 +5929,26 @@
         "materialSha": "94b2d0d966b393c904fd3075631ba475faef711f",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:d4e010c4-a650-484a-a038-6e9c8745227d:finish:4:return:return:1486": {
+      "digest": "f96ca1f4d2d7841b27955e91643f5a7f42e8b3f71d7dc085db7a8edfccba4938",
+      "issue": 1486,
+      "message": {
+        "kind": "return",
+        "issue": 1486,
+        "at": 1795161213881,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795161213881,
+          "entry": 1,
+          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Backend: tests_backend/test_external_screens.py: failed; Backend: tests_backend/test_ha_external_screens_websocket.py: failed; Backend: tests_backend/test_ha_panel_registration.py: failed; Backend: tests_backend/test_ha_space_delete_executor.py: failed; Backend: tests_backend/test_ha_space_delete_routes.py: failed; Backend: tests_backend/test_summary_panel.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed; Браузер: standalone entry: failed",
+          "eventId": "finish:d4e010c4-a650-484a-a038-6e9c8745227d:finish:4:return:return:1486"
+        }
       }
     }
   },
