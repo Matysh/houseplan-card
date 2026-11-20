@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18028,
+  "revision": 18029,
   "nextTicket": 564,
   "nextFence": 564,
   "tasks": {
@@ -5290,7 +5290,12 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795191651975,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "50a3ab86deeb176cfcb8f7f4c1167fca9d9564e4",
+      "changedFiles": [
+        "scripts/mutation-registry.mjs",
+        "test/iso-scene-render.test.mjs"
+      ]
     },
     "1493": {
       "issue": 1493,
@@ -5831,10 +5836,11 @@
     "token": "563:finish:8a32954e-f270-4e79-9fff-a7230290ac6b:finish:1:admit",
     "fence": 563,
     "materialSha": "31b6052234aed5e6d7160ec7fe08844f221fc135",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
+    "phase": "testing",
     "admittedAt": 1795191655726,
-    "expiresAt": 1795191955726
+    "expiresAt": 1795191962079,
+    "patchId": "50a3ab86deeb176cfcb8f7f4c1167fca9d9564e4"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5876,6 +5882,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "finish:8a32954e-f270-4e79-9fff-a7230290ac6b:finish:2:synchronized": {
+      "digest": "b7c51df205967f6052213f802775da9938878aecd3207a2cd42198c092366d7e",
+      "issue": 1492
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
