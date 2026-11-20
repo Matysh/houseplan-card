@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 17520,
-  "nextTicket": 555,
+  "revision": 17521,
+  "nextTicket": 556,
   "nextFence": 555,
   "tasks": {
     "1024": {
@@ -5238,14 +5238,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1485-iso-raster-session",
-      "materialSha": "8d7eeab5591a3d14f6d9f652a81e77b26b5cebd9",
+      "materialSha": "a2ec71aa384e8849957c480472ec03cb7834d5c5",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 554,
-      "queued": false,
+      "ticket": 555,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795164378538,
-      "reviewEntry": 1,
+      "readyAt": 1795164755245,
+      "reviewEntry": 2,
       "patchId": "462635914ca4566a19125d294a407752da58ebcc",
       "changedFiles": [
         "demo/benchmark_iso_wheel_series.mjs",
@@ -5272,7 +5272,6 @@
         "src/viewport-exposure.ts",
         "test/live-viewport.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5802,7 +5801,9 @@
       "runId": 44699909118
     }
   },
-  "waiting": [],
+  "waiting": [
+    1485
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6016,6 +6017,19 @@
           "detail": "Браузер: iso theme walls: failed",
           "eventId": "finish:c6215d8f-a5d8-412c-9c5d-a37693c8f0b4:finish:3:return:return:1485"
         }
+      }
+    },
+    "finish:a2dd9640-d8c5-4273-8d59-db7bb7b7b9c9": {
+      "digest": "531e5d3a9e93fe29fa0396bf9fb92af9d341908ef3c6b55a9b71d3c3bf6bc511",
+      "issue": 1485,
+      "message": {
+        "kind": "queued",
+        "issue": 1485,
+        "at": 1795164755245,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "a2ec71aa384e8849957c480472ec03cb7834d5c5"
       }
     }
   },
