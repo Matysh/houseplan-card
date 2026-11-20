@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 17667,
-  "nextTicket": 557,
+  "revision": 17668,
+  "nextTicket": 558,
   "nextFence": 557,
   "tasks": {
     "1024": {
@@ -5233,6 +5233,23 @@
         "status": "published",
         "sourceSha": "54a8148959ffb71f0737532924c05b0a65de8b4a"
       }
+    },
+    "1488": {
+      "issue": 1488,
+      "branch": "issue/1488-release-return-4b3b5b501a3b",
+      "layer": "product",
+      "track": "show",
+      "ownerAssigned": false,
+      "syncMode": "merge",
+      "mergeSourceSha": "4b3b5b501a3bc73ce4bafc5761c5b142d81cd09a",
+      "releaseTag": "v1.86.0-beta.1",
+      "materialSha": "365df93ee67a75d71dc47c26e262ede8136fe027",
+      "ownerDecision": null,
+      "ticket": 557,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795171232013,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5714,7 +5731,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1488
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5784,6 +5803,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "release-return:a36e2977-a455-4994-a2f5-64c692da3a84": {
+      "digest": "0419ead0c7f5a94fde272abf81a422c5d968e663779dd845c989e3cb27eca146",
+      "issue": 1488,
+      "message": {
+        "kind": "queued",
+        "issue": 1488,
+        "at": 1795171232013,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "365df93ee67a75d71dc47c26e262ede8136fe027"
       }
     }
   },
