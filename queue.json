@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18534,
+  "revision": 18535,
   "nextTicket": 574,
   "nextFence": 574,
   "tasks": {
@@ -5475,14 +5475,22 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1501-stage6-isolation",
-      "materialSha": "5ff404df4ce3a8d8cdb20ddf79fb45e2cc0c6efe",
+      "materialSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 573,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795202980384,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "7290e8f46243eafa4bb1cc9a5b892e4da0f4d51e",
+      "changedFiles": [
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/isometric-stage6-dark-lightfloor.png",
+        "demo/golden/baselines/isometric-stage6-light-darkfloor.png",
+        "demo/golden/matrix.mjs",
+        "process-next/test/golden-surface.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5998,11 +6006,12 @@
     "worker": "github-coordinator",
     "token": "573:github:44805494802:1:tick:2:admit",
     "fence": 573,
-    "materialSha": "5ff404df4ce3a8d8cdb20ddf79fb45e2cc0c6efe",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
+    "expectedBase": "ae1b1763727106c90fdddcbb16b141533e35b610",
+    "phase": "testing",
     "admittedAt": 1795204114885,
-    "expiresAt": 1795204414885
+    "expiresAt": 1795204467575,
+    "patchId": "7290e8f46243eafa4bb1cc9a5b892e4da0f4d51e"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6047,6 +6056,10 @@
     },
     "github:44805494802:1:completions:message:de7fd526c7b1a7d9a95714fc4274e35651fc2916d0cea0a5200b923fb063b9f2": {
       "digest": "cce594eb4f9380457c44bff93f2c914e2a652f38a180ae90791ae8b54d349439",
+      "issue": 1501
+    },
+    "finish:71ea07fb-006d-4e15-ab34-92c0bac0dc15:finish:1:synchronized": {
+      "digest": "256fa7a93c1d5d514ff4572414371286574837c88d2c317da59c2dd89a0feb7a",
       "issue": 1501
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
