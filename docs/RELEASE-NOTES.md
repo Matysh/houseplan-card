@@ -1,11 +1,15 @@
-<!-- release: v1.86.0-beta.3 -->
+<!-- release: v1.86.0-beta.4 -->
 <!-- base: v1.85.2 -->
 <!-- language: ru -->
-## Houseplan 1.86.0-beta.3
+## Houseplan 1.86.0-beta.4
 
-В 2.5D мягкий свет помогает различить грани стен, а тонкие линии подчёркивают видимые рёбра и стыки с полом. Стены остаются непрозрачными. Полупрозрачный цвет осветляет кладку на белой основе. [#1495](https://github.com/Matysh/houseplan-card/issues/1495)
+В 2.5D при повороте плана дальний бейдж значения больше не перекрывает ближнюю иконку. Добавлены эталоны всех четырёх поворотов. [#1504](https://github.com/Matysh/houseplan-card/issues/1504)
+
+Исправлена нестабильная проверка Zigbee для координатора, не размещённого на плане. [#1503](https://github.com/Matysh/houseplan-card/issues/1503)
 
 <!-- language: en -->
-## Houseplan 1.86.0-beta.3
+## Houseplan 1.86.0-beta.4
 
-Soft directional shading makes wall faces easier to distinguish in 2.5D. Fine lines mark visible wall edges and floor junctions. Walls stay opaque, with translucent wall colours blending into a white base. [#1495](https://github.com/Matysh/houseplan-card/issues/1495)
+In 2.5D, a value badge behind its device icon no longer overlaps the front of the icon as you rotate the plan. Visual references cover all four rotations. [#1504](https://github.com/Matysh/houseplan-card/issues/1504)
+
+Fixed a flaky Zigbee check for an unplaced coordinator. [#1503](https://github.com/Matysh/houseplan-card/issues/1503)
