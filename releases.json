@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1066,
+  "revision": 1067,
   "active": "1.86.0-beta.1-20261120",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -148067,7 +148067,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "4b3b5b501a3bc73ce4bafc5761c5b142d81cd09a",
       "portToDev": [
         {
           "from": "3e5f3deaeb36612fd1ed50679cc6fe6f8d79025b",
@@ -148083,6 +148083,12 @@
         "selectionDigest": "3693e143cb8a0af1c07cd10772ff0992321eaf21350717135f35312b6b1886de",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "metricsDecision": {
+        "decisionId": "owner-beta1860-1-sizes-20261120",
+        "source": "chat",
+        "sourceRef": "send_user_message_question_reply/call_e10f3d1c1d9149fdabfe263faf7970e3/0",
+        "decisionText": "Да, принять размеры и выпустить бету: ZIP 5,42 МБ (+8,1%); весь frontend gzip 2,25 МБ (+7,7%); начальная загрузка 483 КБ (+12,7%)."
       }
     }
   },
@@ -153784,7 +153790,8 @@
     "beta1860-1-20261120-prepared": "f101481c8e5d04ddf959aa537e26f567f0d81589ec4e8757e1e955a3df708f42",
     "ship-review:prepare:40a8f196-07cc-4a71-b3a0-a34697987254": "c3e8b5d308832ade68353b59bf250eca5fc79bfeaf888359f4b62890553f44c7",
     "ship-review:result:de13ba28-44bb-42ac-9dc1-68635ce1706a": "9be57c8be9f07990ae9dae92b35d1114b2e65facb6814f0a6cf14781e87ff2dc",
-    "beta1860-1-20261120-metrics": "5d666165d8b2ea984280cfd707399187f70d92609c77e6331cf199aaceb27f39"
+    "beta1860-1-20261120-metrics": "5d666165d8b2ea984280cfd707399187f70d92609c77e6331cf199aaceb27f39",
+    "beta1860-1-20261120-owner": "e503fe88e3ba386cc8c684b5b627b88bce5b15eb600c2e702c51bf8c6c8a3da1"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
