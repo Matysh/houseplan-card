@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17583,
+  "revision": 17584,
   "nextTicket": 557,
   "nextFence": 557,
   "tasks": {
@@ -5209,13 +5209,14 @@
       "status": "S6-in-progress",
       "readyAt": 1795166239068,
       "reviewEntry": 3,
-      "patchId": "68fdc03fc95d0091a903eaf8cfd4a7cc632f86cc",
+      "patchId": "9937ef965e97d8686c303084aa1988ac072c4573",
       "changedFiles": [
         "demo/benchmark_iso_wheel_series.mjs",
         "demo/helpers/iso-paint-scene.mjs",
         "demo/performance/iso-live-camera-probe.js",
         "demo/performance/iso-softness-check.py",
         "demo/performance/iso-softness-gallery.mjs",
+        "demo/smoke_iso_direct_input.mjs",
         "demo/smoke_iso_raster_parity.mjs",
         "demo/smoke_iso_raster_session.mjs",
         "demo/smoke_iso_theme_walls.mjs",
@@ -5786,10 +5787,11 @@
     "token": "556:finish:ea4a9b7a-c17d-413a-90ab-23b08d56ed6c:finish:1:admit",
     "fence": 556,
     "materialSha": "3e5f3deaeb36612fd1ed50679cc6fe6f8d79025b",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "54a8148959ffb71f0737532924c05b0a65de8b4a",
+    "phase": "testing",
     "admittedAt": 1795166243575,
-    "expiresAt": 1795166543575
+    "expiresAt": 1795166552082,
+    "patchId": "9937ef965e97d8686c303084aa1988ac072c4573"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5982,6 +5984,10 @@
     },
     "github:44707920542:1:completions:metadata:e4f1db6c-a50d-4057-99a4-c8d687fd632e:task-notice:1485::": {
       "digest": "ae84f82f9a28227b9e20ff0cd002cd835ad377411f61ad01a1e86a2e1e478f57",
+      "issue": 1485
+    },
+    "finish:ea4a9b7a-c17d-413a-90ab-23b08d56ed6c:finish:2:synchronized": {
+      "digest": "52c3328bced0990188ff0d6e46dcb226b36e96b2a58e97095e82e739a25f258b",
       "issue": 1485
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
