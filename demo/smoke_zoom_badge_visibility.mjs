@@ -2,6 +2,8 @@ import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1147: a shared display rule must preserve the native hidden contract.
 import { expect } from 'playwright/test';
 import { launchColdView, check, finish, captureUiKitSurface } from './serve.mjs';
+import { prepareGoldenScenario } from './golden/harness.mjs';
+import { GOLDEN_SCENARIOS } from './golden/matrix.mjs';
 
 const { page, browser } = await launchColdView({ width:2000, height:900 });
 await prepareDesktopControls(page);
@@ -23,4 +25,13 @@ try {
   await expect(badge).toHaveAttribute('hidden', '', { timeout:5000 });
   await expect(badge).toBeHidden();
   check('fit at rest has no painted target', await badge.evaluate(node => node.getClientRects().length === 0));
+  // The fitted camera can be one floating-point step over 1 on compact
+  // stages. The badge still displays 100% and must remain hidden.
+  for (const id of ['tray-narrow-palette-en', 'plan-rotation-phone-editor-360-1070']) {
+    const scenario = GOLDEN_SCENARIOS.find(scene => scene.id === id);
+    await prepareGoldenScenario(page, scenario);
+    const editorBadge = page.locator('houseplan-card [data-hp-live-zoom]');
+    await expect(editorBadge).toHaveText('100%');
+    await expect(editorBadge).toBeHidden({ timeout: 1000 });
+  }
 } finally { await finish(browser); }

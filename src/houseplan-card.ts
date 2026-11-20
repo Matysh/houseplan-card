@@ -3443,9 +3443,11 @@ export class HouseplanCard extends LitElement {
     // camera of the presented stage, including the retained frame(to).
     const visual = this._modeTransitionVisual;
     const camera = visual ? this._physicalCamera(visual.viewport, visual.stageWidth, visual.stageHeight) : this._cameraState();
-    return this._usesScreenCamera && this._screenReference
-      ? screenZoomBadge(camera, this._screenReference)
-      : { percent: Math.round(camera.zoom * 100), hidden: camera.zoom <= 1 };
+    if (this._usesScreenCamera && this._screenReference) {
+      return screenZoomBadge(camera, this._screenReference);
+    }
+    const percent = Math.round(camera.zoom * 100);
+    return { percent, hidden: percent <= 100 };
   }
   private get _effectiveCycle(): number {
     return this._kiosk && !this._hasFixedFloor && this._model.length > 1
