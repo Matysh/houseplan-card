@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17155,
+  "revision": 17156,
   "nextTicket": 549,
   "nextFence": 549,
   "tasks": {
@@ -5249,7 +5249,16 @@
         "src/houseplan-card.ts",
         "src/iso-camera-raster.ts",
         "src/live-viewport.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261120T054039371-d172b929",
+        "name": "Тесты для задачи #1481 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T054039371-d172b929/report.json",
+        "materialSha": "aa39915acf11d4a6ecaf31514dc0e293e308fded",
+        "status": "passed",
+        "finishedAt": "2026-11-20T05:45:01.071Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5725,9 +5734,9 @@
     "fence": 548,
     "materialSha": "aa39915acf11d4a6ecaf31514dc0e293e308fded",
     "expectedBase": "24989789232ee0e30283bd7ea7dfac268c3bb5b7",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795153227335,
-    "expiresAt": 1795153766432,
+    "expiresAt": 1795157102339,
     "patchId": "4a6c3e72a83b84ef9c75f1c4062f8880461f7d86"
   },
   "events": {
@@ -5797,6 +5806,10 @@
     },
     "finish:f67b9a88-fad6-4e4c-a5b1-9c1db9788905": {
       "digest": "8175a399f11541c72b74bdc73c406c64a8110767841fc3a190de46449984e80e",
+      "issue": 1481
+    },
+    "finish:04a0f2d6-d6f9-41e3-8d29-170e6e48f6ff:finish:3:s6-complete": {
+      "digest": "c9cd5ab4d9b15aa93781268cb78b4de0ce90d0a63b8c0e290ff50ba8e2889a96",
       "issue": 1481
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
