@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17211,
+  "revision": 17212,
   "nextTicket": 550,
   "nextFence": 550,
   "tasks": {
@@ -5235,7 +5235,7 @@
       "ownerDecision": null,
       "ticket": 549,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795154149947,
       "reviewEntry": 1,
       "patchId": "dac493e31296a662812a1d1c68751e44a20ddf19",
@@ -5251,7 +5251,16 @@
         "src/houseplan-card.ts",
         "src/styles/iso-lab-markers.styles.ts",
         "test/device-face.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261120T055609614-27ad135d",
+        "name": "Тесты для задачи #1482 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T055609614-27ad135d/report.json",
+        "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
+        "status": "passed",
+        "finishedAt": "2026-11-20T06:09:56.746Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5727,9 +5736,9 @@
     "fence": 549,
     "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
     "expectedBase": "aa39915acf11d4a6ecaf31514dc0e293e308fded",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795154153780,
-    "expiresAt": 1795155298035,
+    "expiresAt": 1795158600695,
     "patchId": "dac493e31296a662812a1d1c68751e44a20ddf19"
   },
   "events": {
@@ -5901,6 +5910,34 @@
         "materialSha": "2bd38b4a72588307054f867fdb179780a543cde2",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:da72a5f2-ac67-441d-8ad3-8c50dafb51bb:finish:3:s6-complete": {
+      "digest": "41114cca3f2b189d13d13471c81074520b9d2a874e1de514ca6e9f623a04e869",
+      "issue": 1482,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1482,
+        "at": 1795155000695,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
+        "phase": "review",
+        "evidence": {
+          "id": "20261120T055609614-27ad135d",
+          "name": "Тесты для задачи #1482 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T055609614-27ad135d/report.json",
+          "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
+          "status": "passed",
+          "finishedAt": "2026-11-20T06:09:56.746Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Материал `24989789232e → 2bd38b4a72588307054f867fdb179780a543cde2`, ветка `codex/1482-iso-device-outline`, show/product. Это ремонт отображения #1451 в текущей beta-линии; ledger `line-fix`, без пользовательского milestone и без выпуска версии.\n\n### Изменение\n\nCore-sized SVG/CSS mask отдельного устройства раньше висела на `.dev`, внутри которого находится переполняющая его box общая glass-оболочка. Маска тела поэтому обрезала произвольные участки общего стекла и обводки. Маска теперь применяется только к отдельному `.device-occlusion-body` с тем же core-sized box. Glass/contact ink остаётся sibling и использует прежние собственные surface/depth masks. Вершины, wall clipping, ширины/цвета/пунктир, layout и camera не менялись.\n\nПолная карточка теперь сама сохраняет один стабильный `.device-contact-ink` вне guard лица, а shared face получает `contactInk:false`. Это нужно для Flat↔ISO: смена wrapper-шаблона не должна отсоединять paint-узел, который удерживает contact renderer. `!!isoPlacement` добавлен к face guard. Static/preview не получают ISO wrapper, обычное Flat-лицо не оборачивается. Позиции и зоны действий/фокуса по-прежнему принадлежат прежнему `.dev`.\n\n### Проверки и границы\n\n- Свежие `npm run bundle:sync` (включает tsc) и test-build — PASS.\n- `node --test test/device-face.test.mjs test/iso-marker-outline.test.mjs process-next/test/task-selection.test.mjs`: **57/57 PASS**. Новый unit проверяет разделение ink/body, отсутствие лишнего ink у host-owned случая, сохранение Static/preview/Flat. Центральный selection test доказывает product/regression/isometry/task-release и выбор native-контракта из isometry без areaTests на соответствующем широком профиле; эта show-задача явно добавляет его в S6.\n- `demo/smoke_iso_device_contours.mjs`: матрица **80 сочетаний** (DPR1/2, light/dark, четыре поворота, zoom0.73/1/1.33/2.18/3.17), **все попиксельные сравнения идентичны**. Это actual native renderer и 23 синтетических устройства: пристенные группы3/6 со всех сторон, mixed physical/virtual, одиночные, badge и L-группа. В каждом варианте есть реальные body masks (минимум9) и отдельные glass masks (минимум11), не пустой тест без occlusion.\n- Pixel oracle: временно скрываются только тела (не их boxes/state); отключение прежней родительской маски не должно менять стекло. Возврат старой CSS-схемы отдельным отрицательным контролем даёт **421 пиксель на DPR1 /1364 на DPR2**, поэтому оракул действительно ловит исходную ошибку. Это не утверждение о полном сравнении всех объектов с эталоном и не принятие PNG.\n- Flat↔ISO восстановление, единичные wrapper/ink и отсутствие config/layout/service writes прошли после сохранения paint-узла. Первый адресный запуск выявил проблему его замены при Flat-переходе; исправлена в самом владельце DOM, ожидание теста не ослаблено.\n- К этому же native добавлены настоящие wheel/pan с проверкой промежуточных кадров; их исполнение вместе с новым положительным требованием наличия mask выполнит штатный S6 на зафиксированном коммите. Ранее полученные 80 записей отдельно подтверждают минимальные counts выше.\n- Локальные артефакты: `output/1482-unit2.log`, `output/1482-native2/results.json`, пары correct/legacy-negative. Дополнительная визуальная сверка на архивной частной копии плана подтверждает исчезновение разрывов; её PNG/геометрия не публикуются. HA владельца не использован для команд/записей.\n- Реальный HA E2E: [решение houseplan-e2e#85](https://github.com/Matysh/houseplan-e2e/issues/85), отдельный новый сценарий не нужен (API/права/хранение не менялись); выпускные E2E остаются.\n\nНи golden, ни весь stable-набор в этой задаче не запускались. Визуальные эталоны не обновлялись. Обычный finish актуализирует dev в слоте и выполнит текущую центральную S6-выборку, затем независимое код-ревью.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
