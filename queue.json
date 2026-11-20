@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18333,
+  "revision": 18334,
   "nextTicket": 570,
   "nextFence": 570,
   "tasks": {
@@ -5389,30 +5389,24 @@
     },
     "1499": {
       "issue": 1499,
+      "branch": "codex/1499-fit-zoom-badge",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1499-fit-zoom-badge",
-      "materialSha": "553094ec3d21bf93d8cec8547a0006c4692979eb",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 569,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795200980384,
-      "reviewEntry": 1,
-      "patchId": "f9972e9bf4cc9b16e4e765a0fb2280eb1d2a4a3d",
-      "changedFiles": [
-        "demo/smoke_zoom_badge_visibility.mjs",
-        "src/houseplan-card.ts"
-      ],
-      "s6": {
-        "id": "20261120T185757746-d8599740",
-        "name": "Тесты для задачи #1499 (перед слиянием)",
-        "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T185757746-d8599740/report.json",
-        "materialSha": "553094ec3d21bf93d8cec8547a0006c4692979eb",
-        "status": "passed",
-        "finishedAt": "2026-11-20T19:01:25.118Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "4ed2f5c836a2d0f01bcfc81f588819a09eadcdf8",
+      "mergedSha": "553094ec3d21bf93d8cec8547a0006c4692979eb",
+      "mergedAt": 1795201292571,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -5896,18 +5890,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1499,
-    "worker": "finish",
-    "token": "569:finish:79690b9e-36de-41a7-a83a-0cf9b600ca2c:finish:1:admit",
-    "fence": 569,
-    "materialSha": "553094ec3d21bf93d8cec8547a0006c4692979eb",
-    "expectedBase": "4ed2f5c836a2d0f01bcfc81f588819a09eadcdf8",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795200984567,
-    "expiresAt": 1795204887238,
-    "patchId": "f9972e9bf4cc9b16e4e765a0fb2280eb1d2a4a3d"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5949,50 +5932,6 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "finish:79690b9e-36de-41a7-a83a-0cf9b600ca2c:finish:2:synchronized": {
-      "digest": "90acbbaff8e9ac4bb56bc5b0ee893dacb588c3670a80285fb1b0e2539899e1c1",
-      "issue": 1499
-    },
-    "github:44797228475:1:completions:message:61e02f09b717a232cca669ae02eba21e7ccbd0322c0f0b2670c1dd41ddf954b8": {
-      "digest": "a515bfcb4641436d572470b54f77a691fa452e25eeb0c656cf9432b31b688de7",
-      "issue": 1499
-    },
-    "github:44797228475:1:completions:message:4d86f5baf8686d0f8535078143006a3410446d59baf51945a65d67eadccf81ca": {
-      "digest": "448c797a85f8a70270040d89acf024c46224125f9f4a539c028c333242c27e1c",
-      "issue": 1499
-    },
-    "finish:79690b9e-36de-41a7-a83a-0cf9b600ca2c:finish:3:automation-pending": {
-      "digest": "d51bac31338d37718ae2dacc60600473cd54337a056e4ef21f771b6d5a0da48d",
-      "issue": 1499
-    },
-    "finish:a02e15c6-41e4-4ab2-a3fc-a5ed04e146dd": {
-      "digest": "eb0b2b23e5db99e08d353b731e5bc4e525b85614a941cdfa41c9c1bf624f66c7",
-      "issue": 1499
-    },
-    "finish:7eb14ac9-3ec3-458f-9e68-0a668079c95a": {
-      "digest": "298e7acd9d789ea0055f80e6e9dc2a93a475811cbc00a951795d9d1443ff602f",
-      "issue": 1499
-    },
-    "finish:48805ff6-2521-478b-a704-bd8f1abb327d": {
-      "digest": "1f64ad136c11a57a6f12355329b6e6bea44e6c93acd8a6e3f000f8bb9bf3811b",
-      "issue": 1499
-    },
-    "github:44797941018:1:completions:message:bf5385e99a80d3dfd8a55e50298c59b824cdb784e449f1dc3650691ec9fdecc8": {
-      "digest": "9d03b7ef7945261567b87d55c47ba3e029672756aa899822044fb16b2163ea28",
-      "issue": 1499
-    },
-    "finish:1a66e8df-de41-4706-927a-d55c1658c239": {
-      "digest": "bf6c053fba899c3929a0f2a2e831fe8d11e15cc4e41b7ae6a2b86d7618b5ecf2",
-      "issue": 1499
-    },
-    "finish:2c69c075-df1c-41a8-b727-f87ff304efb3": {
-      "digest": "06f261de7214327f932e711c6bc569ae5963f4185e4038f59eacca7d039dddda",
-      "issue": 1499
-    },
-    "finish:79690b9e-36de-41a7-a83a-0cf9b600ca2c:finish:4:s6-complete": {
-      "digest": "a26f26c7bf9b56d87c2cd2faea0a1108b350be6a36ff316876502950b1f39c51",
-      "issue": 1499
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6018,35 +5957,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:79690b9e-36de-41a7-a83a-0cf9b600ca2c": {
-      "digest": "4829aa9c19c6d8cc4051605940f7e7de2048171c5ebacb1c1946dc234d28d01c",
-      "issue": 1499,
-      "message": {
-        "kind": "queued",
-        "issue": 1499,
-        "at": 1795200980384,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "f073d89e52438d84f3a149743d735392b46d6145",
-        "delivered": true
-      }
-    },
-    "finish:79690b9e-36de-41a7-a83a-0cf9b600ca2c:finish:1:admit": {
-      "digest": "ee823c713db85cb8113969d30d6e17a462515720116d923d9ed747f5d1d33cbe",
-      "issue": 1499,
-      "message": {
-        "kind": "admitted",
-        "issue": 1499,
-        "at": 1795200984567,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "f073d89e52438d84f3a149743d735392b46d6145",
         "phase": "sync",
         "delivered": true
       }
