@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16992,
+  "revision": 16993,
   "nextTicket": 546,
   "nextFence": 546,
   "tasks": {
@@ -6464,6 +6464,10 @@
       "digest": "e15ed8984482e196c84f334465be0c0028dc7d5296c06683d56a1e3d3e727e87",
       "issue": 1478
     },
+    "github:44658371698:1:completions:message:6a1d86ef8a75090ef026bbca682d40e1d8564138257b57dea5615947fb82e419": {
+      "digest": "57c133ff0a44e20a77087fb6ed1b524ed1e405b20db0220da9f6f0ce37791317",
+      "issue": 1478
+    },
     "github:44567305558:1:label:spec-request:spec-resubmitted:1478": {
       "digest": "26b88ce75a52e974684590bab2e22abfcac675f43a2c17bc4845dcfa6f1e24bb",
       "issue": 1478,
@@ -6770,7 +6774,8 @@
           "entry": 5,
           "detail": "Браузер: mode transition: failed",
           "eventId": "finish:1efa98ff-1e05-435b-899a-ebce94ea2960:finish:3:return:return:1478"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:ddb7989f-a414-4735-9498-010ef9332d58": {
