@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18858,
+  "revision": 18859,
   "nextTicket": 580,
   "nextFence": 580,
   "tasks": {
@@ -2382,43 +2382,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "24f98e2081b460f7b14a76a186155b574a6bbb45"
-      }
-    },
-    "1412": {
-      "issue": 1412,
-      "branch": "codex/1412-tooltip-e2e-hook",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "c250fcb4591a698481da3ccaa6a2261e2a0e04de",
-      "mergedSha": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
-      "mergedAt": 1794577740659,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222"
       }
     },
     "1413": {
@@ -5562,7 +5525,8 @@
       },
       "releaseTag": "v1.86.0-beta.4",
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "7900aa8f04abe9bc984db1fe0431ab461d5e6d0c"
       }
     }
   },
@@ -6115,6 +6079,18 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:44832639520:1:1505": {
+      "digest": "e96817d2445eb649b2f552770503df41c2d1105e369d1fade2c230c5fcbc5f97",
+      "issue": 1505,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1505,
+        "at": 1795215376886,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "7900aa8f04abe9bc984db1fe0431ab461d5e6d0c"
       }
     }
   },
