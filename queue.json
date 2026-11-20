@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18194,
+  "revision": 18195,
   "nextTicket": 566,
   "nextFence": 566,
   "tasks": {
@@ -5313,14 +5313,23 @@
       "ownerDecision": null,
       "ticket": 565,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795199927126,
       "reviewEntry": 1,
       "patchId": "d73605a743b3267c56757aa989d0ca9226b84ba3",
       "changedFiles": [
         "demo/smoke_live_pan_coverage.mjs",
         "demo/smoke_projection_cold_view_camera.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261120T183903972-ebff1105",
+        "name": "Тесты для задачи #1496 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T183903972-ebff1105/report.json",
+        "materialSha": "3080c38643133e3d4455795be442b751e650eb40",
+        "status": "passed",
+        "finishedAt": "2026-11-20T18:41:05.973Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5810,9 +5819,9 @@
     "fence": 565,
     "materialSha": "3080c38643133e3d4455795be442b751e650eb40",
     "expectedBase": "07331a4cde3fae8aaffc1a022ca49a50502c685e",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795199931345,
-    "expiresAt": 1795200289857,
+    "expiresAt": 1795203672749,
     "patchId": "d73605a743b3267c56757aa989d0ca9226b84ba3"
   },
   "events": {
@@ -5928,6 +5937,34 @@
         "materialSha": "3080c38643133e3d4455795be442b751e650eb40",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:d65ec0d5-740e-4223-bbb5-f7b402519fd6:finish:3:s6-complete": {
+      "digest": "f6d160f75af903275f714abe2d04728fdcf4fbced2102f128568a493c5e00ab9",
+      "issue": 1496,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1496,
+        "at": 1795200072749,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3080c38643133e3d4455795be442b751e650eb40",
+        "phase": "review",
+        "evidence": {
+          "id": "20261120T183903972-ebff1105",
+          "name": "Тесты для задачи #1496 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T183903972-ebff1105/report.json",
+          "materialSha": "3080c38643133e3d4455795be442b751e650eb40",
+          "status": "passed",
+          "finishedAt": "2026-11-20T18:41:05.973Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
