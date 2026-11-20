@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17793,
+  "revision": 17794,
   "nextTicket": 561,
   "nextFence": 560,
   "tasks": {
@@ -5254,7 +5254,7 @@
       "ownerDecision": null,
       "ticket": 559,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795173051657,
       "reviewEntry": 1,
       "patchId": "b77eeed265688099f0faab4668db32fae83fcd4d",
@@ -5267,7 +5267,16 @@
         "docs/release-ledger/v1.85.2/1490.json",
         "src/houseplan-card.ts",
         "test/floor-cache-day-cycle.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261120T111112421-29a49bcb",
+        "name": "Тесты для задачи #1490 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T111112421-29a49bcb/report.json",
+        "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
+        "status": "passed",
+        "finishedAt": "2026-11-20T11:19:52.193Z",
+        "failures": []
+      }
     },
     "1491": {
       "issue": 1491,
@@ -5782,9 +5791,9 @@
     "fence": 559,
     "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
     "expectedBase": "3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795173055726,
-    "expiresAt": 1795173835296,
+    "expiresAt": 1795177193336,
     "patchId": "b77eeed265688099f0faab4668db32fae83fcd4d"
   },
   "events": {
@@ -5957,6 +5966,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "230756c2e3afe2c71ab2ace1db597835721ff3b0"
+      }
+    },
+    "finish:f673d224-f2bd-4611-95d2-ca97d9feafff:finish:3:s6-complete": {
+      "digest": "cf1936ed5d287e04ebc6168ba4b8e23646fe1f7983b0621206b341ca5f50854d",
+      "issue": 1490,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1490,
+        "at": 1795173593336,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
+        "phase": "review",
+        "evidence": {
+          "id": "20261120T111112421-29a49bcb",
+          "name": "Тесты для задачи #1490 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T111112421-29a49bcb/report.json",
+          "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
+          "status": "passed",
+          "finishedAt": "2026-11-20T11:19:52.193Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\n\nИсправляются оба описанных состояния загрузки. Временный экран и готовый View используют один рендерер окружения: день, ночь и статический фон с Луной сохраняют свои правила. В 2.5D L1 остаётся источником fit/камеры, но не рисуется как отдельный силуэт; Flat сохраняет прежнее пассивное SVG-превью.\n\n### Решение и альтернативы\n\nПричина синего кадра — `_renderPendingFloor()` применял `_stageBg()`, но не выводил `renderDayCycleEnvironment()`. Причина силуэта — `renderFloorPreview()` воспроизводит анонимные контуры без полноценных материалов 2.5D. Общий `_renderStageEnvironment()` теперь используется в обоих путях. Сам L1/L2, IndexedDB, worker, валидация, сроки ожидания и fallback не меняются. Альтернатива — дополнять L1 материалами — здесь не нужна и расширила бы задачу.\n\n### Риски и места для внимания\n\nДанные камеры и fit продолжают читаться из L1 даже без его SVG; невидимый эскиз не должен учитываться как показанное превью в диагностике. Навигация и заголовок остаются доступны, старые устройства на временном экране не сохраняются. Полный кадр по-прежнему проходит существующие барьеры готовности и ограниченный fallback. Нет записей config/layout и команд устройствам. Трек show; отдельного формального ТЗ и его ревью нет.\n\n### Проверки и ограничения\n\nАдресный unit исполняет реальные методы шаблона без геометрических портов: до исправления 2 FAIL / 1 PASS, после 3 PASS. Новый native-сценарий `demo/smoke_floor_cache_day_cycle.mjs` использует синтетический план и настоящий module worker, удерживаемый только тестом: три холодных варианта (день, ночь, однотонный), оба перехода между этажами с реальным IDB-превью, 24 промежуточных кадра, готовая 2.5D-сцена и отсутствие записей. Он и прежний `smoke_floor_persistent_cache.mjs` включены в S6; фактический отчёт передаётся штатным запускателем. Старый ISO-witness обновлён только в части намеренно отменённого показа L1; Flat-превью, камера, текущий свет, сохранение и fallback сохраняют проверки. Каталог относит новые тесты к geometry/lighting/performance, важность regression, lifecycle task-release; план подтверждает их выбор. Реальная установка владельца не изменялась, частный бэкап не публикуется, эталоны не обновляются.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
