@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18306,
+  "revision": 18307,
   "nextTicket": 570,
   "nextFence": 570,
   "tasks": {
@@ -5388,7 +5388,10 @@
       "changedFiles": [
         "demo/smoke_zoom_badge_visibility.mjs",
         "src/houseplan-card.ts"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1795201010141,
+      "automationDetail": "S6 runner exited with 1 before a report"
     }
   },
   "ownerDecisions": {},
@@ -5948,6 +5951,10 @@
     },
     "github:44797228475:1:completions:message:4d86f5baf8686d0f8535078143006a3410446d59baf51945a65d67eadccf81ca": {
       "digest": "448c797a85f8a70270040d89acf024c46224125f9f4a539c028c333242c27e1c",
+      "issue": 1499
+    },
+    "finish:79690b9e-36de-41a7-a83a-0cf9b600ca2c:finish:3:automation-pending": {
+      "digest": "d51bac31338d37718ae2dacc60600473cd54337a056e4ef21f771b6d5a0da48d",
       "issue": 1499
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
