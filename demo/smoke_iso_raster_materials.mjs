@@ -12,24 +12,6 @@ for (const translucent of [false, true]) {
   const sideAlpha = translucent ? .45 : 1, topAlpha = translucent ? .6 : 1;
   const { page, browser } = await startIsoPaintScene({
     width: 1920, height: 1080, dpr: 2,
-    async createPage(context) {
-      const page = await context.newPage();
-      await page.addInitScript(value => {
-        document.addEventListener('DOMContentLoaded', () => {
-          document.documentElement.style.setProperty('--wa-form-control-padding-inline', value);
-          document.documentElement.style.setProperty('--hp-inline-fixture', '#17a2b8');
-        }, { once: true });
-        window.__rasterMaterialSources = [];
-        const create = URL.createObjectURL;
-        URL.createObjectURL = function(blob) {
-          if (blob.type.includes('image/svg+xml')) {
-            void blob.text().then(text => window.__rasterMaterialSources.push(text));
-          }
-          return create.call(this, blob);
-        };
-      }, brokenThemeValue);
-      return page;
-    },
     configureFixture({ config }) {
       Object.assign(config.spaces[0].settings, {
         room_color: '#481477', room_opacity: topAlpha,
@@ -39,6 +21,18 @@ for (const translucent of [false, true]) {
     },
   });
   try {
+    await page.evaluate(value => {
+      document.documentElement.style.setProperty('--wa-form-control-padding-inline', value);
+      document.documentElement.style.setProperty('--hp-inline-fixture', '#17a2b8');
+      window.__rasterMaterialSources = [];
+      const create = URL.createObjectURL;
+      URL.createObjectURL = function(blob) {
+        if (blob.type.includes('image/svg+xml')) {
+          void blob.text().then(text => window.__rasterMaterialSources.push(text));
+        }
+        return create.call(this, blob);
+      };
+    }, brokenThemeValue);
     await page.evaluate(async dark => {
       const card = window.__isoPaint;
       card.hass = { ...card.hass, themes: { darkMode: dark } };
