@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16893,
-  "nextTicket": 543,
+  "revision": 16894,
+  "nextTicket": 544,
   "nextFence": 543,
   "tasks": {
     "1024": {
@@ -5159,14 +5159,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1478-camera-performance",
-      "materialSha": "f4aca24bbd781af07b01d6c1bfccbc31b826614a",
+      "materialSha": "d649e8c710e73aa2591ca0afbecbc1140b27f61b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 542,
-      "queued": false,
+      "ticket": 543,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795133858767,
-      "reviewEntry": 3,
+      "readyAt": 1795135487890,
+      "reviewEntry": 4,
       "patchId": "a52cb13a8b0f60315e9f53c5794dd9bea8c605b4",
       "changedFiles": [
         "demo/benchmark_iso_edge_zoom.mjs",
@@ -5255,8 +5255,7 @@
         "entry": 3,
         "detail": "Поведение: test/golden-matrix.test.mjs: failed; Браузер: orphan space references: failed; Браузер: zigbee topology hover: failed",
         "eventId": "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:3:return:return:1478"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5724,7 +5723,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1478
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6233,6 +6234,19 @@
           "detail": "Поведение: test/golden-matrix.test.mjs: failed; Браузер: orphan space references: failed; Браузер: zigbee topology hover: failed",
           "eventId": "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:3:return:return:1478"
         }
+      }
+    },
+    "finish:1aa27134-80d9-44c5-82dd-84c4af8c4f81": {
+      "digest": "829ad0a26488bb6a0f07ab8a186f5702e424c88b76c3f157857eb6c8bf87bd95",
+      "issue": 1478,
+      "message": {
+        "kind": "queued",
+        "issue": 1478,
+        "at": 1795135487890,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "d649e8c710e73aa2591ca0afbecbc1140b27f61b"
       }
     }
   },
