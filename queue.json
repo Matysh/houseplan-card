@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17452,
+  "revision": 17453,
   "nextTicket": 553,
   "nextFence": 553,
   "tasks": {
@@ -5961,7 +5961,8 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Backend: tests_backend/test_external_screens.py: failed; Backend: tests_backend/test_ha_external_screens_websocket.py: failed; Backend: tests_backend/test_ha_panel_registration.py: failed; Backend: tests_backend/test_ha_space_delete_executor.py: failed; Backend: tests_backend/test_ha_space_delete_routes.py: failed; Backend: tests_backend/test_summary_panel.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed; Браузер: standalone entry: failed",
           "eventId": "finish:d4e010c4-a650-484a-a038-6e9c8745227d:finish:4:return:return:1486"
-        }
+        },
+        "delivered": true
       }
     }
   },
