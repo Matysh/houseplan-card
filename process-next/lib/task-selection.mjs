@@ -31,7 +31,7 @@ export const DOMAINS = [
     ['zigbee', 'Zigbee и LQI', /(?:zigbee|lqi|mesh|neighbour)/, ['devices', 'presentation'], ['zigbee_enable_recovery']],
     ['radar', 'Радары и присутствие', /(?:radar|presence|occupancy|heatmap)/, ['devices', 'storage'], ['radar']],
     ['stairs', 'Лестницы', /stair/, ['geometry', 'editors', 'isometry'], ['stairs']],
-    ['isometry', '2.5D и проекции', /(?:isometric|isometry|iso-|projection-view-camera)/, ['geometry', 'presentation', 'devices'], ['isometric_live_touch', 'iso_label_bounds']],
+    ['isometry', '2.5D и проекции', /(?:isometric|isometry|iso-|projection-view-camera)/, ['geometry', 'presentation', 'devices'], ['isometric_live_touch', 'iso_label_bounds', 'iso_device_contours']],
     ['pdf', 'Печать и векторный экспорт', /(?:pdf|svg-export|export-svg|print)/, ['geometry', 'presentation'], ['pdf_export']],
     ['i18n', 'Локализация', /(?:i18n|locale|translation|language|unit|format)/, ['presentation'], ['i18n_live']],
     ['performance', 'Производительность и кеши', /(?:performance|benchmark|latency|cache|invalidation|memory|warm|measurement|budget|demand|identity|epoch|deferred|frame)/, ['presentation', 'navigation'], ['selective_invalidation']],

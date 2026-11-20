@@ -14640,8 +14640,11 @@ export class HouseplanCard extends LitElement {
     >
       ${wallMask ? svg`<svg data-hp-wall-mask-slot width="0" height="0" aria-hidden="true"
         style="position:absolute;pointer-events:none"></svg>` : nothing}
-      ${guard([presentation, this._newIds.has(d.id), d.userHidden, d.marker?.hidden, ghostLabel, this._config?.language], () => { this._modeSceneBuilds['device-faces'] = (this._modeSceneBuilds['device-faces'] || 0) + 1; return renderDeviceFace(presentation, {
+      <span class="device-contact-ink" aria-hidden="true"></span>
+      ${guard([presentation, !!isoPlacement, this._newIds.has(d.id), d.userHidden, d.marker?.hidden, ghostLabel, this._config?.language], () => { this._modeSceneBuilds['device-faces'] = (this._modeSceneBuilds['device-faces'] || 0) + 1; return renderDeviceFace(presentation, {
         surface: 'interactive-plan',
+        occlusionBody: !!isoPlacement,
+        contactInk: false,
         newDevice: this._newIds.has(d.id),
         hiddenDevice: d.userHidden ?? d.marker?.hidden === true,
         newDeviceTitle: this._t('device.new'),

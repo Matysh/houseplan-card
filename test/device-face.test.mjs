@@ -14,6 +14,26 @@ const face = (rippleColor) => ({
   },
 });
 
+test('#1482 only interactive ISO wraps body paint, leaving shared contact ink outside its mask', () => {
+  const flatten = value => value?.strings ? value.strings.map((s,i)=>s+flatten(value.values[i])).join('')
+    : Array.isArray(value)?value.map(flatten).join(''):typeof value==='symbol'?'':String(value??'');
+  const p={...face('#ff9800'),icon:'mdi:lamp',valueBadge:null,battery:{state:'warning'},lqiText:'155'};
+  const iso=flatten(renderDeviceFace(p,{surface:'interactive-plan',occlusionBody:true}));
+  assert.equal((iso.match(/class="device-contact-ink"/g)||[]).length,1);
+  const ink=iso.indexOf('class="device-contact-ink"'),body=iso.indexOf('class="device-occlusion-body"');
+  assert.ok(ink>=0&&body>ink);
+  assert.ok(iso.indexOf('device-core')>body&&iso.indexOf('device-battery')>body&&iso.indexOf('lqi')>body);
+  for(const surface of ['interactive-plan','static-card','preview']){
+    const html=flatten(renderDeviceFace(p,{surface}));
+    assert.doesNotMatch(html,/device-occlusion-body/);
+    assert.equal((html.match(/class="device-contact-ink"/g)||[]).length,surface==='preview'?0:1);
+  }
+  for(const surface of ['static-card','preview'])
+    assert.equal(flatten(renderDeviceFace(p,{surface,occlusionBody:true})),flatten(renderDeviceFace(p,{surface})));
+  for(const occlusionBody of [false,true])
+    assert.doesNotMatch(flatten(renderDeviceFace(p,{surface:'interactive-plan',occlusionBody,contactInk:false})),/device-contact-ink/);
+});
+
 test('#1451 floor shadow measures text capsules without duplicating interactive content', () => {
   const flatten = value => value?.strings ? value.strings.map((s,i)=>s+flatten(value.values[i])).join('')
     : Array.isArray(value)?value.map(flatten).join(''):typeof value==='symbol'?'':String(value??'');

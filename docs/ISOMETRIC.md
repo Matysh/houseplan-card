@@ -144,6 +144,9 @@ own icon angle still applies. Bodies, anchors, hit targets and downward depth
 retain their original orientation and geometry.
 
 A nearer wall dims covered parts of device bodies, badges and common frames.
+The core-sized body mask belongs to a separate paint container. Shared contact
+glass is its sibling and uses its own surface/depth masks: one member's body
+mask must never crop the group's overflowing rims or panes (#1482).
 The room captions and their metrics and Area links are painted over masonry
 and furniture. Their room-fit and Area link inputs retain the native keyboard
 and touch policy. Filled shadows project directly underneath onto the floor.

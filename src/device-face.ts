@@ -14,6 +14,10 @@ const DEVICE_BATTERY_ICONS = {
 
 export interface DeviceFaceOptions {
   surface: 'interactive-plan' | 'preview' | 'static-card';
+  /** Keep shared contact glass outside this marker's core-sized wall mask. */
+  occlusionBody?: boolean;
+  /** The full card retains its ink node across Flat/ISO face replacement. */
+  contactInk?: boolean;
   newDevice?: boolean;
   newDeviceTitle?: string;
   hiddenDevice?: boolean;
@@ -96,6 +100,7 @@ export function renderDeviceFace(
   options: DeviceFaceOptions,
 ): TemplateResult {
   const pulse = presentation.pulse;
+  const occlusionBody = options.surface === 'interactive-plan' && options.occlusionBody === true;
   const gen2 = pulse.generation % 2 === 0;
   const legacyMetrics = legacySupplementalMetrics(presentation);
   const badge = presentation.valueBadge;
@@ -107,7 +112,7 @@ export function renderDeviceFace(
     hasSections ? `with-values pos-${shellPosition}` : '',
     legacyMetrics.length ? 'with-legacy' : '',
   ].filter(Boolean).join(' ');
-  return html`
+  const content = html`
     ${pulse.kind !== 'none' && pulse.reducedMotionIndicator !== 'dot'
       ? html`<span class="device-pulse activity-ring ${pulse.kind} ${pulse.reason} reason-${pulse.reason} ${gen2 ? 'gen2' : ''}"
           aria-hidden="true"><i></i><i></i><i></i></span>`
@@ -121,7 +126,7 @@ export function renderDeviceFace(
     ${presentation.haDisabled
       ? html`<span class="habadge" title=${options.disabledTitle || ''} aria-hidden="true"><ha-icon icon="mdi:power-plug-off-outline"></ha-icon></span>`
       : nothing}
-    ${options.surface !== 'preview' ? html`<span class="device-contact-ink" aria-hidden="true"></span>` : nothing}
+    ${options.surface !== 'preview' && !occlusionBody && options.contactInk !== false ? html`<span class="device-contact-ink" aria-hidden="true"></span>` : nothing}
     <span class=${shellClasses} aria-hidden="true">
       <span class="device-shell-frame"></span>
       <span class="device-core">
@@ -163,6 +168,10 @@ export function renderDeviceFace(
           style=${presentation.lqiColor ? `color:${presentation.lqiColor}` : nothing}>${presentation.lqiText}</span>`
       : nothing}
   `;
+  return occlusionBody ? html`
+    ${options.contactInk !== false ? html`<span class="device-contact-ink" aria-hidden="true"></span>` : nothing}
+    <span class="device-occlusion-body" aria-hidden="true">${content}</span>
+  ` : content;
 }
 
 /**

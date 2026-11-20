@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1482,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Repairs shared device-glass clipping introduced by #1451 in the current 1.85.3 beta line without changing the accepted design or prior stable behavior.",
+  "summary": {
+    "ru": "Общая обводка устройств в 2.5D больше не обрезается маской отдельного корпуса.",
+    "en": "Shared 2.5D device outlines are no longer cropped by an individual body's wall mask."
+  }
+}

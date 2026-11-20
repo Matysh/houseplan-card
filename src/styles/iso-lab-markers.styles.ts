@@ -161,7 +161,12 @@ export const isoLabMarkersStyles = css`
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .device-shell-frame,
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-shell { box-shadow: none; }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .device-contact-contour { filter: none; }
-  .stage.projection-iso.mode-view .dev[data-hp-device-occlusion] {
+  /* The group glass owns its own surface/depth masks. A core-sized body mask
+     on .dev would crop every shared contour painted outside that core. */
+  .stage.projection-iso.mode-view .device-occlusion-body {
+    position: absolute; inset: 0;
+  }
+  .stage.projection-iso.mode-view .dev[data-hp-device-occlusion] .device-occlusion-body {
     mask: var(--hp-device-wall-mask); mask-clip: no-clip;
   }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] [data-hp-iso-occluded] {

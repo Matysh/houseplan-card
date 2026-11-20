@@ -25,6 +25,18 @@ async function fixture(files, run) {
     }
 }
 const select = (root, options = {}) => selectTaskTests({ root, inventory, track: 'ship', layer: 'product', ...options });
+test('#1482 isometry changes select the shared-glass pixel contract without areaTests', async () => fixture({
+    'src/styles/iso-lab-markers.styles.ts':'',
+    'demo/smoke_iso_device_contours.mjs':'',
+}, async dir => {
+    const catalog=await testCatalog(dir,inventory),path='demo/smoke_iso_device_contours.mjs';
+    const row=catalog.rows.find(row=>row.path===path);
+    assert.equal(row.layer,'product');assert.equal(row.importance,'regression');
+    assert.ok(row.domains.includes('isometry'));assert.equal(row.lifecycle,'task-release');
+    const result=await select(dir,{track:'ask',changedFiles:['src/styles/iso-lab-markers.styles.ts']});
+    assert.ok(result.files.includes(path));
+    assert.ok(result.explanation.reasons[path].includes('Сквозной native-контракт области isometry'));
+}));
 test('#1474 paint sources select the classified raised label contract without areaTests', async () => fixture({
     'src/iso-overlays.ts': '',
     'test/iso-overlays.test.mjs': '',
