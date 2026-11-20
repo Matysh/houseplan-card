@@ -1,0 +1,23 @@
+{
+  "issue": 1495,
+  "uiId": "UI-062",
+  "status": "owner-approved-visual-reference",
+  "approvedOn": "2026-11-20",
+  "ownerDecision": "Отлично, теперь всё ок. Фиксируй текущую версию в журнале и в #1495, включая белую подложку стен вместо прозрачности в 2.5D.",
+  "baseTag": "v1.86.0-beta.2",
+  "baseCommit": "6af2e11c1e83442c2dbfd7bbfa2a888466fbbcc1",
+  "acceptedSourceFingerprint": "852093bbf53b3ac1095fafe083efc4e2de4456c2de8db1fa2497718b401e94cc",
+  "branch": "codex/ui-lab-1495-accepted-20261120",
+  "productImplemented": false,
+  "goldenBaselinesAccepted": false,
+  "syntheticDataOnly": true,
+  "whiteBacking": {
+    "opacity": 1,
+    "paintOpacitySamples": [
+      1,
+      0.4,
+      0
+    ],
+    "flatUnchanged": true
+  }
+}

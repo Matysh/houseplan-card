@@ -1,0 +1,220 @@
+diff --git a/src/houseplan-card.ts b/src/houseplan-card.ts
+index 9dc8705cb..287c087e6 100644
+--- a/src/houseplan-card.ts
++++ b/src/houseplan-card.ts
+@@ -1,3 +1,4 @@
++import { architecturalFloorTone } from './iso-architectural-tone-lab';
+ import { HaPlanHost } from './ha-plan-host';
+ import { FloorCacheRuntime } from './floor-cache-runtime';
+ import { floorCacheKeys, cacheSha256 } from './floor-cache-key';
+@@ -13407,7 +13408,7 @@ export class HouseplanCard extends LitElement {
+                 const fillC = roomFills.byRoom.get(r) || null;
+                 if (fillC) {
+                   cls += ' filled';
+-                  st.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity}`);
++                  st.push(`--room-fill:${iso ? architecturalFloorTone(fillC.color, disp.wallFill.c, effFill === 'custom') : fillC.color}`, `--room-fill-op:${fillC.opacity}`);
+                 } else st.push('--room-fill:transparent', '--room-fill-op:0');
+                 style = st.join(';');
+               }
+diff --git a/src/iso-scene-render.ts b/src/iso-scene-render.ts
+index da1749e94..cdc670ab7 100644
+--- a/src/iso-scene-render.ts
++++ b/src/iso-scene-render.ts
+@@ -8,6 +8,7 @@
+ // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
+ export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
+ import { nothing, svg, type TemplateResult } from 'lit';
++import { architecturalPainter } from './iso-architectural-edges-lab';
+ import { difference, union, type Geom } from 'polyclip-ts';
+ import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_OPENINGS } from './iso-lab-camera';
+ import { clipIsoOpeningDepthQueue, deviceWallOcclusion, furnitureOcclusion } from './iso-lab-visibility';
+@@ -117,7 +118,7 @@ export function resolveIsoFramePresentation(input: {
+   const overlays = input.overlays(layers);
+   const smoothMaterials = ISO_LAB_FLOOR_MARKERS && !!input.scene?.camera;
+   const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => {
+-    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture, overlays, input.wallLights);
++    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture, overlays, input.wallLights, input.display.wallFill.c);
+     const indicators = renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing;
+     return {
+       layers: renderLayers, panels, overlays,
+@@ -267,6 +268,7 @@ function renderIsoStructure(
+   furniture: readonly IsoFurniturePaint[] = [],
+   overlays: IsoOverlayRenderScene | null = null,
+   wallLights: readonly IsoWallLightSource[] = [],
++  wallColor = '#ffffff',
+ ): Pick<IsoFramePresentation,'walls'|'foreground'|'shadowClip'> {
+   if (projection !== 'iso' || !layers.structural || !scene) return {walls:emptySvg(), foreground:nothing, shadowClip:null};
+   const openingSurfaces: IsoOpeningRenderSurface[] = layers.panels ? [
+@@ -283,6 +285,7 @@ function renderIsoStructure(
+     (scene.camera?.floorScaleY ?? 1) !== 1);
+   const depthQueue = ISO_LAB_OPENINGS && scene.camera
+     ? clipIsoOpeningDepthQueue(ordered,scene.camera,gridVisualScale(cellCm)) : ordered;
++  const architecture = scene.camera ? architecturalPainter(depthQueue,scene.camera,wallColor) : {fill:()=>'',edges:nothing};
+   const wallCut = ISO_LAB_OPENINGS ? continuousWallCut(scene,depthQueue) : '';
+   if (scene.camera && overlays) for (const placement of overlays.devices.values()) {
+     placement.wallMask = deviceWallOcclusion(depthQueue,scene.camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
+@@ -294,6 +297,12 @@ function renderIsoStructure(
+     if (entry.layer === 'opening' && entry.surface.material === 'wall-side') return [entry.surface.d];
+     return [];
+   }).join(' ') : '';
++  // The wall colour is composited over opaque white, like the cut plane.
++  // Use the already-clipped visible masonry, including columns and lintels,
++  // so the backing never closes a doorway or paints over glazing.
++  const masonryBacking = depthQueue.flatMap(entry => entry.layer === 'wall-side'
++    ? [entry.face.d] : entry.layer === 'opening' && entry.surface.material === 'wall-side'
++      ? [entry.surface.d] : []).join(' ');
+   // Keep individual planes for visibility. Paint adjacent visible facets as a
+   // single SVG fill so antialiasing cannot expose the floor between them.
+   const columnPaint = new Map<number, string[]>();
+@@ -344,7 +353,7 @@ function renderIsoStructure(
+             return svg`${paths ? svg`<path data-hp-round-column=${face.roundColumn} d=${paths.join(' ')}
+               fill=${layers.materialNuance ? 'url(#hp-iso-column-'+face.roundColumn+')' : 'var(--iso-side-mid, #adadad)'}></path>` : nothing}${paintWallLight(entry,index)}`;
+           }
+-          return svg`<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures
++          return svg`<path class="iso-wall-side" style=${architecture.fill(index)} d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures
+             ? svg`<path class="iso-material-texture iso-wall-texture" d=${face.d}></path>`
+             : nothing}${paintWallLight(entry,index)}`;
+         }
+@@ -360,7 +369,7 @@ function renderIsoStructure(
+         const surface = entry.surface;
+         if(wallCut&&surface.kind==='opening-lintel-top')return nothing;
+         if (surface.material === 'wall-side' || surface.material === 'wall-top') {
+-          return svg`<path class="iso-${surface.material}" d=${surface.d} fill-rule="evenodd"
++          return svg`<path class="iso-${surface.material}" style=${architecture.fill(index)} d=${surface.d} fill-rule="evenodd"
+             data-id=${surface.id} data-kind=${surface.type} data-surface=${surface.kind}></path>${paintWallLight(entry,index)}`;
+         }
+         /* css-uses {"owner":"renderIsoWalls","kind":"class","values":["iso-door","iso-window"],"reason":"Opening surfaces have exactly the door/window type union"} */
+@@ -386,10 +395,13 @@ function renderIsoStructure(
+       ${/* Composite the masonry once, including its seam underpaint and light.
+            Per-face alpha would darken overlaps; opening materials stay independent.
+            The depth queue already clips surfaces against nearer opaque geometry. */nothing}
++      ${masonryBacking ? svg`<path data-hp="iso-wall-side-backing" d=${masonryBacking}
++        fill="#ffffff" stroke="none"></path>` : nothing}
+       <g class="iso-wall-side-fill">
+         ${masonrySides ? svg`<path class="iso-masonry-underpaint" fill="var(--iso-side-mid, #adadad)"
+           d=${masonrySides}></path>` : nothing}
+         ${entries.filter(masonrySide).map(paintEntry)}
++        ${architecture.edges}
+       </g>
+       <g class="iso-wall-fill">
+         ${entries.filter(row=>masonry(row)&&!masonrySide(row)).map(paintEntry)}
+diff --git a/src/iso-architectural-tone-lab.ts b/src/iso-architectural-tone-lab.ts
+new file mode 100644
+index 000000000..e8a802866
+--- /dev/null
++++ b/src/iso-architectural-tone-lab.ts
+@@ -0,0 +1,31 @@
++/** Local #1495 visual experiment. Presentation only; never persisted. */
++import { colorLuma, parseCssColor, type Rgb } from './iso-materials';
++
++export function architecturalOptions() {
++  return (globalThis as typeof globalThis & { __hp1495?: { enabled: boolean; edges: boolean; strength: number } }).__hp1495
++    ?? { enabled: true, edges: true, strength: 1 };
++}
++const hex = (c: readonly number[]) => '#' + c.map(v => Math.round(Math.max(0, Math.min(255,v))).toString(16).padStart(2,'0')).join('');
++const mix = (c: Rgb, target: number, amount: number) => hex(c.map(v => v + (target-v)*amount));
++
++export function architecturalWallTone(color: string, light: number): string {
++  const rgb=parseCssColor(color), options=architecturalOptions();
++  if (!rgb || !options.enabled) return color;
++  const luma=colorLuma(rgb), t=Math.max(0,Math.min(1,light));
++  // White still has a shadow face; near-black still has a lit face.
++  const darkBlend=Math.max(0,Math.min(1,(.35-luma)/.25));
++  const shadow=.16*(1-t)+.015*t;
++  const lift=.015*(1-t)+.11*t;
++  return hex(rgb.map(v => v*(1-shadow*options.strength*(1-darkBlend))
++    +(255-v)*lift*options.strength*darkBlend));
++}
++
++export function architecturalFloorTone(color: string, wall: string, staticFill: boolean): string {
++  const options=architecturalOptions(), rgb=parseCssColor(color), other=parseCssColor(wall);
++  if (!options.enabled || !staticFill || !rgb || !other) return color;
++  const distance=Math.hypot(...rgb.map((v,i)=>v-other[i]));
++  const similarity=Math.max(0,1-distance/75);
++  if (!similarity) return color;
++  const luma=colorLuma(rgb), k=similarity*options.strength;
++  return luma<.3 ? mix(rgb,255,.055*k) : mix(rgb,0,.065*k);
++}
+diff --git a/src/iso-architectural-edges-lab.ts b/src/iso-architectural-edges-lab.ts
+new file mode 100644
+index 000000000..6db26cb1b
+--- /dev/null
++++ b/src/iso-architectural-edges-lab.ts
+@@ -0,0 +1,77 @@
++/** #1495 prototype: use existing visible faces, never invent hidden silhouettes. */
++import { nothing, svg, type TemplateResult } from 'lit';
++import { colorLuma, parseCssColor } from './iso-materials';
++import { architecturalOptions, architecturalWallTone } from './iso-architectural-tone-lab';
++import { isoRotationBasis, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
++import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
++
++type Face = { index:number; a:PlanPoint; b:PlanPoint; low:number; high:number; d:string; nx:number; ny:number; color:string };
++type Paint = { fill:(index:number)=>string; edges:TemplateResult|typeof nothing };
++const memo=new WeakMap<object,{key:string;paint:Paint}>();
++const epsilon=1e-4;
++const same=(a:PlanPoint,b:PlanPoint)=>Math.hypot(a[0]-b[0],a[1]-b[1])<epsilon;
++function faceOf(entry:IsoWallDepthQueueEntry,index:number,camera:IsoCamera,color:string):Face|null {
++  let edge:readonly [PlanPoint,PlanPoint]|undefined, low=0, high=0, d='';
++  if(entry.layer==='wall-side') {
++    if(entry.face.roundColumn!==undefined)return null;
++    edge=entry.face.planEdge; high=entry.face.height??0; d=entry.face.d;
++  } else if(entry.layer==='opening' && entry.surface.material==='wall-side') {
++    const points=entry.surface.points;
++    if(!points?.length)return null;
++    low=Math.min(...points.map(p=>p.z)); high=Math.max(...points.map(p=>p.z));
++    const ends:PlanPoint[]=[];
++    for(const p of points)if(!ends.some(q=>same(q,p.point)))ends.push(p.point);
++    if(ends.length!==2)return null;
++    edge=[ends[0],ends[1]]; d=entry.surface.d;
++  }
++  if(!edge || high-low<epsilon || !d)return null;
++  const [a,b]=edge, length=Math.hypot(b[0]-a[0],b[1]-a[1]);
++  if(length<epsilon)return null;
++  let nx=(b[1]-a[1])/length, ny=-(b[0]-a[0])/length;
++  const [cos,sin]=isoRotationBasis(camera);
++  if(nx*sin+ny*cos<0){nx=-nx;ny=-ny;}
++  const sx=nx*cos-ny*sin, sy=nx*sin+ny*cos;
++  const light=(1+(-.8*sx+.6*sy))/2;
++  return {index,a,b,low,high,d,nx,ny,color:architecturalWallTone(color,light)};
++}
++
++export function architecturalPainter(queue:readonly IsoWallDepthQueueEntry[],camera:IsoCamera,color:string):Paint {
++  const options=architecturalOptions();
++  if(!options.enabled)return {fill:()=>'',edges:nothing};
++  const memoKey=JSON.stringify([camera,color,options]);
++  const existing=memo.get(queue);
++  if(existing?.key===memoKey)return existing.paint;
++  const faces=queue.flatMap((entry,i)=>{const f=faceOf(entry,i,camera,color);return f?[f]:[];});
++  const colors=new Map(faces.map(f=>[f.index,`fill:${f.color}`]));
++  const byEnd=new Map<string,Face[]>();
++  const key=(p:PlanPoint)=>p.map(v=>v.toFixed(3)).join(',');
++  for(const face of faces)for(const point of [face.a,face.b]){const k=key(point);byEnd.set(k,[...(byEnd.get(k)??[]),face]);}
++  const seen=new Set<string>();
++  const edges=!options.edges?nothing:svg`<g data-hp="architectural-edges">${faces.map(face=>{
++    const segments:{a:PlanPoint;b:PlanPoint;z1:number;z2:number}[]=[];
++    if(face.low<epsilon)segments.push({a:face.a,b:face.b,z1:0,z2:0});
++    for(const point of [face.a,face.b]) {
++      let intervals=[[face.low,face.high]];
++      for(const other of byEnd.get(key(point))??[]) {
++        if(other===face || Math.abs(face.nx*other.ny-face.ny*other.nx)>epsilon)continue;
++        // Remove shared coplanar construction seams, including apron/lintel joins.
++        intervals=intervals.flatMap(([a,b])=>other.high<=a+epsilon||other.low>=b-epsilon?[[a,b]]:
++          [[a,Math.min(b,other.low)],[Math.max(a,other.high),b]].filter(([l,h])=>h-l>epsilon));
++      }
++      for(const [z1,z2] of intervals) {
++        const id=key(point)+':'+z1.toFixed(3)+':'+z2.toFixed(3);
++        if(!seen.has(id)){seen.add(id);segments.push({a:point,b:point,z1,z2});}
++      }
++    }
++    if(!segments.length)return nothing;
++    const id='hp-arch-edge-'+face.index;
++    const ink=colorLuma(parseCssColor(face.color)??[255,255,255])<.35?'#e2eaf3':'#26313e';
++    const d=segments.map(s=>`M ${projectPlanPoint(s.a,s.z1,camera).join(' ')} L ${projectPlanPoint(s.b,s.z2,camera).join(' ')}`).join(' ');
++    return svg`<defs><clipPath id=${id}><path d=${face.d} fill-rule="evenodd" clip-rule="evenodd"></path></clipPath></defs>
++      <path d=${d} clip-path=${'url(#'+id+')'} fill="none" stroke=${ink} stroke-opacity=".36"
++        style="stroke-width:calc(1.2 * var(--hp-raster-outline-scale, 1))" vector-effect="non-scaling-stroke" stroke-linecap="butt"></path>`;
++  })}</g>`;
++  const paint:Paint={fill:(index:number)=>colors.get(index)??'',edges};
++  memo.set(queue,{key:memoKey,paint});
++  return paint;
++}
