@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17911,
+  "revision": 17912,
   "nextTicket": 562,
   "nextFence": 562,
   "tasks": {
@@ -5232,166 +5232,25 @@
     },
     "1489": {
       "issue": 1489,
+      "branch": "codex/1489-iso-zoom-visual",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1489-iso-zoom-visual",
-      "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 561,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795174399656,
-      "reviewEntry": 2,
-      "patchId": "9fdb84e0d53f8c61b6b9ae7979d42a7305f44ad1",
-      "changedFiles": [
-        "demo/smoke_iso_raster_parity.mjs",
-        "demo/smoke_iso_raster_session.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/ISOMETRIC.md",
-        "docs/release-ledger/v1.85.2/1489.json",
-        "src/iso-camera-raster.ts",
-        "src/iso-raster-source.ts",
-        "src/live-viewport.ts",
-        "src/styles/plan.styles.ts"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795174253782,
-        "entry": 1,
-        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-        "eventId": "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:2:return:return:1489"
-      },
-      "s6": {
-        "id": "20261120T113337209-052318d7",
-        "name": "Тесты для задачи #1489 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T113337209-052318d7/report.json",
-        "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "status": "passed",
-        "finishedAt": "2026-11-20T11:37:56.685Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
+      "mergedSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
+      "mergedAt": 1795174988705,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1489:2:9fdb84e0d53f8c61b6b9ae7979d42a7305f44ad1:9c9e79038e9ff583ecc9e649712b34863334fdc0",
-      "reviewMaterial": {
-        "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "expectedBase": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-        "patchId": "9fdb84e0d53f8c61b6b9ae7979d42a7305f44ad1"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1489:2:9fdb84e0d53f8c61b6b9ae7979d42a7305f44ad1:9c9e79038e9ff583ecc9e649712b34863334fdc0",
-        "eventId": "github:44729192959:1:tick:0:review-retry",
-        "at": 1795174706444,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1489,
-        "requestId": "review:1489:2:9fdb84e0d53f8c61b6b9ae7979d42a7305f44ad1:9c9e79038e9ff583ecc9e649712b34863334fdc0",
-        "kind": "code",
-        "base": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-        "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "patchId": "9fdb84e0d53f8c61b6b9ae7979d42a7305f44ad1",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1489,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1489",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принимать. Изменение небольшое и точечное. Обе причины, установленные в задаче, устранены на уровне механизма.\n1) Растровая копия сцены теперь не перезапускает CSS-анимацию солнечного пятна. Для этого в клоне задаётся `animation:none`, а у слоя с классом `.out` — `opacity:0`. Пока на живом SVG идёт двухсекундная смена освещённости, растровый путь отключается.\n2) Последняя фиксация камеры в 2.5D больше не оставляет на сцене `will-change: transform` с тождественным transform. Слой остаётся композитным через CSS `will-change: opacity`, и браузер может заново отрисовать SVG в конечном масштабе.\nБлокеров нет. Остаются ограничения, о которых владельцу стоит знать. Сильную пикселизацию с пользовательского кадра на синтетике не воспроизвели, поэтому её причина остаётся правдоподобной гипотезой. Регрессионная проверка резкости смотрит на состояние DOM и не сравнивает пиксели со свежей отрисовкой; срок 300 мс не проверяется. Стоимость первого кадра жеста после снятия idle-слоя не измерялась.",
-          "understanding": "Проблема 1 — свет из окон. До изменения `captureIsoRasterSource` клонировал живой SVG вместе с продуктовым CSS. В SVG-изображении своя временная шкала анимаций, поэтому `.sunlayer { animation: hp-sunfade-in 2s linear both }` в каждом битмапе начиналась с кадра `opacity:0`. Пока на экране был растровый кадр (во время зума и при сменах кадров), свет исчезал.\nПосле изменения в клоне у `.iso-sunwash` стоит `animation:none`. Для слоя без `.out` действует атрибут `opacity` (в режиме просмотра это `viewWeight` = 1). Он совпадает с конечным ключевым кадром `to {opacity:1}`. Для `.out` задаётся `opacity:0`. Все битмапы сессии (кадр сцены, подложка, подготовленные кадры) декодируются из одного `session.source`, поэтому исправление распространяется и на смены кадров.\nПока на живом SVG идёт fade (`getAnimations()` содержит pending или running), `prepare()` переводит сессию в `sunFading`. В этом состоянии `supports()` и `queue()` отказывают, вызывается `pause(true)` и очищается подложка. После `Promise.allSettled(finished)` сессия снова ставится в очередь. Значит, во время смены освещённости зум идёт по живому SVG с transform.\nПроблема 2 — резкость. До изменения `commitHouseplanViewport` для iso всегда передавал `keepSceneLayer: true` (наследие 71ee41cf4 «reuse camera surfaces», #1478). В покое на `.iso-scene-surface` оставались тождественный transform и `will-change: transform`, а при таком hint Chrome может зафиксировать масштаб растеризации, полученный во время жеста.\nТеперь последний коммит (`keepSceneLayer` = `active()` из `live-interaction-runtime`) снимает transform, will-change, overflow и clip-path через `setLayerProjection(null)`. Композитный слой сохраняет CSS `will-change: opacity`. Это тот же приём, что уже применяется к `.plan-svg` в #689: комментарий там прямо говорит, что transform-hint замораживает масштаб растеризации.\nРазобранные пути:\n- `paintMotion` → `paintLiveViewport(keepSceneLayer:true)` во время жеста;\n- коммит во время активного жеста (`active()` с 230 мс wheel lease) и последний коммит;\n- конечные точки смены режима (`_modeSceneClip`);\n- `settle`, `queue` и `prepare` в `IsoCameraRaster`;\n- отмена анимации при смене in/out или удалении элемента, а также пересоздание сессии во время ожидания fade;\n- reduced-motion;\n- обе дымовые проверки.",
-          "analysis": [
-            {
-              "topic": "Сохранение света в растровой копии",
-              "assessment": "Исправление верное и минимальное. Конечное состояние без анимации совпадает с установившимся состоянием живого SVG. Для `.in` это presentation-атрибут `opacity`, равный `viewWeight`. Растровый путь доступен только в `.stage.mode-view:not(.mode-transition)`, где значение равно 1, как и в ключевом кадре `to`. Для `.out` получается 0, как после `hp-sunfade-out` и в правиле reduced-motion. Источник общий для всех кадров сессии, поэтому длинные серии со сменами кадров используют тот же исправленный клон.",
-              "evidence": "src/iso-raster-source.ts:59-65; src/styles/base.styles.ts:211-218 (keyframes); src/styles/plan.styles.ts:1494-1504; src/iso-sun.ts:175 (`opacity=\"${opacity}\"`, вызов с `_modeTransitionVisual?.viewWeight ?? 1`); src/iso-camera-raster.ts:255,260,273 — все decode из `session.source`."
-            },
-            {
-              "topic": "Ожидание fade на живом SVG (`sunFading`)",
-              "assessment": "Жизненный цикл устроен надёжно. Fade всегда начинается с мутации DOM: меняется класс `out` или вставляется элемент. MutationObserver вызывает `invalidate`, источник сбрасывается, и проверка в `prepare` (`!session.source`) срабатывает. При смене in/out посреди fade CSS-анимация отменяется, `finished` отклоняется, `allSettled` всё равно завершается, а следующий `prepare` находит новую анимацию. Если сессию заменили, `queue` проверяет `this.session !== session` и ничего не делает. Побочный эффект: первые ~2 с после каждого пересоздания слоя солнца (открытие 2.5D, смена этажа) зум идёт по живому SVG без растра. До изменения в это время растр показывал бы пятно с нулевой яркостью, так что это осознанный и задокументированный компромисс.",
-              "evidence": "src/iso-camera-raster.ts:169,197,234-249,376-386; docs/ISOMETRIC.md (новый абзац о two-second fade)."
-            },
-            {
-              "topic": "Снятие transform-hint после остановки",
-              "assessment": "Удаление `|| host._renderProjection === 'iso'` возвращает iso к контракту #579 из комментария над вызовом: последний кадр Lit восстанавливает DOM без transform. Защита от демоута посреди жеста сохранена: `LiveInteractionRuntime.commit` передаёт `active()`, и в него входят указатели и `_cameraTransition.active`. Повторные idle-коммиты при обновлениях HA ничего не пишут, потому что `setLayerProjection(null)` снимает только то, что установлено. CSS `will-change: opacity` сохраняет композитный слой и тот же контекст наложения, что раньше давал inline `will-change: transform`. Поведение для отрисовки в покое не меняется, кроме масштаба растеризации. Конечные точки смены режима в iso теперь тоже демоутятся, и это согласуется с комментарием в строках 572-574.",
-              "evidence": "src/live-viewport.ts:551-593 (строка 581), 137-187; src/live-interaction-runtime.ts:122-134; src/styles/plan.styles.ts:110-115 (прецедент #689) и 211-213; история: 71ee41cf4 ввёл принудительный keepSceneLayer для iso."
-            },
-            {
-              "topic": "Регрессионные проверки",
-              "assessment": "Проверка света сделана хорошо. Маска строится по разнице между прогонами со светом и без него, поэтому изолирован именно вклад солнечного пятна, и сравнение всего кадра его не размывает. На base проверка упала бы: в растре пятно имело бы нулевую яркость. Проверка резкости — прокси на уровне DOM: после серии 7/−5/7 щелчков колеса на `_zoom >= 5` она сверяет точный `viewBox`, `transform:none`, `will-change: opacity` и отсутствие canvas. На base она бы упала, но пиксельное совпадение со свежей отрисовкой и срок 300 мс из приёмки она не проверяет. Свет во время смен кадров в длинной серии отдельно не измеряется; его покрывает общий источник (см. выше).",
-              "evidence": "demo/smoke_iso_raster_parity.mjs:checkWindowLight, checkLargeZoomSettles; demo/smoke_iso_raster_session.mjs (новая проверка will-change); demo/helpers/iso-paint-scene.mjs:64-74 — `settleIsoPaint` ждёт без ограничения 300 мс."
-            },
-            {
-              "topic": "Цена первого кадра жеста",
-              "assessment": "Это гипотеза, а не установленный дефект. До изменения у iso в покое уже стояли inline `clip-path` (exposure-резерв) и `will-change: transform`, поэтому резерв вокруг видимой области был отрисован заранее. Теперь на первом кадре pan/pinch браузеру нужно отрисовать резерв, на который полагается `keepsVectorReserve`. Для колеса это обычно скрыто растровым кадром, подготовленным в `settle`. Подтвердить или опровергнуть можно замером длительности первого кадра pan/pinch в 2.5D до и после изменения на той же сцене.",
-              "evidence": "src/live-viewport.ts:170-173 (exposure clip ставится только при проекции); src/iso-camera-raster.ts:107-112, 220 (vector reserve для pan/pinch)."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Добавить в `checkLargeZoomSettles` отметку времени от последнего щелчка колеса до появления точного `viewBox` без transform-hint и проверять порог 300 мс из приёмки. Сейчас это значение (249–275 мс) указано только в описании задачи. Цена — одно измерение `performance.now()` в уже существующем сценарии.",
-            "Измерить длительность первого кадра pan/pinch в 2.5D после остановки (см. гипотезу в analysis). Если кадр заметно подорожал, можно на последнем коммите сохранять exposure clip и снимать только transform и `will-change: transform`. Резерв останется отрисованным, а масштаб растеризации обновится. Без замера текущий, более простой вариант предпочтительнее.",
-            "В `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` новая строка отделена пустой строкой от остальных пунктов Unreleased и стоит вплотную к заголовку `## v1.86.0-beta.1`. На отображение Markdown это не влияет, но лучше перенести её в общий список и оставить пустую строку перед заголовком."
-          ],
-          "boundaries": "Сборку, тесты и браузерные проверки не запускал. Всё изучено по исходникам на head и base и по истории: 71ee41cf4 (источник принудительного `keepSceneLayer` для iso) и ed66b74e4. Использована квитанция S6 `20261120T113337209-052318d7` («Тесты для задачи #1489 (перед ревью)», passed, материал 67ad4ad1). Её состав по снимку не виден, поэтому не могу утверждать, что дымовые сценарии `smoke_iso_raster_parity` и `smoke_iso_raster_session` выполнялись именно в ней. Предыдущий отказ S6 (`core-source-readers`, `mutation-browser-offload`, `mutation-gate`) по комментарию исправлен до повторного входа. Поведение Chrome при `will-change: transform` (фиксация масштаба растеризации) принято по комментарию #689 в коде и описанию задачи, а не проверено. Пикселизацию с пользовательского скриншота исполнитель на синтетике не воспроизвёл, поэтому связь именно с transform-hint остаётся правдоподобной, но не доказанной. Производительность первого кадра жеста не измерялась."
-        },
-        "usage": {
-          "input_tokens": 50,
-          "cache_creation_input_tokens": 133419,
-          "cache_read_input_tokens": 2089598,
-          "output_tokens": 20315,
-          "output_tokens_details": {
-            "thinking_tokens": 11210
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 133419,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1031,
-              "cache_read_input_tokens": 122012,
-              "cache_creation_input_tokens": 15611,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 15611
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принимать. Изменение небольшое и точечное. Обе причины, установленные в задаче, устранены на уровне механизма.\n1) Растровая копия сцены теперь не перезапускает CSS-анимацию солнечного пятна. Для этого в клоне задаётся `animation:none`, а у слоя с классом `.out` — `opacity:0`. Пока на живом SVG идёт двухсекундная смена освещённости, растровый путь отключается.\n2) Последняя фиксация камеры в 2.5D больше не оставляет на сцене `will-change: transform` с тождественным transform. Слой остаётся композитным через CSS `will-change: opacity`, и браузер может заново отрисовать SVG в конечном масштабе.\nБлокеров нет. Остаются ограничения, о которых владельцу стоит знать. Сильную пикселизацию с пользовательского кадра на синтетике не воспроизвели, поэтому её причина остаётся правдоподобной гипотезой. Регрессионная проверка резкости смотрит на состояние DOM и не сравнивает пиксели со свежей отрисовкой; срок 300 мс не проверяется. Стоимость первого кадра жеста после снятия idle-слоя не измерялась.\n\n## Понимание решения\n\nПроблема 1 — свет из окон. До изменения `captureIsoRasterSource` клонировал живой SVG вместе с продуктовым CSS. В SVG-изображении своя временная шкала анимаций, поэтому `.sunlayer { animation: hp-sunfade-in 2s linear both }` в каждом битмапе начиналась с кадра `opacity:0`. Пока на экране был растровый кадр (во время зума и при сменах кадров), свет исчезал.\nПосле изменения в клоне у `.iso-sunwash` стоит `animation:none`. Для слоя без `.out` действует атрибут `opacity` (в режиме просмотра это `viewWeight` = 1). Он совпадает с конечным ключевым кадром `to {opacity:1}`. Для `.out` задаётся `opacity:0`. Все битмапы сессии (кадр сцены, подложка, подготовленные кадры) декодируются из одного `session.source`, поэтому исправление распространяется и на смены кадров.\nПока на живом SVG идёт fade (`getAnimations()` содержит pending или running), `prepare()` переводит сессию в `sunFading`. В этом состоянии `supports()` и `queue()` отказывают, вызывается `pause(true)` и очищается подложка. После `Promise.allSettled(finished)` сессия снова ставится в очередь. Значит, во время смены освещённости зум идёт по живому SVG с transform.\nПроблема 2 — резкость. До изменения `commitHouseplanViewport` для iso всегда передавал `keepSceneLayer: true` (наследие 71ee41cf4 «reuse camera surfaces», #1478). В покое на `.iso-scene-surface` оставались тождественный transform и `will-change: transform`, а при таком hint Chrome может зафиксировать масштаб растеризации, полученный во время жеста.\nТеперь последний коммит (`keepSceneLayer` = `active()` из `live-interaction-runtime`) снимает transform, will-change, overflow и clip-path через `setLayerProjection(null)`. Композитный слой сохраняет CSS `will-change: opacity`. Это тот же приём, что уже применяется к `.plan-svg` в #689: комментарий там прямо говорит, что transform-hint замораживает масштаб растеризации.\nРазобранные пути:\n- `paintMotion` → `paintLiveViewport(keepSceneLayer:true)` во время жеста;\n- коммит во время активного жеста (`active()` с 230 мс wheel lease) и последний коммит;\n- конечные точки смены режима (`_modeSceneClip`);\n- `settle`, `queue` и `prepare` в `IsoCameraRaster`;\n- отмена анимации при смене in/out или удалении элемента, а также пересоздание сессии во время ожидания fade;\n- reduced-motion;\n- обе дымовые проверки.\n\n## Разбор решения\n\n### Сохранение света в растровой копии\n\nИсправление верное и минимальное. Конечное состояние без анимации совпадает с установившимся состоянием живого SVG. Для `.in` это presentation-атрибут `opacity`, равный `viewWeight`. Растровый путь доступен только в `.stage.mode-view:not(.mode-transition)`, где значение равно 1, как и в ключевом кадре `to`. Для `.out` получается 0, как после `hp-sunfade-out` и в правиле reduced-motion. Источник общий для всех кадров сессии, поэтому длинные серии со сменами кадров используют тот же исправленный клон.\n\nОснование: src/iso-raster-source.ts:59-65; src/styles/base.styles.ts:211-218 (keyframes); src/styles/plan.styles.ts:1494-1504; src/iso-sun.ts:175 (`opacity=\"${opacity}\"`, вызов с `_modeTransitionVisual?.viewWeight ?? 1`); src/iso-camera-raster.ts:255,260,273 — все decode из `session.source`.\n\n### Ожидание fade на живом SVG (`sunFading`)\n\nЖизненный цикл устроен надёжно. Fade всегда начинается с мутации DOM: меняется класс `out` или вставляется элемент. MutationObserver вызывает `invalidate`, источник сбрасывается, и проверка в `prepare` (`!session.source`) срабатывает. При смене in/out посреди fade CSS-анимация отменяется, `finished` отклоняется, `allSettled` всё равно завершается, а следующий `prepare` находит новую анимацию. Если сессию заменили, `queue` проверяет `this.session !== session` и ничего не делает. Побочный эффект: первые ~2 с после каждого пересоздания слоя солнца (открытие 2.5D, смена этажа) зум идёт по живому SVG без растра. До изменения в это время растр показывал бы пятно с нулевой яркостью, так что это осознанный и задокументированный компромисс.\n\nОснование: src/iso-camera-raster.ts:169,197,234-249,376-386; docs/ISOMETRIC.md (новый абзац о two-second fade).\n\n### Снятие transform-hint после остановки\n\nУдаление `|| host._renderProjection === 'iso'` возвращает iso к контракту #579 из комментария над вызовом: последний кадр Lit восстанавливает DOM без transform. Защита от демоута посреди жеста сохранена: `LiveInteractionRuntime.commit` передаёт `active()`, и в него входят указатели и `_cameraTransition.active`. Повторные idle-коммиты при обновлениях HA ничего не пишут, потому что `setLayerProjection(null)` снимает только то, что установлено. CSS `will-change: opacity` сохраняет композитный слой и тот же контекст наложения, что раньше давал inline `will-change: transform`. Поведение для отрисовки в покое не меняется, кроме масштаба растеризации. Конечные точки смены режима в iso теперь тоже демоутятся, и это согласуется с комментарием в строках 572-574.\n\nОснование: src/live-viewport.ts:551-593 (строка 581), 137-187; src/live-interaction-runtime.ts:122-134; src/styles/plan.styles.ts:110-115 (прецедент #689) и 211-213; история: 71ee41cf4 ввёл принудительный keepSceneLayer для iso.\n\n### Регрессионные проверки\n\nПроверка света сделана хорошо. Маска строится по разнице между прогонами со светом и без него, поэтому изолирован именно вклад солнечного пятна, и сравнение всего кадра его не размывает. На base проверка упала бы: в растре пятно имело бы нулевую яркость. Проверка резкости — прокси на уровне DOM: после серии 7/−5/7 щелчков колеса на `_zoom >= 5` она сверяет точный `viewBox`, `transform:none`, `will-change: opacity` и отсутствие canvas. На base она бы упала, но пиксельное совпадение со свежей отрисовкой и срок 300 мс из приёмки она не проверяет. Свет во время смен кадров в длинной серии отдельно не измеряется; его покрывает общий источник (см. выше).\n\nОснование: demo/smoke_iso_raster_parity.mjs:checkWindowLight, checkLargeZoomSettles; demo/smoke_iso_raster_session.mjs (новая проверка will-change); demo/helpers/iso-paint-scene.mjs:64-74 — `settleIsoPaint` ждёт без ограничения 300 мс.\n\n### Цена первого кадра жеста\n\nЭто гипотеза, а не установленный дефект. До изменения у iso в покое уже стояли inline `clip-path` (exposure-резерв) и `will-change: transform`, поэтому резерв вокруг видимой области был отрисован заранее. Теперь на первом кадре pan/pinch браузеру нужно отрисовать резерв, на который полагается `keepsVectorReserve`. Для колеса это обычно скрыто растровым кадром, подготовленным в `settle`. Подтвердить или опровергнуть можно замером длительности первого кадра pan/pinch в 2.5D до и после изменения на той же сцене.\n\nОснование: src/live-viewport.ts:170-173 (exposure clip ставится только при проекции); src/iso-camera-raster.ts:107-112, 220 (vector reserve для pan/pinch).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить в `checkLargeZoomSettles` отметку времени от последнего щелчка колеса до появления точного `viewBox` без transform-hint и проверять порог 300 мс из приёмки. Сейчас это значение (249–275 мс) указано только в описании задачи. Цена — одно измерение `performance.now()` в уже существующем сценарии.\n- Измерить длительность первого кадра pan/pinch в 2.5D после остановки (см. гипотезу в analysis). Если кадр заметно подорожал, можно на последнем коммите сохранять exposure clip и снимать только transform и `will-change: transform`. Резерв останется отрисованным, а масштаб растеризации обновится. Без замера текущий, более простой вариант предпочтительнее.\n- В `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` новая строка отделена пустой строкой от остальных пунктов Unreleased и стоит вплотную к заголовку `## v1.86.0-beta.1`. На отображение Markdown это не влияет, но лучше перенести её в общий список и оставить пустую строку перед заголовком.\n\n## Границы анализа\n\nСборку, тесты и браузерные проверки не запускал. Всё изучено по исходникам на head и base и по истории: 71ee41cf4 (источник принудительного `keepSceneLayer` для iso) и ed66b74e4. Использована квитанция S6 `20261120T113337209-052318d7` («Тесты для задачи #1489 (перед ревью)», passed, материал 67ad4ad1). Её состав по снимку не виден, поэтому не могу утверждать, что дымовые сценарии `smoke_iso_raster_parity` и `smoke_iso_raster_session` выполнялись именно в ней. Предыдущий отказ S6 (`core-source-readers`, `mutation-browser-offload`, `mutation-gate`) по комментарию исправлен до повторного входа. Поведение Chrome при `will-change: transform` (фиксация масштаба растеризации) принято по комментарию #689 в коде и описанию задачи, а не проверено. Пикселизацию с пользовательского скриншота исполнитель на синтетике не воспроизвёл, поэтому связь именно с transform-hint остаётся правдоподобной, но не доказанной. Производительность первого кадра жеста не измерялась.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 9c9e79038e9ff583ecc9e649712b34863334fdc0 → 67ad4ad1aa10293de5bdc0d891642c5c23f75e85\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-20T11:42:52.765Z",
-        "artifactId": 14624689929,
-        "runId": 44729227278,
-        "runAttempt": 1,
-        "completedAt": "2026-11-20T11:38:22Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44729227278",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "9c9e79038e9ff583ecc9e649712b34863334fdc0"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1490": {
@@ -5950,19 +5809,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1489,
-    "worker": "finish",
-    "token": "561:finish:22a3df88-8668-4421-be32-3c8997a8f31a:finish:1:admit",
-    "fence": 561,
-    "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-    "expectedBase": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795174404110,
-    "expiresAt": 1795178582057,
-    "patchId": "9fdb84e0d53f8c61b6b9ae7979d42a7305f44ad1",
-    "reviewRequest": "review:1489:2:9fdb84e0d53f8c61b6b9ae7979d42a7305f44ad1:9c9e79038e9ff583ecc9e649712b34863334fdc0"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6004,114 +5851,6 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "github:44727185591:1:completions:message:456f0713da7a51443d2a53aac81ad0b203406ebc9b5ed60a974a6e666cb435eb": {
-      "digest": "6e287ee1483770d4c6e3b0bfc8ba0b41eebd9dfdb336762aa480fab24604d65b",
-      "issue": 1489
-    },
-    "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:1:synchronized": {
-      "digest": "9bcebf9b78ef84bdbaaed0ae277e22c18a61a5b287283469fed2b0f209f911c0",
-      "issue": 1489
-    },
-    "finish:c4d4cfa1-6e7f-490b-8343-d3b46c2541eb": {
-      "digest": "d55c11c24b2bd0ebb65d76767292388f8cf57da6ec7a980e9e1c7f9613477d39",
-      "issue": 1489
-    },
-    "dev-build:44727185591:1:webhook": {
-      "digest": "4b1bd4fc3c25acdf8e0c4692f1ecbbef80ebcada07f559e30ceabb684dbe093c",
-      "issue": 1489
-    },
-    "dev-build:44727185591:1:webhook:c0f65d94-5576-4725-92b8-3399e0a5b185:delivered": {
-      "digest": "10127c6501396cc04f46651ff96dff25f4d4727ff47870413f64ec7fa3c4cff3",
-      "issue": 1489
-    },
-    "finish:8125f062-8f64-4e69-a758-86d6b9493128": {
-      "digest": "54263e789a43f2350b514f0331cf1fa450ff5f6ef6f7c64ce87ea3fa383196c7",
-      "issue": 1489
-    },
-    "github:44727645002:1:completions:message:da7a0a2f05dd149dd2df70aea51a1c80928f91d4db16ba998992505f6d777075": {
-      "digest": "086b3005d678dc1ca74adec863354d322c6ad42fa0ce67562a9c047db86f4f96",
-      "issue": 1489
-    },
-    "finish:ebf6d5a8-b190-49cd-bc49-e51ebbe9c5f5": {
-      "digest": "2a22f1919530139a1106e5942ce2b5c32f4af2060ad35c427c8baf3256fefd75",
-      "issue": 1489
-    },
-    "finish:13715098-64c2-4515-be9e-840fcfcba9e1": {
-      "digest": "49b851a5ed7128e47b6929e30abd90ff71636d0ac0ec2fe0ea85463339cc5131",
-      "issue": 1489
-    },
-    "finish:9d438cd6-bea5-40af-b969-43178f253da7": {
-      "digest": "1bfad53430f4a4813a25a7ae68d9e878013ca18d73925c326903ff38d24af4d2",
-      "issue": 1489
-    },
-    "finish:bd326c9c-abfc-49a7-9fa7-d7828a5ace65": {
-      "digest": "c9e6478bda2569bedc30b49d4d7d50fe2aca1c2c0188bde89e8d0920f00cc395",
-      "issue": 1489
-    },
-    "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:2:return": {
-      "digest": "83a5d919275fb66e4a555d6e08679a76977eeefbf52fa94caadea539023c33e6",
-      "issue": 1489
-    },
-    "finish:22a3df88-8668-4421-be32-3c8997a8f31a:finish:2:synchronized": {
-      "digest": "6ba9fbb3aafeebabfcf0812b27a4d246da7f9abb6acd709277e2470f31f4e697",
-      "issue": 1489
-    },
-    "finish:5db5d034-5c07-4867-ad5f-92c12196f869": {
-      "digest": "d051728d72387459514c45c7022c0318bd6b0f912221a764df05904ac626cf37",
-      "issue": 1489
-    },
-    "finish:debe7492-b7b5-44aa-b87f-5565f13c1efa": {
-      "digest": "586a157808a32962431229e54dbb5733ae514a4a61da4adfc93bde0f51255dd2",
-      "issue": 1489
-    },
-    "finish:64947d45-31d5-4921-b2ae-86d7fc8c6281": {
-      "digest": "1535e58cae114954a7d42f089d71904b7e43618c9e132c70fbf1bfc6cea399f9",
-      "issue": 1489
-    },
-    "finish:5281b0fc-2f38-462c-a641-57115a526e85": {
-      "digest": "c4ef9e9ea2b2e26d50da6cc4a06ed88721a93a7d2dda8b36a19cbe5730cb12af",
-      "issue": 1489
-    },
-    "finish:22a3df88-8668-4421-be32-3c8997a8f31a:finish:3:s6-label": {
-      "digest": "d092a100d2757a9c32f1c8d4fc870ef9b9ee9d5fb99000096ff98eab9b6b2232",
-      "issue": 1489
-    },
-    "finish:22a3df88-8668-4421-be32-3c8997a8f31a:finish:4:review-requested": {
-      "digest": "a558fac53d46df5bf4a82f2a821d9eca84311b12e52a9c6aa62486c7f259dec0",
-      "issue": 1489
-    },
-    "github:44729192959:1:tick:0:review-retry": {
-      "digest": "3d3683f0521d4b37f0330ab5147e8905dfe925a254e826d74dc48e8fba4369b9",
-      "issue": 1489
-    },
-    "github:44729192959:1:completions:notice:afe920f96cd9e6c576417bf71e05b6450eade28746dbe1be73bd5f0a5cb11d5e": {
-      "digest": "debf1151cdf8284f3960723cdc4586f667b152be75fdcb4c3726743764e1c1cc",
-      "issue": 1489
-    },
-    "github:44729192959:1:completions:message:afe920f96cd9e6c576417bf71e05b6450eade28746dbe1be73bd5f0a5cb11d5e": {
-      "digest": "0495681b9b10cb6900b3a696ea204503a15f236a44960b6df308c4ec33545c79",
-      "issue": 1489
-    },
-    "github:44729192959:1:completions:message:7295d3c51faff072a6ac4c974dbfa1d2e00bcefa03852d182d52861d23fc207e": {
-      "digest": "62c4296eeff6dd4460ee6eb0fadd20f12f8290610442a7c7665f91d72e2ab7c1",
-      "issue": 1489
-    },
-    "github:44729192959:1:completions:message:52150c17ce1c49e31aa01f10c630c1ea7fb1dc4bbd0c799e173d331dc3a9d3c9": {
-      "digest": "5538609798c1b330ea60600af0bd8d1ca0778e5563ec4504983b8c26e7fdf0ff",
-      "issue": 1489
-    },
-    "github:44729192959:1:completions:message:3a0126117e4df02bcbe7006ef5e5482496a39631ed0889c236e4d46c3920e3fc": {
-      "digest": "7d100225e7cf5c924970f7ca26b15a5f486d9ef39dc2782a8668cc6030c882db",
-      "issue": 1489
-    },
-    "finish:22a3df88-8668-4421-be32-3c8997a8f31a:finish:8:review-presentation": {
-      "digest": "6b2cd28d769bbbbeb2923a7cf4b38faf3b3c83ca3b818a7401681bd44c09c1b4",
-      "issue": 1489
-    },
-    "finish:22a3df88-8668-4421-be32-3c8997a8f31a:finish:8:review-complete": {
-      "digest": "59793ae6391b44f4902fcda5452f12807baf966d32291ffc51b14828ed2603fe",
-      "issue": 1489
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6138,115 +5877,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:80fe0b00-2dd7-4c83-926f-630031070b0e": {
-      "digest": "889b382f4a643d446a93c5a9b7027d7f227feda699c7b5861878bc5a5dc36472",
-      "issue": 1489,
-      "message": {
-        "kind": "queued",
-        "issue": 1489,
-        "at": 1795173587176,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "230756c2e3afe2c71ab2ace1db597835721ff3b0",
-        "delivered": true
-      }
-    },
-    "github:44727185591:1:tick:2:admit": {
-      "digest": "19c8129ba71e2a68c4d18ab153cea3657c4c1efca536e404afdf404808323cce",
-      "issue": 1489,
-      "message": {
-        "kind": "admitted",
-        "issue": 1489,
-        "at": 1795173836849,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "230756c2e3afe2c71ab2ace1db597835721ff3b0",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:2:return:return:1489": {
-      "digest": "83a5d919275fb66e4a555d6e08679a76977eeefbf52fa94caadea539023c33e6",
-      "issue": 1489,
-      "message": {
-        "kind": "return",
-        "issue": 1489,
-        "at": 1795174253782,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795174253782,
-          "entry": 1,
-          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-          "eventId": "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:2:return:return:1489"
-        },
-        "delivered": true
-      }
-    },
-    "finish:22a3df88-8668-4421-be32-3c8997a8f31a": {
-      "digest": "fc3adbf180e3af6be3dcc29ebb21a99bd6683b59dcf15280b9b314bf5f2d9dad",
-      "issue": 1489,
-      "message": {
-        "kind": "queued",
-        "issue": 1489,
-        "at": 1795174399656,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "delivered": true
-      }
-    },
-    "finish:22a3df88-8668-4421-be32-3c8997a8f31a:finish:1:admit": {
-      "digest": "b1e0c261e06e4c10b2fb63e5dc4b122088852c8e13606dfe1464ead414d2ab6d",
-      "issue": 1489,
-      "message": {
-        "kind": "admitted",
-        "issue": 1489,
-        "at": 1795174404110,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:22a3df88-8668-4421-be32-3c8997a8f31a:finish:3:s6-complete": {
-      "digest": "e8750dd3a48d07ce7c7134fbfa6aab48310e1079d551568e67643238a6d30790",
-      "issue": 1489,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1489,
-        "at": 1795174678173,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "phase": "review",
-        "evidence": {
-          "id": "20261120T113337209-052318d7",
-          "name": "Тесты для задачи #1489 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T113337209-052318d7/report.json",
-          "materialSha": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-          "status": "passed",
-          "finishedAt": "2026-11-20T11:37:56.685Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
