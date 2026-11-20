@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18684,
+  "revision": 18685,
   "nextTicket": 576,
   "nextFence": 576,
   "tasks": {
@@ -5539,7 +5539,18 @@
       "patchId": "92d6e0a21da8e65434c41ba6b4f7b83cb30fbe78",
       "changedFiles": [
         "demo/smoke_zigbee_topology_hover.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795211267328,
+        "entry": 1,
+        "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
+        "eventId": "finish:1e1b7423-0b0e-4f9e-ad71-d5cbdbe2f69f:finish:3:return:return:1503"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6022,18 +6033,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1503,
-    "worker": "finish",
-    "token": "575:finish:1e1b7423-0b0e-4f9e-ad71-d5cbdbe2f69f:finish:1:admit",
-    "fence": 575,
-    "materialSha": "c4cb576ca6e1e19b6836fb3863657e174d174877",
-    "expectedBase": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
-    "phase": "testing",
-    "admittedAt": 1795211204235,
-    "expiresAt": 1795211510004,
-    "patchId": "92d6e0a21da8e65434c41ba6b4f7b83cb30fbe78"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6085,6 +6085,10 @@
     },
     "github:44823294913:1:completions:message:ecb9701bed8f3aa4cbd7483a42b8780e4f9bcaa7aa4fe7417096014cb398c5dc": {
       "digest": "d3361d1e25579db00dc0dddb4b11a5d02c67a3a2af7774f42563a128b8082192",
+      "issue": 1503
+    },
+    "finish:1e1b7423-0b0e-4f9e-ad71-d5cbdbe2f69f:finish:3:return": {
+      "digest": "b28f696032b7db6b7706c396021465a91637477605303ecc02953c028264c239",
       "issue": 1503
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -6143,6 +6147,26 @@
         "materialSha": "c4cb576ca6e1e19b6836fb3863657e174d174877",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:1e1b7423-0b0e-4f9e-ad71-d5cbdbe2f69f:finish:3:return:return:1503": {
+      "digest": "b28f696032b7db6b7706c396021465a91637477605303ecc02953c028264c239",
+      "issue": 1503,
+      "message": {
+        "kind": "return",
+        "issue": 1503,
+        "at": 1795211267328,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795211267328,
+          "entry": 1,
+          "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
+          "eventId": "finish:1e1b7423-0b0e-4f9e-ad71-d5cbdbe2f69f:finish:3:return:return:1503"
+        }
       }
     }
   },
