@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1069,
+  "revision": 1070,
   "active": "1.86.0-beta.1-20261120",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -140486,7 +140486,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.86.0-beta.1",
         "candidate": "4b3b5b501a3bc73ce4bafc5761c5b142d81cd09a",
         "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
         "issues": [
@@ -148470,6 +148470,577 @@
         "source": "chat",
         "sourceRef": "send_user_message_question_reply/call_e10f3d1c1d9149fdabfe263faf7970e3/0",
         "decisionText": "Да, принять размеры и выпустить бету: ZIP 5,42 МБ (+8,1%); весь frontend gzip 2,25 МБ (+7,7%); начальная загрузка 483 КБ (+12,7%)."
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.86.0-beta.1",
+          "candidate": "4b3b5b501a3bc73ce4bafc5761c5b142d81cd09a",
+          "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+          "issues": [
+            {
+              "number": 1391,
+              "commits": [
+                "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+                "e41de4e50ce602989b92f320e814719530a90520"
+              ]
+            },
+            {
+              "number": 1392,
+              "commits": [
+                "193dcb853202ed8d6abbb85105aef7b12f9c6f8e",
+                "1b7b3f9bb7e774410424f0dc37dcf933d8d8dcff",
+                "1b90acd62450da2efcf0e75ee4d6c507e00d78a4",
+                "3108fed9e23905a23044453c85be4e158dabaadc",
+                "5a4752ee353842a669001a2cb66ade87d4f00871",
+                "68e97385b0900ceff9cd3df0233c94b22d6f64f7",
+                "7f9d64dc162d236e6e2792fad77c3c8a3f5fec63",
+                "80b559f8a51d21668c245f0fd00eda82e8375b03",
+                "fabc65d2e96e39a722420af290732758e50a06d4",
+                "fee2d3e988bdee9537920a0b083e289329275413"
+              ]
+            },
+            {
+              "number": 1393,
+              "commits": [
+                "759ff053090317b430cdee3dca12fba18892de4b"
+              ]
+            },
+            {
+              "number": 1394,
+              "commits": [
+                "0dc2a4683f90a8005c08f1618575c2c1c40539c9",
+                "11e2e7c19478818e151c0584cfcdcac8144dafd9",
+                "2357f3f362481a2ec12afdc6e60126c7c499ed8d",
+                "9ed0f88801ada63035ccafa464683960da8104e9",
+                "edb1b3ece1127906ce58477afe0f08d650377eac",
+                "f9a7e70dee75cc9dae22cff2ed81391f02ef13dd"
+              ]
+            },
+            {
+              "number": 1395,
+              "commits": [
+                "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
+                "3832620122b454c2b1ed1b9cdc64ae4263616c06",
+                "4c9221465557971947ea98dfdb81fbb2ce4021cd"
+              ]
+            },
+            {
+              "number": 1415,
+              "commits": [
+                "746c8b9c77268d3e809c51221ccbfb46c5072499"
+              ]
+            },
+            {
+              "number": 1421,
+              "commits": [
+                "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1",
+                "c0724ea4179e2c6971033c383ef37a441983960f"
+              ]
+            },
+            {
+              "number": 1422,
+              "commits": [
+                "5169c189d8807db00348b15ddd3723006ca9c993",
+                "a927fbd3bbcb856542cb0ff4cd4061ddf187df07"
+              ]
+            },
+            {
+              "number": 1423,
+              "commits": [
+                "17e097cc5028767c96277023575ac2052d59ef8b",
+                "46eed6c62d78fc18d8fe52119affe06b7a9d2638",
+                "57b416aaa549042855b0e99c54fc2affb109398c"
+              ]
+            },
+            {
+              "number": 1424,
+              "commits": [
+                "a9e4a01420c02318a725157c49d4b9b2e23599c4"
+              ]
+            },
+            {
+              "number": 1425,
+              "commits": [
+                "4423d4dc9c725b24fe4a3d231bd0b72cadccff62"
+              ]
+            },
+            {
+              "number": 1426,
+              "commits": [
+                "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0"
+              ]
+            },
+            {
+              "number": 1427,
+              "commits": [
+                "861880273ebcd36fd891537c15a4c3e85ccebd25",
+                "dc739d2fee27c257627e15739094135a7c306bc0"
+              ]
+            },
+            {
+              "number": 1428,
+              "commits": [
+                "320c48e40d18eca987efff4a432813fb47e01277",
+                "3ddd7b5d8ef9d7c5f16037135528f45a8483bb3a",
+                "54d3917034a0d13ea680b0ea182b086c732e9067",
+                "9c96a09c629d3343773783ba3398569099f68854",
+                "e695dfdf80d916eb8b445450189f96a396b08926"
+              ]
+            },
+            {
+              "number": 1429,
+              "commits": [
+                "e48eb720d353d31ce86848211e8063fc46334bab"
+              ]
+            },
+            {
+              "number": 1430,
+              "commits": [
+                "e756b482350cf5589228d4d282642e5d8c03ced5"
+              ]
+            },
+            {
+              "number": 1431,
+              "commits": [
+                "1728c928b3b7efe869adbe3bb1b05da8bc5f365d",
+                "1e83119d95d0acabbb45de022d9dac0756d085ce"
+              ]
+            },
+            {
+              "number": 1432,
+              "commits": [
+                "11a99eea7f7eb193c3c9985dd32d2814c66a4f6e",
+                "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172"
+              ]
+            },
+            {
+              "number": 1433,
+              "commits": [
+                "9ac718166c29162576bfff6c0ce6907dcacf4469",
+                "b29f59a34cea0e60fd984af21cdfbf94e40785ae"
+              ]
+            },
+            {
+              "number": 1434,
+              "commits": [
+                "4cf51781e2ccfbf18406be02abcd2676edebdabc",
+                "891bdbb8d7153de0d5eb6ba7f864622332849878"
+              ]
+            },
+            {
+              "number": 1435,
+              "commits": [
+                "0c828e730a564f5489ec217bb77f8a5f52a7085a",
+                "45faf4e7c16d5feb2e0f30727784d69a52429960"
+              ]
+            },
+            {
+              "number": 1436,
+              "commits": [
+                "8f7b0ffcf9ae282e2af24ee8d4dd7bd78b50591e",
+                "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7"
+              ]
+            },
+            {
+              "number": 1437,
+              "commits": [
+                "9f5ffe2b99c5c9432b03ae7e0647eb014ca3064a",
+                "c5d7a23892c69ad0504cf3048589344e03525810"
+              ]
+            },
+            {
+              "number": 1438,
+              "commits": [
+                "662309e6efe19b5187841aa0eeaca0b6047f0388",
+                "88f4ccddd0f71e703a627b97c54ae1ca21be0c5b"
+              ]
+            },
+            {
+              "number": 1439,
+              "commits": [
+                "5bd501fa75658b97b4d18608dec89984cfba21a6",
+                "b7a01fee27860d87e087d3220ed76b372e0c4a0d"
+              ]
+            },
+            {
+              "number": 1440,
+              "commits": [
+                "13232743353ca326fb8bfa6dd0904347ea7cdfe4",
+                "23f03a74108fe62e800c07627c22458701c572f0",
+                "e6dab650a19cd3d26db88e43b6d2ba0f42d68cc3",
+                "e8ced3a76cb20bca2a710a858d55348d7ca471c8"
+              ]
+            },
+            {
+              "number": 1441,
+              "commits": [
+                "9765111e4dc5d4ec24c8820cc4a307e1b4f73999",
+                "a08a3cac4940c2042442421ce88830f6a6685d5c"
+              ]
+            },
+            {
+              "number": 1442,
+              "commits": [
+                "00700679c90fda1d58fe537122b8dc81c9aa4e9e",
+                "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6"
+              ]
+            },
+            {
+              "number": 1443,
+              "commits": [
+                "56f51be8175594bb994bc9c5af159ab071dd0999",
+                "b656e79faf2344aafd031fae8373fc5bb3d834ed"
+              ]
+            },
+            {
+              "number": 1444,
+              "commits": [
+                "75925bfe1019b343cfa0b04891b08dd1074abc7e",
+                "a6a0806b9bb4326582691f6587f3d8a76d1c5e8e"
+              ]
+            },
+            {
+              "number": 1445,
+              "commits": [
+                "434018592fe8896e02b2d66d77ecea92e5e7d869",
+                "84c62b8a9aeca6d362a303fae292b37ac3b61cae"
+              ]
+            },
+            {
+              "number": 1446,
+              "commits": [
+                "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
+                "2ec0b71a8a409e10d4bb5770c7df03187537eebe"
+              ]
+            },
+            {
+              "number": 1447,
+              "commits": [
+                "5414cb9ed1be824251e1974d254c81a740ba873f",
+                "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
+                "71845cd91214f206117af4a1d27e6d98856db1ab",
+                "cc435c07eacd939f3f53a4067b087d9918f13e6d"
+              ]
+            },
+            {
+              "number": 1448,
+              "commits": [
+                "551cd6468e30003a29c70f2dd4d65d9e3fd4af31",
+                "98ceda7f4d6517050c929536263c426f0dfbac1d"
+              ]
+            },
+            {
+              "number": 1449,
+              "commits": [
+                "2adee31b34799943d8e5d613b18dc40f426148f7",
+                "58716f60ba507550a24f7286a1b00e92e6c8d6f4",
+                "8814cc56d1a75a5b4b4a49087195799aceffe9eb",
+                "d4f163e3a451dbacec1d19ee594b29b071c34c46"
+              ]
+            },
+            {
+              "number": 1450,
+              "commits": [
+                "98806c06ec8eb601c8e8774ceeb748e1a4511982"
+              ]
+            },
+            {
+              "number": 1451,
+              "commits": [
+                "108635e83cde6c9914f15f829fe20204a406fa62",
+                "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
+                "60f6eeb34695c616ba10343dab390e5cfce202ff",
+                "8b9044dff26c65919618fdb0a4707a55499d5f03",
+                "95f215489e77db0ca20edc6d9b2d46ef4d323163",
+                "9ba7f47dfe3ef949596e30fa52bef295c8c6df80",
+                "a11073ebf2f8c89433196c51adb8a2a06f2a3536",
+                "a8683a623e0d3dd8ba6c5efcabb4548e91f354dd",
+                "aa810067f77c41b8b8f12e0f873a77541e69802f",
+                "b084dfed22a9fa381d4a56c42e40bed8cc97aee0",
+                "d7f65198e07b8c84f32927cd0cd30d9178e82539",
+                "e44a5cbf01acd339cb792fd2319860cca882d554",
+                "fac0ba5fe8df4a4c7b7a0bb809fc9b4932820c52"
+              ]
+            },
+            {
+              "number": 1453,
+              "commits": [
+                "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
+                "86e7623726ca67a9c0bb00e8d2e7a423b33c5465"
+              ]
+            },
+            {
+              "number": 1454,
+              "commits": [
+                "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
+                "65e2eee71de1723d8c994e56aca750548cc58ea4",
+                "663f66a40b9a664e1394bf9079b590a863dc9242",
+                "80caf71b7573175e353cae0f1d35feeb8bf17819",
+                "a8940ad06e5664140c31499ecf3b6ba5fa4854c9",
+                "c5ff604c1ea1372203c9009299cf6d18a23f358d",
+                "cc234a7a869d3853e474c6689001ad3c9e6890ee",
+                "cf27c73e693676613ffa9c75fd33455bc7c20e69",
+                "e0db883ec8d581a3116e604586fa0e1277380f2e",
+                "e113183c2f03278d97e384caf4a7161a7b5034ca"
+              ]
+            },
+            {
+              "number": 1455,
+              "commits": [
+                "0a4d1f3091d227234150a7eb4cc981b9bcd250de",
+                "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa",
+                "4fce3b56bf721db88c490b7dcedc088182d77197",
+                "963d82fc82b4f940985c6bf173b96e38fd908432",
+                "adedf58a4ac0c728cc8474c9d9fec30893d0ebc4"
+              ]
+            },
+            {
+              "number": 1456,
+              "commits": [
+                "09f5f5082ce065406e1d5d275255875e082c6d34",
+                "68455343c9b82cd44f07a99c4a9cd46ddabb1de8"
+              ]
+            },
+            {
+              "number": 1457,
+              "commits": [
+                "40523e47bf1842fd80ad0948693b2a96b6f7d713",
+                "6d28743ea061ad639f508675d0c48fe22865cb5c",
+                "80307b4726b0857dcd94196e2ba6b8e27e1af47a",
+                "8c15c683f5193238e792bd1170b3441776c249f7"
+              ]
+            },
+            {
+              "number": 1458,
+              "commits": [
+                "1eae56d95c687b22d9498231a00dfe50db2edce3",
+                "36b3147da112e55a8e08f3dc4b5aa03d65db7afd",
+                "41f0340b38eea86f6c8feb5527893bd15024086a",
+                "492d78bda1daa9e97aa6f6f17cc848d2bf0babd7",
+                "4a6cd83f2e1fe40c3e8e7ec95ec588e412052ad3",
+                "748823ff6339636de729caf1a00b7d846da25a3c",
+                "828799ea93002e56dbc38161dc7c2a91441a18e1",
+                "bdc4a72d0aa742fbbd085e172ccb3a04845d624e",
+                "cb3780b4ff79e999cee372ea8c53d822e789924d",
+                "db2469dd8360c2954386943a48caea13c1fac912"
+              ]
+            },
+            {
+              "number": 1460,
+              "commits": [
+                "738039eaac5360c6d44bd6999a12b8ad72be2ffc",
+                "9f7721bdeb8a14e8d0120ef7301a884b2c2575cb",
+                "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
+                "f017641b56fd78679cd5dc029663361110d40fee",
+                "f9f74e1f83720246e9de17001846fac5b2331d2f"
+              ]
+            },
+            {
+              "number": 1464,
+              "commits": [
+                "1756607d709841ba0e215520d153fc243bc862e6",
+                "3faa728b1d372b3082c4944eec053d80b527bf88",
+                "46c8b6a510f882687a1fa00f0fb74e707481e0cc",
+                "7a22f0cfd89d621b92e8c5f37c373ec43d795727",
+                "86f01d480e0b4e58a8e32ee33deda1c74bad0ede",
+                "8b9c5eee054be9ddce20fb3a81e17d9a2f002a7a",
+                "cb6eaf9002826e932f1b9eae687fc865c350ccab",
+                "de6b4077363166eac6844d5679a4bf5e937f5681"
+              ]
+            },
+            {
+              "number": 1466,
+              "commits": [
+                "1d4dc0d42d3b8c6c2a4674a08937fc45d271efc8",
+                "673f588054c24a51652b8bdf8d9190d608921ea9",
+                "d108e0dfc158ce0a00a22173a95292eff40fe13a"
+              ]
+            },
+            {
+              "number": 1467,
+              "commits": [
+                "68fb9d6ec311e669bd7a9299022173d6a551e599",
+                "bb9f9b13c5ddbee1eef3a6d7ac28f4bfd7dc1ab7"
+              ]
+            },
+            {
+              "number": 1469,
+              "commits": [
+                "7d1e756b122790a51466a8670096a5e06773ee85",
+                "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
+                "9e6d5c0c3f304c8b75c6dc0551997a330938b684"
+              ]
+            },
+            {
+              "number": 1470,
+              "commits": [
+                "689e9dc8341778f616b8cfc1cf0a5f98e11cdb32",
+                "f10e0e7126fec31be6603c8be66c50bb13523073",
+                "fbfbdea4442539a5e6aadc46c16d2645165e449e"
+              ]
+            },
+            {
+              "number": 1473,
+              "commits": [
+                "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c"
+              ]
+            },
+            {
+              "number": 1474,
+              "commits": [
+                "3830eb930299416750a7f3c70b82ce60e8ba4c69",
+                "4e110b40238efd322aafcbb11a4402d2c830fd1d",
+                "dd0d24298a64a34b09e0a69e145529c1f6b54b02",
+                "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de"
+              ]
+            },
+            {
+              "number": 1475,
+              "commits": [
+                "750975d245a5abf887dd597f4fa054d9cc0e30e4",
+                "8a9cd979795b857b22af3cff5ae3fb282cc8caa0"
+              ]
+            },
+            {
+              "number": 1476,
+              "commits": [
+                "3ab955f133610ea40e7e41c7cc4f5a3288346413"
+              ]
+            },
+            {
+              "number": 1477,
+              "commits": [
+                "6f3f3c4a9331948419de5cd9227dd5200cebb5b2"
+              ]
+            },
+            {
+              "number": 1478,
+              "commits": [
+                "0ee3ec9b8c63e170dea24f8f24ca8d278e880f12",
+                "8a88124796f16c50f39d7f47243c88bae997aafb",
+                "d1a5da3cc9b84c62e83795c28f36ab01466f3c17",
+                "f77fe172da83cebf5efd7087abbb1e62a04d90e6"
+              ]
+            },
+            {
+              "number": 1480,
+              "commits": [
+                "24989789232ee0e30283bd7ea7dfac268c3bb5b7"
+              ]
+            },
+            {
+              "number": 1481,
+              "commits": [
+                "aa39915acf11d4a6ecaf31514dc0e293e308fded"
+              ]
+            },
+            {
+              "number": 1482,
+              "commits": [
+                "113ba1bac0641a4e4e404ef8c0d96d7fa53de263"
+              ]
+            },
+            {
+              "number": 1483,
+              "commits": [
+                "b6676f11465eeaafdcd66cae36621acf6c339116"
+              ]
+            },
+            {
+              "number": 1484,
+              "commits": [
+                "98a386f42de5f465e2be7067957659c157839c53"
+              ]
+            },
+            {
+              "number": 1485,
+              "commits": [
+                "3e5f3deaeb36612fd1ed50679cc6fe6f8d79025b",
+                "8d7eeab5591a3d14f6d9f652a81e77b26b5cebd9",
+                "a2ec71aa384e8849957c480472ec03cb7834d5c5"
+              ]
+            },
+            {
+              "number": 1486,
+              "commits": [
+                "54a8148959ffb71f0737532924c05b0a65de8b4a",
+                "94b2d0d966b393c904fd3075631ba475faef711f"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1391,
+          1392,
+          1393,
+          1394,
+          1395,
+          1415,
+          1421,
+          1422,
+          1423,
+          1424,
+          1425,
+          1426,
+          1427,
+          1428,
+          1429,
+          1430,
+          1431,
+          1432,
+          1433,
+          1434,
+          1435,
+          1436,
+          1437,
+          1438,
+          1439,
+          1440,
+          1441,
+          1442,
+          1443,
+          1444,
+          1445,
+          1446,
+          1447,
+          1448,
+          1449,
+          1450,
+          1451,
+          1453,
+          1454,
+          1455,
+          1456,
+          1457,
+          1458,
+          1460,
+          1464,
+          1466,
+          1467,
+          1469,
+          1470,
+          1473,
+          1474,
+          1475,
+          1476,
+          1477,
+          1478,
+          1480,
+          1481,
+          1482,
+          1483,
+          1484,
+          1485,
+          1486
+        ],
+        "version": "1.86.0-beta.1",
+        "body": "<!-- release: v1.86.0-beta.1 -->\n<!-- base: v1.85.2 -->\n<!-- language: ru -->\n## Houseplan 1.86.0-beta.1\n\nПродолжаем тестирование новой линейки: следующая стабильная версия будет **1.86.0**. Эта бета продолжает 1.85.3-beta.3, а не начинает отдельный набор изменений.\n\nМасштабирование колесом в 2.5D использует подготовленные фоновые кадры и подложку плана, чтобы реже прерываться полной отрисовкой. После остановки возвращается точное изображение. Во время масштабирования возможна временная мягкость картинки. [#1485](https://github.com/Matysh/houseplan-card/issues/1485)\n\nИсправлены смена цвета и прозрачности стен и проёмов при зуме, артефакты общей обводки устройств и переходы между просмотром и редакторами. [#1480](https://github.com/Matysh/houseplan-card/issues/1480), [#1486](https://github.com/Matysh/houseplan-card/issues/1486), [#1482](https://github.com/Matysh/houseplan-card/issues/1482), [#1483](https://github.com/Matysh/houseplan-card/issues/1483), [#1484](https://github.com/Matysh/houseplan-card/issues/1484)\n\n2.5D по-прежнему находится в разработке. Перед обновлением сохраните резервную копию. После установки перезапустите Home Assistant и перезагрузите страницы Houseplan.\n\n<!-- language: en -->\n## Houseplan 1.86.0-beta.1\n\nTesting continues under the new release line: the next stable version will be **1.86.0**. This beta continues 1.85.3-beta.3 rather than starting a separate set of changes.\n\nWheel zoom in 2.5D uses prepared background frames and a plan overview to reduce full redraw interruptions. The exact image returns after scrolling stops. The picture may soften temporarily during zoom. [#1485](https://github.com/Matysh/houseplan-card/issues/1485)\n\nFixes address wall and opening colours and opacity during zoom, shared device-outline artefacts, and transitions between View and editors. [#1480](https://github.com/Matysh/houseplan-card/issues/1480), [#1486](https://github.com/Matysh/houseplan-card/issues/1486), [#1482](https://github.com/Matysh/houseplan-card/issues/1482), [#1483](https://github.com/Matysh/houseplan-card/issues/1483), [#1484](https://github.com/Matysh/houseplan-card/issues/1484)\n\n2.5D is still under development. Back up your plan before updating. Restart Home Assistant after installation and reload Houseplan pages.\n",
+        "technical": {
+          "ru": "## v1.86.0-beta.1 — 2026-11-20\n\n- Не переносить посторонние CSS-токены темы HA в растровый кадр зума 2.5D: они больше не поглощают цвета и прозрачность стен и материалы проёмов при повторном разборе SVG (#1486).\n- Масштабирование 2.5D колесом использует фоновые кадры, а при отдалении открывшийся край сначала показывает подложку плана. После жеста возвращается точное изображение (#1485).\n- Устройства сохраняют положение и масштаб относительно плана во время переходов между просмотром и редакторами плана, устройств и подложки (#1484).\n- При входе в редактор плана и выходе из него цвет пола и узлы стен соответствуют выбранному режиму, даже если камера обновляется во время перехода (#1483).\n- Сохранять растровый кадр 2.5D между запаздывающими шагами отдаления на больших экранах и выполнять один точный коммит в конце (#1481).\n- Общая оболочка устройств в 2.5D отделена от масок отдельных корпусов: обводка и панели больше не обрезаются на разных масштабах; перекрытие стенами, пунктир виртуальных устройств и Flat-разметка сохранены (#1482).\n- Сохранять цвет стен и проёмов во время зума 2.5D и использовать растровое разрешение для геометрии плана (#1480).",
+          "en": "## v1.86.0-beta.1 — 2026-11-20\n\n- Keep unrelated HA theme tokens outside the 2.5D raster so malformed CSS values cannot swallow wall colours, opacity and opening materials during zoom (#1486).\n- Smooth 2.5D wheel zoom with background scene frames and an overview image for newly revealed edges. Restore the exact plan when the gesture ends (#1485).\n- Keep device markers aligned and at the right scale throughout transitions between View and the plan, device and background editors (#1484).\n- Restore the correct floor appearance and wall handles when entering or leaving the Plan editor while the camera updates (#1483).\n- Keep the 2.5D zoom-out raster through delayed wheel events on large displays and avoid a duplicate camera update at settlement (#1481).\n- Keep shared 2.5D device glass outside individual body-occlusion masks, avoiding cropped rims and panes across zoom levels while retaining wall depth, virtual dashes and Flat markup (#1482).\n- Preserve 2.5D wall and opening materials during zoom and use the raster pixels for visible plan geometry (#1480)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -154174,7 +154745,8 @@
     "beta1860-1-20261120-metrics": "5d666165d8b2ea984280cfd707399187f70d92609c77e6331cf199aaceb27f39",
     "beta1860-1-20261120-owner": "e503fe88e3ba386cc8c684b5b627b88bce5b15eb600c2e702c51bf8c6c8a3da1",
     "beta1860-1-20261120-publish:runner-report": "5973a5cf598cf90333a9524ab28873744d6b1f16fb33d41c667e65470315777b",
-    "beta1860-1-20261120-publish:metrics": "359f8d5a20322d9b301eb1b4c8b2f66221c6d07bc6ed3a357a875a6857922761"
+    "beta1860-1-20261120-publish:metrics": "359f8d5a20322d9b301eb1b4c8b2f66221c6d07bc6ed3a357a875a6857922761",
+    "beta1860-1-20261120-publish:prepared:49e3f58e-1854-4e8c-9cf8-215b0879a488": "59f30a7f296095d7ddf72d3e3427ded570ee85163147e1cff8c5784d3ce3b25f"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
