@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1037,
+  "revision": 1038,
   "active": "1.85.3-beta.3",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -131254,7 +131254,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.85.3-beta.3",
@@ -139679,7 +139679,8 @@
           "en": "## v1.85.3-beta.3 — 2026-11-20\n\n- Reuse the painted 2.5D plan during pan and zoom, with SVG floor shadows and a shared lighting fade (#1478).\n- Round each exposed corner of a shared device outline to suit its icon size in 2D and 2.5D (#1477).\n- Preview the saved swing-door position when rebinding an opening to a replacement wall (#1476).\n- Place swing doors at the opening-side wall face by default in Flat and 2.5D. Door properties can also fix either face or the centre. The sliding-door placement labels match its existing panel locations (#1475).\n- Repair the nightly render/layout AST guard to recognize the room-label directive's explicit post-render measurements without exempting synchronous render/update reads or pure ISO helpers; retain the existing mutation witnesses (#1473).\n- Bring the accepted 2.5D View into the product: raised devices, labels, LEDs and locks; two readable glyph orientations, floor-masked shadows, shared stair/furniture material, vertical wall lighting and separate opening accents with backup support (#1474).\n- Defer cold projection fitting and saved-zoom restoration until both stage dimensions are measured, keeping the first cached 2.5D frame aligned with HTML devices and labels without a wheel/fit workaround (#1469).\n- Reduce 2.5D paint/raster work with label-sized wall masks and isolated, silhouette-clipped furniture lighting instead of repeated light-pattern tiles; retain the accepted projection, text, occlusion, light and native interactions (#1470)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.85.3-beta.3"
     }
   },
   "published": {
@@ -145343,7 +145344,8 @@
     "beta3-metrics-approval-586f70394": "f1acfc81620905ad48b55b89624cf01efe45b5d4377039c547c921d967ad3ad2",
     "release-beta3-publish-586f70394:runner-report": "ee2bb7aaaa82b88247b0023b1a52c9a7ef449ce4b54201815aacc2ce41bd2ab0",
     "release-beta3-publish-586f70394:metrics": "deb61841aef2ac13374fde60ffb9ee0265e619a0b104038409f723afad6ed5f0",
-    "release-beta3-publish-586f70394:prepared:532a1250-d88f-4c96-9bcd-df3b09c97979": "fcf06c27302f3b5292a878a82b0f4a219c5813f0ee6c8d5459af9c3dcc2412e4"
+    "release-beta3-publish-586f70394:prepared:532a1250-d88f-4c96-9bcd-df3b09c97979": "fcf06c27302f3b5292a878a82b0f4a219c5813f0ee6c8d5459af9c3dcc2412e4",
+    "release-beta3-publish-586f70394:started:1037": "822b909a4d966f5a36161636e4b3971b621c72daf79582205500a10701b39a7b"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
