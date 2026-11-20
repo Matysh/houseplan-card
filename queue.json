@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17453,
+  "revision": 17454,
   "nextTicket": 553,
   "nextFence": 553,
   "tasks": {
@@ -2228,39 +2228,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06"
-      }
-    },
-    "1396": {
-      "issue": 1396,
-      "branch": "codex/mutation-ui-lab-ha-runtime",
-      "track": "show",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "3f89c4132e2f1e9243df350f26aae849d275bc65",
-      "mergedSha": "c970836c383ce294aeec16069657c546ace2df1b",
-      "mergedAt": 1794472342563,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1396:1:9a91d5cf6079e12bce9515825ef2f1e42424e471:3f89c4132e2f1e9243df350f26aae849d275bc65",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1397": {
@@ -5242,10 +5209,24 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 15
+        },
+        "commentCurrent": true,
+        "commentDigest": "d1c65df9ac3a3cbebb03",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "published",
