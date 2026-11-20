@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16865,
+  "revision": 16866,
   "nextTicket": 543,
   "nextFence": 543,
   "tasks": {
@@ -5167,18 +5167,20 @@
       "status": "S6-in-progress",
       "readyAt": 1795133858767,
       "reviewEntry": 3,
-      "patchId": "a86c6ae4b323e1c3f8529fa21e731e08ecac8ccb",
+      "patchId": "a52cb13a8b0f60315e9f53c5794dd9bea8c605b4",
       "changedFiles": [
         "demo/benchmark_iso_edge_zoom.mjs",
         "demo/benchmark_iso_hardware.mjs",
         "demo/benchmark_iso_light_fade.mjs",
         "demo/benchmark_iso_paint.mjs",
         "demo/golden/harness.mjs",
+        "demo/golden/matrix.mjs",
         "demo/helpers/controlled-compositor.mjs",
         "demo/helpers/iso-paint-scene.mjs",
         "demo/helpers/test-surface-ready.mjs",
         "demo/performance/iso-live-camera-probe.js",
         "demo/serve.mjs",
+        "demo/smoke_approved_ui_1207.mjs",
         "demo/smoke_closed_door_glow.mjs",
         "demo/smoke_daycycle_outline_removed.mjs",
         "demo/smoke_device_battery_performance.mjs",
@@ -5195,6 +5197,8 @@
         "demo/smoke_mode_endpoints.mjs",
         "demo/smoke_room_fit.mjs",
         "demo/smoke_split_corner_wall.mjs",
+        "demo/smoke_stair_arrival.mjs",
+        "demo/smoke_ui_polish_963_reference.mjs",
         "docs/ARCHITECTURE.md",
         "docs/CANVAS.md",
         "docs/CHANGELOG.md",
@@ -5206,6 +5210,7 @@
         "scripts/config-compatibility-inventory.json",
         "scripts/mutation-registry.mjs",
         "src/device-contact-render.ts",
+        "src/editors/form-kit.ts",
         "src/glow-scene.ts",
         "src/houseplan-card.ts",
         "src/hp-zigbee-topology-overlay.ts",
@@ -5221,6 +5226,7 @@
         "src/live-hover.ts",
         "src/live-interaction-runtime.ts",
         "src/live-viewport.ts",
+        "src/pdf/svg-snapshot.ts",
         "src/stairs-volume.ts",
         "src/styles/devices.styles.ts",
         "src/styles/iso-lab-markers.styles.ts",
@@ -5724,10 +5730,11 @@
     "token": "542:finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:1:admit",
     "fence": 542,
     "materialSha": "f4aca24bbd781af07b01d6c1bfccbc31b826614a",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
+    "phase": "testing",
     "admittedAt": 1795133862770,
-    "expiresAt": 1795134162770
+    "expiresAt": 1795134169462,
+    "patchId": "a52cb13a8b0f60315e9f53c5794dd9bea8c605b4"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5948,6 +5955,10 @@
     },
     "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:3:return": {
       "digest": "c280819b8969d11b2ac5c5404702f706af77270638f61974e7346baa621526a4",
+      "issue": 1478
+    },
+    "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:2:synchronized": {
+      "digest": "af86299382d3ea470b74b56a57597d7803ae9467995a357bf7c8f51f51f53e70",
       "issue": 1478
     },
     "github:44567305558:1:label:spec-request:spec-resubmitted:1478": {
