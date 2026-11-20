@@ -2082,9 +2082,12 @@ export class HouseplanCard extends LitElement {
     if (terminal) {
       // Present the endpoint with the ordinary raster path, while the same
       // controller still owns inert until its next RAF.
-      const from = paintedHouseplanViewBox(this) ?? this._modeTransition.state!.from.viewport.viewBox;
+      const from = paintedHouseplanViewBox(this);
+      const endpoint = this._viewOr(this._baseVb());
       commitHouseplanViewport(this);
-      this._rebaseModeHtml(from, visual.viewport.viewBox, raster);
+      // The plan and the HTML layers both use display coordinates. The mode
+      // controller's canonical box is unrotated, including at settlement.
+      this._rebaseModeHtml(from ?? endpoint, endpoint, raster);
       set('.hp-mode-scene-svg', 'clip-path', this._modeSceneClip || 'inset(-25%)');
       set('.hp-mode-scene-svg', 'will-change', 'auto');
       set('.hp-mode-crossfade', 'isolation', 'auto');
@@ -2379,6 +2382,9 @@ export class HouseplanCard extends LitElement {
       this._headerMotion.start(this.renderRoot.querySelector('.head'), this._modeHeaderPositions, this._reducedMotion || forceAtomic, layout?.header.positions);
       // Source dimensions are already accepted. Publishing this basis must
       // not query freshly invalidated scene client metrics.
+      // Take the marker basis before the viewport adopts measured editor
+      // chrome. The existing HTML percentages can still be in the View box.
+      const htmlFrom = paintedHouseplanViewBox(this);
       this._modeSceneSize = [from.stageWidth, from.stageHeight];
       if (!this._modeProjectionSource) commitHouseplanViewport(this);
       // Publish the stage's phase-owned inert baseline after the read batch,
@@ -2400,10 +2406,9 @@ export class HouseplanCard extends LitElement {
       const rasterCamera = this._physicalCamera({ ...from.viewport,
         centerX: from.viewport.centerX - origin[0] / from.viewport.pixelsPerUnit,
         centerY: from.viewport.centerY - origin[1] / from.viewport.pixelsPerUnit }, ...this._modeSceneSize);
-      const htmlFrom = paintedHouseplanViewBox(this);
       this._view = rasterCamera.viewBox; this._zoom = rasterCamera.zoom;
       if (this._modeSceneOrigin && htmlFrom) {
-        this._rebaseModeHtml(htmlFrom, rasterCamera.viewBox, this._modeSceneSize);
+        this._rebaseModeHtml(htmlFrom, this._viewOr(this._baseVb()), this._modeSceneSize);
         commitHouseplanViewport(this, true);
       } else scheduleHouseplanViewport(this, true, true);
       this._modeTransition.start(from, to, targetMode,
@@ -13612,7 +13617,10 @@ export class HouseplanCard extends LitElement {
             ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
             <g data-hp-live-editor></g>` }
     ];
-    const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
+    // During the outgoing fade, the retained 2.5D scene keeps View styling
+    // until the projection swap. The header already represents the edit mode.
+    const stageMode = iso ? 'view' : this._mode;
+    const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${stageMode === 'plan' ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${stageMode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${stageMode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
     this._modePreparedStageClass = stageClass;
     const stage = html`
 

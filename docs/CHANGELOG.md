@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Keep device markers aligned and at the right scale throughout transitions between View and the plan, device and background editors (#1484).
 - Restore the correct floor appearance and wall handles when entering or leaving the Plan editor while the camera updates (#1483).
 - Keep the 2.5D zoom-out raster through delayed wheel events on large displays and avoid a duplicate camera update at settlement (#1481).
 - Keep shared 2.5D device glass outside individual body-occlusion masks, avoiding cropped rims and panes across zoom levels while retaining wall depth, virtual dashes and Flat markup (#1482).

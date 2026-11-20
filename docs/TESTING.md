@@ -163,6 +163,11 @@ For #1483, `demo/smoke_mode_style_ownership.mjs` clears the viewport's SVG
 promotion hint before the first mode RAF. Both directions must settle with
 the target paper, room fill and Plan-only layers.
 
+For #1484, `demo/smoke_mode_marker_camera.mjs` holds the first and settling
+frames from native panel controls. It checks marker alignment on a cold Flat
+entry and a rotated plan, and keeps the 2.5D marker silhouette until the
+projection swap. A side summary and the wide editors exercise the stage resize.
+
 The room/opening transition witnesses inspect the effective alpha of both
 retained endpoints. The opening fixture uses a fixed north-door point inside its
 floor continuation; projection opacity is checked separately. They retain the

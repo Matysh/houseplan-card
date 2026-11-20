@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1484,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Keeps device marker geometry and styling aligned with the stage that is actually being painted during mode transitions on the current beta line.",
+  "summary": {
+    "ru": "Устройства сохраняют положение и масштаб, когда пользователь входит в редактор или возвращается в просмотр.",
+    "en": "Device markers keep their position and scale while entering or leaving an editor."
+  }
+}
