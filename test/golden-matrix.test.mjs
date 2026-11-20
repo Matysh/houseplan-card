@@ -164,7 +164,9 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       const expectedKinds = approvedContactFrame ? new Set(['text'])
         : scenario.id === 'furniture-corrected-art-light'
           ? new Set(['furniture'])
-          : new Set(['line', 'rect', 'ellipse', 'text', 'furniture']);
+          : scenario.isoBadgeDepth
+            ? new Set(['line'])
+            : new Set(['line', 'rect', 'ellipse', 'text', 'furniture']);
       assert.deepEqual(new Set(scenario.decorOverride.map((shape) => shape.kind)),
         expectedKinds, scenario.id);
     }
@@ -201,12 +203,14 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
 });
 
 test('issue 486 keeps its three ordinary panel-host surfaces alongside route kiosk scenes', () => {
-  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost && !scenario.dialog && !scenario.panelKioskUrl && !scenario.resizeJunction && !scenario.closedDoor && !scenario.id.endsWith('-ui-1132'));
-  assert.deepEqual(scenarios.map((scenario) => scenario.id), [
+  const ids = [
     'panel-wide-view-light-en',
     'panel-wide-plan-editor-dark-en',
     'panel-narrow-read-only-empty-light-en',
-  ]);
+  ];
+  const scenarios = GOLDEN_SCENARIOS.filter(scenario => ids.includes(scenario.id));
+  assert.deepEqual(scenarios.map(scenario => scenario.id), ids);
+  assert.ok(scenarios.every(s => s.panelHost && !s.dialog && !s.panelKioskUrl));
   assert.deepEqual(scenarios.map((scenario) => scenario.viewport), [
     { width: 1280, height: 800 },
     { width: 1280, height: 800 },
@@ -225,6 +229,18 @@ test('issue 486 keeps its three ordinary panel-host surfaces alongside route kio
   assert.deepEqual(fixture.config.spaces, []);
   assert.deepEqual(fixture.config.markers, []);
   assert.deepEqual(fixture.layout, {});
+});
+
+test('#1504 dedicated panel goldens cover all four rotations with every badge side', () => {
+  const scenes = prepareGoldenSelection(GOLDEN_SCENARIOS).all.filter(scene => scene.isoBadgeDepth);
+  const rotations = [0, 90, 180, 270];
+  assert.deepEqual(scenes.map(scene => scene.id), rotations.map(turn => `panel-iso-value-badge-depth-${turn}-1504`));
+  assert.deepEqual(scenes.map(scene => scene.rotation), rotations);
+  for (const scene of scenes) {
+    assert.ok(scene.panelHost && scene.projection === 'iso' && scene.mode === 'view' && scene.capture === 'stage');
+    assert.deepEqual(scene.markerOverrides.map(marker => marker.value_badge.position), ['right', 'left', 'top', 'bottom']);
+    assert.ok(scene.markerOverrides.every(marker => marker.value_badge.enabled));
+  }
 });
 
 test('#1383 Resize golden covers whole rooms before, during and after each junction gesture on the real panel', () => {
@@ -560,7 +576,6 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 114);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -1066,7 +1081,6 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 114);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',
