@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18565,
+  "revision": 18566,
   "nextTicket": 574,
   "nextFence": 574,
   "tasks": {
@@ -5473,142 +5473,25 @@
     },
     "1501": {
       "issue": 1501,
+      "branch": "codex/1501-stage6-isolation",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1501-stage6-isolation",
-      "materialSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 573,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795202980384,
-      "reviewEntry": 1,
-      "patchId": "7290e8f46243eafa4bb1cc9a5b892e4da0f4d51e",
-      "changedFiles": [
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/isometric-stage6-dark-lightfloor.png",
-        "demo/golden/baselines/isometric-stage6-light-darkfloor.png",
-        "demo/golden/matrix.mjs",
-        "process-next/test/golden-surface.test.mjs"
-      ],
-      "s6": {
-        "id": "20261120T194933724-291c1dd4",
-        "name": "Тесты для задачи #1501 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T194933724-291c1dd4/report.json",
-        "materialSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
-        "status": "passed",
-        "finishedAt": "2026-11-20T19:52:30.373Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "ae1b1763727106c90fdddcbb16b141533e35b610",
+      "mergedSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
+      "mergedAt": 1795204524681,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1501:1:7290e8f46243eafa4bb1cc9a5b892e4da0f4d51e:ae1b1763727106c90fdddcbb16b141533e35b610",
-      "reviewMaterial": {
-        "materialSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
-        "expectedBase": "ae1b1763727106c90fdddcbb16b141533e35b610",
-        "patchId": "7290e8f46243eafa4bb1cc9a5b892e4da0f4d51e"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1501,
-        "requestId": "review:1501:1:7290e8f46243eafa4bb1cc9a5b892e4da0f4d51e:ae1b1763727106c90fdddcbb16b141533e35b610",
-        "kind": "code",
-        "base": "ae1b1763727106c90fdddcbb16b141533e35b610",
-        "materialSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
-        "patchId": "7290e8f46243eafa4bb1cc9a5b892e4da0f4d51e",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1501,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1501",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принять, блокеров нет. Изменение небольшое и точное: проверено чтением кода, сам я ничего не запускал. Четыре материальных сценария 2.5D (`isometric-stage6-{light,dark}-{light,dark}floor`) получили флаг `isolatedCapture: true`. Это тот же механизм, что уже применяется к кадру hover с #1451. Раннер теперь снимает каждый из них в отдельном браузере, поэтому кадр больше не зависит от истории отрисовки предыдущих сцен. Число сцен, продукт, пороги сравнения и `GOLDEN_MATRIX_VERSION` не изменились. В индексе заменены SHA только двух кадров, которые в stable снимались с пустыми контурами. Новые значения совпадают с SHA из решения владельца («Принять оба повторных кадра»). Записи двух других материальных кадров и самого hover-кадра не изменены.",
-          "understanding": "Проблема. Если в полном stable-прогоне два материальных кадра снимались на странице, уже использованной для предыдущих сцен, у части устройств пропадали контуры. При этом DOM масок и слои устройств присутствовали. По описанию, ошибка воспроизводится, только когда один документ переиспользуется для двух независимых сцен со сбросом окружения.\n\nДо изменения. Материальные сцены входили в общую поверхность `interactive:1` и снимались на `primaryPage` вслед за другими сценами. В индексе эталонов лежали кадры c70ee2b7…/6c9e7c34… от 13.11. По описанию задачи и решению владельца, вместо них должны войти повторно снятые кадры с видимыми иконками.\n\nПосле изменения. `goldenBrowserSurfaceKey` (`process-next/catalog/golden-selection.mjs:5-9`) выдаёт для этих сцен ключ `isolated:<id>:1`. В `golden-runner.mjs:891-899` для каждого нового ключа запускается отдельный браузер через `launch`, а в цикле `915+` каждая из четырёх сцен получает свою страницу. Подготовка (`prepareGoldenScenario`), проверка хоста, DPR и `pageerror` работают по тем же путям, что и раньше. Меняется только экземпляр страницы.\n\nРазобранные пути:\n- генерация `STAGE6_ACCEPTANCE_SCENARIOS` в `matrix.mjs:248-284`: флаг попадает во все четыре объекта `map`, hover-объект уже имел его;\n- `prepareGoldenSelection` и `goldenRunSelection`: материальных id нет в `selections.mjs`, поэтому они попадают в `rest` с собственными id, без panel-варианта и `sourceSceneId`;\n- построение `pagesBySurface` и регистрация обработчиков ошибок и маршрутов pdfjs для каждой страницы в раннере;\n- тест beta (`golden-surface.test.mjs:22-29`): требование «в beta изолирован только hover» по-прежнему корректно, потому что материальных сцен в beta нет;\n- изменённые записи в `baselines-index.json`: хеши, `matrixVersion` 114 (совпадает с `GOLDEN_MATRIX_VERSION`), формат поля `decision` такой же, как у соседних записей #1500.",
-          "analysis": [
-            {
-              "topic": "Соответствие механизма задаче",
-              "assessment": "Изоляция реализована через уже проверенный механизм #1451, нового кода раннера нет. Предмет задачи — артефакт захвата: кадр зависит от переиспользования документа, а тёплое перемонтирование внутри сценария совпало с чистым захватом. Поэтому отдельный браузер на сцену — минимальное и адекватное исправление. Корневая причина в Chromium не найдена, и задача на это не претендует. Граница надёжности: изоляция защищает только от истории отрисовки предыдущих сцен. Если первая отрисовка с масками нестабильна сама по себе, флаг этого не исправит. Однако четыре независимых захвата, по данным S6, совпали побайтно.",
-              "evidence": "`demo/golden/matrix.mjs:266-267`; `process-next/catalog/golden-selection.mjs:6`; `process-next/catalog/golden-runner.mjs:888-899, 918`."
-            },
-            {
-              "topic": "Границы выборок beta/rest",
-              "assessment": "Материальные сцены есть только в stable-части (`rest`/`all`). Набор и число сцен beta (78) не меняются, поэтому тест «в beta изолирован только hover» остаётся верным. Новый тест строит список id из `STAGE6_ACCEPTANCE_SCENARIOS` по признаку `!hoverDevice`. Он проверяет и количество (4), и точный ключ поверхности, так что регрессия заметна, если флаг потеряется или изменится состав матрицы.",
-              "evidence": "`process-next/test/golden-surface.test.mjs:22-39`; поиск `isometric-stage6-light-darkfloor` в `process-next/catalog/selections.mjs` ничего не находит."
-            },
-            {
-              "topic": "Эталоны и решение владельца",
-              "assessment": "В `baselines-index.json` заменены хеши ровно двух кадров. Новые значения 2d1f01c5… и 3df96313… совпадают с SHA из согласованного решения в задаче. Записи `light-lightfloor` и `dark-darkfloor` не тронуты, это соответствует утверждению, что их независимые захваты побайтно совпали с действующими эталонами. В метаданных обновлены `sourceSha`/`buildFingerprint`/`reportSha256`/`acceptedAt`, а `decision` ссылается на #1501 в том же формате, что и записи #1500. Побайтное соответствие самих PNG указанным хешам я проверить не мог.",
-              "evidence": "diff `demo/golden/baselines/baselines-index.json` (строки ~35-37, 1937-1990); `GOLDEN_MATRIX_VERSION = 114` в `matrix.mjs:5`."
-            },
-            {
-              "topic": "Стоимость прогона",
-              "assessment": "Раннер запускает все изолированные браузеры заранее и держит их открытыми до конца прогона. Для stable это четыре дополнительных Chromium сверх уже существующих (hover, static, DPR-варианты). Это не дефект, и S6 прошёл, но потребление памяти полного прогона растёт линейно с числом изолированных сцен.",
-              "evidence": "`process-next/catalog/golden-runner.mjs:889-899` — цикл `launch` до начала захвата, `extraBrowsers` закрываются только в конце."
-            },
-            {
-              "topic": "Комментарий в матрице",
-              "assessment": "Комментарий «must paint their device masks on a fresh page» объясняет, зачем нужен флаг, а не пересказывает строку. Этого достаточно; ссылку на #1501 можно добавить, но это не обязательно.",
-              "evidence": "`demo/golden/matrix.mjs:266`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Если число изолированных сцен будет расти дальше, лучше запускать браузер изолированной сцены лениво, непосредственно перед захватом, и закрывать его сразу после. Сейчас все браузеры поднимаются заранее (`golden-runner.mjs:891-899`). Выгода — пиковая память полного прогона не растёт с каждым новым флагом. Цена — небольшая перестройка цикла и регистрации `pageerror`/маршрутов pdfjs для каждой страницы. Для текущих пяти изолированных сцен это необязательно."
-          ],
-          "boundaries": "Сборку, тесты и golden-прогон я не запускал: на S7 это запрещено. Использован результат S6: набор «Тесты для задачи #1501 (перед ревью)» для материала 3a6f5f9c завершился со статусом passed без ошибок. Утверждения о побайтном совпадении четырёх независимых захватов и о запуске полного визуального повтора вместе с #1500/#1499 взяты из описания задачи, сам я их не проверял. Итог полного визуального повтора в материалах не приведён. Содержимое PNG и соответствие их байтов хешам в индексе я не проверял: доступно только чтение Git-материала. По исходникам изучены `matrix.mjs` (сценарии Stage 6), `golden-selection.mjs`, участок раннера с поверхностями и страницами, тест `golden-surface.test.mjs` и изменённые записи индекса эталонов."
-        },
-        "usage": {
-          "input_tokens": 18,
-          "cache_creation_input_tokens": 43944,
-          "cache_read_input_tokens": 172820,
-          "output_tokens": 6100,
-          "output_tokens_details": {
-            "thinking_tokens": 1251
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 43944,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 796,
-              "cache_read_input_tokens": 37764,
-              "cache_creation_input_tokens": 10384,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 10384
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять, блокеров нет. Изменение небольшое и точное: проверено чтением кода, сам я ничего не запускал. Четыре материальных сценария 2.5D (`isometric-stage6-{light,dark}-{light,dark}floor`) получили флаг `isolatedCapture: true`. Это тот же механизм, что уже применяется к кадру hover с #1451. Раннер теперь снимает каждый из них в отдельном браузере, поэтому кадр больше не зависит от истории отрисовки предыдущих сцен. Число сцен, продукт, пороги сравнения и `GOLDEN_MATRIX_VERSION` не изменились. В индексе заменены SHA только двух кадров, которые в stable снимались с пустыми контурами. Новые значения совпадают с SHA из решения владельца («Принять оба повторных кадра»). Записи двух других материальных кадров и самого hover-кадра не изменены.\n\n## Понимание решения\n\nПроблема. Если в полном stable-прогоне два материальных кадра снимались на странице, уже использованной для предыдущих сцен, у части устройств пропадали контуры. При этом DOM масок и слои устройств присутствовали. По описанию, ошибка воспроизводится, только когда один документ переиспользуется для двух независимых сцен со сбросом окружения.\n\nДо изменения. Материальные сцены входили в общую поверхность `interactive:1` и снимались на `primaryPage` вслед за другими сценами. В индексе эталонов лежали кадры c70ee2b7…/6c9e7c34… от 13.11. По описанию задачи и решению владельца, вместо них должны войти повторно снятые кадры с видимыми иконками.\n\nПосле изменения. `goldenBrowserSurfaceKey` (`process-next/catalog/golden-selection.mjs:5-9`) выдаёт для этих сцен ключ `isolated:<id>:1`. В `golden-runner.mjs:891-899` для каждого нового ключа запускается отдельный браузер через `launch`, а в цикле `915+` каждая из четырёх сцен получает свою страницу. Подготовка (`prepareGoldenScenario`), проверка хоста, DPR и `pageerror` работают по тем же путям, что и раньше. Меняется только экземпляр страницы.\n\nРазобранные пути:\n- генерация `STAGE6_ACCEPTANCE_SCENARIOS` в `matrix.mjs:248-284`: флаг попадает во все четыре объекта `map`, hover-объект уже имел его;\n- `prepareGoldenSelection` и `goldenRunSelection`: материальных id нет в `selections.mjs`, поэтому они попадают в `rest` с собственными id, без panel-варианта и `sourceSceneId`;\n- построение `pagesBySurface` и регистрация обработчиков ошибок и маршрутов pdfjs для каждой страницы в раннере;\n- тест beta (`golden-surface.test.mjs:22-29`): требование «в beta изолирован только hover» по-прежнему корректно, потому что материальных сцен в beta нет;\n- изменённые записи в `baselines-index.json`: хеши, `matrixVersion` 114 (совпадает с `GOLDEN_MATRIX_VERSION`), формат поля `decision` такой же, как у соседних записей #1500.\n\n## Разбор решения\n\n### Соответствие механизма задаче\n\nИзоляция реализована через уже проверенный механизм #1451, нового кода раннера нет. Предмет задачи — артефакт захвата: кадр зависит от переиспользования документа, а тёплое перемонтирование внутри сценария совпало с чистым захватом. Поэтому отдельный браузер на сцену — минимальное и адекватное исправление. Корневая причина в Chromium не найдена, и задача на это не претендует. Граница надёжности: изоляция защищает только от истории отрисовки предыдущих сцен. Если первая отрисовка с масками нестабильна сама по себе, флаг этого не исправит. Однако четыре независимых захвата, по данным S6, совпали побайтно.\n\nОснование: `demo/golden/matrix.mjs:266-267`; `process-next/catalog/golden-selection.mjs:6`; `process-next/catalog/golden-runner.mjs:888-899, 918`.\n\n### Границы выборок beta/rest\n\nМатериальные сцены есть только в stable-части (`rest`/`all`). Набор и число сцен beta (78) не меняются, поэтому тест «в beta изолирован только hover» остаётся верным. Новый тест строит список id из `STAGE6_ACCEPTANCE_SCENARIOS` по признаку `!hoverDevice`. Он проверяет и количество (4), и точный ключ поверхности, так что регрессия заметна, если флаг потеряется или изменится состав матрицы.\n\nОснование: `process-next/test/golden-surface.test.mjs:22-39`; поиск `isometric-stage6-light-darkfloor` в `process-next/catalog/selections.mjs` ничего не находит.\n\n### Эталоны и решение владельца\n\nВ `baselines-index.json` заменены хеши ровно двух кадров. Новые значения 2d1f01c5… и 3df96313… совпадают с SHA из согласованного решения в задаче. Записи `light-lightfloor` и `dark-darkfloor` не тронуты, это соответствует утверждению, что их независимые захваты побайтно совпали с действующими эталонами. В метаданных обновлены `sourceSha`/`buildFingerprint`/`reportSha256`/`acceptedAt`, а `decision` ссылается на #1501 в том же формате, что и записи #1500. Побайтное соответствие самих PNG указанным хешам я проверить не мог.\n\nОснование: diff `demo/golden/baselines/baselines-index.json` (строки ~35-37, 1937-1990); `GOLDEN_MATRIX_VERSION = 114` в `matrix.mjs:5`.\n\n### Стоимость прогона\n\nРаннер запускает все изолированные браузеры заранее и держит их открытыми до конца прогона. Для stable это четыре дополнительных Chromium сверх уже существующих (hover, static, DPR-варианты). Это не дефект, и S6 прошёл, но потребление памяти полного прогона растёт линейно с числом изолированных сцен.\n\nОснование: `process-next/catalog/golden-runner.mjs:889-899` — цикл `launch` до начала захвата, `extraBrowsers` закрываются только в конце.\n\n### Комментарий в матрице\n\nКомментарий «must paint their device masks on a fresh page» объясняет, зачем нужен флаг, а не пересказывает строку. Этого достаточно; ссылку на #1501 можно добавить, но это не обязательно.\n\nОснование: `demo/golden/matrix.mjs:266`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Если число изолированных сцен будет расти дальше, лучше запускать браузер изолированной сцены лениво, непосредственно перед захватом, и закрывать его сразу после. Сейчас все браузеры поднимаются заранее (`golden-runner.mjs:891-899`). Выгода — пиковая память полного прогона не растёт с каждым новым флагом. Цена — небольшая перестройка цикла и регистрации `pageerror`/маршрутов pdfjs для каждой страницы. Для текущих пяти изолированных сцен это необязательно.\n\n## Границы анализа\n\nСборку, тесты и golden-прогон я не запускал: на S7 это запрещено. Использован результат S6: набор «Тесты для задачи #1501 (перед ревью)» для материала 3a6f5f9c завершился со статусом passed без ошибок. Утверждения о побайтном совпадении четырёх независимых захватов и о запуске полного визуального повтора вместе с #1500/#1499 взяты из описания задачи, сам я их не проверял. Итог полного визуального повтора в материалах не приведён. Содержимое PNG и соответствие их байтов хешам в индексе я не проверял: доступно только чтение Git-материала. По исходникам изучены `matrix.mjs` (сценарии Stage 6), `golden-selection.mjs`, участок раннера с поверхностями и страницами, тест `golden-surface.test.mjs` и изменённые записи индекса эталонов.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: ae1b1763727106c90fdddcbb16b141533e35b610 → 3a6f5f9cebcf950ce4b086c0471201123b410cd5\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-20T19:55:04.549Z",
-        "artifactId": 14662369584,
-        "runId": 44806228508,
-        "runAttempt": 1,
-        "completedAt": "2026-11-20T19:52:55Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44806228508",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "ae1b1763727106c90fdddcbb16b141533e35b610"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6134,19 +6017,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1501,
-    "worker": "github-coordinator",
-    "token": "573:github:44805494802:1:tick:2:admit",
-    "fence": 573,
-    "materialSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
-    "expectedBase": "ae1b1763727106c90fdddcbb16b141533e35b610",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795204114885,
-    "expiresAt": 1795208117444,
-    "patchId": "7290e8f46243eafa4bb1cc9a5b892e4da0f4d51e",
-    "reviewRequest": "review:1501:1:7290e8f46243eafa4bb1cc9a5b892e4da0f4d51e:ae1b1763727106c90fdddcbb16b141533e35b610"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6188,58 +6059,6 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "github:44805494802:1:completions:message:de7fd526c7b1a7d9a95714fc4274e35651fc2916d0cea0a5200b923fb063b9f2": {
-      "digest": "cce594eb4f9380457c44bff93f2c914e2a652f38a180ae90791ae8b54d349439",
-      "issue": 1501
-    },
-    "finish:71ea07fb-006d-4e15-ab34-92c0bac0dc15:finish:1:synchronized": {
-      "digest": "256fa7a93c1d5d514ff4572414371286574837c88d2c317da59c2dd89a0feb7a",
-      "issue": 1501
-    },
-    "finish:586717e7-26ca-4d41-b185-277aaca47929": {
-      "digest": "c1954be94c752845f5b4c81426d8bb3f457fe8295e720d1fbe57b7ac536086ff",
-      "issue": 1501
-    },
-    "finish:ff2ac205-353f-4561-b427-f23e3a23f325": {
-      "digest": "418eff5946007d3fbfa87d524b5ef97296089efe8db87d35a5c4850c6ec8eeb3",
-      "issue": 1501
-    },
-    "dev-build:44805494802:1:webhook": {
-      "digest": "b99a33ee1d984b650d64d2874a60c584ac7f39d086bf6d80fca0c5816d930abf",
-      "issue": 1501
-    },
-    "dev-build:44805494802:1:webhook:9d6a9864-a8ce-4bfc-af5b-6dc6866afe62:delivered": {
-      "digest": "9ab6ac254ba6d861e847828706ff79d26697ba5467b323aa0564d7c46f59f21a",
-      "issue": 1501
-    },
-    "finish:8f9f2de5-dc6e-48cd-a67a-1011a5de8f6a": {
-      "digest": "713724df17f1e258c96872134dd2d539812d1156d4dbf07eccd4621466b272ce",
-      "issue": 1501
-    },
-    "finish:71ea07fb-006d-4e15-ab34-92c0bac0dc15:finish:2:s6-label": {
-      "digest": "9b6e719b0338c7e4c415644d012f8e6c06d6a7a7e627579f045343be8395bffa",
-      "issue": 1501
-    },
-    "finish:71ea07fb-006d-4e15-ab34-92c0bac0dc15:finish:3:review-requested": {
-      "digest": "cef5b7e947e2ddcf488e12c2c0e6c2082c50be9b7668189f285705f450e5485d",
-      "issue": 1501
-    },
-    "github:44806198181:1:completions:message:57256df2170c83b19d08a44918658704e55435b242e11c3098822e563ed206fe": {
-      "digest": "3dbe07725b7173b1ed7c54cc18b9df87cd514af42a8e9ff578b7dba4f997a4a4",
-      "issue": 1501
-    },
-    "github:44806198181:1:completions:message:542166d12bd3da88849d6c56a0431c3a0463fd5001a22406bd14acbd410b06fd": {
-      "digest": "52e7edb75750167dc9f340a81c1d0c6971257dc8b0f340636cb51564efde72a6",
-      "issue": 1501
-    },
-    "finish:71ea07fb-006d-4e15-ab34-92c0bac0dc15:finish:5:review-presentation": {
-      "digest": "4a60e8cec7186f4071cc4c976bb019792684602a3beefe27de009dc3a91d9828",
-      "issue": 1501
-    },
-    "finish:71ea07fb-006d-4e15-ab34-92c0bac0dc15:finish:5:review-complete": {
-      "digest": "3ddf9b5ee4b04ae8582f6d5d434ba99aa8b7229daa14a89cc2d4d911fba09809",
-      "issue": 1501
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6266,65 +6085,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:71ea07fb-006d-4e15-ab34-92c0bac0dc15": {
-      "digest": "d7d4d16a4f48d71c803e3c3dda83bf5f85554cf2bedad393047f5274dc55c5d3",
-      "issue": 1501,
-      "message": {
-        "kind": "queued",
-        "issue": 1501,
-        "at": 1795202980384,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5ff404df4ce3a8d8cdb20ddf79fb45e2cc0c6efe",
-        "delivered": true
-      }
-    },
-    "github:44805494802:1:tick:2:admit": {
-      "digest": "630f94fc6400782d0ec9075b9395c05feffdbea44a40e8a01bb14ebc5a0f9699",
-      "issue": 1501,
-      "message": {
-        "kind": "admitted",
-        "issue": 1501,
-        "at": 1795204114885,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5ff404df4ce3a8d8cdb20ddf79fb45e2cc0c6efe",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:71ea07fb-006d-4e15-ab34-92c0bac0dc15:finish:2:s6-complete": {
-      "digest": "477cb84d292f9c016c6b365fb11225facd12356d9793e6d6d99b93768cebea3f",
-      "issue": 1501,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1501,
-        "at": 1795204351670,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
-        "phase": "review",
-        "evidence": {
-          "id": "20261120T194933724-291c1dd4",
-          "name": "Тесты для задачи #1501 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T194933724-291c1dd4/report.json",
-          "materialSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
-          "status": "passed",
-          "finishedAt": "2026-11-20T19:52:30.373Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
