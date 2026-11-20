@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18712,
-  "nextTicket": 577,
+  "revision": 18713,
+  "nextTicket": 578,
   "nextFence": 577,
   "tasks": {
     "1024": {
@@ -5545,6 +5545,20 @@
         "status": "published",
         "sourceSha": "c4cb576ca6e1e19b6836fb3863657e174d174877"
       }
+    },
+    "1504": {
+      "issue": 1504,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1504-iso-badge-depth",
+      "materialSha": "adab14eda239c85eb0dd2f26d91cf50e16fbe4a8",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 577,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795211941019,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6026,7 +6040,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1504
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6108,6 +6124,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "c4cb576ca6e1e19b6836fb3863657e174d174877"
+      }
+    },
+    "finish:4b9d5d9f-1fbb-4dc2-80f0-051f5b938ec9": {
+      "digest": "3f7172eabd6bab6dc7c880942e333c3916acf6b399195e6925d90dab30489a93",
+      "issue": 1504,
+      "message": {
+        "kind": "queued",
+        "issue": 1504,
+        "at": 1795211941019,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "adab14eda239c85eb0dd2f26d91cf50e16fbe4a8"
       }
     }
   },
