@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+## v1.86.0-beta.3 — 2026-11-20
+
 - Add directional masonry shading and thin visible floor contacts and wall ridges in 2.5D. Wall-fill opacity now tints opaque white masonry without filling openings or changing Flat (#1495).
+- Keep the zoom badge hidden when the fitted plan rounds to 100% in mobile editors (#1499).
+- Align cold 2.5D and pan smokes with the current camera, isolate device pixel measurements from the plan background, and wait for the floor before checking restored room labels (#1496, #1497, #1498).
+- Update the reviewed stable visual references and capture the four 2.5D material comparisons on independent pages (#1500, #1501).
 
 ## v1.86.0-beta.2 — 2026-11-20
 
