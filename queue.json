@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17848,
+  "revision": 17849,
   "nextTicket": 561,
   "nextFence": 561,
   "tasks": {
@@ -5235,14 +5235,27 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1489-iso-zoom-visual",
-      "materialSha": "230756c2e3afe2c71ab2ace1db597835721ff3b0",
+      "materialSha": "ed66b74e43f7393a0e653f64ecaacbfb6908424d",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 560,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795173587176,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "d058ae45e10745be7c59de29f2834b4cd4c8bce2",
+      "changedFiles": [
+        "demo/smoke_iso_raster_parity.mjs",
+        "demo/smoke_iso_raster_session.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/ISOMETRIC.md",
+        "docs/release-ledger/v1.85.2/1489.json",
+        "src/iso-camera-raster.ts",
+        "src/iso-raster-source.ts",
+        "src/live-viewport.ts",
+        "src/styles/plan.styles.ts"
+      ]
     },
     "1490": {
       "issue": 1490,
@@ -5790,11 +5803,12 @@
     "worker": "github-coordinator",
     "token": "560:github:44727185591:1:tick:2:admit",
     "fence": 560,
-    "materialSha": "230756c2e3afe2c71ab2ace1db597835721ff3b0",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "ed66b74e43f7393a0e653f64ecaacbfb6908424d",
+    "expectedBase": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
+    "phase": "testing",
     "admittedAt": 1795173836849,
-    "expiresAt": 1795174136849
+    "expiresAt": 1795174201995,
+    "patchId": "d058ae45e10745be7c59de29f2834b4cd4c8bce2"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5839,6 +5853,10 @@
     },
     "github:44727185591:1:completions:message:456f0713da7a51443d2a53aac81ad0b203406ebc9b5ed60a974a6e666cb435eb": {
       "digest": "6e287ee1483770d4c6e3b0bfc8ba0b41eebd9dfdb336762aa480fab24604d65b",
+      "issue": 1489
+    },
+    "finish:80fe0b00-2dd7-4c83-926f-630031070b0e:finish:1:synchronized": {
+      "digest": "9bcebf9b78ef84bdbaaed0ae277e22c18a61a5b287283469fed2b0f209f911c0",
       "issue": 1489
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
