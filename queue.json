@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 17416,
-  "nextTicket": 552,
+  "revision": 17417,
+  "nextTicket": 553,
   "nextFence": 552,
   "tasks": {
     "1024": {
@@ -5251,6 +5251,20 @@
         "status": "published",
         "sourceSha": "98a386f42de5f465e2be7067957659c157839c53"
       }
+    },
+    "1486": {
+      "issue": 1486,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1486-raster-material-recurrence",
+      "materialSha": "94b2d0d966b393c904fd3075631ba475faef711f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 552,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795160584787,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5718,7 +5732,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1486
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5788,6 +5804,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:d4e010c4-a650-484a-a038-6e9c8745227d": {
+      "digest": "3df20e5f45d50ded69a7591e5375de9a7b082682f98fead80682f00cf66589bf",
+      "issue": 1486,
+      "message": {
+        "kind": "queued",
+        "issue": 1486,
+        "at": 1795160584787,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "94b2d0d966b393c904fd3075631ba475faef711f"
       }
     }
   },
