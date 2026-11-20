@@ -2,11 +2,14 @@
 
 ## Unreleased
 
+## v1.86.0-beta.2 — 2026-11-20
+
 - Blend the final 2.5D zoom bitmap into the exact SVG over 200 ms after the SVG is ready (#1493).
 - Keep 2.5D wall cuts opaque. The wall hatch opacity blends the cut colour with white (#1491).
 - Keep the day/night background during floor preparation and omit the simplified 2.5D loading silhouette while retaining cached geometry and camera hints (#1490).
-
 - Keep window sunlight visible during 2.5D zoom and release the geometry scaling hint when the camera settles (#1489).
+- Restore coverage for duplicate SVG material definitions and double projection of vacuum trails (#1492).
+
 ## v1.86.0-beta.1 — 2026-11-20
 
 - Keep unrelated HA theme tokens outside the 2.5D raster so malformed CSS values cannot swallow wall colours, opacity and opening materials during zoom (#1486).
