@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16922,
+  "revision": 16923,
   "nextTicket": 544,
   "nextFence": 544,
   "tasks": {
@@ -6211,6 +6211,10 @@
       "digest": "361b6fa63eff3e504ed2ffded446659287a2416983f46a2499a6d3248484c6e6",
       "issue": 1478
     },
+    "github:44650059759:1:completions:message:a86b6c51cd9c08b4190a00d960973a048b2b977ef7fe817b4e73640ed59af523": {
+      "digest": "4b8ab923a02313c3d4a07181ff0e0ef316215e36db4ec92bc1814b50e6215ca8",
+      "issue": 1478
+    },
     "github:44567305558:1:label:spec-request:spec-resubmitted:1478": {
       "digest": "26b88ce75a52e974684590bab2e22abfcac675f43a2c17bc4845dcfa6f1e24bb",
       "issue": 1478,
@@ -6390,7 +6394,8 @@
           "entry": 3,
           "detail": "Поведение: test/golden-matrix.test.mjs: failed; Браузер: orphan space references: failed; Браузер: zigbee topology hover: failed",
           "eventId": "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:3:return:return:1478"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:1aa27134-80d9-44c5-82dd-84c4af8c4f81": {
