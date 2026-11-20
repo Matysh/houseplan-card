@@ -200,8 +200,12 @@ export class IsoCameraRaster {
     }
     if (sceneImage.revision === session.revision && density > 1 / 1.5 && density < 1.5 &&
       rasterCovers(current.bounds, forecast, limits.content)) return;
-    const margin = forecast.w > view.w ? .06 : 0;
-    return planIsoRaster(forecast, limits, undefined, !!underlay.frame, margin) ?? planIsoRaster(view, limits);
+    const widening = forecast.w > view.w;
+    const targetDensity = forecast.w < view.w ? .9 : 1;
+    // On zoom-in, a small reduction buys preparation time. Other motion
+    // keeps native density so newly covered plan can replace the underlay.
+    return planIsoRaster(forecast, limits, undefined, !!underlay.frame, widening ? .03 : 0, targetDensity)
+      ?? planIsoRaster(view, limits);
   }
 
   private async prepare(session: RasterSession): Promise<void> {
@@ -308,7 +312,8 @@ export class IsoCameraRaster {
       surface.style.removeProperty(blurVariable);
     }
     const coverage = showRaster ? frame!.bounds : session.vector.bounds;
-    if (underlayReady && !rasterCovers(coverage, view, limits.content)) {
+    const showUnderlay = underlayReady && !rasterCovers(coverage, view, limits.content);
+    if (showUnderlay) {
       place(underlay, view, limits, true);
       const clip = rasterUnderlayClip(underlay.frame!.bounds, coverage);
       if (underlay.canvas.style.clipPath !== clip) underlay.canvas.style.clipPath = clip;
@@ -316,6 +321,8 @@ export class IsoCameraRaster {
     } else underlay.canvas.remove();
     if (showRaster) {
       place(sceneImage, view, limits);
+      const clip = showUnderlay && sceneImage.canvas.style.filter ? 'inset(0px)' : '';
+      if (sceneImage.canvas.style.clipPath !== clip) sceneImage.canvas.style.clipPath = clip;
       if (!sceneImage.canvas.isConnected) {
         surface.after(sceneImage.canvas);
         sceneImage.canvas.dataset.hpIsoRaster = 'active';

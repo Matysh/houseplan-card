@@ -1,4 +1,4 @@
-import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor,
+import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor, viewportNeedsCoverage,
   type ViewportExposureLimits } from './viewport-exposure';
 import { IsoCameraRaster, type IsoRasterInput } from './iso-camera-raster';
 import { rasterSmoothing } from './iso-raster-geometry';
@@ -368,7 +368,7 @@ export function paintLiveViewport(
       const aiming = current.target || current.view;
       const motionCanExposeMarkers = options.freezeScene === 'pan' || aiming.w > current.view.w + 1e-6 ||
         aiming.w > (base.markerTarget?.w ?? Infinity) + 1e-6;
-      if (motionCanExposeMarkers && viewportNeedsAnchor(markerBasis, markerCoverage, current.view, limits, forecast)) {
+      if (motionCanExposeMarkers && viewportNeedsCoverage(markerBasis, markerCoverage, current.view, limits, forecast)) {
         const markerAnchor = nextViewportAnchor(current, limits, true);
         markerAnchor.markerPaint = base.markerPaint;
         rebaseMarkerPositions(nodes, markerBasis, markerAnchor);

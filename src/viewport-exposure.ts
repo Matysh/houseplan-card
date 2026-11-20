@@ -47,7 +47,11 @@ export function forecastExposure(view: LiveViewBox, target: LiveViewBox): LiveVi
 export function viewportNeedsAnchor(anchor: LiveViewBox, coverage: LiveViewBox, current: LiveViewBox,
   limits: ViewportExposureLimits, forecast = current): boolean {
   const scale = anchor.w / current.w;
-  if (scale >= 2 || scale <= .5) return true;
+  return scale >= 2 || scale <= .5 || viewportNeedsCoverage(anchor, coverage, current, limits, forecast);
+}
+
+export function viewportNeedsCoverage(anchor: LiveViewBox, coverage: LiveViewBox, current: LiveViewBox,
+  limits: ViewportExposureLimits, forecast = current): boolean {
   const content = limits.content;
   const outside = (lower: boolean, perceived: number, horizon: number, boundary: number,
     contentEdge: number, available: number, desiredSafety: number) => {

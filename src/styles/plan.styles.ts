@@ -216,9 +216,8 @@ export const planStyles = css`
     .iso-scene-surface[data-hp-raster-display] { opacity:0; }
     .hp-iso-raster {
       position:absolute; top:0; left:0; z-index:1; pointer-events:none;
-      transform-origin:0 0; will-change:transform, filter; image-rendering:auto;
+      transform-origin:0 0; will-change:transform; image-rendering:auto;
     }
-    .hp-iso-gesture-image { clip-path:inset(0); }
     .iso-underlay-svg,
     .iso-shadows-svg,
     .iso-walls-svg,

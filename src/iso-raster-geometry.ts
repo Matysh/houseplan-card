@@ -52,12 +52,13 @@ function dimensions(bounds: LiveViewBox, view: LiveViewBox, limits: RasterViewpo
 
 /** Prefer a native-resolution visible frame. Spend the remaining pixel budget on reserve. */
 export function planIsoRaster(view: LiveViewBox, limits: RasterViewport, budget = ISO_FRAME_PIXELS,
-  underlay = false, margin = .1): IsoRasterFrame | undefined {
+  underlay = false, margin = .1, density = 1): IsoRasterFrame | undefined {
   const content = limits.content;
   const visible = content ? rasterIntersection(view, content) : view;
   if (!visible) return;
   const [w, h] = limits.stageSize;
-  const pixels = w * h * limits.dpr ** 2 * visible.w / view.w * visible.h / view.h;
+  const resolution = density < 1 ? { ...limits, dpr: limits.dpr * density } : limits;
+  const pixels = w * h * resolution.dpr ** 2 * visible.w / view.w * visible.h / view.h;
   let bounds = visible;
   if (pixels > budget / restoreDensity ** 2 && underlay) {
     // A very large screen may only fit a sharp central portion. The rest of
@@ -71,11 +72,11 @@ export function planIsoRaster(view: LiveViewBox, limits: RasterViewport, budget 
     bounds = content ? rasterIntersection(exposed, content)! : exposed;
     // The viewport reserve includes empty stage. Limit excess pixels on a
     // long, narrow plan as well as on one that fills the stage.
-    const covered = dimensions(bounds, view, limits, budget);
+    const covered = dimensions(bounds, view, resolution, budget);
     if (rasterDensity(covered, view, limits) >= restoreDensity) return covered;
     bounds = visible;
   }
-  return dimensions(bounds, view, limits, budget);
+  return dimensions(bounds, view, resolution, budget);
 }
 
 export function planIsoUnderlay(view: LiveViewBox, limits: RasterViewport): IsoRasterFrame {
