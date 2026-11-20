@@ -474,6 +474,39 @@ test('#1478 scene and marker anchors rebase together without restarting their vi
   assert.equal(root.camera.attrs.viewBox, '200 100 500 250');
 });
 
+test('#1478 returning to the last authored camera restores unchanged marker bindings', () => {
+  const root = fakeRoot();
+  const marker = { style: { left: '40%', top: '25%' } };
+  root.layer.querySelectorAll = selector => selector.includes('roomlabel') ? [marker] : [];
+  root.layer.style['--icon-size'] = '2.5cqw';
+  root.layer.style.getPropertyValue = name => root.layer.style[name] || '';
+  root.layer.style.setProperty = (name, value) => { root.layer.style[name] = value; };
+  const initial = frame(0, 0).view;
+  const initialBox = liveViewBoxText(initial);
+  root.inherited.setAttribute('viewBox', initialBox);
+  let view = initial;
+  const host = { renderRoot: root, _zoom: 1, _baseVb: () => [], _viewOr: () => view,
+    _floorView: v => v, _renderProjection: 'iso' };
+  authoredHouseplanViewport(host, view, 'floor', false);
+  commitHouseplanViewport(host);
+
+  view = frame(200, 100, 500, 250).view;
+  scheduleHouseplanViewport(host, true);
+  assert.deepEqual(marker.style, { left: '40%', top: '10%' });
+  assert.equal(root.layer.style['--icon-size'], '5cqw');
+  assert.equal(root.inherited.attrs.viewBox, '200 100 500 250');
+
+  view = initial;
+  authoredHouseplanViewport(host, view, 'floor', false);
+  // Lit deduplicates equal attributes, so this commit makes no template writes.
+  commitHouseplanViewport(host);
+  assert.deepEqual(marker.style, { left: '40%', top: '25%' });
+  assert.equal(root.layer.style['--icon-size'], '2.5cqw');
+  assert.equal(root.inherited.attrs.viewBox, initialBox);
+  assert.equal(root.camera.attrs.viewBox, initialBox);
+  disposeHouseplanViewport(host);
+});
+
 test('#1478 prepares a reachable zoom-out target without changing the visible camera', () => {
   const root = fakeRoot(), initial = frame(0, 0);
   root.layer.style.getPropertyValue = () => '';

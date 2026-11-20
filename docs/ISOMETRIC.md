@@ -82,7 +82,10 @@ input, including a quiet window for a wheel series.
 Architecture, floor lighting, furniture, LED strips and floor shadows
 share one projected SVG. Device faces, labels and locks remain live HTML
 on the matching camera. Routes and vacuum trails keep their native
-interaction and draw order.
+interaction and draw order. At a change of camera anchor, the live camera
+temporarily changes marker positions, sizes and route view boxes. Before the
+next plan template, it restores the values last written by Lit so unchanged
+bindings and guarded markers still represent the authored camera.
 
 ## Physical construction and openings
 

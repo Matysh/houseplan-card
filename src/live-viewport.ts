@@ -31,6 +31,12 @@ interface LiveViewportState {
   rasterStyleFrame?: number;
 }
 
+interface MarkerPaint {
+  positions: Map<HTMLElement, readonly [left: string, top: string]>;
+  sizes: Map<HTMLElement, Map<string, string>>;
+  viewBoxes: Map<SVGElement, string | null>;
+}
+
 /** World coordinates represented by the currently prepared scene. */
 export interface LiveViewportAnchor {
   frame: LiveViewportFrame;
@@ -38,6 +44,7 @@ export interface LiveViewportAnchor {
   clip?: string;
   target?: LiveViewBox;
   markerView?: LiveViewBox;
+  markerPaint?: MarkerPaint;
   markerClip?: string;
   inheritedCoverage?: LiveViewBox;
 }
@@ -208,21 +215,56 @@ function sameViewport(a: LiveViewBox | undefined, b: LiveViewBox | undefined): b
   return a === b || !!a && !!b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
 }
 
-function rebaseMarkerPositions(nodes: ViewportNodes, from: LiveViewBox, view: LiveViewBox): void {
+function rebaseMarkerPositions(nodes: ViewportNodes, from: LiveViewBox, anchor: LiveViewportAnchor): void {
+  const view = anchor.frame.view;
   const projection = liveLayerProjection(from, view);
   if (isIdentityLiveLayerProjection(projection)) return;
-  for (const { style } of nodes.markerPositions) {
+  const original = (anchor.markerPaint ??= { positions: new Map(), sizes: new Map(), viewBoxes: new Map() });
+  for (const node of nodes.markerPositions) {
+    const { style } = node;
     if (!style.left.endsWith('%') || !style.top.endsWith('%')) continue;
+    if (!original.positions.has(node)) original.positions.set(node, [style.left, style.top]);
     style.left = (parseFloat(style.left) * projection.scaleX + projection.translateXPercent) + '%';
     style.top = (parseFloat(style.top) * projection.scaleY + projection.translateYPercent) + '%';
   }
-  for (const { style } of nodes.markerLayer) {
-    for (const name of ['--icon-size', '--device-base-size', '--rl-icon-size']) {
-      const value = style.getPropertyValue(name);
-      if (value.endsWith('cqw')) style.setProperty(name, (parseFloat(value) * projection.scaleX) + 'cqw');
+  if (projection.scaleX !== 1) {
+    for (const node of nodes.markerLayer) {
+      let sizes = original.sizes.get(node);
+      if (!sizes) original.sizes.set(node, sizes = new Map());
+      for (const name of ['--icon-size', '--device-base-size', '--rl-icon-size']) {
+        const value = node.style.getPropertyValue(name);
+        if (!value.endsWith('cqw')) continue;
+        if (!sizes.has(name)) sizes.set(name, value);
+        node.style.setProperty(name, (parseFloat(value) * projection.scaleX) + 'cqw');
+      }
     }
   }
-  for (const svg of nodes.inherited) setViewBox(svg, liveViewBoxText(view));
+  const box = liveViewBoxText(view);
+  for (const svg of nodes.inherited) {
+    if (!original.viewBoxes.has(svg)) original.viewBoxes.set(svg, svg.getAttribute('viewBox'));
+    setViewBox(svg, box);
+  }
+}
+
+/** Restore only the temporary camera writes before Lit compares its values.
+ * An unchanged attribute or guarded marker may never be written by Lit. */
+function restoreMarkerPaint(anchor: LiveViewportAnchor | null): void {
+  const original = anchor?.markerPaint;
+  if (!anchor || !original) return;
+  for (const [node, [left, top]] of original.positions) {
+    if (node.style.left !== left) node.style.left = left;
+    if (node.style.top !== top) node.style.top = top;
+  }
+  for (const [node, sizes] of original.sizes) {
+    for (const [name, value] of sizes) {
+      if (node.style.getPropertyValue(name) !== value) node.style.setProperty(name, value);
+    }
+  }
+  for (const [svg, box] of original.viewBoxes) {
+    if (box === null) svg.removeAttribute('viewBox');
+    else setViewBox(svg, box);
+  }
+  anchor.markerPaint = undefined;
 }
 
 function nextViewportAnchor(frame: LiveViewportFrame, limits: ViewportExposureLimits,
@@ -260,6 +302,7 @@ export function paintLiveViewport(
   const refresh = options.force === true || !anchor || !finiteView(base.frame.view) || !finiteView(base.frame.floor)
     || (!options.lockSceneAnchor && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));
   const next = refresh ? nextViewportAnchor(current, limits, !!options.keepMarkerLayer && !options.force) : base;
+  if (refresh) next.markerPaint = base.markerPaint;
   const sceneClip = options.sceneExposureClip ?? (next.clip ??= exposureClip(next.frame.view, next.coverage));
   if (refresh) {
     const viewBox = liveViewBoxText(next.frame.view);
@@ -310,7 +353,7 @@ export function paintLiveViewport(
   }
   const rebaseMarkers = options.keepMarkerLayer && !options.lockSceneAnchor && !options.sceneExposureClip;
   const markerBasis = (!options.authored && base.markerView) || painted.view;
-  if (rebaseMarkers && refresh) rebaseMarkerPositions(nodes, markerBasis, next.frame.view);
+  if (rebaseMarkers && refresh) rebaseMarkerPositions(nodes, markerBasis, next);
   if (rebaseMarkers) next.markerView = refresh ? next.frame.view : markerBasis;
   const markerView = rebaseMarkers ? next.markerView ?? painted.view : painted.view;
   const projection = liveLayerProjection(markerView, current.view);
@@ -371,6 +414,7 @@ export function authoredHouseplanViewport(host: object, current: LiveViewBox, ke
   const previous = state.basis;
   const retained = active && previous?.key === key && !!state.painted;
   const view = retained ? state.anchor?.markerView ?? state.painted!.view : current;
+  restoreMarkerPaint(state.anchor);
   state.basis = { key, view, retained };
   return view;
 }

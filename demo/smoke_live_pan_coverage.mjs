@@ -479,6 +479,75 @@ checks.isoEnabled = await page.evaluate(() => {
 });
 await runPan({ name: 'isoMouseRightEdge', kind: 'mouse', dx: -65, dy: 0, edge: 'right', parity: true });
 await runTouchZoomOut({ name: 'isoTouchZoomOut' });
+// #1478: return to the exact camera Lit last rendered, in a different live
+// anchor. The terminal attributes are equal to the old template's values.
+await page.evaluate(async () => {
+  const spaceId = window.__card._space;
+  await window.__hpTest.setServerConfig(config => {
+    const space = config.spaces.find(item => item.id === spaceId);
+    space.settings = { ...space.settings, show_names: true };
+    config.markers.push({ id: 'pan-roundtrip-marker', binding: 'virtual',
+      space: spaceId, name: 'Pan roundtrip marker', icon: 'mdi:lightbulb' });
+    return config;
+  });
+  await window.__hpTest.setLayout(layout => ({
+    ...layout, 'pan-roundtrip-marker': { s: spaceId, x: .5, y: .5 },
+  }));
+  await window.__hpTest.settled();
+});
+await resetCamera();
+const panRect = await stage().boundingBox();
+const panX = Math.floor(panRect.x + panRect.width / 2);
+const panY = Math.floor(panRect.y + panRect.height * .4);
+const panSnapshot = () => page.evaluate(() => {
+  const card = window.__card;
+  const root = card.renderRoot;
+  const scene = root.querySelector('.iso-scene-surface > .plan-svg');
+  const rect = root.querySelector('.stage').getBoundingClientRect();
+  const points = {};
+  for (const marker of root.querySelectorAll('.dev[data-hp-iso-visual],.roomlabel[data-hp-iso-visual]')) {
+    const bounds = marker.getBoundingClientRect();
+    const x = bounds.left + bounds.width / 2, y = bounds.top + bounds.height / 2;
+    points[`${marker.getAttribute('data-hp')}:${marker.dataset.id}`] = {
+      x, y, visible: bounds.width > 0 && bounds.height > 0
+        && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom,
+    };
+  }
+  const { x, y, w, h } = card._view;
+  return { view: [x, y, w, h], anchor: scene?.getAttribute('viewBox'), points };
+});
+const samePanView = (left, right) => left.view.every((value, i) => Math.abs(value - right.view[i]) < 1e-7);
+const beforeRoundtrip = await panSnapshot();
+await page.mouse.move(panX, panY);
+await page.mouse.down();
+const panAnchors = [];
+for (const step of [-.12, -.47, -.05, 0]) {
+  await page.mouse.move(panX + Math.round(panRect.width * step), panY);
+  await frame();
+  panAnchors.push(await panSnapshot());
+}
+await page.mouse.up();
+await settle();
+const afterRoundtrip = await panSnapshot();
+const heldRoundtrip = panAnchors.at(-1);
+const visiblePoints = Object.entries(beforeRoundtrip.points).filter(([, point]) => point.visible);
+const settledErrors = visiblePoints.map(([id, point]) => {
+  const after = afterRoundtrip.points[id];
+  return { id, distance: after?.visible ? Math.hypot(point.x - after.x, point.y - after.y) : null };
+});
+diagnostics.isoPanRoundtrip = {
+  before: beforeRoundtrip.anchor, anchors: panAnchors.map(sample => sample.anchor),
+  after: afterRoundtrip.anchor, settledErrors,
+};
+checks.isoPanRoundtripExercisesNewAnchor = !!beforeRoundtrip.anchor
+  && panAnchors[1].anchor !== beforeRoundtrip.anchor
+  && heldRoundtrip.anchor !== beforeRoundtrip.anchor && samePanView(heldRoundtrip, beforeRoundtrip);
+checks.isoPanRoundtripSceneRestored = afterRoundtrip.anchor === beforeRoundtrip.anchor
+  && samePanView(afterRoundtrip, beforeRoundtrip);
+checks.isoPanRoundtripOverlaysRestored = settledErrors.some(({ id }) => id.startsWith('device:'))
+  && settledErrors.some(({ id }) => id.startsWith('room-label:'))
+  && settledErrors.every(({ distance }) => distance !== null && distance <= .5);
+
 
 await page.evaluate(async () => {
   const card = document.querySelector('houseplan-card');
