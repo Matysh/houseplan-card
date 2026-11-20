@@ -72,20 +72,29 @@ a no-op delivery. A one-shot kiosk recovery memo stays owned until the measured
 stage and destination runtime are ready, and is adopted in that destination
 plane rather than reinterpreted as the temporary Flat shell.
 
-During a gesture the live camera projects from an authored view box and
-reuses its scene while the current and incoming views stay inside the
-available margin. The margin extends toward plan content, is limited by
-the device-pixel budget, and is recalculated after a reanchor. The stage
-clips overflow. The camera publishes the exact final view after the last
-input, including a quiet window for a wheel series.
+During a wheel, pinch or pan gesture in 2.5D View, the live camera projects
+from the same SVG view box. The SVG remains the hit target. A background
+snapshot of its styles and imagery supplies raster frames for the projected
+camera. The frame planner prioritizes visible detail, with at most 8.3 million
+pixels per frame. It uses the accepted camera target and measured preparation
+time to request improved density or coverage before the current image runs
+out. A full-plan image of at most 1.2 million pixels fills newly exposed
+areas. Its clip excludes the rectangle of the current scene frame, so that
+transparent gaps and shadows keep their original alpha.
 
-Architecture, floor lighting, furniture, LED strips and floor shadows
-share one projected SVG. Device faces, labels and locks remain live HTML
-on the matching camera. Routes and vacuum trails keep their native
-interaction and draw order. At a change of camera anchor, the live camera
-temporarily changes marker positions, sizes and route view boxes. Before the
-next plan template, it restores the values last written by Lit so unchanged
-bindings and guarded markers still represent the authored camera.
+Architecture, floor lighting, furniture, LED strips and floor shadows share
+one projected scene. Device faces, labels, routes and locks remain interactive
+on the same live camera. Their positions stay fixed during zoom-in. During
+zoom-out or pan the marker layer can renew its coverage independently. Before
+the next plan template, the camera restores temporary marker writes so that
+unchanged Lit bindings still match the authored view.
+
+The camera publishes one exact SVG view after the last input and retires the
+temporary surfaces in that commit. Scene inputs are tied to the current plan,
+rotation and theme, and an older preparation cannot overwrite newer content.
+The short light crossfade uses the live SVG layers. If bitmap preparation or
+the bitmap canvas API fails, View falls back to the vector camera with its
+coverage reserve. Flat and the editors use their existing camera paths.
 
 ## Physical construction and openings
 
@@ -175,24 +184,12 @@ inside an isolated group. The latest target received during a transition
 can start the next transition after the current one finishes. Camera changes
 continue through that interval. Reduced-motion presentation updates directly.
 
-During wheel zoom on a 2.5D surface of at least six million device pixels,
-the camera can reuse a bitmap of the passive SVG. It prepares the next view
-while the current frame remains visible and replaces it once the bitmap
-covers the visible part of the plan. Device and room controls stay live.
-Views with unsupported image resources, a light transition, or a camera
-position beyond the available bitmap use the SVG immediately. The exact
-wheel commit takes over from the cached image. A bitmap is limited to 1.2
-million pixels, and the renderer holds one shown and one pending bitmap.
-The bitmap covers the plan and its visible overflow inside the predicted
-viewport reserve, concentrating resolution on paint rather than empty margins.
-Wall and opening materials are read from the stage by property name. The image
-inherits only stage-owned variables and literal `var(--name)` dependencies in
-the product CSS/generated SVG, not the entire HA theme. Unrelated theme tokens
-with EOF-terminated CSS blocks must not consume the image's material declarations.
-On surfaces in the raster size range, wheel zoom-out retains the live
-camera for 230 ms after the last input so GPU-delayed wheel steps can still
-join the gesture. The 160 ms camera animation and zoom-in timing stay the
-same. The final Lit commit replaces the bitmap directly.
+Raster snapshots inherit stage-owned variables and literal var() dependencies
+from the product CSS and generated SVG. Unrelated HA theme tokens stay outside
+the image, including tokens whose CSS blocks otherwise consume following
+material declarations when reparsed (#1486). The camera animation keeps its
+160 ms duration. The 230 ms wheel lease keeps late steps in the same gesture
+and the precise Lit commit takes over from the prepared image.
 
 Physical geometry and projected variants stay separate. The structural LRU
 remains bounded at eight entries; variants are keyed by saved quarter turns,

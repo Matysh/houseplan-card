@@ -26,9 +26,18 @@
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       const start = performance.now();
-      const gaps = [], wheel = [], viewBox = [];
+      const card = stage.getRootNode().host;
+      const gaps = [], wheel = [], viewBox = [], camera = [];
+      let issued = 0;
       const onWheel = event => {
-        if (event.isTrusted) wheel.push({ ms: event.timeStamp - start, deltaY: event.deltaY, mode: event.deltaMode });
+        if (!event.isTrusted) return;
+        const before = card?._cameraTransition?.state?.token;
+        const input = { sequence: ++issued, ms: performance.now() - start,
+          eventMs: event.timeStamp - start, deltaY: event.deltaY, mode: event.deltaMode };
+        queueMicrotask(() => {
+          const motion = card?._cameraTransition?.state;
+          wheel.push({ ...input, accepted: motion?.token !== undefined && motion.token !== before });
+        });
       };
       const observer = new MutationObserver(records => {
         for (const record of records) viewBox.push({ ms: performance.now() - start,
@@ -40,6 +49,8 @@
       let raf, previous;
       const tick = timestamp => {
         if (previous !== undefined) gaps.push(timestamp - previous);
+        camera.push({ ms: performance.now() - start, zoom: card?._zoom,
+          active: card?._cameraTransition?.active === true });
         previous = timestamp;
         raf = requestAnimationFrame(tick);
       };
@@ -55,10 +66,10 @@
           .map(({ name, startTime, detail }) => ({ event: name.split('.').at(-1), ms: startTime - start, detail }));
         const result = { scenario, environment, durationMs: duration,
           fps: gaps.length * 1000 / duration, p95Ms: sorted[Math.ceil(sorted.length * .95) - 1],
-          maxMs: sorted.at(-1), gaps, wheel, viewBox, raster };
+          maxMs: sorted.at(-1), gaps, wheel, viewBox, camera, raster };
         results.push(result);
         console.table([{ scenario, fps: result.fps, p95Ms: result.p95Ms, maxMs: result.maxMs,
-          deliveredWheel: wheel.length, viewBoxWrites: viewBox.length }]);
+          deliveredWheel: wheel.length, acceptedWheel: wheel.filter(input => input.accepted).length, viewBoxWrites: viewBox.length }]);
         return result;
       } finally {
         cancelAnimationFrame(raf);

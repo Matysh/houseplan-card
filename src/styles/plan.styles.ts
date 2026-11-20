@@ -208,6 +208,7 @@ export const planStyles = css`
     .hp-mode-crossfade { position:absolute; inset:0; z-index:1; pointer-events:none; }
     .plan-svg { z-index: 1; }
     .iso-scene-surface { position:absolute; inset:0; z-index:1; }
+    .iso-scene-surface { filter:var(--hp-iso-gesture-blur, none); }
     .iso-scene-surface > svg { overflow:visible; }
     .iso-scene-surface[data-hp-light-mixing] { isolation:isolate; }
     .iso-scene-surface[data-hp-light-mixing] > svg { mix-blend-mode:plus-lighter; }
@@ -215,9 +216,9 @@ export const planStyles = css`
     .iso-scene-surface[data-hp-raster-display] { opacity:0; }
     .hp-iso-raster {
       position:absolute; top:0; left:0; z-index:1; pointer-events:none;
-      transform-origin:0 0; will-change:transform;
+      transform-origin:0 0; will-change:transform, filter; image-rendering:auto;
     }
-    .hp-iso-raster[data-hp-iso-raster="waiting"] { opacity:0; }
+    .hp-iso-gesture-image { clip-path:inset(0); }
     .iso-underlay-svg,
     .iso-shadows-svg,
     .iso-walls-svg,
@@ -236,13 +237,13 @@ export const planStyles = css`
     .iso-wall-side {
       fill: url(#hp-iso-wall-side) var(--iso-side-mid, #adadad);
       stroke: #92989b;
-      stroke-width: 0.7;
+      stroke-width: calc(0.7 * var(--hp-raster-outline-scale, 1));
       vector-effect: non-scaling-stroke;
     }
     .iso-wall-top {
       fill: url(#hp-iso-wall-top) var(--iso-top-hi, #ffffff);
       stroke: #d7d9d8;
-      stroke-width: 0.8;
+      stroke-width: calc(0.8 * var(--hp-raster-outline-scale, 1));
       vector-effect: non-scaling-stroke;
     }
     .iso-wall-fill { opacity: var(--iso-wall-top-op, 1); }
@@ -267,14 +268,14 @@ export const planStyles = css`
     .iso-floor-side {
       fill: #858b8d;
       stroke: #71787b;
-      stroke-width: 0.7;
+      stroke-width: calc(0.7 * var(--hp-raster-outline-scale, 1));
       vector-effect: non-scaling-stroke;
     }
     .iso-opening-panel {
       fill: #d7d9d7;
       fill-opacity: 0.96;
       stroke: #7f878b;
-      stroke-width: 0.9;
+      stroke-width: calc(0.9 * var(--hp-raster-outline-scale, 1));
       vector-effect: non-scaling-stroke;
     }
     .iso-opening-panel.iso-window {
@@ -1506,6 +1507,11 @@ export const planStyles = css`
       inset: 0;
       pointer-events: none;
       z-index: 6;
+    }
+    [data-hp-live-marker-clip] { display:contents; }
+    .projection-iso [data-hp-live-marker-clip] {
+      display:block; position:absolute; inset:0; z-index:6;
+      contain:paint; overflow:clip; pointer-events:none;
     }
     [data-hp-live-marker-surface]:not([data-hp-marker-surface-active]) { display:contents; }
     /* Group intersecting markers into a single paint surface. Its padding

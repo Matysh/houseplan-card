@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Keep unrelated HA theme tokens outside the 2.5D raster so malformed CSS values cannot swallow wall colours, opacity and opening materials during zoom (#1486).
+- Smooth 2.5D wheel zoom with background scene frames and an overview image for newly revealed edges. Restore the exact plan when the gesture ends (#1485).
 - Keep device markers aligned and at the right scale throughout transitions between View and the plan, device and background editors (#1484).
 - Restore the correct floor appearance and wall handles when entering or leaving the Plan editor while the camera updates (#1483).
 - Keep the 2.5D zoom-out raster through delayed wheel events on large displays and avoid a duplicate camera update at settlement (#1481).

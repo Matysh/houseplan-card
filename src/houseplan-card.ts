@@ -309,14 +309,14 @@ import {
   CameraTransitionController, sameCameraState,
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
 } from './viewport-transition'; import { measuredCardHeaderHeight, rawCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
-import { ISO_RASTER_MIN_PIXELS } from './iso-camera-raster';
+import type { IsoRasterInput } from './iso-camera-raster';
 import {
   PlanTapGestureController, roomFitPlanTarget, roomFitClampFrame,
   roomFitPlanBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
   type RoomFitGestureCandidate,
 } from './room-fit';
 import type { FurniturePlacementPress } from './furniture-placement-press';
-import { authoredHouseplanViewport, refreshHouseplanViewportNodes, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
+import { authoredHouseplanSceneViewport, authoredHouseplanViewport, refreshHouseplanViewportNodes, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
 import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
@@ -456,7 +456,7 @@ const BOOT_MAX_MS = 1200;
 const BOOT_SOFT_MS = 1500;
 const CAMERA_BUTTON_MS = 180;
 const CAMERA_WHEEL_MS = 160;
-const CAMERA_ISO_WHEEL_OUT_SETTLE_MS = 230;
+const CAMERA_ISO_WHEEL_SETTLE_MS = 230;
 const CAMERA_FIT_MS = 220;
 /** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
  *  PAGE, not with any card instance. Lovelace re-creates card elements when
@@ -1676,11 +1676,9 @@ export class HouseplanCard extends LitElement {
     state.presented = presented;
     this._zoom = presented.zoom;
     this._view = { ...presented.viewBox };
-    // The exact Lit commit follows in the same tick. During a 2.5D
-    // zoom-out, a final live write can re-layout the old layers just before
-    // Lit replaces their camera and retires the bitmap.
-    if (state.phase !== 'settling' || state.reason !== 'wheel' ||
-        state.to.zoom >= state.from.zoom || this._renderProjection !== 'iso') this._liveVp(true);
+    // The exact Lit commit owns the last wheel pose. Keep the held 2.5D
+    // frame until that commit can replace the scene and markers together.
+    if (state.phase !== 'settling' || state.reason !== 'wheel' || this._renderProjection !== 'iso') this._liveVp(true);
   }
 
   private _settleCameraTransition(state: CameraTransitionState): void {
@@ -1755,15 +1753,8 @@ export class HouseplanCard extends LitElement {
     this._activateSafeDayCycleOutline();
     if (!this._cameraTransition.active && this._mode === 'view') this._clearPointerHover();
     this._cameraTransitionFit = { ...fit };
-    let minimumSettleMs = reason === 'wheel' ? CAMERA_WHEEL_MS : 0;
-    const size = this._lastValidStageSize;
-    const dpr = this.ownerDocument.defaultView?.devicePixelRatio || 1;
-    if (reason === 'wheel' && target.zoom < current.zoom && this._renderProjection === 'iso'
-        && size && size[0] * size[1] * dpr ** 2 >= ISO_RASTER_MIN_PIXELS) {
-      // On a large 2.5D scene the GPU can defer the next queued wheel event
-      // past the animation end. Keep the published frame through that gap.
-      minimumSettleMs = CAMERA_ISO_WHEEL_OUT_SETTLE_MS;
-    }
+    const minimumSettleMs = reason !== 'wheel' ? 0 : this._renderProjection === 'iso'
+      ? CAMERA_ISO_WHEEL_SETTLE_MS : CAMERA_WHEEL_MS;
     this._cameraTransition.start(current, target, reason,
       this._reducedMotion ? 0 : duration, minimumSettleMs);
     return true;
@@ -4113,7 +4104,8 @@ export class HouseplanCard extends LitElement {
           if (record.attributeName !== 'style') return true;
           const target = record.target as Element;
           return !target.hasAttribute('data-hp-live-layer') && !target.hasAttribute('data-hp-live-viewbox')
-            && !target.hasAttribute('data-hp-live-scene') && !target.hasAttribute('data-hp-live-marker-surface');
+            && !target.hasAttribute('data-hp-live-scene') && !target.hasAttribute('data-hp-live-marker-surface')
+            && !target.hasAttribute('data-hp-live-marker-clip');
         }) : records;
         if (deviceLayerMutated(nodes, (node) => this._syncPointerHoverSubtree(node))) {
           this._invalidateDeviceHitGeometry();
@@ -8477,6 +8469,12 @@ export class HouseplanCard extends LitElement {
     const motion = this._cameraTransition.state;
     if (motion?.reason === 'wheel') return this._presentationView(motion.to.viewBox, motion.to.zoom);
     return undefined;
+  }
+  private _liveIsoRasterInput(): IsoRasterInput | undefined {
+    if (this._mode !== 'view' || this._modeTransitionBusy) return undefined;
+    if (this._cameraTransition.active && this._cameraTransition.state?.reason === 'wheel') return 'wheel';
+    if (this._pinchStart) return 'pinch';
+    if (this._panLock === 'pan') return 'pan';
   }
   private _liveViewportLimits() {
     const size = this._lastValidStageSize;
@@ -13325,6 +13323,7 @@ export class HouseplanCard extends LitElement {
       stairVolumes = undefined; isoGlowLayer = undefined; isoLedField = undefined;
       view = this._authoredView(this._viewOr(this._baseVb('flat', null)), 'flat');
     }
+    const sceneView = iso ? authoredHouseplanSceneViewport(this, view) : view;
     const floorCamera = this._isoFloorCamera;
     const markerCamera = ISO_LAB_FLOOR_MARKERS && floorCamera;
     // Labels follow the plan axes, but opposite views share readable lettering.
@@ -13677,7 +13676,7 @@ export class HouseplanCard extends LitElement {
             data-projection=${isoScene ? 'iso' : 'flat'} data-yaw=${isoScene?.camera.rotDeg ?? this._rotation}
             data-rotation=${this._rotation} data-floor-scale-y=${isoScene?.camera.floorScaleY ?? 1}
             data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
-            viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+            viewBox="${sceneView.x} ${sceneView.y} ${sceneView.w} ${sceneView.h}"
             preserveAspectRatio="xMidYMid meet">
             ${isoLayers?.structural ? svg`<g class="iso-underlay-svg" aria-hidden="true" pointer-events="none">
               ${isoFrame?.underlay ?? nothing}
@@ -13841,7 +13840,7 @@ export class HouseplanCard extends LitElement {
                  space-card, so the two renderers agree. The compatibility
                  base is resolved before `iconCqw`; only the per-device and
                  kiosk multipliers still feed --dev-size. */}
-          <div data-hp-live-marker-surface><div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
+          <div data-hp-live-marker-clip><div data-hp-live-marker-surface><div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
             ${renderRadarLive(
               [...this._radarLive.frames.values()].filter((frame) => {
                 const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);
@@ -13867,7 +13866,7 @@ export class HouseplanCard extends LitElement {
                 : nothing}
             ${this._editorRuntime && this._canEdit && !this._kiosk ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
             ${this._renderHaZigbeeTopology(space.id, view)}
-          </div></div>
+          </div></div></div>
           <div data-hp-live-editor-html></div>
           `}
           </div>

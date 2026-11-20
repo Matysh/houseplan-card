@@ -10,21 +10,49 @@ import {
   paintLiveViewport, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, disposeHouseplanViewport,
 } from '../test-build/live-viewport.js';
 import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor } from '../test-build/viewport-exposure.js';
-import { rasterCovers, rasterSize } from '../test-build/iso-camera-raster.js';
+import { ISO_FRAME_PIXELS, ISO_UNDERLAY_PIXELS, planIsoRaster, rasterCovers, rasterDensity, rasterImproves, rasterSize, rasterUnderlayClip } from '../test-build/iso-raster-geometry.js';
 
-test('#1478 each raster buffer has a fixed pixel ceiling, even at 4K/DPR 2', () => {
+test('#1485 the underlay and camera raster have independent pixel ceilings at 4K/DPR 2', () => {
   assert.deepEqual(rasterSize({ stageSize: [1280, 720], dpr: 1 }), [1280, 720]);
-  const [width, height] = rasterSize({ stageSize: [3840, 2160], dpr: 2 });
-  assert.ok(width * height <= 1_200_000);
-  assert.ok(Math.abs(width / height - 3840 / 2160) < .01);
+  for (const budget of [ISO_FRAME_PIXELS, ISO_UNDERLAY_PIXELS]) {
+    const [width, height] = rasterSize({ stageSize: [3840, 2160], dpr: 2 }, budget);
+    assert.ok(width * height <= budget);
+    assert.ok(Math.abs(width / height - 3840 / 2160) < .01);
+  }
 });
 
-test('#1478 a pending raster may hide the SVG only when it covers all visible plan content', () => {
+test('#1485 coverage can use the underlay outside the bitmap rectangle only', () => {
   const bounds = { x: 5, y: 5, w: 50, h: 50 };
   const content = { x: 0, y: 0, w: 55, h: 55 };
   assert.equal(rasterCovers(bounds, { x: 20, y: 20, w: 60, h: 60 }, content), true);
   assert.equal(rasterCovers(bounds, { x: 4, y: 4, w: 60, h: 60 }, content), false);
   assert.equal(rasterCovers(bounds, { x: 60, y: 60, w: 60, h: 60 }, content), true);
+  assert.equal(rasterUnderlayClip({ x: 0, y: 0, w: 100, h: 100 }, bounds),
+    'polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, 5% 5%, 55% 5%, 55% 55%, 5% 55%, 5% 5%, 0 0)');
+  assert.equal(rasterUnderlayClip({ x: 0, y: 0, w: 4, h: 4 }, bounds), 'none');
+});
+
+test('#1485 reference-size camera optimizes for visible density within the raster budget', () => {
+  const view = { x: 100, y: 200, w: 1000, h: 500 };
+  const limits = { stageSize: [1352, 887], dpr: 2 };
+  const frame = planIsoRaster(view, limits);
+  assert.ok(rasterCovers(frame.bounds, view));
+  assert.ok(rasterDensity(frame, view, limits) >= .8);
+  assert.ok(frame.width * frame.height <= ISO_FRAME_PIXELS);
+
+  const big = { stageSize: [3840, 2160], dpr: 2 };
+  const partial = planIsoRaster(view, big, ISO_FRAME_PIXELS, true);
+  assert.equal(rasterCovers(partial.bounds, view), false);
+  assert.ok(rasterDensity(partial, view, big) > .799);
+  assert.ok(partial.width * partial.height <= ISO_FRAME_PIXELS);
+});
+
+test('#1485 an apparently wider raster must preserve sharpness where the old raster is visible', () => {
+  const view = { x: 0, y: 0, w: 1000, h: 500 };
+  const limits = { stageSize: [1400, 700], dpr: 1 };
+  const old = { bounds: { x: 250, y: 125, w: 500, h: 250 }, width: 1400, height: 700 };
+  assert.equal(rasterImproves(old, { bounds: view, width: 1200, height: 600 }, view, limits), false);
+  assert.equal(rasterImproves(old, { bounds: view, width: 1400, height: 700 }, view, limits), true);
 });
 
 test('live viewport projects pan and zoom from the last complete frame', () => {
@@ -62,6 +90,7 @@ const fakeRoot = () => {
   const node = (attrs) => {
     const el = {
       attrs: { ...attrs }, writes: 0, styleWrites: 0, styleRemovals: [],
+      matches: () => false,
       getAttribute: (name) => (name in el.attrs ? el.attrs[name] : null),
       setAttribute: (name, value) => { el.attrs[name] = value; el.writes += 1; },
       style: new Proxy({ _v: {} }, {
@@ -472,6 +501,26 @@ test('#1478 scene and marker anchors rebase together without restarting their vi
   assert.deepEqual(marker.style, { left: '40%', top: '10%' });
   assert.equal(root.layer.style.transform, root.camera.style.transform);
   assert.equal(root.camera.attrs.viewBox, '200 100 500 250');
+});
+
+test('#1485 an expanding camera moves marker coordinates while the scene viewBox stays frozen', () => {
+  const root = fakeRoot(), initial = frame(0, 0);
+  const marker = { style: { left: '40%', top: '25%' } };
+  root.layer.querySelectorAll = selector => selector.includes('roomlabel') ? [marker] : [];
+  root.layer.style.getPropertyValue = () => '';
+  const options = { keepSceneLayer: true, keepMarkerLayer: true, freezeScene: 'wheel' };
+  let anchor = paintLiveViewport(root, initial, initial, null, options);
+  const writes = root.camera.writes;
+  const close = frame(300, 150, 400, 200);
+  anchor = paintLiveViewport(root, initial, { ...close, target: close.view }, anchor, options);
+  assert.deepEqual(marker.style, { left: '40%', top: '25%' });
+  assert.deepEqual(anchor.markerView, initial.view);
+  const far = frame(-700, -350, 2400, 1200);
+  anchor = paintLiveViewport(root, initial, { ...far, target: far.view }, anchor, options);
+  assert.deepEqual(anchor.markerView, far.view);
+  assert.equal(root.camera.writes, writes);
+  assert.equal(root.inherited.attrs.viewBox, liveViewBoxText(far.view));
+  assert.notEqual(marker.style.top, '25%');
 });
 
 test('#1478 returning to the last authored camera restores unchanged marker bindings', () => {
