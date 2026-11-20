@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1132,
+  "revision": 1133,
   "active": "1.86.0-beta.3-20261120",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -166979,7 +166979,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "954bdc1373807315b34ba02a97bf776d52d60284",
       "portToDev": [
         {
           "from": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
@@ -167001,6 +167001,12 @@
         "selectionDigest": "d47bf99f08c82f7c3681c68f92d4b5f72cf1fbced21f9d2b261ac051c231cddd",
         "status": "not-required",
         "inventoryComplete": true
+      },
+      "metricsDecision": {
+        "decisionId": "beta1860-3-owner-size-20261120",
+        "source": "chat",
+        "sourceRef": "chat:Houseplan:v1.86.0-beta.3:2026-11-20:size",
+        "decisionText": "Принимаю"
       }
     }
   },
@@ -172768,7 +172774,8 @@
     "beta1860-3-20261120-accepted-goldens": "c6c8856870b6fff63773e88e69af3c81a557443f3e9a298c39574e2a5befae5a",
     "ship-review:prepare:b90768d9-b1c8-498c-8886-351e37f3b40a": "ac6950b63e9c5e82af180373e09a1b7c039208cd9f8e882767fed96325ed4126",
     "ship-review:result:5fef13b0-4d5d-427c-8eff-ae947d0c531d": "84bea826b0aa4f172e4ef60eef31427c77d52f9261b1a62c0fd539f5d4494007",
-    "beta1860-3-final-metrics": "68b9da2f28d45464b2127e9f6d075d7dd14801f228ee02d1c83796ecd4eb01af"
+    "beta1860-3-final-metrics": "68b9da2f28d45464b2127e9f6d075d7dd14801f228ee02d1c83796ecd4eb01af",
+    "beta1860-3-accept-metrics": "36ba1528d438b5ef59339de3e4bff68e55998b399d12d299f715666906c203f7"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
