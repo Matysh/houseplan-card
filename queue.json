@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16862,
+  "revision": 16863,
   "nextTicket": 542,
   "nextFence": 542,
   "tasks": {
@@ -5241,14 +5241,16 @@
         "test/viewport-transition.test.mjs"
       ],
       "notice": {
-        "key": "1:executor-admission-expired",
-        "reason": "executor-admission-expired",
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795132002288,
-        "entry": 1,
-        "eventId": "finish:cea817d2-249c-44de-af6d-7d11ffb24998:finish:1:expire:return:1478"
-      }
+        "at": 1795133833045,
+        "entry": 2,
+        "detail": "Браузер: approved ui 1207: failed; Браузер: room metrics alignment: failed; Браузер: settings polish 955: failed; Браузер: stair arrival: failed; Браузер: svg export: failed; Браузер: ui polish 963 reference: failed",
+        "eventId": "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:3:return:return:1478"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -5717,18 +5719,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1478,
-    "worker": "finish",
-    "token": "541:finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:1:admit",
-    "fence": 541,
-    "materialSha": "e6d8764b99533d417e7870fd45d1d62d1ac14003",
-    "expectedBase": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
-    "phase": "testing",
-    "admittedAt": 1795132015493,
-    "expiresAt": 1795134114409,
-    "patchId": "a86c6ae4b323e1c3f8529fa21e731e08ecac8ccb"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5946,6 +5937,10 @@
       "digest": "d3a0543a219541feb00084235f9d3e575f4ecc4db02c7b2b4509755115ec70ba",
       "issue": 1478
     },
+    "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:3:return": {
+      "digest": "c280819b8969d11b2ac5c5404702f706af77270638f61974e7346baa621526a4",
+      "issue": 1478
+    },
     "github:44567305558:1:label:spec-request:spec-resubmitted:1478": {
       "digest": "26b88ce75a52e974684590bab2e22abfcac675f43a2c17bc4845dcfa6f1e24bb",
       "issue": 1478,
@@ -6053,6 +6048,26 @@
         "layer": "product",
         "materialSha": "e6d8764b99533d417e7870fd45d1d62d1ac14003",
         "phase": "sync"
+      }
+    },
+    "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:3:return:return:1478": {
+      "digest": "c280819b8969d11b2ac5c5404702f706af77270638f61974e7346baa621526a4",
+      "issue": 1478,
+      "message": {
+        "kind": "return",
+        "issue": 1478,
+        "at": 1795133833045,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795133833045,
+          "entry": 2,
+          "detail": "Браузер: approved ui 1207: failed; Браузер: room metrics alignment: failed; Браузер: settings polish 955: failed; Браузер: stair arrival: failed; Браузер: svg export: failed; Браузер: ui polish 963 reference: failed",
+          "eventId": "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:3:return:return:1478"
+        }
       }
     }
   },
