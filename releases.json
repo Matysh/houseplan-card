@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1181,
+  "revision": 1182,
   "active": "1.86.0-stable-20261121",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -176869,7 +176869,8 @@
           "from": "c5d1b6e0b47a2d3ebfe01a2e544703df923bc6cf",
           "to": "0ce2161adfb8fe0448a676f4a5b9528cb4ae0e89",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "7900aa8f04abe9bc984db1fe0431ab461d5e6d0c"
         }
       ],
       "diagnostics": [],
@@ -177971,7 +177972,8 @@
           "sha": "954bdc1373807315b34ba02a97bf776d52d60284"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "7900aa8f04abe9bc984db1fe0431ab461d5e6d0c",
           "issue": 1505,
           "branch": "issue/1505-release-return-0ce2161adfb8",
           "worktree": "/home/sergey/hp-1380-witness-repairs/artifacts/process-next/return-worktrees/163fc4a94159/artifacts/process-next/return-worktrees/0ce2161adfb8"
@@ -184482,7 +184484,8 @@
     "beta1860-4-20261121-publish:completion:4edcc2aa-22eb-4517-af00-17bca9323884": "3371ecceb92e3d4db6dd025e8307fa86faf2db137936656fc43a50b7db0b9907",
     "beta1860-4-20261121-publish:completion:9897c076-7fd0-4061-96bf-da0b7b73c1c9": "d1f5aa3c457640119854864f820a720de68a9112127fd35a64352951bde15284",
     "stable1860-20261121-create": "2588ba59a27e51414b681d886a87f8765457b83b1f7d9ae0120bb3e1e5bade24",
-    "stable1860-20261121-prepared": "bc6655de0474427cf84c4df98db6eeac10ddbd832bb32c246d0b972b16e586ed"
+    "stable1860-20261121-prepared": "bc6655de0474427cf84c4df98db6eeac10ddbd832bb32c246d0b972b16e586ed",
+    "beta1860-4-20261121-publish:completion:2704882e-4670-4749-b92e-12148434b064": "6ac76677916615b3c3a3865182aefd76279be66c11ca01cdba121e6f68275b3d"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
