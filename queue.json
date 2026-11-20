@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18356,
-  "nextTicket": 571,
+  "revision": 18357,
+  "nextTicket": 572,
   "nextFence": 571,
   "tasks": {
     "1024": {
@@ -5457,6 +5457,20 @@
         "status": "published",
         "sourceSha": "553094ec3d21bf93d8cec8547a0006c4692979eb"
       }
+    },
+    "1500": {
+      "issue": 1500,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1500-visual-baselines",
+      "materialSha": "3faf584e02e4b2bfca92b14dd1eaa27774ce9f40",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 571,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795201779969,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5938,7 +5952,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1500
+  ],
   "active": {
     "issue": 1495,
     "worker": "finish",
@@ -6062,6 +6078,19 @@
         "layer": "product",
         "materialSha": "6d142319e5256828f1f4a94089c0a40daa7533a2",
         "phase": "sync"
+      }
+    },
+    "finish:6f2a65ad-65a4-4cc3-897e-1ae6ce4edb64": {
+      "digest": "39c72289fefb96225e29e3f1adba2c76e65f0cda540e712c937adbd01eb931ee",
+      "issue": 1500,
+      "message": {
+        "kind": "queued",
+        "issue": 1500,
+        "at": 1795201779969,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3faf584e02e4b2bfca92b14dd1eaa27774ce9f40"
       }
     }
   },
