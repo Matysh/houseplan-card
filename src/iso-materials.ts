@@ -63,12 +63,18 @@ export interface IsoWallMaterial {
   sideLo: string;
 }
 
-export function isoWallMaterial(topColor: unknown, sideColor?: unknown): IsoWallMaterial {
+export function isoWallMaterial(topColor: unknown, sideColor?: unknown, topOpacity = 1): IsoWallMaterial {
   const base = parseHexColor(topColor) ?? [255, 255, 255];
   const side = parseHexColor(sideColor);
+  const strength = Number.isFinite(topOpacity) ? Math.min(1, Math.max(0, topOpacity)) : 1;
+  const onWhite = (rgb: Rgb) => hex([
+    255 + (rgb[0] - 255) * strength,
+    255 + (rgb[1] - 255) * strength,
+    255 + (rgb[2] - 255) * strength,
+  ]);
   return {
-    topHi: hex(base),
-    topLo: hex(scale(base, ISO_WALL_TOP_LO)),
+    topHi: onWhite(base),
+    topLo: onWhite(scale(base, ISO_WALL_TOP_LO)),
     sideHi: hex(side ? scale(side, 1.12) : scale(base, ISO_WALL_SIDE[0])),
     sideMid: hex(side ?? scale(base, ISO_WALL_SIDE[1])),
     sideLo: hex(side ? scale(side, .88) : scale(base, ISO_WALL_SIDE[2])),
@@ -76,8 +82,8 @@ export function isoWallMaterial(topColor: unknown, sideColor?: unknown): IsoWall
 }
 
 /** CSS custom properties for the 2.5D stage style attribute. */
-export function isoWallMaterialVars(topColor: unknown, sideColor?: unknown): string {
-  const m = isoWallMaterial(topColor, sideColor);
+export function isoWallMaterialVars(topColor: unknown, sideColor?: unknown, topOpacity = 1): string {
+  const m = isoWallMaterial(topColor, sideColor, topOpacity);
   return `--iso-top-hi:${m.topHi};--iso-top-lo:${m.topLo};--iso-side-hi:${m.sideHi};`
     + `--iso-side-mid:${m.sideMid};--iso-side-lo:${m.sideLo}`;
 }

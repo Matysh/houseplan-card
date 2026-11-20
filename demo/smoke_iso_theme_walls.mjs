@@ -89,14 +89,15 @@ await page.waitForTimeout(450);
 const scheme = await snapshot();
 await page.emulateMedia({ colorScheme: 'light' });
 
-const rgb = (hex, k = 1) => `rgb(${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * k)).join(', ')})`;
+const rgb = (hex, k = 1, tint = 1) => `rgb(${[1, 3, 5].map((i) =>
+  Math.round(255 + (parseInt(hex.slice(i, i + 2), 16) * k - 255) * tint)).join(', ')})`;
 const res = {};
 res.isoOn = light.iso && dark.iso;
-res.topIsUserColour = light.stops[0] === rgb(TOP) && light.stops[1] === rgb(TOP, 0.93);
+res.topColourBlendsWithWhite = light.stops[0] === rgb(TOP, 1, .75) && light.stops[1] === rgb(TOP, .93, .75);
 res.sideDerivedFromUserColour = light.stops[2] === rgb(WALL, 1.12) && light.stops[3] === rgb(WALL)
   && light.stops[4] === rgb(WALL, 0.88);
 res.wallFacesDrawn = light.faces > 0;
-res.separateWallOpacity = Number(light.topOpacity) === .75 && Number(light.sideOpacity) === .5;
+res.opaqueCutWithSeparateSideOpacity = Number(light.topOpacity) === 1 && Number(light.sideOpacity) === .5;
 res.themeKeepsWalls = light.sig.length > 10 && JSON.stringify(light.sig) === JSON.stringify(dark.sig);
 res.colourSchemeKeepsWalls = JSON.stringify(light.sig) === JSON.stringify(scheme.sig);
 res.themeKeepsStops = JSON.stringify(light.stops) === JSON.stringify(dark.stops);
@@ -128,7 +129,7 @@ const rasterScene = await startIsoPaintScene({
   configureFixture({ config }) {
     const settings = config.spaces[0].settings;
     Object.assign(settings, {
-      room_color: '#481477', room_opacity: 1,
+      room_color: '#481477', room_opacity: .4,
       wall_fill: { c: '#246844', a: 1 },
       opening_accent_3d: { c: '#a32a59', a: 1 },
     });
@@ -174,7 +175,52 @@ try {
     ];
   });
   const exact = async () => materialCounts(PNG.sync.read(await stage.screenshot()).data, palette);
-  const before = await exact();
+  const cutProbe = await stage.evaluate(el => {
+    const cut = el.querySelector('[data-hp="iso-wall-cut"]');
+    const { x, y, width, height } = cut.getBBox();
+    const matrix = cut.getScreenCTM();
+    const inverse = matrix.inverse();
+    const offsets = [[-2, -2], [-2, 2], [2, -2], [2, 2]];
+    const bounds = el.getBoundingClientRect();
+    const points = [];
+    for (let row = 1; row < 32; row++) {
+      for (let col = 1; col < 32; col++) {
+        const point = new DOMPoint(x + width * col / 32, y + height * row / 32);
+        if (!cut.isPointInFill(point)) continue;
+        const screen = point.matrixTransform(matrix);
+        if (!offsets.every(([dx, dy]) => cut.isPointInFill(
+          new DOMPoint(screen.x + dx, screen.y + dy).matrixTransform(inverse)))) continue;
+        if (screen.x <= bounds.left || screen.x >= bounds.right ||
+            screen.y <= bounds.top || screen.y >= bounds.bottom) continue;
+        points.push([(screen.x - bounds.left) / bounds.width, (screen.y - bounds.top) / bounds.height]);
+      }
+    }
+    return points;
+  });
+  const withoutDecor = PNG.sync.read(await stage.screenshot());
+  // Insert contrasting synthetic decor immediately below the cut, with the
+  // same footprint. Test interior pixels so antialiasing is irrelevant.
+  await stage.evaluate(el => {
+    const cut = el.querySelector('[data-hp="iso-wall-cut"]');
+    const decor = document.createElementNS(cut.namespaceURI, 'path');
+    decor.setAttribute('d', cut.getAttribute('d'));
+    decor.setAttribute('fill-rule', 'evenodd');
+    decor.setAttribute('fill', '#02ff18');
+    decor.setAttribute('data-test-cut-decor', '');
+    cut.closest('.iso-wall-fill').before(decor);
+  });
+  const withDecor = PNG.sync.read(await stage.screenshot());
+  await stage.evaluate(el => el.querySelector('[data-test-cut-decor]').remove());
+  const topSamples = cutProbe.map(([x, y]) =>
+    (Math.floor(y * withoutDecor.height) * withoutDecor.width + Math.floor(x * withoutDecor.width)) * 4
+  ).filter(offset => palette[0].every(stop => stop.every((channel, i) =>
+    Math.abs(withoutDecor.data[offset + i] - channel) <= 8)));
+  assert(topSamples.length >= 3, 'The contrast fixture must sample the opaque cut material');
+  for (const offset of topSamples) {
+    assert.deepEqual(withDecor.data.subarray(offset, offset + 4), withoutDecor.data.subarray(offset, offset + 4),
+      'A wall cut must cover the floor and contrasting decor with the same colour');
+  }
+  const before = materialCounts(withoutDecor.data, palette);
   const during = await stage.evaluate(async stage => {
     const until = performance.now() + 4500;
     const { x, y, width, height } = stage.getBoundingClientRect();

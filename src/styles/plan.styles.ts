@@ -245,7 +245,6 @@ export const planStyles = css`
       stroke-width: calc(0.8 * var(--hp-raster-outline-scale, 1));
       vector-effect: non-scaling-stroke;
     }
-    .iso-wall-fill { opacity: var(--iso-wall-top-op, 1); }
     .iso-wall-side-fill { opacity: var(--iso-wall-side-op, .55); }
     :is(.iso-wall-fill, .iso-wall-side-fill) :is(.iso-wall-side, .iso-wall-top) { stroke: none; }
     .iso-wall-contour { fill: none; stroke-linejoin: round; }

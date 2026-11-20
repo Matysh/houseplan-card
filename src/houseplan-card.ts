@@ -13644,10 +13644,9 @@ export class HouseplanCard extends LitElement {
             '--hp-iso-room-edge-y': roomLabelDepth?.['--hp-iso-edge-unit-y'],
             ...(markerCamera ? isoTileDepthStyles(markerCamera) : {}),
             '--wall-fill': disp.wallFill.c, '--wall-fill-op': String(disp.wallFill.a),
-            '--iso-wall-top-op': iso ? String(disp.opacity) : undefined,
             '--iso-wall-side-op': iso ? String(disp.wallFill.a) : undefined,
             ...(iso ? isoOpeningMaterialVars(disp.openingAccent3d?.c, disp.openingAccent3d?.a) : {}),
-            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.color, disp.wallFill.c).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
+            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.color, disp.wallFill.c, disp.opacity).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
           })}
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}

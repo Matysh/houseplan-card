@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1491,
+  "baseStable": "v1.85.2",
+  "category": "line-fix",
+  "rationale": "Corrects the opacity of the upper wall cut on the 2.5D beta line.",
+  "summary": {
+    "ru": "Верхний срез стен в 2.5D непрозрачный, а процент непрозрачности штриховки определяет силу цвета на белой основе.",
+    "en": "The 2.5D wall cut is opaque, with hatch opacity blending its colour with white."
+  }
+}

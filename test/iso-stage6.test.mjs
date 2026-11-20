@@ -35,6 +35,15 @@ test('#649 3b walls: top = user colour, sides darker per channel; default white 
   assert.doesNotMatch(isoWallMaterialVars('#d9c8b4'), /dark|theme/);
 });
 
+test('#1491 wall cuts blend the top gradient with white at any tint strength', () => {
+  const full = isoWallMaterial('#123456', '#246844');
+  const white = isoWallMaterial('#123456', '#246844', 0);
+  const mixed = isoWallMaterial('#123456', '#246844', .5);
+  assert.deepEqual(isoWallMaterial('#123456', '#246844', 1), full);
+  assert.deepEqual(white, { ...full, topHi: '#ffffff', topLo: '#ffffff' });
+  assert.deepEqual(mixed, { ...full, topHi: '#899aab', topLo: '#8898a7' });
+});
+
 test('#649 light floor: lab luma > 0.55 on the fill composited over the paper', () => {
   assert.deepEqual(parseHexColor('#abc'), [170, 187, 204]);
   assert.deepEqual(parseCssColor('rgb(238, 232, 222)'), [238, 232, 222]);

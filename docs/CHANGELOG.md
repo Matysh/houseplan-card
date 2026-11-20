@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep 2.5D wall cuts opaque. The wall hatch opacity blends the cut colour with white (#1491).
+
 ## v1.86.0-beta.1 — 2026-11-20
 
 - Keep unrelated HA theme tokens outside the 2.5D raster so malformed CSS values cannot swallow wall colours, opacity and opening materials during zoom (#1486).

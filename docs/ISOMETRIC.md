@@ -168,8 +168,10 @@ coordinates. The clips and geometry share the authored scene view box. The lock 
 actuation. LED light remains on the floor while the tape and its hit target
 use the raised plane.
 
-Space appearance uses room border colour/opacity for the wall top and wall fill
-for the side faces, with independent material on the windows and doors. The
+Space appearance uses room border colour and opacity to tint the opaque white
+wall cut. Zero opacity gives a white cut, and intermediate values blend the
+shaded colour with white. The wall fill controls the side faces separately.
+Windows and doors use their own material. The
 optional opening accent tints frames, leaves, reveals and all sill faces.
 Its alpha controls tint strength. White and zero strength reproduce the
 original material. Glass, shades, hardware and garage gates retain their own
