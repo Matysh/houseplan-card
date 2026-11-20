@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1486,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Repairs remaining HA theme contamination of the passive 2.5D raster introduced in #1478 and incompletely addressed by #1480 on this beta line.",
+  "summary": {
+    "ru": "Посторонние переменные темы HA не меняют материалы растрового кадра при зуме 2.5D.",
+    "en": "Unrelated HA theme tokens no longer corrupt raster materials during 2.5D zoom."
+  }
+}

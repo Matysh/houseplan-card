@@ -1,6 +1,6 @@
 import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor,
   type ViewportExposureLimits } from './viewport-exposure';
-import { ISO_RASTER_MIN_PIXELS, IsoCameraRaster, type RasterStyle } from './iso-camera-raster';
+import { ISO_RASTER_MIN_PIXELS, IsoCameraRaster, rasterStyleProperties, type RasterStyle } from './iso-camera-raster';
 
 export interface LiveViewBox {
   x: number;
@@ -455,14 +455,8 @@ function prepareRasterStyle(host: LiveViewportHost, state: LiveViewportState): v
   state.rasterStyleFrame = requestAnimationFrame(() => {
     state.rasterStyleFrame = undefined;
     if (!svg.isConnected || rasterScene(host, state) !== svg || host._liveViewportTarget?.()) return;
+    const properties = rasterStyleProperties(svg);
     const style = getComputedStyle(svg);
-    const stageStyle = svg.closest<HTMLElement>('.stage')?.style;
-    const properties = new Set(['color', 'color-scheme', 'font-size', 'font-family']);
-    // Some Chromium versions can read custom properties by name but omit them
-    // from the computed style listing. The stage owns the plan materials.
-    for (const property of [...style, ...(stageStyle ?? [])]) {
-      if (property.startsWith('--')) properties.add(property);
-    }
     const values = Array.from(properties, property => [property, style.getPropertyValue(property)] as const);
     state.rasterStyle = { scene: svg, key: rasterStyleKey(svg), values };
   });

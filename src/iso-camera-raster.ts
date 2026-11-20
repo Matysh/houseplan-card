@@ -17,6 +17,28 @@ const namespace = 'http://www.w3.org/2000/svg';
 const intersects = (a: LiveViewBox, b: LiveViewBox) =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
+const sceneCss = (root: ShadowRoot): string => [...root.styleSheets, ...root.adoptedStyleSheets]
+  .flatMap(sheet => [...sheet.cssRules].map(rule => rule.cssText)).join('\n');
+
+/** Find the scene's own CSS inputs, not every inherited HA theme token.
+ * An unrelated custom property can contain an EOF-terminated CSS block; copying
+ * it into the image's style would consume the following material declarations
+ * when the SVG is parsed again. Keep discovery independent of computed-style
+ * enumeration, which is incomplete in some Chromium versions (#1480/#1486). */
+export function rasterStyleProperties(scene: SVGSVGElement): ReadonlySet<string> {
+  const root = scene.getRootNode() as ShadowRoot;
+  const names = new Set(['color', 'color-scheme', 'font-size', 'font-family']);
+  for (const name of scene.closest<HTMLElement>('.stage')?.style ?? []) {
+    if (name.startsWith('--')) names.add(name);
+  }
+  // Product CSS and generated SVG use literal var(--name) references. Include
+  // inline fill/stroke/style references as well as stylesheet dependencies.
+  for (const match of (sceneCss(root) + '\n' + scene.outerHTML).matchAll(/var\(\s*(--[\w-]+)/g)) {
+    names.add(match[1]);
+  }
+  return names;
+}
+
 export function rasterCovers(bounds: LiveViewBox, view: LiveViewBox, content = view): boolean {
   const epsilon = 1e-6;
   return !intersects(view, content) || (
@@ -53,8 +75,7 @@ function rasterSource(scene: SVGSVGElement, stage: Element, inherited: RasterSty
   if (stage.hasAttribute('data-hp-iso-floor-markers')) context.setAttribute('data-hp-iso-floor-markers', 'true');
   for (const [property, value] of inherited) context.style.setProperty(property, value);
   const css = doc.createElementNS(namespace, 'style');
-  css.textContent = [...root.styleSheets, ...root.adoptedStyleSheets]
-    .flatMap(sheet => [...sheet.cssRules].map(rule => rule.cssText)).join('\n')
+  css.textContent = sceneCss(root)
     + '\ng.stage, g.zoomwrap { opacity:1; transform:none; filter:none; clip-path:none; }';
   const wrap = doc.createElementNS(namespace, 'g');
   wrap.setAttribute('class', 'zoomwrap');

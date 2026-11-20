@@ -185,7 +185,10 @@ wheel commit takes over from the cached image. A bitmap is limited to 1.2
 million pixels, and the renderer holds one shown and one pending bitmap.
 The bitmap covers the plan and its visible overflow inside the predicted
 viewport reserve, concentrating resolution on paint rather than empty margins.
-Wall and opening materials are read from the stage by property name.
+Wall and opening materials are read from the stage by property name. The image
+inherits only stage-owned variables and literal `var(--name)` dependencies in
+the product CSS/generated SVG, not the entire HA theme. Unrelated theme tokens
+with EOF-terminated CSS blocks must not consume the image's material declarations.
 On surfaces in the raster size range, wheel zoom-out retains the live
 camera for 230 ms after the last input so GPU-delayed wheel steps can still
 join the gesture. The 160 ms camera animation and zoom-in timing stay the
