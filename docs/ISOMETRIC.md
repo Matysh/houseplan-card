@@ -169,8 +169,14 @@ actuation. LED light remains on the floor while the tape and its hit target
 use the raised plane.
 
 Space appearance uses room border colour and opacity to tint the opaque white
-wall cut. Zero opacity gives a white cut, and intermediate values blend the
-shaded colour with white. The wall fill controls the side faces separately.
+wall cut. In 2.5D the side masonry also has an opaque white backing: wall-fill
+opacity is the tint strength, not see-through masonry. At zero tint the sides
+are white; glazing and real gaps are not backed. Flat and the editors retain
+their original opacity semantics. The UI-062 architectural tone follows the
+camera-facing normal. Similar static room fills get a small mid-tone offset;
+live room scales retain their original colours. Thin adaptive floor contacts
+and vertical ridges are clipped by the already-visible face; coplanar seams
+are excluded. Geometry, live sun/light and saved settings are unchanged (#1495).
 Windows and doors use their own material. The
 optional opening accent tints frames, leaves, reveals and all sill faces.
 Its alpha controls tint strength. White and zero strength reproduce the

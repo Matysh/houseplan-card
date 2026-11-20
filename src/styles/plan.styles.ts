@@ -340,7 +340,7 @@ export const planStyles = css`
     [data-hp-opening-masonry] .iso-opening-door-frame {
       fill: var(--iso-opening-door-frame, #e9ece8); fill-opacity: 1; stroke: none;
     }
-    [data-hp-opening-masonry] .iso-wall-side { fill: var(--iso-side-mid, #adadad); stroke: none; }
+    [data-hp-opening-masonry] .iso-wall-side { fill: var(--iso-face-fill, var(--iso-side-mid, #adadad)); stroke: none; }
     [data-hp-opening-masonry] .iso-opening-panel { stroke: none; }
     [data-hp-opening-masonry] .iso-material-reveal { fill: #8b8d8c; fill-opacity: 1; }
     [data-hp-opening-masonry] :is(.iso-door, .iso-window).iso-material-reveal {
@@ -377,6 +377,9 @@ export const planStyles = css`
       }
       .iso-ambient-shadow,
       .iso-material-texture { display: none; }
+      [data-hp-opening-masonry] .iso-wall-side,
+      .iso-wall-side-backing { fill: Canvas; }
+      .iso-architectural-edges path[vector-effect] { stroke: CanvasText; }
     }
     @supports not (filter: blur(1px)) {
       .iso-ambient-shadow,

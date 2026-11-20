@@ -1,3 +1,4 @@
+import { architecturalFloorTone } from './iso-architectural-tone';
 import { HaPlanHost } from './ha-plan-host';
 import { FloorCacheRuntime } from './floor-cache-runtime';
 import { floorCacheKeys, cacheSha256 } from './floor-cache-key';
@@ -13409,7 +13410,7 @@ export class HouseplanCard extends LitElement {
                 const fillC = roomFills.byRoom.get(r) || null;
                 if (fillC) {
                   cls += ' filled';
-                  st.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity}`);
+                  st.push(`--room-fill:${iso ? architecturalFloorTone(fillC.color, disp.wallFill.c, effFill === 'custom') : fillC.color}`, `--room-fill-op:${fillC.opacity}`);
                 } else st.push('--room-fill:transparent', '--room-fill-op:0');
                 style = st.join(';');
               }

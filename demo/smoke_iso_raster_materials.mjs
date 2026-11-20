@@ -78,7 +78,7 @@ for (const translucent of [false, true]) {
           clientX: box.x + box.width / 2, clientY: box.y + box.height / 2,
           deltaY: zoomIn ? -80 : 80, bubbles: true, cancelable: true,
         }));
-        await new Promise(resolve => setTimeout(resolve, 70));
+      await new Promise(resolve => setTimeout(resolve, 70));
         const canvas = el.querySelector('.hp-iso-raster[data-hp-iso-raster="active"]');
         if (!canvas || !el.querySelector('.iso-scene-surface[data-hp-raster-display]')) continue;
         const copy = document.createElement('canvas');
@@ -87,7 +87,13 @@ for (const translucent of [false, true]) {
         const xml = window.__rasterMaterialSources.at(-1);
         const parsed = new DOMParser().parseFromString(xml, 'image/svg+xml');
         const style = parsed.querySelector('g.stage').style;
-        return { png: copy.toDataURL(), values: Object.fromEntries([...style].map(name => [name, style.getPropertyValue(name)])) };
+        const tones = [...parsed.querySelectorAll('.iso-wall-side[style]')]
+          .map(face => face.style.getPropertyValue('--iso-face-fill'))
+          .filter(value => /^#[a-f\d]{6}$/i.test(value));
+        return { png: copy.toDataURL(), tones: [...new Set(tones)],
+          backing: parsed.querySelector('.iso-wall-side-backing')?.getAttribute('fill'),
+          edges: parsed.querySelectorAll('.iso-architectural-edges path[vector-effect="non-scaling-stroke"]').length,
+          values: Object.fromEntries([...style].map(name => [name, style.getPropertyValue(name)])) };
       }
       throw Error('The poisoned HA theme must exercise an active raster, not a vector fallback');
     }, translucent);
@@ -96,13 +102,17 @@ for (const translucent of [false, true]) {
     }
     assert.equal(during.values['--hp-inline-fixture'], '#17a2b8', 'SVG attribute var() dependencies must be captured');
     assert.equal(during.values['--wa-form-control-padding-inline'], undefined, 'Unused HA tokens must stay outside the image');
+    assert.equal(during.backing, '#ffffff', 'The cached SVG has the same white masonry backing');
+    assert(during.edges > 0 && during.tones.length > 1, 'The cached SVG retains directional tones and clipped edges');
+    const palette = [...during.tones, '#246844'].map(tone => [1, 3, 5].map(offset =>
+      Math.round(255 + (parseInt(tone.slice(offset, offset + 2), 16) - 255) * sideAlpha)));
     const pixels = PNG.sync.read(Buffer.from(during.png.split(',')[1], 'base64')).data;
     let side = 0;
     for (let i = 0; i < pixels.length; i += 4) {
-      if (Math.abs(pixels[i + 3] - Math.round(sideAlpha * 255)) <= 1 &&
-          [36, 104, 68].every((channel, c) => Math.abs(channel - pixels[i + c]) <= 9)) side++;
+      if (pixels[i + 3] === 255 && palette.some(tone =>
+          tone.every((channel, c) => Math.abs(channel - pixels[i + c]) <= 5))) side++;
     }
-    assert(side > 30, 'The actual cached exterior wall must retain its colour and alpha');
+    assert(side > 30, 'Cached masonry pixels must match the wall tint composited over opaque white');
     await stage.locator('.hp-iso-raster').waitFor({ state: 'detached' });
     await settleIsoPaint(page);
     assert.equal(await stage.evaluate(el => getComputedStyle(el.querySelector('.iso-wall-side-fill')).opacity), String(sideAlpha));

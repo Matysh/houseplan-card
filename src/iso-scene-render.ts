@@ -8,6 +8,7 @@
 // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
+import { architecturalPainter } from './iso-architectural-edges';
 import { difference, union, type Geom } from 'polyclip-ts';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_OPENINGS } from './iso-lab-camera';
 import { clipIsoOpeningDepthQueue, deviceWallOcclusion, furnitureOcclusion } from './iso-lab-visibility';
@@ -117,7 +118,7 @@ export function resolveIsoFramePresentation(input: {
   const overlays = input.overlays(layers);
   const smoothMaterials = ISO_LAB_FLOOR_MARKERS && !!input.scene?.camera;
   const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => {
-    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture, overlays, input.wallLights);
+    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture, overlays, input.wallLights, input.display.wallFill.c);
     const indicators = renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing;
     return {
       layers: renderLayers, panels, overlays,
@@ -267,6 +268,7 @@ function renderIsoStructure(
   furniture: readonly IsoFurniturePaint[] = [],
   overlays: IsoOverlayRenderScene | null = null,
   wallLights: readonly IsoWallLightSource[] = [],
+  wallColor = '#ffffff',
 ): Pick<IsoFramePresentation,'walls'|'foreground'|'shadowClip'> {
   if (projection !== 'iso' || !layers.structural || !scene) return {walls:emptySvg(), foreground:nothing, shadowClip:null};
   const openingSurfaces: IsoOpeningRenderSurface[] = layers.panels ? [
@@ -283,6 +285,7 @@ function renderIsoStructure(
     (scene.camera?.floorScaleY ?? 1) !== 1);
   const depthQueue = ISO_LAB_OPENINGS && scene.camera
     ? clipIsoOpeningDepthQueue(ordered,scene.camera,gridVisualScale(cellCm)) : ordered;
+  const architecture = scene.camera ? architecturalPainter(depthQueue,scene.camera,wallColor) : {fill:()=>'',edges:nothing};
   const wallCut = ISO_LAB_OPENINGS ? continuousWallCut(scene,depthQueue) : '';
   if (scene.camera && overlays) for (const placement of overlays.devices.values()) {
     placement.wallMask = deviceWallOcclusion(depthQueue,scene.camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
@@ -294,6 +297,9 @@ function renderIsoStructure(
     if (entry.layer === 'opening' && entry.surface.material === 'wall-side') return [entry.surface.d];
     return [];
   }).join(' ') : '';
+  // The wall colour is composited over opaque white, like the cut plane.
+  // Use the already-clipped visible masonry, including columns and lintels,
+  // so the backing never closes a doorway or paints over glazing.
   // Keep individual planes for visibility. Paint adjacent visible facets as a
   // single SVG fill so antialiasing cannot expose the floor between them.
   const columnPaint = new Map<number, string[]>();
@@ -332,6 +338,9 @@ function renderIsoStructure(
     || entry.surface.material === 'wall-side' || entry.surface.material === 'wall-top';
   const masonrySide = ({entry}:typeof entries[number]) => entry.layer === 'wall-side'
     || (entry.layer === 'opening' && entry.surface.material === 'wall-side');
+  const sideEntries = entries.filter(masonrySide);
+  const masonryBacking = sideEntries.map(({entry}) =>
+    entry.layer === 'wall-side' ? entry.face.d : entry.layer === 'opening' ? entry.surface.d : '').join(' ');
   const paintWallLight = scene.camera ? isoWallLightPainter(wallLights, scene.camera, cellCm, scene.geometry) : () => nothing;
   // The raised-marker presentation has smooth surfaces. Avoid mounting the
   // duplicate path strings that its CSS previously hid during every paint.
@@ -344,7 +353,7 @@ function renderIsoStructure(
             return svg`${paths ? svg`<path data-hp-round-column=${face.roundColumn} d=${paths.join(' ')}
               fill=${layers.materialNuance ? 'url(#hp-iso-column-'+face.roundColumn+')' : 'var(--iso-side-mid, #adadad)'}></path>` : nothing}${paintWallLight(entry,index)}`;
           }
-          return svg`<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures
+          return svg`<path class="iso-wall-side" style=${architecture.fill(index)} d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures
             ? svg`<path class="iso-material-texture iso-wall-texture" d=${face.d}></path>`
             : nothing}${paintWallLight(entry,index)}`;
         }
@@ -360,7 +369,7 @@ function renderIsoStructure(
         const surface = entry.surface;
         if(wallCut&&surface.kind==='opening-lintel-top')return nothing;
         if (surface.material === 'wall-side' || surface.material === 'wall-top') {
-          return svg`<path class="iso-${surface.material}" d=${surface.d} fill-rule="evenodd"
+          return svg`<path class="iso-${surface.material}" style=${architecture.fill(index)} d=${surface.d} fill-rule="evenodd"
             data-id=${surface.id} data-kind=${surface.type} data-surface=${surface.kind}></path>${paintWallLight(entry,index)}`;
         }
         /* css-uses {"owner":"renderIsoWalls","kind":"class","values":["iso-door","iso-window"],"reason":"Opening surfaces have exactly the door/window type union"} */
@@ -386,10 +395,13 @@ function renderIsoStructure(
       ${/* Composite the masonry once, including its seam underpaint and light.
            Per-face alpha would darken overlaps; opening materials stay independent.
            The depth queue already clips surfaces against nearer opaque geometry. */nothing}
+      ${masonryBacking ? svg`<path class="iso-wall-side-backing" d=${masonryBacking}
+        fill="#ffffff" stroke="none"></path>` : nothing}
       <g class="iso-wall-side-fill">
         ${masonrySides ? svg`<path class="iso-masonry-underpaint" fill="var(--iso-side-mid, #adadad)"
           d=${masonrySides}></path>` : nothing}
-        ${entries.filter(masonrySide).map(paintEntry)}
+        ${sideEntries.map(paintEntry)}
+        ${architecture.edges}
       </g>
       <g class="iso-wall-fill">
         ${entries.filter(row=>masonry(row)&&!masonrySide(row)).map(paintEntry)}

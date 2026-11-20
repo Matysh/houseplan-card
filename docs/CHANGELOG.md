@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add directional masonry shading and thin visible floor contacts and wall ridges in 2.5D. Wall-fill opacity now tints opaque white masonry without filling openings or changing Flat (#1495).
+
 ## v1.86.0-beta.2 — 2026-11-20
 
 - Blend the final 2.5D zoom bitmap into the exact SVG over 200 ms after the SVG is ready (#1493).

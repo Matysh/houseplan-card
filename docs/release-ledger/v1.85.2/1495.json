@@ -1,0 +1,1 @@
+{"schema":1,"issue":1495,"baseStable":"v1.85.2","category":"major","rationale":"Accepted UI-062 changes the readability and wall opacity semantics of the 2.5D View.","summary":{"ru":"Мягкое освещение граней и читаемые рёбра в 2.5D, непрозрачная белая основа стен.","en":"Directional shading and readable edges in 2.5D, with an opaque white wall backing."}}

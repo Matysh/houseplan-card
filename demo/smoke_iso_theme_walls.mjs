@@ -56,6 +56,7 @@ const snapshot = () => page.evaluate(() => {
     topOpacity: top ? getComputedStyle(top.closest('.iso-wall-fill')).opacity : null,
     sideOpacity: root.querySelector('.iso-wall-side-fill')
       ? getComputedStyle(root.querySelector('.iso-wall-side-fill')).opacity : null,
+    backing: root.querySelector('.iso-wall-side-backing')?.getAttribute('fill'),
     label: label ? [getComputedStyle(label).color, getComputedStyle(label).textShadow] : null,
     furnitureStroke: furn ? Number(furn.getAttribute('stroke-width')) : NaN,
     furnitureVector: furn?.getAttribute('vector-effect') ?? null,
@@ -97,7 +98,7 @@ res.topColourBlendsWithWhite = light.stops[0] === rgb(TOP, 1, .75) && light.stop
 res.sideDerivedFromUserColour = light.stops[2] === rgb(WALL, 1.12) && light.stops[3] === rgb(WALL)
   && light.stops[4] === rgb(WALL, 0.88);
 res.wallFacesDrawn = light.faces > 0;
-res.opaqueCutWithSeparateSideOpacity = Number(light.topOpacity) === 1 && Number(light.sideOpacity) === .5;
+res.opaqueCutAndSideBacking = Number(light.topOpacity) === 1 && Number(light.sideOpacity) === .5 && light.backing === '#ffffff';
 res.themeKeepsWalls = light.sig.length > 10 && JSON.stringify(light.sig) === JSON.stringify(dark.sig);
 res.colourSchemeKeepsWalls = JSON.stringify(light.sig) === JSON.stringify(scheme.sig);
 res.themeKeepsStops = JSON.stringify(light.stops) === JSON.stringify(dark.stops);
@@ -169,7 +170,8 @@ try {
     };
     return [
       values('.iso-top-hi, .iso-top-lo', 'stopColor'),
-      values('.iso-side-hi, .iso-side-mid, .iso-side-lo', 'stopColor'),
+      [...new Set([...el.querySelectorAll('.iso-wall-side[style]')].map(node => getComputedStyle(node).fill))]
+        .map(rgb),
       values('.iso-door.iso-material-matte-leaf', 'fill'),
       values('.iso-window.iso-material-light-frame', 'fill'),
     ];
