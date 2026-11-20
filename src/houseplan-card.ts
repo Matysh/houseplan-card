@@ -13068,6 +13068,10 @@ export class HouseplanCard extends LitElement {
   }
   /** No ordinary scene/pull producer runs behind this passive preparation
    * surface. Navigation remains live; old marker DOM is not retained below it. */
+  private _renderStageEnvironment(dayCycle: DayCycleState | null, weight = 1): TemplateResult {
+    return html`${renderDayCycleEnvironment(dayCycle, weight, moonLayer(this, this._sunGlobal(), dayCycle))}
+      ${moonLayer(this, this._sunGlobal(), this._moonSkyState(), weight)}`;
+  }
   private _renderPendingFloor(): TemplateResult {
     this._floorPassive = true;
     const preview = this._floorPreparation?.preview || null;
@@ -13075,15 +13079,20 @@ export class HouseplanCard extends LitElement {
     if (preview) this._adoptViewPlane(this._presentedViewPlane(preview.fit.projection));
     const view = this._viewOr(base);
     const disp = this._spaceDisplayForRender();
+    const dayCycle = this._dayCycleState();
+    // L1 remains a fit/camera hint in 2.5D, not a material-complete scene.
+    // Do not flash its anonymous silhouette before the current floor is ready.
+    const visiblePreview = this._desiredProjection === 'flat' && preview?.fit.projection === 'flat' ? preview : null;
     return this._renderPreparedFloorFrame(html`
-      <div class="stage mode-view" data-hp-floor-cache=${preview ? 'preview' : 'preparing'}
+      <div class="stage mode-view${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}" data-hp-floor-cache=${visiblePreview ? 'preview' : 'preparing'}
         style=${styleMap({ height: this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`,
           background: this._stageBg(disp) || undefined, '--wall-fill': disp.wallFill.c })}>
-        <div class="zoomwrap" inert style="pointer-events:none">
+        ${this._renderStageEnvironment(dayCycle)}
+        ${visiblePreview ? html`<div class="zoomwrap" inert style="pointer-events:none">
           <svg class="plan-svg" data-hp-cache-preview data-hp-live-viewbox="camera" aria-hidden="true" viewBox="${view.x} ${view.y} ${view.w} ${view.h}">
-            ${renderFloorPreview(preview)}
+            ${renderFloorPreview(visiblePreview)}
           </svg>
-        </div>
+        </div>` : nothing}
         <div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite">
           <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span>
         </div>
@@ -13663,8 +13672,7 @@ export class HouseplanCard extends LitElement {
             if (this._furnTouchPending?.mouse && this._furnTouchPending.pid === e.pointerId) this._stagePointerCancel(e);
           }}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
-          ${renderDayCycleEnvironment(dayCycle, dayCycleWeight, moonLayer(this, this._sunGlobal(), dayCycle))}
-          ${moonLayer(this, this._sunGlobal(), this._moonSkyState(), dayCycleWeight)}
+          ${this._renderStageEnvironment(dayCycle, dayCycleWeight)}
           ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
           ${this._ledEditor?.chrome() ?? nothing}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"

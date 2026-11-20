@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Keep 2.5D wall cuts opaque. The wall hatch opacity blends the cut colour with white (#1491).
+- Keep the day/night background during floor preparation and omit the simplified 2.5D loading silhouette while retaining cached geometry and camera hints (#1490).
 
 ## v1.86.0-beta.1 — 2026-11-20
 

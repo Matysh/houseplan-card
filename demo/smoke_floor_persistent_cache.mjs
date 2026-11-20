@@ -112,15 +112,18 @@ try {
     let preview;
     try {
       card = await mount();
-      await until(() => card._floorPreparation?.diagnostic.firstPreview > 0
-        && card.renderRoot.querySelector('[data-hp-floor-cache="preview"]'), 'painted passive preview');
+      await until(() => projection === 'iso'
+        ? card._floorPassive && !!card._floorPreparation?.preview
+          && card.renderRoot.querySelector('[data-hp-floor-cache="preparing"]')
+        : card._floorPreparation?.diagnostic.firstPreview > 0
+          && card.renderRoot.querySelector('[data-hp-floor-cache="preview"]'), 'passive fit readiness');
       await frame();
       const root = card.renderRoot.querySelector('[data-hp-cache-preview]');
       const before = { ...card._viewOr(card._baseVb()) };
-      const passive = !root.querySelector('foreignObject,image,use,a,script,style,animate')
+      const passive = !root?.querySelector('foreignObject,image,use,a,script,style,animate')
         && !card.renderRoot.querySelector('.dev,.roomlabel,.vactrail,.oplock');
-      const shapeCount = root.querySelectorAll('path,polygon,rect,line,polyline,circle,ellipse').length;
-      const sample = [...root.querySelectorAll('path')].find(path => path.getAttribute('d'));
+      const shapeCount = root?.querySelectorAll('path,polygon,rect,line,polyline,circle,ellipse').length ?? 0;
+      const sample = [...(root?.querySelectorAll('path') ?? [])].find(path => path.getAttribute('d'));
       const d = sample?.getAttribute('d');
       const project = element => [new DOMPoint(0,0),new DOMPoint(100,100)]
         .map(point => { const screen=point.matrixTransform(element.getScreenCTM());return [screen.x,screen.y]; });
@@ -133,7 +136,7 @@ try {
       const original = [...card.renderRoot.querySelectorAll('.stage path')].find(path => path.getAttribute('d') === d);
       const screenAfter = original ? project(original) : null;
       const after = card._viewOr(card._baseVb()), pixels = card._stageEl.clientWidth / after.w;
-      preview = { passive, shapeCount, camera: Math.abs(before.w - after.w) / after.w <= .0001
+      preview = { passive, shapeCount, previewDom: !!root, camera: Math.abs(before.w - after.w) / after.w <= .0001
         && Math.abs(before.x + before.w / 2 - after.x - after.w / 2) * pixels <= 1
         && Math.abs(before.y + before.h / 2 - after.y - after.h / 2) * pixels <= 1,
         before, after, screenBefore, screenAfter,
@@ -291,9 +294,11 @@ try {
   check('memory navigation reused prepared geometry', result.warm.memoryHits > 0 && result.memoryReturned);
   check('cache did not command devices or write plan', result.noDeviceWritesFromCache);
   check('in-place optimistic config/layout and deferred writes cannot authorize publication', result.publicationSource);
-  check('L1 is a real painted passive basis without live layers', result.preview.passive && result.preview.shapeCount > 0);
+  check('L1 keeps a passive fit basis without live layers', result.preview.passive && (result.projection === 'iso'
+    ? result.preview.shapeCount === 0 && !result.preview.previewDom && result.preview.phases.firstPreview === 0
+    : result.preview.shapeCount > 0 && result.preview.previewDom));
   check('unchanged saved fit keeps preview and full camera', result.preview.camera);
-  check('actual SVG screen transform stays within one pixel', result.preview.screenCamera);
+  if (result.projection !== 'iso') check('actual SVG screen transform stays within one pixel', result.preview.screenCamera);
   check('a door change during worker preparation uses only the current light state', result.preview.freshLight);
   check('demanded summary has the canonical union/subtraction area', Math.abs(result.summary.area - result.summary.expectedArea) < 1e-8);
   check('foreign-floor stairs invalidate the scalar at equal server revision', Math.abs(result.summary.changed - result.summary.expectedChanged) < 1e-8);

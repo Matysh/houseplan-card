@@ -917,6 +917,10 @@ serialized. The normal header/viewport measuring controller also runs during
 passive preparation. Matching fit inputs use the same camera; preview is not
 marked complete or editable. A same-floor coherent complete frame has priority
 over replacing it with L1 while a new current-state candidate is prepared.
+In 2.5D, L1 supplies only the fit/camera hint: its simplified silhouette is
+not painted while the current full scene is preparing (#1490). Flat retains
+its passive preview. Both loading surfaces use the same day/night environment
+as the ready View; a static background retains the configured colour.
 
 The local IndexedDB generation is optional and separate from canonical data,
 backups and assets. See `WARM-REMOUNT.md` for scope, cold hints and failure

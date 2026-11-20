@@ -1,0 +1,1 @@
+{"schema":1,"issue":1490,"baseStable":"v1.85.2","category":"line-fix","rationale":"Repairs the loading presentation of #1454 on the 1.86 beta line; no new feature or canonical-data change.","summary":{"ru":"Фон подготовки совпадает с готовым планом; упрощённый силуэт 2.5D не показывается.","en":"Loading retains the ready plan background without a simplified 2.5D silhouette."}}
