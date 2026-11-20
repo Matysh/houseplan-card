@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18040,
+  "revision": 18041,
   "nextTicket": 564,
   "nextFence": 564,
   "tasks": {
@@ -2419,38 +2419,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "ed16ef29d380e63f2bd12f0f29ba01c0164a863a"
-      }
-    },
-    "1405": {
-      "issue": 1405,
-      "branch": "codex/1405-ha-rotation-record",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "24f98e2081b460f7b14a76a186155b574a6bbb45",
-      "mergedSha": "3749fc755b4e9b1318f3770870a803f687cdd76a",
-      "mergedAt": 1794555844562,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1407": {
@@ -5245,10 +5213,24 @@
       "removedToRelease": false,
       "reviewRequest": "review:1490:1:b77eeed265688099f0faab4668db32fae83fcd4d:3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 16
+        },
+        "commentCurrent": true,
+        "commentDigest": "d1c65df9ac3a3cbebb03",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "published",
