@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1158,
+  "revision": 1159,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -167338,13 +167338,15 @@
           "from": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
           "to": "423e25de2764185af95e9b28b4c35b1cab31063b",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "954bdc1373807315b34ba02a97bf776d52d60284"
         },
         {
           "from": "423e25de2764185af95e9b28b4c35b1cab31063b",
           "to": "954bdc1373807315b34ba02a97bf776d52d60284",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050"
         }
       ],
       "diagnostics": [],
@@ -168445,7 +168447,8 @@
           "sha": "6af2e11c1e83442c2dbfd7bbfa2a888466fbbcc1"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
           "issue": 1502,
           "branch": "issue/1502-release-return-954bdc137380",
           "worktree": "/home/sergey/hp-release-1860-beta3/artifacts/process-next/return-worktrees/954bdc137380"
@@ -174242,7 +174245,8 @@
     "beta1860-3-20261120-publish:completion:7d082cf6-6285-402f-8870-00b3f43d7df5": "582d41dc26bc7652e7a40be06a5c895a8c423b7053c2b69c73dde514b4bc0d81",
     "beta1860-3-20261120-publish:completion:77bea3a7-ca33-4c98-9410-d7c0f5b23322": "607ce15e5132f33ce04088aa50e37b07a8bd09ce74a397ea893523af9af29a55",
     "beta1860-3-20261120-publish:completion:68a9cac3-afbf-4332-844c-64f5f0f18b56": "b2a68e8b4e5c572938fcff618060f669da1823531e02ce337ad4fb96f2468388",
-    "beta1860-3-20261120-publish:completion:d77ceda8-67fc-40a4-b0d6-826ca159409f": "962bbd1cade7db9208943d759846d68fd68d0ceccdb2991b73bebc23715ada74"
+    "beta1860-3-20261120-publish:completion:d77ceda8-67fc-40a4-b0d6-826ca159409f": "962bbd1cade7db9208943d759846d68fd68d0ceccdb2991b73bebc23715ada74",
+    "beta1860-3-20261120-publish:completion:dd5a6fd5-a352-4d78-bb9d-1f5f1922fe50": "69c0e870df16821d0ad7d24315582780cb3242b4d7a0499dec5526272cf2f187"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
