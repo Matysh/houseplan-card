@@ -195,7 +195,11 @@ from the product CSS and generated SVG. Unrelated HA theme tokens stay outside
 the image, including tokens whose CSS blocks otherwise consume following
 material declarations when reparsed (#1486). The camera animation keeps its
 160 ms duration. The 230 ms wheel lease keeps late steps in the same gesture
-and the precise Lit commit takes over from the prepared image.
+and the precise Lit commit takes over from the prepared image. Once settled,
+the scene keeps an opacity compositing hint and drops its gesture transform,
+so the browser can paint the exact SVG at the new scale. A bitmap carries
+the settled sunlight without restarting its CSS animation. The live SVG
+continues to own the two-second fade across the solar threshold.
 
 Physical geometry and projected variants stay separate. The structural LRU
 remains bounded at eight entries; variants are keyed by saved quarter turns,

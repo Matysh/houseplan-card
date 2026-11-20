@@ -28,6 +28,7 @@ interface RasterSession {
   vector: IsoRasterFrame;
   input?: IsoRasterInput;
   failed: boolean;
+  sunFading?: boolean;
   revision: number;
   source?: string;
   job?: AbortController;
@@ -165,7 +166,7 @@ export class IsoCameraRaster {
 
   public supports(scene: SVGSVGElement, view: LiveViewBox, coverage: LiveViewBox): boolean {
     const session = this.session;
-    return !!session && session.scene === scene && !session.failed &&
+    return !!session && session.scene === scene && !session.failed && !session.sunFading &&
       (!!session.underlay.frame || rasterCovers(coverage, view, session.limits.content));
   }
 
@@ -193,7 +194,7 @@ export class IsoCameraRaster {
   }
 
   private queue(session: RasterSession): void {
-    if (this.session !== session || session.failed || session.timer !== undefined ||
+    if (this.session !== session || session.failed || session.sunFading || session.timer !== undefined ||
         session.surface.hasAttribute('data-hp-light-mixing')) return;
     session.timer = session.win.setTimeout(() => {
       session.timer = undefined;
@@ -230,6 +231,22 @@ export class IsoCameraRaster {
 
   private async prepare(session: RasterSession): Promise<void> {
     if (this.session !== session || !session.scene.isConnected || session.failed) return;
+    if (!session.source) {
+      const sun = session.scene.querySelector('.iso-sunwash');
+      const fades = sun?.getAnimations().filter(fade => fade.pending || fade.playState === 'running');
+      if (fades?.length) {
+        // The SVG owns the two-second sunrise/sunset fade. A bitmap cannot
+        // carry its changing opacity to the screen.
+        session.sunFading = true;
+        this.pause(true);
+        clearSurface(session.underlay);
+        void Promise.allSettled(fades.map(fade => fade.finished)).then(() => {
+          session.sunFading = false;
+          this.queue(session);
+        });
+        return;
+      }
+    }
     const job = session.job = new AbortController();
     const revision = session.revision;
     const stillRelevant = () => this.session === session && !job.signal.aborted && revision === session.revision;

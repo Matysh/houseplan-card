@@ -98,6 +98,11 @@ try {
   }
   check('the exact frame releases the attached raster', await page.locator('houseplan-card .hp-iso-raster').count(), 0);
   check('exact SVG is visible', await page.locator('houseplan-card .iso-scene-surface[data-hp-raster-display]').count(), 0);
+  check('settled SVG does not retain the gesture transform hint', await page.locator(
+    'houseplan-card .iso-scene-surface').evaluate(surface => {
+    const style = getComputedStyle(surface);
+    return style.transform === 'none' && !style.willChange.includes('transform');
+  }));
   console.log(JSON.stringify({ mode, ...result }));
 } finally {
   await finish(browser);

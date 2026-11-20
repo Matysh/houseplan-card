@@ -56,6 +56,13 @@ export async function captureIsoRasterSource(scene: SVGSVGElement, stage: HTMLEl
   const clone = scene.cloneNode(true) as SVGSVGElement;
   clone.style.removeProperty('opacity');
   for (const hover of clone.querySelectorAll(isoRasterHoverSelector)) hover.remove();
+  // An SVG image has a new animation timeline. Preserve the settled sun
+  // instead of restarting the fade at zero on each bitmap.
+  const sun = clone.querySelector<SVGElement>('.iso-sunwash');
+  if (sun) {
+    sun.style.animation = 'none';
+    if (sun.classList.contains('out')) sun.style.opacity = '0';
+  }
   clone.setAttribute('viewBox', viewBoxToken);
   clone.setAttribute('preserveAspectRatio', 'none');
   const external = new Map<string, Promise<string>>();

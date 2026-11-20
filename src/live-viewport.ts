@@ -578,7 +578,7 @@ export function commitHouseplanViewport(value: object, keepSceneLayer = false): 
   // the middle of that session (#579). The terminal Lit frame passes false and
   // restores the authored, transform-free idle DOM.
   state.anchor = paintLiveViewport(root, state.painted, current, state.anchor, {
-    force: true, keepSceneLayer: keepSceneLayer || host._renderProjection === 'iso',
+    force: true, keepSceneLayer,
     keepMarkerLayer: host._renderProjection === 'iso', authored: true,
     sceneExposureClip: host._modeSceneClip ?? undefined, nodes: state.nodes, limits: host._liveViewportLimits?.(),
   });

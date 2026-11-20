@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1489,
+  "baseStable": "v1.85.2",
+  "category": "line-fix",
+  "rationale": "Repairs sunlight and geometry sharpness in the 2.5D camera path revised in the 1.86.0 beta line.",
+  "summary": {
+    "ru": "Свет из окон остаётся видимым во время зума 2.5D. После остановки SVG отрисовывается в конечном масштабе.",
+    "en": "Window light stays visible during 2.5D zoom, with the SVG painted at the final scale after settling."
+  }
+}
