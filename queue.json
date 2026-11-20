@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18454,
+  "revision": 18455,
   "nextTicket": 574,
   "nextFence": 573,
   "tasks": {
@@ -5283,7 +5283,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1495-architectural-light",
-      "materialSha": "5b93fe660a1b4d090a77c7588b9d0ffd9ed9a12c",
+      "materialSha": "ae1b1763727106c90fdddcbb16b141533e35b610",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 572,
@@ -5291,7 +5291,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795202497545,
       "reviewEntry": 2,
-      "patchId": "75a604bf5f7a56f6fd7e00a61312a291c2d8ce94",
+      "patchId": "04deb8cbf08669d2197d081a980cd8a9f8b8e6ac",
       "changedFiles": [
         "demo/smoke_iso_raster_materials.mjs",
         "demo/smoke_iso_theme_walls.mjs",
@@ -5301,6 +5301,7 @@
         "docs/USER-GUIDE.md",
         "docs/USER-GUIDE.ru.md",
         "docs/release-ledger/v1.85.2/1495.json",
+        "scripts/mutation-registry.mjs",
         "src/houseplan-card.ts",
         "src/i18n/settings/de.json",
         "src/i18n/settings/en.json",
@@ -6007,11 +6008,12 @@
     "worker": "github-coordinator",
     "token": "572:github:44802499246:1:tick:0:admit",
     "fence": 572,
-    "materialSha": "5b93fe660a1b4d090a77c7588b9d0ffd9ed9a12c",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "ae1b1763727106c90fdddcbb16b141533e35b610",
+    "expectedBase": "eb91c11e65fbcc89f377da809594ed65b8bc54ba",
+    "phase": "testing",
     "admittedAt": 1795202972607,
-    "expiresAt": 1795203272607
+    "expiresAt": 1795203318247,
+    "patchId": "04deb8cbf08669d2197d081a980cd8a9f8b8e6ac"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6132,6 +6134,10 @@
     },
     "github:44802499246:1:completions:message:0a4ccb9b377642ca2004c71526646cb78a13ce404eb94bae06325c325834d617": {
       "digest": "4b9deab1e48a5ee8a7d91f28f5cb2a255731665c67fbf14e37ccf88169131827",
+      "issue": 1495
+    },
+    "finish:af72b22f-32d9-49cf-be47-72dcc8c36294:finish:1:synchronized": {
+      "digest": "f3e27735563ca03e4c0b65c86fb592cc7bc1e51a7df0ab5b85ff75f96ee26706",
       "issue": 1495
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
