@@ -33,8 +33,13 @@ for (const dpr of dprs) {
       if (node !== marker) node.style.display = 'none';
     }
     const markerSurface = layer.closest('[data-hp-live-marker-surface]') || layer;
-    for (const node of markerSurface.parentElement.children) {
-      if (node !== markerSurface) node.style.visibility = 'hidden';
+    // The flat plan can paint from siblings above the marker surface. Hide
+    // that ink without changing layout so only the diagnostic colours count.
+    const stage = root.querySelector('.stage');
+    for (let layerNode = markerSurface; layerNode && layerNode !== stage; layerNode = layerNode.parentElement) {
+      for (const sibling of layerNode.parentElement.children) {
+        if (sibling !== layerNode) sibling.style.setProperty('visibility', 'hidden', 'important');
+      }
     }
     marker.className = 'dev theme-light';
     marker.style.left = '50%';
@@ -56,7 +61,7 @@ for (const dpr of dprs) {
     // A solid diagnostic shell makes the alpha-weighted centroid stable even
     // when the production stroke is only one sparse physical pixel wide.
     frame.style.background = 'rgb(255 0 0)';
-    root.querySelector('.stage').style.background = 'rgb(0 0 255)';
+    stage.style.setProperty('background', 'rgb(0 0 255)', 'important');
   });
 
   const dense = await page.evaluate(async () => {
