@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18679,
-  "nextTicket": 575,
+  "revision": 18680,
+  "nextTicket": 576,
   "nextFence": 575,
   "tasks": {
     "1024": {
@@ -5522,6 +5522,20 @@
         "status": "published",
         "sourceSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050"
       }
+    },
+    "1503": {
+      "issue": 1503,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1503-zigbee-topology-hover",
+      "materialSha": "c4cb576ca6e1e19b6836fb3863657e174d174877",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 575,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795211200095,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6003,7 +6017,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1503
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6073,6 +6089,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:1e1b7423-0b0e-4f9e-ad71-d5cbdbe2f69f": {
+      "digest": "0bae4b3657314cefa4ef9bf0c3af42c571480e90441fc9a000c2a63fc496429d",
+      "issue": 1503,
+      "message": {
+        "kind": "queued",
+        "issue": 1503,
+        "at": 1795211200095,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "c4cb576ca6e1e19b6836fb3863657e174d174877"
       }
     }
   },
