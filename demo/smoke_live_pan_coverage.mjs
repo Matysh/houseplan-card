@@ -479,8 +479,10 @@ checks.isoEnabled = await page.evaluate(() => {
 });
 await runPan({ name: 'isoMouseRightEdge', kind: 'mouse', dx: -65, dy: 0, edge: 'right', parity: true });
 await runTouchZoomOut({ name: 'isoTouchZoomOut' });
-// #1478: return to the exact camera Lit last rendered, in a different live
-// anchor. The terminal attributes are equal to the old template's values.
+// #1478: budgeted SVG re-anchoring must restore the markers even when the
+// terminal attributes equal the old template. The native raster pan above
+// can hold the same SVG anchor, so exercise the vector fallback here.
+await page.evaluate(() => { window.__card._liveIsoRasterInput = () => undefined; });
 await page.evaluate(async () => {
   const spaceId = window.__card._space;
   await window.__hpTest.setServerConfig(config => {
@@ -529,6 +531,7 @@ for (const step of [-.12, -.47, -.05, 0]) {
 await page.mouse.up();
 await settle();
 const afterRoundtrip = await panSnapshot();
+await page.evaluate(() => { delete window.__card._liveIsoRasterInput; });
 const heldRoundtrip = panAnchors.at(-1);
 const visiblePoints = Object.entries(beforeRoundtrip.points).filter(([, point]) => point.visible);
 const settledErrors = visiblePoints.map(([id, point]) => {

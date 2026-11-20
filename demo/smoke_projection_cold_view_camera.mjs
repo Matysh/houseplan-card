@@ -45,8 +45,8 @@ for(const scenario of cases) {
         Object.fromEntries(fixture.config.spaces.map(space=>[space.id,scenario.rotation]))));
       const url='/houseplan?panel-cold=1'+(scenario.host==='kiosk'?'&hpkiosk=1':'');
       history.replaceState(null,'',url);
-      // Delay the real derived-floor response, not a replacement geometry producer:
-      // the persisted passive preview must be painted before the current full scene.
+      // Delay the real derived-floor response to exercise the cached startup
+      // interval in which an incomplete silhouette used to be shown (#1490).
       if(restoring) {
         const NativeWorker=window.Worker;
         window.Worker=class extends NativeWorker {
@@ -181,12 +181,10 @@ for(const scenario of cases) {
     }
     out[`${name}-real-delayed-ISO-runtime`]=delayed>0;
     out[`${name}-cold-cache-miss`]=cold.cache.misses>0&&cold.cache.diskHits===0;
-    if(scenario.profile) {
-      // The exact one-shot profile camera may not have a matching L1 fit key;
-      // L2 reuse is independent. Other six cases require a painted passive L1.
-      out[`${name}-persistent-geometry-reuse`]=restored.cache.diskHits>0&&restored.visible>0;
-    } else out[`${name}-persistent-preview-to-live`]=restored.preview&&restored.cache.diskHits>0
-      &&restored.cache.firstPreview>0&&restored.visible>0;
+    // Geometry reuse is independent of the cached preview, including the
+    // one-shot profile camera path. #1490 keeps the silhouette hidden.
+    out[`${name}-persistent-geometry-reuse`]=restored.cache.diskHits>0&&restored.visible>0;
+    out[`${name}-no-cached-silhouette`]=!restored.preview&&restored.cache.firstPreview===0;
     if(recovery) {
       out[`${name}-recovery-before-late-ISO`]=restored.earlyRecovery;
       out[`${name}-recovery-held-until-ISO`]=restored.heldRecovery&&restored.recoveryConsumed;
