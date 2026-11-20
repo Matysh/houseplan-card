@@ -207,10 +207,10 @@ export const planStyles = css`
     [data-hp-live-scene-exposed] .hp-mode-scene-svg { overflow:visible; }
     .hp-mode-crossfade { position:absolute; inset:0; z-index:1; pointer-events:none; }
     .plan-svg { z-index: 1; }
+    .iso-scene-surface { position:absolute; inset:0; z-index:1; }
     /* Keep the idle SVG composited without freezing its raster density at
        the previous zoom. Camera motion supplies its own transform hint. */
-    .iso-scene-surface { position:absolute; inset:0; z-index:1; will-change:opacity; }
-    .iso-scene-surface { filter:var(--hp-iso-gesture-blur, none); }
+    .iso-scene-surface { filter:var(--hp-iso-gesture-blur, none); will-change:opacity; }
     .iso-scene-surface > svg { overflow:visible; }
     .iso-scene-surface[data-hp-light-mixing] { isolation:isolate; }
     .iso-scene-surface[data-hp-light-mixing] > svg { mix-blend-mode:plus-lighter; }
