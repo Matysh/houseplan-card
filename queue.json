@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18239,
+  "revision": 18240,
   "nextTicket": 568,
   "nextFence": 568,
   "tasks": {
@@ -5960,6 +5960,10 @@
       "digest": "221625e1a1c9dee4e80075d96643a2084d39ab6b6dee88966cb74374646d9e2f",
       "issue": 1497
     },
+    "github:44796348871:1:completions:message:c1a9b358fadb5ff9afbcbb72db89b968da8ae18d19089d5ba18c7cb6257f78a1": {
+      "digest": "d5e45f7fcb5c4831a2da3c09d7cb41661951aa5f585c818a55b10284e60fbafb",
+      "issue": 1497
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6035,7 +6039,8 @@
           "entry": 1,
           "detail": "Backend: tests_backend/test_ha_wall_removal_limits.py: failed",
           "eventId": "finish:e0d9a7c8-63e7-42ca-b14c-ffc01201d7e1:finish:2:return:return:1497"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:9630b23b-3933-4bd1-889c-7c1687ac1c06": {
