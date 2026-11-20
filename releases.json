@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1182,
+  "revision": 1183,
   "active": "1.86.0-stable-20261121",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -177985,14 +177985,14 @@
       "kind": "stable",
       "branch": "release/1.86.0-20261121",
       "sourceSha": "0ce2161adfb8fe0448a676f4a5b9528cb4ae0e89",
-      "sha": "0c32d7dfa4a149162bec5aae5c93001e8550e3b3",
+      "sha": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "0c32d7dfa4a149162bec5aae5c93001e8550e3b3",
+        "candidate": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
         "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
         "issues": [
           {
@@ -178576,6 +178576,12 @@
               "c5d1b6e0b47a2d3ebfe01a2e544703df923bc6cf",
               "d666c4d7510c886e4f3f5f4ea70a660e9e5c238a"
             ]
+          },
+          {
+            "number": 1506,
+            "commits": [
+              "2725feedd276c5c1c19d9223c99b1adcdefefaa1"
+            ]
           }
         ]
       },
@@ -178655,7 +178661,8 @@
         1500,
         1501,
         1503,
-        1504
+        1504,
+        1506
       ],
       "reviewRequired": false,
       "review": null,
@@ -178665,6 +178672,12 @@
         {
           "from": "0ce2161adfb8fe0448a676f4a5b9528cb4ae0e89",
           "to": "0c32d7dfa4a149162bec5aae5c93001e8550e3b3",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "0c32d7dfa4a149162bec5aae5c93001e8550e3b3",
+          "to": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -184485,7 +184498,8 @@
     "beta1860-4-20261121-publish:completion:9897c076-7fd0-4061-96bf-da0b7b73c1c9": "d1f5aa3c457640119854864f820a720de68a9112127fd35a64352951bde15284",
     "stable1860-20261121-create": "2588ba59a27e51414b681d886a87f8765457b83b1f7d9ae0120bb3e1e5bade24",
     "stable1860-20261121-prepared": "bc6655de0474427cf84c4df98db6eeac10ddbd832bb32c246d0b972b16e586ed",
-    "beta1860-4-20261121-publish:completion:2704882e-4670-4749-b92e-12148434b064": "6ac76677916615b3c3a3865182aefd76279be66c11ca01cdba121e6f68275b3d"
+    "beta1860-4-20261121-publish:completion:2704882e-4670-4749-b92e-12148434b064": "6ac76677916615b3c3a3865182aefd76279be66c11ca01cdba121e6f68275b3d",
+    "stable1860-20261121-golden-isolation": "10193f7a0e3596ea0a5b9b77cde2b834f80ef7e466da737f6193f52f284ac8e8"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
