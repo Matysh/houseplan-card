@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17984,
+  "revision": 17985,
   "nextTicket": 563,
   "nextFence": 563,
   "tasks": {
@@ -5280,156 +5280,25 @@
     },
     "1493": {
       "issue": 1493,
+      "branch": "codex/1493-raster-fade",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1493-raster-fade",
-      "materialSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 562,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795189818033,
-      "reviewEntry": 1,
-      "patchId": "ce98d8fc2162f7507a90a6baadc72024558baa8e",
-      "changedFiles": [
-        "demo/smoke_iso_raster_handoff.mjs",
-        "demo/smoke_iso_raster_parity.mjs",
-        "demo/smoke_iso_raster_session.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/ISOMETRIC.md",
-        "docs/release-ledger/v1.85.2/1493.json",
-        "src/iso-camera-raster.ts",
-        "src/live-viewport.ts",
-        "src/styles/plan.styles.ts"
-      ],
-      "s6": {
-        "id": "20261120T155035390-f13cdf85",
-        "name": "Тесты для задачи #1493 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T155035390-f13cdf85/report.json",
-        "materialSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-        "status": "passed",
-        "finishedAt": "2026-11-20T15:54:58.182Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
+      "mergedSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
+      "mergedAt": 1795190446217,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1493:1:ce98d8fc2162f7507a90a6baadc72024558baa8e:67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-      "reviewMaterial": {
-        "materialSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-        "expectedBase": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "patchId": "ce98d8fc2162f7507a90a6baadc72024558baa8e"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1493:1:ce98d8fc2162f7507a90a6baadc72024558baa8e:67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "eventId": "github:44768062117:1:tick:0:review-retry",
-        "at": 1795190124805,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1493,
-        "requestId": "review:1493:1:ce98d8fc2162f7507a90a6baadc72024558baa8e:67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "kind": "code",
-        "base": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-        "materialSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-        "patchId": "ce98d8fc2162f7507a90a6baadc72024558baa8e",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1493,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1493",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Изменение решает задачу. После остановки зума в 2.5D последний растровый кадр выставляется на итоговую камеру и 200 мс смешивается с точным SVG. Кадры перекрываются с дополняющими друг друга значениями прозрачности и режимом `plus-lighter` внутри изолированной поверхности, поэтому яркость не скачет. Любой новый кадр камеры, а также `pause`, `invalidate` и `clear` сразу снимают переход. При уменьшении движения, при панорамировании и когда растр не покрывает итоговый вид, точный кадр показывается сразу. Блокеров не нашёл. Главное слабое место — проверки. Smoke-тест сверяет только заданную длительность анимации и её прерывание. Он не проверяет, что переход без помех доходит до конца примерно за 200 мс и не обрывается поздней мутацией SVG. Это пожелание к тесту, а не установленный дефект.",
-          "understanding": "Проблема: после жеста зума `commitHouseplanViewport` → `IsoCameraRaster.settle()` раньше вызывал `pause()`. Растровый canvas исчезал в том же кадре, где появлялся точный SVG, и смена резкости и тона была заметна скачком.\n\nКак стало:\n- `settle()` вызывает `beginHandoff()`. Он через `display()` выставляет canvas сцены и подложку на итоговый вид `session.view` и переносит их в новый `div.hp-iso-raster-handoff` внутри `.iso-scene-surface`.\n- `beginHandoff()` снимает `data-hp-raster-display`, поэтому поверхность снова непрозрачна, и сбрасывает состояние жеста через `resetInput`.\n- Запускаются две WAAPI-анимации с одинаковыми параметрами (200 мс, `ease-out`, `fill: both`): SVG от 0 до 1 и слой от 1 до 0. Слою задан `mix-blend-mode: plus-lighter`, поверхность с `data-hp-raster-handoff` изолирована.\n- `endHandoff()` удаляет слой и отменяет обе анимации. Его вызывают `onfinish`, `paint()` (новый кадр жеста), `pause()` (кадр без растра, `clear`) и `invalidate()` (изменилась разметка или стиль).\n- Пока идёт переход, `queue()` и `prepare()` не запускаются. Иначе захват источника (`readStyle(scene)`) прочитал бы промежуточную прозрачность SVG.\n- `settle()` синхронно забирает записи `MutationObserver` через `takeRecords()` и сразу инвалидирует ревизию, если изменилась сама разметка сцены. Иначе асинхронный колбэк наблюдателя после фиксации кадра оборвал бы переход в первом же кадре.\n- `rasterScene()` теперь допускает второй дочерний элемент поверхности во время перехода. `hasActiveImage` требует активного `input`, так что `holdsHouseplanIsoScene` во время перехода не задерживает обновления HA.\n\nРазобранные пути:\n- `paintMotion` → `paint`/`pause`: новый жест, в том числе когда растр не поддерживается.\n- `commitHouseplanViewport` → `configure` + `settle`, включая повторный Lit-коммит без движения камеры (ранний `return` в `settle`, переход продолжается).\n- Взаимодействие с `IsoLightTransition`: клон SVG и `data-hp-light-mixing` → `rasterScene` возвращает `undefined` → `clear`.\n- Отмена задания подготовки растра (`job`) при `settle`; возобновление `queue` после `onfinish`.\n- Геометрия: `.iso-scene-surface` и canvas имеют одну систему координат `.zoomwrap`; проекция поверхности к моменту `settle` единичная, `clip-path` снят.",
-          "analysis": [
-            {
-              "topic": "Корректность смешивания без скачка яркости",
-              "assessment": "Механизм правильный. У обеих анимаций одинаковые длительность и кривая, поэтому в каждый момент прозрачности равны a и 1−a. В изолированной группе SVG накладывается обычным способом на прозрачный фон, а слой с растром добавляется через `plus-lighter`. В предумноженной альфе получается точный кроссфейд, в том числе на полупрозрачных краях и на свете из окон: двойного ослабления альфы, как при двух обычных opacity-слоях, нет. Тот же приём уже используется в `IsoLightTransition`. Хорошо, что внутри слоя подложка и кадр сцены сначала складываются обычным образом и лишь потом смешиваются как единый «старый кадр».",
-              "evidence": "`src/iso-camera-raster.ts:415-417` (одинаковый `timing`), `src/styles/plan.styles.ts:219-222`, `src/styles/plan.styles.ts:215-216` (тот же приём для света). Smoke-тест `noDoubleAlpha` проверяет blend mode, изоляцию и сумму прозрачностей на 100 мс."
-            },
-            {
-              "topic": "Обе стороны перехода в одной камере",
-              "assessment": "`display()` вызывается до `resetInput`, когда `session.view` уже равен итоговому виду. Поэтому `place()` переводит закэшированный кадр и подложку в итоговую камеру. `vector` пересчитывается после `beginHandoff`, так что для pinch `display` сравнивает растр с тем векторным кадром, который был на экране. Если растр не покрывает вид, `display` снимает canvas, `beginHandoff` возвращает `false` и вызывается обычный `pause`. Это и есть путь «uncovered final view» из документации. Слой заполняет `.iso-scene-surface` (`absolute; inset:0` в `.zoomwrap`), то есть ту же систему координат, в которой раньше стояли canvas-соседи. К моменту `settle` проекция поверхности единичная и `clip-path` снят (`setLayerProjection(null)`).",
-              "evidence": "`src/iso-camera-raster.ts:172-179`, `394-414`; `src/live-viewport.ts:137-163`, `582-591`; `src/styles/plan.styles.ts:210`, `223-226`."
-            },
-            {
-              "topic": "Прерывание и жизненный цикл",
-              "assessment": "Все пути смены камеры проходят через `paintMotion`, который вызывает либо `paint()`, либо `pause()`, и оба первым делом выполняют `endHandoff()`. Значит, новый жест любого типа снимает переход в первом же кадре движения. `cancel()` не вызывает `onfinish`, а проверка `session.handoff?.outgoing !== outgoing` отсекает устаревший колбэк. Повторный Lit-коммит без движения камеры не обрывает переход благодаря раннему `return` в `settle`. Блокировка `queue/prepare` на время перехода обоснована: захват источника использует `getComputedStyle(scene)` и иначе мог бы запечь промежуточную прозрачность в растр. Цена этого — растр для нового вида начинает готовиться на 200 мс позже. Если новый жест начнётся в этом окне, первые кадры покажут предыдущий кадр, который всё ещё покрывает вид. Это приемлемо.",
-              "evidence": "`src/live-viewport.ts:507-525`; `src/iso-camera-raster.ts:194-199`, `214-216`, `250-251`, `420-437`, `446-475`."
-            },
-            {
-              "topic": "Синхронный `takeRecords()` в `settle`",
-              "assessment": "Это важная и верная деталь. Без неё мутации разметки от терминального Lit-рендера дошли бы до наблюдателя асинхронно, а `invalidate` → `endHandoff` срезал бы переход сразу после старта. Поведение равно прежнему: раньше та же инвалидация приходила колбэком чуть позже. Остаточный риск: если после `commitHouseplanViewport` в том же `updated()` или в следующем Lit-цикле в SVG пишется что-то кроме hover-атрибутов, переход оборвётся резко. Из прочитанного кода (`houseplan-card.ts:5939-5947`, `live-interaction-runtime.ts:133-139`; hover-узлы исключены `isoRasterHoverSelector`) я такого источника не нашёл, но запуском это не подтверждено.",
-              "evidence": "`src/iso-camera-raster.ts:52-56`, `175-177`; `src/iso-raster-source.ts:4`."
-            },
-            {
-              "topic": "Достаточность проверок",
-              "assessment": "Smoke-тест `smoke_iso_raster_handoff.mjs` на реальном колесе проверяет: заданную длительность 200 мс, совпадение `viewBox` с зафиксированной камерой, дополняющие прозрачности, наличие `.iso-sunwash`, то, что маркеры остаются вне слоя смешивания, прерывание новым колесом, освобождение растра и уменьшение движения. Требование «проверить длительность» покрыто только чтением `getTiming().duration` при остановленных анимациях. Во второй серии тест ждёт отметку `handoff` и отсоединения слоя, но не проверяет, что слой ушёл по `onfinish` примерно через 200 мс, а не был оборван сразу. Изменения в `smoke_iso_raster_parity` и `smoke_iso_raster_session` правильно ждут отсоединения растра после перехода.",
-              "evidence": "`demo/smoke_iso_raster_handoff.mjs:28-49`, `63-69`; результат S6: набор `20261120T155035390-f13cdf85` passed на `e322c679`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Усилить проверку длительности в `demo/smoke_iso_raster_handoff.mjs`: во второй серии сравнить время отметок `houseplan.iso.raster.handoff` и следующей `houseplan.iso.raster.release` и потребовать интервал не меньше примерно 180 мс. Это дешёвая проверка, которая закроет риск, что поздняя мутация SVG или HA-обновление обрывает переход раньше срока. Сейчас тест этого не различает.",
-            "Добавить короткий комментарий в `queue()`/`prepare()` о том, почему подготовка растра блокируется на время перехода: захват читает `getComputedStyle(scene)` с анимируемой прозрачностью. Без этого условие `session.handoff` легко принять за лишнее и убрать.",
-            "По желанию в проверку «при видимом свете из окон» добавить сравнение пикселей середины перехода с конечными кадрами в области солнечного пятна. Сейчас проверяется только механизм (blend mode и сумма прозрачностей), а не итоговая яркость на экране."
-          ],
-          "boundaries": "Ревью проведено только чтением исходников на `e322c679`: `src/iso-camera-raster.ts` целиком, `src/live-viewport.ts` (`paintLiveViewport`, `paintMotion`, `commitHouseplanViewport`, `rasterScene`, `setLayerProjection`), `src/iso-light-transition.ts`, стили сцены в `src/styles/plan.styles.ts`, разметка `.iso-scene-surface` и `updated()` в `src/houseplan-card.ts`, `src/live-interaction-runtime.ts`, а также изменённые smoke-тесты. Сборку, тесты и браузер я не запускал. В качестве результата S6 использован набор `20261120T155035390-f13cdf85` (passed, без ошибок); его содержимое по отдельным проверкам я не видел. Не проверены вживую: синхронность старта двух WAAPI-анимаций в разных браузерах, поведение при скрытой вкладке, путь pinch (в тестах только wheel) и браузеры без поддержки `plus-lighter` (по коду там срабатывает мгновенная замена)."
-        },
-        "usage": {
-          "input_tokens": 36,
-          "cache_creation_input_tokens": 82086,
-          "cache_read_input_tokens": 747313,
-          "output_tokens": 21847,
-          "output_tokens_details": {
-            "thinking_tokens": 14812
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 82086,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 764,
-              "cache_read_input_tokens": 62213,
-              "cache_creation_input_tokens": 19873,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 19873
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИзменение решает задачу. После остановки зума в 2.5D последний растровый кадр выставляется на итоговую камеру и 200 мс смешивается с точным SVG. Кадры перекрываются с дополняющими друг друга значениями прозрачности и режимом `plus-lighter` внутри изолированной поверхности, поэтому яркость не скачет. Любой новый кадр камеры, а также `pause`, `invalidate` и `clear` сразу снимают переход. При уменьшении движения, при панорамировании и когда растр не покрывает итоговый вид, точный кадр показывается сразу. Блокеров не нашёл. Главное слабое место — проверки. Smoke-тест сверяет только заданную длительность анимации и её прерывание. Он не проверяет, что переход без помех доходит до конца примерно за 200 мс и не обрывается поздней мутацией SVG. Это пожелание к тесту, а не установленный дефект.\n\n## Понимание решения\n\nПроблема: после жеста зума `commitHouseplanViewport` → `IsoCameraRaster.settle()` раньше вызывал `pause()`. Растровый canvas исчезал в том же кадре, где появлялся точный SVG, и смена резкости и тона была заметна скачком.\n\nКак стало:\n- `settle()` вызывает `beginHandoff()`. Он через `display()` выставляет canvas сцены и подложку на итоговый вид `session.view` и переносит их в новый `div.hp-iso-raster-handoff` внутри `.iso-scene-surface`.\n- `beginHandoff()` снимает `data-hp-raster-display`, поэтому поверхность снова непрозрачна, и сбрасывает состояние жеста через `resetInput`.\n- Запускаются две WAAPI-анимации с одинаковыми параметрами (200 мс, `ease-out`, `fill: both`): SVG от 0 до 1 и слой от 1 до 0. Слою задан `mix-blend-mode: plus-lighter`, поверхность с `data-hp-raster-handoff` изолирована.\n- `endHandoff()` удаляет слой и отменяет обе анимации. Его вызывают `onfinish`, `paint()` (новый кадр жеста), `pause()` (кадр без растра, `clear`) и `invalidate()` (изменилась разметка или стиль).\n- Пока идёт переход, `queue()` и `prepare()` не запускаются. Иначе захват источника (`readStyle(scene)`) прочитал бы промежуточную прозрачность SVG.\n- `settle()` синхронно забирает записи `MutationObserver` через `takeRecords()` и сразу инвалидирует ревизию, если изменилась сама разметка сцены. Иначе асинхронный колбэк наблюдателя после фиксации кадра оборвал бы переход в первом же кадре.\n- `rasterScene()` теперь допускает второй дочерний элемент поверхности во время перехода. `hasActiveImage` требует активного `input`, так что `holdsHouseplanIsoScene` во время перехода не задерживает обновления HA.\n\nРазобранные пути:\n- `paintMotion` → `paint`/`pause`: новый жест, в том числе когда растр не поддерживается.\n- `commitHouseplanViewport` → `configure` + `settle`, включая повторный Lit-коммит без движения камеры (ранний `return` в `settle`, переход продолжается).\n- Взаимодействие с `IsoLightTransition`: клон SVG и `data-hp-light-mixing` → `rasterScene` возвращает `undefined` → `clear`.\n- Отмена задания подготовки растра (`job`) при `settle`; возобновление `queue` после `onfinish`.\n- Геометрия: `.iso-scene-surface` и canvas имеют одну систему координат `.zoomwrap`; проекция поверхности к моменту `settle` единичная, `clip-path` снят.\n\n## Разбор решения\n\n### Корректность смешивания без скачка яркости\n\nМеханизм правильный. У обеих анимаций одинаковые длительность и кривая, поэтому в каждый момент прозрачности равны a и 1−a. В изолированной группе SVG накладывается обычным способом на прозрачный фон, а слой с растром добавляется через `plus-lighter`. В предумноженной альфе получается точный кроссфейд, в том числе на полупрозрачных краях и на свете из окон: двойного ослабления альфы, как при двух обычных opacity-слоях, нет. Тот же приём уже используется в `IsoLightTransition`. Хорошо, что внутри слоя подложка и кадр сцены сначала складываются обычным образом и лишь потом смешиваются как единый «старый кадр».\n\nОснование: `src/iso-camera-raster.ts:415-417` (одинаковый `timing`), `src/styles/plan.styles.ts:219-222`, `src/styles/plan.styles.ts:215-216` (тот же приём для света). Smoke-тест `noDoubleAlpha` проверяет blend mode, изоляцию и сумму прозрачностей на 100 мс.\n\n### Обе стороны перехода в одной камере\n\n`display()` вызывается до `resetInput`, когда `session.view` уже равен итоговому виду. Поэтому `place()` переводит закэшированный кадр и подложку в итоговую камеру. `vector` пересчитывается после `beginHandoff`, так что для pinch `display` сравнивает растр с тем векторным кадром, который был на экране. Если растр не покрывает вид, `display` снимает canvas, `beginHandoff` возвращает `false` и вызывается обычный `pause`. Это и есть путь «uncovered final view» из документации. Слой заполняет `.iso-scene-surface` (`absolute; inset:0` в `.zoomwrap`), то есть ту же систему координат, в которой раньше стояли canvas-соседи. К моменту `settle` проекция поверхности единичная и `clip-path` снят (`setLayerProjection(null)`).\n\nОснование: `src/iso-camera-raster.ts:172-179`, `394-414`; `src/live-viewport.ts:137-163`, `582-591`; `src/styles/plan.styles.ts:210`, `223-226`.\n\n### Прерывание и жизненный цикл\n\nВсе пути смены камеры проходят через `paintMotion`, который вызывает либо `paint()`, либо `pause()`, и оба первым делом выполняют `endHandoff()`. Значит, новый жест любого типа снимает переход в первом же кадре движения. `cancel()` не вызывает `onfinish`, а проверка `session.handoff?.outgoing !== outgoing` отсекает устаревший колбэк. Повторный Lit-коммит без движения камеры не обрывает переход благодаря раннему `return` в `settle`. Блокировка `queue/prepare` на время перехода обоснована: захват источника использует `getComputedStyle(scene)` и иначе мог бы запечь промежуточную прозрачность в растр. Цена этого — растр для нового вида начинает готовиться на 200 мс позже. Если новый жест начнётся в этом окне, первые кадры покажут предыдущий кадр, который всё ещё покрывает вид. Это приемлемо.\n\nОснование: `src/live-viewport.ts:507-525`; `src/iso-camera-raster.ts:194-199`, `214-216`, `250-251`, `420-437`, `446-475`.\n\n### Синхронный `takeRecords()` в `settle`\n\nЭто важная и верная деталь. Без неё мутации разметки от терминального Lit-рендера дошли бы до наблюдателя асинхронно, а `invalidate` → `endHandoff` срезал бы переход сразу после старта. Поведение равно прежнему: раньше та же инвалидация приходила колбэком чуть позже. Остаточный риск: если после `commitHouseplanViewport` в том же `updated()` или в следующем Lit-цикле в SVG пишется что-то кроме hover-атрибутов, переход оборвётся резко. Из прочитанного кода (`houseplan-card.ts:5939-5947`, `live-interaction-runtime.ts:133-139`; hover-узлы исключены `isoRasterHoverSelector`) я такого источника не нашёл, но запуском это не подтверждено.\n\nОснование: `src/iso-camera-raster.ts:52-56`, `175-177`; `src/iso-raster-source.ts:4`.\n\n### Достаточность проверок\n\nSmoke-тест `smoke_iso_raster_handoff.mjs` на реальном колесе проверяет: заданную длительность 200 мс, совпадение `viewBox` с зафиксированной камерой, дополняющие прозрачности, наличие `.iso-sunwash`, то, что маркеры остаются вне слоя смешивания, прерывание новым колесом, освобождение растра и уменьшение движения. Требование «проверить длительность» покрыто только чтением `getTiming().duration` при остановленных анимациях. Во второй серии тест ждёт отметку `handoff` и отсоединения слоя, но не проверяет, что слой ушёл по `onfinish` примерно через 200 мс, а не был оборван сразу. Изменения в `smoke_iso_raster_parity` и `smoke_iso_raster_session` правильно ждут отсоединения растра после перехода.\n\nОснование: `demo/smoke_iso_raster_handoff.mjs:28-49`, `63-69`; результат S6: набор `20261120T155035390-f13cdf85` passed на `e322c679`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Усилить проверку длительности в `demo/smoke_iso_raster_handoff.mjs`: во второй серии сравнить время отметок `houseplan.iso.raster.handoff` и следующей `houseplan.iso.raster.release` и потребовать интервал не меньше примерно 180 мс. Это дешёвая проверка, которая закроет риск, что поздняя мутация SVG или HA-обновление обрывает переход раньше срока. Сейчас тест этого не различает.\n- Добавить короткий комментарий в `queue()`/`prepare()` о том, почему подготовка растра блокируется на время перехода: захват читает `getComputedStyle(scene)` с анимируемой прозрачностью. Без этого условие `session.handoff` легко принять за лишнее и убрать.\n- По желанию в проверку «при видимом свете из окон» добавить сравнение пикселей середины перехода с конечными кадрами в области солнечного пятна. Сейчас проверяется только механизм (blend mode и сумма прозрачностей), а не итоговая яркость на экране.\n\n## Границы анализа\n\nРевью проведено только чтением исходников на `e322c679`: `src/iso-camera-raster.ts` целиком, `src/live-viewport.ts` (`paintLiveViewport`, `paintMotion`, `commitHouseplanViewport`, `rasterScene`, `setLayerProjection`), `src/iso-light-transition.ts`, стили сцены в `src/styles/plan.styles.ts`, разметка `.iso-scene-surface` и `updated()` в `src/houseplan-card.ts`, `src/live-interaction-runtime.ts`, а также изменённые smoke-тесты. Сборку, тесты и браузер я не запускал. В качестве результата S6 использован набор `20261120T155035390-f13cdf85` (passed, без ошибок); его содержимое по отдельным проверкам я не видел. Не проверены вживую: синхронность старта двух WAAPI-анимаций в разных браузерах, поведение при скрытой вкладке, путь pinch (в тестах только wheel) и браузеры без поддержки `plus-lighter` (по коду там срабатывает мгновенная замена).\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 67ad4ad1aa10293de5bdc0d891642c5c23f75e85 → e322c679addbb6b28277410d945db0a2bfc8e6b6\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-20T16:00:13.255Z",
-        "artifactId": 14646687212,
-        "runId": 44768104043,
-        "runAttempt": 1,
-        "completedAt": "2026-11-20T16:00:17Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44768104043",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -5941,19 +5810,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1493,
-    "worker": "finish",
-    "token": "562:finish:a35aef9b-ece7-4ba1-91fc-9b769116bb33:finish:1:admit",
-    "fence": 562,
-    "materialSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-    "expectedBase": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795189822390,
-    "expiresAt": 1795194042845,
-    "patchId": "ce98d8fc2162f7507a90a6baadc72024558baa8e",
-    "reviewRequest": "review:1493:1:ce98d8fc2162f7507a90a6baadc72024558baa8e:67ad4ad1aa10293de5bdc0d891642c5c23f75e85"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5995,58 +5852,6 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "finish:a35aef9b-ece7-4ba1-91fc-9b769116bb33:finish:2:synchronized": {
-      "digest": "befa8db86ee84bbb26068aa419cae58a690e23fc61473ef5719d7a4aa9d51f4a",
-      "issue": 1493
-    },
-    "github:44767271157:1:completions:message:4c66939da40d761549e58dec7a7f8be972080230a9f8b9444b5a4790b6241201": {
-      "digest": "3434c1b488524312570451dfeb08ae277ebfe3fd7995f4931107fb3af19774e5",
-      "issue": 1493
-    },
-    "github:44767271157:1:completions:message:cdbe034572d257f20c78cb011d8d701c92b5997e039119d5cfa856ff691631a4": {
-      "digest": "c752783cfe38d0996493fafe665e45d41ae18e94e97a27f125b27f42ceb94b88",
-      "issue": 1493
-    },
-    "finish:0369ba95-299a-4795-a182-fcce26e6bb71": {
-      "digest": "6b9002ac4eceb87c1ff271c12ef163edfe35be14c70d9d7e2fc89ff2c2d3a79a",
-      "issue": 1493
-    },
-    "finish:ea31ca75-9ffe-4936-88e7-659f35d1c59e": {
-      "digest": "816fc8bf78fda88f775e05a1b543c45932ab41574a473a64339b32d132d2065d",
-      "issue": 1493
-    },
-    "finish:ad1344e3-c582-495d-9395-fc697598d3d4": {
-      "digest": "dd6ebbff73bccca6a5af5aa33f75185fd6b09d1f21508905ae448fbb4fc3534e",
-      "issue": 1493
-    },
-    "finish:530945cc-469a-4e79-b570-5f9e4b484350": {
-      "digest": "6914e8dbaa406559bdb63f0ec7fbdcea90ee2928f2f29b627e962e0767c89bc7",
-      "issue": 1493
-    },
-    "finish:a35aef9b-ece7-4ba1-91fc-9b769116bb33:finish:3:s6-label": {
-      "digest": "10e98fa88ada7cb18593234309f6f2cf7c5a17b23454f352587d5be8aeab6b4a",
-      "issue": 1493
-    },
-    "finish:a35aef9b-ece7-4ba1-91fc-9b769116bb33:finish:4:review-requested": {
-      "digest": "3eb2cb0f48d547636c39903ff3dcee46392272458f3aa11b7e6bae9a93d8ce1c",
-      "issue": 1493
-    },
-    "github:44768062117:1:tick:0:review-retry": {
-      "digest": "222fbb8a4f955d213743213d0450787d9e01ce74f0ad448dafa419be69e83f71",
-      "issue": 1493
-    },
-    "github:44768062117:1:completions:message:3f815f58b4d60a4356bdbd0c309c9ace1c863c569196daa7f556d0e8631a2139": {
-      "digest": "29b40570c3038c1fd235f1e08be6f801ffe05ff12b59211de191c3a9a71b7cc4",
-      "issue": 1493
-    },
-    "github:44768932519:1:tick:0:review-presentation": {
-      "digest": "243ef4b2becb0e0b8f381a60ff8edb39dd65b60e518bdc0bcd93a1286672a583",
-      "issue": 1493
-    },
-    "github:44768932519:1:tick:0:review-complete": {
-      "digest": "204a6872d1e834123c82088fffcc816677b3a1f92a0e9809ea38e9173526269b",
-      "issue": 1493
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6073,65 +5878,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:a35aef9b-ece7-4ba1-91fc-9b769116bb33": {
-      "digest": "2bfe44a9f55f998d33ef5b04ed61ec53747ddaaa1b3ec6881842e519fb185979",
-      "issue": 1493,
-      "message": {
-        "kind": "queued",
-        "issue": 1493,
-        "at": 1795189818033,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-        "delivered": true
-      }
-    },
-    "finish:a35aef9b-ece7-4ba1-91fc-9b769116bb33:finish:1:admit": {
-      "digest": "6c1eef7739c341f507eab22d33b41f0064979edb0b95f47d6678211f6521fe6b",
-      "issue": 1493,
-      "message": {
-        "kind": "admitted",
-        "issue": 1493,
-        "at": 1795189822390,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:a35aef9b-ece7-4ba1-91fc-9b769116bb33:finish:3:s6-complete": {
-      "digest": "9f589a6ee5f1d114ec4fb5438e91a0fae80c1ae4a61b46c60e880549a19247b7",
-      "issue": 1493,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1493,
-        "at": 1795190099348,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-        "phase": "review",
-        "evidence": {
-          "id": "20261120T155035390-f13cdf85",
-          "name": "Тесты для задачи #1493 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T155035390-f13cdf85/report.json",
-          "materialSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-          "status": "passed",
-          "finishedAt": "2026-11-20T15:54:58.182Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
