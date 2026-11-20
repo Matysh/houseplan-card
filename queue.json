@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18353,
-  "nextTicket": 570,
+  "revision": 18354,
+  "nextTicket": 571,
   "nextFence": 570,
   "tasks": {
     "1024": {
@@ -5278,6 +5278,20 @@
         "sourceSha": "07331a4cde3fae8aaffc1a022ca49a50502c685e"
       }
     },
+    "1495": {
+      "issue": 1495,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1495-architectural-light",
+      "materialSha": "6d142319e5256828f1f4a94089c0a40daa7533a2",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 570,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795201738449,
+      "reviewEntry": 1
+    },
     "1496": {
       "issue": 1496,
       "branch": "codex/1496-stable-iso-smokes",
@@ -5903,7 +5917,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1495
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5985,6 +6001,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "553094ec3d21bf93d8cec8547a0006c4692979eb"
+      }
+    },
+    "finish:5abbc3cd-2c07-437d-97f7-d0ed21179369": {
+      "digest": "3df3d780475176d19b5fffc943ad5e12d5f227498f133c1bfe6019f06e298db3",
+      "issue": 1495,
+      "message": {
+        "kind": "queued",
+        "issue": 1495,
+        "at": 1795201738449,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6d142319e5256828f1f4a94089c0a40daa7533a2"
       }
     }
   },
