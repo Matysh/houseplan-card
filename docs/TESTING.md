@@ -159,6 +159,10 @@ stage. It uses the existing stage pixel policy, fixed time, actual card widths
 checks exact CSS endpoint writes, style/inert/effect cleanup and current marker
 input roles. It creates no accepted baselines.
 
+For #1483, `demo/smoke_mode_style_ownership.mjs` clears the viewport's SVG
+promotion hint before the first mode RAF. Both directions must settle with
+the target paper, room fill and Plan-only layers.
+
 The room/opening transition witnesses inspect the effective alpha of both
 retained endpoints. The opening fixture uses a fixed north-door point inside its
 floor continuation; projection opacity is checked separately. They retain the

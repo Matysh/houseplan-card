@@ -1,6 +1,6 @@
 /** Styles belong to a single mode presentation, never to Lit's idle state. */
 interface OwnedStyle {
-  text: string | null;
+  text: string | null | undefined;
   values: Map<string, { value: string; priority: string }>;
   owned: Set<string>;
   last: Map<string, { value: string; priority: string; input: string }>;
@@ -97,15 +97,28 @@ export class ModePresentation {
    * Capture its authored declarations before reapplying the transient frame. */
   public adoptRenderedStyles(): void {
     for (const [element, record] of this.styles) {
-      if (![...record.owned].some(name => element.style.getPropertyValue(name) !== record.last.get(name)?.value
-          || element.style.getPropertyPriority(name) !== record.last.get(name)?.priority)) continue;
-      record.text = element.getAttribute('style');
-      record.values.clear();
+      let adopted = false;
+      for (const name of record.owned) {
+        const last = record.last.get(name);
+        if (element.style.getPropertyValue(name) === last?.value
+            && element.style.getPropertyPriority(name) === last?.priority) continue;
+        record.owned.delete(name);
+        record.last.delete(name);
+        adopted = true;
+      }
+      if (!adopted) continue;
+      // The viewport and Lit may replace just one declaration. Other owned
+      // values still describe the transition (e.g. the outgoing opacity below
+      // a sampled animation), so retain their original baselines.
+      record.text = record.owned.size ? undefined : element.getAttribute('style');
+      for (const name of record.values.keys()) {
+        if (!record.owned.has(name)) record.values.delete(name);
+      }
       for (let index = 0; index < element.style.length; index++) {
         const name = element.style.item(index);
-        record.values.set(name, { value: element.style.getPropertyValue(name), priority: element.style.getPropertyPriority(name) });
+        if (!record.owned.has(name))
+          record.values.set(name, { value: element.style.getPropertyValue(name), priority: element.style.getPropertyPriority(name) });
       }
-      record.owned.clear(); record.last.clear();
     }
   }
 
@@ -141,7 +154,7 @@ export class ModePresentation {
       const original = [...record.values].filter(([key]) => !record.owned.has(key));
       const untouched = current.size === original.length && original.every(([key, value]) =>
         current.get(key)?.value === value.value && current.get(key)?.priority === value.priority);
-      if (untouched) {
+      if (record.text !== undefined && untouched) {
         // Preserve declaration order, spelling, and absence of a style attribute.
         if (record.text === null) element.removeAttribute('style');
         else element.setAttribute('style', record.text);
@@ -152,7 +165,7 @@ export class ModePresentation {
           if (prior) element.style.setProperty(key, prior.value, prior.priority);
           else element.style.removeProperty(key);
         }
-        if (record.text === null && !element.style.length) element.removeAttribute('style');
+        if (record.text == null && !element.style.length) element.removeAttribute('style');
       }
     }
     for (const [element, prior] of this.inert) if (element.inert !== prior) element.inert = prior;

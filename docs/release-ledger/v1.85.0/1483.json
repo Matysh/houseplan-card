@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1483,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Fixes stale Plan and View layers on the current beta line when the viewport updates SVG styles during a mode transition.",
+  "summary": {
+    "ru": "При переключении между просмотром и редактором плана восстанавливается цвет пола, а узлы стен видны только в редакторе.",
+    "en": "Switching between View and the Plan editor restores the floor colour and shows wall handles only in the editor."
+  }
+}
