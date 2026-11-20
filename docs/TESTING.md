@@ -209,6 +209,14 @@ light меняет свет посреди колеса и проверяет в
 `demo/performance/iso-live-camera-probe.js` записывает события и кадры без
 изменения настроек.
 
+Для контрольной галереи задайте `HP_WHEEL_BROWSER` и `HP_WHEEL_GALLERY`, затем
+запустите `node demo/performance/iso-softness-gallery.mjs`. Скрипт сохраняет
+пары с удержанным растром и точным кадром той же камеры. В том же
+аппаратном профиле запустите `python demo/performance/iso-softness-check.py <каталог галереи>`
+с Pillow. Он проверит среднюю ошибку RGB относительно точного кадра с
+фиксированным гауссовым размытием. Параметры и исходные замеры описаны в
+[отчёте #1485](evidence/1485-camera-performance.md).
+
 ### Длинный зум 2.5D у края (#1478)
 
 `node demo/benchmark_iso_edge_zoom.mjs` использует синтетический этаж iso-paint.

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1485,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Reduces interruptions during 2.5D wheel zoom after the current beta line's camera changes in #1478.",
+  "summary": {
+    "ru": "Во время зума колесом 2.5D использует фоновые кадры. При отдалении подложка закрывает открывшиеся края, а после остановки возвращается точный вид.",
+    "en": "2.5D wheel zoom uses background frames. An overview fills newly exposed edges, and the exact view returns when the gesture ends."
+  }
+}
