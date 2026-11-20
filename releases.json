@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1070,
+  "revision": 1071,
   "active": "1.86.0-beta.1-20261120",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -140483,7 +140483,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.0-beta.1",
@@ -149041,7 +149041,8 @@
           "en": "## v1.86.0-beta.1 — 2026-11-20\n\n- Keep unrelated HA theme tokens outside the 2.5D raster so malformed CSS values cannot swallow wall colours, opacity and opening materials during zoom (#1486).\n- Smooth 2.5D wheel zoom with background scene frames and an overview image for newly revealed edges. Restore the exact plan when the gesture ends (#1485).\n- Keep device markers aligned and at the right scale throughout transitions between View and the plan, device and background editors (#1484).\n- Restore the correct floor appearance and wall handles when entering or leaving the Plan editor while the camera updates (#1483).\n- Keep the 2.5D zoom-out raster through delayed wheel events on large displays and avoid a duplicate camera update at settlement (#1481).\n- Keep shared 2.5D device glass outside individual body-occlusion masks, avoiding cropped rims and panes across zoom levels while retaining wall depth, virtual dashes and Flat markup (#1482).\n- Preserve 2.5D wall and opening materials during zoom and use the raster pixels for visible plan geometry (#1480)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.0-beta.1"
     }
   },
   "published": {
@@ -154746,7 +154747,8 @@
     "beta1860-1-20261120-owner": "e503fe88e3ba386cc8c684b5b627b88bce5b15eb600c2e702c51bf8c6c8a3da1",
     "beta1860-1-20261120-publish:runner-report": "5973a5cf598cf90333a9524ab28873744d6b1f16fb33d41c667e65470315777b",
     "beta1860-1-20261120-publish:metrics": "359f8d5a20322d9b301eb1b4c8b2f66221c6d07bc6ed3a357a875a6857922761",
-    "beta1860-1-20261120-publish:prepared:49e3f58e-1854-4e8c-9cf8-215b0879a488": "59f30a7f296095d7ddf72d3e3427ded570ee85163147e1cff8c5784d3ce3b25f"
+    "beta1860-1-20261120-publish:prepared:49e3f58e-1854-4e8c-9cf8-215b0879a488": "59f30a7f296095d7ddf72d3e3427ded570ee85163147e1cff8c5784d3ce3b25f",
+    "beta1860-1-20261120-publish:started:1070": "976b3944a2dfbd6590633d02f61f3e15db7bc823ab0407e3e5ecd57974d2dad1"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
