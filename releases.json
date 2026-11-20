@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1167,
+  "revision": 1168,
   "active": "1.86.0-beta.4-20261121",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -168809,7 +168809,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.0-beta.4",
@@ -177560,7 +177560,8 @@
           "en": "## v1.86.0-beta.4 — 2026-11-21\n\n- In 2.5D, icons and their value badges overlap in camera-depth order at every plan rotation (#1504).\n- Stabilize the Zigbee hover check for a coordinator that is not placed on the plan (#1503)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.0-beta.4"
     }
   },
   "published": {
@@ -183361,7 +183362,8 @@
     "beta1860-4-20261121-publish:metrics": "04f1c87eff4763fbd73b3c9fd5171e31b6f3577ce81565b1d110a6035d13f842",
     "beta1860-4-20261121-owner-size": "a46652cfdca4b293fd49cd4320d0ee38fca67ecaa3e6c6da39454bfd593f67a4",
     "beta1860-4-20261121-publish:runner-report": "901a5e599980b37fda96ea1eab5a9d80c83b901c1cb823bb1cc9d81c209e3f40",
-    "beta1860-4-20261121-publish:prepared:8cea5022-3b78-4d50-b19e-91c1a4e7af58": "d7dbfa35cbedcf1105402315c1bfd8b0de8ff1e6e3b37963bf5d44124718b5f3"
+    "beta1860-4-20261121-publish:prepared:8cea5022-3b78-4d50-b19e-91c1a4e7af58": "d7dbfa35cbedcf1105402315c1bfd8b0de8ff1e6e3b37963bf5d44124718b5f3",
+    "beta1860-4-20261121-publish:started:1167": "f4dae447ffef4ca15fe3da3768b6575167938b9ef0285494760212d804e868ae"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
