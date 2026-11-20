@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18231,
-  "nextTicket": 567,
+  "revision": 18232,
+  "nextTicket": 568,
   "nextFence": 567,
   "tasks": {
     "1024": {
@@ -5335,16 +5335,15 @@
       "materialSha": "e9c56ea8b48fa203fe536e51a3881d3c2eda04ee",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 566,
-      "queued": false,
+      "ticket": 567,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795200261528,
-      "reviewEntry": 1,
+      "readyAt": 1795200569396,
+      "reviewEntry": 2,
       "patchId": "2e080ef6800e70ee870e1e0abfabd3ad9596c111",
       "changedFiles": [
         "demo/smoke_device_icon_pixel_alignment.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5850,7 +5849,9 @@
       "runId": 44795149057
     }
   },
-  "waiting": [],
+  "waiting": [
+    1497
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6005,6 +6006,19 @@
           "detail": "Backend: tests_backend/test_ha_wall_removal_limits.py: failed",
           "eventId": "finish:e0d9a7c8-63e7-42ca-b14c-ffc01201d7e1:finish:2:return:return:1497"
         }
+      }
+    },
+    "finish:9630b23b-3933-4bd1-889c-7c1687ac1c06": {
+      "digest": "2ebf5ef1964b508c316269ef15ff0adfd8fb098b2af79ef7b90e9c43701645da",
+      "issue": 1497,
+      "message": {
+        "kind": "queued",
+        "issue": 1497,
+        "at": 1795200569396,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "e9c56ea8b48fa203fe536e51a3881d3c2eda04ee"
       }
     }
   },
