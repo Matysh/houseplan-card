@@ -1,5 +1,5 @@
 import {
-  commitHouseplanViewport, disposeHouseplanViewport, scheduleHouseplanViewport,
+  commitHouseplanViewport, disposeHouseplanViewport, holdsHouseplanIsoScene, scheduleHouseplanViewport,
 } from './live-viewport';
 import {
   clearDeviceFocusTip, clearPointerHover, deviceFocusTipActive, hideDeviceFocusTip,
@@ -85,7 +85,7 @@ export class LiveRuntime {
     intake: () => void,
   ): boolean {
     const change = classifyHassRenderChange(before, after, dependencies);
-    const defer = change === 'state' && this.active(false)
+    const defer = change === 'state' && this.active(false) && !holdsHouseplanIsoScene(this.host)
       && !contactValueFrameChanged(this.host,this.contacts,before,after);
     if (defer) this.deferredHass = true;
     const render = change !== 'none' && !defer;

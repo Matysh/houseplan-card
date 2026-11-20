@@ -1,6 +1,7 @@
 // #1485 wheel comparison on the synthetic ISO paint fixture.
 // Collect trace events separately from the uninstrumented comparison run.
 import { writeFile } from 'node:fs/promises';
+import { availableParallelism } from 'node:os';
 import { beginDaycycleLayers } from './helpers/daycycle-diagnostics.mjs';
 import { finish } from './serve.mjs';
 import { settleIsoPaint, startIsoPaintScene } from './helpers/iso-paint-scene.mjs';
@@ -105,9 +106,15 @@ try {
       const { left, top, width, height } = stage.getBoundingClientRect();
       const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
       const start = await frame();
+      const traceOffset = performance.now() - start;
       if (trace) performance.mark('hp-wheel-trace-' + name + '-begin');
       const viewBox = [], events = [], intervals = [], commits = [];
-      const accepted = [], markers = [];
+      const accepted = [], markers = [], density = [];
+      const vectorSurface = initial.parentElement;
+      const readScale = node => {
+        const scale = node.style.transform.match(/\bscale\(([^)]+)\)/);
+        return scale ? Math.max(...scale[1].split(',').map(Number)) : 1;
+      };
       let markerWrites = 0;
       const observer = new MutationObserver(records => {
         for (const { target, attributeName, oldValue } of records) {
@@ -148,6 +155,11 @@ try {
             markerWrites = 0;
           }
           zoomPeak = Math.max(zoomPeak, card._zoom);
+          if (card._cameraTransition.active) {
+            const image = stage.querySelector('.hp-iso-gesture-image');
+            density.push({ ms: time - start, zoom: card._zoom,
+              value: image ? 1 / (devicePixelRatio * readScale(image)) : 1 / readScale(vectorSurface) });
+          }
           if (index === steps.length && !card._cameraTransition.active) {
             await card.updateComplete;
             const t = await frame();
@@ -170,11 +182,19 @@ try {
       const sorted = during.map(({ ms }) => ms).sort((a, b) => a - b);
       const long = during.filter(({ ms }) => ms > 50);
       const sum = during.reduce((total, { ms }) => total + ms, 0);
+      let lowSince = null, longestBelowHalfDensityMs = 0;
+      for (const { ms, value } of [...density, { ms: sharpAt ?? time - start, value: 1 }]) {
+        if (value < .5) lowSince ??= ms;
+        else if (lowSince !== null) {
+          longestBelowHalfDensityMs = Math.max(longestBelowHalfDensityMs, ms - lowSince);
+          lowSince = null;
+        }
+      }
       return {
         stage: { width, height, dpr: devicePixelRatio },
-        firstZoom, zoomPeak, lastZoom: card._zoom, wheelTimes: events, accepted, viewBox, commits, markers, intervals,
+        firstZoom, zoomPeak, lastZoom: card._zoom, wheelTimes: events, accepted, viewBox, commits, markers, intervals, density, longestBelowHalfDensityMs, traceOffset,
         firstInput, lastInput, p95Ms: sorted[Math.ceil(sorted.length * .95) - 1],
-        sharpAfterInputMs: sharpAt === null ? null : sharpAt - lastInput,
+        settledByRafMs: sharpAt === null ? null : sharpAt - lastInput,
         fps: sum ? during.length * 1000 / sum : null,
         longFrames: long.length, longMs: long.reduce((total, { ms }) => total + ms, 0),
         raster: performance.getEntriesByType('mark')
@@ -187,12 +207,12 @@ try {
     const commit = row.commits.at(-1);
     const vectorRasterTasks = trace && trace.sceneLayerIds.length && Number.isFinite(trace.begin) && Number.isFinite(commit)
       ? trace.events.filter(event => event.name === 'RasterTask' && event.ph === 'X' &&
-        event.ts >= trace.begin && event.ts < trace.begin + commit * 1000 &&
+        event.ts >= trace.begin && event.ts < trace.begin + (commit - row.traceOffset) * 1000 &&
         trace.sceneLayerIds.includes(event.args?.tileData?.layerId)).length : null;
     result.push({ name, ...row, vectorRasterTasks });
   }
   if (tracePath) await writeFile(tracePath, JSON.stringify(traceEvidence));
-  console.log(JSON.stringify({ provenance, gpu, result }, null, 2));
+  console.log(JSON.stringify({ provenance: { ...provenance, availableLogicalCpus: availableParallelism() }, gpu, result }, null, 2));
 } finally {
   await finish(browser);
 }

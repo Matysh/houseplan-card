@@ -152,6 +152,10 @@ export class IsoCameraRaster {
     return !!this.session && this.session.scene === scene && !this.session.failed;
   }
 
+  public get hasActiveImage(): boolean {
+    return this.session?.sceneImage.canvas.isConnected === true;
+  }
+
   public paint(view: LiveViewBox, target: LiveViewBox, input: IsoRasterInput, anchor: LiveViewBox,
     coverage: LiveViewBox): void {
     const session = this.session;
@@ -331,17 +335,23 @@ export class IsoCameraRaster {
     this.queue(session);
   }
 
-  public pause(): void {
+  public pause(lightMix = false): void {
     const session = this.session;
     if (!session) return;
     session.active = false;
+    session.newestTarget = session.forecast = undefined;
     session.prepared?.bitmap.close();
     session.prepared = undefined;
     if (session.surface.hasAttribute('data-hp-raster-display')) session.surface.removeAttribute('data-hp-raster-display');
     if (session.surface.style.getPropertyValue('--hp-iso-gesture-blur'))
       session.surface.style.removeProperty('--hp-iso-gesture-blur');
     if (session.sceneImage.canvas.isConnected) performance.mark('houseplan.iso.raster.release');
-    session.sceneImage.canvas.remove();
+    if (lightMix && session.sceneImage.frame) {
+      // The fade has published the new light. Keep the live endpoint until
+      // its own raster arrives, so the old light cannot flash on again.
+      clearSurface(session.sceneImage);
+      session.requested = undefined;
+    } else session.sceneImage.canvas.remove();
     session.underlay.canvas.remove();
   }
 

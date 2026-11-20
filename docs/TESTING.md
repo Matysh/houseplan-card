@@ -199,7 +199,8 @@ benchmark or a test-build preparation running concurrently.
 
 `node demo/smoke_iso_raster_session.mjs underlay` задерживает подготовку
 кадра на секунду. Варианты `backdrop` и `fallback` проверяют план с
-изображением и доступность векторного пути без createImageBitmap.
+изображением и доступность векторного пути без createImageBitmap. Вариант
+light меняет свет посреди колеса и проверяет возврат к растру после проявления.
 `node demo/smoke_iso_raster_parity.mjs` сравнивает кадр с вектором в той же
 камере при DPR 2, четырёх поворотах, двух темах и двух состояниях света.
 Порог 0,5 % пикселей при разнице свыше восьми уровней в любом канале.

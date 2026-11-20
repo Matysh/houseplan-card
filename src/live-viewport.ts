@@ -488,6 +488,17 @@ function configureCameraRaster(host: LiveViewportHost, state: LiveViewportState,
     { ...state.limits, stageSize, dpr }, stage.getAttribute('style') ?? '', authority);
 }
 
+function isoLightMixing(state: LiveViewportState): boolean {
+  return state.nodes?.camera[0]?.parentElement?.hasAttribute('data-hp-light-mixing') === true;
+}
+
+/** HA changes can be adopted during an ISO gesture while the scene pixels
+ * come from a held image or the deliberately live light fade. */
+export function holdsHouseplanIsoScene(host: object): boolean {
+  const state = states.get(host);
+  return !!state && (state.raster?.hasActiveImage === true || isoLightMixing(state));
+}
+
 function paintMotion(host: LiveViewportHost, state: LiveViewportState, frame: LiveViewportFrame, force = false): void {
   const root = host.renderRoot;
   const limits = state.limits ??= host._liveViewportLimits?.() ?? {};
@@ -503,7 +514,7 @@ function paintMotion(host: LiveViewportHost, state: LiveViewportState, frame: Li
   if (input) {
     state.raster!.paint(frame.view, frame.target ?? frame.view, input, state.anchor.frame.view, state.anchor.coverage);
   } else {
-    state.raster?.pause();
+    state.raster?.pause(isoLightMixing(state));
   }
 }
 

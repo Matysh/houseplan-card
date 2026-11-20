@@ -3,7 +3,7 @@ import { check, finish } from './serve.mjs';
 import { settleIsoPaint, startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
 
 const mode = process.argv[2] ?? 'underlay';
-if (!['underlay', 'backdrop', 'fallback'].includes(mode)) throw Error('Choose underlay, backdrop or fallback');
+if (!['underlay', 'backdrop', 'fallback', 'light'].includes(mode)) throw Error('Choose underlay, backdrop, fallback or light');
 const readyMark = 'houseplan.iso.raster.ready';
 const { browser, page } = await startIsoPaintScene({
   width: 1408, height: 952, dpr: 2, reducedMotion: 'no-preference',
@@ -45,24 +45,45 @@ try {
         return create(...args);
       };
     }
+    const lightId = Object.keys(card.hass.states).find(id => id.startsWith('light.'));
+    const light = lightId && card.hass.states[lightId];
     let sawUnderlay = false, sawRaster = false, sawVectorWrite = false, samples = 0;
+    let lightChanged = false, lightMix = false, rasterAfterLight = false;
+    let previousView = firstView;
     const tick = () => new Promise(resolve => requestAnimationFrame(resolve));
     let sent = 0, time = start;
     try {
-      while (sent < 10 || card._cameraTransition.active) {
-        while (sent < 10 && time - start >= sent * 140) { send(); sent++; }
+      const steps = mode === 'light' ? 12 : 10;
+      while (sent < steps || card._cameraTransition.active) {
+        while (sent < steps && time - start >= sent * 140) { send(); sent++; }
+        if (mode === 'light' && sent >= 3 && !lightChanged) {
+          if (!light) throw Error('The paint fixture has no light');
+          card.hass = { ...card.hass, states: { ...card.hass.states,
+            [lightId]: { ...light, state: light.state === 'on' ? 'off' : 'on' } } };
+          lightChanged = true;
+          await card.updateComplete;
+        }
         if (card._cameraTransition.active) {
           samples++;
-          sawVectorWrite ||= svg.getAttribute('viewBox') !== firstView;
+          const mixing = scene.hasAttribute('data-hp-light-mixing');
+          const nextView = svg.getAttribute('viewBox');
+          if (!mixing) sawVectorWrite ||= nextView !== previousView;
+          previousView = nextView;
+          lightMix ||= mixing;
           const image = root.querySelector('.hp-iso-gesture-image');
           const underlay = root.querySelector('.hp-iso-gesture-underlay');
-          sawRaster ||= !!image && scene.hasAttribute('data-hp-raster-display');
+          const raster = !!image && scene.hasAttribute('data-hp-raster-display');
+          sawRaster ||= raster;
+          rasterAfterLight ||= lightMix && !mixing && raster;
           sawUnderlay ||= !!underlay && underlay.style.clipPath.includes('evenodd');
         }
         time = await tick();
         if (time - start > 6000) throw Error('The synthetic wheel series did not settle');
       }
-      return { samples, sawRaster, sawUnderlay, sawVectorWrite, cameraMoved: svg.getAttribute('viewBox') !== firstView };
+      const finalLight = lightId && Boolean(scene.querySelector('.glow-spot[data-glow-source="' + lightId + '"]'));
+      return { samples, sawRaster, sawUnderlay, sawVectorWrite, lightMix, rasterAfterLight,
+        finalLightMatches: finalLight === (light?.state !== 'on'),
+        cameraMoved: svg.getAttribute('viewBox') !== firstView };
     } finally {
       if (mode === 'underlay') window.createImageBitmap = create;
     }
@@ -73,6 +94,11 @@ try {
   check('vector writes during wheel follow capability', result.sawVectorWrite, mode === 'fallback');
   check('raster surface follows capability', result.sawRaster, mode !== 'fallback');
   if (mode === 'underlay') check('slow preparation uses a cut-out underlay', result.sawUnderlay);
+  if (mode === 'light') {
+    check('the old and new light states share the short SVG fade', result.lightMix);
+    check('the raster path returns during the same gesture', result.rasterAfterLight);
+    check('the exact frame contains the new light state', result.finalLightMatches);
+  }
   check('the exact frame releases the attached raster', await page.locator('houseplan-card .hp-iso-raster').count(), 0);
   check('exact SVG is visible', await page.locator('houseplan-card .iso-scene-surface[data-hp-raster-display]').count(), 0);
   console.log(JSON.stringify({ mode, ...result }));
