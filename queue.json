@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 17724,
-  "nextTicket": 558,
+  "revision": 17725,
+  "nextTicket": 559,
   "nextFence": 558,
   "tasks": {
     "1024": {
@@ -5229,6 +5229,20 @@
         "status": "published",
         "sourceSha": "365df93ee67a75d71dc47c26e262ede8136fe027"
       }
+    },
+    "1491": {
+      "issue": 1491,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1491-opaque-wall-cut",
+      "materialSha": "3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 558,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795172607726,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5710,7 +5724,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1491
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5792,6 +5808,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "365df93ee67a75d71dc47c26e262ede8136fe027"
+      }
+    },
+    "finish:7cfe448c-5b88-49b0-9f26-1e3f750017d9": {
+      "digest": "c46df7aba07c94a360a0b7e8e365c838a321e2aef01a985c08cf38c19d04d6aa",
+      "issue": 1491,
+      "message": {
+        "kind": "queued",
+        "issue": 1491,
+        "at": 1795172607726,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "3ae1fa8408ad1c86b2954c6742b89412b1ca4a60"
       }
     }
   },
