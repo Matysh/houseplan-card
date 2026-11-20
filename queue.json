@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17217,
+  "revision": 17218,
   "nextTicket": 550,
   "nextFence": 550,
   "tasks": {
@@ -5227,161 +5227,25 @@
     },
     "1482": {
       "issue": 1482,
+      "branch": "codex/1482-iso-device-outline",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1482-iso-device-outline",
-      "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 549,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795154149947,
-      "reviewEntry": 1,
-      "patchId": "dac493e31296a662812a1d1c68751e44a20ddf19",
-      "changedFiles": [
-        "demo/smoke_iso_device_contours.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/ISOMETRIC.md",
-        "docs/release-ledger/v1.85.0/1482.json",
-        "process-next/lib/task-selection.mjs",
-        "process-next/test/task-selection.test.mjs",
-        "src/device-face.ts",
-        "src/houseplan-card.ts",
-        "src/styles/iso-lab-markers.styles.ts",
-        "test/device-face.test.mjs"
-      ],
-      "s6": {
-        "id": "20261120T055609614-27ad135d",
-        "name": "Тесты для задачи #1482 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T055609614-27ad135d/report.json",
-        "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
-        "status": "passed",
-        "finishedAt": "2026-11-20T06:09:56.746Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "aa39915acf11d4a6ecaf31514dc0e293e308fded",
+      "mergedSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
+      "mergedAt": 1795155423259,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1482:1:dac493e31296a662812a1d1c68751e44a20ddf19:aa39915acf11d4a6ecaf31514dc0e293e308fded",
-      "reviewMaterial": {
-        "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
-        "expectedBase": "aa39915acf11d4a6ecaf31514dc0e293e308fded",
-        "patchId": "dac493e31296a662812a1d1c68751e44a20ddf19"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1482,
-        "requestId": "review:1482:1:dac493e31296a662812a1d1c68751e44a20ddf19:aa39915acf11d4a6ecaf31514dc0e293e308fded",
-        "kind": "code",
-        "base": "aa39915acf11d4a6ecaf31514dc0e293e308fded",
-        "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
-        "patchId": "dac493e31296a662812a1d1c68751e44a20ddf19",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1482,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1482",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Материал `24989789232e → 2bd38b4a72588307054f867fdb179780a543cde2`, ветка `codex/1482-iso-device-outline`, show/product. Это ремонт отображения #1451 в текущей beta-линии; ledger `line-fix`, без пользовательского milestone и без выпуска версии.\n\n### Изменение\n\nCore-sized SVG/CSS mask отдельного устройства раньше висела на `.dev`, внутри которого находится переполняющая его box общая glass-оболочка. Маска тела поэтому обрезала произвольные участки общего стекла и обводки. Маска теперь применяется только к отдельному `.device-occlusion-body` с тем же core-sized box. Glass/contact ink остаётся sibling и использует прежние собственные surface/depth masks. Вершины, wall clipping, ширины/цвета/пунктир, layout и camera не менялись.\n\nПолная карточка теперь сама сохраняет один стабильный `.device-contact-ink` вне guard лица, а shared face получает `contactInk:false`. Это нужно для Flat↔ISO: смена wrapper-шаблона не должна отсоединять paint-узел, который удерживает contact renderer. `!!isoPlacement` добавлен к face guard. Static/preview не получают ISO wrapper, обычное Flat-лицо не оборачивается. Позиции и зоны действий/фокуса по-прежнему принадлежат прежнему `.dev`.\n\n### Проверки и границы\n\n- Свежие `npm run bundle:sync` (включает tsc) и test-build — PASS.\n- `node --test test/device-face.test.mjs test/iso-marker-outline.test.mjs process-next/test/task-selection.test.mjs`: **57/57 PASS**. Новый unit проверяет разделение ink/body, отсутствие лишнего ink у host-owned случая, сохранение Static/preview/Flat. Центральный selection test доказывает product/regression/isometry/task-release и выбор native-контракта из isometry без areaTests на соответствующем широком профиле; эта show-задача явно добавляет его в S6.\n- `demo/smoke_iso_device_contours.mjs`: матрица **80 сочетаний** (DPR1/2, light/dark, четыре поворота, zoom0.73/1/1.33/2.18/3.17), **все попиксельные сравнения идентичны**. Это actual native renderer и 23 синтетических устройства: пристенные группы3/6 со всех сторон, mixed physical/virtual, одиночные, badge и L-группа. В каждом варианте есть реальные body masks (минимум9) и отдельные glass masks (минимум11), не пустой тест без occlusion.\n- Pixel oracle: временно скрываются только тела (не их boxes/state); отключение прежней родительской маски не должно менять стекло. Возврат старой CSS-схемы отдельным отрицательным контролем даёт **421 пиксель на DPR1 /1364 на DPR2**, поэтому оракул действительно ловит исходную ошибку. Это не утверждение о полном сравнении всех объектов с эталоном и не принятие PNG.\n- Flat↔ISO восстановление, единичные wrapper/ink и отсутствие config/layout/service writes прошли после сохранения paint-узла. Первый адресный запуск выявил проблему его замены при Flat-переходе; исправлена в самом владельце DOM, ожидание теста не ослаблено.\n- К этому же native добавлены настоящие wheel/pan с проверкой промежуточных кадров; их исполнение вместе с новым положительным требованием наличия mask выполнит штатный S6 на зафиксированном коммите. Ранее полученные 80 записей отдельно подтверждают минимальные counts выше.\n- Локальные артефакты: `output/1482-unit2.log`, `output/1482-native2/results.json`, пары correct/legacy-negative. Дополнительная визуальная сверка на архивной частной копии плана подтверждает исчезновение разрывов; её PNG/геометрия не публикуются. HA владельца не использован для команд/записей.\n- Реальный HA E2E: [решение houseplan-e2e#85](https://github.com/Matysh/houseplan-e2e/issues/85), отдельный новый сценарий не нужен (API/права/хранение не менялись); выпускные E2E остаются.\n\nНи golden, ни весь stable-набор в этой задаче не запускались. Визуальные эталоны не обновлялись. Обычный finish актуализирует dev в слоте и выполнит текущую центральную S6-выборку, затем независимое код-ревью."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление выбрано правильно и минимально, его можно принять. Причина дефекта: маска перекрытия корпуса размером с ядро висела на `.dev`, а внутри `.dev` рисуется переполняющая его общая glass-оболочка группы. Поэтому маска срезала участки обводки, и набор срезанных участков менялся вместе с масштабом и камерой. Теперь маска стоит на отдельной обёртке `.device-occlusion-body` с тем же box. Стекло остаётся соседним слоем и использует только собственные маски поверхности и глубины (`renderIsoMarkerGlass` → `glassMask`). Геометрия контактов, камера, данные плана и маршрутизация событий не менялись. Перенос `.device-contact-ink` в шаблон хоста устраняет отдельную проблему жизненного цикла: renderer держит ссылку на ink-узел и сверяет только идентичность `.dev`. Блокеров нет. Есть несколько мелких побочных изменений порядка слоёв: при маскированной обёртке подпись LQI оказывается под передним стеклом, во Flat ink теперь стоит перед pulse и habadge, `.vacwarn` вышел из-под маски. Кроме того, «положительное» попиксельное сравнение в smoke на head сравнивает кадры, которые по построению одинаковы. Всё это описано в improvements и не мешает принять работу.",
-          "understanding": "Проблема: в 2.5D у групп и пристенных рядов общая glass-обводка местами обрезана или незамкнута, и картина зависит от уровня приближения. До изменения правило `.stage.projection-iso.mode-view .dev[data-hp-device-occlusion] { mask: var(--hp-device-wall-mask) }` (base, `iso-lab-markers.styles.ts:164`) применялось ко всему `.dev`. Маска строится в `paintWallMasks` (`device-contact-render.ts:265-293`) с `maskUnits=\"objectBoundingBox\"` по метрикам граней одного устройства. Внутри `.dev` лежит `.device-contact-ink`, куда `paint()` рендерит общий rear/front glass группы. Rear glass нарисован только у owner и выходит далеко за box своего `.dev`, поэтому чужая для него маска корпуса его срезала. После изменения `renderDeviceFace` при `occlusionBody` оборачивает содержимое лица в `.device-occlusion-body`. В режиме view обёртка получает `position:absolute; inset:0`, её box совпадает с `.dev`, и маска objectBoundingBox даёт ту же геометрию. Маска перенесена на обёртку. Ink стал прямым дочерним узлом `.dev` в шаблоне хоста (`houseplan-card.ts:14643`), лицо получает `contactInk:false`, в guard лица добавлен `!!isoPlacement`. Поэтому при переходе Flat↔ISO меняется только поддерево лица, а ink-узел, на который ссылается `DeviceContactRenderer.elements`, сохраняется. Static и preview не меняются: `occlusionBody` учитывается только для `interactive-plan`. Я прочитал вызывающий путь `_renderDevice`: `isoOverlays` берётся только из `isoFrame`. Прочитаны sync/measure/paintWallMasks/paint рендерера: probe клонирует `.dev` вместе с обёрткой, ink находится через `querySelector`, а `.device-shell-frame` и `.device-core` — по-прежнему через селекторы потомков. Прочитаны `renderIsoMarkerGlass`, стили devices/iso-tiles/iso-lab-markers и контактов, smoke, вспомогательный модуль сцены, unit-тест и изменение выборки тестов.",
-          "analysis": [
-            {
-              "topic": "Корневая причина и выбор механизма",
-              "assessment": "Диагноз подтверждается кодом. Маска строится по граням одного корпуса (rect от min(face.left)+.15 до max(face.right)+1 в единицах ядра), а owner рисует в своём ink общий rear glass всей группы. Всё, что выходит за прямоугольник маски, срезалось, и при изменении камеры или масштаба менялись и маска, и проекция стекла. Перенос маски на соседний с ink контейнер того же размера устраняет причину и не требует новой геометрии. Альтернатива «убрать маску» потеряла бы перекрытие корпуса стеной; авторы это явно отвергли. Решение стоит сохранить.",
-              "evidence": "src/device-contact-render.ts:283-292 (маска objectBoundingBox по faces), :328-333 и :370-376 (общий glass рендерится в ink owner), src/iso-marker-glass.ts:8-31 (собственные back/front маски стекла), src/styles/iso-lab-markers.styles.ts:164-171."
-            },
-            {
-              "topic": "Совпадение геометрии маски после переноса",
-              "assessment": "При `objectBoundingBox` маска зависит от border box маскируемого элемента. Обёртка с `position:absolute; inset:0` внутри `.dev` (border:0) имеет тот же box, а все дети лица и раньше позиционировались абсолютно относительно `.dev`, поэтому их containing block фактически не изменился. Правило `.dev > *` с translate из iso-tiles в режиме floor-markers не действует (оно переписано на `:not([data-hp-iso-floor-markers])`), а в tile-режиме translate получает обёртка вместо каждого ребёнка, и суммарный сдвиг тот же. Selectors с дочерним комбинатором к частям лица я не нашёл. Smoke дополнительно проверяет совпадение box обёртки и `.dev` с точностью 0.05 px.",
-              "evidence": "src/styles/devices.styles.ts:93-135, 169-185 (абсолютные дети, border:0); src/styles/iso-tiles.styles.ts:28-31, 85-88; demo/smoke_iso_device_contours.mjs:55-58."
-            },
-            {
-              "topic": "Жизненный цикл ink-узла при Flat↔ISO",
-              "assessment": "Перенос ink в хост обоснован. В base ink был внутри guard лица, и при смене шаблона (обёртка или её отсутствие) Lit заменил бы узел. Рендерер кеширует `{element, ink}` и на быстрых путях `sync` сверяет только `.dev` (`elements.get(id).element === nodes.get(id)`), поэтому мог бы рисовать в отсоединённый ink. Ink в хосте статичен, его Lit-часть не содержит динамических детей, так что собственный `render()` рендерера в него безопасен. `!!isoPlacement` в guard нужен, иначе лицо не перестроилось бы при смене проекции. Цена: при каждом переходе ISO-view↔Flat/edit лица всех устройств создаются заново, включая `ha-icon`. Раньше внешний guard тоже пересчитывался, но DOM лица сохранялся. Это измеримо только на больших планах; бюджетного теста на это нет, `demo/performance/mode-transition.mjs` лишь диагностический.",
-              "evidence": "src/houseplan-card.ts:14557-14561 (внешний guard уже включает isoPlacement), :14643-14652; src/device-contact-render.ts:141-150, 163-172, 197-206."
-            },
-            {
-              "topic": "Порядок отрисовки (stacking) после введения обёртки",
-              "assessment": "Маска делает обёртку отдельным stacking context, поэтому z-index её детей теперь действует только внутри неё. Основной порядок сохраняется: rear glass (z0, раньше в DOM) → тело → front glass (z3). Есть мелкие сдвиги. (1) У маскированного устройства `.lqi` (z3) раньше шла в DOM после ink и рисовалась поверх front glass, теперь оказывается под ним. (2) У немаскированного устройства в ISO newdot и activity-dot (z3) теперь стоят в DOM после ink и рисуются поверх front glass; раньше были под ним. Итог: точки ведут себя по-разному у перекрытых и неперекрытых устройств. (3) `.vacwarn` остался прямым потомком `.dev` и больше не попадает под маску стены. Перекрытие геометрии стекла и LQI я не проверял запуском; это вывод из CSS, а не наблюдение. На целевую обводку всё это не влияет.",
-              "evidence": "src/styles/devices.styles.ts:46-59, 80-91, 512-526, 533-547; src/styles/iso-lab-markers.styles.ts:133, 140-141, 169-171; src/device-face.ts:115-174; src/houseplan-card.ts:14653."
-            },
-            {
-              "topic": "Flat-вид",
-              "assessment": "Обёртки во Flat действительно нет. Но DOM всё же изменился: ink переехал из середины лица в начало `.dev`. Во Flat ink имеет `z-index:0` (`device-contact.styles.ts:5`), поэтому `.device-pulse` (z0) и `.habadge` (z auto) теперь рисуются поверх контактного контура, а раньше были под ним. Habadge сдвинут на −18% и пересекается с линией контура сгруппированного устройства. Для неконтактного устройства кольцо `.device-shell-frame` (z2) по-прежнему лежит поверх habadge. Изменение мелкое и визуально, возможно, даже лучше, но формулировка «Flat-разметка сохранена» в changelog не вполне точна. Golden-наборы в S6 не запускались.",
-              "evidence": "src/houseplan-card.ts:14643; src/device-face.ts:116-129 (в base ink шёл после pulse/newdot/habadge); src/styles/devices.styles.ts:11-20, 450-463; src/device-contact.styles.ts:5."
-            },
-            {
-              "topic": "Доказательная сила smoke",
-              "assessment": "Сильные стороны: в каждой из 80 комбинаций проверяется, что маска корпуса реально есть (`masked>0`, `ownMasks>0`, совпадение box). Есть DOM-инвариант «ни у одного предка стекла нет mask-image», реальные wheel/pan с проверкой промежуточных кадров, Flat↔ISO и отсутствие записей. Отрицательный контроль доказывает, что оракул ловит старую схему. Слабое место: «положительное» попиксельное сравнение на head сравнивает кадры с правилом `.dev[data-hp-device-occlusion]{mask:none}` и без него. В head у `.dev` маски нет, поэтому кадры совпадают всегда. Фактически это страж против возврата маски на `.dev`, равнозначный DOM-проверке `clean`, а не независимое подтверждение непрерывности контура. Отсутствие артефактов от собственных масок стекла smoke не доказывает; авторы честно оговаривают это, их довод — сверка на частной копии плана.",
-              "evidence": "demo/smoke_iso_device_contours.mjs:50-66 (clean/registered), 70-84 (оракул и negative control), 91-110 (wheel/pan); квитанция 20261120T055609614-27ad135d — passed на 113ba1b."
-            },
-            {
-              "topic": "Выборка тестов и сопутствующие файлы",
-              "assessment": "Добавление `iso_device_contours` в доменные native-контракты isometry соответствует существующему соглашению `demo/smoke_${name}.mjs`, и тест выборки это закрепляет. Ledger (`line-fix`), changelog и абзац в ISOMETRIC.md соразмерны изменению. Комментарий в CSS сохраняет неочевидную причину, а не пересказывает строку.",
-              "evidence": "process-next/lib/task-selection.mjs:34, 207; process-next/test/task-selection.test.mjs:28-40; docs/ISOMETRIC.md:146-149."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Порядок слоёв внутри маскированной обёртки. Если подтвердится, что у перекрытого устройства LQI попадает под переднюю панель стекла, проще всего вынести `.lqi` (и при желании `.vacwarn`) за пределы `.device-occlusion-body` и маскировать её отдельно той же `--hp-device-wall-mask`. Либо явно зафиксировать новое поведение. Выгода: одинаковый вид LQI у перекрытых и неперекрытых устройств. Цена: ещё один маскированный узел. Подтвердить или опровергнуть можно одним скриншотом из имеющегося smoke с устройством, у которого LQI включён и есть `data-hp-device-occlusion`.",
-            "Расхождение newdot/activity-dot. У неперекрытых ISO-устройств они теперь поверх front glass, у перекрытых — под ним. Если нужен единый вид, стоит выровнять поведение: например, задать в ISO обёртке `isolation: isolate` всегда, а не только при маске. Тогда порядок у всех устройств совпадёт с маскированным случаем и не будет зависеть от наличия перекрытия.",
-            "Flat-порядок ink. Чтобы сохранить DOM-порядок Flat и одновременно стабильность ink-узла, можно разделить лицо на две части с отдельными guard: «префикс» (pulse/dots/habadge) и тело. Тогда хостовой ink встанет между ними, как в base. Альтернатива — не трогать код, но уточнить в changelog и ISOMETRIC, что во Flat поменялся порядок pulse и habadge относительно контура, и прогнать связанные Flat-goldens в выпускной проверке.",
-            "Оракул smoke. Чтобы положительная проверка была не тавтологией, а самостоятельным доказательством, можно сравнивать кадр стекла (тела скрыты) с кадром, где `.device-occlusion-body` вообще не маскируется (`mask:none` на обёртке). Это одновременно подтвердит, что маска тела не влияет на стекло, через механизм, который реально присутствует в head. Тогда текущее правило на `.dev` останется отрицательным контролем."
-          ],
-          "boundaries": "Сборку, unit, smoke и golden я не запускал (S7). Использованы квитанция S6 `20261120T055609614-27ad135d` (status passed, failures пусты, material 113ba1b) и описание проверок исполнителя: 57/57 unit, 80 комбинаций native smoke, отрицательный контроль 421/1364 px. Сами артефакты (`output/1482-*`, PNG) я не видел. Выводы о stacking context и перекрытии LQI с front glass сделаны по CSS-спецификации и исходникам, а не по снимкам. Наблюдение «LQI под стеклом» — гипотеза о видимости, подтверждённого дефекта нет. Поведение hit-testing при маске не изменилось, потому что маска и раньше была на предке рамки. Golden и полный stable-набор не запускались; это осталось на выпускную проверку, так же как реальный HA E2E по houseplan-e2e#85. Частный план владельца недоступен, сверку на нём я не повторял."
-        },
-        "usage": {
-          "input_tokens": 60,
-          "cache_creation_input_tokens": 147352,
-          "cache_read_input_tokens": 2797316,
-          "output_tokens": 28114,
-          "output_tokens_details": {
-            "thinking_tokens": 18127
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 147352,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 960,
-              "cache_read_input_tokens": 123095,
-              "cache_creation_input_tokens": 24257,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 24257
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление выбрано правильно и минимально, его можно принять. Причина дефекта: маска перекрытия корпуса размером с ядро висела на `.dev`, а внутри `.dev` рисуется переполняющая его общая glass-оболочка группы. Поэтому маска срезала участки обводки, и набор срезанных участков менялся вместе с масштабом и камерой. Теперь маска стоит на отдельной обёртке `.device-occlusion-body` с тем же box. Стекло остаётся соседним слоем и использует только собственные маски поверхности и глубины (`renderIsoMarkerGlass` → `glassMask`). Геометрия контактов, камера, данные плана и маршрутизация событий не менялись. Перенос `.device-contact-ink` в шаблон хоста устраняет отдельную проблему жизненного цикла: renderer держит ссылку на ink-узел и сверяет только идентичность `.dev`. Блокеров нет. Есть несколько мелких побочных изменений порядка слоёв: при маскированной обёртке подпись LQI оказывается под передним стеклом, во Flat ink теперь стоит перед pulse и habadge, `.vacwarn` вышел из-под маски. Кроме того, «положительное» попиксельное сравнение в smoke на head сравнивает кадры, которые по построению одинаковы. Всё это описано в improvements и не мешает принять работу.\n\n## Понимание решения\n\nПроблема: в 2.5D у групп и пристенных рядов общая glass-обводка местами обрезана или незамкнута, и картина зависит от уровня приближения. До изменения правило `.stage.projection-iso.mode-view .dev[data-hp-device-occlusion] { mask: var(--hp-device-wall-mask) }` (base, `iso-lab-markers.styles.ts:164`) применялось ко всему `.dev`. Маска строится в `paintWallMasks` (`device-contact-render.ts:265-293`) с `maskUnits=\"objectBoundingBox\"` по метрикам граней одного устройства. Внутри `.dev` лежит `.device-contact-ink`, куда `paint()` рендерит общий rear/front glass группы. Rear glass нарисован только у owner и выходит далеко за box своего `.dev`, поэтому чужая для него маска корпуса его срезала. После изменения `renderDeviceFace` при `occlusionBody` оборачивает содержимое лица в `.device-occlusion-body`. В режиме view обёртка получает `position:absolute; inset:0`, её box совпадает с `.dev`, и маска objectBoundingBox даёт ту же геометрию. Маска перенесена на обёртку. Ink стал прямым дочерним узлом `.dev` в шаблоне хоста (`houseplan-card.ts:14643`), лицо получает `contactInk:false`, в guard лица добавлен `!!isoPlacement`. Поэтому при переходе Flat↔ISO меняется только поддерево лица, а ink-узел, на который ссылается `DeviceContactRenderer.elements`, сохраняется. Static и preview не меняются: `occlusionBody` учитывается только для `interactive-plan`. Я прочитал вызывающий путь `_renderDevice`: `isoOverlays` берётся только из `isoFrame`. Прочитаны sync/measure/paintWallMasks/paint рендерера: probe клонирует `.dev` вместе с обёрткой, ink находится через `querySelector`, а `.device-shell-frame` и `.device-core` — по-прежнему через селекторы потомков. Прочитаны `renderIsoMarkerGlass`, стили devices/iso-tiles/iso-lab-markers и контактов, smoke, вспомогательный модуль сцены, unit-тест и изменение выборки тестов.\n\n## Разбор решения\n\n### Корневая причина и выбор механизма\n\nДиагноз подтверждается кодом. Маска строится по граням одного корпуса (rect от min(face.left)+.15 до max(face.right)+1 в единицах ядра), а owner рисует в своём ink общий rear glass всей группы. Всё, что выходит за прямоугольник маски, срезалось, и при изменении камеры или масштаба менялись и маска, и проекция стекла. Перенос маски на соседний с ink контейнер того же размера устраняет причину и не требует новой геометрии. Альтернатива «убрать маску» потеряла бы перекрытие корпуса стеной; авторы это явно отвергли. Решение стоит сохранить.\n\nОснование: src/device-contact-render.ts:283-292 (маска objectBoundingBox по faces), :328-333 и :370-376 (общий glass рендерится в ink owner), src/iso-marker-glass.ts:8-31 (собственные back/front маски стекла), src/styles/iso-lab-markers.styles.ts:164-171.\n\n### Совпадение геометрии маски после переноса\n\nПри `objectBoundingBox` маска зависит от border box маскируемого элемента. Обёртка с `position:absolute; inset:0` внутри `.dev` (border:0) имеет тот же box, а все дети лица и раньше позиционировались абсолютно относительно `.dev`, поэтому их containing block фактически не изменился. Правило `.dev > *` с translate из iso-tiles в режиме floor-markers не действует (оно переписано на `:not([data-hp-iso-floor-markers])`), а в tile-режиме translate получает обёртка вместо каждого ребёнка, и суммарный сдвиг тот же. Selectors с дочерним комбинатором к частям лица я не нашёл. Smoke дополнительно проверяет совпадение box обёртки и `.dev` с точностью 0.05 px.\n\nОснование: src/styles/devices.styles.ts:93-135, 169-185 (абсолютные дети, border:0); src/styles/iso-tiles.styles.ts:28-31, 85-88; demo/smoke_iso_device_contours.mjs:55-58.\n\n### Жизненный цикл ink-узла при Flat↔ISO\n\nПеренос ink в хост обоснован. В base ink был внутри guard лица, и при смене шаблона (обёртка или её отсутствие) Lit заменил бы узел. Рендерер кеширует `{element, ink}` и на быстрых путях `sync` сверяет только `.dev` (`elements.get(id).element === nodes.get(id)`), поэтому мог бы рисовать в отсоединённый ink. Ink в хосте статичен, его Lit-часть не содержит динамических детей, так что собственный `render()` рендерера в него безопасен. `!!isoPlacement` в guard нужен, иначе лицо не перестроилось бы при смене проекции. Цена: при каждом переходе ISO-view↔Flat/edit лица всех устройств создаются заново, включая `ha-icon`. Раньше внешний guard тоже пересчитывался, но DOM лица сохранялся. Это измеримо только на больших планах; бюджетного теста на это нет, `demo/performance/mode-transition.mjs` лишь диагностический.\n\nОснование: src/houseplan-card.ts:14557-14561 (внешний guard уже включает isoPlacement), :14643-14652; src/device-contact-render.ts:141-150, 163-172, 197-206.\n\n### Порядок отрисовки (stacking) после введения обёртки\n\nМаска делает обёртку отдельным stacking context, поэтому z-index её детей теперь действует только внутри неё. Основной порядок сохраняется: rear glass (z0, раньше в DOM) → тело → front glass (z3). Есть мелкие сдвиги. (1) У маскированного устройства `.lqi` (z3) раньше шла в DOM после ink и рисовалась поверх front glass, теперь оказывается под ним. (2) У немаскированного устройства в ISO newdot и activity-dot (z3) теперь стоят в DOM после ink и рисуются поверх front glass; раньше были под ним. Итог: точки ведут себя по-разному у перекрытых и неперекрытых устройств. (3) `.vacwarn` остался прямым потомком `.dev` и больше не попадает под маску стены. Перекрытие геометрии стекла и LQI я не проверял запуском; это вывод из CSS, а не наблюдение. На целевую обводку всё это не влияет.\n\nОснование: src/styles/devices.styles.ts:46-59, 80-91, 512-526, 533-547; src/styles/iso-lab-markers.styles.ts:133, 140-141, 169-171; src/device-face.ts:115-174; src/houseplan-card.ts:14653.\n\n### Flat-вид\n\nОбёртки во Flat действительно нет. Но DOM всё же изменился: ink переехал из середины лица в начало `.dev`. Во Flat ink имеет `z-index:0` (`device-contact.styles.ts:5`), поэтому `.device-pulse` (z0) и `.habadge` (z auto) теперь рисуются поверх контактного контура, а раньше были под ним. Habadge сдвинут на −18% и пересекается с линией контура сгруппированного устройства. Для неконтактного устройства кольцо `.device-shell-frame` (z2) по-прежнему лежит поверх habadge. Изменение мелкое и визуально, возможно, даже лучше, но формулировка «Flat-разметка сохранена» в changelog не вполне точна. Golden-наборы в S6 не запускались.\n\nОснование: src/houseplan-card.ts:14643; src/device-face.ts:116-129 (в base ink шёл после pulse/newdot/habadge); src/styles/devices.styles.ts:11-20, 450-463; src/device-contact.styles.ts:5.\n\n### Доказательная сила smoke\n\nСильные стороны: в каждой из 80 комбинаций проверяется, что маска корпуса реально есть (`masked>0`, `ownMasks>0`, совпадение box). Есть DOM-инвариант «ни у одного предка стекла нет mask-image», реальные wheel/pan с проверкой промежуточных кадров, Flat↔ISO и отсутствие записей. Отрицательный контроль доказывает, что оракул ловит старую схему. Слабое место: «положительное» попиксельное сравнение на head сравнивает кадры с правилом `.dev[data-hp-device-occlusion]{mask:none}` и без него. В head у `.dev` маски нет, поэтому кадры совпадают всегда. Фактически это страж против возврата маски на `.dev`, равнозначный DOM-проверке `clean`, а не независимое подтверждение непрерывности контура. Отсутствие артефактов от собственных масок стекла smoke не доказывает; авторы честно оговаривают это, их довод — сверка на частной копии плана.\n\nОснование: demo/smoke_iso_device_contours.mjs:50-66 (clean/registered), 70-84 (оракул и negative control), 91-110 (wheel/pan); квитанция 20261120T055609614-27ad135d — passed на 113ba1b.\n\n### Выборка тестов и сопутствующие файлы\n\nДобавление `iso_device_contours` в доменные native-контракты isometry соответствует существующему соглашению `demo/smoke_${name}.mjs`, и тест выборки это закрепляет. Ledger (`line-fix`), changelog и абзац в ISOMETRIC.md соразмерны изменению. Комментарий в CSS сохраняет неочевидную причину, а не пересказывает строку.\n\nОснование: process-next/lib/task-selection.mjs:34, 207; process-next/test/task-selection.test.mjs:28-40; docs/ISOMETRIC.md:146-149.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Порядок слоёв внутри маскированной обёртки. Если подтвердится, что у перекрытого устройства LQI попадает под переднюю панель стекла, проще всего вынести `.lqi` (и при желании `.vacwarn`) за пределы `.device-occlusion-body` и маскировать её отдельно той же `--hp-device-wall-mask`. Либо явно зафиксировать новое поведение. Выгода: одинаковый вид LQI у перекрытых и неперекрытых устройств. Цена: ещё один маскированный узел. Подтвердить или опровергнуть можно одним скриншотом из имеющегося smoke с устройством, у которого LQI включён и есть `data-hp-device-occlusion`.\n- Расхождение newdot/activity-dot. У неперекрытых ISO-устройств они теперь поверх front glass, у перекрытых — под ним. Если нужен единый вид, стоит выровнять поведение: например, задать в ISO обёртке `isolation: isolate` всегда, а не только при маске. Тогда порядок у всех устройств совпадёт с маскированным случаем и не будет зависеть от наличия перекрытия.\n- Flat-порядок ink. Чтобы сохранить DOM-порядок Flat и одновременно стабильность ink-узла, можно разделить лицо на две части с отдельными guard: «префикс» (pulse/dots/habadge) и тело. Тогда хостовой ink встанет между ними, как в base. Альтернатива — не трогать код, но уточнить в changelog и ISOMETRIC, что во Flat поменялся порядок pulse и habadge относительно контура, и прогнать связанные Flat-goldens в выпускной проверке.\n- Оракул smoke. Чтобы положительная проверка была не тавтологией, а самостоятельным доказательством, можно сравнивать кадр стекла (тела скрыты) с кадром, где `.device-occlusion-body` вообще не маскируется (`mask:none` на обёртке). Это одновременно подтвердит, что маска тела не влияет на стекло, через механизм, который реально присутствует в head. Тогда текущее правило на `.dev` останется отрицательным контролем.\n\n## Границы анализа\n\nСборку, unit, smoke и golden я не запускал (S7). Использованы квитанция S6 `20261120T055609614-27ad135d` (status passed, failures пусты, material 113ba1b) и описание проверок исполнителя: 57/57 unit, 80 комбинаций native smoke, отрицательный контроль 421/1364 px. Сами артефакты (`output/1482-*`, PNG) я не видел. Выводы о stacking context и перекрытии LQI с front glass сделаны по CSS-спецификации и исходникам, а не по снимкам. Наблюдение «LQI под стеклом» — гипотеза о видимости, подтверждённого дефекта нет. Поведение hit-testing при маске не изменилось, потому что маска и раньше была на предке рамки. Golden и полный stable-набор не запускались; это осталось на выпускную проверку, так же как реальный HA E2E по houseplan-e2e#85. Частный план владельца недоступен, сверку на нём я не повторял.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: aa39915acf11d4a6ecaf31514dc0e293e308fded → 113ba1bac0641a4e4e404ef8c0d96d7fa53de263\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1482, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nМатериал `24989789232e → 2bd38b4a72588307054f867fdb179780a543cde2`, ветка `codex/1482-iso-device-outline`, show/product. Это ремонт отображения #1451 в текущей beta-линии; ledger `line-fix`, без пользовательского milestone и без выпуска версии.\n\n### Изменение\n\nCore-sized SVG/CSS mask отдельного устройства раньше висела на `.dev`, внутри которого находится переполняющая его box общая glass-оболочка. Маска тела поэтому обрезала произвольные участки общего стекла и обводки. Маска теперь применяется только к отдельному `.device-occlusion-body` с тем же core-sized box. Glass/contact ink остаётся sibling и использует прежние собственные surface/depth masks. Вершины, wall clipping, ширины/цвета/пунктир, layout и camera не менялись.\n\nПолная карточка теперь сама сохраняет один стабильный `.device-contact-ink` вне guard лица, а shared face получает `contactInk:false`. Это нужно для Flat↔ISO: смена wrapper-шаблона не должна отсоединять paint-узел, который удерживает contact renderer. `!!isoPlacement` добавлен к face guard. Static/preview не получают ISO wrapper, обычное Flat-лицо не оборачивается. Позиции и зоны действий/фокуса по-прежнему принадлежат прежнему `.dev`.\n\n### Проверки и границы\n\n- Свежие `npm run bundle:sync` (включает tsc) и test-build — PASS.\n- `node --test test/device-face.test.mjs test/iso-marker-outline.test.mjs process-next/test/task-selection.test.mjs`: **57/57 PASS**. Новый unit проверяет разделение ink/body, отсутствие лишнего ink у host-owned случая, сохранение Static/preview/Flat. Центральный selection test доказывает product/regression/isometry/task-release и выбор native-контракта из isometry без areaTests на соответствующем широком профиле; эта show-задача явно добавляет его в S6.\n- `demo/smoke_iso_device_contours.mjs`: матрица **80 сочетаний** (DPR1/2, light/dark, четыре поворота, zoom0.73/1/1.33/2.18/3.17), **все попиксельные сравнения идентичны**. Это actual native renderer и 23 синтетических устройства: пристенные группы3/6 со всех сторон, mixed physical/virtual, одиночные, badge и L-группа. В каждом варианте есть реальные body masks (минимум9) и отдельные glass masks (минимум11), не пустой тест без occlusion.\n- Pixel oracle: временно скрываются только тела (не их boxes/state); отключение прежней родительской маски не должно менять стекло. Возврат старой CSS-схемы отдельным отрицательным контролем даёт **421 пиксель на DPR1 /1364 на DPR2**, поэтому оракул действительно ловит исходную ошибку. Это не утверждение о полном сравнении всех объектов с эталоном и не принятие PNG.\n- Flat↔ISO восстановление, единичные wrapper/ink и отсутствие config/layout/service writes прошли после сохранения paint-узла. Первый адресный запуск выявил проблему его замены при Flat-переходе; исправлена в самом владельце DOM, ожидание теста не ослаблено.\n- К этому же native добавлены настоящие wheel/pan с проверкой промежуточных кадров; их исполнение вместе с новым положительным требованием наличия mask выполнит штатный S6 на зафиксированном коммите. Ранее полученные 80 записей отдельно подтверждают минимальные counts выше.\n- Локальные артефакты: `output/1482-unit2.log`, `output/1482-native2/results.json`, пары correct/legacy-negative. Дополнительная визуальная сверка на архивной частной копии плана подтверждает исчезновение разрывов; её PNG/геометрия не публикуются. HA владельца не использован для команд/записей.\n- Реальный HA E2E: [решение houseplan-e2e#85](https://github.com/Matysh/houseplan-e2e/issues/85), отдельный новый сценарий не нужен (API/права/хранение не менялись); выпускные E2E остаются.\n\nНи golden, ни весь stable-набор в этой задаче не запускались. Визуальные эталоны не обновлялись. Обычный finish актуализирует dev в слоте и выполнит текущую центральную S6-выборку, затем независимое код-ревью.\n```\n\n</details>\n",
-        "createdAt": "2026-11-20T06:16:23.587Z",
-        "artifactId": 14606053834,
-        "runId": 44685906309,
-        "runAttempt": 1,
-        "completedAt": "2026-11-20T06:16:30Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44685906309",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "aa39915acf11d4a6ecaf31514dc0e293e308fded"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -5865,19 +5729,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1482,
-    "worker": "finish",
-    "token": "549:finish:da72a5f2-ac67-441d-8ad3-8c50dafb51bb:finish:1:admit",
-    "fence": 549,
-    "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
-    "expectedBase": "aa39915acf11d4a6ecaf31514dc0e293e308fded",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795154153780,
-    "expiresAt": 1795159020237,
-    "patchId": "dac493e31296a662812a1d1c68751e44a20ddf19",
-    "reviewRequest": "review:1482:1:dac493e31296a662812a1d1c68751e44a20ddf19:aa39915acf11d4a6ecaf31514dc0e293e308fded"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5919,98 +5771,6 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "finish:da72a5f2-ac67-441d-8ad3-8c50dafb51bb:finish:2:synchronized": {
-      "digest": "4b9a0ae04b28fd7b631be9943ce37b806af43ff7b06e448afe4f0f9865e59d91",
-      "issue": 1482
-    },
-    "github:44684265871:1:completions:message:30756eeb853b986a285b17369d49dba1df23ce963aa2729b1a41b3a4e055e733": {
-      "digest": "a3e96f33d346fac58449113bbdde07df5c73efce7f1c3907f52c7d3776c4891c",
-      "issue": 1482
-    },
-    "github:44684265871:1:completions:message:b0cdc009c58ac785fe30e86e70b5bc4df53ecd82018655f9d6bcacda13fced15": {
-      "digest": "d75088eab2d7d185a7659f51020a6bbaa31d3fadb49c2dcdcbe9ef2c3b30e1f6",
-      "issue": 1482
-    },
-    "github:44684265871:1:completions:message:1632c11e5094ea25ae37f22a8a3d3378b3fc00b6d6fae10211e8c1bcc237725d": {
-      "digest": "22b4714ac86abcf8993ea2cac898699eb638d4e39c7d7a6c240a1de59033f268",
-      "issue": 1482
-    },
-    "finish:30936be9-68e5-4794-9984-84c486842257": {
-      "digest": "649e4e66e8ef08a4364f203c80ba3dc2b24a10fe2eaf647a4d043c077c9a3be3",
-      "issue": 1482
-    },
-    "finish:339d4fbb-a92d-40d7-a0bd-1112a399d8f3": {
-      "digest": "d8b698c18d9a78e5f9884b02d64892ab95c12aa2d019080b49a8e2bc1c32fdc8",
-      "issue": 1482
-    },
-    "finish:6622eb12-915d-4ed9-beeb-43c83ace64ca": {
-      "digest": "5fac96afc6040e7c09e844c0fe8c761775f633e860be23aa7c91da5ebef727f8",
-      "issue": 1482
-    },
-    "finish:4b2e43b9-fcdd-4723-9c08-b45f9449739d": {
-      "digest": "304e2762138d7071ece48aabac23367b1bbf9f75c0891b9fa36d15dd25e05175",
-      "issue": 1482
-    },
-    "finish:e899e12e-e5b3-493b-a4ab-7fb587193648": {
-      "digest": "4d479e0178fe526dc8d2df43bb8325f79c2c748e50b7bb2db6f2030bf92496dd",
-      "issue": 1482
-    },
-    "finish:17bf5a41-8525-4a7f-8bfb-4941ae601cc6": {
-      "digest": "3f38f8d70216e5113d0fe16f6a79f3884ed427ac57bce6ff30e21cb1bdae515e",
-      "issue": 1482
-    },
-    "finish:e0520111-63f1-4a4b-851e-3d3d222bbb2e": {
-      "digest": "47a98ab34304a3aaa89c190314fa5048945328f94c94848fcdcf8541e29b1fcd",
-      "issue": 1482
-    },
-    "finish:665711cf-0517-4d90-af26-df9a5a9fb09c": {
-      "digest": "8e63477cbbb5e451c784948feae8bba04fbf69d8b0ee40e301356c1dd121f9ca",
-      "issue": 1482
-    },
-    "finish:6d85f1b1-cdce-4941-8086-15d0a0cc86d3": {
-      "digest": "58167e750e45480a661b93d9840cc27d10dd02503ebecdcb33251853362808ad",
-      "issue": 1482
-    },
-    "finish:62ac730d-5c52-4817-a9b6-74ece3cc7e58": {
-      "digest": "75de92734ad3431767491baeb963ab7d3279e3f36e407709f3b5216ab40f31a6",
-      "issue": 1482
-    },
-    "finish:621185d0-d537-4b7e-92e1-3d14f65cf15f": {
-      "digest": "0ac4403780d6803346f0d020c78a687375f2861ac6b0a7341dced2112ef0f508",
-      "issue": 1482
-    },
-    "finish:4be97d3d-a6f7-4acd-9f97-711e1151f692": {
-      "digest": "284db9d78aa5ca88289b99134d77a42d586bbb2c131535f057577a9d8a2d50b6",
-      "issue": 1482
-    },
-    "finish:ada34fd3-c940-4e3b-a4c8-6c2b0cf057ed": {
-      "digest": "cc3b7ba1801f323da418a5d959665b5992a0afb4b189765dcabe28f4107b74c4",
-      "issue": 1482
-    },
-    "finish:e72cc8de-e34a-4f56-bf20-77d936738b15": {
-      "digest": "3122ba5bcad35b5a081fe21a247fe5e591122fdfcde3e945fea5422d2cbee1e5",
-      "issue": 1482
-    },
-    "finish:da72a5f2-ac67-441d-8ad3-8c50dafb51bb:finish:3:s6-label": {
-      "digest": "75040ea783b9635a435df5cb44b98f64f26a646cb225e102ebc556b0402d32c8",
-      "issue": 1482
-    },
-    "finish:da72a5f2-ac67-441d-8ad3-8c50dafb51bb:finish:4:review-requested": {
-      "digest": "7aae228388059152351ca0b7c521e8c6b107778b8ff49ed501b444222adaddeb",
-      "issue": 1482
-    },
-    "github:44685879148:1:completions:message:97f7e981208c191c039d95f3b759138808047e9180abf339d3d3d5c553078428": {
-      "digest": "53239ef1aaadef2eb74f213b306dfc3d5bb83b28424b1eab26a7f3f765da9856",
-      "issue": 1482
-    },
-    "github:44686650115:1:tick:0:review-presentation": {
-      "digest": "d438f80b374485365aacfb91f7bf091d90449e76022a07ef3dd11aaddba79959",
-      "issue": 1482
-    },
-    "github:44686650115:1:tick:0:review-complete": {
-      "digest": "4bf1f1f0dcfaa4689d8406dd52a296f71887dc240cb39ec6093caf7d18a38337",
-      "issue": 1482
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6037,65 +5797,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:da72a5f2-ac67-441d-8ad3-8c50dafb51bb": {
-      "digest": "19764d5dc787ae52195d728e879c31abb56830c100498a3d289064e51bccf9f4",
-      "issue": 1482,
-      "message": {
-        "kind": "queued",
-        "issue": 1482,
-        "at": 1795154149947,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2bd38b4a72588307054f867fdb179780a543cde2",
-        "delivered": true
-      }
-    },
-    "finish:da72a5f2-ac67-441d-8ad3-8c50dafb51bb:finish:1:admit": {
-      "digest": "e6dc4fc090c9375d287eacbccdac0ed9948eff1f98c7fda631ee3a386fd65b48",
-      "issue": 1482,
-      "message": {
-        "kind": "admitted",
-        "issue": 1482,
-        "at": 1795154153780,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2bd38b4a72588307054f867fdb179780a543cde2",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:da72a5f2-ac67-441d-8ad3-8c50dafb51bb:finish:3:s6-complete": {
-      "digest": "41114cca3f2b189d13d13471c81074520b9d2a874e1de514ca6e9f623a04e869",
-      "issue": 1482,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1482,
-        "at": 1795155000695,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
-        "phase": "review",
-        "evidence": {
-          "id": "20261120T055609614-27ad135d",
-          "name": "Тесты для задачи #1482 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T055609614-27ad135d/report.json",
-          "materialSha": "113ba1bac0641a4e4e404ef8c0d96d7fa53de263",
-          "status": "passed",
-          "finishedAt": "2026-11-20T06:09:56.746Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Материал `24989789232e → 2bd38b4a72588307054f867fdb179780a543cde2`, ветка `codex/1482-iso-device-outline`, show/product. Это ремонт отображения #1451 в текущей beta-линии; ledger `line-fix`, без пользовательского milestone и без выпуска версии.\n\n### Изменение\n\nCore-sized SVG/CSS mask отдельного устройства раньше висела на `.dev`, внутри которого находится переполняющая его box общая glass-оболочка. Маска тела поэтому обрезала произвольные участки общего стекла и обводки. Маска теперь применяется только к отдельному `.device-occlusion-body` с тем же core-sized box. Glass/contact ink остаётся sibling и использует прежние собственные surface/depth masks. Вершины, wall clipping, ширины/цвета/пунктир, layout и camera не менялись.\n\nПолная карточка теперь сама сохраняет один стабильный `.device-contact-ink` вне guard лица, а shared face получает `contactInk:false`. Это нужно для Flat↔ISO: смена wrapper-шаблона не должна отсоединять paint-узел, который удерживает contact renderer. `!!isoPlacement` добавлен к face guard. Static/preview не получают ISO wrapper, обычное Flat-лицо не оборачивается. Позиции и зоны действий/фокуса по-прежнему принадлежат прежнему `.dev`.\n\n### Проверки и границы\n\n- Свежие `npm run bundle:sync` (включает tsc) и test-build — PASS.\n- `node --test test/device-face.test.mjs test/iso-marker-outline.test.mjs process-next/test/task-selection.test.mjs`: **57/57 PASS**. Новый unit проверяет разделение ink/body, отсутствие лишнего ink у host-owned случая, сохранение Static/preview/Flat. Центральный selection test доказывает product/regression/isometry/task-release и выбор native-контракта из isometry без areaTests на соответствующем широком профиле; эта show-задача явно добавляет его в S6.\n- `demo/smoke_iso_device_contours.mjs`: матрица **80 сочетаний** (DPR1/2, light/dark, четыре поворота, zoom0.73/1/1.33/2.18/3.17), **все попиксельные сравнения идентичны**. Это actual native renderer и 23 синтетических устройства: пристенные группы3/6 со всех сторон, mixed physical/virtual, одиночные, badge и L-группа. В каждом варианте есть реальные body masks (минимум9) и отдельные glass masks (минимум11), не пустой тест без occlusion.\n- Pixel oracle: временно скрываются только тела (не их boxes/state); отключение прежней родительской маски не должно менять стекло. Возврат старой CSS-схемы отдельным отрицательным контролем даёт **421 пиксель на DPR1 /1364 на DPR2**, поэтому оракул действительно ловит исходную ошибку. Это не утверждение о полном сравнении всех объектов с эталоном и не принятие PNG.\n- Flat↔ISO восстановление, единичные wrapper/ink и отсутствие config/layout/service writes прошли после сохранения paint-узла. Первый адресный запуск выявил проблему его замены при Flat-переходе; исправлена в самом владельце DOM, ожидание теста не ослаблено.\n- К этому же native добавлены настоящие wheel/pan с проверкой промежуточных кадров; их исполнение вместе с новым положительным требованием наличия mask выполнит штатный S6 на зафиксированном коммите. Ранее полученные 80 записей отдельно подтверждают минимальные counts выше.\n- Локальные артефакты: `output/1482-unit2.log`, `output/1482-native2/results.json`, пары correct/legacy-negative. Дополнительная визуальная сверка на архивной частной копии плана подтверждает исчезновение разрывов; её PNG/геометрия не публикуются. HA владельца не использован для команд/записей.\n- Реальный HA E2E: [решение houseplan-e2e#85](https://github.com/Matysh/houseplan-e2e/issues/85), отдельный новый сценарий не нужен (API/права/хранение не менялись); выпускные E2E остаются.\n\nНи golden, ни весь stable-набор в этой задаче не запускались. Визуальные эталоны не обновлялись. Обычный finish актуализирует dev в слоте и выполнит текущую центральную S6-выборку, затем независимое код-ревью.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
