@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18237,
+  "revision": 18238,
   "nextTicket": 568,
   "nextFence": 568,
   "tasks": {
@@ -5353,6 +5353,15 @@
         "entry": 1,
         "detail": "Backend: tests_backend/test_ha_wall_removal_limits.py: failed",
         "eventId": "finish:e0d9a7c8-63e7-42ca-b14c-ffc01201d7e1:finish:2:return:return:1497"
+      },
+      "s6": {
+        "id": "20261120T184951464-8c3b4452",
+        "name": "Тесты для задачи #1497 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T184951464-8c3b4452/report.json",
+        "materialSha": "e9c56ea8b48fa203fe536e51a3881d3c2eda04ee",
+        "status": "passed",
+        "finishedAt": "2026-11-20T18:50:12.356Z",
+        "failures": []
       }
     }
   },
@@ -5857,9 +5866,9 @@
     "fence": 567,
     "materialSha": "e9c56ea8b48fa203fe536e51a3881d3c2eda04ee",
     "expectedBase": "3080c38643133e3d4455795be442b751e650eb40",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795200575690,
-    "expiresAt": 1795200883219,
+    "expiresAt": 1795204215758,
     "patchId": "2e080ef6800e70ee870e1e0abfabd3ad9596c111"
   },
   "events": {
@@ -5941,6 +5950,10 @@
     },
     "github:44796348871:1:completions:message:7dbb8c1e7c4ea45fff3dffbcf1fd19ec2d0eb5a4e6b7a18526d7d448655af1d5": {
       "digest": "395e0b07f191298cda0e14b3c3f08386ca2dfb7c34fc8899d41ef3f9cb6997eb",
+      "issue": 1497
+    },
+    "finish:9630b23b-3933-4bd1-889c-7c1687ac1c06:finish:3:s6-complete": {
+      "digest": "80469e0116d90148e8c1bd1213f6c67dff67b2c024de1264ccb1709320a52af6",
       "issue": 1497
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
