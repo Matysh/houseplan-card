@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1105,
+  "revision": 1106,
   "active": "1.86.0-beta.2-20261120",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -149839,7 +149839,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.0-beta.2",
@@ -158475,7 +158475,8 @@
           "en": "## v1.86.0-beta.2 — 2026-11-20\n\n- Blend the final 2.5D zoom bitmap into the exact SVG over 200 ms after the SVG is ready (#1493).\n- Keep 2.5D wall cuts opaque. The wall hatch opacity blends the cut colour with white (#1491).\n- Keep the day/night background during floor preparation and omit the simplified 2.5D loading silhouette while retaining cached geometry and camera hints (#1490).\n- Keep window sunlight visible during 2.5D zoom and release the geometry scaling hint when the camera settles (#1489).\n- Restore coverage for duplicate SVG material definitions and double projection of vacuum trails (#1492)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.0-beta.2"
     }
   },
   "published": {
@@ -164228,7 +164229,8 @@
     "beta1860-2-accept-metrics": "f064e44da4de01165e6750c79a61c2d11eb6a6f062fb1520f9d050fc7cfabc97",
     "beta1860-2-20261120-publish:runner-report": "496aebcacee7869165c5d7976b035511f6a52b7deceb6a83e3dc25ae83622545",
     "beta1860-2-20261120-publish:metrics": "f0331f376482c0753d824940c5cff19dcaf329902199da3066d2271b19d1dacf",
-    "beta1860-2-20261120-publish:prepared:71efc62d-9a0c-4341-914f-a6b3d41f7596": "41ca4db3a325df0eb3aafd704f9fdfb911c194ce61cd21477535cb6de739bbeb"
+    "beta1860-2-20261120-publish:prepared:71efc62d-9a0c-4341-914f-a6b3d41f7596": "41ca4db3a325df0eb3aafd704f9fdfb911c194ce61cd21477535cb6de739bbeb",
+    "beta1860-2-20261120-publish:started:1105": "9dbe8245796cbc8b9f10167fd1b53b1f7f811b53a124191f7daf0c68d8227d25"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
