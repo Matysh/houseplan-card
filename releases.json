@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1136,
+  "revision": 1137,
   "active": "1.86.0-beta.3-20261120",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -159280,7 +159280,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.0-beta.3",
@@ -168018,7 +168018,8 @@
           "en": "## v1.86.0-beta.3 — 2026-11-20\n\n- Add directional masonry shading and thin visible floor contacts and wall ridges in 2.5D. Wall-fill opacity now tints opaque white masonry without filling openings or changing Flat (#1495).\n- Keep the zoom badge hidden when the fitted plan rounds to 100% in mobile editors (#1499).\n- Align cold 2.5D and pan smokes with the current camera, isolate device pixel measurements from the plan background, and wait for the floor before checking restored room labels (#1496, #1497, #1498).\n- Update the reviewed stable visual references and capture the four 2.5D material comparisons on independent pages (#1500, #1501)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.0-beta.3"
     }
   },
   "published": {
@@ -173789,7 +173790,8 @@
     "beta1860-3-accept-metrics": "36ba1528d438b5ef59339de3e4bff68e55998b399d12d299f715666906c203f7",
     "beta1860-3-20261120-publish:runner-report": "317fa26c6d1da609d9b3f458f9b06d4e3feb47a5bf179ee1fde765e7a17db3be",
     "beta1860-3-20261120-publish:metrics": "ac7e71b2d468c3f51787ac58db6e9778fdbb1b4d00d1f9d85af190c57b6894d1",
-    "beta1860-3-20261120-publish:prepared:67b64b96-0d4a-4249-bbfc-2e049b7d33ab": "3d52cd30e4a176066885c8bfd0d04839f9619ca3ecb7d601f6eed075e54045a8"
+    "beta1860-3-20261120-publish:prepared:67b64b96-0d4a-4249-bbfc-2e049b7d33ab": "3d52cd30e4a176066885c8bfd0d04839f9619ca3ecb7d601f6eed075e54045a8",
+    "beta1860-3-20261120-publish:started:1136": "05ba1d31bd8c040f78e00f4f6842b99fd643520bda575ac85050c9bdbc9f7d56"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
