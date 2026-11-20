@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## v1.86.0-beta.4 — 2026-11-21
+
 - In 2.5D, icons and their value badges overlap in camera-depth order at every plan rotation (#1504).
+- Stabilize the Zigbee hover check for a coordinator that is not placed on the plan (#1503).
 
 ## v1.86.0-beta.3 — 2026-11-20
 
