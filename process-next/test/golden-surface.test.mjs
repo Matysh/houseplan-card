@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
+import { GOLDEN_SCENARIOS, STAGE6_ACCEPTANCE_SCENARIOS } from '../../demo/golden/matrix.mjs';
 import { goldenBrowserSurfaceKey, goldenRunSelection } from '../catalog/golden-selection.mjs';
 
 test('golden surfaces preserve shared hosts, Static isolation and DPR separation', () => {
@@ -26,4 +26,14 @@ test('beta keeps all 78 scenes and isolates only the reviewed hover raster fixtu
   assert.deepEqual(isolated.map(scene => scene.id), ['panel-isometric-stage6-hover-light']);
   assert.equal(goldenBrowserSurfaceKey(isolated[0]), 'isolated:panel-isometric-stage6-hover-light:1');
   assert.equal(isolated[0].sourceSceneId, 'isometric-stage6-hover-light');
+});
+
+
+test('stable 2.5D material comparisons use independent browser surfaces', () => {
+  const { scenarios } = goldenRunSelection(GOLDEN_SCENARIOS, ['--selection=rest']);
+  const materialIds = STAGE6_ACCEPTANCE_SCENARIOS
+    .filter(scene => !scene.hoverDevice).map(scene => scene.id);
+  assert.equal(materialIds.length, 4);
+  assert.deepEqual(scenarios.filter(scene => materialIds.includes(scene.id)).map(goldenBrowserSurfaceKey),
+    materialIds.map(id => `isolated:${id}:1`));
 });

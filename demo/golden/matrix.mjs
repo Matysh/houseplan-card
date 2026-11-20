@@ -263,6 +263,8 @@ export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
     glowEnabled: false, sunRays: true, northDeg: 180,
     // The lab's walls are the default white; the colour is the user's either way.
     wallFill: { c: '#ffffff', a: 1 },
+    // The four material references must paint their device masks on a fresh page.
+    isolatedCapture: true,
     theme, viewport: { width: 1000, height: 900 }, ...stage,
   })),
   { id: 'isometric-stage6-hover-light', fixture: 'visual',
