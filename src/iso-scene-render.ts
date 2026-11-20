@@ -118,7 +118,7 @@ export function resolveIsoFramePresentation(input: {
   const overlays = input.overlays(layers);
   const smoothMaterials = ISO_LAB_FLOOR_MARKERS && !!input.scene?.camera;
   const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => {
-    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture, overlays, input.wallLights, input.display.wallFill.c);
+    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture, overlays, input.wallLights, input.display.wallFill?.c);
     const indicators = renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing;
     return {
       layers: renderLayers, panels, overlays,

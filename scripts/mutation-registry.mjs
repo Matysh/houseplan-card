@@ -15215,8 +15215,8 @@ const MUTANT_DEFINITIONS = [
       + 'replicated for every face or marker (#570)',
     patches: [{
       file: 'src/iso-scene-render.ts',
-      find: 'return svg`<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures',
-      replace: 'return svg`${renderIsoDefs(layers, \'walls\', cellCm)}<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures',
+      find: 'return svg`<path class="iso-wall-side" style=${architecture.fill(index)} d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures',
+      replace: 'return svg`${renderIsoDefs(layers, \'walls\', cellCm)}<path class="iso-wall-side" style=${architecture.fill(index)} d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures',
     }],
   },
   {
