@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18026,
-  "nextTicket": 563,
+  "revision": 18027,
+  "nextTicket": 564,
   "nextFence": 563,
   "tasks": {
     "1024": {
@@ -5278,6 +5278,20 @@
         "sourceSha": "3ae1fa8408ad1c86b2954c6742b89412b1ca4a60"
       }
     },
+    "1492": {
+      "issue": 1492,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1492-mutation-guards",
+      "materialSha": "31b6052234aed5e6d7160ec7fe08844f221fc135",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 563,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795191651975,
+      "reviewEntry": 1
+    },
     "1493": {
       "issue": 1493,
       "branch": "codex/1493-raster-fade",
@@ -5810,7 +5824,9 @@
       "runId": 44768104043
     }
   },
-  "waiting": [],
+  "waiting": [
+    1492
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5880,6 +5896,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:8a32954e-f270-4e79-9fff-a7230290ac6b": {
+      "digest": "d36e1a1c7dd74725044fbe076d67e5db5f646dddbde4e65057bf1c752b23c142",
+      "issue": 1492,
+      "message": {
+        "kind": "queued",
+        "issue": 1492,
+        "at": 1795191651975,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "31b6052234aed5e6d7160ec7fe08844f221fc135"
       }
     }
   },
