@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18230,
+  "revision": 18231,
   "nextTicket": 567,
   "nextFence": 567,
   "tasks": {
@@ -5343,7 +5343,18 @@
       "patchId": "2e080ef6800e70ee870e1e0abfabd3ad9596c111",
       "changedFiles": [
         "demo/smoke_device_icon_pixel_alignment.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795200510798,
+        "entry": 1,
+        "detail": "Backend: tests_backend/test_ha_wall_removal_limits.py: failed",
+        "eventId": "finish:e0d9a7c8-63e7-42ca-b14c-ffc01201d7e1:finish:2:return:return:1497"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5840,18 +5851,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1497,
-    "worker": "finish",
-    "token": "566:finish:c624d8f7-65b5-422a-a9b4-ee9969272fcc:finish:1:admit",
-    "fence": 566,
-    "materialSha": "e9c56ea8b48fa203fe536e51a3881d3c2eda04ee",
-    "expectedBase": "3080c38643133e3d4455795be442b751e650eb40",
-    "phase": "testing",
-    "admittedAt": 1795200265319,
-    "expiresAt": 1795200792137,
-    "patchId": "2e080ef6800e70ee870e1e0abfabd3ad9596c111"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5911,6 +5911,10 @@
     },
     "finish:e256ad3c-9e88-409c-be1a-b8bade609852": {
       "digest": "e9b4f888704367a3ecef4b877c418648b1c2d2cf50e31a632be793bb689aedd8",
+      "issue": 1497
+    },
+    "finish:e0d9a7c8-63e7-42ca-b14c-ffc01201d7e1:finish:2:return": {
+      "digest": "e603bbcf63edb873a510365f05f665c165745fafcbd9ebf7f942859617f6d3bb",
       "issue": 1497
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -5981,6 +5985,26 @@
         "track": "show",
         "layer": "product",
         "materialSha": "3080c38643133e3d4455795be442b751e650eb40"
+      }
+    },
+    "finish:e0d9a7c8-63e7-42ca-b14c-ffc01201d7e1:finish:2:return:return:1497": {
+      "digest": "e603bbcf63edb873a510365f05f665c165745fafcbd9ebf7f942859617f6d3bb",
+      "issue": 1497,
+      "message": {
+        "kind": "return",
+        "issue": 1497,
+        "at": 1795200510798,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795200510798,
+          "entry": 1,
+          "detail": "Backend: tests_backend/test_ha_wall_removal_limits.py: failed",
+          "eventId": "finish:e0d9a7c8-63e7-42ca-b14c-ffc01201d7e1:finish:2:return:return:1497"
+        }
       }
     }
   },
