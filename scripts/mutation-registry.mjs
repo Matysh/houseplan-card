@@ -14568,7 +14568,7 @@ const MUTANT_DEFINITIONS = [
       + 'is what guarantees the skipped tick is replayed afterwards (#451, #458)',
     patches: [{
       file: 'src/live-interaction-runtime.ts',
-      find: "    const defer = change === 'state' && this.active(false)\n      && !contactValueFrameChanged(this.host,this.contacts,before,after);",
+      find: "    const defer = change === 'state' && this.active(false) && !holdsHouseplanIsoScene(this.host)\n      && !contactValueFrameChanged(this.host,this.contacts,before,after);",
       replace: '    const defer = false;',
     }],
   },
@@ -14639,7 +14639,7 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/live-viewport.ts",
-    "find": "    || (!options.lockSceneAnchor && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));",
+    "find": "    || (!options.lockSceneAnchor && !options.freezeScene && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));",
     "replace": "    || !options.lockSceneAnchor;"
   }
 ],

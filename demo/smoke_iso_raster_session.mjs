@@ -11,10 +11,7 @@ const { browser, page } = await startIsoPaintScene({
     fixture.config.spaces[0].plan_url = '/assets/f1.svg?raster-session';
     fixture.config.spaces[0].plan_aspect = 1;
   } : undefined,
-  createPage: async context => {
-    if (mode === 'fallback') await context.addInitScript(() => { window.createImageBitmap = undefined; });
-    return context.newPage();
-  },
+  initScript: mode === 'fallback' ? () => { window.createImageBitmap = undefined; } : undefined,
 });
 
 try {

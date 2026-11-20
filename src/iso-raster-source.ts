@@ -24,7 +24,7 @@ function dataUrl(blob: Blob): Promise<string> {
 
 /** Capture the same scene and styling once, then reuse it for different cameras. */
 export async function captureIsoRasterSource(scene: SVGSVGElement, stage: HTMLElement,
-  signal: AbortSignal): Promise<string> {
+  computed: CSSStyleDeclaration, signal: AbortSignal): Promise<string> {
   const root = scene.getRootNode();
   if (!(root instanceof ShadowRoot) || scene.querySelector('foreignObject')) throw Error('Unsupported SVG source');
   const doc = scene.ownerDocument;
@@ -49,7 +49,6 @@ export async function captureIsoRasterSource(scene: SVGSVGElement, stage: HTMLEl
   const names = new Set(['color', 'color-scheme', 'font-size', 'font-family']);
   for (const name of stage.style) if (name.startsWith('--')) names.add(name);
   for (const match of (sceneCss + '\n' + scene.outerHTML).matchAll(/var\(\s*(--[\w-]+)/g)) names.add(match[1]);
-  const computed = getComputedStyle(scene);
   for (const name of names) context.style.setProperty(name, computed.getPropertyValue(name));
   css.textContent = sceneCss + '\ng.stage, g.zoomwrap { opacity:1; transform:none; filter:none; clip-path:none; }';
   const wrap = doc.createElementNS(svgNamespace, 'g');

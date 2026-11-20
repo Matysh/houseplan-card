@@ -484,7 +484,9 @@ function configureCameraRaster(host: LiveViewportHost, state: LiveViewportState,
   const dpr = svg.ownerDocument.defaultView?.devicePixelRatio || 1;
   const theme = stage.classList.contains('theme-dark') ? 'dark' : stage.classList.contains('theme-light') ? 'light' : '';
   const authority = (state.basis?.key ?? '') + '|' + theme;
-  (state.raster ??= new IsoCameraRaster()).configure(svg, anchor.frame.view, anchor.coverage,
+  // The renderer invokes the style read from its deferred source capture.
+  // The geometry and SVG serialization modules do not measure live layout.
+  (state.raster ??= new IsoCameraRaster(scene => getComputedStyle(scene))).configure(svg, anchor.frame.view, anchor.coverage,
     { ...state.limits, stageSize, dpr }, stage.getAttribute('style') ?? '', authority);
 }
 

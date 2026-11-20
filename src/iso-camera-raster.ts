@@ -103,6 +103,8 @@ export class IsoCameraRaster {
   private unsupported?: Document;
   private busy = false;
 
+  constructor(private readonly readStyle: (scene: SVGSVGElement) => CSSStyleDeclaration) {}
+
   public configure(scene: SVGSVGElement, view: LiveViewBox, coverage: LiveViewBox, limits: RasterViewport,
     styleKey: string, authority: string): void {
     const current = this.session;
@@ -215,7 +217,7 @@ export class IsoCameraRaster {
     const stillRelevant = () => this.session === session && !job.signal.aborted && revision === session.revision;
     this.busy = true;
     try {
-      session.source ??= await captureIsoRasterSource(session.scene, session.stage, job.signal);
+      session.source ??= await captureIsoRasterSource(session.scene, session.stage, this.readStyle(session.scene), job.signal);
       if (!stillRelevant()) { session.source = undefined; return; }
       const needUnderlay = session.underlay.revision !== revision;
       if (needUnderlay) {
