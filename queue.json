@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18309,
+  "revision": 18310,
   "nextTicket": 570,
   "nextFence": 570,
   "tasks": {
@@ -5346,7 +5346,8 @@
         "comment": false
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "e9c56ea8b48fa203fe536e51a3881d3c2eda04ee"
       }
     },
     "1498": {
