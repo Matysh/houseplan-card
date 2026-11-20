@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16863,
-  "nextTicket": 542,
+  "revision": 16864,
+  "nextTicket": 543,
   "nextFence": 542,
   "tasks": {
     "1024": {
@@ -5159,14 +5159,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1478-camera-performance",
-      "materialSha": "e6d8764b99533d417e7870fd45d1d62d1ac14003",
+      "materialSha": "f4aca24bbd781af07b01d6c1bfccbc31b826614a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 541,
-      "queued": false,
+      "ticket": 542,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795132011130,
-      "reviewEntry": 2,
+      "readyAt": 1795133858767,
+      "reviewEntry": 3,
       "patchId": "a86c6ae4b323e1c3f8529fa21e731e08ecac8ccb",
       "changedFiles": [
         "demo/benchmark_iso_edge_zoom.mjs",
@@ -5249,8 +5249,7 @@
         "entry": 2,
         "detail": "Браузер: approved ui 1207: failed; Браузер: room metrics alignment: failed; Браузер: settings polish 955: failed; Браузер: stair arrival: failed; Браузер: svg export: failed; Браузер: ui polish 963 reference: failed",
         "eventId": "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:3:return:return:1478"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5718,7 +5717,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1478
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6068,6 +6069,19 @@
           "detail": "Браузер: approved ui 1207: failed; Браузер: room metrics alignment: failed; Браузер: settings polish 955: failed; Браузер: stair arrival: failed; Браузер: svg export: failed; Браузер: ui polish 963 reference: failed",
           "eventId": "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:3:return:return:1478"
         }
+      }
+    },
+    "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1": {
+      "digest": "b3467eabb2d40990215604242677c7a63a1f6900bc892140ef4acba0e051c407",
+      "issue": 1478,
+      "message": {
+        "kind": "queued",
+        "issue": 1478,
+        "at": 1795133858767,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "f4aca24bbd781af07b01d6c1bfccbc31b826614a"
       }
     }
   },
