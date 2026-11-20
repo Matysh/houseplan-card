@@ -1,25 +1,25 @@
-<!-- release: v1.85.3-beta.2 -->
+<!-- release: v1.85.3-beta.3 -->
 <!-- base: v1.85.2 -->
 <!-- language: ru -->
-## Houseplan 1.85.3-beta.2
+## Houseplan 1.85.3-beta.3
 
-Изменения после beta.1:
+Изменения после beta.2:
 
-- Новый наклонный 2.5D-вид: проработанные стены и проёмы, 60 объёмных моделей мебели и связь компьютера со столом. Редакторы остаются плоскими. 2.5D пока находится в разработке; у существующего верхнего открывания окна меняется только объёмное изображение — створка наклоняется с неподвижным нижним краем, сохранённая настройка и датчики не меняются. [#1451](https://github.com/Matysh/houseplan-card/issues/1451)
-- Подготовленная геометрия этажей сохраняется в локальном кэше. При загрузке может показываться пассивная архитектурная основа, пока готовятся актуальные данные; старые состояния устройств не выдаются за текущие. [#1454](https://github.com/Matysh/houseplan-card/issues/1454)
-- Контекстное меню комнаты в редакторе плана объединяет настройки, изменение размера, разделение, объединение и удаление. [#1453](https://github.com/Matysh/houseplan-card/issues/1453)
-- Отдельный ZIP планировки всего дома переносит этажи, лестницы и изображения без устройств и HA-привязок. Импорт добавляет планировку, не заменяя общие настройки принимающей установки. Полный бэкап остаётся отдельной операцией. [#1464](https://github.com/Matysh/houseplan-card/issues/1464)
+- Панорама и масштабирование в 2.5D переиспользуют уже отрисованный план. При зуме изображение может ненадолго смягчаться и снова становится резким после остановки. Свет пола, стен и мебели меняется плавно. [#1478](https://github.com/Matysh/houseplan-card/issues/1478)
+- В 2.5D подняты значки и подписи, свет отображается на стенах, а мебель и лестницы используют общий материал. В настройках пространства можно задать отдельный акцент проёмов. [#1474](https://github.com/Matysh/houseplan-card/issues/1474)
+- Распашная дверь по умолчанию располагается у стороны открывания. В свойствах можно выбрать любую сторону или центр проёма. Выбранное положение видно и при перепривязке двери. [#1475](https://github.com/Matysh/houseplan-card/issues/1475) · [#1476](https://github.com/Matysh/houseplan-card/issues/1476)
+- Обводка значков разных размеров правильно закругляется в 2D и 2.5D. [#1477](https://github.com/Matysh/houseplan-card/issues/1477)
 
 Перед обновлением сохраните резервную копию. После установки перезапустите Home Assistant и перезагрузите страницы Houseplan.
 
 <!-- language: en -->
-## Houseplan 1.85.3-beta.2
+## Houseplan 1.85.3-beta.3
 
-Changes since beta.1:
+Changes since beta.2:
 
-- New angled 2.5D presentation with refined walls and openings, 60 volume furniture models and desk/computer links. Editors remain flat. 2.5D is still under development. Existing top-opening windows change their volume appearance only: the sash tilts around its fixed bottom edge; saved settings and sensors are unchanged. [#1451](https://github.com/Matysh/houseplan-card/issues/1451)
-- Prepared floor geometry is retained in a local cache. A passive architectural preview can appear while current data is prepared; stale device states are not presented as live. [#1454](https://github.com/Matysh/houseplan-card/issues/1454)
-- A room context menu in the plan editor brings together settings, resize, split, merge and delete actions. [#1453](https://github.com/Matysh/houseplan-card/issues/1453)
-- A separate whole-house plan ZIP transfers floors, stairs and images without devices or HA bindings. Import appends the plan without replacing the destination's global settings. Full backup remains a separate operation. [#1464](https://github.com/Matysh/houseplan-card/issues/1464)
+- Pan and zoom in 2.5D reuse the rendered plan. The image may soften briefly while zooming and sharpens again when scrolling stops. Lighting fades across the floor, walls and furniture together. [#1478](https://github.com/Matysh/houseplan-card/issues/1478)
+- 2.5D raises markers and labels, adds lighting on walls, and uses matching materials for stairs and furniture. Space settings offer a separate accent colour for openings. [#1474](https://github.com/Matysh/houseplan-card/issues/1474)
+- Swing doors sit on the opening side by default. You can choose either side or the centre in the door's properties. The preview keeps that choice when you reattach the door to another wall. [#1475](https://github.com/Matysh/houseplan-card/issues/1475) · [#1476](https://github.com/Matysh/houseplan-card/issues/1476)
+- Device outlines follow the corners of mixed-size icons in 2D and 2.5D. [#1477](https://github.com/Matysh/houseplan-card/issues/1477)
 
-Back up your plan before updating. Restart Home Assistant after installation and reload Houseplan pages.
+Save a backup before updating. After installation, restart Home Assistant and reload Houseplan.
