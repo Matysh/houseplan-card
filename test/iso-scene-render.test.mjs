@@ -16,6 +16,7 @@ import {
   isoStructuralRoomGeometry,
   resolveIsoDecorationLayers,
   resolveIsoFramePresentation,
+  renderIsoWalls,
   resolveIsoOverlayFitEnvelope,
   resolveIsoScene,
 } from '../test-build/iso-scene-render.js';
@@ -34,7 +35,7 @@ import {
   resolveIsoOverlayOwner,
 } from '../test-build/iso-overlays.js';
 import {
-  isoDisplayWallHeight,
+  ISO_CAMERA, isoDisplayWallHeight,
   projectPlanPoint, isoFloorMatrix,
 } from '../test-build/iso-projection.js';
 
@@ -798,6 +799,27 @@ test('structural scene cache refreshes a hot hit before evicting the least-recen
   assert.equal(builds.get(initial[0].id), 1, 'a hot hit must not rebuild structural geometry');
   resolve(1);
   assert.equal(builds.get(initial[1].id), 2, 'the evicted cold entry must rebuild on its next use');
+});
+
+test('#1492 wall faces share one set of SVG material definitions', () => {
+  const geometry = structureOf([...wallRect(0, 0, 100, 10), ...wallRect(0, 30, 100, 40)]);
+  const scene = {
+    key: 'shared-materials', geometry, floor: { footprintPath: '', sides: [] },
+    openings: [], openingSurfaces: [], frame: { x: 0, y: 0, w: 100, h: 100 },
+    camera: ISO_CAMERA,
+  };
+  const layers = {
+    structural: true, panels: true, shadows: true, materialNuance: true, floorSymbols: false,
+  };
+  // Walk the emitted Lit fragments, including the nested output for each face.
+  const staticSvg = part => {
+    if (Array.isArray(part)) return part.map(staticSvg).join('');
+    return part?.strings ? part.strings.join('') + part.values.map(staticSvg).join('') : '';
+  };
+  const walls = staticSvg(renderIsoWalls('iso', layers, scene, [], 5));
+  assert.ok([...walls.matchAll(/class="iso-wall-side"/g)].length > 1, 'fixture renders several wall faces');
+  const ids = [...walls.matchAll(/id="([^"]+)" data-hp-iso-material-def/g)].map(match => match[1]);
+  assert.deepEqual(ids.sort(), ['hp-iso-wall-side', 'hp-iso-wall-texture', 'hp-iso-wall-top']);
 });
 
 test('throwing decoration capability probes keep Iso structural geometry on the solid path', () => {

@@ -3259,14 +3259,12 @@ const MUTANT_DEFINITIONS = [
     id: 'vacuum-trail-double-camera-owner',
     guard: 'node demo/smoke_vacuum_camera.mjs',
     because: '#871 AC1: native intermediate pan frames observe SVG/plan screen landmarks; '
-      + 'a settled frame or a pure inverse cannot reveal a second live ancestor projection.',
-    patches: [
-  {
-    "file": "src/houseplan-card.ts",
-    "find": "class=\"vactrail\" data-hp=\"vacuum-trail\" data-hp-live-inherited-scene=\"camera\"",
-    "replace": "class=\"vactrail\" data-hp=\"vacuum-trail\" data-hp-live-viewbox=\"camera\""
-  }
-],
+      + 'a settled frame or a pure inverse cannot reveal a second live projection on a nested route.',
+    patches: [{ file: 'src/live-viewport.ts',
+      find: '  const cameraLayers = [...new Set(camera.map(svg =>\n',
+      replace: '  const owners = [...camera, ...root.querySelectorAll<SVGElement>(\'[data-hp-live-inherited-scene="camera"]\')];\n'
+        + '  const cameraLayers = [...new Set(owners.map(svg =>\n',
+    }],
   },
   {
     id: 'vacuum-tip-runtime-skips-current-matrix',
