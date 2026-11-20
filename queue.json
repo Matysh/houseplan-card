@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 17468,
-  "nextTicket": 553,
+  "revision": 17469,
+  "nextTicket": 554,
   "nextFence": 553,
   "tasks": {
     "1024": {
@@ -5238,14 +5238,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1486-raster-material-recurrence",
-      "materialSha": "94b2d0d966b393c904fd3075631ba475faef711f",
+      "materialSha": "54a8148959ffb71f0737532924c05b0a65de8b4a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 552,
-      "queued": false,
+      "ticket": 553,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795160584787,
-      "reviewEntry": 1,
+      "readyAt": 1795161565870,
+      "reviewEntry": 2,
       "patchId": "3edaa136a48b01a08960d3d3fea9336d364619df",
       "changedFiles": [
         "demo/smoke_iso_raster_materials.mjs",
@@ -5256,7 +5256,6 @@
         "src/iso-camera-raster.ts",
         "src/live-viewport.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5755,7 +5754,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1486
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5972,6 +5973,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:de5b469c-f5cb-4f73-9eb9-eb1b8d98b03f": {
+      "digest": "7c4d4ccd2f1d1f183c3dc48f2fe2bea025003e8d8a5168b4eb4448af9fc8760e",
+      "issue": 1486,
+      "message": {
+        "kind": "queued",
+        "issue": 1486,
+        "at": 1795161565870,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "54a8148959ffb71f0737532924c05b0a65de8b4a"
       }
     }
   },
