@@ -116,10 +116,10 @@ const out = await page.evaluate(async () => {
     && htmlLabels(compact).length === 0 && svgLabels(compact).length === 0;
 
   // Turning names back on restores the existing HTML card and saved layout.
-  space.settings.show_names = true;
-  card._cfgEpoch++;
-  card.requestUpdate();
-  await settle();
+  card._openSpaceDialog('edit', space.id);
+  card._spaceDialog = { ...card._spaceDialog, showNames: true };
+  await card._saveSpaceDialog();
+  await window.__hpTest.settled();
   const restored = root().querySelector(`[data-hp="room-label"][data-id="${room.id}"]`);
   const trueRestoresExistingCard = !!restored
     && restored.tagName.toLowerCase() === 'div'
