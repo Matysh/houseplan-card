@@ -1,0 +1,1 @@
+{"schema":1,"issue":1504,"baseStable":"v1.85.2","category":"line-fix","rationale":"Corrects paint order within the floor-aligned, extruded marker added on the current 1.86 beta line.","summary":{"ru":"В 2.5D иконка и бейдж значения перекрываются по глубине текущего ракурса.","en":"In 2.5D, icon and value badge overlap by camera depth."}}

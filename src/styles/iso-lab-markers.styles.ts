@@ -121,6 +121,20 @@ export const isoLabMarkersStyles = css`
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .value-badge {
     --hp-iso-side: #808080;
   }
+  /* Order the whole badge (cap and side) against its own core, without
+     changing their anchors or the shared glass's rear/front layers. */
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .pos-right .value-badge {
+    z-index: var(--hp-iso-badge-right-layer, 2);
+  }
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .pos-left .value-badge {
+    z-index: var(--hp-iso-badge-left-layer, 2);
+  }
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .pos-top .value-badge {
+    z-index: var(--hp-iso-badge-top-layer, 2);
+  }
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .pos-bottom .value-badge {
+    z-index: var(--hp-iso-badge-bottom-layer, 2);
+  }
   /* The native contact renderer paints the envelope of the entire body.
      Hide only the old flat ring, not its canonical measurement or hit area. */
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev[data-hp="device"][data-hp-iso-body-outline] .device-shell-frame {

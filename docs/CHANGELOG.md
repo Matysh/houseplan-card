@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- In 2.5D, icons and their value badges overlap in camera-depth order at every plan rotation (#1504).
+
 ## v1.86.0-beta.3 — 2026-11-20
 
 - Add directional masonry shading and thin visible floor contacts and wall ridges in 2.5D. Wall-fill opacity now tints opaque white masonry without filling openings or changing Flat (#1495).

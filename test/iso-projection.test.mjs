@@ -34,6 +34,20 @@ test('#1451 solid tile edge remains vertically down through camera turns', () =>
   }
 });
 
+test('#1504 each badge side switches paint layer only when it crosses behind the core', () => {
+  const sides = ['right', 'bottom', 'left', 'top'];
+  const front = [['right', 'bottom'], ['right', 'top'], ['left', 'top'], ['left', 'bottom']];
+  for (const [i, turn] of [0, 90, 180, 270].entries()) {
+    const styles = isoTileDepthStyles(isoCameraFor(turn));
+    for (const side of sides) {
+      assert.equal(styles[`--hp-iso-badge-${side}-layer`], front[i].includes(side) ? '2' : '0', `${turn}°/${side}`);
+    }
+  }
+  const edgeOn = isoTileDepthStyles({ ...ISO_CAMERA, rotDeg: 90 });
+  assert.equal(edgeOn['--hp-iso-badge-top-layer'], '2', 'a depth tie keeps the old paint order');
+  assert.equal(edgeOn['--hp-iso-badge-bottom-layer'], '2');
+});
+
 test('#1451 marker-local corners follow the floor and inverse preserves the screen hit target', () => {
   for (const turn of [0,90,180,270]) {
     const camera = {...ISO_CAMERA,rotDeg:35+turn,tiltDeg:55,floorScaleY:Math.sin(35*Math.PI/180)};

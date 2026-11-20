@@ -154,11 +154,19 @@ export function isoFloorLinearCss(camera: IsoCamera = ISO_CAMERA, inverse = fals
   return `matrix(${[...linear, 0, 0].join(',')})`;
 }
 
-/** Local offsets whose projection is a vertical, screen-space tile edge. */
+/** Tile extrusion and relative paint layers on the same raised camera plane. */
 export function isoTileDepthStyles(camera: IsoCamera): Record<string,string> {
   const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c;
+  // On a shared height, increasing projected Y is nearer. A badge is
+  // translated along one local axis from the core, so its side determines
+  // the sign. Keep layer 1 for the core and preserve the old tie order.
+  const badgeLayer = (delta: number) => delta < -1e-12 ? '0' : '2';
   return {'--hp-iso-edge-unit-x':String(-c/det*.22),
-    '--hp-iso-edge-unit-y':String(a/det*.22)};
+    '--hp-iso-edge-unit-y':String(a/det*.22),
+    '--hp-iso-badge-right-layer':badgeLayer(b),
+    '--hp-iso-badge-left-layer':badgeLayer(-b),
+    '--hp-iso-badge-bottom-layer':badgeLayer(d),
+    '--hp-iso-badge-top-layer':badgeLayer(-d)};
 }
 
 export function isoOverlayVisualHeight(visualOffset: number): number {

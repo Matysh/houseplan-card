@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 114;
+export const GOLDEN_MATRIX_VERSION = 115;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1067,6 +1067,32 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       'golden-climate': { s: 'golden-lighting', x: 0.80, y: 0.28 },
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  // #1504: the same large icon/badge pairs in all four camera quadrants.
+  // An opposite turn must reverse which face covers the other, not move it.
+  ...[0, 90, 180, 270].map(rotation => ({
+    id: `panel-iso-value-badge-depth-${rotation}-1504`, fixture: 'visual', space: 'golden-lighting',
+    panelHost: true, mode: 'view', projection: 'iso', rotation, isoBadgeDepth: true,
+    sunRays: false, glowEnabled: false, showNames: false,
+    // The harness verifies rotation against a real decor transform.
+    decorOverride: [{ ...decorLayerFixture[0], color: '#5e6874', width_cm: 1 }],
+    stateOverrides: {
+      'sensor.golden_left_temperature': { state: '100', attributes: { unit_of_measurement: '%' } },
+    },
+    markerOverrides: [
+      ['golden-light-one', 'right'], ['golden-light-two', 'left'],
+      ['golden-light-three', 'top'], ['golden-climate', 'bottom'],
+    ].map(([id, position]) => ({
+      id, binding: `device:${id}`, display: 'icon', size: 2.5,
+      value_badge: { enabled: true, source: { kind: 'entity_state', entity_id: 'sensor.golden_left_temperature' }, position },
+    })),
+    layoutOverrides: {
+      'golden-light-one': { s: 'golden-lighting', x: 0.20, y: 0.15 },
+      'golden-light-two': { s: 'golden-lighting', x: 0.44, y: 0.37 },
+      'golden-light-three': { s: 'golden-lighting', x: 0.82, y: 0.33 },
+      'golden-climate': { s: 'golden-lighting', x: 0.81, y: 0.71 },
+    },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage,
+  })),
   // #792: six exact designer variants (Light/Dark × D32/56/96), all four
   // states, every badge side, expanded Text and legacy multi-metric shells.
   // Each rendered battery must render its MDI path and paint matching ink.

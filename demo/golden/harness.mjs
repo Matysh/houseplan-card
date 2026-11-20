@@ -1413,6 +1413,20 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
       await settleMode(card, scenario.mode);
     }
+    // Panel has no Lovelace rotation option: set the current space's turn
+    // through the same toolbar controls used by the real panel.
+    if (scenario.panelHost && scenario.rotation !== undefined) {
+      for (let step = 0; step < 3 && card._rotation !== scenario.rotation; step++) {
+        const previous = card._rotation;
+        const direction = (scenario.rotation - previous + 360) % 360 === 270 ? 'left' : 'right';
+        const button = card.renderRoot.querySelector(`[data-hp="rotate-${direction}"]`);
+        if (!button || button.disabled) throw Error(`golden panel rotation control unavailable: ${scenario.id}`);
+        button.click();
+        await until(() => card._rotation !== previous && !card._rotationMotion.running, 1500);
+        await settleCamera(card);
+      }
+      if (card._rotation !== scenario.rotation) throw Error(`golden panel rotation did not settle: ${scenario.id}`);
+    }
     if (Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')) {
       const target = String(scenario.integrationVersion || '').trim();
       await until(() => card._versionRecovery?.relation?.kind === 'mismatch'
@@ -3023,6 +3037,29 @@ export async function prepareGoldenScenario(page, scenario) {
         throw Error(`painted plan axis does not follow ${expected}: ${direction}`);
       return { expected, direction, length };
     }, { expected: scenario.rotation, isIso: scenario.projection === 'iso' });
+  }
+  if (scenario.isoBadgeDepth) {
+    result.isoBadgeDepth = await page.evaluate((ids) => {
+      const root = window.__goldenCard.renderRoot;
+      const stage = root.querySelector('.stage.projection-iso[data-hp-iso-floor-markers]');
+      if (!stage) throw Error('badge depth witness needs the raised 2.5D plane');
+      const rows = ids.map(id => {
+        const device = stage.querySelector(`.dev[data-id="${CSS.escape(id)}"]`);
+        const core = device?.querySelector('.device-core');
+        const badge = device?.querySelector('.device-sections .value-badge');
+        const coreBox = core?.getBoundingClientRect(), badgeBox = badge?.getBoundingClientRect();
+        if (!coreBox?.width || !badgeBox?.width) throw Error(`missing icon/badge pair: ${id}`);
+        const depth = badgeBox.y + badgeBox.height / 2 - coreBox.y - coreBox.height / 2;
+        const nearer = depth > 0;
+        const order = Number(getComputedStyle(badge).zIndex) - Number(getComputedStyle(core).zIndex);
+        if (Math.abs(depth) < 1 || !Number.isFinite(order) || order === 0 || (order > 0) !== nearer)
+          throw Error(`badge paint order disagrees with the projected centres: ${id} (depth ${depth}, layer difference ${order})`);
+        return { id, nearer, depth, order };
+      });
+      if (!rows.some(row => row.nearer) || !rows.some(row => !row.nearer))
+        throw Error('badge depth witness must include near and far badges');
+      return rows;
+    }, scenario.markerOverrides.map(marker => marker.id));
   }
   if (scenario.id.startsWith('plan-rotation-phone-')) {
     result.phoneHeader = await page.evaluate((scenario) => {
