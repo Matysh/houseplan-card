@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.86.0-beta.1 — 2026-11-20
+
 - Keep unrelated HA theme tokens outside the 2.5D raster so malformed CSS values cannot swallow wall colours, opacity and opening materials during zoom (#1486).
 - Smooth 2.5D wheel zoom with background scene frames and an overview image for newly revealed edges. Restore the exact plan when the gesture ends (#1485).
 - Keep device markers aligned and at the right scale throughout transitions between View and the plan, device and background editors (#1484).
@@ -9,6 +11,9 @@
 - Keep the 2.5D zoom-out raster through delayed wheel events on large displays and avoid a duplicate camera update at settlement (#1481).
 - Keep shared 2.5D device glass outside individual body-occlusion masks, avoiding cropped rims and panes across zoom levels while retaining wall depth, virtual dashes and Flat markup (#1482).
 - Preserve 2.5D wall and opening materials during zoom and use the raster pixels for visible plan geometry (#1480).
+
+## v1.85.3-beta.3 — 2026-11-20
+
 - Reuse the painted 2.5D plan during pan and zoom, with SVG floor shadows and a shared lighting fade (#1478).
 - Round each exposed corner of a shared device outline to suit its icon size in 2D and 2.5D (#1477).
 - Preview the saved swing-door position when rebinding an opening to a replacement wall (#1476).
