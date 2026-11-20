@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18639,
+  "revision": 18640,
   "nextTicket": 575,
   "nextFence": 575,
   "tasks": {
@@ -5502,83 +5502,24 @@
     "1502": {
       "issue": 1502,
       "branch": "issue/1502-release-return-954bdc137380",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "954bdc1373807315b34ba02a97bf776d52d60284",
-      "releaseTag": "v1.86.0-beta.3",
-      "materialSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
-      "ownerDecision": null,
-      "ticket": 574,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795207098129,
-      "reviewEntry": 1,
-      "patchId": "1c1386c936bbdfc66e8aef979e89b913379a83ab",
-      "review": {
-        "source": "published-release",
-        "sourceSha": "954bdc1373807315b34ba02a97bf776d52d60284",
-        "tag": "v1.86.0-beta.3",
-        "verdict": "accepted",
-        "patchId": "1c1386c936bbdfc66e8aef979e89b913379a83ab",
-        "materialSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050"
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
+      "mergedSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
+      "mergedAt": 1795208288962,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/device-alert-alarm-iso.png",
-        "demo/golden/baselines/device-alert-attention-iso.png",
-        "demo/golden/baselines/device-alert-maintenance-iso.png",
-        "demo/golden/baselines/direct-zigbee-lqi-iso-dark.png",
-        "demo/golden/baselines/hidden-devices-iso-dark.png",
-        "demo/golden/baselines/iso-led-strip-dark.png",
-        "demo/golden/baselines/isometric-geometry-view-dark.png",
-        "demo/golden/baselines/isometric-live-layers-dark.png",
-        "demo/golden/baselines/isometric-stage3-no-filter-dark.png",
-        "demo/golden/baselines/isometric-stage3-openings-dark.png",
-        "demo/golden/baselines/isometric-stage3-overlays-light.png",
-        "demo/golden/baselines/isometric-stage6-dark-darkfloor.png",
-        "demo/golden/baselines/isometric-stage6-dark-lightfloor.png",
-        "demo/golden/baselines/isometric-stage6-light-darkfloor.png",
-        "demo/golden/baselines/isometric-stage6-light-lightfloor.png",
-        "demo/golden/baselines/isometric-touch-kiosk-dark.png",
-        "demo/golden/baselines/isometric-wall-junctions-dark.png",
-        "demo/golden/baselines/lighting-closed-door-panel-iso-dark.png",
-        "demo/golden/baselines/lighting-interior-window-iso-dark.png",
-        "demo/golden/baselines/lighting-sun-transparent-chain-iso.png",
-        "demo/golden/baselines/panel-isometric-geometry-view-light.png",
-        "demo/golden/baselines/panel-isometric-large-warm-remount-dark.png",
-        "demo/golden/baselines/panel-isometric-opening-symbol-parity-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-forced-colors-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
-        "demo/golden/baselines/panel-isometric-stage6-hover-light.png",
-        "demo/golden/baselines/panel-narrow-kiosk-fixed.png",
-        "demo/golden/baselines/panel-stairs-isometric-dark.png",
-        "demo/golden/baselines/plan-rotation-iso-0-1070.png",
-        "demo/golden/baselines/plan-rotation-iso-180-1070.png",
-        "demo/golden/baselines/plan-rotation-iso-270-1070.png",
-        "demo/golden/baselines/plan-rotation-iso-90-1070.png",
-        "demo/golden/baselines/room-co2-iso-dark.png",
-        "demo/golden/baselines/view-device-menu-iso-edge-dark.png",
-        "demo/golden/baselines/zigbee-led-iso-dark.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "package-lock.json",
-        "package.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "s6": {
-        "id": "20261120T203842482-44d77066",
-        "name": "Тесты для задачи #1502 (перед ревью)",
-        "reportPath": "/home/sergey/hp-release-1860-beta3/.git/process-next/runs/20261120T203842482-44d77066/report.json",
-        "materialSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
-        "status": "passed",
-        "finishedAt": "2026-11-20T20:58:02.410Z",
-        "failures": []
+      "releaseTag": "v1.86.0-beta.3",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6062,18 +6003,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1502,
-    "worker": "finish",
-    "token": "574:release-return-finish:c0acd092-7b09-42a3-a257-d8705308afcc:finish:1:admit",
-    "fence": 574,
-    "materialSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
-    "expectedBase": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795207102906,
-    "expiresAt": 1795211883781,
-    "patchId": "1c1386c936bbdfc66e8aef979e89b913379a83ab"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6115,98 +6045,6 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "release-return-finish:c0acd092-7b09-42a3-a257-d8705308afcc:finish:2:synchronized": {
-      "digest": "971fe5f17e57b743feccadfbdf312fa82aca2af714ae94fcf2ac846f077dfd77",
-      "issue": 1502
-    },
-    "finish:ca506a8b-fbdf-4f38-ae04-b4e3b4b9d87d": {
-      "digest": "4b75294c0205faf4440540fc843910faa80cb812b35619cb9155c2d6b885db1c",
-      "issue": 1502
-    },
-    "finish:d21443ab-5186-4921-8d83-e3e2ed45b7cf": {
-      "digest": "a838b256ce2c0bd88ecf04e522ba220558e2493900207af72f8870788d6403cd",
-      "issue": 1502
-    },
-    "finish:48b81fa5-8a9f-4d92-97e6-637e31833bbb": {
-      "digest": "a5337b92c535b1ba10e62ccf2c36c5a24f4a25947b3d47457c5e67e1e0f6cc39",
-      "issue": 1502
-    },
-    "finish:8ecd6a8d-c954-494b-96d4-4419a5123c37": {
-      "digest": "e921926384f84d1ed83a33e05430f90056dbf25e85edc59da090e8397024a6de",
-      "issue": 1502
-    },
-    "finish:644d73b2-52f9-4c78-89c5-515c64e66799": {
-      "digest": "04101b9a8f8a64259e4c5322954bd557ca77e258b7ef74c192860030f04132f3",
-      "issue": 1502
-    },
-    "finish:a2f66a50-9b60-4c78-80ac-d7a4362d038a": {
-      "digest": "0e84cd2e97e7ec603ebe9af4fbda947a3be581f7b9f50eb4ca073da59999c092",
-      "issue": 1502
-    },
-    "finish:fb62b0f8-a669-4ffa-9d45-6a9613ac3675": {
-      "digest": "ff782c12f7a9c77ebdf3fdd3d9132c1c2997e7085298faeadaad246f6f9904a7",
-      "issue": 1502
-    },
-    "github:44814235256:1:completions:message:64e1ad9c871e925521f55d958f5806804fbe3b05007a5b8db84738cbb590c6c4": {
-      "digest": "a9f1ef4b50c3b623a352e86526f1e8b8d563f2c6964f211c8b4424cf3239d189",
-      "issue": 1502
-    },
-    "github:44814235256:1:completions:message:c5435f3998819867524ab14d074272891d6b6513e7213c0a5998ec4c6c16f082": {
-      "digest": "a8977b691cd0252e55c17736e7af1a56d3aac57d54c415588e17d806bdab0217",
-      "issue": 1502
-    },
-    "finish:e47c9b01-e73e-41ac-adb4-3148fb157945": {
-      "digest": "5afdac068f5c41a7ef66543f5338258e1e72cc09f1483691a57c4f8ab2be2e00",
-      "issue": 1502
-    },
-    "finish:b8b31c50-6c8c-4931-9851-65d8c8fe2d4f": {
-      "digest": "72c68a61cff106be99177ebba560e300a0ef7643a9a80b7afa86f5f8e327951f",
-      "issue": 1502
-    },
-    "finish:602cd9b9-dfeb-4470-806b-cdac4612dc2d": {
-      "digest": "14a64b4488bed4846307c90b2e9abb9393e4303c1bfaf148acb1b51004021799",
-      "issue": 1502
-    },
-    "finish:6ddc7174-7f70-4caa-b26c-d6f369c7215f": {
-      "digest": "881a343c727debcb289e77f30e97efc2fb5136bd1f18968b5eb8272ebd52ae4f",
-      "issue": 1502
-    },
-    "finish:01ff9b6d-1cc6-4e9e-99d9-83e87a16d175": {
-      "digest": "f25e156eddbb1033e186102829ed17dbb249da5f58dc8948228bd8164a5e2b58",
-      "issue": 1502
-    },
-    "finish:52a098c6-84c0-42ba-baef-1da5db976944": {
-      "digest": "114b6acbab2810b9d18359f3fd93b8af71d387c7494b335d3c90176762075294",
-      "issue": 1502
-    },
-    "finish:58d24b27-b1f0-4cdc-8748-1bc479a8a46c": {
-      "digest": "5db0b54b1c52221df7ac4337f0c5f60284af742fc44e17bab253e382439dc77c",
-      "issue": 1502
-    },
-    "finish:f6bffbc8-9f52-4b15-93dc-a75e35073193": {
-      "digest": "acae66466e6999c2b2a508d4ab199699b144d0e40160431941822e22a77a4f8d",
-      "issue": 1502
-    },
-    "finish:49d3dd6b-3bdb-4179-9045-b1e6e54294ca": {
-      "digest": "345aca6d52dbfba118e4770e2d4075eaf4bec336251ec094541db1b6aafd1370",
-      "issue": 1502
-    },
-    "finish:91bda2f6-522a-449b-8308-df79b4406285": {
-      "digest": "e96bb9fdefd672adb7a1d494f866d9f19da429c53374ddbedb2749b33e686218",
-      "issue": 1502
-    },
-    "finish:d6defb59-6a4c-49dc-be78-5555614eb268": {
-      "digest": "c711893b2453c11a8d63033e48440a1217f2a5d8a4ba460effe3451916eccf05",
-      "issue": 1502
-    },
-    "finish:f47ee7d3-0ec5-4224-95ad-bf6147aba8c7": {
-      "digest": "14f5c996d83ef07ad17d0cf627e46d46a2a1997ad14d3a0d3fcbb99c82bffeff",
-      "issue": 1502
-    },
-    "release-return-finish:c0acd092-7b09-42a3-a257-d8705308afcc:finish:3:s6-complete": {
-      "digest": "d38ac4e63bf280ac6a191cdcd2757b624bbfb9c54234385c8188b36541fd1f90",
-      "issue": 1502
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6232,35 +6070,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-return:c0acd092-7b09-42a3-a257-d8705308afcc": {
-      "digest": "ee4df282c6c3d5f4b42627fd131d03b9668cd18f8e3b0d225b35fbeb990df1dd",
-      "issue": 1502,
-      "message": {
-        "kind": "queued",
-        "issue": 1502,
-        "at": 1795207098129,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
-        "delivered": true
-      }
-    },
-    "release-return-finish:c0acd092-7b09-42a3-a257-d8705308afcc:finish:1:admit": {
-      "digest": "6bf3389abe084f1f075b0b0a92e5f5621fd7cf2ff80e1d2ee9d26a5c24060222",
-      "issue": 1502,
-      "message": {
-        "kind": "admitted",
-        "issue": 1502,
-        "at": 1795207102906,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
         "phase": "sync",
         "delivered": true
       }
