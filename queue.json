@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 17053,
-  "nextTicket": 547,
+  "revision": 17054,
+  "nextTicket": 548,
   "nextFence": 547,
   "tasks": {
     "1024": {
@@ -5250,6 +5250,20 @@
         "src/houseplan-editor-runtime.ts"
       ],
       "reason": "owner-stopped"
+    },
+    "1480": {
+      "issue": 1480,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1480-raster-colors",
+      "materialSha": "24989789232ee0e30283bd7ea7dfac268c3bb5b7",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 547,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795151561781,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5731,7 +5745,9 @@
       "runId": 44658398227
     }
   },
-  "waiting": [],
+  "waiting": [
+    1480
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5801,6 +5817,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:2a1f34a8-4b06-45ab-956b-1235a9c64e57": {
+      "digest": "36cf75a294aba9315d6ac3f82b5043c06dd4697855ef26ecad6e73f1f7c4aba4",
+      "issue": 1480,
+      "message": {
+        "kind": "queued",
+        "issue": 1480,
+        "at": 1795151561781,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "24989789232ee0e30283bd7ea7dfac268c3bb5b7"
       }
     }
   },
