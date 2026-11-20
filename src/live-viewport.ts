@@ -417,7 +417,8 @@ export function paintLiveViewport(
     // Filter the screen-sized presentation. Blurring the expanded reserve
     // makes the compositor process several times the visible area.
     const scale = projection.scaleX;
-    const blur = options.freezeScene ? rasterSmoothing(1 / scale) * scale / (options.rasterDpr ?? 1) : 0;
+    const smooth = options.freezeScene === 'wheel' || (options.freezeScene && (scale >= 2 || scale <= .5));
+    const blur = smooth ? rasterSmoothing(1 / scale) * scale / (options.rasterDpr ?? 1) : 0;
     const filter = blur ? 'blur(' + blur.toFixed(1) + 'px)' : '';
     if (nodes.markerClip.style.filter !== filter) nodes.markerClip.style.filter = filter;
   }
@@ -506,7 +507,8 @@ function paintMotion(host: LiveViewportHost, state: LiveViewportState, frame: Li
   const limits = state.limits ??= host._liveViewportLimits?.() ?? {};
   const nodes = state.nodes ??= findViewportNodes(root);
   const svg = rasterScene(host, state);
-  const input = svg && state.raster?.supports(svg) ? host._liveIsoRasterInput?.() : undefined;
+  const input = svg && state.anchor && state.raster?.supports(svg, frame.view, state.anchor.coverage)
+    ? host._liveIsoRasterInput?.() : undefined;
   state.frozenScene = !!input;
   state.anchor = paintLiveViewport(root, state.painted ??= frame, frame, state.anchor, {
     keepSceneLayer: true, keepMarkerLayer: host._renderProjection === 'iso', force, nodes, limits,

@@ -26,7 +26,7 @@ interface RasterSession {
   underlay: Surface;
   view: LiveViewBox;
   vector: IsoRasterFrame;
-  active: boolean;
+  input?: IsoRasterInput;
   failed: boolean;
   revision: number;
   source?: string;
@@ -82,11 +82,16 @@ function projectTarget(view: LiveViewBox, target: LiveViewBox, input: IsoRasterI
   earlier: RasterSession['newestTarget'], at: number, prepareMs: number): LiveViewBox {
   const prior = earlier?.view ?? view;
   const oldW = prior.w, nextW = target.w;
-  const interval = Math.max(60, Math.min(320, earlier ? at - earlier.at : 140));
-  const steps = Math.max(1, Math.min(6, prepareMs / interval + (input === 'wheel' ? 1 : 0)));
+  const wheel = input === 'wheel';
+  const interval = Math.max(wheel ? 60 : 8, Math.min(320, earlier ? at - earlier.at : 140));
+  // A sampled drag or pinch pose arrives much faster than wheel notches.
+  // Its measured cadence must cover the decode time, not just two paints.
+  const steps = Math.max(1, Math.min(wheel ? 6 : 36, prepareMs / interval + (wheel ? 1 : 0)));
   if (Math.abs(nextW / oldW - 1) < 1e-6) {
-    return { ...target, x: target.x + (target.x - prior.x) * Math.min(steps, 2),
-      y: target.y + (target.y - prior.y) * Math.min(steps, 2) };
+    const distance = (delta: number, span: number) =>
+      Math.max(-span * .75, Math.min(span * .75, delta * (wheel ? Math.min(steps, 2) : steps)));
+    return { ...target, x: target.x + distance(target.x - prior.x, target.w),
+      y: target.y + distance(target.y - prior.y, target.h) };
   }
   const ratio = Math.max(.49, Math.min(2.04, (nextW / oldW) ** steps));
   const amount = (ratio - 1) / (1 - oldW / nextW);
@@ -95,6 +100,14 @@ function projectTarget(view: LiveViewBox, target: LiveViewBox, input: IsoRasterI
     w: nextW * ratio, h: target.h * ratio,
   };
   return nextW > view.w && ratio < 1.15 ? forecastExposure(view, target) : forecast;
+}
+
+/** Keep the original direct-gesture paint while its reserve is enough. */
+function keepsVectorReserve(session: RasterSession, coverageTarget = session.view): boolean {
+  if (session.input !== 'pan' && session.input !== 'pinch') return false;
+  const { vector, view, limits } = session;
+  const density = rasterDensity(vector, view, limits);
+  return density > .5 && density < 2 && rasterCovers(vector.bounds, coverageTarget, limits.content);
 }
 
 /** Passive paint. Camera state and hit testing continue to belong to the live viewport. */
@@ -131,7 +144,7 @@ export class IsoCameraRaster {
     });
     const session: RasterSession = {
       scene, surface, stage, win, limits, authority, styleKey, observer, sceneImage, underlay,
-      view, vector: vectorFrame(view, coverage, limits), active: false, failed: false, revision: 0, prepareMs: 280,
+      view, vector: vectorFrame(view, coverage, limits), failed: false, revision: 0, prepareMs: 280,
     };
     this.session = session;
     observer.observe(scene, { attributes: true, childList: true, subtree: true, characterData: true });
@@ -141,7 +154,7 @@ export class IsoCameraRaster {
   public settle(view: LiveViewBox, coverage: LiveViewBox): void {
     const session = this.session;
     if (!session) return;
-    if (!session.active && samePose(view, session.view) && samePose(coverage, session.vector.bounds)) return;
+    if (!session.input && samePose(view, session.view) && samePose(coverage, session.vector.bounds)) return;
     session.view = view;
     session.vector = vectorFrame(view, coverage, session.limits);
     session.requested = session.forecast = session.newestTarget = undefined;
@@ -150,8 +163,10 @@ export class IsoCameraRaster {
     this.queue(session);
   }
 
-  public supports(scene: SVGSVGElement): boolean {
-    return !!this.session && this.session.scene === scene && !this.session.failed;
+  public supports(scene: SVGSVGElement, view: LiveViewBox, coverage: LiveViewBox): boolean {
+    const session = this.session;
+    return !!session && session.scene === scene && !session.failed &&
+      (!!session.underlay.frame || rasterCovers(coverage, view, session.limits.content));
   }
 
   public get hasActiveImage(): boolean {
@@ -163,9 +178,8 @@ export class IsoCameraRaster {
     const session = this.session;
     if (!session || session.failed) return;
     session.view = view;
-    const initial = !session.active;
-    session.active = true;
-    if (initial) session.vector = vectorFrame(anchor, coverage, session.limits);
+    if (!session.input) session.vector = vectorFrame(anchor, coverage, session.limits);
+    session.input = input;
     const accepted = !session.newestTarget || !samePose(session.newestTarget.view, target);
     if (accepted) {
       const at = performance.now();
@@ -174,7 +188,8 @@ export class IsoCameraRaster {
     }
     this.presentPrepared(session);
     this.display(session);
-    if (accepted && !session.prepared) this.queue(session);
+    if (accepted && !session.prepared &&
+        (session.sceneImage.canvas.isConnected || !keepsVectorReserve(session, session.forecast))) this.queue(session);
   }
 
   private queue(session: RasterSession): void {
@@ -192,21 +207,24 @@ export class IsoCameraRaster {
 
   private nextFrame(session: RasterSession): IsoRasterFrame | undefined {
     const { view, limits, sceneImage, underlay } = session;
-    const current = sceneImage.frame ?? session.vector;
+    const direct = session.input === 'pan' || session.input === 'pinch';
+    const current = (direct && !sceneImage.canvas.isConnected ? session.vector : sceneImage.frame) ?? session.vector;
     const forecast = session.forecast ?? view;
     const density = rasterDensity(current, forecast, limits);
-    if (!session.active) {
+    if (!session.input) {
       if (sceneImage.revision === session.revision && rasterCovers(current.bounds, view, limits.content)
         && rasterDensity(current, view, limits) >= .99) return;
       return planIsoRaster(view, limits, undefined, false, 0);
     }
-    if (sceneImage.revision === session.revision && density > 1 / 1.5 && density < 1.5 &&
+    if (current === session.vector && keepsVectorReserve(session, forecast)) return;
+    const currentRevision = (direct && current === session.vector) || sceneImage.revision === session.revision;
+    if (currentRevision && density > 1 / 1.5 && density < 1.5 &&
       rasterCovers(current.bounds, forecast, limits.content)) return;
     const widening = forecast.w > view.w;
     const targetDensity = forecast.w < view.w ? .9 : 1;
     // On zoom-in, a small reduction buys preparation time. Other motion
     // keeps native density so newly covered plan can replace the underlay.
-    return planIsoRaster(forecast, limits, undefined, !!underlay.frame, widening ? .03 : 0, targetDensity)
+    return planIsoRaster(forecast, limits, undefined, !!underlay.frame, direct ? .15 : widening ? .03 : 0, targetDensity)
       ?? planIsoRaster(view, limits);
   }
 
@@ -238,7 +256,7 @@ export class IsoCameraRaster {
       const bitmap = await decodeIsoRaster(session.source, frame, job.signal, session.limits.dpr);
       if (!stillRelevant()) { bitmap.close(); return; }
       session.prepareMs = session.prepareMs * .4 + (performance.now() - start) * .6;
-      if (session.active) {
+      if (session.input) {
         session.prepared?.bitmap.close();
         session.prepared = { frame, bitmap, revision };
         this.presentPrepared(session);
@@ -279,11 +297,13 @@ export class IsoCameraRaster {
       session.prepared = undefined;
       return;
     }
-    if (sceneImage.frame && sceneImage.revision === candidate.revision
-      && !rasterImproves(sceneImage.frame, candidate.frame, view, limits)) {
+    const direct = session.input !== 'wheel';
+    const shown = direct && !sceneImage.canvas.isConnected ? session.vector : sceneImage.frame;
+    if (shown && (shown === session.vector || sceneImage.revision === candidate.revision)
+      && !rasterImproves(shown, candidate.frame, view, limits)) {
       // A forecast frame can be useful a few frames later, while the current
       // compression still makes it visibly softer. Keep preparing on new input.
-      if (session.forecast && rasterImproves(sceneImage.frame, candidate.frame, session.forecast, limits)) return;
+      if (session.forecast && rasterImproves(shown, candidate.frame, session.forecast, limits)) return;
       candidate.bitmap.close();
       session.prepared = undefined;
       return;
@@ -297,15 +317,19 @@ export class IsoCameraRaster {
   }
 
   private display(session: RasterSession): void {
-    if (!session.active || session.failed || session.surface.hasAttribute('data-hp-light-mixing')) return;
+    if (!session.input || session.failed || session.surface.hasAttribute('data-hp-light-mixing')) return;
     const { surface, sceneImage, underlay, view, limits } = session;
     const frame = sceneImage.frame;
     const cover = frame && rasterCovers(frame.bounds, view, limits.content);
     const underlayReady = !!underlay.frame && rasterCovers(underlay.frame.bounds, view, limits.content);
-    const showRaster = !!frame && (!!cover || underlayReady);
+    // A drag or pinch starts with the already sharp vector reserve. Only
+    // replace it when the prepared bitmap improves the visible result.
+    const showRaster = !!frame && (!!cover || underlayReady) &&
+      (session.input === 'wheel' || rasterImproves(session.vector, frame, view, limits));
     if (surface.hasAttribute('data-hp-raster-display') !== showRaster)
       surface.toggleAttribute('data-hp-raster-display', showRaster);
-    const vectorBlur = showRaster ? 0 : rasterSmoothing(rasterDensity(session.vector, view, limits)) / limits.dpr;
+    const vectorBlur = showRaster || keepsVectorReserve(session) ? 0 :
+      rasterSmoothing(rasterDensity(session.vector, view, limits)) / limits.dpr;
     const blurVariable = '--hp-iso-gesture-blur';
     if (vectorBlur) {
       const filter = 'blur(' + vectorBlur.toFixed(2) + 'px)';
@@ -347,7 +371,7 @@ export class IsoCameraRaster {
   public pause(lightMix = false): void {
     const session = this.session;
     if (!session) return;
-    session.active = false;
+    session.input = undefined;
     session.newestTarget = session.forecast = undefined;
     session.prepared?.bitmap.close();
     session.prepared = undefined;

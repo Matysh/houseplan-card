@@ -80,7 +80,11 @@ pixels per frame. It uses the accepted camera target and measured preparation
 time to request improved density or coverage before the current image runs
 out. A full-plan image of at most 1.2 million pixels fills newly exposed
 areas. Its clip excludes the rectangle of the current scene frame, so that
-transparent gaps and shadows keep their original alpha.
+transparent gaps and shadows keep their original alpha. Dragging keeps the
+sharp vector reserve while it covers the camera. A pinch also keeps that
+reserve for modest scale changes. A direct gesture forecasts from the
+cadence of the sampled input. Its prepared bitmap replaces the reserve
+when it improves density or visible coverage.
 
 Architecture, floor lighting, furniture, LED strips and floor shadows share
 one projected scene. Device faces, labels, routes and locks remain interactive

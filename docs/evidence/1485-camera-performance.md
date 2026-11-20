@@ -1,7 +1,7 @@
 # #1485 2.5D camera evidence
 
 The comparisons use the synthetic iso-paint floor. The frozen comparison
-build is b6676f11. The final hardware input measurements used 289fec9b3,
+build is b6676f11. The initial hardware input measurements used 289fec9b3,
 after the #1486 material fix and the change to marker coverage. Frame
 intervals come from requestAnimationFrame. A commit time from this probe
 estimates presentation timing.
@@ -91,3 +91,37 @@ iso-paint. The full large-house performance matrix and GPU tab memory
 remain unmeasured here. The pixel ceilings are covered by the planner
 tests. The captured gallery and the browser smoke use separate hardware
 and software paths.
+
+
+## Direct input after code review
+
+The paired check uses the same fixture, device scale, and GPU as the wheel
+benchmark. The camera starts at 3×. It receives a held mouse drag across 32%
+of the stage and a two-contact pinch of 1.57×, both through Chromium input
+rather than a camera method. Each gesture has a 2.5 s input schedule.
+The captured stage during the held drag was byte-identical across the first
+pair. Both builds wrote zero scene view boxes while fingers or mouse were
+down. They painted the exact end pose and released the temporary surfaces.
+
+| Gesture | Pair order | Baseline rAF/s | Candidate rAF/s | Baseline frames >50 ms | Candidate frames >50 ms |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Drag | Baseline first | 14.8 | 13.7 | 20 | 20 |
+| Drag | Candidate first | 17.1 | 13.9 | 21 | 21 |
+| Pinch | Baseline first | 120.0 | 120.0 | 0 | 0 |
+| Pinch | Candidate first | 120.0 | 118.8 | 0 | 0 |
+
+The staged mouse series takes just 22 or 23 delivered moves on both builds.
+The driver awaits each move and skips expired ticks. These rates are specific
+to that input profile, so they cannot be directly compared to the scripted
+54.5 rAF/s panorama on the owner's live plan. The measured drag rAF rate
+was lower for the candidate in these pairs, while long-frame counts matched
+and the longest interval fell from 167/158 ms to 158/150 ms. Neither gesture
+used a low-resolution underlay or an extra blur pass within the vector reserve.
+The pinned headless smoke also passed, with zero vector view-box changes and
+the exact end pose verified for both gestures.
+
+Wheel was remeasured on the reviewed correction. The three series reached
+110.1, 110.4 and 107.4 rAF/s, with zero frames over 50 ms. Each wrote one
+exact camera, observed at 249, 274 and 274 ms after the last input by rAF.
+The longest stretch below half density was 25.1 ms in the twelve-step
+zoom-in.
