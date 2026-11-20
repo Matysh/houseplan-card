@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Preserve 2.5D wall and opening materials during zoom and use the raster pixels for visible plan geometry (#1480).
 - Reuse the painted 2.5D plan during pan and zoom, with SVG floor shadows and a shared lighting fade (#1478).
 - Round each exposed corner of a shared device outline to suit its icon size in 2D and 2.5D (#1477).
 - Preview the saved swing-door position when rebinding an opening to a replacement wall (#1476).

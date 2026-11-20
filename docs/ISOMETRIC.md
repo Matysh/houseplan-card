@@ -180,6 +180,9 @@ Views with unsupported image resources, a light transition, or a camera
 position beyond the available bitmap use the SVG immediately. The exact
 wheel commit takes over from the cached image. A bitmap is limited to 1.2
 million pixels, and the renderer holds one shown and one pending bitmap.
+The bitmap covers the plan and its visible overflow inside the predicted
+viewport reserve, concentrating resolution on paint rather than empty margins.
+Wall and opening materials are read from the stage by property name.
 
 Physical geometry and projected variants stay separate. The structural LRU
 remains bounded at eight entries; variants are keyed by saved quarter turns,

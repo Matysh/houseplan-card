@@ -4,9 +4,11 @@ import { currentGraphFixture } from './graph-fixture.mjs';
 import { join } from 'node:path';
 
 export async function startIsoPaintScene({width=1480,height=1080,referenceRoot,browserArgs=[],createPage,
-  dpr=1, launchOptions, reducedMotion='reduce'}={}) {
+  dpr=1, launchOptions, configureFixture, reducedMotion='reduce'}={}) {
   if (!launchOptions) requirePinnedBrowser('#1470 paired paint/raster evidence');
-  const fixture=makeIsoPaintFixture();fixture.config=currentGraphFixture(fixture.config);
+  const fixture=makeIsoPaintFixture();
+  configureFixture?.(fixture);
+  fixture.config=currentGraphFixture(fixture.config);
   const args=[{width,height},dpr,browserArgs,{reducedMotion,createPage,launchOptions}];
   if(referenceRoot)args.push(join(referenceRoot,'demo/srv'),referenceRoot);
   const env=await launch(...args);

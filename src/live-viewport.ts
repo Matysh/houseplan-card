@@ -456,9 +456,14 @@ function prepareRasterStyle(host: LiveViewportHost, state: LiveViewportState): v
     state.rasterStyleFrame = undefined;
     if (!svg.isConnected || rasterScene(host, state) !== svg || host._liveViewportTarget?.()) return;
     const style = getComputedStyle(svg);
-    const values = [...style].filter(property => property.startsWith('--') ||
-      ['color', 'color-scheme', 'font-size', 'font-family'].includes(property))
-      .map(property => [property, style.getPropertyValue(property)] as const);
+    const stageStyle = svg.closest<HTMLElement>('.stage')?.style;
+    const properties = new Set(['color', 'color-scheme', 'font-size', 'font-family']);
+    // Some Chromium versions can read custom properties by name but omit them
+    // from the computed style listing. The stage owns the plan materials.
+    for (const property of [...style, ...(stageStyle ?? [])]) {
+      if (property.startsWith('--')) properties.add(property);
+    }
+    const values = Array.from(properties, property => [property, style.getPropertyValue(property)] as const);
     state.rasterStyle = { scene: svg, key: rasterStyleKey(svg), values };
   });
 }

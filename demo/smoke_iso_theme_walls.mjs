@@ -2,7 +2,10 @@
 // user's wall colour, the theme never repaints walls, openings, the floor edge
 // or room labels. #1451's accepted volumetric furniture keeps its own paint
 // recipe across themes; Flat furniture retains its native non-scaling stroke.
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { launch, checkAll, finish } from './serve.mjs';
+import { settleIsoPaint, startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
 const TOP = '#667788', WALL = '#d9c8b4';
@@ -115,4 +118,98 @@ const back = await snapshot();
 res.flatBack = !back.iso && back.furnitureStroke === flat.furnitureStroke
   && JSON.stringify(back.label) === JSON.stringify(flat.label);
 checkAll(res);
-await finish(browser, { ...res, stops: light.stops, stroke: [flat.furnitureStroke, light.furnitureStroke] });
+await browser.close();
+
+const { PNG } = createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
+const rasterScene = await startIsoPaintScene({
+  width: 1920, height: 1080, dpr: 2,
+  // Exercise the CSSOM of Chromium versions that omit custom properties from enumeration.
+  browserArgs: ['--disable-blink-features=CSSEnumeratedCustomProperties'],
+  configureFixture({ config }) {
+    const settings = config.spaces[0].settings;
+    Object.assign(settings, {
+      room_color: '#481477', room_opacity: 1,
+      wall_fill: { c: '#246844', a: 1 },
+      opening_accent_3d: { c: '#a32a59', a: 1 },
+    });
+  },
+});
+
+// Count solid pixels in each material, away from antialiased edges. The wall
+// stops and the opening fills come from the live paint, including its tint.
+function materialCounts(data, palette) {
+  return palette.map((colours, index) => {
+    const tolerance = index < 2 ? 9 : 0;
+    let count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] !== 255) continue;
+      if (colours.some(([r, g, b]) =>
+        Math.abs(r - data[i]) <= tolerance && Math.abs(g - data[i + 1]) <= tolerance &&
+        Math.abs(b - data[i + 2]) <= tolerance)) count++;
+    }
+    return count;
+  });
+}
+
+try {
+  const page = rasterScene.page;
+  await zoomIsoPaint(page, 1.2);
+  const stage = page.locator('houseplan-card .stage');
+  assert(await stage.evaluate(el => {
+    const style = getComputedStyle(el.querySelector('.iso-scene-surface svg'));
+    return style.getPropertyValue('--iso-wall-side-op') === '1' && ![...style].includes('--iso-wall-side-op');
+  }), 'The browser must support name-based CSS reads without enumerating custom properties');
+  const palette = await stage.evaluate(el => {
+    const rgb = value => value.match(/\d+/g).slice(0, 3).map(Number);
+    const values = (selector, prop) => {
+      const nodes = [...el.querySelectorAll(selector)];
+      if (!nodes.length) throw Error('Missing visible paint for ' + selector);
+      return nodes.slice(0, 3).map(node => rgb(getComputedStyle(node)[prop]));
+    };
+    return [
+      values('.iso-top-hi, .iso-top-lo', 'stopColor'),
+      values('.iso-side-hi, .iso-side-mid, .iso-side-lo', 'stopColor'),
+      values('.iso-door.iso-material-matte-leaf', 'fill'),
+      values('.iso-window.iso-material-light-frame', 'fill'),
+    ];
+  });
+  const exact = async () => materialCounts(PNG.sync.read(await stage.screenshot()).data, palette);
+  const before = await exact();
+  const during = await stage.evaluate(async stage => {
+    const until = performance.now() + 4500;
+    const { x, y, width, height } = stage.getBoundingClientRect();
+    // A short burst keeps the wheel animation running until a real bitmap is
+    // presented. Alternate direction to keep all four materials in view.
+    for (let step = 0; performance.now() < until; step++) {
+      stage.dispatchEvent(new WheelEvent('wheel', {
+        clientX: x + width / 2, clientY: y + height / 2,
+        deltaY: step % 2 ? 80 : -80, bubbles: true, cancelable: true,
+      }));
+      await new Promise(resolve => setTimeout(resolve, 70));
+      const canvas = stage.querySelector('.hp-iso-raster[data-hp-iso-raster="active"]');
+      if (!canvas || !stage.querySelector('.iso-scene-surface[data-hp-raster-display]')) continue;
+      const copy = document.createElement('canvas');
+      copy.width = canvas.width;
+      copy.height = canvas.height;
+      const cpu = copy.getContext('2d');
+      cpu.drawImage(canvas, 0, 0);
+      return copy.toDataURL();
+    }
+    throw Error('2.5D wheel did not display a raster frame');
+  });
+  await stage.locator('.hp-iso-raster').waitFor({ state: 'detached' });
+  await settleIsoPaint(page);
+  const after = await exact();
+  const cached = materialCounts(PNG.sync.read(Buffer.from(during.split(',')[1], 'base64')).data, palette);
+  for (const [index, material] of ['wall tops', 'wall sides', 'door leaves', 'window frames'].entries()) {
+    assert(before[index] > 30 && after[index] > 30, 'The live SVG must paint ' + material);
+    assert(cached[index] > 30, 'The active raster must preserve solid pixels for ' + material +
+      ' (before/during/after: ' + [before[index], cached[index], after[index]].join('/') + ')');
+  }
+  await finish(rasterScene.browser, {
+    ...res, stops: light.stops, stroke: [flat.furnitureStroke, light.furnitureStroke],
+    rasterMaterialPixels: { before, cached, after },
+  });
+} finally {
+  await rasterScene.browser.close();
+}

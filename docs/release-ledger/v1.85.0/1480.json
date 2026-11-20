@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1480,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Preserves the material colours and increases useful pixel density of the in-gesture 2.5D raster added in #1478 on the current beta line.",
+  "summary": {
+    "ru": "При зуме 2.5D стены и проёмы сохраняют цвета, а растровый кадр использует разрешение для геометрии плана.",
+    "en": "2.5D zoom preserves wall and opening colours and concentrates raster resolution on the plan."
+  }
+}

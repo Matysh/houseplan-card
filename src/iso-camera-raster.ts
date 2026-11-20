@@ -9,6 +9,8 @@ export interface RasterViewport extends ViewportExposureLimits {
 export type RasterStyle = readonly (readonly [string, string])[];
 
 const enoughPixels = 1_200_000;
+const imageWidth = 'hp-raster-width';
+const imageHeight = 'hp-raster-height';
 const imageViewBox = 'hp-raster-view-box';
 const namespace = 'http://www.w3.org/2000/svg';
 const intersects = (a: LiveViewBox, b: LiveViewBox) =>
@@ -30,8 +32,7 @@ export function rasterSize({ stageSize: [w, h], dpr }: RasterViewport): readonly
   return [Math.max(1, Math.floor(w * scale)), Math.max(1, Math.floor(h * scale))];
 }
 
-function rasterSource(scene: SVGSVGElement, stage: Element, width: number, height: number,
-  inherited: RasterStyle): string | undefined {
+function rasterSource(scene: SVGSVGElement, stage: Element, inherited: RasterStyle): string | undefined {
   // SVG image documents can't load external resources. If the live scene
   // depends on them, leave it on the vector path for the entire gesture.
   const resources = [...scene.querySelectorAll('image, feImage, use')];
@@ -44,8 +45,8 @@ function rasterSource(scene: SVGSVGElement, stage: Element, width: number, heigh
   if (!(root instanceof ShadowRoot)) return undefined;
   const doc = scene.ownerDocument;
   const outer = doc.createElementNS(namespace, 'svg');
-  outer.setAttribute('width', String(width));
-  outer.setAttribute('height', String(height));
+  outer.setAttribute('width', imageWidth);
+  outer.setAttribute('height', imageHeight);
   const context = doc.createElementNS(namespace, 'g');
   context.setAttribute('class', stage.className);
   if (stage.hasAttribute('data-hp-iso-floor-markers')) context.setAttribute('data-hp-iso-floor-markers', 'true');
@@ -123,7 +124,6 @@ export class IsoCameraRaster {
     const canvas = scene.ownerDocument.createElement('canvas');
     const renderer = canvas.getContext('bitmaprenderer');
     if (!renderer) { this.unsupportedScene = scene; return; }
-    [canvas.width, canvas.height] = rasterSize(limits);
     canvas.className = 'hp-iso-raster';
     canvas.inert = true;
     canvas.setAttribute('aria-hidden', 'true');
@@ -144,21 +144,38 @@ export class IsoCameraRaster {
     if (this.session !== session || !scene.isConnected || this.preparing ||
         (limits.content && !intersects(anchor, limits.content))) return;
     const bounds = viewportExposure(anchor, limits);
+    // The bounds of the plan already include its paint overflow. Use the
+    // pixel budget for that content and the reserve that can reveal it.
+    const content = limits.content;
+    if (content) {
+      const x = Math.max(bounds.x, content.x), y = Math.max(bounds.y, content.y);
+      bounds.w = Math.min(bounds.x + bounds.w, content.x + content.w) - x;
+      bounds.h = Math.min(bounds.y + bounds.h, content.y + content.h) - y;
+      bounds.x = x;
+      bounds.y = y;
+    }
+    const [width, height] = rasterSize({
+      stageSize: [limits.stageSize[0] * bounds.w / anchor.w, limits.stageSize[1] * bounds.h / anchor.h],
+      dpr: limits.dpr,
+    });
     let url: string | undefined;
     let frame: ImageBitmap | undefined;
     try {
-      session.source ??= rasterSource(scene, stage, canvas.width, canvas.height, session.inherited);
+      session.source ??= rasterSource(scene, stage, session.inherited);
       if (!session.source) { session.failed = true; return; }
       const { x, y, w, h } = bounds;
-      const xml = session.source.replace(`viewBox="${imageViewBox}"`, `viewBox="${x} ${y} ${w} ${h}"`);
+      const xml = session.source.replace(imageWidth, String(width)).replace(imageHeight, String(height))
+        .replace(`viewBox="${imageViewBox}"`, `viewBox="${x} ${y} ${w} ${h}"`);
       url = URL.createObjectURL(new Blob([xml], { type: 'image/svg+xml;charset=utf-8' }));
       const image = this.preparing = new Image();
       image.src = url;
-      performance.mark('houseplan.iso.raster.prepare', { detail: { bounds, pixels: canvas.width * canvas.height } });
+      performance.mark('houseplan.iso.raster.prepare', { detail: { bounds, pixels: width * height } });
       await image.decode();
       if (this.session !== session) return;
       frame = await createImageBitmap(image);
       if (this.session !== session || !rasterCovers(bounds, session.view, limits.content)) return;
+      if (canvas.width !== width) canvas.width = width;
+      if (canvas.height !== height) canvas.height = height;
       session.renderer.transferFromImageBitmap(frame);
       frame = undefined;
       const previous = session.active;
