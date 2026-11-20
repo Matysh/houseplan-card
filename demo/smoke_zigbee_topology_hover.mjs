@@ -33,9 +33,17 @@ const result = await page.evaluate(async () => {
 
   let zhaCalls = 0;
   let pendingConfigReads = 0;
+  const unplacedCoordinatorId = 'zha_unplaced_coordinator';
+  let coordinatorId = 'd_lamp';
   window.__zigbeeSmokeFetchCount = () => zhaCalls;
   const originalHass = card.hass;
-  card.hass = { ...originalHass, callWS: async (message) => {
+  card.hass = { ...originalHass, devices: {
+    ...originalHass.devices,
+    [unplacedCoordinatorId]: {
+      id: unplacedCoordinatorId, name: 'ZHA coordinator', area_id: null,
+      identifiers: [['zha', '00124b0000000002']],
+    },
+  }, callWS: async (message) => {
     if (message.type !== 'zha/devices') {
       const configRead = message.type === 'houseplan/config/get';
       if (configRead) pendingConfigReads++;
@@ -51,7 +59,7 @@ const result = await page.evaluate(async () => {
         { ieee: '00124b0000000005', lqi: 128, relationship: 'Child' },
         { ieee: '00124b0000000007', lqi: 255, relationship: 'Sibling' },
       ] },
-      { ieee: '00124b0000000002', nwk: 0, device_reg_id: 'd_lamp', device_type: 'Coordinator', neighbors: [
+      { ieee: '00124b0000000002', nwk: 0, device_reg_id: coordinatorId, device_type: 'Coordinator', neighbors: [
         { ieee: '00124b0000000001', relationship: 'Child' },
         { ieee: '00124b0000000006', lqi: 140, relationship: 'Child' },
       ] },
@@ -371,6 +379,24 @@ const result = await page.evaluate(async () => {
     overlay.shadowRoot.querySelector('.route-status')?.textContent || '',
   );
 
+  // Keep the coordinator outside the plan in the HA registry and ZHA response,
+  // so a card render or a floor switch cannot restore the placed test coordinator.
+  coordinatorId = unplacedCoordinatorId;
+  card._openSettingsDialog();
+  await card.updateComplete;
+  settings = root().querySelector('hp-zigbee-topology-settings');
+  await wait(() => settings?.shadowRoot?.querySelector('button'), 'settings button for ZHA refresh');
+  await settings._readZha();
+  card._settingsDialog = null;
+  card.requestUpdate();
+  await card.updateComplete;
+  const coordinatorBubble = () => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+    ?.querySelector('[data-kind="unplaced-coordinator"]');
+  enter(root().querySelector('.dev[data-id="d_light1"]'));
+  await wait(coordinatorBubble, 'unplaced coordinator bubble before switching floors');
+  out.unplacedCoordinatorBubbleBeforeFloorSwitch = coordinatorBubble()?.textContent.trim()
+    === 'coordinator is not on the plan';
+
   card._commitSpace('garden', true);
   card.requestUpdate();
   await card.updateComplete;
@@ -411,17 +437,11 @@ const result = await page.evaluate(async () => {
   out.unplacedNameIsSafeText = !missingParentBubble?.querySelector('router,img,script')
     && !missingParentBubble?.textContent.includes('Temperature sensor');
 
-  activeOverlay.devices = activeOverlay.devices.map((device) => (
-    device.id === 'd_lamp' ? { ...device, hidden: true } : device
-  ));
-  await activeOverlay.updateComplete;
   const router = root().querySelector('.dev[data-id="d_light1"]');
   enter(router);
-  await wait(() => activeOverlay.shadowRoot.querySelector('[data-kind="unplaced-coordinator"]'),
-    'unplaced coordinator bubble');
-  out.unplacedCoordinatorBubble = activeOverlay.shadowRoot
-    .querySelector('[data-kind="unplaced-coordinator"]')?.textContent.trim()
-      === 'coordinator is not on the plan';
+  await wait(coordinatorBubble, 'unplaced coordinator bubble after switching floors');
+  activeOverlay = root().querySelector('hp-zigbee-topology-overlay');
+  out.unplacedCoordinatorBubble = coordinatorBubble()?.textContent.trim() === 'coordinator is not on the plan';
   const parentCore = activeOverlay.shadowRoot.querySelector('line.parent-route');
   const parentArrow = activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-parent-arrow"]');
   out.parentRouteHasUnknownOutline = !!parentCore && !!parentArrow
@@ -485,7 +505,7 @@ const result = await page.evaluate(async () => {
   card.hass = { ...card.hass, user: { ...card.hass.user, is_admin: false } };
   await card.updateComplete;
   out.nonAdminHasNoOverlay = !root().querySelector('hp-zigbee-topology-overlay')
-    && !root().querySelector('[data-hp-zigbee-topology-endpoint]') && zhaCalls === 1;
+    && !root().querySelector('[data-hp-zigbee-topology-endpoint]') && zhaCalls === 2;
   return out;
 });
 
