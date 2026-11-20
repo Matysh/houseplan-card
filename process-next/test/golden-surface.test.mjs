@@ -19,6 +19,15 @@ test('isolated captures cannot share a browser with another scene or DPR', () =>
   assert.notEqual(goldenBrowserSurfaceKey(scene), goldenBrowserSurfaceKey({ ...scene, deviceScaleFactor: 2 }));
 });
 
+test('native panel rotations keep all four badge scenes off the shared page', () => {
+  const { scenarios } = goldenRunSelection(GOLDEN_SCENARIOS, ['--selection=rest']);
+  const rotated = scenarios.filter(scene => scene.panelHost && scene.isoBadgeDepth);
+  assert.deepEqual(rotated.map(scene => scene.rotation), [0, 90, 180, 270]);
+  assert.deepEqual(rotated.map(goldenBrowserSurfaceKey),
+    rotated.map(scene => `isolated:${scene.id}:1`));
+  assert.equal(goldenBrowserSurfaceKey({ id: 'card-turn', rotation: 270 }), 'interactive:1');
+});
+
 test('beta keeps all 78 scenes and isolates only the reviewed hover raster fixture', () => {
   const { scenarios } = goldenRunSelection(GOLDEN_SCENARIOS, ['--selection=beta']);
   assert.equal(scenarios.length, 78);

@@ -1,9 +1,12 @@
 import { BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN,
   PANEL_GOLDEN_SOURCES, selectExact } from './selections.mjs';
 
-/** Keep explicitly isolated raster fixtures independent of prior SVG paint history. */
+/** Keep raster fixtures and native panel rotation independent of shared page state. */
 export function goldenBrowserSurfaceKey(scene) {
-  const surface = scene.isolatedCapture ? `isolated:${scene.id}`
+  // The panel rotates through real controls and keeps the preference in memory
+  // even after the harness clears localStorage. Never rotate a shared page.
+  const isolated = scene.isolatedCapture || (scene.panelHost && scene.rotation !== undefined);
+  const surface = isolated ? `isolated:${scene.id}`
     : scene.staticWallOpenings ? 'static' : 'interactive';
   return `${surface}:${scene.deviceScaleFactor || 1}`;
 }
