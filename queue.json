@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17483,
+  "revision": 17484,
   "nextTicket": 554,
   "nextFence": 554,
   "tasks": {
@@ -5243,7 +5243,7 @@
       "ownerDecision": null,
       "ticket": 553,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795161565870,
       "reviewEntry": 2,
       "patchId": "b0dc2fc69264dddcf3ef1c6a524534b583c0f757",
@@ -5265,6 +5265,15 @@
         "entry": 1,
         "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Backend: tests_backend/test_external_screens.py: failed; Backend: tests_backend/test_ha_external_screens_websocket.py: failed; Backend: tests_backend/test_ha_panel_registration.py: failed; Backend: tests_backend/test_ha_space_delete_executor.py: failed; Backend: tests_backend/test_ha_space_delete_routes.py: failed; Backend: tests_backend/test_summary_panel.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed; Браузер: standalone entry: failed",
         "eventId": "finish:d4e010c4-a650-484a-a038-6e9c8745227d:finish:4:return:return:1486"
+      },
+      "s6": {
+        "id": "20261120T075942631-3af2f65f",
+        "name": "Тесты для задачи #1486 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T075942631-3af2f65f/report.json",
+        "materialSha": "54a8148959ffb71f0737532924c05b0a65de8b4a",
+        "status": "passed",
+        "finishedAt": "2026-11-20T08:06:05.024Z",
+        "failures": []
       }
     }
   },
@@ -5755,9 +5764,9 @@
     "fence": 553,
     "materialSha": "54a8148959ffb71f0737532924c05b0a65de8b4a",
     "expectedBase": "98a386f42de5f465e2be7067957659c157839c53",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795161570048,
-    "expiresAt": 1795162230014,
+    "expiresAt": 1795165566268,
     "patchId": "b0dc2fc69264dddcf3ef1c6a524534b583c0f757"
   },
   "events": {
@@ -6056,6 +6065,34 @@
         "materialSha": "54a8148959ffb71f0737532924c05b0a65de8b4a",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:de5b469c-f5cb-4f73-9eb9-eb1b8d98b03f:finish:3:s6-complete": {
+      "digest": "7d1eb8085664b16d23e94ff093f1dece8e14ab7c3aaad387efe3c5192ee9fda5",
+      "issue": 1486,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1486,
+        "at": 1795161966268,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "54a8148959ffb71f0737532924c05b0a65de8b4a",
+        "phase": "review",
+        "evidence": {
+          "id": "20261120T075942631-3af2f65f",
+          "name": "Тесты для задачи #1486 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T075942631-3af2f65f/report.json",
+          "materialSha": "54a8148959ffb71f0737532924c05b0a65de8b4a",
+          "status": "passed",
+          "finishedAt": "2026-11-20T08:06:05.024Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Реализовано ограничение CSS-входов растрового кадра: `rasterStyleProperties` собирает имена из stage и буквальных `var(--name)` в собственных stylesheet и SVG markup; разрешение значений остаётся в существующем post-paint rAF `prepareRasterStyle`. Общая тема HA больше не копируется целиком. Имена не зависят от перечисления computed style, чтобы сохранить исправление #1480 для прежних Chromium. Общий `sceneCss` используется и для поиска зависимостей, и при сериализации изображения. Геометрия, бюджет bitmap, камера, управление и хранение не меняются.\n\nАльтернативы: исключение конкретного имени `--wa-*` хрупко; полный перенос темы с самописным исправлением CSS-токенов дублирует CSS-парсер; принудительный SVG fallback лишает большие планы ускорения. Выбран перенос реально используемых входов. Риск для внимания — полнота поиска `var()` в генерируемом SVG и CSS, отсутствие layout-read в горячем пути, сохранение тем/альфа. Продукт использует буквальные ASCII-имена переменных; сложные escape-идентификаторы и динамические имена вне этого контракта не вводились.\n\nНовый `demo/smoke_iso_raster_materials.mjs` на старом коде упал с `Raster image must retain --iso-wall-side-op` (`undefined !== '1'`). После исправления прошёл: все 15 переменных материалов сохраняются, реальные пиксели внешней стены — 111816 для непрозрачного и 31852 для полупрозрачного варианта. Проверяется точный проблемный токен HA, отрицательный контроль CSS round-trip, активный bitmap, SVG-атрибутная зависимость, оба направления wheel, light/dark и отсутствие HA writes. Прежний `smoke_iso_theme_walls` также прошёл, включая Chromium без перечисления computed custom properties. AST guard render/layout прошёл. Окончательный S6 выполняет обычный finish; его результат передаётся автоматически.\n\nКаталог классифицировал новый smoke как `browser/product`, `isometry`, `regression`, `task-release`; план S6 выбирает его как изменённый исполняемый файл и дополнение. Адресное дополнение настоящего HA E2E перед следующей бетой записано в https://github.com/Matysh/houseplan-e2e/issues/88. Сейчас не выполнялись полный выпускной прогон, приёмка PNG или обновление реального HA. Личные данные и снимки плана не публиковались.\n\nПодготовка S6, вход 1 (`20261120T074424562-98b357ed`): новый smoke и прежняя проверка материалов прошли. Найдено замечание reader `smoke-exception-guard` к созданию страницы через callback (общая обвязка уже подписывала её, но статический reader этого не видит): callback убран, используется обычная страница helper, тестовая тема устанавливается перед сменой темы/инвалидацией снимка. Остальные отказы (`core-source-readers`, 7 backend-файлов, standalone entry) вызваны неактивированным подготовленным Python venv: отсутствовали voluptuous/HA, `python` попадал на недоступный Windows alias. Окружение подключено; два упавших Node-файла адресно прошли, импорт HA/voluptuous подтверждён. Следующий finish повторит недостающее с сохранением применимых успехов. Модель ещё не вызывалась.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
