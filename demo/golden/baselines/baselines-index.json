@@ -420,7 +420,11 @@
     "lighting-closed-door-panel-dark": "4c4b099627e3224d843cdb509209a352f8dbe8f6b6249a83829f8e773fcbd3c5",
     "lighting-open-door-panel-dark": "1d639230bda9f4fe616c40b47dc13b11cb73dec4e7248cae69127fa556332fb1",
     "lighting-closed-door-panel-iso-dark": "b7b6b932b2ccc6ac003c62ff41ac1ba3ad6d49893c3b3145a40c75dc46eb2cf6",
-    "lighting-closed-slide-door-panel-dark": "7332599b4e0400fcd65984cd133af101dd665f82ed181af7d1ba8a15450aa2db"
+    "lighting-closed-slide-door-panel-dark": "7332599b4e0400fcd65984cd133af101dd665f82ed181af7d1ba8a15450aa2db",
+    "panel-iso-value-badge-depth-0-1504": "0605f40ccfb8a503391defa7a7c4a5cd95c06268341991a1e8bda07b19f99f87",
+    "panel-iso-value-badge-depth-90-1504": "3a0fc329afc922f2a1954a344ed3c5e7200035f5c9e5eba480af1944a6fcf6fd",
+    "panel-iso-value-badge-depth-180-1504": "077bbb536dd676a2f89358bc513cbd8fb37992767c32ea0a64610b03889432a8",
+    "panel-iso-value-badge-depth-270-1504": "541205c29d6852774acda937fcf421951f878a6284ee0e898cca520d58f07b05"
   },
   "scenarioProvenance": {
     "panel-wide-view-light-en": {
@@ -7232,6 +7236,86 @@
       },
       "host": "lovelace",
       "sourceSceneId": "first-space-no-storage-dark"
+    },
+    "panel-iso-value-badge-depth-0-1504": {
+      "acceptedAt": "2026-11-20T21:58:09.912Z",
+      "decision": "Owner accepted the four 0/90/180/270 degree #1504 frames in Codex on 2026-11-21, review.json SHA256 6c4f78a8d282c24de1bee5083d898def12626e6d7943abb4528a79011259e7fd",
+      "reportSha256": "6c4f78a8d282c24de1bee5083d898def12626e6d7943abb4528a79011259e7fd",
+      "sourceSha": "336335d19a01c7abb31fdfd332ff49c2a4cb53e4",
+      "sourceFingerprint": "044e12232b2676f40b1a103de4bc8ce6d604f21d59938204da5d8d409ff425d5",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "336335d19a01c7abb31fdfd332ff49c2a4cb53e4",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "044e12232b2676f40b1a103de4bc8ce6d604f21d59938204da5d8d409ff425d5",
+        "harnessIconsSha256": "974acfcf2ca273d4b9d7fd5446224d4dffadf17cf123f85f889b3d071abb9cf1",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-iso-value-badge-depth-0-1504"
+    },
+    "panel-iso-value-badge-depth-90-1504": {
+      "acceptedAt": "2026-11-20T21:58:09.912Z",
+      "decision": "Owner accepted the four 0/90/180/270 degree #1504 frames in Codex on 2026-11-21, review.json SHA256 6c4f78a8d282c24de1bee5083d898def12626e6d7943abb4528a79011259e7fd",
+      "reportSha256": "6c4f78a8d282c24de1bee5083d898def12626e6d7943abb4528a79011259e7fd",
+      "sourceSha": "336335d19a01c7abb31fdfd332ff49c2a4cb53e4",
+      "sourceFingerprint": "044e12232b2676f40b1a103de4bc8ce6d604f21d59938204da5d8d409ff425d5",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "336335d19a01c7abb31fdfd332ff49c2a4cb53e4",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "044e12232b2676f40b1a103de4bc8ce6d604f21d59938204da5d8d409ff425d5",
+        "harnessIconsSha256": "974acfcf2ca273d4b9d7fd5446224d4dffadf17cf123f85f889b3d071abb9cf1",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-iso-value-badge-depth-90-1504"
+    },
+    "panel-iso-value-badge-depth-180-1504": {
+      "acceptedAt": "2026-11-20T21:58:09.912Z",
+      "decision": "Owner accepted the four 0/90/180/270 degree #1504 frames in Codex on 2026-11-21, review.json SHA256 6c4f78a8d282c24de1bee5083d898def12626e6d7943abb4528a79011259e7fd",
+      "reportSha256": "6c4f78a8d282c24de1bee5083d898def12626e6d7943abb4528a79011259e7fd",
+      "sourceSha": "336335d19a01c7abb31fdfd332ff49c2a4cb53e4",
+      "sourceFingerprint": "044e12232b2676f40b1a103de4bc8ce6d604f21d59938204da5d8d409ff425d5",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "336335d19a01c7abb31fdfd332ff49c2a4cb53e4",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "044e12232b2676f40b1a103de4bc8ce6d604f21d59938204da5d8d409ff425d5",
+        "harnessIconsSha256": "974acfcf2ca273d4b9d7fd5446224d4dffadf17cf123f85f889b3d071abb9cf1",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-iso-value-badge-depth-180-1504"
+    },
+    "panel-iso-value-badge-depth-270-1504": {
+      "acceptedAt": "2026-11-20T21:58:09.912Z",
+      "decision": "Owner accepted the four 0/90/180/270 degree #1504 frames in Codex on 2026-11-21, review.json SHA256 6c4f78a8d282c24de1bee5083d898def12626e6d7943abb4528a79011259e7fd",
+      "reportSha256": "6c4f78a8d282c24de1bee5083d898def12626e6d7943abb4528a79011259e7fd",
+      "sourceSha": "336335d19a01c7abb31fdfd332ff49c2a4cb53e4",
+      "sourceFingerprint": "044e12232b2676f40b1a103de4bc8ce6d604f21d59938204da5d8d409ff425d5",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "336335d19a01c7abb31fdfd332ff49c2a4cb53e4",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "044e12232b2676f40b1a103de4bc8ce6d604f21d59938204da5d8d409ff425d5",
+        "harnessIconsSha256": "974acfcf2ca273d4b9d7fd5446224d4dffadf17cf123f85f889b3d071abb9cf1",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-iso-value-badge-depth-270-1504"
     }
   }
 }
