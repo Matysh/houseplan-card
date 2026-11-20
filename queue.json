@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 18685,
-  "nextTicket": 576,
+  "revision": 18686,
+  "nextTicket": 577,
   "nextFence": 576,
   "tasks": {
     "1024": {
@@ -5531,16 +5531,15 @@
       "materialSha": "c4cb576ca6e1e19b6836fb3863657e174d174877",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 575,
-      "queued": false,
+      "ticket": 576,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795211200095,
-      "reviewEntry": 1,
+      "readyAt": 1795211320688,
+      "reviewEntry": 2,
       "patchId": "92d6e0a21da8e65434c41ba6b4f7b83cb30fbe78",
       "changedFiles": [
         "demo/smoke_zigbee_topology_hover.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6032,7 +6031,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1503
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6167,6 +6168,19 @@
           "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
           "eventId": "finish:1e1b7423-0b0e-4f9e-ad71-d5cbdbe2f69f:finish:3:return:return:1503"
         }
+      }
+    },
+    "finish:fc471e1d-1f56-40be-921d-10cbea12729f": {
+      "digest": "a9277cf8a70c8b702aac22b76d9e08b6753ae7095981a4e98c75621609257903",
+      "issue": 1503,
+      "message": {
+        "kind": "queued",
+        "issue": 1503,
+        "at": 1795211320688,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "c4cb576ca6e1e19b6836fb3863657e174d174877"
       }
     }
   },
