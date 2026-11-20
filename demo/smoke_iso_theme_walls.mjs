@@ -206,8 +206,8 @@ try {
     assert(cached[index] > 30, 'The active raster must preserve solid pixels for ' + material +
       ' (before/during/after: ' + [before[index], cached[index], after[index]].join('/') + ')');
   }
-  // A delayed wheel step on a large 2.5D surface must not work through a
-  // terminal SVG repaint. Zoom-in keeps its regular settle timing.
+  // Both directions keep the wheel session through a short pause. Verify
+  // that the exact SVG still arrives within the final settle deadline.
   await page.clock.install();
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
   const wheel = deltaY => stage.evaluate((el, deltaY) => {
@@ -218,22 +218,21 @@ try {
     }));
   }, deltaY);
   const moving = () => page.evaluate(() => window.__isoPaint._cameraTransition.active);
-  await wheel(80);
-  await page.clock.runFor(200);
-  assert(await moving(), 'Zoom-out must keep its visible frame through a delayed wheel step');
-  await wheel(80);
-  await page.clock.runFor(280);
-  assert(!(await moving()), 'Zoom-out must return to the exact SVG after wheel input stops');
-  assert.equal(await stage.locator('.hp-iso-raster').count(), 0);
-  assert(await stage.evaluate(el => {
-    const card = window.__isoPaint;
-    const { x, y, w, h } = card._viewOr(card._baseVb());
-    const box = el.querySelector('.iso-scene-surface > svg').getAttribute('viewBox').split(/\s+/).map(Number);
-    return box.length === 4 && [x, y, w, h].every((value, i) => Math.abs(value - box[i]) < 1e-5);
-  }), 'The actual SVG must use the exact final camera after cached zoom-out');
-  await wheel(-80);
-  await page.clock.runFor(200);
-  assert(!(await moving()), 'Zoom-in must retain its original settle timing');
+  for (const [delta, direction] of [[80, 'Zoom-out'], [-80, 'Zoom-in']]) {
+    await wheel(delta);
+    await page.clock.runFor(200);
+    assert(await moving(), direction + ' must keep the session through a delayed wheel step');
+    await wheel(delta);
+    await page.clock.runFor(280);
+    assert(!(await moving()), direction + ' must settle after wheel input stops');
+    assert.equal(await stage.locator('.hp-iso-raster').count(), 0);
+    assert(await stage.evaluate(el => {
+      const card = window.__isoPaint;
+      const { x, y, w, h } = card._viewOr(card._baseVb());
+      const box = el.querySelector('.iso-scene-surface > svg').getAttribute('viewBox').split(/\s+/).map(Number);
+      return box.length === 4 && [x, y, w, h].every((value, i) => Math.abs(value - box[i]) < 1e-5);
+    }), direction + ' must restore the exact final camera in the live SVG');
+  }
   await page.clock.resume();
 
   await finish(rasterScene.browser, {
