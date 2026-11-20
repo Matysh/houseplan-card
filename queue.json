@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18332,
+  "revision": 18333,
   "nextTicket": 570,
   "nextFence": 570,
   "tasks": {
@@ -5405,9 +5405,15 @@
         "demo/smoke_zoom_badge_visibility.mjs",
         "src/houseplan-card.ts"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1795201010141,
-      "automationDetail": "S6 runner exited with 1 before a report"
+      "s6": {
+        "id": "20261120T185757746-d8599740",
+        "name": "Тесты для задачи #1499 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T185757746-d8599740/report.json",
+        "materialSha": "553094ec3d21bf93d8cec8547a0006c4692979eb",
+        "status": "passed",
+        "finishedAt": "2026-11-20T19:01:25.118Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5897,9 +5903,9 @@
     "fence": 569,
     "materialSha": "553094ec3d21bf93d8cec8547a0006c4692979eb",
     "expectedBase": "4ed2f5c836a2d0f01bcfc81f588819a09eadcdf8",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795200984567,
-    "expiresAt": 1795201583714,
+    "expiresAt": 1795204887238,
     "patchId": "f9972e9bf4cc9b16e4e765a0fb2280eb1d2a4a3d"
   },
   "events": {
@@ -5981,6 +5987,10 @@
     },
     "finish:2c69c075-df1c-41a8-b727-f87ff304efb3": {
       "digest": "06f261de7214327f932e711c6bc569ae5963f4185e4038f59eacca7d039dddda",
+      "issue": 1499
+    },
+    "finish:79690b9e-36de-41a7-a83a-0cf9b600ca2c:finish:4:s6-complete": {
+      "digest": "a26f26c7bf9b56d87c2cd2faea0a1108b350be6a36ff316876502950b1f39c51",
       "issue": 1499
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
