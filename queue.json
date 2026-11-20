@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18403,
+  "revision": 18404,
   "nextTicket": 573,
   "nextFence": 572,
   "tasks": {
@@ -6256,6 +6256,10 @@
       "digest": "8ff975642388e3f9289b30e1d569f3fd2be667d692170490ecb820c6f62a3217",
       "issue": 1495
     },
+    "github:44801844578:1:completions:message:b4bfca0012226db8edb34e30787ccdbf59056284df484a80eb93bd19631fa2ea": {
+      "digest": "a1df2df596597d32e2411a12e0a7ac4561114ea596863531ac6b789b22be4768",
+      "issue": 1500
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6345,7 +6349,8 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/iso-scene-render.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: geometry history refusal: cancelled; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: iso device contours: Подготовка не завершена успешно; Браузер: iso label bounds: Подготовка не завершена успешно; Браузер: iso raster handoff: Подготовка не завершена успешно; Браузер: iso raster materials: Подготовка не завершена успешно; Браузер: iso theme walls: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: portable recovery: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
           "eventId": "finish:5abbc3cd-2c07-437d-97f7-d0ed21179369:finish:3:return:return:1495"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:6f2a65ad-65a4-4cc3-897e-1ae6ce4edb64:finish:1:admit": {
