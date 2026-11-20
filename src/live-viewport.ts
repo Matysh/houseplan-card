@@ -1,6 +1,6 @@
 import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor,
   type ViewportExposureLimits } from './viewport-exposure';
-import { IsoCameraRaster, type RasterStyle } from './iso-camera-raster';
+import { ISO_RASTER_MIN_PIXELS, IsoCameraRaster, type RasterStyle } from './iso-camera-raster';
 
 export interface LiveViewBox {
   x: number;
@@ -429,7 +429,7 @@ function rasterScene(host: LiveViewportHost, state: LiveViewportState): SVGSVGEl
   const svg = state.nodes?.camera[0] as SVGSVGElement | undefined;
   // On smaller surfaces the vector renderer finishes before the cost of
   // preparing a bitmap pays back. Enable the cache for large raster loads.
-  if ((state.limits?.pixelArea ?? 0) >= 6_000_000 && host._renderProjection === 'iso' &&
+  if ((state.limits?.pixelArea ?? 0) >= ISO_RASTER_MIN_PIXELS && host._renderProjection === 'iso' &&
       !host._modeSceneClip && svg &&
       svg.matches('.iso-scene-surface > svg[data-projection="iso"]:not([data-hp-retained-light])') &&
       svg.parentElement?.childElementCount === 1 && svg.closest('.stage.mode-view:not(.mode-transition)')) {

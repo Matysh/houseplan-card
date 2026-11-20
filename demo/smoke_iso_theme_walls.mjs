@@ -206,6 +206,36 @@ try {
     assert(cached[index] > 30, 'The active raster must preserve solid pixels for ' + material +
       ' (before/during/after: ' + [before[index], cached[index], after[index]].join('/') + ')');
   }
+  // A delayed wheel step on a large 2.5D surface must not work through a
+  // terminal SVG repaint. Zoom-in keeps its regular settle timing.
+  await page.clock.install();
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
+  const wheel = deltaY => stage.evaluate((el, deltaY) => {
+    const { x, y, width, height } = el.getBoundingClientRect();
+    el.dispatchEvent(new WheelEvent('wheel', {
+      clientX: x + width * .88, clientY: y + height * .66,
+      deltaY, bubbles: true, cancelable: true,
+    }));
+  }, deltaY);
+  const moving = () => page.evaluate(() => window.__isoPaint._cameraTransition.active);
+  await wheel(80);
+  await page.clock.runFor(200);
+  assert(await moving(), 'Zoom-out must keep its visible frame through a delayed wheel step');
+  await wheel(80);
+  await page.clock.runFor(280);
+  assert(!(await moving()), 'Zoom-out must return to the exact SVG after wheel input stops');
+  assert.equal(await stage.locator('.hp-iso-raster').count(), 0);
+  assert(await stage.evaluate(el => {
+    const card = window.__isoPaint;
+    const { x, y, w, h } = card._viewOr(card._baseVb());
+    const box = el.querySelector('.iso-scene-surface > svg').getAttribute('viewBox').split(/\s+/).map(Number);
+    return box.length === 4 && [x, y, w, h].every((value, i) => Math.abs(value - box[i]) < 1e-5);
+  }), 'The actual SVG must use the exact final camera after cached zoom-out');
+  await wheel(-80);
+  await page.clock.runFor(200);
+  assert(!(await moving()), 'Zoom-in must retain its original settle timing');
+  await page.clock.resume();
+
   await finish(rasterScene.browser, {
     ...res, stops: light.stops, stroke: [flat.furnitureStroke, light.furnitureStroke],
     rasterMaterialPixels: { before, cached, after },

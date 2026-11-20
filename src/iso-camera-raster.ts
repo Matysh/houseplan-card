@@ -8,6 +8,7 @@ export interface RasterViewport extends ViewportExposureLimits {
 
 export type RasterStyle = readonly (readonly [string, string])[];
 
+export const ISO_RASTER_MIN_PIXELS = 6_000_000;
 const enoughPixels = 1_200_000;
 const imageWidth = 'hp-raster-width';
 const imageHeight = 'hp-raster-height';

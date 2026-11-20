@@ -309,6 +309,7 @@ import {
   CameraTransitionController, sameCameraState,
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
 } from './viewport-transition'; import { measuredCardHeaderHeight, rawCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
+import { ISO_RASTER_MIN_PIXELS } from './iso-camera-raster';
 import {
   PlanTapGestureController, roomFitPlanTarget, roomFitClampFrame,
   roomFitPlanBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
@@ -455,6 +456,7 @@ const BOOT_MAX_MS = 1200;
 const BOOT_SOFT_MS = 1500;
 const CAMERA_BUTTON_MS = 180;
 const CAMERA_WHEEL_MS = 160;
+const CAMERA_ISO_WHEEL_OUT_SETTLE_MS = 230;
 const CAMERA_FIT_MS = 220;
 /** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
  *  PAGE, not with any card instance. Lovelace re-creates card elements when
@@ -1674,7 +1676,11 @@ export class HouseplanCard extends LitElement {
     state.presented = presented;
     this._zoom = presented.zoom;
     this._view = { ...presented.viewBox };
-    this._liveVp(true);
+    // The exact Lit commit follows in the same tick. During a 2.5D
+    // zoom-out, a final live write can re-layout the old layers just before
+    // Lit replaces their camera and retires the bitmap.
+    if (state.phase !== 'settling' || state.reason !== 'wheel' ||
+        state.to.zoom >= state.from.zoom || this._renderProjection !== 'iso') this._liveVp(true);
   }
 
   private _settleCameraTransition(state: CameraTransitionState): void {
@@ -1749,8 +1755,17 @@ export class HouseplanCard extends LitElement {
     this._activateSafeDayCycleOutline();
     if (!this._cameraTransition.active && this._mode === 'view') this._clearPointerHover();
     this._cameraTransitionFit = { ...fit };
+    let minimumSettleMs = reason === 'wheel' ? CAMERA_WHEEL_MS : 0;
+    const size = this._lastValidStageSize;
+    const dpr = this.ownerDocument.defaultView?.devicePixelRatio || 1;
+    if (reason === 'wheel' && target.zoom < current.zoom && this._renderProjection === 'iso'
+        && size && size[0] * size[1] * dpr ** 2 >= ISO_RASTER_MIN_PIXELS) {
+      // On a large 2.5D scene the GPU can defer the next queued wheel event
+      // past the animation end. Keep the published frame through that gap.
+      minimumSettleMs = CAMERA_ISO_WHEEL_OUT_SETTLE_MS;
+    }
     this._cameraTransition.start(current, target, reason,
-      this._reducedMotion ? 0 : duration, reason === 'wheel' ? CAMERA_WHEEL_MS : 0);
+      this._reducedMotion ? 0 : duration, minimumSettleMs);
     return true;
   }
   private _cssColor(value: string | null | undefined, fallback: string): string {

@@ -183,6 +183,10 @@ million pixels, and the renderer holds one shown and one pending bitmap.
 The bitmap covers the plan and its visible overflow inside the predicted
 viewport reserve, concentrating resolution on paint rather than empty margins.
 Wall and opening materials are read from the stage by property name.
+On surfaces in the raster size range, wheel zoom-out retains the live
+camera for 230 ms after the last input so GPU-delayed wheel steps can still
+join the gesture. The 160 ms camera animation and zoom-in timing stay the
+same. The final Lit commit replaces the bitmap directly.
 
 Physical geometry and projected variants stay separate. The structural LRU
 remains bounded at eight entries; variants are keyed by saved quarter turns,

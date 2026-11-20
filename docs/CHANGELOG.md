@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Keep the 2.5D zoom-out raster through delayed wheel events on large displays and avoid a duplicate camera update at settlement (#1481).
 - Preserve 2.5D wall and opening materials during zoom and use the raster pixels for visible plan geometry (#1480).
 - Reuse the painted 2.5D plan during pan and zoom, with SVG floor shadows and a shared lighting fade (#1478).
 - Round each exposed corner of a shared device outline to suit its icon size in 2D and 2.5D (#1477).

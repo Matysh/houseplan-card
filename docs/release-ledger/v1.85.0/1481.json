@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1481,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Reduces interruptions during zoom-out on large 2.5D surfaces using the raster path added in the current beta line.",
+  "summary": {
+    "ru": "Отдаление 2.5D на больших экранах реже прерывается полной отрисовкой посреди жеста.",
+    "en": "2.5D zoom-out on large displays keeps the raster through delayed wheel input."
+  }
+}
