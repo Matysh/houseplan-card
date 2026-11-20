@@ -10,6 +10,22 @@ English. It does not rewrite the published release.
 Each entry's final link opens the milestone page by number with closed issues
 (`…/milestone/N?closed=1`), so it does not depend on the milestone title.
 
+<!-- release: v1.86.0 -->
+<!-- base: v1.85.2 -->
+## Houseplan 1.86.0 release
+
+🏠 **A redesigned 2.5D view.** A new viewing angle makes layout, furniture and openings easier to see. Soft shading and fine edges distinguish walls from floors even in similar colours. Wall colour blends into a white base without making the walls see-through. Panning and zooming no longer need to redraw the plan at each step. [#1451](https://github.com/Matysh/houseplan-card/issues/1451), [#1478](https://github.com/Matysh/houseplan-card/issues/1478), [#1495](https://github.com/Matysh/houseplan-card/issues/1495)
+
+⚡ **Faster floor loading.** Houseplan saves prepared geometry so it can show a reopened floor without rebuilding it from scratch. Device and opening states update separately. [#1454](https://github.com/Matysh/houseplan-card/issues/1454)
+
+📦 **Move a whole house layout in one ZIP.** Export and add all floors, including stairs and images, without carrying over devices, Home Assistant bindings or global settings. Full backups are still available separately. [#1464](https://github.com/Matysh/houseplan-card/issues/1464)
+
+🚪 **Position swing doors within the wall.** By default, the door sits on the side it opens toward. You can also place it on the other side or in the centre. [#1475](https://github.com/Matysh/houseplan-card/issues/1475)
+
+In the plan editor, right-click a room to open its settings or edit its boundaries. You can also delete a room from its settings. [#1453](https://github.com/Matysh/houseplan-card/issues/1453)
+
+[Full list of changes](https://github.com/Matysh/houseplan-card/milestone/16?closed=1)
+
 <!-- release: v1.85.2 -->
 <!-- base: v1.85.1 -->
 ## Houseplan 1.85.2 release

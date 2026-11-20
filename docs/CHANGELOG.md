@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v1.86.0 — 2026-11-21
+
+- Promote the verified 1.86.0 beta line to stable, including the Zigbee check for an unplaced coordinator (#1503), camera-depth order for icons and value badges, and visual references for all four 2.5D rotations (#1504).
+
 ## v1.86.0-beta.4 — 2026-11-21
 
 - In 2.5D, icons and their value badges overlap in camera-depth order at every plan rotation (#1504).
