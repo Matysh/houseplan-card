@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18392,
+  "revision": 18393,
   "nextTicket": 572,
   "nextFence": 571,
   "tasks": {
@@ -5311,7 +5311,18 @@
         "src/iso-scene-render.ts",
         "src/styles/plan.styles.ts",
         "test/iso-architectural-tone.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795202411385,
+        "entry": 1,
+        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/iso-scene-render.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: geometry history refusal: cancelled; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: iso device contours: Подготовка не завершена успешно; Браузер: iso label bounds: Подготовка не завершена успешно; Браузер: iso raster handoff: Подготовка не завершена успешно; Браузер: iso raster materials: Подготовка не завершена успешно; Браузер: iso theme walls: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: portable recovery: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
+        "eventId": "finish:5abbc3cd-2c07-437d-97f7-d0ed21179369:finish:3:return:return:1495"
+      }
     },
     "1496": {
       "issue": 1496,
@@ -5955,18 +5966,7 @@
   "waiting": [
     1500
   ],
-  "active": {
-    "issue": 1495,
-    "worker": "finish",
-    "token": "570:finish:5abbc3cd-2c07-437d-97f7-d0ed21179369:finish:1:admit",
-    "fence": 570,
-    "materialSha": "fb467be6ea44837dc5010eafdf4d95c98b12e86d",
-    "expectedBase": "553094ec3d21bf93d8cec8547a0006c4692979eb",
-    "phase": "testing",
-    "admittedAt": 1795201743823,
-    "expiresAt": 1795202708556,
-    "patchId": "75a604bf5f7a56f6fd7e00a61312a291c2d8ce94"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6072,6 +6072,10 @@
       "digest": "bc95721be4ea1ed45d55d04ba22ae9f5b17c9c6daa617e9298266f185cec6bf9",
       "issue": 1495
     },
+    "finish:5abbc3cd-2c07-437d-97f7-d0ed21179369:finish:3:return": {
+      "digest": "d316f2e00b21c524e3d5309ebbf6007234aadf39c1c25d9f93e612039c253895",
+      "issue": 1495
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6142,6 +6146,26 @@
         "layer": "product",
         "materialSha": "3faf584e02e4b2bfca92b14dd1eaa27774ce9f40",
         "delivered": true
+      }
+    },
+    "finish:5abbc3cd-2c07-437d-97f7-d0ed21179369:finish:3:return:return:1495": {
+      "digest": "d316f2e00b21c524e3d5309ebbf6007234aadf39c1c25d9f93e612039c253895",
+      "issue": 1495,
+      "message": {
+        "kind": "return",
+        "issue": 1495,
+        "at": 1795202411385,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795202411385,
+          "entry": 1,
+          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/iso-scene-render.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: geometry history refusal: cancelled; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: iso device contours: Подготовка не завершена успешно; Браузер: iso label bounds: Подготовка не завершена успешно; Браузер: iso raster handoff: Подготовка не завершена успешно; Браузер: iso raster materials: Подготовка не завершена успешно; Браузер: iso theme walls: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: portable recovery: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
+          "eventId": "finish:5abbc3cd-2c07-437d-97f7-d0ed21179369:finish:3:return:return:1495"
+        }
       }
     }
   },
