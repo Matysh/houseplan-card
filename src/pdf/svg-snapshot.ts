@@ -80,10 +80,16 @@ export function captureSvgView(source: SvgViewSource, options: SvgExportOptions)
 
   // Keep native scene SVGs native; only HTML presentation (labels/markers/sky)
   // uses standard foreignObject. Geometry is never a screenshot.
+  // A display:contents layer has no box. Its painted children participate
+  // directly in the surrounding layer order and must be captured individually.
+  const paintedChildren = (node: Element): Element[] => [...node.children].flatMap(child => {
+    if (excluded(child)) return [];
+    return computed(child).display === 'contents' ? paintedChildren(child) : [child];
+  });
   const append = (node: Element): void => {
     if (excluded(node) || computed(node).display === 'none') return;
     if (node.matches('.zoomwrap')) {
-      [...node.children].sort((a, b) => (parseInt(computed(a).zIndex) || 0) - (parseInt(computed(b).zIndex) || 0)).forEach(append);
+      paintedChildren(node).sort((a, b) => (parseInt(computed(a).zIndex) || 0) - (parseInt(computed(b).zIndex) || 0)).forEach(append);
       return;
     }
     const rect = node.getBoundingClientRect();
@@ -98,12 +104,13 @@ export function captureSvgView(source: SvgViewSource, options: SvgExportOptions)
       svg.append(copy);
     } else {
       const foreign = doc.createElementNS(SVG, 'foreignObject');
-      foreign.setAttribute('x', String(rect.left - box.left)); foreign.setAttribute('y', String(rect.top - box.top));
-      foreign.setAttribute('width', String(rect.width)); foreign.setAttribute('height', String(rect.height));
+      // Keep the foreignObject in the visible viewport. An oversized camera
+      // layer can start outside it, where SVG-as-image can drop its paint.
+      foreign.setAttribute('width', String(box.width)); foreign.setAttribute('height', String(box.height));
       const wrapper = doc.createElementNS(HTML, 'div');
-      wrapper.style.cssText = `position:relative;width:${rect.width}px;height:${rect.height}px;overflow:visible`;
-      // The layer remains a positioning parent for absolute room/device children.
-      copy.style.position = 'relative'; copy.style.left = '0'; copy.style.top = '0';
+      wrapper.style.cssText = `position:relative;width:${box.width}px;height:${box.height}px;overflow:visible`;
+      copy.style.position = 'absolute';
+      copy.style.inset = `${rect.top - box.top}px auto auto ${rect.left - box.left}px`;
       wrapper.append(copy); foreign.append(wrapper); svg.append(foreign);
     }
   };

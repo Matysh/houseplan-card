@@ -120,6 +120,13 @@ try{
     const extra=second.box[1]-first.box[1];
     const toggle={key:'light_transparent',box:[...first.box]};
     group.fields.slice(flipIndex).forEach(field=>field.box[1]+=extra);group.fields.splice(flipIndex,0,toggle);group.box[3]+=extra;
+    // #1475 appends a full-width position selector after the flip controls.
+    // Derive its height from the independent full-width opening field.
+    const fullField=expected.groups.flatMap(candidate=>candidate.fields).find(field=>field.key==='gap');
+    const rowGap=extra-first.box[3];
+    const [x,y,width,height]=second.box;
+    group.fields.push({key:'swing_position',box:[x,y+height+rowGap,width,fullField.box[3]]});
+    group.box[3]+=rowGap+fullField.box[3];
    }
    out[prefix+'_section_geometry']=expected.groups.length===actual.groups.length&&expected.groups.every((group,i)=>near(group.box,actual.groups[i].box));
    out[prefix+'_field_geometry']=expected.groups.every((group,i)=>group.fields.length===actual.groups[i]?.fields.length&&group.fields.every((f,j)=>f.key===actual.groups[i].fields[j].key&&near(f.box,actual.groups[i].fields[j].box)));

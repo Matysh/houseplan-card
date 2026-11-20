@@ -100,15 +100,16 @@ out.motion=await page.evaluate(async()=>{
  const c=window.__card,root=c.renderRoot,frame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
  const requests=[],request=c.requestUpdate.bind(c);c.requestUpdate=(...args)=>{if(c._modeTransition.active)requests.push({name:String(args[0]),stack:new Error().stack.split('\n').slice(1,5)});return request(...args);};
  const original=c.render.bind(c);let runningRenders=0;c.render=(...args)=>{if(c._modeTransition.active)runningRenders++;return original(...args);};
- const initial=root.querySelector('.plan-svg'),ppu=initial.getBoundingClientRect().width/initial.viewBox.baseVal.width;
+ const screenScale=()=>{const matrix=root.querySelector('.plan-svg').getScreenCTM();return Math.hypot(matrix.a,matrix.b);};
+ const ppu=screenScale();
  const samples=[];
  c._setMode('plan');await frame();await frame();c._setMode('devices');await frame();c._setMode('decor');
  const start=performance.now();
- while(c._modeTransitionBusy&&performance.now()-start<2500){await frame();const svg=root.querySelector('.plan-svg');samples.push(svg.getBoundingClientRect().width/svg.viewBox.baseVal.width);}
+ while(c._modeTransitionBusy&&performance.now()-start<2500){await frame();samples.push(screenScale());}
  await c.updateComplete;await frame();
  const stage=root.querySelector('.stage');
  console.log('Rapid observations',JSON.stringify({ppu,samples,runningRenders,requests}));return {rapidSettled:!c._modeTransitionBusy&&!stage.inert,
-   scaleKept:samples.every(value=>Math.abs(value-ppu)<1e-5),
+   scaleKept:samples.length>0&&samples.every(value=>Math.abs(value-ppu)<1e-5),
    noFullRenderPerFrame:runningRenders===0,
    sceneStylesRetired:!root.querySelector('.zoomwrap').style.width&&!stage.style.width};
 });

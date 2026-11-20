@@ -1726,11 +1726,13 @@ export async function prepareGoldenScenario(page, scenario) {
         }
       }
       if (contract.requirePassage) {
-        if (!card._openingsR?.some((opening) => opening.type === 'passage')
-            || card.renderRoot.querySelector(
-              '[data-hp="iso-openings"] .iso-opening-panel[data-kind="passage"]',
-            )) {
-          throw new Error(`Stage 4 passage golden violated negative-volume contract: ${scenario.id}`);
+        const passage = card._openingsR?.find(opening => opening.type === 'passage');
+        const surfaces = [...card.renderRoot.querySelectorAll('[data-hp="iso-openings"] path[data-kind="passage"]')];
+        const structural = new Set(['jamb-reveal', 'opening-lintel-side', 'opening-lintel-top',
+          'opening-lintel-underside']);
+        if (!passage || !surfaces.length || surfaces.some(surface =>
+          !structural.has(surface.getAttribute('data-surface')) || surface.hasAttribute('data-leaf'))) {
+          throw new Error(`Stage 4 passage golden requires masonry without any leaf: ${scenario.id}`);
         }
       }
       if (contract.requireVacuumFloor) {

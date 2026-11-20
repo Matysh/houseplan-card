@@ -35,11 +35,17 @@ try {
     out[`${name}AllAndOnlyBackStairs`] = await count() === 2;
     out[`${name}SharedContourStyle`] = await root.locator('[data-hp="stair-arrival"]').evaluateAll((nodes, { dark, iso }) => nodes.every(n => {
       const s = getComputedStyle(n), expected = dark ? 'rgb(181, 107, 234)' : 'rgb(0, 138, 117)';
+      const stair = n.closest('[data-hp="stair"]');
+      const volume = stair?.getAttribute('data-hp-stair-volume') === 'true';
+      const contour = volume ? 'd' : 'points';
+      const outline = n.getAttribute(contour);
+      const hit = stair?.querySelector('.hp-stair-hit');
       return s.stroke === expected && s.fill === expected && s.fillOpacity === '0.22'
         && s.strokeWidth === '3px' && s.vectorEffect === 'non-scaling-stroke' && s.pointerEvents === 'none'
         && s.animationDuration === '1s' && s.animationIterationCount === '2' && s.animationTimingFunction === 'ease-in-out'
-        && n.getAttribute('points') === n.parentNode.querySelector('.hp-stair-outline').getAttribute('points')
-        && (!iso || !!n.closest('.iso-floor-scene'));
+        && !!outline && outline === hit?.getAttribute(contour)
+        && (!volume || iso && !!n.closest('.iso-furniture-foreground'))
+        && (!iso || !!n.closest('.iso-floor-scene, .iso-furniture-foreground'));
     }), { dark, iso });
     // Pause only the browser animation to inspect both pulses without changing product state/timers.
     out[`${name}TwoPulseFrames`] = await root.locator('[data-hp="stair-arrival"]').first().evaluate(n => {

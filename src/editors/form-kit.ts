@@ -380,8 +380,9 @@ export interface ColorRowOptions {
 
 /** Строка цвета (§3.1 «gs-color-row»): подпись слева, плашка справа. */
 export function colorRow({ label, help, picker, action }: ColorRowOptions): TemplateResult {
+  const hasHelp = help && help !== nothing;
   return html`<div class="hpf-colorrow">
-    <span class="hpf-labelrow">${label}${help ?? nothing}</span>
+    <span class="hpf-labelrow ${hasHelp ? 'hpf-inline-help' : ''}">${hasHelp ? helpLabel(label, help) : label}</span>
     ${picker}${action ?? nothing}
   </div>`;
 }
