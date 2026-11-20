@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17825,
+  "revision": 17826,
   "nextTicket": 561,
   "nextFence": 560,
   "tasks": {
@@ -5246,157 +5246,26 @@
     },
     "1490": {
       "issue": 1490,
+      "branch": "codex/1490-loading-background",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1490-loading-background",
-      "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 559,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795173051657,
-      "reviewEntry": 1,
-      "patchId": "b77eeed265688099f0faab4668db32fae83fcd4d",
-      "changedFiles": [
-        "demo/smoke_floor_cache_day_cycle.mjs",
-        "demo/smoke_floor_persistent_cache.mjs",
-        "docs/CANVAS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.85.2/1490.json",
-        "src/houseplan-card.ts",
-        "test/floor-cache-day-cycle.test.mjs"
-      ],
-      "s6": {
-        "id": "20261120T111112421-29a49bcb",
-        "name": "Тесты для задачи #1490 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T111112421-29a49bcb/report.json",
-        "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-        "status": "passed",
-        "finishedAt": "2026-11-20T11:19:52.193Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
+      "mergedSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
+      "mergedAt": 1795173830358,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1490:1:b77eeed265688099f0faab4668db32fae83fcd4d:3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
-      "reviewMaterial": {
-        "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-        "expectedBase": "3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
-        "patchId": "b77eeed265688099f0faab4668db32fae83fcd4d"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1490:1:b77eeed265688099f0faab4668db32fae83fcd4d:3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
-        "eventId": "github:44726696667:1:tick:0:review-retry",
-        "at": 1795173615679,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1490,
-        "requestId": "review:1490:1:b77eeed265688099f0faab4668db32fae83fcd4d:3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
-        "kind": "code",
-        "base": "3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
-        "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-        "patchId": "b77eeed265688099f0faab4668db32fae83fcd4d",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1490,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1490",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\n\nИсправляются оба описанных состояния загрузки. Временный экран и готовый View используют один рендерер окружения: день, ночь и статический фон с Луной сохраняют свои правила. В 2.5D L1 остаётся источником fit/камеры, но не рисуется как отдельный силуэт; Flat сохраняет прежнее пассивное SVG-превью.\n\n### Решение и альтернативы\n\nПричина синего кадра — `_renderPendingFloor()` применял `_stageBg()`, но не выводил `renderDayCycleEnvironment()`. Причина силуэта — `renderFloorPreview()` воспроизводит анонимные контуры без полноценных материалов 2.5D. Общий `_renderStageEnvironment()` теперь используется в обоих путях. Сам L1/L2, IndexedDB, worker, валидация, сроки ожидания и fallback не меняются. Альтернатива — дополнять L1 материалами — здесь не нужна и расширила бы задачу.\n\n### Риски и места для внимания\n\nДанные камеры и fit продолжают читаться из L1 даже без его SVG; невидимый эскиз не должен учитываться как показанное превью в диагностике. Навигация и заголовок остаются доступны, старые устройства на временном экране не сохраняются. Полный кадр по-прежнему проходит существующие барьеры готовности и ограниченный fallback. Нет записей config/layout и команд устройствам. Трек show; отдельного формального ТЗ и его ревью нет.\n\n### Проверки и ограничения\n\nАдресный unit исполняет реальные методы шаблона без геометрических портов: до исправления 2 FAIL / 1 PASS, после 3 PASS. Новый native-сценарий `demo/smoke_floor_cache_day_cycle.mjs` использует синтетический план и настоящий module worker, удерживаемый только тестом: три холодных варианта (день, ночь, однотонный), оба перехода между этажами с реальным IDB-превью, 24 промежуточных кадра, готовая 2.5D-сцена и отсутствие записей. Он и прежний `smoke_floor_persistent_cache.mjs` включены в S6; фактический отчёт передаётся штатным запускателем. Старый ISO-witness обновлён только в части намеренно отменённого показа L1; Flat-превью, камера, текущий свет, сохранение и fallback сохраняют проверки. Каталог относит новые тесты к geometry/lighting/performance, важность regression, lifecycle task-release; план подтверждает их выбор. Реальная установка владельца не изменялась, частный бэкап не публикуется, эталоны не обновляются.\n\n\nДополнительно выполнен `node demo/smoke_floor_persistent_cache.mjs --iso`: PASS. Сохранены проверки восстановления камеры (центр в пределах CSS-пикселя), настоящего module-worker/IDB, текущего света, запрета записей из кэша, восстановления при повреждении и отказах Worker/IndexedDB. В 2.5D показ L1 не учитывается как нарисованное превью; Flat-проверки не ослаблены."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Изменение устраняет обе проблемы из #1490, оно компактное и нацелено точно на причину. Временный экран «Updating plan» теперь рисует то же окружение «День / ночь» и Луну через общий `_renderStageEnvironment()`, что и готовый View. Поэтому однотонный синий `bg_color` больше не виден, пока фон-градиент ещё не появился. В 2.5D упрощённый силуэт L1 не выводится, хотя его данные fit/камеры по-прежнему используются. В Flat пассивное превью и однотонный фон в режиме static сохранены. Блокеров не нашёл. Есть одна мелочь: doc-комментарий от `_renderPendingFloor` теперь стоит над вставленным перед ним новым методом.",
-          "understanding": "Было: `_renderPendingFloor()` задавал только `background: _stageBg(disp)`. При `bg_mode: daynight` эта функция всё равно возвращает пользовательский `bg_color`, потому что в основном View он служит подложкой под слоем `.hp-day-cycle-env` (#146). При этом сам слой окружения во временный экран не попадал, и на всю область был виден синий цвет. В 2.5D пассивное SVG-превью L1 (`renderFloorPreview`) рисовало упрощённые контуры без материалов, и они появлялись как отдельный кадр перед полной сценой.\n\nСтало: (1) вывод окружения и Луны из основного stage вынесен в `_renderStageEnvironment(dayCycle, weight)` и вызывается в обоих путях. Временный stage получил классы `daycycle phase-*`, фон `_stageBg` остался прежним, как и в основном stage (строки 13350/13367/13644). (2) `visiblePreview` равен непустому значению только при `_desiredProjection === 'flat'` и `fit.projection === 'flat'`. Иначе SVG-превью не рендерится, а `data-hp-floor-cache` получает значение `preparing`. Вызовы `preview.fit` и `_adoptViewPlane(...)` выполняются по-прежнему, так что камера и fit берутся из L1.\n\nЧто прослежено: вызовы `_renderPendingFloor` (13222, 13226 во время boot), `_dayCycleState`/`_moonSkyState`/`_stageBg`, ключ выбора кэша `_floorCacheSelection` (в `persistentKey` и `input.projection` попадает `_desiredProjection`), фильтр превью по проекции в `floor-cache-runtime.ts:142/152`, `_effectiveProjection` в пассивном режиме, `updated()` с `_syncFloorPreviewCamera` и `markPreviewPaint` (5902–5909), CSS `.stage.hpboot`, `renderDayCycleEnvironment`.",
-          "analysis": [
-            {
-              "topic": "Причина синего кадра и согласованность фона",
-              "assessment": "Причина указана верно. При daynight `_stageBg` намеренно отдаёт `bg_color` как подложку, а градиент рисуется отдельным слоем. Теперь оба stage строят одинаковую стопку слоёв: подложка из `_stageBg`, над ней `.hp-day-cycle-env`, затем Луна. Общий хелпер убирает дублирование, и пути больше не разойдутся. В режиме static `_dayCycleState()` возвращает null, поэтому окружения нет и пользовательский цвет сохраняется, как требует ТЗ. Переход в ready не даёт синей вспышки: `.stage.hpboot` и `.hpiso-pending` скрывают только `.zoomwrap`/`.zoombadge`, а окружение остаётся видимым (plan.styles.ts:136–141).",
-              "evidence": "src/houseplan-card.ts:13071–13074, 13082, 13087–13090, 13674; 13350/13367/13644 (основной stage тоже использует `_stageBg`); 12054–12058; src/day-cycle-render.ts:14–37; src/styles/plan.styles.ts:136–141."
-            },
-            {
-              "topic": "Скрытие силуэта L1 в 2.5D без потери fit/камеры",
-              "assessment": "Решение рабочее. Камера адаптируется до проверки видимости (`_adoptViewPlane(this._presentedViewPlane(preview.fit.projection))`, `_viewOr(base)`), а `_presentedPreviewFit` и `_effectiveProjection` в пассивном режиме читают `preview` напрямую, без DOM. `_syncFloorPreviewCamera` сразу выходит, если SVG нет. `markPreviewPaint` ставится только при наличии `[data-hp-cache-preview]`, поэтому в ISO `firstPreview` остаётся 0, как и описано в контексте автора. Двойное условие в `visiblePreview` по сути избыточно: в `_floorCacheSelection` проекция выбора равна `_desiredProjection`, а runtime отбрасывает превью с другой проекцией. Вреда от этого нет, лишняя проверка лишь страхует. Опасение, что Flat-превью пропадёт у этажа с fallback на Flat в режиме 2.5D, не подтвердилось: такое превью и раньше хранилось с `projection: 'iso'`, а в 2.5D силуэты убраны намеренно.",
-              "evidence": "src/houseplan-card.ts:13077–13085, 3789–3791, 8178, 13058–13068, 5905–5909, 2855/2886–2887; src/floor-cache-runtime.ts:63–66, 142, 152."
-            },
-            {
-              "topic": "Путь во время boot при уже готовом этаже",
-              "assessment": "В строке 13226 во время boot при наличии превью по-прежнему выводится временный экран. В 2.5D до конца boot-окна теперь видны фон и индикатор вместо силуэта, а до правки был силуэт. Это соответствует цели задачи. Пустого кадра не появляется, потому что окружение рисуется и во временном, и в основном stage.",
-              "evidence": "src/houseplan-card.ts:13224–13226."
-            },
-            {
-              "topic": "Тесты",
-              "assessment": "Unit-тест вытаскивает из исходника реальные методы через TypeScript AST и выполняет их с заглушками. Подход хрупкий к переименованию, зато проверяет сам шаблон, а не его копию, и подтверждает, что окружение передаётся с весом 1 и Луной, что в ISO превью не вызывается, а в Flat вызывается. Native-сценарий удерживает настоящий worker и проверяет три холодных варианта и оба направления переключения, по 12 кадров rAF на каждое (всего 24). Сверяются фаза, `backgroundImage` и непрозрачность активного градиента против готовой сцены, rgb `bg_color` в static, отсутствие превью и устройств, а также нулевое число записей. Это закрывает критерии ТЗ: синтетическая сцена, задержка подготовки, контрастный `bg_color`, переходы в обе стороны. Старый smoke `smoke_floor_persistent_cache` ослаблен только для ISO, где превью отменено намеренно. Проверки Flat (shapeCount>0, экранная трансформация) сохранены.",
-              "evidence": "test/floor-cache-day-cycle.test.mjs; demo/smoke_floor_cache_day_cycle.mjs:69–118; diff demo/smoke_floor_persistent_cache.mjs:115–119, 296–300. S6-квитанция 20261120T111112421-29a49bcb: passed на 9c9e790."
-            },
-            {
-              "topic": "Сопровождение",
-              "assessment": "Новый метод вставлен между doc-комментарием «No ordinary scene/pull producer runs behind this passive preparation surface…» и `_renderPendingFloor`. Теперь этот комментарий формально относится к `_renderStageEnvironment`, а его смысл касается временного экрана. На поведение это не влияет.",
-              "evidence": "src/houseplan-card.ts:13069–13075."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Перенести doc-комментарий в строках 13069–13070 обратно к `_renderPendingFloor`. Над `_renderStageEnvironment` можно оставить короткую пометку, что временный и готовый stage обязаны рисовать одно и то же окружение (#1490). Именно эту договорённость легко потерять при будущих правках.",
-            "Условие `visiblePreview` можно упростить до `preview?.fit.projection === 'flat'`: проекция превью уже согласована с `_desiredProjection` в `_floorCacheSelection`/`floor-cache-runtime.ts:142,152`. Изменение необязательное. Нынешняя двойная проверка безвредна, просто читатель может подумать, что эти значения бывают несогласованы."
-          ],
-          "boundaries": "Код ревьюировал только по исходникам на head 9c9e790 и base. Сборку, тесты и браузерные сценарии не запускал. Опирался на успешную S6-квитанцию «Тесты для задачи #1490 (перед ревью)» и на заявленный автором прогон `smoke_floor_persistent_cache.mjs --iso`. Содержимое report.json и скриншоты из `output/1490` не видел. Пользовательский бэкап недоступен, поэтому визуальное совпадение со скриншотом владельца не проверял. Остаётся одна оговорка: если `sun.sun` появляется в `_renderPlanHass` позже, чем отрисован временный экран, фаза при холодном старте может сначала вычисляться по часам браузера. Это общее поведение day-cycle, а не регрессия этой правки, и в синтетическом сценарии оно не проверяется."
-        },
-        "usage": {
-          "input_tokens": 40,
-          "cache_creation_input_tokens": 71669,
-          "cache_read_input_tokens": 888911,
-          "output_tokens": 10472,
-          "output_tokens_details": {
-            "thinking_tokens": 3372
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 71669,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 938,
-              "cache_read_input_tokens": 59708,
-              "cache_creation_input_tokens": 11961,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 11961
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИзменение устраняет обе проблемы из #1490, оно компактное и нацелено точно на причину. Временный экран «Updating plan» теперь рисует то же окружение «День / ночь» и Луну через общий `_renderStageEnvironment()`, что и готовый View. Поэтому однотонный синий `bg_color` больше не виден, пока фон-градиент ещё не появился. В 2.5D упрощённый силуэт L1 не выводится, хотя его данные fit/камеры по-прежнему используются. В Flat пассивное превью и однотонный фон в режиме static сохранены. Блокеров не нашёл. Есть одна мелочь: doc-комментарий от `_renderPendingFloor` теперь стоит над вставленным перед ним новым методом.\n\n## Понимание решения\n\nБыло: `_renderPendingFloor()` задавал только `background: _stageBg(disp)`. При `bg_mode: daynight` эта функция всё равно возвращает пользовательский `bg_color`, потому что в основном View он служит подложкой под слоем `.hp-day-cycle-env` (#146). При этом сам слой окружения во временный экран не попадал, и на всю область был виден синий цвет. В 2.5D пассивное SVG-превью L1 (`renderFloorPreview`) рисовало упрощённые контуры без материалов, и они появлялись как отдельный кадр перед полной сценой.\n\nСтало: (1) вывод окружения и Луны из основного stage вынесен в `_renderStageEnvironment(dayCycle, weight)` и вызывается в обоих путях. Временный stage получил классы `daycycle phase-*`, фон `_stageBg` остался прежним, как и в основном stage (строки 13350/13367/13644). (2) `visiblePreview` равен непустому значению только при `_desiredProjection === 'flat'` и `fit.projection === 'flat'`. Иначе SVG-превью не рендерится, а `data-hp-floor-cache` получает значение `preparing`. Вызовы `preview.fit` и `_adoptViewPlane(...)` выполняются по-прежнему, так что камера и fit берутся из L1.\n\nЧто прослежено: вызовы `_renderPendingFloor` (13222, 13226 во время boot), `_dayCycleState`/`_moonSkyState`/`_stageBg`, ключ выбора кэша `_floorCacheSelection` (в `persistentKey` и `input.projection` попадает `_desiredProjection`), фильтр превью по проекции в `floor-cache-runtime.ts:142/152`, `_effectiveProjection` в пассивном режиме, `updated()` с `_syncFloorPreviewCamera` и `markPreviewPaint` (5902–5909), CSS `.stage.hpboot`, `renderDayCycleEnvironment`.\n\n## Разбор решения\n\n### Причина синего кадра и согласованность фона\n\nПричина указана верно. При daynight `_stageBg` намеренно отдаёт `bg_color` как подложку, а градиент рисуется отдельным слоем. Теперь оба stage строят одинаковую стопку слоёв: подложка из `_stageBg`, над ней `.hp-day-cycle-env`, затем Луна. Общий хелпер убирает дублирование, и пути больше не разойдутся. В режиме static `_dayCycleState()` возвращает null, поэтому окружения нет и пользовательский цвет сохраняется, как требует ТЗ. Переход в ready не даёт синей вспышки: `.stage.hpboot` и `.hpiso-pending` скрывают только `.zoomwrap`/`.zoombadge`, а окружение остаётся видимым (plan.styles.ts:136–141).\n\nОснование: src/houseplan-card.ts:13071–13074, 13082, 13087–13090, 13674; 13350/13367/13644 (основной stage тоже использует `_stageBg`); 12054–12058; src/day-cycle-render.ts:14–37; src/styles/plan.styles.ts:136–141.\n\n### Скрытие силуэта L1 в 2.5D без потери fit/камеры\n\nРешение рабочее. Камера адаптируется до проверки видимости (`_adoptViewPlane(this._presentedViewPlane(preview.fit.projection))`, `_viewOr(base)`), а `_presentedPreviewFit` и `_effectiveProjection` в пассивном режиме читают `preview` напрямую, без DOM. `_syncFloorPreviewCamera` сразу выходит, если SVG нет. `markPreviewPaint` ставится только при наличии `[data-hp-cache-preview]`, поэтому в ISO `firstPreview` остаётся 0, как и описано в контексте автора. Двойное условие в `visiblePreview` по сути избыточно: в `_floorCacheSelection` проекция выбора равна `_desiredProjection`, а runtime отбрасывает превью с другой проекцией. Вреда от этого нет, лишняя проверка лишь страхует. Опасение, что Flat-превью пропадёт у этажа с fallback на Flat в режиме 2.5D, не подтвердилось: такое превью и раньше хранилось с `projection: 'iso'`, а в 2.5D силуэты убраны намеренно.\n\nОснование: src/houseplan-card.ts:13077–13085, 3789–3791, 8178, 13058–13068, 5905–5909, 2855/2886–2887; src/floor-cache-runtime.ts:63–66, 142, 152.\n\n### Путь во время boot при уже готовом этаже\n\nВ строке 13226 во время boot при наличии превью по-прежнему выводится временный экран. В 2.5D до конца boot-окна теперь видны фон и индикатор вместо силуэта, а до правки был силуэт. Это соответствует цели задачи. Пустого кадра не появляется, потому что окружение рисуется и во временном, и в основном stage.\n\nОснование: src/houseplan-card.ts:13224–13226.\n\n### Тесты\n\nUnit-тест вытаскивает из исходника реальные методы через TypeScript AST и выполняет их с заглушками. Подход хрупкий к переименованию, зато проверяет сам шаблон, а не его копию, и подтверждает, что окружение передаётся с весом 1 и Луной, что в ISO превью не вызывается, а в Flat вызывается. Native-сценарий удерживает настоящий worker и проверяет три холодных варианта и оба направления переключения, по 12 кадров rAF на каждое (всего 24). Сверяются фаза, `backgroundImage` и непрозрачность активного градиента против готовой сцены, rgb `bg_color` в static, отсутствие превью и устройств, а также нулевое число записей. Это закрывает критерии ТЗ: синтетическая сцена, задержка подготовки, контрастный `bg_color`, переходы в обе стороны. Старый smoke `smoke_floor_persistent_cache` ослаблен только для ISO, где превью отменено намеренно. Проверки Flat (shapeCount>0, экранная трансформация) сохранены.\n\nОснование: test/floor-cache-day-cycle.test.mjs; demo/smoke_floor_cache_day_cycle.mjs:69–118; diff demo/smoke_floor_persistent_cache.mjs:115–119, 296–300. S6-квитанция 20261120T111112421-29a49bcb: passed на 9c9e790.\n\n### Сопровождение\n\nНовый метод вставлен между doc-комментарием «No ordinary scene/pull producer runs behind this passive preparation surface…» и `_renderPendingFloor`. Теперь этот комментарий формально относится к `_renderStageEnvironment`, а его смысл касается временного экрана. На поведение это не влияет.\n\nОснование: src/houseplan-card.ts:13069–13075.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Перенести doc-комментарий в строках 13069–13070 обратно к `_renderPendingFloor`. Над `_renderStageEnvironment` можно оставить короткую пометку, что временный и готовый stage обязаны рисовать одно и то же окружение (#1490). Именно эту договорённость легко потерять при будущих правках.\n- Условие `visiblePreview` можно упростить до `preview?.fit.projection === 'flat'`: проекция превью уже согласована с `_desiredProjection` в `_floorCacheSelection`/`floor-cache-runtime.ts:142,152`. Изменение необязательное. Нынешняя двойная проверка безвредна, просто читатель может подумать, что эти значения бывают несогласованы.\n\n## Границы анализа\n\nКод ревьюировал только по исходникам на head 9c9e790 и base. Сборку, тесты и браузерные сценарии не запускал. Опирался на успешную S6-квитанцию «Тесты для задачи #1490 (перед ревью)» и на заявленный автором прогон `smoke_floor_persistent_cache.mjs --iso`. Содержимое report.json и скриншоты из `output/1490` не видел. Пользовательский бэкап недоступен, поэтому визуальное совпадение со скриншотом владельца не проверял. Остаётся одна оговорка: если `sun.sun` появляется в `_renderPlanHass` позже, чем отрисован временный экран, фаза при холодном старте может сначала вычисляться по часам браузера. Это общее поведение day-cycle, а не регрессия этой правки, и в синтетическом сценарии оно не проверяется.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 3ae1fa8408ad1c86b2954c6742b89412b1ca4a60 → 9c9e79038e9ff583ecc9e649712b34863334fdc0\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1490, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и результат\n\nИсправляются оба описанных состояния загрузки. Временный экран и готовый View используют один рендерер окружения: день, ночь и статический фон с Луной сохраняют свои правила. В 2.5D L1 остаётся источником fit/камеры, но не рисуется как отдельный силуэт; Flat сохраняет прежнее пассивное SVG-превью.\n\n### Решение и альтернативы\n\nПричина синего кадра — `_renderPendingFloor()` применял `_stageBg()`, но не выводил `renderDayCycleEnvironment()`. Причина силуэта — `renderFloorPreview()` воспроизводит анонимные контуры без полноценных материалов 2.5D. Общий `_renderStageEnvironment()` теперь используется в обоих путях. Сам L1/L2, IndexedDB, worker, валидация, сроки ожидания и fallback не меняются. Альтернатива — дополнять L1 материалами — здесь не нужна и расширила бы задачу.\n\n### Риски и места для внимания\n\nДанные камеры и fit продолжают читаться из L1 даже без его SVG; невидимый эскиз не должен учитываться как показанное превью в диагностике. Навигация и заголовок остаются доступны, старые устройства на временном экране не сохраняются. Полный кадр по-прежнему проходит существующие барьеры готовности и ограниченный fallback. Нет записей config/layout и команд устройствам. Трек show; отдельного формального ТЗ и его ревью нет.\n\n### Проверки и ограничения\n\nАдресный unit исполняет реальные методы шаблона без геометрических портов: до исправления 2 FAIL / 1 PASS, после 3 PASS. Новый native-сценарий `demo/smoke_floor_cache_day_cycle.mjs` использует синтетический план и настоящий module worker, удерживаемый только тестом: три холодных варианта (день, ночь, однотонный), оба перехода между этажами с реальным IDB-превью, 24 промежуточных кадра, готовая 2.5D-сцена и отсутствие записей. Он и прежний `smoke_floor_persistent_cache.mjs` включены в S6; фактический отчёт передаётся штатным запускателем. Старый ISO-witness обновлён только в части намеренно отменённого показа L1; Flat-превью, камера, текущий свет, сохранение и fallback сохраняют проверки. Каталог относит новые тесты к geometry/lighting/performance, важность regression, lifecycle task-release; план подтверждает их выбор. Реальная установка владельца не изменялась, частный бэкап не публикуется, эталоны не обновляются.\n\n\nДополнительно выполнен `node demo/smoke_floor_persistent_cache.mjs --iso`: PASS. Сохранены проверки восстановления камеры (центр в пределах CSS-пикселя), настоящего module-worker/IDB, текущего света, запрета записей из кэша, восстановления при повреждении и отказах Worker/IndexedDB. В 2.5D показ L1 не учитывается как нарисованное превью; Flat-проверки не ослаблены.\n```\n\n</details>\n",
-        "createdAt": "2026-11-20T11:23:09.533Z",
-        "artifactId": 14623569311,
-        "runId": 44726760788,
-        "runAttempt": 1,
-        "completedAt": "2026-11-20T11:23:13Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44726760788",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "3ae1fa8408ad1c86b2954c6742b89412b1ca4a60"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795173827806,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1491": {
       "issue": 1491,
@@ -5918,19 +5787,7 @@
   "waiting": [
     1489
   ],
-  "active": {
-    "issue": 1490,
-    "worker": "finish",
-    "token": "559:finish:f673d224-f2bd-4611-95d2-ca97d9feafff:finish:1:admit",
-    "fence": 559,
-    "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-    "expectedBase": "3ae1fa8408ad1c86b2954c6742b89412b1ca4a60",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795173055726,
-    "expiresAt": 1795177423086,
-    "patchId": "b77eeed265688099f0faab4668db32fae83fcd4d",
-    "reviewRequest": "review:1490:1:b77eeed265688099f0faab4668db32fae83fcd4d:3ae1fa8408ad1c86b2954c6742b89412b1ca4a60"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5972,98 +5829,6 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "finish:f673d224-f2bd-4611-95d2-ca97d9feafff:finish:2:synchronized": {
-      "digest": "35d3f0e250657f0307d61d8ed92c2a588657590f736d4c0fa0b0b2f8554c4599",
-      "issue": 1490
-    },
-    "github:44725438545:1:completions:message:7e180d5d10f214a29099aa67bba9588c7cf5d4a23310c63d8a7ec01f8b1dba05": {
-      "digest": "bcaef3aa50ebc2f8d24720601193d276e433dc9b26e22812203815ca7cb5274f",
-      "issue": 1490
-    },
-    "github:44725438545:1:completions:message:e8b47fddc7349596effb02ee2ac76f8a7a2862b5ffdf4513435da503b1f8f6e7": {
-      "digest": "35c9f18585ba14a28fc3bdd5778f6faebf218caf73cf10bab40ef83acee19981",
-      "issue": 1490
-    },
-    "finish:0526ddc5-02b4-4278-b3dc-173e0154424e": {
-      "digest": "5c91951b361b615fc20b621d61a4ff039cb4692aeb91dff4b0a8a4f7dddf03a6",
-      "issue": 1490
-    },
-    "finish:9ac82026-8dda-4d78-9294-dc9590259d30": {
-      "digest": "91631f9189327aaf699cc3e027c9e35f8d41dcabb9b9ef77501e776bf1750c43",
-      "issue": 1490
-    },
-    "dev-build:44725266729:1:webhook": {
-      "digest": "0c7c629b41990926a12795516ab9d2bdb4fc4d4c165e6f54d8f02ad18009fb63",
-      "issue": 1490
-    },
-    "finish:d349ca20-288b-4209-8d30-683ef35e3cc9": {
-      "digest": "e6f3a4e8ac650861c410303b8c0060343b94c69de20f9ee46ffd0bbba04b3c25",
-      "issue": 1490
-    },
-    "finish:6450a4d4-795a-4ef2-a30e-ae1067f458a3": {
-      "digest": "2cbdded74f27f1fa018455535240214cc94b53d9561f3cb6d1f0a181521e0a72",
-      "issue": 1490
-    },
-    "finish:95996f77-add5-4eaa-b024-ae64237bc91c": {
-      "digest": "ef299a3620a46890db2a30f5304665954ce5460e0f2bfac00381d9f98d747535",
-      "issue": 1490
-    },
-    "finish:0c3efabc-18e8-4d56-bbd2-541c58c18c6f": {
-      "digest": "e83f29766abe5d2d326ad79e36f0dcbff73272b4e7b968dee75c02b529101768",
-      "issue": 1490
-    },
-    "finish:33b8f88c-7831-4242-9378-bbdd54e5372b": {
-      "digest": "667c9b23896243e7916fd05499c6bce904ccb36ba41fc016268ac0b07db25d2c",
-      "issue": 1490
-    },
-    "finish:b417070a-0200-4a22-b8d1-772564e78ec8": {
-      "digest": "5186bbeedb61513335bc6c3a37dbb9d88914283078383b157bd46483cea8dbc7",
-      "issue": 1490
-    },
-    "finish:27c13e96-233f-46de-9ec3-1222191c44d0": {
-      "digest": "7e0c430dea3882adac511c2b64e0edb52fb4580fbba781700398b5a4ec4bf96f",
-      "issue": 1490
-    },
-    "finish:f673d224-f2bd-4611-95d2-ca97d9feafff:finish:3:s6-label": {
-      "digest": "36aef94a24034c8a8253f72ea9e0a52db3319f8f6229948eb295e42dc5b8b08b",
-      "issue": 1490
-    },
-    "finish:f673d224-f2bd-4611-95d2-ca97d9feafff:finish:4:review-requested": {
-      "digest": "d24254433a850d0baeb454a4b894918af7baa4d351d3102be35a9a61e702fe46",
-      "issue": 1490
-    },
-    "github:44726696667:1:tick:0:review-retry": {
-      "digest": "43056ce180a2469c07c64613a26032872152f9904642c306deeb8e1cc77ff096",
-      "issue": 1490
-    },
-    "github:44726696667:1:completions:message:8f108b4b3ff63109e6f9b800c565842a24b172f3ddfebbb5aa0937642d3d5ef4": {
-      "digest": "84efcd31b1af9460702c23efab2a8b58dff5dfca21b1d488d81ec3a3592ac09f",
-      "issue": 1490
-    },
-    "github:44726696667:1:completions:message:f84d3b3377dce9596f51d162857032700c227232ddad1200bf8c009d55590678": {
-      "digest": "4590c65ced7596d3ec2a99f27f9dac3b0d535a3f0fd17fa824292d5af54edaf3",
-      "issue": 1490
-    },
-    "github:44726696667:1:completions:message:8c587f008f9f6a89356815f9b9c92c10a37213f5e352c8dfe63d03cf3f0349c9": {
-      "digest": "4d00873f885fa513dcae15b4e9414c7473c36b0d18f3cd084510236eac0dbb90",
-      "issue": 1490
-    },
-    "github:44726696667:1:dev-webhook:9582e90c-33bd-4a55-9fd3-90de1e92aa33:delivered": {
-      "digest": "331aae1cff6bf93fc39f754cfe4d4551e379f9c5429d046b7eaec4b1b9ee42d6",
-      "issue": 1490
-    },
-    "github:44727185591:1:tick:0:review-presentation": {
-      "digest": "f884b4c61c0bc299f70b96d933dcc003259f579124569fdd2388bdca1f8e7fd8",
-      "issue": 1490
-    },
-    "github:44727185591:1:tick:0:review-complete": {
-      "digest": "002ba4e6ca1bd83efaa51a520e643cc4e2f7176adb691cebd9d991892274d826",
-      "issue": 1490
-    },
-    "finish:f673d224-f2bd-4611-95d2-ca97d9feafff:finish:7:automation-pending": {
-      "digest": "77be5555046ec50dbd4a1a7e77bc024543a783ab7423433436b648877cfa72da",
-      "issue": 1490
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6093,35 +5858,6 @@
         "delivered": true
       }
     },
-    "finish:f673d224-f2bd-4611-95d2-ca97d9feafff": {
-      "digest": "057eb5b42e5cb35751e3b4241b581a9b2fac3218d7208e902db7d028b2939172",
-      "issue": 1490,
-      "message": {
-        "kind": "queued",
-        "issue": 1490,
-        "at": 1795173051657,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3433a6b47cfa835f79bd66ddb657c52133aff0bb",
-        "delivered": true
-      }
-    },
-    "finish:f673d224-f2bd-4611-95d2-ca97d9feafff:finish:1:admit": {
-      "digest": "e42af37a57e46acb31ed4979b9803fe6d87f0d7b7e14c64d7582d1c8862393ff",
-      "issue": 1490,
-      "message": {
-        "kind": "admitted",
-        "issue": 1490,
-        "at": 1795173055726,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3433a6b47cfa835f79bd66ddb657c52133aff0bb",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:80fe0b00-2dd7-4c83-926f-630031070b0e": {
       "digest": "889b382f4a643d446a93c5a9b7027d7f227feda699c7b5861878bc5a5dc36472",
       "issue": 1489,
@@ -6133,36 +5869,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "230756c2e3afe2c71ab2ace1db597835721ff3b0",
-        "delivered": true
-      }
-    },
-    "finish:f673d224-f2bd-4611-95d2-ca97d9feafff:finish:3:s6-complete": {
-      "digest": "cf1936ed5d287e04ebc6168ba4b8e23646fe1f7983b0621206b341ca5f50854d",
-      "issue": 1490,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1490,
-        "at": 1795173593336,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-        "phase": "review",
-        "evidence": {
-          "id": "20261120T111112421-29a49bcb",
-          "name": "Тесты для задачи #1490 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261120T111112421-29a49bcb/report.json",
-          "materialSha": "9c9e79038e9ff583ecc9e649712b34863334fdc0",
-          "status": "passed",
-          "finishedAt": "2026-11-20T11:19:52.193Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Цель и результат\n\nИсправляются оба описанных состояния загрузки. Временный экран и готовый View используют один рендерер окружения: день, ночь и статический фон с Луной сохраняют свои правила. В 2.5D L1 остаётся источником fit/камеры, но не рисуется как отдельный силуэт; Flat сохраняет прежнее пассивное SVG-превью.\n\n### Решение и альтернативы\n\nПричина синего кадра — `_renderPendingFloor()` применял `_stageBg()`, но не выводил `renderDayCycleEnvironment()`. Причина силуэта — `renderFloorPreview()` воспроизводит анонимные контуры без полноценных материалов 2.5D. Общий `_renderStageEnvironment()` теперь используется в обоих путях. Сам L1/L2, IndexedDB, worker, валидация, сроки ожидания и fallback не меняются. Альтернатива — дополнять L1 материалами — здесь не нужна и расширила бы задачу.\n\n### Риски и места для внимания\n\nДанные камеры и fit продолжают читаться из L1 даже без его SVG; невидимый эскиз не должен учитываться как показанное превью в диагностике. Навигация и заголовок остаются доступны, старые устройства на временном экране не сохраняются. Полный кадр по-прежнему проходит существующие барьеры готовности и ограниченный fallback. Нет записей config/layout и команд устройствам. Трек show; отдельного формального ТЗ и его ревью нет.\n\n### Проверки и ограничения\n\nАдресный unit исполняет реальные методы шаблона без геометрических портов: до исправления 2 FAIL / 1 PASS, после 3 PASS. Новый native-сценарий `demo/smoke_floor_cache_day_cycle.mjs` использует синтетический план и настоящий module worker, удерживаемый только тестом: три холодных варианта (день, ночь, однотонный), оба перехода между этажами с реальным IDB-превью, 24 промежуточных кадра, готовая 2.5D-сцена и отсутствие записей. Он и прежний `smoke_floor_persistent_cache.mjs` включены в S6; фактический отчёт передаётся штатным запускателем. Старый ISO-witness обновлён только в части намеренно отменённого показа L1; Flat-превью, камера, текущий свет, сохранение и fallback сохраняют проверки. Каталог относит новые тесты к geometry/lighting/performance, важность regression, lifecycle task-release; план подтверждает их выбор. Реальная установка владельца не изменялась, частный бэкап не публикуется, эталоны не обновляются.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
