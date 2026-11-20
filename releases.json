@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1092,
+  "revision": 1093,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -148454,7 +148454,8 @@
           "from": "3e5f3deaeb36612fd1ed50679cc6fe6f8d79025b",
           "to": "4b3b5b501a3bc73ce4bafc5761c5b142d81cd09a",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "365df93ee67a75d71dc47c26e262ede8136fe027"
         }
       ],
       "diagnostics": [],
@@ -149468,7 +149469,8 @@
           "sha": "586f70394437e34496566bff512737aa33f179e1"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "365df93ee67a75d71dc47c26e262ede8136fe027",
           "issue": 1488,
           "branch": "issue/1488-release-return-4b3b5b501a3b",
           "worktree": "/home/sergey/hp-1380-witness-repairs/artifacts/process-next/return-worktrees/163fc4a94159/artifacts/process-next/return-worktrees/4b3b5b501a3b"
@@ -155213,7 +155215,8 @@
     "beta1860-1-20261120-publish:completion:4aa9640f-9738-4f4c-b8d2-1ba1628b896e": "5a8dab965c6fda087671537ceae36263431e82aa56116ecd2d12c465e8ed4cfd",
     "beta1860-1-20261120-publish:completion:ca861c41-5d8f-4276-b90f-627daeb9f5be": "e3379371f430716efbc84ba5c3f7c789606270cf2520835935e01918252eea99",
     "beta1860-1-20261120-publish:completion:df62d07c-19bf-44c2-bee3-26d767fec9d4": "2781bc384beea0b2f138c2677baadb320f9e6b862a73f9de4c7c4598c8554fdf",
-    "beta1860-1-20261120-publish:completion:a993dec0-8b14-4806-854a-a1d733868ebd": "bca888b7db273dd60807dc5eb071e675837715202b0834b463a0ec7aa6af5b6f"
+    "beta1860-1-20261120-publish:completion:a993dec0-8b14-4806-854a-a1d733868ebd": "bca888b7db273dd60807dc5eb071e675837715202b0834b463a0ec7aa6af5b6f",
+    "beta1860-1-20261120-publish:completion:2251d662-1478-4502-b8c6-55873b380d44": "7000b60f25a09c1d509c7ed8c855e5b9c60fde4179ef73ee1d396587b8f5aea1"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
