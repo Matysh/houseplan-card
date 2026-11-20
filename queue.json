@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18284,
+  "revision": 18285,
   "nextTicket": 569,
   "nextFence": 569,
   "tasks": {
@@ -5365,7 +5365,16 @@
       "patchId": "2134bfe290e5b61e9e9701a7937253f1fb610cae",
       "changedFiles": [
         "demo/smoke_hide_room_names.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261120T185313797-969e462a",
+        "name": "Тесты для задачи #1498 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T185313797-969e462a/report.json",
+        "materialSha": "4ed2f5c836a2d0f01bcfc81f588819a09eadcdf8",
+        "status": "passed",
+        "finishedAt": "2026-11-20T18:54:36.515Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5869,9 +5878,9 @@
     "fence": 568,
     "materialSha": "4ed2f5c836a2d0f01bcfc81f588819a09eadcdf8",
     "expectedBase": "e9c56ea8b48fa203fe536e51a3881d3c2eda04ee",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795200723703,
-    "expiresAt": 1795201127848,
+    "expiresAt": 1795204477664,
     "patchId": "2134bfe290e5b61e9e9701a7937253f1fb610cae"
   },
   "events": {
@@ -5929,6 +5938,10 @@
     },
     "finish:701be4cd-b582-4d03-941b-2fe2c4f5edb3": {
       "digest": "a93ad3d7f8f8bb4aa2ff9f8ca4ed40e9a84525a9d5eb24538d13e6dda4c53ebd",
+      "issue": 1498
+    },
+    "finish:e5d43abb-2555-4c38-a112-ab107e34ec5d:finish:2:s6-complete": {
+      "digest": "85a4fd34c262d360fe625999740a084d2e964745e4aca091167b48c340bada1c",
       "issue": 1498
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
