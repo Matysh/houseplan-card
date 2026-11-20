@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17558,
+  "revision": 17559,
   "nextTicket": 556,
   "nextFence": 556,
   "tasks": {
@@ -2228,43 +2228,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06"
-      }
-    },
-    "1397": {
-      "issue": 1397,
-      "branch": "codex/wall-dimensions-live-camera",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "d67d7fd3b6d77aafd8c84f3e82d4890d59039d15",
-      "mergedSha": "0b8b0d847f8c72182ef16494f5482c0dbc153d63",
-      "mergedAt": 1794490120586,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "0b8b0d847f8c72182ef16494f5482c0dbc153d63"
       }
     },
     "1398": {
@@ -5326,10 +5289,24 @@
       "removedToRelease": false,
       "reviewRequest": "review:1486:2:b0dc2fc69264dddcf3ef1c6a524534b583c0f757:98a386f42de5f465e2be7067957659c157839c53",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 15
+        },
+        "commentCurrent": true,
+        "commentDigest": "d1c65df9ac3a3cbebb03",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "published",
