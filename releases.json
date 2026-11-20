@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1033,
+  "revision": 1034,
   "active": "1.85.3-beta.3",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -138778,7 +138778,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "586f70394437e34496566bff512737aa33f179e1",
       "portToDev": [
         {
           "from": "0ee3ec9b8c63e170dea24f8f24ca8d278e880f12",
@@ -138800,6 +138800,12 @@
         "selectionDigest": "bf917b40dba0b598b68fb256852924d991a446b6af6b2fae1bccd14e2b54de8a",
         "status": "not-required",
         "inventoryComplete": true
+      },
+      "metricsDecision": {
+        "decisionId": "call_8e3ada23e02d44369324a533ff687620",
+        "source": "chat",
+        "sourceRef": "request_user_input_async call_8e3ada23e02d44369324a533ff687620",
+        "decisionText": "Принять размеры для beta.3"
       }
     }
   },
@@ -144460,7 +144466,8 @@
     "beta3-accepted-frames-586f70394": "6c72c0f85408eef001ddda889332dba987f38c0f990bae1498e3c75d5d9e2678",
     "ship-review:prepare:38f98c64-9a3f-439b-af22-9e0409000cda": "210e265575121ee0a857771e4d68143562672e49c927ccaf8b523d937306f4d8",
     "ship-review:result:e5613006-cc0f-4014-9b21-06e28b0ee87f": "95741e919753c06264fef317c8f11cc27933996385d3d4c0f5b9810533f4136b",
-    "beta3-measurements-586f70394": "cea9c983a3dae2d924dce002bdd1b955e6fabab80476899837c289a9da82d437"
+    "beta3-measurements-586f70394": "cea9c983a3dae2d924dce002bdd1b955e6fabab80476899837c289a9da82d437",
+    "beta3-metrics-approval-586f70394": "f1acfc81620905ad48b55b89624cf01efe45b5d4377039c547c921d967ad3ad2"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
