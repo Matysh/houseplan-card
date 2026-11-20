@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18750,
+  "revision": 18751,
   "nextTicket": 579,
   "nextFence": 579,
   "tasks": {
@@ -2420,43 +2420,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "c250fcb4591a698481da3ccaa6a2261e2a0e04de"
-      }
-    },
-    "1411": {
-      "issue": 1411,
-      "branch": "codex/1411-tooltip-metric-wrap",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "9054a6f04bc030867f1d841663b91cdb262b172d",
-      "mergedSha": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856",
-      "mergedAt": 1794570565551,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 15,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "f05541086a4cb3bf0fd7",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 15
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856"
       }
     },
     "1412": {
@@ -5512,10 +5475,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "releaseTag": "v1.86.0-beta.3",
       "devBuild": {
