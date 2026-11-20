@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16892,
+  "revision": 16893,
   "nextTicket": 543,
   "nextFence": 543,
   "tasks": {
@@ -5247,15 +5247,16 @@
         "test/viewport-transition.test.mjs"
       ],
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795133833045,
-        "entry": 2,
-        "detail": "Браузер: approved ui 1207: failed; Браузер: room metrics alignment: failed; Браузер: settings polish 955: failed; Браузер: stair arrival: failed; Браузер: svg export: failed; Браузер: ui polish 963 reference: failed",
-        "eventId": "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45:finish:3:return:return:1478"
-      }
+        "at": 1795135473636,
+        "entry": 3,
+        "detail": "Поведение: test/golden-matrix.test.mjs: failed; Браузер: orphan space references: failed; Браузер: zigbee topology hover: failed",
+        "eventId": "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:3:return:return:1478"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -5724,18 +5725,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1478,
-    "worker": "finish",
-    "token": "542:finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:1:admit",
-    "fence": 542,
-    "materialSha": "f4aca24bbd781af07b01d6c1bfccbc31b826614a",
-    "expectedBase": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
-    "phase": "testing",
-    "admittedAt": 1795133862770,
-    "expiresAt": 1795135722170,
-    "patchId": "a52cb13a8b0f60315e9f53c5794dd9bea8c605b4"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6065,6 +6055,10 @@
       "digest": "acc592f176ef6fd6593ac3826f2cee3abbe0385ab64a08b4d94bdc3dc881aa95",
       "issue": 1478
     },
+    "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:3:return": {
+      "digest": "1c45f8528bc2898dd81910496cfc715e6c14fa8212783443f4b29d67186e8804",
+      "issue": 1478
+    },
     "github:44567305558:1:label:spec-request:spec-resubmitted:1478": {
       "digest": "26b88ce75a52e974684590bab2e22abfcac675f43a2c17bc4845dcfa6f1e24bb",
       "issue": 1478,
@@ -6219,6 +6213,26 @@
         "layer": "product",
         "materialSha": "f4aca24bbd781af07b01d6c1bfccbc31b826614a",
         "phase": "sync"
+      }
+    },
+    "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:3:return:return:1478": {
+      "digest": "1c45f8528bc2898dd81910496cfc715e6c14fa8212783443f4b29d67186e8804",
+      "issue": 1478,
+      "message": {
+        "kind": "return",
+        "issue": 1478,
+        "at": 1795135473636,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795135473636,
+          "entry": 3,
+          "detail": "Поведение: test/golden-matrix.test.mjs: failed; Браузер: orphan space references: failed; Браузер: zigbee topology hover: failed",
+          "eventId": "finish:9f134454-5baa-45f9-a6ee-cda5853dfbf1:finish:3:return:return:1478"
+        }
       }
     }
   },
