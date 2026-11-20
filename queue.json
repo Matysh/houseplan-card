@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16965,
-  "nextTicket": 545,
+  "revision": 16966,
+  "nextTicket": 546,
   "nextFence": 545,
   "tasks": {
     "1024": {
@@ -5162,11 +5162,11 @@
       "materialSha": "0ee3ec9b8c63e170dea24f8f24ca8d278e880f12",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 544,
-      "queued": false,
+      "ticket": 545,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795137362241,
-      "reviewEntry": 5,
+      "readyAt": 1795139352410,
+      "reviewEntry": 6,
       "patchId": "57c273c76717a7aa6712697e9250f1adf5b915cf",
       "changedFiles": [
         "demo/benchmark_iso_edge_zoom.mjs",
@@ -5270,8 +5270,7 @@
       "reviewCorrection": {
         "requestId": "review:1478:4:65e271b3660c933f926552ef41866c695486524d:6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
         "at": 1795136818534
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5739,7 +5738,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1478
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6646,6 +6647,28 @@
           "entry": 5,
           "detail": "Браузер: mode transition: failed",
           "eventId": "finish:1efa98ff-1e05-435b-899a-ebce94ea2960:finish:3:return:return:1478"
+        }
+      }
+    },
+    "finish:ddb7989f-a414-4735-9498-010ef9332d58": {
+      "digest": "6d102a0acad2c97a5b5a75a66fb88b8e4aa187ffdd1b8ebc8edd4b52cb2fe80e",
+      "issue": 1478,
+      "message": {
+        "kind": "queued",
+        "issue": 1478,
+        "at": 1795139352410,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "0ee3ec9b8c63e170dea24f8f24ca8d278e880f12",
+        "evidence": {
+          "id": "20261120T004507926-fd23fba3",
+          "name": "Тесты для задачи #1478 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T004507926-fd23fba3/report.json",
+          "materialSha": "d649e8c710e73aa2591ca0afbecbc1140b27f61b",
+          "status": "passed",
+          "finishedAt": "2026-11-20T00:58:20.629Z",
+          "failures": []
         }
       }
     }
