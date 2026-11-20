@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17531,
+  "revision": 17532,
   "nextTicket": 556,
   "nextFence": 556,
   "tasks": {
@@ -5993,6 +5993,10 @@
       "digest": "043bd188214277a74f0381bb65b388a323572d9e320058b3f19abbfc5485dc50",
       "issue": 1485
     },
+    "github:44706579196:1:completions:message:55ebd1c2ed6beb1705653f15592d8fa84160f844712b71c3f1400de11b6ffb58": {
+      "digest": "f08b6385e23117e8bff3af0b6fe02d4cd566bea2b0a15f876cc8fd7fa9916756",
+      "issue": 1485
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6037,18 +6041,6 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
-      }
-    },
-    "dev-build:44700366028:1:1486": {
-      "digest": "c9d7e82c4ffbd5d9b06a9c0d3825eed71191ecd06d9206e7bee79a7203e41d12",
-      "issue": 1486,
-      "message": {
-        "kind": "dev-build",
-        "issue": 1486,
-        "at": 1795162384045,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "54a8148959ffb71f0737532924c05b0a65de8b4a"
       }
     },
     "finish:c6215d8f-a5d8-412c-9c5d-a37693c8f0b4": {
