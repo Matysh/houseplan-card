@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16929,
-  "nextTicket": 544,
+  "revision": 16930,
+  "nextTicket": 545,
   "nextFence": 544,
   "tasks": {
     "1024": {
@@ -5159,14 +5159,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1478-camera-performance",
-      "materialSha": "d649e8c710e73aa2591ca0afbecbc1140b27f61b",
+      "materialSha": "0ee3ec9b8c63e170dea24f8f24ca8d278e880f12",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 543,
-      "queued": false,
+      "ticket": 544,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795135487890,
-      "reviewEntry": 4,
+      "readyAt": 1795137362241,
+      "reviewEntry": 5,
       "patchId": "65e271b3660c933f926552ef41866c695486524d",
       "changedFiles": [
         "demo/benchmark_iso_edge_zoom.mjs",
@@ -5267,20 +5267,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1478:4:65e271b3660c933f926552ef41866c695486524d:6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
-      "reviewMaterial": {
-        "materialSha": "d649e8c710e73aa2591ca0afbecbc1140b27f61b",
-        "expectedBase": "6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
-        "patchId": "65e271b3660c933f926552ef41866c695486524d"
-      },
-      "reviewRetry": {
-        "requestId": "review:1478:4:65e271b3660c933f926552ef41866c695486524d:6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
-        "eventId": "github:44650059759:1:tick:0:review-retry",
-        "at": 1795136322521,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1478:4:65e271b3660c933f926552ef41866c695486524d:6f3f3c4a9331948419de5cd9227dd5200cebb5b2",
         "at": 1795136818534
@@ -5752,7 +5738,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1478
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6459,6 +6447,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:1efa98ff-1e05-435b-899a-ebce94ea2960": {
+      "digest": "28a378569b55472d933e2b1231bc13d97273ec59170562e49d3269acb9a1af24",
+      "issue": 1478,
+      "message": {
+        "kind": "queued",
+        "issue": 1478,
+        "at": 1795137362241,
+        "entry": 5,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "0ee3ec9b8c63e170dea24f8f24ca8d278e880f12",
+        "evidence": {
+          "id": "20261120T004507926-fd23fba3",
+          "name": "Тесты для задачи #1478 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1478-linux/.git/process-next/runs/20261120T004507926-fd23fba3/report.json",
+          "materialSha": "d649e8c710e73aa2591ca0afbecbc1140b27f61b",
+          "status": "passed",
+          "finishedAt": "2026-11-20T00:58:20.629Z",
+          "failures": []
+        }
       }
     }
   },
