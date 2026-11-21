@@ -1349,8 +1349,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_device_settings_947.mjs',
     because: '#947 AC6: showing a default radius must not edit or serialize the draft; the browser witness reads the real field, dirty state and unchanged adopted config',
     patches: [{file:'src/editors/marker-dialog.ts',
-      find:"id: 'marker-glow-radius', unit, min: 0.5, step: 0.5, value: radiusValue,",
-      replace:"id: 'marker-glow-radius', unit, min: 0.5, step: 0.5, value: (d.glowRadius = radiusValue),",
+      find:"id: 'marker-glow-radius', unit, min: this.host._imperial ? 10 / 30.48 : .1, max: this.host._imperial ? 10000 / 30.48 : 100, step: 'any', value: radiusValue,",
+      replace:"id: 'marker-glow-radius', unit, min: this.host._imperial ? 10 / 30.48 : .1, max: this.host._imperial ? 10000 / 30.48 : 100, step: 'any', value: (d.glowRadius = radiusValue),",
     }],
   },
   {

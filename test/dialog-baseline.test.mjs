@@ -243,7 +243,7 @@ const markerDraft = (patch = {}) => ({
 
 test('#631 marker dialog: exactly the declared transient keys are ignored, Touched/original are not', () => {
   assert.deepEqual([...MARKER_DIALOG_TRANSIENT_KEYS].sort(), [
-    'autoIcon', 'bindingFilter', 'bindingOpen', 'busy', 'controlsFilter', 'moreInfoFilter', 'moreInfoOpen', 'runFilter', 'stateSourceFilter', 'stateSourceOpen', 'tapHintAnnouncement', 'uploadId',
+    'autoIcon', 'bindingFilter', 'bindingOpen', 'busy', 'controlsFilter', 'glowRadiusBadInput', 'moreInfoFilter', 'moreInfoOpen', 'runFilter', 'stateSourceFilter', 'stateSourceOpen', 'tapHintAnnouncement', 'uploadId',
   ]);
   const host = {};
   const base = markerDraft();
@@ -251,7 +251,7 @@ test('#631 marker dialog: exactly the declared transient keys are ignored, Touch
   assert.equal(markerDirty(host, base), false);
   const transient = {
     bindingOpen: true, bindingFilter: 'kit', runFilter: 'scr', controlsFilter: 'x', busy: true,
-    tapHintAnnouncement: 'hint', uploadId: 7, autoIcon: 'mdi:lightbulb',
+    tapHintAnnouncement: 'hint', uploadId: 7, autoIcon: 'mdi:lightbulb', glowRadiusBadInput: true,
     stateSourceOpen: true, stateSourceFilter: 'Laundry', moreInfoOpen: true, moreInfoFilter: 'floor',
   };
   for (const [k, v] of Object.entries(transient)) {

@@ -46,8 +46,11 @@ test('stable space ids use exact lookup and abort before side effects', () => {
 
   const saveMarker = methodBody('_saveMarker');
   const exactAt = saveMarker.indexOf('_spaceModelById(explicitSpaceId)');
-  const guardAt = saveMarker.indexOf('if (!targetSpaceModel) return;');
+  const guardAt = saveMarker.indexOf('if (!targetSpaceModel) {');
   const busyAt = saveMarker.indexOf('busy: true');
+  const refusal = saveMarker.slice(guardAt, busyAt);
+  assert.match(refusal, /marker\.error_room/);
+  assert.match(refusal, /return;/);
   const migrateAt = saveMarker.indexOf("type: 'houseplan/files/migrate'");
   const configMutationAt = saveMarker.indexOf('candidate.markers = markers');
   assert.ok(exactAt >= 0 && exactAt < guardAt && guardAt < busyAt
