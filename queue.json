@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19413,
+  "revision": 19414,
   "nextTicket": 590,
   "nextFence": 589,
   "tasks": {
@@ -6531,6 +6531,10 @@
       "digest": "89504401ed63d6da56b297acc4c1c4a18fc8386260b732e441bb75c939304521",
       "issue": 1472
     },
+    "finish:034c5438-1b0d-4b19-921d-bc59ee7729a4:finish:7:s6-label": {
+      "digest": "572ce3e48ccb2d0b970348ebb2e9bd138babdc1f1c993417258609c9f02336a7",
+      "issue": 1472
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6695,7 +6699,8 @@
         "resubmission": false,
         "reviewChanges": "Независимая опция Real 3D (строго true, default off), ленивый Three.js 0.187.0, каноническая геометрия и камера, прежние HTML-устройства и права HA. При отказе WebGL используется сохранённый 2.5D или Flat. Экспорт активного 3D скачивает плоский векторный SVG с подсказкой и не меняет экран. Эталоны не обновлены.\n\nИсходник сравнения `3c82c0f1801173caa5aa6a5a7cfe19445c746305`; 16 кадров на одной синтетической сцене, две темы и четыре поворота. Проверены RTX 4090 и SwiftShader, но не настоящий маломощный планшет. Отличия — прозрачность, тени и детали створок. В HA 2026.11.1 подтверждены сохранение, перезагрузка и отключение без изменения геометрии. Проверены browser smoke 3D/SVG, unit и backend; итог S6 приложит очередь. Полные условия и команды ниже. Совместимый relay нужен до будущего HACS-релиза, здесь деплоя нет.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
