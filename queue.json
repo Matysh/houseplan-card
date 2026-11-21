@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19596,
+  "revision": 19597,
   "nextTicket": 594,
   "nextFence": 593,
   "tasks": {
@@ -5717,7 +5717,18 @@
         "test/marker-placement.test.mjs",
         "tests_backend/test_ha_marker_placement.py",
         "tests_backend/test_marker_placement.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795273228251,
+        "entry": 1,
+        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/dialog-baseline.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed",
+        "eventId": "finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da:finish:3:return:return:1512"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6230,18 +6241,7 @@
   "waiting": [
     1472
   ],
-  "active": {
-    "issue": 1512,
-    "worker": "github-coordinator",
-    "token": "592:github:44914137904:1:tick:2:admit",
-    "fence": 592,
-    "materialSha": "d57250c1b30dea3b55e6e3c4b884949493686d33",
-    "expectedBase": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-    "phase": "testing",
-    "admittedAt": 1795271358753,
-    "expiresAt": 1795273453079,
-    "patchId": "d962a1c4904687cbd32622c397568ecba3ce5757"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6891,6 +6891,10 @@
       "digest": "1e2c2c3affd538cb5af57bcda27aa36158e4a4f1cbca78149434de01ed99caef",
       "issue": 1512
     },
+    "finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da:finish:3:return": {
+      "digest": "6132b3953d9e544c85e8c6550144c5be00b8629f783bb023aa657d3bf418a436",
+      "issue": 1512
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7176,6 +7180,26 @@
         "track": "show",
         "layer": "product",
         "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab"
+      }
+    },
+    "finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da:finish:3:return:return:1512": {
+      "digest": "6132b3953d9e544c85e8c6550144c5be00b8629f783bb023aa657d3bf418a436",
+      "issue": 1512,
+      "message": {
+        "kind": "return",
+        "issue": 1512,
+        "at": 1795273228251,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795273228251,
+          "entry": 1,
+          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/dialog-baseline.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed",
+          "eventId": "finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da:finish:3:return:return:1512"
+        }
       }
     }
   },
