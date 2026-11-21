@@ -595,6 +595,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               disabled: glowSourceDisabled && !problemFor('marker-glow-radius'),
               describedBy: glowSourceDisabled || passiveSource ? 'marker-glow-disabled-hint' : undefined,
               invalid: !!problemFor('marker-glow-radius'),
+              preserveBadInput: d.glowRadiusBadInput,
               onInput: (raw, input) => { radiusInputs.set(this.host,{owner,raw}); this.host._markerDialog = { ...d, glowRadius: raw, glowRadiusBadInput: input.validity.badInput }; },
             }),
           })}

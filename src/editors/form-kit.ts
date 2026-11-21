@@ -10,7 +10,7 @@
  * префиксом `hpf`. Каждый примитив соответствует поверхности из §3.1 `SPEC.md`
  * референса; расхождение с ним — находка, а не вкус.
  */
-import { html, nothing, type TemplateResult } from 'lit';
+import { html, nothing, noChange, type TemplateResult } from 'lit';
 
 import { colorTileInk } from './color-tile-ink';
 import { sourcePickerOverlay } from './source-picker-overlay';
@@ -460,6 +460,8 @@ export interface UnitInputOptions {
   wide?: boolean;
   /** Computed numeric value, distinct from an inapplicable/disabled field. */
   readonly?: boolean;
+  /** Keep the browser's partial numeric text, which value exposes as an empty string. */
+  preserveBadInput?: boolean;
   onInput: (raw: string, input: HTMLInputElement) => void;
   /** Необязательный атомарный commit для полей с промежуточным текстовым вводом. */
   onChange?: (raw: string, input: HTMLInputElement) => void;
@@ -468,11 +470,11 @@ export interface UnitInputOptions {
 /** Числовое поле с единицей внутри рамки (§3.1 «unit-inside»). */
 export function unitInput({
   id, fieldId = id, describedBy, value, unit, maxCharacters, tooltip, min, max, step, placeholder, ariaLabel, invalid, disabled, wide, readonly,
-  onInput, onChange,
+  onInput, onChange, preserveBadInput,
 }: UnitInputOptions): TemplateResult {
   let accepted = value;
   return html`<span class="hpf-unit ${wide ? 'hpf-unit-wide' : ''}">
-    <input data-hp="field" data-field=${fieldId ?? nothing} id=${id ?? nothing} type="number" inputmode="decimal" .value=${value}
+    <input data-hp="field" data-field=${fieldId ?? nothing} id=${id ?? nothing} type="number" inputmode="decimal" .value=${preserveBadInput ? noChange : value}
       aria-describedby=${describedBy ?? nothing}
       min=${min ?? nothing} max=${max ?? nothing} step=${step ?? nothing}
       placeholder=${placeholder ?? nothing} aria-label=${ariaLabel ?? nothing}
