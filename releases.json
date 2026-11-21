@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1198,
+  "revision": 1199,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -191318,8 +191318,10 @@
         "digest": "07810b28784d73168af25e32cb7a7e77ffaaae9e89d0d75806b5f84951bbdb1d",
         "contentDigest": "61ac5a94af07ad76667fb51321779d8be7e916f2146abe0e303cff70ade57fb5",
         "attempt": 1,
-        "status": "sending",
-        "startedAt": "2026-11-21T00:52:18.110Z"
+        "status": "sent",
+        "startedAt": "2026-11-21T00:52:18.110Z",
+        "messageId": 1049,
+        "finishedAt": "2026-11-21T00:52:23.687Z"
       }
     }
   },
@@ -197336,7 +197338,8 @@
     "stable1860-20261121-publish:completion:0aa8ffc1-09a9-4663-8ae0-8996b8c91c23": "60f3a3d66844f21657d297bf5e357007bd76887bc1daf528999c3c447cd2128c",
     "github:44846538525:1:complete:completion:3c1d3b45-ba33-4a60-801f-4383400718b1": "ef9553e79420c15a0ad37f3cd23989c2b8b6feb8e4ec4a5392a15fe769cb84c6",
     "github:44846538525:1:complete:completion:5e0c98ba-dbdd-4a04-8200-7fd1e301250e": "7ae9cda89f982a9defd99d128f0859def21cbae699bea647b5b1ef810177d11b",
-    "github:44846538525:1:complete:completion:16c8dbf3-a369-4df4-8c24-815771045848": "980656aec8ff750938ed66e70f9a82cbb98cde50bc51bded32a2259c84c32688"
+    "github:44846538525:1:complete:completion:16c8dbf3-a369-4df4-8c24-815771045848": "980656aec8ff750938ed66e70f9a82cbb98cde50bc51bded32a2259c84c32688",
+    "github:44846538525:1:complete:completion:a573c8c4-2220-40d1-8d8f-fde1ebc0e54b": "087687b7875cc057a48e70aa72f61a90cf86e633977cca2e75a85396b2ce50af"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
