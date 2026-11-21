@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18901,
+  "revision": 18902,
   "nextTicket": 581,
   "nextFence": 581,
   "tasks": {
@@ -5569,7 +5569,16 @@
         "process-next/test/golden-surface.test.mjs",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261121T003456519-ed9d789a",
+        "name": "Тесты для задачи #1507 (перед ревью)",
+        "reportPath": "/home/sergey/hp-release-1860-beta3-preflight/.git/process-next/runs/20261121T003456519-ed9d789a/report.json",
+        "materialSha": "6b8ef512d27636767389a906461d64c096d8a1a6",
+        "status": "passed",
+        "finishedAt": "2026-11-21T00:50:08.579Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6059,9 +6068,9 @@
     "fence": 580,
     "materialSha": "6b8ef512d27636767389a906461d64c096d8a1a6",
     "expectedBase": "7900aa8f04abe9bc984db1fe0431ab461d5e6d0c",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795221280043,
-    "expiresAt": 1795222478558,
+    "expiresAt": 1795225809314,
     "patchId": "580bc07dde5cb19b03ca624b322fc94a4f4f05c9"
   },
   "events": {
@@ -6179,6 +6188,10 @@
     },
     "finish:00b8f6d5-96f2-4c17-afac-7526f997a56d": {
       "digest": "de06a2b5e0018274e43bd2a058bb9d1f581a6560d0e27f95f5419f46d8fd413c",
+      "issue": 1507
+    },
+    "release-return-finish:f810c688-1647-4fbe-83ea-35edcec67fd7:finish:3:s6-complete": {
+      "digest": "4ad4f3faf87e9cca7460bdad4874ceff7c35433f8f692ee4fb3a92ee06104308",
       "issue": 1507
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
