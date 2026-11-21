@@ -32,6 +32,15 @@ export async function planStableCycle({ candidate, api, git }) {
 export async function verifyReleaseCycle(git, commit, expected) {
   if (!expected) return;
   const actual = await readReleaseCycle(git, commit);
-  if (JSON.stringify(actual) !== JSON.stringify(expected))
-    throw Error('Release history returned without the prepared next release cycle');
+  const base = version(actual.baseStable), required = version(expected.baseStable);
+  const target = version(actual.targetStable);
+  const validTarget = actual.targetStable === null && actual.milestone === null
+    || target && base && compare(target, base) > 0 && Number.isSafeInteger(actual.milestone?.number)
+      && actual.milestone.number > 0 && version(actual.milestone.title)
+      && compare(version(actual.milestone.title), target) === 0;
+  if (!base || !required || compare(base, required) < 0 || !validTarget)
+    throw Object.assign(Error('Release history returned without a valid next release cycle'), { code: 'RELEASE_CYCLE_MISSING' });
+  // A reviewed correction or a newer dev cycle is authoritative. A retry must
+  // not demand byte equality with a plan selected before asynchronous review.
+  return actual;
 }

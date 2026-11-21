@@ -77,17 +77,26 @@ export async function returnPublishedHistory({ candidate, previous = {}, api, gi
   if (!onUpdate || !finish) throw Error('Return requires the existing release state and task finish route');
   let issue = previous?.issue ?? config.returnIssue ?? config.release?.returnIssue;
   if (issue !== undefined && (!Number.isSafeInteger(issue) || issue < 1)) throw Error('Return issue must be a positive number');
-  let branch = previous?.branch, worktree;
+  let branch = previous?.branch, worktree, nextCycle = previous?.nextCycle;
   const marker = `<!-- process-next-release-return:${candidate.tag} -->`, invocation = randomUUID();
-  const progress = () => ({ ...(issue ? { issue } : {}), ...(branch ? { branch } : {}), ...(worktree ? { worktree } : {}) });
+  const progress = () => ({ ...(issue ? { issue } : {}), ...(branch ? { branch } : {}), ...(worktree ? { worktree } : {}),
+    ...(nextCycle !== undefined ? { nextCycle } : {}) });
   const save = async () => onUpdate({ type: 'completion-step', candidate: candidate.id, name: 'return-to-dev',
     result: { status: 'running', ...progress() } });
   try {
-    const nextCycle = await planStableCycle({ candidate, api, git });
+    if (nextCycle === undefined) nextCycle = await planStableCycle({ candidate, api, git });
     let included;
     try { included = await git.verifyDevReturn(candidate.sha); }
     catch (error) { if (error.code !== 1) throw error; }
-    if (included && !nextCycle) {
+    let cycleIncluded = !nextCycle;
+    if (included && nextCycle) {
+      try { await verifyReleaseCycle(git, included.devSha, nextCycle); cycleIncluded = true; }
+      catch (error) {
+        if (error.code !== 'RELEASE_CYCLE_MISSING') throw error;
+        // The tag can precede its next-cycle metadata in dev. Continue through the queue.
+      }
+    }
+    if (included && cycleIncluded) {
       if (!issue) issue = (await findServiceIssue(api, marker))?.number;
       if (issue) await closeServiceIssue({ api, issue, candidate, devSha: included.devSha });
       return { status: 'completed', alreadyIncluded: true, devSha: included.devSha, ...progress() };
@@ -96,7 +105,7 @@ export async function returnPublishedHistory({ candidate, previous = {}, api, gi
     if (!current) {
       try {
         current = await api.createIssue({ title: `Вернуть ${candidate.tag} в dev`,
-          body: `${marker}\n\nСлужебный возврат опубликованного релиза ${candidate.tag} (${candidate.sha}) через общую очередь.\n\nСохранить опубликованную историю; короткие проверки S6, зачёт принятого ревью при чистом автоматическом merge.`,
+          body: `${marker}\n\nСлужебный возврат опубликованного релиза ${candidate.tag} (${candidate.sha}) через общую очередь.\n\nСохранить опубликованную историю; короткие проверки S6. Зачёт прежнего ревью возможен только при чистом автоматическом merge; обновление цикла stable проходит обычное ревью.`,
           labels: ['infra', 'track:show', 'S6-in-progress'] });
       } catch (error) {
         // A POST can succeed while its response is lost. Search before any later creation.
@@ -124,6 +133,7 @@ export async function returnPublishedHistory({ candidate, previous = {}, api, gi
       && ['review-findings', 'checks-failed', 'rebase-conflict', 'review-retry-exhausted'].includes(queued.reason))
       throw Error(`Return requires an executor correction: ${queued.reason}`);
     const prepared = await git.prepareDevReturn({ candidate, issue, branch, worktree, nextCycle });
+    if (prepared.nextCycle) nextCycle = prepared.nextCycle;
     if (prepared.alreadyIncluded) {
       const verified = await git.verifyDevReturn(candidate.sha);
       await verifyReleaseCycle(git, verified.devSha, nextCycle);

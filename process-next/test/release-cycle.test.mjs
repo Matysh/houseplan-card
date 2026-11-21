@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { planStableCycle } from '../lib/release-cycle.mjs';
+import { planStableCycle, verifyReleaseCycle } from '../lib/release-cycle.mjs';
 
 const candidate = { kind: 'stable', tag: 'v1.86.0' };
 const milestone = (number, title, state = 'open') => ({ number, title, state });
@@ -27,4 +27,15 @@ test('retries and old stable completions never rewind a current or newer cycle; 
   for (const baseStable of ['v1.86.0', 'v2.0.0']) assert.equal(await plan({ baseStable }), null);
   for (const kind of ['beta', 'hotfix']) assert.equal(await plan(undefined, undefined, { ...candidate, kind }), null);
   await assert.rejects(plan({ baseStable: 'invalid' }, []), /no valid stable base/);
+});
+
+test('return verification accepts reviewed targets and newer valid cycles without accepting an old base', async () => {
+  const expected = { baseStable: 'v1.86.0' };
+  const verify = actual => verifyReleaseCycle({ git: async () => JSON.stringify(actual) }, 'commit', expected);
+  const corrected = { milestone: { number: 19, title: '3.0.0' }, targetStable: 'v3.0.0', baseStable: 'v1.86.0' };
+  assert.deepEqual(await verify(corrected), corrected);
+  const newer = { baseStable: 'v2.0.0', targetStable: null, milestone: null };
+  assert.deepEqual(await verify(newer), newer);
+  await assert.rejects(verify({ ...corrected, baseStable: 'v1.85.2' }), /without a valid next release cycle/);
+  await assert.rejects(verify({ ...corrected, milestone: { number: 19, title: '2.0.0' } }), /without a valid next release cycle/);
 });

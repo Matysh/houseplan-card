@@ -342,15 +342,15 @@ export class ReleaseGitAdapter extends GitAdapter {
     const remoteTask = await this.remoteHead(branch);
     if (remoteTask) {
       await this.ensureCommit(remoteTask); await this.assertAncestor(candidate.sha, remoteTask);
-      if (nextCycle) await verifyReleaseCycle(this, remoteTask, nextCycle);
-      return { prepared: true, reused: true, task: { ...task, materialSha: remoteTask } };
+      const actualCycle = nextCycle ? await verifyReleaseCycle(this, remoteTask, nextCycle) : null;
+      return { prepared: true, reused: true, ...(actualCycle ? { nextCycle: actualCycle } : {}), task: { ...task, materialSha: remoteTask } };
     }
     let head;
     try { head = await this.git(['rev-parse', '--verify', `refs/heads/${branch}`]); }
     catch { /* new worktree */ }
     if (head) {
       await this.assertAncestor(candidate.sha, head);
-      if (nextCycle) await verifyReleaseCycle(this, head, nextCycle);
+      if (nextCycle) nextCycle = await verifyReleaseCycle(this, head, nextCycle);
     }
     else {
       if (!worktree) throw Error('An isolated worktree path is required to prepare the return branch');
@@ -367,7 +367,7 @@ export class ReleaseGitAdapter extends GitAdapter {
     // Creation only: an existing branch is never overwritten on a concurrent preparation.
     try { await this.git(['push', `--force-with-lease=refs/heads/${branch}:`, this.remote, `${head}:refs/heads/${branch}`]); }
     catch (error) { if (await this.remoteHead(branch) !== head) throw error; }
-    return { prepared: true, task: { ...task, materialSha: head } };
+    return { prepared: true, ...(nextCycle ? { nextCycle } : {}), task: { ...task, materialSha: head } };
   }
   async verifyDevReturn(sourceSha) {
     const devSha = await this.remoteHead(this.dev);

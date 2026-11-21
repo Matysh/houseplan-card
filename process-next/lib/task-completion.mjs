@@ -192,7 +192,7 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
         if (facts.milestone !== null && assigned !== facts.milestone) {
           const target = await api.getMilestone(facts.milestone);
           if (target.number !== facts.milestone || target.state !== 'open')
-            throw Error(`Milestone ${facts.milestone} is not open; update the release cycle before assigning new tasks`);
+            throw Error(`Milestone ${facts.milestone} is not open; assignment skipped, this task's release cycle is pinned to its merge commit and needs manual bookkeeping correction`);
           result.milestoneTitle = target.title;
         }
         if (facts.milestone !== null && assigned !== facts.milestone

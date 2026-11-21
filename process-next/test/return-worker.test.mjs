@@ -89,8 +89,24 @@ test('stable completion cannot claim success when its queued return omitted the 
   const f = await fixture(t, { oldCycle: true }), prepare = f.options.git.prepareDevReturn;
   f.options.git.prepareDevReturn = args => prepare({ ...args, nextCycle: null });
   const result = await returnPublishedHistory(f.options);
-  assert.equal(result.status, 'pending'); assert.match(result.reason, /without the prepared next release cycle/);
+  assert.equal(result.status, 'pending'); assert.match(result.reason, /without a valid next release cycle/);
   assert.equal(f.issues.get(9).state, 'open');
+});
+
+test('a waiting stable return resumes its persisted cycle after milestone inventory changes', async t => {
+  const f = await fixture(t, { oldCycle: true }), finish = f.options.finish;
+  f.options.finish = async () => ({ action: 'waiting' });
+  const waiting = await returnPublishedHistory(f.options);
+  assert.equal(waiting.status, 'pending'); assert.equal(waiting.nextCycle.milestone.number, 8);
+  const durable = f.updates.at(-1).result;
+  assert.deepEqual(durable.nextCycle, waiting.nextCycle);
+  f.options.api.listOpenMilestones = async () => { throw Error('the live inventory changed during review; do not replan'); };
+  f.options.finish = finish;
+  const result = await returnPublishedHistory({ ...f.options, previous: durable });
+  assert.equal(result.status, 'completed'); assert.equal(f.finished, 1); assert.equal(f.created, 1);
+  assert.equal(f.cycle.milestone.number, 8);
+  assert.equal((await returnPublishedHistory({ ...f.options, previous: result })).status, 'completed');
+  assert.equal(f.finished, 1);
 });
 
 test('published history reaches dev through queued S6 and closes its service issue; retry does no work', async t => {

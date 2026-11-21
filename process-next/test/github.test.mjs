@@ -329,6 +329,14 @@ test('stable return commits the next cycle without editing the published tag or 
     materialSha: prepared.task.materialSha, patchId: 'cycle-change' }), null, 'new cycle metadata needs its own review');
   const retry = await adapter.prepareDevReturn({ candidate, issue: 2, nextCycle });
   assert.equal(retry.task.materialSha, prepared.task.materialSha);
+  const corrected = { ...nextCycle, targetStable: 'v3.0.0', milestone: { number: 9, title: '3.0.0' } };
+  const worktree = join(f.cwd, '..', 'cycle-return');
+  await writeFile(join(worktree, 'docs/release-ledger/cycle.json'), JSON.stringify(corrected));
+  await f.git(['-C', worktree, 'commit', '-am', 'review correction']);
+  await f.git(['-C', worktree, 'push', 'origin', prepared.task.branch]);
+  const resumed = await adapter.prepareDevReturn({ candidate, issue: 2, nextCycle });
+  assert.deepEqual(resumed.nextCycle, corrected);
+  assert.notEqual(resumed.task.materialSha, prepared.task.materialSha);
 });
 
 
