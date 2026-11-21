@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19658,
+  "revision": 19659,
   "nextTicket": 596,
   "nextFence": 596,
   "tasks": {
@@ -5686,7 +5686,7 @@
       "ownerDecision": null,
       "ticket": 595,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795274628823,
       "reviewEntry": 3,
       "patchId": "8e8f5c48ec8a5e33347029413dd26e310777b541",
@@ -5734,19 +5734,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261121T150505509-c545d86f",
+        "id": "20261121T152405962-4c09588d",
         "name": "Тесты для задачи #1512 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261121T150505509-c545d86f/report.json",
-        "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261121T152405962-4c09588d/report.json",
+        "materialSha": "3337227988d528e977cf8f978a112c7e8a730cfa",
         "status": "passed",
-        "finishedAt": "2026-11-21T15:09:02.827Z",
+        "finishedAt": "2026-11-21T15:54:33.118Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1512:2:9ce37ce2962e97d29be5f5e9f765509044f20b19:5237ec475be4adf61d102ffc4e3954de19cb68ab",
-        "at": 1795274265757
-      }
+      "reviewRound": null
     }
   },
   "ownerDecisions": {},
@@ -6264,9 +6260,9 @@
     "fence": 595,
     "materialSha": "3337227988d528e977cf8f978a112c7e8a730cfa",
     "expectedBase": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795274632819,
-    "expiresAt": 1795276732187,
+    "expiresAt": 1795280074512,
     "patchId": "8e8f5c48ec8a5e33347029413dd26e310777b541"
   },
   "events": {
@@ -7584,6 +7580,34 @@
           "finishedAt": "2026-11-21T15:09:02.827Z",
           "failures": []
         }
+      }
+    },
+    "finish:b3b7fc6f-4c51-4b6a-af73-15520a7ebf02:finish:3:s6-complete": {
+      "digest": "2a64ba0192d1ea7832d452b58e98ac9fb671bff5bf762b0b435b79cbe3484678",
+      "issue": 1512,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1512,
+        "at": 1795276474512,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3337227988d528e977cf8f978a112c7e8a730cfa",
+        "phase": "review",
+        "evidence": {
+          "id": "20261121T152405962-4c09588d",
+          "name": "Тесты для задачи #1512 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261121T152405962-4c09588d/report.json",
+          "materialSha": "3337227988d528e977cf8f978a112c7e8a730cfa",
+          "status": "passed",
+          "finishedAt": "2026-11-21T15:54:33.118Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "### Реализация\n\nВетка `codex/1512-device-space-save`, материал `333722798` (поверх `501aeb434`), база dev `5237ec475`. Общий TS resolver используется в ordinary config write, _saveMarker до поиска target и reference-pass Optimize. Сервер независимо выполняет тот же ремонт в config/set и plan/optimize после нормализации схемы. Исправляется только существующий непустой explicit space при доказательстве одной текущей комнатой. Если исходный этаж ещё существует, его можно согласовать с Area только у HA-маркера со строковой Area: его показ уже следует Area. Виртуальные маркеры и ручные комнаты сохраняют живой explicit floor. Привязанная LED-лента сохраняет своего владельца. Отсутствие override остаётся отсутствием, missing/ambiguous room не угадывается. Layout этот ремонт не пишет, независимая геометрическая/grid-политика Optimize не меняется.\n\nНеразрешимый target даёт понятное сообщение и раскрывает room selector. Валидация всей формы работает независимо от активной вкладки; footer Review раскрывает вкладку и фокусирует ошибочное поле, черновик сохраняется. Текстовые лимиты и радиус 10–10000 см согласованы со storage. Пустой радиус использует общий; нечисло/ноль/отрицательное теперь явно ошибочны вместо silent fallback. Browser-owned частичный ввод (1e) переживает render/navigation, transient badInput не создаёт phantom dirty. RU/EN/DE/FR сообщения добавлены.\n\n### Исправления по предыдущему ревью\n\nИсточник: [код-ревью 501aeb434](https://github.com/Matysh/houseplan-card/issues/1512#issuecomment-7064768552), run 44917665923.\n\n- Блокер: ремонт переносил виртуальный/manual marker с живого explicit этажа. Подтверждён красным regression на прежнем test-build: оба marker.space B стали A. В обоих TS/Python зеркалах добавлена защита живого explicit floor для этих видов размещения. Проверки обычного writer и Optimize сохраняют markers/layout, реальный buildDevices остаётся на сохранённом layout.s; четыре backend сценария config/set × optimize × virtual/manual проходят. HA Area transfer между живыми этажами для обычных HA-маркеров сохранён.\n- Замечание про exact-copy proof: доверенный ожидаемый результат is_saved_space_copy проходит такой же metadata repair перед точным сравнением. Исходный stored previous не мутируется, copied roomless geometry/прочие metadata не ослабляются. Authentic HA WS тест копирования near-end geometry расширен на stale marker для моделей 0/10/11 и wall/partition; после copy обычная изменённая геометрия всё ещё отклоняется. Forged-copy checks включают постороннее изменение marker metadata при stale reference.\n- Замечание про imperial radius: draft отображает футы с точностью 0.01 вместо 0.1, достаточной для сохранения целого cm при обратном округлении. Browser smoke дополнен 10/11/9999/10000 см: unrelated metadata save должен сохранять радиус и весь layout точно.\n- Условное улучшение «несколько комнат одной Area на одном этаже» не менялось: контракт ремонта остаётся консервативным, требуется ровно одна текущая комната. При неоднозначном room evidence не производится автоматическое угадывание; исходный report имеет однозначное доказательство.\n\n### Проверки\n\nПредыдущий канонический S6 `20261121T150505509-c545d86f` на `501aeb434`: passed, materialClean=true, все 801 шаг (28 новых + 773 переиспользованных), включая исходные оба сценария, дробные размеры и сохранение точных позиций, hidden invalid fields и настоящий authenticated HA WS/Store.\n\nПосле ревью прошли сборка test-build, 12 адресных Node тестов и 41 backend тест (включая authentic HA WS copy с новой stale-reference комбинацией). Новые imperial browser observations проверит повторный канонический S6 в finish перед новым ревью. Обязательная широкая выборка из-за общего writer/card type не урезается; tests_backend/test_ha_space_copy.py явно включён в request. Полный mutation shard не запускался; его прежний clean browser guard 947 и registry readiness прошли в предыдущем S6.\n\nПриватный report hpr-7064322d93 проверен локально: ровно 43 исправленных marker.space, прочие поля/layout неизменны, второй проход 0 изменений; пакет не опубликован и не включён в fixtures. Пользовательский HA не менялся.\n\nПолный внешний browser HA E2E до следующей беты зарегистрирован отдельно: [houseplan-e2e#94](https://github.com/Matysh/houseplan-e2e/issues/94). Сейчас выпуск версии не поручен.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
