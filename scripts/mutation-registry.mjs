@@ -16419,9 +16419,9 @@ const MUTANT_DEFINITIONS = [
       file: 'src/config-adoption.ts',
       find: '    const configChanged = nextFingerprint !== this.currentConfigFingerprint();\n'
         + '    if (configChanged) {\n'
-        + '      onConfigReplace();',
+        + '      onConfigReplace(next);',
       replace: '    const configChanged = nextFingerprint !== this.currentConfigFingerprint();\n'
-        + '    onConfigReplace();\n'
+        + '    onConfigReplace(next);\n'
         + '    if (configChanged) {',
     }],
   },

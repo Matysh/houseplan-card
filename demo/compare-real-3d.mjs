@@ -12,7 +12,7 @@ mkdirSync(output, { recursive: true });
 const hardware = process.env.HP_REAL_3D_GPU === 'hardware';
 const browserArgs = hardware ? ['--enable-gpu', '--use-angle=d3d11', '--disable-software-rasterizer']
   : ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'];
-const report = { backendClass: hardware ? 'hardware' : 'software', input: 'iso-paint fixture (8 rooms, 15 openings, 15 furniture objects, 74 devices)',
+const report = { backendClass: hardware ? 'hardware' : 'software', input: 'iso-paint fixture (8 rooms, 15 openings, 15 furniture objects, an upward stair, 74 devices)',
   reference: '3c82c0f1801173caa5aa6a5a7cfe19445c746305', frames: [], timings: {} };
 const waitReady = (page, real3d) => page.waitForFunction(real => {
   const card = window.__isoPaint;
@@ -28,6 +28,9 @@ for (const real3d of [false, true]) {
       config.settings.real_3d = real3d || undefined;
       const settings = config.spaces[0].settings;
       Object.assign(settings, { show_borders: true, show_names: true, opening_accent_3d: { c: '#bdb3a9', a: .55 } });
+      const floor = config.spaces[0], [a] = floor.rooms[0].poly;
+      floor.stairs = [{ id: 'compare-real-3d-stair', kind: 'straight', direction: 'forward',
+        x: a[0] + .08, y: a[1] + .10, length: .055, width: .032, angle: 0 }];
     },
   });
   try {

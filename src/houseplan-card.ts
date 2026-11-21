@@ -58,7 +58,6 @@ import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWall
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
-import { resolveViewBackend } from './iso-view-backend';
 import type { Real3dFrame, Real3dRenderer } from './iso-view-gl-runtime';
 import './hp-dialog';
 import { dialogPresence } from './dialog-presence';
@@ -831,6 +830,21 @@ export class HouseplanCard extends LitElement {
       && generation.space === this._space && generation.epoch === this._cfgEpoch;
   }
 
+  // Only a pending attempt or failure latch is floor/revision scoped. A
+  // working GPU context belongs to the card and its current plan authority.
+  private _activeReal3d(): Real3dRenderer | null {
+    return this._real3d && this._real3dGeneration?.authority === this.planHost.authorityKey
+      && this._real3dEligible() ? this._real3d : null;
+  }
+
+  private _keepsReal3dCameraForConfig(next: ServerConfig | null): boolean {
+    if (!this._activeReal3d() || !next || !this._serverCfg
+        || contentFingerprint(next.settings) !== contentFingerprint(this._serverCfg.settings)) return false;
+    const previousFloor = this._serverCfg.spaces.find(space => space.id === this._space);
+    const nextFloor = next.spaces.find(space => space.id === this._space);
+    return !!previousFloor && !!nextFloor && contentFingerprint(previousFloor) === contentFingerprint(nextFloor);
+  }
+
   private _releaseReal3d(): void {
     this._real3dGeneration = null;
     this._real3d?.dispose();
@@ -839,27 +853,27 @@ export class HouseplanCard extends LitElement {
     this._flatSvgScene = null;
   }
 
+  private _failReal3d(): void {
+    this._releaseReal3d();
+    this._real3dGeneration = {
+      authority: this.planHost.authorityKey, space: this._space, epoch: this._cfgEpoch, failed: true,
+    };
+    const fallback = volumetricViewOf(this._settings) ? 'gs.real_3d_fallback_iso' : 'gs.real_3d_fallback_flat';
+    this._showToast(this._t(fallback), fallback, { owner: null });
+    this.requestUpdate();
+  }
+
   private _syncReal3d(): void {
     if (!this._real3dEligible()) {
       this._releaseReal3d();
       return;
     }
-    if (this._currentReal3dGeneration()) return;
+    if (this._activeReal3d() || this._currentReal3dGeneration()) return;
     this._releaseReal3d();
     const generation = { authority: this.planHost.authorityKey, space: this._space, epoch: this._cfgEpoch, failed: false };
     this._real3dGeneration = generation;
     const ownsAttempt = () => this._real3dGeneration === generation
       && this._currentReal3dGeneration() && this._real3dEligible();
-    const fail = () => {
-      if (!ownsAttempt() || generation.failed) return;
-      generation.failed = true;
-      this._real3d?.dispose();
-      this._real3d = null;
-      this._real3dFrame = null;
-      const fallback = volumetricViewOf(this._settings) ? 'gs.real_3d_fallback_iso' : 'gs.real_3d_fallback_flat';
-      this._showToast(this._t(fallback), fallback, { owner: null });
-      this.requestUpdate();
-    };
     const display = this._spaceDisplayForRender();
     const hasFurniture = !display.hideDecor && this._decorList.some(item => item.kind === 'furniture');
     const furniture = hasFurniture ? FURNITURE_VOLUME_RUNTIME.ensure(this._furnitureVolumeObserver).then(() => {
@@ -867,17 +881,22 @@ export class HouseplanCard extends LitElement {
     }) : Promise.resolve();
     void Promise.all([loadReal3dEntry(), furniture]).then(([runtime]) => {
       if (!ownsAttempt()) return;
-      this._real3d = new runtime.Real3dRenderer(this.ownerDocument, fail);
+      const renderer = new runtime.Real3dRenderer(this.ownerDocument, () => {
+        // The context may have painted several newer floors since it was made.
+        // Only the still-installed renderer can fail the current presentation.
+        if (this._activeReal3d() === renderer) this._failReal3d();
+      });
+      this._real3d = renderer;
       this.requestUpdate();
-    }).catch(fail);
+    }).catch(() => { if (ownsAttempt()) this._failReal3d(); });
   }
 
   private _presentReal3d(): void {
-    const renderer = this._real3d;
+    const renderer = this._activeReal3d();
     if (!renderer) return;
     const svg = this._isoAuthoredScene();
     const layer = svg?.querySelector<SVGForeignObjectElement>('[data-hp-real-3d]');
-    if (svg && layer && this._real3dFrame && this._currentReal3dGeneration() && this._real3dEligible()) {
+    if (svg && layer && this._real3dFrame) {
       renderer.present(svg, layer, this._real3dFrame);
     } else renderer.clearPresentation();
   }
@@ -3848,12 +3867,7 @@ export class HouseplanCard extends LitElement {
   private _tabOrderWarned = false;
   /** #649: one installation-wide switch in General settings › Display (no alpha, no per-device choice). */
   private get _isoEnabled(): boolean {
-    const saved2d = volumetricViewOf(this._settings);
-    if (!this._real3d || !this._currentReal3dGeneration() || !this._real3dEligible()) return saved2d;
-    return resolveViewBackend({
-      surface: 'view', showBorders: true, fallbackRequested: saved2d, real3dRequested: true,
-      real3dReady: true, fallbackReady: saved2d,
-    }).projection === 'iso';
+    return volumetricViewOf(this._settings) || this._activeReal3d() !== null;
   }
 
   private readonly _furnitureVolumeObserver = ((owner: HouseplanCard) => ({
@@ -13373,6 +13387,7 @@ export class HouseplanCard extends LitElement {
     let view = this._authoredView(this._viewOr(this._baseVb(projection, isoScene)), projection);
     let isoFrame: IsoFramePresentation | null = null;
     this._real3dFrame = null;
+    const real3d = this._activeReal3d();
     let isoGlowLayer: TemplateResult | undefined;
     let isoLedField: TemplateResult | undefined;
     let isoWallLights: IsoWallLightSource[] = [];
@@ -13392,7 +13407,7 @@ export class HouseplanCard extends LitElement {
           source.key, source.color, source.alpha, source.radius, source.points,
         ]));
         const field = this._isoLight.choose(scope, signature, { glow, led, lights: isoWallLights },
-          this._isoAuthoredScene(), !this._real3d && !this._reducedMotion && !this._modeTransitionBusy && !this._floorPassive);
+          this._isoAuthoredScene(), !real3d && !this._reducedMotion && !this._modeTransitionBusy && !this._floorPassive);
         isoGlowLayer = field.glow;
         isoLedField = field.led;
         isoWallLights = field.lights;
@@ -13412,7 +13427,7 @@ export class HouseplanCard extends LitElement {
             return [{footprint,height,mesh,lift,opacity:1,
               shadow:lift ? nothing : furnitureShadow(mesh,scale,false),
               body:svg`<g transform=${isoFloorMatrixCss(camera)}>
-                ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,scale,false,sampleFurnitureLight)}</g>`}];
+                ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,scale,false,sampleFurnitureLight,!!real3d)}</g>`}];
           }) : [];
       if(iso && camera){
         stairVolumes=this._stairsView.volumeItems(camera);
@@ -13470,8 +13485,7 @@ export class HouseplanCard extends LitElement {
     const roomLabelDepth = roomLabelCamera ? isoTileDepthStyles(roomLabelCamera) : null;
     const isoLayers = isoFrame?.layers ?? null;
     const isoOverlays = isoFrame?.overlays ?? null;
-    if (isoScene && isoFrame && isoLayers?.structural && this._real3d
-        && this._currentReal3dGeneration() && this._real3dEligible()) {
+    if (isoScene && isoFrame && isoLayers?.structural && real3d && !this._furnitureVolumePending()) {
       this._real3dFrame = {
         scene: isoScene, panels: isoFrame.panels, display: disp, cellCm: this._cellCm,
         shapes: useFurnitureVolume && !disp.hideDecor

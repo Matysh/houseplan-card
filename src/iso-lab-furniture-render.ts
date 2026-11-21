@@ -12,9 +12,10 @@ export function furnitureShadow(mesh: FurnitureMesh, visualScale: number, blur =
 
 /** Inert view paint: one translucent material, independent of Flat outline opacity. */
 export function renderIsoLabFurniture(mesh: FurnitureMesh, id: string, symbol: string,
-  color: string, visualScale: number, withShadow = true, sampleLight?: ReturnType<typeof isoFurnitureLightSampler>) {
+  color: string, visualScale: number, withShadow = true, sampleLight?: ReturnType<typeof isoFurnitureLightSampler>,
+  glOwned = false) {
   return svg`<g data-hp="decor" data-id=${id} data-kind="furniture" data-symbol=${symbol}
-    data-hp-furniture-volume="glass" pointer-events="none" aria-hidden="true"
+    data-hp-furniture-volume="glass" ?data-hp-gl-furniture=${glOwned} pointer-events="none" aria-hidden="true"
     color=${color} stroke-linejoin="round" stroke-linecap="round">
     ${withShadow ? furnitureShadow(mesh,visualScale) : null}
     ${mesh.parts.map(p=>svg`<g data-furniture-part=${p.name}>

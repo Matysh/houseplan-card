@@ -220,7 +220,7 @@ export const planStyles = css`
       .iso-wall-side-fill .iso-wall-side, .iso-wall-fill, .iso-opening-panel,
       .iso-wall-side-fill [data-hp-round-column]
     ) { visibility:hidden; }
-    .iso-scene-surface > svg:has(> [data-real-3d-ready]) [data-hp-furniture-base] { fill-opacity:0; }
+    .iso-scene-surface > svg:has(> [data-real-3d-ready]) [data-hp-gl-furniture] [data-hp-furniture-base] { fill-opacity:0; }
     .iso-scene-surface[data-hp-light-mixing] { isolation:isolate; }
     .iso-scene-surface[data-hp-light-mixing] > svg { mix-blend-mode:plus-lighter; }
     .iso-scene-surface > svg[data-hp-retained-light] { pointer-events:none; }

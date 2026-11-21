@@ -35,8 +35,7 @@ const styleBodiesFor = (...selectorParts) => [...styles.matchAll(/([^{}]+)\{([^{
 
 test('#649 2.5D is the General settings switch, presentation-only and absent from the space card', () => {
   const choice = section(card, 'private get _isoEnabled()', 'private readonly _furnitureVolumeObserver');
-  assert.match(choice, /const saved2d = volumetricViewOf\(this\._settings\);/);
-  assert.match(choice, /if \(!this\._real3d \|\| .*?\) return saved2d;/);
+  assert.match(choice, /return volumetricViewOf\(this\._settings\) \|\| this\._activeReal3d\(\) !== null;/);
   assert.match(card, /return this\._mode === 'view' && this\._isoEnabled \? 'iso' : 'flat';/);
   assert.doesNotMatch(card, /data-hp="projection-toggle"|_viewPreference|houseplan_card_view_v1|_labsIso/,
     'no per-device choice, no header button, no alpha gate');

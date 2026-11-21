@@ -23,6 +23,13 @@ const preference = (real, legacy) => page.evaluate(async ({ real, legacy }) => {
     if (real && !legacy && !space.decor?.some(shape => shape.id === 'real-3d-chair')) {
       space.decor = [...(space.decor || []), { id: 'real-3d-chair', kind: 'furniture',
         symbol: 'chair', x: .45, y: .35, w: .05, h: .05, width_cm: 1 }];
+      space.stairs = [...(space.stairs || []), { id: 'real-3d-stair', kind: 'straight',
+        direction: 'forward', x: .32, y: .38, length: .13, width: .07, angle: 0 }];
+    }
+    const other = cfg.spaces[1];
+    other.settings = { ...other.settings, show_borders: true };
+    if (!other.partitions?.some(wall => wall.id === 'real-3d-garden-wall')) {
+      other.partitions = [...(other.partitions || []), { id: 'real-3d-garden-wall', a: [.25, .35], b: [.65, .35], cm: 12 }];
     }
     return cfg;
   });
@@ -84,6 +91,78 @@ try {
     && frame.width > 0 && frame.height > 0 && frame.svg === frame.widthUnits && frame.triangles > 0);
   check('first WebGL frame contains the required furniture model', frame.furnitureFaces > 0);
   check('plan devices still use native HTML', await page.locator('.devlayer [data-hp=device]').count() > 0);
+  const fills = await layer.evaluate(element => {
+    const visibleBase = id => element.ownerSVGElement.querySelector(
+      '[data-hp-furniture-volume][data-id=' + id + '] [data-hp-furniture-base]:not([d=""])');
+    const stair = visibleBase('real-3d-stair'), chair = visibleBase('real-3d-chair');
+    return { stair: stair ? +getComputedStyle(stair).fillOpacity : null,
+      chair: chair ? +getComputedStyle(chair).fillOpacity : null };
+  });
+  check('GPU ownership hides only the duplicate furniture fill and leaves solid stair paint',
+    fills.stair > 0 && fills.chair === 0);
+
+  const startingScene = await page.evaluate(async () => {
+    const c = window.__card;
+    const focus = c._fitRoom('r1', false);
+    await window.__hpTest.settled();
+    const transitions = [], original = c._convertProjectionView;
+    c._convertProjectionView = function(from, to) {
+      if (from !== to) transitions.push([from, to]);
+      return original.call(this, from, to);
+    };
+    window.__real3dContinuity = { renderer: c._real3d, transitions, original };
+    return { focus, epoch: c._cfgEpoch, view: c._view, zoom: c._zoom, room: c._roomFocus,
+      scene: c._real3d.frame.scene.key };
+  });
+  await page.evaluate(async () => window.__hpTest.setServerConfig(cfg => ({
+    ...cfg, spaces: cfg.spaces.map((s, n) => n === 1 ? { ...s, title: 'Garden external update' } : s),
+  })));
+  await page.waitForFunction(epoch => window.__card._cfgEpoch > epoch, startingScene.epoch);
+  const externallyUpdated = await page.evaluate(async () => {
+    const c = window.__card;
+    await window.__hpTest.settled();
+    return { sameRenderer: c._real3d === window.__real3dContinuity.renderer,
+      transitions: window.__real3dContinuity.transitions.slice(), view: c._view, zoom: c._zoom, room: c._roomFocus };
+  });
+  const cameraPreserved = startingScene.focus && startingScene.room?.roomId === 'r1' && externallyUpdated.sameRenderer
+    && externallyUpdated.transitions.length === 0
+    && JSON.stringify([externallyUpdated.view, externallyUpdated.zoom, externallyUpdated.room])
+      === JSON.stringify([startingScene.view, startingScene.zoom, startingScene.room]);
+  if (!cameraPreserved) console.log('External config continuity:', { before: startingScene, after: externallyUpdated });
+  check('an unrelated external config retains the GPU context, camera, zoom and room focus', cameraPreserved);
+
+  await page.evaluate(async () => window.__hpTest.setServerConfig(cfg => {
+    const wall = cfg.spaces[0].partitions.find(item => item.id === 'real-3d-masonry');
+    wall.b = [.71, .22];
+    return cfg;
+  }));
+  await page.waitForFunction(scene => {
+    const next = window.__card._real3d?.frame?.scene.key;
+    return next?.startsWith('f1|') && next !== scene;
+  }, startingScene.scene);
+  check('changed active geometry retires stale room focus without losing the GPU context',
+    await page.evaluate(() => !window.__card._roomFocus
+      && window.__card._real3d === window.__real3dContinuity.renderer));
+
+  await page.evaluate(() => window.__hpTest.switchSpace('garden'));
+  await page.waitForFunction(() => {
+    const c = window.__card;
+    return c._space === 'garden' && c._real3d?.frame?.scene.key.startsWith('garden|')
+      && c.renderRoot.querySelector('[data-real-3d-ready]');
+  });
+  check('switching an eligible floor paints its own geometry without a Flat hop or a new context',
+    await page.evaluate(() => {
+      const c = window.__card, { renderer, transitions } = window.__real3dContinuity;
+      return c._real3d === renderer && !renderer.disposed && c._renderProjection === 'iso'
+        && !transitions.some(([, to]) => to === 'flat');
+    }));
+  await page.evaluate(async () => {
+    const c = window.__card;
+    c._convertProjectionView = window.__real3dContinuity.original;
+    delete window.__real3dContinuity;
+    await window.__hpTest.switchSpace('f1');
+  });
+  await layer.waitFor({ state: 'attached', timeout: 12000 });
   const stage = page.locator('houseplan-card .stage').first();
   const box = await stage.boundingBox();
   const before = Number(await layer.getAttribute('data-real3d-frames'));
@@ -111,12 +190,15 @@ try {
       && buffer.width === Math.round(node.ownerSVGElement.getBoundingClientRect().width * devicePixelRatio);
   }, frame.width);
   check('window resizing updates the GPU buffer and shares the measured SVG viewport', true);
-  const beforeIdle = await layer.getAttribute('data-real3d-frames');
   await page.evaluate(() => window.__hpTest.settled());
   await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
+  const beforeIdle = await layer.getAttribute('data-real3d-frames');
+  await page.evaluate(async () => {
+    for (let i = 0; i < 8; i++) await new Promise(done => requestAnimationFrame(done));
+  });
   check('no perpetual GPU animation loop', await layer.getAttribute('data-real3d-frames'), beforeIdle);
   const beforeExport = await page.evaluate(() => JSON.stringify({
-    view: window.__card._view, settings: window.__card._serverCfg.settings,
+    view: window.__card._view, zoom: window.__card._zoom, settings: window.__card._serverCfg.settings,
   }));
   const flatSvg = await exportSvg(true);
   const exported = await page.evaluate(text => {
@@ -128,7 +210,9 @@ try {
   check('Real 3D exports native flat geometry and devices without embedding the canvas',
     exported.flatWalls > 0 && exported.devices > 0 && !exported.isoWalls && !exported.canvas);
   check('export leaves plan, camera and the GPU frame unchanged',
-    await page.evaluate(() => JSON.stringify({ view: window.__card._view, settings: window.__card._serverCfg.settings })),
+    await page.evaluate(() => JSON.stringify({
+      view: window.__card._view, zoom: window.__card._zoom, settings: window.__card._serverCfg.settings,
+    })),
     beforeExport);
   // A second card in the same document shares the lazy module but not its GPU
   // context or observers. Put both surfaces on screen for the raster witnesses.
