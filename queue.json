@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 19445,
+  "revision": 19446,
   "nextTicket": 591,
-  "nextFence": 590,
+  "nextFence": 591,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -4206,7 +4206,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 590,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795268513477,
       "reviewEntry": 3,
@@ -6232,10 +6232,18 @@
       }
     }
   },
-  "waiting": [
-    1472
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1472,
+    "worker": "finish",
+    "token": "590:finish:a1294e97-0e65-4bb7-be65-79a2891d1556:finish:1:admit",
+    "fence": 590,
+    "materialSha": "cd1bd594529cece05797971bbc76123427c580ac",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795268947844,
+    "expiresAt": 1795269247844
+  },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6928,6 +6936,29 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:a1294e97-0e65-4bb7-be65-79a2891d1556:finish:1:admit": {
+      "digest": "c53eefba316314d66e3a4bcdf63871870f1b3d129fb15a7ad0dc1b8faed2da45",
+      "issue": 1472,
+      "message": {
+        "kind": "admitted",
+        "issue": 1472,
+        "at": 1795268947844,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "cd1bd594529cece05797971bbc76123427c580ac",
+        "phase": "sync",
+        "evidence": {
+          "id": "20261121T132012118-edb9fe9b",
+          "name": "Тесты для задачи #1472 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1472-real-3d/.git/process-next/runs/20261121T132012118-edb9fe9b/report.json",
+          "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
+          "status": "passed",
+          "finishedAt": "2026-11-21T13:22:09.465Z",
+          "failures": []
+        }
       }
     }
   },
