@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19425,
+  "revision": 19426,
   "nextTicket": 590,
   "nextFence": 590,
   "tasks": {
@@ -5664,14 +5664,55 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1511-mount-tv",
-      "materialSha": "82eea3dea6cc361417766fb2465c9f98c34d86ad",
+      "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 589,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795266950577,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c240139592c8ab4d5ae64c61ce7cdbea46e5e62b",
+      "changedFiles": [
+        "custom_components/houseplan/core/furniture_workstation.py",
+        "custom_components/houseplan/core/house_document.py",
+        "custom_components/houseplan/core/import_export.py",
+        "custom_components/houseplan/core/plan_commands.py",
+        "custom_components/houseplan/core/validation.py",
+        "demo/smoke_tv_mount.mjs",
+        "demo/srv/demo.html",
+        "demo/srv/fixture-state.js",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/DECOR-EDITOR.md",
+        "docs/FURNITURE.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.86.0/1511.json",
+        "scripts/config-schema.json",
+        "src/editors/decor/order.ts",
+        "src/editors/decor/types.ts",
+        "src/editors/space-delete.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
+        "src/i18n/tools/de.json",
+        "src/i18n/tools/en.json",
+        "src/i18n/tools/fr.json",
+        "src/i18n/tools/ru.json",
+        "src/iso-lab-furniture.ts",
+        "src/iso-lab-workstation.ts",
+        "src/pdf/pdf-scene.ts",
+        "src/plan-optimize-write.ts",
+        "src/tv-mount.ts",
+        "src/version-recovery-card.ts",
+        "test/tv-mount.test.mjs",
+        "tests_backend/test_furniture_workstation.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -6173,11 +6214,12 @@
     "worker": "github-coordinator",
     "token": "589:github:44909098656:1:tick:0:admit",
     "fence": 589,
-    "materialSha": "82eea3dea6cc361417766fb2465c9f98c34d86ad",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
+    "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
+    "phase": "testing",
     "admittedAt": 1795267776235,
-    "expiresAt": 1795268076235
+    "expiresAt": 1795268126734,
+    "patchId": "c240139592c8ab4d5ae64c61ce7cdbea46e5e62b"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6575,6 +6617,10 @@
     "github:44909098656:1:completions:metadata:6e88a1bf-5028-4959-a8a2-6ce052b58293:task-notice:1472::": {
       "digest": "b8730a9695408ab29018ab340f77a2c10171441ac1c890add09634b237daf418",
       "issue": 1472
+    },
+    "finish:c46d3215-2147-4f5d-862a-5752e5f400e8:finish:1:synchronized": {
+      "digest": "68078bd52708067442c10e4d7e13b845e3eb86db649c31f60bd7d4935bde540a",
+      "issue": 1511
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
