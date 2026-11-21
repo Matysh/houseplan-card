@@ -503,6 +503,10 @@
       "allowExtra": true,
       "required": false
     },
+    "config.settings.real_3d": {
+      "required": false,
+      "type": "bool"
+    },
     "config.settings.show_device_battery": {
       "required": false,
       "variants": [

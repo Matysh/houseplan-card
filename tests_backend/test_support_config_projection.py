@@ -28,6 +28,16 @@ def project(config):
     return result, ids
 
 
+def test_issue_1472_support_projects_only_a_typed_real_3d_flag():
+    from custom_components.houseplan.support_wire_schema import GLOBAL_SETTINGS, validate
+
+    for flag in (True, False):
+        assert validate(_global_settings({"real_3d": flag, "volumetric_view": not flag}), GLOBAL_SETTINGS) is None
+        assert _global_settings({"real_3d": flag}) == {"real_3d": flag}
+    for invalid in (None, "true", 1, {"private": "not a flag"}):
+        assert _global_settings({"real_3d": invalid}) == {}
+
+
 def test_issue1024_nested_sources_share_pseudonyms_but_local_leaf_ids_are_parent_scoped():
     from custom_components.houseplan.support_wire_schema import CONFIG, validate
     from tests_backend.test_opening_features import window

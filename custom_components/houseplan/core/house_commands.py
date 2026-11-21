@@ -49,7 +49,7 @@ def _summary(document, config, details, manifest):
     # These target globals intentionally remain authoritative, not pixel parity.
     settings = config.get("settings") or {}
     appearance = {key: copy.deepcopy(settings.get(key)) for key in (
-        "moon", "volumetric_view", "sun_ray_origin", "fill_colors", "night_brightness") if key in settings}
+        "moon", "volumetric_view", "real_3d", "sun_ray_origin", "fill_colors", "night_brightness") if key in settings}
     return {"kind": "house", "plan_only": True, "counts": counts, "spaces": details["spaces"],
             "warnings": [*details["warnings"], *({"code": "image_" + row["reason"], "ref": row["ref"]} for row in missing)],
             "missing_content": missing, "complete": manifest["complete"], "target_appearance": appearance,
