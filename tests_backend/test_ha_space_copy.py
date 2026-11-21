@@ -49,9 +49,10 @@ def source_fixture(kind="wall"):
 def frontend_copy(config, seed="proof", source_id="source", **options):
     # Run the shipped TypeScript builder, not a Python facsimile of its result.
     code = """import {createSpaceCopyCandidate} from './test-build/space-copy.js';
+    import {canonicalizeConfigWrite} from './test-build/coordinate-canonicalization.js';
     let text='';for await(const chunk of process.stdin)text+=chunk;
     const {config,seed,source_id,options}=JSON.parse(text);
-    console.log(JSON.stringify(createSpaceCopyCandidate(config,source_id,'Copy',seed,options).config));"""
+    console.log(JSON.stringify(canonicalizeConfigWrite(createSpaceCopyCandidate(config,source_id,'Copy',seed,options).config)));"""
     result = subprocess.run(["node", "--input-type=module", "-e", code], cwd=ROOT,
                             input=json.dumps({"config": config, "seed": seed, "source_id": source_id, "options": options}),
                             capture_output=True, text=True, check=False)
@@ -195,13 +196,21 @@ async def test_1024_frontend_copy_matches_server_and_clears_nested_disabled_bind
 
 @pytest.mark.parametrize("kind", ["wall", "partition"])
 @pytest.mark.parametrize("model", [0, 10, 11])
-async def test_copy_preserves_near_end_geometry_then_regular_writes_remain_strict(hass, hass_ws_client, kind, model):
+@pytest.mark.parametrize("stale_marker", [False, True])
+async def test_copy_preserves_near_end_geometry_then_regular_writes_remain_strict(hass, hass_ws_client, kind, model, stale_marker):
     source = await setup_source(hass, kind, model)
+    if stale_marker:
+        source["spaces"][0]["rooms"][0]["area"] = "garage"
+        source["markers"] = [{"id": "sensor", "binding": "device:ble", "space": "gone", "area": "garage"}]
+        await get_data(hass).config_store.async_save({"rev": 7, "config": source})
     client = await hass_ws_client(hass)
     candidate = frontend_copy(source)
     reply = await write(client, candidate, 7, previous=source)
     assert reply["success"], reply
     saved = await read(client)
+    if stale_marker:
+        assert saved["config"]["markers"][0]["space"] == "source"
+        assert source["markers"][0]["space"] == "gone"  # proof cannot mutate its stored predecessor
     copied = saved["config"]["spaces"][1]
     opening = copied["openings"][0]
     assert opening["length"] == .2
@@ -222,9 +231,12 @@ async def test_copy_preserves_near_end_geometry_then_regular_writes_remain_stric
     assert (await read(client)) == saved
 
 
-@pytest.mark.parametrize("mutation", ["copied_length", "source", "settings", "extra_space"])
+@pytest.mark.parametrize("mutation", ["copied_length", "source", "settings", "extra_space", "marker"])
 async def test_forged_copy_cannot_inherit_saved_geometry(hass, hass_ws_client, mutation):
     source = await setup_source(hass, "wall", 11)
+    source["spaces"][0]["rooms"][0]["area"] = "garage"
+    source["markers"] = [{"id": "sensor", "binding": "device:ble", "space": "gone", "area": "garage"}]
+    await get_data(hass).config_store.async_save({"rev": 7, "config": source})
     client = await hass_ws_client(hass)
     candidate = frontend_copy(source)
     if mutation == "copied_length":
@@ -233,6 +245,8 @@ async def test_forged_copy_cannot_inherit_saved_geometry(hass, hass_ws_client, m
         candidate["spaces"][0]["title"] = "Changed source"
     elif mutation == "settings":
         candidate["settings"]["show_lqi"] = False
+    elif mutation == "marker":
+        candidate["markers"][0]["name"] = "Unrelated metadata change"
     else:
         candidate["spaces"].append({"id": "extra", "title": "Extra", "view_box": [0, 0, 1, 1],
                                     "rooms": [], "wall_segments": [], "partitions": [],

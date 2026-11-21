@@ -78,3 +78,26 @@ def test_repair_preserves_a_linked_strip_floor():
            "markers": [{"id": "sensor", "space": "old", "area": "garage"}]}
     assert repair_marker_spaces(cfg) == 0
     assert cfg["markers"][0]["space"] == "old"
+
+
+@pytest.mark.parametrize("binding,area", [("virtual", "garage"), ("device:ble", None)])
+@pytest.mark.parametrize("command", ["config/set", "plan/optimize"])
+async def test_live_virtual_or_manual_floor_does_not_move_on_unrelated_write(binding, area, command):
+    commands = service()
+    cfg = commands.storage.config_data["config"]
+    cfg["spaces"].append(migrate_graph_space({"id": "other", "title": "Other", "view_box": [0, 0, 1, 1], "rooms": [{"id": "garage", "name": "Garage", "area": "garage", "x": .1, "y": .1, "w": .2, "h": .2}]}, {"source_model_version": 10})["space"])
+    cfg["markers"] = [{"id": "sensor", "binding": binding, "name": "Sensor", "space": "floor", "area": area, "room_id": "garage"}]
+    commands.storage.layout_data["layout"]["sensor"] = {"s": "floor", "x": .2134, "y": .6735}
+    before = commands.storage.snapshot()
+    candidate = copy.deepcopy(before.config_data["config"])
+    candidate["spaces"][0]["title"] = "Unrelated title edit"
+    message = {"type": "houseplan/" + command, "config": candidate}
+    if command == "config/set":
+        message["expected_rev"] = 4
+    else:
+        message.update(expected_config_rev=4, expected_layout_rev=7, opening_features_api=1,
+                       layout=copy.deepcopy(before.layout_data["layout"]))
+    await commands.execute(message)
+    saved = commands.storage.snapshot()
+    assert saved.config_data["config"]["markers"] == before.config_data["config"]["markers"]
+    assert saved.layout_data["layout"] == before.layout_data["layout"]

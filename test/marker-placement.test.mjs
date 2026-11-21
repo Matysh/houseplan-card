@@ -20,7 +20,8 @@ test('#1512 ordinary writes repair only room-proved references without mutating 
 });
 test('#1512 room transfer repairs even an existing old floor; ambiguous or missing rooms are not guessed',()=>{
  const cfg=config();cfg.spaces.push({id:'deleted',rooms:[]});
- assert.equal(repairMarkerSpacesInPlace(cfg),4);assert.equal(cfg.markers[0].space,'current');
+ assert.equal(repairMarkerSpacesInPlace(cfg),3);assert.equal(cfg.markers[0].space,'current');
+ assert.equal(cfg.markers.find(m=>m.id==='manual').space,'deleted');
  const ambiguous=config();ambiguous.spaces.push({id:'other',rooms:[{id:'r',area:'garage'}]});
  assert.equal(repairMarkerSpacesInPlace(ambiguous),0);
  const absent=config();absent.spaces[0].rooms=[];assert.equal(repairMarkerSpacesInPlace(absent),0);
@@ -54,4 +55,21 @@ test('#1512 repair cannot separate a linked LED strip from its marker',()=>{
 
 test('#1512 generic config canonicalization retains its null/primitive contract',()=>{
  for(const value of [null,undefined,42,'future'])assert.equal(canonicalizeConfigWrite(value),value);
+});
+
+
+test('#1512 ordinary writes and Optimize preserve live virtual/manual floor and visible placement',async()=>{
+ const {buildDevices}=await import('../test-build/devices.js');
+ const cfg={spaces:[{id:'A',rooms:[{id:'r',area:'garage'}]},{id:'B',rooms:[]}],markers:[
+  {id:'virtual',binding:'virtual',name:'Virtual',space:'B',area:'garage'},
+  {id:'manual',binding:'device:ble',space:'B',area:null,room_id:'r'},
+ ]};
+ const layout={virtual:{s:'B',x:.2134,y:.6735},manual:{s:'B',x:.32,y:.74}};
+ const shown=markers=>buildDevices({hass:{devices:{ble:{id:'ble',name:'Sensor',area_id:'garage'}},entities:{},states:{}},areaToSpace:{garage:'A'},markers,settings:{},excluded:new Set(),showAll:false,firstSpaceId:'A',loc:k=>k});
+ for(const candidate of [canonicalizeConfigWrite(cfg),repairSpaceReferences(cfg,layout).config]){
+  assert.deepEqual(candidate.markers,cfg.markers);
+  for(const device of shown(candidate.markers))assert.equal(device.space,layout[device.id].s,device.id+' keeps its saved visible floor');
+  assert.equal(shown(candidate.markers).length,2);
+ }
+ assert.deepEqual(repairSpaceReferences(cfg,layout).layout,layout);
 });

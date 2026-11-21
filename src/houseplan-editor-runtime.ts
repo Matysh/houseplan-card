@@ -8167,7 +8167,7 @@ public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): voi
         hideSignal: d.marker?.hide_signal === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this.host._imperial
-              ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 10) / 10
+              ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 100) / 100
               : Math.round(Number(d.marker!.glow_radius_cm)) / 100)
           : '',
         model: d.model || '',

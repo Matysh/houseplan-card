@@ -135,6 +135,7 @@ def is_saved_space_copy(candidate: dict, previous: dict | None) -> bool:
         from .graph_write import normalize_graph_config, preserve_legacy_structure
         from .room_appearance import normalize_room_appearance
         from .validation import CONFIG_SCHEMA
+        from .marker_placement import repair_marker_spaces
 
         # Presence determines the selected categories; a partial category can
         # never match the complete source projection below.
@@ -154,6 +155,9 @@ def is_saved_space_copy(candidate: dict, previous: dict | None) -> bool:
             checked = CONFIG_SCHEMA(expected)
             if int(expected.get("model_version", 0)) < 11:
                 checked = preserve_legacy_structure(checked, expected)
+            # The ordinary writer repairs marker metadata before this exact proof.
+            # Mirror only that trusted projection; rooms are never added by a copy.
+            repair_marker_spaces(checked)
             if candidate == normalize_room_appearance(checked):
                 return True
         return False

@@ -43,5 +43,18 @@ try{
  await dialog.locator('#marker-description').fill('valid');await settle();
  out.fixedFieldsAllowSave=await dialog.locator('[data-hp="dialog-confirm"]').isEnabled();
  await dialog.locator('[data-hp="dialog-confirm"]').click();await dialog.waitFor({state:'detached'});
+
+ // Opening and saving unrelated metadata must not round a valid boundary radius
+ // outside the server range (10 cm used to become 0.3 ft -> 9 cm).
+ await page.evaluate(()=>{const c=window.__card;c.hass={...c.hass,config:{...c.hass.config,unit_system:{...c.hass.config?.unit_system,length:'mi'}}};});await settle();
+ for(const cm of [10,11,9999,10000]){
+  await page.evaluate(async cm=>{await window.__hpTest.setServerConfig(cfg=>({...cfg,markers:cfg.markers.map(m=>m.id==='d_temp'?{...m,glow_radius_cm:cm,description:'radius '+cm}:m)}));},cm);await settle();
+  const before=await page.evaluate(()=>structuredClone(window.__card._layout));
+  await open();await settingsSection(dialog,'details');
+  await dialog.locator('#marker-description').fill('saved radius '+cm);await settle();
+  out['imperial'+cm+'AllowsMetadataSave']=await dialog.locator('[data-hp="dialog-confirm"]').isEnabled();
+  await dialog.locator('[data-hp="dialog-confirm"]').click();await dialog.waitFor({state:'detached'});await settle();
+  out['imperial'+cm+'RetainsRadiusAndPosition']=await page.evaluate(async({cm,before})=>{const c=window.__card,stored=await c.planHost.request({type:'houseplan/config/get'});return stored.config.markers.find(m=>m.id==='d_temp').glow_radius_cm===cm&&JSON.stringify(c._layout)===JSON.stringify(before);},{cm,before});
+ }
  checkAll(out);await finish(browser,out);
 }catch(error){await browser.close();throw error;}
