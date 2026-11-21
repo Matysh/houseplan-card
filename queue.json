@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19419,
+  "revision": 19420,
   "nextTicket": 590,
   "nextFence": 589,
   "tasks": {
@@ -4207,7 +4207,7 @@
       "ownerDecision": null,
       "ticket": 588,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1795265077145,
       "reviewEntry": 2,
       "patchId": "eefbadbbe1e35a948692c85c66bd83cb0f804fc0",
@@ -4268,14 +4268,13 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795265029902,
-        "entry": 1,
-        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/pdf-compass.test.mjs: failed; Поведение: test/render-layout-read.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Backend: tests_backend/test_plan_graph_support.py: failed",
-        "eventId": "finish:2a189472-54d2-4616-9a71-c11155b47358:finish:3:return:return:1472"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1795267773418,
+        "entry": 2,
+        "requestId": "review:1472:2:eefbadbbe1e35a948692c85c66bd83cb0f804fc0:36af10803c20dbf027b922553b37419d112023a9"
       },
       "s6": {
         "id": "20261121T132012118-edb9fe9b",
@@ -4292,6 +4291,11 @@
         "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
         "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
         "patchId": "eefbadbbe1e35a948692c85c66bd83cb0f804fc0"
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1472:2:eefbadbbe1e35a948692c85c66bd83cb0f804fc0:36af10803c20dbf027b922553b37419d112023a9",
+        "at": 1795267773418
       }
     },
     "1473": {
@@ -6179,19 +6183,7 @@
   "waiting": [
     1511
   ],
-  "active": {
-    "issue": 1472,
-    "worker": "finish",
-    "token": "588:finish:034c5438-1b0d-4b19-921d-bc59ee7729a4:finish:1:admit",
-    "fence": 588,
-    "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
-    "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
-    "phase": "review",
-    "admittedAt": 1795265081309,
-    "expiresAt": 1795270933262,
-    "patchId": "eefbadbbe1e35a948692c85c66bd83cb0f804fc0",
-    "reviewRequest": "review:1472:2:eefbadbbe1e35a948692c85c66bd83cb0f804fc0:36af10803c20dbf027b922553b37419d112023a9"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6567,6 +6559,10 @@
     },
     "finish:034c5438-1b0d-4b19-921d-bc59ee7729a4:finish:14:review-presentation": {
       "digest": "be542a69016b4ac66d763f2c7a9a63966d4db8172531670a3e03a55ba94a93d7",
+      "issue": 1472
+    },
+    "finish:034c5438-1b0d-4b19-921d-bc59ee7729a4:finish:14:return": {
+      "digest": "c46181a0e9850658107af425b731ec3ef91873cd0d698788cb69894a8f54744f",
       "issue": 1472
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
