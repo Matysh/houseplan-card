@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19215,
+  "revision": 19216,
   "nextTicket": 585,
   "nextFence": 585,
   "tasks": {
@@ -2414,40 +2414,6 @@
       },
       "devBuild": {
         "status": "not-required"
-      }
-    },
-    "1416": {
-      "issue": 1416,
-      "branch": "issue/1416-release-return-86015ab8132a",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "029393cfcfce8beb4ab60f47d872e7c0ef35c78e",
-      "mergedSha": "7f2f701713db065218dea84cb62b03ff64e97d5f",
-      "mergedAt": 1794584812160,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.85.2-beta.2",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "7f2f701713db065218dea84cb62b03ff64e97d5f"
       }
     },
     "1417": {
@@ -5592,7 +5558,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305"
       }
     }
   },
@@ -6159,6 +6126,18 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:44898222339:1:1509": {
+      "digest": "63268d054160fd1c39be8a3415f90abdf49bd96f13307e12de987daf6995843b",
+      "issue": 1509,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1509,
+        "at": 1795259911141,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305"
       }
     }
   },
