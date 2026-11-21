@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19607,
+  "revision": 19608,
   "nextTicket": 595,
   "nextFence": 595,
   "tasks": {
@@ -5686,7 +5686,7 @@
       "ownerDecision": null,
       "ticket": 594,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795273488577,
       "reviewEntry": 2,
       "patchId": "9ce37ce2962e97d29be5f5e9f765509044f20b19",
@@ -5730,6 +5730,15 @@
         "entry": 1,
         "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/dialog-baseline.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed",
         "eventId": "finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da:finish:3:return:return:1512"
+      },
+      "s6": {
+        "id": "20261121T150505509-c545d86f",
+        "name": "Тесты для задачи #1512 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261121T150505509-c545d86f/report.json",
+        "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
+        "status": "passed",
+        "finishedAt": "2026-11-21T15:09:02.827Z",
+        "failures": []
       }
     }
   },
@@ -6248,9 +6257,9 @@
     "fence": 594,
     "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
     "expectedBase": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795273492642,
-    "expiresAt": 1795274044251,
+    "expiresAt": 1795277347292,
     "patchId": "9ce37ce2962e97d29be5f5e9f765509044f20b19"
   },
   "events": {
@@ -7308,6 +7317,34 @@
         "layer": "product",
         "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
         "phase": "sync"
+      }
+    },
+    "finish:d4a8f9b8-ac1c-4a99-9f41-c63bdb466e69:finish:3:s6-complete": {
+      "digest": "787d7fe3d843c9357ba876eee44a3a69f8216f2070b990d658a6c802d2ef07e9",
+      "issue": 1512,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1512,
+        "at": 1795273747292,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
+        "phase": "review",
+        "evidence": {
+          "id": "20261121T150505509-c545d86f",
+          "name": "Тесты для задачи #1512 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261121T150505509-c545d86f/report.json",
+          "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
+          "status": "passed",
+          "finishedAt": "2026-11-21T15:09:02.827Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Реализация\n\nКоммит 501aeb434, ветка `codex/1512-device-space-save`. Общий TS resolver ремонта используется в подготовке ordinary config write, в сохранении устройства до поиска целевого пространства и в существующем reference-pass Optimize. Сервер независимо нормализует доказуемые ссылки в реальных config/set и plan/optimize. Индексы линейны; отсутствие override остаётся отсутствием, несуществующие/неоднозначные комнаты не угадываются. Привязанная LED-лента сохраняет своего владельца пространства. Координаты этот ремонт не пишет; обычная самостоятельная геометрическая/grid-политика Optimize не меняется.\n\nПри неразрешимом target сохранение явно объясняет отказ и раскрывает поле комнаты. Вся форма валидируется независимо от активной вкладки: длины текста согласованы с сервером, радиус — 10–10000 см с тем же округлением. Пустое значение использует общий радиус; нечисло/ноль/отрицательное теперь явно ошибочны вместо прежнего молчаливого fallback. Ошибочное неактивное поле радиуса можно исправить. Footer Review открывает вкладку и фокусирует ошибочное поле, черновик сохраняется. RU/EN/DE/FR сообщения добавлены.\n\n### Проверки и границы\n\nНа подготовленных исходниках прошли адресные Node-проверки, новый browser smoke (17 наблюдений: действия, 0.9/0.8, точные x/y/s и чужой layout, повторное открытие, ошибочный радиус/описание на другой вкладке), существующая форма устройства и 11 backend проверок, включая четыре настоящих authenticated HA WS + Store round trip. Дополнительно сохранён browser-owned частичный числовой ввод (например 1e) без затирания при повторном render; два новых наблюдения ждут финального S6. После последнего дополнения требуется финальный S6, его запускает finish в слоте очереди. В классификации новых файлов подтверждены области devices/storage, статические readers и включение в план. План широкий из-за изменения общего writer/карточного типа; выборка не урезается.\n\nПолный внешний browser HA E2E перед следующей бетой: [houseplan-e2e#94](https://github.com/Matysh/houseplan-e2e/issues/94). Пользовательский HA и приватный репорт не менялись, приватные данные не включены в fixtures. Релиз сейчас не поручен.\n\n\n### Проверка приватного репорта\n\nНа локальной копии пакета hpr-7064322d93 актуальный Python repair исправил ровно 43 ссылки. Изменялось только marker.space; второй проход дал 0 изменений. Layout не записывался. Пакет и результаты остаются приватными локальными артефактами.\n\n\n### Исправления после первого S6\n\nПрогон `20261121T143014660-0f39e5f5`, источник `d57250c1b`: все 799 шагов выполнены, materialClean=true. Все backend и browser проверки прошли, включая 8 новых backend, 4 authenticated HA WS/Store и 19 наблюдений нового browser smoke. Четыре отказа тестовых файлов имеют три причины:\n- `dialog-baseline`: ожидаемый список transient-полей дополнен `glowRadiusBadInput`, проверено игнорирование этого UI-only флага.\n- `optional-space-model-contract`: сохранена проверка раннего отказа до busy/миграции/записи, добавлены проверки объяснения вместо требования буквального молчаливого return.\n- `core-source-readers` и `mutation-gate`: обновлён единственный якорь `inherited-glow-radius-materialized-by-render-947` под новые числовые границы поля. Смысл мутации, guard и все проверки сохранены.\n\nПосле правки прошли адресные четыре Node-файла и исходный browser guard `smoke_device_settings_947`. Полный mutation shard не запускался. Повторный обязательный S6 запускается штатным finish; успешные результаты по неизменным входам переиспользуются. Статус до успешной передачи остаётся S6. Код-ревью ещё не выполнялось.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
