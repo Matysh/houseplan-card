@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19664,
+  "revision": 19665,
   "nextTicket": 596,
   "nextFence": 596,
   "tasks": {
@@ -7185,6 +7185,10 @@
       "digest": "9e889e0847e3539436df8106d196645f065c3178b19c7b245c2b667b314aa3c5",
       "issue": 1512
     },
+    "github:44921670501:1:completions:message:1df9174c3b3c4d442a49906991227dde0f12d8bb966df31a23e763451c0af87c": {
+      "digest": "0cb2e3a31420c0120f13e46cf9b71ac0d8e6fd3bb082a4844acd209a60e4a45e",
+      "issue": 1512
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7657,7 +7661,8 @@
         "reviewChanges": "### Реализация\n\nВетка `codex/1512-device-space-save`, материал `333722798` (поверх `501aeb434`), база dev `5237ec475`. Общий TS resolver используется в ordinary config write, _saveMarker до поиска target и reference-pass Optimize. Сервер независимо выполняет тот же ремонт в config/set и plan/optimize после нормализации схемы. Исправляется только существующий непустой explicit space при доказательстве одной текущей комнатой. Если исходный этаж ещё существует, его можно согласовать с Area только у HA-маркера со строковой Area: его показ уже следует Area. Виртуальные маркеры и ручные комнаты сохраняют живой explicit floor. Привязанная LED-лента сохраняет своего владельца. Отсутствие override остаётся отсутствием, missing/ambiguous room не угадывается. Layout этот ремонт не пишет, независимая геометрическая/grid-политика Optimize не меняется.\n\nНеразрешимый target даёт понятное сообщение и раскрывает room selector. Валидация всей формы работает независимо от активной вкладки; footer Review раскрывает вкладку и фокусирует ошибочное поле, черновик сохраняется. Текстовые лимиты и радиус 10–10000 см согласованы со storage. Пустой радиус использует общий; нечисло/ноль/отрицательное теперь явно ошибочны вместо silent fallback. Browser-owned частичный ввод (1e) переживает render/navigation, transient badInput не создаёт phantom dirty. RU/EN/DE/FR сообщения добавлены.\n\n### Исправления по предыдущему ревью\n\nИсточник: [код-ревью 501aeb434](https://github.com/Matysh/houseplan-card/issues/1512#issuecomment-7064768552), run 44917665923.\n\n- Блокер: ремонт переносил виртуальный/manual marker с живого explicit этажа. Подтверждён красным regression на прежнем test-build: оба marker.space B стали A. В обоих TS/Python зеркалах добавлена защита живого explicit floor для этих видов размещения. Проверки обычного writer и Optimize сохраняют markers/layout, реальный buildDevices остаётся на сохранённом layout.s; четыре backend сценария config/set × optimize × virtual/manual проходят. HA Area transfer между живыми этажами для обычных HA-маркеров сохранён.\n- Замечание про exact-copy proof: доверенный ожидаемый результат is_saved_space_copy проходит такой же metadata repair перед точным сравнением. Исходный stored previous не мутируется, copied roomless geometry/прочие metadata не ослабляются. Authentic HA WS тест копирования near-end geometry расширен на stale marker для моделей 0/10/11 и wall/partition; после copy обычная изменённая геометрия всё ещё отклоняется. Forged-copy checks включают постороннее изменение marker metadata при stale reference.\n- Замечание про imperial radius: draft отображает футы с точностью 0.01 вместо 0.1, достаточной для сохранения целого cm при обратном округлении. Browser smoke дополнен 10/11/9999/10000 см: unrelated metadata save должен сохранять радиус и весь layout точно.\n- Условное улучшение «несколько комнат одной Area на одном этаже» не менялось: контракт ремонта остаётся консервативным, требуется ровно одна текущая комната. При неоднозначном room evidence не производится автоматическое угадывание; исходный report имеет однозначное доказательство.\n\n### Проверки\n\nПредыдущий канонический S6 `20261121T150505509-c545d86f` на `501aeb434`: passed, materialClean=true, все 801 шаг (28 новых + 773 переиспользованных), включая исходные оба сценария, дробные размеры и сохранение точных позиций, hidden invalid fields и настоящий authenticated HA WS/Store.\n\nПосле ревью прошли сборка test-build, 12 адресных Node тестов и 41 backend тест (включая authentic HA WS copy с новой stale-reference комбинацией). Новые imperial browser observations проверит повторный канонический S6 в finish перед новым ревью. Обязательная широкая выборка из-за общего writer/card type не урезается; tests_backend/test_ha_space_copy.py явно включён в request. Полный mutation shard не запускался; его прежний clean browser guard 947 и registry readiness прошли в предыдущем S6.\n\nПриватный report hpr-7064322d93 проверен локально: ровно 43 исправленных marker.space, прочие поля/layout неизменны, второй проход 0 изменений; пакет не опубликован и не включён в fixtures. Пользовательский HA не менялся.\n\nПолный внешний browser HA E2E до следующей беты зарегистрирован отдельно: [houseplan-e2e#94](https://github.com/Matysh/houseplan-e2e/issues/94). Сейчас выпуск версии не поручен.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
