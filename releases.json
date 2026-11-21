@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1186,
+  "revision": 1187,
   "active": "1.86.0-stable-20261121",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -182427,7 +182427,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.0",
@@ -191270,7 +191270,8 @@
           "ru": "<!-- release: v1.86.0 -->\n<!-- base: v1.85.2 -->\n## Релиз Houseplan 1.86.0\n\n🏠 **Новый вид 2.5D.** Под другим углом лучше видны планировка, мебель и проёмы. Мягкое освещение и тонкие линии отделяют грани стен от пола даже при близких цветах. Выбранный цвет стен смешивается с белой основой, не делая стены прозрачными. При перетаскивании и зуме план не нужно заново отрисовывать на каждом шаге. [#1451](https://github.com/Matysh/houseplan-card/issues/1451), [#1478](https://github.com/Matysh/houseplan-card/issues/1478), [#1495](https://github.com/Matysh/houseplan-card/issues/1495)\n\n⚡ **Быстрее открываются этажи.** Houseplan сохраняет подготовленную геометрию, чтобы при повторном открытии не строить её с нуля. Устройства и состояния проёмов обновляются отдельно. [#1454](https://github.com/Matysh/houseplan-card/issues/1454)\n\n📦 **Перенос всей планировки одним ZIP.** Можно экспортировать и добавить все этажи дома вместе с лестницами и изображениями, без устройств, привязок Home Assistant и переноса общих настроек. Это отдельный вариант, полные резервные копии остаются доступны отдельно. [#1464](https://github.com/Matysh/houseplan-card/issues/1464)\n\n🚪 **Положение двери в толще стены.** Распашная дверь по умолчанию показана у грани, в сторону которой открывается. При необходимости её можно разместить у другой грани или посередине. [#1475](https://github.com/Matysh/houseplan-card/issues/1475)\n\nВ редакторе плана правый клик по комнате открывает её настройки и операции с границами; удалить комнату можно также из её настроек. [#1453](https://github.com/Matysh/houseplan-card/issues/1453)\n\n[Полный список изменений](https://github.com/Matysh/houseplan-card/milestone/16?closed=1)\n",
           "en": "<!-- release: v1.86.0 -->\n<!-- base: v1.85.2 -->\n## Houseplan 1.86.0 release\n\n🏠 **A redesigned 2.5D view.** A new viewing angle makes layout, furniture and openings easier to see. Soft shading and fine edges distinguish walls from floors even in similar colours. Wall colour blends into a white base without making the walls see-through. Panning and zooming no longer need to redraw the plan at each step. [#1451](https://github.com/Matysh/houseplan-card/issues/1451), [#1478](https://github.com/Matysh/houseplan-card/issues/1478), [#1495](https://github.com/Matysh/houseplan-card/issues/1495)\n\n⚡ **Faster floor loading.** Houseplan saves prepared geometry so it can show a reopened floor without rebuilding it from scratch. Device and opening states update separately. [#1454](https://github.com/Matysh/houseplan-card/issues/1454)\n\n📦 **Move a whole house layout in one ZIP.** Export and add all floors, including stairs and images, without carrying over devices, Home Assistant bindings or global settings. Full backups are still available separately. [#1464](https://github.com/Matysh/houseplan-card/issues/1464)\n\n🚪 **Position swing doors within the wall.** By default, the door sits on the side it opens toward. You can also place it on the other side or in the centre. [#1475](https://github.com/Matysh/houseplan-card/issues/1475)\n\nIn the plan editor, right-click a room to open its settings or edit its boundaries. You can also delete a room from its settings. [#1453](https://github.com/Matysh/houseplan-card/issues/1453)\n\n[Full list of changes](https://github.com/Matysh/houseplan-card/milestone/16?closed=1)\n"
         }
-      }
+      },
+      "tag": "v1.86.0"
     }
   },
   "published": {
@@ -197083,7 +197084,8 @@
     "stable1860-20261121-golden-isolation": "10193f7a0e3596ea0a5b9b77cde2b834f80ef7e466da737f6193f52f284ac8e8",
     "stable1860-20261121-publish:runner-report": "dd7dd7feb71d5a50917b9dec43a5ca4b5f482b06d79dc35c34dc2dd3c30bfb24",
     "stable1860-20261121-publish:metrics": "8b359c38b72a9a4ccba105b479d5f269c5ffa788198c83f32276ee8fb10397c8",
-    "stable1860-20261121-publish:prepared:49ecff1b-7ad1-40ec-8925-7880b29f1bae": "7bd723784ec68c4f4db8f6e03b55b56a3143d5694a8d0aa1e16b0ad28b26adbd"
+    "stable1860-20261121-publish:prepared:49ecff1b-7ad1-40ec-8925-7880b29f1bae": "7bd723784ec68c4f4db8f6e03b55b56a3143d5694a8d0aa1e16b0ad28b26adbd",
+    "stable1860-20261121-publish:started:1186": "5c7afd7a6e043edeeadffcc26afa02a65b81cdc3bd3cab09ed309a0ff3f2c380"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
