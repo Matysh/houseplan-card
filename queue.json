@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19427,
+  "revision": 19428,
   "nextTicket": 590,
   "nextFence": 590,
   "tasks": {
@@ -5712,7 +5712,10 @@
         "src/version-recovery-card.ts",
         "test/tv-mount.test.mjs",
         "tests_backend/test_furniture_workstation.py"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1795268036521,
+      "automationDetail": "fetch failed"
     }
   },
   "ownerDecisions": {},
@@ -6624,6 +6627,10 @@
     },
     "finish:4cecad41-cccc-48ac-87cb-446265bac3c5": {
       "digest": "8bef9b5578c7adc454d650e64a94503ffc357bd3f6ca23b6ca6b1dd76130974b",
+      "issue": 1511
+    },
+    "finish:c46d3215-2147-4f5d-862a-5752e5f400e8:finish:2:automation-pending": {
+      "digest": "14d107b6b457dbe19cfba1759b659c600376e8f73761596eb09e7099c172e929",
       "issue": 1511
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
