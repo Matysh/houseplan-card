@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19502,
-  "nextTicket": 593,
+  "revision": 19503,
+  "nextTicket": 594,
   "nextFence": 592,
   "tasks": {
     "1024": {
@@ -4202,14 +4202,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1472-real-3d",
-      "materialSha": "cd1bd594529cece05797971bbc76123427c580ac",
+      "materialSha": "633cf03d7dc682a043a898881ebfb122d8cad65d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 590,
-      "queued": false,
+      "ticket": 593,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795268513477,
-      "reviewEntry": 3,
+      "readyAt": 1795270476685,
+      "reviewEntry": 4,
       "patchId": "da2e92d09b849f0595932926e08b7e155ddfb086",
       "changedFiles": [
         "THIRD_PARTY_NOTICES.md",
@@ -4290,8 +4290,7 @@
       "reviewCorrection": {
         "requestId": "review:1472:2:eefbadbbe1e35a948692c85c66bd83cb0f804fc0:36af10803c20dbf027b922553b37419d112023a9",
         "at": 1795267773418
-      },
-      "reason": "checks-failed"
+      }
     },
     "1473": {
       "issue": 1473,
@@ -6241,7 +6240,8 @@
     }
   },
   "waiting": [
-    1512
+    1512,
+    1472
   ],
   "active": {
     "issue": 1511,
@@ -7164,6 +7164,28 @@
           "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
           "status": "passed",
           "finishedAt": "2026-11-21T13:33:52.455Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:6357fc36-3280-40ee-a922-f971d6b58a99": {
+      "digest": "73be6d293c42df5690467ed9f5884cdbeb310be61194a2cac022546c8ca07cce",
+      "issue": 1472,
+      "message": {
+        "kind": "queued",
+        "issue": 1472,
+        "at": 1795270476685,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "633cf03d7dc682a043a898881ebfb122d8cad65d",
+        "evidence": {
+          "id": "20261121T132012118-edb9fe9b",
+          "name": "Тесты для задачи #1472 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1472-real-3d/.git/process-next/runs/20261121T132012118-edb9fe9b/report.json",
+          "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
+          "status": "passed",
+          "finishedAt": "2026-11-21T13:22:09.465Z",
           "failures": []
         }
       }
