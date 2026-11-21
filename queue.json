@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18946,
+  "revision": 18947,
   "nextTicket": 581,
   "nextFence": 581,
   "tasks": {
@@ -5893,18 +5893,12 @@
       }
     },
     "1465": {
-      "requestId": "spec:1465:6ec6592b2928be825ba422f0b270f233a79b443f0b7beb85b5063f73fb1a51ea",
-      "contextDigest": "6ec6592b2928be825ba422f0b270f233a79b443f0b7beb85b5063f73fb1a51ea",
+      "requestId": "spec:1465:7bf9b3b7ad3915a4ce15c8d626d631007470d6cd2ea83008674a671be41f015c",
+      "contextDigest": "7bf9b3b7ad3915a4ce15c8d626d631007470d6cd2ea83008674a671be41f015c",
       "base": "6b8ef512d27636767389a906461d64c096d8a1a6",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795225709683,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44851737882",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795225880566
     },
     "1469": {
       "requestId": "spec:1469:dcd6be59512d3d26e4880c96335fedd66c7102b000b25c4cd720320bfb0d1273",
@@ -6017,6 +6011,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "spec:1465:spec:1465:7bf9b3b7ad3915a4ce15c8d626d631007470d6cd2ea83008674a671be41f015c": {
+      "issue": 1465,
+      "kind": "spec",
+      "requestId": "spec:1465:7bf9b3b7ad3915a4ce15c8d626d631007470d6cd2ea83008674a671be41f015c",
+      "materialSha": "6b8ef512d27636767389a906461d64c096d8a1a6",
+      "expectedBase": "6b8ef512d27636767389a906461d64c096d8a1a6",
+      "patchId": "7bf9b3b7ad3915a4ce15c8d626d631007470d6cd2ea83008674a671be41f015c",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-21T01:51:20.566Z"
+      }
     }
   },
   "waiting": [],
@@ -6082,6 +6089,10 @@
       "digest": "bb356736bd7ad010cb710b6df8cafef7135d75862cfdbe4cb50f9f83d904dd7c",
       "issue": 1465
     },
+    "github:44852551851:1:label:spec-request": {
+      "digest": "8820c8db6402e5f025abbcfa4b4779a7da17742007d50c204dd13cb742791a10",
+      "issue": 1465
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6109,6 +6120,22 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "github:44852551851:1:label:spec-request:spec-resubmitted:1465": {
+      "digest": "8820c8db6402e5f025abbcfa4b4779a7da17742007d50c204dd13cb742791a10",
+      "issue": 1465,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1465,
+        "at": 1795225880566,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1465:7bf9b3b7ad3915a4ce15c8d626d631007470d6cd2ea83008674a671be41f015c",
+        "reviewChanges": "Действующие сборщики: `tools/build_core_package.py`, `scripts/standalone-build.mjs`. Штатный маршрут: `process-next/lib/catalog.mjs`, `process-next/lib/package.mjs`, `process-next/lib/release-preparation.mjs`. Переиспользуем их, чтобы не поддерживать второй процесс выпуска или копию кода ядра. Упаковка bare dev и новый stable ради дополнительных файлов хуже: первая не даёт идентичность, второй необоснованно повторяет публикацию HACS. Особое внимание: верификация замороженного тега и безопасное дозаполнение v1.86.0, проверка именно распакованного архива и установленного wheel, а не исходников; версия формата дома отличается от JSON пространства. Фактически проверены состав GitHub Release и существующие контракты исходников; проверки нового маршрута ещё не запускались.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1465#issuecomment-7055408173) → редакция 2:\n\n- Дозаполнение v1.86.0 определено: релизный упаковщик указывает корень исходников отдельно, вызывает оригинальные сборщики тега, сохраняет внутренний манифест с `source.channel:'dev'`. Единый внешний `houseplan-site-<version>.json` доказывает stable-идентичность пары и совпадение отпечатка с HACS ZIP.\n- Открытый диапазон совместимости убран: формат ZIP и модель совпадают точно, required_api проверяется; первый stable — справочный факт, а не гарантированная совместимость будущих версий.\n- Hotfix исключён из объёма. Закреплены имя/схема внешнего манифеста, дерево архива, правила технического блока, фиксация зависимостей сборки и проверки.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
