@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19627,
+  "revision": 19628,
   "nextTicket": 596,
   "nextFence": 596,
   "tasks": {
@@ -5689,10 +5689,11 @@
       "status": "S6-in-progress",
       "readyAt": 1795274628823,
       "reviewEntry": 3,
-      "patchId": "9ce37ce2962e97d29be5f5e9f765509044f20b19",
+      "patchId": "8e8f5c48ec8a5e33347029413dd26e310777b541",
       "changedFiles": [
         "custom_components/houseplan/core/marker_placement.py",
         "custom_components/houseplan/core/plan_commands.py",
+        "custom_components/houseplan/core/space_copy.py",
         "demo/smoke_device_save_placement.mjs",
         "demo/smoke_device_settings_form.mjs",
         "docs/CHANGELOG.md",
@@ -5719,6 +5720,7 @@
         "test/marker-placement.test.mjs",
         "test/optional-space-model-contract.test.mjs",
         "tests_backend/test_ha_marker_placement.py",
+        "tests_backend/test_ha_space_copy.py",
         "tests_backend/test_marker_placement.py"
       ],
       "notice": {
@@ -6261,10 +6263,11 @@
     "token": "595:finish:b3b7fc6f-4c51-4b6a-af73-15520a7ebf02:finish:1:admit",
     "fence": 595,
     "materialSha": "3337227988d528e977cf8f978a112c7e8a730cfa",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
+    "phase": "testing",
     "admittedAt": 1795274632819,
-    "expiresAt": 1795274932819
+    "expiresAt": 1795274938411,
+    "patchId": "8e8f5c48ec8a5e33347029413dd26e310777b541"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -7013,6 +7016,10 @@
     },
     "github:44918397388:1:completions:metadata:e95b9551-81c8-422d-9f44-01f265c42ac1:task-notice:1512::": {
       "digest": "ab2e5ba1edd204fbc5a6dc7f742970ce5cc642fe0e11bd5fe93718f20c4ead8a",
+      "issue": 1512
+    },
+    "finish:b3b7fc6f-4c51-4b6a-af73-15520a7ebf02:finish:2:synchronized": {
+      "digest": "556bba842567608ea81380bff4a763d3b65fbf9523794ef0f6e21028164dc704",
       "issue": 1512
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
