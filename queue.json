@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19625,
-  "nextTicket": 595,
+  "revision": 19626,
+  "nextTicket": 596,
   "nextFence": 595,
   "tasks": {
     "1024": {
@@ -5681,14 +5681,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1512-device-space-save",
-      "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
+      "materialSha": "3337227988d528e977cf8f978a112c7e8a730cfa",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 594,
-      "queued": false,
+      "ticket": 595,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795273488577,
-      "reviewEntry": 2,
+      "readyAt": 1795274628823,
+      "reviewEntry": 3,
       "patchId": "9ce37ce2962e97d29be5f5e9f765509044f20b19",
       "changedFiles": [
         "custom_components/houseplan/core/marker_placement.py",
@@ -5741,20 +5741,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1512:2:9ce37ce2962e97d29be5f5e9f765509044f20b19:5237ec475be4adf61d102ffc4e3954de19cb68ab",
-      "reviewMaterial": {
-        "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
-        "expectedBase": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-        "patchId": "9ce37ce2962e97d29be5f5e9f765509044f20b19"
-      },
-      "reviewRetry": {
-        "requestId": "review:1512:2:9ce37ce2962e97d29be5f5e9f765509044f20b19:5237ec475be4adf61d102ffc4e3954de19cb68ab",
-        "eventId": "github:44917644079:1:tick:0:review-retry",
-        "at": 1795273766766,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1512:2:9ce37ce2962e97d29be5f5e9f765509044f20b19:5237ec475be4adf61d102ffc4e3954de19cb68ab",
         "at": 1795274265757
@@ -6268,7 +6254,9 @@
       "runId": 44913920516
     }
   },
-  "waiting": [],
+  "waiting": [
+    1512
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -7416,6 +7404,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:b3b7fc6f-4c51-4b6a-af73-15520a7ebf02": {
+      "digest": "b827caa01b9b3674c66e064998aec5b2765796a12168291fd72b9453ebd3ce52",
+      "issue": 1512,
+      "message": {
+        "kind": "queued",
+        "issue": 1512,
+        "at": 1795274628823,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3337227988d528e977cf8f978a112c7e8a730cfa",
+        "evidence": {
+          "id": "20261121T150505509-c545d86f",
+          "name": "Тесты для задачи #1512 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261121T150505509-c545d86f/report.json",
+          "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
+          "status": "passed",
+          "finishedAt": "2026-11-21T15:09:02.827Z",
+          "failures": []
+        }
       }
     }
   },
