@@ -3656,11 +3656,16 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'full-reattach-pending-authority-not-started-1054',
     guard: 'node demo/smoke_detached_authority.mjs',
-    because: '#1054 AC1: Lit has already consumed the detached HA assignment, so reconnect itself must consume the pending current intent while same-context short returns still make no read.',
+    because: '#1054 AC1: reattachment must resume a read deferred by detached HA intake. '
+      + 'Suppress both same-element replay paths while keeping first mount and later host notifications available.',
     patches: [{
       file: 'src/houseplan-card.ts',
+      find: '    this._connectPlanHost();\n    this._intakePlanEnvironment();\n    window.addEventListener(\'keydown\', this._keyHandler);',
+      replace: '    this._connectPlanHost();\n    if (!this.hasUpdated) this._intakePlanEnvironment();\n    window.addEventListener(\'keydown\', this._keyHandler);',
+    }, {
+      file: 'src/houseplan-card.ts',
       find: '\n    if (this._read.pending) void this._loadFromServer();\n    this.requestUpdate();',
-      replace: '\n    this.requestUpdate();',
+      replace: '\n    if (!this.hasUpdated && this._read.pending) void this._loadFromServer();\n    this.requestUpdate();',
     }],
   },
   {
