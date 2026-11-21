@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19518,
+  "revision": 19519,
   "nextTicket": 594,
   "nextFence": 592,
   "tasks": {
@@ -6908,6 +6908,10 @@
       "digest": "f0428dab4c1db1e303d8994b2f75ac5353930e2e150076c7adb2e0223218d6de",
       "issue": 1472
     },
+    "github:44913889594:1:completions:message:c899fe4dc7bd35ed98ba1ac48f1e41b3b1ca49b2dcc08a9ab5023ecfaef5f337": {
+      "digest": "3a521c6f2574c833798ee9122345068213adb04e0325255fce751054030908f8",
+      "issue": 1511
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7223,7 +7227,8 @@
           "entry": 3,
           "detail": "Поведение: test/wall-union-isolation.test.mjs: failed",
           "eventId": "finish:a1294e97-0e65-4bb7-be65-79a2891d1556:finish:3:return:return:1472"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da:finish:1:admit": {
