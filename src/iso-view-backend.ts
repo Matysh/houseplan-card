@@ -4,10 +4,10 @@ export type ViewProjection = 'flat' | 'iso';
 export interface ViewBackendInput {
   surface: 'view' | 'editor' | 'static';
   showBorders: boolean;
-  legacyRequested: boolean;
+  fallbackRequested: boolean;
   real3dRequested: boolean;
   /** The respective backend has a complete frame for the current plan. */
-  legacyReady: boolean;
+  fallbackReady: boolean;
   real3dReady: boolean;
 }
 
@@ -25,8 +25,8 @@ export function resolveViewBackend(input: ViewBackendInput): ViewBackendChoice {
   if (input.surface !== 'view' || !input.showBorders) {
     return { requested: 'flat', presented: 'flat', projection: 'flat' };
   }
-  const requested = input.real3dRequested ? 'real-3d' : input.legacyRequested ? '2.5d' : 'flat';
+  const requested = input.real3dRequested ? 'real-3d' : input.fallbackRequested ? '2.5d' : 'flat';
   const presented = input.real3dRequested && input.real3dReady ? 'real-3d'
-    : input.legacyRequested && input.legacyReady ? '2.5d' : 'flat';
+    : input.fallbackRequested && input.fallbackReady ? '2.5d' : 'flat';
   return { requested, presented, projection: presented === 'flat' ? 'flat' : 'iso' };
 }

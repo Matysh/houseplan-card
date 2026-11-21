@@ -43,6 +43,8 @@ export class Real3dRenderer {
   private updateId = 0;
   private disposed = false;
   private bounds: readonly [number, number] = [-1, 1];
+  private viewportWidth = 0;
+  private viewportHeight = 0;
   private width = 0;
   private height = 0;
   private pixelRatio = 0;
@@ -120,14 +122,26 @@ export class Real3dRenderer {
       this.layer = layer;
       this.inViewport = true;
       this.cameraKey = [];
+      this.viewportWidth = this.viewportHeight = 0;
       layer.append(this.renderer.domElement);
       const win = this.doc.defaultView;
-      if (win) {
+      if (!win?.ResizeObserver) {
+        this.failure();
+        return;
+      }
+      // Install observers only after the view has a valid owner.
+      {
         // Lit and the live gesture owner can update viewBox and hit targets
         // together. Redraw before paint, not a requestAnimationFrame later.
         this.observer = new win.MutationObserver(() => this.draw());
         this.observer.observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
-        this.resize = new win.ResizeObserver(this.queue);
+        this.resize = new win.ResizeObserver(([entry]) => {
+          if (!entry || this.sceneSvg !== svg || this.layer !== layer) return;
+          // Use the observed SVG viewport, never force layout in a camera frame.
+          this.viewportWidth = Math.round(entry.contentRect.width);
+          this.viewportHeight = Math.round(entry.contentRect.height);
+          this.draw();
+        });
         this.resize.observe(svg);
         if (win.IntersectionObserver) {
           this.intersection = new win.IntersectionObserver(([entry]) => {
@@ -207,7 +221,7 @@ export class Real3dRenderer {
     if (this.disposed || this.doc.hidden || !this.inViewport || !this.frame || !this.sceneSvg || !this.layer) return;
     try {
       const { x, y, width: w, height: h } = this.sceneSvg.viewBox.baseVal;
-      const pixelW = this.sceneSvg.clientWidth, pixelH = this.sceneSvg.clientHeight;
+      const pixelW = this.viewportWidth, pixelH = this.viewportHeight;
       if (!(w > 0 && h > 0 && pixelW > 0 && pixelH > 0)) return;
       const density = Math.min(this.doc.defaultView?.devicePixelRatio || 1, 2);
       const contentChanged = this.refreshGeometry(this.frame);

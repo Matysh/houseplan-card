@@ -857,10 +857,15 @@ export class HouseplanCard extends LitElement {
       this._real3d = null;
       this._real3dFrame = null;
       const fallback = volumetricViewOf(this._settings) ? 'gs.real_3d_fallback_iso' : 'gs.real_3d_fallback_flat';
-      this._showToast(this._t(fallback), 'message');
+      this._showToast(this._t(fallback), fallback, { owner: null });
       this.requestUpdate();
     };
-    void loadReal3dEntry().then(runtime => {
+    const display = this._spaceDisplayForRender();
+    const hasFurniture = !display.hideDecor && this._decorList.some(item => item.kind === 'furniture');
+    const furniture = hasFurniture ? FURNITURE_VOLUME_RUNTIME.ensure(this._furnitureVolumeObserver).then(() => {
+      if (FURNITURE_VOLUME_RUNTIME.state() !== 'ready') throw new Error('Furniture volume unavailable');
+    }) : Promise.resolve();
+    void Promise.all([loadReal3dEntry(), furniture]).then(([runtime]) => {
       if (!ownsAttempt()) return;
       this._real3d = new runtime.Real3dRenderer(this.ownerDocument, fail);
       this.requestUpdate();
@@ -3843,11 +3848,11 @@ export class HouseplanCard extends LitElement {
   private _tabOrderWarned = false;
   /** #649: one installation-wide switch in General settings › Display (no alpha, no per-device choice). */
   private get _isoEnabled(): boolean {
-    const legacy = volumetricViewOf(this._settings);
-    if (!this._real3d || !this._currentReal3dGeneration() || !this._real3dEligible()) return legacy;
+    const saved2d = volumetricViewOf(this._settings);
+    if (!this._real3d || !this._currentReal3dGeneration() || !this._real3dEligible()) return saved2d;
     return resolveViewBackend({
-      surface: 'view', showBorders: true, legacyRequested: legacy, real3dRequested: true,
-      real3dReady: true, legacyReady: legacy,
+      surface: 'view', showBorders: true, fallbackRequested: saved2d, real3dRequested: true,
+      real3dReady: true, fallbackReady: saved2d,
     }).projection === 'iso';
   }
 

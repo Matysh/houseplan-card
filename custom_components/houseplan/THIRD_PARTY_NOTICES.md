@@ -71,4 +71,4 @@ custom_components/houseplan/licenses/mdi.txt in the installed package.
 
 Three.js 0.187.0, MIT, copyright © 2010–2026 three.js authors.
 Source: https://github.com/mrdoob/three.js/tree/r187
-License: licenses/three.txt in the installed package.
+License: custom_components/houseplan/licenses/three.txt in the installed package.

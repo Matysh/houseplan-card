@@ -15146,10 +15146,10 @@ const MUTANT_DEFINITIONS = [
       + 'roots are raised (#160)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      const point = [cx, cy];',
-      replace: "      const point = this._renderProjection === 'iso'\n"
+      find: '      const point = [cx, cy] as const;',
+      replace: "      const point = (!flatSnapshot && this._renderProjection === 'iso'\n"
         + '        ? [cx, cy - gridVisualUnits(28, this._cellCm)]\n'
-        + '        : [cx, cy];',
+        + '        : [cx, cy]) as readonly [number, number];',
     }],
   },
   {
