@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19438,
-  "nextTicket": 590,
+  "revision": 19439,
+  "nextTicket": 591,
   "nextFence": 590,
   "tasks": {
     "1024": {
@@ -4202,14 +4202,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1472-real-3d",
-      "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
+      "materialSha": "cd1bd594529cece05797971bbc76123427c580ac",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 588,
-      "queued": false,
+      "ticket": 590,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795265077145,
-      "reviewEntry": 2,
+      "readyAt": 1795268513477,
+      "reviewEntry": 3,
       "patchId": "eefbadbbe1e35a948692c85c66bd83cb0f804fc0",
       "changedFiles": [
         "THIRD_PARTY_NOTICES.md",
@@ -4287,13 +4287,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1472:2:eefbadbbe1e35a948692c85c66bd83cb0f804fc0:36af10803c20dbf027b922553b37419d112023a9",
-      "reviewMaterial": {
-        "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
-        "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
-        "patchId": "eefbadbbe1e35a948692c85c66bd83cb0f804fc0"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1472:2:eefbadbbe1e35a948692c85c66bd83cb0f804fc0:36af10803c20dbf027b922553b37419d112023a9",
         "at": 1795267773418
@@ -6237,7 +6230,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1472
+  ],
   "active": {
     "issue": 1511,
     "worker": "github-coordinator",
@@ -6896,6 +6891,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:a1294e97-0e65-4bb7-be65-79a2891d1556": {
+      "digest": "da4bad3ab888579998efdd1884146d1dfebe9b551aa671cf077b5921d8b8c8ae",
+      "issue": 1472,
+      "message": {
+        "kind": "queued",
+        "issue": 1472,
+        "at": 1795268513477,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "cd1bd594529cece05797971bbc76123427c580ac",
+        "evidence": {
+          "id": "20261121T132012118-edb9fe9b",
+          "name": "Тесты для задачи #1472 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1472-real-3d/.git/process-next/runs/20261121T132012118-edb9fe9b/report.json",
+          "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
+          "status": "passed",
+          "finishedAt": "2026-11-21T13:22:09.465Z",
+          "failures": []
+        }
       }
     }
   },
