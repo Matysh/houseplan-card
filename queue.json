@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18975,
+  "revision": 18976,
   "nextTicket": 582,
   "nextFence": 582,
   "tasks": {
@@ -4099,7 +4099,7 @@
       "ownerDecision": null,
       "ticket": 581,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795226829488,
       "reviewEntry": 1,
       "patchId": "8ff585096aa840a4da4c166e58f9e8ee1863b57e",
@@ -4124,7 +4124,16 @@
         "tools/site-release-build.txt",
         "tools/site-release-runtime.txt",
         "tools/smoke_core_package.py"
-      ]
+      ],
+      "s6": {
+        "id": "20261121T020724200-0c0f4e33",
+        "name": "Тесты для задачи #1465 (перед ревью)",
+        "reportPath": "/home/sergey/hp-release-1860-beta3-preflight/.git/process-next/runs/20261121T020724200-0c0f4e33/report.json",
+        "materialSha": "ddbc1d9243bfb699293d3755e52faa3b60d64517",
+        "status": "passed",
+        "finishedAt": "2026-11-21T02:07:55.037Z",
+        "failures": []
+      }
     },
     "1466": {
       "issue": 1466,
@@ -6064,9 +6073,9 @@
     "fence": 581,
     "materialSha": "ddbc1d9243bfb699293d3755e52faa3b60d64517",
     "expectedBase": "6b8ef512d27636767389a906461d64c096d8a1a6",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795226833327,
-    "expiresAt": 1795227139625,
+    "expiresAt": 1795230476224,
     "patchId": "8ff585096aa840a4da4c166e58f9e8ee1863b57e"
   },
   "events": {
@@ -6225,6 +6234,34 @@
         "layer": "infra",
         "materialSha": "ddbc1d9243bfb699293d3755e52faa3b60d64517",
         "phase": "sync"
+      }
+    },
+    "finish:522eb88b-58d7-493e-a36d-dd543bca387d:finish:3:s6-complete": {
+      "digest": "970c61254ccc88c3a8324517a4e97e30dc869b739f2f27032ace9beac0f6abd6",
+      "issue": 1465,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1465,
+        "at": 1795226876224,
+        "entry": 1,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "ddbc1d9243bfb699293d3755e52faa3b60d64517",
+        "phase": "review",
+        "evidence": {
+          "id": "20261121T020724200-0c0f4e33",
+          "name": "Тесты для задачи #1465 (перед ревью)",
+          "reportPath": "/home/sergey/hp-release-1860-beta3-preflight/.git/process-next/runs/20261121T020724200-0c0f4e33/report.json",
+          "materialSha": "ddbc1d9243bfb699293d3755e52faa3b60d64517",
+          "status": "passed",
+          "finishedAt": "2026-11-21T02:07:55.037Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Действующие сборщики: `tools/build_core_package.py`, `scripts/standalone-build.mjs`. Штатный маршрут: `process-next/lib/catalog.mjs`, `process-next/lib/package.mjs`, `process-next/lib/release-preparation.mjs`. Переиспользуем их, чтобы не поддерживать второй процесс выпуска или копию кода ядра. Упаковка bare dev и новый stable ради дополнительных файлов хуже: первая не даёт идентичность, второй необоснованно повторяет публикацию HACS. Особое внимание: верификация замороженного тега и безопасное дозаполнение v1.86.0, проверка именно распакованного архива и установленного wheel, а не исходников; версия формата дома отличается от JSON пространства. Фактически проверены состав GitHub Release и существующие контракты исходников; проверки нового маршрута ещё не запускались.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1465#issuecomment-7055408173) → редакция 2:\n\n- Дозаполнение v1.86.0 определено: релизный упаковщик указывает корень исходников отдельно, вызывает оригинальные сборщики тега, сохраняет внутренний манифест с `source.channel:'dev'`. Единый внешний `houseplan-site-<version>.json` доказывает stable-идентичность пары и совпадение отпечатка с HACS ZIP.\n- Открытый диапазон совместимости убран: формат ZIP и модель совпадают точно, required_api проверяется; первый stable — справочный факт, а не гарантированная совместимость будущих версий.\n- Hotfix исключён из объёма. Закреплены имя/схема внешнего манифеста, дерево архива, правила технического блока, фиксация зависимостей сборки и проверки.\n\n### Реализация и проверки\n\nКод: `ddbc1d9243bfb699293d3755e52faa3b60d64517`, ветка `codex/1465-standalone-release`. Обычный stable получает адресный обязательный шаг упаковки; его хеш выходов связан с существующим отчётом запуска. Публикация сверяет готовые файлы и включает их в SHA256SUMS, а технические факты добавляет после авторского текста, не меняя анонс. Бета, hotfix и stable-профиль аудита беты не требуют этой пары. Для v1.86.0 используется чистый checkout тега вместе с оригинальными сборщиками тега; никаких исправлений внутри опубликованного коммита.\n\nПроверен именно комплект 1.86.0: wheel (298 989 байт) установлен в чистой Python 3.14 venv, сверено 76 исходных файлов; 18 базовых и 2 house-conformance прошли внутри пакета, ещё 9 базовых сценариев через внешний изолированный процесс прошли, намеренно неправильный ответ отвергнут. Редактор из распакованного ZIP (2 538 563 байта) смонтирован в закреплённом Chromium без HA и прошёл реальное рукопожатие с тестовым хостом. Скачанный исходный HACS ZIP проверен по прежнему SHA256SUMS; бандлы совпали по отпечатку. Эти файлы пока локальные — загрузка на GitHub после принятого кода. Не проверялись продакшн-хост и изоляция арендаторов сайта (#1459).",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
