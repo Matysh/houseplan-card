@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19394,
+  "revision": 19395,
   "nextTicket": 589,
   "nextFence": 589,
   "tasks": {
@@ -4314,7 +4314,10 @@
         "entry": 1,
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/pdf-compass.test.mjs: failed; Поведение: test/render-layout-read.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Backend: tests_backend/test_plan_graph_support.py: failed",
         "eventId": "finish:2a189472-54d2-4616-9a71-c11155b47358:finish:3:return:return:1472"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1795266796816,
+      "automationDetail": "fetch failed"
     },
     "1473": {
       "issue": 1473,
@@ -6514,6 +6517,10 @@
     },
     "finish:3b81a2c9-4c52-4cc0-a7fa-ebaf65eb399e": {
       "digest": "27ed7f77faacf84073f0eb0f0ea32f3c389f90bf3a25295344528ae64e5c303e",
+      "issue": 1472
+    },
+    "finish:034c5438-1b0d-4b19-921d-bc59ee7729a4:finish:4:automation-pending": {
+      "digest": "7546596b1e157178c7343303c010595aadcc849dec2b0a270c0707bee668c89a",
       "issue": 1472
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
