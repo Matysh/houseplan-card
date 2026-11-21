@@ -56,6 +56,20 @@ test('GitHub writes default to a plan without network; activation requires an ex
   client.activated = true; await assert.rejects(client.updateIssue(1, { state: 'closed' }), /credentials/); assert.equal(calls, 0);
 });
 
+test('milestone reads validate identity and paginate the complete open inventory', async () => {
+  const urls = [], first = Array.from({ length: 100 }, (_, i) => ({ number: i + 1, state: 'open' }));
+  const client = new GitHubClient({ owner: 'o', repo: 'r', fetchImpl: async url => {
+    urls.push(url);
+    return response(url.endsWith('/milestones/18') ? { number: 18, state: 'closed' }
+      : url.endsWith('page=1') ? first : [{ number: 101, state: 'open' }]);
+  } });
+  assert.throws(() => client.getMilestone(0), /Invalid milestone/);
+  assert.equal((await client.getMilestone(18)).state, 'closed');
+  assert.equal((await client.listOpenMilestones()).length, 101);
+  assert.match(urls[1], /state=open&per_page=100&page=1$/);
+  assert.match(urls[2], /page=2$/);
+});
+
 test('GitHub API and upload transports time out; request cancellation reaches fetch', async () => {
   const observed = [];
   const fetchImpl = (_url, { signal }) => new Promise((resolve, reject) => {
@@ -294,6 +308,27 @@ test('two stable releases and a hotfix retain main ancestry through queued tag-r
   await adapter.publishCandidateRefs({ materialSha: stable3, tag: 'v3', kind: 'stable', expectedMain: hotfix });
   assert.equal(await adapter.remoteHead('main'), stable3);
   assert.equal((await adapter.fixPortPlan({ from: stable2, to: hotfix })).commands[0][1], 'merge');
+});
+
+test('stable return commits the next cycle without editing the published tag or bypassing review', async t => {
+  const f = await fixture(t), adapter = new ReleaseGitAdapter({ cwd: f.cwd, activated: true });
+  await f.git(['checkout', '-b', 'release/cycle', f.base]);
+  await mkdir(join(f.cwd, 'docs/release-ledger'), { recursive: true });
+  await writeFile(join(f.cwd, 'docs/release-ledger/cycle.json'), JSON.stringify({ baseStable: 'v1.0.0' }));
+  await f.git(['add', '.']); await f.git(['commit', '-m', 'stable']);
+  const published = await f.git(['rev-parse', 'HEAD']);
+  await f.git(['tag', 'v1.1.0', published]); await f.git(['push', 'origin', 'v1.1.0']);
+  const candidate = { kind: 'stable', status: 'published', tag: 'v1.1.0', sha: published };
+  const nextCycle = { schema: 1, baseStable: 'v1.1.0', targetStable: 'v2.0.0', milestone: { number: 8, title: '2.0.0' } };
+  const prepared = await adapter.prepareDevReturn({ candidate, issue: 2,
+    worktree: join(f.cwd, '..', 'cycle-return'), nextCycle });
+  assert.deepEqual(JSON.parse(await f.git(['show', `${prepared.task.materialSha}:docs/release-ledger/cycle.json`])), nextCycle);
+  assert.equal(JSON.parse(await f.git(['show', 'v1.1.0:docs/release-ledger/cycle.json'])).baseStable, 'v1.0.0');
+  assert.equal(await adapter.remoteHead('dev'), f.base, 'only the shared queue may merge');
+  assert.equal(await adapter.publishedReturnReview({ task: prepared.task, expectedBase: f.base,
+    materialSha: prepared.task.materialSha, patchId: 'cycle-change' }), null, 'new cycle metadata needs its own review');
+  const retry = await adapter.prepareDevReturn({ candidate, issue: 2, nextCycle });
+  assert.equal(retry.task.materialSha, prepared.task.materialSha);
 });
 
 

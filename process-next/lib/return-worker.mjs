@@ -4,6 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readFile, writeFile, stat } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { checkedRef } from './github.mjs';
+import { planStableCycle, verifyReleaseCycle } from './release-cycle.mjs';
 
 const exec = promisify(execFile);
 const sha = value => /^[a-f0-9]{40}$/.test(value ?? '');
@@ -82,10 +83,11 @@ export async function returnPublishedHistory({ candidate, previous = {}, api, gi
   const save = async () => onUpdate({ type: 'completion-step', candidate: candidate.id, name: 'return-to-dev',
     result: { status: 'running', ...progress() } });
   try {
+    const nextCycle = await planStableCycle({ candidate, api, git });
     let included;
     try { included = await git.verifyDevReturn(candidate.sha); }
     catch (error) { if (error.code !== 1) throw error; }
-    if (included) {
+    if (included && !nextCycle) {
       if (!issue) issue = (await findServiceIssue(api, marker))?.number;
       if (issue) await closeServiceIssue({ api, issue, candidate, devSha: included.devSha });
       return { status: 'completed', alreadyIncluded: true, devSha: included.devSha, ...progress() };
@@ -121,9 +123,10 @@ export async function returnPublishedHistory({ candidate, previous = {}, api, gi
     if (queued && !queued.queued && snapshot.active?.issue !== issue
       && ['review-findings', 'checks-failed', 'rebase-conflict', 'review-retry-exhausted'].includes(queued.reason))
       throw Error(`Return requires an executor correction: ${queued.reason}`);
-    const prepared = await git.prepareDevReturn({ candidate, issue, branch, worktree });
+    const prepared = await git.prepareDevReturn({ candidate, issue, branch, worktree, nextCycle });
     if (prepared.alreadyIncluded) {
       const verified = await git.verifyDevReturn(candidate.sha);
+      await verifyReleaseCycle(git, verified.devSha, nextCycle);
       await closeServiceIssue({ api, issue, candidate, devSha: verified.devSha });
       return { status: 'completed', devSha: verified.devSha, ...progress() };
     }
@@ -141,6 +144,7 @@ export async function returnPublishedHistory({ candidate, previous = {}, api, gi
       prepareEnvironment: options => prepareEnvironment({ worktree, signal, onProgress, ...options }) });
     if (result?.action !== 'merged') return { status: 'pending', ...progress(), reason: result?.reason ?? `Return task is ${result?.action ?? 'unfinished'}` };
     const verified = await git.verifyDevReturn(candidate.sha);
+    await verifyReleaseCycle(git, verified.devSha, nextCycle);
     await closeServiceIssue({ api, issue, candidate, devSha: verified.devSha });
     return { status: 'completed', devSha: verified.devSha, ...progress() };
   } catch (error) { return { status: 'pending', ...progress(), reason: String(error.message).slice(0, 1200) }; }

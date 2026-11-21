@@ -80,6 +80,19 @@ export class GitHubClient {
     if (!Number.isSafeInteger(issue) || issue < 1) throw Error('Invalid issue');
     return this.request('GET', `${this.root}/issues/${issue}`);
   }
+  getMilestone(number) {
+    if (!Number.isSafeInteger(number) || number < 1) throw Error('Invalid milestone');
+    return this.request('GET', `${this.root}/milestones/${number}`);
+  }
+  async listOpenMilestones() {
+    const milestones = [];
+    for (let page = 1; page <= 100; page++) {
+      const rows = await this.request('GET', `${this.root}/milestones?state=open&per_page=100&page=${page}`);
+      milestones.push(...rows);
+      if (rows.length < 100) return milestones;
+    }
+    throw Error('Milestone inventory incomplete');
+  }
   createIssue({ title, body, labels = [], milestone }) {
     return this.request('POST', `${this.root}/issues`, { title, body, labels, ...(milestone ? { milestone } : {}) });
   }

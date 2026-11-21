@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Advance the release cycle during stable return to dev and refuse automatic assignment to closed milestones (#1510).
 - Preserve window sunlight and its solar fade during 2.5D light-source transitions (#1509).
 - Publish a checked wheel and standalone editor ZIP for the website with ordinary stable releases, separate from the HACS package (#1465).
 

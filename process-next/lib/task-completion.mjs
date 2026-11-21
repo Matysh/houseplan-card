@@ -189,6 +189,12 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
         const assigned = current.milestone?.number ?? null;
         if (facts.milestone !== null && assigned !== null && assigned !== facts.milestone)
           throw Error('Issue already belongs to another milestone; keep it until the owner resolves the conflict');
+        if (facts.milestone !== null && assigned !== facts.milestone) {
+          const target = await api.getMilestone(facts.milestone);
+          if (target.number !== facts.milestone || target.state !== 'open')
+            throw Error(`Milestone ${facts.milestone} is not open; update the release cycle before assigning new tasks`);
+          result.milestoneTitle = target.title;
+        }
         if (facts.milestone !== null && assigned !== facts.milestone
           || facts.milestone === null && assigned === facts.cycleMilestone)
           await api.updateIssue(task.issue, { milestone: facts.milestone });

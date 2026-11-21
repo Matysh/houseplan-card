@@ -5,14 +5,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { QueueController, MemoryQueueStore } from '../lib/queue.mjs';
 import { returnPublishedHistory, prepareReturnEnvironment } from '../lib/return-worker.mjs';
+import { completePublishedRelease } from '../lib/release-completion.mjs';
 
 const A = 'a'.repeat(40), B = 'b'.repeat(40), C = 'c'.repeat(40);
-async function fixture(t, { reusedBranch = false, lostCreate = false } = {}) {
+async function fixture(t, { reusedBranch = false, lostCreate = false, oldCycle = false } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'hp-return-worker-')); t.after(() => rm(root, { recursive: true, force: true }));
   const candidate = { id: 'stable1', kind: 'stable', status: 'published', tag: 'v1.1.0', sha: B };
   const queue = new QueueController(new MemoryQueueStore());
   const issues = new Map(), updates = [], gitCalls = [], comments = new Map();
   let created = 0, finished = 0, installations = 0, included = false, localBranch = null, worktree = null;
+  let cycle = { schema: 1, baseStable: oldCycle ? 'v1.0.0' : 'v1.1.0', targetStable: 'v1.1.0', milestone: { number: 7 } }, preparedCycle;
   const api = { owner: 'owner', repo: 'repo', root: '/repos/owner/repo',
     request: async (method, path, body) => {
       if (method === 'GET' && path.includes('/issues?')) return [...issues.values()].map(value => structuredClone(value));
@@ -20,6 +22,7 @@ async function fixture(t, { reusedBranch = false, lostCreate = false } = {}) {
       throw Error(`${method} ${path}`);
     },
     getIssue: async number => structuredClone(issues.get(number)),
+    listOpenMilestones: async () => [{ number: 8, title: '2.0.0', state: 'open' }],
     createIssue: async value => { created++; const issue = { number: 9, state: 'open', ...structuredClone(value) }; issues.set(9, issue);
       if (lostCreate) { lostCreate = false; throw Error('POST response was lost'); } return structuredClone(issue); },
     moveStatus: async (number, to) => { const row = issues.get(number); row.labels = row.labels.filter(label => !/^S[1-8]-/.test(label)).concat(to); },
@@ -28,14 +31,17 @@ async function fixture(t, { reusedBranch = false, lostCreate = false } = {}) {
     upsertComment: async (number, { marker, body }) => comments.set(`${number}:${marker}`, body),
   };
   const git = { cwd: root, dev: 'dev',
+    remoteHead: async () => C,
     verifyDevReturn: async sourceSha => { assert.equal(sourceSha, B); if (!included) throw Object.assign(Error('not an ancestor'), { code: 1 }); return { devSha: C }; },
-    prepareDevReturn: async ({ issue, branch, worktree: requested }) => {
+    prepareDevReturn: async ({ issue, branch, worktree: requested, nextCycle }) => {
+      preparedCycle = nextCycle;
       if (!reusedBranch) { worktree = requested; localBranch = branch; await mkdir(worktree, { recursive: true }); }
       return { prepared: true, reused: reusedBranch, task: { issue, branch, track: 'show', layer: 'product', materialSha: C,
         syncMode: 'merge', mergeSourceSha: B, releaseTag: candidate.tag } };
     },
     git: async args => {
       gitCalls.push(args);
+      if (args[0] === 'show' && args[1].endsWith(':docs/release-ledger/cycle.json')) return JSON.stringify(cycle);
       if (args.join(' ') === 'worktree list --porcelain') return worktree ? `worktree ${worktree}\nHEAD ${C}\nbranch refs/heads/${localBranch}\n\n` : '';
       if (args[0] === 'rev-parse') { if (localBranch) return C; throw Object.assign(Error('missing branch'), { code: 128 }); }
       if (args[0] === 'worktree' && args[1] === 'add') {
@@ -57,11 +63,35 @@ async function fixture(t, { reusedBranch = false, lostCreate = false } = {}) {
       await prepareEnvironment();
       await queue.dispatch({ id: 's6', type: 's6-complete', issue: 9, token, materialSha: C, outcome: 'passed' });
       await queue.dispatch({ id: 'merged', type: 'merged', issue: 9, token, materialSha: C, actualDevSha: C });
-      included = true; await api.moveStatus(9, 'S8-merged'); return { action: 'merged' };
+      included = true; if (preparedCycle) cycle = preparedCycle;
+      await api.moveStatus(9, 'S8-merged'); return { action: 'merged' };
     } };
   return { options, issues, updates, gitCalls, comments, queue, get created() { return created; }, get finished() { return finished; },
-    get installations() { return installations; }, set included(value) { included = value; } };
+    get installations() { return installations; }, get cycle() { return cycle; }, set included(value) { included = value; } };
 }
+
+test('stable completion advances the cycle through the same return queue even if tag history is already included', async t => {
+  for (const alreadyIncluded of [false, true]) {
+    const f = await fixture(t, { oldCycle: true }); f.included = alreadyIncluded;
+    const candidate = { ...f.options.candidate, delivery: { hacsAvailable: true },
+      membership: { schema: 1, candidate: B, issues: [] } };
+    const result = await completePublishedRelease({ candidate, api: f.options.api, onUpdate: async () => {},
+      announce: async () => ({ status: 'not-required' }),
+      returnToDev: request => returnPublishedHistory({ ...f.options, ...request }) });
+    assert.equal(result.status, 'completed'); assert.equal(f.finished, 1); assert.equal(f.created, 1);
+    assert.deepEqual(f.cycle, { schema: 1, baseStable: 'v1.1.0', targetStable: 'v2.0.0', milestone: { number: 8, title: '2.0.0' } });
+    await returnPublishedHistory({ ...f.options, previous: result.candidate.completion['return-to-dev'] });
+    assert.equal(f.finished, 1); assert.equal(f.created, 1);
+  }
+});
+
+test('stable completion cannot claim success when its queued return omitted the next cycle', async t => {
+  const f = await fixture(t, { oldCycle: true }), prepare = f.options.git.prepareDevReturn;
+  f.options.git.prepareDevReturn = args => prepare({ ...args, nextCycle: null });
+  const result = await returnPublishedHistory(f.options);
+  assert.equal(result.status, 'pending'); assert.match(result.reason, /without the prepared next release cycle/);
+  assert.equal(f.issues.get(9).state, 'open');
+});
 
 test('published history reaches dev through queued S6 and closes its service issue; retry does no work', async t => {
   const f = await fixture(t), result = await returnPublishedHistory(f.options);

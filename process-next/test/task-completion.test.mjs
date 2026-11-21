@@ -20,6 +20,7 @@ async function fixture({ category = 'major', missing = false, currentMilestone =
     milestone: currentMilestone ? { number: currentMilestone } : null };
   const comments = new Map(), writes = { labels: 0, milestone: 0, comment: 0 }; let labelFail = false, commentFail = false;
   const api = { owner: 'owner', repo: 'repo', getIssue: async () => structuredClone(issue),
+    getMilestone: async number => ({ number, title: '1.1.0', state: 'open' }),
     moveStatus: async (_number, to) => {
       if (labelFail) throw Error('labels unavailable');
       writes.labels++; issue.labels = issue.labels.filter(label => !/^S[1-8]-/.test(label) && label !== 'to_release').concat(to);
@@ -68,6 +69,33 @@ test('missing classification is visible and nonblocking; another milestone is ne
   assert.equal(infra.issue.milestone, null);
   const unrelated = await fixture({ category: 'infra', currentMilestone: 88 }); await unrelated.complete('unrelated');
   assert.equal(unrelated.issue.milestone.number, 88);
+});
+
+test('closed or unavailable milestones never receive new tasks, including cached-target retries', async () => {
+  const f = await fixture(); let open = false, reads = 0;
+  f.api.getMilestone = async number => { reads++; return { number, title: '1.1.0', state: open ? 'open' : 'closed' }; };
+  for (const tick of ['closed', 'cached-retry']) {
+    const result = await f.complete(tick);
+    assert.equal(result.pending.length, 1); assert.match(result.pending[0].errors.milestone, /not open/);
+    assert.equal(f.issue.milestone, null); assert.equal(f.writes.milestone, 0);
+    assert.ok(f.issue.labels.includes('S8-merged'));
+  }
+  assert.equal(reads, 2); assert.equal(f.comments.size, 1);
+  f.api.getMilestone = async () => { throw Error('GitHub unavailable'); };
+  assert.equal((await f.complete('unavailable')).pending.length, 1);
+  assert.equal(f.writes.milestone, 0);
+  f.api.getMilestone = async number => ({ number, title: '1.1.0', state: 'open' });
+  assert.equal((await f.complete('opened')).completed.length, 1);
+  assert.equal(f.issue.milestone.number, 7); assert.equal(f.writes.milestone, 1);
+});
+
+test('existing owner milestones are preserved without reopening or replacing them', async () => {
+  for (const currentMilestone of [7, 88]) {
+    const f = await fixture({ currentMilestone });
+    f.api.getMilestone = async () => { throw Error('must not inspect an existing owner assignment'); };
+    await f.complete('owner-assigned');
+    assert.equal(f.issue.milestone.number, currentMilestone); assert.equal(f.writes.milestone, 0);
+  }
 });
 
 test('a lost comment response retries its marker, and a released closed issue never regains S8', async () => {

@@ -1,5 +1,7 @@
 import { checkedRef, GitAdapter, sha256 } from './github.mjs';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { cyclePath, verifyReleaseCycle } from './release-cycle.mjs';
 import { membershipIssueNumbers } from './release-data.mjs';
 import { SITE_RELEASE_STEP } from './site-release.mjs';
 
@@ -318,7 +320,7 @@ export class ReleaseGitAdapter extends GitAdapter {
       commands: [['git', 'merge', '--no-ff', to]],
       note: 'Merge this exact release history into dev through the task queue; never rebase it or merge fresh dev into the release candidate' };
   }
-  async prepareDevReturn({ candidate, issue, branch = `issue/${issue}-release-return-${candidate?.sha?.slice(0, 12)}`, worktree }) {
+  async prepareDevReturn({ candidate, issue, branch = `issue/${issue}-release-return-${candidate?.sha?.slice(0, 12)}`, worktree, nextCycle }) {
     if (candidate?.status !== 'published' || !sha(candidate.sha) || !candidate.tag || !Number.isSafeInteger(issue) || issue < 1)
       throw Error('Published candidate and a queue issue are required');
     checkedRef(branch); checkedRef(candidate.tag);
@@ -335,20 +337,30 @@ export class ReleaseGitAdapter extends GitAdapter {
     await this.ensureCommit(devSha); await this.ensureCommit(candidate.sha);
     let included = false;
     try { await this.assertAncestor(candidate.sha, devSha); included = true; } catch { /* merge below */ }
-    if (included) return { alreadyIncluded: true, devSha, mergeSourceSha: candidate.sha };
+    if (included && !nextCycle) return { alreadyIncluded: true, devSha, mergeSourceSha: candidate.sha };
+    if (included) task.layer = 'infra';
     const remoteTask = await this.remoteHead(branch);
     if (remoteTask) {
       await this.ensureCommit(remoteTask); await this.assertAncestor(candidate.sha, remoteTask);
+      if (nextCycle) await verifyReleaseCycle(this, remoteTask, nextCycle);
       return { prepared: true, reused: true, task: { ...task, materialSha: remoteTask } };
     }
     let head;
     try { head = await this.git(['rev-parse', '--verify', `refs/heads/${branch}`]); }
     catch { /* new worktree */ }
-    if (head) await this.assertAncestor(candidate.sha, head);
+    if (head) {
+      await this.assertAncestor(candidate.sha, head);
+      if (nextCycle) await verifyReleaseCycle(this, head, nextCycle);
+    }
     else {
       if (!worktree) throw Error('An isolated worktree path is required to prepare the return branch');
       await this.git(['worktree', 'add', '-b', branch, worktree, devSha]);
-      await this.git(['-C', worktree, 'merge', '--no-ff', '-m', `Return published ${candidate.tag} to dev\n\nIssue: #${issue}\nRelease: ${candidate.tag}\nUser-Visible: no`, candidate.sha]);
+      if (!included) await this.git(['-C', worktree, 'merge', '--no-ff', '-m', `Return published ${candidate.tag} to dev\n\nIssue: #${issue}\nRelease: ${candidate.tag}\nUser-Visible: no`, candidate.sha]);
+      if (nextCycle) {
+        await writeFile(resolve(worktree, cyclePath), JSON.stringify(nextCycle, null, 2) + '\n');
+        await this.git(['-C', worktree, 'add', '--', cyclePath]);
+        await this.git(['-C', worktree, 'commit', '-m', `Open release cycle after ${candidate.tag}\n\nIssue: #${issue}\nRelease: ${candidate.tag}\nUser-Visible: no`]);
+      }
       head = await this.git(['-C', worktree, 'rev-parse', 'HEAD']);
     }
     await this.assertAncestor(devSha, head); await this.assertAncestor(candidate.sha, head);
