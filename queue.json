@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19706,
+  "revision": 19707,
   "nextTicket": 597,
   "nextFence": 597,
   "tasks": {
@@ -4165,7 +4165,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1472-real-3d",
-      "materialSha": "eaf9af293812b3719f5e61b0fa98079548690a6d",
+      "materialSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 596,
@@ -4173,7 +4173,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795283517976,
       "reviewEntry": 5,
-      "patchId": "da2e92d09b849f0595932926e08b7e155ddfb086",
+      "patchId": "70994bd9238c3b210aef9c2cf7ec7a4b208a3bfa",
       "changedFiles": [
         "THIRD_PARTY_NOTICES.md",
         "custom_components/houseplan/THIRD_PARTY_NOTICES.md",
@@ -4224,6 +4224,7 @@
         "test/iso-view-gl-mesh.test.mjs",
         "test/iso-view-gl-projection.test.mjs",
         "test/isometric-contract.test.mjs",
+        "test/wall-union-isolation.test.mjs",
         "tests_backend/test_config_schema_manifest.py",
         "tests_backend/test_ha_import_export.py",
         "tests_backend/test_house_commands.py",
@@ -6191,11 +6192,12 @@
     "worker": "finish",
     "token": "596:finish:563d4f31-664f-4c0a-a422-e7595a6dce43:finish:1:admit",
     "fence": 596,
-    "materialSha": "eaf9af293812b3719f5e61b0fa98079548690a6d",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+    "expectedBase": "3337227988d528e977cf8f978a112c7e8a730cfa",
+    "phase": "testing",
     "admittedAt": 1795283521971,
-    "expiresAt": 1795283821971
+    "expiresAt": 1795283832168,
+    "patchId": "70994bd9238c3b210aef9c2cf7ec7a4b208a3bfa"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6720,6 +6722,10 @@
     },
     "github:44917644079:1:completions:notice:5ad02d5fcfa59a31eeff893f7e72ddbe032c987fb2b749d2f27804ea8153a83a": {
       "digest": "52db28893a092b3a821c9ee614f87246c82d9e66038f3eb439cb9a6935fa37f7",
+      "issue": 1472
+    },
+    "finish:563d4f31-664f-4c0a-a422-e7595a6dce43:finish:2:synchronized": {
+      "digest": "16a472891001d2ac51c7e69e78e23a067a59f5a77a349d36db6b478acadd1da9",
       "issue": 1472
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
