@@ -709,6 +709,12 @@
       "required": true,
       "type": "str"
     },
+    "config.spaces[].decor[]<furniture>.tv_cabinet_id": {
+      "maxLength": 512,
+      "minLength": 1,
+      "required": false,
+      "type": "str"
+    },
     "config.spaces[].decor[]<furniture>.w": {
       "max": 5000.0,
       "min": 1e-07,
