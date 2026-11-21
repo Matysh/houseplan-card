@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19175,
+  "revision": 19176,
   "nextTicket": 585,
   "nextFence": 585,
   "tasks": {
@@ -5560,147 +5560,25 @@
     },
     "1509": {
       "issue": 1509,
+      "branch": "codex/issue-1509-iso-window-light-flicker",
       "track": "show",
       "layer": "product",
-      "branch": "codex/issue-1509-iso-window-light-flicker",
-      "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 584,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795259086301,
-      "reviewEntry": 1,
-      "patchId": "672710d744cfac1f12f9392f81ef279bb9a61e21",
-      "changedFiles": [
-        "demo/smoke_iso_sun.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/ISOMETRIC.md",
-        "docs/release-ledger/v1.85.2/1509.json",
-        "process-next/lib/source-dependencies.mjs",
-        "src/iso-light-transition.ts"
-      ],
-      "s6": {
-        "id": "20261121T110505848-4192970f",
-        "name": "Тесты для задачи #1509 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T110505848-4192970f/report.json",
-        "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "status": "passed",
-        "finishedAt": "2026-11-21T11:12:14.049Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "646c31987cf144d9676b827403321a6e91e7a92a",
+      "mergedSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
+      "mergedAt": 1795259749490,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1509:1:672710d744cfac1f12f9392f81ef279bb9a61e21:646c31987cf144d9676b827403321a6e91e7a92a",
-      "reviewMaterial": {
-        "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "expectedBase": "646c31987cf144d9676b827403321a6e91e7a92a",
-        "patchId": "672710d744cfac1f12f9392f81ef279bb9a61e21"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1509:1:672710d744cfac1f12f9392f81ef279bb9a61e21:646c31987cf144d9676b827403321a6e91e7a92a",
-        "eventId": "github:44897981464:1:tick:0:review-retry",
-        "at": 1795259560247,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1509,
-        "requestId": "review:1509:1:672710d744cfac1f12f9392f81ef279bb9a61e21:646c31987cf144d9676b827403321a6e91e7a92a",
-        "kind": "code",
-        "base": "646c31987cf144d9676b827403321a6e91e7a92a",
-        "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "patchId": "672710d744cfac1f12f9392f81ef279bb9a61e21",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1509,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1509",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление точно устраняет установленную причину мигания света из окон. Раньше `IsoLightTransition.choose()` клонировал всю SVG-сцену для 500 мс перехода искусственного освещения, и в клоне CSS-анимация `.sunlayer` (2 с fade-in/out) начиналась с нуля. Теперь сразу после вставки клона его солнечные анимации получают startTime оригинала, а если оригинал на паузе — паузу и currentTime. Законченный fade остаётся законченным, текущий fade продолжает ту же фазу, геометрия и собственный кроссфейд освещения не затронуты. Регрессия в `demo/smoke_iso_sun.mjs` проверяет неизменный свет при on→off/off→on и сохранение фазы солнечного fade-in/fade-out на обоих слоях. Квитанция S6 зелёная. Блокеров нет.",
-          "understanding": "Проблема: при смене поля искусственного света в 2.5D `IsoLightTransition.choose()` (вызывается в render в `houseplan-card.ts:13274` до коммита Lit) делает `scene.cloneNode(true)` и вставляет клон рядом с живой сценой как retained-слой для 500 мс кроссфейда. У `.sunlayer` есть CSS-анимация `hp-sunfade-in/out 2s linear both` (`plan.styles.ts:1501-1506`). У вставленного клона она создаётся заново с currentTime=0. Поэтому свет из окон в retained-слое гас до нуля и нарастал, хотя на живом слое (Lit сохраняет тот же `<g class=\"sunlayer\">`) анимация давно закончена.\n\nПосле исправления (`iso-light-transition.ts:50-65`): сразу после `scene.after(clone)` солнечные слои клона и живой сцены сопоставляются по индексу. Порядок совпадает по построению, так как клон глубокий, а живая DOM ещё не обновлена. Для каждой анимации копируются playbackRate и startTime оригинала, либо для оригинала на паузе — pause() и currentTime. В итоге finished-анимация клона сразу finished с той же fill-прозрачностью, бегущий порог продолжает общую временную шкалу, пауза сохраняется. В reduced motion клон не создаётся (`animate=false`), а CSS даёт `animation: none`, так что код не участвует.\n\nРазобранные пути: `choose()/present()/release()` целиком, вызов из render и формирование scope/signature, `renderIsoSunWash` (класс `out`, Lit-шаблон сохраняет узел g), CSS солнечной анимации и reduced-motion, изменения smoke (reducedMotion `no-preference`, `glow_enabled` для смены сигнатуры лампой, ожидание finished перед последующими проверками), регистрация зависимостей, changelog/ledger.",
-          "analysis": [
-            {
-              "topic": "Корректность синхронизации фазы",
-              "assessment": "Подход верный и минимальный. Клон и оригинал живут в одном документе и одной document timeline, поэтому присвоение startTime даёт точное совпадение фазы. Для законченного fade клон сразу finished, а с fill both прозрачность остаётся 1 для in и 0 для out. Сопоставление по индексу надёжно: клон глубокий, а `liveSun` берётся из ещё не перерисованной сцены, так как choose() вызывается в render до коммита Lit. `getAnimations()` на клоне форсирует стиль, и CSS-анимации уже существуют. Ветка `startTime === null` (оригинал ещё в pending-play) оставляет клон стартовать с нуля почти одновременно с оригиналом, что визуально безвредно.",
-              "evidence": "src/iso-light-transition.ts:28-65; src/houseplan-card.ts:13274-13275; src/styles/plan.styles.ts:1501-1511"
-            },
-            {
-              "topic": "Границы ответственности",
-              "assessment": "Солнечная анимация остаётся владельцем своей временной шкалы, кроссфейд освещения в present() не меняется. Затрагивается только `.sunlayer` клона, без пересчёта лучей и изменения сигнатуры. Комментарий в коде объясняет неочевидную причину: клонированная CSS-анимация стартует с нуля.",
-              "evidence": "src/iso-light-transition.ts:50-52, 69-95"
-            },
-            {
-              "topic": "Регрессия",
-              "assessment": "Сценарий проверяет именно описанный дефект. Он ждёт finished, дважды переключает лампу и проверяет на обоих слоях opacity > .99 и неизменную геометрию. Затем для порогов elevation 2 (out) и 30 (in) ставит живую анимацию на паузу на 800 мс и проверяет, что retained-анимация на паузе с тем же currentTime и той же прозрачностью. Отключение эмуляции reduced motion необходимо для наблюдаемой фазы. В конце сценарий дожидается finished, чтобы последующие проверки длины лучей шли на стабильном слое. По описанию исполнителя на исходном продукте падали ровно четыре новые проверки.",
-              "evidence": "demo/smoke_iso_sun.mjs:8, 68, 86-131; receipt 20261121T110505848-4192970f passed на 3c82c0f"
-            },
-            {
-              "topic": "Сопровождение и документы",
-              "assessment": "Связь smoke с `iso-light-transition.ts`, `iso-sun.ts`, `sun.ts`, `plan.styles.ts` в DECLARED_SOURCE_SCOPES обеспечивает выбор сценария при будущих изменениях этих модулей. Запись в ledger оформлена так же, как соседние в v1.85.2, changelog EN/RU и ISOMETRIC.md точны.",
-              "evidence": "process-next/lib/source-dependencies.mjs:24; docs/release-ledger/v1.85.2/1509.json; docs/ISOMETRIC.md:198-199"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Необязательно: защищаться от `liveSun[index]` === undefined (например, `liveSun[index]?.getAnimations() ?? []`). Сейчас рассинхронизация невозможна, так как клон глубокий и снят в том же такте, но защита сделала бы код устойчивым к будущему переносу клонирования после коммита. Цена — одна проверка.",
-            "Необязательно: если в retained-клон в будущем попадут другие CSS-анимации, синхронизацию можно вынести в маленькую функцию по селектору. Сейчас это преждевременно."
-          ],
-          "boundaries": "Сборку и тесты не запускал. Использована квитанция S6 «Тесты для задачи #1509 (перед ревью)» (passed, материал 3c82c0f) и описание исполнителя о падении четырёх новых проверок до исправления; лог `artifacts/1509/regression-before.log` локальный и мне недоступен. Код изучен по исходникам: iso-light-transition.ts целиком, место вызова в houseplan-card.ts, renderIsoSunWash, CSS солнечной анимации, launch в demo/serve.mjs. Проверка в реальном Home Assistant вынесена в houseplan-e2e#92. Текущее свидетельство синтетическое браузерное. Другие возможные CSS-анимации внутри retained-клона, кроме `.sunlayer`, не изучались: вне объёма задачи."
-        },
-        "usage": {
-          "input_tokens": 30,
-          "cache_creation_input_tokens": 44204,
-          "cache_read_input_tokens": 323414,
-          "output_tokens": 8876,
-          "output_tokens_details": {
-            "thinking_tokens": 2380
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 44204,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 4,
-              "output_tokens": 1134,
-              "cache_read_input_tokens": 48379,
-              "cache_creation_input_tokens": 29,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 29
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление точно устраняет установленную причину мигания света из окон. Раньше `IsoLightTransition.choose()` клонировал всю SVG-сцену для 500 мс перехода искусственного освещения, и в клоне CSS-анимация `.sunlayer` (2 с fade-in/out) начиналась с нуля. Теперь сразу после вставки клона его солнечные анимации получают startTime оригинала, а если оригинал на паузе — паузу и currentTime. Законченный fade остаётся законченным, текущий fade продолжает ту же фазу, геометрия и собственный кроссфейд освещения не затронуты. Регрессия в `demo/smoke_iso_sun.mjs` проверяет неизменный свет при on→off/off→on и сохранение фазы солнечного fade-in/fade-out на обоих слоях. Квитанция S6 зелёная. Блокеров нет.\n\n## Понимание решения\n\nПроблема: при смене поля искусственного света в 2.5D `IsoLightTransition.choose()` (вызывается в render в `houseplan-card.ts:13274` до коммита Lit) делает `scene.cloneNode(true)` и вставляет клон рядом с живой сценой как retained-слой для 500 мс кроссфейда. У `.sunlayer` есть CSS-анимация `hp-sunfade-in/out 2s linear both` (`plan.styles.ts:1501-1506`). У вставленного клона она создаётся заново с currentTime=0. Поэтому свет из окон в retained-слое гас до нуля и нарастал, хотя на живом слое (Lit сохраняет тот же `<g class=\"sunlayer\">`) анимация давно закончена.\n\nПосле исправления (`iso-light-transition.ts:50-65`): сразу после `scene.after(clone)` солнечные слои клона и живой сцены сопоставляются по индексу. Порядок совпадает по построению, так как клон глубокий, а живая DOM ещё не обновлена. Для каждой анимации копируются playbackRate и startTime оригинала, либо для оригинала на паузе — pause() и currentTime. В итоге finished-анимация клона сразу finished с той же fill-прозрачностью, бегущий порог продолжает общую временную шкалу, пауза сохраняется. В reduced motion клон не создаётся (`animate=false`), а CSS даёт `animation: none`, так что код не участвует.\n\nРазобранные пути: `choose()/present()/release()` целиком, вызов из render и формирование scope/signature, `renderIsoSunWash` (класс `out`, Lit-шаблон сохраняет узел g), CSS солнечной анимации и reduced-motion, изменения smoke (reducedMotion `no-preference`, `glow_enabled` для смены сигнатуры лампой, ожидание finished перед последующими проверками), регистрация зависимостей, changelog/ledger.\n\n## Разбор решения\n\n### Корректность синхронизации фазы\n\nПодход верный и минимальный. Клон и оригинал живут в одном документе и одной document timeline, поэтому присвоение startTime даёт точное совпадение фазы. Для законченного fade клон сразу finished, а с fill both прозрачность остаётся 1 для in и 0 для out. Сопоставление по индексу надёжно: клон глубокий, а `liveSun` берётся из ещё не перерисованной сцены, так как choose() вызывается в render до коммита Lit. `getAnimations()` на клоне форсирует стиль, и CSS-анимации уже существуют. Ветка `startTime === null` (оригинал ещё в pending-play) оставляет клон стартовать с нуля почти одновременно с оригиналом, что визуально безвредно.\n\nОснование: src/iso-light-transition.ts:28-65; src/houseplan-card.ts:13274-13275; src/styles/plan.styles.ts:1501-1511\n\n### Границы ответственности\n\nСолнечная анимация остаётся владельцем своей временной шкалы, кроссфейд освещения в present() не меняется. Затрагивается только `.sunlayer` клона, без пересчёта лучей и изменения сигнатуры. Комментарий в коде объясняет неочевидную причину: клонированная CSS-анимация стартует с нуля.\n\nОснование: src/iso-light-transition.ts:50-52, 69-95\n\n### Регрессия\n\nСценарий проверяет именно описанный дефект. Он ждёт finished, дважды переключает лампу и проверяет на обоих слоях opacity > .99 и неизменную геометрию. Затем для порогов elevation 2 (out) и 30 (in) ставит живую анимацию на паузу на 800 мс и проверяет, что retained-анимация на паузе с тем же currentTime и той же прозрачностью. Отключение эмуляции reduced motion необходимо для наблюдаемой фазы. В конце сценарий дожидается finished, чтобы последующие проверки длины лучей шли на стабильном слое. По описанию исполнителя на исходном продукте падали ровно четыре новые проверки.\n\nОснование: demo/smoke_iso_sun.mjs:8, 68, 86-131; receipt 20261121T110505848-4192970f passed на 3c82c0f\n\n### Сопровождение и документы\n\nСвязь smoke с `iso-light-transition.ts`, `iso-sun.ts`, `sun.ts`, `plan.styles.ts` в DECLARED_SOURCE_SCOPES обеспечивает выбор сценария при будущих изменениях этих модулей. Запись в ledger оформлена так же, как соседние в v1.85.2, changelog EN/RU и ISOMETRIC.md точны.\n\nОснование: process-next/lib/source-dependencies.mjs:24; docs/release-ledger/v1.85.2/1509.json; docs/ISOMETRIC.md:198-199\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательно: защищаться от `liveSun[index]` === undefined (например, `liveSun[index]?.getAnimations() ?? []`). Сейчас рассинхронизация невозможна, так как клон глубокий и снят в том же такте, но защита сделала бы код устойчивым к будущему переносу клонирования после коммита. Цена — одна проверка.\n- Необязательно: если в retained-клон в будущем попадут другие CSS-анимации, синхронизацию можно вынести в маленькую функцию по селектору. Сейчас это преждевременно.\n\n## Границы анализа\n\nСборку и тесты не запускал. Использована квитанция S6 «Тесты для задачи #1509 (перед ревью)» (passed, материал 3c82c0f) и описание исполнителя о падении четырёх новых проверок до исправления; лог `artifacts/1509/regression-before.log` локальный и мне недоступен. Код изучен по исходникам: iso-light-transition.ts целиком, место вызова в houseplan-card.ts, renderIsoSunWash, CSS солнечной анимации, launch в demo/serve.mjs. Проверка в реальном Home Assistant вынесена в houseplan-e2e#92. Текущее свидетельство синтетическое браузерное. Другие возможные CSS-анимации внутри retained-клона, кроме `.sunlayer`, не изучались: вне объёма задачи.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 646c31987cf144d9676b827403321a6e91e7a92a → 3c82c0f1801173caa5aa6a5a7cfe19445c746305\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-21T11:15:13.950Z",
-        "artifactId": 14704228298,
-        "runId": 44898003107,
-        "runAttempt": 1,
-        "completedAt": "2026-11-21T11:15:17Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44898003107",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "646c31987cf144d9676b827403321a6e91e7a92a"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6212,19 +6090,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1509,
-    "worker": "finish",
-    "token": "584:finish:bfc8634a-3062-43b3-a77f-cbb20cf488de:finish:1:admit",
-    "fence": 584,
-    "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-    "expectedBase": "646c31987cf144d9676b827403321a6e91e7a92a",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795259090809,
-    "expiresAt": 1795263347399,
-    "patchId": "672710d744cfac1f12f9392f81ef279bb9a61e21",
-    "reviewRequest": "review:1509:1:672710d744cfac1f12f9392f81ef279bb9a61e21:646c31987cf144d9676b827403321a6e91e7a92a"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6266,70 +6132,6 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "finish:bfc8634a-3062-43b3-a77f-cbb20cf488de:finish:2:synchronized": {
-      "digest": "e5656da5a676bdeaf88e5120f9642dde3d2290b1fa28626fe565c468a8c22bb5",
-      "issue": 1509
-    },
-    "github:44897358700:1:completions:message:57a0b5199efcc2c9c4edd21d9e31abe524c89acda5f69dba6c80170cfb87177a": {
-      "digest": "b162927b16f7019d746e9956f9b8b262b7f2c3c2e0667b96c11e99d929094618",
-      "issue": 1509
-    },
-    "github:44897358700:1:completions:message:3149404473017f82d5bdd825b578fe79690a8cc87df791d5baca76299b6cb809": {
-      "digest": "3d8b7bbc893ad0956679bc11ee7c025e84a7f895c703a79ae7f835d6569a355f",
-      "issue": 1509
-    },
-    "finish:691a4087-4cc1-429b-9a88-3e8e53e9fd68": {
-      "digest": "c2296832418ed28eaa76430e4ff43392e1604410154274af3e313613b28b74a9",
-      "issue": 1509
-    },
-    "finish:d22063f0-cc69-441f-970f-ae5f680b9b7e": {
-      "digest": "9de3c29b8bc78fd64c91d746eab9cafd8499d48cde915c028bf8674911254f40",
-      "issue": 1509
-    },
-    "finish:e0a29cb2-fde6-4b20-adfb-35dd6cdd6a40": {
-      "digest": "ba1d71635bd4f0758296f83a30a933cce633a9a361a9fe505bad5cd1f7bcd33e",
-      "issue": 1509
-    },
-    "finish:445eecb4-22fb-43df-b667-73e4c41547d5": {
-      "digest": "031a781054b9c942826ea57223a3477728f6ab1c4fedeb36f4eb4ab8f929aaa8",
-      "issue": 1509
-    },
-    "finish:5a96a379-21f7-4b9d-b4fd-ee22659007b0": {
-      "digest": "0463f7679b64b5fac6273d03efa78cc93ce7ffee5479b26b0d490149a56087fc",
-      "issue": 1509
-    },
-    "finish:25b558f7-e290-4f64-906b-733c7b738083": {
-      "digest": "f6a2268f610028b4a2427c9bafe052b54a085c754916d172d116f1506c4d6cad",
-      "issue": 1509
-    },
-    "finish:3348a0fb-7654-4023-84e8-4e0beff3fc87": {
-      "digest": "8280a95c36cd363bcb05ff4a92df0edd983b8b564bcf0b58d714cc65515258ac",
-      "issue": 1509
-    },
-    "finish:bfc8634a-3062-43b3-a77f-cbb20cf488de:finish:3:s6-label": {
-      "digest": "2e0bdd21898b820c05b09f9b48f6e699d438e44018d5ead80f67ec05256c6f2a",
-      "issue": 1509
-    },
-    "finish:bfc8634a-3062-43b3-a77f-cbb20cf488de:finish:4:review-requested": {
-      "digest": "1f1e5a4f581e39689247709def2535ae38189414f7c7f1691482087195014b83",
-      "issue": 1509
-    },
-    "github:44897981464:1:tick:0:review-retry": {
-      "digest": "9088ec8c726e1d3497000a8b59168df0d1cd3cb85420633bd6811b1344181733",
-      "issue": 1509
-    },
-    "github:44897981464:1:completions:message:8603c3a8402f23b3cbb95f460e1d9895439170c25dc428a1be246cee255e9688": {
-      "digest": "3000345d2a6264731ee9c2525431f571d97812215102044575b305690d975e33",
-      "issue": 1509
-    },
-    "github:44898222339:1:tick:0:review-presentation": {
-      "digest": "9bf291921055436f38541af9a53c490d72ad89ecf9288e82e8957058cd85894b",
-      "issue": 1509
-    },
-    "github:44898222339:1:tick:0:review-complete": {
-      "digest": "43261cc369610684eabc1111c908a7a42e5a75567223daa0948d47e6dd8663ef",
-      "issue": 1509
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6356,65 +6158,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:bfc8634a-3062-43b3-a77f-cbb20cf488de": {
-      "digest": "5facc2e87cfef19c38333992f23623e6ae766939253359c6aaf200fd4a67bc43",
-      "issue": 1509,
-      "message": {
-        "kind": "queued",
-        "issue": 1509,
-        "at": 1795259086301,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "delivered": true
-      }
-    },
-    "finish:bfc8634a-3062-43b3-a77f-cbb20cf488de:finish:1:admit": {
-      "digest": "2ab5dbc197a241460afd5f973743fd51edb07df51aebc756a3fb76609ff76fd2",
-      "issue": 1509,
-      "message": {
-        "kind": "admitted",
-        "issue": 1509,
-        "at": 1795259090809,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:bfc8634a-3062-43b3-a77f-cbb20cf488de:finish:3:s6-complete": {
-      "digest": "6f2373b93516b6e80575c1d4c33a58d74643655f3dd208ed040b85b561d7953f",
-      "issue": 1509,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1509,
-        "at": 1795259535388,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "phase": "review",
-        "evidence": {
-          "id": "20261121T110505848-4192970f",
-          "name": "Тесты для задачи #1509 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T110505848-4192970f/report.json",
-          "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-          "status": "passed",
-          "finishedAt": "2026-11-21T11:12:14.049Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
