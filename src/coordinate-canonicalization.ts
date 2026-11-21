@@ -301,8 +301,8 @@ export function canonicalizeConfigGeometry<T>(config: T): T {
  * gesture merely because the historical scalar canonicalizer snapped it. */
 export function canonicalizeConfigWrite<T>(config: T): T {
   const result = canonicalizeConfigGeometry(config);
-  repairMarkerSpacesInPlace(result as import('./marker-placement').MarkerPlacementConfig);
   const source = record(config), target = record(result);
+  if (target) repairMarkerSpacesInPlace(target as import('./marker-placement').MarkerPlacementConfig);
   if (!source || !target || Number(source.model_version || 0) >= 11) return result;
   const copy = (from: JsonRecord, to: JsonRecord, fields: readonly string[]) => {
     for (const field of fields) {

@@ -51,3 +51,7 @@ test('#1512 repair cannot separate a linked LED strip from its marker',()=>{
  const cfg=config();cfg.spaces.push({id:'deleted',rooms:[],led_strips:[{marker:'sensor'}]});
  repairMarkerSpacesInPlace(cfg);assert.equal(cfg.markers[0].space,'deleted');
 });
+
+test('#1512 generic config canonicalization retains its null/primitive contract',()=>{
+ for(const value of [null,undefined,42,'future'])assert.equal(canonicalizeConfigWrite(value),value);
+});
