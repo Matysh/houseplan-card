@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19273,
+  "revision": 19274,
   "nextTicket": 587,
   "nextFence": 587,
   "tasks": {
@@ -5572,7 +5572,7 @@
       "ownerDecision": null,
       "ticket": 586,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795261019505,
       "reviewEntry": 2,
       "patchId": "c83e1288f1b8e884cbe078b0797edb7529f11415",
@@ -5592,19 +5592,15 @@
         "process-next/test/task-completion.test.mjs"
       ],
       "s6": {
-        "id": "20261121T112831587-643f4aa6",
+        "id": "20261121T113714027-15e2a336",
         "name": "Тесты для задачи #1510 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T112831587-643f4aa6/report.json",
-        "materialSha": "76009cd13974a5e96df68196c10ce09f1131551d",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T113714027-15e2a336/report.json",
+        "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
         "status": "passed",
-        "finishedAt": "2026-11-21T11:28:53.626Z",
+        "finishedAt": "2026-11-21T11:37:20.562Z",
         "failures": []
       },
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1510:1:50f2be1aa6ec9c032a70eb89c02c78d94f752977:3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "at": 1795260833169
-      },
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -6118,9 +6114,9 @@
     "fence": 586,
     "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
     "expectedBase": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795261023512,
-    "expiresAt": 1795261329364,
+    "expiresAt": 1795264641978,
     "patchId": "c83e1288f1b8e884cbe078b0797edb7529f11415"
   },
   "events": {
@@ -6384,6 +6380,34 @@
           "finishedAt": "2026-11-21T11:28:53.626Z",
           "failures": []
         }
+      }
+    },
+    "finish:7c4161f2-6563-4ed6-b4e6-bbfb590160ad:finish:3:s6-complete": {
+      "digest": "a7babc2977ba2b63e2e519620d25c50816330ddfd7ea707e5c02c32bd9c19f32",
+      "issue": 1510,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1510,
+        "at": 1795261041978,
+        "entry": 2,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
+        "phase": "review",
+        "evidence": {
+          "id": "20261121T113714027-15e2a336",
+          "name": "Тесты для задачи #1510 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T113714027-15e2a336/report.json",
+          "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
+          "status": "passed",
+          "finishedAt": "2026-11-21T11:37:20.562Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "### Раунд 1 → исправление\nБлокер: nextCycle пересчитывался из изменяемого live списка при каждом повторе; существующая ветка требовала точного JSON-совпадения и могла остановиться до finish.\n\nИзменение: выбранный nextCycle записывается в существующий прогресс return-to-dev до подготовки ветки; повтор использует сохранённый план. Подготовленная/исправленная по ревью ветка авторитетна по своим метаданным: проверяются валидная база не старше опубликованного stable и согласованная будущая цель либо null/null, а не побайтовое совпадение с прошлым планом. Более новый цикл dev не откатывается; transport/JSON-ошибки при проверке не маскируются как отсутствие цикла. Успешный повтор с уже вошедшим циклом закрывает прежнюю служебную задачу, не создаёт новую.\n\nРегрессия: waiting после первой подготовки → сохранённый nextCycle → live inventory меняется/недоступен → повтор доходит до finish и завершает ту же задачу. Настоящая Git-ветка: согласованная правка цели после подготовки → повтор принимает новый SHA/цель без перезаписи ветки. Проверяются более новый цикл и отказ старой/несогласованной базы/цели. Адресный прогон четырёх файлов: 65/65 PASS; финальный S6 штатно через finish.\n\nНеблокирующие замечания: уточнён текст закрытой цели (цикл слитой задачи закреплён за её коммитом, простое обновление текущего цикла её не переносит), описание служебной задачи больше не обещает зачёт ревью для stable с метаданными; это ограничение и сохранение плана записаны в PROCESS.md. HA E2E не требуется: https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1510.md.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
