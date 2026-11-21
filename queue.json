@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19736,
+  "revision": 19737,
   "nextTicket": 597,
   "nextFence": 597,
   "tasks": {
@@ -4170,7 +4170,7 @@
       "ownerDecision": null,
       "ticket": 596,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795283517976,
       "reviewEntry": 5,
       "patchId": "70994bd9238c3b210aef9c2cf7ec7a4b208a3bfa",
@@ -4241,19 +4241,15 @@
         "eventId": "finish:6357fc36-3280-40ee-a922-f971d6b58a99:finish:2:return:return:1472"
       },
       "s6": {
-        "id": "20261121T132012118-edb9fe9b",
+        "id": "20261121T175221115-ff027c16",
         "name": "Тесты для задачи #1472 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1472-real-3d/.git/process-next/runs/20261121T132012118-edb9fe9b/report.json",
-        "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
+        "reportPath": "/home/sergey/hp-1472-real-3d/.git/process-next/runs/20261121T175221115-ff027c16/report.json",
+        "materialSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
         "status": "passed",
-        "finishedAt": "2026-11-21T13:22:09.465Z",
+        "finishedAt": "2026-11-21T18:21:08.948Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1472:2:eefbadbbe1e35a948692c85c66bd83cb0f804fc0:36af10803c20dbf027b922553b37419d112023a9",
-        "at": 1795267773418
-      }
+      "reviewRound": null
     },
     "1473": {
       "issue": 1473,
@@ -6194,9 +6190,9 @@
     "fence": 596,
     "materialSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
     "expectedBase": "3337227988d528e977cf8f978a112c7e8a730cfa",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795283521971,
-    "expiresAt": 1795285570338,
+    "expiresAt": 1795288873073,
     "patchId": "70994bd9238c3b210aef9c2cf7ec7a4b208a3bfa"
   },
   "events": {
@@ -7177,6 +7173,34 @@
           "finishedAt": "2026-11-21T13:22:09.465Z",
           "failures": []
         }
+      }
+    },
+    "finish:563d4f31-664f-4c0a-a422-e7595a6dce43:finish:3:s6-complete": {
+      "digest": "6c1c096a98d7405529bc00f0d5a5b2eb3da3f1922a76b4ca4da893004cb2ecbc",
+      "issue": 1472,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1472,
+        "at": 1795285273073,
+        "entry": 5,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+        "phase": "review",
+        "evidence": {
+          "id": "20261121T175221115-ff027c16",
+          "name": "Тесты для задачи #1472 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1472-real-3d/.git/process-next/runs/20261121T175221115-ff027c16/report.json",
+          "materialSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+          "status": "passed",
+          "finishedAt": "2026-11-21T18:21:08.948Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Независимая опция Real 3D (строго true, default off), ленивый Three.js 0.187.0, каноническая геометрия и камера, прежние HTML-устройства и права HA. При отказе WebGL используется сохранённый 2.5D или Flat. Экспорт активного 3D скачивает плоский векторный SVG с подсказкой и не меняет экран. Эталоны не обновлены.\n\nИсходник сравнения `3c82c0f1801173caa5aa6a5a7cfe19445c746305`; 16 кадров на одной синтетической сцене, две темы и четыре поворота. Проверены RTX 4090 и SwiftShader, но не настоящий маломощный планшет. Отличия — прозрачность, тени и детали створок. В HA 2026.11.1 подтверждены сохранение, перезагрузка и отключение без изменения геометрии. Проверены browser smoke 3D/SVG, unit и backend; итог S6 приложит очередь. Полные условия и команды ниже. Совместимый relay нужен до будущего HACS-релиза, здесь деплоя нет.\n\n### Исправления по предыдущему ревью\n\n- Этаж/ревизия теперь ограничивают незавершённую попытку и защёлку отказа, но не жизнь работающего контекста. Его держат карточка и текущий PlanHost; новый этаж обновляет геометрию того же renderer. При серверном обновлении другого этажа не срываются камера и фокус; при изменённом активном плане сохраняется прежний сброс. Smoke подтверждает всё это при выключенном 2.5D, включая отсутствие промежуточного Flat.\n- Заливку скрываем только на объёмах мебели с явным маркером владения GPU. Лестница остаётся в нативном SVG; smoke сравнивает ненулевую заливку лестницы и нулевую дублирующую мебельную заливку. В повторные парные кадры добавлена лестница. Убран только неиспользуемый resolver; SVG-smoke проверяет также сохранность zoom.\n- После слияния #1511 ребейз сохранил общий источник положения и высоты телевизора на тумбе: один экземпляр описания мебели для SVG и GPU. Smoke проверяет позицию и высоту, unit — физическое поднятие вершин на всех четырёх поворотах. Сигнатура старого теста защитного барьера обновлена без ослабления его проверки.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
