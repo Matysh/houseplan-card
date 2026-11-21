@@ -2,7 +2,7 @@ import test from 'node:test';
 import { inputIdentity } from '../lib/storage.mjs';
 import { GOLDEN_CAPTURE_INPUTS } from '../../scripts/source-fingerprint.mjs';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -180,6 +180,14 @@ test('stable retains beta identities for reuse and separates converter failure f
   const diagnostic = stable.steps.find(item => item.id === 'converters-stable');
   assert.equal(diagnostic.command, null); assert.equal(diagnostic.diagnostic, true); assert.match(diagnostic.unavailable, /prerequisites/);
   assert.ok(stable.steps.some(item => item.id === 'backend-coverage-threshold'));
+  const site = stable.steps.find(item => item.id === 'site-release');
+  const version = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8')).version;
+  if (/^\d+\.\d+\.\d+$/.test(version)) {
+    assert.ok(site && site.exclusive && !site.diagnostic);
+    assert.deepEqual(site.requires, ['release-package', 'test-build']);
+    assert.equal(site.outputs.length, 3);
+  } else assert.ok(!site);
+  assert.ok(!beta.steps.some(item => item.id === 'site-release'));
   assert.ok(!stable.steps.some(item => item.id.startsWith('mutation') || item.id === 'infra-behavior'));
 });
 
@@ -215,7 +223,7 @@ test('#1295 isolates the complete selective timing family and connected profile 
   const expected=files.map(f=>`smoke:${f.replace('demo/','').replace('.mjs','')}`).sort();
   for(const event of ['task','stable']) {
     const p=await planProfile({root,event,areaTests:[...files,['demo','smoke_summary_weather.mjs'].join('/')],version:'1.84.0'});
-    assert.deepEqual(p.steps.filter(s=>s.exclusive).map(s=>s.id).sort(),expected);
+    assert.deepEqual(p.steps.filter(s=>s.exclusive && s.id.startsWith('smoke:')).map(s=>s.id).sort(),expected);
     for(const file of files)assert.deepEqual(p.steps.find(s=>s.command?.[1]===file).command,['node',file,'--diagnostic-timing']);
     if(event==='task') assert.ok(p.steps.some(s=>s.id==='startup-view'&&!s.exclusive));
     assert.ok(p.steps.some(s=>s.id.startsWith('smoke:')&&!s.exclusive));

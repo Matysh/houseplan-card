@@ -9,6 +9,7 @@ import { execFileSync } from 'node:child_process';
 import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
 import { makeE2ESteps } from './e2e.mjs';
 import { makeConverterStep } from './converters.mjs';
+import { ordinaryStableVersion, SITE_RELEASE_STEP, siteReleasePaths } from './site-release.mjs';
 import { walk, matchesInputs } from './storage.mjs';
 import { GOLDEN_CAPTURE_INPUTS } from '../../scripts/source-fingerprint.mjs';
 import { demoIconSourceFiles } from '../../demo/helpers/icon-sources.mjs';
@@ -247,6 +248,18 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     [...packageSources, 'package.json'], ['product-build'],
     { env: { HP_PROCESS_SOURCE_SHA: sourceSha }, outputs: ['artifacts/process-next/package.json', 'artifacts/process-next/houseplan.zip', 'artifacts/process-next/houseplan-card.js', 'artifacts/process-next/candidate'],
       evidenceOutputs: ['artifacts/process-next/houseplan.zip', 'artifacts/process-next/houseplan-card.js', 'artifacts/process-next/candidate'] }));
+  if (event === 'stable') {
+    const stableVersion = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8')).version;
+    if (ordinaryStableVersion(stableVersion)) {
+      steps.push(step(SITE_RELEASE_STEP, 'Проверенный комплект редактора и ядра для сайта', helper('site-release'),
+        [...browserInputs, ...pythonInputs, 'tools/build_site_release.py', 'tools/build_core_package.py',
+          'tools/smoke_core_package.py', 'tools/core_external_conformance_fixture.py',
+          'tools/site-release-build.txt', 'tools/site-release-runtime.txt', 'docs/CORE-HOST.md'],
+        ['release-package', 'test-build'],
+        { outputs: siteReleasePaths(sourceSha, stableVersion).outputs, exclusive: true, timeoutMs: 900000 }));
+      result.prerequisites.push('Stable site assets need the dedicated Python environment from tools/site-release-build.txt and tools/site-release-runtime.txt (HP_SITE_RELEASE_PYTHON).');
+    } else result.limitations.push('A stable-profile audit of a prerelease does not prepare stable site assets.');
+  }
   let measurementInputs = [];
   if (metricsRequest) {
     await checkedPaths(root, [metricsRequest]);

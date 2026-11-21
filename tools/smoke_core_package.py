@@ -6,6 +6,8 @@ be imported by either installed artifact. This is an author/packaging check.
 from __future__ import annotations
 
 import argparse
+import os
+import shutil
 import subprocess
 import tempfile
 import venv
@@ -43,18 +45,35 @@ print(json.dumps({"installed": str(root), "version": info["version"], "source_fi
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dist", type=Path, required=True)
+    parser.add_argument("--wheel-only", action="store_true")
+    parser.add_argument("--external-adapter", action="store_true")
     arguments = parser.parse_args()
     wheel, = arguments.dist.resolve().glob("*.whl")
-    sdist, = arguments.dist.resolve().glob("*.tar.gz")
+    distributions = [("wheel", wheel)]
+    if not arguments.wheel_only:
+        sdist, = arguments.dist.resolve().glob("*.tar.gz")
+        distributions.append(("sdist", sdist))
     with tempfile.TemporaryDirectory(prefix="houseplan-core-install-") as temporary:
         root = Path(temporary)
-        for name, artifact in (("wheel", wheel), ("sdist", sdist)):
+        for name, artifact in distributions:
             environment = root / name
             venv.EnvBuilder(with_pip=True).create(environment)
-            python = environment / ("Scripts/python.exe" if __import__("os").name == "nt" else "bin/python")
+            python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
             subprocess.run([str(python), "-m", "pip", "install", "--disable-pip-version-check", str(artifact)],
                            cwd=root, check=True)
             subprocess.run([str(python), "-I", "-c", CHECK], cwd=root, check=True)
+            if name == "wheel" and arguments.external_adapter:
+                fixture = Path(__file__).with_name("core_external_conformance_fixture.py")
+                shutil.copyfile(fixture, root / fixture.name)
+                conformance = [str(python), "-m", "houseplan_core.conformance", "--factory",
+                               f"{fixture.stem}:create_adapter"]
+                env = {key: value for key, value in os.environ.items()
+                       if key not in {"PYTHONPATH", "PYTHONHOME", "HP_TEST_WRONG_EXTERNAL_REPLY"}}
+                subprocess.run(conformance, cwd=root, env=env, check=True, timeout=90)
+                wrong = subprocess.run(conformance, cwd=root, capture_output=True, text=True, timeout=90,
+                                       env={**env, "HP_TEST_WRONG_EXTERNAL_REPLY": "1"})
+                if wrong.returncode == 0 or "TypeError: 'NoneType' object is not subscriptable" not in wrong.stderr:
+                    raise RuntimeError("External bad-reply control did not reach conformance")
 
 
 if __name__ == "__main__":

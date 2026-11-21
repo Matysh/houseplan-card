@@ -1,0 +1,6 @@
+# Build with --no-isolation in a dedicated Python 3.14 environment.
+build==1.6.1
+packaging==26.3
+setuptools==84.2.1
+wheel==0.48.0
+pyproject_hooks==1.2.0

@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path';
 import { composeUserStableNotes, userStableSection } from '../../scripts/user-stable-changelog.mjs';
 import { buildCandidateMembership, membershipIssueNumbers } from './release-data.mjs';
 import { digest, within } from './storage.mjs';
+import { siteReleasePublication } from './site-release.mjs';
 
 const versionPattern = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const jsonFiles = ['package.json', 'package-lock.json', 'custom_components/houseplan/manifest.json'];
@@ -110,6 +111,7 @@ export function preparePublicationArtifacts({ root, packageResult, candidate, ou
   const expectedStandalone = packageResult.standaloneDigest
     ?? packageResult.files?.find(file => file.path === 'custom_components/houseplan/frontend/houseplan-card.js')?.digest;
   if (!expectedStandalone || assets[1].expectedDigest !== expectedStandalone) throw Error('Prepared public JS changed after packaging');
+  if (candidate.kind === 'stable') assets.push(...siteReleasePublication(root, candidate, packageResult).assets);
   const sums = assets.map(asset => `${asset.expectedDigest}  ${asset.name}`).sort().join('\n') + '\n';
   const sumsPath = join(output, 'SHA256SUMS'); writeFileSync(sumsPath, sums);
   assets.push({ name: 'SHA256SUMS', path: sumsPath, expectedDigest: digest(sums) });

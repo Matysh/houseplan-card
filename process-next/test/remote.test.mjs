@@ -10,6 +10,8 @@ import { initialReleaseState, reduceRelease, ReleasePublisher } from '../lib/rel
 import { prepareShipReviewArtifacts } from '../lib/ship-review-artifacts.mjs';
 import { reconcileQueue } from '../lib/coordinator.mjs';
 import { GitHubClient } from '../lib/github.mjs';
+import { siteReleasePaths, SITE_RELEASE_NOTES } from '../lib/site-release.mjs';
+import { digest, outputIdentity } from '../lib/storage.mjs';
 
 const A = 'a'.repeat(40), B = 'b'.repeat(40), C = 'c'.repeat(40), D = 'd'.repeat(64);
 const config = { enabled: true, owner: 'owner', repo: 'repo' }, env = { HP_PROCESS_NEXT_ACTIVATE: '1' };
@@ -855,10 +857,30 @@ test('superseded empty requests do not block later history and expire with an ex
   assert.equal(comments.length, 2); assert.match(comments[1].body, /окно хранения артефактов/);
 });
 
-test('published stable completes only missing bookkeeping and Telegram on retry, without local reports or republishing', async () => {
+test('published stable completes only missing bookkeeping and Telegram on retry, without local reports or republishing', async t => {
   const initial = readyRelease(), item = initial.candidates.beta1;
   delete item.shipReview; // This published-source fixture predates batch review.
   item.kind = 'stable'; item.runner.event = 'stable';
+  const root = await mkdtemp(join(tmpdir(), 'hp-stable-completion-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const site = siteReleasePaths(B, '1.0.0');
+  await mkdir(join(root, site.directory), { recursive:true });
+  const evidenceAsset = async (path, bytes) => {
+    await writeFile(join(root, path), bytes);
+    return { name:path.split('/').at(-1), bytes:Buffer.byteLength(bytes), sha256:digest(bytes) };
+  };
+  const hacs = await evidenceAsset('houseplan.zip', 'checked HACS archive');
+  const js = await evidenceAsset('houseplan-card.js', 'checked HACS entry');
+  const wheel = await evidenceAsset(site.outputs[0], 'checked wheel');
+  const editor = await evidenceAsset(site.outputs[1], 'checked archive');
+  await writeFile(join(root, 'package.json'), JSON.stringify({ version:'1.0.0', sourceSha:B, zip:hacs.name,
+    artifactDigest:hacs.sha256, standalone:js.name, standaloneDigest:js.sha256 }));
+  await writeFile(join(root, site.outputs[2]), JSON.stringify({ schema:1, version:'1.0.0', tag:'v1.0.0',
+    sourceSha:B, sourceFingerprint:D, assets:[wheel,editor,hacs],
+    compatibility:{ modelVersion:11, spaceExportVersion:3, houseExportVersion:4, python:'>=3.14',
+      firstStableWithHouseImport:'1.0.0', houseRequiredApi:{house_transfer_api:1},
+      houseOptionalApi:{furniture_workstation_api:1} } }));
+  item.runner.siteReleaseOutputHash = outputIdentity(root, site.outputs).hash;
   const issue = { number: 1, state: 'open', labels: ['S8-merged', 'track:show', 'personal'] };
   const { api, comments } = issueTransport(issue, { failClose: true });
   const store = new MemoryQueueStore(initial); let publishes = 0, observations = 0, returns = 0, sends = 0, preparations = 0, ciRefreshes = 0;
@@ -866,9 +888,11 @@ test('published stable completes only missing bookkeeping and Telegram on retry,
     includedIssues: [1], userChangelog: { ru: '<!-- release: v1.0.0 -->\n<!-- base: v0.9.0 -->\n## Релиз Houseplan 1.0.0\n\nПользовательское изменение.\n', en: 'User change' } };
   const dependencies = { api, git: { remoteHead: async () => A }, releaseStore: store,
     queue: new QueueController(new MemoryQueueStore()), prepareReleaseData: async () => { preparations++; return data; },
-    publisher: { publish: async ({ body }) => { publishes++; assert.equal(body, data.body); return { published: true,
-      evidence: { sha: B, tag: 'v1.0.0', artifactDigest: D } }; } },
-    verifier: { verify: async () => { observations++; return { hacsAvailable: true, tag: 'v1.0.0', artifactDigest: D }; } },
+    publisher: { publish: async ({ body, artifacts }) => { publishes++;
+      assert.ok(body.startsWith(data.body + '\n\n' + SITE_RELEASE_NOTES));
+      assert.ok(artifacts.some(asset => asset.name === site.manifest));
+      return { published: true, evidence: { sha: B, tag: 'v1.0.0', artifactDigest: hacs.sha256 } }; } },
+    verifier: { verify: async () => { observations++; return { hacsAvailable: true, tag: 'v1.0.0', artifactDigest: hacs.sha256 }; } },
     returnToDev: async () => { returns++; return { status: 'completed', devSha: C }; },
     publishCiStatus: async ({ published }) => {
       ciRefreshes++; assert.equal(published.tag, 'v1.0.0'); assert.equal(published.sha, B);
@@ -878,10 +902,10 @@ test('published stable completes only missing bookkeeping and Telegram on retry,
     fetchImpl: async (_url, options) => { sends++; assert.match(options.body, /Пользовательское изменение/);
       return { ok: true, status: 200, json: async () => ({ ok: true, result: { message_id: 42 } }) }; },
   };
-  const call = (command, event) => executeRemoteCommand({ command, config: { ...config, workspace: '/missing' },
+  const call = (command, event) => executeRemoteCommand({ command, config: { ...config, workspace: root },
     env: { ...env, TELEGRAM_BOT_TOKEN: '12345:test-token', TELEGRAM_CHAT_ID: 'test-chat' }, execute: true, dependencies,
     event: { id: 'publish-complete', candidate: 'beta1', tag: 'v1.0.0', ...event } });
-  const first = await call('publish-prepared', { artifacts: [] });
+  const first = await call('publish-prepared', { packagePath: 'package.json' });
   assert.equal(first.published, true); assert.equal(first.ciStatus.diagnostic, true);
   assert.equal(first.completion.status, 'pending'); assert.equal(issue.state, 'open');
   assert.deepEqual(issue.labels, ['track:show', 'personal']); assert.equal(comments.length, 1);

@@ -1,11 +1,9 @@
 # Isolated frontend distribution
 
 `npm run build:standalone` builds the **real** House Plan renderer and editors
-in `dist-standalone/`. This is a local developer distribution from current dev,
-not a published website, production backend, installation backup format or new
-stable release. Its source commit, dirty flag and content fingerprint are
-explicit. A future stable pin needs a separate owner-authorized release that
-actually contains #1391–1395, #1422 and #1423.
+in `dist-standalone/`. The local build is not a published website, production
+backend or installation backup. Ordinary stable releases can additionally
+publish a checked set for the website (#1465); see below.
 
 The installed HA build is still `npm run build`: it has its own `dist/` and
 manifest. The standalone builder neither cleans nor writes that tree, the
@@ -137,6 +135,67 @@ are retained. Loss of the entry itself is an embedding-loader error: the
 embedder must observe dynamic-import rejection and offer reconnect/reload;
 an absent script cannot render its own UI. The SDK's visible connection notice
 covers failed/incompatible host handshakes after it loads.
+
+## Consume an ordinary stable release
+
+Pin a specific stable tag and download `houseplan-site-<version>.json`, `houseplan_core-<version>-py3-none-any.whl` and
+`houseplan-standalone-<version>.zip` from that same release. Verify their sizes and SHA-256 values
+against the JSON before installing or extracting. Verify that `tag`,
+`version` and `sourceSha` are the tag, version and dereferenced commit you
+pinned. `sourceFingerprint` also matches the JS manifest inside the unchanged
+HACS ZIP. Unpack the archive at the site’s static path; its root contains
+`houseplan-standalone.js` and all recorded resources. An inner builder field `source.channel: 'dev'`
+describes the local build tool, not the release channel; the external JSON
+and published tag are the stable identity.
+
+Use Python 3.14 or the compatible runtime declared in the JSON, and install
+the downloaded wheel in the service venv:
+
+```text
+python -m pip install ./houseplan_core-1.86.0-py3-none-any.whl
+```
+
+Keep one pinned version for both halves. The JSON records accepted plan model
+and export versions. To import a whole-house file, the destination importer
+must support its exact model and archive format, and every required API in
+the document (including additional API requirements of individual files).
+The first stable with the importer was 1.86.0; this is not a promise that all
+later versions accept the same formats. Beta and hotfix do not promise these
+assets. The website pins ordinary stable, not a floating release URL.
+
+### Verify an external test host
+
+From a separate test checkout/venv with the pinned wheel installed and a
+factory that connects to your isolated test service, run:
+
+```text
+python -m houseplan_core.conformance --factory mysite_test_adapter:create_adapter
+```
+
+Use the adapter contract in [CORE-HOST](CORE-HOST.md). Its reset and fault
+controls act on synthetic test data and must not be public production routes.
+For a host advertising whole-house transfer, also run `houseplan_core.conformance.run_house` with your
+factory and an isolated temporary directory. The release smoke runs the
+documented command across a process boundary and checks that a bad response
+fails the suite. Neither the reference host nor this exercise proves the
+deployed site's storage, authentication, recovery or tenant isolation.
+
+### Release operator
+
+Use the pinned Node/browser and build the test support modules via the release
+runner. Prepare a dedicated Python 3.14 venv once:
+
+```bash
+python3.14 -m venv /path/to/site-release-venv
+/path/to/site-release-venv/bin/python -m pip install -r tools/site-release-build.txt -r tools/site-release-runtime.txt
+export HP_SITE_RELEASE_PYTHON=/path/to/site-release-venv/bin/python
+```
+
+The ordinary stable runner will build and test the pair, then record its exact
+outputs. A publication retry uses the checked files, not new builds. For an
+offline Python preparation, use a wheelhouse through `PIP_NO_INDEX=1` and
+`PIP_FIND_LINKS`; the smoke-install uses the pinned runtime constraints.
+There is no separate PyPI or HACS upload.
 
 ## Test-only reference transport
 

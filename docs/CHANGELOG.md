@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Publish a checked wheel and standalone editor ZIP for the website with ordinary stable releases, separate from the HACS package (#1465).
+
 ## v1.86.0 — 2026-11-21
 
 - Promote the verified 1.86.0 beta line to stable, including the Zigbee check for an unplaced coordinator (#1503), camera-depth order for icons and value badges, and visual references for all four 2.5D rotations (#1504).

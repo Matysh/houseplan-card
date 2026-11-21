@@ -17,6 +17,7 @@ import { reconcileTaskCompletions, notifyDevWebhook, canEmbedAcceptedReview } fr
 import { publishReviewReceipt } from './lib/review-publication.mjs';
 import { publishServiceMessages } from './lib/service-messages.mjs';
 import { prepareReleaseData, preparePublicationArtifacts } from './lib/release-preparation.mjs';
+import { appendSiteReleaseNotes } from './lib/site-release.mjs';
 import { completePublishedRelease } from './lib/release-completion.mjs';
 import { announceStableRelease } from './lib/notifications.mjs';
 import { returnPublishedHistory } from './lib/return-worker.mjs';
@@ -671,9 +672,15 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     const reviewArtifacts = await (dependencies.prepareShipReviewArtifacts ?? preparePublicationShipReviewArtifacts)({
       root: config.workspace, candidate: { ...candidate, tag }, records: state.shipReviews,
       github: api, resuming: resumingPublication });
+    if (candidate.kind === 'stable' && event.artifacts)
+      throw Error('Stable publication uses the checked release asset set, not custom asset overrides');
     const artifacts = [...(event.artifacts ?? preparePublicationArtifacts({ root: config.workspace,
       packageResult: JSON.parse(await readFile(resolve(config.workspace, event.packagePath ?? 'artifacts/process-next/package.json'), 'utf8')),
       candidate: { ...candidate, tag } })).filter(item => !reviewArtifacts.some(reviewArtifact => reviewArtifact.name === item.name)), ...reviewArtifacts];
+    const body = candidate.kind === 'stable'
+      ? appendSiteReleaseNotes(candidate.releaseData.body, JSON.parse(await readFile(
+          artifacts.find(asset => asset.name === 'houseplan-site-' + tag.slice(1) + '.json').path, 'utf8')))
+      : candidate.releaseData.body;
     const expectedMain = event.expectedMain ?? (candidate.kind === 'beta' ? undefined : await git.remoteHead('main'));
     if (candidate.status !== 'published' && candidate.status !== 'publishing') {
       state = await releaseDispatch(releaseStore, { id: `${event.id}:started:${state.revision}`, type: 'publication-started',
@@ -683,7 +690,7 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     if (event.tag && candidate.tag !== event.tag) throw Error('Publication retry cannot change the tag');
     const publisher = dependencies.publisher ?? new ReleasePublisher({ github: api, git, activated: true });
     try {
-      const result = await publisher.publish({ candidate, tag: candidate.tag, artifacts, body: candidate.releaseData.body, expectedMain,
+      const result = await publisher.publish({ candidate, tag: candidate.tag, artifacts, body, expectedMain,
         measurementPath: event.measurementPath ?? (candidate.kind === 'stable' ? resolve(config.workspace, 'artifacts/process-next/measurement.json') : undefined) });
       if (!result.published) throw Error('Publication has no actual evidence');
       if (candidate.status !== 'published') state = await releaseDispatch(releaseStore, {

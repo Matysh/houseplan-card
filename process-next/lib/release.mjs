@@ -1,6 +1,7 @@
 import { checkedRef, GitAdapter, sha256 } from './github.mjs';
 import { readFile } from 'node:fs/promises';
 import { membershipIssueNumbers } from './release-data.mjs';
+import { SITE_RELEASE_STEP } from './site-release.mjs';
 
 const sha = value => typeof value === 'string' && /^[a-f0-9]{40}$/.test(value);
 const copy = value => structuredClone(value);
@@ -38,10 +39,13 @@ function runnerReceipt(report, candidate) {
     throw Error('A completed runner report for this exact candidate and release profile is required');
   const required = report.results.filter(row => !row.diagnostic);
   const failed = required.filter(row => !['passed', 'reused', 'not-required'].includes(row.status)).map(row => row.id);
+  const site = required.find(row => row.id === SITE_RELEASE_STEP && ['passed', 'reused'].includes(row.status));
   // One report is the authority; no second per-case store or independently declared requirements.
   return { id: report.id, sha: report.materialSha, event: report.event, status: report.status,
     path: report.reportPath, digest: sha256(JSON.stringify(report)), finishedAt: report.finishedAt,
     materialClean: report.materialClean, ...(report.materialClean ? {} : { reason: 'dirty-material' }),
+    ...(candidate.kind === 'stable' && /^[a-f0-9]{64}$/.test(site?.outputHash ?? '')
+      ? { siteReleaseOutputHash: site.outputHash } : {}),
     ready: report.materialClean && report.status === 'passed' && required.length > 0 && failed.length === 0,
     required: required.length, failed, reused: required.filter(row => row.status === 'reused').length,
     checks: report.results.map(publicRunnerCheck) };

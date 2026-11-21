@@ -3,7 +3,8 @@
 `houseplan-core` provides `houseplan_core.plan_commands.PlanCommands`. The HA
 integration imports the identical source under `custom_components.houseplan.core`;
 it does not download a separate package at runtime. Python 3.14+, voluptuous and
-Pillow are required. The package is prepared locally here; publishing is #1465.
+Pillow are required. Ordinary stable releases supply a checked wheel alongside
+the standalone editor; see [Standalone frontend](STANDALONE-FRONTEND.md#consume-an-ordinary-stable-release).
 
 ## Ports and ownership
 
