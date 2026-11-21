@@ -1,10 +1,31 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildIsoGlBatch, triangulateIsoGlFace } from '../test-build/iso-view-gl-mesh.js';
+import { buildIsoGlBatch, isoGlFurniture, triangulateIsoGlFace } from '../test-build/iso-view-gl-mesh.js';
+import { FURNITURE_VOLUME_RUNTIME } from '../test-build/furniture-volume-runtime.js';
+import { FURNITURE_HEIGHT_SCALE, tvCabinetSurfaceCm } from '../test-build/iso-lab-furniture.js';
 import { isoCameraFor } from '../test-build/iso-projection.js';
 
 const p = (x, y, z) => ({ point: [x, y], z });
 const ring = (x, y, w, h, z) => [p(x,y,z), p(x+w,y,z), p(x+w,y+h,z), p(x,y+h,z)];
+
+test('#1472 a mounted TV uses the shared cabinet elevation in GPU meshes at every turn', async () => {
+  await FURNITURE_VOLUME_RUNTIME.ensure();
+  const lift = tvCabinetSurfaceCm();
+  assert.ok(lift > 0);
+  const tv = { id: 'tv', kind: 'furniture', symbol: 'tv', x: .2, y: .3, w: .09, h: .03 };
+  const vertices = faces => faces.flatMap(face => face.loops.flat());
+  for (const turn of [0, 90, 180, 270]) {
+    const args = [tv, 1000, 1000, 1, isoCameraFor(turn)];
+    const floor = vertices(isoGlFurniture(...args));
+    const mounted = vertices(isoGlFurniture(...args, lift));
+    assert.ok(floor.length > 0);
+    assert.equal(mounted.length, floor.length);
+    for (let i = 0; i < floor.length; i++) {
+      assert.deepEqual(mounted[i].point, floor[i].point);
+      assert.ok(Math.abs(mounted[i].z - floor[i].z - lift * FURNITURE_HEIGHT_SCALE) < 1e-8);
+    }
+  }
+});
 
 test('#1472 physical cut-plane triangles preserve holes and negative coordinates', () => {
   const outer = ring(-6, 3, 10, 10, 5), hole = ring(-4, 6, 4, 4, 5).reverse();

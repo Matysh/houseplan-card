@@ -6,7 +6,8 @@ import { clickHeaderAction } from './helpers/header-actions.mjs';
 
 const ready = '[data-hp-real-3d][data-real-3d-ready]';
 const { page, browser } = await launchColdView({ width: 1100, height: 780 }, 1,
-  ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'], { reducedMotion: 'reduce' });
+  ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'], { reducedMotion: 'reduce' },
+  undefined, undefined, '/demo.html?tv-mount=1');
 const layer = page.locator(ready);
 const runtimeUrl = /\/iso-view-gl-runtime-[^/]+\.js(?:$|\?)/;
 const loaded = () => page.evaluate(() => new Set(performance.getEntriesByType('resource')
@@ -21,8 +22,13 @@ const preference = (real, legacy) => page.evaluate(async ({ real, legacy }) => {
       space.partitions = [...(space.partitions || []), { id: 'real-3d-masonry', a: [.18, .22], b: [.75, .22], cm: 15 }];
     }
     if (real && !legacy && !space.decor?.some(shape => shape.id === 'real-3d-chair')) {
-      space.decor = [...(space.decor || []), { id: 'real-3d-chair', kind: 'furniture',
-        symbol: 'chair', x: .45, y: .35, w: .05, h: .05, width_cm: 1 }];
+      space.decor = [...(space.decor || []),
+        { id: 'real-3d-chair', kind: 'furniture', symbol: 'chair', x: .45, y: .35, w: .05, h: .05, width_cm: 1 },
+        { id: 'real-3d-tv', kind: 'furniture', symbol: 'tv', x: .3, y: .32, w: .08, h: .03,
+          tv_cabinet_id: 'real-3d-cabinet' },
+        { id: 'real-3d-cabinet', kind: 'furniture', symbol: 'cabinet_tv', x: .18, y: .19,
+          w: .12, h: .06, angle: 90 },
+      ];
       space.stairs = [...(space.stairs || []), { id: 'real-3d-stair', kind: 'straight',
         direction: 'forward', x: .32, y: .38, length: .13, width: .07, angle: 0 }];
     }
@@ -90,6 +96,11 @@ try {
   check('first WebGL frame has a nonempty buffer at the current SVG viewport', !!frame.renderer
     && frame.width > 0 && frame.height > 0 && frame.svg === frame.widthUnits && frame.triangles > 0);
   check('first WebGL frame contains the required furniture model', frame.furnitureFaces > 0);
+  check('a mounted TV passes its positioned shape and cabinet height to the real GPU frame', await page.evaluate(() => {
+    const subject = window.__card._real3d.frame.shapes.find(({ record }) => record.id === 'real-3d-tv');
+    return !!subject && subject.cabinet?.id === 'real-3d-cabinet' && subject.liftCm > 0
+      && Math.abs(subject.shape.x - .20) < 1e-8 && Math.abs(subject.shape.y - .205) < 1e-8 && subject.shape.angle === 90;
+  }));
   check('plan devices still use native HTML', await page.locator('.devlayer [data-hp=device]').count() > 0);
   const fills = await layer.evaluate(element => {
     const visibleBase = id => element.ownerSVGElement.querySelector(

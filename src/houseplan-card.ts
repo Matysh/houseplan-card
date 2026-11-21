@@ -13388,6 +13388,7 @@ export class HouseplanCard extends LitElement {
     let isoFrame: IsoFramePresentation | null = null;
     this._real3dFrame = null;
     const real3d = this._activeReal3d();
+    const real3dFurniture: Real3dFrame['shapes'][number][] = [];
     let isoGlowLayer: TemplateResult | undefined;
     let isoLedField: TemplateResult | undefined;
     let isoWallLights: IsoWallLightSource[] = [];
@@ -13422,6 +13423,7 @@ export class HouseplanCard extends LitElement {
             const shape = cabinet ? tvOnCabinet(item, cabinet) : item;
             const volume = furnitureVolume(shape,NORM_W,this._decorH,camera,scale,lift);
             if (!volume) return [];
+            if (real3d) real3dFurniture.push({ record: item, cabinet, shape, liftCm: lift });
             const {mesh,footprint,height} = volume;
             const style = this._decorResolvedStyle(item);
             return [{footprint,height,mesh,lift,opacity:1,
@@ -13488,9 +13490,7 @@ export class HouseplanCard extends LitElement {
     if (isoScene && isoFrame && isoLayers?.structural && real3d && !this._furnitureVolumePending()) {
       this._real3dFrame = {
         scene: isoScene, panels: isoFrame.panels, display: disp, cellCm: this._cellCm,
-        shapes: useFurnitureVolume && !disp.hideDecor
-          ? this._decorList.filter((shape): shape is Extract<DecorShape, { kind: 'furniture' }> => shape.kind === 'furniture')
-          : [],
+        shapes: real3dFurniture,
         decorWidth: NORM_W, decorHeight: this._decorH, visualScale: scale,
       };
     }

@@ -136,13 +136,14 @@ export function isoGlOpeningPanels(scene: IsoRenderScene, appearance: Appearance
 
 export function isoGlFurniture(
   shape: DecorFurniture, canvasW: number, canvasH: number, visualScale: number, camera: IsoCamera,
+  liftCm = 0,
 ): IsoGlFace[] {
   const parts = furniturePartsFor(shape);
   if (!parts || shape.w <= 0 || shape.h <= 0) return [];
   const scale = FURNITURE_HEIGHT_SCALE * visualScale;
   return parts.flatMap(part => furnitureVolumeFaces(part, shape.w * canvasW, shape.h * canvasH, scale).flatMap(face => {
     const loops = face.loops.map(loop => loop.map(([x, y, z]) => point(
-      furniturePlanPoint(shape, [x, y], canvasW, canvasH), z * scale,
+      furniturePlanPoint(shape, [x, y], canvasW, canvasH), (z + liftCm) * scale,
     )));
     // Use the original projected outward-face rule for translucent pieces.
     // Backfaces of closed parts must not add another coat of transparency.

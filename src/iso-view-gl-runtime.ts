@@ -16,7 +16,7 @@ export interface Real3dFrame {
   panels: readonly IsoOpeningPanel[];
   display: SpaceDisplay;
   cellCm: number;
-  shapes: readonly DecorFurniture[];
+  shapes: readonly { record: DecorFurniture; cabinet?: DecorFurniture; shape: DecorFurniture; liftCm: number }[];
   decorWidth: number;
   decorHeight: number;
   visualScale: number;
@@ -195,11 +195,15 @@ export class Real3dRenderer {
       this.staticFaces = isoGlArchitecture(scene, appearance, cellCm, !display.hideOpenings);
       this.sceneKey = key;
     }
-    const shapeKey = [scene.camera, decorWidth, decorHeight, visualScale, ...shapes];
+    // A mounted television's derived shape can be a new object every Lit pass.
+    // Its two canonical records determine the same pose without rebuilding.
+    const shapeKey = [scene.camera, decorWidth, decorHeight, visualScale,
+      ...shapes.flatMap(({ record, cabinet, liftCm }) => [record, cabinet, liftCm])];
     const shapesChanged = !same(shapeKey, this.shapeKey);
     if (shapesChanged) {
       this.shapeKey = shapeKey;
-      this.shapeFaces = shapes.flatMap(shape => isoGlFurniture(shape, decorWidth, decorHeight, visualScale, scene.camera));
+      this.shapeFaces = shapes.flatMap(({ shape, liftCm }) =>
+        isoGlFurniture(shape, decorWidth, decorHeight, visualScale, scene.camera, liftCm));
     }
     const pose = panels.map(panel => panel.surfaces.map(surface => surface.kind + surface.d).join(';')).join('|');
     if (!structureChanged && !shapesChanged && pose === this.poseKey) return false;
