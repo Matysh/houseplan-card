@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19354,
-  "nextTicket": 588,
+  "revision": 19355,
+  "nextTicket": 589,
   "nextFence": 588,
   "tasks": {
     "1024": {
@@ -4243,11 +4243,11 @@
       "materialSha": "0a43fd36c857fe3841a3ad54962bbbcca66d6036",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 587,
-      "queued": false,
+      "ticket": 588,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795263280724,
-      "reviewEntry": 1,
+      "readyAt": 1795265077145,
+      "reviewEntry": 2,
       "patchId": "b571c9b556cfa55b154560c0cc22017b58f6eed6",
       "changedFiles": [
         "THIRD_PARTY_NOTICES.md",
@@ -4302,7 +4302,6 @@
         "tests_backend/test_support_config_projection.py",
         "tsconfig.test.json"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6172,7 +6171,9 @@
       "runId": 44900005683
     }
   },
-  "waiting": [],
+  "waiting": [
+    1472
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6460,6 +6461,19 @@
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/pdf-compass.test.mjs: failed; Поведение: test/render-layout-read.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Backend: tests_backend/test_plan_graph_support.py: failed",
           "eventId": "finish:2a189472-54d2-4616-9a71-c11155b47358:finish:3:return:return:1472"
         }
+      }
+    },
+    "finish:034c5438-1b0d-4b19-921d-bc59ee7729a4": {
+      "digest": "53b1312771cb9e5765f86901ab2f7e1de7540e6d0778fe100237108548add888",
+      "issue": 1472,
+      "message": {
+        "kind": "queued",
+        "issue": 1472,
+        "at": 1795265077145,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "0a43fd36c857fe3841a3ad54962bbbcca66d6036"
       }
     }
   },
