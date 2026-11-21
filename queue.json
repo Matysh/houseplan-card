@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19259,
+  "revision": 19260,
   "nextTicket": 586,
   "nextFence": 586,
   "tasks": {
@@ -6018,18 +6018,12 @@
       }
     },
     "1472": {
-      "requestId": "spec:1472:3c60977d89afbaacae896fd8077491ed09b1cd0d8639730ad10e09487f1b57f5",
-      "contextDigest": "3c60977d89afbaacae896fd8077491ed09b1cd0d8639730ad10e09487f1b57f5",
-      "base": "7d1e756b122790a51466a8670096a5e06773ee85",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795078240567,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44490172225",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "requestId": "spec:1472:5bfa623f7396c2da8fabfd493d3b27ae3fea54abf9445ed2e1d21ed07dfea867",
+      "contextDigest": "5bfa623f7396c2da8fabfd493d3b27ae3fea54abf9445ed2e1d21ed07dfea867",
+      "base": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795260693315
     },
     "1475": {
       "requestId": "spec:1475:67f6991aafbbbe6c4659e8f39277402c317d2662b22b6ac298b4049417f27a75",
@@ -6113,6 +6107,19 @@
         "round": 1,
         "occurredAt": "2026-11-21T11:29:04.821Z"
       }
+    },
+    "spec:1472:spec:1472:5bfa623f7396c2da8fabfd493d3b27ae3fea54abf9445ed2e1d21ed07dfea867": {
+      "issue": 1472,
+      "kind": "spec",
+      "requestId": "spec:1472:5bfa623f7396c2da8fabfd493d3b27ae3fea54abf9445ed2e1d21ed07dfea867",
+      "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
+      "expectedBase": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
+      "patchId": "5bfa623f7396c2da8fabfd493d3b27ae3fea54abf9445ed2e1d21ed07dfea867",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-21T11:31:33.315Z"
+      }
     }
   },
   "waiting": [],
@@ -6193,6 +6200,10 @@
     "github:44899304456:1:completions:message:1f08a117bfce1102bc5fd48df1c6024490d6b9b46edb042ad30713d958255d99": {
       "digest": "3f472d40b4a24f45c930475e7747731fe19dad5ce727750c8dc2eeae257da53b",
       "issue": 1510
+    },
+    "github:44899482861:1:label:spec-request": {
+      "digest": "1e225e5d6a9867f87dd55591a70db44209436d2fd69b6b918eec23a4c68b75db",
+      "issue": 1472
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -6280,6 +6291,22 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "github:44899482861:1:label:spec-request:spec-resubmitted:1472": {
+      "digest": "1e225e5d6a9867f87dd55591a70db44209436d2fd69b6b918eec23a4c68b75db",
+      "issue": 1472,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1472,
+        "at": 1795260693315,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1472:5bfa623f7396c2da8fabfd493d3b27ae3fea54abf9445ed2e1d21ed07dfea867",
+        "reviewChanges": "### Цель и подход\n\nЭто вторая редакция ТЗ. В ней зафиксирован выбор владельца по SVG. Новый backend отделён от геометрической flat/iso-плоскости; оба старых preferences и renderer сохраняются. Дополнительный boolean real_3d по умолчанию отсутствует; приоритет/возврат заданы таблицей. Предлагается Three.js/WebGL2 из исследования #1471, общая физическая геометрия, прежние HTML/UI/HA owners, lazy loading и render-on-demand. Альтернативы Babylon/PlayCanvas/OGL и перенос внешнего планировщика разобраны в исследовании; здесь выбрана ограниченная интеграция, а не второй проект дома.\n\n### Риски и места для внимания\n\nПросьба проверить целостность snapshot/camera/hit handoff и fallback, независимость от старого volumetric_view, прозрачность и полноту live layers, существующий backend/settings whitelist и совместимость, уход в редакторы/киоск, ownership GPU и async generation. Это ориентиры, не ограничение области независимого ревью.\n\nВ S3 проверены актуальный dev `3c82c0f1801173caa5aa6a5a7cfe19445c746305`, `src/pdf/svg-snapshot.ts` (Canvas не принимается), `docs/PDF-EXPORT.md` и `core/house_commands.py` (поля оформления цели). #1469 и #1470 уже закрыты; визуальный reference SHA фиксируется отдельно на старте S6, не из прежнего ревью. Главный вопрос ревью — как получить detached Flat-снимок из актуального кадра, не монтируя вторую живую карточку и не меняя основную камеру.\n\n### Исправления по предыдущему ревью\n\n- **SVG при живом Real 3D не определён** → §6, UX, i18n и AC13: решение владельца — плоский векторный SVG, явная подсказка до скачивания, штатная камера/слои без изменения экрана. При отказе WebGL экспорт соответствует видимому 2.5D/Flat; PDF не меняется.\n- **Загрузка дольше бюджета** → §7 и AC10 различают временный legacy-кадр с одним актуальным handoff и реальные отказы с latch.\n- **Возврат из фона и несколько карточек** → для первой версии нет фонового retry после подтверждённой потери контекста: fallback и штатный явный повтор сохраняются; AC11 проверяет изоляцию карточек.\n- **Прозрачность, перо и свет мебели** → §6 и AC4 называют три случая для парного визуального сравнения. **Оформление цели переноса** → модель и AC12 явно фиксируют `target_appearance.real_3d` как информацию о цели, не входной импорт флага.\n\n### Проверки и ограничения\n\nРевизия r2 меняет только ТЗ; продуктовые исходники и пользовательский HA не затрагивались. Передача требует зелёного `spec-check` формы; его результат не считается содержательным ревью или выполненным AC. Нет продуктовых прогонов на S3.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
