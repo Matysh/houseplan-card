@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19283,
+  "revision": 19284,
   "nextTicket": 587,
   "nextFence": 587,
   "tasks": {
@@ -5564,156 +5564,25 @@
     },
     "1510": {
       "issue": 1510,
+      "branch": "codex/closed-milestone-assignment",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/closed-milestone-assignment",
-      "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 586,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795261019505,
-      "reviewEntry": 2,
-      "patchId": "c83e1288f1b8e884cbe078b0797edb7529f11415",
-      "changedFiles": [
-        "PROCESS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/cycle.json",
-        "process-next/lib/github.mjs",
-        "process-next/lib/release-cycle.mjs",
-        "process-next/lib/release.mjs",
-        "process-next/lib/return-worker.mjs",
-        "process-next/lib/task-completion.mjs",
-        "process-next/test/github.test.mjs",
-        "process-next/test/release-cycle.test.mjs",
-        "process-next/test/return-worker.test.mjs",
-        "process-next/test/task-completion.test.mjs"
-      ],
-      "s6": {
-        "id": "20261121T113714027-15e2a336",
-        "name": "Тесты для задачи #1510 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T113714027-15e2a336/report.json",
-        "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
-        "status": "passed",
-        "finishedAt": "2026-11-21T11:37:20.562Z",
-        "failures": []
-      },
-      "reviewRound": 2,
-      "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795260833169,
-        "entry": 1,
-        "requestId": "review:1510:1:50f2be1aa6ec9c032a70eb89c02c78d94f752977:3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "transitionConfirmed": true
-      },
+      "status": "S8-merged",
+      "expectedBase": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
+      "mergedSha": "36af10803c20dbf027b922553b37419d112023a9",
+      "mergedAt": 1795261237200,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1510:2:c83e1288f1b8e884cbe078b0797edb7529f11415:3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-      "reviewMaterial": {
-        "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
-        "expectedBase": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "patchId": "c83e1288f1b8e884cbe078b0797edb7529f11415"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1510,
-        "requestId": "review:1510:2:c83e1288f1b8e884cbe078b0797edb7529f11415:3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "kind": "code",
-        "base": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-        "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
-        "patchId": "c83e1288f1b8e884cbe078b0797edb7529f11415",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1510,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1510",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Раунд 1 → исправление\nБлокер: nextCycle пересчитывался из изменяемого live списка при каждом повторе; существующая ветка требовала точного JSON-совпадения и могла остановиться до finish.\n\nИзменение: выбранный nextCycle записывается в существующий прогресс return-to-dev до подготовки ветки; повтор использует сохранённый план. Подготовленная/исправленная по ревью ветка авторитетна по своим метаданным: проверяются валидная база не старше опубликованного stable и согласованная будущая цель либо null/null, а не побайтовое совпадение с прошлым планом. Более новый цикл dev не откатывается; transport/JSON-ошибки при проверке не маскируются как отсутствие цикла. Успешный повтор с уже вошедшим циклом закрывает прежнюю служебную задачу, не создаёт новую.\n\nРегрессия: waiting после первой подготовки → сохранённый nextCycle → live inventory меняется/недоступен → повтор доходит до finish и завершает ту же задачу. Настоящая Git-ветка: согласованная правка цели после подготовки → повтор принимает новый SHA/цель без перезаписи ветки. Проверяются более новый цикл и отказ старой/несогласованной базы/цели. Адресный прогон четырёх файлов: 65/65 PASS; финальный S6 штатно через finish.\n\nНеблокирующие замечания: уточнён текст закрытой цели (цикл слитой задачи закреплён за её коммитом, простое обновление текущего цикла её не переносит), описание служебной задачи больше не обещает зачёт ревью для stable с метаданными; это ограничение и сохранение плана записаны в PROCESS.md. HA E2E не требуется: https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1510.md."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокер первого раунда устранён, новых существенных дефектов не нашёл. Раньше `nextCycle` заново вычислялся из живого списка milestone на каждом повторе, а подготовленную ветку сверяли с планом побайтово. Теперь план вычисляется один раз, попадает в прогресс `return-to-dev` до подготовки ветки и на повторах берётся из сохранённого состояния. Подготовленную или исправленную по ревью ветку проверяют по инвариантам: база не старше опубликованного stable, цель согласована с базой и milestone либо пуста (null/null). Если во время ожидания ревью владелец создаст, закроет или переименует milestone, возврат больше не зависает до `finish`. Согласованная правка `cycle.json` в ветке тоже принимается.\n\nОстальные требования владельца выполнены, как и в первом раунде. Новая задача назначается только в живой `open` milestone, в том числе на повторе с сохранённой целью. Назначение, сделанное владельцем, не трогается. Цикл обновляется через общую очередь, тег не меняется. Beta/hotfix цикл не открывают, повтор старого stable не откатывает более новый цикл. Ручная правка `cycle.json` (v1.86.0 / v2.0.0 / №18) соответствует решению владельца. Неблокирующие замечания первого раунда учтены: изменены текст ошибки, тело служебной issue и PROCESS.md. Остались только пограничные случаи, они вынесены в улучшения.",
-          "understanding": "Проблема: после v1.86.0 #1509 получила закрытый milestone №16. Причины две: `cycle.json` после stable не обновлялся, а перед PATCH никто не проверял живое состояние milestone.\n\nРешение состоит из трёх частей.\n1) `task-completion.mjs:192-197`: перед новым назначением выполняется `api.getMilestone`, допустим только `open`. Закрытая или недоступная цель оставляет оформление видимо незавершённым, S8 не откатывается. Если milestone уже назначен, его не читают и не меняют.\n2) `release-cycle.mjs`: `planStableCycle` строит следующий цикл только для stable и только если база цикла в dev старше опубликованного тега. Целью становится явно запланированный открытый будущий milestone, иначе ближайший открытый по версии, иначе null/null. `verifyReleaseCycle` теперь проверяет инварианты (база ≥ ожидаемой, target > base, версия в названии milestone совпадает с target, либо null/null) и возвращает фактический цикл, а не сравнивает его с планом на равенство.\n3) `return-worker.mjs`: `nextCycle = previous?.nextCycle`, план строится только при `undefined`. Он входит в `progress()` и сохраняется через `save()` (стр. 121) до `prepareDevReturn`. В результате `pending` он попадает в состояние через `defer` (`release-completion.mjs:21-24,157`) и редьюсер `completion-step` (`release.mjs:228-241`), который копирует результат целиком. `prepareDevReturn` для существующей удалённой или локальной ветки возвращает фактический цикл ветки, и воркер принимает его как авторитетный (стр. 136). После merge и в ветке «уже в dev» цикл в dev проверяется до закрытия служебной issue.\n\nРазобранные пути:\n- `remote.mjs:601-610` → `completePublishedRelease` → `returnPublishedHistory` → `prepareDevReturn` / `finish` → сохранение `pending` с `nextCycle` → повтор с `previous`;\n- случай «тег уже в dev, цикл старый» (стр. 91-103 и `layer: 'infra'` в `prepareDevReturn`);\n- чтение `remoteHead` через `ls-remote` и `ensureCommit` с fetch (`github.mjs:254-266`);\n- `readTaskReleaseMilestone` (`release-data.mjs:5-31`), закрепляющий цикл за коммитом слияния.",
-          "analysis": [
-            {
-              "topic": "Исправление блокера: сохранённый план и проверка по инвариантам",
-              "assessment": "Механизм теперь живучий. План вычисляется один раз и сохраняется в существующем прогрессе шага, без нового хранилища. Повтор живой список milestone не читает: тест подменяет `listOpenMilestones` на исключение, и возврат всё равно доходит до `finish`. Для существующей ветки ветка авторитетнее плана, поэтому правка цели по ревью принимается, а воркер продолжает работать с фактическим циклом ветки. Проверка по инвариантам вместо побайтового сравнения выбрана верно: она защищает ровно то, что важно (база не откатывается, цель согласована) и не мешает правке по ревью. Ошибки транспорта и JSON из `verifyReleaseCycle` не маскируются под «цикла нет»: в стр. 93-97 перехватывается только `RELEASE_CYCLE_MISSING`.",
-              "evidence": "`return-worker.mjs:80-87,121,135-136,157`; `release.mjs:345-354`; `release-cycle.mjs:32-46`; `release-completion.mjs:21-24,154-157`; `release.mjs:241`. Тесты: `return-worker.test.mjs` «a waiting stable return resumes its persisted cycle after milestone inventory changes», `github.test.mjs` «stable return commits the next cycle…» (настоящий Git, правка цели после подготовки, новый SHA без перезаписи), `release-cycle.test.mjs` (принимает более новый цикл, отклоняет старую базу и несогласованное название)."
-            },
-            {
-              "topic": "Проверка живого состояния milestone перед назначением",
-              "assessment": "Решение минимальное и стоит на месте PATCH. Оно срабатывает и при кешированном `milestoneTarget`, а назначение владельца не трогает (стр. 190 и условие `assigned !== facts.milestone`). Текст ошибки теперь честно говорит, что цикл задачи закреплён за коммитом слияния и нужно ручное исправление. Ограничение осталось прежним: если владелец вручную поставил другой milestone, а автоматическая цель закрыта (так сейчас с #1509), задача остаётся в конфликте «already belongs to another milestone». Это поведение было и раньше, и оно соответствует требованию сохранить выбор владельца.",
-              "evidence": "`task-completion.mjs:188-203`; тесты `task-completion.test.mjs` «closed or unavailable milestones never receive new tasks…» и «existing owner milestones are preserved…»."
-            },
-            {
-              "topic": "Обновление цикла через общую очередь и защита от отката",
-              "assessment": "Устройство из первого раунда сохранено. Цикл записывается отдельным коммитом поверх merge тега либо поверх dev, если тег уже вошёл. Тег не меняется, dev напрямую не продвигается, и зачёта прежнего ревью нет, потому что дерево отличается от чистого merge. Beta/hotfix и более новая база в dev дают план null. Повтор после завершения закрывает ту же служебную issue и новую не создаёт. Тело служебной issue больше не обещает зачёт ревью.",
-              "evidence": "`release.mjs:339-371`; `release-cycle.mjs:13-30`; `return-worker.mjs:99-103,108`; тест `return-worker.test.mjs` «stable completion advances the cycle… even if tag history is already included» (оба варианта, повтор без дубликата)."
-            },
-            {
-              "topic": "Цена фиксации плана",
-              "assessment": "Это сознательный компромисс, и он соответствует решению владельца. План закрепляется в момент первого вызова. Если milestone в этот момент ещё не создан, ветка получит null/null, даже если владелец заведёт milestone во время ревью; исправлять придётся правкой ветки по ревью или отдельной правкой цикла. Если владелец закроет выбранную цель во время ревью, в цикл попадёт закрытый milestone, и новые задачи получат видимое «not open» вместо ошибочного назначения. Оба исхода безопасны и видимы, это лучше прежнего зависания. PROCESS.md прямо описывает фиксацию плана и ручное исправление.",
-              "evidence": "`return-worker.mjs:87`; `PROCESS.md` (новые строки о сохранении плана и задачах с пустой или закрытой целью); `task-completion.mjs:194-195`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Если подготовка локальной ветки прервалась между `worktree add`/merge и коммитом цикла (сбой процесса, ошибка записи), повтор увидит локальную `head` без нового цикла. `verifyReleaseCycle` бросит «without a valid next release cycle», а ветка автоматически не пересоздаётся, так что выход только через ручное удаление worktree и ветки. Тот же класс сбоев уже был у самого merge (конфликт или прерывание после `worktree add`), так что это не регрессия. Если захочется закрыть: для локальной ветки, которая ещё не опубликована и совпадает с `devSha` или с одним merge, дописывать коммит цикла в существующий worktree, а не отказывать. Цена — дополнительная ветка в `prepareDevReturn`.",
-            "В стр. 92-98 `return-worker.mjs` есть редкий случай: в dev база ≥ тега, но цель несогласована (например, ручная правка с target без milestone). Тогда `RELEASE_CYCLE_MISSING` уводит в подготовку ветки, и она запишет сохранённый план. Если база в dev новее тега, это откат. Можно различать «база старше» (продолжать через очередь) и «база не старше, но цикл некорректен» (видимая ошибка без записи). Случай маловероятен, поэтому это пожелание."
-          ],
-          "boundaries": "Тесты, сборку и tooling не запускал. Из S6 использую квитанцию «Тесты для задачи #1510 (перед ревью)» на `36af1080`: статус passed, отказов нет. Содержимое `report.json` не видел, поэтому утверждение исполнителя «65/65 PASS» знаю только с его слов.\n\nПо исходникам изучены: `return-worker.mjs` (целиком `returnPublishedHistory`), `release-cycle.mjs`, `release.mjs` (`prepareDevReturn`, редьюсер `completion-step`), `release-completion.mjs` (`save`, `defer`, шаг `return-to-dev`), `task-completion.mjs:150-203`, `release-data.mjs:5-31`, `github.mjs` (`remoteHead`, `ensureCommit`, новые методы milestone), привязка в `remote.mjs:596-610`, а также новые и изменённые тесты.\n\nНе проверено: фактическое состояние milestone №18 и возврата v1.86.0 в GitHub, поведение при сбое процесса в середине подготовки локальной ветки (вывод сделан только по коду)."
-        },
-        "usage": {
-          "input_tokens": 16,
-          "cache_creation_input_tokens": 73884,
-          "cache_read_input_tokens": 386447,
-          "output_tokens": 9692,
-          "output_tokens_details": {
-            "thinking_tokens": 3720
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 73884,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 871,
-              "cache_read_input_tokens": 63726,
-              "cache_creation_input_tokens": 14362,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 14362
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокер первого раунда устранён, новых существенных дефектов не нашёл. Раньше `nextCycle` заново вычислялся из живого списка milestone на каждом повторе, а подготовленную ветку сверяли с планом побайтово. Теперь план вычисляется один раз, попадает в прогресс `return-to-dev` до подготовки ветки и на повторах берётся из сохранённого состояния. Подготовленную или исправленную по ревью ветку проверяют по инвариантам: база не старше опубликованного stable, цель согласована с базой и milestone либо пуста (null/null). Если во время ожидания ревью владелец создаст, закроет или переименует milestone, возврат больше не зависает до `finish`. Согласованная правка `cycle.json` в ветке тоже принимается.\n\nОстальные требования владельца выполнены, как и в первом раунде. Новая задача назначается только в живой `open` milestone, в том числе на повторе с сохранённой целью. Назначение, сделанное владельцем, не трогается. Цикл обновляется через общую очередь, тег не меняется. Beta/hotfix цикл не открывают, повтор старого stable не откатывает более новый цикл. Ручная правка `cycle.json` (v1.86.0 / v2.0.0 / №18) соответствует решению владельца. Неблокирующие замечания первого раунда учтены: изменены текст ошибки, тело служебной issue и PROCESS.md. Остались только пограничные случаи, они вынесены в улучшения.\n\n## Понимание решения\n\nПроблема: после v1.86.0 #1509 получила закрытый milestone №16. Причины две: `cycle.json` после stable не обновлялся, а перед PATCH никто не проверял живое состояние milestone.\n\nРешение состоит из трёх частей.\n1) `task-completion.mjs:192-197`: перед новым назначением выполняется `api.getMilestone`, допустим только `open`. Закрытая или недоступная цель оставляет оформление видимо незавершённым, S8 не откатывается. Если milestone уже назначен, его не читают и не меняют.\n2) `release-cycle.mjs`: `planStableCycle` строит следующий цикл только для stable и только если база цикла в dev старше опубликованного тега. Целью становится явно запланированный открытый будущий milestone, иначе ближайший открытый по версии, иначе null/null. `verifyReleaseCycle` теперь проверяет инварианты (база ≥ ожидаемой, target > base, версия в названии milestone совпадает с target, либо null/null) и возвращает фактический цикл, а не сравнивает его с планом на равенство.\n3) `return-worker.mjs`: `nextCycle = previous?.nextCycle`, план строится только при `undefined`. Он входит в `progress()` и сохраняется через `save()` (стр. 121) до `prepareDevReturn`. В результате `pending` он попадает в состояние через `defer` (`release-completion.mjs:21-24,157`) и редьюсер `completion-step` (`release.mjs:228-241`), который копирует результат целиком. `prepareDevReturn` для существующей удалённой или локальной ветки возвращает фактический цикл ветки, и воркер принимает его как авторитетный (стр. 136). После merge и в ветке «уже в dev» цикл в dev проверяется до закрытия служебной issue.\n\nРазобранные пути:\n- `remote.mjs:601-610` → `completePublishedRelease` → `returnPublishedHistory` → `prepareDevReturn` / `finish` → сохранение `pending` с `nextCycle` → повтор с `previous`;\n- случай «тег уже в dev, цикл старый» (стр. 91-103 и `layer: 'infra'` в `prepareDevReturn`);\n- чтение `remoteHead` через `ls-remote` и `ensureCommit` с fetch (`github.mjs:254-266`);\n- `readTaskReleaseMilestone` (`release-data.mjs:5-31`), закрепляющий цикл за коммитом слияния.\n\n## Разбор решения\n\n### Исправление блокера: сохранённый план и проверка по инвариантам\n\nМеханизм теперь живучий. План вычисляется один раз и сохраняется в существующем прогрессе шага, без нового хранилища. Повтор живой список milestone не читает: тест подменяет `listOpenMilestones` на исключение, и возврат всё равно доходит до `finish`. Для существующей ветки ветка авторитетнее плана, поэтому правка цели по ревью принимается, а воркер продолжает работать с фактическим циклом ветки. Проверка по инвариантам вместо побайтового сравнения выбрана верно: она защищает ровно то, что важно (база не откатывается, цель согласована) и не мешает правке по ревью. Ошибки транспорта и JSON из `verifyReleaseCycle` не маскируются под «цикла нет»: в стр. 93-97 перехватывается только `RELEASE_CYCLE_MISSING`.\n\nОснование: `return-worker.mjs:80-87,121,135-136,157`; `release.mjs:345-354`; `release-cycle.mjs:32-46`; `release-completion.mjs:21-24,154-157`; `release.mjs:241`. Тесты: `return-worker.test.mjs` «a waiting stable return resumes its persisted cycle after milestone inventory changes», `github.test.mjs` «stable return commits the next cycle…» (настоящий Git, правка цели после подготовки, новый SHA без перезаписи), `release-cycle.test.mjs` (принимает более новый цикл, отклоняет старую базу и несогласованное название).\n\n### Проверка живого состояния milestone перед назначением\n\nРешение минимальное и стоит на месте PATCH. Оно срабатывает и при кешированном `milestoneTarget`, а назначение владельца не трогает (стр. 190 и условие `assigned !== facts.milestone`). Текст ошибки теперь честно говорит, что цикл задачи закреплён за коммитом слияния и нужно ручное исправление. Ограничение осталось прежним: если владелец вручную поставил другой milestone, а автоматическая цель закрыта (так сейчас с #1509), задача остаётся в конфликте «already belongs to another milestone». Это поведение было и раньше, и оно соответствует требованию сохранить выбор владельца.\n\nОснование: `task-completion.mjs:188-203`; тесты `task-completion.test.mjs` «closed or unavailable milestones never receive new tasks…» и «existing owner milestones are preserved…».\n\n### Обновление цикла через общую очередь и защита от отката\n\nУстройство из первого раунда сохранено. Цикл записывается отдельным коммитом поверх merge тега либо поверх dev, если тег уже вошёл. Тег не меняется, dev напрямую не продвигается, и зачёта прежнего ревью нет, потому что дерево отличается от чистого merge. Beta/hotfix и более новая база в dev дают план null. Повтор после завершения закрывает ту же служебную issue и новую не создаёт. Тело служебной issue больше не обещает зачёт ревью.\n\nОснование: `release.mjs:339-371`; `release-cycle.mjs:13-30`; `return-worker.mjs:99-103,108`; тест `return-worker.test.mjs` «stable completion advances the cycle… even if tag history is already included» (оба варианта, повтор без дубликата).\n\n### Цена фиксации плана\n\nЭто сознательный компромисс, и он соответствует решению владельца. План закрепляется в момент первого вызова. Если milestone в этот момент ещё не создан, ветка получит null/null, даже если владелец заведёт milestone во время ревью; исправлять придётся правкой ветки по ревью или отдельной правкой цикла. Если владелец закроет выбранную цель во время ревью, в цикл попадёт закрытый milestone, и новые задачи получат видимое «not open» вместо ошибочного назначения. Оба исхода безопасны и видимы, это лучше прежнего зависания. PROCESS.md прямо описывает фиксацию плана и ручное исправление.\n\nОснование: `return-worker.mjs:87`; `PROCESS.md` (новые строки о сохранении плана и задачах с пустой или закрытой целью); `task-completion.mjs:194-195`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Если подготовка локальной ветки прервалась между `worktree add`/merge и коммитом цикла (сбой процесса, ошибка записи), повтор увидит локальную `head` без нового цикла. `verifyReleaseCycle` бросит «without a valid next release cycle», а ветка автоматически не пересоздаётся, так что выход только через ручное удаление worktree и ветки. Тот же класс сбоев уже был у самого merge (конфликт или прерывание после `worktree add`), так что это не регрессия. Если захочется закрыть: для локальной ветки, которая ещё не опубликована и совпадает с `devSha` или с одним merge, дописывать коммит цикла в существующий worktree, а не отказывать. Цена — дополнительная ветка в `prepareDevReturn`.\n- В стр. 92-98 `return-worker.mjs` есть редкий случай: в dev база ≥ тега, но цель несогласована (например, ручная правка с target без milestone). Тогда `RELEASE_CYCLE_MISSING` уводит в подготовку ветки, и она запишет сохранённый план. Если база в dev новее тега, это откат. Можно различать «база старше» (продолжать через очередь) и «база не старше, но цикл некорректен» (видимая ошибка без записи). Случай маловероятен, поэтому это пожелание.\n\n## Границы анализа\n\nТесты, сборку и tooling не запускал. Из S6 использую квитанцию «Тесты для задачи #1510 (перед ревью)» на `36af1080`: статус passed, отказов нет. Содержимое `report.json` не видел, поэтому утверждение исполнителя «65/65 PASS» знаю только с его слов.\n\nПо исходникам изучены: `return-worker.mjs` (целиком `returnPublishedHistory`), `release-cycle.mjs`, `release.mjs` (`prepareDevReturn`, редьюсер `completion-step`), `release-completion.mjs` (`save`, `defer`, шаг `return-to-dev`), `task-completion.mjs:150-203`, `release-data.mjs:5-31`, `github.mjs` (`remoteHead`, `ensureCommit`, новые методы milestone), привязка в `remote.mjs:596-610`, а также новые и изменённые тесты.\n\nНе проверено: фактическое состояние milestone №18 и возврата v1.86.0 в GitHub, поведение при сбое процесса в середине подготовки локальной ветки (вывод сделан только по коду).\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 3c82c0f1801173caa5aa6a5a7cfe19445c746305 → 36af10803c20dbf027b922553b37419d112023a9\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1510, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Раунд 1 → исправление\nБлокер: nextCycle пересчитывался из изменяемого live списка при каждом повторе; существующая ветка требовала точного JSON-совпадения и могла остановиться до finish.\n\nИзменение: выбранный nextCycle записывается в существующий прогресс return-to-dev до подготовки ветки; повтор использует сохранённый план. Подготовленная/исправленная по ревью ветка авторитетна по своим метаданным: проверяются валидная база не старше опубликованного stable и согласованная будущая цель либо null/null, а не побайтовое совпадение с прошлым планом. Более новый цикл dev не откатывается; transport/JSON-ошибки при проверке не маскируются как отсутствие цикла. Успешный повтор с уже вошедшим циклом закрывает прежнюю служебную задачу, не создаёт новую.\n\nРегрессия: waiting после первой подготовки → сохранённый nextCycle → live inventory меняется/недоступен → повтор доходит до finish и завершает ту же задачу. Настоящая Git-ветка: согласованная правка цели после подготовки → повтор принимает новый SHA/цель без перезаписи ветки. Проверяются более новый цикл и отказ старой/несогласованной базы/цели. Адресный прогон четырёх файлов: 65/65 PASS; финальный S6 штатно через finish.\n\nНеблокирующие замечания: уточнён текст закрытой цели (цикл слитой задачи закреплён за её коммитом, простое обновление текущего цикла её не переносит), описание служебной задачи больше не обещает зачёт ревью для stable с метаданными; это ограничение и сохранение плана записаны в PROCESS.md. HA E2E не требуется: https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1510.md.\n```\n\n</details>\n",
-        "createdAt": "2026-11-21T11:40:22.809Z",
-        "artifactId": 14705152569,
-        "runId": 44900005683,
-        "runAttempt": 1,
-        "completedAt": "2026-11-21T11:40:26Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44900005683",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "3c82c0f1801173caa5aa6a5a7cfe19445c746305"
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -6225,19 +6094,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1510,
-    "worker": "finish",
-    "token": "586:finish:7c4161f2-6563-4ed6-b4e6-bbfb590160ad:finish:1:admit",
-    "fence": 586,
-    "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
-    "expectedBase": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795261023512,
-    "expiresAt": 1795264834474,
-    "patchId": "c83e1288f1b8e884cbe078b0797edb7529f11415",
-    "reviewRequest": "review:1510:2:c83e1288f1b8e884cbe078b0797edb7529f11415:3c82c0f1801173caa5aa6a5a7cfe19445c746305"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6279,57 +6136,9 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "finish:4d251665-eea9-4f61-8560-4166d36e39f4:finish:2:synchronized": {
-      "digest": "b0cea9034bffa755558819fae84a947bf1db5e0ff8b880b5003463dc2c6126ba",
-      "issue": 1510
-    },
-    "github:44899247696:1:completions:message:0c2c61d4f7f98f75daf3fd5a31d6976008b85f5de5446d2d894167c87c70a324": {
-      "digest": "239df06ad8ac7a602e70111147232bfc82ee721372c4ad1962311cfb177da0f4",
-      "issue": 1510
-    },
-    "github:44899247696:1:completions:message:c0e9b292e4f4b1ec2b66f8e51e1a808af7189366d5e0d0c700fff9296c5c6238": {
-      "digest": "dae0ce4895796b4565113f24aadecbd059563cf2fd4e30a6a8fbf8bc73f8809d",
-      "issue": 1510
-    },
-    "finish:4d251665-eea9-4f61-8560-4166d36e39f4:finish:3:s6-label": {
-      "digest": "ac792a3ed80a9015f9b7ada687f45101f278235cd5d8e390beb71061a8586956",
-      "issue": 1510
-    },
-    "finish:4d251665-eea9-4f61-8560-4166d36e39f4:finish:4:review-requested": {
-      "digest": "25f38a79ddd1cf7adae77cdb7775bef930f60f2cca6d23238e1a646c8f2fbab4",
-      "issue": 1510
-    },
-    "github:44899304456:1:completions:message:1f08a117bfce1102bc5fd48df1c6024490d6b9b46edb042ad30713d958255d99": {
-      "digest": "3f472d40b4a24f45c930475e7747731fe19dad5ce727750c8dc2eeae257da53b",
-      "issue": 1510
-    },
     "github:44899482861:1:label:spec-request": {
       "digest": "1e225e5d6a9867f87dd55591a70db44209436d2fd69b6b918eec23a4c68b75db",
       "issue": 1472
-    },
-    "github:44899482861:1:completions:message:349b0766aa877fe12b135ecb34d5475b8210e8b5686095b537f255ee0873a2f5": {
-      "digest": "5798d00bf65bbe432910a047e03c622fede548dd1f1aa75e5419e32ac2a2cea2",
-      "issue": 1510
-    },
-    "github:44899675543:1:tick:0:review-presentation": {
-      "digest": "0a7862c67871b50e07477e29db1cc991ee0d67c3bae1630ccc4d1b685c4c12c1",
-      "issue": 1510
-    },
-    "github:44899675543:1:tick:0:return": {
-      "digest": "6d297daddbefc1a562ceab53c764b7f1baf09e1cc963fce4373e823d11fd4690",
-      "issue": 1510
-    },
-    "github:44899675543:1:tick:0:return-label": {
-      "digest": "640aabd879aeba20559c2a4c5d229f72b73f4e76a10c240fcebfe56b7ffcea3c",
-      "issue": 1510
-    },
-    "github:44899675543:1:completions:report:57542d935450060cd58e56d7c9c288f6c3afb5065ab55718c7901bab82b58376": {
-      "digest": "20c8d7db39da6e05cd2123af79a03c9350d4d972a7fe820c52e904dbc4e71d69",
-      "issue": 1510
-    },
-    "github:44899675543:1:completions:metadata:e7f3b501-3f8e-4e75-aae4-7bcf8f6f580a:task-notice:1510::": {
-      "digest": "7198defabc78a7b4becec21d5037ea6b9fa2e169cc05e3148946602e39f5819d",
-      "issue": 1510
     },
     "github:44899914439:1:spec:1472:spec-presentation": {
       "digest": "5e8cc4842009a1260afb1d9962ff03ae35dea0b7184264f053bbdfc7a96f7e12",
@@ -6343,41 +6152,9 @@
       "digest": "d2a4aba9004e4f0a9595d0a5fcaa55fabe5e4ef76f5b9207cc5203224f5b4a40",
       "issue": 1472
     },
-    "finish:7c4161f2-6563-4ed6-b4e6-bbfb590160ad:finish:2:synchronized": {
-      "digest": "abf6e90f97405b43ff1aa5964e4d1b67bece4058805c88ab7d578c4f5d4bac76",
-      "issue": 1510
-    },
     "github:44899914439:1:completions:report:c926ec13b167402bfa927fdf9d77df972d8e3a5caa52c4e40a6d82cfaa4b51db": {
       "digest": "0be500959beaed8359003fde3b4f9e25c2a0e566db63aa2daf36a2cd0a6a1ba2",
       "issue": 1472
-    },
-    "finish:7c4161f2-6563-4ed6-b4e6-bbfb590160ad:finish:3:s6-label": {
-      "digest": "acf460a5475a7f3c8e754283a873a3b68a189c3228793975935e9a32f53461cb",
-      "issue": 1510
-    },
-    "finish:7c4161f2-6563-4ed6-b4e6-bbfb590160ad:finish:4:review-requested": {
-      "digest": "5f4e12fa130c26e79de56c545c5b253177b6ae82cbf2accbba05a4ab4df0f4e8",
-      "issue": 1510
-    },
-    "github:44899951166:1:completions:message:7dcc09f8f901fbf170c1485b5e4b0fe5666d00a452a6aca5ebcd29975ff75a03": {
-      "digest": "f5602c3dc5200f885ee9a9a7c01784311cb9fb2ee8fa8205a30f614b8bf45a11",
-      "issue": 1510
-    },
-    "github:44899951166:1:completions:message:65eb21860fe082d1e168b531e3720abc09a37cf328c8fb4fa456d6d572b77401": {
-      "digest": "8ca7092ffc534b12f45b7a59754f68e9cae77956273ea888f61077297b3d7972",
-      "issue": 1510
-    },
-    "github:44899951166:1:completions:message:9f891993c9c62b2f4a0cd1816b12e0febe992bc2f775c71f51fa05e5cfacfed4": {
-      "digest": "d10e03c25845e7975513f3c7b0ff34be58bc7b4416251ce10d551280a76c905a",
-      "issue": 1510
-    },
-    "github:44900136930:1:tick:0:review-presentation": {
-      "digest": "c5b961077aee9bd1f209ff95ebc2d0fd7648395286c89f8edd2fba193f238e83",
-      "issue": 1510
-    },
-    "github:44900136930:1:tick:0:review-complete": {
-      "digest": "b27d977d8bfe1e3798d4afe1bdf565adc5079b28c59dc688a15150b9d46087e0",
-      "issue": 1510
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -6408,65 +6185,6 @@
         "delivered": true
       }
     },
-    "finish:4d251665-eea9-4f61-8560-4166d36e39f4": {
-      "digest": "67e9c2ca97ecebebd8bed900106cb69f9f091f8eccfcdc3de88b1ad7dc5a4af1",
-      "issue": 1510,
-      "message": {
-        "kind": "queued",
-        "issue": 1510,
-        "at": 1795260496415,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "76009cd13974a5e96df68196c10ce09f1131551d",
-        "delivered": true
-      }
-    },
-    "finish:4d251665-eea9-4f61-8560-4166d36e39f4:finish:1:admit": {
-      "digest": "418f04e60129e5e277a7c98cb3c957ef8a9a4d36acf9a120c4215378ec1123bb",
-      "issue": 1510,
-      "message": {
-        "kind": "admitted",
-        "issue": 1510,
-        "at": 1795260500639,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "76009cd13974a5e96df68196c10ce09f1131551d",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:4d251665-eea9-4f61-8560-4166d36e39f4:finish:3:s6-complete": {
-      "digest": "aac23dff16ce6742bc54a18e5e3e20d068b3fbde96a59ad6d2f9d5d258db0b7d",
-      "issue": 1510,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1510,
-        "at": 1795260535300,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "76009cd13974a5e96df68196c10ce09f1131551d",
-        "phase": "review",
-        "evidence": {
-          "id": "20261121T112831587-643f4aa6",
-          "name": "Тесты для задачи #1510 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T112831587-643f4aa6/report.json",
-          "materialSha": "76009cd13974a5e96df68196c10ce09f1131551d",
-          "status": "passed",
-          "finishedAt": "2026-11-21T11:28:53.626Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
     "github:44899482861:1:label:spec-request:spec-resubmitted:1472": {
       "digest": "1e225e5d6a9867f87dd55591a70db44209436d2fd69b6b918eec23a4c68b75db",
       "issue": 1472,
@@ -6480,83 +6198,6 @@
         "reviewChanges": "### Цель и подход\n\nЭто вторая редакция ТЗ. В ней зафиксирован выбор владельца по SVG. Новый backend отделён от геометрической flat/iso-плоскости; оба старых preferences и renderer сохраняются. Дополнительный boolean real_3d по умолчанию отсутствует; приоритет/возврат заданы таблицей. Предлагается Three.js/WebGL2 из исследования #1471, общая физическая геометрия, прежние HTML/UI/HA owners, lazy loading и render-on-demand. Альтернативы Babylon/PlayCanvas/OGL и перенос внешнего планировщика разобраны в исследовании; здесь выбрана ограниченная интеграция, а не второй проект дома.\n\n### Риски и места для внимания\n\nПросьба проверить целостность snapshot/camera/hit handoff и fallback, независимость от старого volumetric_view, прозрачность и полноту live layers, существующий backend/settings whitelist и совместимость, уход в редакторы/киоск, ownership GPU и async generation. Это ориентиры, не ограничение области независимого ревью.\n\nВ S3 проверены актуальный dev `3c82c0f1801173caa5aa6a5a7cfe19445c746305`, `src/pdf/svg-snapshot.ts` (Canvas не принимается), `docs/PDF-EXPORT.md` и `core/house_commands.py` (поля оформления цели). #1469 и #1470 уже закрыты; визуальный reference SHA фиксируется отдельно на старте S6, не из прежнего ревью. Главный вопрос ревью — как получить detached Flat-снимок из актуального кадра, не монтируя вторую живую карточку и не меняя основную камеру.\n\n### Исправления по предыдущему ревью\n\n- **SVG при живом Real 3D не определён** → §6, UX, i18n и AC13: решение владельца — плоский векторный SVG, явная подсказка до скачивания, штатная камера/слои без изменения экрана. При отказе WebGL экспорт соответствует видимому 2.5D/Flat; PDF не меняется.\n- **Загрузка дольше бюджета** → §7 и AC10 различают временный legacy-кадр с одним актуальным handoff и реальные отказы с latch.\n- **Возврат из фона и несколько карточек** → для первой версии нет фонового retry после подтверждённой потери контекста: fallback и штатный явный повтор сохраняются; AC11 проверяет изоляцию карточек.\n- **Прозрачность, перо и свет мебели** → §6 и AC4 называют три случая для парного визуального сравнения. **Оформление цели переноса** → модель и AC12 явно фиксируют `target_appearance.real_3d` как информацию о цели, не входной импорт флага.\n\n### Проверки и ограничения\n\nРевизия r2 меняет только ТЗ; продуктовые исходники и пользовательский HA не затрагивались. Передача требует зелёного `spec-check` формы; его результат не считается содержательным ревью или выполненным AC. Нет продуктовых прогонов на S3.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:7c4161f2-6563-4ed6-b4e6-bbfb590160ad": {
-      "digest": "2cf906c4865c09eeab81a92f0f9493d56b9758cef6c151e8506edfd6c5a2dba5",
-      "issue": 1510,
-      "message": {
-        "kind": "queued",
-        "issue": 1510,
-        "at": 1795261019505,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
-        "evidence": {
-          "id": "20261121T112831587-643f4aa6",
-          "name": "Тесты для задачи #1510 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T112831587-643f4aa6/report.json",
-          "materialSha": "76009cd13974a5e96df68196c10ce09f1131551d",
-          "status": "passed",
-          "finishedAt": "2026-11-21T11:28:53.626Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:7c4161f2-6563-4ed6-b4e6-bbfb590160ad:finish:1:admit": {
-      "digest": "9f5bd949007a5eb93af6051771e431e88d023348d8ca4e14bfca1378920e55dc",
-      "issue": 1510,
-      "message": {
-        "kind": "admitted",
-        "issue": 1510,
-        "at": 1795261023512,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261121T112831587-643f4aa6",
-          "name": "Тесты для задачи #1510 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T112831587-643f4aa6/report.json",
-          "materialSha": "76009cd13974a5e96df68196c10ce09f1131551d",
-          "status": "passed",
-          "finishedAt": "2026-11-21T11:28:53.626Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:7c4161f2-6563-4ed6-b4e6-bbfb590160ad:finish:3:s6-complete": {
-      "digest": "a7babc2977ba2b63e2e519620d25c50816330ddfd7ea707e5c02c32bd9c19f32",
-      "issue": 1510,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1510,
-        "at": 1795261041978,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
-        "phase": "review",
-        "evidence": {
-          "id": "20261121T113714027-15e2a336",
-          "name": "Тесты для задачи #1510 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261121T113714027-15e2a336/report.json",
-          "materialSha": "36af10803c20dbf027b922553b37419d112023a9",
-          "status": "passed",
-          "finishedAt": "2026-11-21T11:37:20.562Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "### Раунд 1 → исправление\nБлокер: nextCycle пересчитывался из изменяемого live списка при каждом повторе; существующая ветка требовала точного JSON-совпадения и могла остановиться до finish.\n\nИзменение: выбранный nextCycle записывается в существующий прогресс return-to-dev до подготовки ветки; повтор использует сохранённый план. Подготовленная/исправленная по ревью ветка авторитетна по своим метаданным: проверяются валидная база не старше опубликованного stable и согласованная будущая цель либо null/null, а не побайтовое совпадение с прошлым планом. Более новый цикл dev не откатывается; transport/JSON-ошибки при проверке не маскируются как отсутствие цикла. Успешный повтор с уже вошедшим циклом закрывает прежнюю служебную задачу, не создаёт новую.\n\nРегрессия: waiting после первой подготовки → сохранённый nextCycle → live inventory меняется/недоступен → повтор доходит до finish и завершает ту же задачу. Настоящая Git-ветка: согласованная правка цели после подготовки → повтор принимает новый SHA/цель без перезаписи ветки. Проверяются более новый цикл и отказ старой/несогласованной базы/цели. Адресный прогон четырёх файлов: 65/65 PASS; финальный S6 штатно через finish.\n\nНеблокирующие замечания: уточнён текст закрытой цели (цикл слитой задачи закреплён за её коммитом, простое обновление текущего цикла её не переносит), описание служебной задачи больше не обещает зачёт ревью для stable с метаданными; это ограничение и сохранение плана записаны в PROCESS.md. HA E2E не требуется: https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1510.md.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
       }
