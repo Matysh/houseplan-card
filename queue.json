@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19470,
-  "nextTicket": 591,
+  "revision": 19471,
+  "nextTicket": 592,
   "nextFence": 591,
   "tasks": {
     "1024": {
@@ -5657,14 +5657,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1511-mount-tv",
-      "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
+      "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 589,
-      "queued": false,
+      "ticket": 591,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795266950577,
-      "reviewEntry": 1,
+      "readyAt": 1795269125733,
+      "reviewEntry": 2,
       "patchId": "c240139592c8ab4d5ae64c61ce7cdbea46e5e62b",
       "changedFiles": [
         "custom_components/houseplan/core/furniture_workstation.py",
@@ -5716,13 +5716,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1511:1:c240139592c8ab4d5ae64c61ce7cdbea46e5e62b:36af10803c20dbf027b922553b37419d112023a9",
-      "reviewMaterial": {
-        "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
-        "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
-        "patchId": "c240139592c8ab4d5ae64c61ce7cdbea46e5e62b"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1511:1:c240139592c8ab4d5ae64c61ce7cdbea46e5e62b:36af10803c20dbf027b922553b37419d112023a9",
         "at": 1795268921503
@@ -6232,7 +6225,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1511
+  ],
   "active": {
     "issue": 1472,
     "worker": "finish",
@@ -6981,6 +6976,28 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:7d31d7ac-4bc9-49c4-bada-d0d8c2226446": {
+      "digest": "0640fa8db09487627fc5da87629d556ffc6ab47e2692bbbd3fafb48fdee5ab84",
+      "issue": 1511,
+      "message": {
+        "kind": "queued",
+        "issue": 1511,
+        "at": 1795269125733,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
+        "evidence": {
+          "id": "20261121T133034051-9555e51a",
+          "name": "Тесты для задачи #1511 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261121T133034051-9555e51a/report.json",
+          "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
+          "status": "passed",
+          "finishedAt": "2026-11-21T13:33:52.455Z",
+          "failures": []
+        }
       }
     }
   },
