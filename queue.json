@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19396,
-  "nextTicket": 589,
+  "revision": 19397,
+  "nextTicket": 590,
   "nextFence": 589,
   "tasks": {
     "1024": {
@@ -5668,6 +5668,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1511": {
+      "issue": 1511,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1511-mount-tv",
+      "materialSha": "82eea3dea6cc361417766fb2465c9f98c34d86ad",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 589,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795266950577,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6177,7 +6191,9 @@
       "runId": 44900005683
     }
   },
-  "waiting": [],
+  "waiting": [
+    1511
+  ],
   "active": {
     "issue": 1472,
     "worker": "finish",
@@ -6650,6 +6666,19 @@
         "materialSha": "0a43fd36c857fe3841a3ad54962bbbcca66d6036",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:c46d3215-2147-4f5d-862a-5752e5f400e8": {
+      "digest": "91ff055796f7beff03c6be243bcf443886fc107e3cce5402a5a15c00c02bf748",
+      "issue": 1511,
+      "message": {
+        "kind": "queued",
+        "issue": 1511,
+        "at": 1795266950577,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "82eea3dea6cc361417766fb2465c9f98c34d86ad"
       }
     }
   },
