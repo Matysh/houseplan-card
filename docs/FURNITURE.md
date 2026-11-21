@@ -219,6 +219,15 @@ original computer path do not enlarge the printed footprint; a crop does not
 leak into following PDF commands. This changes neither the plan nor the
 ordinary print options.
 
+## Television on a TV cabinet (#1511)
+
+The `tv` shape can carry an explicit `tv_cabinet_id` reference to one
+`cabinet_tv` on the same floor. Flat and architectural PDF center the TV over
+the cabinet and apply its rotation and reflections. The 2.5D stand rests at
+the height of the cabinet model's `console-top` part. The TV retains its own
+dimensions and style. An overlapping TV with no link still stands on the
+floor.
+
 ## Compatibility and performance
 
 The backend schema additively accepts optional boolean furniture `flip_h` and

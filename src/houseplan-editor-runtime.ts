@@ -1,5 +1,6 @@
 import type { PlanHost, HostPresentationContext } from './plan-host';
 import { workstationTarget, toggleWorkstation, removeWorkstationItems } from './iso-lab-workstation';
+import { tvMountTarget, toggleTvMount } from './tv-mount';
 import { hasMarkers } from './plan-capabilities';
 import { ModeChromeLayouts, type ModeChromeProbe } from './mode-chrome-layout';
 import {WallSideDimensionEditor} from './wall-side-dimension-editor';
@@ -5367,8 +5368,10 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
     const selected = this.host._dtSel;
     if (selected) {
       const label = this.host._t((`decor.${selected.kind}`) as any);
-      const workstation = this.host._canEdit && this.host._haFurnitureWorkstationApi === 1
+      const workstation = this.host._canEdit && this.host._haFurnitureWorkstationApi
         ? workstationTarget(this.host._decorList, selected) : null;
+      const tvMount = this.host._canEdit && this.host._haFurnitureWorkstationApi === 2
+        ? tvMountTarget(this.host._decorList, selected) : null;
       return {
         contextId,
         kind: 'selection',
@@ -5382,7 +5385,7 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
                 @click=${() => this._runEditorContext(contextId, () => {
                   const current = this.host._dtSel;
                   const space = this.host._curSpaceCfg;
-                  if (!space || !this.host._canEdit || this.host._haFurnitureWorkstationApi !== 1
+                  if (!space || !this.host._canEdit || !this.host._haFurnitureWorkstationApi
                       || !current || current.id !== selected.id) return;
                   const target = workstationTarget(this.host._decorList, current);
                   if (!target) return;
@@ -5398,6 +5401,22 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
                   this.host.requestUpdate();
                 })}>${this.host._t(workstation.desk.workstation === 'mounted'
                   ? 'decor.workstation_unmount' : 'decor.workstation_mount')}</button>` : nothing}
+            ${tvMount
+              ? html`<button class="btn ghost" data-hp="action" data-action="tv-mount"
+                @click=${() => this._runEditorContext(contextId, () => {
+                  const current = this.host._dtSel;
+                  const space = this.host._curSpaceCfg;
+                  if (!space || !this.host._canEdit || this.host._haFurnitureWorkstationApi !== 2
+                      || !current || current.id !== selected.id) return;
+                  const target = tvMountTarget(this.host._decorList, current);
+                  if (!target) return;
+                  const before = this._geometrySnapshot();
+                  space.decor = toggleTvMount(this.host._decorList, target);
+                  this.host._decorSel = target.mounted ? target.tv.id : target.cabinet.id;
+                  this._recordGeometry(this.host._t(target.mounted ? 'decor.tv_unmount' : 'decor.tv_mount'), before);
+                  this._saveConfig();
+                  this.host.requestUpdate();
+                })}>${this.host._t(tvMount.mounted ? 'decor.tv_unmount' : 'decor.tv_mount')}</button>` : nothing}
             ${(['front', 'back'] as const).map(direction => html`<button class="btn ghost" data-hp="action" data-action=${`decor-${direction}`}
               ?disabled=${(direction === 'front' ? this.host._decorList[this.host._decorList.length - 1] : this.host._decorList[0])?.id === selected.id}
               @click=${() => this._runEditorContext(contextId, () => this.decorOrder.command(selected.id, direction))}>

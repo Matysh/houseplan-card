@@ -76,6 +76,8 @@ export interface DecorFurniture extends DecorBoxBase {
   workstation?: 'mounted' | 'tower';
   /** Same-space computer/tower owned by this mounted desk. */
   workstation_tower_id?: string;
+  /** Explicit same-space support for a television on a stand. */
+  tv_cabinet_id?: string;
   /** Mirroring is presentation state; persisted extents always stay positive. */
   flip_h?: boolean;
   flip_v?: boolean;

@@ -102,7 +102,7 @@ _LOGGER = logging.getLogger(__name__)
 PLAN_APIS = {"wall_node_move_api": 1, "wall_node_merge_api": 1, "wall_node_attach_api": 1,
              "wall_node_delete_api": 1, "plan_graph_api": 1, "room_label_layout_api": 1,
              "graph_change_api": 2, "opening_features_api": 1, "structural_upload_api": 1,
-             "decor_assets_api": DECOR_ASSETS_API_VERSION, "furniture_workstation_api": 1}
+             "decor_assets_api": DECOR_ASSETS_API_VERSION, "furniture_workstation_api": 1, "furniture_tv_mount_api": 1}
 
 
 def changed_summary_entity_ids(config: dict, previous: dict | None) -> set[str] | None:

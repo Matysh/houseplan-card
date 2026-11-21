@@ -1620,6 +1620,12 @@ Boiler: {climate.boiler:hvac_action}
 
 &emsp;&emsp;Select the equipped desk and choose **Remove from desk** to restore a plain desk and an ordinary computer assembled around the tower's current position. Mount and unmount each use one Undo/Redo step. The link survives reload, space copies and export/import, including plan-only transfer. A single copied item is independent and never points into its original pair. An older tab must reload before changing the relationship; the furniture itself is retained.
 
+### Television on a TV cabinet
+
+&emsp;&emsp;In the Background editor, overlap a TV with stand and a TV cabinet. Select either piece and choose **Place on TV cabinet**. In 2.5D the stand rests on the cabinet surface. The television keeps its size and moves and turns with the cabinet.
+
+&emsp;&emsp;Select the cabinet and choose **Remove from TV cabinet** to put the television back on the floor in its current position.
+
 ### Custom images
 
 &emsp;&emsp;The Image palette stores reusable files privately in House Plan. Each processed file in storage is at most 2 MiB; PNG, JPEG, WebP and safe SVG are supported. When a raster source exceeds that limit, the warning dialog offers to upload a reduced copy while keeping the oversized original unavailable. After picking a file, you can place one instance: the pointer preview shows the result, one click adds it at 100 cm wide (aspect-preserving, height capped at 200 cm), and the tool returns to Select.

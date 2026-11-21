@@ -531,6 +531,19 @@ reflections and crop-aware fit; neither print nor View writes geometry.
 Static `houseplan-space-card` still displays supported decor images rather
 than furniture and is not expanded by this feature.
 
+### 6.3. Television on a TV cabinet (#1511)
+
+When the center of a freestanding TV overlaps an empty TV cabinet, selecting
+either piece offers **Place on TV cabinet**. This centers and aligns the TV
+with the cabinet while keeping its dimensions and style. Select the cabinet
+to move the pair or choose **Remove from TV cabinet**. Removing the link or
+deleting the cabinet puts the surviving TV on the floor at its current
+position. Mount and unmount each add one Undo/Redo step.
+
+The pair survives a reload and a whole-space copy. A single-object copy is
+independent. The actions require ordinary edit access and the
+`furniture_tv_mount_api: 1` server capability.
+
 ## 7. Custom image lifecycle
 
 

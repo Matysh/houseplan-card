@@ -72,6 +72,20 @@ not given new furniture support. The volume camera/profile and the changed
 Introduction is #1451; its first published stable and any retirement boundary
 remain pending actual publication. No new minimum released version is assumed.
 
+## Television on a TV cabinet (#1511)
+
+The optional `tv_cabinet_id` field on a `tv` names one `cabinet_tv` in the
+same space. Each cabinet accepts one television. Older configurations work
+without migration. A server advertises `furniture_tv_mount_api: 1` in addition
+to `furniture_workstation_api: 1`. Writers supporting TV links send
+`furniture_workstation_api: 2`. Version 1 clients continue to edit computer
+workstations and must preserve stored TV links.
+
+Portable full and space JSON containing TV links uses `export_version: 5`.
+House ZIPs containing TV links require `required_api.furniture_workstation_api: 2`.
+Space copies and compatible imports remap the cabinet reference within the
+floor. Import repair removes invalid references and retains the furniture.
+
 ## Plan-only house container (#1464)
 
 This is a separate `houseplan-plan-transfer` ZIP, archive_version1, with a first
@@ -79,7 +93,7 @@ stored `mimetype` entry `application/vnd.houseplan.plan+zip;version=1`. Its
 document is houseplan-export export_version4/kind house/model11 and requires
 house_transfer_api1 plus literal transfer.plan_only=true. These numbers do not
 replace the independently selected space/full JSON versions (including the
-conditional workstation v4 above) or full-backup archive_version1. Extracted
+conditional furniture-link v4/v5 above) or full-backup archive_version1. Extracted
 document.json is refused by the ordinary JSON ingress. Keep all old readers.
 
 The optional handshake selects one upload route before sending bytes. A known

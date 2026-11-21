@@ -42,7 +42,7 @@ from .content_index import (
     internal_reference,
 )
 from .furniture_workstation import (
-    has_workstations,
+    required_workstation_api,
     remap_workstation_items,
     repair_workstations,
 )
@@ -90,6 +90,10 @@ from .wall_segment_model import commit_wall_segment_model as commit_wall_segment
 FORMAT = "houseplan-export"
 
 
+# Full/space JSON version required by each furniture-link capability.
+FURNITURE_EXPORT_VERSIONS = (0, 4, 5)
+
+
 def create_migration_source_export(runtime: PortableRuntime, snapshot: dict[str, Any], *,
     card_version: str, config_root: Path) -> tuple[dict[str, Any], str]:
     """Read-only rollback copy: the original logical pair in the v1 envelope.
@@ -116,8 +120,9 @@ def create_migration_source_export(runtime: PortableRuntime, snapshot: dict[str,
     unfinished_layout = {str(key): value for key, value in old_pending.items() if str(key) not in old_frames}
     migrate_layout(layout, unfinished_layout)
     model = _stored_model_version(config)
+    furniture_version = FURNITURE_EXPORT_VERSIONS[required_workstation_api(config)]
     document = {
-        "format": FORMAT, "export_version": 4 if has_workstations(config) else 1,
+        "format": FORMAT, "export_version": furniture_version or 1,
         "kind": "full", "model_version": model,
         "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "source_fingerprint": source_fingerprint(runtime.instance_id),
@@ -188,7 +193,7 @@ _DECOR_KIND_FIELDS = {
     "ellipse": ("x", "y", "w", "h", "angle", "fill", "fill_color", "fill_opacity"),
     "text": ("x", "y", "text", "size", "size_cm", "scale", "angle"),
     "furniture": ("symbol", "x", "y", "w", "h", "angle", "flip_h", "flip_v",
-                  "workstation", "workstation_tower_id"),
+                  "workstation", "workstation_tower_id", "tv_cabinet_id"),
     "image": ("asset_id", "x", "y", "w", "h", "angle", "flip_h", "flip_v"),
 }
 
@@ -700,12 +705,13 @@ def prepare_export_document(
     except vol.Invalid as err:
         raise ImportFailure("invalid_config", str(err)) from err
     dropped_marker_links += recovery["counts"].get("controls", 0) + recovery["counts"].get("value", 0)
+    furniture_version = FURNITURE_EXPORT_VERSIONS[required_workstation_api(config)]
     document = {
         "format": FORMAT,
-        "export_version": 4 if has_workstations(config) else EXPORT_VERSION if any(
+        "export_version": furniture_version or (EXPORT_VERSION if any(
             "opening_features" in opening for space in config.get("spaces", [])
             for opening in space.get("openings", [])
-        ) else 2,
+        ) else 2),
         "kind": kind,
         "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "source_fingerprint": source_fingerprint(runtime.instance_id),
@@ -809,7 +815,7 @@ def parse_document(
         raise ImportFailure("invalid_json", str(err)) from err
     if not isinstance(document, dict) or document.get("format") != FORMAT:
         raise ImportFailure("invalid_format", "Not a House Plan export")
-    if type(document.get("export_version")) is not int or document["export_version"] not in (1, 2, EXPORT_VERSION, 4):
+    if type(document.get("export_version")) is not int or document["export_version"] not in (1, 2, EXPORT_VERSION, *FURNITURE_EXPORT_VERSIONS[1:]):
         raise ImportFailure("unsupported_export_version", "Unsupported export version")
     if document.get("kind") not in ("full", "space"):
         raise ImportFailure("invalid_format", "Export kind must be full or space")
@@ -826,8 +832,9 @@ def parse_document(
         # A future or mixed extension must not disappear in import repair.
         if not isinstance(config_candidate, dict):
             raise vol.Invalid("Configuration must be an object")
-        if has_workstations(config_candidate) and document["export_version"] < 4:
-            raise ImportFailure("unsupported_export_version", "Workstation links require export version 4")
+        furniture_version = FURNITURE_EXPORT_VERSIONS[required_workstation_api(config_candidate)]
+        if document["export_version"] < furniture_version:
+            raise ImportFailure("unsupported_export_version", "The export version does not support these furniture links")
         workstations = merge_workstation_reports(workstation_repairs, repair_workstations(config_candidate))
         for space in config_candidate.get("spaces", []):
             if not isinstance(space, dict):

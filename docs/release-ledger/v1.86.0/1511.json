@@ -1,0 +1,1 @@
+{"schema":1,"issue":1511,"baseStable":"v1.86.0","category":"major","rationale":"Adds a Background editor action and a saved furniture link for a TV on a cabinet.","summary":{"ru":"Телевизор можно поставить на ТВ-тумбу и перемещать вместе с ней.","en":"Place a TV on a TV cabinet and move both together."}}

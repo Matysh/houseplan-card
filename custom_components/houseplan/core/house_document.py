@@ -16,7 +16,7 @@ import voluptuous as vol
 from .backup_archive import image_refs, strict_json
 from .constants import DEFAULT_CONFIG, MAX_EXPORT_BYTES
 from .furniture_workstation import (
-    has_workstations,
+    required_workstation_api,
     remap_workstation_items,
     repair_workstations,
 )
@@ -169,11 +169,15 @@ def export_document(identity, config_data, layout_data, card_version="", build=N
     except (WallSegmentMigrationError, vol.Invalid, KeyError, TypeError) as error:
         raise fail("invalid_config") from error
     stamp = datetime.now(UTC)
+    required_api = dict(REQUIRED_API)
+    furniture_api = required_workstation_api(config)
+    if furniture_api:
+        required_api["furniture_workstation_api"] = furniture_api
     document = {"format": FORMAT, "export_version": EXPORT_VERSION, "kind": "house",
         "created_at": stamp.isoformat().replace("+00:00", "Z"),
         "source_fingerprint": source_fingerprint(identity.instance_id), "card_version": card_version,
         "integration_version": identity.integration_version, "model_version": PLAN_MODEL_VERSION,
-        "required_api": {**REQUIRED_API, **({"furniture_workstation_api": 1} if has_workstations(config) else {})},
+        "required_api": required_api,
         "payload": {"config": config, "layout": layout},
         "transfer": {"plan_only": True}, **({"build": dict(build)} if build else {})}
     sanitize_image_urls(document)
@@ -197,7 +201,7 @@ def parse_document(raw, *, workstation_repairs=None):
         raise fail()
     if (set(required) - {"house_transfer_api", "furniture_workstation_api"}
             or required["house_transfer_api"] != 1
-            or required.get("furniture_workstation_api", 1) != 1):
+            or required.get("furniture_workstation_api", 1) not in (1, 2)):
         raise fail("unsupported-transfer")
     if document.get("transfer") != {"plan_only": True} or type(document["transfer"].get("plan_only")) is not bool:
         raise fail()
@@ -222,7 +226,7 @@ def parse_document(raw, *, workstation_repairs=None):
     if not isinstance(payload, dict) or set(payload) != {"config", "layout"}:
         raise fail()
     incoming = _json_copy(payload["config"])
-    if isinstance(incoming, dict) and has_workstations(incoming) and "furniture_workstation_api" not in required:
+    if isinstance(incoming, dict) and required_workstation_api(incoming) > required.get("furniture_workstation_api", 0):
         raise fail("unsupported-transfer")
     repaired = repair_workstations(incoming)
     config, layout = _privacy(incoming, payload["layout"])

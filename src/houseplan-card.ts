@@ -344,7 +344,8 @@ import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
 import type { IsoWallLightSource } from './iso-wall-light';
 import { IsoLightTransition } from './iso-light-transition';
 import {acceptedViewFrame, canonicalPhysicalCamera, hasMeasuredViewSize, physicalViewCamera, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
-import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume } from './iso-lab-furniture';
+import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume, tvCabinetSurfaceCm } from './iso-lab-furniture';
+import { tvCabinet, tvOnCabinet } from './tv-mount';
 import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
 import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
 import { renderIsoLabFurniture, furnitureShadow } from './iso-lab-furniture-render';
@@ -9977,7 +9978,7 @@ export class HouseplanCard extends LitElement {
       const response = await sendHouseplanWrite<any>(writeHass, {
         type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: expectedRev,
         ...(this._haOpeningFeaturesApi === 1 ? { opening_features_api: 1 } : {}),
-        ...(this._haFurnitureWorkstationApi === 1 ? { furniture_workstation_api: 1 } : {}),
+        ...(this._haFurnitureWorkstationApi ? { furniture_workstation_api: this._haFurnitureWorkstationApi } : {}),
         ...(graph_change ? {graph_change} : {}),
         ...(contactLayout?{contact_layout:contactLayout}:{}),
         ...(roomLabels?{room_label_layout:roomLabels}:{}),
@@ -10695,31 +10696,42 @@ export class HouseplanCard extends LitElement {
       modeScale === null ? stage?.clientHeight : modeScale * planView.h, planView.w, planView.h,
     );
     const onlyIds = Array.isArray(onlyId) ? new Set(onlyId) : null;
-    let decorShapes = this._decorList.filter((sh) => onlyIds ? onlyIds.has(sh.id) : onlyId === undefined || sh.id === onlyId);
-    if (paint !== 'all' && decorShapes.some(sh=>sh.kind==='furniture')) void FURNITURE_VOLUME_RUNTIME.ensure(this);
+    let decorShapes = this._decorList.flatMap(record => {
+      const cabinet = record.kind === 'furniture' && record.tv_cabinet_id
+        ? tvCabinet(this._decorList, record) : undefined;
+      const owner = cabinet ?? record;
+      if (!(onlyIds ? onlyIds.has(owner.id) : onlyId === undefined || owner.id === onlyId)) return [];
+      const shape = cabinet && record.kind === 'furniture' ? tvOnCabinet(record, cabinet) : record;
+      return [{ record, shape, owner, cabinet }];
+    });
+    if (paint !== 'all' && decorShapes.some(({shape})=>shape.kind==='furniture')) void FURNITURE_VOLUME_RUNTIME.ensure(this);
     // Tilted Lab furniture sits above floor light. Keep flat/unsupported decor
     // in its original slot; each object is painted exactly once.
-    if (paint !== 'all') decorShapes = decorShapes.filter(sh => {
+    if (paint !== 'all') decorShapes = decorShapes.filter(({shape: sh}) => {
       const volume = sh.kind === 'furniture' && !!furnitureParts(sh.symbol);
       return paint === 'volume' ? volume : !volume;
     });
     if (paint === 'volume') {
       const camera=isoCameraFor(this._rotation);
-      const furniture=decorShapes.filter((sh)=>sh.kind==='furniture' && furnitureParts(sh.symbol))
-        .sort((a,b)=>furnitureViewDepth(a as Extract<DecorShape,{kind:'furniture'}>,W,H,camera)
-          -furnitureViewDepth(b as Extract<DecorShape,{kind:'furniture'}>,W,H,camera));
+      const depth = (entry: typeof decorShapes[number]) =>
+        furnitureViewDepth(entry.shape as Extract<DecorShape,{kind:'furniture'}>,W,H,camera);
+      const furniture=decorShapes.filter(({shape})=>shape.kind==='furniture' && furnitureParts(shape.symbol))
+        .sort((a,b) => {
+          const delta = depth(a)-depth(b);
+          return Math.abs(delta) > 1e-9 ? delta : Number(!!a.cabinet)-Number(!!b.cabinet);
+        });
       let next=0;
       // Retain other decor's paint slots; only order supported volume subjects.
-      decorShapes=decorShapes.map(sh=>sh.kind==='furniture' && furnitureParts(sh.symbol) ? furniture[next++] : sh);
+      decorShapes=decorShapes.map(entry=>entry.shape.kind==='furniture' && furnitureParts(entry.shape.symbol) ? furniture[next++] : entry);
     }
-    const shapes = decorShapes.map((sh) => guard([this._modeSceneRevision, FURNITURE_VOLUME_RUNTIME.state(), sh, furnitureScreenScale, onlyId, paint, this._rotation, this._renderProjection, this._cellCm,
-      editing && this._decorSel === sh.id, erasing, preparedSelect,
+    const shapes = decorShapes.map(({record, shape: sh, owner, cabinet}) => guard([this._modeSceneRevision, FURNITURE_VOLUME_RUNTIME.state(), record, cabinet, furnitureScreenScale, onlyId, paint, this._rotation, this._renderProjection, this._cellCm,
+      editing && this._decorSel === owner.id, erasing, preparedSelect,
       sh.kind === 'image' && !this._decorAssets.has(sh.asset_id) && editing], () => {
-      const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
+      const cls = 'dshape' + (editing && this._decorSel === owner.id ? ' dsel' : '');
       const style = this._decorResolvedStyle(sh);
       const strokeWidth = this._decorWidthUnits(sh);
-      const down = (e: PointerEvent) => this._decorShapeDown(e, sh);
-      const dbl = (e: MouseEvent) => this._decorShapeDbl(e, sh);
+      const down = (e: PointerEvent) => this._decorShapeDown(e, owner);
+      const dbl = (e: MouseEvent) => this._decorShapeDbl(e, owner);
       // docs/STYLING-HOOKS.md §3: every shape carries its kind and its id
       if (sh.kind === 'line')
         // round caps: line ends read as circles of the stroke width, so two
@@ -10785,8 +10797,8 @@ export class HouseplanCard extends LitElement {
       if (sh.kind === 'furniture') {
         if (paint === 'volume') {
           const scale=gridVisualScale(this._cellCm);
-          const mesh=furnitureMesh(sh,W,H,isoCameraFor(this._rotation),scale);
-          if(mesh) return renderIsoLabFurniture(mesh,sh.id,sh.symbol,style.color,scale);
+          const mesh=furnitureMesh(sh,W,H,isoCameraFor(this._rotation),scale,cabinet ? tvCabinetSurfaceCm() : 0);
+          if(mesh) return renderIsoLabFurniture(mesh,sh.id,sh.symbol,style.color,scale,!cabinet);
         }
         // One path per piece. Designer art keeps its native viewBox and is
         // scaled to the user's stored box; vector-effect rejects that local
@@ -10811,12 +10823,12 @@ export class HouseplanCard extends LitElement {
           stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"
           @pointerdown=${down} @dblclick=${dbl}></path>
           ${preparedSelect ? svg`<path
-            class="dshape dfurniturehit" data-hp="decor" data-id="${sh.id}"
+            class="dshape dfurniturehit" data-hp="decor" data-id="${owner.id}"
             data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${transform}
             stroke-width="${selectStrokePx}" fill="none" stroke-linecap="round"
             stroke-linejoin="round" vector-effect="non-scaling-stroke"
             @pointerdown=${down} @dblclick=${dbl}></path>` : nothing}
-          ${erasing ? svg`<path class="dshape derasehit" data-hp="decor" data-id="${sh.id}"
+          ${erasing ? svg`<path class="dshape derasehit" data-hp="decor" data-id="${owner.id}"
             data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${transform}
             vector-effect="non-scaling-stroke"
             @pointerdown=${down}></path>` : nothing}`;
@@ -13281,27 +13293,32 @@ export class HouseplanCard extends LitElement {
       const camera = isoScene?.camera;
       const furniture = useFurnitureVolume && camera && !disp.hideDecor
         ? this._decorList.filter((item): item is Extract<DecorShape,{kind:'furniture'}> => item.kind === 'furniture')
-          .sort((a,b)=>furnitureViewDepth(a,NORM_W,this._decorH,camera)-furnitureViewDepth(b,NORM_W,this._decorH,camera))
           .flatMap(item=>{
-            const volume = furnitureVolume(item,NORM_W,this._decorH,camera,scale);
+            const cabinet = item.tv_cabinet_id ? tvCabinet(this._decorList, item) : undefined;
+            const lift = cabinet ? tvCabinetSurfaceCm() : 0;
+            const shape = cabinet ? tvOnCabinet(item, cabinet) : item;
+            const volume = furnitureVolume(shape,NORM_W,this._decorH,camera,scale,lift);
             if (!volume) return [];
             const {mesh,footprint,height} = volume;
             const style = this._decorResolvedStyle(item);
-            return [{footprint,height,mesh,opacity:1,
-              shadow:furnitureShadow(mesh,scale,false),
+            return [{footprint,height,mesh,lift,opacity:1,
+              shadow:lift ? nothing : furnitureShadow(mesh,scale,false),
               body:svg`<g transform=${isoFloorMatrixCss(camera)}>
                 ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,scale,false,sampleFurnitureLight)}</g>`}];
           }) : [];
       if(iso && camera){
         stairVolumes=this._stairsView.volumeItems(camera);
         for(const [id,volume] of stairVolumes){
-          furniture.push({...volume,opacity:1,
+          furniture.push({...volume,lift:0,opacity:1,
             shadow:furnitureShadow(volume.mesh,scale,false),
             body:svg`<g transform=${isoFloorMatrixCss(camera)}>${this._stairsView.renderLayer(new Map([[id,volume]]),'volume')}</g>`});
         }
         const [,b,,d]=isoFloorMatrix(camera);
         const depth=(item:typeof furniture[number])=>item.footprint.reduce((sum,p)=>sum+b*p[0]+d*p[1],0)/item.footprint.length;
-        furniture.sort((x,y)=>depth(x)-depth(y));
+        furniture.sort((x,y)=>{
+          const delta = depth(x)-depth(y);
+          return Math.abs(delta)>1e-9 ? delta : x.lift-y.lift;
+        });
       }
       isoFrame = isoRuntime?.resolveIsoFramePresentation({
         projection, display: disp, scene: isoScene, openings: this._openingsR, furniture,

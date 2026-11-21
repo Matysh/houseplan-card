@@ -101,33 +101,38 @@ export function furnitureViewDepth(shape: FurnitureTransformBox, canvasW: number
   return x*sin+y*cos;
 }
 
+export function tvCabinetSurfaceCm(): number {
+  return furnitureParts('cabinet_tv')?.find(part => part.name === 'console-top')?.top ?? 0;
+}
+
 type FurnitureSubject = FurnitureTransformBox & Pick<DecorFurniture,'symbol'|'workstation'>;
 const meshCache = new WeakMap<FurnitureSubject,{camera:IsoCamera; key:string; volume:FurnitureVolume}>();
 
 export function furnitureMesh(shape: FurnitureSubject,
-  canvasW: number, canvasH: number, camera: IsoCamera, visualScale=1): FurnitureMesh | null {
-  return furnitureVolume(shape,canvasW,canvasH,camera,visualScale)?.mesh ?? null;
+  canvasW: number, canvasH: number, camera: IsoCamera, visualScale=1, liftCm=0): FurnitureMesh | null {
+  return furnitureVolume(shape,canvasW,canvasH,camera,visualScale,liftCm)?.mesh ?? null;
 }
 
 export function furnitureVolume(shape: FurnitureSubject,
-  canvasW: number, canvasH: number, camera: IsoCamera, visualScale=1): FurnitureVolume | null {
+  canvasW: number, canvasH: number, camera: IsoCamera, visualScale=1, liftCm=0): FurnitureVolume | null {
   const base=furnitureParts(shape.symbol);
-  if (!base || ![shape.x,shape.y,shape.w,shape.h,Number(shape.angle ?? 0),canvasW,canvasH,visualScale].every(Number.isFinite)
+  if (!base || ![shape.x,shape.y,shape.w,shape.h,Number(shape.angle ?? 0),canvasW,canvasH,visualScale,liftCm].every(Number.isFinite)
     || shape.w<=0 || shape.h<=0 || canvasW<=0 || canvasH<=0 || visualScale<=0) return null;
   const key = [shape.symbol,shape.workstation,shape.x,shape.y,shape.w,shape.h,shape.angle,shape.flip_h,shape.flip_v,
-    canvasW,canvasH,visualScale].join('|');
+    canvasW,canvasH,visualScale,liftCm].join('|');
   const cached = meshCache.get(shape);
   if (cached?.camera === camera && cached.key === key) return cached.volume;
   const parts=shape.workstation ? workstationParts(shape,base,furnitureParts('computer') || []) : base;
   const [cos,sin]=isoRotationBasis(camera), scale=FURNITURE_HEIGHT_SCALE*visualScale;
+  const lift = liftCm * scale;
   const elevation=(90-camera.tiltDeg)*Math.PI/180;
   const transform=(p:PlanPoint) => furniturePlanPoint(shape,p,canvasW,canvasH);
   // These paths live inside the existing floor matrix. Inverting that matrix
   // once lets z remain vertical on screen at every camera turn.
-  const atHeight=(p:PlanPoint,z:number) => unprojectFloorPoint(projectPlanPoint(p,z,camera),camera);
+  const atHeight=(p:PlanPoint,z:number) => unprojectFloorPoint(projectPlanPoint(p,z+lift,camera),camera);
   const meshes=parts.map(p => {
     const center=transform([p.x+p.w/2,p.y+p.h/2]);
-    const depth=(center[0]*sin+center[1]*cos)*Math.cos(elevation)+(p.bottom+p.top)/2*scale*Math.sin(elevation);
+    const depth=(center[0]*sin+center[1]*cos)*Math.cos(elevation)+((p.bottom+p.top)/2*scale+lift)*Math.sin(elevation);
     if(p.profile||p.plane||p.inset||p.baseScale||p.topScale){
       const caps:string[]=[],sides:string[]=[];
       const bands=new Map<number,{count:number;edges:Map<number,PlanPoint[]>}>();
@@ -193,8 +198,9 @@ export function furnitureVolume(shape: FurnitureSubject,
     return path(furnitureFootprint(footprint,shape.w*canvasW,shape.h*canvasH).map(transform));
   }).join(' '):path(furnitureFootprint(part('shadow',.03,.03,.94,.94,0,0,.08),shape.w*canvasW,shape.h*canvasH).map(transform));
   const footprint = ([[0,0],[1,0],[1,1],[0,1]] as const).map(transform);
-  const height = Math.max(...parts.map(p=>p.top))*scale;
-  const corners = [...footprint,...footprint.map(p=>atHeight(p,height))];
+  const localHeight = Math.max(...parts.map(p=>p.top))*scale;
+  const height = localHeight + lift;
+  const corners = [...(lift ? footprint.map(p=>atHeight(p,0)) : footprint),...footprint.map(p=>atHeight(p,localHeight))];
   const xs=corners.map(p=>p[0]), ys=corners.map(p=>p[1]);
   const left=Math.min(...xs)-1, top=Math.min(...ys)-1;
   const lightBox = [left,top,Math.max(...xs)-left+1,Math.max(...ys)-top+1] as const;

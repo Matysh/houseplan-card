@@ -6,7 +6,7 @@
   "backup.house_floors": "Floors to add",
   "backup.house_target_settings": "The target home's global appearance and lighting settings stay unchanged. Per-floor settings are transferred where supported; the result may look different. No global import undo is created.",
   "backup.house_warnings": "Transfer warnings",
-  "backup.workstations_detached": "Invalid computer-to-desk links removed: {n}. The furniture was kept; place the computer on its desk again in the Background editor if needed.",
+  "backup.workstations_detached": "Invalid furniture links removed: {n}. The furniture was kept. Restore the links in the Background editor if needed.",
   "backup.house_dangling_stair": "Stair link to unavailable floor {target} will be cleared.",
   "backup.house_confirm_missing": "Continue without unavailable images. Missing backgrounds will be detached; decor images remain repairable placeholders. External URLs are kept but not downloaded by the server.",
   "backup.house_add": "Add house",

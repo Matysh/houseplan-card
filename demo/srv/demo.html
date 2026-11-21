@@ -115,7 +115,8 @@ const SERVED={config:0,layout:0};
 const server=createFixtureStore(CFG,LAYOUT,(event,rev,extra)=>{
   if(extra?.external_screens_update)SERVED.config=rev; // This revision was served in the bounded event.
   for(const cb of SERVER_LISTENERS[event])cb({event_type:event,data:{rev,...extra}});
-},{markerHistory:new URLSearchParams(location.search).get('device-history')==='1',externalScreens:new URLSearchParams(location.search).get('external-screens')==='1'});
+},{markerHistory:new URLSearchParams(location.search).get('device-history')==='1',externalScreens:new URLSearchParams(location.search).get('external-screens')==='1',
+   tvMount:new URLSearchParams(location.search).get('tv-mount')==='1'});
 window.__servedRevision=SERVED;
 const OWN_SCREEN_SUBSCRIPTIONS=new Set();
 window.__externalScreenSubscriptionCounts=()=>({own:OWN_SCREEN_SUBSCRIPTIONS.size,total:SERVER_LISTENERS.houseplan_config_updated.size});

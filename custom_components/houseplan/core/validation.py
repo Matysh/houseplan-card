@@ -1864,6 +1864,7 @@ DECOR_SCHEMA = vol.All(vol.Any(
                 vol.Required("w"): _FURN_SIZE, vol.Required("h"): _FURN_SIZE,
                 vol.Optional("flip_h"): bool, vol.Optional("flip_v"): bool,
                 vol.Optional("workstation"): vol.In(("mounted", "tower")),
+                vol.Optional("tv_cabinet_id"): vol.All(str, vol.Length(min=1, max=512)),
                 vol.Optional("workstation_tower_id"): vol.All(str, vol.Length(min=1, max=512)),
                 vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0))},
                extra=vol.ALLOW_EXTRA),

@@ -47,6 +47,7 @@ import {
 } from './pdf-writer';
 import { transformSvgPath, type PdfAffine } from './svg-path';
 import { desktopSurface, TOWER_BOX } from '../iso-lab-workstation';
+import { tvCabinet, tvOnCabinet } from '../tv-mount';
 import { pdfLocalDate } from './pdf-date';
 import { rotatePdfCommands } from './pdf-layout';
 import { planRotation, type PlanRotation } from '../view-frame';
@@ -457,7 +458,10 @@ function buildPdfCandidate(
     });
   }
 
-  if (input.options.decor) for (const shape of (input.rawSpace.decor || []) as DecorShape[]) {
+  const decor = (input.rawSpace.decor || []) as DecorShape[];
+  if (input.options.decor) for (const record of decor) {
+    const cabinet = record.kind === 'furniture' ? tvCabinet(decor, record) : undefined;
+    const shape = cabinet && record.kind === 'furniture' ? tvOnCabinet(record, cabinet) : record;
     if (shape.kind === 'image') continue;
     if (shape.kind === 'line') commands.push({
       kind: 'line', points: [pt([shape.x1 * NORM_W, shape.y1 * NORM_W]),

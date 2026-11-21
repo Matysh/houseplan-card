@@ -83,7 +83,7 @@ def test_new_invalid_or_cross_floor_links_are_refused_without_mutating_input(dam
     assert config == before
 
 
-@pytest.mark.parametrize("writer", [None, True, "1", 0, 2])
+@pytest.mark.parametrize("writer", [None, True, "1", 0, 3])
 def test_old_writer_can_change_style_and_coordinates_but_not_relationship(writer):
     config = source()
     changed = copy.deepcopy(config)
@@ -193,7 +193,7 @@ def test_invalid_optional_json_links_are_repaired_and_file_report_cannot_be_forg
 def test_house_required_api_is_optional_without_feature_and_future_versions_refuse_safely():
     document = house_exported()
     assert document["required_api"] == {"house_transfer_api": 1, "furniture_workstation_api": 1}
-    for key, value in [("furniture_workstation_api", 2), ("future_api", 1)]:
+    for key, value in [("furniture_workstation_api", 3), ("future_api", 1)]:
         future = copy.deepcopy(document)
         future["required_api"][key] = value
         with pytest.raises(ImportFailure) as error:
@@ -263,6 +263,7 @@ async def test_common_writers_reject_old_client_before_storage_and_advertise_opt
     config["spaces"][0]["decor"] = pair()
     response = await commands.execute({"type": "houseplan/config/get"})
     assert response["furniture_workstation_api"] == 1
+    assert response["furniture_tv_mount_api"] == 1
     before = commands.storage.snapshot()
     candidate = copy.deepcopy(before.config_data["config"])
     for item in candidate["spaces"][0]["decor"]:
@@ -299,3 +300,89 @@ async def test_capability_never_grants_write_permission_and_new_writer_commits_w
     commands.authority.can_write = True
     assert (await commands.execute(message))["rev"] == 5
     assert commands.storage.config_data["config"]["spaces"][0]["decor"] == pair()
+
+
+def tv_setup():
+    config = source()
+    config["spaces"][0]["decor"] += [
+        {"id": "cabinet", "kind": "furniture", "symbol": "cabinet_tv", "x": .2, "y": .3, "w": .1, "h": .06},
+        {"id": "tv", "kind": "furniture", "symbol": "tv", "x": .22, "y": .31, "w": .06, "h": .04,
+         "tv_cabinet_id": "cabinet"},
+    ]
+    return config
+
+
+@pytest.mark.parametrize("damage,reason", [
+    (lambda rows: rows[-1].update(symbol="tv_wall"), "invalid_fields"),
+    (lambda rows: rows[-1].update(tv_cabinet_id="elsewhere"), "missing_tv_cabinet"),
+    (lambda rows: rows[-2].update(symbol="wardrobe"), "missing_tv_cabinet"),
+    (lambda rows: rows.append({**rows[-1], "id": "second-tv"}), "ambiguous_tv_cabinet"),
+])
+def test_invalid_tv_links_are_rejected_on_live_writes_and_detached_on_import(damage, reason):
+    config = tv_setup()
+    rows = config["spaces"][0]["decor"]
+    assert CONFIG_SCHEMA(config)["spaces"][0]["decor"] == rows
+    damage(rows)
+    before = copy.deepcopy(config)
+    with pytest.raises(vol.Invalid):
+        CONFIG_SCHEMA(config)
+    assert config == before
+    report = repair_workstations(config)
+    assert {example["reason"] for example in report["examples"]} == {reason}
+    restored = config["spaces"][0]["decor"]
+    assert len(restored) == len(rows)
+    assert all("tv_cabinet_id" not in item for item in restored)
+    assert restored[:2] == pair()
+
+
+def test_tv_link_has_its_own_compatible_reader_version_and_remaps_when_copied(tmp_path):
+    config = tv_setup()
+    document, _ = create_export(IDENTITY, {"config": config}, {"layout": {}}, kind="space", space_id="floor",
+                                plan_only=True, card_version="test", config_root=tmp_path)
+    assert document["export_version"] == 5
+    portable = parse_document(json.dumps(document).encode())
+    assert portable["payload"]["config"]["spaces"][0]["decor"] == config["spaces"][0]["decor"]
+    older = {**document, "export_version": 4}
+    with pytest.raises(ImportFailure) as unsupported:
+        parse_document(json.dumps(older).encode())
+    assert unsupported.value.code == "unsupported_export_version"
+
+    target = {"spaces": [], "markers": [], "settings": {}}
+    imported, _, _ = build_space_merge(portable, target, {}, "skip", same_source=False)
+    canonical = {**portable["payload"]["config"], "model_version": document["model_version"]}
+    copied = space_copy_candidate(canonical, "floor", "Copy", "television", furniture=True)
+    house, _ = house_document.export_document(IDENTITY, {"config": config}, {"layout": {}}, "test")
+    assert house["required_api"]["furniture_workstation_api"] == 2
+    house_parsed = house_document.parse_document(json.dumps(house).encode())
+    house_imported, _, _ = house_document.build_merge(house_parsed, target, {})
+    for space in [imported["spaces"][0], copied["spaces"][1], house_imported["spaces"][0]]:
+        cabinet, television = space["decor"][-2:]
+        assert television["tv_cabinet_id"] == cabinet["id"] != "cabinet"
+    house["required_api"]["furniture_workstation_api"] = 1
+    with pytest.raises(ImportFailure) as unsupported:
+        house_document.parse_document(json.dumps(house).encode())
+    assert unsupported.value.code == "unsupported-transfer"
+
+
+async def test_old_writer_can_edit_computer_links_but_cannot_drop_tv_link_through_config_set():
+    from test_plan_commands import valid_service
+
+    from custom_components.houseplan.core.command_ports import CommandError
+
+    commands = valid_service()
+    commands.storage.config_data["config"]["spaces"][0]["decor"] = tv_setup()["spaces"][0]["decor"]
+    before = commands.storage.snapshot()
+    candidate = copy.deepcopy(before.config_data["config"])
+    rows = candidate["spaces"][0]["decor"]
+    rows[:2] = [standalone_workstation(item) for item in rows[:2]]
+    message = {"type": "houseplan/config/set", "config": candidate, "expected_rev": before.config_data["rev"],
+               "opening_features_api": 1, "furniture_workstation_api": 1}
+    guard_workstation_write(candidate, before.config_data["config"], 1)
+    rows[-1].pop("tv_cabinet_id")
+    with pytest.raises(CommandError) as error:
+        await commands.execute(message)
+    assert error.value.code == "furniture_workstation_client_outdated"
+    assert commands.storage.snapshot() == before
+    message["furniture_workstation_api"] = 2
+    assert (await commands.execute(message))["rev"] == before.config_data["rev"] + 1
+    assert commands.storage.config_data["config"]["spaces"][0]["decor"][-2:] == rows[-2:]

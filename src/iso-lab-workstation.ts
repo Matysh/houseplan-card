@@ -1,3 +1,4 @@
+import { detachedTv, tvCabinet } from './tv-mount';
 import type {FurniturePart} from './furniture-volume-types';
 import type {DecorFurniture, DecorShape} from './editors/decor/types';
 import {furnitureSymbol} from './furniture';
@@ -58,7 +59,9 @@ export function workstationTarget(items: readonly DecorShape[], selected: DecorS
 
 /** Reassemble around the CURRENT tower, not the desk's initial transform. */
 export function standaloneWorkstation<T extends DecorShape>(shape: T): T {
-  if (shape.kind !== 'furniture' || (!shape.workstation && !shape.workstation_tower_id)) return shape;
+  if (shape.kind !== 'furniture') return shape;
+  if (shape.tv_cabinet_id) return detachedTv(shape) as T;
+  if (!shape.workstation && !shape.workstation_tower_id) return shape;
   const out: DecorFurniture = {...shape};
   if (shape.symbol === 'computer' && shape.workstation === 'tower') {
     const w = shape.w * 4;
@@ -92,7 +95,16 @@ export function toggleWorkstation(items: readonly DecorShape[], desk: DecorFurni
 export function remapWorkstationItems<T extends DecorShape>(items: readonly T[], ids: ReadonlyMap<string,string>): T[] {
   const claimed = new Set<string>();
   const linked = items.map(item => {
-    if (item.kind !== 'furniture' || item.workstation !== 'mounted') return item;
+    if (item.kind !== 'furniture') return item;
+    if (item.tv_cabinet_id) {
+      const target = ids.get(item.tv_cabinet_id);
+      if (!target || !tvCabinet(items, { ...item, tv_cabinet_id: target }) || claimed.has(target)) {
+        return detachedTv(item);
+      }
+      claimed.add(target);
+      return { ...item, tv_cabinet_id: target };
+    }
+    if (item.workstation !== 'mounted') return item;
     const tower = ids.get(item.workstation_tower_id || '');
     if (!tower || !items.some(candidate => candidate.id === tower && candidate.kind === 'furniture'
         && candidate.symbol === 'computer' && candidate.workstation === 'tower') || claimed.has(tower)) {
@@ -113,7 +125,12 @@ export function removeWorkstationItems(items: readonly DecorShape[], ids: Readon
     if (ids.has(item.id) && item.workstation_tower_id) detach.add(item.workstation_tower_id);
     if (item.workstation_tower_id && ids.has(item.workstation_tower_id)) detach.add(item.id);
   }
-  return items.filter(item => !ids.has(item.id)).map(item => detach.has(item.id) ? standaloneWorkstation(item) : item);
+  return items.filter(item => !ids.has(item.id)).map(item => {
+    if (item.kind === 'furniture' && item.tv_cabinet_id && ids.has(item.tv_cabinet_id)) {
+      return detachedTv(item, tvCabinet(items, item));
+    }
+    return detach.has(item.id) ? standaloneWorkstation(item) : item;
+  });
 }
 
 export function workstationParts(shape: Pick<DecorFurniture,'symbol'|'workstation'>,
