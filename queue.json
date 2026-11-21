@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19358,
+  "revision": 19359,
   "nextTicket": 589,
   "nextFence": 589,
   "tasks": {
@@ -4240,7 +4240,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1472-real-3d",
-      "materialSha": "0a43fd36c857fe3841a3ad54962bbbcca66d6036",
+      "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 588,
@@ -4248,7 +4248,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795265077145,
       "reviewEntry": 2,
-      "patchId": "b571c9b556cfa55b154560c0cc22017b58f6eed6",
+      "patchId": "eefbadbbe1e35a948692c85c66bd83cb0f804fc0",
       "changedFiles": [
         "THIRD_PARTY_NOTICES.md",
         "custom_components/houseplan/THIRD_PARTY_NOTICES.md",
@@ -4271,7 +4271,9 @@
         "package.json",
         "scripts/bundle-manifest.mjs",
         "scripts/config-schema.json",
+        "scripts/mutation-registry.mjs",
         "scripts/standalone-build.mjs",
+        "scripts/support-relay/hp_relay/support_wire_schema.py",
         "src/editors/general-settings-dialog.ts",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts",
@@ -4296,6 +4298,7 @@
         "test/iso-view-backend.test.mjs",
         "test/iso-view-gl-mesh.test.mjs",
         "test/iso-view-gl-projection.test.mjs",
+        "test/isometric-contract.test.mjs",
         "tests_backend/test_config_schema_manifest.py",
         "tests_backend/test_ha_import_export.py",
         "tests_backend/test_house_commands.py",
@@ -4311,10 +4314,7 @@
         "entry": 1,
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/pdf-compass.test.mjs: failed; Поведение: test/render-layout-read.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Backend: tests_backend/test_plan_graph_support.py: failed",
         "eventId": "finish:2a189472-54d2-4616-9a71-c11155b47358:finish:3:return:return:1472"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795265087937,
-      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
+      }
     },
     "1473": {
       "issue": 1473,
@@ -6180,11 +6180,12 @@
     "worker": "finish",
     "token": "588:finish:034c5438-1b0d-4b19-921d-bc59ee7729a4:finish:1:admit",
     "fence": 588,
-    "materialSha": "0a43fd36c857fe3841a3ad54962bbbcca66d6036",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "b2ec1476b25da30e33e8bbbc64e84d4045e76bdf",
+    "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
+    "phase": "testing",
     "admittedAt": 1795265081309,
-    "expiresAt": 1795265441531
+    "expiresAt": 1795265454575,
+    "patchId": "eefbadbbe1e35a948692c85c66bd83cb0f804fc0"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6385,6 +6386,10 @@
     },
     "finish:e95f4127-db04-45a6-9c88-d72ba40582d7": {
       "digest": "1b101ec8111f2a2ce063b1c072b52dcd996c8a57da0f420799325e815c32776f",
+      "issue": 1472
+    },
+    "finish:034c5438-1b0d-4b19-921d-bc59ee7729a4:finish:3:synchronized": {
+      "digest": "bccac62d3836819e7fb06dc1174798cc5a22ecdc5c701c35eb738402fb4f3f88",
       "issue": 1472
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
