@@ -195,6 +195,8 @@ one share a 500 ms opacity transition. They use distinct SVG IDs and blend
 inside an isolated group. The latest target received during a transition
 can start the next transition after the current one finishes. Camera changes
 continue through that interval. Reduced-motion presentation updates directly.
+The retained sunlight shares the live layer's animation phase: lamp toggles
+neither restart settled window light nor reset a solar-threshold fade (#1509).
 
 Raster snapshots inherit stage-owned variables and literal var() dependencies
 from the product CSS and generated SVG. Unrelated HA theme tokens stay outside

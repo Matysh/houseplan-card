@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1509,
+  "baseStable": "v1.85.2",
+  "category": "stable-fix",
+  "rationale": "Fixes restarted window-sunlight animation on artificial-light transitions in the shipped 2.5D presentation.",
+  "summary": {
+    "ru": "Свет из окон в 2.5D не мигает при переключении источников света.",
+    "en": "Window sunlight no longer flickers when 2.5D light sources toggle."
+  }
+}

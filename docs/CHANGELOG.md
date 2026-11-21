@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Preserve window sunlight and its solar fade during 2.5D light-source transitions (#1509).
 - Publish a checked wheel and standalone editor ZIP for the website with ordinary stable releases, separate from the HACS package (#1465).
 
 ## v1.86.0 — 2026-11-21

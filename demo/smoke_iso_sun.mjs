@@ -5,7 +5,7 @@
 // byte for byte; editors and night draw nothing.
 import { launch, checkAll, finish } from './serve.mjs';
 
-const { page, browser } = await launch({ width: 900, height: 900 });
+const { page, browser } = await launch({ width: 900, height: 900 }, 1, [], { reducedMotion: 'no-preference' });
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -65,7 +65,7 @@ const res = await page.evaluate(async () => {
       { id: 'wI', type: 'window', x: 0.55, y: 0.30, angle: 90, length: 0.08 },
       { id: 'dS', type: 'door', x: 0.20, y: 0.86, angle: 0, length: 0.1 },
     ];
-    space.settings = { ...(space.settings || {}), show_borders: true };
+    space.settings = { ...(space.settings || {}), show_borders: true, glow_enabled: true };
     cfg.settings = { ...(cfg.settings || {}), sun_rays: true, north_deg: 0 };
     return cfg;
   });
@@ -82,6 +82,52 @@ const res = await page.evaluate(async () => {
   out.washReplacesWedges = !!wash() && flatWedges().length === 0;
   out.sameWindowsAsSunRays = JSON.stringify(litIds()) === JSON.stringify(flatLit) && flatLit.length > 0;
   out.interiorWindowDark = !litIds().includes('wI');
+
+  // #1509: a lamp transition retains the complete SVG. Its sunlight must
+  // share the live layer's timeline, rather than fading from zero again.
+  const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
+  const until = async (predicate) => {
+    const deadline = performance.now() + 6000;
+    while (!predicate()) {
+      if (performance.now() > deadline) throw Error('Sun/light transition did not settle');
+      await frame();
+    }
+  };
+  const surface = () => sr().querySelector('.iso-scene-surface');
+  const liveSun = () => surface()?.querySelector('svg:not([data-hp-retained-light]) .sunlayer');
+  const retainedSun = () => surface()?.querySelector('[data-hp-retained-light] .sunlayer');
+  const toggleLamp = async () => {
+    const state = c.hass.states['light.ceiling'];
+    c.hass = { ...c.hass, states: { ...c.hass.states,
+      'light.ceiling': { ...state, state: state.state === 'on' ? 'off' : 'on' } } };
+    await c.updateComplete;
+    await until(() => !!retainedSun());
+  };
+  await until(() => !retainedSun() && liveSun()?.getAnimations()[0]?.playState === 'finished');
+  const geometry = liveSun().innerHTML;
+  for (const direction of ['off', 'on']) {
+    await toggleLamp();
+    out[`settledSunPreservedOnLamp${direction}`] = +getComputedStyle(retainedSun()).opacity > .99
+      && +getComputedStyle(liveSun()).opacity > .99;
+    out[`sunGeometryUnchangedOnLamp${direction}`] = liveSun().innerHTML === geometry;
+    await until(() => !retainedSun());
+  }
+  // A real solar-threshold fade continues on BOTH layers during lamp changes.
+  for (const [elevation, name] of [[2, 'out'], [30, 'in']]) {
+    await setSun(180, elevation);
+    const animation = liveSun().getAnimations()[0];
+    animation.pause();
+    animation.currentTime = 800;
+    const opacity = +getComputedStyle(liveSun()).opacity;
+    await toggleLamp();
+    const retained = retainedSun().getAnimations()[0];
+    out[`solarFade${name}Preserved`] = Math.abs(+getComputedStyle(retainedSun()).opacity - opacity) < .02
+      && retained?.playState === 'paused' && Math.abs(retained.currentTime - 800) < 1;
+    animation.play();
+    retained?.play();
+    await until(() => !retainedSun());
+  }
+  await until(() => liveSun()?.getAnimations()[0]?.playState === 'finished');
 
   // Length from the elevation: L(e) ∝ clamp(1.865·(0.55 + 1.4·(1 − e/90)^1.6), 0.98, 4.16).
   const L = (e) => Math.min(4.16, Math.max(0.98, 1.865 * (0.55 + 1.4 * (1 - e / 90) ** 1.6)));

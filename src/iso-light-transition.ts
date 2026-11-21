@@ -47,6 +47,22 @@ export class IsoLightTransition<T> {
     clone.style.opacity = '1';
     this.snapshot = clone;
     scene.after(clone);
+    // A cloned CSS animation starts at zero when attached. Sunlight belongs
+    // to the solar timeline, not this lamp crossfade: retain both settled
+    // light and an in-flight threshold fade at the live layer's exact phase.
+    const liveSun = [...scene.querySelectorAll('.sunlayer')];
+    [...clone.querySelectorAll('.sunlayer')].forEach((sun, index) => {
+      const originals = liveSun[index].getAnimations();
+      sun.getAnimations().forEach((animation, i) => {
+        const original = originals[i];
+        if (!original) return;
+        animation.playbackRate = original.playbackRate;
+        if (original.playState === 'paused') {
+          animation.pause();
+          animation.currentTime = original.currentTime;
+        } else if (original.startTime !== null) animation.startTime = original.startTime;
+      });
+    });
     return value;
   }
 
