@@ -162,6 +162,12 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             caption: st('gs.volumetric_view_development'),
             checked: d.volumetricView, onChange: (v) => set({ volumetricView: v }),
           }),
+          toggleRow({
+            id: 'gs-real-3d', icon: 'mdi:cube-outline',
+            title: t('gs.real_3d'), help: help(t('gs.real_3d_hint'), t('gs.real_3d')),
+            caption: t('gs.real_3d_development'),
+            checked: d.real3d, onChange: (v) => set({ real3d: v }),
+          }),
           c.summary ? toggleRow({
             id: 'gs-center-summary', icon: 'mdi:align-horizontal-center',
             title: st('gs.center_summary'), help: help(st('gs.center_summary_hint'), st('gs.center_summary')),
@@ -321,7 +327,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
           glowRadiusInput: String(host._imperial ? 9.8 : 3),
           bgColor: null, northDeg: null, northDegInput: '', bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',
-          showRoomTooltip: true, showLqi: true, deviceBattery: 'all', radarShowLive: true, volumetricView: false, centerSummary: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
+          showRoomTooltip: true, showLqi: true, deviceBattery: 'all', radarShowLive: true, volumetricView: false, real3d: false, centerSummary: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
         })}>${t('gs.reset')}</button>
       </div>
       <div class="dialog-action-group dialog-action-commit">

@@ -18,10 +18,10 @@ export function renderIsoLabFurniture(mesh: FurnitureMesh, id: string, symbol: s
     color=${color} stroke-linejoin="round" stroke-linecap="round">
     ${withShadow ? furnitureShadow(mesh,visualScale) : null}
     ${mesh.parts.map(p=>svg`<g data-furniture-part=${p.name}>
-      <path d=${p.side} fill="#e4edf0" fill-opacity=${.52*materialOpacity} stroke="currentColor"
+      <path data-hp-furniture-base d=${p.side} fill="#e4edf0" fill-opacity=${.52*materialOpacity} stroke="currentColor"
         stroke-opacity=${.26*materialOpacity} stroke-width=${.7*visualScale}></path>
       <path d=${p.side} fill="currentColor" fill-opacity=${.06*materialOpacity} stroke="none"></path>
-      <path d=${p.top} fill="#f7fbfc" fill-opacity=${.72*materialOpacity} stroke="currentColor"
+      <path data-hp-furniture-base d=${p.top} fill="#f7fbfc" fill-opacity=${.72*materialOpacity} stroke="currentColor"
         stroke-opacity=${.34*materialOpacity} stroke-width=${.7*visualScale}></path>
       <path d=${p.top} fill="none" stroke="#ffffff" stroke-opacity=${.4*materialOpacity}
         stroke-width=${.3*visualScale}></path>

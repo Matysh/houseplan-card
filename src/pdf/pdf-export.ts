@@ -9,6 +9,7 @@ import type { DecorShape } from '../editors/decor/types';
 import { pdfLocalDate } from './pdf-date';
 import { assertPdfRasterBudget } from './pdf-raster';
 import { captureSvgView, finishSvgView } from './svg-snapshot';
+import { prepareSvgFlatStage } from './svg-flat-stage';
 
 export const PDF_EXPORT_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -90,6 +91,7 @@ export async function exportSpacePdf(
 }
 
 export class PdfExportRuntime {
+  public readonly prepareFlatStage = prepareSvgFlatStage;
   /** Browser-smoke seam for the pre-writer size guard. */
   public assertRasterBudget(byteLengths: readonly number[]): void {
     assertPdfRasterBudget(byteLengths);
@@ -103,8 +105,11 @@ export class PdfExportRuntime {
         const now = complete.now || new Date();
         if (request.format === 'pdf') { await exportSpacePdf(context, request.options, now); return; }
         if (!context.svgSource) throw new Error('svg.view_required');
-        const source = context.svgSource();
-        const frame = captureSvgView(source, request.options);
+        const source = await context.svgSource();
+        const frame = (() => {
+          try { return captureSvgView(source, request.options); }
+          finally { source.dispose?.(); }
+        })();
         const text = await finishSvgView(frame);
         if (!source.isCurrent()) throw new Error('svg.cancelled');
         const url = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml;charset=utf-8' }));

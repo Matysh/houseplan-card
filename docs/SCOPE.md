@@ -135,6 +135,9 @@ the file — and if a future version wants to reclaim that space, it asks.
   [#89](https://github.com/Matysh/houseplan-card/issues/89) is a deterministic
   2.5D presentation of the existing canonical plan: the same J1/J2/J3 state,
   actions and geometry, with no second model and no free camera.
+  The owner approved an alternate experimental WebGL2 backend for that same
+  live map in [#1472](https://github.com/Matysh/houseplan-card/issues/1472):
+  the fixed camera, plan model, device actions and scope remain unchanged.
 - General CAD, architectural drafting and construction-document tooling →
   specialised applications. A narrow read-only exception approved on
   2026-08-15 and scoped on 2026-09-07 for

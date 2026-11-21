@@ -40,7 +40,8 @@ export interface PdfDialogContext {
   captureToast?: () => (message: string, id?: string) => void;
   close: () => void;
   save: (request: ExportRequest) => Promise<void>;
-  svgSource?: () => SvgViewSource;
+  svgSource?: () => SvgViewSource | Promise<SvgViewSource>;
+  svgFlatFromReal3d?: boolean;
   /** Deterministic harness seam; production leaves this unset. */
   now?: Date;
 }
@@ -180,6 +181,8 @@ export class HpPdfDialog extends LitElement {
             ariaLabel: t('export.format'), options: [{ value: 'pdf', label: t('export.pdf') }, { value: 'svg', label: t('export.svg') }],
             onChange: value => this.setFormat(value) })}
         </div>
+        ${isSvg && this.context.svgFlatFromReal3d
+          ? html`<p class="rhint" data-hp="svg-real-3d-hint">${t('svg.real_3d_flat_hint')}</p>` : nothing}
         ${isSvg && this.context.showDevices === false ? nothing : option(firstKey, t(isSvg ? 'export.devices' : 'pdf.dimensions'), isSvg ? this.svgOptions.devices : (this.options || defaults()).dimensions, true)}
         ${option('decor', t('pdf.decor'), o.decor)}
         ${option('roomNames', t('pdf.room_names'), o.roomNames)}

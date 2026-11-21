@@ -66,3 +66,9 @@ Source: https://github.com/Templarian/MaterialDesign
 Icons: Pictogrammers Free License / Apache 2.0; non-icon code: MIT.
 The upstream notice and the Apache 2.0 license are included in
 custom_components/houseplan/licenses/mdi.txt in the installed package.
+
+## Three.js — experimental Real 3D View
+
+Three.js 0.187.0, MIT, copyright © 2010–2026 three.js authors.
+Source: https://github.com/mrdoob/three.js/tree/r187
+License: licenses/three.txt in the installed package.
