@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19356,
+  "revision": 19357,
   "nextTicket": 589,
   "nextFence": 589,
   "tasks": {
@@ -4311,7 +4311,10 @@
         "entry": 1,
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/pdf-compass.test.mjs: failed; Поведение: test/render-layout-read.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Backend: tests_backend/test_plan_graph_support.py: failed",
         "eventId": "finish:2a189472-54d2-4616-9a71-c11155b47358:finish:3:return:return:1472"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1795265087937,
+      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
     },
     "1473": {
       "issue": 1473,
@@ -6374,6 +6377,10 @@
     },
     "finish:2a189472-54d2-4616-9a71-c11155b47358:finish:3:return": {
       "digest": "e15c1127ff5ad4e10030da19baf13a98e76a67d6ca39d505e77bb70144a74215",
+      "issue": 1472
+    },
+    "finish:034c5438-1b0d-4b19-921d-bc59ee7729a4:finish:2:automation-pending": {
+      "digest": "a24386b66ac26077d071b7a371ef8c5904cfa65ba4f54aa10e7eadccf5c4d1ae",
       "issue": 1472
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
