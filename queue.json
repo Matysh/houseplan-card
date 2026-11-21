@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19524,
+  "revision": 19525,
   "nextTicket": 594,
   "nextFence": 592,
   "tasks": {
@@ -5654,193 +5654,25 @@
     },
     "1511": {
       "issue": 1511,
+      "branch": "codex/1511-mount-tv",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1511-mount-tv",
-      "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 591,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795269125733,
-      "reviewEntry": 2,
-      "patchId": "2f7a4ee4e1879c31c643745d77425f90bf2ad2b8",
-      "changedFiles": [
-        "custom_components/houseplan/core/furniture_workstation.py",
-        "custom_components/houseplan/core/house_document.py",
-        "custom_components/houseplan/core/import_export.py",
-        "custom_components/houseplan/core/plan_commands.py",
-        "custom_components/houseplan/core/validation.py",
-        "demo/smoke_tv_mount.mjs",
-        "demo/srv/demo.html",
-        "demo/srv/fixture-state.js",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/DECOR-EDITOR.md",
-        "docs/FURNITURE.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/release-ledger/v1.86.0/1511.json",
-        "scripts/config-schema.json",
-        "src/editors/decor/order.ts",
-        "src/editors/decor/selection.ts",
-        "src/editors/decor/types.ts",
-        "src/editors/space-delete.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/i18n/de.json",
-        "src/i18n/en.json",
-        "src/i18n/fr.json",
-        "src/i18n/ru.json",
-        "src/i18n/tools/de.json",
-        "src/i18n/tools/en.json",
-        "src/i18n/tools/fr.json",
-        "src/i18n/tools/ru.json",
-        "src/iso-lab-furniture.ts",
-        "src/iso-lab-workstation.ts",
-        "src/pdf/pdf-scene.ts",
-        "src/plan-optimize-write.ts",
-        "src/tv-mount.ts",
-        "src/version-recovery-card.ts",
-        "test/tv-mount.test.mjs",
-        "tests_backend/test_furniture_workstation.py"
-      ],
-      "s6": {
-        "id": "20261121T141459936-9ae4723f",
-        "name": "Тесты для задачи #1511 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261121T141459936-9ae4723f/report.json",
-        "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-        "status": "passed",
-        "finishedAt": "2026-11-21T14:25:46.124Z",
-        "failures": []
-      },
-      "reviewRound": 2,
-      "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795268921503,
-        "entry": 1,
-        "requestId": "review:1511:1:c240139592c8ab4d5ae64c61ce7cdbea46e5e62b:36af10803c20dbf027b922553b37419d112023a9",
-        "transitionConfirmed": true
-      },
+      "status": "S8-merged",
+      "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
+      "mergedSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
+      "mergedAt": 1795271353769,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1511:2:2f7a4ee4e1879c31c643745d77425f90bf2ad2b8:36af10803c20dbf027b922553b37419d112023a9",
-      "reviewMaterial": {
-        "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-        "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
-        "patchId": "2f7a4ee4e1879c31c643745d77425f90bf2ad2b8"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1511:2:2f7a4ee4e1879c31c643745d77425f90bf2ad2b8:36af10803c20dbf027b922553b37419d112023a9",
-        "eventId": "github:44913889594:1:tick:0:review-retry",
-        "at": 1795271175909,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1511,
-        "requestId": "review:1511:2:2f7a4ee4e1879c31c643745d77425f90bf2ad2b8:36af10803c20dbf027b922553b37419d112023a9",
-        "kind": "code",
-        "base": "36af10803c20dbf027b922553b37419d112023a9",
-        "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-        "patchId": "2f7a4ee4e1879c31c643745d77425f90bf2ad2b8",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1511,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1511",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Команда использует существующие действия выбора и историю геометрии редактора подложки. Она доступна при попадании центра обычного телевизора в площадь свободной ТВ-тумбы или при выборе самой тумбы. Установка центрирует телевизор и сохраняет его размеры и стиль. Поверхность для подставки берётся из модели тумбы. В Flat, 2.5D и PDF положение выводится из тумбы, а высота влияет только на 2.5D. Снятие или удаление тумбы оставляет телевизор в последнем положении на полу.\n\nСвязь хранится в одном необязательном поле `tv_cabinet_id`. Проверьте защиту связей в старых клиентах, сопоставление идентификаторов при копировании и импорте и высотный порядок при отрисовке. Дополнительная возможность сервера сохраняет работу старого механизма рабочего стола. Версии переносимых документов повышаются только при наличии связи с тумбой.\n\nПрямые проверки прошли. Браузерный smoke через обычные кнопки редактора проверяет монтаж и снятие, Undo/Redo, переход в 2.5D и перемещение после записи. Тесты проекции проверяют высоту при четырёх поворотах. Серверные тесты проверяют валидность, перенос и старые версии клиента. Отдельный сценарий для реальной панели HA запланирован в [houseplan-e2e#93](https://github.com/Matysh/houseplan-e2e/issues/93).\n\nПредварительный локальный прогон полного выбранного набора S6 на `6ecc2be90` прошёл. Отдельный замер gzip дал 484 346 Б на чистом `dev` и 485 204 Б на ветке задачи, прирост 858 Б. Порог 420 000 Б был превышен на базе ещё до изменений.\n\n### Исправления по предыдущему ревью\n\n- После «Снять с тумбы → Отменить» восстановленная пара снова выделяется за тумбу. Рамка и клавиатурные команды применяются к ней. Браузерный сценарий с предварительно перемещённой тумбой воспроизвёл прежнюю ошибку и теперь проходит с проверкой рамки, связи и последующего повтора. [Ревью раунда 1](https://github.com/Matysh/houseplan-card/issues/1511#issuecomment-7063603495)\n- Установленный телевизор исключён из обычной привязки и массового выбора как отдельная фигура. Ластик удаляет предмет, на который нажали. При равной глубине порядок отрисовки зафиксирован тестом с телевизором, записанным в план перед тумбой. Вычисленная геометрия переиспользуется, пока оба предмета прежние.\n- Старый клиент получает подсказку обновиться и при попытке удалить связанную тумбу. Тест проверяет ответ и сохранность обоих предметов.\n\nМатериал повторной передачи — `5237ec475`. Браузерный сценарий, сборка и адресные тесты редактора прошли."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокер первого раунда устранён. После «Снять с тумбы → Отменить» выделение переходит на тумбу. Рамка, маркеры и стрелки снова относятся к паре, а не к устаревшим сохранённым координатам телевизора. Необязательные замечания прошлого раунда тоже закрыты:\n- ластик удаляет тот предмет, на который нажали;\n- установленный телевизор не участвует в привязке и в выборе всех объектов;\n- старый клиент при удалении связанной тумбы получает понятную ошибку «обновите House Plan»;\n- вычисленная форма телевизора кэшируется, поэтому сетка 2.5D пересчитывается только при изменении телевизора или тумбы.\n\nНовых существенных рисков исправления не внесли. Модель данных, серверная часть и отрисовка не изменились с прошлого раунда, где их признали удачными. Работу можно принимать. Осталось одно необязательное улучшение: сейчас выделение нормализуется только после шага истории, а не в одном общем месте.",
-          "understanding": "Задача: в 2.5D телевизор на подставке рисуется от пола и проходит сквозь ТВ-тумбу. Решение: необязательное поле `tv_cabinet_id` у `tv`. Положение, угол и отражения телевизора в Flat, 2.5D и PDF вычисляются функцией `tvOnCabinet` из текущей тумбы. В 2.5D телевизор поднимается на высоту части `console-top`. Сервер проверяет связь, ремонтирует её при импорте и пересопоставляет идентификаторы при копировании. Он защищает связь от старых writer'ов и повышает версии документов только при наличии связи.\n\nВо втором раунде (коммит 5237ec47) изменено:\n1) в `_applyGeometryState` после `_showGeometrySpace` выделение установленного телевизора переводится на его тумбу (houseplan-editor-runtime.ts:2584-2586);\n2) `tvOnCabinet` хранит готовую форму в WeakMap по записи телевизора и проверяет, что тумба та же (tv-mount.ts:14-29);\n3) `_decorSnapGeometry` пропускает установленные телевизоры (4009), `allDecorSelectionIds` их не выбирает (selection.ts:20-23);\n4) у ластика `derasehit`/`down` получают `record`, а не `owner` (houseplan-card.ts:10730, 10832);\n5) `guard_workstation_write.rows()` добавляет в расширенные записи и тумбу, на которую ссылается `tv_cabinet_id` (furniture_workstation.py:232-234);\n6) smoke дополнен сценарием «переместить тумбу → снять → Отменить → проверить выделение и рамку → Повторить».\n\nРазобранные пути: шаг истории (`_applyGeometryState` → `_showGeometrySpace` → нормализация → `_saveConfig`), геттер `_dtSel` (ищет по `_decorSel` в `_decorList`), нажатие и перемещение (`_decorShapeDown`, `_decorMoveUpdate` заменяют запись новым объектом), подтверждение ластика (`_decorEraseConfirm` с id записи), групповой выбор и `decorSelectionMembers`, кэш `meshCache` в связке с новой мемоизацией, серверный guard для writer 1/None и новый тест удаления тумбы старым клиентом.",
-          "analysis": [
-            {
-              "topic": "Исправление блокера: выделение после Undo снятия",
-              "assessment": "Устранено. После любого шага истории проверяется: если выбранный предмет — установленный телевизор, `_decorSel` переходит на тумбу. `_dtSel` ищет запись по `_decorSel` в текущем `_decorList`, поэтому рамка, маркеры, стрелки и контекстная команда снова работают с тумбой, а телевизор следует за ней. Проверка стоит после обеих веток восстановления (`presentationOnly` и полной) и до `_saveConfig`, то есть охватывает и Undo, и Redo. При Redo снятия выбранной остаётся тумба, что тоже согласуется с поведением. Smoke воспроизводит прежний сценарий с предварительно перемещённой тумбой и сверяет x и width рамки `.dtfurnitureframe .dtbox` с тумбой.",
-              "evidence": "src/houseplan-editor-runtime.ts:2583-2586; src/houseplan-card.ts:10555 (`_dtSel` = find по `_decorSel`); demo/smoke_tv_mount.mjs: шаги 'undoing removal moves the selection and handles to the cabinet' и 'redoing removal returns the TV to the floor'."
-            },
-            {
-              "topic": "Мемоизация вычисленной формы и кэш сетки 2.5D",
-              "assessment": "Решение корректное и простое. WeakMap по записи телевизора с проверкой, что тумба тот же объект, возвращает ту же форму, пока не изменились оба предмета. Поэтому `meshCache` (WeakMap по объекту формы) снова попадает в кэш. Перемещение (`_decorMoveUpdate`), стрелки (`_decorNudge`) и правки свойств заменяют запись новым объектом, а не меняют её на месте, так что устаревшая форма не останется в кэше. Мутации decor через `Object.assign` в редакторах я не нашёл: patch.ts:45 меняет только пространство.",
-              "evidence": "src/tv-mount.ts:14-29; src/houseplan-editor-runtime.ts:4300-4305 (замена записи при перетаскивании); src/editors/properties/patch.ts:45; test/tv-mount.test.mjs:38-40 (повторный вызов возвращает тот же объект, для другой тумбы — новый)."
-            },
-            {
-              "topic": "Привязка, выбор всех объектов и ластик",
-              "assessment": "Привязка больше не цепляется к сохранённой рамке установленного телевизора на старом месте. `tvCabinet` сначала проверяет `symbol==='tv'` и наличие `tv_cabinet_id`, поэтому лишняя работа на остальных предметах минимальна. Кэш привязки сбрасывается по `_cfgEpoch`. В `allDecorSelectionIds` логика сохранена: обычная мебель выбирается всегда, остальной декор — только без фильтра «только мебель», установленный телевизор — никогда. Ластик стал предсказуемым: нажатие на телевизор удаляет только телевизор, тумба остаётся. Выбор и перемещение по-прежнему идут через тумбу.",
-              "evidence": "src/houseplan-editor-runtime.ts:4005-4009; src/editors/decor/selection.ts:20-23; src/houseplan-card.ts:10730 (`erasing ? record : owner`), 10832 (`data-id=record.id`); src/houseplan-editor-runtime.ts:4253-4255."
-            },
-            {
-              "topic": "Старый клиент и удаление тумбы",
-              "assessment": "Исправлено по существу. Тумба, на которую ссылается телевизор, теперь считается расширенной записью. У writer 1 сравниваются только `kind`/`symbol`/`tv_cabinet_id`, поэтому старый клиент по-прежнему может двигать тумбу и менять её стиль. Удалить тумбу или заменить её символ он не может и получает `furniture_workstation_client_outdated`. Тест проверяет оба запрета и сохранность хранилища, а writer 2 проходит. Цена: старый клиент, двигающий тумбу, видит телевизор по устаревшим координатам. Это ограничение совместимости, а не потеря данных.",
-              "evidence": "custom_components/houseplan/core/furniture_workstation.py:215, 226-234; tests_backend/test_furniture_workstation.py:367-394."
-            },
-            {
-              "topic": "Общая оценка решения (без изменений с раунда 1)",
-              "assessment": "Связь хранится как ссылка, а положение вычисляется. Такое решение надёжно и не требует синхронизации координат. Серверные validate, repair и remap согласованы, версии экспорта 0/4/5 и `required_api` 1/2 повышаются только при наличии связи. Порядок отрисовки при равной глубине задаётся тай-брейком по `lift`/`cabinet`, комментарий у компаратора объясняет причину. Повторно разбирать эти части не потребовалось: в этом раунде они не менялись.",
-              "evidence": "src/houseplan-card.ts:10716-10725, 13296-13322; src/pdf/pdf-scene.ts:461-465; custom_components/houseplan/core/house_document.py, import_export.py (диффы не менялись относительно 6ecc2be9)."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Выделение нормализуется только после шага истории. Выделение может оказаться на установленном телевизоре и другими, более редкими путями. Например, телевизор выбран свободным, а связь пришла в обновлении конфигурации из другой вкладки. Или групповой выбор «свободные телевизор + тумба» пережил Undo, вернувший связь. Надёжнее перенести то же правило в одно место: геттер `_dtSel` или его вызывающий слой, который разрешает id установленного телевизора в тумбу, и при необходимости фильтр групповых id. Так одно правило покроет все источники изменения конфигурации. Цена — пара строк и одна проверка в часто вызываемом геттере. Это не блокер: основной сценарий из приёмки исправлен и покрыт smoke."
-          ],
-          "boundaries": "Сам ничего не запускал: ни сборку, ни тесты, ни smoke. Использован результат S6: прогон «Тесты для задачи #1511 (перед ревью)» на 5237ec47 завершился со статусом passed без ошибок, содержимое report.json мне недоступно. Слова автора о прохождении браузерного сценария и адресных тестов не перепроверены запуском. Замер gzip (+858 Б, порог превышен ещё на базе) взят со слов автора.\n\nПо исходникам на head изучены:\n- src/houseplan-editor-runtime.ts: `_applyGeometryState`, `_decorShapeDown`, `_decorMoveUpdate`, `_decorSnapGeometry`;\n- геттер `_dtSel`;\n- src/tv-mount.ts, src/editors/decor/selection.ts;\n- в src/editors/properties: catalog.ts и место с `Object.assign` в patch.ts;\n- guard в furniture_workstation.py;\n- серверные тесты связи телевизора, включая новый тест старого writer;\n- demo/smoke_tv_mount.mjs.\n\nОстальные части (2.5D-подъём, PDF, импорт и экспорт) в этом раунде не менялись и оценены по ревью раунда 1 и диффу. Не проверялись визуальное качество 2.5D, совпадение лицевой стороны арта `tv` и `cabinet_tv` и поведение в реальной панели HA (запланировано автором в houseplan-e2e#93)."
-        },
-        "usage": {
-          "input_tokens": 24,
-          "cache_creation_input_tokens": 131867,
-          "cache_read_input_tokens": 1175245,
-          "output_tokens": 9295,
-          "output_tokens_details": {
-            "thinking_tokens": 3545
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 131867,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 752,
-              "cache_read_input_tokens": 121637,
-              "cache_creation_input_tokens": 14434,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 14434
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокер первого раунда устранён. После «Снять с тумбы → Отменить» выделение переходит на тумбу. Рамка, маркеры и стрелки снова относятся к паре, а не к устаревшим сохранённым координатам телевизора. Необязательные замечания прошлого раунда тоже закрыты:\n- ластик удаляет тот предмет, на который нажали;\n- установленный телевизор не участвует в привязке и в выборе всех объектов;\n- старый клиент при удалении связанной тумбы получает понятную ошибку «обновите House Plan»;\n- вычисленная форма телевизора кэшируется, поэтому сетка 2.5D пересчитывается только при изменении телевизора или тумбы.\n\nНовых существенных рисков исправления не внесли. Модель данных, серверная часть и отрисовка не изменились с прошлого раунда, где их признали удачными. Работу можно принимать. Осталось одно необязательное улучшение: сейчас выделение нормализуется только после шага истории, а не в одном общем месте.\n\n## Понимание решения\n\nЗадача: в 2.5D телевизор на подставке рисуется от пола и проходит сквозь ТВ-тумбу. Решение: необязательное поле `tv_cabinet_id` у `tv`. Положение, угол и отражения телевизора в Flat, 2.5D и PDF вычисляются функцией `tvOnCabinet` из текущей тумбы. В 2.5D телевизор поднимается на высоту части `console-top`. Сервер проверяет связь, ремонтирует её при импорте и пересопоставляет идентификаторы при копировании. Он защищает связь от старых writer'ов и повышает версии документов только при наличии связи.\n\nВо втором раунде (коммит 5237ec47) изменено:\n1) в `_applyGeometryState` после `_showGeometrySpace` выделение установленного телевизора переводится на его тумбу (houseplan-editor-runtime.ts:2584-2586);\n2) `tvOnCabinet` хранит готовую форму в WeakMap по записи телевизора и проверяет, что тумба та же (tv-mount.ts:14-29);\n3) `_decorSnapGeometry` пропускает установленные телевизоры (4009), `allDecorSelectionIds` их не выбирает (selection.ts:20-23);\n4) у ластика `derasehit`/`down` получают `record`, а не `owner` (houseplan-card.ts:10730, 10832);\n5) `guard_workstation_write.rows()` добавляет в расширенные записи и тумбу, на которую ссылается `tv_cabinet_id` (furniture_workstation.py:232-234);\n6) smoke дополнен сценарием «переместить тумбу → снять → Отменить → проверить выделение и рамку → Повторить».\n\nРазобранные пути: шаг истории (`_applyGeometryState` → `_showGeometrySpace` → нормализация → `_saveConfig`), геттер `_dtSel` (ищет по `_decorSel` в `_decorList`), нажатие и перемещение (`_decorShapeDown`, `_decorMoveUpdate` заменяют запись новым объектом), подтверждение ластика (`_decorEraseConfirm` с id записи), групповой выбор и `decorSelectionMembers`, кэш `meshCache` в связке с новой мемоизацией, серверный guard для writer 1/None и новый тест удаления тумбы старым клиентом.\n\n## Разбор решения\n\n### Исправление блокера: выделение после Undo снятия\n\nУстранено. После любого шага истории проверяется: если выбранный предмет — установленный телевизор, `_decorSel` переходит на тумбу. `_dtSel` ищет запись по `_decorSel` в текущем `_decorList`, поэтому рамка, маркеры, стрелки и контекстная команда снова работают с тумбой, а телевизор следует за ней. Проверка стоит после обеих веток восстановления (`presentationOnly` и полной) и до `_saveConfig`, то есть охватывает и Undo, и Redo. При Redo снятия выбранной остаётся тумба, что тоже согласуется с поведением. Smoke воспроизводит прежний сценарий с предварительно перемещённой тумбой и сверяет x и width рамки `.dtfurnitureframe .dtbox` с тумбой.\n\nОснование: src/houseplan-editor-runtime.ts:2583-2586; src/houseplan-card.ts:10555 (`_dtSel` = find по `_decorSel`); demo/smoke_tv_mount.mjs: шаги 'undoing removal moves the selection and handles to the cabinet' и 'redoing removal returns the TV to the floor'.\n\n### Мемоизация вычисленной формы и кэш сетки 2.5D\n\nРешение корректное и простое. WeakMap по записи телевизора с проверкой, что тумба тот же объект, возвращает ту же форму, пока не изменились оба предмета. Поэтому `meshCache` (WeakMap по объекту формы) снова попадает в кэш. Перемещение (`_decorMoveUpdate`), стрелки (`_decorNudge`) и правки свойств заменяют запись новым объектом, а не меняют её на месте, так что устаревшая форма не останется в кэше. Мутации decor через `Object.assign` в редакторах я не нашёл: patch.ts:45 меняет только пространство.\n\nОснование: src/tv-mount.ts:14-29; src/houseplan-editor-runtime.ts:4300-4305 (замена записи при перетаскивании); src/editors/properties/patch.ts:45; test/tv-mount.test.mjs:38-40 (повторный вызов возвращает тот же объект, для другой тумбы — новый).\n\n### Привязка, выбор всех объектов и ластик\n\nПривязка больше не цепляется к сохранённой рамке установленного телевизора на старом месте. `tvCabinet` сначала проверяет `symbol==='tv'` и наличие `tv_cabinet_id`, поэтому лишняя работа на остальных предметах минимальна. Кэш привязки сбрасывается по `_cfgEpoch`. В `allDecorSelectionIds` логика сохранена: обычная мебель выбирается всегда, остальной декор — только без фильтра «только мебель», установленный телевизор — никогда. Ластик стал предсказуемым: нажатие на телевизор удаляет только телевизор, тумба остаётся. Выбор и перемещение по-прежнему идут через тумбу.\n\nОснование: src/houseplan-editor-runtime.ts:4005-4009; src/editors/decor/selection.ts:20-23; src/houseplan-card.ts:10730 (`erasing ? record : owner`), 10832 (`data-id=record.id`); src/houseplan-editor-runtime.ts:4253-4255.\n\n### Старый клиент и удаление тумбы\n\nИсправлено по существу. Тумба, на которую ссылается телевизор, теперь считается расширенной записью. У writer 1 сравниваются только `kind`/`symbol`/`tv_cabinet_id`, поэтому старый клиент по-прежнему может двигать тумбу и менять её стиль. Удалить тумбу или заменить её символ он не может и получает `furniture_workstation_client_outdated`. Тест проверяет оба запрета и сохранность хранилища, а writer 2 проходит. Цена: старый клиент, двигающий тумбу, видит телевизор по устаревшим координатам. Это ограничение совместимости, а не потеря данных.\n\nОснование: custom_components/houseplan/core/furniture_workstation.py:215, 226-234; tests_backend/test_furniture_workstation.py:367-394.\n\n### Общая оценка решения (без изменений с раунда 1)\n\nСвязь хранится как ссылка, а положение вычисляется. Такое решение надёжно и не требует синхронизации координат. Серверные validate, repair и remap согласованы, версии экспорта 0/4/5 и `required_api` 1/2 повышаются только при наличии связи. Порядок отрисовки при равной глубине задаётся тай-брейком по `lift`/`cabinet`, комментарий у компаратора объясняет причину. Повторно разбирать эти части не потребовалось: в этом раунде они не менялись.\n\nОснование: src/houseplan-card.ts:10716-10725, 13296-13322; src/pdf/pdf-scene.ts:461-465; custom_components/houseplan/core/house_document.py, import_export.py (диффы не менялись относительно 6ecc2be9).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Выделение нормализуется только после шага истории. Выделение может оказаться на установленном телевизоре и другими, более редкими путями. Например, телевизор выбран свободным, а связь пришла в обновлении конфигурации из другой вкладки. Или групповой выбор «свободные телевизор + тумба» пережил Undo, вернувший связь. Надёжнее перенести то же правило в одно место: геттер `_dtSel` или его вызывающий слой, который разрешает id установленного телевизора в тумбу, и при необходимости фильтр групповых id. Так одно правило покроет все источники изменения конфигурации. Цена — пара строк и одна проверка в часто вызываемом геттере. Это не блокер: основной сценарий из приёмки исправлен и покрыт smoke.\n\n## Границы анализа\n\nСам ничего не запускал: ни сборку, ни тесты, ни smoke. Использован результат S6: прогон «Тесты для задачи #1511 (перед ревью)» на 5237ec47 завершился со статусом passed без ошибок, содержимое report.json мне недоступно. Слова автора о прохождении браузерного сценария и адресных тестов не перепроверены запуском. Замер gzip (+858 Б, порог превышен ещё на базе) взят со слов автора.\n\nПо исходникам на head изучены:\n- src/houseplan-editor-runtime.ts: `_applyGeometryState`, `_decorShapeDown`, `_decorMoveUpdate`, `_decorSnapGeometry`;\n- геттер `_dtSel`;\n- src/tv-mount.ts, src/editors/decor/selection.ts;\n- в src/editors/properties: catalog.ts и место с `Object.assign` в patch.ts;\n- guard в furniture_workstation.py;\n- серверные тесты связи телевизора, включая новый тест старого writer;\n- demo/smoke_tv_mount.mjs.\n\nОстальные части (2.5D-подъём, PDF, импорт и экспорт) в этом раунде не менялись и оценены по ревью раунда 1 и диффу. Не проверялись визуальное качество 2.5D, совпадение лицевой стороны арта `tv` и `cabinet_tv` и поведение в реальной панели HA (запланировано автором в houseplan-e2e#93).\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 36af10803c20dbf027b922553b37419d112023a9 → 5237ec475be4adf61d102ffc4e3954de19cb68ab\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1511, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nКоманда использует существующие действия выбора и историю геометрии редактора подложки. Она доступна при попадании центра обычного телевизора в площадь свободной ТВ-тумбы или при выборе самой тумбы. Установка центрирует телевизор и сохраняет его размеры и стиль. Поверхность для подставки берётся из модели тумбы. В Flat, 2.5D и PDF положение выводится из тумбы, а высота влияет только на 2.5D. Снятие или удаление тумбы оставляет телевизор в последнем положении на полу.\n\nСвязь хранится в одном необязательном поле `tv_cabinet_id`. Проверьте защиту связей в старых клиентах, сопоставление идентификаторов при копировании и импорте и высотный порядок при отрисовке. Дополнительная возможность сервера сохраняет работу старого механизма рабочего стола. Версии переносимых документов повышаются только при наличии связи с тумбой.\n\nПрямые проверки прошли. Браузерный smoke через обычные кнопки редактора проверяет монтаж и снятие, Undo/Redo, переход в 2.5D и перемещение после записи. Тесты проекции проверяют высоту при четырёх поворотах. Серверные тесты проверяют валидность, перенос и старые версии клиента. Отдельный сценарий для реальной панели HA запланирован в [houseplan-e2e#93](https://github.com/Matysh/houseplan-e2e/issues/93).\n\nПредварительный локальный прогон полного выбранного набора S6 на `6ecc2be90` прошёл. Отдельный замер gzip дал 484 346 Б на чистом `dev` и 485 204 Б на ветке задачи, прирост 858 Б. Порог 420 000 Б был превышен на базе ещё до изменений.\n\n### Исправления по предыдущему ревью\n\n- После «Снять с тумбы → Отменить» восстановленная пара снова выделяется за тумбу. Рамка и клавиатурные команды применяются к ней. Браузерный сценарий с предварительно перемещённой тумбой воспроизвёл прежнюю ошибку и теперь проходит с проверкой рамки, связи и последующего повтора. [Ревью раунда 1](https://github.com/Matysh/houseplan-card/issues/1511#issuecomment-7063603495)\n- Установленный телевизор исключён из обычной привязки и массового выбора как отдельная фигура. Ластик удаляет предмет, на который нажали. При равной глубине порядок отрисовки зафиксирован тестом с телевизором, записанным в план перед тумбой. Вычисленная геометрия переиспользуется, пока оба предмета прежние.\n- Старый клиент получает подсказку обновиться и при попытке удалить связанную тумбу. Тест проверяет ответ и сохранность обоих предметов.\n\nМатериал повторной передачи — `5237ec475`. Браузерный сценарий, сборка и адресные тесты редактора прошли.\n```\n\n</details>\n",
-        "createdAt": "2026-11-21T14:28:45.120Z",
-        "artifactId": 14711096963,
-        "runId": 44913920516,
-        "runAttempt": 1,
-        "completedAt": "2026-11-21T14:28:50Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44913920516",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "36af10803c20dbf027b922553b37419d112023a9"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1512": {
@@ -6369,19 +6201,7 @@
     1512,
     1472
   ],
-  "active": {
-    "issue": 1511,
-    "worker": "finish",
-    "token": "591:finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da:finish:1:admit",
-    "fence": 591,
-    "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-    "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795270469944,
-    "expiresAt": 1795274951606,
-    "patchId": "2f7a4ee4e1879c31c643745d77425f90bf2ad2b8",
-    "reviewRequest": "review:1511:2:2f7a4ee4e1879c31c643745d77425f90bf2ad2b8:36af10803c20dbf027b922553b37419d112023a9"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6771,73 +6591,9 @@
       "digest": "43cbfd6c02c9a393134474d596b49c78b6d6f7db375824227fd97a0145a9ad6e",
       "issue": 1472
     },
-    "github:44909098656:1:completions:message:1081fcd85729f5a6785f5db52d633a3a16cf074c872fbf4c984bb47ccccc0803": {
-      "digest": "065c3fa69f4c4ce756868e863f9d6ed8a55950cbd20facc69ea7f0df74adc01a",
-      "issue": 1511
-    },
     "github:44909098656:1:completions:metadata:6e88a1bf-5028-4959-a8a2-6ce052b58293:task-notice:1472::": {
       "digest": "b8730a9695408ab29018ab340f77a2c10171441ac1c890add09634b237daf418",
       "issue": 1472
-    },
-    "finish:c46d3215-2147-4f5d-862a-5752e5f400e8:finish:1:synchronized": {
-      "digest": "68078bd52708067442c10e4d7e13b845e3eb86db649c31f60bd7d4935bde540a",
-      "issue": 1511
-    },
-    "finish:4cecad41-cccc-48ac-87cb-446265bac3c5": {
-      "digest": "8bef9b5578c7adc454d650e64a94503ffc357bd3f6ca23b6ca6b1dd76130974b",
-      "issue": 1511
-    },
-    "finish:c46d3215-2147-4f5d-862a-5752e5f400e8:finish:2:automation-pending": {
-      "digest": "14d107b6b457dbe19cfba1759b659c600376e8f73761596eb09e7099c172e929",
-      "issue": 1511
-    },
-    "finish:3376fe3d-c172-4efc-8a0b-b53eec2dc391": {
-      "digest": "cb9befb049233083fce49539be8aa4db0e0787cb740edeb76f6858bfba55821a",
-      "issue": 1511
-    },
-    "finish:155609fc-ff84-4635-a589-c35dea4ad827": {
-      "digest": "d6bde4e3f5ca33aaab5ddb918c42d3673ef30024a65c3faa6a25c5693a8885d8",
-      "issue": 1511
-    },
-    "finish:edf10473-fb9d-4cd3-9459-ded764e2d8fd": {
-      "digest": "1cdad0711fa31c2ba0dbc69a302346f5f841fdc94c217b3867aff2e9bb82ff3f",
-      "issue": 1511
-    },
-    "finish:0bcdd3f2-9ead-4b97-aea0-83ee74e37c1c:finish:1:s6-label": {
-      "digest": "57a1838580e1f8ba54381bfdcf200f7dbcaa57ba3995e52c4b6a12c33008f9af",
-      "issue": 1511
-    },
-    "finish:0bcdd3f2-9ead-4b97-aea0-83ee74e37c1c:finish:2:review-requested": {
-      "digest": "e5dcb7367ed05025316aef47adebffcd58d707e8c53347485d7c46960c780124",
-      "issue": 1511
-    },
-    "github:44910077065:1:completions:message:f248ef67ccd59e3d08cbed3eb2c0a5676e901f0a247ba04dc22f16e5d785768a": {
-      "digest": "c262e390176add67986cec3dd9e51b376d45e5a8b108b6a265c323eb131c1a89",
-      "issue": 1511
-    },
-    "github:44910078591:1:completions:message:eedc920e70cdde4f3990dd808fddc8c327fed1cb0e0fd9335e1e03d43fc439b8": {
-      "digest": "b280eb5d0243a07f6e8a5b790e44e1118f49476fe0ac46becf4a34e70dbc173e",
-      "issue": 1511
-    },
-    "github:44910683643:1:tick:0:review-presentation": {
-      "digest": "4f6658943f8601bd4cbd1741bbcc03973eb9eafe0966fe87ac5156c95a807308",
-      "issue": 1511
-    },
-    "github:44910683643:1:tick:0:return": {
-      "digest": "0f22f71d7a86c5c9a891c2599a50c14d4d8e951de203a98c49972e319dcc810e",
-      "issue": 1511
-    },
-    "github:44910683643:1:tick:0:return-label": {
-      "digest": "491438e5c8358dba2dbd28daeec3b98d1965d607bcf1a550f117bddee9fea0c8",
-      "issue": 1511
-    },
-    "github:44910683643:1:completions:report:48fbcc43d17d747705d4615040b963da864a41c220872f4ed42e4b72cc95d0ae": {
-      "digest": "0376330c5577db9b702c26dfaf258a6ab0857233c16a09e8e44bcc1b9f680d81",
-      "issue": 1511
-    },
-    "github:44910683643:1:completions:metadata:9e0b3248-c3ec-4355-a6c1-2120363942a6:task-notice:1511::": {
-      "digest": "93251911489130414da791e66252e43d4558902b71afa3fa9225aebeeaa6dbec",
-      "issue": 1511
     },
     "finish:a1294e97-0e65-4bb7-be65-79a2891d1556:finish:2:synchronized": {
       "digest": "665f64ef9714306836d154ad193a3c9877f35a239b46685ad92f8c8b11bd77f8",
@@ -6955,85 +6711,9 @@
       "digest": "ee9f2fa320d33abe791fd50c7e2777779975f18a7b448395f91545343ae5825b",
       "issue": 1472
     },
-    "finish:7d31d7ac-4bc9-49c4-bada-d0d8c2226446:finish:1:synchronized": {
-      "digest": "64b88590a195e0100d3db0af8a506cac22a9198adb53bb090a95e9a364edecec",
-      "issue": 1511
-    },
-    "finish:4353a413-9d25-4ce5-9e6b-0702ad8e6837": {
-      "digest": "a90abe1305b98771da1eccc6363723c71c396d247e44f5256984909e80b57afb",
-      "issue": 1511
-    },
-    "finish:b2471592-f1e1-48e2-9a75-65060c933c59": {
-      "digest": "7e38a82c39b955abf7fc8ee4f07d970bfcbb393cc61c221638c0bf43f7680c9d",
-      "issue": 1511
-    },
-    "finish:8aef9dcd-671f-48a2-9e21-19de508877d8": {
-      "digest": "21e4e22c2f43d7f47b98823df1faa7577c5b74dc3c0ae21bad124c53bdcb8b68",
-      "issue": 1511
-    },
-    "finish:87746a01-3de8-416c-9089-73617564424e": {
-      "digest": "f69dc2e3b6df5e23c39518fa1c98c210b42086a7fbe71c128bddd735e318c6b0",
-      "issue": 1511
-    },
-    "finish:6cf034f8-0641-406c-a140-994ab4f7e853": {
-      "digest": "1d718a1338ab522b5cc7849c6d52e3ff719a188438ba684b3a1c499113b8c18c",
-      "issue": 1511
-    },
-    "finish:3b37af0f-4530-4c0d-bfce-0e1b1c853400": {
-      "digest": "67e01cb18b737f845361868b2e1e03c274c45dc1c579633df149de97d6305461",
-      "issue": 1511
-    },
-    "finish:37c51518-2cf8-4c70-9fec-96720037879d": {
-      "digest": "4e008a54a4c5102d124c67d129ab0410e5bec862f034a78775816655d3ad5cb9",
-      "issue": 1511
-    },
-    "finish:500780bf-adf6-44e6-9541-849a1849bd6a": {
-      "digest": "504aeacfdca73b209a61dd287c44ddca3731ed4cf3f1bc74b9920e98c0e6d8eb",
-      "issue": 1511
-    },
-    "finish:f9c79b34-cdd5-4c98-8c36-a28f1a5f7650": {
-      "digest": "1109e8caea6a071371243aaf21f037d161f6114f5ff24115db070ccd1d73ecfe",
-      "issue": 1511
-    },
-    "finish:7d31d7ac-4bc9-49c4-bada-d0d8c2226446:finish:2:s6-label": {
-      "digest": "a1063875ef12a9afddb34249382c53897f307f125f5f21d7be6e4829dc1c4303",
-      "issue": 1511
-    },
-    "finish:7d31d7ac-4bc9-49c4-bada-d0d8c2226446:finish:3:review-requested": {
-      "digest": "03069e22ac129fa62a8f487ff8645032e4ddb29bebba25b28bb59c666d1dde4a",
-      "issue": 1511
-    },
-    "github:44913889594:1:tick:0:review-retry": {
-      "digest": "8345068d19a4453c6290bf748945f657984cbb92af9b3193727f157433b4813d",
-      "issue": 1511
-    },
     "github:44913889594:1:completions:notice:c899fe4dc7bd35ed98ba1ac48f1e41b3b1ca49b2dcc08a9ab5023ecfaef5f337": {
       "digest": "f0428dab4c1db1e303d8994b2f75ac5353930e2e150076c7adb2e0223218d6de",
       "issue": 1472
-    },
-    "github:44913889594:1:completions:message:c899fe4dc7bd35ed98ba1ac48f1e41b3b1ca49b2dcc08a9ab5023ecfaef5f337": {
-      "digest": "3a521c6f2574c833798ee9122345068213adb04e0325255fce751054030908f8",
-      "issue": 1511
-    },
-    "github:44913889594:1:completions:message:9f626a231f0b06f93bf38ac69a0cd502a93e70387f1ebd15f14404403f9cc2b5": {
-      "digest": "62b65c9051d52b80dd383bb00805f8bbb179f1e8d96ff16d92a6dee8c10bcea9",
-      "issue": 1511
-    },
-    "github:44913889594:1:completions:message:94cf7e841282c6f69f3b9e8cdd65a2094604f96c2c119d2e1de7e23725000e25": {
-      "digest": "992faf77fbaaeccf8715af94ac8bf3ac10ebb0805b7b2bc2f148c7a242d26ed2",
-      "issue": 1511
-    },
-    "github:44913889594:1:completions:message:70162007de7827cfd5ba1c744a84236359971e3b10bbbc389a87d1f1604fd64c": {
-      "digest": "c97a27b04044659517e9dedddde7c5b969c732789969c81248766069c1d53832",
-      "issue": 1511
-    },
-    "github:44914137904:1:tick:0:review-presentation": {
-      "digest": "7abfae13b6f8d9cd26aca1288a3dde16d02d2a9c070e2df84c8344f65efe1094",
-      "issue": 1511
-    },
-    "github:44914137904:1:tick:0:review-complete": {
-      "digest": "651282f398bdb76e7c7e6b0a14239e8c565a309d55696a35e4bc298d69e01cb9",
-      "issue": 1511
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7160,20 +6840,6 @@
         "delivered": true
       }
     },
-    "finish:c46d3215-2147-4f5d-862a-5752e5f400e8": {
-      "digest": "91ff055796f7beff03c6be243bcf443886fc107e3cce5402a5a15c00c02bf748",
-      "issue": 1511,
-      "message": {
-        "kind": "queued",
-        "issue": 1511,
-        "at": 1795266950577,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "82eea3dea6cc361417766fb2465c9f98c34d86ad",
-        "delivered": true
-      }
-    },
     "finish:034c5438-1b0d-4b19-921d-bc59ee7729a4:finish:7:s6-complete": {
       "digest": "39bd7790995bb3828fca8261c43b154ff76beb834c60558605a7296bccc66e18",
       "issue": 1472,
@@ -7198,51 +6864,6 @@
         "newReview": true,
         "resubmission": false,
         "reviewChanges": "Независимая опция Real 3D (строго true, default off), ленивый Three.js 0.187.0, каноническая геометрия и камера, прежние HTML-устройства и права HA. При отказе WebGL используется сохранённый 2.5D или Flat. Экспорт активного 3D скачивает плоский векторный SVG с подсказкой и не меняет экран. Эталоны не обновлены.\n\nИсходник сравнения `3c82c0f1801173caa5aa6a5a7cfe19445c746305`; 16 кадров на одной синтетической сцене, две темы и четыре поворота. Проверены RTX 4090 и SwiftShader, но не настоящий маломощный планшет. Отличия — прозрачность, тени и детали створок. В HA 2026.11.1 подтверждены сохранение, перезагрузка и отключение без изменения геометрии. Проверены browser smoke 3D/SVG, unit и backend; итог S6 приложит очередь. Полные условия и команды ниже. Совместимый relay нужен до будущего HACS-релиза, здесь деплоя нет.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "github:44909098656:1:tick:0:admit": {
-      "digest": "6c8c41e45cc48a5a51103594e1b37f4ab4a1b84c59393514e43f471fa0bdd572",
-      "issue": 1511,
-      "message": {
-        "kind": "admitted",
-        "issue": 1511,
-        "at": 1795267776235,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "82eea3dea6cc361417766fb2465c9f98c34d86ad",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:0bcdd3f2-9ead-4b97-aea0-83ee74e37c1c:finish:1:s6-complete": {
-      "digest": "66e77d2c6bac2c2418f39f2e6ae07ffa90793998e0829083c51cafae77042567",
-      "issue": 1511,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1511,
-        "at": 1795268458113,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
-        "phase": "review",
-        "evidence": {
-          "id": "20261121T133034051-9555e51a",
-          "name": "Тесты для задачи #1511 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261121T133034051-9555e51a/report.json",
-          "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
-          "status": "passed",
-          "finishedAt": "2026-11-21T13:33:52.455Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Команда использует существующие действия выбора и историю геометрии редактора подложки. Она доступна при попадании центра обычного телевизора в площадь свободной ТВ-тумбы или при выборе самой тумбы. Установка центрирует телевизор и сохраняет его размеры и стиль. Поверхность для подставки берётся из модели тумбы. В Flat, 2.5D и PDF положение выводится из тумбы, а высота влияет только на 2.5D. Снятие или удаление тумбы оставляет телевизор в последнем положении на полу.\n\nСвязь хранится в одном необязательном поле `tv_cabinet_id`. Проверьте защиту связей в старых клиентах, сопоставление идентификаторов при копировании и импорте и высотный порядок при отрисовке. Дополнительная возможность сервера сохраняет работу старого механизма рабочего стола. Версии переносимых документов повышаются только при наличии связи с тумбой.\n\nПрямые проверки прошли. Браузерный smoke через обычные кнопки редактора проверяет монтаж и снятие, Undo/Redo, переход в 2.5D и перемещение после записи. Тесты проекции проверяют высоту при четырёх поворотах. Серверные тесты проверяют валидность, перенос и старые версии клиента. Отдельный сценарий для реальной панели HA запланирован в [houseplan-e2e#93](https://github.com/Matysh/houseplan-e2e/issues/93).\n\nПредварительный локальный прогон полного выбранного набора S6 на `6ecc2be90` прошёл. Отдельный замер gzip дал 484 346 Б на чистом `dev` и 485 204 Б на ветке задачи, прирост 858 Б. Порог 420 000 Б был превышен на базе ещё до изменений.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
@@ -7296,29 +6917,6 @@
         "delivered": true
       }
     },
-    "finish:7d31d7ac-4bc9-49c4-bada-d0d8c2226446": {
-      "digest": "0640fa8db09487627fc5da87629d556ffc6ab47e2692bbbd3fafb48fdee5ab84",
-      "issue": 1511,
-      "message": {
-        "kind": "queued",
-        "issue": 1511,
-        "at": 1795269125733,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-        "evidence": {
-          "id": "20261121T133034051-9555e51a",
-          "name": "Тесты для задачи #1511 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261121T133034051-9555e51a/report.json",
-          "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
-          "status": "passed",
-          "finishedAt": "2026-11-21T13:33:52.455Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
     "finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da": {
       "digest": "f6f6d8868f6b692c2ba0fe513a4b97e629c3360fcc25453f6fb79eac18ae7f21",
       "issue": 1512,
@@ -7354,30 +6952,6 @@
         "delivered": true
       }
     },
-    "finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da:finish:1:admit": {
-      "digest": "495a5988440ef626894a70c20af26a0dca42eb525d7fec69c9a8b74446c8113a",
-      "issue": 1511,
-      "message": {
-        "kind": "admitted",
-        "issue": 1511,
-        "at": 1795270469944,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261121T133034051-9555e51a",
-          "name": "Тесты для задачи #1511 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261121T133034051-9555e51a/report.json",
-          "materialSha": "6ecc2be9098933a914064093f8fff82bf7e6edbe",
-          "status": "passed",
-          "finishedAt": "2026-11-21T13:33:52.455Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
     "finish:6357fc36-3280-40ee-a922-f971d6b58a99": {
       "digest": "73be6d293c42df5690467ed9f5884cdbeb310be61194a2cac022546c8ca07cce",
       "issue": 1472,
@@ -7398,36 +6972,6 @@
           "finishedAt": "2026-11-21T13:22:09.465Z",
           "failures": []
         },
-        "delivered": true
-      }
-    },
-    "finish:7d31d7ac-4bc9-49c4-bada-d0d8c2226446:finish:2:s6-complete": {
-      "digest": "5bdbfa882643feb36ee41ad13400d9ef4acf2397ddb0bc30647e89314eb7ded4",
-      "issue": 1511,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1511,
-        "at": 1795271147634,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-        "phase": "review",
-        "evidence": {
-          "id": "20261121T141459936-9ae4723f",
-          "name": "Тесты для задачи #1511 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261121T141459936-9ae4723f/report.json",
-          "materialSha": "5237ec475be4adf61d102ffc4e3954de19cb68ab",
-          "status": "passed",
-          "finishedAt": "2026-11-21T14:25:46.124Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "Команда использует существующие действия выбора и историю геометрии редактора подложки. Она доступна при попадании центра обычного телевизора в площадь свободной ТВ-тумбы или при выборе самой тумбы. Установка центрирует телевизор и сохраняет его размеры и стиль. Поверхность для подставки берётся из модели тумбы. В Flat, 2.5D и PDF положение выводится из тумбы, а высота влияет только на 2.5D. Снятие или удаление тумбы оставляет телевизор в последнем положении на полу.\n\nСвязь хранится в одном необязательном поле `tv_cabinet_id`. Проверьте защиту связей в старых клиентах, сопоставление идентификаторов при копировании и импорте и высотный порядок при отрисовке. Дополнительная возможность сервера сохраняет работу старого механизма рабочего стола. Версии переносимых документов повышаются только при наличии связи с тумбой.\n\nПрямые проверки прошли. Браузерный smoke через обычные кнопки редактора проверяет монтаж и снятие, Undo/Redo, переход в 2.5D и перемещение после записи. Тесты проекции проверяют высоту при четырёх поворотах. Серверные тесты проверяют валидность, перенос и старые версии клиента. Отдельный сценарий для реальной панели HA запланирован в [houseplan-e2e#93](https://github.com/Matysh/houseplan-e2e/issues/93).\n\nПредварительный локальный прогон полного выбранного набора S6 на `6ecc2be90` прошёл. Отдельный замер gzip дал 484 346 Б на чистом `dev` и 485 204 Б на ветке задачи, прирост 858 Б. Порог 420 000 Б был превышен на базе ещё до изменений.\n\n### Исправления по предыдущему ревью\n\n- После «Снять с тумбы → Отменить» восстановленная пара снова выделяется за тумбу. Рамка и клавиатурные команды применяются к ней. Браузерный сценарий с предварительно перемещённой тумбой воспроизвёл прежнюю ошибку и теперь проходит с проверкой рамки, связи и последующего повтора. [Ревью раунда 1](https://github.com/Matysh/houseplan-card/issues/1511#issuecomment-7063603495)\n- Установленный телевизор исключён из обычной привязки и массового выбора как отдельная фигура. Ластик удаляет предмет, на который нажали. При равной глубине порядок отрисовки зафиксирован тестом с телевизором, записанным в план перед тумбой. Вычисленная геометрия переиспользуется, пока оба предмета прежние.\n- Старый клиент получает подсказку обновиться и при попытке удалить связанную тумбу. Тест проверяет ответ и сохранность обоих предметов.\n\nМатериал повторной передачи — `5237ec475`. Браузерный сценарий, сборка и адресные тесты редактора прошли.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
