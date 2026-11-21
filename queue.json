@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19744,
+  "revision": 19745,
   "nextTicket": 597,
   "nextFence": 597,
   "tasks": {
@@ -2414,43 +2414,6 @@
       },
       "devBuild": {
         "status": "not-required"
-      }
-    },
-    "1419": {
-      "issue": 1419,
-      "branch": "codex/1419-zigbee-golden-dwell",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "e3319fe71ad51b9f02329f478f1608a1ef0f453b",
-      "mergedSha": "460993a2c24dd3079191169a9f597e43fdf7602f",
-      "mergedAt": 1794591421838,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "460993a2c24dd3079191169a9f597e43fdf7602f"
       }
     },
     "1420": {
@@ -5631,10 +5594,25 @@
       "removedToRelease": false,
       "reviewRequest": "review:1511:2:2f7a4ee4e1879c31c643745d77425f90bf2ad2b8:36af10803c20dbf027b922553b37419d112023a9",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": 18,
+          "cycleMilestone": 18
+        },
+        "milestoneTitle": "2.0.0",
+        "commentCurrent": true,
+        "commentDigest": "b4a585966f4b15997bed",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": 18
+        }
       },
       "devBuild": {
         "status": "published",
