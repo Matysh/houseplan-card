@@ -1,3 +1,4 @@
+import { tvCabinet } from '../../tv-mount';
 import type { DecorKind, DecorShape } from './types';
 
 const kinds = new Set<DecorKind>(['line', 'rect', 'ellipse', 'text', 'furniture', 'image']);
@@ -17,7 +18,8 @@ export function decorSelectionMembers(items: readonly DecorShape[], ids: readonl
 }
 
 export function allDecorSelectionIds(items: readonly DecorShape[], furnitureOnly = false): string[] | null {
-  const ids = items.filter(item => !furnitureOnly || item.kind === 'furniture').map(item => item.id);
+  // A mounted television moves with its cabinet, which is the selectable object.
+  const ids = items.filter(item => item.kind === 'furniture' ? !tvCabinet(items, item) : !furnitureOnly).map(item => item.id);
   return decorSelectionMembers(items, ids) ? ids : null;
 }
 

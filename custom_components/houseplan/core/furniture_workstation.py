@@ -228,6 +228,9 @@ def guard_workstation_write(candidate: dict, previous: dict | None, writer=None)
                                                    if field in item})
                 if any(field in item for field in protected):
                     extended.add(key)
+                cabinet_id = item.get(TV_CABINET)
+                if isinstance(cabinet_id, str) and cabinet_id:
+                    extended.add((space["id"], cabinet_id))
         return result, extended
 
     old, old_extended = rows(previous)

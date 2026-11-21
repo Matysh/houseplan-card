@@ -60,6 +60,12 @@ try {
   await page.evaluate(() => window.__hpTest.setMode('view'));
   const raised = await viewStand();
   check('mounted stand is projected above its former position', raised.y < floor.y - 5);
+  check('the cabinet paints before its raised TV even though the TV is stored first', await page.evaluate(() => {
+    const root = window.__card.renderRoot;
+    const cabinet = root.querySelector('[data-hp-furniture-volume][data-id="cabinet"]');
+    const tv = root.querySelector('[data-hp-furniture-volume][data-id="tv"]');
+    return !!(cabinet?.compareDocumentPosition(tv) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }));
   await page.evaluate(() => window.__hpTest.setMode('decor'));
   await selectCabinet();
   const originalX = (await savedDecor())[1].x;
@@ -77,6 +83,19 @@ try {
   check('linked cabinet offers the remove command', (await mount.textContent()).trim(), 'Remove from TV cabinet');
   await mount.click();
   check('remove persists a free television', !Object.hasOwn((await savedDecor())[0], 'tv_cabinet_id'));
+  check('the freed television is selected', await page.evaluate(() => window.__card._decorSel), 'tv');
+  await undo.click();
+  check('undoing removal restores the TV link', (await savedDecor())[0].tv_cabinet_id, 'cabinet');
+  check('undoing removal moves the selection and handles to the cabinet', await page.evaluate(() => {
+    const card = window.__card;
+    const frame = card.renderRoot.querySelector('.dtfurnitureframe .dtbox');
+    const cabinet = card._decorList.find(item => item.id === 'cabinet');
+    return card._decorSel === cabinet.id && !!frame
+      && Math.abs(Number(frame.getAttribute('x')) - cabinet.x * 1000) < .001
+      && Math.abs(Number(frame.getAttribute('width')) - cabinet.w * 1000) < .001;
+  }));
+  await redo.click();
+  check('redoing removal returns the TV to the floor', !Object.hasOwn((await savedDecor())[0], 'tv_cabinet_id'));
   await page.evaluate(() => window.__hpTest.setMode('view'));
   const detached = await viewStand();
   check('detaching lowers the TV without losing its new plan position',

@@ -1,6 +1,6 @@
 import type { PlanHost, HostPresentationContext } from './plan-host';
 import { workstationTarget, toggleWorkstation, removeWorkstationItems } from './iso-lab-workstation';
-import { tvMountTarget, toggleTvMount } from './tv-mount';
+import { tvCabinet, tvMountTarget, toggleTvMount } from './tv-mount';
 import { hasMarkers } from './plan-capabilities';
 import { ModeChromeLayouts, type ModeChromeProbe } from './mode-chrome-layout';
 import {WallSideDimensionEditor} from './wall-side-dimension-editor';
@@ -2581,6 +2581,9 @@ public _applyGeometryState(
         });
       }
       this._showGeometrySpace(target.spaceId, !!host._activeWallChainId && host._space === target.spaceId);
+      const selected = host._dtSel;
+      const cabinet = selected?.kind === 'furniture' ? tvCabinet(host._decorList, selected) : undefined;
+      if (cabinet) host._decorSel = cabinet.id;
       host._modelCache = null;
       host._frame = null;
       if (!presentationOnly) { host._regSignature = ''; host._maybeRebuildDevices(); }
@@ -4000,9 +4003,10 @@ public _decorSnapGeometry(excludeId?: string | readonly string[]): SnapGeometry 
         && cached.height === this.host._decorH && cached.exclude === cacheKey) {
       return cached.geometry;
     }
+    const items = this.host._decorList;
     const parts: SnapGeometry[] = [];
-    for (const shape of this.host._decorList) {
-      if (excluded.has(shape.id)) continue;
+    for (const shape of items) {
+      if (excluded.has(shape.id) || shape.kind === 'furniture' && tvCabinet(items, shape)) continue;
       if (shape.kind === 'line') {
         const a = [shape.x1 * NORM_W, shape.y1 * this.host._decorH];
         const b = [shape.x2 * NORM_W, shape.y2 * this.host._decorH];

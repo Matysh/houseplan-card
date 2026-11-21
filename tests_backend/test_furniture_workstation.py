@@ -378,6 +378,12 @@ async def test_old_writer_can_edit_computer_links_but_cannot_drop_tv_link_throug
     message = {"type": "houseplan/config/set", "config": candidate, "expected_rev": before.config_data["rev"],
                "opening_features_api": 1, "furniture_workstation_api": 1}
     guard_workstation_write(candidate, before.config_data["config"], 1)
+    cabinet = rows.pop(-2)
+    with pytest.raises(CommandError) as error:
+        await commands.execute(message)
+    assert error.value.code == "furniture_workstation_client_outdated"
+    assert commands.storage.snapshot() == before
+    rows.insert(-1, cabinet)
     rows[-1].pop("tv_cabinet_id")
     with pytest.raises(CommandError) as error:
         await commands.execute(message)

@@ -10730,7 +10730,7 @@ export class HouseplanCard extends LitElement {
       const cls = 'dshape' + (editing && this._decorSel === owner.id ? ' dsel' : '');
       const style = this._decorResolvedStyle(sh);
       const strokeWidth = this._decorWidthUnits(sh);
-      const down = (e: PointerEvent) => this._decorShapeDown(e, owner);
+      const down = (e: PointerEvent) => this._decorShapeDown(e, erasing ? record : owner);
       const dbl = (e: MouseEvent) => this._decorShapeDbl(e, owner);
       // docs/STYLING-HOOKS.md §3: every shape carries its kind and its id
       if (sh.kind === 'line')
@@ -10828,7 +10828,7 @@ export class HouseplanCard extends LitElement {
             stroke-width="${selectStrokePx}" fill="none" stroke-linecap="round"
             stroke-linejoin="round" vector-effect="non-scaling-stroke"
             @pointerdown=${down} @dblclick=${dbl}></path>` : nothing}
-          ${erasing ? svg`<path class="dshape derasehit" data-hp="decor" data-id="${owner.id}"
+          ${erasing ? svg`<path class="dshape derasehit" data-hp="decor" data-id="${record.id}"
             data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${transform}
             vector-effect="non-scaling-stroke"
             @pointerdown=${down}></path>` : nothing}`;
@@ -13317,6 +13317,7 @@ export class HouseplanCard extends LitElement {
         const depth=(item:typeof furniture[number])=>item.footprint.reduce((sum,p)=>sum+b*p[0]+d*p[1],0)/item.footprint.length;
         furniture.sort((x,y)=>{
           const delta = depth(x)-depth(y);
+          // A mounted TV shares its cabinet's center and must paint above it.
           return Math.abs(delta)>1e-9 ? delta : x.lift-y.lift;
         });
       }

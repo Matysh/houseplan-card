@@ -3,6 +3,7 @@ import test from 'node:test';
 import { tvCabinet, tvMountTarget, tvOnCabinet, toggleTvMount } from '../test-build/tv-mount.js';
 import { remapWorkstationItems, removeWorkstationItems } from '../test-build/iso-lab-workstation.js';
 import { copyDecor } from '../test-build/editors/decor/order.js';
+import { allDecorSelectionIds } from '../test-build/editors/decor/selection.js';
 import { FURNITURE_VOLUME_RUNTIME } from '../test-build/furniture-volume-runtime.js';
 import { furnitureParts, furnitureVolume, FURNITURE_HEIGHT_SCALE, tvCabinetSurfaceCm } from '../test-build/iso-lab-furniture.js';
 import { isoCameraFor, projectPlanPoint } from '../test-build/iso-projection.js';
@@ -35,6 +36,9 @@ test('the link follows cabinet movement and orientation, and detaches or copies 
   const items = [moved, mounted];
   assert.equal(tvCabinet(items, mounted), moved);
   const drawn = tvOnCabinet(mounted, moved);
+  assert.equal(tvOnCabinet(mounted, moved), drawn);
+  assert.notEqual(tvOnCabinet(mounted, cabinet), drawn);
+  assert.deepEqual(allDecorSelectionIds(items, true), [moved.id]);
   near(drawn.x + drawn.w/2, moved.x + moved.w/2);
   near(drawn.y + drawn.h/2, moved.y + moved.h/2);
   for (const key of ['w', 'h', 'color']) assert.equal(drawn[key], tv[key]);
@@ -43,6 +47,7 @@ test('the link follows cabinet movement and orientation, and detaches or copies 
   assert.deepEqual(removeWorkstationItems(items, new Set([cabinet.id])), [detached]);
   assert.equal(detached.tv_cabinet_id, undefined);
   assert.equal(detached.x, drawn.x);
+  assert.deepEqual(allDecorSelectionIds([moved, detached], true), [moved.id, detached.id]);
   const copied = copyDecor(items, tv.id, 'copy', 10).shape;
   assert.equal(copied.tv_cabinet_id, undefined);
   assert.ok(Math.abs(copied.x - drawn.x) < Math.abs(copied.x - tv.x));

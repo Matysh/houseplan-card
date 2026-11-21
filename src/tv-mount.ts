@@ -1,8 +1,8 @@
 import type { DecorFurniture, DecorShape } from './editors/decor/types';
 
-const isTelevision = (item: DecorShape): item is DecorFurniture =>
+const isTelevision = (item: DecorShape): item is DecorFurniture & { symbol: 'tv' } =>
   item.kind === 'furniture' && item.symbol === 'tv';
-const isCabinet = (item: DecorShape): item is DecorFurniture =>
+const isCabinet = (item: DecorShape): item is DecorFurniture & { symbol: 'cabinet_tv' } =>
   item.kind === 'furniture' && item.symbol === 'cabinet_tv';
 
 export function tvCabinet(items: readonly DecorShape[], tv: DecorFurniture): DecorFurniture | undefined {
@@ -11,8 +11,12 @@ export function tvCabinet(items: readonly DecorShape[], tv: DecorFurniture): Dec
     : undefined;
 }
 
+const mountedPaint = new WeakMap<DecorFurniture, { cabinet: DecorFurniture; shape: DecorFurniture }>();
+
 export function tvOnCabinet(tv: DecorFurniture, cabinet: DecorFurniture): DecorFurniture {
-  return {
+  const cached = mountedPaint.get(tv);
+  if (cached?.cabinet === cabinet) return cached.shape;
+  const shape = {
     ...tv,
     x: cabinet.x + (cabinet.w - tv.w) / 2,
     y: cabinet.y + (cabinet.h - tv.h) / 2,
@@ -20,6 +24,8 @@ export function tvOnCabinet(tv: DecorFurniture, cabinet: DecorFurniture): DecorF
     flip_h: cabinet.flip_h,
     flip_v: cabinet.flip_v,
   };
+  mountedPaint.set(tv, { cabinet, shape });
+  return shape;
 }
 
 function distanceOnCabinet(tv: DecorFurniture, cabinet: DecorFurniture): number {
@@ -63,7 +69,7 @@ export function tvMountTarget(items: readonly DecorShape[], selected: DecorShape
 }
 
 export function detachedTv(tv: DecorFurniture, cabinet?: DecorFurniture): DecorFurniture {
-  const result = cabinet ? tvOnCabinet(tv, cabinet) : { ...tv };
+  const result = { ...(cabinet ? tvOnCabinet(tv, cabinet) : tv) };
   delete result.tv_cabinet_id;
   return result;
 }
