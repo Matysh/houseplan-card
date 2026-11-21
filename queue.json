@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19010,
+  "revision": 19011,
   "nextTicket": 583,
   "nextFence": 583,
   "tasks": {
@@ -4102,7 +4102,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795227734154,
       "reviewEntry": 2,
-      "patchId": "8ff585096aa840a4da4c166e58f9e8ee1863b57e",
+      "patchId": "fb26f661460635ce5a8aeb88801159c55dedba86",
       "changedFiles": [
         "PROCESS.md",
         "docs/CHANGELOG.md",
@@ -4123,7 +4123,8 @@
         "tools/core_external_conformance_fixture.py",
         "tools/site-release-build.txt",
         "tools/site-release-runtime.txt",
-        "tools/smoke_core_package.py"
+        "tools/smoke_core_package.py",
+        "tools/test_build_site_release.py"
       ],
       "s6": {
         "id": "20261121T020724200-0c0f4e33",
@@ -6087,10 +6088,11 @@
     "token": "582:finish:a94a705c-7d71-4224-ba26-04500390bca9:finish:1:admit",
     "fence": 582,
     "materialSha": "d6756f108caf162b987bc3e217ac7492ab113e66",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "6b8ef512d27636767389a906461d64c096d8a1a6",
+    "phase": "testing",
     "admittedAt": 1795227737895,
-    "expiresAt": 1795228037895
+    "expiresAt": 1795228044481,
+    "patchId": "fb26f661460635ce5a8aeb88801159c55dedba86"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6219,6 +6221,10 @@
     },
     "github:44854725419:1:completions:metadata:23887a64-7f06-46f3-b16e-6d9bca2ffeae:task-notice:1465::": {
       "digest": "4398bf98e73386b20571e95fd1bc2a452199ca1b2298a746cc080c3214095d1d",
+      "issue": 1465
+    },
+    "finish:a94a705c-7d71-4224-ba26-04500390bca9:finish:2:synchronized": {
+      "digest": "bb0410dd0f83737328f7c17456b27a3d03cee5dccf4e9dd54904bedfd8ec0423",
       "issue": 1465
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
