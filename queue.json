@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19500,
+  "revision": 19501,
   "nextTicket": 593,
   "nextFence": 591,
   "tasks": {
@@ -4268,14 +4268,14 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "2:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795267773418,
-        "entry": 2,
-        "requestId": "review:1472:2:eefbadbbe1e35a948692c85c66bd83cb0f804fc0:36af10803c20dbf027b922553b37419d112023a9",
-        "transitionConfirmed": true
+        "key": "3:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795270444065,
+        "entry": 3,
+        "detail": "Поведение: test/wall-union-isolation.test.mjs: failed",
+        "eventId": "finish:a1294e97-0e65-4bb7-be65-79a2891d1556:finish:3:return:return:1472"
       },
       "s6": {
         "id": "20261121T132012118-edb9fe9b",
@@ -4290,7 +4290,8 @@
       "reviewCorrection": {
         "requestId": "review:1472:2:eefbadbbe1e35a948692c85c66bd83cb0f804fc0:36af10803c20dbf027b922553b37419d112023a9",
         "at": 1795267773418
-      }
+      },
+      "reason": "checks-failed"
     },
     "1473": {
       "issue": 1473,
@@ -6243,18 +6244,7 @@
     1511,
     1512
   ],
-  "active": {
-    "issue": 1472,
-    "worker": "finish",
-    "token": "590:finish:a1294e97-0e65-4bb7-be65-79a2891d1556:finish:1:admit",
-    "fence": 590,
-    "materialSha": "cd1bd594529cece05797971bbc76123427c580ac",
-    "expectedBase": "36af10803c20dbf027b922553b37419d112023a9",
-    "phase": "testing",
-    "admittedAt": 1795268947844,
-    "expiresAt": 1795270676573,
-    "patchId": "da2e92d09b849f0595932926e08b7e155ddfb086"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -6824,6 +6814,10 @@
       "digest": "44a68eb15fbd01ac5d3cca39f99fbdd8633b0670326391b185da81e95a016601",
       "issue": 1472
     },
+    "finish:a1294e97-0e65-4bb7-be65-79a2891d1556:finish:3:return": {
+      "digest": "ee9f2fa320d33abe791fd50c7e2777779975f18a7b448395f91545343ae5825b",
+      "issue": 1472
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7120,6 +7114,26 @@
         "layer": "product",
         "materialSha": "ea72ce3580585f4e372f2499de0aa43f215a0a86",
         "delivered": true
+      }
+    },
+    "finish:a1294e97-0e65-4bb7-be65-79a2891d1556:finish:3:return:return:1472": {
+      "digest": "ee9f2fa320d33abe791fd50c7e2777779975f18a7b448395f91545343ae5825b",
+      "issue": 1472,
+      "message": {
+        "kind": "return",
+        "issue": 1472,
+        "at": 1795270444065,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795270444065,
+          "entry": 3,
+          "detail": "Поведение: test/wall-union-isolation.test.mjs: failed",
+          "eventId": "finish:a1294e97-0e65-4bb7-be65-79a2891d1556:finish:3:return:return:1472"
+        }
       }
     }
   },
