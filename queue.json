@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19600,
-  "nextTicket": 594,
+  "revision": 19601,
+  "nextTicket": 595,
   "nextFence": 594,
   "tasks": {
     "1024": {
@@ -5681,14 +5681,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1512-device-space-save",
-      "materialSha": "d57250c1b30dea3b55e6e3c4b884949493686d33",
+      "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 592,
-      "queued": false,
+      "ticket": 594,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795269668495,
-      "reviewEntry": 1,
+      "readyAt": 1795273488577,
+      "reviewEntry": 2,
       "patchId": "d962a1c4904687cbd32622c397568ecba3ce5757",
       "changedFiles": [
         "custom_components/houseplan/core/marker_placement.py",
@@ -5718,7 +5718,6 @@
         "tests_backend/test_ha_marker_placement.py",
         "tests_backend/test_marker_placement.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6238,7 +6237,9 @@
       "runId": 44913920516
     }
   },
-  "waiting": [],
+  "waiting": [
+    1512
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -7248,6 +7249,19 @@
           "entry": 4,
           "eventId": "finish:6357fc36-3280-40ee-a922-f971d6b58a99:finish:2:return:return:1472"
         }
+      }
+    },
+    "finish:d4a8f9b8-ac1c-4a99-9f41-c63bdb466e69": {
+      "digest": "ae84dc19200a56fc0cb765acc7807a52bb4ac109e8d6a26661262304e304674c",
+      "issue": 1512,
+      "message": {
+        "kind": "queued",
+        "issue": 1512,
+        "at": 1795273488577,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "501aeb434a7d9258a2ef10663a3c778875d8e9a5"
       }
     }
   },
