@@ -526,5 +526,11 @@
   "screens.no_spaces": "Zuerst einen Bereich hinzufügen. Seine individuellen Einstellungen erscheinen dann hier.",
   "screens.space_errors": "Maßstab prüfen: {names}.",
   "screens.use_available": "Verfügbaren Bereich verwenden",
-  "screens.individual_named": "Einstellungen: {name}"
+  "screens.individual_named": "Einstellungen: {name}",
+  "marker.error_room": "Der gespeicherte Raum oder Bereich ist nicht mehr verfügbar. Wählen Sie unter Allgemein den aktuellen Raum und speichern Sie erneut.",
+  "marker.error_text_length": "Verwenden Sie höchstens 500 Zeichen.",
+  "marker.error_link_length": "Der Link darf höchstens 2000 Zeichen enthalten.",
+  "marker.error_description_length": "Die Beschreibung darf höchstens 4000 Zeichen enthalten.",
+  "marker.error_glow_radius": "Geben Sie einen Radius von 0,1 bis 100 Metern (etwa 0,33 bis 328 Fuß) ein oder leeren Sie das Feld für den gemeinsamen Radius.",
+  "marker.error_numeric_range": "Wählen Sie eine Zahl im zulässigen Bereich."
 }

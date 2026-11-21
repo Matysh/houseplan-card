@@ -174,7 +174,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
      * калибровка радара, привязка не выбрана или не подтверждена реестром)
      * остаются; привязка и радиус теперь ещё и названы словами под полем. */
     const edit = !!d.devId;
-    const problems = markerProblems(d, effectiveTapAction, moreInfoDraftInvalid(d, this.host._planHass, this.host._fullRegistryHass));
+    const problems = markerProblems(d, effectiveTapAction, moreInfoDraftInvalid(d, this.host._planHass, this.host._fullRegistryHass), this.host._imperial);
     const problemFor = (fieldId: string) => problems.find((p) => p.field === fieldId);
     const dirty = markerDirty(this.host, d);
     const bindingUnverified = d.bindingMode === 'ha' && !d.devId && bindingStatus?.kind !== 'active';
@@ -586,14 +586,16 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           })}
           ${glowValue}
           ${field({
-            label: t('marker.glow_radius_label'), htmlFor: 'marker-glow-radius', help: this._help('marker.glow_radius.help'),
+            label: t('marker.glow_radius_label'), htmlFor: 'marker-glow-radius',
+            error: problemFor('marker-glow-radius') ? st(problemFor('marker-glow-radius')!.message) : undefined, help: this._help('marker.glow_radius.help'),
             hint: d.glowRadius.trim() ? undefined : st('marker.glow_radius_empty_hint', { v: `${this.host._glowRadiusPlaceholder} ${unit}` }),
             control: unitInput({
-              id: 'marker-glow-radius', unit, min: 0.5, step: 0.5, value: radiusValue, wide:true,
+              id: 'marker-glow-radius', unit, min: this.host._imperial ? 10 / 30.48 : .1, max: this.host._imperial ? 10000 / 30.48 : 100, step: 'any', value: radiusValue, wide:true,
               placeholder: this.host._glowRadiusPlaceholder, ariaLabel: t('marker.glow_radius_label'),
-              disabled: glowSourceDisabled,
+              disabled: glowSourceDisabled && !problemFor('marker-glow-radius'),
               describedBy: glowSourceDisabled || passiveSource ? 'marker-glow-disabled-hint' : undefined,
-              onInput: (raw) => { radiusInputs.set(this.host,{owner,raw}); this.host._markerDialog = { ...d, glowRadius: raw }; },
+              invalid: !!problemFor('marker-glow-radius'),
+              onInput: (raw, input) => { radiusInputs.set(this.host,{owner,raw}); this.host._markerDialog = { ...d, glowRadius: raw, glowRadiusBadInput: input.validity.badInput }; },
             }),
           })}
           ${glowSourceDisabled || passiveSource
@@ -615,7 +617,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       title: st('marker.section_appearance'),
       body: formSections([
           field({
-          label: t('marker.icon_label'), htmlFor: 'marker-icon', help: shelp('marker.icon.help'),
+          label: t('marker.icon_label'), htmlFor: 'marker-icon',
+          error: problemFor('marker-icon') ? st(problemFor('marker-icon')!.message) : undefined, help: shelp('marker.icon.help'),
           control: iconControl,
         }),
           this.host._ledSection(d.devId),
@@ -831,12 +834,14 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           fieldGrid([
           field({
             label: t('marker.model_label'), htmlFor: 'marker-model',
+          error: problemFor('marker-model') ? st(problemFor('marker-model')!.message) : undefined,
             control: html`<input data-hp="field" data-field="marker-model" id="marker-model" class="hpf-input" type="text" placeholder=${t('marker.model_ph')}
               .value=${d.model}
               @input=${(e: Event) => (this.host._markerDialog = { ...d, model: (e.target as HTMLInputElement).value })} />`,
           }),
           field({
             label: t('marker.link_label'), htmlFor: 'marker-link',
+          error: problemFor('marker-link') ? st(problemFor('marker-link')!.message) : undefined,
             hint: note(st('marker.link_hint'),'info'),
             control: html`<input data-hp="field" data-field="marker-link" id="marker-link" class="hpf-input" type="url" placeholder="https://…"
               .value=${d.link}
@@ -845,6 +850,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         ], { stacked: true }),
           field({
           label: t('marker.desc_label'), htmlFor: 'marker-description',
+          error: problemFor('marker-description') ? st(problemFor('marker-description')!.message) : undefined,
           control: html`<textarea data-hp="field" data-field="marker-description" id="marker-description" class="hpf-input" rows="4" placeholder=${t('marker.desc_ph')}
             .value=${d.description}
             @input=${(e: Event) => (this.host._markerDialog = { ...d, description: (e.target as HTMLTextAreaElement).value })}></textarea>`,

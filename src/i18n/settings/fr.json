@@ -526,5 +526,11 @@
   "screens.no_spaces": "Ajoutez d’abord un espace. Ses réglages individuels seront alors disponibles ici.",
   "screens.space_errors": "Vérifiez le zoom : {names}.",
   "screens.use_available": "Utiliser l’espace disponible",
-  "screens.individual_named": "Réglages : {name}"
+  "screens.individual_named": "Réglages : {name}",
+  "marker.error_room": "La pièce ou l’espace enregistré n’est plus disponible. Choisissez la pièce actuelle dans Général, puis enregistrez à nouveau.",
+  "marker.error_text_length": "Utilisez au maximum 500 caractères.",
+  "marker.error_link_length": "Le lien doit contenir au maximum 2000 caractères.",
+  "marker.error_description_length": "La description doit contenir au maximum 4000 caractères.",
+  "marker.error_glow_radius": "Saisissez un rayon de 0,1 à 100 mètres (environ 0,33 à 328 pieds), ou videz le champ pour utiliser le rayon commun.",
+  "marker.error_numeric_range": "Choisissez un nombre dans la plage autorisée."
 }

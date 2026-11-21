@@ -14,6 +14,7 @@ from typing import Any
 
 import voluptuous as vol
 
+from .marker_placement import repair_marker_spaces
 from .command_effects import BestEffortEffects
 from .command_execution import (
     begin_preparation,
@@ -478,6 +479,7 @@ class PlanCommands:
                     return preserve_legacy_structure(checked, source) if int(source.get("model_version", 0) or 0) < 11 else checked
 
                 checked = prepare_ordinary_summary_candidate(candidate, previous, readable, normalize)
+                repair_marker_spaces(checked)
                 copied = is_saved_space_copy(checked, previous)
                 geometry_previous = checked if copied else previous
                 validate_active_marker_ids(checked, previous)
@@ -729,6 +731,7 @@ class PlanCommands:
                     return CONFIG_SCHEMA(candidate)
 
                 checked = prepare_ordinary_summary_candidate(copy.deepcopy(message["config"]), previous, readable, normalize)
+                repair_marker_spaces(checked)
                 if len(json.dumps(checked, separators=(",", ":"))) > MAX_CONFIG_BYTES:
                     raise CommandError("too_large", "Configuration exceeds the store limit")
                 validate_active_marker_ids(checked, previous)

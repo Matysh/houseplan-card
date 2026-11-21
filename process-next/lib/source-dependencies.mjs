@@ -6,6 +6,7 @@ const safeRelative = value => typeof value === 'string' && value && !value.start
 // repository paths conservative for both selection and result fingerprints.
 // Runtime witnesses name their owner; dynamic scanners name the text trees they read.
 const DECLARED_SOURCE_SCOPES = new Map([
+  ['demo/smoke_device_save_placement.mjs', ['src/marker-placement.ts', 'src/coordinate-canonicalization.ts', 'src/houseplan-editor-runtime.ts', 'src/editors/marker-dialog.ts', 'src/editors/marker-form-state.ts']],
   // #1423: this HA comparison imports the synthetic dispatcher as a Python
   // namespace outside custom_components; its transitive core is still real.
   ['tests_backend/test_ha_standalone_core_transport.py', ['demo/standalone/core_process.py']],

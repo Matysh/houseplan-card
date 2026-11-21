@@ -760,3 +760,9 @@ ever wants the two domains to read alike, a valve needs an icon pair first.
 
 
 Device editor preview (#947) projects the same resolved face at scale=1 regardless of marker size; icon rotation remains from the projection, while values/badges remain upright. Oversized effects and long faces use an unscaled scrollable preview canvas. This editor-only normalization does not change plan/static/kiosk geometry, source precedence, availability or service targets.
+
+## Device placement and invalid drafts (#1512)
+
+An explicit HA Area with exactly one current room (or an exact manual room with area:null) proves its owning space. Ordinary frontend writes and the core config/optimize commands reconcile an existing explicit marker.space with that owner, including hidden records and tombstones. Absent registry-following overrides stay absent, ambiguous/missing room evidence is not guessed, and this repair never writes layout. Optimize includes these metadata repairs in its reference report even without a registry snapshot; its existing independent geometry/grid alignment policy is unchanged.
+
+The marker dialog repairs the candidate before resolving its target. An unresolved space refuses with an explanation and reveals the room selector; it does not silently discard a click. All mounted draft sections contribute to validation. The footer’s review-fields action reveals and focuses an invalid field in another tab. Bounded text and glow radius (10–10000 cm, rounded exactly as storage) are checked before writing. Empty radius uses the shared default; non-numeric/nonpositive input is an explicit error, replacing the previous silent fallback. Raw invalid number input survives navigation until corrected; a dormant glow field remains editable if it has an error.

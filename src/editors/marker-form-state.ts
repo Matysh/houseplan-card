@@ -8,6 +8,7 @@
  */
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
 import { dialogDirty, dialogSession, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
+import { strictNumber } from '../space-dialog';
 import { normalizeMarkerStateSource } from '../marker-state-source';
 
 export type MarkerDialogDraft = NonNullable<HouseplanEditorHostPort['_markerDialog']>;
@@ -61,17 +62,12 @@ export function markerDirty(host: object, d: MarkerDialogDraft): boolean {
 export interface MarkerProblem {
   field: string;
   message: 'marker.error_binding' | 'marker.error_virtual_name'
-    | 'marker.more_info_invalid' | 'marker.error_run_target' | 'marker.error_value_badge_source' | 'marker.state_source_states_invalid';
+    | 'marker.error_text_length' | 'marker.error_link_length' | 'marker.error_description_length'
+    | 'marker.error_glow_radius' | 'marker.error_numeric_range' | 'marker.more_info_invalid' | 'marker.error_run_target' | 'marker.error_value_badge_source' | 'marker.state_source_states_invalid';
 }
 
-/**
- * Ошибки черновика: привязка обязательна в режиме HA — прежнее условие Save,
- * теперь названное словами под полем. Радиус свечения ошибкой **не является**
- * (ревью #600 r1, M2): как и на `dev`, непустое нечисло или неположительное
- * значение при сохранении молча становится «общим радиусом» (`null`), и К10
- * закрытым списком других условий не называет.
- */
-export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction, moreInfoInvalid = false): MarkerProblem[] {
+/** Validate the complete draft, including fields in inactive settings sections. */
+export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction, moreInfoInvalid = false, imperial = false): MarkerProblem[] {
   const problems: MarkerProblem[] = [];
   if (moreInfoInvalid) problems.push({ field: 'marker-more-info-entity', message: 'marker.more_info_invalid' });
   if (d.stateSourceTouched && d.stateSource != null && !normalizeMarkerStateSource(d.stateSource)) {
@@ -89,5 +85,21 @@ export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapA
   if (d.valueBadgeTouched && d.valueBadgeEnabled && !d.valueBadgeSource) {
     problems.push({ field: 'marker-value-badge-source', message: 'marker.error_value_badge_source' });
   }
+  for (const [field, value, limit, message] of [
+    ['marker-name', d.name, 500, 'marker.error_text_length'],
+    ['marker-icon', d.icon, 500, 'marker.error_text_length'],
+    ['marker-model', d.model, 500, 'marker.error_text_length'],
+    ['marker-link', d.link, 2000, 'marker.error_link_length'],
+    ['marker-description', d.description, 4000, 'marker.error_description_length'],
+  ] as const) if (typeof value === 'string' && Array.from(field === 'marker-icon' ? value : value.trim()).length > limit)
+    problems.push({ field, message });
+  const radius = (d.glowRadius || '').trim(), n = strictNumber(radius);
+  const cm = n == null ? null : Math.round(n * (imperial ? 30.48 : 100));
+  if (d.glowRadiusBadInput || radius && (cm == null || cm < 10 || cm > 10000))
+    problems.push({ field: 'marker-glow-radius', message: 'marker.error_glow_radius' });
+  for (const [field, value, min, max] of [
+    ['marker-size', d.size, .2, 6], ['marker-ripple-size', d.rippleSize, 1, 20], ['marker-angle', d.angle, -360, 360],
+  ] as const) if (value !== undefined && (!Number.isFinite(value) || value < min || value > max))
+    problems.push({ field, message: 'marker.error_numeric_range' });
   return problems;
 }

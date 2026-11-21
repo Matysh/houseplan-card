@@ -227,3 +227,15 @@ test('#631 roomProblems: comfort bounds are numbers or empty; name comes before 
     ['room-temp-min', 'room.error_temp_range'],
   ]);
 });
+
+// #1512: validation reads the whole draft, not the currently selected tab.
+test('#1512 hidden marker fields expose bounded text and radius errors',()=>{
+ for(const [key,field,value] of [['name','marker-name','x'.repeat(501)],['model','marker-model','x'.repeat(501)],['link','marker-link','x'.repeat(2001)],['description','marker-description','x'.repeat(4001)]])
+  assert.ok(markerProblems(baseMarker({[key]:value})).some(p=>p.field===field));
+ for(const glowRadius of ['x','0','-1','0.01','101'])
+  assert.ok(markerProblems(baseMarker({glowRadius})).some(p=>p.field==='marker-glow-radius'),glowRadius);
+ for(const glowRadius of ['','.1','100','0,9'])
+  assert.ok(!markerProblems(baseMarker({glowRadius})).some(p=>p.field==='marker-glow-radius'),glowRadius);
+ assert.ok(markerProblems(baseMarker({glowRadius:'',glowRadiusBadInput:true})).some(p=>p.field==='marker-glow-radius'));
+ assert.ok(markerProblems(baseMarker({glowRadius:'329'}),undefined,false,true).some(p=>p.field==='marker-glow-radius'));
+});

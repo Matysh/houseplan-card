@@ -526,5 +526,11 @@
   "screens.no_spaces": "Add a space first. Its individual settings will become available here.",
   "screens.space_errors": "Check zoom: {names}.",
   "screens.use_available": "Use the available space",
-  "screens.individual_named": "Settings: {name}"
+  "screens.individual_named": "Settings: {name}",
+  "marker.error_room": "The saved room or space is no longer available. Choose the current room in General and save again.",
+  "marker.error_text_length": "Use no more than 500 characters.",
+  "marker.error_link_length": "Use a link of no more than 2000 characters.",
+  "marker.error_description_length": "Use a description of no more than 4000 characters.",
+  "marker.error_glow_radius": "Enter a radius from 0.1 to 100 metres (about 0.33 to 328 feet), or clear the field to use the shared radius.",
+  "marker.error_numeric_range": "Choose a number within the allowed range."
 }

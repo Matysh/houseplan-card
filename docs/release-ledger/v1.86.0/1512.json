@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1512,
+  "baseStable": "v1.86.0",
+  "category": "stable-fix",
+  "rationale": "The shipped 1.86.0 silently refuses marker settings with stale space references; reproduced in both metadata action and fractional size changes.",
+  "summary": {
+    "ru": "Настройки устройств сохраняются при устаревшей ссылке на пространство; оптимизация исправляет привязки, а ошибки других вкладок объясняются у полей.",
+    "en": "Device settings recover stale space references; optimization repairs placement metadata and invalid fields remain discoverable across tabs."
+  }
+}

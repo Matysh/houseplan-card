@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Place a freestanding TV on a TV cabinet from the Background editor. The stand rests on the cabinet in 2.5D and moves with it (#1511).
+- Device settings: repair room-proved stale space references on writes and Optimize without relocating saved devices; explain invalid drafts across settings tabs. (#1512)
 - Advance the release cycle during stable return to dev and refuse automatic assignment to closed milestones (#1510).
 - Preserve window sunlight and its solar fade during 2.5D light-source transitions (#1509).
 - Publish a checked wheel and standalone editor ZIP for the website with ordinary stable releases, separate from the HACS package (#1465).

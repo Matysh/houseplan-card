@@ -102,16 +102,15 @@ const out = await page.evaluate(async () => {
   input(q('#marker-glow-brightness'), '42'); change(q('#marker-glow-brightness')); await upd();
   o.brightnessNumberWrites = c._markerDialog.glowBrightness === 42 && c._markerDialog.glowTouched === true;
   o.radiusHintWhenEmpty = c._markerDialog.glowRadius === '' && !!q('#marker-glow-radius')?.closest('.hpf-field')?.querySelector('.hpf-hint');
-  // Ревью r1 M2: радиус — не условие Save. Нечисло или ноль, как на dev, при
-  // сохранении молча становится общим радиусом; поле не помечается ошибкой.
+  // #1512: invalid raw drafts are now explained before the backend write.
   c._markerDialog = { ...c._markerDialog, glowRadius: 'x' }; await upd();
-  o.badRadiusDoesNotBlockSave = saveBtn().disabled === false && !q('#marker-glow-radius[aria-invalid="true"]')
-    && !q('.hpf-card[data-card="light"] .hpf-error') && !q('.hpf-status .hpf-link');
+  o.badRadiusExplainsAndBlocksSave = saveBtn().disabled === true && !!q('#marker-glow-radius[aria-invalid="true"]')
+    && !!q('.hpf-card[data-card="light"] .hpf-error') && !!q('.hpf-status .hpf-link');
   input(q('#marker-glow-radius'), '2.5'); await upd();
   o.radiusWrites = c._markerDialog.glowRadius === '2.5' && saveBtn().disabled === false;
   // «Review N fields» ведёт к первому ошибочному полю — здесь к привязке (create-режим ниже проверяет ссылку).
   input(q('#marker-glow-radius'), '0'); await upd();
-  o.zeroRadiusKeepsSaveEnabled = saveBtn().disabled === false;
+  o.zeroRadiusExplainsAndBlocksSave = saveBtn().disabled === true;
   input(q('#marker-glow-radius'), ''); await upd();
 
   q('[data-section-target=appearance]').click(); await upd();

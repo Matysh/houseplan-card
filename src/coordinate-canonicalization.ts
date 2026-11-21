@@ -5,6 +5,7 @@
  * Keep the precision, lattice formula and field allow-list in lockstep.
  */
 
+import { repairMarkerSpacesInPlace } from './marker-placement';
 import {
   DECOR_BOX_KINDS,
   type DecorBoxKind,
@@ -300,6 +301,7 @@ export function canonicalizeConfigGeometry<T>(config: T): T {
  * gesture merely because the historical scalar canonicalizer snapped it. */
 export function canonicalizeConfigWrite<T>(config: T): T {
   const result = canonicalizeConfigGeometry(config);
+  repairMarkerSpacesInPlace(result as import('./marker-placement').MarkerPlacementConfig);
   const source = record(config), target = record(result);
   if (!source || !target || Number(source.model_version || 0) >= 11) return result;
   const copy = (from: JsonRecord, to: JsonRecord, fields: readonly string[]) => {

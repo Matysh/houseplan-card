@@ -73,7 +73,7 @@ import { newSpaceDialogDraft, savedSpaceDialogDraft, spaceDialogSettings } from 
 import { loadSpacePlanList } from './editors/space-plan-list';
 import { advanceFurniturePlacementPress, type FurniturePlacementPress } from './furniture-placement-press';
 import { liveGridBounds } from './live-viewport';
-import { selectSettingsSection } from './editors/settings-sections';
+import { selectSettingsSection, revealSettingsField } from './editors/settings-sections';
 import { normalizeRoomAppearance } from './room-appearance';
 import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
 import {
@@ -192,7 +192,8 @@ import { roomSaveBusy, saveRoomEdit } from './editors/room-save';
 import { acceptSavedDialogExit, dialogSession } from './editors/dialog-baseline';
 import { guardDraftNavigation, requestMarkerClose, requestRoomClose } from './editors/draft-actions';
 import { EditorChainExit, finishWallChainForNavigation } from './editor-chain-exit';
-import { forgetMarkerBaseline, rememberMarkerBaseline, rememberMarkerRadarRemoval } from './editors/marker-form-state';
+import { repairMarkerSpacesInPlace } from './marker-placement';
+import { markerProblems, forgetMarkerBaseline, rememberMarkerBaseline, rememberMarkerRadarRemoval } from './editors/marker-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
 import { reloadOptimizePair } from './optimize-reload';
 import type { LayoutWriteReload } from './layout-write-reload';
@@ -736,7 +737,7 @@ export interface HouseplanEditorHostPort {
   _layout: DeviceLayout;
   readonly _layoutRev: number;
   _logicalViewCenter: () => { x: number; y: number; } | null;
-  _markerDialog: { alertSources?: Marker['alert_sources']; moreInfoEntity?: Marker['more_info_entity']; moreInfoTouched?: boolean; moreInfoOpen?: boolean; moreInfoFilter?: string; vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
+  _markerDialog: { alertSources?: Marker['alert_sources']; moreInfoEntity?: Marker['more_info_entity']; moreInfoTouched?: boolean; moreInfoOpen?: boolean; moreInfoFilter?: string; vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; glowRadiusBadInput?: boolean; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
   _markers: Marker[];
@@ -8387,8 +8388,14 @@ public async _saveMarker(): Promise<void> {
     const dlg = this.host._markerDialog;
     if (!dlg || dlg.busy) return;
     if (dlg.bindingMode === 'virtual' ? !this.host.planHost.capabilities.virtualDevices : !this.host.planHost.capabilities.devices) return;
-    if (moreInfoDraftInvalid(dlg, this.host._planHass, this.host._fullRegistryHass)) return;
-      if (dlg.stateSourceTouched && dlg.stateSource != null && !normalizeMarkerStateSource(dlg.stateSource)) return;
+    const problem = markerProblems(dlg, this._effectiveMarkerTapAction(dlg),
+      moreInfoDraftInvalid(dlg, this.host._planHass, this.host._fullRegistryHass), this.host._imperial)[0];
+    if (problem) {
+      showToast(settingsCopy(this.host).st(problem.message), problem.message);
+      const field = this.host.renderRoot.querySelector<HTMLElement>(`#${problem.field}`);
+      if (field) revealSettingsField(this.host, field);
+      return;
+    }
     const effectiveTapAction = this._effectiveMarkerTapAction(dlg);
     if (dlg.bindingMode === 'ha' && (!dlg.binding || dlg.binding === 'virtual')) return;
     if (dlg.binding === 'virtual' && !dlg.name.trim()) return;
@@ -8420,6 +8427,7 @@ public async _saveMarker(): Promise<void> {
     const baseRevision = this.host._cfgRev;
     const baseContent = contentFingerprint(cfg);
     let candidate = JSON.parse(JSON.stringify(cfg)) as ServerConfig;
+    repairMarkerSpacesInPlace(candidate);
     const markers = candidate.markers || [];
     const id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
     const oldId = dlg.devId;
@@ -8445,7 +8453,12 @@ public async _saveMarker(): Promise<void> {
     const targetSpaceModel = explicitSpaceId
       ? this.host._spaceModelById(explicitSpaceId)
       : this.host._spaceModel();
-    if (!targetSpaceModel) return;
+    if (!targetSpaceModel) {
+      showToast(settingsCopy(this.host).st('marker.error_room'), 'marker.error_room');
+      const field = this.host.renderRoot.querySelector<HTMLElement>('#marker-room');
+      if (field) revealSettingsField(this.host, field);
+      return;
+    }
     const targetSpaceId = targetSpaceModel.id;
     if (dlg.binding === 'virtual' && !space) space = targetSpaceId;
     if (this.host._ledEditor?.markerMoveBlocked(oldId, space || targetSpaceId)) return; // #780 §5

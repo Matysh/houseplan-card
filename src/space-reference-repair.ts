@@ -7,6 +7,8 @@
  * Area. Inputs are never mutated.
  */
 
+import { repairMarkerSpacesInPlace } from './marker-placement';
+
 export interface SpaceReferenceRepairContext {
   /** Runtime-only positive face evidence; never a config/layout field. */
   deviceContactFaces?: readonly import('./device-contact-maintenance').DeviceContactFaceEvidence[];
@@ -122,6 +124,7 @@ export function repairSpaceReferences(
   const layout = clone(layoutIn || {});
   const beforeConfig = JSON.stringify(config);
   const beforeLayout = JSON.stringify(layout);
+  const repairedMarkerSpaces = repairMarkerSpacesInPlace(config);
   const spaces = Array.isArray(config.spaces) ? config.spaces : [];
   const markers = Array.isArray(config.markers) ? config.markers : [];
 
@@ -175,7 +178,7 @@ export function repairSpaceReferences(
   }
 
   const report: SpaceReferenceReport = {
-    spaceRefsRemapped: 0,
+    spaceRefsRemapped: repairedMarkerSpaces,
     roomRefsRemapped: 0,
     positionsRemapped: 0,
     markersDetached: 0,
@@ -213,7 +216,8 @@ export function repairSpaceReferences(
     return candidates.length === 1 ? candidates[0] : null;
   };
   const uniqueAreaRoom = (markerId: string): { spaceId: string; roomId: string } | null => {
-    const area = context.effectiveAreaByMarker?.[markerId] || '';
+    const marker = activeMarkers.get(markerId) || removedMarkers.get(markerId);
+    const area = marker?.area || context.effectiveAreaByMarker?.[markerId] || '';
     const candidates = area ? roomsByArea.get(area) || [] : [];
     return candidates.length === 1 ? candidates[0] : null;
   };

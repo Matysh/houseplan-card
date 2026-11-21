@@ -460,7 +460,7 @@ export interface UnitInputOptions {
   wide?: boolean;
   /** Computed numeric value, distinct from an inapplicable/disabled field. */
   readonly?: boolean;
-  onInput: (raw: string) => void;
+  onInput: (raw: string, input: HTMLInputElement) => void;
   /** Необязательный атомарный commit для полей с промежуточным текстовым вводом. */
   onChange?: (raw: string, input: HTMLInputElement) => void;
 }
@@ -491,7 +491,7 @@ export function unitInput({
           return;
         }
         accepted = raw;
-        onInput(raw);
+        onInput(raw, input);
       }}
       @change=${onChange
         ? (e: Event) => onChange((e.target as HTMLInputElement).value, e.target as HTMLInputElement)

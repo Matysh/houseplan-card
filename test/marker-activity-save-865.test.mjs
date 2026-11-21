@@ -94,3 +94,14 @@ test('#865 late success/failure does not close or rewrite the next dialog', asyn
     assert.equal(f.closed(), 0);
   }
 });
+
+test('#1512 unresolved placement explains the refusal and retains draft and position',async()=>{
+ const f=fixture();Object.assign(f.host._serverCfg.markers[0],{space:'gone',area:'missing'});
+ f.host._spaceModelById=id=>id==='f1'?{id:'f1',rooms:[]}:undefined;
+ f.host.renderRoot={querySelector:()=>null};
+ const before=structuredClone(f.host._layout);
+ await f.runtime._saveMarker();
+ assert.equal(f.payload(),undefined);assert.equal(f.host._markerDialog,f.draft);
+ assert.equal(f.draft.busy,false);assert.deepEqual(f.host._layout,before);
+ assert.equal(f.toasts.length,1);assert.match(f.toasts[0],/room.*space.*no longer available/i);
+});

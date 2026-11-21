@@ -3339,6 +3339,7 @@ export class HouseplanCard extends LitElement {
     controls: string[];  // entities this icon toggles as a group
     controlsFilter: string;
     glowRadius: string;  // per-device glow radius in display units; '' = global default
+    glowRadiusBadInput?: boolean;
     lightRole: 'auto' | 'always' | 'never';
     lightRoleTouched: boolean;
     originalHasIsLight: boolean;
