@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19174,
+  "revision": 19175,
   "nextTicket": 585,
   "nextFence": 585,
   "tasks": {
@@ -5603,6 +5603,104 @@
         "at": 1795259560247,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1509,
+        "requestId": "review:1509:1:672710d744cfac1f12f9392f81ef279bb9a61e21:646c31987cf144d9676b827403321a6e91e7a92a",
+        "kind": "code",
+        "base": "646c31987cf144d9676b827403321a6e91e7a92a",
+        "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
+        "patchId": "672710d744cfac1f12f9392f81ef279bb9a61e21",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1509,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1509",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исправление точно устраняет установленную причину мигания света из окон. Раньше `IsoLightTransition.choose()` клонировал всю SVG-сцену для 500 мс перехода искусственного освещения, и в клоне CSS-анимация `.sunlayer` (2 с fade-in/out) начиналась с нуля. Теперь сразу после вставки клона его солнечные анимации получают startTime оригинала, а если оригинал на паузе — паузу и currentTime. Законченный fade остаётся законченным, текущий fade продолжает ту же фазу, геометрия и собственный кроссфейд освещения не затронуты. Регрессия в `demo/smoke_iso_sun.mjs` проверяет неизменный свет при on→off/off→on и сохранение фазы солнечного fade-in/fade-out на обоих слоях. Квитанция S6 зелёная. Блокеров нет.",
+          "understanding": "Проблема: при смене поля искусственного света в 2.5D `IsoLightTransition.choose()` (вызывается в render в `houseplan-card.ts:13274` до коммита Lit) делает `scene.cloneNode(true)` и вставляет клон рядом с живой сценой как retained-слой для 500 мс кроссфейда. У `.sunlayer` есть CSS-анимация `hp-sunfade-in/out 2s linear both` (`plan.styles.ts:1501-1506`). У вставленного клона она создаётся заново с currentTime=0. Поэтому свет из окон в retained-слое гас до нуля и нарастал, хотя на живом слое (Lit сохраняет тот же `<g class=\"sunlayer\">`) анимация давно закончена.\n\nПосле исправления (`iso-light-transition.ts:50-65`): сразу после `scene.after(clone)` солнечные слои клона и живой сцены сопоставляются по индексу. Порядок совпадает по построению, так как клон глубокий, а живая DOM ещё не обновлена. Для каждой анимации копируются playbackRate и startTime оригинала, либо для оригинала на паузе — pause() и currentTime. В итоге finished-анимация клона сразу finished с той же fill-прозрачностью, бегущий порог продолжает общую временную шкалу, пауза сохраняется. В reduced motion клон не создаётся (`animate=false`), а CSS даёт `animation: none`, так что код не участвует.\n\nРазобранные пути: `choose()/present()/release()` целиком, вызов из render и формирование scope/signature, `renderIsoSunWash` (класс `out`, Lit-шаблон сохраняет узел g), CSS солнечной анимации и reduced-motion, изменения smoke (reducedMotion `no-preference`, `glow_enabled` для смены сигнатуры лампой, ожидание finished перед последующими проверками), регистрация зависимостей, changelog/ledger.",
+          "analysis": [
+            {
+              "topic": "Корректность синхронизации фазы",
+              "assessment": "Подход верный и минимальный. Клон и оригинал живут в одном документе и одной document timeline, поэтому присвоение startTime даёт точное совпадение фазы. Для законченного fade клон сразу finished, а с fill both прозрачность остаётся 1 для in и 0 для out. Сопоставление по индексу надёжно: клон глубокий, а `liveSun` берётся из ещё не перерисованной сцены, так как choose() вызывается в render до коммита Lit. `getAnimations()` на клоне форсирует стиль, и CSS-анимации уже существуют. Ветка `startTime === null` (оригинал ещё в pending-play) оставляет клон стартовать с нуля почти одновременно с оригиналом, что визуально безвредно.",
+              "evidence": "src/iso-light-transition.ts:28-65; src/houseplan-card.ts:13274-13275; src/styles/plan.styles.ts:1501-1511"
+            },
+            {
+              "topic": "Границы ответственности",
+              "assessment": "Солнечная анимация остаётся владельцем своей временной шкалы, кроссфейд освещения в present() не меняется. Затрагивается только `.sunlayer` клона, без пересчёта лучей и изменения сигнатуры. Комментарий в коде объясняет неочевидную причину: клонированная CSS-анимация стартует с нуля.",
+              "evidence": "src/iso-light-transition.ts:50-52, 69-95"
+            },
+            {
+              "topic": "Регрессия",
+              "assessment": "Сценарий проверяет именно описанный дефект. Он ждёт finished, дважды переключает лампу и проверяет на обоих слоях opacity > .99 и неизменную геометрию. Затем для порогов elevation 2 (out) и 30 (in) ставит живую анимацию на паузу на 800 мс и проверяет, что retained-анимация на паузе с тем же currentTime и той же прозрачностью. Отключение эмуляции reduced motion необходимо для наблюдаемой фазы. В конце сценарий дожидается finished, чтобы последующие проверки длины лучей шли на стабильном слое. По описанию исполнителя на исходном продукте падали ровно четыре новые проверки.",
+              "evidence": "demo/smoke_iso_sun.mjs:8, 68, 86-131; receipt 20261121T110505848-4192970f passed на 3c82c0f"
+            },
+            {
+              "topic": "Сопровождение и документы",
+              "assessment": "Связь smoke с `iso-light-transition.ts`, `iso-sun.ts`, `sun.ts`, `plan.styles.ts` в DECLARED_SOURCE_SCOPES обеспечивает выбор сценария при будущих изменениях этих модулей. Запись в ledger оформлена так же, как соседние в v1.85.2, changelog EN/RU и ISOMETRIC.md точны.",
+              "evidence": "process-next/lib/source-dependencies.mjs:24; docs/release-ledger/v1.85.2/1509.json; docs/ISOMETRIC.md:198-199"
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Необязательно: защищаться от `liveSun[index]` === undefined (например, `liveSun[index]?.getAnimations() ?? []`). Сейчас рассинхронизация невозможна, так как клон глубокий и снят в том же такте, но защита сделала бы код устойчивым к будущему переносу клонирования после коммита. Цена — одна проверка.",
+            "Необязательно: если в retained-клон в будущем попадут другие CSS-анимации, синхронизацию можно вынести в маленькую функцию по селектору. Сейчас это преждевременно."
+          ],
+          "boundaries": "Сборку и тесты не запускал. Использована квитанция S6 «Тесты для задачи #1509 (перед ревью)» (passed, материал 3c82c0f) и описание исполнителя о падении четырёх новых проверок до исправления; лог `artifacts/1509/regression-before.log` локальный и мне недоступен. Код изучен по исходникам: iso-light-transition.ts целиком, место вызова в houseplan-card.ts, renderIsoSunWash, CSS солнечной анимации, launch в demo/serve.mjs. Проверка в реальном Home Assistant вынесена в houseplan-e2e#92. Текущее свидетельство синтетическое браузерное. Другие возможные CSS-анимации внутри retained-клона, кроме `.sunlayer`, не изучались: вне объёма задачи."
+        },
+        "usage": {
+          "input_tokens": 30,
+          "cache_creation_input_tokens": 44204,
+          "cache_read_input_tokens": 323414,
+          "output_tokens": 8876,
+          "output_tokens_details": {
+            "thinking_tokens": 2380
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 44204,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 4,
+              "output_tokens": 1134,
+              "cache_read_input_tokens": 48379,
+              "cache_creation_input_tokens": 29,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 29
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление точно устраняет установленную причину мигания света из окон. Раньше `IsoLightTransition.choose()` клонировал всю SVG-сцену для 500 мс перехода искусственного освещения, и в клоне CSS-анимация `.sunlayer` (2 с fade-in/out) начиналась с нуля. Теперь сразу после вставки клона его солнечные анимации получают startTime оригинала, а если оригинал на паузе — паузу и currentTime. Законченный fade остаётся законченным, текущий fade продолжает ту же фазу, геометрия и собственный кроссфейд освещения не затронуты. Регрессия в `demo/smoke_iso_sun.mjs` проверяет неизменный свет при on→off/off→on и сохранение фазы солнечного fade-in/fade-out на обоих слоях. Квитанция S6 зелёная. Блокеров нет.\n\n## Понимание решения\n\nПроблема: при смене поля искусственного света в 2.5D `IsoLightTransition.choose()` (вызывается в render в `houseplan-card.ts:13274` до коммита Lit) делает `scene.cloneNode(true)` и вставляет клон рядом с живой сценой как retained-слой для 500 мс кроссфейда. У `.sunlayer` есть CSS-анимация `hp-sunfade-in/out 2s linear both` (`plan.styles.ts:1501-1506`). У вставленного клона она создаётся заново с currentTime=0. Поэтому свет из окон в retained-слое гас до нуля и нарастал, хотя на живом слое (Lit сохраняет тот же `<g class=\"sunlayer\">`) анимация давно закончена.\n\nПосле исправления (`iso-light-transition.ts:50-65`): сразу после `scene.after(clone)` солнечные слои клона и живой сцены сопоставляются по индексу. Порядок совпадает по построению, так как клон глубокий, а живая DOM ещё не обновлена. Для каждой анимации копируются playbackRate и startTime оригинала, либо для оригинала на паузе — pause() и currentTime. В итоге finished-анимация клона сразу finished с той же fill-прозрачностью, бегущий порог продолжает общую временную шкалу, пауза сохраняется. В reduced motion клон не создаётся (`animate=false`), а CSS даёт `animation: none`, так что код не участвует.\n\nРазобранные пути: `choose()/present()/release()` целиком, вызов из render и формирование scope/signature, `renderIsoSunWash` (класс `out`, Lit-шаблон сохраняет узел g), CSS солнечной анимации и reduced-motion, изменения smoke (reducedMotion `no-preference`, `glow_enabled` для смены сигнатуры лампой, ожидание finished перед последующими проверками), регистрация зависимостей, changelog/ledger.\n\n## Разбор решения\n\n### Корректность синхронизации фазы\n\nПодход верный и минимальный. Клон и оригинал живут в одном документе и одной document timeline, поэтому присвоение startTime даёт точное совпадение фазы. Для законченного fade клон сразу finished, а с fill both прозрачность остаётся 1 для in и 0 для out. Сопоставление по индексу надёжно: клон глубокий, а `liveSun` берётся из ещё не перерисованной сцены, так как choose() вызывается в render до коммита Lit. `getAnimations()` на клоне форсирует стиль, и CSS-анимации уже существуют. Ветка `startTime === null` (оригинал ещё в pending-play) оставляет клон стартовать с нуля почти одновременно с оригиналом, что визуально безвредно.\n\nОснование: src/iso-light-transition.ts:28-65; src/houseplan-card.ts:13274-13275; src/styles/plan.styles.ts:1501-1511\n\n### Границы ответственности\n\nСолнечная анимация остаётся владельцем своей временной шкалы, кроссфейд освещения в present() не меняется. Затрагивается только `.sunlayer` клона, без пересчёта лучей и изменения сигнатуры. Комментарий в коде объясняет неочевидную причину: клонированная CSS-анимация стартует с нуля.\n\nОснование: src/iso-light-transition.ts:50-52, 69-95\n\n### Регрессия\n\nСценарий проверяет именно описанный дефект. Он ждёт finished, дважды переключает лампу и проверяет на обоих слоях opacity > .99 и неизменную геометрию. Затем для порогов elevation 2 (out) и 30 (in) ставит живую анимацию на паузу на 800 мс и проверяет, что retained-анимация на паузе с тем же currentTime и той же прозрачностью. Отключение эмуляции reduced motion необходимо для наблюдаемой фазы. В конце сценарий дожидается finished, чтобы последующие проверки длины лучей шли на стабильном слое. По описанию исполнителя на исходном продукте падали ровно четыре новые проверки.\n\nОснование: demo/smoke_iso_sun.mjs:8, 68, 86-131; receipt 20261121T110505848-4192970f passed на 3c82c0f\n\n### Сопровождение и документы\n\nСвязь smoke с `iso-light-transition.ts`, `iso-sun.ts`, `sun.ts`, `plan.styles.ts` в DECLARED_SOURCE_SCOPES обеспечивает выбор сценария при будущих изменениях этих модулей. Запись в ledger оформлена так же, как соседние в v1.85.2, changelog EN/RU и ISOMETRIC.md точны.\n\nОснование: process-next/lib/source-dependencies.mjs:24; docs/release-ledger/v1.85.2/1509.json; docs/ISOMETRIC.md:198-199\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательно: защищаться от `liveSun[index]` === undefined (например, `liveSun[index]?.getAnimations() ?? []`). Сейчас рассинхронизация невозможна, так как клон глубокий и снят в том же такте, но защита сделала бы код устойчивым к будущему переносу клонирования после коммита. Цена — одна проверка.\n- Необязательно: если в retained-клон в будущем попадут другие CSS-анимации, синхронизацию можно вынести в маленькую функцию по селектору. Сейчас это преждевременно.\n\n## Границы анализа\n\nСборку и тесты не запускал. Использована квитанция S6 «Тесты для задачи #1509 (перед ревью)» (passed, материал 3c82c0f) и описание исполнителя о падении четырёх новых проверок до исправления; лог `artifacts/1509/regression-before.log` локальный и мне недоступен. Код изучен по исходникам: iso-light-transition.ts целиком, место вызова в houseplan-card.ts, renderIsoSunWash, CSS солнечной анимации, launch в demo/serve.mjs. Проверка в реальном Home Assistant вынесена в houseplan-e2e#92. Текущее свидетельство синтетическое браузерное. Другие возможные CSS-анимации внутри retained-клона, кроме `.sunlayer`, не изучались: вне объёма задачи.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 646c31987cf144d9676b827403321a6e91e7a92a → 3c82c0f1801173caa5aa6a5a7cfe19445c746305\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-21T11:15:13.950Z",
+        "artifactId": 14704228298,
+        "runId": 44898003107,
+        "runAttempt": 1,
+        "completedAt": "2026-11-21T11:15:17Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44898003107",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "646c31987cf144d9676b827403321a6e91e7a92a"
       }
     }
   },
@@ -6121,9 +6219,9 @@
     "fence": 584,
     "materialSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305",
     "expectedBase": "646c31987cf144d9676b827403321a6e91e7a92a",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1795259090809,
-    "expiresAt": 1795263135388,
+    "expiresAt": 1795263347399,
     "patchId": "672710d744cfac1f12f9392f81ef279bb9a61e21",
     "reviewRequest": "review:1509:1:672710d744cfac1f12f9392f81ef279bb9a61e21:646c31987cf144d9676b827403321a6e91e7a92a"
   },
@@ -6226,6 +6324,10 @@
     },
     "github:44898222339:1:tick:0:review-presentation": {
       "digest": "9bf291921055436f38541af9a53c490d72ad89ecf9288e82e8957058cd85894b",
+      "issue": 1509
+    },
+    "github:44898222339:1:tick:0:review-complete": {
+      "digest": "43261cc369610684eabc1111c908a7a42e5a75567223daa0948d47e6dd8663ef",
       "issue": 1509
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
