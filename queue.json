@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18974,
+  "revision": 18975,
   "nextTicket": 582,
   "nextFence": 582,
   "tasks": {
@@ -4101,7 +4101,30 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795226829488,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "8ff585096aa840a4da4c166e58f9e8ee1863b57e",
+      "changedFiles": [
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CORE-HOST.md",
+        "docs/STANDALONE-FRONTEND.md",
+        "process-next/catalog/site-release-browser.mjs",
+        "process-next/catalog/site-release.mjs",
+        "process-next/lib/catalog.mjs",
+        "process-next/lib/release-preparation.mjs",
+        "process-next/lib/release.mjs",
+        "process-next/lib/site-release.mjs",
+        "process-next/remote.mjs",
+        "process-next/test/catalog.test.mjs",
+        "process-next/test/remote.test.mjs",
+        "process-next/test/site-release.test.mjs",
+        "tools/build_site_release.py",
+        "tools/core_external_conformance_fixture.py",
+        "tools/site-release-build.txt",
+        "tools/site-release-runtime.txt",
+        "tools/smoke_core_package.py"
+      ]
     },
     "1466": {
       "issue": 1466,
@@ -6040,10 +6063,11 @@
     "token": "581:finish:522eb88b-58d7-493e-a36d-dd543bca387d:finish:1:admit",
     "fence": 581,
     "materialSha": "ddbc1d9243bfb699293d3755e52faa3b60d64517",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "6b8ef512d27636767389a906461d64c096d8a1a6",
+    "phase": "testing",
     "admittedAt": 1795226833327,
-    "expiresAt": 1795227133327
+    "expiresAt": 1795227139625,
+    "patchId": "8ff585096aa840a4da4c166e58f9e8ee1863b57e"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6124,6 +6148,10 @@
     },
     "github:44852999570:1:completions:report:dbe748e77e7091e888b5538af92f873a2289296c13870e8f9601862c232f4b43": {
       "digest": "b7087303a4f84070c610f5e1e4510608463e2bf4718bd6921742c0eefafce5b5",
+      "issue": 1465
+    },
+    "finish:522eb88b-58d7-493e-a36d-dd543bca387d:finish:2:synchronized": {
+      "digest": "4f3c9d4d78088bf4ec9ce57beb5fce0575cfa7d3b7eb0c1f1fb5b73f134d09a4",
       "issue": 1465
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
