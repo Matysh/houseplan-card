@@ -29,6 +29,12 @@ try{
  out.errorRevealsCorrectTab=await dialog.locator('[data-settings-section="light"]').isVisible();
  out.errorExplainsRadius=/0[.,]1.*100/.test(await dialog.locator('[data-settings-section="light"] .hpf-error').textContent());
  out.invalidDraftRetained=await dialog.locator('#marker-glow-radius').inputValue()==='0.01';
+ await dialog.locator('#marker-glow-radius').fill('');
+ await dialog.locator('#marker-glow-radius').pressSequentially('1e');await settingsSection(dialog,'actions');
+ out.nativeBadInputSurvivesTab=await dialog.locator('[data-hp="dialog-confirm"]').isDisabled();
+ await dialog.locator('[data-action="review-fields"]').click();await settle();
+ out.nativeBadInputIsExplained=await dialog.locator('#marker-glow-radius').evaluate(input=>input.validity.badInput)
+   && await dialog.locator('[data-settings-section="light"] .hpf-error').isVisible();
  await dialog.locator('#marker-glow-radius').fill('');await settingsSection(dialog,'details');
  await dialog.locator('#marker-description').fill('x'.repeat(4001));await settingsSection(dialog,'actions');
  out.hiddenDescriptionBlocksSave=await dialog.locator('[data-hp="dialog-confirm"]').isDisabled();

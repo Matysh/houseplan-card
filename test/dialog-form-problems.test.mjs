@@ -239,3 +239,9 @@ test('#1512 hidden marker fields expose bounded text and radius errors',()=>{
  assert.ok(markerProblems(baseMarker({glowRadius:'',glowRadiusBadInput:true})).some(p=>p.field==='marker-glow-radius'));
  assert.ok(markerProblems(baseMarker({glowRadius:'329'}),undefined,false,true).some(p=>p.field==='marker-glow-radius'));
 });
+
+test('#1512 clearing a native bad-input flag does not create a phantom edit',async()=>{
+ const {rememberMarkerBaseline,markerDirty}=await import('../test-build/editors/marker-form-state.js');
+ const host={},draft=baseMarker({glowRadius:''});rememberMarkerBaseline(host,draft);
+ assert.equal(markerDirty(host,{...draft,glowRadiusBadInput:false}),false);
+});
