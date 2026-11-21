@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19616,
+  "revision": 19617,
   "nextTicket": 595,
   "nextFence": 595,
   "tasks": {
@@ -7003,6 +7003,10 @@
       "digest": "9aaa20efc97be0c69097d30817a94c84d2b08936c42dfe96ee3a8f9e402dc6f4",
       "issue": 1512
     },
+    "github:44917644079:1:completions:message:eab726d56a0bcbf05d46cceb52cf4503ffc959ab87dc7e6d2b99e277cd47822a": {
+      "digest": "4588cd3d7b4af5fa845094b12f6ea6edaef1d298939d109626e46ff130aa2023",
+      "issue": 1512
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7295,7 +7299,8 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/dialog-baseline.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed",
           "eventId": "finish:c90d1d99-1dd2-4d49-90e8-d8da55fa37da:finish:3:return:return:1512"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:6357fc36-3280-40ee-a922-f971d6b58a99:finish:1:admit": {
