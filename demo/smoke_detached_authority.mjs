@@ -101,6 +101,11 @@ for (const scenario of ['short', 'long', 'same-object', 'ABA', 'held-return']) {
         if (scenario === 'long') Date.now = () => now() + 20_000;
         parent.append(card);
       } finally { Date.now = now; }
+      if (scenario === 'short') {
+        // The attached render or its retries could eventually start a pair.
+        // Claim the already-consumed detached demand at the reconnect boundary.
+        out.pendingReadClaimedOnAttach = card._read.busy;
+      }
       if (scenario === 'held-return') {
         out.firstForeignPairIsHeld = await until(() => b.held.length === 2);
         await card.updateComplete;

@@ -168,6 +168,15 @@ const res = await page.evaluate(async () => {
   out.noRoomTransitionOnSwitchWithSameId = sameId.transitions;
   out.noRoomNodeOutlivesTheSwitchWithSameId = sameId.survivors;
   out.sameIdRoomBornInItsFill = sameId.fill;
+  // A cold floor can remount the entire stage while its cache is prepared.
+  // Warm both floors so the room key has to protect the live shared stage.
+  await pickSpace(ids[0]);
+  const warmStage = root().querySelector('.stage');
+  const warmSameId = await switchRooms(ids[1]);
+  out.warmSameIdUsesMountedStage = !!warmStage && warmStage === root().querySelector('.stage')
+    && warmSameId.headId === sharedId;
+  out.warmSameIdRoomsBelongOnlyToNewFloor = warmSameId.survivors;
+  out.warmSameIdDoesNotAnimate = warmSameId.transitions;
   // AC3: настоящая смена заливки той же комнаты по-прежнему анимируется —
   // ловит ложный фикс `transition: none`
   await settle();
@@ -350,5 +359,6 @@ checkAll(res, { unexpectedAnimations: [], reusedMarkerNodes: [],
   newFloorRoomsBornInTheirFill: FINAL_FILL,
   noRoomNodeSwappedInsideTheSpace: [], quietRoomsAfterTheInsert: [],
   noRoomTransitionOnSwitchWithSameId: [], noRoomNodeOutlivesTheSwitchWithSameId: [],
-  sameIdRoomBornInItsFill: FINAL_FILL });
+  sameIdRoomBornInItsFill: FINAL_FILL,
+  warmSameIdRoomsBelongOnlyToNewFloor: [], warmSameIdDoesNotAnimate: [] });
 await finish(browser, res);

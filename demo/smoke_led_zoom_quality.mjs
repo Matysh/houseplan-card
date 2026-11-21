@@ -207,9 +207,10 @@ try {
     // At the scale clamp a wheel event is not an actual scale change.
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await idle();
-    const clamp = await observeClampedWheelLease(page, point);
+    const clamp = await observeClampedWheelLease(page, point, touch);
     results.push({ clamp });
-    check('clamp witness reaches maximum by real wheel while coarse is active', clamp.before.scale === 8 && clamp.before.coarse);
+    check('clamp witness reaches maximum by pinch with no running camera target',
+      clamp.before.scale === 8 && clamp.before.coarse && !clamp.before.cameraActive);
     check('clamp witness delivers trusted wheel inside the measured original lease', clamp.delivery);
     for (const [name, passed] of Object.entries(clampedWheelVerdict(clamp))) check(name, passed);
     await page.evaluate(() => { window.__colourCache = [...window.__card.shadowRoot.querySelectorAll('.led-fields')]

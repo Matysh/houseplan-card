@@ -75,8 +75,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 105 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 106 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 58 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 274 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **556 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
+| Custom-element and HA browser lifecycle | 273 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **555 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 ## Historical measurements (2026-09-27)
@@ -1052,12 +1052,13 @@ Other owner/retry/discard/notice invariants execute pure Node boundaries.
 - `view-summary-retry-reuses-failed-root`
 - `view-zigbee-installs-foreign-root`
 
-#890: public setConfig meets real browser localStorage and Lit floor adoption;
-a delayed write crosses the actual HA-intake lifecycle before another connection
+#890: public setConfig meets real browser localStorage and Lit floor adoption.
+A delayed write crosses the actual HA-intake lifecycle before another connection
 is authorized. Pure context tests cannot prove those consumers remain wired.
-Vacuum-attempt and New-ack rollback guards instead execute their Node consumers.
+The #1508 warm-cache mutation runs the direct Node adoption test because the
+scoped browser intake now rejects a live model before calling restoreCached.
+Vacuum-attempt and New-ack rollback guards also execute their Node consumers.
 
-- `config-live-setconfig-restores-stale-cache`
 - `config-foreign-write-reply-revives-authority`
 - `config-foreign-context-keeps-old-write-queue`
 - `config-foreign-reply-decrements-new-context-count`

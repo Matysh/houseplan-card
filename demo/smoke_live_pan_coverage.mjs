@@ -333,6 +333,16 @@ const runStablePromotion = async () => {
   await preparePointerCapture();
   const origin = await pointerCentre();
   await dispatchTouch('pointerdown', 721, origin.x - 80, origin.y);
+  // A reactive frame between contacts has no retained pinch basis yet. The
+  // runtime still owns an active contact and must keep the scene promoted.
+  const firstContactActive = await page.evaluate(async () => {
+    const card = window.__card;
+    card.requestUpdate();
+    await card.updateComplete;
+    return card._pointers.size === 1 && !card._pinchStart;
+  });
+  const firstContactFrame = await liveState();
+  checks.firstContactLitCommitKeepsScenePromoted = firstContactActive && firstContactFrame.allScenePromoted;
   await dispatchTouch('pointerdown', 722, origin.x + 80, origin.y);
   await dispatchTouch('pointermove', 721, origin.x - 90, origin.y);
   await dispatchTouch('pointermove', 722, origin.x + 90, origin.y);

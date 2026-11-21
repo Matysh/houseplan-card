@@ -2428,8 +2428,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'config-live-setconfig-restores-stale-cache',
-    guard: 'node demo/smoke_config_authority.mjs',
-    because: '#890 AC1/AC6: the real Lit card, browser localStorage and public setConfig/floor lifecycle must retain accepted/pending authority.',
+    guard: 'node --test --test-name-pattern="repeated warm-cache restore" test/config-adoption.test.mjs',
+    because: '#890 AC1: restoreCached must independently reject an older candidate when accepted state or a pending draft already owns the model.',
     patches: [{ file: 'src/config-adoption.ts',
       find: '    if (this.config || this.acceptedCache) return false;',
       replace: '    // stale LS_CFG replaces even accepted authority' }],
@@ -17544,8 +17544,8 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'led-zoom-noop-clears-lease',
     guard: 'node demo/smoke_led_zoom_quality.mjs',
-    because: '#789 AC5: a second trusted wheel at the scale clamp must not clear the active deadline; '
-      + 'the pure timer unit cannot prove how the camera no-op branch calls structural cancellation',
+    because: '#789 AC5: trusted wheel at the scale clamp must not clear a scale lease from a completed pinch. '
+      + 'The pinch leaves no running camera target, so wheel reaches the current-pose no-op branch.',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '      // A clamped/no-op command neither starts nor shortens the zoom lease.\n'
@@ -18049,13 +18049,16 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'iso-focus-under-neighbour',
     guard: 'node demo/smoke_iso_tiles.mjs',
-    because: '#813 AC5: the (0,4,0) 2.5D marker layer beats a (0,2,0) focus layer; only the computed '
-      + 'z-index and the rasterised overlap of two real tiles after a real Shift+Tab show the focused '
-      + 'marker staying under its neighbour',
+    because: '#813 AC5: the raised 2.5D marker has both a fallback focus rule and a raised-plane focus rule. '
+      + 'Removing both lifts exposes the lower paint order after a real Shift+Tab; hover and lock focus remain independent.',
     patches: [{
       file: 'src/styles/devices.styles.ts',
       find: '    .stage.projection-iso.mode-view .dev:focus-visible { z-index: 5; }\n',
-      replace: '    /* mutant: the 2.5D focus layer is gone */\n',
+      replace: '',
+    }, {
+      file: 'src/styles/iso-lab-markers.styles.ts',
+      find: '  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev:not(.unavail):focus-visible,\n',
+      replace: '',
     }],
   },
   {

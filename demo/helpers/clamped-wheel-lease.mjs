@@ -10,7 +10,7 @@ export function clampedWheelVerdict({ before, during, deadline, idle }) {
 }
 
 /** Only this page context owns the clock; finally restores observation hooks. */
-export async function observeClampedWheelLease(page, point) {
+export async function observeClampedWheelLease(page, point, touch) {
   await page.clock.install();
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
   await page.evaluate(() => {
@@ -33,6 +33,7 @@ export async function observeClampedWheelLease(page, point) {
   const sample = () => page.evaluate(() => {
     const card = window.__card, probe = window.__clampProbe;
     return { at: performance.now(), scale: card._zoom,
+      cameraActive: card._cameraTransition.active,
       coarse: card.hasAttribute('data-led-zoom-quality'),
       cache: JSON.stringify([...card.shadowRoot.querySelectorAll('.led-fields')]
         .map(node => [node.dataset.ledCache, node.dataset.ledRecomputes])),
@@ -43,13 +44,20 @@ export async function observeClampedWheelLease(page, point) {
     await page.clock.runFor(1);
   };
   try {
-    // Actual changes, with reduced motion, reach the real camera maximum.
+    // Seed the clamp with direct input. A wheel reaching the limit keeps a
+    // quiet target and a duplicate notch can exit before the no-op path.
     for (let i = 0; i < 25; i++) {
+      if ((await sample()).scale >= 5) break;
       await wheel();
-      if ((await sample()).scale >= 8) break;
     }
+    await page.clock.runFor(200);
+    const p = await point();
+    await touch('touchStart', [[p.x - 40, p.y], [p.x + 40, p.y]]);
+    await touch('touchMove', [[p.x - 80, p.y], [p.x + 80, p.y]]);
+    await touch('touchEnd', []);
+    await page.clock.runFor(1);
     const before = await sample();
-    if (before.scale !== 8 || !before.coarse || !before.lease) {
+    if (before.scale !== 8 || !before.coarse || !before.lease || before.cameraActive) {
       throw new Error(`no known active clamp lease: ${JSON.stringify(before)}`);
     }
     await page.clock.runFor(Math.max(0, before.lease.at + 45 - before.at));
