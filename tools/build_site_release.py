@@ -155,11 +155,23 @@ def ensure_toolchain():
             require(found == expected, f"Prepare the standalone release venv: {name}=={expected} is required")
 
 
+def verify_source(root, commit, version):
+    require(git(root, "rev-parse", "HEAD") == commit and
+            not git(root, "status", "--porcelain", "--untracked-files=no"),
+            "Build only an exact source checkout with no tracked changes")
+    untracked_sources = git(root, "ls-files", "--others", "--exclude-standard", "--",
+                            CORE_PATH, "src", "assets", "scripts", "demo/fixtures")
+    require(not untracked_sources, "Untracked source inputs are not part of the release commit")
+    tag = f"refs/tags/v{version}"
+    if git(root, "tag", "-l", f"v{version}"):
+        require(git(root, "rev-parse", tag + "^{commit}") == commit,
+                "Existing release tag points to a different commit")
+
+
 def prepare(source, output, hacs, hacs_hash, commit, version):
     ensure_toolchain()
     require(re.fullmatch(r"\d+\.\d+\.\d+", version), "Expected an ordinary stable version")
-    require(git(source, "rev-parse", "HEAD") == commit and not git(source, "status", "--porcelain"),
-            "Build only an exact, clean source checkout")
+    verify_source(source, commit, version)
     require(json.loads((source / "package.json").read_text(encoding="utf-8"))["version"] == version,
             "Source version differs from the tag")
     fingerprint = validate_hacs(hacs, version, hacs_hash)
@@ -191,8 +203,8 @@ def prepare(source, output, hacs, hacs_hash, commit, version):
         run(["node", str(TOOLS.parent / "process-next/catalog/site-release-browser.mjs"),
              str(source), str(extracted)], TOOLS.parent,
             env={**os.environ, "HP_STANDALONE_PYTHON": sys.executable})
-        require(git(source, "rev-parse", "HEAD") == commit and not git(source, "status", "--porcelain")
-                and asset(hacs)["sha256"] == hacs_hash, "Release material changed during verification")
+        verify_source(source, commit, version)
+        require(asset(hacs)["sha256"] == hacs_hash, "HACS ZIP changed during verification")
         receipt = stage / f"houseplan-site-{version}.json"
         receipt.write_text(json.dumps({"schema": 1, "tag": f"v{version}", "version": version,
                                       "sourceSha": commit, "sourceFingerprint": fingerprint,

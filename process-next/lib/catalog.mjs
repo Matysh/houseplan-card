@@ -254,6 +254,7 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
       steps.push(step(SITE_RELEASE_STEP, 'Проверенный комплект редактора и ядра для сайта', helper('site-release'),
         [...browserInputs, ...pythonInputs, 'tools/build_site_release.py', 'tools/build_core_package.py',
           'tools/smoke_core_package.py', 'tools/core_external_conformance_fixture.py',
+          'process-next/catalog/site-release-browser.mjs', 'scripts/standalone-build.mjs', 'demo/standalone/host.js',
           'tools/site-release-build.txt', 'tools/site-release-runtime.txt', 'docs/CORE-HOST.md'],
         ['release-package', 'test-build'],
         { outputs: siteReleasePaths(sourceSha, stableVersion).outputs, exclusive: true, timeoutMs: 900000 }));

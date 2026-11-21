@@ -54,6 +54,7 @@ def serve(root):
             request = json.loads(line)
             method, args = request["method"], request["arguments"]
             if os.environ.get("HP_TEST_WRONG_EXTERNAL_REPLY") == "1" and method == "request":
+                print("External negative control delivered", file=sys.stderr, flush=True)
                 print('{"result": null}', flush=True)
                 continue
             if method in {"preview", "stage", "upload_plan", "upload_asset", "house_preview"}:

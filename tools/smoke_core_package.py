@@ -72,7 +72,8 @@ def main():
                 subprocess.run(conformance, cwd=root, env=env, check=True, timeout=90)
                 wrong = subprocess.run(conformance, cwd=root, capture_output=True, text=True, timeout=90,
                                        env={**env, "HP_TEST_WRONG_EXTERNAL_REPLY": "1"})
-                if wrong.returncode == 0 or "TypeError: 'NoneType' object is not subscriptable" not in wrong.stderr:
+                if (wrong.returncode == 0 or '"passed"' in wrong.stdout
+                        or "External negative control delivered" not in wrong.stderr):
                     raise RuntimeError("External bad-reply control did not reach conformance")
 
 

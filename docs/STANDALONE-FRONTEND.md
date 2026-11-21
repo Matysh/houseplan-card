@@ -197,6 +197,16 @@ offline Python preparation, use a wheelhouse through `PIP_NO_INDEX=1` and
 `PIP_FIND_LINKS`; the smoke-install uses the pinned runtime constraints.
 There is no separate PyPI or HACS upload.
 
+The one-time v1.86.0 addition uses the same package verification from a
+separate clean checkout of the published tag. Supply `--hacs` and
+`--hacs-sha256` to `tools/build_site_release.py` from the downloaded original ZIP and its
+original SHA256SUMS. Pass `--source`, `--sha` and `--version` for the
+dereferenced tag and `--out` for a fresh owned staging directory. Use the
+existing release without clobbering names or replacing any assets. Append
+the technical block only if the authored body is preserved as an exact
+prefix. Finish by downloading the new files and comparing their hashes;
+the original HACS ZIP, checksum file and tag stay unchanged.
+
 ## Test-only reference transport
 
 `demo/standalone/` is a synthetic contract laboratory, **not** a deployable

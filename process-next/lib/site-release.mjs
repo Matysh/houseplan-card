@@ -59,6 +59,7 @@ export function appendSiteReleaseNotes(body, manifest) {
   const c = manifest.compatibility;
   const names = manifest.assets.filter(row => row.name !== 'houseplan.zip').map(row => row.name);
   return body + '\n\n' + SITE_RELEASE_NOTES + '\n\n' + '## Поставка для сайта / Website distribution\n\n'
+    + 'Коммит / Commit: `' + manifest.sourceSha + '`\n\n'
     + names.map(name => '- ' + name).join('\n') + '\n- houseplan-site-' + manifest.version + '.json (SHA-256)\n\n'
     + '**RU.** Модель плана: ' + c.modelVersion + '; JSON пространства: ' + c.spaceExportVersion
     + '; ZIP дома: ' + c.houseExportVersion + '; Python: ' + c.python + '. '
