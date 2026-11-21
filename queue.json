@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19235,
-  "nextTicket": 585,
+  "revision": 19236,
+  "nextTicket": 586,
   "nextFence": 585,
   "tasks": {
     "1024": {
@@ -5561,6 +5561,20 @@
         "status": "published",
         "sourceSha": "3c82c0f1801173caa5aa6a5a7cfe19445c746305"
       }
+    },
+    "1510": {
+      "issue": 1510,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/closed-milestone-assignment",
+      "materialSha": "76009cd13974a5e96df68196c10ce09f1131551d",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 585,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795260496415,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6056,7 +6070,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1510
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -6126,6 +6142,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:4d251665-eea9-4f61-8560-4166d36e39f4": {
+      "digest": "67e9c2ca97ecebebd8bed900106cb69f9f091f8eccfcdc3de88b1ad7dc5a4af1",
+      "issue": 1510,
+      "message": {
+        "kind": "queued",
+        "issue": 1510,
+        "at": 1795260496415,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "76009cd13974a5e96df68196c10ce09f1131551d"
       }
     }
   },
