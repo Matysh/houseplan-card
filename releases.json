@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1258,
+  "revision": 1259,
   "active": "v1.86.1-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -207788,7 +207788,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.1-beta.2",
@@ -215525,7 +215525,8 @@
           "en": "## v1.86.1-beta.2 — 2026-11-22\n\n- A prepared floor preview, including furniture, can appear on the first open in a fresh browser after the same Home Assistant account has viewed the plan (#1522)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.1-beta.2"
     }
   },
   "published": {
@@ -221616,7 +221617,8 @@
     "ship-review:result:8e471cd9-6b01-4207-87e7-9735730e0735": "0c400c11374f05c6fc69c4bf8cdff177bfa0e1bc799d687153d478d0886d0c3f",
     "beta-1861-2-publish:runner-report": "bf5523fc2c55b704bb1077cc9071dccacb18eb1ae230b938c2f19ceffa96c1a0",
     "beta-1861-2-publish:metrics": "530e5ae1875c971f9023222adf9021783ce50f79ad9121bde34c9c927b2bd944",
-    "beta-1861-2-publish:prepared:20940397-dcb7-4290-83b9-03b75e35fdfc": "36a62485aebbde97f5d4b06fdeed052e89f5d0538a34c4ad8c54910df2ad6dbb"
+    "beta-1861-2-publish:prepared:20940397-dcb7-4290-83b9-03b75e35fdfc": "36a62485aebbde97f5d4b06fdeed052e89f5d0538a34c4ad8c54910df2ad6dbb",
+    "beta-1861-2-publish:started:1258": "2e212d1b91f8e6c6630672770b1313105ebad332778f218e94b0105207685c7e"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
