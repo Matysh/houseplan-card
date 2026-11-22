@@ -80,6 +80,11 @@ test('#1521 a silent worker and stalled fallback import are bounded together', a
     assert.equal(owner.metrics.workerTimeouts, 1);
     loading.resolve({computeFloorJob(){ computations++; return {area:10,ms:1}; }});
     await flush(); assert.equal(computations, 0);
+    const next = owner.runWithOutcome(job({id:'B'}));
+    const healthy = WorkerFake.all.at(-1);
+    assert.notEqual(healthy, worker, 'a timeout on A must not disable workers on B');
+    healthy.complete({area:7,ms:1});
+    assert.deepEqual(await next, {outcome:'ready',result:{area:7,ms:1}});
   } finally { owner.dispose(); }
 });
 

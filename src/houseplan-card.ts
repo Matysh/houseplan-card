@@ -942,6 +942,7 @@ export class HouseplanCard extends LitElement {
     // mode commit. Defer that entire transaction, not only its mode string.
     if (mode !== 'view' && (!this._ensureFloorPreparation() || !this._loadOk)) {
       this._floorPendingMode = { mode, animate, warm: !!adopt, resume: commit };
+      if (!adopt) this._retryFloorPreparation();
       return;
     }
     commit();
@@ -2911,7 +2912,6 @@ export class HouseplanCard extends LitElement {
         // A ready floor's live light tables are not a new spatial frame. Keep
         // the camera and input surface intact while repainting current HA UI.
         if (kind === 'light' || this._floorPreparation?.failed) {
-          if (kind !== 'light') this._floorPendingMode = null;
           this.requestUpdate(); return;
         }
         if (!this._floorPreparation?.pending && this._warmViewportPending === 'projection') {
@@ -2926,6 +2926,9 @@ export class HouseplanCard extends LitElement {
     });
     return this._floorPreparation.ensure();
   }
+  private _retryFloorPreparation = (): void => {
+    if (this._floorPreparation?.retry()) this.requestUpdate();
+  };
   private _floorGeometryPresent(frame: FloorGeometryFrame): boolean {
     return this._floorPreparedRooms?.frame === frame
       && this._physicalBodiesPool.get(frame.bodies.key) === frame.bodies
@@ -5271,7 +5274,7 @@ export class HouseplanCard extends LitElement {
 
   private _publishFloorCacheAfterPaint(): void {
     const runtime = this._floorPreparation;
-    if (!runtime || runtime.pending || this._floorPublishing || !this._loadOk || this._mode !== 'view'
+    if (!runtime || runtime.pending || runtime.failed || this._floorPublishing || !this._loadOk || this._mode !== 'view'
       || !runtime.publicationNeeded && !this._floorPendingMode
       || this._booting || this._bootFading || this._modeTransitionBusy || this._continuity.state !== 'steady'
       || this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)
@@ -5292,7 +5295,7 @@ export class HouseplanCard extends LitElement {
     this._floorPublishing = true;
     void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
       .then(() => {
-        if (!current() || runtime !== this._floorPreparation || runtime.pending) return;
+        if (!current() || runtime !== this._floorPreparation || runtime.pending || runtime.failed) return;
         if (runtime.publicationNeeded && accepted()) {
           const base = this._baseVb();
           const fit = { frame: this._frameOf(), base, display: this._displayBase(base), projection: this._renderProjection, rotation: this._rotation };
@@ -9858,7 +9861,9 @@ export class HouseplanCard extends LitElement {
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true, warm = false): void {
     if (!warm) this._cancelPendingWarmMode();
     if (mode !== 'view' && (!this._ensureFloorPreparation() || !this._loadOk)) {
-      this._floorPendingMode = { mode, animate, warm }; return;
+      this._floorPendingMode = { mode, animate, warm };
+      if (!warm) this._retryFloorPreparation();
+      return;
     }
     this._floorPendingMode = null;
     if (mode === 'devices' && !hasMarkers(this.planHost.capabilities)) return;
@@ -13192,8 +13197,9 @@ export class HouseplanCard extends LitElement {
         ${failed ? html`<div class="recoveryoverlay hpf-empty-state hpf-empty-state-overlay floor-preparation-error">
           <ha-icon icon="mdi:alert-circle-outline" aria-hidden="true"></ha-icon>
           <span role="status">${this._t('plan.prepare_failed')}</span>
-          <button type="button" class="btn on"
-            @click=${() => { if (this._floorPreparation?.retry()) this.requestUpdate(); }}>${this._t('continuity.retry')}</button>
+          <button type="button" class="btn on" @click=${this._retryFloorPreparation}>${this._t('continuity.retry')}</button>
+          ${this._norm && this._canEdit && !this._kiosk ? html`<button type="button" class="btn"
+            data-hp="floor-error-support" @click=${this._openSupportDialog}>${this._t('support.title')}</button>` : nothing}
         </div>` : html`<div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite">
           <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span>
         </div>`}

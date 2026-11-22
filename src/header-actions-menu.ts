@@ -30,7 +30,8 @@ export class HeaderActionsMenu {
   show(head: HTMLElement, trigger: HTMLButtonElement, label: string, current: () => boolean): void {
     const commands = [...head.querySelectorAll<HTMLButtonElement>('button')].filter(button =>
       button !== trigger && !['space-tab', 'panel-menu', 'zoom-out', 'zoom-fit', 'zoom-in'].includes(button.dataset.hp || ''));
-    const state = (button: HTMLButtonElement) => JSON.stringify([button.disabled,
+    const disabled = (button: HTMLButtonElement) => button.disabled || !!button.closest('[inert]') || button.getAttribute('aria-disabled') === 'true';
+    const state = (button: HTMLButtonElement) => JSON.stringify([disabled(button),
       button.getAttribute('aria-disabled'),button.getAttribute('aria-label'),button.getAttribute('aria-pressed'),
       button.getAttribute('aria-current'),button.classList.contains('active')]);
     const snapshot = commands.map(button => [button, state(button)] as const);
@@ -48,10 +49,10 @@ export class HeaderActionsMenu {
       items: commands.map((button,index) => ({ key: String(index), action: button.dataset.editorNavigation
           ? 'mode-' + button.dataset.editorNavigation : button.dataset.hp || String(index),
         label: headerMenuLabel(button),
-        disabled: button.disabled || button.getAttribute('aria-disabled') === 'true',
+        disabled: disabled(button),
         current: button.classList.contains('active') || button.getAttribute('aria-current') === 'page',
         pressed: button.hasAttribute('aria-pressed') ? button.getAttribute('aria-pressed') === 'true' : undefined,
-        invoke: () => { this.close(); button.click(); },
+        invoke: () => { this.close(); if (!disabled(button)) button.click(); },
       })),
     };
     this.host.requestUpdate();

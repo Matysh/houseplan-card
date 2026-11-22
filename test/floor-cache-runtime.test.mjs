@@ -23,7 +23,9 @@ async function result(input){
 function harness(initial){
   let current=initial;const hydrated=[],jobs=[],reads=[],publications=[],changes=[],frames=[];
   const owner=new FloorCacheRuntime({selection:()=>current,hydrate:(frame,light)=>{hydrated.push(frame.id);frames.push({frame,light});},changed:kind=>changes.push(kind)});
-  owner.scheduler={run(job,priority){const d=defer();jobs.push({...d,job,priority});return d.promise;},cancel(){this.cancels=(this.cancels||0)+1;},retryWorker(){},dispose(){this.disposed=true},metrics:{}};
+  owner.scheduler={run(job,priority){const d=defer();jobs.push({...d,job,priority});return d.promise;},
+    runWithOutcome(job){const d=defer();jobs.push({job,resolve(result,outcome=result?'ready':'timeout'){d.resolve({result,outcome});}});return d.promise;},
+    cancel(){this.cancels=(this.cancels||0)+1;},retryWorker(){},dispose(){this.disposed=true},metrics:{}};
   owner.store={read(address,level){if(level==='preview')return Promise.resolve(null);const d=defer();reads.push({...d,address});return d.promise;},
     publish(value,isCurrent){publications.push({value,isCurrent});return Promise.resolve(isCurrent());},close(){this.closed=true},metrics:{}};
   return{owner,hydrated,jobs,reads,publications,changes,frames,set:value=>{current=value}};
@@ -70,6 +72,36 @@ test('#1521 a failed family exits loading but stays unready until a valid explic
   h.jobs[1].resolve(await result(selected.input));await flush();
   assert.equal(h.owner.ensure(),true);assert.equal(h.owner.failed,null);
   assert.deepEqual(h.hydrated,['A']);h.owner.dispose();
+});
+test('#1521 completed worker failures and invalid packets allow only the current canonical reader',async()=>{
+  const a=selection('A',{});delete a.scope;
+  const h=harness(a);
+  for(const [index,outcome,packet] of [[0,'limited',null],[1,'error',null],[2,'ready',{wire:null,ms:1}]]){
+    h.set({...a,persistentKey:'new-matrix-'+index});
+    assert.equal(h.owner.ensure(),false);await flush();
+    h.jobs[index].resolve(packet,outcome);await flush();
+    assert.equal(h.owner.pending,false);assert.equal(h.owner.failed,null);
+    assert.equal(h.owner.ensure(),true);assert.equal(h.owner.publicationNeeded,false);
+    assert.equal(h.owner.readyKey,'','the canonical route is not a prepared cache hit');
+    h.owner.ensure();assert.equal(h.jobs.length,index+1,'read/render never queues another attempt');
+    assert.deepEqual(h.hydrated,[]);
+  }
+  h.owner.dispose();
+});
+test('#1521 A→B→A with a light miss opens the accepted geometry before optional refresh',async()=>{
+  const authority={},a=selection('A',authority),b=selection('B',authority),h=harness(a);
+  await ready(h,a);const entry=h.owner.memory.get(a.persistentKey);
+  h.set(b);await ready(h,b);
+  h.set({...a,light:{...a.light,fingerprint:'new-light-on-return'}});
+  assert.equal(h.owner.ensure(),true);assert.equal(h.owner.pending,false);
+  assert.equal(h.frames.at(-1).frame,entry.frame);assert.equal(h.frames.at(-1).light,undefined);
+  assert.equal(h.jobs.at(-1).priority,'light');assert.equal(h.jobs.at(-1).job.memory,entry.wire);
+  h.jobs.at(-1).resolve(null);await flush();
+  assert.equal(h.owner.ensure(),true);assert.equal(h.owner.failed,null);
+  assert.equal(h.owner.memory.get(a.persistentKey).frame,entry.frame);
+  assert.deepEqual(h.changes,[undefined,undefined,'light']);
+  assert.equal(h.jobs.length,3,'unavailable light never queues a new geometry job or a retry');
+  h.owner.dispose();
 });
 test('#1454 memory beats disk but connection generation independently retires it',async()=>{
   const a=selection('A',{}), h=harness(a);h.owner.ensure();h.reads[0].resolve(null);await flush();

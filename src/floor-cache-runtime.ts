@@ -28,6 +28,7 @@ export class FloorCacheRuntime {
   private selected: Selection | null = null;
   private key = '';
   private readyKey = '';
+  private canonicalKey = '';
   private failure: 'unavailable' | 'invalid' | null = null;
   private disposed = false;
   private published = new Map<string, string>();
@@ -45,7 +46,7 @@ export class FloorCacheRuntime {
     producers: [] as NonNullable<import('./floor-cache-job').FloorJobResult['producer']>[] };
   constructor(private readonly host: FloorRuntimeHost) { this.store.preopen(); }
   private selection(): Selection | null { try { return this.host.selection(); } catch { return null; } }
-  get pending(): boolean { return !!this.key && this.readyKey !== this.key && !this.failure; }
+  get pending(): boolean { return !!this.key && this.readyKey !== this.key && this.canonicalKey !== this.key && !this.failure; }
   get failed() { return this.failure; }
   get publicationNeeded(): boolean {
     const publication = this.publication();
@@ -187,6 +188,10 @@ export class FloorCacheRuntime {
       }
       return false;
     }
+    if (this.key && this.canonicalKey === this.key && this.sameStructure(this.selected, selection)) {
+      this.selected = selection;
+      return true;
+    }
     const authorityChanged = this.memoryAuthority !== selection.authority
       || this.memoryConnection !== selection.connection || this.memoryScope !== selection.scope;
     if (authorityChanged) { this.memory.clear(); this.areaMemory.clear(); this.published.clear(); this.publishing.clear(); }
@@ -194,57 +199,79 @@ export class FloorCacheRuntime {
     this.lightTask = null; this.failedLight = '';
     const sequence = ++this.sequence; this.scheduler.cancel(); this.selected = selection;
     this.key = `${sequence}|${selection.persistentKey}|${selection.light.fingerprint}`;
+    this.canonicalKey = '';
     this.failure = null;
     this.preview = null;
     this.metrics.firstPreview = this.metrics.firstCachedFullFrame = this.metrics.readyCurrentFrame = 0;
     const isCurrent = () => !this.disposed && sequence === this.sequence && this.sameStructure(selection, this.selection());
     const memoryKey = selection.persistentKey;
-    let warm = this.memory.get(memoryKey);
-    if (warm?.lightKey === selection.light.fingerprint) {
-      this.memory.delete(memoryKey); this.memory.set(memoryKey, warm);
+    const warm = this.memory.get(memoryKey);
+    if (warm) {
+      const lightCurrent = warm.lightKey === selection.light.fingerprint;
+      this.memory.delete(memoryKey); this.memory.set(memoryKey, lightCurrent ? warm : { ...warm, light: undefined });
       try {
-        this.host.hydrate(warm.frame, warm.light); this.readyKey = this.key; this.metrics.memoryHits++;
+        // A light miss cannot hold a previously accepted structural frame.
+        // Canonical light remains available even when its optional refresh fails.
+        this.host.hydrate(warm.frame, lightCurrent ? warm.light : undefined);
+        this.readyKey = this.key; this.metrics.memoryHits++;
+        this.refreshLight();
         return true;
-      } catch { this.memory.delete(memoryKey); warm = undefined; }
+      } catch { this.memory.delete(memoryKey); }
     }
     const address = this.address(selection);
+    const useCanonical = () => {
+      // A completed but unusable optimization attempt is not a cache hit. The
+      // ordinary reader builds from the current model, never from a rejected
+      // packet or retained scene. Do not duplicate the full worker producers
+      // on the main thread, publish an unprepared cache, or retry per render.
+      this.memory.delete(memoryKey); this.canonicalKey = this.key;
+      this.metrics.familyFallbacks++; this.preview = null; this.host.changed();
+    };
     this.readPreview(selection, sequence);
     void (async () => {
       try {
-        const disk = !warm && address ? await this.store.read(address, 'geometry') : null;
+        const disk = address ? await this.store.read(address, 'geometry') : null;
         if (!isCurrent()) return;
-        // A live HA/light revision does not replace immutable geometry. The
-        // worker returns only new light tables for an already accepted frame.
-        const result = await this.scheduler.run(warm
-          ? { kind: 'light', input: selection.input, memory: warm.wire, light: selection.light }
-          : { kind: 'geometry', input: selection.input, disk, light: selection.light });
+        const { result, outcome } = await this.scheduler.runWithOutcome({ kind: 'geometry', input: selection.input, disk, light: selection.light });
         if (!isCurrent()) return;
         if (!result) {
+          if (outcome === 'limited' || outcome === 'error') { useCanonical(); return; }
           this.failure = 'unavailable'; this.metrics.familyFallbacks++; this.preview = null; this.host.changed(); return;
         }
         this.metrics.workerMs.push(result.ms);
         if (this.metrics.workerMs.length > 100) this.metrics.workerMs.shift();
         if (result.producer) this.metrics.producers.push(result.producer);
         if (this.metrics.producers.length > 50) this.metrics.producers.shift();
-        const start = performance.now(), frame = warm?.frame ?? decodeGeometryValue(result.wire);
-        if (!isFloorGeometryFrame(frame, selection.input)) throw new Error('floor-cache:frame');
+        const start = performance.now();
+        let frame: FloorGeometryFrame;
+        try {
+          const decoded = decodeGeometryValue(result.wire);
+          if (!isFloorGeometryFrame(decoded, selection.input)) throw new Error('floor-cache:frame');
+          frame = decoded;
+        } catch { useCanonical(); return; }
         // A fresher HA sample cannot restart structural preparation or use
         // the obsolete light tables. The ordinary light refresh follows it.
-        const light = result.light && this.same(selection, this.selection()) ? decodeGeometryValue(result.light) : undefined;
+        let light: unknown;
+        if (result.light && this.same(selection, this.selection())) {
+          try {
+            const decoded = decodeGeometryValue(result.light);
+            if (decoded && typeof decoded === 'object' && 'fingerprint' in decoded
+              && decoded.fingerprint === selection.light.fingerprint) light = decoded;
+          } catch { /* Invalid optional light must not suppress valid geometry. */ }
+        }
         if (!isCurrent()) return;
-        const entry: Entry = { frame, wire: warm?.wire ?? result.wire!, payload: warm?.payload ?? result.payload,
+        const entry: Entry = { frame, wire: result.wire!, payload: result.payload,
           lightKey: selection.light.fingerprint, light };
         this.memory.set(memoryKey, entry);
         while (this.memory.size > 8) this.memory.delete(this.memory.keys().next().value!);
-        if (warm) this.metrics.memoryHits++; else if (result.hit) this.metrics.diskHits++; else this.metrics.misses++;
+        if (result.hit) this.metrics.diskHits++; else this.metrics.misses++;
         this.host.hydrate(frame, light); this.readyKey = this.key;
         this.metrics.hydrationMs.push(performance.now() - start);
         if (this.metrics.hydrationMs.length > 100) this.metrics.hydrationMs.shift();
         this.host.changed();
       } catch {
         if (!isCurrent()) return;
-        // Never start expensive canonical readers on every render or claim
-        // the retained frame is current after preparation has failed.
+        // Unexpected failures are not evidence that a frame is safe to use.
         this.memory.delete(memoryKey); this.failure = 'invalid'; this.metrics.familyFallbacks++;
         this.preview = null; this.host.changed();
       }
@@ -317,6 +344,6 @@ export class FloorCacheRuntime {
     this.invalidate(); this.scheduler.retryWorker(); return true;
   }
   invalidate(): void { this.sequence++; this.lightTask = null; this.failedLight = ''; this.scheduler.cancel(); this.selected = null;
-    this.key = ''; this.readyKey = ''; this.preview = null; this.failure = null; }
+    this.key = ''; this.readyKey = ''; this.canonicalKey = ''; this.preview = null; this.failure = null; }
   dispose(): void { this.disposed = true; this.invalidate(); this.scheduler.dispose(); this.store.close(); }
 }

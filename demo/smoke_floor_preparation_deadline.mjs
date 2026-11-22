@@ -5,13 +5,19 @@ import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
 const out = {};
 for (const projection of ['flat', 'iso']) for (const surface of ['panel', 'card', 'external']) {
     const key = `${surface}/${projection}`;
+    if (process.env.HP_DEADLINE_CASE && key !== process.env.HP_DEADLINE_CASE) continue;
     const { page, browser } = await launchPanelCold({ width: 1280, height: 900 });
     try {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.clock.install();
     const fixture = makeLargeHouseFixture({ floors: 2, roomsPerFloor: 1, devices: 4, openings: 1,
       partitions: 0, columns: 0, stairs: 0, decor: 0 });
-    await page.evaluate(async ({ fixture, projection, surface }) => {
+    const editorRecovery = key === 'panel/flat';
+    if (editorRecovery || key === 'external/iso') {
+      fixture.config.spaces[1].decor = makeLargeHouseFixture({ floors: 2, roomsPerFloor: 1,
+        devices: 0, openings: 0, partitions: 0, columns: 0, stairs: 0, decor: 260 }).config.spaces[1].decor;
+    }
+    await page.evaluate(async ({ fixture, projection, surface, editorRecovery }) => {
       const host = document.getElementById('host');
       host.replaceChildren();
       const config = fixture.config;
@@ -20,9 +26,9 @@ for (const projection of ['flat', 'iso']) for (const surface of ['panel', 'card'
           cycle: 0, idle: 0, summary: 'local', hidden_devices: 'local', icon_scale: null, font_scale: null }] } };
       const hass = window.__mkHass();
       const call = hass.callWS;
-      const wire = { ...hass, user: { id: 'floor-deadline-test', is_admin: false }, states: fixture.states,
+      const wire = { ...hass, user: { id: 'floor-deadline-test', is_admin: editorRecovery }, states: fixture.states,
         callWS: async message => {
-          if (message.type === 'houseplan/config/get') return {config: structuredClone(config), rev: 1, can_write: false};
+          if (message.type === 'houseplan/config/get') return {config: structuredClone(config), rev: 1, can_write: editorRecovery};
           if (message.type === 'houseplan/layout/get') return {layout: structuredClone(fixture.layout), rev: 1};
           return call(message);
         } };
@@ -40,7 +46,7 @@ for (const projection of ['flat', 'iso']) for (const surface of ['panel', 'card'
         panel.route = { prefix: '/houseplan', path: '' }; panel.hass = wire;
         host.append(panel); window.__deadlineCard = () => panel.shadowRoot?.querySelector('houseplan-card');
       }
-    }, {fixture, projection, surface});
+    }, {fixture, projection, surface, editorRecovery});
     await page.waitForFunction(({ projection, surface }) => {
       const c = window.__deadlineCard();
       return c?._loadOk && !c._booting && !c._bootFading && c._renderProjection === projection
@@ -77,13 +83,45 @@ for (const projection of ['flat', 'iso']) for (const surface of ['panel', 'card'
     await page.evaluate(() => {
       window.__finishRetiredFallback(); window.__enableHealthyFloorWorker();
     });
-    await error.getByRole('button', {name:'Try again'}).click();
+    if (editorRecovery) {
+      assert.equal(await error.locator('[data-hp="floor-error-support"]').isVisible(), true);
+      await page.locator('[data-hp="mode-tab"][data-mode="plan"]').click();
+    } else await error.getByRole('button', {name:'Try again'}).click();
     await page.waitForFunction(projection => {
       const c = window.__deadlineCard(), root = c.renderRoot;
       return c._renderProjection === projection && !!root.querySelector('.stage:not([inert]) .dev')
         && !root.querySelector('[data-hp-floor-cache],.editorloading');
     }, projection);
+    if (editorRecovery) {
+      await page.waitForFunction(() => window.__deadlineCard()._mode === 'plan');
+      await page.locator('.modes [data-hp="editor-close"]').click();
+      await page.waitForFunction(() => window.__deadlineCard()._mode === 'view');
+    }
     out[`${key}: retained frame inert, deadline error, real-worker retry`] = true;
+    if (editorRecovery || key === 'external/iso') {
+      await page.evaluate(() => {
+        const c = window.__deadlineCard(), r = c._floorPreparation;
+        r.scheduler.stopWorker(); r.scheduler.factory = () => { throw Error('Worker unsupported'); };
+        c._pickSpace('perf-floor-2');
+      });
+      await page.waitForFunction(() => {
+        const c = window.__deadlineCard(), r = c._floorPreparation;
+        return c._space === 'perf-floor-2' && r.canonicalKey && r.key === r.canonicalKey
+          && c.renderRoot.querySelector('.stage:not([inert]) svg.plan-svg') && !c.renderRoot.querySelector('[data-hp-floor-cache]');
+      }, null, {timeout:12_000}).catch(async error => {
+        const facts = await page.evaluate(() => {
+          const c = window.__deadlineCard(), r = c._floorPreparation;
+          return {space:c._space,mode:c._mode,load:c._loadOk,ready:r.readyKey===r.key,canonical:r.canonicalKey===r.key,
+            selected:!!r.selected,decor:r.selected?.input.raw.decor?.length,facts:r.supportFacts};
+        });
+        throw Error(key + ': ' + JSON.stringify(facts), {cause:error});
+      });
+      assert.equal(await page.evaluate(() => {
+        const c = window.__deadlineCard(), r = c._floorPreparation;
+        return c._floorCompleteSpace === 'perf-floor-2' && !r.publicationNeeded && !r.failed && r.readyKey !== r.key;
+      }), true, 'completed rejection opens the current larger floor without fake cache readiness');
+      out[`${key}: unsupported worker opens the larger floor through canonical readers`] = true;
+    }
     checkAll(out);
     } catch (error) {
       checkAll({ [key]: false });
