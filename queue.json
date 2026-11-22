@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20511,
+  "revision": 20512,
   "nextTicket": 613,
   "nextFence": 613,
   "tasks": {
@@ -5800,14 +5800,36 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1521-floor-preparation-deadline",
-      "materialSha": "08da288393bdb764e1cea41028df383dbe1d18c0",
+      "materialSha": "5e0bcb480553872b9b648e21afa631ee207528df",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 612,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795348303050,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "f89177d7053097382be780d637fa1f776d5e2ea6",
+      "changedFiles": [
+        "custom_components/houseplan/support_wire_schema.py",
+        "demo/smoke_floor_preparation_deadline.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.86.0/1521.json",
+        "src/floor-cache-compute.ts",
+        "src/floor-cache-runtime.ts",
+        "src/floor-cache-scheduler.ts",
+        "src/floor-geometry-frame.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
+        "src/support-diagnostics.ts",
+        "test/floor-cache-runtime.test.mjs",
+        "test/floor-cache-scheduler.test.mjs",
+        "tests_backend/test_support_wire_schema.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -6386,11 +6408,12 @@
     "worker": "finish",
     "token": "612:finish:f1091ebc-30a7-4bc2-b4bf-d27c7cd305c8:finish:2:admit",
     "fence": 612,
-    "materialSha": "08da288393bdb764e1cea41028df383dbe1d18c0",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "5e0bcb480553872b9b648e21afa631ee207528df",
+    "expectedBase": "29f32c05ed0932be242e766771b7cdaaf06472bc",
+    "phase": "testing",
     "admittedAt": 1795348495521,
-    "expiresAt": 1795348795521
+    "expiresAt": 1795348805742,
+    "patchId": "f89177d7053097382be780d637fa1f776d5e2ea6"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6748,6 +6771,10 @@
     "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return": {
       "digest": "6e228ab591643e8be45f39c03d4b751aa32d1b74d4f671e8afbd160f157c013a",
       "issue": 1517
+    },
+    "finish:f1091ebc-30a7-4bc2-b4bf-d27c7cd305c8:finish:3:synchronized": {
+      "digest": "ef99c6ee2ab677d3338ce91965227f9a6536ef4a9992a1c2a114f0eb394eb0d6",
+      "issue": 1521
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
