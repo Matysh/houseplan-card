@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20088,
+  "revision": 20089,
   "nextTicket": 602,
   "nextFence": 601,
   "tasks": {
@@ -5627,7 +5627,18 @@
         "src/styles/plan.styles.ts",
         "test/iso-wall-transparency.test.mjs",
         "tests_backend/test_ha_import_export.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795336279269,
+        "entry": 1,
+        "detail": "Поведение: test/isometric-contract.test.mjs: failed",
+        "eventId": "finish:15095b3d-9f7d-48b3-a937-80e8d66dea87:finish:3:return:return:1518"
+      }
     },
     "1519": {
       "issue": 1519,
@@ -6207,18 +6218,7 @@
   "waiting": [
     1515
   ],
-  "active": {
-    "issue": 1518,
-    "worker": "finish",
-    "token": "600:finish:2f945ee5-a1f0-4976-85f3-b5ce814e74e5:finish:1:admit",
-    "fence": 600,
-    "materialSha": "b35e672cbfd9629e3a609bdc12f441e53ffb7831",
-    "expectedBase": "432662652229bf4bf58c2a4b94e954efa9f770c7",
-    "phase": "testing",
-    "admittedAt": 1795334318044,
-    "expiresAt": 1795336504844,
-    "patchId": "bb95d046144f3f4742ba13cca04152d10bd16b59"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6560,6 +6560,10 @@
       "digest": "55d532ac36f298b216fdb694ffa4f189540d38cc67d647e3c71418a1d917f718",
       "issue": 1518
     },
+    "finish:15095b3d-9f7d-48b3-a937-80e8d66dea87:finish:3:return": {
+      "digest": "11845962678886364d9a3daeb6902afcad25b40329b8f76c2ea0a2ce2cea8114",
+      "issue": 1518
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6715,6 +6719,26 @@
         "materialSha": "f33508a66dd1dacd73206ebbd105e34587f171eb",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:15095b3d-9f7d-48b3-a937-80e8d66dea87:finish:3:return:return:1518": {
+      "digest": "11845962678886364d9a3daeb6902afcad25b40329b8f76c2ea0a2ce2cea8114",
+      "issue": 1518,
+      "message": {
+        "kind": "return",
+        "issue": 1518,
+        "at": 1795336279269,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795336279269,
+          "entry": 1,
+          "detail": "Поведение: test/isometric-contract.test.mjs: failed",
+          "eventId": "finish:15095b3d-9f7d-48b3-a937-80e8d66dea87:finish:3:return:return:1518"
+        }
       }
     }
   },
