@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20273,
+  "revision": 20274,
   "nextTicket": 609,
   "nextFence": 607,
   "tasks": {
@@ -5639,13 +5639,14 @@
       "readyAt": 1795340117068,
       "reviewEntry": 2,
       "notice": {
-        "key": "1:rebase-conflict",
-        "reason": "rebase-conflict",
-        "status": "delivered",
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795340046013,
-        "entry": 1,
-        "eventId": "finish:e9e77efc-431d-4a45-be41-000dfb4e00ea:finish:2:return:return:1517"
+        "at": 1795341468096,
+        "entry": 2,
+        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
+        "eventId": "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return:return:1517"
       },
       "patchId": "d21ed98286fbf6c553638278679c1865dac65e78",
       "changedFiles": [
@@ -5703,7 +5704,8 @@
       ],
       "automationError": "automation-error",
       "automationSince": 1795340262463,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
+      "reason": "checks-failed"
     },
     "1518": {
       "issue": 1518,
@@ -6353,18 +6355,7 @@
     1516,
     1518
   ],
-  "active": {
-    "issue": 1517,
-    "worker": "finish",
-    "token": "606:finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:1:admit",
-    "fence": 606,
-    "materialSha": "8cc632ede75a64efdb5cc9a2d1211a4d59966ab3",
-    "expectedBase": "c633b67b1a283ef013c3497641c5bcdf41884c87",
-    "phase": "testing",
-    "admittedAt": 1795340243728,
-    "expiresAt": 1795341740184,
-    "patchId": "d21ed98286fbf6c553638278679c1865dac65e78"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6870,6 +6861,10 @@
       "digest": "bad25713495dd6febb547e22734968478cbec5b878a6ac75f96da16685f1e72a",
       "issue": 1517
     },
+    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return": {
+      "digest": "b6283e2842b6a85e24082f6acfbb0fb38284c124a6c2d3985da5cbaedfb0a8cb",
+      "issue": 1517
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7236,6 +7231,26 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return:return:1517": {
+      "digest": "b6283e2842b6a85e24082f6acfbb0fb38284c124a6c2d3985da5cbaedfb0a8cb",
+      "issue": 1517,
+      "message": {
+        "kind": "return",
+        "issue": 1517,
+        "at": 1795341468096,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795341468096,
+          "entry": 2,
+          "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
+          "eventId": "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return:return:1517"
+        }
       }
     }
   },
