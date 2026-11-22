@@ -6,7 +6,8 @@ import { isoRotationBasis, projectPlanPoint, type IsoCamera, type PlanPoint } fr
 import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
 
 type Face = { index:number; a:PlanPoint; b:PlanPoint; low:number; high:number; d:string; nx:number; ny:number; color:string };
-type Paint = { fill:(index:number)=>string; edges:TemplateResult|typeof nothing };
+type Paint = { fill:(index:number)=>string; edges:TemplateResult|typeof nothing;
+  edge:(index:number,d:string,fragment:number)=>TemplateResult|typeof nothing };
 const memo=new WeakMap<object,{key:string;paint:Paint}>();
 const epsilon=1e-4;
 const same=(a:PlanPoint,b:PlanPoint)=>Math.hypot(a[0]-b[0],a[1]-b[1])<epsilon;
@@ -48,7 +49,7 @@ export function architecturalPainter(queue:readonly IsoWallDepthQueueEntry[],cam
     const k=key(point), peers=byEnd.get(k);
     if(peers)peers.push(face);else byEnd.set(k,[face]);
   }
-  const edges=svg`<g class="iso-architectural-edges">${faces.map(face=>{
+  const renderEdge = (face:Face,d:string,fragment:number) => {
     const segments:{a:PlanPoint;b:PlanPoint;z1:number;z2:number}[]=[];
     if(face.low<epsilon)segments.push({a:face.a,b:face.b,z1:0,z2:0});
     for(const point of [face.a,face.b]) {
@@ -64,14 +65,19 @@ export function architecturalPainter(queue:readonly IsoWallDepthQueueEntry[],cam
       for(const [z1,z2] of intervals) segments.push({a:point,b:point,z1,z2});
     }
     if(!segments.length)return nothing;
-    const id='hp-arch-edge-'+face.index;
+    const id='hp-arch-edge-'+fragment;
     const ink=colorLuma(parseCssColor(face.color)??[255,255,255])<.35?'#e2eaf3':'#26313e';
-    const d=segments.map(s=>`M ${projectPlanPoint(s.a,s.z1,camera).join(' ')} L ${projectPlanPoint(s.b,s.z2,camera).join(' ')}`).join(' ');
-    return svg`<defs><clipPath id=${id}><path d=${face.d} fill-rule="evenodd" clip-rule="evenodd"></path></clipPath></defs>
-      <path d=${d} clip-path=${'url(#'+id+')'} fill="none" stroke=${ink} stroke-opacity=".36"
+    const linePath=segments.map(s=>`M ${projectPlanPoint(s.a,s.z1,camera).join(' ')} L ${projectPlanPoint(s.b,s.z2,camera).join(' ')}`).join(' ');
+    return svg`<defs><clipPath id=${id}><path d=${d} fill-rule="evenodd" clip-rule="evenodd"></path></clipPath></defs>
+      <path d=${linePath} clip-path=${'url(#'+id+')'} fill="none" stroke=${ink} stroke-opacity=".36"
         style="stroke-width:calc(1.2 * var(--hp-raster-outline-scale, 1))" vector-effect="non-scaling-stroke" stroke-linecap="butt"></path>`;
-  })}</g>`;
-  const paint:Paint={fill:(index:number)=>colors.get(index)??'',edges};
+  };
+  const edges=svg`<g class="iso-architectural-edges">${faces.map(face=>renderEdge(face,face.d,face.index))}</g>`;
+  const byIndex = new Map(faces.map(face => [face.index, face]));
+  const paint: Paint = { fill:index=>colors.get(index)??'', edges, edge:(index,d,fragment) => {
+    const face = byIndex.get(index);
+    return face ? renderEdge(face,d,fragment) : nothing;
+  } };
   memo.set(queue,{key:memoKey,paint});
   return paint;
 }

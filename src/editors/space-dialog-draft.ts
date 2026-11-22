@@ -21,7 +21,7 @@ export function newSpaceDialogDraft(imperial: boolean): SpaceDialogState {
     mode: 'create', title: '', planUrl: null, planFile: null,
     ...initialSpaceDisplayDraft('draw'), hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
     roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
-    nameColor: { ...DEFAULT_NAME_COLOR }, wallFill: { ...DEFAULT_WALL_FILL },
+    nameColor: { ...DEFAULT_NAME_COLOR }, wallFill: { ...DEFAULT_WALL_FILL }, transparentWalls3d: false,
     customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 }, glowEnabled: true, bgColor: null,
     bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
     tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
@@ -42,7 +42,7 @@ export function savedSpaceDialogDraft(sp: SavedSpace, imperial: boolean, globalM
     source: sp.plan_url ? 'file' : 'draw', showBorders: disp.showBorders, showNames: disp.showNames,
     zeroWallStyle: zeroWallStyleOf(sp), displayTouched: true,
     hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings, roomColor: disp.color, roomOpacity: disp.opacity,
-    nameColor: disp.nameColor, wallFill: disp.wallFill,
+    nameColor: disp.nameColor, wallFill: disp.wallFill, transparentWalls3d: disp.transparentWalls3d,
     openingAccent3d: disp.openingAccent3d,
     fillMode: disp.fill === 'none' ? 'custom' : disp.fill,
     customFill: disp.fill === 'none' ? { ...(storedCustom || DEFAULT_CUSTOM_FILL), a: 0 } : storedCustom,
@@ -82,6 +82,8 @@ export function spaceDialogSettings(d: SpaceDialogState, previous?: Record<strin
     label_temp: d.labelTemp, label_hum: d.labelHum, label_co2: d.labelCo2,
     label_lqi: d.labelLqi, label_light: d.labelLight,
   };
+  if (d.transparentWalls3d) settings.transparent_walls_3d = true;
+  else delete settings.transparent_walls_3d;
   writeSpaceDeviceBatterySetting(settings, d.deviceBatteryMode);
   return writeSpaceSignalVisibility(settings, d.showLqiMode);
 }

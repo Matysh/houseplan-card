@@ -254,6 +254,7 @@ export const planStyles = css`
     .iso-wall-side-fill { opacity: var(--iso-wall-side-op, .55); }
     :is(.iso-wall-fill, .iso-wall-side-fill) :is(.iso-wall-side, .iso-wall-top) { stroke: none; }
     .iso-wall-contour { fill: none; stroke-linejoin: round; }
+    .iso-translucent-masonry-face > :is(.iso-wall-side, .iso-wall-top) { stroke: none; }
     .iso-material-texture {
       fill: url(#hp-iso-wall-texture);
       stroke: none;

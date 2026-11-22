@@ -389,6 +389,11 @@ includes the field. Wall tops continue to read `room_color` / `room_opacity`
 and sides read `wall_fill`. The coordinates, physical wall cut, masks and
 light profiles require no new persisted representation.
 
+Optional Boolean `space.settings.transparent_walls_3d` (#1518) permits actual
+colour opacity for both kinds of 2.5D masonry. Absent and false preserve the
+opaque white backing. Copies and full or plan-only exports retain the switch
+along with the existing colour fields. The setting affects paint only.
+
 Additive optional `space.settings.name_color` and `space.settings.wall_fill`
 store `{c: '#RRGGBB', a: finite JSON number 0..1}`. New writes reject null,
 booleans, strings and out-of-range alpha; zero is explicit. Compatible unknown

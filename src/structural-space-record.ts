@@ -10,7 +10,7 @@ export function structuralSpaceRecord(record: unknown, ...nonStructural: readonl
 // masonry/clean-floor geometry. Visibility is still part of the contact and
 // light consumers' own demand keys. Unknown compatible settings stay physical.
 const DISPLAY_SETTINGS = new Set([
-  'bg_mode', 'bg_color', 'room_color', 'room_opacity', 'name_color', 'wall_fill',
+  'bg_mode', 'bg_color', 'room_color', 'room_opacity', 'name_color', 'wall_fill', 'transparent_walls_3d',
   'show_names', 'show_borders', 'hide_decor', 'hide_openings', 'fill_mode', 'custom_fill',
   'glow_enabled', 'temp_min', 'temp_max', 'card_name_scale', 'card_label_scale',
   'label_temp', 'label_hum', 'label_co2', 'label_lqi', 'label_light',

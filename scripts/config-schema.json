@@ -1743,6 +1743,10 @@
       "required": false,
       "type": "float"
     },
+    "config.spaces[].settings.transparent_walls_3d": {
+      "required": false,
+      "type": "bool"
+    },
     "config.spaces[].settings.wall_fill": {
       "allowExtra": true,
       "required": false

@@ -1911,7 +1911,7 @@ cycle: 30
 
 &emsp;&emsp;Device icons, LED strips, door locks and room names sit level with the top of the walls. Names and their readings are visible over the walls. Icons and labels turn with the view and stay upright. Lights can also illuminate the sides of nearby walls.
 
-&emsp;&emsp;Open **Space settings → Room appearance** to adjust the wall cut and sides separately. **Wall hatching color** sets the top and **Wall fill color** sets the sides. In 2.5D, lowering the colour opacity lightens walls toward white; the walls themselves stay opaque. Soft shading and thin lines distinguish the faces and the floor joint. Flat keeps its original fill opacity.
+&emsp;&emsp;Open **Space settings → Room appearance** to adjust the wall cut and sides separately. **Wall hatching color** sets the top and **Wall fill color** sets the sides. In 2.5D the colours are normally painted over an opaque white base. Turn on **Allow transparent walls in 2.5D** below the fill colour to remove that base from the sides and the top cut. Adjust each surface’s opacity in its own colour field. Soft shading and thin lines distinguish the faces and the floor joint.
 
 &emsp;&emsp;**Accent color for 3D windows and doors** tints frames, door panels, reveals and sills. Set white or 0% to restore the original colour. The percentage controls the strength of the tint. Glass, shades and hardware keep their own appearance.
 

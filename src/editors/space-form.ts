@@ -352,6 +352,9 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
       onChange:v => set(port,{...d,zeroWallStyle:v})})}),
           color('border'),
           color('wall-fill'),
+          toggleRow({id:id('transparent-walls-3d'), title:st('space.transparent_walls_3d'),
+            caption:st('space.transparent_walls_3d.help'), checked:d.transparentWalls3d,
+            onChange:v => set(port,{...d,transparentWalls3d:v})}),
           colorRow({label:st('space.opening_accent_3d'),help:shelp('space.opening_accent_3d.help'),
             picker:colorField({hex:d.openingAccent3d?.c || '#ffffff',opacity:d.openingAccent3d?.a ?? 1,
               picker:html`<hp-color-opacity data-hp="field" data-field=${id('opening-accent-3d')}

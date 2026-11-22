@@ -110,7 +110,8 @@ export class StairViewRuntime {
     return new Map(this.stairs.flatMap(stair=>{const volume=stairVolume(stair,this.owner._cellCm,camera);return volume?[[stair.id,volume] as const]:[];}));
   }
 
-  public renderLayer(volumes?:ReadonlyMap<string,StairVolume>,part:'flat'|'volume'='flat'): TemplateResult {
+  public renderLayer(volumes?:ReadonlyMap<string,StairVolume>,part:'flat'|'volume'='flat',
+    volumePart:'all'|'paint'|'hit'='all'): TemplateResult {
     // #694: the card's `_model` getter fingerprints the whole config on every
     // read; read it once per layer, not once more per navigable stair.
     const model = this.owner._model;
@@ -151,11 +152,13 @@ export class StairViewRuntime {
       };
       const highlight = arrival && stair.target_space_id === arrival.from;
       const volume=volumes?.get(stair.id),style=stairVisualStyle(stair,this.owner._decorStyle);
+      const body = volume && volumePart !== 'hit'
+        ? renderIsoLabFurniture(volume.mesh,stair.id,'stairs',style.color,gridVisualScale(this.owner._cellCm),false) : nothing;
+      if (volumePart === 'paint') return body;
       if (highlight) arrival.rendered = true;
       return renderStairSymbol({
         stair, geometry, markup,
-        volume: volume ? {height:volume.height,steps:volume.steps,hit:volume.hit,
-          body:renderIsoLabFurniture(volume.mesh,stair.id,'stairs',style.color,gridVisualScale(this.owner._cellCm),false)} : undefined,
+        volume: volume ? {height:volume.height,steps:volume.steps,hit:volume.hit,body} : undefined,
         classes: 'hp-stair-view ' + (active ? 'navigable' : '') + ' ' + (interactive ? 'input-enabled' : ''),
         targetState, style: stairStyleVars(stair, this.owner._cellCm, this.owner._gridPitch, this.owner._decorStyle),
         role: active ? 'link' : 'img', focusable: active, label: this.owner._t('markup.stairs'),

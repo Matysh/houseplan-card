@@ -38,6 +38,7 @@ export interface SpaceDialogState {
   roomOpacity: number;
   nameColor: FillColorEntry;
   wallFill: FillColorEntry;
+  transparentWalls3d: boolean;
   openingAccent3d?: FillColorEntry;
   bgColor: string | null;
   bgMode: 'static' | 'daynight' | null;

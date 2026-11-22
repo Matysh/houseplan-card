@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1518,
+  "baseStable": "v1.86.0",
+  "category": "major",
+  "rationale": "Adds a space-level option for translucent masonry in 2.5D.",
+  "summary": {
+    "ru": "В настройках пространства можно разрешить прозрачные стены в 2.5D.",
+    "en": "Allow transparent walls in 2.5D in each space’s settings."
+  }
+}

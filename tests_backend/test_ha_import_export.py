@@ -123,6 +123,7 @@ def test_issue1037_appearance_survives_transfer_without_target_global_leak(tmp_p
     accent = {"c": "#987654", "a": 0.65}
     source["spaces"][0]["settings"] = {
         "room_color": "#456789", "room_opacity": 0.2, "future": 7, "opening_accent_3d": accent,
+        "transparent_walls_3d": True,
     }
     source["spaces"][0]["rooms"][0]["settings"] = {"name_color": {"c": "#abcdef", "a": 0}}
     before = copy.deepcopy(source)
@@ -134,6 +135,7 @@ def test_issue1037_appearance_survives_transfer_without_target_global_leak(tmp_p
     assert space["settings"]["name_color"] == {"c": "#456789", "a": 0.45}
     assert space["settings"]["wall_fill"] == {"c": "#112233", "a": 0}
     assert space["settings"]["opening_accent_3d"] == accent
+    assert space["settings"]["transparent_walls_3d"] is True
     assert space["rooms"][0]["settings"]["name_color"] == {"c": "#abcdef", "a": 0}
     assert source == before
     if kind == "space":
@@ -143,6 +145,8 @@ def test_issue1037_appearance_survives_transfer_without_target_global_leak(tmp_p
         merged, _layout, _details = build_space_merge(parsed, target, {}, "skip")
         assert merged["spaces"][-1]["settings"]["wall_fill"] == {"c": "#112233", "a": 0}
         assert merged["spaces"][-1]["settings"]["opening_accent_3d"] == accent
+        assert merged["spaces"][-1]["settings"]["transparent_walls_3d"] is True
+        assert "transparent_walls_3d" not in merged["spaces"][0]["settings"]
         assert merged["settings"] == target_before
 
 
