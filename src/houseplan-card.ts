@@ -14268,7 +14268,7 @@ export class HouseplanCard extends LitElement {
           }}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderStageEnvironment(dayCycle, dayCycleWeight)}
-          ${this._renderStartupFloor()}
+          ${this._renderStartupFloor(this._booting || isoFirstFramePending)}
           ${this._startupStyle?.value ? this._startupStatus() : nothing}
           ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
           ${this._ledEditor?.chrome() ?? nothing}
