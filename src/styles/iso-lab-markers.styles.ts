@@ -51,7 +51,7 @@ export const isoLabMarkersStyles = css`
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
     --hp-glyph-depth: calc(var(--battery-frame) * .15);
   }
-  /* Read glyphs in the same two orientations as room labels. Rotate only
+  /* Read glyphs along the same axes as room labels. Rotate only
      their contents: bodies, contact frames and badge anchors stay in place.
      Independent rotate also preserves a device icon's configured angle. */
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core > ha-icon,

@@ -415,7 +415,7 @@ export type IsoStructuralSource = {
 };
 
 // Physical booleans and opening bases belong to the floor, not its viewing
-// side. Four cheap projected variants share this one immutable physical build.
+// side. Each projected viewpoint shares this one immutable physical build.
 type IsoPhysicalScene = ReturnType<IsoStructuralSource['build']>;
 const isoPhysicalScenes = new WeakMap<IsoSceneCacheEntry, IsoPhysicalScene>();
 const isoProjectedScenes = new WeakMap<IsoSceneCacheEntry, Map<number, IsoSceneCacheEntry>>();

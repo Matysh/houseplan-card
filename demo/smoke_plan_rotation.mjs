@@ -134,11 +134,33 @@ try {
   const isoInitial = await snapshot();
   const sides = [];
   const yawByRotation = new Map([[0,35],[45,90],[90,125],[135,180],[180,215],[225,270],[270,305],[315,0]]);
+  const labelByYaw = new Map([[0,0],[35,35],[90,0],[125,-55],[180,0],[215,35],[270,0],[305,-55]]);
+  const readingAxes = () => stage.evaluate(stage => {
+    const room = stage.querySelector('.iso-room-label-plane .roomlabel');
+    const markerPlane = new DOMMatrixReadOnly(getComputedStyle(stage).getPropertyValue('--hp-iso-marker-plane'));
+    const axis = matrix => [matrix.a, matrix.b];
+    const glyph = selector => {
+      const element = stage.querySelector(selector);
+      return element ? axis(markerPlane.rotate(parseFloat(getComputedStyle(element).rotate))) : null;
+    };
+    return [
+      room ? axis(new DOMMatrixReadOnly(getComputedStyle(room).transform)) : null,
+      glyph('.dev[data-id="plain"] .device-core > ha-icon'),
+      glyph('.dev[data-id="plain"] .value-badge-content'),
+      glyph('.oplock[data-opening-id="lock-door"] .oplock-core > ha-icon'),
+    ];
+  });
   for (let n = 0; n < 8; n++) {
     const state = await snapshot(), logical = (90 + n * 45) % 360;
     check('ISO logical rotation ' + logical, state.rotation === logical);
+    const yaw = yawByRotation.get(logical);
     check('ISO accepted physical camera ' + logical,
-      Number(await card.locator('svg.plan-svg').first().getAttribute('data-yaw')) === yawByRotation.get(logical));
+      Number(await card.locator('svg.plan-svg').first().getAttribute('data-yaw')) === yaw);
+    const labelAngle = labelByYaw.get(yaw) * Math.PI / 180;
+    const baseline = [Math.cos(labelAngle), Math.sin(labelAngle) * Math.sin(40 * Math.PI / 180)];
+    const axes = await readingAxes();
+    check('room caption, device icon, badge, and lock read along the expected axis at ' + logical,
+      axes.every(axis => axis && Math.hypot(axis[0] - baseline[0], axis[1] - baseline[1]) < 1e-5));
     sides.push(await card.locator('.iso-walls-svg').evaluate(svg => svg.innerHTML));
     await frame('iso-' + logical);
     if (logical % 90) {

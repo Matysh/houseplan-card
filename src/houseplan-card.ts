@@ -13392,9 +13392,10 @@ export class HouseplanCard extends LitElement {
     const sceneView = iso ? authoredHouseplanSceneViewport(this, view) : view;
     const floorCamera = this._isoFloorCamera;
     const markerCamera = ISO_LAB_FLOOR_MARKERS && floorCamera;
-    // Labels follow the plan axes, but opposite views share readable lettering.
+    // Opposite views share the same lettering. In a direct view the
+    // horizontal plan axis determines the reading direction.
     const roomLabelCamera = markerCamera ? { ...markerCamera,
-      rotDeg: ((markerCamera.rotDeg + 90) % 180 + 180) % 180 - 90 } : null;
+      rotDeg: markerCamera.rotDeg % 90 === 0 ? 0 : ((markerCamera.rotDeg + 90) % 180 + 180) % 180 - 90 } : null;
     const roomLabelDepth = roomLabelCamera ? isoTileDepthStyles(roomLabelCamera) : null;
     const isoLayers = isoFrame?.layers ?? null;
     const isoOverlays = isoFrame?.overlays ?? null;

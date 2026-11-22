@@ -163,9 +163,10 @@ Devices, contacts, door locks, LED strips and room labels keep their saved
 plan anchors. Their top faces sit at the shared wall-cut height of 140 cm.
 Device and label edges use fixed gray. Zigbee and battery edges use a darker
 version of their own colour. Device glyphs, values, badges, Zigbee, charge,
-locks and room captions use the same two readable orientations. The device's
-own icon angle still applies. Bodies, anchors, hit targets and downward depth
-retain their original orientation and geometry.
+locks and room captions share a reading direction. On the four diagonal
+views they follow the existing two plan axes. In each straight-on view the
+text and glyphs read horizontally. The device's own icon angle still applies.
+Bodies, anchors, hit targets and downward depth follow the actual camera.
 
 A nearer wall dims covered parts of device bodies, badges and common frames.
 The core-sized body mask belongs to a separate paint container. Shared contact

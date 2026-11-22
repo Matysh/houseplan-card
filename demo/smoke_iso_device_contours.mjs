@@ -34,9 +34,9 @@ for(const dpr of [1,2]) {
     let negativePixels=0;
     for(const dark of [false,true]) {
       await page.evaluate(async dark=>{const c=window.__isoPaint;c.hass={...c.hass,themes:{darkMode:dark}};await c.updateComplete;},dark);
-      for(const rotation of [0,90,180,270]) {
-        if(rotation){for(let i=0;i<2;i++){await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);}}
-        for(const zoom of [.73,1,1.33,2.18,3.17]) {
+      for(const [rotation, steps] of [[0,0],[45,1],[90,1],[180,2],[270,2]]) {
+        for(let i=0;i<steps;i++){await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);}
+        for(const zoom of rotation === 45 ? [1.33] : [.73,1,1.33,2.18,3.17]) {
           await zoomIsoPaint(page,zoom);
           await page.evaluate(()=>{const c=window.__isoPaint,root=c.renderRoot;
             const owners=[...root.querySelectorAll('.dev[data-hp-device-occlusion]')]
