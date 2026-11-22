@@ -2919,8 +2919,8 @@ export class HouseplanCard extends LitElement {
     }
     const selection = this._startupSelection();
     let value = this._startupFloor?.observe(selection);
-    // A summary that reserves part of the viewport is only compatible with
-    // an already measured reference, not the previous session's placement.
+    // A summary that reserves part of the viewport needs a freshly measured
+    // reference; the previous session's placement is not a camera proof.
     if (value && selection && this._centerSummary) {
       const target = this._startupColdCamera(selection, value.fit.base);
       if (!target || !sameCameraState(target, { zoom: value.zoom, viewBox: value.view })) {
