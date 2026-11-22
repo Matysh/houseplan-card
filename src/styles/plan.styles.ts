@@ -212,15 +212,6 @@ export const planStyles = css`
        the previous zoom. Camera motion supplies its own transform hint. */
     .iso-scene-surface { filter:var(--hp-iso-gesture-blur, none); will-change:opacity; }
     .iso-scene-surface > svg { overflow:visible; }
-    /* Geometry is painted by one owner; native contours, live light and
-       interactive overlays stay above the completed GPU pass. If an attempt
-       fails there is no ready attribute and the complete SVG remains usable. */
-    .iso-scene-surface > svg:has(> [data-real-3d-ready]) :is(
-      .iso-floor-edge, .iso-wall-side-backing, .iso-masonry-underpaint,
-      .iso-wall-side-fill .iso-wall-side, .iso-wall-fill, .iso-opening-panel,
-      .iso-wall-side-fill [data-hp-round-column]
-    ) { visibility:hidden; }
-    .iso-scene-surface > svg:has(> [data-real-3d-ready]) [data-hp-gl-furniture] [data-hp-furniture-base] { fill-opacity:0; }
     .iso-scene-surface[data-hp-light-mixing] { isolation:isolate; }
     .iso-scene-surface[data-hp-light-mixing] > svg { mix-blend-mode:plus-lighter; }
     .iso-scene-surface > svg[data-hp-retained-light] { pointer-events:none; }

@@ -80,25 +80,6 @@ async def test_empty_install_import_has_no_fabricated_floor(tmp_path):
     assert len(target.config["spaces"]) == 3 and target.config["model_version"] == 11
 
 
-@pytest.mark.parametrize("target_flag", [True, False, None])
-async def test_issue_1472_house_transfer_preserves_target_view_preference(tmp_path, target_flag):
-    raw = archive(tmp_path)[0].read_bytes()
-    target = host(tmp_path / "target")
-    settings = target.config["settings"]
-    settings["volumetric_view"] = False
-    if target_flag is not None:
-        settings["real_3d"] = target_flag
-    before = copy.deepcopy(settings)
-    reply = await preview(target, raw)
-    assert reply["target_appearance"]["volumetric_view"] is False
-    if target_flag is None:
-        assert "real_3d" not in reply["target_appearance"]
-    else:
-        assert reply["target_appearance"]["real_3d"] is target_flag
-    await target.request(apply_message(reply))
-    assert target.config["settings"] == before
-
-
 async def test_revalidate_retains_ids_on_same_base_and_rebuilds_after_conflict(tmp_path):
     raw = archive(tmp_path)[0].read_bytes()
     target = host(tmp_path / "target")

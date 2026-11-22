@@ -88,8 +88,7 @@ export async function buildStandalone(directory=resolve(root,'dist-standalone'))
     this.emitFile({type:'asset',fileName:'houseplan-standalone.css',source:
       `@font-face{font-family:Roboto;src:url("./${font}") format("truetype");font-weight:400;font-style:normal;font-display:swap}.houseplan-standalone{font-family:Roboto,system-ui,sans-serif}.houseplan-standalone>houseplan-card{display:block;height:100%;min-height:400px}`});
     for(const [fileName,input] of [['licenses/MIT.txt','LICENSE'],['licenses/Roboto.txt','assets/fonts/LICENSE'],
-      ['licenses/MDI.txt','custom_components/houseplan/licenses/mdi.txt'],
-      ['licenses/Three.txt','custom_components/houseplan/licenses/three.txt'],['licenses/THIRD_PARTY_NOTICES.md','THIRD_PARTY_NOTICES.md']])
+      ['licenses/MDI.txt','custom_components/houseplan/licenses/mdi.txt'],['licenses/THIRD_PARTY_NOTICES.md','THIRD_PARTY_NOTICES.md']])
       this.emitFile({type:'asset',fileName,source:readFileSync(resolve(root,input))});
   }};
   const plugins=config.plugins.filter(p=>!skipped.has(p.name)).map(p=>p.name==='typescript'

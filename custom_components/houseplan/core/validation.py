@@ -3003,8 +3003,6 @@ CONFIG_TYPE_SCHEMA = vol.Schema(
                     vol.Optional("show_device_battery"): _DEVICE_BATTERY,
                     # #649: installation-wide 2.5D View; absent/false keeps Flat.
                     vol.Optional("volumetric_view"): bool,
-    # #1472: independent opt-in, with the 2.5D preference kept for fallback.
-                    vol.Optional("real_3d"): bool,
                     vol.Optional("center_summary"): bool,
                     # #661: the moon on the "Follow the Sun" background; absent/false = off.
                     vol.Optional("moon"): bool,

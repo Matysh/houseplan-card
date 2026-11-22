@@ -179,9 +179,6 @@ def _global_settings(value: object) -> dict[str, Any]:
     volumetric_view = value.get("volumetric_view")
     if isinstance(volumetric_view, bool):
         out["volumetric_view"] = volumetric_view
-    real_3d = value.get("real_3d")
-    if isinstance(real_3d, bool):
-        out["real_3d"] = real_3d
     moon = value.get("moon")
     if isinstance(moon, bool):
         out["moon"] = moon

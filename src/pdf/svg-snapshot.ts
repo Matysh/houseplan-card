@@ -7,7 +7,7 @@ const LIMIT = 25 * 1024 * 1024;
 const CHROME = '.hp-editor-only-layer,[data-hp-live-editor],[data-hp-live-editor-html],.room-hover,.led-hit,.led-focus,.rlgo,.rlhandle';
 const DEVICE = '.dev,.oplock,.vacpuck,.vactrail,.vacpath,[data-vacuum-owner],.radar-target,.radar-ranges,.iso-tile-shadows,.led-strips,[data-hp-device-furniture],.zigbee-topology-overlay,hp-zigbee-topology-overlay';
 
-export interface SvgViewSource { stage: HTMLElement; isCurrent: () => boolean; dispose?: () => void; }
+export interface SvgViewSource { stage: HTMLElement; isCurrent: () => boolean; }
 
 /** Synchronous read-only capture. No HA/config authority and no live DOM mutation. */
 export function captureSvgView(source: SvgViewSource, options: SvgExportOptions): SVGSVGElement {

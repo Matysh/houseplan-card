@@ -8,25 +8,6 @@ their rationale remains in the #89/#160/#570/#649/#713 ADRs and issues.
 This is a deterministic presentation of the same canonical 2D plan, not a
 second saved model, an interior editor or a free 3D camera.
 
-## Experimental Real 3D (#1472)
-
-The separate installation preference `settings.real_3d` opts ordinary View
-and kiosk into WebGL2. It is off by default and never rewrites the older
-`volumetric_view` choice. Editors, static cards and spaces with hidden borders
-remain Flat. If WebGL cannot initialize or loses its context, the same plan
-falls back to the saved 2.5D preference or Flat. A different space, reload or
-an explicit off/on setting permits a fresh attempt.
-
-The card, not Three.js, owns camera state, interaction and the shared physical
-scene. The renderer consumes triangulated wall, opening and furniture surfaces
-over the existing floor and light layers. Native contours, sunlight, labels
-and interactive device layers use the same authored viewport. No separate
-3D geometry, device state, camera or GPU handle is saved. The engine chunk is
-not fetched for default Flat or ordinary 2.5D.
-
-SVG download from live Real 3D uses an inert Flat snapshot and does not change
-the displayed plan. See [PDF-EXPORT.md](PDF-EXPORT.md).
-
 ## Activation and surfaces
 
 The existing `settings.volumetric_view` enables the mode in ordinary View,

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1513,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Remove an unpublished Real 3D dev experiment while retaining compatibility with backups made during the experiment."
+}

@@ -474,8 +474,7 @@ function rasterScene(host: LiveViewportHost, state: LiveViewportState): SVGSVGEl
   if (host._renderProjection === 'iso' && !host._modeSceneClip && svg &&
       svg.matches('.iso-scene-surface > svg[data-projection="iso"]:not([data-hp-retained-light])') &&
       surface && surface.childElementCount === (surface.hasAttribute('data-hp-raster-handoff') ? 2 : 1) &&
-      !surface.hasAttribute('data-hp-light-mixing') && !svg.querySelector('[data-real-3d-ready]')
-      && svg.closest('.stage.mode-view:not(.mode-transition)')) {
+      !surface.hasAttribute('data-hp-light-mixing') && svg.closest('.stage.mode-view:not(.mode-transition)')) {
     return svg;
   }
 }

@@ -112,7 +112,7 @@ import {
   type FloorInfo, parseRoomRef, resolveGlowValues, normalizeGlowColorOverride, isControllable,
   spaceDisplayOf, DEFAULT_FILL_COLORS, customFillOf, type FillColors,
   type FillColorEntry, type SpaceDisplay, RUN_TARGET_DOMAINS, stageBgOf,
-  showRoomTooltipOf, real3dViewOf, volumetricViewOf, normalizeDeviceDisplay,
+  showRoomTooltipOf, volumetricViewOf, normalizeDeviceDisplay,
   type DeviceDisplayMode, liveTextReference, liveTextToken, DECOR_TEXT_BASE,
 } from './logic';
 import {
@@ -855,7 +855,7 @@ export interface HouseplanEditorHostPort {
   _serverStorage: boolean;
   _settings: { external_screens?: unknown; exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; show_lqi?: boolean; show_device_battery?: boolean; center_summary?: boolean; moon?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
   _terminalFrame: 0 | 1 | 2;
-  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; showLqi: import('./signal-visibility').SignalVisibility; deviceBattery: DeviceBatteryMode; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; real3d: boolean; centerSummary: boolean; moon: boolean; externalScreens?: unknown; busy: boolean; } | null;
+  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; showLqi: import('./signal-visibility').SignalVisibility; deviceBattery: DeviceBatteryMode; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; centerSummary: boolean; moon: boolean; externalScreens?: unknown; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -9134,7 +9134,7 @@ public _openSettingsDialog = (): void => {
       bgMode: bgModeOf(this.host._settings, {}),
       sunRays: sunRaysOn(this.host._settings, {}),
       sunRayOrigin: sunRayOriginOf(this.host._settings),
-      radarShowLive: this.host._settings.radar?.show_live !== false, volumetricView: volumetricViewOf(this.host._settings), real3d: real3dViewOf(this.host._settings), centerSummary: this.host._settings.center_summary === true, moon: moonDraftOf(this.host._settings),
+      radarShowLive: this.host._settings.radar?.show_live !== false, volumetricView: volumetricViewOf(this.host._settings), centerSummary: this.host._settings.center_summary === true, moon: moonDraftOf(this.host._settings),
       showRoomTooltip: showRoomTooltipOf(this.host._settings), zigbeeTopology: zigbeeTopologySettingsOf(this.host._settings), busy: false,
       deviceBattery: deviceBatteryModeOf(this.host._settings),
       showLqi: globalSignalVisibleOf(this.host._settings),
@@ -10245,8 +10245,6 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
       writeGlobalSignalVisibility(settings, d.showLqi);
       if (d.volumetricView) settings.volumetric_view = true;
       else delete settings.volumetric_view;
-      if (d.real3d) settings.real_3d = true;
-      else delete settings.real_3d;
       if (d.centerSummary) settings.center_summary = true;
       else delete settings.center_summary;
       writeMoonSetting(settings, d.moon);

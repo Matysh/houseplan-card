@@ -30,8 +30,6 @@ export const VIEW_RUNTIME_RETRY_CHUNKS = [
     exports: ['CONVERTER_INFO_FINGERPRINT', 'installPlanConverterInfo'] },
   { module: '/src/marker-alert-view-runtime.ts', token: '__HOUSEPLAN_MARKER_ALERT_RETRY_ASSET__',
     exports: ['MARKER_ALERT_FINGERPRINT', 'MarkerAlertViewRuntime'] },
-  { module: '/src/iso-view-gl-runtime.ts', token: '__HOUSEPLAN_REAL_3D_RETRY_ASSET__',
-    exports: ['REAL_3D_FINGERPRINT', 'Real3dRenderer'] },
 ];
 
 /**

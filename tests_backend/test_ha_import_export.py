@@ -236,28 +236,6 @@ def test_issue1050_settings_action_survives_export_parse_and_apply(tmp_path: Pat
     assert config == before
 
 
-@pytest.mark.parametrize("kind", ["full", "space"])
-def test_issue1472_transfer_keeps_installation_view_policy(tmp_path: Path, kind: str) -> None:
-    config = _config()
-    config["settings"].update(real_3d=True, volumetric_view=False)
-    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same", import_previews={})
-    document, _ = create_export(
-        runtime, {"config": config, "rev": 2}, {"layout": {}, "rev": 3}, kind=kind,
-        space_id="ground" if kind == "space" else None, card_version="review", config_root=tmp_path,
-    )
-    current = _config()
-    current["settings"]["volumetric_view"] = True
-    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
-        current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
-    imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), current, {}, confirm_missing_content=True)
-    if kind == "full":
-        assert imported["settings"]["real_3d"] is True
-        assert imported["settings"]["volumetric_view"] is False
-    else:
-        assert "real_3d" not in imported["settings"]
-        assert imported["settings"]["volumetric_view"] is True
-
-
 @pytest.mark.parametrize("alpha", [0, 1])
 def test_issue_943_legacy_darkness_survives_full_backup_without_forced_migration(tmp_path: Path, alpha: float) -> None:
     config = _config()
@@ -1621,9 +1599,12 @@ def test_plan_only_cannot_be_requested_for_full_export(tmp_path: Path) -> None:
     assert invalid.value.code == "invalid_format"
 
 
-def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) -> None:
-    """The portable envelope version must return to the persisted config."""
+@pytest.mark.parametrize("experimental_settings", [{}, {"real_3d": True, "volumetric_view": False},
+                                                     {"real_3d": True, "volumetric_view": True}])
+def test_full_export_import_round_trip_restores_model_version(tmp_path: Path, experimental_settings) -> None:
+    """Restore the model and ordinary settings from stable and experimental backups."""
     document = _document(tmp_path)
+    document["payload"]["config"]["settings"].update(experimental_settings)
     runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
@@ -1635,7 +1616,9 @@ def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) ->
         candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False,
     )
     assert config["model_version"] == document["model_version"] == PLAN_MODEL_VERSION
-    assert config == normalize_room_appearance(_config())
+    expected = _config()
+    expected["settings"].update(experimental_settings)
+    assert config == normalize_room_appearance(expected)
 
 
 def test_issue_836_dev_label_rides_the_envelope_and_imports(tmp_path: Path) -> None:

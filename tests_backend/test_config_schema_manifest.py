@@ -12,9 +12,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-import voluptuous as vol
-
 REPO = Path(__file__).resolve().parent.parent
 
 
@@ -31,19 +28,6 @@ def _validation():
     # Модуль берётся возвращённым значением, а не из sys.modules: подмена
     # пакетов теперь обратима и после загрузки ключей там не остаётся (#389).
     return _load_dump_module()._load_validation()
-
-
-def test_issue_1472_real_3d_is_optional_strict_and_independent_of_2_5d():
-    validate = _validation().CONFIG_SCHEMA
-    legacy = validate({"spaces": [], "settings": {"volumetric_view": True}})["settings"]
-    assert "real_3d" not in legacy
-    for real_3d in (False, True):
-        settings = validate({"spaces": [], "settings": {"real_3d": real_3d}})["settings"]
-        assert settings["real_3d"] is real_3d
-        assert "volumetric_view" not in settings
-    for invalid in ("true", 1, None, []):
-        with pytest.raises(vol.Invalid):
-            validate({"spaces": [], "settings": {"real_3d": invalid}})
 
 
 def test_issue_33_manifest_is_fresh_and_deterministic():

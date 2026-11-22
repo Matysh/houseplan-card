@@ -106,10 +106,6 @@ export function tvCabinetSurfaceCm(): number {
 }
 
 type FurnitureSubject = FurnitureTransformBox & Pick<DecorFurniture,'symbol'|'workstation'>;
-export function furniturePartsFor(shape: FurnitureSubject): readonly FurniturePart[] | null {
-  const base = furnitureParts(shape.symbol);
-  return base && shape.workstation ? workstationParts(shape, base, furnitureParts('computer') || []) : base;
-}
 const meshCache = new WeakMap<FurnitureSubject,{camera:IsoCamera; key:string; volume:FurnitureVolume}>();
 
 export function furnitureMesh(shape: FurnitureSubject,
@@ -119,14 +115,14 @@ export function furnitureMesh(shape: FurnitureSubject,
 
 export function furnitureVolume(shape: FurnitureSubject,
   canvasW: number, canvasH: number, camera: IsoCamera, visualScale=1, liftCm=0): FurnitureVolume | null {
-  if (![shape.x,shape.y,shape.w,shape.h,Number(shape.angle ?? 0),canvasW,canvasH,visualScale,liftCm].every(Number.isFinite)
+  const base=furnitureParts(shape.symbol);
+  if (!base || ![shape.x,shape.y,shape.w,shape.h,Number(shape.angle ?? 0),canvasW,canvasH,visualScale,liftCm].every(Number.isFinite)
     || shape.w<=0 || shape.h<=0 || canvasW<=0 || canvasH<=0 || visualScale<=0) return null;
   const key = [shape.symbol,shape.workstation,shape.x,shape.y,shape.w,shape.h,shape.angle,shape.flip_h,shape.flip_v,
     canvasW,canvasH,visualScale,liftCm].join('|');
   const cached = meshCache.get(shape);
   if (cached?.camera === camera && cached.key === key) return cached.volume;
-  const parts = furniturePartsFor(shape);
-  if (!parts) return null;
+  const parts=shape.workstation ? workstationParts(shape,base,furnitureParts('computer') || []) : base;
   const [cos,sin]=isoRotationBasis(camera), scale=FURNITURE_HEIGHT_SCALE*visualScale;
   const lift = liftCm * scale;
   const elevation=(90-camera.tiltDeg)*Math.PI/180;

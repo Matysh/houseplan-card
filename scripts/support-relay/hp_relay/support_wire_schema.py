@@ -287,7 +287,6 @@ GLOBAL_SETTINGS = Object(
             "sun_rays show_room_tooltip volumetric_view moon filter_seeded group_lights",
             nullable(BOOL),
         ),
-        "real_3d": BOOL,
         "show_lqi": Choice((None, BOOL, enum("low"))),
         "show_device_battery": Choice((None, BOOL, enum("low"))),
         "fill_colors": Object(

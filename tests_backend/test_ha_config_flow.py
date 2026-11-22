@@ -19,6 +19,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.houseplan.const import CONF_ADMIN_ONLY, DOMAIN, PLAN_MODEL_VERSION
 from custom_components.houseplan import previous_data
+from custom_components.houseplan.core.graph_write import normalize_graph_config
 
 # Capture real disk I/O at collection time, before phcc's hass_storage fixture
 # replaces Store I/O. Only House Plan stores use it; HA registries stay mocked.
@@ -61,12 +62,15 @@ def _store(root, key, data):
     return path
 
 
-def _seed(hass, markers=()):
+def _seed(hass, markers=(), *, settings=None):
     root = Path(hass.config.config_dir)
     config = {"model_version": PLAN_MODEL_VERSION, "spaces": [{
         "id": "old", "title": "Old floor", "view_box": [0, 0, 1, 1], "rooms": [],
         "plan_url": "/api/houseplan/content/plans/_/old.svg",
-    }], "markers": list(markers), "settings": {"bg_mode": "static"}}
+    }], "markers": list(markers), "settings": {"bg_mode": "static", **(settings or {})}}
+    if settings:
+        config["model_version"] = PLAN_MODEL_VERSION - 1
+        config = normalize_graph_config(config)
     payloads = [
         {"config": config, "rev": 7},
         {"layout": {"old-marker": {"x": 0.2, "y": 0.3}}, "rev": 3},
@@ -204,9 +208,11 @@ async def test_previous_data_menu(hass, markers):
     assert _snapshot(root) == before
 
 
-@pytest.mark.parametrize("markers", [(), (MARKER,)], ids=["no-markers", "markers"])
-async def test_restore_previous_data(hass, hass_ws_client, hass_client, markers):
-    root = _seed(hass, markers)
+@pytest.mark.parametrize("markers, settings", [
+    ((), {}), ((MARKER,), {}), ((MARKER,), {"real_3d": True, "volumetric_view": True}),
+], ids=["no-markers", "markers", "retired-real-3d"])
+async def test_restore_previous_data(hass, hass_ws_client, hass_client, markers, settings):
+    root = _seed(hass, markers, settings=settings)
     before = _active_bytes(root)
     result = await _choose(hass, await _init(hass), "restore")
     assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
@@ -221,6 +227,21 @@ async def test_restore_previous_data(hass, hass_ws_client, hass_client, markers)
     assert await response.read() == before["houseplan/plans/old.svg"]
     assert _active_bytes(root) == before
     assert not (root / "houseplan/archive").exists()
+    if settings:
+        assert all(config["config"]["settings"][key] is value for key, value in settings.items())
+        candidate = config["config"]
+        candidate["spaces"][0]["title"] = "Renamed"
+        ws = await hass_ws_client(hass)
+        await ws.send_json_auto_id({"type": "houseplan/config/set", "expected_rev": config["rev"], "config": candidate})
+        saved = await ws.receive_json()
+        assert saved["success"], saved
+        readback = (await _ws_get(hass, hass_ws_client, "config"))["config"]
+        assert readback["settings"] == candidate["settings"]
+        assert readback["markers"] == candidate["markers"]
+        space = readback["spaces"][0]
+        assert space["title"] == "Renamed"
+        assert space["plan_graph"] == candidate["spaces"][0]["plan_graph"]
+        assert space["plan_url"] == candidate["spaces"][0]["plan_url"]
 
 
 @pytest.mark.parametrize("markers", [(), (MARKER,)], ids=["no-markers", "markers"])

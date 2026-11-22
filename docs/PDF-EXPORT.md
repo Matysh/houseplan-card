@@ -16,11 +16,6 @@ room labels remain independent. Light effects are part of plan appearance. Hidde
 View layers are never restored by export. Editor mode must be closed before SVG
 export; PDF remains available there.
 
-When experimental Real 3D is active, the SVG format shows a notice and saves
-an editable Flat vector snapshot of the same floor, framing the same physical
-centre and scale. The screen stays in 3D; no WebGL canvas is embedded. If 3D
-has fallen back to ordinary 2.5D or Flat, SVG saves the actual visible View.
-
 SVG background is **Transparent**, **As on the plan** or **Custom color**. Only
 Custom color shows the shared HEX/opacity picker below the select. This is the
 document background, independent of the backdrop image or room paper/fills.

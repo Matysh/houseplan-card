@@ -137,14 +137,14 @@ export class MutableConfigAdoption {
   adoptResponses(
     cfgResp: AuthoritativeConfigResponse,
     layResp: LayoutResponse | null | undefined,
-    onConfigReplace: (next: ServerConfig | null) => void,
+    onConfigReplace: () => void,
     onLayoutReplace: () => void,
   ): { configChanged: boolean; layoutChanged: boolean } {
     const next = configOf(cfgResp);
     const nextFingerprint = contentFingerprint(next);
     const configChanged = nextFingerprint !== this.currentConfigFingerprint();
     if (configChanged) {
-      onConfigReplace(next);
+      onConfigReplace();
       this.setConfig(next);
       this.configFingerprint = nextFingerprint;
     }
@@ -421,7 +421,6 @@ export interface ConfigAdoptionHostPort extends PlanHostProvider {
   _signer: { prepareImage(hass: unknown, url: string): Promise<boolean> };
   _cancelDeviceDrag(): unknown;
   _clearRoomFocus(pointer?: boolean): void;
-  _keepsReal3dCameraForConfig?(next: ServerConfig | null): boolean;
   _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;
   _clearGeometryGesture(): void;
   _seedDecorStyle(cfg: ServerConfig | null): void;
@@ -450,21 +449,18 @@ export function adoptStructuralResponses(
   const adoption = host._adoption;
   const hadConfig = !!adoption.config;
   const { configChanged, layoutChanged } = adoption.adoptResponses(cfgResp ?? {}, layResp,
-    (next) => {
+    () => {
       // A genuinely different baseline invalidates local geometry undo. A
       // reconnect echo with identical content deliberately does not.
       host._geometryHistory.clear();
       retireDeviceBaseline(host._devicePositionHistory);
       host._cancelDeviceDrag();
       host._pendingPhysicalWrites.clear();
+      host._clearRoomFocus(true);
       // #82: a new structural baseline owns the viewport. Freeze the last
       // painted camera frame before replacing geometry so an obsolete target
-      // cannot settle against the new content frame. A live Real 3D view
-      // whose active floor and settings did not change has the same target.
-      if (!host._keepsReal3dCameraForConfig?.(next)) {
-        host._clearRoomFocus(true);
-        host._cancelCameraTransition(false);
-      }
+      // cannot settle against the new content frame.
+      host._cancelCameraTransition(false);
       if (hadConfig) host._clearGeometryGesture();
     },
     () => {

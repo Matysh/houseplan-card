@@ -1918,8 +1918,6 @@ cycle: 30
 
 &emsp;&emsp;Editors are always flat. The option is off by default; turning it off or **Reset** returns the flat plan. There is no separate button on the card.
 
-&emsp;&emsp;**Real 3D** is a separate experimental switch next to 2.5D, off by default. It uses the same plan and fixed camera, but requires WebGL2. If 3D is unavailable, House Plan falls back to your saved 2.5D choice or the flat plan. You can turn either option off independently; editors stay flat.
-
 &emsp;&emsp;Hidden wall borders disable volume: furniture, coordinates and hits use the Flat presentation. If the volume registry cannot load or the scene fails to build, House Plan safely displays the complete Flat plan without deleting furniture or clearing the saved preference.
 
 ### Room fills and light
@@ -2252,7 +2250,7 @@ cycle: 30
 
 ### Download a file for printing: PDF or SVG
 
-&emsp;&emsp;Choose the file format at the top. **PDF - architectural plan** retains the existing architectural sheet. **SVG - current view** saves the displayed View area, projection, colours and opacity without changing the camera. In **Real 3D**, the dialog shows a note and saves the same floor in Flat view as a vector SVG. The screen remains in 3D. Switch out of an editor before exporting SVG. Live states/animations become a static frame.
+&emsp;&emsp;Choose the file format at the top. **PDF - architectural plan** retains the existing architectural sheet. **SVG - current view** saves the displayed View area, projection, colours and opacity without changing the camera. Switch out of an editor before exporting SVG. Live states/animations become a static frame.
 
 ![Before downloading, choose the format and what to include in the file.](images/guide-2026-11/en/print.png)
 

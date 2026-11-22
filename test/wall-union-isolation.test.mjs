@@ -203,6 +203,6 @@ test('#278 production source routes physical writers through one barrier and dec
   // #500: the baseline replacement hook lives with the identity owner; the
   // clear runs inside the config-replace hook passed to adoptResponses.
   const adoption = readFileSync(new URL('../src/config-adoption.ts', import.meta.url), 'utf8');
-  assert.match(adoption, /adoptResponses\(cfgResp \?\? \{\}, layResp,\s*\((?:next)?\) => \{[\s\S]{0,400}_pendingPhysicalWrites\.clear\(\)/,
+  assert.match(adoption, /adoptResponses\(cfgResp \?\? \{\}, layResp,\s*\(\) => \{[\s\S]{0,400}_pendingPhysicalWrites\.clear\(\)/,
     'an external baseline must invalidate pending local approvals');
 });

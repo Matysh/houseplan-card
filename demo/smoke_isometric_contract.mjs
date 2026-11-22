@@ -62,6 +62,14 @@ const out = await page.evaluate(async () => {
     && ![...root().querySelector('.stage').classList]
       .some((name) => name.startsWith('projection-'));
   result.cleanAlphaOffSkipsIsoRuntimeRequest = isoRuntimeRequests() === 0;
+  // #1513: a configuration from the retired experiment follows the ordinary 2.5D switch.
+  await window.__hpTest.setServerConfig(config => ({
+    ...config, settings: { ...config.settings, real_3d: true },
+  }));
+  await window.__hpTest.settled();
+  result.legacySettingKeepsFlat = card._serverCfg.settings?.real_3d === true
+    && !root().querySelector('[data-projection="iso"], [data-real-3d-ready]')
+    && isoRuntimeRequests() === 0;
   let configSpace = card._serverCfg.spaces.find((space) => space.id === 'f1');
   configSpace.settings = {
     ...(configSpace.settings || {}), show_borders: true, show_names: true,
@@ -95,6 +103,10 @@ const out = await page.evaluate(async () => {
   await window.__hpTest.settled();
   await enable();
   result.settingLoadsIsoRuntimeOnce = isoRuntimeRequests() === 1;
+  result.legacySettingUsesNativeIsometricView = card._serverCfg.settings?.real_3d === true
+    && !!root().querySelector('[data-projection="iso"]')
+    && !root().querySelector('[data-real-3d-ready]')
+    && !performance.getEntriesByType('resource').some(entry => /iso-view-gl|three-vendor/.test(entry.name));
   const openingBases = card._isoSource()?.build().openings || [];
   const basis = (id) => openingBases.find((opening) => opening.id === id);
   const centredDoor = basis('iso-centred-door');

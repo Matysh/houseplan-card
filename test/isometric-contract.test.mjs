@@ -34,8 +34,7 @@ const styleBodiesFor = (...selectorParts) => [...styles.matchAll(/([^{}]+)\{([^{
   .join('\n');
 
 test('#649 2.5D is the General settings switch, presentation-only and absent from the space card', () => {
-  const choice = section(card, 'private get _isoEnabled()', 'private readonly _furnitureVolumeObserver');
-  assert.match(choice, /return volumetricViewOf\(this\._settings\) \|\| this\._activeReal3d\(\) !== null;/);
+  assert.match(card, /private get _isoEnabled\(\): boolean \{ return volumetricViewOf\(this\._settings\); \}/);
   assert.match(card, /return this\._mode === 'view' && this\._isoEnabled \? 'iso' : 'flat';/);
   assert.doesNotMatch(card, /data-hp="projection-toggle"|_viewPreference|houseplan_card_view_v1|_labsIso/,
     'no per-device choice, no header button, no alpha gate');
@@ -154,11 +153,7 @@ test('Stage 4 composes ordered inert SVG groups below screen-facing HTML', () =>
   assert.match(sceneRender, /aria-hidden="true" pointer-events="none"/);
   assert.match(styles, /\.iso-scene-surface\s*\{[^}]*z-index:\s*1/);
   assert.match(styles, /\.devlayer\s*\{[\s\S]*?z-index:\s*6/);
-  assert.doesNotMatch(card, /data-hp-live-mask|iso-overlays-svg/);
-  const graphicsSurfaces = [...card.matchAll(/<foreignObject\b/g)];
-  assert.equal(graphicsSurfaces.length, 1, 'the only embedded surface is the optional Real 3D canvas');
-  assert.match(card, /this\._real3dFrame \? svg\x60<foreignObject data-hp-real-3d\b/);
-  assert.doesNotMatch(sceneRender, /<foreignObject\b|<canvas\b/);
+  assert.doesNotMatch(card, /<foreignObject|data-hp-live-mask|iso-overlays-svg/);
   const frameResolver = section(sceneRender, 'export function resolveIsoFramePresentation', 'const emptySvg');
   assert.doesNotMatch(frameResolver, /grounds|raised/);
   assert.doesNotMatch(sceneRender, /renderIsoOverlayGrounds|renderIsoRaisedOverlays|groundRadius/);
@@ -409,15 +404,10 @@ test('#649 room labels keep the configured colour in both themes; 2.5D only drop
   assert.equal(styleBodiesFor('projection-iso', 'theme-dark', '.roomlabel'), '');
 });
 
-test('SVG 2.5D remains independent of the optional WebGL engine and HA actions', () => {
+test('Stage 4 adds no schema, dependency, storage, network or HA action surface', () => {
   for (const source of [openings, overlays, projection, sceneRender]) {
     assert.doesNotMatch(source, /localStorage\s*\.|fetch\(|XMLHttpRequest|WebSocket|callService\(|Math\.random/);
-    assert.doesNotMatch(source, /from ['"](?:three(?:\/[^'"]*)?|[^'"]*iso-view-gl-runtime)['"]|WebGLRenderer|\.getContext\(/);
   }
-  const runtime = readFileSync(new URL('../src/iso-view-gl-runtime.ts', import.meta.url), 'utf8');
-  assert.match(runtime, /from 'three'/);
-  assert.doesNotMatch(card, /import\s+(?!type\b)[^;]+\bfrom '\.\/iso-view-gl-runtime'/);
-  assert.match(card, /import\('\.\/iso-view-gl-runtime'\)/);
-  assert.match(JSON.parse(packageJson).dependencies.three, /^\d+\.\d+\.\d+$/, 'the engine version is pinned');
+  assert.doesNotMatch(packageJson, /three|babylon|webgl/i);
   assert.doesNotMatch(card, /iso2|isometric_stage|stage2_enabled|stage3_enabled|hp_alpha_stage/);
 });

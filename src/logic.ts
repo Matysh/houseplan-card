@@ -1458,11 +1458,6 @@ export function volumetricViewOf(settings: unknown): boolean {
   return (settings as { volumetric_view?: unknown } | null | undefined)?.volumetric_view === true;
 }
 
-/** #1472: only an explicit true opts in; missing data never requests the renderer. */
-export function real3dViewOf(settings: unknown): boolean {
-  return (settings as { real_3d?: unknown } | null | undefined)?.real_3d === true;
-}
-
 // ---------------- global fill colors ----------------
 
 export interface FillColorEntry {
