@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20795,
+  "revision": 20796,
   "nextTicket": 620,
   "nextFence": 620,
   "tasks": {
@@ -5742,7 +5742,7 @@
       "ownerDecision": null,
       "ticket": 619,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1795355690535,
       "reviewEntry": 3,
       "patchId": "ebb8270e3170338e03988e26d020879d71c5c576",
@@ -5763,14 +5763,13 @@
         "test/startup-floor.test.mjs"
       ],
       "notice": {
-        "key": "2:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795355679082,
-        "entry": 2,
-        "detail": "Браузер: device contact resize 1517: failed",
-        "eventId": "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:3:return:return:1520"
+        "key": "3:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1795356759606,
+        "entry": 3,
+        "requestId": "review:1520:3:ebb8270e3170338e03988e26d020879d71c5c576:0987240f1c33505bf9352be24a98a281f8a1d4e9"
       },
       "s6": {
         "id": "20261122T135508125-d4fb468a",
@@ -5794,6 +5793,11 @@
         "at": 1795356333311,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1520:3:ebb8270e3170338e03988e26d020879d71c5c576:0987240f1c33505bf9352be24a98a281f8a1d4e9",
+        "at": 1795356759606
       }
     },
     "1521": {
@@ -6400,19 +6404,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1520,
-    "worker": "finish",
-    "token": "619:finish:af292777-111c-45be-b574-3dcc8f782398:finish:1:admit",
-    "fence": 619,
-    "materialSha": "2c0573d0c08bab0c585111994aafbbdd56cf582c",
-    "expectedBase": "0987240f1c33505bf9352be24a98a281f8a1d4e9",
-    "phase": "review",
-    "admittedAt": 1795355694788,
-    "expiresAt": 1795359911306,
-    "patchId": "ebb8270e3170338e03988e26d020879d71c5c576",
-    "reviewRequest": "review:1520:3:ebb8270e3170338e03988e26d020879d71c5c576:0987240f1c33505bf9352be24a98a281f8a1d4e9"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6684,6 +6676,10 @@
     },
     "finish:af292777-111c-45be-b574-3dcc8f782398:finish:10:review-presentation": {
       "digest": "8410c845051eb69b0ac9823d021d6e1810fff79b35c6be1a759e3797cc29b639",
+      "issue": 1520
+    },
+    "finish:af292777-111c-45be-b574-3dcc8f782398:finish:10:return": {
+      "digest": "115ed538e8eda3fa44ddb595eece237a7726ff27ae41626bce3d671cc765abd7",
       "issue": 1520
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
