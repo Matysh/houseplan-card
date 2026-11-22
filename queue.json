@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 20216,
+  "revision": 20217,
   "nextTicket": 606,
-  "nextFence": 605,
+  "nextFence": 606,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -5627,7 +5627,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 605,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795339163092,
       "reviewEntry": 3,
@@ -6276,10 +6276,18 @@
       "runId": 45007880183
     }
   },
-  "waiting": [
-    1518
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1518,
+    "worker": "github-coordinator",
+    "token": "605:github:45008151983:1:tick:0:admit",
+    "fence": 605,
+    "materialSha": "d12669af73b0a856bce5b1e8b3e3d088f6e25674",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795340062035,
+    "expiresAt": 1795340362035
+  },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6927,6 +6935,29 @@
           "at": 1795340046013,
           "entry": 1,
           "eventId": "finish:e9e77efc-431d-4a45-be41-000dfb4e00ea:finish:2:return:return:1517"
+        }
+      }
+    },
+    "github:45008151983:1:tick:0:admit": {
+      "digest": "5e379148d9fad6a53ce0a598caaa01e5c0494a9c877beaf84a64c94dd43f7618",
+      "issue": 1518,
+      "message": {
+        "kind": "admitted",
+        "issue": 1518,
+        "at": 1795340062035,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d12669af73b0a856bce5b1e8b3e3d088f6e25674",
+        "phase": "sync",
+        "evidence": {
+          "id": "20261122T085948695-0681fb22",
+          "name": "Тесты для задачи #1518 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T085948695-0681fb22/report.json",
+          "materialSha": "c53678a671e8f0b11ae838e3671ba965ff6660bb",
+          "status": "passed",
+          "finishedAt": "2026-11-22T09:01:01.040Z",
+          "failures": []
         }
       }
     }
