@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19919,
+  "revision": 19920,
   "nextTicket": 599,
   "nextFence": 598,
   "tasks": {
@@ -5655,6 +5655,109 @@
         "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
         "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
         "patchId": "99a4577ad4e0b540c3e68334f78e0d234d8849de"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1513,
+        "requestId": "review:1513:1:99a4577ad4e0b540c3e68334f78e0d234d8849de:5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+        "kind": "code",
+        "base": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+        "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
+        "patchId": "99a4577ad4e0b540c3e68334f78e0d234d8849de",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1513,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1513",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Откат выполнен обратным diff по диапазону экспериментальных коммитов `333722798..5fa8459ea`. Ветка содержит отдельный обычный коммит поверх dev. Поза и подъём ТВ на тумбе уже входят в предшествующую реализацию #1511. Правка #1472 добавляла к той же позе только передачу в GPU; удаляется этот вызов. Защита pending physical writes остаётся на исходном вызове принятия конфигурации.\n\nОбщий серверный контракт допускает неизвестные ключи настроек. Сохранённый `real_3d` читается и переносится как неприменяемое старое поле, а клиент руководствуется `volumetric_view`. Проверки включают получение и запись восстановленных данных через HA, импорт полной копии и браузерный Flat / 2.5D с прежним флагом. Отдельный экспериментальный runtime, зависимости и пользовательские записи удаляются. История реализации и ревью остаётся в #1472 и Git.\n\nПеред следующим выпуском нужен [панельный HA E2E](https://github.com/Matysh/houseplan-e2e/issues/95). Адресные проверки восстановления, записи и импорта прошли в HA и backend."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Откат эксперимента «Реальное 3D» (#1472) сделан правильно и аккуратно. Это обратный diff ровно по шести коммитам #1472 (`5ec319fe…5fa8459e`) поверх `3337227988`. Фронтенд вернулся к состоянию до эксперимента: по сверенным фрагментам `src/houseplan-card.ts` (15846 строк в обеих версиях) и `src/config-adoption.ts` совпадают с `3337227988`. Изменения #1511 и #1512 лежат в истории до этого диапазона и не затронуты. Монтаж ТВ на тумбе (`tvCabinet`/`tvOnCabinet`/`tvCabinetSurfaceCm`) остался, удалена только передача позы в GPU. Старый флаг `settings.real_3d` безопасен: серверная схема settings задана с `extra=vol.ALLOW_EXTRA`, поэтому при чтении, записи, восстановлении и импорте ключ проходит как неизвестный. Клиент его не интерпретирует и сохраняет при записи настроек через `{ ...cfg.settings }`. Зависимости three/@types/three, лицензия, retry-чанк, i18n, документация и запись ledger #1472 удалены. В коде не осталось ссылок на `real3d`, `REAL_3D`, `iso-view-gl` и `svg-flat-stage`. Блокеров нет. Закрытие #1472 и HA E2E — шаги процесса после слияния, к коду не относятся.",
+          "understanding": "Задача: убрать из dev экспериментальный WebGL2/Three.js-режим #1472 и не потерять 2D/2.5D, независимые исправления и совместимость с уже сохранёнными конфигурациями и резервными копиями, где есть `real_3d`.\n\nДо отката: в настройках был переключатель `gs-real-3d`. В `HouseplanCard` работал жизненный цикл `_syncReal3d`/`_presentReal3d`/`_releaseReal3d` с ленивой загрузкой `iso-view-gl-runtime` и retry-ассетом, `_isoEnabled` включался ещё и через `_activeReal3d()`. Был `foreignObject` с canvas, плоский SVG-снимок `_flatSvgScene` для экспорта из 3D и CSS, скрывавший SVG-геометрию поверх готового GPU-кадра. В `config-adoption` камера сохранялась при неизменном этаже (`_keepsReal3dCameraForConfig`). На сервере `real_3d` был строгим bool в `CONFIG_TYPE_SCHEMA`, в support-проекции и в `target_appearance`.\n\nПосле отката всё это удалено. `_isoEnabled` снова зависит только от `volumetricViewOf(settings)`. `adoptStructuralResponses` безусловно вызывает `_clearRoomFocus(true)` и `_cancelCameraTransition(false)`, `_pendingPhysicalWrites.clear()` остаётся на том же месте. SVG-экспорт снова синхронный (`svgSource: () => SvgViewSource`). Сервер больше не знает о ключе, но и не отвергает его: settings задан с `extra=vol.ALLOW_EXTRA`.\n\nЧто разобрал по исходникам:\n- диапазон коммитов по `git_log`;\n- совпадение ключевых участков `houseplan-card.ts` и `config-adoption.ts` с `3337227988`;\n- схему `validation.py` (строки 2979–3044);\n- сохранение настроек `_saveSettingsDialog` (`{ ...cfg.settings }`);\n- support-проекцию и закрытую wire-схему relay;\n- запись ledger и то, как процесс выпуска читает категории;\n- поиск остатков по всему дереву;\n- новые и удалённые тесты (backend restore/import, браузерный smoke `smoke_isometric_contract`) и правки mutation-registry под восстановленный текст исходника.",
+          "analysis": [
+            {
+              "topic": "Точность отката и сохранение независимых изменений",
+              "assessment": "Обратный diff по точному диапазону даёт практически дерево `3337227988` плюс новые тесты и ledger. Это надёжнее ручной вычистки, и требование «не сбрасывать dev к старому SHA» выполнено: #1511/#1512 лежат ниже диапазона и не затронуты. Монтаж ТВ на тумбе остался. Удалён только `real3dFurniture.push(...)` и флаг `glOwned` в `renderIsoLabFurniture`. Хелпер `furniturePartsFor` вернулся внутрь `furnitureVolume`: он появился только в #1472, и других потребителей у него нет.",
+              "evidence": "`src/houseplan-card.ts:13295-13309` в head совпадает с тем же участком в `3337227988`, длина файла 15846 строк в обеих версиях. Импорты (стр. 340–349) совпадают. `src/config-adoption.ts:443-470` совпадает с `3337227988`. Поиск `furniturePartsFor`, `prepareFlatStage`, `data-hp-export-floor-light` ничего не находит."
+            },
+            {
+              "topic": "Совместимость сохранённого `settings.real_3d`",
+              "assessment": "Чтение безопасно: внутренняя схема settings открыта для неизвестных ключей, поэтому старый bool при валидации, записи `houseplan/config/set`, восстановлении previous_data и импорте полной копии проходит без ошибки. Клиент флаг не читает, вид определяется только `volumetric_view`. Сохранение общих настроек копирует существующие settings, так что флаг переносится как инертный. В ТЗ это допустимо: «читается и переносится как неприменяемое старое поле». Импорт пространства и house-transfer используют настройки целевой установки, флаг на них не влияет.",
+              "evidence": "`custom_components/houseplan/core/validation.py:2979-3042` (`extra=vol.ALLOW_EXTRA`). `src/houseplan-editor-runtime.ts:10226` (`{ ...cfg.settings }`). Тесты: `tests_backend/test_ha_config_flow.py:211-246` (restore → set → readback с сохранением settings/plan_graph), `tests_backend/test_ha_import_export.py:1602-1623` (полный импорт с `real_3d` true при обоих значениях `volumetric_view`)."
+            },
+            {
+              "topic": "Поведение 2D/2.5D со старым флагом",
+              "assessment": "Браузерный smoke проверяет оба направления. С `real_3d: true` и выключенным 2.5D план плоский, iso-runtime не запрашивается. После включения `volumetric_view` рисуется нативное SVG 2.5D без запросов `iso-view-gl`/`three-vendor`. Результаты проходят через `checkAll(out)`, то есть это настоящие утверждения, а не только вычисления.",
+              "evidence": "`demo/smoke_isometric_contract.mjs:65-72, 105-109, 618`. Результат S6 «Тесты для задачи #1513 (перед ревью)» — passed на `b6d5e3bf`."
+            },
+            {
+              "topic": "Сборка, зависимости, тестовые контракты",
+              "assessment": "three и @types/three вместе с транзитивными dev-пакетами убраны из package.json и lock. Лицензия убрана из notices и из standalone-сборки. Retry-чанк убран из `bundle-manifest`. В rollup не было отдельного three-чанка, правка не нужна. Статический тест `isometric-contract` снова запрещает three/webgl в package.json и `<foreignObject>` в карточке. Это хорошая защита от случайного возврата. Find-строки mutation-registry откатаны к тексту, который действительно есть в head (`const point = [cx, cy];`, `onConfigReplace();`).",
+              "evidence": "Диффы `package.json`, `package-lock.json`, `scripts/standalone-build.mjs`, `scripts/bundle-manifest.mjs`, `test/isometric-contract.test.mjs:405-411`, `scripts/mutation-registry.mjs:15145-15157, 16418-16428`. Поиск `real3d`, `REAL_3D`, `iso-view-gl`, `Three.txt`, `smoke_iso_real_3d` даёт только намеренные негативные проверки в smoke."
+            },
+            {
+              "topic": "Документация и учёт выпуска",
+              "assessment": "Записи CHANGELOG (en/ru), разделы ISOMETRIC/PDF-EXPORT/SCOPE и USER-GUIDE (en/ru) про «Реальное 3D» удалены. Остальной текст про SVG-экспорт и 2.5D не тронут. `1472.json` удалён, а `1513.json` с `line-fix` и без `summary` не попадёт в пользовательские заметки, поэтому отменённая функция не будет показана как новинка. `process-next/lib/release-data.mjs` проверяет только issue/baseStable/category, отсутствие `introducedBy` ему не мешает, и в текущей линии такие записи уже есть (1490, 1504).",
+              "evidence": "`docs/release-ledger/v1.86.0/1513.json`. `process-next/lib/release-data.mjs:3-16`. Поиск `issues/1472`, `(#1472)`, `Реальное 3D` по дереву не находит пользовательских упоминаний."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Relay поддержки: из закрытой wire-схемы `GLOBAL_SETTINGS` (и в интеграции, и в копии `scripts/support-relay/hp_relay/support_wire_schema.py`) удалён `\"real_3d\": BOOL`. Новая интеграция флаг больше не проецирует, так что для актуальных клиентов это корректно. Но если relay будет переразвёрнут из этого дерева, пока у кого-то стоит экспериментальная dev-сборка с включённым флагом, весь пакет такого пользователя получит `support_rejected`: схема закрытая, неизвестное поле — отказ (`scripts/support-relay/README.md:16-19, 70-72`). Затронут узкий круг: только dev-канал и только тем, кто включал эксперимент. Есть дешёвая альтернатива на переходный период: оставить `real_3d` в схеме relay как допустимое входящее поле, а `_global_settings` по-прежнему его не выдаёт. Цена — одна строка и комментарий о плане удаления. Перед деплоем relay стоит также свериться, разворачивался ли вообще relay с версией #1472.",
+            "Необязательно: при сохранении общих настроек можно удалять инертный `real_3d`, как это сделано для `weather_entity` (`validation.py:3012-3015`). Тогда старый ключ со временем исчезнет из хранилища и резервных копий. Текущее поведение (перенос без изменений) соответствует ТЗ, поэтому это лишь гигиена данных и не нужно, если владелец предпочитает не трогать сохранённые поля до следующей итерации #1514."
+          ],
+          "boundaries": "Сборку, тесты, smoke и HA E2E я не запускал. Опирался на квитанцию S6 «Тесты для задачи #1513 (перед ревью)» (status passed, материал `b6d5e3bf`, без failures) и на то, что автор сообщил о проверках в HA и backend. Совпадение `houseplan-card.ts` и `config-adoption.ts` с `3337227988` проверено выборочно по фрагментам и длине файла; полностью два дерева не сравнивались, такой возможности у меня нет. Diff в задаче усечён, поэтому изменённые файлы я читал отдельными вызовами `git_diff` и `read_file`. Удалённые `src/iso-view-gl-*.ts`, `src/pdf/svg-flat-stage.ts` и связанные тесты построчно не просматривал: убедился только, что в head на них никто не ссылается. Панельный HA E2E (houseplan-e2e#95), закрытие #1472 со ссылками на #1513/#1514 и возможный деплой relay — шаги процесса после слияния, в этом ревью они не проверялись. Учтите: коммиты #1472 с трейлером `Issue: #1472` остаются в истории, поэтому `buildCandidateMembership` включит #1472 в RELEASE-MEMBERSHIP следующего выпуска. Если к тому времени issue будет закрыта, как требует ТЗ, `release-completion` её пропустит. Если нет, выпуск может закрыть её как «выпущенную»."
+        },
+        "usage": {
+          "input_tokens": 84,
+          "cache_creation_input_tokens": 146530,
+          "cache_read_input_tokens": 4267624,
+          "output_tokens": 16758,
+          "output_tokens_details": {
+            "thinking_tokens": 5284
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 146530,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 890,
+              "cache_read_input_tokens": 136686,
+              "cache_creation_input_tokens": 14048,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 14048
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nОткат эксперимента «Реальное 3D» (#1472) сделан правильно и аккуратно. Это обратный diff ровно по шести коммитам #1472 (`5ec319fe…5fa8459e`) поверх `3337227988`. Фронтенд вернулся к состоянию до эксперимента: по сверенным фрагментам `src/houseplan-card.ts` (15846 строк в обеих версиях) и `src/config-adoption.ts` совпадают с `3337227988`. Изменения #1511 и #1512 лежат в истории до этого диапазона и не затронуты. Монтаж ТВ на тумбе (`tvCabinet`/`tvOnCabinet`/`tvCabinetSurfaceCm`) остался, удалена только передача позы в GPU. Старый флаг `settings.real_3d` безопасен: серверная схема settings задана с `extra=vol.ALLOW_EXTRA`, поэтому при чтении, записи, восстановлении и импорте ключ проходит как неизвестный. Клиент его не интерпретирует и сохраняет при записи настроек через `{ ...cfg.settings }`. Зависимости three/@types/three, лицензия, retry-чанк, i18n, документация и запись ledger #1472 удалены. В коде не осталось ссылок на `real3d`, `REAL_3D`, `iso-view-gl` и `svg-flat-stage`. Блокеров нет. Закрытие #1472 и HA E2E — шаги процесса после слияния, к коду не относятся.\n\n## Понимание решения\n\nЗадача: убрать из dev экспериментальный WebGL2/Three.js-режим #1472 и не потерять 2D/2.5D, независимые исправления и совместимость с уже сохранёнными конфигурациями и резервными копиями, где есть `real_3d`.\n\nДо отката: в настройках был переключатель `gs-real-3d`. В `HouseplanCard` работал жизненный цикл `_syncReal3d`/`_presentReal3d`/`_releaseReal3d` с ленивой загрузкой `iso-view-gl-runtime` и retry-ассетом, `_isoEnabled` включался ещё и через `_activeReal3d()`. Был `foreignObject` с canvas, плоский SVG-снимок `_flatSvgScene` для экспорта из 3D и CSS, скрывавший SVG-геометрию поверх готового GPU-кадра. В `config-adoption` камера сохранялась при неизменном этаже (`_keepsReal3dCameraForConfig`). На сервере `real_3d` был строгим bool в `CONFIG_TYPE_SCHEMA`, в support-проекции и в `target_appearance`.\n\nПосле отката всё это удалено. `_isoEnabled` снова зависит только от `volumetricViewOf(settings)`. `adoptStructuralResponses` безусловно вызывает `_clearRoomFocus(true)` и `_cancelCameraTransition(false)`, `_pendingPhysicalWrites.clear()` остаётся на том же месте. SVG-экспорт снова синхронный (`svgSource: () => SvgViewSource`). Сервер больше не знает о ключе, но и не отвергает его: settings задан с `extra=vol.ALLOW_EXTRA`.\n\nЧто разобрал по исходникам:\n- диапазон коммитов по `git_log`;\n- совпадение ключевых участков `houseplan-card.ts` и `config-adoption.ts` с `3337227988`;\n- схему `validation.py` (строки 2979–3044);\n- сохранение настроек `_saveSettingsDialog` (`{ ...cfg.settings }`);\n- support-проекцию и закрытую wire-схему relay;\n- запись ledger и то, как процесс выпуска читает категории;\n- поиск остатков по всему дереву;\n- новые и удалённые тесты (backend restore/import, браузерный smoke `smoke_isometric_contract`) и правки mutation-registry под восстановленный текст исходника.\n\n## Разбор решения\n\n### Точность отката и сохранение независимых изменений\n\nОбратный diff по точному диапазону даёт практически дерево `3337227988` плюс новые тесты и ledger. Это надёжнее ручной вычистки, и требование «не сбрасывать dev к старому SHA» выполнено: #1511/#1512 лежат ниже диапазона и не затронуты. Монтаж ТВ на тумбе остался. Удалён только `real3dFurniture.push(...)` и флаг `glOwned` в `renderIsoLabFurniture`. Хелпер `furniturePartsFor` вернулся внутрь `furnitureVolume`: он появился только в #1472, и других потребителей у него нет.\n\nОснование: `src/houseplan-card.ts:13295-13309` в head совпадает с тем же участком в `3337227988`, длина файла 15846 строк в обеих версиях. Импорты (стр. 340–349) совпадают. `src/config-adoption.ts:443-470` совпадает с `3337227988`. Поиск `furniturePartsFor`, `prepareFlatStage`, `data-hp-export-floor-light` ничего не находит.\n\n### Совместимость сохранённого `settings.real_3d`\n\nЧтение безопасно: внутренняя схема settings открыта для неизвестных ключей, поэтому старый bool при валидации, записи `houseplan/config/set`, восстановлении previous_data и импорте полной копии проходит без ошибки. Клиент флаг не читает, вид определяется только `volumetric_view`. Сохранение общих настроек копирует существующие settings, так что флаг переносится как инертный. В ТЗ это допустимо: «читается и переносится как неприменяемое старое поле». Импорт пространства и house-transfer используют настройки целевой установки, флаг на них не влияет.\n\nОснование: `custom_components/houseplan/core/validation.py:2979-3042` (`extra=vol.ALLOW_EXTRA`). `src/houseplan-editor-runtime.ts:10226` (`{ ...cfg.settings }`). Тесты: `tests_backend/test_ha_config_flow.py:211-246` (restore → set → readback с сохранением settings/plan_graph), `tests_backend/test_ha_import_export.py:1602-1623` (полный импорт с `real_3d` true при обоих значениях `volumetric_view`).\n\n### Поведение 2D/2.5D со старым флагом\n\nБраузерный smoke проверяет оба направления. С `real_3d: true` и выключенным 2.5D план плоский, iso-runtime не запрашивается. После включения `volumetric_view` рисуется нативное SVG 2.5D без запросов `iso-view-gl`/`three-vendor`. Результаты проходят через `checkAll(out)`, то есть это настоящие утверждения, а не только вычисления.\n\nОснование: `demo/smoke_isometric_contract.mjs:65-72, 105-109, 618`. Результат S6 «Тесты для задачи #1513 (перед ревью)» — passed на `b6d5e3bf`.\n\n### Сборка, зависимости, тестовые контракты\n\nthree и @types/three вместе с транзитивными dev-пакетами убраны из package.json и lock. Лицензия убрана из notices и из standalone-сборки. Retry-чанк убран из `bundle-manifest`. В rollup не было отдельного three-чанка, правка не нужна. Статический тест `isometric-contract` снова запрещает three/webgl в package.json и `<foreignObject>` в карточке. Это хорошая защита от случайного возврата. Find-строки mutation-registry откатаны к тексту, который действительно есть в head (`const point = [cx, cy];`, `onConfigReplace();`).\n\nОснование: Диффы `package.json`, `package-lock.json`, `scripts/standalone-build.mjs`, `scripts/bundle-manifest.mjs`, `test/isometric-contract.test.mjs:405-411`, `scripts/mutation-registry.mjs:15145-15157, 16418-16428`. Поиск `real3d`, `REAL_3D`, `iso-view-gl`, `Three.txt`, `smoke_iso_real_3d` даёт только намеренные негативные проверки в smoke.\n\n### Документация и учёт выпуска\n\nЗаписи CHANGELOG (en/ru), разделы ISOMETRIC/PDF-EXPORT/SCOPE и USER-GUIDE (en/ru) про «Реальное 3D» удалены. Остальной текст про SVG-экспорт и 2.5D не тронут. `1472.json` удалён, а `1513.json` с `line-fix` и без `summary` не попадёт в пользовательские заметки, поэтому отменённая функция не будет показана как новинка. `process-next/lib/release-data.mjs` проверяет только issue/baseStable/category, отсутствие `introducedBy` ему не мешает, и в текущей линии такие записи уже есть (1490, 1504).\n\nОснование: `docs/release-ledger/v1.86.0/1513.json`. `process-next/lib/release-data.mjs:3-16`. Поиск `issues/1472`, `(#1472)`, `Реальное 3D` по дереву не находит пользовательских упоминаний.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Relay поддержки: из закрытой wire-схемы `GLOBAL_SETTINGS` (и в интеграции, и в копии `scripts/support-relay/hp_relay/support_wire_schema.py`) удалён `\"real_3d\": BOOL`. Новая интеграция флаг больше не проецирует, так что для актуальных клиентов это корректно. Но если relay будет переразвёрнут из этого дерева, пока у кого-то стоит экспериментальная dev-сборка с включённым флагом, весь пакет такого пользователя получит `support_rejected`: схема закрытая, неизвестное поле — отказ (`scripts/support-relay/README.md:16-19, 70-72`). Затронут узкий круг: только dev-канал и только тем, кто включал эксперимент. Есть дешёвая альтернатива на переходный период: оставить `real_3d` в схеме relay как допустимое входящее поле, а `_global_settings` по-прежнему его не выдаёт. Цена — одна строка и комментарий о плане удаления. Перед деплоем relay стоит также свериться, разворачивался ли вообще relay с версией #1472.\n- Необязательно: при сохранении общих настроек можно удалять инертный `real_3d`, как это сделано для `weather_entity` (`validation.py:3012-3015`). Тогда старый ключ со временем исчезнет из хранилища и резервных копий. Текущее поведение (перенос без изменений) соответствует ТЗ, поэтому это лишь гигиена данных и не нужно, если владелец предпочитает не трогать сохранённые поля до следующей итерации #1514.\n\n## Границы анализа\n\nСборку, тесты, smoke и HA E2E я не запускал. Опирался на квитанцию S6 «Тесты для задачи #1513 (перед ревью)» (status passed, материал `b6d5e3bf`, без failures) и на то, что автор сообщил о проверках в HA и backend. Совпадение `houseplan-card.ts` и `config-adoption.ts` с `3337227988` проверено выборочно по фрагментам и длине файла; полностью два дерева не сравнивались, такой возможности у меня нет. Diff в задаче усечён, поэтому изменённые файлы я читал отдельными вызовами `git_diff` и `read_file`. Удалённые `src/iso-view-gl-*.ts`, `src/pdf/svg-flat-stage.ts` и связанные тесты построчно не просматривал: убедился только, что в head на них никто не ссылается. Панельный HA E2E (houseplan-e2e#95), закрытие #1472 со ссылками на #1513/#1514 и возможный деплой relay — шаги процесса после слияния, в этом ревью они не проверялись. Учтите: коммиты #1472 с трейлером `Issue: #1472` остаются в истории, поэтому `buildCandidateMembership` включит #1472 в RELEASE-MEMBERSHIP следующего выпуска. Если к тому времени issue будет закрыта, как требует ТЗ, `release-completion` её пропустит. Если нет, выпуск может закрыть её как «выпущенную».\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 5fa8459ea722365e0d1c479a25dc21bd73c549e5 → b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1513, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nОткат выполнен обратным diff по диапазону экспериментальных коммитов `333722798..5fa8459ea`. Ветка содержит отдельный обычный коммит поверх dev. Поза и подъём ТВ на тумбе уже входят в предшествующую реализацию #1511. Правка #1472 добавляла к той же позе только передачу в GPU; удаляется этот вызов. Защита pending physical writes остаётся на исходном вызове принятия конфигурации.\n\nОбщий серверный контракт допускает неизвестные ключи настроек. Сохранённый `real_3d` читается и переносится как неприменяемое старое поле, а клиент руководствуется `volumetric_view`. Проверки включают получение и запись восстановленных данных через HA, импорт полной копии и браузерный Flat / 2.5D с прежним флагом. Отдельный экспериментальный runtime, зависимости и пользовательские записи удаляются. История реализации и ревью остаётся в #1472 и Git.\n\nПеред следующим выпуском нужен [панельный HA E2E](https://github.com/Matysh/houseplan-e2e/issues/95). Адресные проверки восстановления, записи и импорта прошли в HA и backend.\n```\n\n</details>\n",
+        "createdAt": "2026-11-22T07:37:44.429Z",
+        "artifactId": 14745137141,
+        "runId": 44998798065,
+        "runAttempt": 1,
+        "completedAt": "2026-11-22T07:37:49Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44998798065",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5"
       }
     },
     "1519": {
@@ -6250,9 +6353,9 @@
     "fence": 597,
     "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
     "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1795331389554,
-    "expiresAt": 1795336403165,
+    "expiresAt": 1795336710113,
     "patchId": "99a4577ad4e0b540c3e68334f78e0d234d8849de",
     "reviewRequest": "review:1513:1:99a4577ad4e0b540c3e68334f78e0d234d8849de:5fa8459ea722365e0d1c479a25dc21bd73c549e5"
   },
@@ -6575,6 +6678,10 @@
     },
     "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:8:review-presentation": {
       "digest": "73b6eaddb5432bcaf2cc24c76665554f2ada021f4e6cfc6e533630fb572d6534",
+      "issue": 1513
+    },
+    "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:8:review-complete": {
+      "digest": "cf7d62ee933443b35c511a88bd97b9ed4eae50a2c9b5241efea28feb1805364d",
       "issue": 1513
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
