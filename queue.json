@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 21218,
-  "nextTicket": 628,
+  "revision": 21219,
+  "nextTicket": 629,
   "nextFence": 628,
   "tasks": {
     "1024": {
@@ -5821,6 +5821,20 @@
         "status": "published",
         "sourceSha": "e38612b43a41121dcd0f1e72c37176a95477e6e7"
       }
+    },
+    "1526": {
+      "issue": 1526,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1526-direct-25d-perspective",
+      "materialSha": "9275726e155a921a2bdb94c36c8c42a0457d228b",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 628,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795390506089,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6400,7 +6414,9 @@
       "runId": 45061804725
     }
   },
-  "waiting": [],
+  "waiting": [
+    1526
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6450,6 +6466,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:1c03ec16-4175-4748-ac54-9e568ec7b025": {
+      "digest": "7071555c9273775ee8d456e07f81fbdfd7e57b0de8a97db823da5af31d6f99a2",
+      "issue": 1526,
+      "message": {
+        "kind": "queued",
+        "issue": 1526,
+        "at": 1795390506089,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9275726e155a921a2bdb94c36c8c42a0457d228b"
       }
     }
   },
