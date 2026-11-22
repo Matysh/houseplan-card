@@ -434,7 +434,13 @@
     "panel-device-contact-resize-iso-individual-larger": "7b2321925c01f872db20acdd8ec7e84b322e522d63761230b87a62bea0406b73",
     "panel-device-contact-resize-iso-individual-smaller": "e6cce55a234a87eece7f236f3568ad619f139c1dd05ae05328e02681649f52d2",
     "panel-device-contact-resize-iso-profile-larger": "eed4d1ce6775b2d1a699dbe0ac0a438af0c247db72926e3989f06e91379b85a7",
-    "panel-device-contact-resize-iso-profile-smaller": "58285b3ec440f99cd7907ebaa177b333c3b7d6e1fb8440992e948b7108742509"
+    "panel-device-contact-resize-iso-profile-smaller": "58285b3ec440f99cd7907ebaa177b333c3b7d6e1fb8440992e948b7108742509",
+    "panel-device-contact-resize-flat-profile-larger-rotation-90": "fcf11d2735facddb54917a277107ea254e1ba6c8523d2125861421c67d02a460",
+    "panel-device-contact-resize-iso-profile-larger-rotation-90": "0940c59dc504ffb412e89d80dbeeba1373b49908cce0c771b4e57cd5106375dc",
+    "panel-device-contact-resize-flat-profile-larger-rotation-180": "a6af8c6a5692e25575f1b7988045726ae2dbbfb07bd2b5dc917dba347e966624",
+    "panel-device-contact-resize-iso-profile-larger-rotation-180": "8e07863d564ed09b33f3ffbb389d44ed9b926642692218d1da0536bd27fbc671",
+    "panel-device-contact-resize-flat-profile-larger-rotation-270": "04be3f469837ce2586752463a0574ad0faaf8502b8b71b7aad6efc638160eff3",
+    "panel-device-contact-resize-iso-profile-larger-rotation-270": "c68257b4749ce3a9d81fa5066e11e48fcccf0aeabbac80e5676ed2bd1c3028e0"
   },
   "scenarioProvenance": {
     "panel-wide-view-light-en": {
@@ -7526,6 +7532,126 @@
       },
       "host": "panel",
       "sourceSceneId": "panel-device-contact-resize-iso-profile-smaller"
+    },
+    "panel-device-contact-resize-flat-profile-larger-rotation-90": {
+      "acceptedAt": "2026-11-22T09:03:55.130Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076905544",
+      "reportSha256": "90a974086df9361f3eab4706b7f36b259980948de77f38410d5c2c7b88b21c7f",
+      "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+      "sourceFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+      "matrixVersion": 116,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-flat-profile-larger-rotation-90"
+    },
+    "panel-device-contact-resize-iso-profile-larger-rotation-90": {
+      "acceptedAt": "2026-11-22T09:03:55.143Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076905544",
+      "reportSha256": "15c85fa26208ffc07c2be1d0363403b7f40ba7b8eb78d49f08f146f61bb9cb2b",
+      "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+      "sourceFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+      "matrixVersion": 116,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-iso-profile-larger-rotation-90"
+    },
+    "panel-device-contact-resize-flat-profile-larger-rotation-180": {
+      "acceptedAt": "2026-11-22T09:03:55.156Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076905544",
+      "reportSha256": "beb1a2187880f219b3af3f6b78ec9a2ce3d4369662ecf401f4badf9b8522560d",
+      "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+      "sourceFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+      "matrixVersion": 116,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-flat-profile-larger-rotation-180"
+    },
+    "panel-device-contact-resize-iso-profile-larger-rotation-180": {
+      "acceptedAt": "2026-11-22T09:03:55.169Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076905544",
+      "reportSha256": "31c084c638bc4b552bc80815b8eeddc03c344aa1e39d74210669512eaf6d18f0",
+      "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+      "sourceFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+      "matrixVersion": 116,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-iso-profile-larger-rotation-180"
+    },
+    "panel-device-contact-resize-flat-profile-larger-rotation-270": {
+      "acceptedAt": "2026-11-22T09:03:55.184Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076905544",
+      "reportSha256": "65e786bf81447530742aca8301a53dc8d2328c3fa1e2ab191a62e558ecf51d4a",
+      "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+      "sourceFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+      "matrixVersion": 116,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-flat-profile-larger-rotation-270"
+    },
+    "panel-device-contact-resize-iso-profile-larger-rotation-270": {
+      "acceptedAt": "2026-11-22T09:03:55.197Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076905544",
+      "reportSha256": "aa7ad9fab18a74f3e80df456392b0b27db2ca6b4cb01821fbe5179d12b089cc5",
+      "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+      "sourceFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+      "matrixVersion": 116,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "70c7aaf9243672c33aa8fb6ab9686418804e6777",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "33c926de9c8bc86ac5246ce2fbfcf3247984fc605831dad0bd1f35eed2d2c33a",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-iso-profile-larger-rotation-270"
     }
   }
 }
