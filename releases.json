@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1212,
+  "revision": 1213,
   "active": "v1.86.1-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -206808,7 +206808,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "5de9e31fdfc4b6ccbbb5770e6fecd8c786406982",
       "portToDev": [
         {
           "from": "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
@@ -206824,6 +206824,12 @@
         "selectionDigest": "02a9a5875a4b4d30445408a61145c932b95dc839aadaeef85c9f2ddfe1ee6754",
         "status": "not-required",
         "inventoryComplete": true
+      },
+      "metricsDecision": {
+        "decisionId": "beta-1861-owner-accepts-20261122",
+        "source": "chat",
+        "sourceRef": "Codex Houseplan release conversation, 2026-11-22; candidate 5de9e31fd",
+        "decisionText": "принимаю оба пункта, принимаю новые эталоны, если будут"
       }
     }
   },
@@ -212854,7 +212860,8 @@
     "ship-review:prepare:34d02c46-df2b-476f-b320-5d548f445ac1": "58a5fb09b64af23fc05d01256e735d5f6a7dbe8deff0bc3869f747a35ea80958",
     "ship-review:result:340ab154-45f3-42f7-ab7f-cd7183aa95a1": "8f0108ec120f51c94d330e951c323c8c78f5958d9d348412c2f249e96ae49b6a",
     "beta-1861-record-run": "dc697bb566e4d84a1bc8c607d1f43f57f148ed4a22af8f17e7316407fc1da3db",
-    "beta-1861-record-isolated-measurement": "c51f62f29b7a343c7336724aa6eba9f65918ea90336d029076572d67a4dd30db"
+    "beta-1861-record-isolated-measurement": "c51f62f29b7a343c7336724aa6eba9f65918ea90336d029076572d67a4dd30db",
+    "beta-1861-owner-accepted-cold-render": "e018eefb97ffa5ed5b6bb8be4278ce457adba2a49e53b663dd1c8a42e65549bd"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
