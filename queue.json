@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20776,
+  "revision": 20777,
   "nextTicket": 620,
   "nextFence": 620,
   "tasks": {
@@ -6673,6 +6673,10 @@
       "digest": "c597e57c1c0cbb001da5e263b4a3f7ded1ba9a24e7b0bda4f366c551c69e44da",
       "issue": 1520
     },
+    "github:45030890116:1:completions:message:ab2f30b0af0b0ebf33a720211bb204b54e76eba23e14fbc6a25474e072c9b0df": {
+      "digest": "c280feffdee53416f9a87a97d4ac86398479997d06a572a764dac13eb2276d67",
+      "issue": 1520
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6815,7 +6819,8 @@
           "entry": 2,
           "detail": "Браузер: device contact resize 1517: failed",
           "eventId": "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:3:return:return:1520"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:af292777-111c-45be-b574-3dcc8f782398": {
