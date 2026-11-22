@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20159,
-  "nextTicket": 604,
+  "revision": 20160,
+  "nextTicket": 605,
   "nextFence": 603,
   "tasks": {
     "1024": {
@@ -5647,6 +5647,20 @@
         "transitionConfirmed": true
       }
     },
+    "1517": {
+      "issue": 1517,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1517-resize-contacts",
+      "materialSha": "d1b0172db324f973b64a0bfa551951dabda36357",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 604,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795338318571,
+      "reviewEntry": 1
+    },
     "1518": {
       "issue": 1518,
       "track": "show",
@@ -6314,7 +6328,8 @@
     }
   },
   "waiting": [
-    1515
+    1515,
+    1517
   ],
   "active": {
     "issue": 1518,
@@ -7132,6 +7147,19 @@
           "finishedAt": "2026-11-22T08:50:58.478Z",
           "failures": []
         }
+      }
+    },
+    "finish:e9e77efc-431d-4a45-be41-000dfb4e00ea": {
+      "digest": "418af2fc6c59e85d6b9def69c7eca3a9f49aa553b41aeedb1729941457638413",
+      "issue": 1517,
+      "message": {
+        "kind": "queued",
+        "issue": 1517,
+        "at": 1795338318571,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "d1b0172db324f973b64a0bfa551951dabda36357"
       }
     }
   },
