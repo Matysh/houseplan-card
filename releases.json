@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1248,
+  "revision": 1249,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -207421,6 +207421,13 @@
           "status": "completed",
           "branch": "release/1.86.0-beta.4-20261121",
           "sha": "0ce2161adfb8fe0448a676f4a5b9528cb4ae0e89"
+        },
+        "return-to-dev": {
+          "status": "running",
+          "issue": 1523,
+          "branch": "issue/1523-release-return-5de9e31fdfc4",
+          "worktree": "/home/sergey/hp-1520/artifacts/process-next/return-worktrees/5de9e31fdfc4",
+          "nextCycle": null
         }
       }
     }
@@ -213503,7 +213510,8 @@
     "beta-1861-publish:completion:76b0ec8f-efff-4475-9e0e-5256f27c2135": "8ab283cd7aecf7eb59692f0af1757e4386e4514dd11f219648f286e2f345a88d",
     "beta-1861-publish:completion:2bfe0436-156a-47d1-b002-ae9b1a26e415": "12d3459d9ad4e47b8b331bead65f07eef9bfcbc538533ca48d75c34c7ab69d38",
     "beta-1861-publish:completion:08ab6813-1133-4019-ac09-22df8f99f0c7": "2611fb0e48180e0fb993c47d1998a5f1c5d7b41d5a8815a08e63f69057216b8d",
-    "beta-1861-publish:completion:f98c108d-776a-454c-a2e6-6d98450ae8d8": "7e02483e609e336fee5be565a2af38bcef544d1e4f9b674fe509b2805abf6b8a"
+    "beta-1861-publish:completion:f98c108d-776a-454c-a2e6-6d98450ae8d8": "7e02483e609e336fee5be565a2af38bcef544d1e4f9b674fe509b2805abf6b8a",
+    "beta-1861-publish:completion:6c8d2137-21ff-485c-a890-6015f27b33e0": "bfb47eb27499b219b360477f780114d6196b5d1d18fbceb0250975f163df5bf9"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
