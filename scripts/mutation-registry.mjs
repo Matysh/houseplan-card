@@ -15238,7 +15238,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stage3-w12-separate-alpha-url-key-restored',
-    guard: 'node --test --test-name-pattern="2.5D is the General settings switch, presentation-only" '
+    guard: 'node --test --test-name-pattern="full plan surfaces inherit 2.5D" '
       + 'test/isometric-contract.test.mjs',
     because: 'W12: Stage 4 shares the one permanent hp_alpha switch; a feature-specific URL '
       + 'key or expiry must not return (#570)',
