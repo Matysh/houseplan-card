@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20407,
-  "nextTicket": 611,
+  "revision": 20408,
+  "nextTicket": 612,
   "nextFence": 611,
   "tasks": {
     "1024": {
@@ -5694,14 +5694,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1517-resize-contacts",
-      "materialSha": "784a4157b801e31910dec320e08734a7ef95bbb6",
+      "materialSha": "1494d496f7ab787af54914763fab2f0616afe909",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 609,
-      "queued": false,
+      "ticket": 611,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795341558574,
-      "reviewEntry": 3,
+      "readyAt": 1795346351449,
+      "reviewEntry": 4,
       "notice": {
         "key": "3:checks-failed",
         "reason": "checks-failed",
@@ -5769,8 +5769,7 @@
         "test/device-contact-screen.test.mjs",
         "test/device-contact-write.test.mjs",
         "test/fixtures/845-wall-corpus-current-identities.json"
-      ],
-      "reason": "checks-failed"
+      ]
     },
     "1518": {
       "issue": 1518,
@@ -6387,7 +6386,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1517
+  ],
   "active": {
     "issue": 1516,
     "worker": "finish",
@@ -7226,6 +7227,19 @@
         "layer": "product",
         "materialSha": "2bb7609d2bf6a30db11d69cd0873a67a1402f322",
         "phase": "sync"
+      }
+    },
+    "finish:dad2c920-a8c3-4191-b77f-934f506da6c0": {
+      "digest": "549e9bfdcfcd46b08a60f6a696f51a9ae93b4ca8e494bfdbe3387485231ca751",
+      "issue": 1517,
+      "message": {
+        "kind": "queued",
+        "issue": 1517,
+        "at": 1795346351449,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "1494d496f7ab787af54914763fab2f0616afe909"
       }
     }
   },
