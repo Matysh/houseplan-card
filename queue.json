@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21043,
+  "revision": 21044,
   "nextTicket": 626,
   "nextFence": 626,
   "tasks": {
@@ -5782,7 +5782,7 @@
       "ownerDecision": null,
       "ticket": 625,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795374361395,
       "reviewEntry": 3,
       "patchId": "5fea2e9bbae768254540c4cce98ea4870ade7bb4",
@@ -5819,9 +5819,15 @@
         "entry": 2,
         "eventId": "finish:72947272-b741-4e1f-aeb3-644ff3429ac1:finish:1:expire:return:1522"
       },
-      "automationError": "automation-error",
-      "automationSince": 1795374443723,
-      "automationDetail": "fetch failed"
+      "s6": {
+        "id": "20261122T191107337-43f2e1c1",
+        "name": "Тесты для задачи #1522 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261122T191107337-43f2e1c1/report.json",
+        "materialSha": "9624bf260356a6db38927ff44a1deb67321d192f",
+        "status": "passed",
+        "finishedAt": "2026-11-22T19:12:09.851Z",
+        "failures": []
+      }
     },
     "1523": {
       "issue": 1523,
@@ -6419,9 +6425,9 @@
     "fence": 625,
     "materialSha": "9624bf260356a6db38927ff44a1deb67321d192f",
     "expectedBase": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795374364952,
-    "expiresAt": 1795375031653,
+    "expiresAt": 1795378336154,
     "patchId": "5fea2e9bbae768254540c4cce98ea4870ade7bb4"
   },
   "events": {
@@ -6824,6 +6830,34 @@
         "layer": "product",
         "materialSha": "9624bf260356a6db38927ff44a1deb67321d192f",
         "phase": "sync"
+      }
+    },
+    "finish:f3b63eb5-a1fa-4ec4-a380-46d1a6a130c7:finish:1:s6-complete": {
+      "digest": "3e35a1a278dfe7b2b69fe6bc378178692a77687d5157d54af6d2e3a68fdecbcc",
+      "issue": 1522,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1522,
+        "at": 1795374736154,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "9624bf260356a6db38927ff44a1deb67321d192f",
+        "phase": "review",
+        "evidence": {
+          "id": "20261122T191107337-43f2e1c1",
+          "name": "Тесты для задачи #1522 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261122T191107337-43f2e1c1/report.json",
+          "materialSha": "9624bf260356a6db38927ff44a1deb67321d192f",
+          "status": "passed",
+          "finishedAt": "2026-11-22T19:12:09.851Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Исправления по предыдущему ревью\n\n- Несовпадение рамки: решение владельца — «нет, нужно точное совпадение. Мебель тоже включать в превью». По следующему уточнению («снимать не кадр, а всю геометрию, а потом уже подстраивать ее под кадр») материал разделён на geometry/world fit и текущую позу. Не допускаются приблизительное кадрирование и подстройка живой камеры во время появления. AC2 измеряет точное совпадение независимо.\n- Дублирование config/get: сервер отдаёт уже рассчитанные контуры/грани, мебель и подтверждаемую рамку, а не исходные комнаты и сегменты; старт запроса, где возможно, параллельный. Источник — один существующий рендерер/кэш, прямого Python-порта и каскада чтений нет. AC6 проверяет не только ранний кадр, но и время появления интерактивного плана.\n- Ревизии и ограничения: серверный ключ принятой версии и авторизация обязательны отдельно от клиентского fit key. Для установки без прогретой записи прямо предусмотрена обычная загрузка. Не утверждаем, что сохранённый кадр существует до первого просмотра этого поколения в любом браузере.\n\n[Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1522#issuecomment-7082062190).\n\n- Раунд 2, резервные копии: изначально речь о неизменном House Plan ZIP; явно отделён системный backup HA, в котором нет обещания исключения `.storage`. В AC5 теперь есть отрицательный случай восстановления чужой или устаревшей производной записи при новом источнике и положительный restart на той же версии.\n- Раунд 2, живая 2.5D-рамка: явно требуются текущие `screenHalfSize` и опоры; старый fitKey неполон. Добавлены проверка изменения размера бейджа/LQI и отдельная доля попаданий при изменяющихся значениях. Проёмы в превью без живых створок; уточнены область пользователя и вытеснение. Стены и мебель должны совпасть по камере и положению на телефоне и компьютере.\n\n[Второй раунд ревью](https://github.com/Matysh/houseplan-card/issues/1522#issuecomment-7083020604).",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
