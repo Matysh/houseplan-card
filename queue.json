@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19826,
+  "revision": 19827,
   "nextTicket": 597,
   "nextFence": 597,
   "tasks": {
@@ -2416,40 +2416,6 @@
         "status": "not-required"
       }
     },
-    "1420": {
-      "issue": 1420,
-      "branch": "issue/1420-release-return-eeab22dee2af",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "460993a2c24dd3079191169a9f597e43fdf7602f",
-      "mergedSha": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
-      "mergedAt": 1794599069250,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.85.2",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9"
-      }
-    },
     "1421": {
       "issue": 1421,
       "branch": "codex/1421-door-leaf-glow",
@@ -4137,10 +4103,25 @@
       "removedToRelease": false,
       "reviewRequest": "review:1472:5:70994bd9238c3b210aef9c2cf7ec7a4b208a3bfa:3337227988d528e977cf8f978a112c7e8a730cfa",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": 18,
+          "cycleMilestone": 18
+        },
+        "milestoneTitle": "2.0.0",
+        "commentCurrent": true,
+        "commentDigest": "b4a585966f4b15997bed",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": 18
+        }
       },
       "devBuild": {
         "status": "published",
