@@ -35,7 +35,7 @@ for(const dpr of [1,2]) {
     for(const dark of [false,true]) {
       await page.evaluate(async dark=>{const c=window.__isoPaint;c.hass={...c.hass,themes:{darkMode:dark}};await c.updateComplete;},dark);
       for(const rotation of [0,90,180,270]) {
-        if(rotation){await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);}
+        if(rotation){for(let i=0;i<2;i++){await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);}}
         for(const zoom of [.73,1,1.33,2.18,3.17]) {
           await zoomIsoPaint(page,zoom);
           await page.evaluate(()=>{const c=window.__isoPaint,root=c.renderRoot;
@@ -87,7 +87,7 @@ for(const dpr of [1,2]) {
           evidence.push({label,...result,comparison});
         }
       }
-      await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);
+      for(let i=0;i<2;i++){await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);}
     }
     const glassUnmasked=()=>page.evaluate(()=>[...window.__isoPaint.renderRoot.querySelectorAll('.iso-marker-glass')].every(n=>{
       for(let p=n;p&&!p.classList.contains('stage');p=p.parentElement)if(getComputedStyle(p).maskImage!=='none')return false;

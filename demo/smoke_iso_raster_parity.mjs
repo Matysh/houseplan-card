@@ -47,7 +47,7 @@ try {
       await setLightAndTheme(light, dark);
       await settleIsoPaint(page);
       await waitReady(before);
-      for (const rotation of [0, 90, 180, 270]) {
+      for (const rotation of [0, 45, 90, 135, 180, 225, 270, 315]) {
         const baseline = await screenshot(stage);
         const active = await imageAtSameCamera(page, stage);
         let different = 0;

@@ -1,39 +1,61 @@
 import { fitView } from './logic';
 import { cameraTargetAtAnchor, type CameraState } from './viewport-transition';
-/** Presentation-only quarter turns. No plan, layout or camera coordinates are rewritten. */
-export type PlanRotation = 0 | 90 | 180 | 270;
+/** Logical presentation positions, in degrees. The ISO camera selects its own azimuth. */
+export const PLAN_ROTATIONS = [0, 45, 90, 135, 180, 225, 270, 315] as const;
+export type PlanRotation = typeof PLAN_ROTATIONS[number];
+export type FlatPlanRotation = 0 | 90 | 180 | 270;
+export type PlanProjection = 'flat' | 'iso';
 export type FramePoint = readonly [number, number];
 export interface FrameRect { x: number; y: number; w: number; h: number; }
 export const PLAN_ROTATION_STORAGE = 'houseplan_card_rotation_v1';
 export const PLAN_ROTATION_EVENT = 'houseplan-plan-rotation';
 export const PLAN_ROTATION_ORIGIN: FramePoint = Object.freeze([500, 500]);
 
-export const validPlanRotation = (value: unknown): value is PlanRotation =>
+export const validFlatPlanRotation = (value: unknown): value is FlatPlanRotation =>
   value === 0 || value === 90 || value === 180 || value === 270;
+export const validPlanRotation = (value: unknown): value is PlanRotation =>
+  validFlatPlanRotation(value) || value === 45 || value === 135 || value === 225 || value === 315;
 export const planRotation = (value: unknown): PlanRotation => validPlanRotation(value) ? value : 0;
-export const stepPlanRotation = (value: PlanRotation, direction: -1 | 1): PlanRotation =>
-  ((value + direction * 90 + 360) % 360) as PlanRotation;
+/** For halfway positions the nearest quarter clockwise wins, including 315° → 0°. */
+export const flatPlanRotation = (value: unknown): FlatPlanRotation =>
+  ((Math.round(planRotation(value) / 90) * 90) % 360) as FlatPlanRotation;
+export const planRotationForProjection = (value: unknown, projection: PlanProjection): PlanRotation =>
+  projection === 'iso' ? planRotation(value) : flatPlanRotation(value);
+export const stepPlanRotation = (value: PlanRotation, direction: -1 | 1, projection: PlanProjection = 'flat'): PlanRotation =>
+  ((planRotationForProjection(value, projection) + direction * (projection === 'iso' ? 45 : 90) + 360) % 360) as PlanRotation;
 export const inversePlanRotation = (value: PlanRotation): PlanRotation =>
   ((360 - value) % 360) as PlanRotation;
 
-/** Exact basis, including the zero entries (Math.sin(PI) is not zero). */
-export function quarterBasis(value: PlanRotation): readonly [number, number] {
-  return value === 90 ? [0, 1] : value === 180 ? [-1, 0] : value === 270 ? [0, -1] : [1, 0];
+/** Exact basis at the cardinal angles, including zero entries. */
+export function rotationBasis(degrees: number): readonly [number, number] {
+  const turn = (degrees % 360 + 360) % 360;
+  if (turn === 0) return [1, 0];
+  if (turn === 90) return [0, 1];
+  if (turn === 180) return [-1, 0];
+  if (turn === 270) return [0, -1];
+  const angle = degrees * Math.PI / 180;
+  return [Math.cos(angle), Math.sin(angle)];
 }
 
-export function turnVector(point: FramePoint, rotation: PlanRotation): [number, number] {
-  const [x, y] = point;
+export function turnVector([x, y]: FramePoint, rotation: number): [number, number] {
   switch (rotation) {
-    case 90: return [-y, x];
-    case 180: return [-x, -y];
-    case 270: return [y, -x];
-    default: return [x, y];
+    case 0: return [x, y];
+    case 90:
+    case -270: return [-y, x];
+    case 180:
+    case -180: return [-x, -y];
+    case 270:
+    case -90: return [y, -x];
+    default: {
+      const [cos, sin] = rotationBasis(rotation);
+      return [x * cos - y * sin, x * sin + y * cos];
+    }
   }
 }
 
 /** Rotate a camera offset in a compressed scene: D × R × inverse(D).
  * Plan geometry still uses turnVector; this is only the camera-space basis. */
-export function turnSceneVector(point: FramePoint, rotation: PlanRotation, floorScaleY = 1): [number, number] {
+export function turnSceneVector(point: FramePoint, rotation: number, floorScaleY = 1): [number, number] {
   if (!(Number.isFinite(floorScaleY) && floorScaleY > 1e-12)) throw new Error('invalid scene depth scale');
   const [x, y] = turnVector([point[0], point[1] / floorScaleY], rotation);
   return [x, y * floorScaleY];
@@ -54,13 +76,14 @@ export function turnRect(
   const corners = [[rect.x, rect.y], [rect.x + rect.w, rect.y],
     [rect.x, rect.y + rect.h], [rect.x + rect.w, rect.y + rect.h]] as const;
   const points = corners.map(point => turnPoint(point, rotation, origin));
+  const [cos, sin] = rotationBasis(rotation);
   return { x: Math.min(...points.map(p => p[0])), y: Math.min(...points.map(p => p[1])),
-    w: rotation === 90 || rotation === 270 ? rect.h : rect.w,
-    h: rotation === 90 || rotation === 270 ? rect.w : rect.h };
+    w: Math.abs(cos) * rect.w + Math.abs(sin) * rect.h,
+    h: Math.abs(sin) * rect.w + Math.abs(cos) * rect.h };
 }
 
 export function turnMatrix(rotation: PlanRotation, origin: FramePoint = PLAN_ROTATION_ORIGIN): string {
-  const [c, s] = quarterBasis(rotation);
+  const [c, s] = rotationBasis(rotation);
   return `matrix(${c} ${s} ${-s || 0} ${c} ${origin[0] - c * origin[0] + s * origin[1]} ${origin[1] - s * origin[0] - c * origin[1]})`;
 }
 
@@ -84,7 +107,7 @@ const center = (rect: FrameRect): [number, number] => [rect.x + rect.w / 2, rect
  */
 export function presentationView(
   canonical: FrameRect, canonicalBase: FrameRect, displayBase: FrameRect,
-  rotation: PlanRotation, zoom: number, displayFit: FrameRect,
+  rotation: number, zoom: number, displayFit: FrameRect,
   floorScaleY = 1,
 ): FrameRect {
   if (!rotation) return canonical;
@@ -97,12 +120,12 @@ export function presentationView(
 /** Invert only a proposed display camera; the canonical size comes from its fit. */
 export function canonicalView(
   displayed: FrameRect, canonicalBase: FrameRect, displayBase: FrameRect,
-  rotation: PlanRotation, zoom: number, canonicalFit: FrameRect,
+  rotation: number, zoom: number, canonicalFit: FrameRect,
   floorScaleY = 1,
 ): FrameRect {
   if (!rotation) return displayed;
   const c = center(displayed), base = center(canonicalBase), display = center(displayBase);
-  const delta = turnSceneVector([c[0] - display[0], c[1] - display[1]], inversePlanRotation(rotation), floorScaleY);
+  const delta = turnSceneVector([c[0] - display[0], c[1] - display[1]], -rotation, floorScaleY);
   const w = canonicalFit.w / zoom, h = canonicalFit.h / zoom;
   return { x: base[0] + delta[0] - w / 2, y: base[1] + delta[1] - h / 2, w, h };
 }
@@ -122,7 +145,7 @@ export function physicalPlanCamera(
 
 /** Rendering uses the observed stage size; it never asks layout for a new one. */
 export function presentationViewport(
-  view: FrameRect, vb: number[], display: FrameRect, rotation: PlanRotation, zoom: number,
+  view: FrameRect, vb: number[], display: FrameRect, rotation: number, zoom: number,
   size: readonly [number, number] | null,
   visual: { stageWidth: number; stageHeight: number } | null,
   floorScaleY = 1,
@@ -137,7 +160,7 @@ export function presentationViewport(
 
 /** Pointer anchoring and clamping meet at the canonical/display boundary. */
 export function planZoomTarget(
-  anchor: CameraState, zoom: number, vb: number[], display: FrameRect, rotation: PlanRotation,
+  anchor: CameraState, zoom: number, vb: number[], display: FrameRect, rotation: number,
   width: number, height: number, sx: number, sy: number,
   clamp: (view: FrameRect, fit: FrameRect) => FrameRect,
   floorScaleY = 1,
@@ -152,7 +175,7 @@ export function planZoomTarget(
   return { target, fit };
 }
 
-export function homeArrowPosition(base: number[], view: FrameRect | null, rotation: PlanRotation, floorScaleY = 1) {
+export function homeArrowPosition(base: number[], view: FrameRect | null, rotation: number, floorScaleY = 1) {
   if (!view?.w || !view.h) return null;
   const [x, y, w, h] = base;
   if (!(x + w <= view.x || x >= view.x + view.w || y + h <= view.y || y >= view.y + view.h)) return null;
@@ -164,7 +187,7 @@ export function homeArrowPosition(base: number[], view: FrameRect | null, rotati
 export function effectivePlanRotation(
   cardValue: unknown, deviceValue: unknown, kiosk = false,
 ): PlanRotation {
-  return !kiosk && validPlanRotation(deviceValue) ? deviceValue : planRotation(cardValue);
+  return !kiosk && validPlanRotation(deviceValue) ? deviceValue : validFlatPlanRotation(cardValue) ? cardValue : 0;
 }
 
 type RotationStorage = Pick<Storage, 'getItem' | 'setItem'>;

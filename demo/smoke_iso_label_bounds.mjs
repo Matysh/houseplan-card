@@ -42,7 +42,7 @@ try {
       && !node.parentElement.hasAttribute('filter'));
   }));
   check('lit walls mount beside the original floor light',original.wallLights>0);
-  for(const rotation of [0,90,180,270]) {
+  for(const rotation of [0,45,90,135,180,225,270,315]) {
     await zoomIsoPaint(page,1);
     const before=await snapshot();
     const stage=await page.locator('.stage:not([inert])').first().boundingBox();

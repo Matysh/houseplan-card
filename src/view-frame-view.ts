@@ -1,8 +1,8 @@
 import { html, nothing } from 'lit';
-import { homeArrowPosition, type FrameRect, type PlanRotation } from './view-frame';
+import { homeArrowPosition, type FrameRect } from './view-frame';
 
 /** "Home is that way" (CANVAS §5): an unbounded plane points back to content. */
-export function renderHomeArrow(base: number[], view: FrameRect | null, rotation: PlanRotation,
+export function renderHomeArrow(base: number[], view: FrameRect | null, rotation: number,
   title: string, fit: () => void, hasContent: boolean, floorScaleY = 1) {
   // A fallback/editor-grown frame is useful for the camera, not a lost plan.
   if (!hasContent) return nothing;

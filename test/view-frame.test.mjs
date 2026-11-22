@@ -116,7 +116,7 @@ test('#1070 AC5/AC6: unavailable and malformed storage never disable rotation, i
   }));
   preference.set('ground', 180);
   assert.equal(preference.get('ground', 90), 180);
-  for (const value of [-90, 360, 45, '90', null, NaN, Infinity]) {
+  for (const value of [-90, 360, 35, '90', null, NaN, Infinity]) {
     assert.equal(validPlanRotation(value), false);
     assert.equal(effectivePlanRotation(value, undefined), 0);
     assert.equal(invalidCardRotation({ rotation: value }), true);
@@ -125,6 +125,9 @@ test('#1070 AC5/AC6: unavailable and malformed storage never disable rotation, i
     assert.equal(invalidCardRotation({ rotation }), false);
     assert.equal(rotationConfigValue(String(rotation)), rotation);
   }
+  assert.equal(validPlanRotation(45), true, 'there is a distinct ISO position');
+  assert.equal(invalidCardRotation({ rotation: 45 }), true, 'legacy card config still takes quarters');
+  assert.equal(effectivePlanRotation(45, undefined), 0);
   assert.equal(invalidCardRotation({}), false);
 });
 
@@ -178,4 +181,22 @@ test('#1070 AC10: PDF rotates all geometry, Beziers and raster centres, preservi
   const bounds = pdfCommandBounds([rotated[0]]);
   assert.deepEqual(bounds, { minX: -20.5, minY: 9.5, maxX: -19.5, maxY: 110.5 });
   assert.deepEqual(commands[0].points, [[10, 20], [110, 20]], 'export does not mutate the live plan');
+});
+
+
+test('#1515 local orientation adopts the nearest clockwise Flat quarter without reinterpreting stored degrees', async () => {
+  const { PLAN_ROTATIONS, planRotationForProjection, flatPlanRotation } = await import('../test-build/view-frame.js');
+  assert.deepEqual(PLAN_ROTATIONS.map(flatPlanRotation), [0,90,90,180,180,270,270,0]);
+  assert.deepEqual(PLAN_ROTATIONS.map(value => planRotationForProjection(value, 'iso')), [...PLAN_ROTATIONS]);
+  const saved = new Map();
+  const storage = { getItem: key => saved.get(key), setItem: (key, value) => saved.set(key, value) };
+  const preference = new PlanRotationPreference(() => storage);
+  for (const [index, angle] of PLAN_ROTATIONS.entries()) {
+    const next = stepPlanRotation(angle, 1, 'iso');
+    assert.equal(next, PLAN_ROTATIONS[(index + 1) % 8]);
+    assert.equal(stepPlanRotation(next, -1, 'iso'), angle);
+    preference.set('space-' + index, angle);
+  }
+  const reloaded = new PlanRotationPreference(() => storage);
+  assert.deepEqual(PLAN_ROTATIONS.map((_, i) => reloaded.get('space-' + i, 0)), [...PLAN_ROTATIONS]);
 });

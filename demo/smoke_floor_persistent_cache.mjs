@@ -81,9 +81,9 @@ try {
     const diskBuilds = { ...card._floorCacheBuilds };
     const projection = card._renderProjection, isoBuilds = card._isoStructuralBuildCount;
     const quarterTurnBuilds = [];
-    if (projection === 'iso') for (const rotation of [90, 180, 270, 0]) {
+    if (projection === 'iso') for (const rotation of [45, 90, 135, 180, 225, 270, 315, 0]) {
       card._rotatePlan(1);
-      await until(() => card._rotation === rotation && !card._rotationMotion.running, 'actual quarter turn');
+      await until(() => card._rotation === rotation && !card._rotationMotion.running, 'actual ISO turn');
       await settle(card); quarterTurnBuilds.push(card._isoStructuralBuildCount);
     }
     delay = 0;
@@ -104,7 +104,7 @@ try {
     if (projection === 'iso') {
       const priorWrites=card._floorPreparation.diagnostic.store.writes;
       card._rotatePlan(1);
-      await until(()=>card._rotation===90&&!card._rotationMotion.running,'rotated preview profile');await settle(card);
+      await until(()=>card._rotation===45&&!card._rotationMotion.running,'direct-view preview profile');await settle(card);
       card.requestUpdate();await until(()=>card._floorPreparation.diagnostic.store.writes>priorWrites,'rotated fit publication');
     }
     const NativeWorker = window.Worker;

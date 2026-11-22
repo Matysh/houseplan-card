@@ -1,4 +1,4 @@
-import { projectPlanPoint, isoCameraFor, isoDisplayWallHeight, ISO_FLOOR_EDGE_HEIGHT, type PlanPoint, type IsoCamera } from './iso-projection';
+import { projectPlanPoint, isoCameraFor, isoViewTurn, isoDisplayWallHeight, ISO_FLOOR_EDGE_HEIGHT, type PlanPoint, type IsoCamera } from './iso-projection';
 import type { CameraState, CameraViewBox } from './viewport-transition';
 import type { RoomCfg, SpaceModel, WallEntry } from './types';
 import { roomPoly } from './logic';
@@ -33,11 +33,11 @@ export function roomFitPlanBounds(input: {
 }
 
 export function roomFitPlanTarget(input: RoomFitTargetInput & {
-  canonicalBase: CameraViewBox; displayBase: CameraViewBox; rotation: PlanRotation; canonicalFit: CameraViewBox; floorScaleY?: number;
+  canonicalBase: CameraViewBox; displayBase: CameraViewBox; rotation: PlanRotation; canonicalFit: CameraViewBox; floorScaleY?: number; plane?: Readonly<IsoCamera>;
 }) {
   const target = roomFitCameraTarget(input);
   if (target) target.viewBox = canonicalView(target.viewBox, input.canonicalBase,
-    input.displayBase, input.rotation, target.zoom, input.canonicalFit, input.floorScaleY);
+    input.displayBase, input.plane ? isoViewTurn(input.plane) : input.rotation, target.zoom, input.canonicalFit, input.floorScaleY);
   return target;
 }
 

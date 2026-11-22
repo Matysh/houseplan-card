@@ -33,8 +33,8 @@ main and geometry worker. The module's historical name is not an opt-in.
 It reads neither `document` nor `location`.
 
 ```text
-saved quarter turn = 0 | 90 | 180 | 270
-camera yaw        = 35 degrees + saved quarter turn
+logical rotation =  0 | 45 |  90 | 135 | 180 | 225 | 270 | 315
+camera yaw       = 35 | 90 | 125 | 180 | 215 | 270 | 305 |   0
 elevation         = 40 degrees above the floor
 floor Y scale     = sin(40 degrees)
 height projection = cos(40 degrees), vertically up the screen
@@ -50,13 +50,24 @@ reference-scale constant. It is not the physical wall-cut height; call
 back to plan coordinates. Fit, room fit, SVG floor, volume faces, HTML device
 anchors, locks, LED geometry and vacuum placement use the same effective
 snapshot. `isoCameraDepth()` supplies the compatible orthographic depth.
-Camera yaw is not a valid `PlanRotation` or a cache quarter-turn key.
+The controls move one logical position at a time in 2.5D. Physical clockwise
+steps alternate 55° and 35°, so the four accepted diagonal cameras keep
+their azimuths and the new views face a plan axis directly. The logical
+angle is still the preference and cache key. Screen motion uses the physical
+change of yaw from the camera, including when it crosses 360°.
+
+Flat keeps 90° steps. An intermediate logical position rounds to the nearest
+Flat quarter, clockwise on a tie (315° → 0°). A straight-on camera already
+has that physical azimuth. The first ready ordinary View of a space with 2.5D
+disabled records the rounded local preference for that space. Editors, hidden
+borders and temporary loading or fallback frames use the Flat quarter without
+recording it.
 
 The stored viewport belongs to the zero-quarter presentation plane. Its centre
 is not already plan XY. `projection-view-camera.ts` converts that centre through
 the authoritative projection/inverse when changing planes, including an
 off-centre view and hidden-border transitions. Screen width is retained and
-normalized zoom is read against the new frame. Active quarter turns use the
+normalized zoom is read against the new frame. Active turns use the
 same compressed-plane camera algebra in `view-frame.ts`. Warm viewport state
 records its actual plane separately from the desired preference.
 

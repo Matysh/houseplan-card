@@ -132,16 +132,36 @@ try {
   await page.evaluate(async () => { await window.__hpTest.setVolumetricView(true); }); await wait();
   const isoInitial = await snapshot();
   const sides = [];
-  for (let n = 0; n < 4; n++) {
-    const state = await snapshot();
+  const yawByRotation = new Map([[0,35],[45,90],[90,125],[135,180],[180,215],[225,270],[270,305],[315,0]]);
+  for (let n = 0; n < 8; n++) {
+    const state = await snapshot(), logical = (90 + n * 45) % 360;
+    check('ISO logical rotation ' + logical, state.rotation === logical);
+    check('ISO accepted physical camera ' + logical,
+      Number(await card.locator('svg.plan-svg').first().getAttribute('data-yaw')) === yawByRotation.get(logical));
     sides.push(await card.locator('.iso-walls-svg').evaluate(svg => svg.innerHTML));
-    await frame(`iso-${state.rotation}`); await rotate();
+    await frame('iso-' + logical); await rotate();
   }
-  check('2.5D renders four distinct projected sides', new Set(sides).size === 4);
+  check('2.5D renders eight distinct projected sides', new Set(sides).size === 8);
   const isoAfter = await snapshot();
   check('rotation preserves physical floor/sun/body build counts', JSON.stringify(isoAfter.floorBuilds) === JSON.stringify(isoInitial.floorBuilds)
     && isoAfter.isoStructuralBuilds === isoInitial.isoStructuralBuilds);
-  check('Flat/2.5D switches preserve chosen orientation', isoAfter.rotation === 90);
+  check('eight ISO steps preserve the logical orientation and canonical camera', isoAfter.rotation === 90
+    && JSON.stringify(isoAfter.camera) === JSON.stringify(isoInitial.camera));
+
+  // The editor uses a temporary Flat quarter. An accepted setting update
+  // while in ordinary View keeps the quarter on return to 2.5D.
+  for (const [isoAngle, flatAngle] of [[135,180],[225,270],[315,0],[45,90]]) {
+    await rotate();
+    check('direct ISO camera before Flat ' + isoAngle, (await snapshot()).rotation === isoAngle);
+    await page.evaluate(() => window.__hpTest.setMode('plan')); await wait();
+    check('editor displays the nearest Flat orientation ' + isoAngle, (await snapshot()).rotation === flatAngle);
+    await page.evaluate(() => window.__hpTest.setMode('view')); await wait();
+    check('editor keeps ISO choice ' + isoAngle, (await snapshot()).rotation === isoAngle);
+    await page.evaluate(() => window.__hpTest.setVolumetricView(false)); await wait();
+    check('accepted Flat setting rounds orientation ' + isoAngle, (await snapshot()).rotation === flatAngle);
+    await page.evaluate(() => window.__hpTest.setVolumetricView(true)); await wait();
+    check('return to ISO starts at the already rounded angle ' + isoAngle, (await snapshot()).rotation === flatAngle);
+  }
   await page.evaluate(() => window.__hpTest.setVolumetricView(false)); await wait();
   await page.evaluate(async () => { await window.__hpTest.switchSpace('f2'); }); await wait();
   check('another space has an independent default', (await snapshot()).rotation === 0);
@@ -203,7 +223,7 @@ try {
     c.setConfig({ type: 'custom:houseplan-card' });
   });
   await page.waitForFunction(() => document.getElementById('rotation-kiosk').renderRoot.querySelector('.stage')?.dataset.hpPlanRotation === '90');
-  await page.locator('#rotation-kiosk .stage').dispatchEvent('dblclick', { clientX: 5, clientY: 5 });
+  await page.locator('#rotation-kiosk .stage:not([inert])').dblclick({ position: { x: 8, y: 8 } });
   await page.waitForFunction(() => { const c = document.getElementById('rotation-kiosk'); return c._zoom === 1 && !c._cameraTransition.active; });
   check('profile quarter-turn paints and fit-all settles at the rotated base',
     await page.locator('#rotation-kiosk .stage').getAttribute('data-hp-plan-rotation') === '90');

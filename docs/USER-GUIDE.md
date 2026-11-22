@@ -1907,7 +1907,7 @@ cycle: 30
 
 ### 2.5D presentation
 
-&emsp;&emsp;A user with House Plan editing permission turns the volumetric plan on: **General settings → Appearance and background → Show the plan in 2.5D**. View and kiosk use the accepted 35° yaw and 40° viewing elevation; rotation buttons change the side by 90°. Walls have a 140 cm cutaway, windows retain masonry below their sills, and doors and passages have lintels. All 60 library items have matching volumetric forms. Saved dimensions, positions and states remain authoritative; no second 3D plan is stored.
+&emsp;&emsp;A user with House Plan editing permission turns the volumetric plan on: **General settings → Appearance and background → Show the plan in 2.5D**. View and kiosk use a 40° viewing elevation. Where rotation controls are available, 2.5D offers eight viewpoints: the four original diagonals and four directly facing the sides. Flat keeps 90° steps. On return to Flat, an intermediate orientation rounds clockwise to the next quarter. Walls have a 140 cm cutaway, windows retain masonry below their sills, and doors and passages have lintels. All 60 library items have matching volumetric forms. Saved dimensions, positions and states remain authoritative; no second 3D plan is stored.
 
 &emsp;&emsp;Device icons, LED strips, door locks and room names sit level with the top of the walls. Names and their readings are visible over the walls. Icons and labels turn with the view and stay upright. Lights can also illuminate the sides of nearby walls.
 

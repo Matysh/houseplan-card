@@ -80,6 +80,7 @@ test('#1451 accepted product camera is fixed and ignores former laboratory contr
     assert.equal(isoCameraFor(rotation).rotDeg,35+rotation);
     assert.equal(isoCameraFor(rotation),isoCameraFor(rotation));
   }
+  assert.deepEqual([45,135,225,315].map(rotation => isoCameraFor(rotation).rotDeg),[90,180,270,0]);
   for (const rotation of [35,125,-90,360,NaN]) assert.throws(()=>isoCameraFor(rotation));
   close(isoDisplayWallHeight(),140*(1000/240)/5);
 });
@@ -96,7 +97,7 @@ test('#1451 product profile loads identically in worker and browser contexts wit
 });
 
 test('#1451 depth ordering follows the same orthographic ray as point projection', () => {
-  for (const rotation of [0,90,180,270]) for (const [xyScale,zScale] of [[1,1],[2,.75]]) {
+  for (const rotation of [0,45,90,135,180,225,270,315]) for (const [xyScale,zScale] of [[1,1],[2,.75]]) {
     const camera = {...isoCameraFor(rotation),xyScale,zScale};
     const angle = camera.rotDeg*Math.PI/180;
     const dy = 17*zScale*Math.sin(camera.tiltDeg*Math.PI/180)/(xyScale*camera.floorScaleY);

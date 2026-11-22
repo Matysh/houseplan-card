@@ -1,8 +1,9 @@
-/** One owner for the accepted 280ms quarter-turn presentation. */
+/** One owner for the accepted 280ms plan-turn presentation. */
 export interface PlanRotationMotionPort {
   current(): () => boolean;
   stage(): HTMLElement | null;
-  changed(direction: -1 | 1): void;
+  /** Apply the logical turn and return the signed physical azimuth change. */
+  changed(direction: -1 | 1): number;
   updated(): Promise<unknown>;
   reduced(): boolean;
   blocked(): boolean;
@@ -38,7 +39,7 @@ export class PlanRotationMotion {
     if (!request.current()) { void this.next(); return; }
     this.active = true;
     const epoch = this.epoch, before = this.port.stage(), scale = before ? pixelScale(before) : 1;
-    this.port.changed(request.direction);
+    const degrees = this.port.changed(request.direction);
     await this.port.updated();
     if (epoch !== this.epoch) return;
     const stage = this.port.stage(), wrap = stage?.querySelector<HTMLElement>('.zoomwrap');
@@ -60,7 +61,7 @@ export class PlanRotationMotion {
       if (!request.current() || !stage.isConnected || !wrap.isConnected) { finish(); return; }
       const progress = Math.min(1, Math.max(0, (now - start) / 280));
       const eased = 1 - (1 - progress) ** 3;
-      wrap.style.transform = `rotate(${-request.direction * 90 * (1 - eased)}deg) scale(${ratio + (1 - ratio) * eased})`;
+      wrap.style.transform = `rotate(${-degrees * (1 - eased)}deg) scale(${ratio + (1 - ratio) * eased})`;
       if (progress < 1) this.frame = this.port.requestFrame(frame);
       else finish();
     };

@@ -162,7 +162,7 @@ if(!screenOnly) {
         widths:[before,flat,restored,editor,back].map(state=>state.view.w),
         stageSizes:[before,flat,restored,editor,back].map(state=>state.stageSize),
         scales:[before,flat,restored,editor,back].map(state=>state.pixelsPerSceneUnit)});
-      await rotate(page);
+      await rotate(page); await rotate(page);
     }
     detail.roundtrips = turns;
     if(!roundtripOnly) {

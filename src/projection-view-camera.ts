@@ -1,4 +1,4 @@
-import {isoCameraFor, projectPlanPoint, unprojectFloorPoint, type IsoCamera, type ViewRect} from './iso-projection';
+import {isoCameraFor, isoViewTurn, projectPlanPoint, unprojectFloorPoint, type IsoCamera, type ViewRect} from './iso-projection';
 import {fitView} from './logic';
 import {canonicalView, inversePlanRotation, planRotation, presentationViewport, turnPoint,
   type FrameRect, type PlanRotation} from './view-frame';
@@ -49,7 +49,7 @@ export function shouldRebaseViewFrame(from: ProjectionViewFrame, to: ProjectionV
 }
 
 export function presentedView(view: ViewRect, zoom: number, frame: ProjectionViewFrame): ViewRect {
-  return presentationViewport(view, frame.base, frame.display, frame.rotation, zoom,
+  return presentationViewport(view, frame.base, frame.display, frame.plane ? isoViewTurn(frame.plane) : frame.rotation, zoom,
     frame.size, null, frame.plane?.floorScaleY ?? 1);
 }
 
@@ -76,6 +76,6 @@ export function canonicalPhysicalCamera(
   const zoom = (frame.rotation ? displayFit : fit).w / w;
   const viewBox = canonicalView({x: x-w/2, y:y-h/2, w, h},
     {x:frame.base[0], y:frame.base[1], w:frame.base[2], h:frame.base[3]}, frame.display,
-    frame.rotation, zoom, fit, frame.plane?.floorScaleY ?? 1);
+    frame.plane ? isoViewTurn(frame.plane) : frame.rotation, zoom, fit, frame.plane?.floorScaleY ?? 1);
   return {zoom, viewBox};
 }

@@ -2,6 +2,7 @@
  * untrusted input: never feed strings to unsafeSVG/innerHTML. */
 import { svg, nothing } from 'lit';
 import type { Rect } from './space-geometry';
+import { validFlatPlanRotation, validPlanRotation } from './view-frame';
 export interface FloorFitPacket {
   frame: { rect: Rect; all: Rect; outliers: number; hasContent: boolean };
   base: number[]; display: Rect; projection: 'flat' | 'iso'; rotation: number;
@@ -24,7 +25,7 @@ export function validFloorPreview(value: unknown, fitKey?: string): value is Flo
     && (!fitKey || p.fitKey === fitKey) && !!p.fit && ['flat', 'iso'].includes(p.fit.projection)
     && fieldsOnly(p.fit, ['frame', 'base', 'display', 'projection', 'rotation']) && fieldsOnly(p.fit.frame, ['rect', 'all', 'outliers', 'hasContent'])
     && rectValid(p.fit.display) && fieldsOnly(p.fit.display, ['x', 'y', 'w', 'h'])
-    && [0, 90, 180, 270].includes(p.fit.rotation) && rectValid(p.fit.frame?.rect) && rectValid(p.fit.frame?.all)
+    && (p.fit.projection === 'iso' ? validPlanRotation(p.fit.rotation) : validFlatPlanRotation(p.fit.rotation)) && rectValid(p.fit.frame?.rect) && rectValid(p.fit.frame?.all)
     && fieldsOnly(p.fit.frame.rect, ['x', 'y', 'w', 'h']) && fieldsOnly(p.fit.frame.all, ['x', 'y', 'w', 'h'])
     && Number.isSafeInteger(p.fit.frame.outliers) && p.fit.frame.outliers >= 0 && typeof p.fit.frame.hasContent === 'boolean'
     && Array.isArray(p.fit.base) && p.fit.base.length === 4 && p.fit.base.every(Number.isFinite) && p.fit.base[2] > 0 && p.fit.base[3] > 0

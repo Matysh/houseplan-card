@@ -66,7 +66,7 @@ try {
     }
     writeFileSync(join(directory,'interactions.json'),JSON.stringify(result,null,2));
   } else if(process.env.HP_ISO_PAINT_CAPTURE) {
-    for(const dark of [false,true]) for(const rotation of [0,90,180,270]) {
+    for(const dark of [false,true]) for(const rotation of [0,45,90,135,180,225,270,315]) {
       await page.evaluate(async dark=>{const c=window.__isoPaint;c.hass={...c.hass,themes:{darkMode:dark}};await c.updateComplete;},dark);
       if (process.env.HP_ISO_PAINT_LIGHT_SWEEP) {
         await zoomIsoPaint(page,1);await page.mouse.move(5,5);

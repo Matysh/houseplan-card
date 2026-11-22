@@ -1,5 +1,5 @@
 import { fitView } from './logic';
-import { canonicalView, type FrameRect, type PlanRotation } from './view-frame';
+import { canonicalView, type FrameRect } from './view-frame';
 import type { CameraState } from './viewport-transition';
 
 export interface ScreenCameraTarget {
@@ -23,7 +23,7 @@ export function screenFreeArea(width: number, height: number,
 }
 
 /** Uses the existing canonical/projected bounds, never a second geometry walk. */
-export function screenCameraTarget(vb: number[], display: FrameRect, rotation: PlanRotation,
+export function screenCameraTarget(vb: number[], display: FrameRect, rotation: number,
   size: readonly [number, number], free: FrameRect, multiplier: number,
   floorScaleY = 1): ScreenCameraTarget | null {
   const [width, height] = size;

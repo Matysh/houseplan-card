@@ -156,3 +156,24 @@ for (const rotation of [0,90,180,270]) {
     for(const key of ['x','y','w','h'])close(next.viewBox[key],panned[key]);
   });
 }
+
+
+test('#1515 noncentrally panned view projects its offset with the actual change of yaw', async () => {
+  const { ISO_CAMERA, projectPlanPoint } = await import('../test-build/iso-projection.js');
+  const referencePlan = [273.8, 586.4], canonical = projectPlanPoint(referencePlan, 0, ISO_CAMERA);
+  const offset = [canonical[0] - 500, canonical[1] - 500];
+  const w = 1000 * (800 / 600) / 2, h = 500;
+  const view = {x: 500 + offset[0] - w / 2, y: 500 + offset[1] - h / 2, w, h};
+  for (const [rotation, yaw] of [[45,90],[135,180],[225,270],[315,0]]) {
+    const plane = isoCameraFor(rotation), frame = {base:[0,0,1000,1000],display:{x:77,y:16,w:850,h:728},
+      rotation,plane,size:[800,600]};
+    const shown = presentedView(view,2,frame);
+    const pointing = projectPlanPoint(referencePlan,0,{...plane,rotDeg:yaw});
+    close(shown.x + shown.w/2, frame.display.x + frame.display.w/2 + pointing[0] - 500);
+    close(shown.y + shown.h/2, frame.display.y + frame.display.h/2 + pointing[1] - 500);
+    const physical = physicalViewCamera(view,2,frame);
+    const restored = canonicalPhysicalCamera(physical,frame);
+    close(restored.zoom,2);
+    for (const key of ['x','y','w','h']) close(restored.viewBox[key],view[key]);
+  }
+});

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1515,
+  "baseStable": "v1.86.0",
+  "category": "major",
+  "rationale": "Adds four directly facing viewpoints to the existing isometric presentation while preserving the previous cameras and flat plan rotation.",
+  "summary": {
+    "ru": "Четыре прямых ракурса в 2.5D и доворот при возврате к плоскому виду.",
+    "en": "Four straight-on 2.5D views and clockwise rounding on return to Flat."
+  }
+}

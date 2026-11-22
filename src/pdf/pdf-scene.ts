@@ -50,7 +50,7 @@ import { desktopSurface, TOWER_BOX } from '../iso-lab-workstation';
 import { tvCabinet, tvOnCabinet } from '../tv-mount';
 import { pdfLocalDate } from './pdf-date';
 import { rotatePdfCommands } from './pdf-layout';
-import { planRotation, type PlanRotation } from '../view-frame';
+import { flatPlanRotation, type PlanRotation } from '../view-frame';
 
 export interface PdfExportOptions {
   dimensions: boolean;
@@ -760,7 +760,7 @@ function buildPdfCandidate(
     minX: margin, minY: fieldTop,
     maxX: pageWidth - margin, maxY: fieldTop + fieldHeight,
   };
-  commands = rotatePdfCommands(commands, planRotation(input.rotation));
+  commands = rotatePdfCommands(commands, flatPlanRotation(input.rotation));
   const localSceneBounds = pdfCommandBounds(commands);
   const localField: PdfField = { minX: 0, minY: 0, maxX: planFieldWidth, maxY: fieldHeight };
   const fits = pdfSceneFits(localSceneBounds, localField, 0.5 * MM);
@@ -793,7 +793,7 @@ function buildPdfCandidate(
   if (north !== null) {
     const nx = pageWidth / 2, ny = footerY + 5.5 * MM;
     commands.push({ kind: 'vector',
-      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north + planRotation(input.rotation) }),
+      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north + flatPlanRotation(input.rotation) }),
       fill: INK, width: 0, fillRule: 'evenodd' });
     commands.push(
       { kind: 'text', x: nx, y: footerY, text: input.t('pdf.north'), size: 7, align: 'center' });
@@ -837,7 +837,7 @@ export function buildPdfPage(input: PdfSceneInput): BuiltPdfPage {
   let lastCandidates: PdfCandidate[] = [];
   for (const scale of PDF_SCALE_SERIES) {
     const candidates = [false, true]
-      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, planRotation(input.rotation)))
+      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, flatPlanRotation(input.rotation)))
       .map((landscape) => buildPdfCandidate(input, prepared, scale, landscape));
     if (!candidates.length) continue;
     const fitting = candidates.filter((candidate) => candidate.fits);

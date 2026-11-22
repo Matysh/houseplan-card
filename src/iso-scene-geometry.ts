@@ -624,7 +624,7 @@ export interface ResolveIsoSceneInput {
   cache: Map<string, IsoSceneCacheEntry>;
   cellCm: number;
   liveFrame: Rect;
-  /** Only the four fixed production cameras; arbitrary projection parameters are not a cache input. */
+  /** Fixed production cameras only; arbitrary projection parameters are not a cache input. */
   rotation?: PlanRotation;
 }
 

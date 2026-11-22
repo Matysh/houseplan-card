@@ -338,7 +338,7 @@ import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
 import {
-  isoDisplayWallHeight, isoCameraFor, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
+  isoDisplayWallHeight, isoCameraFor, isoViewTurn, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
 import type { IsoWallLightSource } from './iso-wall-light';
@@ -352,9 +352,9 @@ import { renderIsoLabFurniture, furnitureShadow } from './iso-lab-furniture-rend
 import { isoLockGlass } from './iso-marker-outline';
 import { renderIsoMarkerGlass } from './iso-marker-glass';
 import {
-  PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation, planRotation,
+  PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation, planRotationForProjection, flatPlanRotation, validFlatPlanRotation,
   turnPoint, turnSceneVector, turnRect, turnMatrix, inversePlanRotation, framePercent,
-  presentationViewport, physicalPlanCamera, planZoomTarget, type FrameRect, type PlanRotation,
+  presentationViewport, physicalPlanCamera, planZoomTarget, type FrameRect, type PlanRotation, type PlanProjection,
 } from './view-frame';
 import { renderHomeArrow, renderPlanRotationControls } from './view-frame-view';
 import { PlanRotationMotion } from './plan-rotation-motion';
@@ -2855,9 +2855,10 @@ export class HouseplanCard extends LitElement {
       memo = this._floorPrepareMemo = { raw, model, epoch: this._cfgEpoch,
         keys: floorCacheKeys(model, raw, this._cellCm, this._gridPitch) };
     const projection = this._desiredProjection;
+    const rotation = this._rotationForProjection(projection);
     const summaryFit = this._summary?.cacheFitInputs() ?? null;
     const signature = [raw, this._layout, this._devices, this.planHost.capabilities, this._config, this._settings,
-      this._rotation, this._showFar, this._effectiveKioskScale.icon, this._effectiveKioskScale.font, this._decorAssets.size,
+      rotation, this._showFar, this._effectiveKioskScale.icon, this._effectiveKioskScale.font, this._decorAssets.size,
       this._presentation.themes, this._presentation.language, summaryFit, this.ownerDocument.fonts?.status,
       window.innerWidth, window.innerHeight, window.devicePixelRatio];
     let fit = this._floorFitMemo;
@@ -2865,7 +2866,7 @@ export class HouseplanCard extends LitElement {
       fit = this._floorFitMemo = { signature, key: cacheSha256([memo.keys.geometry,
         // Fit depends on positions and metric profiles, never saved HA values.
         this._layout, this._displayDevices.filter(d => d.space === space.id).map(d => [d.id, d.hidden, this._pos(d), d.name]),
-        raw, this._markers, this._config, this._settings, this._rotation, this._showFar,
+        raw, this._markers, this._config, this._settings, rotation, this._showFar,
         this._effectiveKioskScale, [...this._decorAssets.keys()].sort(), this._externalScreen,
         this._presentation.themes, this._presentation.language, summaryFit, this.ownerDocument.fonts?.status,
         window.innerWidth, window.innerHeight, window.devicePixelRatio]) };
@@ -3487,7 +3488,7 @@ export class HouseplanCard extends LitElement {
       if (Number.isFinite(saved) && saved > 0) this._screenRestoreZoom = saved;
     }
     const fullReference = !previous && !this._hasScreenProfile
-      ? screenCameraTarget(vb, display, this._rotation, size, screenFreeArea(...size, null), 1, this._sceneDepthScale) : null;
+      ? screenCameraTarget(vb, display, this._sceneRotation, size, screenFreeArea(...size, null), 1, this._sceneDepthScale) : null;
     // A rapid panel reversal still owns automatic centring. The visible
     // intermediate frame is not a manual pan away from the reference.
     const followingSummary = this._screenCameraTransition && this._screenCameraAutomatic
@@ -3500,7 +3501,7 @@ export class HouseplanCard extends LitElement {
       || !!previous && onScreenReference(current, previous,
       this._cameraTransition.active || this._pointers.size > 0));
     const free = screenFreeArea(...size, this._centerSummary ? geometry.panel : null);
-    const reference = screenCameraTarget(vb, display, this._rotation, size, free, this._hasScreenProfile ? screen.zoom ?? 1 : 1, this._sceneDepthScale);
+    const reference = screenCameraTarget(vb, display, this._sceneRotation, size, free, this._hasScreenProfile ? screen.zoom ?? 1 : 1, this._sceneDepthScale);
     if (!reference) return;
     this._screenReference = reference; this._screenReferenceKey = key;
     this._screenSummaryVisible = !!geometry.panel;
@@ -3510,7 +3511,7 @@ export class HouseplanCard extends LitElement {
     if (follow || explicit) {
       const multiplier = this._screenRestoreZoom === null ? 1 : this._screenRestoreZoom / reference.camera.zoom;
       const target = explicit || this._screenRestoreZoom !== null
-        ? screenCameraTarget(vb, display, this._rotation, size, free, explicit ? 1 : multiplier, this._sceneDepthScale)! : reference;
+        ? screenCameraTarget(vb, display, this._sceneRotation, size, free, explicit ? 1 : multiplier, this._sceneDepthScale)! : reference;
       this._cancelCameraTransition(false);
       this._screenCameraTransition = true;
       this._screenCameraAutomatic = !explicit;
@@ -3805,7 +3806,7 @@ export class HouseplanCard extends LitElement {
     const projection = preview?.projection ?? this._effectiveProjection();
     const base = preview ? [...preview.base] : this._baseVb();
     const activePlane = plane === undefined ? this._presentedViewPlane(projection) : plane;
-    const rotation = preview ? planRotation(preview.rotation) : this._rotation;
+    const rotation = preview ? planRotationForProjection(preview.rotation, preview.projection) : this._rotationForProjection(projection);
     const size = this._modeSceneSize ?? this._lastValidStageSize
       ?? [this._view?.w || 1, this._view?.h || 1] as const;
     return {base: [...base], display: {...(preview?.display ?? this._displayBase(base))}, rotation,
@@ -5962,6 +5963,7 @@ export class HouseplanCard extends LitElement {
     if (!this._usesScreenCamera && stage && !this._view) this._refitView();
     this._editorSecondary?.afterRender();
     this._settleContinuityFrame(!changed.has('_continuityEpoch') || changed.size > 1);
+    this._rememberPresentedFlatRotation();
     // onboarding: on an empty server config, open the space dialog right away
     if (
       this._serverStorage &&
@@ -8166,7 +8168,7 @@ export class HouseplanCard extends LitElement {
     const cfgSize = this._config?.icon_size ?? 2.5, iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     return runtime.resolveIsoFitScene({
       source, cache: this._isoGeometryCache, cellCm: this._cellCm, liveFrame,
-      rotation: this._rotation,
+      rotation: this._rotationForProjection('iso'),
       overlays: space && disp.showBorders ? (scene) => this._isoOverlayScene(
         space, this._renderDevices.filter((device) => device.space === space.id && !device.hidden),
         disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
@@ -8331,7 +8333,7 @@ export class HouseplanCard extends LitElement {
       minZoom: HouseplanCard.ZOOM_MIN,
       maxZoom: HouseplanCard.ZOOM_MAX,
       canonicalBase: { x: base[0], y: base[1], w: base[2], h: base[3] },
-      displayBase, rotation: this._rotation, canonicalFit: baseFit, floorScaleY: this._sceneDepthScale,
+      displayBase, rotation: this._rotation, canonicalFit: baseFit, floorScaleY: this._sceneDepthScale, plane: this._isoFloorCamera,
     });
     let target = targetOf(bounds);
     const runtime = this._isoSceneRuntime, entries = this._renderIsoScene?.overlayFitEntries;
@@ -8387,7 +8389,7 @@ export class HouseplanCard extends LitElement {
 
   private _renderHomeArrow(base = this._baseVb()): TemplateResult | typeof nothing {
     const frame = this._frameOf();
-    return renderHomeArrow(base, this._booting ? null : this._view, this._rotation,
+    return renderHomeArrow(base, this._booting ? null : this._view, this._sceneRotation,
       this._t('canvas.home_tip'), () => this._fitAll('home'),
       frame.hasContent && this._frame?.id === this._space, this._sceneDepthScale);
   }
@@ -8414,18 +8416,50 @@ export class HouseplanCard extends LitElement {
     return this._view && this._view.w ? this._view : fitView(vb, this._stageAspect(vb));
   }
 
-  private get _rotation() { return devicePlanRotation.get(this._space, this._externalScreen.rotation ?? this._config?.rotation, this._kiosk); }
+  private get _requestedPlanRotation(): PlanRotation {
+    return devicePlanRotation.get(this._space, this._externalScreen.rotation ?? this._config?.rotation, this._kiosk);
+  }
+  private _rotationForProjection(projection: PlanProjection): PlanRotation {
+    const rotation = this._requestedPlanRotation;
+    if (validFlatPlanRotation(rotation)) return rotation;
+    return projection === 'iso' && this._spaceDisplayForRender().showBorders ? rotation : flatPlanRotation(rotation);
+  }
+  private get _rotation(): PlanRotation {
+    const preview = this._presentedPreviewFit;
+    return preview ? planRotationForProjection(preview.rotation, preview.projection) : this._rotationForProjection(this._renderProjection);
+  }
+  private get _sceneRotation(): number {
+    const camera = this._isoFloorCamera;
+    return camera ? isoViewTurn(camera) : this._rotation;
+  }
+  private _rememberPlanRotation(rotation: PlanRotation): void {
+    devicePlanRotation.set(this._space, rotation);
+    window.dispatchEvent(new Event(PLAN_ROTATION_EVENT));
+  }
+  private _rememberPresentedFlatRotation(): void {
+    // A Flat editor or interim Flat shell during a 2.5D startup must not
+    // consume a preference until this space really presents ordinary 2D View.
+    if (this._mode !== 'view' || this._kiosk || this._isoEnabled || this._renderProjection !== 'flat'
+        || !this._loadOk || this._booting || this._bootFading || this._modeTransitionBusy || !this._view
+        || !this._spaceModel() || this._continuity.state !== 'steady' || !this._continuity.hasCompleteFrame) return;
+    const rotation = this._requestedPlanRotation, flat = flatPlanRotation(rotation);
+    if (flat !== rotation) this._rememberPlanRotation(flat);
+  }
   private readonly _rotationMotion = new PlanRotationMotion({
     current: () => {
       const owner = this._configWriteContext.claim(), space = this._space, mode = this._mode;
+      const iso = !!this._isoFloorCamera;
       return () => this.isConnected && !this._kiosk && space === this._space && mode === this._mode
-        && this._configWriteContext.current(owner, this.planHost);
+        && iso === !!this._isoFloorCamera && this._configWriteContext.current(owner, this.planHost);
     },
     stage: () => this.renderRoot.querySelector<HTMLElement>('.stage'),
     changed: direction => {
       this._cancelCameraTransition(false); this._clearRoomFocus(true);
-      devicePlanRotation.set(this._space, stepPlanRotation(this._rotation, direction));
-      window.dispatchEvent(new Event(PLAN_ROTATION_EVENT));
+      const iso = !!this._isoFloorCamera, before = this._rotation;
+      const next = stepPlanRotation(before, direction, iso ? 'iso' : 'flat');
+      this._rememberPlanRotation(next);
+      if (!iso) return direction * 90;
+      return (isoCameraFor(next).rotDeg - isoCameraFor(before).rotDeg + 540) % 360 - 180;
     },
     updated: () => this.updateComplete,
     reduced: () => this.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches === true,
@@ -8450,12 +8484,13 @@ export class HouseplanCard extends LitElement {
   private _displayBase(vb = this._baseVb()): FrameRect {
     if (this._floorPassive && this._floorPreparation?.preview) return this._floorPreparation.preview.fit.display;
     if (this._effectiveProjection() === 'iso' && this._renderIsoScene) return this._renderIsoScene.frame;
-    return turnRect({ x: vb[0], y: vb[1], w: vb[2], h: vb[3] }, this._rotation);
+    return turnRect({ x: vb[0], y: vb[1], w: vb[2], h: vb[3] }, this._rotationForProjection('flat'));
   }
   private _presentationView(view: FrameRect, zoom = this._zoom, vb = this._baseVb()): FrameRect {
-    if (this._modeSceneSize) return presentationViewport(view, vb, this._displayBase(vb), this._rotation, zoom,
+    const turn = this._sceneRotation;
+    if (this._modeSceneSize) return presentationViewport(view, vb, this._displayBase(vb), turn, zoom,
       this._modeSceneSize, null, this._sceneDepthScale);
-    return !this._rotation ? view : presentationViewport(view, vb, this._displayBase(vb), this._rotation, zoom,
+    return !turn ? view : presentationViewport(view, vb, this._displayBase(vb), turn, zoom,
       this._lastValidStageSize, this._modeTransitionVisual, this._sceneDepthScale);
   }
   // With hidden borders, 2.5D uses Flat's quarter turn for both paint and input.
@@ -8509,7 +8544,7 @@ export class HouseplanCard extends LitElement {
     return `left:${left.toFixed(2)}%;top:${top.toFixed(2)}%`;
   }
   private _planScreenDelta(dx: number, dy: number): [number, number] {
-    return turnSceneVector([dx, dy], inversePlanRotation(this._rotation), this._sceneDepthScale);
+    return turnSceneVector([dx, dy], -this._sceneRotation, this._sceneDepthScale);
   }
   private _planVisibleRect(view: FrameRect): FrameRect {
     const camera = this._isoFloorCamera;
@@ -8784,7 +8819,7 @@ export class HouseplanCard extends LitElement {
     // 14-16 CSS px away, while spec #82 §10 promises it stays put.
     const anchorFrom = (animated && this._cameraTransition.target)
       || this._cameraState();
-    return planZoomTarget(anchorFrom, z, vb, this._displayBase(vb), this._rotation,
+    return planZoomTarget(anchorFrom, z, vb, this._displayBase(vb), this._sceneRotation,
       stage.width, stage.height, sx, sy, (view, fit) => this._clampView(view, fit), this._sceneDepthScale);
   }
 

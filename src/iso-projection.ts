@@ -1,4 +1,4 @@
-import { quarterBasis, validPlanRotation, type PlanRotation } from './view-frame';
+import { rotationBasis, validPlanRotation, type PlanRotation } from './view-frame';
 import { ISO_LAB_CAMERA, ISO_VIEW_PROFILE } from './iso-lab-camera';
 import { GRID_PITCH, GRID_VISUAL_REFERENCE_CELL_CM } from './canvas-constants';
 export type PlanPoint = readonly [number, number];
@@ -34,18 +34,27 @@ export const ISO_CAMERA: Readonly<IsoCamera> = Object.freeze({
   ...(ISO_LAB_CAMERA.floorScaleY !== 1 ? { floorScaleY: ISO_LAB_CAMERA.floorScaleY } : {}),
 });
 
-const quarterCameras = new Map<PlanRotation, Readonly<IsoCamera>>([[0, ISO_CAMERA]]);
+const cameras = new Map<PlanRotation, Readonly<IsoCamera>>([[0, ISO_CAMERA]]);
 export function isoCameraFor(rotation: PlanRotation): Readonly<IsoCamera> {
   if (!validPlanRotation(rotation)) throw new Error('invalid plan rotation');
-  let camera = quarterCameras.get(rotation);
-  if (!camera) { camera = Object.freeze({ ...ISO_CAMERA, rotDeg: ISO_CAMERA.rotDeg + rotation }); quarterCameras.set(rotation, camera); }
+  let camera = cameras.get(rotation);
+  if (!camera) {
+    // Alternate the accepted diagonal cameras with a direct view of each side.
+    const dir = rotation % 90 === 0 ? ISO_CAMERA.rotDeg + rotation : (rotation + 45) % 360;
+    camera = Object.freeze({ ...ISO_CAMERA, rotDeg: dir });
+    cameras.set(rotation, camera);
+  }
   return camera;
 }
 export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {
-  const rotation = (camera.rotDeg % 360 + 360) % 360;
-  return validPlanRotation(rotation) ? quarterBasis(rotation)
-    : [Math.cos(camera.rotDeg * Math.PI / 180), Math.sin(camera.rotDeg * Math.PI / 180)];
+  return rotationBasis(camera.rotDeg);
 }
+
+/** Physical turn from the camera-plane origin used by the stored viewport. */
+export function isoViewTurn(camera: Readonly<IsoCamera>): number {
+  return camera.rotDeg - ISO_CAMERA.rotDeg;
+}
+
 
 export const ISO_WALL_HEIGHT = 84;
 // The cutaway represents half of a 280 cm wall. Callers apply gridVisualUnits

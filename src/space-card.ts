@@ -59,7 +59,7 @@ import {
 } from './sun';
 import { dayCycleClock, moonSkyState } from './moon-gate';
 import { PointerModalityController } from './pointer-modality';
-import { PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation } from './view-frame';
+import { PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, flatPlanRotation } from './view-frame';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
 import {
   createGlowRuntimeState, disposeGlowRuntime,
@@ -970,7 +970,7 @@ class HouseplanSpaceCard extends LitElement {
       cfg,
       layout: this._snap?.layout || {},
       spaceId,
-      rotation: devicePlanRotation.get(spaceId, this._config.rotation),
+      rotation: flatPlanRotation(devicePlanRotation.get(spaceId, this._config.rotation)),
       iconSize: this._config.icon_size,
       fit: this._config.fit,
       // #376(а): YAML `title:` with no value parses as null — the owner decided

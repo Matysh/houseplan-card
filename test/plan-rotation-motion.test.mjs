@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { PlanRotationMotion } from '../test-build/plan-rotation-motion.js';
 
 const flush = async () => { await Promise.resolve(); await Promise.resolve(); };
-function fixture() {
+function fixture(turn = direction => direction * 90) {
   const wrap = { style: { transform: '', transformOrigin: '', willChange: '' }, isConnected: true };
   const svg = { viewBox: { baseVal: { width: 1000, height: 500 } } };
   const stage = { style: { overflow: 'visible' }, inert: false, isConnected: true, clientWidth: 800, clientHeight: 600,
@@ -13,7 +13,7 @@ function fixture() {
   const port = {
     current: () => { const captured = generation; return () => captured === generation; },
     stage: () => stage,
-    changed: direction => { changes.push(direction); [svg.viewBox.baseVal.width, svg.viewBox.baseVal.height] = [svg.viewBox.baseVal.height, svg.viewBox.baseVal.width]; },
+    changed: direction => { changes.push(direction); [svg.viewBox.baseVal.width, svg.viewBox.baseVal.height] = [svg.viewBox.baseVal.height, svg.viewBox.baseVal.width]; return turn(direction); },
     updated: () => Promise.resolve(), reduced: () => reduced, blocked: () => blocked,
     requestFrame: callback => { frames.set(++id, callback); return id; }, cancelFrame: key => frames.delete(key), now: () => 0,
   };
@@ -51,4 +51,17 @@ test('#1119 cancellation during pending render retires later callbacks; reduced 
 test('#1119 finishing rotation cannot release a concurrent mode input barrier', async () => {
   const f = fixture(); f.motion.rotate(1); await flush(); f.block(); f.motion.cancel();
   assert.equal(f.stage.inert, true); assert.equal(f.wrap.style.transform, ''); assert.equal(f.frames.size, 0);
+});
+
+
+test('#1515 the CSS handoff uses actual signed steps, including across 360 degrees', async () => {
+  const turns = [55,35,-35,-55], f = fixture(() => turns.shift());
+  for (const direction of [1,1,-1,-1]) f.motion.rotate(direction);
+  for (const expected of [-55,-35,35,55]) {
+    await flush();
+    assert.equal(f.wrap.style.transform.split('deg')[0], 'rotate(' + expected);
+    f.frame(280);
+  }
+  assert.equal(f.stage.inert, false);
+  assert.equal(f.wrap.style.transform, '');
 });
