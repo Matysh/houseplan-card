@@ -62,11 +62,18 @@ export function renderIsoPerspectiveSnapshot(camera: IsoCamera, bounds: ViewRect
     const m = [(b[0]-a[0])/dx,(b[1]-a[1])/dx,(c[0]-a[0])/dy,(c[1]-a[1])/dy];
     m.push(a[0] - m[0]*x - m[2]*y, a[1] - m[1]*x - m[3]*y);
     const id = 'hp-startup-floor-triangle-' + index;
-    const d = 'M ' + [a,b,c].map(p=>p.join(' ')).join(' L ') + ' Z';
+    // The adjacent clips overlap at antialiased seams. A separate outline
+    // keeps the outer edges of the floor exact.
+    const midX = (a[0]+b[0]+c[0])/3, midY = (a[1]+b[1]+c[1])/3;
+    const clip = [a,b,c].map(([px,py])=>[midX+(px-midX)*1.16,midY+(py-midY)*1.16]);
+    const d = 'M ' + clip.map(p=>p.join(' ')).join(' L ') + ' Z';
     return {id,d,transform:'matrix(' + m.join(' ') + ')'};
   });
+  const right = left+width*columns, bottom = top+height*rows;
+  const outline = [[left,top],[right,top],[right,bottom],[left,bottom]].map(([x,y])=>project(x,y).join(' ')).join(' ');
   return svg`<g aria-hidden="true"><defs><g id="hp-startup-floor-source">${content}</g>
+    <clipPath id="hp-startup-floor-bounds"><polygon points=${outline}></polygon></clipPath>
     ${tiles.map(tile => svg`<clipPath id=${tile.id}><path d=${tile.d}></path></clipPath>`)}</defs>
-    ${tiles.map(tile => svg`<g clip-path=${'url(#'+tile.id+')'}>
-      <use href="#hp-startup-floor-source" transform=${tile.transform}></use></g>`)}</g>`;
+    <g clip-path="url(#hp-startup-floor-bounds)">${tiles.map(tile => svg`<g clip-path=${'url(#'+tile.id+')'}>
+      <use href="#hp-startup-floor-source" transform=${tile.transform}></use></g>`)}</g></g>`;
 }
