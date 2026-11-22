@@ -280,7 +280,7 @@ import {
   type PageVisibilitySignal,
 } from './visual-continuity';
 import { cardInteractionIdleSnapshot, cardVersionReloadSafetySnapshot, createCardVersionRecovery, renderVersionBanner,
-  adoptCardConfigCapabilities, getAuthoritativeCardConfig, runningBuild,
+  adoptCardConfigCapabilities, getAuthoritativeCardConfig, readAuthoritativeCardConfig, runningBuild,
   type AuthoritativeConfigResponse, type BackendBuildIdentity, type ConfigCapabilitiesCardPort,
   type VersionRecoveryCardPort } from './version-recovery-card';
 import { PointerModalityController } from './pointer-modality';
@@ -2902,7 +2902,7 @@ export class HouseplanCard extends LitElement {
         && this._startupRevision() === selection.revision && this._floorSourceAccepted() && this.isConnected;
       if (!current()) { if (this._startupProofRefresh === owner) this._startupProofRefresh = undefined; return; }
       void Promise.all([
-        host.request<AuthoritativeConfigResponse>({ type: 'houseplan/config/get' }),
+        readAuthoritativeCardConfig(host),
         host.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' }),
       ]).then(([cfg, layout]) => {
         if (current()) { this._rememberStartupSource(host, cfg, layout); this.requestUpdate(); }
@@ -6676,10 +6676,11 @@ export class HouseplanCard extends LitElement {
           // exactly here — the bodies are adopted.
           this._loadOk = true;
           rebuildDevices();
-          this._rememberStartupSource(portHost, cfgResp, layResp);
           // The optional browser presentation cache cannot fail the accepted
           // pair, device seed, or the enrichment that follows this adoption.
           try {
+            if (typeof cfgResp?.startup_floor_source === 'string' && typeof layResp?.startup_floor_source === 'string')
+              this._rememberStartupSource(portHost, cfgResp, layResp);
             this._observeStartupFloor();
             this._primeStartupFloorRead();
           } catch { this._startupFloor?.skipImage(); }

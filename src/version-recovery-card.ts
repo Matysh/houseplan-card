@@ -153,13 +153,18 @@ export const runningBuild = (): RuntimeBuildFacts => ({
   build: entryBuildLabel(),
 });
 
+/** The port shared by authoritative adoption and optional matching reads. */
+export function readAuthoritativeCardConfig(input: unknown): Promise<AuthoritativeConfigResponse> {
+  return planHostFrom(input).request<AuthoritativeConfigResponse>({ type: 'houseplan/config/get' });
+}
+
 export function getAuthoritativeCardConfig(
   host: ConfigCapabilitiesCardPort,
   input: unknown = planHostOf(host),
   isCurrent: () => boolean = () => true,
 ): Promise<AuthoritativeConfigResponse> {
   return fetchAuthoritativeConfig(
-    () => planHostFrom(input).request<AuthoritativeConfigResponse>({ type: 'houseplan/config/get' }),
+    () => readAuthoritativeCardConfig(input),
     (response) => { if (isCurrent()) adoptCardConfigCapabilities(host, response); },
   );
 }

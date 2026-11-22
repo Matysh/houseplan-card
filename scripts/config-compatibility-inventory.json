@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "39d58c6fb98db844d2fbc66b50cb96ee11b1c9886ad8833efda552b6c82a0ed2",
+  "matchesSha256": "be2ba843e786d55f0e40309067e425547b72b19262a68635df38f204ec27892c",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -3019,10 +3019,10 @@
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
     },
     {
-      "id": "391238c6c561b55d94955c77",
+      "id": "50c2684b7a796d63cb21804f",
       "path": "src/device-contact-card.ts",
-      "line": 90,
-      "text": "diameter: surfaceBase * scale * iconScale, legacyDiameters: [surfaceBase * scale, neutralBase * scale] };",
+      "line": 92,
+      "text": "legacyDiameters: [surfaceBase * scale, neutralBase * scale] };",
       "occurrence": 1,
       "kind": "exclusion",
       "owner": "current-feature",
@@ -5709,9 +5709,9 @@
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
     },
     {
-      "id": "90ac0f84e2c7d63a6828ec83",
-      "path": "src/iso-scene-geometry.ts",
-      "line": 45,
+      "id": "af5832f6b1ce8e11b2101af2",
+      "path": "src/iso-overlay-fit-inputs.ts",
+      "line": 1,
       "text": "import { deviceTextScale, legacySupplementalMetrics } from './device-face';",
       "occurrence": 1,
       "kind": "branch",
@@ -5719,10 +5719,10 @@
       "reason": "Persisted representation: implicit temperature/humidity source + secondary metric. A second old metric and implicit primary resolution are observable. Preserve until explicit user choice; lossless total replacement does not exist."
     },
     {
-      "id": "7b355412f2ebcd9cdcd7f97c",
-      "path": "src/iso-scene-geometry.ts",
-      "line": 301,
-      "text": "for (const metric of legacySupplementalMetrics(presentation)) {",
+      "id": "0fdc2cfc9ee789066e5a0237",
+      "path": "src/iso-overlay-fit-inputs.ts",
+      "line": 26,
+      "text": "for (const metric of legacySupplementalMetrics(p)) {",
       "occurrence": 1,
       "kind": "branch",
       "owner": "marker-value-presentation",

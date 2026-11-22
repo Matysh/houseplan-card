@@ -8149,8 +8149,8 @@ const MUTANT_DEFINITIONS = [
       + 'otherwise raised tiles overlap; this witness targets that branch only.',
     patches: [{
       file: 'src/iso-scene-geometry.ts',
-      find: '      ?? baseDeviceUnits * presentation.scale * (input.floorAlignedMarkers ? 1 : ISO_ICON_SCALE);',
-      replace: '      ?? baseDeviceUnits * presentation.scale;',
+      find: '        : baseDeviceUnits * presentation.scale * ISO_ICON_SCALE);',
+      replace: '        : baseDeviceUnits * presentation.scale);',
     }],
   },
   {
