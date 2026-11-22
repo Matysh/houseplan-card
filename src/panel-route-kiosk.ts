@@ -1,5 +1,6 @@
 import type { RouteKiosk } from './route-kiosk';
-import type { ScreenOverrides, ExternalScreenView } from './external-screens';
+import type { ScreenOverrides } from './external-screens';
+import { validPlanRotation } from './view-frame';
 
 function positionOf(value: string | null): number | null {
   if (!value || !/^\d+$/.test(value)) return null;
@@ -30,8 +31,8 @@ export function screenOverrides(query: URLSearchParams): ScreenOverrides {
     const raw = query.get(key);
     return raw !== null && /^\d+$/.test(raw) && Number.isSafeInteger(Number(raw)) && Number(raw) >= min && Number(raw) <= max ? Number(raw) : undefined;
   };
-  const rotation = number('hprotate', 0, 270);
-  if (rotation !== undefined && [0, 90, 180, 270].includes(rotation)) value.rotation = rotation as ExternalScreenView['rotation'];
+  const rotation = number('hprotate', 0, 315);
+  if (validPlanRotation(rotation)) value.rotation = rotation;
   for (const [url, key] of [['hpcycle', 'cycle'], ['hpidle', 'idle']] as const) {
     const n = number(url, 0, 3600); if (n !== undefined) value[key] = n;
   }

@@ -37,7 +37,7 @@ export function createFixtureStore(config, layout, emit = () => {}, {
     handle(m, registryEntities = []) {
       switch (m.type) {
         case 'houseplan/config/get': return { config: structuredClone(cfg), rev: configRev, can_write: true, device_contact_api: 1, plan_graph_api: 1,
-          ...(externalScreens ? { external_screens_api: 2, external_screens_events_api: 1 } : {}),
+          ...(externalScreens ? { external_screens_api: 3, external_screens_events_api: 1 } : {}),
           ...(markerHistory ? { device_history_api: 1 } : {}),
           ...(tvMount ? { furniture_workstation_api: 1, furniture_tv_mount_api: 1 } : {}) };
         case 'houseplan/layout/get': return { layout: structuredClone(positions), rev: layoutRev,

@@ -8,7 +8,7 @@ const current=()=>({version:2,next_id:2,screens:[defaultExternalScreen(1)]});
 test('#1165 legacy conversion is read-only, memoized and preserves inherited presentation',()=>{
  const raw=legacy(),before=structuredClone(raw),converted=externalScreensForEdit(raw);
  assert.equal(externalScreensOf(raw),raw);assert.equal(externalScreensForEdit(raw),converted);
- assert.deepEqual(raw,before);assert.equal(converted.version,2);assert.equal(converted.opaque,'kept');
+ assert.deepEqual(raw,before);assert.equal(converted.version,3);assert.equal(converted.opaque,'kept');
  assert.deepEqual(converted.screens[0].future,{nested:[1,2]});
  assert.deepEqual(converted.screens[0].default_view,{...defaultExternalScreenView(),rotation:90,summary:'show',icon_scale:1.5});
  assert.deepEqual(converted.screens[0].space_views,{});
@@ -29,7 +29,7 @@ test('#1165 raw v2 rejects invalid known fields instead of treating them as futu
   assert.equal(externalScreenEventCandidate({settings:{}},4,{rev:5,external_screens_update:{version:1,base_rev:4,value:raw}}),null);
  }
  const big=current();big.opaque='я'.repeat(70000);assert.equal(externalScreensOf(big),null);
- assert.equal(externalScreensForEdit({version:3,opaque:'future'}),null);
+ assert.equal(externalScreensForEdit({version:4,opaque:'future'}),null);
 });
 test('#1165 space maps use own stable keys including prototype-like names',()=>{
  const raw=current();raw.screens[0].space_views=JSON.parse('{"__proto__":'+JSON.stringify({...defaultExternalScreenView(),zoom:2})+'}');
@@ -40,4 +40,32 @@ test('#1165 obsolete profile and injected URL controls cannot override House Pla
  const raw=legacy(),r=new ExternalScreenResolver();
  const result=r.read(raw,{enabled:true,profile:1,overrides:{hidden_devices:true,controls:true,summary:false}},'floor');
  assert.equal(result.hidden_devices,undefined);assert.equal(result.controls,undefined);assert.equal(result.summary,false);
+});
+
+
+test('#1516 writes v3 only in editable drafts, with preserved legacy defaults',()=>{
+ const raw=current();
+ raw.screens[0].space_views.a={...defaultExternalScreenView(),rotation:270,zoom:2,custom:{preserved:1}};
+ const before=structuredClone(raw), draft=externalScreensForEdit(raw);
+ assert.equal(draft.version,3);
+ assert.deepEqual(draft.screens,raw.screens);
+ assert.deepEqual(raw,before);
+ const malformed=structuredClone(draft);
+ malformed.screens[0].default_view={...defaultExternalScreenView(),view:'flat',rotation:45};
+ assert.equal(externalScreensOf(malformed),null);
+ assert.equal(externalScreenEventCandidate({settings:{}},4,{rev:5,external_screens_update:{version:1,base_rev:4,value:malformed}}),null);
+});
+
+test('#1516 profile view is per space, URL rotation overrides it and row data is never changed',()=>{
+ const raw={...current(),version:3};
+ const row=raw.screens[0];
+ row.default_view={...defaultExternalScreenView(),view:'iso',rotation:315};
+ row.space_views.a={...defaultExternalScreenView(),view:'flat',rotation:null};
+ const before=structuredClone(raw), resolver=new ExternalScreenResolver();
+ const route={enabled:true,profile:1,overrides:{rotation:135,view:'flat'}};
+ assert.equal(resolver.read(raw,route,'b').view,'iso');
+ assert.equal(resolver.read(raw,route,'b').rotation,135);
+ assert.equal(resolver.read(raw,route,'a').view,'flat');
+ assert.equal(resolver.read(raw,{enabled:true,profile:1},'a').rotation,undefined);
+ assert.deepEqual(raw,before);
 });

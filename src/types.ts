@@ -488,8 +488,11 @@ export interface DevItem {
 }
 
 export interface CardConfig {
-  /** Clockwise presentation quarter turn; persisted plan geometry is unchanged. */
+  /** Legacy clockwise quarter turn, used when this card inherits the local choice. */
   rotation?: number;
+  /** Explicit presentation overrides for this full Lovelace card. */
+  view?: import('./view-frame').PlanProjection;
+  plan_rotation?: import('./view-frame').PlanRotation;
   type: string;
   title?: string;
   floor?: string | number;

@@ -77,6 +77,8 @@ type PlacementNode = {
   cards?: ArrayLike<unknown>;
   host?: unknown;
   getRootNode?: () => unknown;
+  preview?: unknown;
+  editMode?: unknown;
 };
 
 const placementSlots = new WeakMap<object, string>();
@@ -217,4 +219,19 @@ export function stableSummaryPlacementSlot(start: object): string | null {
   const slot = structuralPath(anchor);
   placementSlots.set(anchor, slot);
   return slot;
+}
+
+
+/** Reuse HA's logical Masonry slot and require a dashboard view for durability.
+ * Preview cards and unresolved custom hosts keep only instance memory. */
+export function cardRotationPlacementSlot(start: object): string | null {
+  const chain = ancestorChain(start);
+  if (chain.some(node => shapeOf(node).preview === true || shapeOf(node).editMode === true
+    || localNameOf(node) === 'hui-dialog-edit-card')) return null;
+  const masonry = masonryPlacement(start);
+  if (masonry.kind === 'resolved') return masonry.slot;
+  if (masonry.kind === 'unresolved') return null;
+  const view = chain.find(node => localNameOf(node) === 'hui-view');
+  const suffix = view && descendantPath(start, view);
+  return suffix ? `view:${suffix}` : null;
 }

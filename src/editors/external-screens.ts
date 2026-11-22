@@ -9,6 +9,7 @@ import { emptyExternalScreens, externalScreensForEdit, defaultExternalScreen, up
 import { dialogSession } from './dialog-baseline';
 import { dialogPresence } from '../dialog-presence';
 import { externalScreenPath } from '../route-kiosk';
+import { flatPlanRotation, validPlanRotation } from '../view-frame';
 import { field, formCard, formSections, sectionHeading, unitInput } from './form-kit';
 
 interface ScreenDraft {
@@ -36,7 +37,7 @@ export class ExternalScreensEditor implements ReactiveController {
   close(): void { this.draft = null; }
   private open(row?: ExternalScreen): void {
     const session = dialogSession(this.host, 'settings'), rows = this.rows();
-    if (!session || this.host._haExternalScreensApi !== 2 || !rows || !row && rows.screens.length >= 20
+    if (!session || this.host._haExternalScreensApi !== 3 || !rows || !row && rows.screens.length >= 20
       || row && !rows.screens.includes(row)) return;
     const spaces = this.host._serverCfg?.spaces ?? [];
     const draft = { row: structuredClone(row ?? defaultExternalScreen(rows.next_id)),
@@ -61,8 +62,9 @@ export class ExternalScreensEditor implements ReactiveController {
     const d = this.draft;
     if (!d || d.instance !== instance || !this.current(d) || this.activeSpace(d) !== space
       || !this.host._serverCfg?.spaces.some(item => item.id === space)) return;
-    this.draft = { ...d, row: { ...d.row, space_views: { ...d.row.space_views,
-      [space]: { ...externalScreenView(d.row, space), ...patch } } },
+    const view = { ...externalScreenView(d.row, space), ...patch };
+    if (view.view === undefined) delete view.view;
+    this.draft = { ...d, row: { ...d.row, space_views: { ...d.row.space_views, [space]: view } },
       zooms: patch.zoom === undefined ? d.zooms : { ...d.zooms, [space]: String(Math.round(patch.zoom * 100)) } };
     this.host.requestUpdate();
   }
@@ -90,7 +92,7 @@ export class ExternalScreensEditor implements ReactiveController {
   renderSection() {
     if (!planHostOf(this.host).capabilities.externalScreens) return nothing;
     const raw = this.host._settingsDialog?.externalScreens, rows = this.rows() ?? emptyExternalScreens();
-    const unsupported = raw !== undefined && !externalScreensForEdit(raw), backend = this.host._haExternalScreensApi !== 2;
+    const unsupported = raw !== undefined && !externalScreensForEdit(raw), backend = this.host._haExternalScreensApi !== 3;
     const spaces = this.host._serverCfg?.spaces ?? [];
     const session = dialogSession(this.host, 'settings');
     const owner = session ? { session, authority: this.host._configWriteContext.claim() } : null;
@@ -103,7 +105,7 @@ export class ExternalScreensEditor implements ReactiveController {
           <button type="button" class="hp-screen-edit btn hpf-action-option" data-hp="external-screen-edit" aria-label=${this.t('edit', { name: this.t('screen', { n: row.id }) })} @click=${() => this.open(row)}>
             <strong>${this.t('screen', { n: row.id })}</strong><span>${row.space === null ? this.t('all') : space ? space.title || space.id : this.t('missing')} · ${row.space === null && spaces.length > 1 && row.cycle > 0 ? this.t('cycling', { time: this.time(row.cycle) }) : this.t('no_cycle')}</span>
           </button><button type="button" class="btn ghost hpf-action-icon hp-screen-icon" data-hp="external-screen-delete" title=${this.host._t('btn.delete')} aria-label=${this.t('delete')}
-            @click=${() => { const outer = this.host._settingsDialog; if (outer && owner && this.current(owner) && this.rows() === rows && this.host._haExternalScreensApi === 2) this.host._settingsDialog = { ...outer, externalScreens: { ...rows, screens: rows.screens.filter(item => item.id !== row.id) } }; }}><ha-icon icon="mdi:delete-outline"></ha-icon></button>
+            @click=${() => { const outer = this.host._settingsDialog; if (outer && owner && this.current(owner) && this.rows() === rows && this.host._haExternalScreensApi === 3) this.host._settingsDialog = { ...outer, externalScreens: { ...rows, screens: rows.screens.filter(item => item.id !== row.id) } }; }}><ha-icon icon="mdi:delete-outline"></ha-icon></button>
           <div class="hp-screen-link"><input class="hpf-input" readonly .value=${this.path(row.id)} aria-label=${this.t('link', { n: row.id })}
             @click=${(e: Event) => (e.currentTarget as HTMLInputElement).select()}>
             <button type="button" class="btn ghost hpf-action-icon hp-screen-icon" data-hp="external-screen-copy" title=${this.t('copy')} aria-label=${this.t('copy')}
@@ -149,9 +151,29 @@ export class ExternalScreensEditor implements ReactiveController {
     const updateView = (patch: Partial<ExternalScreenView>) => { if (space) this.changeView(patch, d.instance, space); };
     const idle = () => select('idle', this.t('idle'), String(row.idle), times([0,30,60,120,300,600]),
       value => this.change({ idle: Number(value) }, d.instance), cycling, cycling ? this.t('idle_hint') : this.t('idle_description'), this.t('idle_help'));
+    const projection = view.view ?? (this.host._settingsDialog?.volumetricView ? 'iso' : 'flat');
+    const rotations: [string, string][] = [['', this.t('rotation_inherit')]];
+    for (let angle = 0; angle < 360; angle += projection === 'iso' ? 45 : 90) {
+      rotations.push([String(angle), `${angle}°`]);
+    }
+    if (view.rotation !== null && !rotations.some(([value]) => value === String(view.rotation))) {
+      // The inherited projection can change while a remembered angle remains authored.
+      rotations.push([String(view.rotation), `${view.rotation}°`]);
+    }
+    const selectView = (value: string) => {
+      const next = value === 'flat' || value === 'iso' ? value : undefined;
+      updateView({ view: next, ...(next === 'flat' && view.rotation !== null
+        ? { rotation: flatPlanRotation(view.rotation) } : {}) });
+    };
+    const selectRotation = (value: string) => {
+      if (!value) return updateView({ rotation: null });
+      const angle = Number(value);
+      if (validPlanRotation(angle)) updateView({ rotation: angle });
+    };
     const rawZoom = space && Object.prototype.hasOwnProperty.call(d.zooms, space) ? d.zooms[space] : String(Math.round(view.zoom * 100));
     const individual = () => html`<div class="hpf-grid hp-screen-fields">
-      ${select('rotation', this.t('rotation'), String(view.rotation), [0,90,180,270].map(n => [String(n), `${n}°`]), value => updateView({rotation:Number(value) as ExternalScreenView['rotation']}), !exists)}
+      ${select('view', this.t('view'), view.view ?? '', [['', this.t('view_inherit')], ['flat', this.t('view_flat')], ['iso', this.t('view_iso')]], selectView, !exists)}
+      ${select('rotation', this.t('rotation'), view.rotation === null ? '' : String(view.rotation), rotations, selectRotation, !exists)}
       ${field({ label: this.t('zoom'), htmlFor:'screen-zoom', help:html`<hp-help instant .text=${this.t('zoom_help')} .ariaLabel=${this.t('zoom')}></hp-help>`, hint:this.t('zoom_hint'),
         error:space && errors.includes(space) ? this.t('zoom_error') : undefined,
         control:html`<div class="hp-screen-zoom">${unitInput({id:'screen-zoom',fieldId:'external-screen-zoom',value:rawZoom,unit:'%',min:10,max:1000,step:1,

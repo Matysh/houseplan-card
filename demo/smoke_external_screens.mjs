@@ -73,7 +73,7 @@ const out=await page.evaluate(async()=>{
   settings().querySelector('[data-hp="external-screen-add"]').click();await admin.updateComplete;await until(()=>child(),'second constructor');
   select('summary','show');await admin.updateComplete;
   child().querySelector('[data-hp="external-screen-ok"]').click();await admin.updateComplete;await sleep(250);
-  result.okChangesOnlyOuterDraft=admin._settingsDialog.externalScreens.version===2&&admin._settingsDialog.externalScreens.screens.length===2&&JSON.stringify(admin._serverCfg.settings.external_screens)===beforeSaved&&!('controls' in admin._settingsDialog.externalScreens.screens[1]);
+  result.okChangesOnlyOuterDraft=admin._settingsDialog.externalScreens.version===3&&admin._settingsDialog.externalScreens.screens.length===2&&JSON.stringify(admin._serverCfg.settings.external_screens)===beforeSaved&&!('controls' in admin._settingsDialog.externalScreens.screens[1]);
   settings().querySelector('[data-hp="external-screen-delete"]').click();await admin.updateComplete;
   settings().querySelector('[data-hp="external-screen-add"]').click();await admin.updateComplete;await until(()=>child(),'third constructor');
   child().querySelector('[data-hp="external-screen-ok"]').click();await admin.updateComplete;await sleep(250);

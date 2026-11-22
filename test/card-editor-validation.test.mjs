@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { invalidDefaultFloor } from '../test-build/card-editor-validation.js';
+import { invalidDefaultFloor, fullCardPresentationConfig, invalidFullCardPresentation } from '../test-build/card-editor-validation.js';
 
 const spaces = [{ value: 'home', label: 'Home' }];
 
@@ -18,4 +18,23 @@ test('issue 244 default_floor warning is absent for empty and valid values', () 
   assert.equal(invalidDefaultFloor({}, spaces, true), null);
   assert.equal(invalidDefaultFloor({ default_floor: '' }, spaces, true), null);
   assert.equal(invalidDefaultFloor({ default_floor: 'home' }, spaces, true), null);
+});
+
+
+test('#1516 editing an unrelated Lovelace field retains legacy rotation and rotation inheritance', () => {
+  for(const legacy of [undefined, 0, 90]){
+    const previous = { type: 'custom:houseplan-card', ...(legacy===undefined?{}:{rotation:legacy}) };
+    const updated = fullCardPresentationConfig(previous, { title: 'New', view: '', plan_rotation: '' });
+    assert.deepEqual(updated,{...previous,title:'New'});
+  }
+});
+test('#1516 explicit zero, inherited removal and clockwise wrap preserve legacy fallback', () => {
+  const base = { rotation: 90 };
+  assert.deepEqual(fullCardPresentationConfig(base,{view:'flat',plan_rotation:'0'}),
+    {...base,view:'flat',plan_rotation:0});
+  assert.deepEqual(fullCardPresentationConfig({...base,view:'iso',plan_rotation:315},{view:'flat'}),
+    {...base,view:'flat',plan_rotation:0});
+  assert.deepEqual(fullCardPresentationConfig({...base,view:'iso',plan_rotation:45},{view:'',plan_rotation:''}),base);
+  assert.equal(invalidFullCardPresentation({view:'flat',plan_rotation:45}),true);
+  assert.equal(invalidFullCardPresentation({plan_rotation:45}),false);
 });

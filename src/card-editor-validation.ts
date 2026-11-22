@@ -1,4 +1,4 @@
-import { validFlatPlanRotation } from './view-frame';
+import { flatPlanRotation, validFlatPlanRotation, validPlanRotation } from './view-frame';
 export interface CardEditorSpaceOption { value: string; label: string }
 export const cardRotationOptions = [0, 90, 180, 270].map(value => ({ value: String(value), label: `${value}°` }));
 export const invalidCardRotation = (config: { rotation?: unknown }): boolean =>
@@ -17,4 +17,28 @@ export function invalidDefaultFloor(
   const raw = typeof config?.default_floor === 'string' ? config.default_floor : '';
   if (!raw || spaces.some((space) => space.value === raw)) return null;
   return raw;
+}
+
+
+/** A new full-card override is authored explicitly. Older rotation YAML stays intact. */
+export function fullCardPresentationConfig(
+  previous: Record<string, unknown>, value: Record<string, unknown>,
+): Record<string, unknown> {
+  const config = { ...previous, ...value };
+  if (config.view === '') delete config.view;
+  if (config.plan_rotation === '') delete config.plan_rotation;
+  else if (typeof config.plan_rotation === 'string' && /^\d+$/.test(config.plan_rotation)) {
+    const angle = Number(config.plan_rotation);
+    if (validPlanRotation(angle)) config.plan_rotation = angle;
+  }
+  if (config.view === 'flat' && previous.view !== 'flat' && validPlanRotation(config.plan_rotation)) {
+    config.plan_rotation = flatPlanRotation(config.plan_rotation);
+  }
+  return config;
+}
+
+export function invalidFullCardPresentation(config: { view?: unknown; plan_rotation?: unknown }): boolean {
+  return config.view !== undefined && config.view !== 'flat' && config.view !== 'iso'
+    || config.plan_rotation !== undefined && (!validPlanRotation(config.plan_rotation)
+      || config.view === 'flat' && !validFlatPlanRotation(config.plan_rotation));
 }

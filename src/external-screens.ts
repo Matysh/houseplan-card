@@ -1,6 +1,12 @@
-/** Persisted profiles and runtime-only per-space resolution (#1113/#1165). */
+/** Persisted profiles and runtime-only per-space resolution (#1113/#1165/#1516). */
+import { validPlanRotation, type PlanRotation } from './view-frame';
+
+export type PlanView = 'flat' | 'iso';
+export const validPlanView = (value: unknown): value is PlanView => value === 'flat' || value === 'iso';
+type LegacyRotation = 0 | 90 | 180 | 270;
+const legacyScreenRotation = (v: unknown): v is LegacyRotation => v === 0 || v === 90 || v === 180 || v === 270;
 export interface ExternalScreenView extends Record<string, unknown> {
-  rotation: 0 | 90 | 180 | 270; zoom: number;
+  view?: PlanView; rotation: PlanRotation | null; zoom: number;
   summary: 'local' | 'show' | 'hide'; center_summary: boolean;
   icon_scale: number | null; font_scale: number | null;
 }
@@ -9,25 +15,29 @@ export interface ExternalScreen extends Record<string, unknown> {
   default_view: ExternalScreenView; space_views: Record<string, ExternalScreenView>;
 }
 interface LegacyScreen extends Record<string, unknown> {
-  id: number; space: string | null; rotation: ExternalScreenView['rotation'];
+  id: number; space: string | null; rotation: LegacyRotation;
   cycle: number; idle: number; summary: ExternalScreenView['summary'];
   hidden_devices: 'local' | 'show' | 'hide'; icon_scale: number | null;
   font_scale: number | null; controls: boolean;
 }
 export interface ExternalScreens extends Record<string, unknown> {
-  version: 2; next_id: number; screens: ExternalScreen[];
+  version: 3; next_id: number; screens: ExternalScreen[];
 }
 export interface LegacyExternalScreens extends Record<string, unknown> {
   version: 1; next_id: number; screens: LegacyScreen[];
 }
-export type StoredExternalScreens = ExternalScreens | LegacyExternalScreens;
-export type ScreenOverrides = Partial<Pick<ExternalScreenView, 'rotation' | 'icon_scale' | 'font_scale'>> & {
+export interface PreviousExternalScreens extends Record<string, unknown> {
+  version: 2; next_id: number; screens: ExternalScreen[];
+}
+export type StoredExternalScreens = ExternalScreens | PreviousExternalScreens | LegacyExternalScreens;
+export type ScreenOverrides = Partial<Pick<ExternalScreenView, 'icon_scale' | 'font_scale'>> & {
+  rotation?: PlanRotation;
   cycle?: number; idle?: number; summary?: boolean;
 };
 export interface ResolvedScreen extends ScreenOverrides {
-  space?: string | null; profile?: number; zoom?: number; center_summary?: boolean;
+  space?: string | null; profile?: number; view?: PlanView; zoom?: number; center_summary?: boolean;
 }
-export const emptyExternalScreens = (): ExternalScreens => ({ version: 2, next_id: 1, screens: [] });
+export const emptyExternalScreens = (): ExternalScreens => ({ version: 3, next_id: 1, screens: [] });
 export const defaultExternalScreenView = (): ExternalScreenView => ({
   rotation: 0, zoom: 1, summary: 'local', center_summary: false, icon_scale: null, font_scale: null,
 });
@@ -39,8 +49,11 @@ export const validScreenZoom = (n: unknown): n is number => typeof n === 'number
   && Number.isFinite(n) && n >= .1 && n <= 10 && Math.abs(n * 100 - Math.round(n * 100)) < 1e-8;
 const scale = (n: unknown): boolean => n === null || typeof n === 'number'
   && Number.isFinite(n) && n >= .5 && n <= 3 && Math.abs(n * 20 - Math.round(n * 20)) < 1e-8;
-const viewOf = (value: unknown): value is ExternalScreenView => record(value)
-  && [0, 90, 180, 270].includes(value.rotation as number) && validScreenZoom(value.zoom)
+const viewOf = (value: unknown, version: 2 | 3): value is ExternalScreenView => record(value)
+  && (version === 2 ? legacyScreenRotation(value.rotation) : (value.rotation === null || validPlanRotation(value.rotation))
+    && (value.view === undefined || validPlanView(value.view))
+    && (value.view !== 'flat' || value.rotation === null || legacyScreenRotation(value.rotation)))
+  && validScreenZoom(value.zoom)
   && ['local', 'show', 'hide'].includes(value.summary as string) && typeof value.center_summary === 'boolean'
   && scale(value.icon_scale) && scale(value.font_scale);
 const bounded = (value: unknown): boolean => {
@@ -50,36 +63,42 @@ const bounded = (value: unknown): boolean => {
 export function externalScreensOf(raw: unknown): StoredExternalScreens | null {
   if (!record(raw)) return null;
   const value = raw;
-  if (![1, 2].includes(value.version as number) || !integer(value.next_id, 1) || !Array.isArray(value.screens)
+  if (value.version !== 1 && value.version !== 2 && value.version !== 3 || !integer(value.next_id, 1) || !Array.isArray(value.screens)
     || value.screens.length > 20) return null;
-  if (value.version === 2 && !bounded(value)) return null;
+  if (value.version !== 1 && !bounded(value)) return null;
   const ids = new Set<number>();
   for (const row of value.screens) {
     if (!record(row) || !integer(row.id, 1) || row.id >= value.next_id || ids.has(row.id)
       || !(row.space === null || typeof row.space === 'string' && row.space.trim().length > 0)
       || !integer(row.cycle, 0, 3600) || !integer(row.idle, 0, 3600)) return null;
     if (value.version === 1) {
-      if (![0, 90, 180, 270].includes(row.rotation as number)
+      if (!legacyScreenRotation(row.rotation)
         || !['local', 'show', 'hide'].includes(row.summary as string)
         || !['local', 'show', 'hide'].includes(row.hidden_devices as string)
         || !scale(row.icon_scale) || !scale(row.font_scale) || typeof row.controls !== 'boolean') return null;
-    } else if (!viewOf(row.default_view) || !record(row.space_views)
-      || Object.entries(row.space_views).some(([id, view]) => !id.trim() || !viewOf(view))) return null;
+    } else if (!viewOf(row.default_view, value.version) || !record(row.space_views)
+      || Object.entries(row.space_views).some(([id, view]) => !id.trim() || !viewOf(view, value.version as 2 | 3))) return null;
     ids.add(row.id);
   }
   return raw as unknown as StoredExternalScreens;
 }
 /** Read-only conversion; callers publish it only after the nested editor's OK. */
-const migrated = new WeakMap<LegacyExternalScreens, ExternalScreens>();
+const migrated = new WeakMap<LegacyExternalScreens | PreviousExternalScreens, ExternalScreens>();
 export function externalScreensForEdit(raw: unknown): ExternalScreens | null {
   const value = externalScreensOf(raw);
-  if (!value || value.version === 2) return value;
+  if (!value || value.version === 3) return value;
   let result = migrated.get(value);
   if (!result) {
-    result = { ...value, version: 2, screens: value.screens.map(row => {
+    const legacyView = ({ view: _unused, ...fields }: ExternalScreenView): ExternalScreenView => fields;
+    const screens = value.version === 2 ? value.screens.map(row => ({
+      ...row,
+      default_view: legacyView(row.default_view),
+      space_views: Object.fromEntries(Object.entries(row.space_views).map(([id, view]) => [id, legacyView(view)])),
+    })) : value.screens.map(row => {
       const { rotation, summary, icon_scale, font_scale, hidden_devices: _hidden, controls: _controls, ...rest } = row;
       return { ...rest, default_view: { ...defaultExternalScreenView(), rotation, summary, icon_scale, font_scale }, space_views: {} };
-    }) };
+    });
+    result = { ...value, version: 3, screens };
     migrated.set(value, result);
   }
   return result;
@@ -108,7 +127,9 @@ export class ExternalScreenResolver {
     const view = profile ? externalScreenView(profile, space) : null;
     const result: ResolvedScreen = profile ? {
       profile: profile.id, space: profile.space, cycle: profile.cycle, idle: profile.idle,
-      rotation: view!.rotation, zoom: view!.zoom, center_summary: view!.center_summary,
+      ...(view!.view === undefined ? {} : { view: view!.view }),
+      ...(view!.rotation === null ? {} : { rotation: view!.rotation }),
+      zoom: view!.zoom, center_summary: view!.center_summary,
       ...(view!.summary === 'local' ? {} : { summary: view!.summary === 'show' }),
       ...(view!.icon_scale === null ? {} : { icon_scale: view!.icon_scale }),
       ...(view!.font_scale === null ? {} : { font_scale: view!.font_scale }),
@@ -132,7 +153,7 @@ export function externalScreenEventCandidate<T extends { settings?: object }>(
     || update.base_rev !== currentRev || event.rev !== currentRev + 1) return null;
   const value = update.value;
   if (!externalScreensOf(value)) {
-    if (!record(value) || !integer(value.version, 3) || !bounded(value)) return null;
+    if (!record(value) || !integer(value.version, 4) || !bounded(value)) return null;
   }
   return { config: { ...current, settings: { ...current.settings, external_screens: value } }, rev: event.rev };
 }

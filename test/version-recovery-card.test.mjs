@@ -231,7 +231,8 @@ test('#1113 external-screen editing is a literal config/get capability, never a 
   const host={_syncVersionRecovery(){}};
   adoptCardConfigCapabilities(host,{external_screens_api:1});assert.equal(host._haExternalScreensApi,1);
   adoptCardConfigCapabilities(host,{external_screens_api:2});assert.equal(host._haExternalScreensApi,2);
-  for(const value of [undefined,0,3,true,'1',null]){
+  adoptCardConfigCapabilities(host,{external_screens_api:3});assert.equal(host._haExternalScreensApi,3);
+  for(const value of [undefined,0,4,true,'1',null]){
     adoptCardConfigCapabilities(host,{external_screens_api:value,config:{settings:{external_screens:{version:1,next_id:1,screens:[]}}}});
     assert.equal(host._haExternalScreensApi,null);
   }

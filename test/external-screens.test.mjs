@@ -25,7 +25,7 @@ test('#1113 detached draft adds/edits/deletes without reusing numbers or overflo
 test('#1113 codec is inert on future/malformed envelopes and preserves unknown v1 fields', () => {
   const d = { ...emptyExternalScreens(), next_id:2, screens:[{...defaultExternalScreen(1), controls:true, future:{n:3}}] };
   assert.equal(externalScreensOf(d), d);
-  for (const malformed of [null,[],{...d,version:3},{...d,next_id:1}, {...d,screens:[d.screens[0],d.screens[0]]},
+  for (const malformed of [null,[],{...d,version:4},{...d,next_id:1}, {...d,screens:[d.screens[0],d.screens[0]]},
     {...d,screens:[{...d.screens[0],cycle:true}]}, {...d,screens:[{...d.screens[0],default_view:{...d.screens[0].default_view,icon_scale:.51}}]}]) assert.equal(externalScreensOf(malformed), null);
 });
 
@@ -43,7 +43,7 @@ test('#1113 profile enables kiosk independently and path position wins only its 
 test('#1113 exact syntax and URL boundary matrix, including first repeated values', () => {
   assert.deepEqual(screenOverrides(new URLSearchParams('hprotate=270&hpcycle=3600&hpidle=0&hpsummary=1&hphidden=0&hpcontrols=0&hpicons=52&hptext=300')),
     {rotation:270,cycle:3600,idle:0,summary:true,icon_scale:.5,font_scale:3});
-  assert.deepEqual(screenOverrides(new URLSearchParams('hprotate=45&hpcycle=3601&hpidle=-1&hpsummary=true&hphidden=01&hpcontrols=yes&hpicons=49&hptext=301')),{});
+  assert.deepEqual(screenOverrides(new URLSearchParams('hprotate=44&hpcycle=3601&hpidle=-1&hpsummary=true&hphidden=01&hpcontrols=yes&hpicons=49&hptext=301')),{});
   for (const n of [50,51,52,53,54,55,299,300]) assert.equal(screenOverrides(new URLSearchParams('hpicons='+n)).icon_scale, Math.round(n/5)/20);
   assert.deepEqual(screenOverrides(new URLSearchParams('hpcycle=0&hpcycle=300&hpsummary=0&hpsummary=1')), {cycle:0,summary:false});
 });
@@ -116,7 +116,7 @@ test('#1113 nested constructor retires stale sessions/authority and cannot write
   const {ExternalScreensEditor}=await import('../test-build/editors/external-screens.js');
   const {rememberDialogBaseline}=await import('../test-build/editors/dialog-baseline.js');
   let authority={};const controllers=[];
-  const host={isConnected:true,_canEdit:true,_kiosk:false,_connectionWasLost:false,_haExternalScreensApi:2,
+  const host={isConnected:true,_canEdit:true,_kiosk:false,_connectionWasLost:false,_haExternalScreensApi:3,
     _settingsDialog:{externalScreens:emptyExternalScreens(),busy:false},hass:{user:{id:'admin'}},
     _configWriteContext:{claim:()=>authority,current:value=>value===authority},addController:controller=>controllers.push(controller),requestUpdate(){}};
   rememberDialogBaseline(host,'settings','initial');
