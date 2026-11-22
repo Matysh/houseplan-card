@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1516,
+  "baseStable": "v1.86.0",
+  "category": "major",
+  "rationale": "Dashboard cards and external screens gain independently authored projection and rotation overrides.",
+  "summary": {
+    "ru": "Независимые вид и поворот плана у карточек дашборда и внешних экранов.",
+    "en": "Independent plan view and rotation on dashboard cards and external screens."
+  }
+}

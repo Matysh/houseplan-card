@@ -1696,6 +1696,8 @@ Boiler: {climate.boiler:hvac_action}
 | An interactive plan inside a dashboard | The full **custom:houseplan-card**; its YAML display options are not new global settings. |
 | A compact diagram linking to the full plan | **custom:houseplan-space-card**; its sole link is interactive, its devices are not. |
 
+In the full dashboard card editor, set **Plan view** and **Plan rotation** independently for each card. Leaving the view inherited follows General settings. Leaving rotation inherited uses the saved local angle of the main plan, then the card's existing legacy `rotation` if provided. An explicit angle is configured as `plan_rotation`. Rotation buttons save the new choice for that card's position in the dashboard in this browser.
+
 &emsp;&emsp;Create profiles on desktop, then open the copied URL on the intended screen. A profile does not make the URL public or bypass HA login. Configuration and device positions are shared; local camera/sizes remain display-specific unless the profile explicitly supplies them.
 
 <a id="screen-profiles"></a>
@@ -1710,7 +1712,7 @@ Boiler: {climate.boiler:hvac_action}
 
 &emsp;&emsp;Open `/houseplan?hpprofile=1` on the screen: it enters kiosk and receives later profile edits without reloading. Unknown/deleted numbers mean kiosk without a profile. A deleted referenced space means all spaces and warns in settings.
 
-&emsp;&emsp;Link overrides: `hprotate=0|90|180|270`; integer `hpcycle`/`hpidle` 0–3600 seconds; `hpsummary=0|1`; `hpicons`/`hptext` 50–300 percent rounded to 5. Invalid values are ignored. `/kiosk/N` or `hpspace=N` selects space ahead of the profile. For example `/houseplan/kiosk/2?hpprofile=1` combines the second space and profile 1. A fixed space does not auto-advance; cycling retains its 60-second interaction pause, while independent idle return works without cycling.
+&emsp;&emsp;Link overrides: `hprotate` accepts angles 0–315° in steps of 45°; in a Flat view it uses the nearest quarter turn, choosing clockwise on a tie; integer `hpcycle`/`hpidle` 0–3600 seconds; `hpsummary=0|1`; `hpicons`/`hptext` 50–300 percent rounded to 5. Invalid values are ignored. `/kiosk/N` or `hpspace=N` selects space ahead of the profile. For example `/houseplan/kiosk/2?hpprofile=1` combines the second space and profile 1. A fixed space does not auto-advance; cycling retains its 60-second interaction pause, while independent idle return works without cycling.
 
 &emsp;&emsp;Hidden devices follow the ordinary House Plan local preference; retired hphidden/hpcontrols and their profile fields are inert.
 

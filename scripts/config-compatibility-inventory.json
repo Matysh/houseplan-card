@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "c3cd24e43551eff328d8f456943f8c2c05f92d19110899bc7b383a1cee472bcb",
+  "matchesSha256": "0da06e4565e147c2329fa12015631517d301c121f16ba93a02f727b9e04da1da",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -3599,6 +3599,36 @@
       "reason": "Persisted representation: catalogue-less rooms, old drafts, midpoint-only thickness/host evidence. Ambiguous wall ownership and malformed-but-readable old drafts cannot be guessed on load. Keep exact current proof/read paths; canonical walls[] is also a current projection ABI."
     },
     {
+      "id": "0426451a804671caf2bfc6cf",
+      "path": "src/editor.ts",
+      "line": 91,
+      "text": "const legacyRotation = this._config?.rotation;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "full-card-rotation-fallback",
+      "reason": "Legacy Lovelace rotation retains its local-first fallback contract while plan_rotation explicitly overrides it."
+    },
+    {
+      "id": "6edda95447ad6586ac6442b7",
+      "path": "src/editor.ts",
+      "line": 129,
+      "text": "...(Number.isInteger(legacyRotation) && [0, 90, 180, 270].includes(legacyRotation)",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "full-card-rotation-fallback",
+      "reason": "Legacy Lovelace rotation retains its local-first fallback contract while plan_rotation explicitly overrides it."
+    },
+    {
+      "id": "cf9b7e5a43fc4328df2a2c3d",
+      "path": "src/editor.ts",
+      "line": 130,
+      "text": "? { description: settingsT(L, 'editor.rotation_legacy', { angle: legacyRotation }) } : {}) },",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "full-card-rotation-fallback",
+      "reason": "Legacy Lovelace rotation retains its local-first fallback contract while plan_rotation explicitly overrides it."
+    },
+    {
       "id": "a9b313cc72f851224196e107",
       "path": "src/editors/decor/geometry.ts",
       "line": 89,
@@ -3969,6 +3999,26 @@
       "reason": "Persisted representation: map_id→matrix without source/space. Inventing a source or floor changes route authority. Keep old dictionary and live run adoption; provider telemetry fallbacks are a separate non-config exclusion."
     },
     {
+      "id": "ffb73ab2d7796a9f8635dde4",
+      "path": "src/external-screens.ts",
+      "line": 6,
+      "text": "type LegacyRotation = 0 | 90 | 180 | 270;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
+    },
+    {
+      "id": "7783388812491f2f38199c51",
+      "path": "src/external-screens.ts",
+      "line": 7,
+      "text": "const legacyScreenRotation = (v: unknown): v is LegacyRotation => v === 0 || v === 90 || v === 180 || v === 270;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
+    },
+    {
       "id": "e160e57884e37f62f345a705",
       "path": "src/external-screens.ts",
       "line": 11,
@@ -3977,6 +4027,16 @@
       "kind": "branch",
       "owner": "external-screen-views",
       "reason": "Retained external-screen v1 namespace types/read migration to screen profiles; keep the existing external-screen-views lifecycle."
+    },
+    {
+      "id": "6aa48a595864472757fa9385",
+      "path": "src/external-screens.ts",
+      "line": 18,
+      "text": "id: number; space: string | null; rotation: LegacyRotation;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
     },
     {
       "id": "d5da833dba65a524c9f065cd",
@@ -3999,14 +4059,34 @@
       "reason": "Retained external-screen v1 namespace types/read migration to screen profiles; keep the existing external-screen-views lifecycle."
     },
     {
-      "id": "cff43d32ee4ff7ff31717bff",
+      "id": "4a463033a8d264e4951dc7fb",
       "path": "src/external-screens.ts",
-      "line": 23,
-      "text": "export type StoredExternalScreens = ExternalScreens | LegacyExternalScreens;",
+      "line": 32,
+      "text": "export type StoredExternalScreens = ExternalScreens | PreviousExternalScreens | LegacyExternalScreens;",
       "occurrence": 1,
       "kind": "branch",
-      "owner": "external-screen-views",
-      "reason": "Retained external-screen v1 namespace types/read migration to screen profiles; keep the existing external-screen-views lifecycle."
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
+    },
+    {
+      "id": "697cb1947778544e3e9e293f",
+      "path": "src/external-screens.ts",
+      "line": 53,
+      "text": "&& (version === 2 ? legacyScreenRotation(value.rotation) : (value.rotation === null || validPlanRotation(value.rotation))",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
+    },
+    {
+      "id": "49ab1d0afbb80483e4247711",
+      "path": "src/external-screens.ts",
+      "line": 55,
+      "text": "&& (value.view !== 'flat' || value.rotation === null || legacyScreenRotation(value.rotation)))",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
     },
     {
       "id": "8c5cef47c34456e44929a949",
@@ -4019,14 +4099,54 @@
       "reason": "Retained external-screen v1 namespace types/read migration to screen profiles; keep the existing external-screen-views lifecycle."
     },
     {
-      "id": "0662866a3a3c2bb1409d4b08",
+      "id": "1ba9694136e2947f77ad4717",
       "path": "src/external-screens.ts",
-      "line": 73,
-      "text": "const migrated = new WeakMap<LegacyExternalScreens, ExternalScreens>();",
+      "line": 75,
+      "text": "if (!legacyScreenRotation(row.rotation)",
       "occurrence": 1,
       "kind": "branch",
-      "owner": "external-screen-views",
-      "reason": "Retained external-screen v1 namespace types/read migration to screen profiles; keep the existing external-screen-views lifecycle."
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
+    },
+    {
+      "id": "a96c7a6466170f9bc14288a5",
+      "path": "src/external-screens.ts",
+      "line": 86,
+      "text": "const migrated = new WeakMap<LegacyExternalScreens | PreviousExternalScreens, ExternalScreens>();",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
+    },
+    {
+      "id": "5307952d85c3f1068ea6d515",
+      "path": "src/external-screens.ts",
+      "line": 92,
+      "text": "const legacyView = ({ view: _unused, ...fields }: ExternalScreenView): ExternalScreenView => fields;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
+    },
+    {
+      "id": "d4bff3ec6525f2884d654154",
+      "path": "src/external-screens.ts",
+      "line": 95,
+      "text": "default_view: legacyView(row.default_view),",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
+    },
+    {
+      "id": "549bfbaa07c4e66b957d3433",
+      "path": "src/external-screens.ts",
+      "line": 96,
+      "text": "space_views: Object.fromEntries(Object.entries(row.space_views).map(([id, view]) => [id, legacyView(view)])),",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "external-screen-projection",
+      "reason": "The original quarter-turn profile decoder remains for v1/v2 while only v3 accepts authored independent view/rotation."
     },
     {
       "id": "10e785dae4af477d430fa493",
@@ -7417,6 +7537,16 @@
       "kind": "exclusion",
       "owner": "current-feature",
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
+    },
+    {
+      "id": "04c0608ae100648d5b555046",
+      "path": "src/types.ts",
+      "line": 493,
+      "text": "/** Legacy clockwise quarter turn, used when this card inherits the local choice. */",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "full-card-rotation-fallback",
+      "reason": "Legacy Lovelace rotation retains its local-first fallback contract while plan_rotation explicitly overrides it."
     },
     {
       "id": "73f2445df195f52b80a0eddb",

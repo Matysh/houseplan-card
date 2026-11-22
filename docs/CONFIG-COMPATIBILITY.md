@@ -2120,27 +2120,36 @@ one-deep Undo are unchanged; no automatic Optimize or migration runs on read.
 
 ### Per-space presentation, v2 (#1165)
 
-The current bounded namespace is `{version:2,next_id,screens}`. Profile globals
-are `id`, `space`, `cycle`, `idle`; `default_view` supplies inherited values and
-`space_views[stableSpaceId]` supplies explicitly edited views. Each view has
-`rotation`, `zoom` (0.1–10 in 0.01 steps), `summary`, `center_summary`,
-`icon_scale`, `font_scale`. The namespace remains limited to 20 profiles and
-128 KiB UTF-8 JSON. Stable IDs survive floor reordering and profile deletion;
-unmodified dangling references survive, newly introduced unknown references fail.
+The current bounded namespace is `{version:3,next_id,screens}`. Profile globals
+are `id`, `space`, `cycle`, `idle`. `default_view` supplies the complete view for
+spaces without an explicit `space_views[stableSpaceId]` record. Version 3 keeps
+v2's zoom, summary, centering and scales, with optional `view: flat|iso`.
+Rotation is an integer number of degrees, 0–315 in steps of 45, or null
+to inherit the browser's main-plan angle. Explicit Flat allows quarter-turns.
+An inherited view applies the effective projection's nearest angle without
+rewriting the authored value. The namespace remains limited to 20 profiles
+and 128 KiB UTF-8 JSON. Unchanged missing-space references survive; new ones fail.
 
-The v1 reader projects flat presentation into `default_view` without mutation
-or storage writes. Nested OK prepares a detached v2 draft; outer Save commits
-it. Cancellation leaves v1 untouched. Unknown fields survive; known legacy
-flat fields and the retired `hidden_devices`/`controls` are removed on conversion.
-These retired overrides, including `hphidden`/`hpcontrols`, are inert on reads.
-Known v1/v2 input is validated strictly; versions above 2 remain opaque,
-bounded, preserved and read-only. Ordinary v1 writes cannot downgrade v2;
-omitting the namespace preserves it. Explicit authoritative import retains its
-existing replacement semantics. The runtime editing capability is now
-`external_screens_api:2`; the authenticated event capability and patch envelope
-remain version 1. Support v2 views use the same pseudonymous space identity as
-the projected plan and omit unknown fields. The historical v1 description below
-documents the retained decoder; no stable retirement deadline exists yet.
+The v1/v2 readers retain their strict quarter-turn schemas. Reading and
+canceling never convert persisted data. A confirmed edit prepares a detached
+v3 draft. Outer Save commits it with the same stable IDs, defaults and known
+settings. The `view` member becomes reserved in v3; other unknown data survives.
+Omitting the namespace in an ordinary write preserves it. Ordinary writers
+cannot downgrade a stored namespace. Explicit authoritative import retains
+its replacement semantics. Versions above 3 remain opaque, bounded and
+read-only. An older backend treats v3 as an opaque future object so unrelated
+writes remain possible. The authoring capability is `external_screens_api:3`.
+Event capability and patch envelope remain version 1. The support projection
+includes typed v3 views and applies existing space pseudonyms.
+
+Full Lovelace cards have separate optional `view` and `plan_rotation`.
+The former inherits the installation preference, the latter inherits the
+previous local-then-legacy-`rotation` policy. Explicit zero remains distinct
+from inheritance. Reading the new fields or changing other editor settings
+does not materialize a default rotation. Toolbar choices persist per
+dashboard placement, user, installation, and space, bound to the authored
+values for that card. The main view keeps its existing local storage key.
+External URL/preset values do not write into either key.
 
 `settings.external_screens` is optional. Absence means no profiles and opening settings creates no write. Version1 is `{version:1,next_id,screens:[...]}` with at most20 profiles. Each profile has a positive safe-integer `id`, stable space ID or `null`, rotation0/90/180/270, integer cycle/idle0–3600s, summary/hidden_devices `local|show|hide`, icon_scale/font_scale `null` or0.5–3 in0.05 steps, and boolean controls. Names and credentials are not stored.
 
