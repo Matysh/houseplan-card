@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20517,
+  "revision": 20518,
   "nextTicket": 614,
   "nextFence": 613,
   "tasks": {
@@ -5650,7 +5650,7 @@
       "notice": {
         "key": "4:rebase-conflict",
         "reason": "rebase-conflict",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1795348441927,
         "entry": 4,
@@ -6785,6 +6785,10 @@
     "github:45019578379:1:completions:report:f0715395ed969de7abb972a05a122bc35c59fa341489ccf14086af3f9bd84d24": {
       "digest": "dfaa879bba718d15d8444420133c15dccf2e88b4862d0fb40ddc510cfdf91ddc",
       "issue": 1520
+    },
+    "github:45019578379:1:completions:notice:2d42b06440cd36088759eb6584bdc14d3d66e986bac39c3b495d53f2bada4414": {
+      "digest": "56494bd36cefcc4b10e56cdb5602110a107d95d5f67c23ae5185473701388819",
+      "issue": 1517
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
