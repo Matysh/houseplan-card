@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19868,
+  "revision": 19869,
   "nextTicket": 599,
   "nextFence": 598,
   "tasks": {
@@ -6143,18 +6143,12 @@
       }
     },
     "1517": {
-      "requestId": "spec:1517:1e0621332b631a5f182fa701ab43bccfdb81146001ca62cd13494a02398c079e",
-      "contextDigest": "1e0621332b631a5f182fa701ab43bccfdb81146001ca62cd13494a02398c079e",
+      "requestId": "spec:1517:b0d3af4bd1677b5a687f4ef1a6a298182fe1181dbe48999703c053139ce83f3f",
+      "contextDigest": "b0d3af4bd1677b5a687f4ef1a6a298182fe1181dbe48999703c053139ce83f3f",
       "base": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795332036333,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44997417997",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795332145362
     }
   },
   "reviewPublications": {
@@ -6195,6 +6189,19 @@
       "presentation": {
         "round": 1,
         "occurredAt": "2026-11-22T07:16:34.764Z"
+      }
+    },
+    "spec:1517:spec:1517:b0d3af4bd1677b5a687f4ef1a6a298182fe1181dbe48999703c053139ce83f3f": {
+      "issue": 1517,
+      "kind": "spec",
+      "requestId": "spec:1517:b0d3af4bd1677b5a687f4ef1a6a298182fe1181dbe48999703c053139ce83f3f",
+      "materialSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+      "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+      "patchId": "b0d3af4bd1677b5a687f4ef1a6a298182fe1181dbe48999703c053139ce83f3f",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-22T07:22:25.362Z"
       }
     }
   },
@@ -6342,6 +6349,10 @@
       "digest": "4ff5914aea0ea5d03889db95bddb71c12b323c88935bd8685eaeda9eee8ccd52",
       "issue": 1513
     },
+    "github:44997900807:1:spec:1517:spec-request": {
+      "digest": "67dcc7bf73dd091cab62c5150da765d9f8d5aa4f0f1219c6641082b45d00b837",
+      "issue": 1517
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6412,6 +6423,22 @@
         "layer": "product",
         "materialSha": "01e04cdf8725e5cc3ad17d9ca3fd5889597d0f1e",
         "delivered": true
+      }
+    },
+    "github:44997900807:1:spec:1517:spec-request:spec-resubmitted:1517": {
+      "digest": "67dcc7bf73dd091cab62c5150da765d9f8d5aa4f0f1219c6641082b45d00b837",
+      "issue": 1517,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1517,
+        "at": 1795332145362,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1517:b0d3af4bd1677b5a687f4ef1a6a298182fe1181dbe48999703c053139ce83f3f",
+        "reviewChanges": "Анализ на dev `5fa8459ea`, `spec-check` прошёл повторно. Проверены разные диаметры paint и solver у профиля и холодный запуск с устаревшей опорой. Исправленная редакция хранит текущую семантику допустимых legacy-групп и фиксирует детерминированный resize. Трек ask по S4. Код ещё не изменялся.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075864767).\n\n1. Неоднозначная legacy-опора → отдельные геометрические кандидаты при штатном размере и собственном размере карточки без профиля, явный выбор между ними, материализация только доказанного. В AC4 добавлена legacy-группа, созданная при нестандартном icon_size.\n2. Неопределённый безопасный t=0 и отличие от value-only → resize активен при различии диаметров запроса и reference, даже при одновременном появлении текста и постоянном переопределении. t=0 использует текущую относительную форму при опорных размерах. При невозможном t=0 старый безопасный fallback выполняется с явной индикацией. Чистое изменение формы при тех же диаметрах сохраняет #1003.\n3. Произвольная занятость → ограничения учитывают реально принятый результат или опорный размер соседа, а не запрошенную форму на старой позиции. Канонический геометрический порядок Y/X с ID только для точного равенства, занятость обновляется целиком на компонент. Изменение соседа снимает устаревший лимит. В AC3 добавлены два соседних растущих компонента, перестановка/переименование и одновременный resize с широкой надписью.\n4. Улучшения: кандидат распространяется от детерминированного корня с полной проверкой вместо общего поиска новых опор; метрики не зависят от ограниченного диаметра; обе устаревшие фразы DEVICE-PRESENTATION будут заменены.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
