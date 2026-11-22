@@ -13318,7 +13318,7 @@ export class HouseplanCard extends LitElement {
               </div>`
             : nothing}
           <span class="spacer"></span>
-          <div class="header-actions" ?inert=${!!(this._floorPreparation?.pending || this._floorPreparation?.failed)}>
+          <div class="header-actions" ?inert=${!!(this._floorPreparation?.pending || this._floorPreparation?.failed || this._startupStyle?.value)}>
           <div class="zoomctl hpf-icon-group hpf-camera-group">
             ${this._kiosk ? nothing : renderPlanRotationControls(key => this._t(key), direction => this._rotatePlan(direction))}
             <button class="btn zb hpf-icon-action" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} data-hp-tooltip=${this._t('title.zoom_out')} aria-label=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>

@@ -38,7 +38,8 @@ export class StartupFloor {
   /** Only cold presentation can display a recalled image. Cache reads never
    * own readiness, block the ordinary frame, or restart after a miss. */
   observe(selection: StartupSelection | null): Ready | undefined {
-    if (this.writing && (!selection || !same(this.writing.selection, selection))) {
+    if (this.writing && (!selection || !same(this.writing.selection, selection)
+      || !selection.size || !this.writing.selection.size || !sameSize(this.writing.selection.size, selection.size))) {
       this.writing.abort.abort(); this.writing = undefined;
     }
     if (this.disposed || this.ready) return;

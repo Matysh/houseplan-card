@@ -9,10 +9,10 @@ const fixture = makeLargeHouseFixture({ floors:2, roomsPerFloor:8, devices:24, o
 const results = {};
 try {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const mount = async ({ projection, surface, user = 'startup-fixture', rev = 1, hold = false }) => {
+  const mount = async ({ projection, surface, user = 'startup-fixture', rev = 1, hold = false, silent = false }) => {
     await page.goto('http://demo.local/demo.html?panel-cold=1', { waitUntil:'domcontentloaded' });
     await page.waitForFunction(() => typeof window.__mkHass === 'function');
-    await page.evaluate(async ({ fixture, projection, surface, user, rev, hold }) => {
+    await page.evaluate(async ({ fixture, projection, surface, user, rev, hold, silent }) => {
       const config = fixture.config, host = document.getElementById('host');
       const floor = config.spaces[0], rotation = projection === 'iso' ? 45 : 0;
       config.settings = { ...config.settings, volumetric_view: surface === 'external' ? projection !== 'iso' : projection === 'iso',
@@ -41,6 +41,7 @@ try {
           constructor(url, options) { super(url, options); this.floor = options?.name === 'houseplan-floor'; }
           postMessage(...args) {
             if (!this.floor) return super.postMessage(...args);
+            if (silent) return;
             setTimeout(() => super.postMessage(...args), 1_000);
           }
         };
@@ -82,7 +83,7 @@ try {
         card.requestUpdate();
       };
       requestAnimationFrame(installImage);
-    }, {fixture, projection, surface, user, rev, hold});
+    }, {fixture, projection, surface, user, rev, hold, silent});
   };
   const ready = (projection, surface) => page.waitForFunction(({projection,surface}) => {
     const c = window.__startupFixture(), root = c?.renderRoot;
@@ -213,6 +214,28 @@ try {
     await ready('flat','card');
     const facts = await page.evaluate(() => window.__startupFixture().houseplanStartupFloorDiagnostics());
     check('never shows mismatched ' + Object.keys(changed)[0], facts.shown === 0);
+  }
+  if (!process.env.HP_STARTUP_CASE) {
+    // The passive image can lead a cold opening, but must neither cover an
+    // explicit #1521 deadline error nor leave the retry controls inert.
+    await page.clock.install();
+    await mount({projection:'flat',surface:'panel',hold:true,silent:true});
+    await page.evaluate(() => window.__releaseStartupFixture());
+    await snapshot.waitFor({state:'visible',timeout:6_000});
+    await page.evaluate(() => {
+      window.__startupFixture()._floorPreparation.scheduler.loadFallback = () => new Promise(() => {});
+    });
+    await page.clock.fastForward(15_000);
+    await page.waitForFunction(() => window.__startupFixture()._floorPreparation.supportFacts.active === 'fallback-load');
+    await page.clock.fastForward(3_000);
+    await page.locator('.floor-preparation-error').getByRole('button',{name:'Try again'}).waitFor({state:'visible'});
+    const terminal = await page.evaluate(() => {
+      const c = window.__startupFixture(), root = c.renderRoot, stage = root.querySelector('.stage');
+      return root.querySelector('ha-card')?.dataset.hpState === 'error' && stage && !stage.inert
+        && !stage.querySelector('.hp-startup-view,.dev,.editorloading');
+    });
+    check('terminal preparation failure retires the image and exposes recovery', terminal);
+    assert.ok(terminal, 'terminal preparation error must replace the passive preview');
   }
 } catch (error) {
   check('startup SVG matrix completed', false);
