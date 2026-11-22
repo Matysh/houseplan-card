@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20815,
-  "nextTicket": 621,
+  "revision": 20816,
+  "nextTicket": 622,
   "nextFence": 621,
   "tasks": {
     "1024": {
@@ -5737,14 +5737,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1520-static-floor-start",
-      "materialSha": "c67f55e7e54c5cee4e30ecdfcfc9430969b67c15",
+      "materialSha": "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 620,
-      "queued": false,
+      "ticket": 621,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795357469691,
-      "reviewEntry": 4,
+      "readyAt": 1795358135863,
+      "reviewEntry": 5,
       "patchId": "282994b83a0f74dbff1874e3c5c0932d622028b6",
       "changedFiles": [
         "demo/smoke_startup_floor.mjs",
@@ -5785,8 +5785,7 @@
       "reviewCorrection": {
         "requestId": "review:1520:3:ebb8270e3170338e03988e26d020879d71c5c576:0987240f1c33505bf9352be24a98a281f8a1d4e9",
         "at": 1795356759606
-      },
-      "reason": "checks-failed"
+      }
     },
     "1521": {
       "issue": 1521,
@@ -6377,7 +6376,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1520
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6983,6 +6984,28 @@
           "entry": 4,
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
           "eventId": "finish:87c6949d-1ef6-4232-b07a-3404aede9c60:finish:3:return:return:1520"
+        }
+      }
+    },
+    "finish:84ed9fa6-ce58-4ea8-aff1-6142d649728b": {
+      "digest": "54f19472d0f448b45992f2a208958032930d01fcee2c423af3f77a75b18ca3ac",
+      "issue": 1520,
+      "message": {
+        "kind": "queued",
+        "issue": 1520,
+        "at": 1795358135863,
+        "entry": 5,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
+        "evidence": {
+          "id": "20261122T135508125-d4fb468a",
+          "name": "Тесты для задачи #1520 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261122T135508125-d4fb468a/report.json",
+          "materialSha": "2c0573d0c08bab0c585111994aafbbdd56cf582c",
+          "status": "passed",
+          "finishedAt": "2026-11-22T14:05:10.103Z",
+          "failures": []
         }
       }
     }
