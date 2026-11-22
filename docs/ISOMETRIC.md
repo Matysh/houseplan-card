@@ -176,7 +176,15 @@ their original opacity semantics. The UI-062 architectural tone follows the
 camera-facing normal. Similar static room fills get a small mid-tone offset;
 live room scales retain their original colours. Thin adaptive floor contacts
 and vertical ridges are clipped by the already-visible face; coplanar seams
-are excluded. Geometry, live sun/light and saved settings are unchanged (#1495).
+are excluded.
+
+The opt-in **Allow transparent walls in 2.5D** space setting (#1518) uses
+actual opacity for the side fill and for the cut separately. Translucent
+surfaces retain their directional shading and reveal the parts of the plan
+behind them. A surface with zero opacity contributes no paint or visual
+occlusion. Masonry around openings and columns shares the same rule.
+Opening frames, glass, furniture and raised device overlays keep their own
+materials. Geometry and sun/light barriers still follow the physical plan.
 Windows and doors use their own material. The
 optional opening accent tints frames, leaves, reveals and all sill faces.
 Its alpha controls tint strength. White and zero strength reproduce the

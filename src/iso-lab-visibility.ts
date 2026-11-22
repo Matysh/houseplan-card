@@ -342,3 +342,144 @@ export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry
     ...result.filter(entry=>!transparentSurface(entry)),...result.filter(transparentSurface),
   ]);return lastResult;
 }
+
+/** Opacity is a material property, independent of the physical wall model. */
+export interface IsoMasonryOpacity { side: number; top: number }
+
+export function masonrySurface(entry: IsoWallDepthQueueEntry): keyof IsoMasonryOpacity | undefined {
+  if (entry.layer === 'wall-side' || (entry.layer === 'opening' && entry.surface.material === 'wall-side')) return 'side';
+  if (entry.layer === 'wall-top' || (entry.layer === 'opening' && entry.surface.material === 'wall-top')) return 'top';
+  return undefined;
+}
+
+export interface IsoDepthFurniture {
+  footprint: readonly PlanPoint[];
+  height: number;
+}
+
+type DepthSurface = Pick<Face, 'geom' | 'plane' | 'bounds' | 'opaque'>;
+export interface IsoDepthFragment {
+  index: number;
+  d: string;
+}
+
+function furnitureDepthSurface(item: IsoDepthFurniture, camera: IsoCamera, coordinates: ClipCoordinates): DepthSurface | null {
+  const points = item.footprint.map(p => projectPlanPoint(p, 0, camera)).sort((a,b) => a[0]-b[0]);
+  const left = points[0], right = points[points.length-1];
+  if (!left || !right || right[0] - left[0] < 1e-7) return null;
+  const floorY = (x: number) => {
+    const atX = points.filter(p => Math.abs(p[0]-x) < 1e-7);
+    return atX.reduce((sum, p) => sum+p[1], 0)/atX.length;
+  };
+  const lift = projectPlanPoint([0,0],0,camera)[1] - projectPlanPoint([0,0],1,camera)[1];
+  const minY = Math.min(...points.map(p => p[1])) - item.height * lift - 2;
+  const maxY = Math.max(...points.map(p => p[1])) + 2;
+  const [x0,y0] = coordinates.point([left[0]-2,minY]);
+  const [x1,y1] = coordinates.point([right[0]+2,maxY]);
+  const [a,b] = coordinates.point([left[0],floorY(left[0])]);
+  const [c,d] = coordinates.point([right[0],floorY(right[0])]);
+  if (c === a) return null;
+  const slope = (d-b)/(c-a);
+  return {
+    bounds:[x0,y0,x1,y1], geom:[[[[x0,y0],[x1,y0],[x1,y1],[x0,y1]]]],
+    plane:[slope/lift,-1/lift,(b-slope*a)/lift],
+    // The real SVG has holes and irregular outlines within this envelope.
+    // It participates in depth order without cutting away any background.
+    opaque:false,
+  };
+}
+
+let transparentKey = '';
+let transparentResult: readonly IsoDepthFragment[] = [];
+
+/**
+ * Transparent surfaces can reveal an opaque surface farther away. Sort by
+ * depth at the same projected pixel, not by a wall's midpoint: a slanted
+ * face can pass from behind to in front of another face in a single frame.
+ * Opaque faces discard covered fragments. Translucent faces only partition
+ * them by the number of nearer layers, so higher ranks paint first.
+ */
+export function composeIsoTranslucentStructure(
+  queue: readonly IsoWallDepthQueueEntry[], camera: IsoCamera, scale: number,
+  masonry: IsoMasonryOpacity, furniture: readonly IsoDepthFurniture[],
+): readonly IsoDepthFragment[] {
+  const key = JSON.stringify([camera,scale,masonry,furniture.map(({footprint,height})=>[footprint,height]),
+    queue.map(entry => entry.layer === 'opening' ? [entry.surface.material,entry.surface.kind,entry.surface.d]
+      : [entry.layer,entry.face.d])]);
+  if (key === transparentKey) return transparentResult;
+  const [x0,y0] = projectPlanPoint([0,0],0,camera);
+  const normalize = (value: number) => Math.round(value / scale * 1e6) / 1e6;
+  const coordinates: ClipCoordinates = {
+    point: ([x,y]) => [normalize(x-x0),normalize(y-y0)], height: normalize,
+  };
+  const restore = ([x,y]:Point):Point => [x*scale+x0,y*scale+y0];
+  const masonryKinds = queue.map(masonrySurface);
+  const faces: (DepthSurface | null)[] = [...queue.map((entry,index) => {
+    const kind = masonryKinds[index];
+    if (kind && masonry[kind] === 0) return null;
+    const face = faceOf(entry,camera,coordinates);
+    if (face && kind) face.opaque = masonry[kind] === 1;
+    return face;
+  }), ...furniture.map(item => furnitureDepthSurface(item,camera,coordinates))];
+  const result: {index:number;d:string;rank:number}[] = [];
+  for (const [index,face] of faces.entries()) {
+    if (!face) continue;
+    let visible = new Map<number, Multi>([[0,face.geom]]);
+    for (const [otherIndex,other] of faces.entries()) {
+      if (index === otherIndex || !other || !visible.size) continue;
+      const a = face.bounds, b = other.bounds;
+      const overlap = [Math.max(a[0],b[0]),Math.max(a[1],b[1]),Math.min(a[2],b[2]),Math.min(a[3],b[3])];
+      if (overlap[2]-overlap[0]<1e-6 || overlap[3]-overlap[1]<1e-6) continue;
+      let delta = other.plane.map((n,k) => n-face.plane[k]) as Plane;
+      const coplanar = other.geom.every(([ring]) => ring.every(point => Math.abs(at(delta,point)) < DEPTH_EPS));
+      // Prefer an opening reveal to its coplanar structural cut end. Other
+      // coincident faces keep their original stable order. Duplicate masonry
+      // in the same plane is one material, so it never darkens itself.
+      if (coplanar) {
+        const current = queue[index], next = queue[otherIndex];
+        const reveal = next?.layer === 'opening' && next.surface.kind === 'jamb-reveal';
+        const currentReveal = current?.layer === 'opening' && current.surface.kind === 'jamb-reveal';
+        if (current?.layer === 'wall-side' && reveal) delta = [0,0,1];
+        else if (currentReveal && next?.layer === 'wall-side') continue;
+        else if (otherIndex > index) delta = [0,0,1];
+        else continue;
+      }
+      const duplicateMasonry = coplanar && masonryKinds[index] !== undefined
+        && masonryKinds[index] === masonryKinds[otherIndex];
+      for (const [ring] of other.geom) {
+        const cover = halfPlane(ring,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
+        if (!cover.length) continue;
+        const next = new Map<number,Multi>();
+        const add = (rank:number, polygons:Multi) => {
+          if (!polygons.length) return;
+          const existing = next.get(rank);
+          if (existing) existing.push(...polygons);
+          else next.set(rank,polygons);
+        };
+        for (const [rank,polygons] of visible) {
+          for (const [subject] of polygons) {
+            const outside = subtractConvex(subject,cover);
+            add(rank,outside);
+            if (outside.length === 1 && outside[0][0] === subject) continue;
+            if (other.opaque || duplicateMasonry) continue;
+            // Clip the current subject to the same convex cover for the
+            // portion visible through this pane or wall.
+            const sign = Math.sign(area(cover));
+            let inside = subject;
+            for (let i = 0; i < cover.length && inside.length; i++) {
+              const p = cover[i], q = cover[(i+1)%cover.length];
+              inside = halfPlane(inside,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
+            }
+            if (inside.length) add(rank+1,[[inside]]);
+          }
+        }
+        visible = next;
+      }
+    }
+    for (const [rank,geom] of visible) result.push({index,rank,d:path(geom,restore)});
+  }
+  result.sort((a,b) => b.rank-a.rank || a.index-b.index);
+  transparentKey = key;
+  transparentResult = result;
+  return result;
+}

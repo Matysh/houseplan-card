@@ -363,7 +363,7 @@ import { controlMotion } from './ui-motion';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
 import type {
-  IsoFramePresentation, IsoOverlayRenderScene, IsoRenderScene, IsoSceneCacheEntry,
+  IsoFramePresentation, IsoFurniturePaint, IsoOverlayRenderScene, IsoRenderScene, IsoSceneCacheEntry,
   IsoStructuralSource,
 } from './iso-scene-render';
 import {
@@ -13292,7 +13292,7 @@ export class HouseplanCard extends LitElement {
       } else this._isoLight.clear();
       const sampleFurnitureLight = isoRuntime?.isoFurnitureLightSampler(isoWallLights, isoScene?.geometry);
       const camera = isoScene?.camera;
-      const furniture = useFurnitureVolume && camera && !disp.hideDecor
+      const furniture: (IsoFurniturePaint & {lift:number;shadow:TemplateResult|typeof nothing})[] = useFurnitureVolume && camera && !disp.hideDecor
         ? this._decorList.filter((item): item is Extract<DecorShape,{kind:'furniture'}> => item.kind === 'furniture')
           .flatMap(item=>{
             const cabinet = item.tv_cabinet_id ? tvCabinet(this._decorList, item) : undefined;
@@ -13310,9 +13310,13 @@ export class HouseplanCard extends LitElement {
       if(iso && camera){
         stairVolumes=this._stairsView.volumeItems(camera);
         for(const [id,volume] of stairVolumes){
-          furniture.push({...volume,lift:0,opacity:1,
+          const item = new Map([[id,volume]]);
+          const transform = isoFloorMatrixCss(camera);
+          const depthPaint = disp.transparentWalls3d && !real3d;
+          furniture.push({...volume,lift:0,
             shadow:furnitureShadow(volume.mesh,scale,false),
-            body:svg`<g transform=${isoFloorMatrixCss(camera)}>${this._stairsView.renderLayer(new Map([[id,volume]]),'volume')}</g>`});
+            body:svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume',depthPaint ? 'paint' : 'all')}</g>`,
+            hit:depthPaint ? svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume','hit')}</g>` : undefined});
         }
         const [,b,,d]=isoFloorMatrix(camera);
         const depth=(item:typeof furniture[number])=>item.footprint.reduce((sum,p)=>sum+b*p[0]+d*p[1],0)/item.footprint.length;
@@ -13324,7 +13328,7 @@ export class HouseplanCard extends LitElement {
       }
       isoFrame = isoRuntime?.resolveIsoFramePresentation({
         projection, display: disp, scene: isoScene, openings: this._openingsR, furniture,
-        wallLights: isoWallLights,
+        wallLights: isoWallLights, transparency: !real3d,
         amountOf: opening => this._openingAmtForProjection(opening, projection), cellCm: this._cellCm,
         visualOf: opening => resolveOpeningVisual(opening,
           eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null,
@@ -13677,7 +13681,7 @@ export class HouseplanCard extends LitElement {
             '--wall-fill': disp.wallFill.c, '--wall-fill-op': String(disp.wallFill.a),
             '--iso-wall-side-op': iso ? String(disp.wallFill.a) : undefined,
             ...(iso ? isoOpeningMaterialVars(disp.openingAccent3d?.c, disp.openingAccent3d?.a) : {}),
-            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.color, disp.wallFill.c, disp.opacity).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
+            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.color, disp.wallFill.c, disp.transparentWalls3d && !real3d ? 1 : disp.opacity).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
           })}
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}

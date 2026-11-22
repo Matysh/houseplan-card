@@ -1739,6 +1739,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("room_color"): _COLOR,
         vol.Optional("name_color"): _APPEARANCE_COLOR,
         vol.Optional("wall_fill"): _APPEARANCE_COLOR,
+        vol.Optional("transparent_walls_3d"): bool,
         vol.Optional("opening_accent_3d"): _APPEARANCE_COLOR,
         # per-space background around the plan; absent = inherit the global one
         vol.Optional("bg_color"): _COLOR,
