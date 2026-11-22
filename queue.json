@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 21061,
-  "nextTicket": 626,
+  "revision": 21062,
+  "nextTicket": 627,
   "nextFence": 626,
   "tasks": {
     "1024": {
@@ -5777,14 +5777,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1522-first-open-server-preview",
-      "materialSha": "9624bf260356a6db38927ff44a1deb67321d192f",
+      "materialSha": "ec73fa6e474fe9e87021f1ead36817beffd89a8d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 625,
-      "queued": false,
+      "ticket": 626,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795374361395,
-      "reviewEntry": 3,
+      "readyAt": 1795376061463,
+      "reviewEntry": 4,
       "patchId": "5fea2e9bbae768254540c4cce98ea4870ade7bb4",
       "changedFiles": [
         "custom_components/houseplan/command_adapter.py",
@@ -5830,20 +5830,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1522:3:5fea2e9bbae768254540c4cce98ea4870ade7bb4:273a176054edeb81b9e36ad60d0265f3d88e0a71",
-      "reviewMaterial": {
-        "materialSha": "9624bf260356a6db38927ff44a1deb67321d192f",
-        "expectedBase": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
-        "patchId": "5fea2e9bbae768254540c4cce98ea4870ade7bb4"
-      },
-      "reviewRetry": {
-        "requestId": "review:1522:3:5fea2e9bbae768254540c4cce98ea4870ade7bb4:273a176054edeb81b9e36ad60d0265f3d88e0a71",
-        "eventId": "github:45059425719:1:tick:0:review-retry",
-        "at": 1795374766344,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1522:3:5fea2e9bbae768254540c4cce98ea4870ade7bb4:273a176054edeb81b9e36ad60d0265f3d88e0a71",
         "at": 1795375296288
@@ -6437,7 +6423,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1522
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6943,6 +6931,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:6efa2e4c-6e4f-4215-b752-81d4f3a41c78": {
+      "digest": "645814cd4214a4171582eb6170c648edb86734df5f2c079294aa0bdc2e93fdf8",
+      "issue": 1522,
+      "message": {
+        "kind": "queued",
+        "issue": 1522,
+        "at": 1795376061463,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "ec73fa6e474fe9e87021f1ead36817beffd89a8d",
+        "evidence": {
+          "id": "20261122T191107337-43f2e1c1",
+          "name": "Тесты для задачи #1522 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261122T191107337-43f2e1c1/report.json",
+          "materialSha": "9624bf260356a6db38927ff44a1deb67321d192f",
+          "status": "passed",
+          "finishedAt": "2026-11-22T19:12:09.851Z",
+          "failures": []
+        }
       }
     }
   },
