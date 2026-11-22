@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20404,
+  "revision": 20405,
   "nextTicket": 611,
   "nextFence": 611,
   "tasks": {
@@ -5616,7 +5616,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1516-surface-view",
-      "materialSha": "2bb7609d2bf6a30db11d69cd0873a67a1402f322",
+      "materialSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 610,
@@ -5624,7 +5624,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795343188162,
       "reviewEntry": 2,
-      "patchId": "c758439828ddd96fa1b414201bb9b89f2445ed7f",
+      "patchId": "73e78a967e2f9573cd15a5920fe46875834c3f1c",
       "changedFiles": [
         "custom_components/houseplan/command_adapter.py",
         "custom_components/houseplan/core/validation.py",
@@ -5651,6 +5651,7 @@
         "scripts/config-compatibility-inventory.json",
         "scripts/config-field-registry.mjs",
         "scripts/config-schema.json",
+        "scripts/mutation-registry.mjs",
         "scripts/support-relay/README.md",
         "scripts/support-relay/hp_relay/support_wire_schema.py",
         "src/card-editor-validation.ts",
@@ -6392,11 +6393,12 @@
     "worker": "finish",
     "token": "610:finish:504bc629-7831-4a8d-9970-388f758069fe:finish:1:admit",
     "fence": 610,
-    "materialSha": "2bb7609d2bf6a30db11d69cd0873a67a1402f322",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
+    "expectedBase": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
+    "phase": "testing",
     "admittedAt": 1795346199138,
-    "expiresAt": 1795346499138
+    "expiresAt": 1795346508812,
+    "patchId": "73e78a967e2f9573cd15a5920fe46875834c3f1c"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6878,6 +6880,10 @@
     "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:4:return": {
       "digest": "98f4ba8730b0ea9683ef37c6ae14931c4c75f1dd889369d6ef34db1d86485a89",
       "issue": 1517
+    },
+    "finish:504bc629-7831-4a8d-9970-388f758069fe:finish:2:synchronized": {
+      "digest": "d2d9900b41608f58dc356d55ce76a2afa65282838e52dcb138bbada9de15cb47",
+      "issue": 1516
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
