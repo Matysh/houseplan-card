@@ -111,6 +111,7 @@ export async function serializeStartupFloor(source: SVGSVGElement, readImage: Re
   const todo: Array<[Element, SVGElement]> = [[source, output]];
   const images = new Map<string, string>();
   const excluded = portable ? new Set<Element>() : undefined;
+  const paintInputs = new Map<Element, Record<string, string>>();
   let slice = performance.now(), vectorBytes = 0, imageBytes = 0;
   for (let index = 0; index < todo.length; index++) {
     if (todo.length > 25_000) throw Error('vector-size');
@@ -122,6 +123,12 @@ export async function serializeStartupFloor(source: SVGSVGElement, readImage: Re
     if (input !== source && css.display === 'none' && !input.closest('defs')) { node.remove(); continue; }
     if (excluded && input.matches('.iso-opening-panel[data-leaf],.iso-opening-texture,.iso-material-texture,[data-hp-live-opening]'))
       excluded.add(node);
+    if (portable && tag === 'path') {
+      const stroke = input.getAttribute('data-hp-startup-stroke'), depth = input.getAttribute('data-hp-startup-wall-depth'),
+        hatch = input.getAttribute('data-hp-startup-hatch-step');
+      if (stroke !== null) paintInputs.set(node, { 'hp-stroke-units': stroke });
+      if (depth !== null && hatch !== null) paintInputs.set(node, { 'hp-wall-depth': depth, 'hp-hatch-step': hatch });
+    }
     for (const attr of input.attributes) {
       const value = attr.value;
       if (attr.localName === 'href' && tag === 'image') {
@@ -161,7 +168,7 @@ export async function serializeStartupFloor(source: SVGSVGElement, readImage: Re
   }
   signal.throwIfAborted();
   if (portable && excluded) {
-    try { portable(startupVector(output, excluded)); }
+    try { portable(startupVector(output, excluded, paintInputs)); }
     catch { /* a local image is still usable without a portable packet */ }
   }
   if (portable && vectorBytes > STARTUP_VECTOR_LIMIT) return null;

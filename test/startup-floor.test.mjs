@@ -112,6 +112,21 @@ test('#1520 explicit A→B→A retirement fences work even if no intermediate vi
 
 const portable = { ...selection, remote:{source:['c','l'],variant:'fit',projection:'iso',rotation:45} };
 
+test('#1522 optional fit is no longer recalculated in steady View after one accepted write', async({mock})=>{
+  mock.timers.enable({apis:['setTimeout']});
+  const h=harness({publish:async()=>true});
+  h.set(portable);
+  h.owner.publishedLive();
+  const wants=(source=portable.remote.source)=>h.owner.wantsPortable(portable.scope,portable.floor,'iso',45,source);
+  assert.equal(wants(),true);
+  h.owner.capture(portable,async()=>({...packet,geometry:{}}),()=>true);
+  mock.timers.tick(200);await flush();
+  assert.equal(h.owner.facts.remote,'stored');
+  assert.equal(wants(),false);
+  assert.equal(wants(['newer','layout']),true);
+  h.owner.dispose();
+});
+
 test('#1522 a browser entry is tried first and no remote read is made after a hit', async()=>{
   const h=harness({read:async()=>assert.fail('a browser hit must not call HA')});
   h.set(portable);

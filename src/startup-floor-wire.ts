@@ -1,4 +1,6 @@
 import { validFloorPreview, type FloorFitPacket } from './floor-cache-preview';
+import { furniturePlanScreenScale, furnitureStrokePx } from './furniture';
+import { wallBodyNeedsSolid, wallHatchNeedsSolid } from './wall-thickness';
 
 // No markup, text, images, foreign resources or editable plan objects cross
 // the server boundary. Match the HA adapter's closed format.
@@ -20,6 +22,7 @@ const tags = new Set(('svg g defs path rect circle ellipse line polyline polygon
   + 'pattern filter feGaussianBlur feOffset feColorMatrix feFlood feComposite feMerge feMergeNode feMorphology use').split(' '));
 const geometry = new Set(('d points x y x1 y1 x2 y2 width height rx ry r cx cy dx dy transform '
   + 'viewBox gradientTransform patternTransform offset fx fy fr stdDeviation values').split(' '));
+const paintInputs = new Set(['hp-stroke-units', 'hp-wall-depth', 'hp-hatch-step']);
 const attributes = new Set(('id preserveAspectRatio vector-effect clip-rule fill-rule stroke-linecap stroke-linejoin stroke-miterlimit '
   + 'gradientUnits patternUnits patternContentUnits filterUnits primitiveUnits color-interpolation-filters '
   + 'in in2 result type operator k1 k2 k3 k4 maskUnits maskContentUnits marker-start marker-mid marker-end href '
@@ -30,6 +33,9 @@ const safeNumber = (value: unknown): value is number => typeof value === 'number
 const plainObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 export const isStartupSourceStamp = (value: unknown): value is string => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
 export function validStartupVectorAttr(tag: string, key: string, value: unknown): value is string {
+  if (paintInputs.has(key)) return tag === 'path' && typeof value === 'string'
+    && value.length <= 42 && /^\d+(?:\.\d*)?(?:e[-+]?\d+)?$/i.test(value) && safeNumber(Number(value))
+    && (key === 'hp-wall-depth' || Number(value) > 0);
   if ((!geometry.has(key) && !attributes.has(key)) || typeof value !== 'string' || value.length > 520_000) return false;
   if (key === 'id') return localRef.test('#' + value);
   if (key === 'href') return tag === 'use' && localRef.test(value);
@@ -69,7 +75,8 @@ export function validStartupGeometry(value: unknown, address: Pick<StartupRemote
 
 /** Copy the already resolved detached paint, not the source plan or a
  * clipped viewport. The caller marks stateful opening parts as local-only. */
-export function startupVector(root: Element, excluded: ReadonlySet<Element>): StartupVector[] {
+export function startupVector(root: Element, excluded: ReadonlySet<Element>,
+  inputs: ReadonlyMap<Element, Record<string, string>>): StartupVector[] {
   let count = 0;
   const visit = (element: Element, depth: number): StartupVector[] => {
     if (++count > 25_000 || depth > 48) throw Error('vector-size');
@@ -78,6 +85,15 @@ export function startupVector(root: Element, excluded: ReadonlySet<Element>): St
     const a: Record<string, string> = {};
     for (const attr of element.attributes) {
       if (validStartupVectorAttr(element.localName, attr.name, attr.value)) a[attr.name] = attr.value;
+    }
+    const paint = inputs.get(element);
+    if (paint) {
+      for (const [name, value] of Object.entries(paint)) {
+        if (!validStartupVectorAttr(element.localName, name, value)) throw Error('unsupported-vector');
+        a[name] = value;
+      }
+      if (a['hp-stroke-units'] !== undefined) delete a['stroke-width'];
+      if (a['hp-wall-depth'] !== undefined) delete a.fill;
     }
     return [[element.localName, a, Array.from(element.children).flatMap(child => visit(child, depth + 1))]];
   };
@@ -151,7 +167,7 @@ export async function decodeStartupGeometry(encoded: unknown, address: StartupRe
       || !tags.has(row[0]) || !plainObject(row[1]) || !Array.isArray(row[2])) throw Error('unsupported-vector');
     const attrs: Record<string, string> = {};
     for (const [name, index] of Object.entries(row[1])) {
-      if (!geometry.has(name) && !attributes.has(name)
+      if (!geometry.has(name) && !attributes.has(name) && !paintInputs.has(name)
         || typeof index !== 'number' || !Number.isSafeInteger(index) || index < 0 || index >= pool.length)
         throw Error('unsupported-vector');
       const value = pool[index];
@@ -175,10 +191,22 @@ export function startupGeometryImage(packet: StartupGeometry, size: readonly [nu
   view: {x: number; y: number; w: number; h: number}): Blob {
   const parts: string[] = [`<svg xmlns="${STARTUP_SVG_NS}" width="${size[0]}" height="${size[1]}"
     viewBox="${view.x} ${view.y} ${view.w} ${view.h}">`];
+  const furnitureScale = furniturePlanScreenScale(...size, view.w, view.h);
+  const wallScale = Math.round(size[0] / view.w * 1e6) / 1e6;
   const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   const add = ([tag, a, children]: StartupVector) => {
     parts.push('<' + tag);
-    for (const [name, value] of Object.entries(a)) parts.push(' ' + name + '="' + escape(value) + '"');
+    for (const [name, value] of Object.entries(a)) {
+      if (paintInputs.has(name) || name === 'stroke-width' && a['hp-stroke-units'] !== undefined
+        || name === 'fill' && a['hp-wall-depth'] !== undefined) continue;
+      parts.push(' ' + name + '="' + escape(value) + '"');
+    }
+    if (a['hp-stroke-units'] !== undefined)
+      parts.push(` stroke-width="${furnitureStrokePx(Number(a['hp-stroke-units']), furnitureScale)}"`);
+    if (a['hp-wall-depth'] !== undefined) {
+      const solid = wallBodyNeedsSolid(Number(a['hp-wall-depth']), wallScale) || wallHatchNeedsSolid(Number(a['hp-hatch-step']), wallScale);
+      parts.push(` fill="${solid ? 'none' : 'url(#hp-wall-hatch)'}"`);
+    }
     if (!children.length) { parts.push('/>'); return; }
     parts.push('>');
     for (const child of children) add(child);

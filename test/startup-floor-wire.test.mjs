@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { gzipSync } from 'node:zlib';
-import { decodeStartupGeometry, encodeStartupGeometry, validStartupGeometry } from '../test-build/startup-floor-wire.js';
+import { decodeStartupGeometry, encodeStartupGeometry, startupGeometryImage, validStartupGeometry } from '../test-build/startup-floor-wire.js';
 import { isoDeviceFitInputs } from '../test-build/iso-overlay-fit-inputs.js';
 
 const rect = { x: 0, y: 0, w: 1000, h: 500 };
@@ -39,6 +39,21 @@ test('#1522 repeated furniture paths stay under the wire bound without allowing 
   assert.deepEqual(await decodeStartupGeometry(encoded, address, signal), room);
   const oversized = await encodeStartupGeometry({ ...room, nodes: Array.from({length:600}, () => path) }, signal);
   assert.equal(await decodeStartupGeometry(oversized,address,signal),null);
+});
+
+test('#1522 the same geometry uses the receiver’s stroke and wall-hatch policy', async () => {
+  const styled = { ...valid, nodes: [
+    ['path', {d:'M 1 1 L 2 2', 'hp-stroke-units':'2', 'vector-effect':'non-scaling-stroke'}, []],
+    ['path', {d:'M 0 0 L 3 0 Z', 'hp-wall-depth':'8', 'hp-hatch-step':'8'}, []],
+  ] };
+  const packet = await decodeStartupGeometry(await encodeStartupGeometry(styled, signal), address, signal);
+  const wide = await startupGeometryImage(packet,[1000,500],rect).text();
+  const narrow = await startupGeometryImage(packet,[250,125],rect).text();
+  assert.match(wide, /stroke-width="2"/);
+  assert.match(narrow, /stroke-width="0\.5"/);
+  assert.match(wide, /fill="url\(#hp-wall-hatch\)"/);
+  assert.match(narrow, /fill="none"/);
+  assert.doesNotMatch(wide+narrow, /hp-(stroke-units|wall-depth|hatch-step)=/);
 });
 
 test('#1522 use the live numeric footprint for badges, LQI and pulse, never the values', () => {

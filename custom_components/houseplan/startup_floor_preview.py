@@ -40,6 +40,7 @@ VALUE = re.compile(r"[A-Za-z0-9#_.:,() /%+\-\s]*", re.ASCII)
 NUMBERS = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?", re.ASCII)
 GEOMETRY = frozenset(("d points x y x1 y1 x2 y2 width height rx ry r cx cy dx dy transform "
                       "viewBox gradientTransform patternTransform offset fx fy fr stdDeviation values").split())
+PAINT_INPUTS = frozenset(("hp-stroke-units", "hp-wall-depth", "hp-hatch-step"))
 TAGS = frozenset(("svg g defs path rect circle ellipse line polyline polygon clipPath mask linearGradient "
                   "radialGradient stop pattern filter feGaussianBlur feOffset feColorMatrix feFlood feComposite "
                   "feMerge feMergeNode feMorphology use").split())
@@ -93,6 +94,10 @@ def _valid_fit(fit, projection, rotation) -> bool:
 
 
 def _valid_attribute(tag, key, value):
+    if key in PAINT_INPUTS:
+        return (tag == "path" and isinstance(value, str) and len(value) <= 42
+                and bool(re.fullmatch(r"\d+(?:\.\d*)?(?:e[-+]?\d+)?", value, re.I | re.ASCII))
+                and 0 <= float(value) <= 10_000_000 and (key == "hp-wall-depth" or float(value) > 0))
     if key not in ATTRS or not isinstance(value, str) or len(value) > 520_000:
         return False
     if key == "href":

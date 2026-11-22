@@ -49,11 +49,21 @@ def wire(nodes=None, **extra):
     [["path", {"d": "M NaN Infinity"}, []]],
     [["path", {"d": "M 1 2 Z", "onclick": "alert(1)"}, []]],
     [["rect", {"width": "1", "filter": "url (foo)"}, []]],
+    [["rect", {"hp-stroke-units": "0.25"}, []]],
+    [["path", {"hp-stroke-units": "1e999"}, []]],
+    [["path", {"hp-hatch-step": "0"}, []]],
 ])
 def test_closed_render_schema(nodes):
     assert validate_preview(wire(), "flat", 0) > 0
     with pytest.raises(ValueError):
         validate_preview(wire(nodes), "flat", 0)
+
+
+def test_finite_plan_units_for_receiver_paint():
+    assert validate_preview(wire([
+        ["path", {"d": "M 0 0 L 3 0 Z", "hp-stroke-units": "2.5e-2"}, []],
+        ["path", {"d": "M 0 0 L 3 0 Z", "hp-wall-depth": "0", "hp-hatch-step": "8"}, []],
+    ]), "flat", 0) > 0
 
 
 async def test_preview_scope_survives_reload_but_not_equal_rev_restore(

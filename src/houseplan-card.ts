@@ -2968,7 +2968,8 @@ export class HouseplanCard extends LitElement {
       envStyle, this._presentation.language, window.innerWidth, window.innerHeight, window.devicePixelRatio,
       this._effectiveKioskScale.icon, this._effectiveKioskScale.font];
     const proof = this._startupSourceProof;
-    const portable = proof && proof.authority === this.planHost.authorityKey && startupWireAvailable();
+    const portable = proof && proof.authority === this.planHost.authorityKey && startupWireAvailable()
+      && this._startupFloor?.wantsPortable(scope, floor, projection, rotation, proof.source) !== false;
     const dynamic = portable ? [proof, this._displayDevices, this._renderDeviceSnapshot, env.states,
       this._renderPlanHass.states, this._haRegistry, this._deviceContacts?.scene, this._showHidden, this._startupCameraBusy()] : [];
     const inputs = [this.planHost.authorityKey, env.connectionRevision, scope, floor, this._cfgRev,
@@ -3031,7 +3032,8 @@ export class HouseplanCard extends LitElement {
     // reference; the previous session's placement is not a camera proof.
     if (value && selection && this._centerSummary) {
       const target = this._startupColdCamera(selection, value.fit.base, value.remote ? value.fit : undefined);
-      if (!target || !sameCameraState(target, { zoom: value.zoom, viewBox: value.view })) {
+      if (!target) value = undefined; // Keep the decoded hit until the panel is measured.
+      else if (!sameCameraState(target, { zoom: value.zoom, viewBox: value.view })) {
         this._startupFloor?.skipImage(); value = undefined;
       }
     }
@@ -3167,6 +3169,12 @@ export class HouseplanCard extends LitElement {
       }, 160);
     }
     this._refreshStartupSource(selection);
+    const proof = this._startupSourceProof;
+    if (!selection.remote && proof?.authority === selection.authority && proof.revision === selection.revision
+      && !this._startupCameraBusy()) {
+      const projection = this._desiredProjection;
+      store.finishPortable(selection.scope, selection.floor, projection, this._rotationForProjection(projection), proof.source);
+    }
     if (!store.canCapture(selection) || this._startupCameraBusy()) return;
     const base = [...this._baseVb()], cold = this._startupColdCamera(selection, base);
     const camera = { zoom: this._zoom, viewBox: { ...this._cameraView(base) } };
@@ -11317,6 +11325,7 @@ export class HouseplanCard extends LitElement {
         );
         const draw = (d: string, transform: string | typeof nothing) => svg`<path class="${cls} dfurn" data-hp="decor" data-id="${sh.id}"
           data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${transform}
+          data-hp-startup-stroke=${staticOnly ? strokeWidth : nothing}
           stroke="${style.color}" stroke-opacity="${style.opacity}"
           stroke-width="${visibleStrokePx}" fill="none"
           stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"
@@ -11849,6 +11858,8 @@ export class HouseplanCard extends LitElement {
           stroke="none" pointer-events="none"></path>
         <path class="wallbody ${solid ? 'solid' : ''}"
           data-hp="wall" data-id="union" data-kind="union" data-component=${component.id}
+          data-hp-startup-wall-depth=${canonical ? united.depthUnits : nothing}
+          data-hp-startup-hatch-step=${canonical ? wallHatchStepUnits(this._cellCm) : nothing}
           d="${component.d}" fill="${solid ? 'none' : 'url(#hp-wall-hatch)'}"
           fill-rule=${component.fillRule}
           stroke="${stroke}" stroke-width="${gridVisualUnits(0.6, this._cellCm)}"

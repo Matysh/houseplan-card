@@ -16,6 +16,8 @@ export interface StartupRemoteSource {
   publish(selection: StartupSelection, packet: StartupGeometry, signal: AbortSignal): Promise<boolean>;
 }
 const key = (s: StartupSelection) => JSON.stringify([s.scope, s.floor, s.variant, s.revision]);
+const portableKey = (scope: string, floor: string, projection: string, rotation: number, source: readonly string[]) =>
+  JSON.stringify([scope, floor, projection, rotation, source[0], source[1]]);
 const same = (a: StartupSelection, b: StartupSelection) =>
   a.authority === b.authority && a.connection === b.connection && a.zoomHint === b.zoomHint && key(a) === key(b)
   && a.remote?.variant === b.remote?.variant && a.remote?.source[0] === b.remote?.source[0]
@@ -32,7 +34,21 @@ export class StartupFloor {
   private readonly written = new Set<string>();
   private readonly published = new Set<string>();
   private remoteId(s: StartupSelection) {
-    return JSON.stringify([s.scope, s.floor, s.remote?.source, s.remote?.variant]);
+    const remote = s.remote;
+    return remote ? portableKey(s.scope, s.floor, remote.projection, remote.rotation, remote.source) : '';
+  }
+  /** Revalidate volatile fit while cold or capturing, not on every state tick
+   * after this accepted content has been considered for a background write. */
+  wantsPortable(scope: string, floor: string, projection: string, rotation: number, source: readonly string[]): boolean {
+    return this.awaitsLive || !this.published.has(portableKey(scope, floor, projection, rotation, source));
+  }
+  finishPortable(scope: string, floor: string, projection: string, rotation: number, source: readonly string[]): void {
+    this.rememberPortable(portableKey(scope, floor, projection, rotation, source));
+  }
+  private rememberPortable(id: string): void {
+    if (!id) return;
+    this.published.add(id);
+    if (this.published.size > 32) this.published.delete(this.published.values().next().value!);
   }
   private ready = false;
   private disposed = false;
@@ -150,13 +166,12 @@ export class StartupFloor {
         if (portable && current()) {
           // Record this attempt separately: an old IDB hit must still be
           // allowed to seed the server once without a canonical plan save.
-          this.published.add(remoteId);
-          if (this.published.size > 32) this.published.delete(this.published.values().next().value!);
           if (geometry) {
             this.facts.remote = this.facts.remote === 'shown' ? 'shown' : 'publishing';
             const ok = await this.remote!.publish(selection, geometry, owner.abort.signal);
             if (current() && this.facts.remote !== 'shown') this.facts.remote = ok ? 'stored' : 'unavailable';
           } else if (this.facts.remote !== 'shown') this.facts.remote = 'unsupported-vector';
+          if (current()) this.rememberPortable(remoteId);
         }
       } catch (error) {
         if (current()) {
@@ -164,6 +179,7 @@ export class StartupFloor {
           this.facts.capture = ['vector-size','asset-size','asset-format','asset-unavailable','asset-bounds','unsupported-vector'].includes(message)
             ? message : 'unavailable';
           remember();
+          this.rememberPortable(this.remoteId(selection));
         }
       } finally {
         if (this.writing === owner) this.writing = undefined;
