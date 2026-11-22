@@ -214,6 +214,8 @@ export interface IsoOpeningSurface {
   depth: number;
   jamb?: 0 | 1;
   edge?: 'hinge' | 'tip';
+  /** Host-interior or back-facing surface retained by the opaque renderer. */
+  hiddenInTranslucentMasonry?: boolean;
 }
 
 export interface IsoOpeningPanel {
@@ -432,6 +434,8 @@ export function buildIsoOpeningBasis(
 const pointText = (point: ScenePoint): string =>
   `${Number(point[0].toFixed(4))} ${Number(point[1].toFixed(4))}`;
 
+type IsoOpeningSurfaceMetadata = Pick<IsoOpeningSurface, 'jamb' | 'edge' | 'hiddenInTranslucentMasonry'>;
+
 export interface IsoSpatialPoint {
   point: PlanPoint;
   z: number;
@@ -442,7 +446,7 @@ function projectedSurface(
   material: IsoOpeningMaterial,
   points: readonly IsoSpatialPoint[],
   camera: IsoCamera,
-  metadata: Pick<IsoOpeningSurface, 'jamb' | 'edge'> = {},
+  metadata: IsoOpeningSurfaceMetadata = {},
 ): IsoOpeningSurface {
   const projected = points.map((value) => projectPlanPoint(value.point, value.z, camera));
   const cameraDepth = points.reduce((sum, value) => sum
@@ -466,7 +470,7 @@ function verticalSurface(
   bottom: number,
   top: number,
   camera: IsoCamera,
-  metadata: Pick<IsoOpeningSurface, 'jamb' | 'edge'> = {},
+  metadata: IsoOpeningSurfaceMetadata = {},
 ): IsoOpeningSurface {
   return projectedSurface(kind, material, [
     { point: a, z: bottom },
@@ -538,13 +542,16 @@ function openingPrism(
   sideKind: IsoOpeningSurfaceKind, topKind: IsoOpeningSurfaceKind,
   sideMaterial: IsoOpeningMaterial, topMaterial: IsoOpeningMaterial,
   camera: IsoCamera, undersideKind?: IsoOpeningSurfaceKind,
+  visibleSides?: readonly boolean[],
 ): IsoOpeningSurface[] {
   if (!(top > bottom)) return [];
   const result = ring.map((a,i) => verticalSurface(sideKind, sideMaterial,
-    a, ring[(i+1)%ring.length], bottom, top, camera));
+    a, ring[(i+1)%ring.length], bottom, top, camera,
+    visibleSides && !visibleSides[i] ? { hiddenInTranslucentMasonry:true } : undefined));
   result.push(projectedSurface(topKind, topMaterial, ring.map(point=>({point,z:top})), camera));
   if (undersideKind) result.push(projectedSurface(undersideKind, sideMaterial,
-    [...ring].reverse().map(point=>({point,z:bottom})), camera));
+    [...ring].reverse().map(point=>({point,z:bottom})), camera,
+    { hiddenInTranslucentMasonry:true }));
   return result;
 }
 
@@ -564,11 +571,17 @@ export function projectIsoOpeningMasonry(basis: IsoOpeningBasis, camera: IsoCame
   const volume = isoOpeningMasonry(basis);
   if (!volume) return [];
   const {ring, bottom, top} = volume;
+  // Both end faces meet the host wall. Only its camera-facing exterior
+  // continues through the opening apron or lintel as exposed masonry.
+  const [cos,sin] = isoRotationBasis(camera);
+  const [ox,oy] = basis.face.offset;
+  const facing = ox*sin + oy*cos;
+  const visibleSides = [facing > 1e-9, false, facing < -1e-9, false];
   return Object.freeze(basis.type === 'window'
     ? openingPrism(ring, bottom, top,
-      'window-apron-side','window-apron-top','wall-side','wall-top',camera)
+      'window-apron-side','window-apron-top','wall-side','wall-top',camera,undefined,visibleSides)
     : openingPrism(ring, bottom, top,
-      'opening-lintel-side','opening-lintel-top','wall-side','wall-top',camera,'opening-lintel-underside'));
+      'opening-lintel-side','opening-lintel-top','wall-side','wall-top',camera,'opening-lintel-underside',visibleSides));
 }
 
 /**
@@ -591,10 +604,15 @@ export function projectIsoOpeningStructure(
       {jamb:0 as const,selected:basis.face.selectedStart,opposite:basis.face.oppositeStart},
       {jamb:1 as const,selected:basis.face.selectedEnd,opposite:basis.face.oppositeEnd},
     ] : basis.reveals;
+    const [cos,sin] = isoRotationBasis(camera);
+    const [tx,ty] = basis.axis.tangent;
+    const along = tx*sin + ty*cos;
     for (const reveal of reveals) {
+      // Each jamb faces into the aperture, in opposite directions along the wall.
+      const facing = reveal.jamb === 0 ? along : -along;
       surfaces.push(verticalSurface(
         'jamb-reveal', 'reveal', reveal.selected, reveal.opposite,
-        lower, upper, camera, { jamb: reveal.jamb },
+        lower, upper, camera, { jamb: reveal.jamb, hiddenInTranslucentMasonry: facing <= 1e-9 },
       ));
     }
   }
