@@ -3002,6 +3002,17 @@ export class HouseplanCard extends LitElement {
       });
   }
 
+  /** Separate optional idle capture from the live frame's failure boundary. */
+  private _startupIsoFrame(display: SpaceDisplay, scene: IsoRenderScene | null,
+    furniture?: () => IsoFurniturePaint[]): IsoFramePresentation | null {
+    return this._isoSceneRuntime?.resolveIsoFramePresentation({
+      projection: 'iso', display, scene, openings: this._openingsR.filter(o => !o.orphanReason),
+      cellCm: this._cellCm, amountOf: opening => resolvedOpeningAmount(opening, () => null),
+      visualOf: opening => resolveOpeningVisual(opening, () => null, resolvedOpeningAmount(opening, () => null)),
+      overlays: () => null, furniture: furniture?.(), wallLights: [],
+    }) ?? null;
+  }
+
   private async _captureStartupSvg(stage: HTMLElement, source: () => TemplateResult[], signal: AbortSignal): Promise<Blob> {
     const container = this.ownerDocument.createElement('div'), shell = this.ownerDocument.createElement('div');
     const wrap = this.ownerDocument.createElement('div'); wrap.className = 'zoomwrap';
@@ -13985,12 +13996,7 @@ export class HouseplanCard extends LitElement {
       const transform = this._floorTransform;
       const floorLayer = (content: unknown) => svg`<g class=${iso ? 'iso-floor-scene' : nothing} transform=${transform}>${content}</g>`;
       this._startupSource = () => {
-        const neutral = iso && isoRuntime ? isoRuntime.resolveIsoFramePresentation({
-          projection, display: disp, scene: isoScene, openings: this._openingsR.filter(o => !o.orphanReason),
-          cellCm: this._cellCm, amountOf: opening => resolvedOpeningAmount(opening, () => null),
-          visualOf: opening => resolveOpeningVisual(opening, () => null, resolvedOpeningAmount(opening, () => null)),
-          overlays: () => null, furniture: startupFurniture?.(), wallLights: [],
-        }) : null;
+        const neutral = iso ? this._startupIsoFrame(disp, isoScene, startupFurniture) : null;
         const fragments: TemplateResult[] = [];
         if (neutral?.layers.structural) fragments.push(svg`<g class="iso-underlay-svg">${neutral.underlay}</g>`);
         fragments.push(floorLayer(svg`${wallHatch}${renderPaperShapes(paperShapes)}`));

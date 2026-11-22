@@ -8,8 +8,8 @@ import {html, nothing} from 'lit';
 // absent, so a loading-screen fix cannot start a canonical scene pull.
 const source=ts.createSourceFile('card.ts',readFileSync(new URL('../src/houseplan-card.ts',import.meta.url),'utf8'),ts.ScriptTarget.Latest,true);
 const methods=[];
-function visit(node){if(ts.isMethodDeclaration(node)&&['_renderPendingFloor','_renderStageEnvironment'].includes(node.name.getText(source)))methods.push(node.getText(source));ts.forEachChild(node,visit);}
-visit(source);assert.equal(methods.length,2);
+function visit(node){if(ts.isMethodDeclaration(node)&&['_renderPendingFloor','_renderStageEnvironment','_renderStartupFloor','_startupStatus'].includes(node.name.getText(source)))methods.push(node.getText(source));ts.forEachChild(node,visit);}
+visit(source);assert.equal(methods.length,4);
 const code=ts.transpileModule(`export class Fixture { ${methods.join('\n')} }`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
 function harness(projection,dayCycle,hasPreview=true){
   const exports={},calls={environment:[],preview:0},moon={kind:'moon'},global={moon:true};
@@ -42,4 +42,14 @@ test('#1490 Flat keeps its passive preview; static background stays a stage styl
   const h=harness('flat',null);const result=h.card._renderPendingFloor();
   assert.equal(h.calls.preview,1);
   assert.ok(result.values.some(value=>value?.background==='#1b2d50'));
+});
+test('#1520 cold SVG and numeric silhouette never compete for the same pending stage',()=>{
+  const h=harness('flat',{phase:'night'});
+  h.card._startupFloor={awaitsLive:true};
+  h.card._startupStyle={value:{url:'blob:verified'}};
+  const result=h.card._renderPendingFloor();
+  assert.equal(h.calls.preview,0);
+  assert.equal(h.calls.environment.length,1);
+  assert.ok(result.values.some(value=>value?.strings?.join('').includes('class="hp-startup-view"')));
+  assert.ok(result.values.some(value=>value?.strings?.join('').includes('floor-preparation-status')));
 });
