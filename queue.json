@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20740,
-  "nextTicket": 618,
+  "revision": 20741,
+  "nextTicket": 619,
   "nextFence": 618,
   "tasks": {
     "1024": {
@@ -5737,14 +5737,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1520-static-floor-start",
-      "materialSha": "15853d335dab075caa990fc33027b1544fd85493",
+      "materialSha": "2a4cb0a37be86072052d4559a12cdc6278523753",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 617,
-      "queued": false,
+      "ticket": 618,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795354248053,
-      "reviewEntry": 1,
+      "readyAt": 1795355085295,
+      "reviewEntry": 2,
       "patchId": "a8b275ffa35ba7416f3e0e67320e82fd181f2b7d",
       "changedFiles": [
         "demo/smoke_startup_floor.mjs",
@@ -5759,7 +5759,6 @@
         "src/styles/plan.styles.ts",
         "test/startup-floor.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6360,7 +6359,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1520
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6604,6 +6605,19 @@
           "detail": "Критичные данные, сохранение и права: failed; Поведение: test/floor-cache-day-cycle.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed",
           "eventId": "finish:62d91283-82a3-45be-980a-9c42edc4c58e:finish:3:return:return:1520"
         }
+      }
+    },
+    "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3": {
+      "digest": "0979897c9278212472ee62d6b87000d8c2aeec718f564d74b3df333f194c249a",
+      "issue": 1520,
+      "message": {
+        "kind": "queued",
+        "issue": 1520,
+        "at": 1795355085295,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "2a4cb0a37be86072052d4559a12cdc6278523753"
       }
     }
   },
