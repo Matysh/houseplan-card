@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20275,
+  "revision": 20276,
   "nextTicket": 609,
   "nextFence": 608,
   "tasks": {
@@ -5623,7 +5623,60 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795340270583,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c758439828ddd96fa1b414201bb9b89f2445ed7f",
+      "changedFiles": [
+        "custom_components/houseplan/command_adapter.py",
+        "custom_components/houseplan/core/validation.py",
+        "custom_components/houseplan/support_config_projection.py",
+        "custom_components/houseplan/support_wire_schema.py",
+        "demo/golden/harness.mjs",
+        "demo/smoke_external_screens.mjs",
+        "demo/smoke_floor_persistent_cache.mjs",
+        "demo/smoke_iso_flat_parity.mjs",
+        "demo/smoke_native_card_presentation.mjs",
+        "demo/smoke_plan_rotation.mjs",
+        "demo/smoke_static_wall_openings.mjs",
+        "demo/srv/fixture-state.js",
+        "demo/ui-lab/mock-ha.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.86.0/1516.json",
+        "process-next/lib/source-dependencies.mjs",
+        "process-next/lib/task-selection.mjs",
+        "scripts/config-compatibility-catalog.mjs",
+        "scripts/config-compatibility-inventory.json",
+        "scripts/config-field-registry.mjs",
+        "scripts/config-schema.json",
+        "scripts/support-relay/README.md",
+        "scripts/support-relay/hp_relay/support_wire_schema.py",
+        "src/card-editor-validation.ts",
+        "src/card-rotation-preference.ts",
+        "src/editor.ts",
+        "src/editors/external-screens.ts",
+        "src/external-screens.ts",
+        "src/houseplan-card.ts",
+        "src/i18n/settings/de.json",
+        "src/i18n/settings/en.json",
+        "src/i18n/settings/fr.json",
+        "src/i18n/settings/ru.json",
+        "src/panel-route-kiosk.ts",
+        "src/summary-panel-identity.ts",
+        "src/types.ts",
+        "src/version-recovery-card.ts",
+        "test/card-editor-validation.test.mjs",
+        "test/card-rotation-preference.test.mjs",
+        "test/external-screen-views.test.mjs",
+        "test/external-screens.test.mjs",
+        "test/isometric-contract.test.mjs",
+        "test/version-recovery-card.test.mjs",
+        "tests_backend/test_external_screens.py",
+        "tests_backend/test_ha_external_screens_websocket.py",
+        "tests_backend/test_support_config_projection.py"
+      ]
     },
     "1517": {
       "issue": 1517,
@@ -6360,10 +6413,11 @@
     "token": "607:finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:1:admit",
     "fence": 607,
     "materialSha": "fb7e68b467fe8f663e230057323e681ca242de19",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c633b67b1a283ef013c3497641c5bcdf41884c87",
+    "phase": "testing",
     "admittedAt": 1795341500823,
-    "expiresAt": 1795341800823
+    "expiresAt": 1795341806832,
+    "patchId": "c758439828ddd96fa1b414201bb9b89f2445ed7f"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6873,6 +6927,10 @@
     "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return": {
       "digest": "b6283e2842b6a85e24082f6acfbb0fb38284c124a6c2d3985da5cbaedfb0a8cb",
       "issue": 1517
+    },
+    "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:2:synchronized": {
+      "digest": "af894eacf859e72102ac11bde1ea2968129c2a7368e456e749c79dbbc85a13b4",
+      "issue": 1516
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
