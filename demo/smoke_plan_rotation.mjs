@@ -43,7 +43,7 @@ try {
       { id: 'f2', title: 'Other', cell_cm: 5, rooms: [], decor: [] }],
       markers: [{ id: 'plain', binding: 'entity:sensor.living_temp', space: 'f1', name: 'Plain', icon: 'mdi:home',
         value_badge: { enabled: true, source: { kind: 'entity_state', entity_id: 'sensor.living_temp' }, position: 'right' } },
-        { id: 'angled', binding: 'virtual', space: 'f1', name: 'Angled', icon: 'mdi:arrow-up', angle: 30 }],
+        { id: 'angled', binding: 'virtual', space: 'f1', name: 'Angled', icon: 'mdi:arrow-up', angle: 30, tap_action: 'info' }],
       settings: { filter_seeded: true, volumetric_view: false } });
     await window.__hpTest.setLayout({ plain: { s: 'f1', x: .25, y: .3 }, angled: { s: 'f1', x: .7, y: .3 } });
     await window.__hpTest.switchSpace('f1');
@@ -139,7 +139,14 @@ try {
     check('ISO accepted physical camera ' + logical,
       Number(await card.locator('svg.plan-svg').first().getAttribute('data-yaw')) === yawByRotation.get(logical));
     sides.push(await card.locator('.iso-walls-svg').evaluate(svg => svg.innerHTML));
-    await frame('iso-' + logical); await rotate();
+    await frame('iso-' + logical);
+    if (logical % 90) {
+      await card.locator('[data-hp="device"][data-id="angled"]').click();
+      await page.waitForFunction(() => window.__card._infoCard?.id === 'angled');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !window.__card._infoCard);
+    }
+    await rotate();
   }
   check('2.5D renders eight distinct projected sides', new Set(sides).size === 8);
   const isoAfter = await snapshot();

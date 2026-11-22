@@ -364,8 +364,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-frame.test.mjs',
     because: '#1070 AC6: kiosk orientation comes only from its card configuration. Registered only; nightly execution.',
     patches: [{ file: 'src/view-frame.ts',
-      find: 'return !kiosk && validPlanRotation(deviceValue) ? deviceValue : planRotation(cardValue);',
-      replace: 'return validPlanRotation(deviceValue) ? deviceValue : planRotation(cardValue);' }],
+      find: 'return !kiosk && validPlanRotation(deviceValue) ? deviceValue : validFlatPlanRotation(cardValue) ? cardValue : 0;',
+      replace: 'return validPlanRotation(deviceValue) ? deviceValue : validFlatPlanRotation(cardValue) ? cardValue : 0;' }],
   },
   {
     id: 'plan-rotation-pointer-skips-inverse-1070',
@@ -396,7 +396,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/pdf-scene.test.mjs',
     because: '#1070 AC10: the complete PDF page must follow rotation before fitting and keep captions readable. Registered only; nightly execution.',
     patches: [{ file: 'src/pdf/pdf-scene.ts',
-      find: 'commands = rotatePdfCommands(commands, planRotation(input.rotation));',
+      find: 'commands = rotatePdfCommands(commands, flatPlanRotation(input.rotation));',
       replace: 'commands = rotatePdfCommands(commands, 0);' }],
   },
   {

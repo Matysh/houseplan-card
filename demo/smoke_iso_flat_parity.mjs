@@ -134,7 +134,9 @@ if(!screenOnly) {
     out.nativeEntry = !original.hasLabFlag && !original.query && original.camera?.yaw===35
       && Math.abs(original.camera.depth-Math.sin(40*Math.PI/180))<1e-12 && original.volumeIds.length===5;
     const turns = [];
-    for(const rotation of hiddenOnly ? [] : [0,90,180,270]) {
+    const yaw = new Map([[0,35],[45,90],[90,125],[135,180],[180,215],[225,270],[270,305],[315,0]]);
+    for(const rotation of hiddenOnly ? [] : [...yaw.keys()]) {
+      if((await snapshot(page)).rotation!==rotation)await rotate(page);
       await fit(page);
       const home = await snapshot(page);
       await page.locator('[data-hp="zoom-in"]').first().click(); await settled(page);
@@ -156,13 +158,12 @@ if(!screenOnly) {
         editorFlat:editor.projection==='flat' && editor.volumeIds.length===0 && editor.flatIds.length===5,
         dataPreserved:equal(before.stored,back.stored),
         hitCorrect:close(before.inverseHit,[320,320]) && close(flat.inverseHit,[320,320]),
-        profile:before.camera?.yaw===35+rotation && restored.camera?.yaw===35+rotation};
+        profile:before.camera?.yaw===yaw.get(rotation) && restored.camera?.yaw===yaw.get((Math.round(rotation/90)*90)%360)};
       out['roundtrip'+rotation] = Object.entries(result).filter(([key])=>key!=='rotation').every(([,value])=>value);
       turns.push({...result,centres:[before,flat,restored,editor,back].map(state=>state.worldCenter),
         widths:[before,flat,restored,editor,back].map(state=>state.view.w),
         stageSizes:[before,flat,restored,editor,back].map(state=>state.stageSize),
         scales:[before,flat,restored,editor,back].map(state=>state.pixelsPerSceneUnit)});
-      await rotate(page); await rotate(page);
     }
     detail.roundtrips = turns;
     if(!roundtripOnly) {
