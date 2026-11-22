@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1215,
+  "revision": 1216,
   "active": "v1.86.1-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -199527,7 +199527,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.86.1-beta.1",
         "candidate": "5de9e31fdfc4b6ccbbb5770e6fecd8c786406982",
         "base": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
         "issues": [
@@ -206830,6 +206830,162 @@
         "source": "chat",
         "sourceRef": "Codex Houseplan release conversation, 2026-11-22; candidate 5de9e31fd",
         "decisionText": "принимаю оба пункта, принимаю новые эталоны, если будут"
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.86.1-beta.1",
+          "candidate": "5de9e31fdfc4b6ccbbb5770e6fecd8c786406982",
+          "base": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
+          "issues": [
+            {
+              "number": 1465,
+              "commits": [
+                "d6756f108caf162b987bc3e217ac7492ab113e66",
+                "ddbc1d9243bfb699293d3755e52faa3b60d64517"
+              ]
+            },
+            {
+              "number": 1472,
+              "commits": [
+                "1adfb020ee47e52b7897612624cd84b1196dca8b",
+                "288508bdbb5e26de30b891b71a358f30e0ba121e",
+                "5ec319fe96ff3d8c7922031d75d2d3e2ae4c8146",
+                "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+                "812ec1e9a25bf88ab4db658cd4247bcd1d94b311",
+                "ba2f06b8ec121a5a93c0432ad6b374fcfdb1d505"
+              ]
+            },
+            {
+              "number": 1508,
+              "commits": [
+                "646c31987cf144d9676b827403321a6e91e7a92a",
+                "d87079131e98ffa2f0e6ab447c83819ae1689afe"
+              ]
+            },
+            {
+              "number": 1509,
+              "commits": [
+                "3c82c0f1801173caa5aa6a5a7cfe19445c746305"
+              ]
+            },
+            {
+              "number": 1510,
+              "commits": [
+                "36af10803c20dbf027b922553b37419d112023a9",
+                "76009cd13974a5e96df68196c10ce09f1131551d"
+              ]
+            },
+            {
+              "number": 1511,
+              "commits": [
+                "5237ec475be4adf61d102ffc4e3954de19cb68ab",
+                "6ecc2be9098933a914064093f8fff82bf7e6edbe",
+                "82eea3dea6cc361417766fb2465c9f98c34d86ad"
+              ]
+            },
+            {
+              "number": 1512,
+              "commits": [
+                "3337227988d528e977cf8f978a112c7e8a730cfa",
+                "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
+                "9051fc47cd84b0bbce7d466fe909d91588726f14",
+                "b813d183d073f5a30b5489d6fb35922399cb0c3c",
+                "d57250c1b30dea3b55e6e3c4b884949493686d33",
+                "f06fae6e2846106241e67f117c8e814004c7fd40"
+              ]
+            },
+            {
+              "number": 1513,
+              "commits": [
+                "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585"
+              ]
+            },
+            {
+              "number": 1515,
+              "commits": [
+                "b9b1ede15ac44c53f655c13adc9fc5ef410d6cd9",
+                "c633b67b1a283ef013c3497641c5bcdf41884c87"
+              ]
+            },
+            {
+              "number": 1516,
+              "commits": [
+                "29f32c05ed0932be242e766771b7cdaaf06472bc"
+              ]
+            },
+            {
+              "number": 1517,
+              "commits": [
+                "235643a7c47ccdf359165e706c2388971605bcb1",
+                "8304dda874ff028e068e56b0a1397ada5c6fd27c",
+                "8d413b8121306d906999556537096b8db5f00dfa",
+                "a1fe29b487968318c70d906049ad4cf9e2e13702"
+              ]
+            },
+            {
+              "number": 1518,
+              "commits": [
+                "3e3cb32854b080df2e9dbb87a08689b95bc81aea"
+              ]
+            },
+            {
+              "number": 1519,
+              "commits": [
+                "01e04cdf8725e5cc3ad17d9ca3fd5889597d0f1e",
+                "432662652229bf4bf58c2a4b94e954efa9f770c7"
+              ]
+            },
+            {
+              "number": 1520,
+              "commits": [
+                "15853d335dab075caa990fc33027b1544fd85493",
+                "208889308ff5aa413c7e0abe4f9f9284889c7f38",
+                "2a4cb0a37be86072052d4559a12cdc6278523753",
+                "2c0573d0c08bab0c585111994aafbbdd56cf582c",
+                "369f9c9bd852f8daeab42bc2f7134aa569946656",
+                "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
+                "66dfecb5e8db3a176f0a3d88ddea207ac76313ab",
+                "8e5c631d31289c36078e0238a532e94aab0ab25a",
+                "aa8f585f75a909ddf03dc12125a93e3545e439cb",
+                "c67f55e7e54c5cee4e30ecdfcfc9430969b67c15"
+              ]
+            },
+            {
+              "number": 1521,
+              "commits": [
+                "0987240f1c33505bf9352be24a98a281f8a1d4e9",
+                "dc1f17424d52bde3afe021b40dbd41d2f646ba58",
+                "f6a27ee7c94730c595f2d10b4093c5005d9d50a9",
+                "fb32f15eccce770ebef9700e314f0f11ff9e37ed"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1465,
+          1472,
+          1508,
+          1509,
+          1510,
+          1511,
+          1512,
+          1513,
+          1515,
+          1516,
+          1517,
+          1518,
+          1519,
+          1520,
+          1521
+        ],
+        "version": "1.86.1-beta.1",
+        "body": "<!-- release: v1.86.1-beta.1 -->\n<!-- base: v1.86.0 -->\n<!-- language: ru -->\n## Houseplan 1.86.1-beta.1\n\n- При повторном открытии план может сразу показать сохранённое превью, пока загружаются устройства и освещение. Если подготовка этажа зависла, вместо бесконечного ожидания появляется кнопка «Повторить». [#1520](https://github.com/Matysh/houseplan-card/issues/1520), [#1521](https://github.com/Matysh/houseplan-card/issues/1521)\n- В 2.5D теперь восемь ракурсов: четыре прямых и четыре диагональных. Для полноценной карточки дашборда и внешнего экрана можно отдельно выбрать вид и поворот. В настройках пространства можно включить полупрозрачные стены. [#1515](https://github.com/Matysh/houseplan-card/issues/1515), [#1516](https://github.com/Matysh/houseplan-card/issues/1516), [#1518](https://github.com/Matysh/houseplan-card/issues/1518)\n- Изменение размеров значков учитывает группы и привязки к стенам. Телевизор с подставкой теперь можно поставить на ТВ-тумбу. [#1517](https://github.com/Matysh/houseplan-card/issues/1517), [#1511](https://github.com/Matysh/houseplan-card/issues/1511)\n\n<!-- language: en -->\n## Houseplan 1.86.1-beta.1\n\n- Reopening a floor can show a saved preview while devices and lighting load. If floor preparation stalls, Houseplan now offers Retry instead of leaving the loading message up indefinitely. [#1520](https://github.com/Matysh/houseplan-card/issues/1520), [#1521](https://github.com/Matysh/houseplan-card/issues/1521)\n- 2.5D now has eight angles: four straight-on and four diagonal. Full dashboard cards and external screens can use their own view and rotation. Each space can opt in to translucent walls. [#1515](https://github.com/Matysh/houseplan-card/issues/1515), [#1516](https://github.com/Matysh/houseplan-card/issues/1516), [#1518](https://github.com/Matysh/houseplan-card/issues/1518)\n- Device icon resizing accounts for groups and wall attachments. A freestanding TV can now sit on a TV cabinet. [#1517](https://github.com/Matysh/houseplan-card/issues/1517), [#1511](https://github.com/Matysh/houseplan-card/issues/1511)\n",
+        "technical": {
+          "ru": "## v1.86.1-beta.1 — 2026-11-22\n\n- Зависшая подготовка плана завершается сообщением с кнопкой повтора вместо бесконечной плашки «Обновляем план» (#1521).\n- При повторном открытии Flat и 2.5D могут сначала показать подходящий снимок планировки без устройств и состояний. Индикатор загрузки теперь слева сверху на плане (#1520).\n- Для каждого пространства можно включить полупрозрачность стен в 2.5D. По умолчанию стены остаются непрозрачными (#1518).\n- В 2.5D добавлены четыре прямых ракурса между прежними диагональными. При переходе в плоский вид промежуточное положение доворачивается по часовой стрелке. (#1515)\n- Цвет названий комнат теперь в разделе «Названия и показатели» над размерами шрифтов. Образец обновляется при выборе цвета (#1519).\n- У полноценной карточки дашборда и внешнего экрана можно отдельно выбрать вид и поворот плана. В изометрии доступны ракурсы через 45° (#1516).\n- При изменении размера значка устройства или масштаба экрана сохраняются привязки к стенам и группы. Если размер не помещается, план показывает допустимый вариант и объясняет ограничение (#1517).\n- В редакторе подложки телевизор на подставке можно поставить на ТВ-тумбу. В 2.5D он стоит на её поверхности и перемещается вместе с ней (#1511).\n- Настройки устройств: восстановление устаревших ссылок по текущей комнате при записи и оптимизации, сохранение положения и понятные ошибки полей на других вкладках. (#1512)\n- После stable цикл релиза обновляется при возврате в dev; автоматическое назначение закрытых milestone запрещено (#1510).\n- Свет из окон в 2.5D сохраняет текущую фазу солнечного перехода и больше не мигает при переключении источников света (#1509).\n- Обычный stable выпускает проверенные wheel ядра и ZIP автономного редактора для сайта отдельно от поставки HACS (#1465).",
+          "en": "## v1.86.1-beta.1 — 2026-11-22\n\n- End stalled floor preparation with a retryable error instead of leaving “Updating plan” on screen (#1521).\n- On a repeat open, Flat and 2.5D can show a matching, verified static SVG before live devices and lighting are ready; progress stays in the upper-left corner of the plan (#1520).\n- Opt in to translucent 2.5D walls per space while keeping the default opaque masonry (#1518).\n- Move the room caption color to Names and readings, above Font sizes, with immediate preview while editing (#1519).\n- Configure independent plan views and rotation for full dashboard cards and external screens, with 45° steps in 2.5D (#1516).\n- Keep device wall anchors and groups when changing individual or per-screen icon sizes, with an explanation where the requested size cannot fit (#1517).\n- Place a freestanding TV on a TV cabinet from the Background editor. The stand rests on the cabinet in 2.5D and moves with it (#1511).\n- 2.5D plan rotation adds four straight-on views between the existing diagonal views and rounds to a clockwise quarter when returning to Flat. (#1515)\n- Device settings: repair room-proved stale space references on writes and Optimize without relocating saved devices; explain invalid drafts across settings tabs. (#1512)\n- Advance the release cycle during stable return to dev and refuse automatic assignment to closed milestones (#1510).\n- Preserve window sunlight and its solar fade during 2.5D light-source transitions (#1509).\n- Publish a checked wheel and standalone editor ZIP for the website with ordinary stable releases, separate from the HACS package (#1465)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -212863,7 +213019,8 @@
     "beta-1861-record-isolated-measurement": "c51f62f29b7a343c7336724aa6eba9f65918ea90336d029076572d67a4dd30db",
     "beta-1861-owner-accepted-cold-render": "e018eefb97ffa5ed5b6bb8be4278ce457adba2a49e53b663dd1c8a42e65549bd",
     "beta-1861-publish:runner-report": "ba495753b00f511959303462eaded65335728a67016535051636533dd76e939b",
-    "beta-1861-publish:metrics": "9798a6823c7e5248acb64d46de7cb46f05247d615934b4f759b40c053dcc5748"
+    "beta-1861-publish:metrics": "9798a6823c7e5248acb64d46de7cb46f05247d615934b4f759b40c053dcc5748",
+    "beta-1861-publish:prepared:7dd302da-3bd7-4e8f-8319-3dde5f99b031": "1642334d91a0c2da6efabfd21f11b33b548775083eec0c6340c6ad4e27dde266"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
