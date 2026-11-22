@@ -9,6 +9,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.houseplan.const import DOMAIN
 from custom_components.houseplan.startup_floor_preview import (
+    STORE_OVERHEAD_BYTES,
     PreviewStorage,
     validate_preview,
 )
@@ -84,6 +85,8 @@ async def test_preview_scope_survives_reload_but_not_equal_rev_restore(
                "source": [config["startup_floor_source"], layout["startup_floor_source"]]}
     packet = wire()
     assert await call(reader, "startup_floor/put", **address, packet=packet) == {"stored": True}
+    rows = await runtime.startup_floor_previews.index()
+    assert next(iter(rows.values()))["bytes"] == len(packet) + STORE_OVERHEAD_BYTES
     assert await call(writer, "startup_floor/get", **address) == {"packet": None}
     assert await call(reader, "startup_floor/get", **address) == {"packet": packet}
     runtime.startup_floor_previews = PreviewStorage(hass)

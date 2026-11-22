@@ -3029,8 +3029,8 @@ export class HouseplanCard extends LitElement {
     let value = this._startupFloor?.observe(selection);
     // A summary that reserves part of the viewport needs a freshly measured
     // reference; the previous session's placement is not a camera proof.
-    if (value && !value.remote && selection && this._centerSummary) {
-      const target = this._startupColdCamera(selection, value.fit.base);
+    if (value && selection && this._centerSummary) {
+      const target = this._startupColdCamera(selection, value.fit.base, value.remote ? value.fit : undefined);
       if (!target || !sameCameraState(target, { zoom: value.zoom, viewBox: value.view })) {
         this._startupFloor?.skipImage(); value = undefined;
       }

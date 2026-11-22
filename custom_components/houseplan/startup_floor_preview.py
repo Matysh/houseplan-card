@@ -23,10 +23,14 @@ from .core.room_appearance import (
 from .store import get_data
 
 WIRE_BYTES = 512 * 1024
+BASE64_BYTES = (WIRE_BYTES + 2) // 3 * 4
 VECTOR_BYTES = 2 * 1024 * 1024
 PAINT_BYTES = 8 * 1024 * 1024
 COUNT_LIMIT = 32
 QUOTA_BYTES = 16 * 1024 * 1024
+# HA persists a base64 string in a JSON Store plus its index row. Budget
+# both envelopes, not just the compressed payload sent inside the string.
+STORE_OVERHEAD_BYTES = 1024
 PREFIX = "houseplan.startup-paint"
 FORMAT = 1
 HEX = re.compile(r"[0-9a-f]{64}")
@@ -106,7 +110,7 @@ def _valid_attribute(tag, key, value):
 
 def validate_preview(wire: str, projection: str, rotation: int) -> int:
     """Check bounded gzip + inert typed geometry, return decoded wire bytes."""
-    if not isinstance(wire, str) or len(wire) > (WIRE_BYTES + 2) // 3 * 4:
+    if not isinstance(wire, str) or len(wire) > BASE64_BYTES:
         raise ValueError("wire limit")
     data = base64.b64decode(wire, validate=True)
     if not 0 < len(data) <= WIRE_BYTES:
@@ -174,7 +178,7 @@ class PreviewStorage:
                 if HEX.fullmatch(key) and isinstance(row, dict)
                 and isinstance(row.get("generation"), str) and HEX.fullmatch(row["generation"])
                 and isinstance(row.get("variant"), str) and HEX.fullmatch(row["variant"])
-                and type(row.get("bytes")) is int and 0 < row["bytes"] <= WIRE_BYTES
+                and type(row.get("bytes")) is int and 0 < row["bytes"] <= BASE64_BYTES + STORE_OVERHEAD_BYTES
                 and type(row.get("used")) is int and 0 <= row["used"] <= 2**53
                 and isinstance(row.get("source"), list) and len(row["source"]) == 2
                 and all(isinstance(s, str) and HEX.fullmatch(s) for s in row["source"])
@@ -191,7 +195,7 @@ class PreviewStorage:
                 return None
             wire = await self.body(key, found["generation"]).async_load()
             found["used"] = self.clock
-            return wire if isinstance(wire, str) and len(wire) <= (WIRE_BYTES + 2) // 3 * 4 else None
+            return wire if isinstance(wire, str) and len(wire) <= BASE64_BYTES else None
 
     async def write(self, key, source, variant, wire, size, current):
         async with self.lock:
@@ -295,7 +299,7 @@ async def ws_get(hass, connection, msg):
 
 @websocket_api.websocket_command({
     vol.Required("type"): "houseplan/startup_floor/put", **ADDRESS,
-    vol.Required("packet"): vol.All(str, vol.Length(max=(WIRE_BYTES + 2) // 3 * 4)),
+    vol.Required("packet"): vol.All(str, vol.Length(max=BASE64_BYTES)),
 })
 @websocket_api.async_response
 async def ws_put(hass, connection, msg):
@@ -311,7 +315,8 @@ async def ws_put(hass, connection, msg):
             if msg["projection"] == "flat" and msg["rotation"] % 90:
                 raise ValueError("flat rotation")
             wire = msg["packet"]
-            size = await hass.async_add_executor_job(validate_preview, wire, msg["projection"], msg["rotation"])
+            await hass.async_add_executor_job(validate_preview, wire, msg["projection"], msg["rotation"])
+            size = len(wire) + STORE_OVERHEAD_BYTES
             if await storage.write(_address(user, msg), msg["source"], msg["variant"], wire, size, current):
                 connection.send_result(msg["id"], {"stored": True})
                 return
