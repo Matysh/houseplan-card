@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1207,
+  "revision": 1208,
   "active": "v1.86.1-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -199160,14 +199160,14 @@
       "kind": "beta",
       "branch": "release/1.86.1-beta.1",
       "sourceSha": "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
-      "sha": "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
+      "sha": "5de9e31fdfc4b6ccbbb5770e6fecd8c786406982",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v1.86.1-beta.1",
-        "candidate": "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
+        "tag": null,
+        "candidate": "5de9e31fdfc4b6ccbbb5770e6fecd8c786406982",
         "base": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
         "issues": [
           {
@@ -199315,7 +199315,14 @@
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
+          "to": "5de9e31fdfc4b6ccbbb5770e6fecd8c786406982",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": []
     }
   },
@@ -205341,7 +205348,8 @@
     "beta-2001-record-run": "8f7abad3843de425bc61ecd834bdeed5417cfa8dd0afeee1e7cca34aa005dbc3",
     "beta-2001-record-measurements": "a27e32f7720a904af33fa1b82b968efff5b1b6c420ea733380efc01e3df9af1a",
     "beta-2001-replaced-by-owner-1861": "93b7e91308a350212aba4aedc01b2d603b53f97dcde3ba4c65db95c8140ecca3",
-    "beta-1861-create": "eea98e79e3c146b02cdd3cf704fe0c030692de7f73c6c52b8da0ee9e4cde91ac"
+    "beta-1861-create": "eea98e79e3c146b02cdd3cf704fe0c030692de7f73c6c52b8da0ee9e4cde91ac",
+    "beta-1861-pin-release": "fc28ff8fd8a589db2c8066afaf4fa0833d609322a1c2fa44d07058420efa9ca0"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
