@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20217,
+  "revision": 20218,
   "nextTicket": 606,
   "nextFence": 606,
   "tasks": {
@@ -5611,7 +5611,7 @@
       "notice": {
         "key": "1:rebase-conflict",
         "reason": "rebase-conflict",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1795340046013,
         "entry": 1,
@@ -6659,6 +6659,10 @@
     },
     "finish:e9e77efc-431d-4a45-be41-000dfb4e00ea:finish:2:return": {
       "digest": "047635f6402f30e413c0bc262641e842d71a7e92314af955ed0f37699068b83a",
+      "issue": 1517
+    },
+    "github:45008151983:1:completions:notice:195935d479e16747be566f7f4f4e2ce8529e7761bc533a328f0f2ab223e5fc95": {
+      "digest": "6e341d0279e28d265c6f678996d080d76abe2be746b3ad5da81fa27605db8e46",
       "issue": 1517
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
