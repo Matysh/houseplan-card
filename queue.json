@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20377,
+  "revision": 20378,
   "nextTicket": 611,
   "nextFence": 610,
   "tasks": {
@@ -5764,7 +5764,10 @@
         "test/device-contact-card.test.mjs",
         "test/device-contact-screen.test.mjs",
         "test/device-contact-write.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1795345086174,
+      "automationDetail": "Queue remained busy; retry the same event ID"
     },
     "1518": {
       "issue": 1518,
@@ -6779,6 +6782,10 @@
     },
     "github:45014880529:1:completions:message:819cf76598fc34914a2db518fd2eb7f279a08c2345b8133390b433d063d394f6": {
       "digest": "594cd7a333a6ba08d47666b77956df71fd370d94f6e3590c31cf280e2685b783",
+      "issue": 1517
+    },
+    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:2:automation-pending": {
+      "digest": "9b7763c7c3ecfc40e6007119d49b7116c8a767b247e47640709a4249a22a19d3",
       "issue": 1517
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
