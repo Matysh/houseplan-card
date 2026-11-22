@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20303,
+  "revision": 20304,
   "nextTicket": 610,
   "nextFence": 608,
   "tasks": {
@@ -5676,7 +5676,18 @@
         "tests_backend/test_external_screens.py",
         "tests_backend/test_ha_external_screens_websocket.py",
         "tests_backend/test_support_config_projection.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795343076004,
+        "entry": 1,
+        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed",
+        "eventId": "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:3:return:return:1516"
+      }
     },
     "1517": {
       "issue": 1517,
@@ -6404,18 +6415,7 @@
     1518,
     1517
   ],
-  "active": {
-    "issue": 1516,
-    "worker": "finish",
-    "token": "607:finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:1:admit",
-    "fence": 607,
-    "materialSha": "fb7e68b467fe8f663e230057323e681ca242de19",
-    "expectedBase": "c633b67b1a283ef013c3497641c5bcdf41884c87",
-    "phase": "testing",
-    "admittedAt": 1795341500823,
-    "expiresAt": 1795343334681,
-    "patchId": "c758439828ddd96fa1b414201bb9b89f2445ed7f"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7033,6 +7033,10 @@
       "digest": "8c383c5ee115ee0f822148a61c4cb7652d3d9e280dbaf5e9ee28705ac0f18624",
       "issue": 1516
     },
+    "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:3:return": {
+      "digest": "2c381231988572c0e56b8b01ab53716ac398f9deade727a7b0009a3dd6e53bab",
+      "issue": 1516
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7446,6 +7450,26 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09"
+      }
+    },
+    "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:3:return:return:1516": {
+      "digest": "2c381231988572c0e56b8b01ab53716ac398f9deade727a7b0009a3dd6e53bab",
+      "issue": 1516,
+      "message": {
+        "kind": "return",
+        "issue": 1516,
+        "at": 1795343076004,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795343076004,
+          "entry": 1,
+          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed",
+          "eventId": "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:3:return:return:1516"
+        }
       }
     }
   },
