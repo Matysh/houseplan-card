@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20940,
+  "revision": 20941,
   "nextTicket": 623,
   "nextFence": 623,
   "tasks": {
@@ -6316,6 +6316,14 @@
         "to": "S5-ready",
         "confirmed": true
       }
+    },
+    "1522": {
+      "requestId": "spec:1522:6df370f706eb0e559da76254fab1c6bc83d1e9c1cad6a7dcafec98ef4df75b1c",
+      "contextDigest": "6df370f706eb0e559da76254fab1c6bc83d1e9c1cad6a7dcafec98ef4df75b1c",
+      "base": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
+      "round": 1,
+      "status": "pending",
+      "updatedAt": 1795364367038
     }
   },
   "reviewPublications": {
@@ -6344,6 +6352,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "spec:1522:spec:1522:6df370f706eb0e559da76254fab1c6bc83d1e9c1cad6a7dcafec98ef4df75b1c": {
+      "issue": 1522,
+      "kind": "spec",
+      "requestId": "spec:1522:6df370f706eb0e559da76254fab1c6bc83d1e9c1cad6a7dcafec98ef4df75b1c",
+      "materialSha": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
+      "expectedBase": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
+      "patchId": "6df370f706eb0e559da76254fab1c6bc83d1e9c1cad6a7dcafec98ef4df75b1c",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-22T16:19:27.038Z"
+      }
     }
   },
   "waiting": [],
@@ -6368,6 +6389,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "spec-1522-round-1-operator:spec-request": {
+      "digest": "61db84b57036ad3e27241ad9fde8626fe87bc58ebef422dab8b56b2e5858fbe9",
+      "issue": 1522
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
