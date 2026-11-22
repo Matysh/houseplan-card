@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19967,
-  "nextTicket": 599,
+  "revision": 19968,
+  "nextTicket": 600,
   "nextFence": 599,
   "tasks": {
     "1024": {
@@ -5590,6 +5590,20 @@
         "sourceSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585"
       }
     },
+    "1518": {
+      "issue": 1518,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1518-iso-wall-transparency",
+      "materialSha": "f33508a66dd1dacd73206ebbd105e34587f171eb",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 599,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795333309410,
+      "reviewEntry": 1
+    },
     "1519": {
       "issue": 1519,
       "track": "ship",
@@ -6164,7 +6178,9 @@
       "runId": 44998798065
     }
   },
-  "waiting": [],
+  "waiting": [
+    1518
+  ],
   "active": {
     "issue": 1519,
     "worker": "finish",
@@ -6535,6 +6551,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585"
+      }
+    },
+    "finish:15095b3d-9f7d-48b3-a937-80e8d66dea87": {
+      "digest": "8bfbad344f28e92ea117f1411b4b5dcaa6d63e6316f7a949b9efe80e010d6ec6",
+      "issue": 1518,
+      "message": {
+        "kind": "queued",
+        "issue": 1518,
+        "at": 1795333309410,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f33508a66dd1dacd73206ebbd105e34587f171eb"
       }
     }
   },
