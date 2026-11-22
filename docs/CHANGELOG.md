@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.86.1-beta.2 — 2026-11-22
+
 - A prepared floor preview, including furniture, can appear on the first open in a fresh browser after the same Home Assistant account has viewed the plan (#1522).
 
 ## v1.86.1-beta.1 — 2026-11-22

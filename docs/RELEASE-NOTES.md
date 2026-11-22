@@ -1,15 +1,11 @@
-<!-- release: v1.86.1-beta.1 -->
-<!-- base: v1.86.0 -->
+<!-- release: v1.86.1-beta.2 -->
+<!-- base: v1.86.1-beta.1 -->
 <!-- language: ru -->
-## Houseplan 1.86.1-beta.1
+## Houseplan 1.86.1-beta.2
 
-- При повторном открытии план может сразу показать сохранённое превью, пока загружаются устройства и освещение. Если подготовка этажа зависла, вместо бесконечного ожидания появляется кнопка «Повторить». [#1520](https://github.com/Matysh/houseplan-card/issues/1520), [#1521](https://github.com/Matysh/houseplan-card/issues/1521)
-- В 2.5D теперь восемь ракурсов: четыре прямых и четыре диагональных. Для полноценной карточки дашборда и внешнего экрана можно отдельно выбрать вид и поворот. В настройках пространства можно включить полупрозрачные стены. [#1515](https://github.com/Matysh/houseplan-card/issues/1515), [#1516](https://github.com/Matysh/houseplan-card/issues/1516), [#1518](https://github.com/Matysh/houseplan-card/issues/1518)
-- Изменение размеров значков учитывает группы и привязки к стенам. Телевизор с подставкой теперь можно поставить на ТВ-тумбу. [#1517](https://github.com/Matysh/houseplan-card/issues/1517), [#1511](https://github.com/Matysh/houseplan-card/issues/1511)
+При первом открытии в новом браузере House Plan может сразу показать план с мебелью, пока загружаются устройства и освещение. Это работает и в плоском виде, и в 2.5D, если вы уже открывали этот этаж под той же учётной записью. [#1522](https://github.com/Matysh/houseplan-card/issues/1522)
 
 <!-- language: en -->
-## Houseplan 1.86.1-beta.1
+## Houseplan 1.86.1-beta.2
 
-- Reopening a floor can show a saved preview while devices and lighting load. If floor preparation stalls, Houseplan now offers Retry instead of leaving the loading message up indefinitely. [#1520](https://github.com/Matysh/houseplan-card/issues/1520), [#1521](https://github.com/Matysh/houseplan-card/issues/1521)
-- 2.5D now has eight angles: four straight-on and four diagonal. Full dashboard cards and external screens can use their own view and rotation. Each space can opt in to translucent walls. [#1515](https://github.com/Matysh/houseplan-card/issues/1515), [#1516](https://github.com/Matysh/houseplan-card/issues/1516), [#1518](https://github.com/Matysh/houseplan-card/issues/1518)
-- Device icon resizing accounts for groups and wall attachments. A freestanding TV can now sit on a TV cabinet. [#1517](https://github.com/Matysh/houseplan-card/issues/1517), [#1511](https://github.com/Matysh/houseplan-card/issues/1511)
+When you first open a floor in a new browser, House Plan can show the layout and furniture while devices and lighting load. This works in Flat and 2.5D if the same Home Assistant account has already viewed the floor. [#1522](https://github.com/Matysh/houseplan-card/issues/1522)
