@@ -6598,12 +6598,6 @@ export class HouseplanCard extends LitElement {
    * continuity candidate → adopt → profile tail; see `adoptAuthoritativeGated`.
    */
   public _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult> {
-    if (input.profile === 'screen-event' && typeof input.cfgResp?.rev === 'number') {
-      // The authenticated profile stream is a complete adoption, not a
-      // reason to reload config/layout for an optional startup image.
-      this._startupProofRefresh = undefined;
-      this._startupStreamRevision = { authority: this.planHost.authorityKey, configRev: input.cfgResp.rev };
-    }
     return adoptAuthoritativeGated(this as unknown as ConfigAdoptionHostPort, input);
   }
 
@@ -6860,7 +6854,15 @@ export class HouseplanCard extends LitElement {
           const current = () => ownsContext() && this._serverCfg === previous && this._cfgRev === base
             && !this._cfgWriting && !this._saveConfigDebounced.pending();
           const fallback = () => { if (ownsContext() && observedRev > this._cfgRev) void this._reloadConfigOnly(false, observedRev); };
-          void this._adoptAuthoritative({ cfgResp: candidate, reason: 'external-screens-event', profile: 'screen-event', isCurrent: current })
+          void this._adoptAuthoritative({
+            cfgResp: candidate, reason: 'external-screens-event', profile: 'screen-event', isCurrent: current,
+            afterAdopt: () => {
+              // A proven profile delta must not cause another config/layout
+              // read just to seed an optional startup preview.
+              this._startupProofRefresh = undefined;
+              this._startupStreamRevision = { authority: connection, configRev: candidate.rev };
+            },
+          })
             .then(result => { if (result.status !== 'adopted') fallback(); }, fallback);
           return;
         }
