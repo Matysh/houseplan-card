@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20579,
+  "revision": 20580,
   "nextTicket": 615,
   "nextFence": 614,
   "tasks": {
@@ -5653,226 +5653,26 @@
     },
     "1517": {
       "issue": 1517,
+      "branch": "codex/1517-resize-contacts",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1517-resize-contacts",
-      "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 613,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795348523433,
-      "reviewEntry": 5,
-      "notice": {
-        "key": "4:rebase-conflict",
-        "reason": "rebase-conflict",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795348441927,
-        "entry": 4,
-        "eventId": "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return:return:1517"
-      },
-      "patchId": "9fd0ef395ff0d23464edd8e10d3e7b960e3eb225",
-      "changedFiles": [
-        "demo/fixtures/device-contact-resize-1517-layout.json",
-        "demo/fixtures/device-contact-resize-1517.mjs",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/panel-device-contact-resize-flat-base.png",
-        "demo/golden/baselines/panel-device-contact-resize-flat-individual-larger.png",
-        "demo/golden/baselines/panel-device-contact-resize-flat-individual-smaller.png",
-        "demo/golden/baselines/panel-device-contact-resize-flat-profile-larger-rotation-180.png",
-        "demo/golden/baselines/panel-device-contact-resize-flat-profile-larger-rotation-270.png",
-        "demo/golden/baselines/panel-device-contact-resize-flat-profile-larger-rotation-90.png",
-        "demo/golden/baselines/panel-device-contact-resize-flat-profile-larger.png",
-        "demo/golden/baselines/panel-device-contact-resize-flat-profile-smaller.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-base.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-individual-larger.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-individual-smaller.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-180.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-270.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-90.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-smaller.png",
-        "demo/golden/device-contact-resize.mjs",
-        "demo/golden/harness.mjs",
-        "demo/golden/matrix.mjs",
-        "demo/smoke_device_contact_badges_1517.mjs",
-        "demo/smoke_device_contact_profile_1517.mjs",
-        "demo/smoke_device_contact_reflow.mjs",
-        "demo/smoke_device_contact_resize_1517.mjs",
-        "demo/smoke_room_co2.mjs",
-        "demo/srv/assets/icons.js",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/DEVICE-PRESENTATION.md",
-        "docs/data-hp-contract.json",
-        "docs/release-ledger/v1.86.0/1517.json",
-        "process-next/lib/source-dependencies.mjs",
-        "scripts/config-compatibility-inventory.json",
-        "scripts/mutation-registry.mjs",
-        "src/device-contact-card.ts",
-        "src/device-contact-geometry.ts",
-        "src/device-contact-layout.ts",
-        "src/device-contact-render.ts",
-        "src/device-contact-screen.ts",
-        "src/device-contact-write.ts",
-        "src/houseplan-card.ts",
-        "src/i18n/de.json",
-        "src/i18n/en.json",
-        "src/i18n/fr.json",
-        "src/i18n/ru.json",
-        "src/iso-scene-geometry.ts",
-        "src/render-snapshot-capture.ts",
-        "src/styles/plan.styles.ts",
-        "test/device-contact-1003.test.mjs",
-        "test/device-contact-card.test.mjs",
-        "test/device-contact-screen.test.mjs",
-        "test/device-contact-write.test.mjs",
-        "test/fixtures/845-wall-corpus-current-identities.json"
-      ],
-      "s6": {
-        "id": "20261122T121101970-d0470f5a",
-        "name": "Тесты для задачи #1517 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T121101970-d0470f5a/report.json",
-        "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
-        "status": "passed",
-        "finishedAt": "2026-11-22T12:29:01.465Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "29f32c05ed0932be242e766771b7cdaaf06472bc",
+      "mergedSha": "8d413b8121306d906999556537096b8db5f00dfa",
+      "mergedAt": 1795350946952,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1517:5:9fd0ef395ff0d23464edd8e10d3e7b960e3eb225:29f32c05ed0932be242e766771b7cdaaf06472bc",
-      "reviewMaterial": {
-        "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
-        "expectedBase": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-        "patchId": "9fd0ef395ff0d23464edd8e10d3e7b960e3eb225"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1517:5:9fd0ef395ff0d23464edd8e10d3e7b960e3eb225:29f32c05ed0932be242e766771b7cdaaf06472bc",
-        "eventId": "github:45022504446:1:tick:0:review-retry",
-        "at": 1795350570953,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1517,
-        "requestId": "review:1517:5:9fd0ef395ff0d23464edd8e10d3e7b960e3eb225:29f32c05ed0932be242e766771b7cdaaf06472bc",
-        "kind": "code",
-        "base": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-        "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
-        "patchId": "9fd0ef395ff0d23464edd8e10d3e7b960e3eb225",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1517,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1517",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Анализ на dev `5fa8459ea`, `spec-check` прошёл повторно. Проверены разные диаметры paint и solver у профиля и холодный запуск с устаревшей опорой. Исправленная редакция хранит текущую семантику допустимых legacy-групп и фиксирует детерминированный resize. Трек ask по S4. Код ещё не изменялся.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075864767).\n\n1. Неоднозначная legacy-опора → отдельные геометрические кандидаты при штатном размере и собственном размере карточки без профиля, явный выбор между ними, материализация только доказанного. В AC4 добавлена legacy-группа, созданная при нестандартном icon_size.\n2. Неопределённый безопасный t=0 и отличие от value-only → resize активен при различии диаметров запроса и reference, даже при одновременном появлении текста и постоянном переопределении. t=0 использует текущую относительную форму при опорных размерах. При невозможном t=0 старый безопасный fallback выполняется с явной индикацией. Чистое изменение формы при тех же диаметрах сохраняет #1003.\n3. Произвольная занятость → ограничения учитывают реально принятый результат или опорный размер соседа, а не запрошенную форму на старой позиции. Канонический геометрический порядок Y/X с ID только для точного равенства, занятость обновляется целиком на компонент. Изменение соседа снимает устаревший лимит. В AC3 добавлены два соседних растущих компонента, перестановка/переименование и одновременный resize с широкой надписью.\n4. Улучшения: кандидат распространяется от детерминированного корня с полной проверкой вместо общего поиска новых опор; метрики не зависят от ограниченного диаметра; обе устаревшие фразы DEVICE-PRESENTATION будут заменены.\n\n[Раунд 2](https://github.com/Matysh/houseplan-card/actions/runs/44997955145).\n\n- Ограничение и сообщение относятся только к компонентам с доказанным ребром или опорой стены. Свободные значки держат исходные центры и запрошенный размер без сообщения при изменении собственных или профильных размеров. Они участвуют как неподвижные препятствия для контактной группы своей фактической формой. Добавлены регрессии на плотную группу свободных значков, на индивидуальный размер и на соседство с контактной группой.\n- Граница resize использует CONTACT_EPS, отдельный случай несогласуемого цикла удерживает проверенный размер. AC2 фиксирует и замыкающие выравнивания.\n\n[Раунд 3](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075985189).\n\n- Изменение свободного значка больше не разрывает соседнюю группу. В конкуренции защищается baseline контакта, а затем ограничивается только запрошенный рост свободного значка при пересечении с принятой группой. Свободный значок остаётся на исходном центре. Перекрытия только свободных значков не включают лимит. В AC3 добавлены индивидуальный и профильный рост возле уже связанной группы.\n- При равном типе опоры точка группового роста выбирается по Y/X/ID. Угловая/стеновая опора имеет прежний приоритет.\n\n### Г-образная группа у двух стен\n\nПо уточнению владельца в общую панельную сцену добавлена группа из пяти устройств. Угловой значок опирается на обе стены, по два устройства продолжают каждое плечо. При изменении углового значка и общего масштаба профиля проверяются все четыре связи, обе стены, неизменная камера и возвращение к исходной форме в плоском виде и 2.5D. Внутреннее пересечение декоративных полей в месте поворота совместимо с доказанными стеновыми контактами. Пересечение самих значков ограничивает размер и сохраняет группу. Добавлена проверка открытия профиля с эквивалентным исходным размером после округления.\n\nКод и тесты сохранены в [18f68838d6](https://github.com/Matysh/houseplan-card/commit/18f68838d67043b44af4bf16f18182781c956958). В новом наборе 10 кандидатов по двум проекциям, из фактической панели с одинаковой камерой в пределах каждой проекции. Сценарий также добавлен в [HA E2E №100](https://github.com/Matysh/houseplan-e2e/issues/100).\n\n### Бейдж в середине группы при повороте и изменении значения\n\nПо уточнению владельца при повороте на 180° в плоском «Просмотре» бейдж остаётся на заданной стороне экрана, а горизонтальный ряд и вертикальная колонка сохраняют связи и выравнивание. Компоновка учитывает фактический габарит бейджа в новой ориентации. Обновление внешней сущности, выбранной источником бейджа, запускает новое измерение. Короткое, очень длинное и снова короткое значение в среднем устройстве должны сохранить все связи. Группа расширяется под длинное значение в пределах доступного места, при этом бейдж и соседние значки не перекрываются. Проверка выполняется на настоящем DOM в плоском виде при 0° и 180°, с контрольным возвращением и проверкой расположения в хранилище.\n\nПоворотная галерея из [предыдущего комментария](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076607704) служит материалом «до» для уточнения. Десять принятых кадров с исходным поворотом закреплены в `c8d80401a8`.\n\n### Материал к код-ревью\n\n- Согласованы и записаны 16 эталонов. [Первые десять](https://github.com/Matysh/houseplan-card/commit/c8d80401a8) приняты [в первом решении владельца](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049). [Шесть кадров поворотов](https://github.com/Matysh/houseplan-card/commit/d1b0172db3) приняты [после исправления бейджа](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076905544). Хеш каждого PNG сверен с принятой версией и индексом.\n- Адресная проверка прошла на сборке `70c7aaf9243672c33aa8fb6ab9686418804e6777`: 117 Node-тестов, 117 проверок Chromium живого бейджа, сцена семи типов контакта в двух проекциях, профиль и две отдельные карточки, прежние браузерные тесты reflow и углов. Проверка в каталоге относится к `devices` и выбирается в S6 по исходникам.\n- Защищены и числовая геометрия, и визуальная регистрация. При 0° и 180° длинный бейдж расширяет ряд с 288 до 360 px, не закрывая значки соседей. DOM-проверка контролирует обе связи у среднего устройства, расположение бейджа и возврат без дрейфа. Снимок View включает отдельную сущность, выбранную источником бейджа.\n- Реальный транспорт HA проверяется перед релизом по [House Plan E2E №100](https://github.com/Matysh/houseplan-e2e/issues/100). Локальные браузерные проверки монтируют продукт с синтетическим HA.\n\n### Первый S6 и исправление проверок\n\nНа материале `8cc632ede75a64efdb5cc9a2d1211a4d59966ab3` прошли 717 из 722 шагов, включая все браузерные проверки и повторное сравнение всех 16 принятых PNG без отличий. Пять отказов относятся к реестрам исходников и точным якорям проверок, причины воспроизведены отдельно. В [9ec59ff0cd](https://github.com/Matysh/houseplan-card/commit/9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09) зарегистрированы внутренний DOM-хук, источники совместимости и тестовая фикстура без сохранённых конфигов. Четыре мутационных якоря привязаны к изменившимся строкам с сохранением прежних проверок. На исправленном дереве прошли 108 адресных тестов, девять поведенческих проверок и браузерный сценарий диалога толщины стены. Проверка выбора нашла по одному плану для каждого из четырёх якорей. Задача повторно поставлена в общую очередь.\n\n### Повтор после слияния #1518\n\nНа ребейзе `784a4157b8` все 16 утверждённых эталонов снова совпали пиксель в пиксель. S6 дал 723 из 724 шагов. Единственный отказ возник в `smoke_room_co2` при ожидании двух карточек, Chromium вернул `Resulting promise was garbage collected`. Адресный повтор исходного теста на том же материале прошёл все 23 проверки. В [1494d496f](https://github.com/Matysh/houseplan-card/commit/1494d496f) синхронное монтирование вынесено отдельно, готовность ждёт Playwright по состоянию фактического DOM. Проверки CO₂ на kiosk и статической карточке, записи и геометрия остались прежними. Исправленный адресный тест также прошёл 23 из 23.\n\n### Проверка на базе #1516\n\nВ [итоговом материале](https://github.com/Matysh/houseplan-card/commit/8d413b8121306d906999556537096b8db5f00dfa) панельные тесты внешнего экрана продолжают проверять API 3, а согласованные кадры #1517 по-прежнему используют профиль API 2. Каталог совместимости после объединения содержит 878 проверенных попаданий, восемь адресных проверок прошли. Повторный захват всех 16 принятых эталонов на фактической базе `29f32c05ed` дал 0 отличающихся пикселей во всех кадрах."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Реализация решает поставленную задачу внутри общего `device-contact-layout`, отдельного solver для карточки или экрана не появилось. Устранены оба дефекта, подтверждённые на S4:\n- адаптер передаёт solver'у `_effectiveKioskScale.icon`;\n- холодный legacy без basis выбирает опору из двух геометрических кандидатов (собственный размер карточки и штатный), а не берёт текущую переопределённую форму.\n\nПри расхождении запрошенного и опорного диаметра больше CONTACT_EPS включается отдельный resize-проход `resolveResize`. Он работает так, как договорились в ТЗ после четырёх раундов:\n- t=0 — опорные диаметры с текущим содержимым;\n- контактные компоненты обрабатываются по каноническому якорю Y/X/ID;\n- соседу оставляется его baseline;\n- 12 шагов бисекции по одному параметру компонента;\n- раздельный fallback #1003 включается только при невозможном t=0 и сопровождается отдельным сообщением;\n- растущий свободный значок держит центр и уступает только доказанным контактам.\n\nЭффективный диаметр одинаково доходит до CSS (`--dev-size`), hit-контура и ISO-overlay. Локальный масштаб ничего не записывает. Блокеров я не нашёл.\n\nОстались необязательные улучшения:\n- в resize-режиме пропадает покомпонентный кэш (на внешнем экране с `icon_scale≠1` это постоянный режим);\n- подсказка об ограничении видна только в режиме `view`, а в редакторе устройств размер ограничивается молча;\n- фраза в документации о повторном использовании индексов теперь верна не для всех путей.\n\nПринять работу можно. Эталоны согласованы владельцем, набор S6 на `8d413b8` прошёл.",
-          "understanding": "**Проблема.** Есть три источника размера маркера: индивидуальный `presentation.scale`, `icon_size` карточки и `icon_scale` профиля внешнего экрана. При любом из них маркеры у стен, в углах и в группах должны расти от опорных линий и не терять связей, причём без записи в общий layout.\n\n**Поведение до.** Профиль не доходил до solver: адаптер умножал на `_kioskScale.icon`, а слой рисования — на effective-масштаб. Холодный legacy-reference равнялся текущему переопределённому запросу. При тесноте группа разъединялась (`separate`). Свободный маркер при собственном росте мог сдвинуться через `separate`.\n\n**Поведение после (по исходникам head).**\n- `device-contact-card.ts:77-92` передаёт в кадр `diameter = surfaceBase·scale·iconScale` и `legacyDiameters = [surfaceBase·scale, neutralBase·scale]`.\n- `DeviceContactLayout.resolve` пересчитывает reference только для маркеров, у которых изменилась авторская позиция или basis. Для них `legacyReferences` строит две сцены кандидатов и для каждого связного (по объединённым рёбрам) компонента выбирает доказанный кандидат. Reference стабилен в сессии, поэтому смена `icon_size` или индивидуального размера даёт расхождение с reference, и включается `resolveResize`.\n- `resolveResize`:\n  1. Делит компоненты на контактные и свободные одиночки. Растущие свободные временно получают опорный диаметр.\n  2. Для каждого контактного компонента строит baseline (t=0) без занятости и сортирует компоненты по `anchorOrder`.\n  3. Последовательно проверяет полный запрос, затем t=0 и бисекцию против общей занятости. Принятая форма заменяет baseline. Если t=0 невозможен, выполняется `releaseContacts` с флагом `resizeBaselineLost`.\n  4. Рост свободных значков ограничивается только принятыми контактными компонентами (noJoin-пересечение).\n- `place()` в resize-режиме дополнительно сверяет каждое ребро, включая замыкающие, через обратный `follow`. Угловые плечи с общим углом допускают пересечение декоративных полей (`sharesWallCorner`).\n- Рендерер выставляет `resizeStatus` и `appearanceChanged`. `houseplan-card._renderDevice` переопределяет `--dev-size` в cqw по эффективному диаметру, ISO-overlay получает `effectiveDiameterOf`, hit берётся из той же сцены.\n- В режиме `view` выводится `role=\"status\"` подсказка (en/ru/de/fr).\n- Запись `contactConfigPatch` материализует только участников reference-графа с доказанными связями (`referenceMembers`).\n- Добавлен разворот следа бейджа при 180° в плоском View (`uprightHalfTurn`). Это уточнение владельца, на него приняты эталоны.\n\n**Что разобрано.** Полный diff `device-contact-layout.ts`, `device-contact-card.ts`, `device-contact-render.ts`, `device-contact-screen.ts`, `device-contact-geometry.ts` (`halfTurnContactBox`), `device-contact-write.ts` целиком, изменения в `houseplan-card.ts` (`_renderDevice`, статус, ISO-вход), `iso-scene-geometry.ts`, `render-snapshot-capture.ts`, вычисление `--device-base-size`/`iconCqw` (`space-geometry.ts:544`), CSS `--dev-size` (`devices.styles.ts`), `houseplan-panel.ts` (у панели нет `icon_size`), `_effectiveKioskScale` (только `panelHost`), новые юнит-тесты `#1517` и обновлённые тесты адаптера/записи, смоки `smoke_device_contact_profile_1517`, `smoke_device_contact_resize_1517`, `smoke_device_contact_badges_1517`, изменение `smoke_device_contact_reflow`, документация DEVICE-PRESENTATION/CONFIG-COMPATIBILITY.",
-          "analysis": [
-            {
-              "topic": "Единый эффективный диаметр: solver, CSS, hit, ISO",
-              "assessment": "Источник запрошенного диаметра теперь один. Адаптер и рендер дома используют одну формулу `effectiveDeviceBaseSize(iconPct)·iconUnit/100·(view ? effective icon : 1)·presentation.scale`. Ограниченный диаметр попадает в CSS как абсолютный `--dev-size` в тех же cqw, что и `--device-base-size` (`iconCqw` = `pct·iconUnit·k/view.w`), поэтому paint и hit не расходятся. `guard` в `_renderDevice` включает `limitedSize`, а `appearanceChanged` вызывает `requestUpdate`. Петли нет: повторный `sync` с тем же ключом возвращается рано. Метрика грани нормирована на диаметр, её ключ не зависит от ограничения, как и требовало ТЗ.",
-              "evidence": "src/device-contact-card.ts:77-92; src/houseplan-card.ts:13330-13335 (contactBaseDiameter), 14678-14700 (limitedSize → `--dev-size`), 13955 (`--device-base-size` через iconCqw); src/space-geometry.ts:544-553; src/iso-scene-geometry.ts:957-958; src/device-contact-render.ts:184-190 (box = metric × diameter), 199-205 (appearanceChanged)."
-            },
-            {
-              "topic": "Выбор legacy-опоры без basis",
-              "assessment": "Кандидаты строятся масштабированием текущего бокса до собственного и штатного диаметров, рёбра разных кандидатов не смешиваются, допуски не расширяются. Компонент собирается по объединению рёбер обеих сцен, так что расхождение составов тоже учитывается. Есть два отличия от буквы ТЗ. (1) Если доказательств нет ни в одном кандидате, берётся собственный размер, а не штатный. Для свободных значков на карточке с `icon_size>2,5` это лучше ТЗ: они не считаются «растущими» и не получают ложного лимита (раунд 4 S4 отмечал это как граничный случай). (2) Если связи расходятся, всегда берётся собственный кандидат, хотя для панели и профиля ТЗ предписывало штатный. На практике разницы нет: панель монтирует карточку без `icon_size` (`houseplan-panel.ts:185`), а профиль работает только при `panelHost`. Поэтому для них собственный кандидат совпадает со штатным, и срабатывает ранний возврат. Reference стабилен до смены x/y/basis, а при сохранении индивидуального размера материализуется именно он. Это корректно связывает live-изменение и запись.",
-              "evidence": "src/device-contact-layout.ts:24-62 (legacyReferences), 136-150 (обновление references только для `updated`); src/houseplan-panel.ts:179-185; src/houseplan-card.ts:1160-1166; src/device-contact-write.ts:34-41; test/device-contact-1003.test.mjs `#1517 cold profile and card resize...` (оба порядка кандидатов дают x=38,625 и край 0)."
-            },
-            {
-              "topic": "Resize-проход: t=0, порядок, соседи, fallback",
-              "assessment": "Механизм прямо следует ТЗ и при этом прост. Baseline всех контактных компонентов строится до проверки роста. Необработанный сосед занимает свой выполнимый baseline, а не запрос на старых центрах. Порядок обработки задаёт `anchorOrder` (Y, X, ID). Принятая форма целиком заменяет baseline (`occupied.replace`). Бисекция принимает только проверенный вариант. `resizeBaselineLost` выставляется лишь при невозможном t=0, и тогда `releaseContacts` работает на опорных диаметрах. Неизменённые группы проверяются против той же занятости и не сдвигаются. Удачно, что `place(..., resize=true)` сверяет каждое ребро обратным `follow`, а не только факт `joinedContactSide`: так ловится незаметный дрейф на замыканиях. Тесты покрывают перестановку и переименование, канонический приоритет, коридор у стены, невозможный t=0 и Г-образный угол (включая сжатие до столкновения ядер).",
-              "evidence": "src/device-contact-layout.ts:196-276 (resolveResize), 306-347 (place), 160-170 (переключение на resize при `!near` диаметров); test/device-contact-1003.test.mjs: `constrained growth keeps a complete row`, `simultaneous growth leaves each neighbour its feasible baseline`, `if the current face cannot fit even at the original diameter`, `a wall corner keeps both arms`."
-            },
-            {
-              "topic": "Свободные значки",
-              "assessment": "Обе развилки ТЗ раунда 3–4 реализованы. Пока считаются группы, растущий свободный значок занимает опорный диаметр, поэтому не может сделать t=0 соседней группы небезопасным. После групп его рост ограничивается только принятыми контактными формами, а центр не меняется. Взаимные пересечения свободных значков не проверяются, и при отсутствии контактных компонентов значки просто получают запрошенный размер. Оба необязательных уточнения раунда 4 не сделаны, но это осознанная граница. Свободный значок может зайти в стену: сцена `contacts` создаётся без masonry. Расширившееся значение статичного свободного значка по-прежнему может разъединить соседнюю группу, но так же было в #1003.",
-              "evidence": "src/device-contact-layout.ts:201-210 (growingFree), 255-272 (проверка noJoin против `contacts` без masonry); test `#1517 growing free marker retains its centre and yields to existing contact`; demo/smoke_device_contact_profile_1517.mjs `peerMarkerDoesNotMove`."
-            },
-            {
-              "topic": "Отсутствие записей и материализация",
-              "assessment": "Локальный масштаб ничего не пишет, производные центры и диаметры остаются в рендерере. Переход `contactConfigPatch` с эффективной сцены на reference-граф (`referenceMembers`) правильный: материализуются доказанные исходные связи, а не возможный ограниченный или разъединённый кадр. Свободные одиночки по-прежнему не получают basis. Права, CAS и capability (`device_contact_api`) не менялись. Отдельно стоит понимать: перетаскивание в редакторе (`prepareContactMove`) пишет basis по эффективной сцене. Если группа в этот момент ограничена, в basis попадёт ограниченный диаметр. Это явное авторское действие, связи при этом диаметре доказаны, а следующий кадр снова попробует вырасти до запроса. Дефектом я это не считаю.",
-              "evidence": "src/device-contact-write.ts:25-52, 54-80; src/device-contact-layout.ts:121-126 (referenceMembers); demo/smoke_device_contact_profile_1517.mjs (`profileDoesNotWriteLayout`, `noConfigOrLayoutWrites`); demo/smoke_device_contact_resize_1517.mjs (`local overrides perform no writes`)."
-            },
-            {
-              "topic": "Поворот 180° и бейдж (уточнение владельца)",
-              "assessment": "Разворот следа (`halfTurnContactBox`) выполняется только в плоском View при 180°. Он согласованно применяется в solver (`oriented`), в экранной сцене (`screenContactMarker`) и в выборе стороны выравнивания `follow`: свободный ряд сохраняет экранное выравнивание, общая стена — мировое. Ключи кадра и группы учитывают `uprightHalfTurn`, поэтому кэш не перепутает ориентации. Изменение `render-snapshot-capture` добавляет сущность — источник бейджа в снимок, и её обновление теперь запускает измерение. Это нужно для живого бейджа. Сложность оправдана принятым уточнением, но решение точечное: для 90°/270° следы асимметричных бейджей остаются вертикально стоящими, как до задачи.",
-              "evidence": "src/device-contact-geometry.ts:7-9; src/device-contact-layout.ts:84-101 (follow), 155-158; src/device-contact-screen.ts:23-35; src/device-contact-card.ts:84; src/render-snapshot-capture.ts:215-218; demo/smoke_device_contact_badges_1517.mjs."
-            },
-            {
-              "topic": "Кэширование в resize-режиме",
-              "assessment": "В обычном пути сохранён покомпонентный кэш `groupResults` и инкрементальная занятость (#1003 AC15). В resize-пути при любой смене `inputKey` сбрасываются `occupancy` и `groupResults`. Затем заново выполняются `place` для каждого контактного компонента, одна полная `DeviceContactScene` по всем маркерам и до 14 `place` на каждый ограниченный компонент. На внешнем экране с `icon_scale≠1` и на карточке, чей `icon_size` отличается от basis, этот путь действует постоянно, поэтому каждое изменение ширины значения на любом маркере пересчитывает весь этаж. Корректность от этого только выигрывает: устаревший лимит соседа невозможен. Но обещание ТЗ и документации «unchanged fitted geometry reuses indexes and solver results» здесь выполняется только для полностью идентичного кадра. Измерений нагрузки на 200 маркерах в resize-режиме среди результатов S6 нет. Это не блокер, но риск на основном сценарии внешнего экрана.",
-              "evidence": "src/device-contact-layout.ts:160-170 (`this.occupancy = null; this.groupResults.clear();` перед resolveResize), 226-232 (полная занятость), 246-253 (бисекция); docs/DEVICE-PRESENTATION.md:489-490; test/device-contact-1003.test.mjs AC15 проверяет только обычный путь."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Вернуть инкрементальность resize-прохода. Например, держать ключ результата компонента как (собственные входы + принятые формы предшествующих по `anchorOrder` соседей, чьи bounds пересекают его область поиска) и пересчитывать только компоненты, у которых этот ключ изменился. Ещё проще — сначала добавить в тест AC15 вариант с `legacy` и профильным множителем, чтобы измерить `work.components`/`occupancyBuilds` при смене одного значения среди 200 маркеров. Выгода: внешний экран с `icon_scale≠1` не будет пересчитывать весь этаж на каждое изменение ширины текста. Цена — более сложный ключ; если измерение покажет пренебрежимые затраты, достаточно поправить формулировку в документации.",
-            "Показывать подсказку об ограничении и в режиме редактора устройств. Сейчас она есть только при `_mode === 'view'`: пользователь сохраняет индивидуальный размер в `devices` и видит меньший значок без объяснения, а `smoke_device_contact_reflow` специально переключается в View ради проверки. Выгода: обратная связь появляется там, где совершается действие. Цена — одно условие в шаблоне и проверка, что подсказка не перекрывает элементы редактора.",
-            "Уточнить в `docs/DEVICE-PRESENTATION.md` фразу «unchanged fitted geometry reuses indexes and solver results»: в resize-режиме переиспользуется только полностью идентичный кадр. Ещё полезно одной фразой зафиксировать два отличия выбора legacy-кандидата от текста ТЗ: без доказательств берётся собственный размер, при расхождении связей — собственный кандидат (для панели и профиля он совпадает со штатным).",
-            "Необязательное улучшение из раунда 4 S4: передать masonry в сцену `contacts` в проходе свободных значков (`new DeviceContactScene(..., walls, masonry)`), чтобы рост свободного значка рядом со стеной ограничивался стеной, а не заходил в неё. Или явно задокументировать, что такое наложение допускается."
-          ],
-          "boundaries": "Это S7-ревью по исходникам. Сборку, тесты, браузерные смоки и визуальные сравнения я не запускал. Использован результат S6: набор «Тесты для задачи #1517 (перед ревью)» на материале `8d413b8121306d906999556537096b8db5f00dfa` в статусе passed, без отказов. Утверждения исполнителя о попиксельном совпадении 16 эталонов на базе `29f32c05ed`, о 117 Node и Chromium проверках и о прохождении `smoke_room_co2` после правки я принимаю как результаты исполнителя и не перепроверял. Сами PNG-эталоны не просматривал: их приняли владельцем (комментарии 7076557049 и 7076905544), а хеши в `baselines-index.json` совпадают с перечисленными в issue. Реальный HA-транспорт (houseplan-e2e №100) находится вне этого репозитория и не оценивался.\n\nПрочитано целиком или по полному diff: `device-contact-layout.ts`, `device-contact-card.ts`, `device-contact-render.ts` (изменённые участки), `device-contact-screen.ts`, `device-contact-write.ts`, `device-contact-geometry.ts` (`halfTurnContactBox`), изменения в `houseplan-card.ts`, `iso-scene-geometry.ts`, `render-snapshot-capture.ts`, `plan.styles.ts`, i18n-ключи, DEVICE-PRESENTATION/CONFIG-COMPATIBILITY, новые юнит-тесты и три новых смока.\n\nНе разбирал подробно: внутренности `DeviceContactScene`/`joinedContactSide` (опирался на прошлые раунды S4), ISO-overlay ниже входа `effectiveDiameterOf`, изменения в реестрах (`mutation-registry`, `source-dependencies`, `config-compatibility-inventory`, `data-hp-contract`, `wall-identity-corpus`) — они прошли в S6. Поведение асимметричных бейджей при 90°/270° и промежуточных 45° (#1515) оценивал только по коду: этот diff их не меняет. Затраты resize-прохода на больших этажах не измерены, вывод о риске сделан по структуре кода."
-        },
-        "usage": {
-          "input_tokens": 48,
-          "cache_creation_input_tokens": 214387,
-          "cache_read_input_tokens": 3747192,
-          "output_tokens": 26165,
-          "output_tokens_details": {
-            "thinking_tokens": 15383
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 214387,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1209,
-              "cache_read_input_tokens": 191404,
-              "cache_creation_input_tokens": 27187,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 27187
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРеализация решает поставленную задачу внутри общего `device-contact-layout`, отдельного solver для карточки или экрана не появилось. Устранены оба дефекта, подтверждённые на S4:\n- адаптер передаёт solver'у `_effectiveKioskScale.icon`;\n- холодный legacy без basis выбирает опору из двух геометрических кандидатов (собственный размер карточки и штатный), а не берёт текущую переопределённую форму.\n\nПри расхождении запрошенного и опорного диаметра больше CONTACT_EPS включается отдельный resize-проход `resolveResize`. Он работает так, как договорились в ТЗ после четырёх раундов:\n- t=0 — опорные диаметры с текущим содержимым;\n- контактные компоненты обрабатываются по каноническому якорю Y/X/ID;\n- соседу оставляется его baseline;\n- 12 шагов бисекции по одному параметру компонента;\n- раздельный fallback #1003 включается только при невозможном t=0 и сопровождается отдельным сообщением;\n- растущий свободный значок держит центр и уступает только доказанным контактам.\n\nЭффективный диаметр одинаково доходит до CSS (`--dev-size`), hit-контура и ISO-overlay. Локальный масштаб ничего не записывает. Блокеров я не нашёл.\n\nОстались необязательные улучшения:\n- в resize-режиме пропадает покомпонентный кэш (на внешнем экране с `icon_scale≠1` это постоянный режим);\n- подсказка об ограничении видна только в режиме `view`, а в редакторе устройств размер ограничивается молча;\n- фраза в документации о повторном использовании индексов теперь верна не для всех путей.\n\nПринять работу можно. Эталоны согласованы владельцем, набор S6 на `8d413b8` прошёл.\n\n## Понимание решения\n\n**Проблема.** Есть три источника размера маркера: индивидуальный `presentation.scale`, `icon_size` карточки и `icon_scale` профиля внешнего экрана. При любом из них маркеры у стен, в углах и в группах должны расти от опорных линий и не терять связей, причём без записи в общий layout.\n\n**Поведение до.** Профиль не доходил до solver: адаптер умножал на `_kioskScale.icon`, а слой рисования — на effective-масштаб. Холодный legacy-reference равнялся текущему переопределённому запросу. При тесноте группа разъединялась (`separate`). Свободный маркер при собственном росте мог сдвинуться через `separate`.\n\n**Поведение после (по исходникам head).**\n- `device-contact-card.ts:77-92` передаёт в кадр `diameter = surfaceBase·scale·iconScale` и `legacyDiameters = [surfaceBase·scale, neutralBase·scale]`.\n- `DeviceContactLayout.resolve` пересчитывает reference только для маркеров, у которых изменилась авторская позиция или basis. Для них `legacyReferences` строит две сцены кандидатов и для каждого связного (по объединённым рёбрам) компонента выбирает доказанный кандидат. Reference стабилен в сессии, поэтому смена `icon_size` или индивидуального размера даёт расхождение с reference, и включается `resolveResize`.\n- `resolveResize`:\n  1. Делит компоненты на контактные и свободные одиночки. Растущие свободные временно получают опорный диаметр.\n  2. Для каждого контактного компонента строит baseline (t=0) без занятости и сортирует компоненты по `anchorOrder`.\n  3. Последовательно проверяет полный запрос, затем t=0 и бисекцию против общей занятости. Принятая форма заменяет baseline. Если t=0 невозможен, выполняется `releaseContacts` с флагом `resizeBaselineLost`.\n  4. Рост свободных значков ограничивается только принятыми контактными компонентами (noJoin-пересечение).\n- `place()` в resize-режиме дополнительно сверяет каждое ребро, включая замыкающие, через обратный `follow`. Угловые плечи с общим углом допускают пересечение декоративных полей (`sharesWallCorner`).\n- Рендерер выставляет `resizeStatus` и `appearanceChanged`. `houseplan-card._renderDevice` переопределяет `--dev-size` в cqw по эффективному диаметру, ISO-overlay получает `effectiveDiameterOf`, hit берётся из той же сцены.\n- В режиме `view` выводится `role=\"status\"` подсказка (en/ru/de/fr).\n- Запись `contactConfigPatch` материализует только участников reference-графа с доказанными связями (`referenceMembers`).\n- Добавлен разворот следа бейджа при 180° в плоском View (`uprightHalfTurn`). Это уточнение владельца, на него приняты эталоны.\n\n**Что разобрано.** Полный diff `device-contact-layout.ts`, `device-contact-card.ts`, `device-contact-render.ts`, `device-contact-screen.ts`, `device-contact-geometry.ts` (`halfTurnContactBox`), `device-contact-write.ts` целиком, изменения в `houseplan-card.ts` (`_renderDevice`, статус, ISO-вход), `iso-scene-geometry.ts`, `render-snapshot-capture.ts`, вычисление `--device-base-size`/`iconCqw` (`space-geometry.ts:544`), CSS `--dev-size` (`devices.styles.ts`), `houseplan-panel.ts` (у панели нет `icon_size`), `_effectiveKioskScale` (только `panelHost`), новые юнит-тесты `#1517` и обновлённые тесты адаптера/записи, смоки `smoke_device_contact_profile_1517`, `smoke_device_contact_resize_1517`, `smoke_device_contact_badges_1517`, изменение `smoke_device_contact_reflow`, документация DEVICE-PRESENTATION/CONFIG-COMPATIBILITY.\n\n## Разбор решения\n\n### Единый эффективный диаметр: solver, CSS, hit, ISO\n\nИсточник запрошенного диаметра теперь один. Адаптер и рендер дома используют одну формулу `effectiveDeviceBaseSize(iconPct)·iconUnit/100·(view ? effective icon : 1)·presentation.scale`. Ограниченный диаметр попадает в CSS как абсолютный `--dev-size` в тех же cqw, что и `--device-base-size` (`iconCqw` = `pct·iconUnit·k/view.w`), поэтому paint и hit не расходятся. `guard` в `_renderDevice` включает `limitedSize`, а `appearanceChanged` вызывает `requestUpdate`. Петли нет: повторный `sync` с тем же ключом возвращается рано. Метрика грани нормирована на диаметр, её ключ не зависит от ограничения, как и требовало ТЗ.\n\nОснование: src/device-contact-card.ts:77-92; src/houseplan-card.ts:13330-13335 (contactBaseDiameter), 14678-14700 (limitedSize → `--dev-size`), 13955 (`--device-base-size` через iconCqw); src/space-geometry.ts:544-553; src/iso-scene-geometry.ts:957-958; src/device-contact-render.ts:184-190 (box = metric × diameter), 199-205 (appearanceChanged).\n\n### Выбор legacy-опоры без basis\n\nКандидаты строятся масштабированием текущего бокса до собственного и штатного диаметров, рёбра разных кандидатов не смешиваются, допуски не расширяются. Компонент собирается по объединению рёбер обеих сцен, так что расхождение составов тоже учитывается. Есть два отличия от буквы ТЗ. (1) Если доказательств нет ни в одном кандидате, берётся собственный размер, а не штатный. Для свободных значков на карточке с `icon_size>2,5` это лучше ТЗ: они не считаются «растущими» и не получают ложного лимита (раунд 4 S4 отмечал это как граничный случай). (2) Если связи расходятся, всегда берётся собственный кандидат, хотя для панели и профиля ТЗ предписывало штатный. На практике разницы нет: панель монтирует карточку без `icon_size` (`houseplan-panel.ts:185`), а профиль работает только при `panelHost`. Поэтому для них собственный кандидат совпадает со штатным, и срабатывает ранний возврат. Reference стабилен до смены x/y/basis, а при сохранении индивидуального размера материализуется именно он. Это корректно связывает live-изменение и запись.\n\nОснование: src/device-contact-layout.ts:24-62 (legacyReferences), 136-150 (обновление references только для `updated`); src/houseplan-panel.ts:179-185; src/houseplan-card.ts:1160-1166; src/device-contact-write.ts:34-41; test/device-contact-1003.test.mjs `#1517 cold profile and card resize...` (оба порядка кандидатов дают x=38,625 и край 0).\n\n### Resize-проход: t=0, порядок, соседи, fallback\n\nМеханизм прямо следует ТЗ и при этом прост. Baseline всех контактных компонентов строится до проверки роста. Необработанный сосед занимает свой выполнимый baseline, а не запрос на старых центрах. Порядок обработки задаёт `anchorOrder` (Y, X, ID). Принятая форма целиком заменяет baseline (`occupied.replace`). Бисекция принимает только проверенный вариант. `resizeBaselineLost` выставляется лишь при невозможном t=0, и тогда `releaseContacts` работает на опорных диаметрах. Неизменённые группы проверяются против той же занятости и не сдвигаются. Удачно, что `place(..., resize=true)` сверяет каждое ребро обратным `follow`, а не только факт `joinedContactSide`: так ловится незаметный дрейф на замыканиях. Тесты покрывают перестановку и переименование, канонический приоритет, коридор у стены, невозможный t=0 и Г-образный угол (включая сжатие до столкновения ядер).\n\nОснование: src/device-contact-layout.ts:196-276 (resolveResize), 306-347 (place), 160-170 (переключение на resize при `!near` диаметров); test/device-contact-1003.test.mjs: `constrained growth keeps a complete row`, `simultaneous growth leaves each neighbour its feasible baseline`, `if the current face cannot fit even at the original diameter`, `a wall corner keeps both arms`.\n\n### Свободные значки\n\nОбе развилки ТЗ раунда 3–4 реализованы. Пока считаются группы, растущий свободный значок занимает опорный диаметр, поэтому не может сделать t=0 соседней группы небезопасным. После групп его рост ограничивается только принятыми контактными формами, а центр не меняется. Взаимные пересечения свободных значков не проверяются, и при отсутствии контактных компонентов значки просто получают запрошенный размер. Оба необязательных уточнения раунда 4 не сделаны, но это осознанная граница. Свободный значок может зайти в стену: сцена `contacts` создаётся без masonry. Расширившееся значение статичного свободного значка по-прежнему может разъединить соседнюю группу, но так же было в #1003.\n\nОснование: src/device-contact-layout.ts:201-210 (growingFree), 255-272 (проверка noJoin против `contacts` без masonry); test `#1517 growing free marker retains its centre and yields to existing contact`; demo/smoke_device_contact_profile_1517.mjs `peerMarkerDoesNotMove`.\n\n### Отсутствие записей и материализация\n\nЛокальный масштаб ничего не пишет, производные центры и диаметры остаются в рендерере. Переход `contactConfigPatch` с эффективной сцены на reference-граф (`referenceMembers`) правильный: материализуются доказанные исходные связи, а не возможный ограниченный или разъединённый кадр. Свободные одиночки по-прежнему не получают basis. Права, CAS и capability (`device_contact_api`) не менялись. Отдельно стоит понимать: перетаскивание в редакторе (`prepareContactMove`) пишет basis по эффективной сцене. Если группа в этот момент ограничена, в basis попадёт ограниченный диаметр. Это явное авторское действие, связи при этом диаметре доказаны, а следующий кадр снова попробует вырасти до запроса. Дефектом я это не считаю.\n\nОснование: src/device-contact-write.ts:25-52, 54-80; src/device-contact-layout.ts:121-126 (referenceMembers); demo/smoke_device_contact_profile_1517.mjs (`profileDoesNotWriteLayout`, `noConfigOrLayoutWrites`); demo/smoke_device_contact_resize_1517.mjs (`local overrides perform no writes`).\n\n### Поворот 180° и бейдж (уточнение владельца)\n\nРазворот следа (`halfTurnContactBox`) выполняется только в плоском View при 180°. Он согласованно применяется в solver (`oriented`), в экранной сцене (`screenContactMarker`) и в выборе стороны выравнивания `follow`: свободный ряд сохраняет экранное выравнивание, общая стена — мировое. Ключи кадра и группы учитывают `uprightHalfTurn`, поэтому кэш не перепутает ориентации. Изменение `render-snapshot-capture` добавляет сущность — источник бейджа в снимок, и её обновление теперь запускает измерение. Это нужно для живого бейджа. Сложность оправдана принятым уточнением, но решение точечное: для 90°/270° следы асимметричных бейджей остаются вертикально стоящими, как до задачи.\n\nОснование: src/device-contact-geometry.ts:7-9; src/device-contact-layout.ts:84-101 (follow), 155-158; src/device-contact-screen.ts:23-35; src/device-contact-card.ts:84; src/render-snapshot-capture.ts:215-218; demo/smoke_device_contact_badges_1517.mjs.\n\n### Кэширование в resize-режиме\n\nВ обычном пути сохранён покомпонентный кэш `groupResults` и инкрементальная занятость (#1003 AC15). В resize-пути при любой смене `inputKey` сбрасываются `occupancy` и `groupResults`. Затем заново выполняются `place` для каждого контактного компонента, одна полная `DeviceContactScene` по всем маркерам и до 14 `place` на каждый ограниченный компонент. На внешнем экране с `icon_scale≠1` и на карточке, чей `icon_size` отличается от basis, этот путь действует постоянно, поэтому каждое изменение ширины значения на любом маркере пересчитывает весь этаж. Корректность от этого только выигрывает: устаревший лимит соседа невозможен. Но обещание ТЗ и документации «unchanged fitted geometry reuses indexes and solver results» здесь выполняется только для полностью идентичного кадра. Измерений нагрузки на 200 маркерах в resize-режиме среди результатов S6 нет. Это не блокер, но риск на основном сценарии внешнего экрана.\n\nОснование: src/device-contact-layout.ts:160-170 (`this.occupancy = null; this.groupResults.clear();` перед resolveResize), 226-232 (полная занятость), 246-253 (бисекция); docs/DEVICE-PRESENTATION.md:489-490; test/device-contact-1003.test.mjs AC15 проверяет только обычный путь.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Вернуть инкрементальность resize-прохода. Например, держать ключ результата компонента как (собственные входы + принятые формы предшествующих по `anchorOrder` соседей, чьи bounds пересекают его область поиска) и пересчитывать только компоненты, у которых этот ключ изменился. Ещё проще — сначала добавить в тест AC15 вариант с `legacy` и профильным множителем, чтобы измерить `work.components`/`occupancyBuilds` при смене одного значения среди 200 маркеров. Выгода: внешний экран с `icon_scale≠1` не будет пересчитывать весь этаж на каждое изменение ширины текста. Цена — более сложный ключ; если измерение покажет пренебрежимые затраты, достаточно поправить формулировку в документации.\n- Показывать подсказку об ограничении и в режиме редактора устройств. Сейчас она есть только при `_mode === 'view'`: пользователь сохраняет индивидуальный размер в `devices` и видит меньший значок без объяснения, а `smoke_device_contact_reflow` специально переключается в View ради проверки. Выгода: обратная связь появляется там, где совершается действие. Цена — одно условие в шаблоне и проверка, что подсказка не перекрывает элементы редактора.\n- Уточнить в `docs/DEVICE-PRESENTATION.md` фразу «unchanged fitted geometry reuses indexes and solver results»: в resize-режиме переиспользуется только полностью идентичный кадр. Ещё полезно одной фразой зафиксировать два отличия выбора legacy-кандидата от текста ТЗ: без доказательств берётся собственный размер, при расхождении связей — собственный кандидат (для панели и профиля он совпадает со штатным).\n- Необязательное улучшение из раунда 4 S4: передать masonry в сцену `contacts` в проходе свободных значков (`new DeviceContactScene(..., walls, masonry)`), чтобы рост свободного значка рядом со стеной ограничивался стеной, а не заходил в неё. Или явно задокументировать, что такое наложение допускается.\n\n## Границы анализа\n\nЭто S7-ревью по исходникам. Сборку, тесты, браузерные смоки и визуальные сравнения я не запускал. Использован результат S6: набор «Тесты для задачи #1517 (перед ревью)» на материале `8d413b8121306d906999556537096b8db5f00dfa` в статусе passed, без отказов. Утверждения исполнителя о попиксельном совпадении 16 эталонов на базе `29f32c05ed`, о 117 Node и Chromium проверках и о прохождении `smoke_room_co2` после правки я принимаю как результаты исполнителя и не перепроверял. Сами PNG-эталоны не просматривал: их приняли владельцем (комментарии 7076557049 и 7076905544), а хеши в `baselines-index.json` совпадают с перечисленными в issue. Реальный HA-транспорт (houseplan-e2e №100) находится вне этого репозитория и не оценивался.\n\nПрочитано целиком или по полному diff: `device-contact-layout.ts`, `device-contact-card.ts`, `device-contact-render.ts` (изменённые участки), `device-contact-screen.ts`, `device-contact-write.ts`, `device-contact-geometry.ts` (`halfTurnContactBox`), изменения в `houseplan-card.ts`, `iso-scene-geometry.ts`, `render-snapshot-capture.ts`, `plan.styles.ts`, i18n-ключи, DEVICE-PRESENTATION/CONFIG-COMPATIBILITY, новые юнит-тесты и три новых смока.\n\nНе разбирал подробно: внутренности `DeviceContactScene`/`joinedContactSide` (опирался на прошлые раунды S4), ISO-overlay ниже входа `effectiveDiameterOf`, изменения в реестрах (`mutation-registry`, `source-dependencies`, `config-compatibility-inventory`, `data-hp-contract`, `wall-identity-corpus`) — они прошли в S6. Поведение асимметричных бейджей при 90°/270° и промежуточных 45° (#1515) оценивал только по коду: этот diff их не меняет. Затраты resize-прохода на больших этажах не измерены, вывод о риске сделан по структуре кода.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 29f32c05ed0932be242e766771b7cdaaf06472bc → 8d413b8121306d906999556537096b8db5f00dfa\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1517, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nАнализ на dev `5fa8459ea`, `spec-check` прошёл повторно. Проверены разные диаметры paint и solver у профиля и холодный запуск с устаревшей опорой. Исправленная редакция хранит текущую семантику допустимых legacy-групп и фиксирует детерминированный resize. Трек ask по S4. Код ещё не изменялся.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075864767).\n\n1. Неоднозначная legacy-опора → отдельные геометрические кандидаты при штатном размере и собственном размере карточки без профиля, явный выбор между ними, материализация только доказанного. В AC4 добавлена legacy-группа, созданная при нестандартном icon_size.\n2. Неопределённый безопасный t=0 и отличие от value-only → resize активен при различии диаметров запроса и reference, даже при одновременном появлении текста и постоянном переопределении. t=0 использует текущую относительную форму при опорных размерах. При невозможном t=0 старый безопасный fallback выполняется с явной индикацией. Чистое изменение формы при тех же диаметрах сохраняет #1003.\n3. Произвольная занятость → ограничения учитывают реально принятый результат или опорный размер соседа, а не запрошенную форму на старой позиции. Канонический геометрический порядок Y/X с ID только для точного равенства, занятость обновляется целиком на компонент. Изменение соседа снимает устаревший лимит. В AC3 добавлены два соседних растущих компонента, перестановка/переименование и одновременный resize с широкой надписью.\n4. Улучшения: кандидат распространяется от детерминированного корня с полной проверкой вместо общего поиска новых опор; метрики не зависят от ограниченного диаметра; обе устаревшие фразы DEVICE-PRESENTATION будут заменены.\n\n[Раунд 2](https://github.com/Matysh/houseplan-card/actions/runs/44997955145).\n\n- Ограничение и сообщение относятся только к компонентам с доказанным ребром или опорой стены. Свободные значки держат исходные центры и запрошенный размер без сообщения при изменении собственных или профильных размеров. Они участвуют как неподвижные препятствия для контактной группы своей фактической формой. Добавлены регрессии на плотную группу свободных значков, на индивидуальный размер и на соседство с контактной группой.\n- Граница resize использует CONTACT_EPS, отдельный случай несогласуемого цикла удерживает проверенный размер. AC2 фиксирует и замыкающие выравнивания.\n\n[Раунд 3](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075985189).\n\n- Изменение свободного значка больше не разрывает соседнюю группу. В конкуренции защищается baseline контакта, а затем ограничивается только запрошенный рост свободного значка при пересечении с принятой группой. Свободный значок остаётся на исходном центре. Перекрытия только свободных значков не включают лимит. В AC3 добавлены индивидуальный и профильный рост возле уже связанной группы.\n- При равном типе опоры точка группового роста выбирается по Y/X/ID. Угловая/стеновая опора имеет прежний приоритет.\n\n### Г-образная группа у двух стен\n\nПо уточнению владельца в общую панельную сцену добавлена группа из пяти устройств. Угловой значок опирается на обе стены, по два устройства продолжают каждое плечо. При изменении углового значка и общего масштаба профиля проверяются все четыре связи, обе стены, неизменная камера и возвращение к исходной форме в плоском виде и 2.5D. Внутреннее пересечение декоративных полей в месте поворота совместимо с доказанными стеновыми контактами. Пересечение самих значков ограничивает размер и сохраняет группу. Добавлена проверка открытия профиля с эквивалентным исходным размером после округления.\n\nКод и тесты сохранены в [18f68838d6](https://github.com/Matysh/houseplan-card/commit/18f68838d67043b44af4bf16f18182781c956958). В новом наборе 10 кандидатов по двум проекциям, из фактической панели с одинаковой камерой в пределах каждой проекции. Сценарий также добавлен в [HA E2E №100](https://github.com/Matysh/houseplan-e2e/issues/100).\n\n### Бейдж в середине группы при повороте и изменении значения\n\nПо уточнению владельца при повороте на 180° в плоском «Просмотре» бейдж остаётся на заданной стороне экрана, а горизонтальный ряд и вертикальная колонка сохраняют связи и выравнивание. Компоновка учитывает фактический габарит бейджа в новой ориентации. Обновление внешней сущности, выбранной источником бейджа, запускает новое измерение. Короткое, очень длинное и снова короткое значение в среднем устройстве должны сохранить все связи. Группа расширяется под длинное значение в пределах доступного места, при этом бейдж и соседние значки не перекрываются. Проверка выполняется на настоящем DOM в плоском виде при 0° и 180°, с контрольным возвращением и проверкой расположения в хранилище.\n\nПоворотная галерея из [предыдущего комментария](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076607704) служит материалом «до» для уточнения. Десять принятых кадров с исходным поворотом закреплены в `c8d80401a8`.\n\n### Материал к код-ревью\n\n- Согласованы и записаны 16 эталонов. [Первые десять](https://github.com/Matysh/houseplan-card/commit/c8d80401a8) приняты [в первом решении владельца](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049). [Шесть кадров поворотов](https://github.com/Matysh/houseplan-card/commit/d1b0172db3) приняты [после исправления бейджа](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076905544). Хеш каждого PNG сверен с принятой версией и индексом.\n- Адресная проверка прошла на сборке `70c7aaf9243672c33aa8fb6ab9686418804e6777`: 117 Node-тестов, 117 проверок Chromium живого бейджа, сцена семи типов контакта в двух проекциях, профиль и две отдельные карточки, прежние браузерные тесты reflow и углов. Проверка в каталоге относится к `devices` и выбирается в S6 по исходникам.\n- Защищены и числовая геометрия, и визуальная регистрация. При 0° и 180° длинный бейдж расширяет ряд с 288 до 360 px, не закрывая значки соседей. DOM-проверка контролирует обе связи у среднего устройства, расположение бейджа и возврат без дрейфа. Снимок View включает отдельную сущность, выбранную источником бейджа.\n- Реальный транспорт HA проверяется перед релизом по [House Plan E2E №100](https://github.com/Matysh/houseplan-e2e/issues/100). Локальные браузерные проверки монтируют продукт с синтетическим HA.\n\n### Первый S6 и исправление проверок\n\nНа материале `8cc632ede75a64efdb5cc9a2d1211a4d59966ab3` прошли 717 из 722 шагов, включая все браузерные проверки и повторное сравнение всех 16 принятых PNG без отличий. Пять отказов относятся к реестрам исходников и точным якорям проверок, причины воспроизведены отдельно. В [9ec59ff0cd](https://github.com/Matysh/houseplan-card/commit/9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09) зарегистрированы внутренний DOM-хук, источники совместимости и тестовая фикстура без сохранённых конфигов. Четыре мутационных якоря привязаны к изменившимся строкам с сохранением прежних проверок. На исправленном дереве прошли 108 адресных тестов, девять поведенческих проверок и браузерный сценарий диалога толщины стены. Проверка выбора нашла по одному плану для каждого из четырёх якорей. Задача повторно поставлена в общую очередь.\n\n### Повтор после слияния #1518\n\nНа ребейзе `784a4157b8` все 16 утверждённых эталонов снова совпали пиксель в пиксель. S6 дал 723 из 724 шагов. Единственный отказ возник в `smoke_room_co2` при ожидании двух карточек, Chromium вернул `Resulting promise was garbage collected`. Адресный повтор исходного теста на том же материале прошёл все 23 проверки. В [1494d496f](https://github.com/Matysh/houseplan-card/commit/1494d496f) синхронное монтирование вынесено отдельно, готовность ждёт Playwright по состоянию фактического DOM. Проверки CO₂ на kiosk и статической карточке, записи и геометрия остались прежними. Исправленный адресный тест также прошёл 23 из 23.\n\n### Проверка на базе #1516\n\nВ [итоговом материале](https://github.com/Matysh/houseplan-card/commit/8d413b8121306d906999556537096b8db5f00dfa) панельные тесты внешнего экрана продолжают проверять API 3, а согласованные кадры #1517 по-прежнему используют профиль API 2. Каталог совместимости после объединения содержит 878 проверенных попаданий, восемь адресных проверок прошли. Повторный захват всех 16 принятых эталонов на фактической базе `29f32c05ed` дал 0 отличающихся пикселей во всех кадрах.\n```\n\n</details>\n",
-        "createdAt": "2026-11-22T12:34:52.128Z",
-        "artifactId": 14753564700,
-        "runId": 45022525979,
-        "runAttempt": 1,
-        "completedAt": "2026-11-22T12:34:56Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45022525979",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "29f32c05ed0932be242e766771b7cdaaf06472bc"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795350926915,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1518": {
       "issue": 1518,
@@ -6566,19 +6366,7 @@
   "waiting": [
     1521
   ],
-  "active": {
-    "issue": 1517,
-    "worker": "finish",
-    "token": "613:finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:1:admit",
-    "fence": 613,
-    "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
-    "expectedBase": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795349448612,
-    "expiresAt": 1795354522564,
-    "patchId": "9fd0ef395ff0d23464edd8e10d3e7b960e3eb225",
-    "reviewRequest": "review:1517:5:9fd0ef395ff0d23464edd8e10d3e7b960e3eb225:29f32c05ed0932be242e766771b7cdaaf06472bc"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6600,317 +6388,9 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "github:44997374940:1:label:spec-request": {
-      "digest": "eb903fe27b91bd36300e68a4c80d65e348dfe683ef62d216cca303bbdf38d922",
-      "issue": 1517
-    },
-    "github:44997763185:1:spec:1517:spec-presentation": {
-      "digest": "6875cb9ddfec0a7a900e416fb1623777dfdb06c0667ec5febb24f1cb7ce824ab",
-      "issue": 1517
-    },
-    "github:44997763185:1:spec:1517:spec-complete": {
-      "digest": "4ea5b1b771a73e9dd6fcff2b0f1f0d1bbec11308d5ad62c418e52f85b5c09ce3",
-      "issue": 1517
-    },
-    "github:44997763185:1:spec:1517:spec-label": {
-      "digest": "9d825cdc9bf4e041035dcd56795fc5462ac3daca46533868815acf95a8cd4a2a",
-      "issue": 1517
-    },
-    "github:44997763185:1:completions:report:4f4b51fc6ad594f33d56429ca11dcb915c2e6dc31a983ffb9090fb6b68999f75": {
-      "digest": "e1b326b12046b983fbd6097ffbb25be3e26fd1db0c99f85ff7fe1652c9042b56",
-      "issue": 1517
-    },
-    "github:44997900807:1:spec:1517:spec-request": {
-      "digest": "67dcc7bf73dd091cab62c5150da765d9f8d5aa4f0f1219c6641082b45d00b837",
-      "issue": 1517
-    },
-    "github:44998279529:1:spec:1517:spec-presentation": {
-      "digest": "48f3a93b75dc290060c5f378961b4f916a3127f2125846006b619ba7b843b2f8",
-      "issue": 1517
-    },
-    "github:44998279529:1:spec:1517:spec-complete": {
-      "digest": "c6ad835cec695822ace7f4fb9b0f0fe475dbc0165b7a42704926bda56c352437",
-      "issue": 1517
-    },
-    "github:44998279529:1:spec:1517:spec-label": {
-      "digest": "7b176147327c944f163cf7a7113876279ecb1c766a7d1a8600d75df7d7584c42",
-      "issue": 1517
-    },
-    "github:44998279529:1:completions:report:68b1305f51a0468b68405b30ef696856fefadd32f40e86b4a392c8fa749b397f": {
-      "digest": "5755eca9e9282660aef6f84f3503b4f14df283a226eac3c61cf7856350d5754b",
-      "issue": 1517
-    },
-    "github:44998399588:1:spec:1517:spec-request": {
-      "digest": "0f6cf9465991cf4bcd9dde5f3606d46020c2f32f111c1f7be540755a098e769f",
-      "issue": 1517
-    },
-    "github:44998716791:1:spec:1517:spec-presentation": {
-      "digest": "4a10973d43f84dbb78b6cab3f0121afabc3634a6dce1dcac6b552d4e52c187e2",
-      "issue": 1517
-    },
-    "github:44998716791:1:spec:1517:spec-complete": {
-      "digest": "0634aafd66ddc07409382e44d5792c95947075759593b65d8d2c4ad9a6e4c2ca",
-      "issue": 1517
-    },
-    "github:44998716791:1:spec:1517:spec-label": {
-      "digest": "3009b6b1330de8d37e6618225e61948262df5ff418be6b4199650bd290b5ebd6",
-      "issue": 1517
-    },
-    "github:44998716791:1:completions:report:bd336c6a7c0bf046ab4160880b6f7b58ea8c49569c860c54885a95ae1f36a63c": {
-      "digest": "12ceb84291dd6f87751e5e64883505142ac0a5209eb7540fa398299046bd158a",
-      "issue": 1517
-    },
-    "github:44998869735:1:label:spec-request": {
-      "digest": "598e3c4cb6d0344dd1974f97bb87b4872b2ec693e3dabf980312f17db6c3113f",
-      "issue": 1517
-    },
-    "github:44999112063:1:spec:1517:spec-presentation": {
-      "digest": "6a6bbee4c847bbdb6fa6d1e84dc30deb6405656de014af8170ceb39e2c4c439c",
-      "issue": 1517
-    },
-    "github:44999112063:1:spec:1517:spec-complete": {
-      "digest": "6f30851067a70aba5d7d98088e7b6674a33bf611de5882d3336cac700674eeef",
-      "issue": 1517
-    },
-    "github:44999112063:1:spec:1517:spec-label": {
-      "digest": "dd06d36ecdd893e0e4140fd462abf5b1202d7acfe1797a97db5125a234653e71",
-      "issue": 1517
-    },
-    "github:44999112063:1:completions:report:48114e24d178c86750df13b1433861f0b74c4cebcd98230c5e1f5e2348ec61a3": {
-      "digest": "715361cd0c6ccbe9c5cccee1b3bc0bd94b4217343f706b0aae70f4e05097db5c",
-      "issue": 1517
-    },
-    "github:45008085071:1:completions:message:bdc893b43efa418f24413ecccbb29e56ffe54e55f761e36e95504060e8e81ee6": {
-      "digest": "379207a14416589abc047eabe74cc2822e2226246a4cce41ba9c7017f8895e1d",
-      "issue": 1517
-    },
-    "finish:e9e77efc-431d-4a45-be41-000dfb4e00ea:finish:2:return": {
-      "digest": "047635f6402f30e413c0bc262641e842d71a7e92314af955ed0f37699068b83a",
-      "issue": 1517
-    },
-    "github:45008151983:1:completions:notice:195935d479e16747be566f7f4f4e2ce8529e7761bc533a328f0f2ab223e5fc95": {
-      "digest": "6e341d0279e28d265c6f678996d080d76abe2be746b3ad5da81fa27605db8e46",
-      "issue": 1517
-    },
-    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:2:synchronized": {
-      "digest": "b591f09536da35b00cd5e922ca55b4ff6e2f8bed1a209dd142edea67e80be46b",
-      "issue": 1517
-    },
-    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:3:automation-pending": {
-      "digest": "a88a3bfbf8fb0b7a01fe261a56c13ad5b91469f5401d8f525f9fd5ba302ddf62",
-      "issue": 1517
-    },
-    "github:45008477073:1:completions:message:1c6e4e8d69e9ce8763317883e348dd497aff9c61c33d2b97162006a81eea7903": {
-      "digest": "d5abeb7043f3c8c59cbe866cc28ae4463c2c974bc85b7ad7ec8bf08774961d4f",
-      "issue": 1517
-    },
-    "github:45008477073:1:completions:message:203b39885acf479fd5bfa78c24c7edc8edd71ff91f352b86f8392a47514757dc": {
-      "digest": "462ecb75aa5f322507716f8a337ae87664b706a135fdd4f9fdd43cd5accbb336",
-      "issue": 1517
-    },
-    "github:45008477073:1:completions:message:03e84db9d178070000266a9f1f85fd21ebfed64ce17b9f5f6a707055acfe5c91": {
-      "digest": "c62b55c28201558c638f21470c9d427066bfd12fe96be6579f4d8ff430f8ea5c",
-      "issue": 1517
-    },
-    "github:45008477073:1:completions:message:bc46a133cf2c5edb71e4f510ac9a3574cf21b0177e560ec94e05240b110f240b": {
-      "digest": "7d406a53c466b5f13400b7c62859d779a013660dd81d4f694231e1ff5f9a9c83",
-      "issue": 1517
-    },
-    "finish:d4a084bd-cf8b-4857-8a0a-6e602f851345": {
-      "digest": "e9314b8be854f19c95d8af2a3ccc2a1caf4747cbfbecc602ab089f584298e150",
-      "issue": 1517
-    },
-    "finish:dc915fec-3921-4440-8171-dc34d848421e": {
-      "digest": "5bfcb8bb1ef3b819f7c54e32e1d0e0c5c84fb8c5622f650a67209cfe25ce32d3",
-      "issue": 1517
-    },
-    "finish:d9ee0e40-0eac-4d2e-a83c-c7e45810e661": {
-      "digest": "5f7356af62d0e92a8c8d6688c626ec3a885d891e627a8f0558f08abbd5544a9b",
-      "issue": 1517
-    },
-    "finish:bea304a4-6a34-4545-ac07-96a4b61df05c": {
-      "digest": "0d009d8ea9baf721c0838a17136dd066d9a6819217da8e7a2bc0f9fcc49baaaf",
-      "issue": 1517
-    },
-    "finish:12c625bd-3cc4-4b11-9dea-aa5a670759a5": {
-      "digest": "9b50a8a950f6004c538a8a42da0da06ac65bd47f3ce727ada44d9a0eec2353a9",
-      "issue": 1517
-    },
-    "finish:d7fe29a4-862c-4509-a418-a39bd098fc68": {
-      "digest": "bdfc646cb6fc3063044d10ec8a6faa56b6fd750c928704bcafe5c18cee6babe8",
-      "issue": 1517
-    },
-    "finish:f3d4498b-8d16-4ab2-af1a-0cd18f946473": {
-      "digest": "539693d1c2186503ba2f970ca5ff10d40eb1664f06379a88a60d93f57f796548",
-      "issue": 1517
-    },
-    "github:45008982142:1:completions:message:5f121fd883258c78a8e69b7ab27436d2243af654ea6036bb9bebfd1217c14ee1": {
-      "digest": "64dafd13b96d830412a24563466b6032e5a830ef690844c66588dce67f794902",
-      "issue": 1517
-    },
-    "finish:8bbe0df8-270e-4d5c-9d2a-b792e47b9195": {
-      "digest": "a11776c6fa78a57f39a0b43bf5ec2773abef9b94a144d714abb9e8305d962fdc",
-      "issue": 1517
-    },
-    "finish:15ef80b6-1fa0-48aa-ab2d-844e4a6afff1": {
-      "digest": "2ec1eb5bd6c19d347ac357d0585e3fc1696a37914122b9422b73f0ebfce761ef",
-      "issue": 1517
-    },
-    "finish:26179ae1-9f39-4512-8746-2d22d9ddb7e1": {
-      "digest": "57385405256122fda24a7e8f306e5c014d04ec8876db22959931bae83dbacf9d",
-      "issue": 1517
-    },
-    "finish:1f652f99-77ac-44c2-a621-1ff93797e5db": {
-      "digest": "a669bd8e511e8c01b8750fc65470541a6cb0c1eb49491fc87ea367698a8dae23",
-      "issue": 1517
-    },
-    "finish:d2dc0f48-823e-4378-8e48-7d88ae915c15": {
-      "digest": "c10695af1d530045d97ef7d243b0ea12f72b959aa3800e30a7722d40181ab480",
-      "issue": 1517
-    },
-    "finish:65eb1f28-3c61-4611-9bab-4e698026728f": {
-      "digest": "06e164809a8591419ac88de1ca4bf23e74d87871d2565ac64d54f943af82acc5",
-      "issue": 1517
-    },
-    "finish:550f0a13-d2dd-4560-ba67-df9b1ead912c": {
-      "digest": "43913b8b519e226dc8b5be5cc25f7d10b2404186b34dccb06fa6fa92921a297e",
-      "issue": 1517
-    },
-    "finish:d5442dfe-e619-4d53-ab92-168acda1f8d3": {
-      "digest": "44a3b517df1e404da1ada929f76621ecf74913a32ec2339ddf11ef8a96c55b93",
-      "issue": 1517
-    },
-    "finish:d7a2556c-0c4d-494f-8a51-6de4571104a1": {
-      "digest": "413aef2b54841c893a2f7c253e0b90f4fbf290f83b9611c3b2edc65877c68e40",
-      "issue": 1517
-    },
-    "finish:3874aa49-53c4-4fbc-9772-a5bbfb1d29e7": {
-      "digest": "7ece00c73827ffca661c077e1cb08ce3bd34e65cc9d4138ca8c0a97849fd37df",
-      "issue": 1517
-    },
-    "finish:6492621f-1eda-4a7e-aa9f-c34bf069fbca": {
-      "digest": "a1c8f016af8fc922807aa184a74d29dfbc62553a86d8aa1466db087ff0f8dd29",
-      "issue": 1517
-    },
-    "finish:3bf90b2c-7ed9-4f45-8965-007e9e75a7d9": {
-      "digest": "7581ae2f3eb06cd61fa2486f042fa0146743293171aa42e770450dcb6b29f608",
-      "issue": 1517
-    },
-    "finish:9581862d-6969-4ff4-8487-1bec89f38d61": {
-      "digest": "bad25713495dd6febb547e22734968478cbec5b878a6ac75f96da16685f1e72a",
-      "issue": 1517
-    },
-    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return": {
-      "digest": "b6283e2842b6a85e24082f6acfbb0fb38284c124a6c2d3985da5cbaedfb0a8cb",
-      "issue": 1517
-    },
-    "github:45014443548:1:completions:notice:4f21d0c378720561e605155303095561f88d409b4e4176d59740728b80f7490d": {
-      "digest": "95372727403ea7dd6ded7ef0909983cd578fa72a171ddb59da14ae9e2e64ae4f",
-      "issue": 1517
-    },
-    "github:45014880529:1:completions:message:819cf76598fc34914a2db518fd2eb7f279a08c2345b8133390b433d063d394f6": {
-      "digest": "594cd7a333a6ba08d47666b77956df71fd370d94f6e3590c31cf280e2685b783",
-      "issue": 1517
-    },
-    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:2:automation-pending": {
-      "digest": "9b7763c7c3ecfc40e6007119d49b7116c8a767b247e47640709a4249a22a19d3",
-      "issue": 1517
-    },
-    "finish:301188be-6c60-41cd-ad1e-712ea299c4bb": {
-      "digest": "fd754331bd7a91983985205ac5fe1a939b2183014b5ae1a9f092f02af7519542",
-      "issue": 1517
-    },
-    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:3:synchronized": {
-      "digest": "ca8ab1dd125aa420386a772e779684f08ab774c307846ca0cbf9250c8068cfd6",
-      "issue": 1517
-    },
-    "finish:e7a7d3c1-cb03-4cbd-8ad1-647e795afbd1": {
-      "digest": "67570819726ca77b1fa1990627d2c6c3572afcc906107aede816d456a0f02d5c",
-      "issue": 1517
-    },
-    "dev-build:45014880529:1:webhook": {
-      "digest": "1ad2c5daacbb1d89ca1dcb85c8e45adcc6c3ac7bc5e0a51a0338bfe87286e77b",
-      "issue": 1517
-    },
-    "dev-build:45014880529:1:webhook:cd406510-cc58-4ef3-b05b-37146e271874:delivered": {
-      "digest": "bbc9c67201d5f7f3557b32fcd930f9e44604b4039287006ba32b5a95e9b11611",
-      "issue": 1517
-    },
-    "finish:24f6d984-6f86-423e-8a5d-350e292fadbf": {
-      "digest": "4c3fb581ee56ef3764edae986bfa618c4790303799b67cb427929a91b6a213f7",
-      "issue": 1517
-    },
-    "finish:1bd1d844-7077-4c94-a710-7f9af75e0cd1": {
-      "digest": "3432abccaa038bbbcd09e6ae98719079f2fbbcdbe6bb63a557f036dca5bbf839",
-      "issue": 1517
-    },
-    "finish:5ff5fc3a-f5b9-43e6-b47b-3abef71d1a21": {
-      "digest": "8b42db1a9d2ce6db52aaabad8de1c59a332fcdcecf665f984cc16d4d7d6f03bb",
-      "issue": 1517
-    },
-    "finish:b615c8a0-dabb-4203-b3c9-87d8f253e8ef": {
-      "digest": "4987c9ff441c17fccabd77c9245590f74ff992071ddb1529d776caf7469b2ec9",
-      "issue": 1517
-    },
-    "finish:2d3f3262-e734-4a53-a5b6-e65263156956": {
-      "digest": "7e4c433765ac1af7be32a5a91930654504cd83552095d9b5e1a3cf20c686a620",
-      "issue": 1517
-    },
-    "finish:2441bdf9-5fe5-4210-bd57-d4ebf25bb6c1": {
-      "digest": "e640ea7c3a43202945761922111f2dd4fde86785fd4d1c6a4468908eb7ebac3d",
-      "issue": 1517
-    },
-    "finish:fba81653-03dd-44f0-b25a-632f3d120965": {
-      "digest": "ef56be4a3343030bf06c1fd5e364e19a09f48ccd5a3de1b7656a8d2c6bd70bda",
-      "issue": 1517
-    },
-    "finish:99dd6424-1619-4ed8-85e4-2f0d3d907326": {
-      "digest": "21850730ff3dee7a11dcd66a690c391ad83ae974d6b7f6c7b21c073ba8d02d4f",
-      "issue": 1517
-    },
-    "finish:9d3eec5f-6e7a-497e-9286-d7bb0f4a82b6": {
-      "digest": "470fb593a8c76e8434e7c89e3393c9b7081d5830c145d72487c5881128aa7375",
-      "issue": 1517
-    },
-    "finish:8b5b46eb-f1f4-4549-94ed-97bdcb7daef4": {
-      "digest": "e00bcea05cfcf48f59843ef95bd4abf79b82f5f103fc55e1291f086798c9a91b",
-      "issue": 1517
-    },
-    "finish:1b390053-c768-447b-80c4-f7346dc595d6": {
-      "digest": "5dc27248f413ff468dd1917e3475615d8bf2dbb1e3617fdeac61f6d9237cc523",
-      "issue": 1517
-    },
-    "finish:04cbe3a2-602f-40d8-8ced-9c09a0fa1c65": {
-      "digest": "de806d464e0fab37b44967abe7fd00d5ed14c595bae8d075fa574b8c1637a56d",
-      "issue": 1517
-    },
-    "finish:599c4a36-ed3e-45ca-abee-c3cafa67d5bc": {
-      "digest": "11090280e20caea6663d7245e224175931ba6e2fbdee181f73c77fbcd7bfbea5",
-      "issue": 1517
-    },
-    "finish:8134aac1-2bed-4216-b5af-064581dedefd": {
-      "digest": "12717e58589cf474508f030aaa325abdb778b2b89e5fd19514719562f75367c7",
-      "issue": 1517
-    },
-    "finish:52fe24c1-9ee8-41cb-b58d-5d28e0f3342b": {
-      "digest": "4fe4b1bbbec61ca7e781bc63142c13c5c7ff1aebb9a4e666052922dcd27513ce",
-      "issue": 1517
-    },
-    "finish:d20b11d6-76fb-42d4-ae3e-9702a0ff19f7": {
-      "digest": "d3283f668469f14e870d630c065839205ca4764af150582b8ca50a382e32a34e",
-      "issue": 1517
-    },
-    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:4:return": {
-      "digest": "98f4ba8730b0ea9683ef37c6ae14931c4c75f1dd889369d6ef34db1d86485a89",
-      "issue": 1517
-    },
     "github:45018425208:1:label:spec-request": {
       "digest": "d9d0dab580460451a82a37c164cc6c458a477b866c62f7f85a345062cb4b902a",
       "issue": 1520
-    },
-    "github:45018425208:1:completions:notice:04ec144c67e8788393692094df7ca280628dbf35d2f32e7cc13115497f0f5a96": {
-      "digest": "e7cd04ad240849654537c535ae32f929c6b47ced3a6d8e870cd8c7e0fce48a77",
-      "issue": 1517
     },
     "github:45018907719:1:spec:1520:spec-presentation": {
       "digest": "0954ce7f71f625de353ab79e3242ca757d1e00d200069886b3bce7c091204da4",
@@ -6932,10 +6412,6 @@
       "digest": "de7f8c24b53bfe614b978faec819a2d693cc8d901581cc617bc1e7ade3ab4aa6",
       "issue": 1520
     },
-    "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return": {
-      "digest": "6e228ab591643e8be45f39c03d4b751aa32d1b74d4f671e8afbd160f157c013a",
-      "issue": 1517
-    },
     "finish:f1091ebc-30a7-4bc2-b4bf-d27c7cd305c8:finish:3:synchronized": {
       "digest": "ef99c6ee2ab677d3338ce91965227f9a6536ef4a9992a1c2a114f0eb394eb0d6",
       "issue": 1521
@@ -6955,10 +6431,6 @@
     "github:45019578379:1:completions:report:f0715395ed969de7abb972a05a122bc35c59fa341489ccf14086af3f9bd84d24": {
       "digest": "dfaa879bba718d15d8444420133c15dccf2e88b4862d0fb40ddc510cfdf91ddc",
       "issue": 1520
-    },
-    "github:45019578379:1:completions:notice:2d42b06440cd36088759eb6584bdc14d3d66e986bac39c3b495d53f2bada4414": {
-      "digest": "56494bd36cefcc4b10e56cdb5602110a107d95d5f67c23ae5185473701388819",
-      "issue": 1517
     },
     "github:45019578379:1:completions:message:2d42b06440cd36088759eb6584bdc14d3d66e986bac39c3b495d53f2bada4414": {
       "digest": "e75cf4dc78e7c26266bf363e940c239487e100589eaeabdfb600100329ed97f2",
@@ -7044,129 +6516,9 @@
       "digest": "8183f8780e8a6cc900a15e4a78c087ff1bb04e18e4e686905d945eb55b57dcfb",
       "issue": 1521
     },
-    "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:2:synchronized": {
-      "digest": "30a2a8fe2badb0905f4950368e4b323b8190bf3ed8004b1953d1ff27019b7902",
-      "issue": 1517
-    },
-    "finish:f4abcc52-b334-448e-8750-404144c59821": {
-      "digest": "6ca5951d6338c154609da4c84c9b9e4175ae2da25cee0a7abc2f857ee4d7a151",
-      "issue": 1517
-    },
-    "finish:b2f51b85-8b15-45fa-b838-91baf66874f9": {
-      "digest": "382c5c0de8c89751a767f6066e9ff64f0632d518495d7ac4d89530f894d41f43",
-      "issue": 1517
-    },
-    "finish:5619a21f-07b2-47f0-aeda-c66a814509e8": {
-      "digest": "381dbb56bfe8eca6814fc4f0f39f73fa1d2f9090e4d80fb4fd950721d20e626b",
-      "issue": 1517
-    },
-    "finish:eab55daa-31f1-41f2-b9fd-a3f1ec895288": {
-      "digest": "cbf86c50b6e1b7f1670284f5fb2ff3f0230f5ac0d86eaff1ccd823b782a37225",
-      "issue": 1517
-    },
-    "finish:c1569ee5-bbfc-4bd0-a968-f7abfd1936a5": {
-      "digest": "d077b1b5254b2688e7fab8c73fc2e8ff1100b4d0099476993dca38f74db9f465",
-      "issue": 1517
-    },
-    "finish:daba637e-7d47-41c3-89d3-815835fd28eb": {
-      "digest": "bf8e1882582998b77c3fa39ead9e159d33faf3c92422e106104dd68761a8ede2",
-      "issue": 1517
-    },
-    "finish:cd2926f1-665b-4a0d-9e4a-e72a29215ff9": {
-      "digest": "331199cd7733b5b4db3693cc5542983b14fd3d9a1aa7c3674ab6572f4c6e1718",
-      "issue": 1517
-    },
-    "finish:ca141e4d-42d4-443e-812b-bd0199c7b961": {
-      "digest": "2a7cf6abebfd7375c319ef5fbe14686facddd74632fd60ef57057bdf07a00512",
-      "issue": 1517
-    },
-    "finish:0b6b94d6-8256-45c2-91e9-c72b20d1c5d6": {
-      "digest": "a7c18906033ebcd66269bbabd2732db93e8fd220ae1b228c4c758f7118a49c67",
-      "issue": 1517
-    },
-    "finish:77ebd012-adc5-414f-9b37-b6c1f4e56831": {
-      "digest": "e7890157813ab6f2df7ed2436adfdd5a5389e756df9f0271f602d1d0a43dbe5d",
-      "issue": 1517
-    },
-    "finish:ab372ae7-70d9-48b2-8aa3-7dcd1c0b4c7d": {
-      "digest": "001fef1bd8a931956c3b71f1165ddfe5b2318e3156c9c72ac78936872e465021",
-      "issue": 1517
-    },
-    "finish:376ef149-f114-49f4-829c-f19c7f1fd92d": {
-      "digest": "b9ed1de3ac7b7eeface18b3c936c6c6cecb87f30947623af07586fb2b165bfe6",
-      "issue": 1517
-    },
-    "finish:9e685ebc-f46b-4574-817e-d27f314cd41f": {
-      "digest": "8ef1c3d5e3358168f242d39da3ba4810412d66434770b8943a1b35a0d32f2028",
-      "issue": 1517
-    },
-    "finish:6945b52b-ee97-445d-b8b2-800318d4b422": {
-      "digest": "4c16d7a8258fda69986f3a89b8c7b51195b1794c3001d01fbb16c92fdbb2ec54",
-      "issue": 1517
-    },
-    "finish:d01503c7-73fc-4013-8f67-e11140716bb4": {
-      "digest": "1ed0ec447f8c674cc853bfcb8ca00a7d5228849698e5fe63403803acff6e5c30",
-      "issue": 1517
-    },
-    "finish:f706616a-30e5-4fbe-86df-2b6afeae6dd7": {
-      "digest": "d898eee048d6d481d6416e56c8a192a1d6b7836013a40677213cf1b0b8f02886",
-      "issue": 1517
-    },
-    "finish:f4396f31-244a-43f6-81a9-803302f4e5e2": {
-      "digest": "021ef1ed1ecbf4ff032b70ce0b76402db93712ead5ddbfc3c11c6e85ed903fc4",
-      "issue": 1517
-    },
-    "finish:454bdb7f-32dd-4943-ab55-25fbbbc37044": {
-      "digest": "b504eb00995efceb7b24f4b6bb2f057c8f44d85dea24322c69c47efc289d5600",
-      "issue": 1517
-    },
-    "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:3:s6-label": {
-      "digest": "9cd130ea16dffe3aa6ee71084472bbb584e20eeb554f8b7ab64fc647f747859b",
-      "issue": 1517
-    },
-    "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:4:review-requested": {
-      "digest": "ac6cacda18d23de0016d4f9d9891b21aa8e81660ab3c8a251c30d46038f2207f",
-      "issue": 1517
-    },
-    "github:45022504446:1:tick:0:review-retry": {
-      "digest": "728e43e4e7475ec2865650eb9c6a9c8dce795591b57ebdf455d78e724a28c547",
-      "issue": 1517
-    },
-    "github:45022504446:1:completions:message:4258a6ac9c956d578a5f64bf1d2bbf716c3ad0b0ee8bfd7135e3f1d1c50273de": {
-      "digest": "018264d6f712dfb5f20e38f3d5652c6963d8fc0fe36e231e9ec8b4546c48848c",
-      "issue": 1517
-    },
-    "github:45022504446:1:completions:message:a3abdfe3d0a7e9b5f2d84f1ce106b413d4b7902042594f2be7b42364103f4949": {
-      "digest": "78c7626d57881fec491bd10e00a5a620e6198ecf5d0603889814765869dcd23f",
-      "issue": 1517
-    },
-    "github:45022504446:1:completions:message:e0918a77d422db06a11464f14679f1fe60d4bdd48e06538ea4d8dbe8a6f44cd9": {
-      "digest": "7a76327da54227086fd53ddb5f8e786c093f8744e9b34072f6573d9dbb495820",
-      "issue": 1517
-    },
     "github:45022504446:1:completions:notice:e942d423408802f606365a294862ea5b18611a3ba6b27180c86d0606dcb7f1cd": {
       "digest": "5843177743d6d6cb9a8a12202a979c438924f4675dcfcdad44a30fb257595e43",
       "issue": 1521
-    },
-    "github:45022504446:1:completions:message:e942d423408802f606365a294862ea5b18611a3ba6b27180c86d0606dcb7f1cd": {
-      "digest": "23982cf6ce8d15a5ddbc7bc162e96772337b36787e611ac4f7b33d3e1c885da3",
-      "issue": 1517
-    },
-    "github:45022504446:1:completions:message:b1fba57185af05b0f5268a1551302ee3c33514f4270a3a2f3209a3eb24147347": {
-      "digest": "cf041eb50afb8929354fcc5f6a2eae983debd5cb49614febf6a6694bd547daf9",
-      "issue": 1517
-    },
-    "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:9:review-presentation": {
-      "digest": "4e9ed69bd59a485d26aa8034a4973c540cfe5fab13bbdabffc6933601e926e0d",
-      "issue": 1517
-    },
-    "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:9:review-complete": {
-      "digest": "c14a19458bc704ca569bafbf76faefb646d8186c3ec9b989f97f8624a537dce8",
-      "issue": 1517
-    },
-    "github:45023031560:1:tick:0:automation-pending": {
-      "digest": "184020bec97a76a9f1069ba53f9e482886219c602ebf9b5929fbacf7ed97e07d",
-      "issue": 1517
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7194,220 +6546,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "github:44997900807:1:spec:1517:spec-request:spec-resubmitted:1517": {
-      "digest": "67dcc7bf73dd091cab62c5150da765d9f8d5aa4f0f1219c6641082b45d00b837",
-      "issue": 1517,
-      "message": {
-        "kind": "spec-resubmitted",
-        "issue": 1517,
-        "at": 1795332145362,
-        "previousRound": 1,
-        "round": 2,
-        "requestId": "spec:1517:b0d3af4bd1677b5a687f4ef1a6a298182fe1181dbe48999703c053139ce83f3f",
-        "reviewChanges": "Анализ на dev `5fa8459ea`, `spec-check` прошёл повторно. Проверены разные диаметры paint и solver у профиля и холодный запуск с устаревшей опорой. Исправленная редакция хранит текущую семантику допустимых legacy-групп и фиксирует детерминированный resize. Трек ask по S4. Код ещё не изменялся.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075864767).\n\n1. Неоднозначная legacy-опора → отдельные геометрические кандидаты при штатном размере и собственном размере карточки без профиля, явный выбор между ними, материализация только доказанного. В AC4 добавлена legacy-группа, созданная при нестандартном icon_size.\n2. Неопределённый безопасный t=0 и отличие от value-only → resize активен при различии диаметров запроса и reference, даже при одновременном появлении текста и постоянном переопределении. t=0 использует текущую относительную форму при опорных размерах. При невозможном t=0 старый безопасный fallback выполняется с явной индикацией. Чистое изменение формы при тех же диаметрах сохраняет #1003.\n3. Произвольная занятость → ограничения учитывают реально принятый результат или опорный размер соседа, а не запрошенную форму на старой позиции. Канонический геометрический порядок Y/X с ID только для точного равенства, занятость обновляется целиком на компонент. Изменение соседа снимает устаревший лимит. В AC3 добавлены два соседних растущих компонента, перестановка/переименование и одновременный resize с широкой надписью.\n4. Улучшения: кандидат распространяется от детерминированного корня с полной проверкой вместо общего поиска новых опор; метрики не зависят от ограниченного диаметра; обе устаревшие фразы DEVICE-PRESENTATION будут заменены.",
-        "fromStatus": "S3-spec",
-        "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "github:44998399588:1:spec:1517:spec-request:spec-resubmitted:1517": {
-      "digest": "0f6cf9465991cf4bcd9dde5f3606d46020c2f32f111c1f7be540755a098e769f",
-      "issue": 1517,
-      "message": {
-        "kind": "spec-resubmitted",
-        "issue": 1517,
-        "at": 1795332551730,
-        "previousRound": 2,
-        "round": 3,
-        "requestId": "spec:1517:b72946451d30fa4695d7bc0c0cb83ac64c1b5eb388bdd5553e0c1eb61f4d75e7",
-        "reviewChanges": "Анализ на dev `5fa8459ea`, `spec-check` прошёл повторно. Проверены разные диаметры paint и solver у профиля и холодный запуск с устаревшей опорой. Исправленная редакция хранит текущую семантику допустимых legacy-групп и фиксирует детерминированный resize. Трек ask по S4. Код ещё не изменялся.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075864767).\n\n1. Неоднозначная legacy-опора → отдельные геометрические кандидаты при штатном размере и собственном размере карточки без профиля, явный выбор между ними, материализация только доказанного. В AC4 добавлена legacy-группа, созданная при нестандартном icon_size.\n2. Неопределённый безопасный t=0 и отличие от value-only → resize активен при различии диаметров запроса и reference, даже при одновременном появлении текста и постоянном переопределении. t=0 использует текущую относительную форму при опорных размерах. При невозможном t=0 старый безопасный fallback выполняется с явной индикацией. Чистое изменение формы при тех же диаметрах сохраняет #1003.\n3. Произвольная занятость → ограничения учитывают реально принятый результат или опорный размер соседа, а не запрошенную форму на старой позиции. Канонический геометрический порядок Y/X с ID только для точного равенства, занятость обновляется целиком на компонент. Изменение соседа снимает устаревший лимит. В AC3 добавлены два соседних растущих компонента, перестановка/переименование и одновременный resize с широкой надписью.\n4. Улучшения: кандидат распространяется от детерминированного корня с полной проверкой вместо общего поиска новых опор; метрики не зависят от ограниченного диаметра; обе устаревшие фразы DEVICE-PRESENTATION будут заменены.\n\n[Раунд 2](https://github.com/Matysh/houseplan-card/actions/runs/44997955145).\n\n- Ограничение и сообщение относятся только к компонентам с доказанным ребром или опорой стены. Свободные значки держат исходные центры и запрошенный размер без сообщения при изменении собственных или профильных размеров. Они участвуют как неподвижные препятствия для контактной группы своей фактической формой. Добавлены регрессии на плотную группу свободных значков, на индивидуальный размер и на соседство с контактной группой.\n- Граница resize использует CONTACT_EPS, отдельный случай несогласуемого цикла удерживает проверенный размер. AC2 фиксирует и замыкающие выравнивания.",
-        "fromStatus": "S3-spec",
-        "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "github:44998869735:1:label:spec-request:spec-resubmitted:1517": {
-      "digest": "598e3c4cb6d0344dd1974f97bb87b4872b2ec693e3dabf980312f17db6c3113f",
-      "issue": 1517,
-      "message": {
-        "kind": "spec-resubmitted",
-        "issue": 1517,
-        "at": 1795332911692,
-        "previousRound": 3,
-        "round": 4,
-        "requestId": "spec:1517:127c3bff50fb38c3f4a6b786cecd70633bb10a2340090226b2802e2f90197402",
-        "reviewChanges": "Анализ на dev `5fa8459ea`, `spec-check` прошёл повторно. Проверены разные диаметры paint и solver у профиля и холодный запуск с устаревшей опорой. Исправленная редакция хранит текущую семантику допустимых legacy-групп и фиксирует детерминированный resize. Трек ask по S4. Код ещё не изменялся.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075864767).\n\n1. Неоднозначная legacy-опора → отдельные геометрические кандидаты при штатном размере и собственном размере карточки без профиля, явный выбор между ними, материализация только доказанного. В AC4 добавлена legacy-группа, созданная при нестандартном icon_size.\n2. Неопределённый безопасный t=0 и отличие от value-only → resize активен при различии диаметров запроса и reference, даже при одновременном появлении текста и постоянном переопределении. t=0 использует текущую относительную форму при опорных размерах. При невозможном t=0 старый безопасный fallback выполняется с явной индикацией. Чистое изменение формы при тех же диаметрах сохраняет #1003.\n3. Произвольная занятость → ограничения учитывают реально принятый результат или опорный размер соседа, а не запрошенную форму на старой позиции. Канонический геометрический порядок Y/X с ID только для точного равенства, занятость обновляется целиком на компонент. Изменение соседа снимает устаревший лимит. В AC3 добавлены два соседних растущих компонента, перестановка/переименование и одновременный resize с широкой надписью.\n4. Улучшения: кандидат распространяется от детерминированного корня с полной проверкой вместо общего поиска новых опор; метрики не зависят от ограниченного диаметра; обе устаревшие фразы DEVICE-PRESENTATION будут заменены.\n\n[Раунд 2](https://github.com/Matysh/houseplan-card/actions/runs/44997955145).\n\n- Ограничение и сообщение относятся только к компонентам с доказанным ребром или опорой стены. Свободные значки держат исходные центры и запрошенный размер без сообщения при изменении собственных или профильных размеров. Они участвуют как неподвижные препятствия для контактной группы своей фактической формой. Добавлены регрессии на плотную группу свободных значков, на индивидуальный размер и на соседство с контактной группой.\n- Граница resize использует CONTACT_EPS, отдельный случай несогласуемого цикла удерживает проверенный размер. AC2 фиксирует и замыкающие выравнивания.\n\n[Раунд 3](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075985189).\n\n- Изменение свободного значка больше не разрывает соседнюю группу. В конкуренции защищается baseline контакта, а затем ограничивается только запрошенный рост свободного значка при пересечении с принятой группой. Свободный значок остаётся на исходном центре. Перекрытия только свободных значков не включают лимит. В AC3 добавлены индивидуальный и профильный рост возле уже связанной группы.\n- При равном типе опоры точка группового роста выбирается по Y/X/ID. Угловая/стеновая опора имеет прежний приоритет.",
-        "fromStatus": "S3-spec",
-        "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:e9e77efc-431d-4a45-be41-000dfb4e00ea": {
-      "digest": "418af2fc6c59e85d6b9def69c7eca3a9f49aa553b41aeedb1729941457638413",
-      "issue": 1517,
-      "message": {
-        "kind": "queued",
-        "issue": 1517,
-        "at": 1795338318571,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "d1b0172db324f973b64a0bfa551951dabda36357",
-        "delivered": true
-      }
-    },
-    "github:45008085071:1:tick:1:admit": {
-      "digest": "6fd4d7750e29b9d2922c53f1f8f1a8c064c6963ea3b555b70a49bf06c1b7f1ae",
-      "issue": 1517,
-      "message": {
-        "kind": "admitted",
-        "issue": 1517,
-        "at": 1795339995432,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "d1b0172db324f973b64a0bfa551951dabda36357",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:e9e77efc-431d-4a45-be41-000dfb4e00ea:finish:2:return:return:1517": {
-      "digest": "047635f6402f30e413c0bc262641e842d71a7e92314af955ed0f37699068b83a",
-      "issue": 1517,
-      "message": {
-        "kind": "return",
-        "issue": 1517,
-        "at": 1795340046013,
-        "entry": 1,
-        "notice": {
-          "key": "1:rebase-conflict",
-          "reason": "rebase-conflict",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795340046013,
-          "entry": 1,
-          "eventId": "finish:e9e77efc-431d-4a45-be41-000dfb4e00ea:finish:2:return:return:1517"
-        },
-        "delivered": true
-      }
-    },
-    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48": {
-      "digest": "730e4b62fad370d4351fdbdef26d1bcfe5f6ed63592394f0f42dc7d5e7785fb8",
-      "issue": 1517,
-      "message": {
-        "kind": "queued",
-        "issue": 1517,
-        "at": 1795340117068,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "8cc632ede75a64efdb5cc9a2d1211a4d59966ab3",
-        "delivered": true
-      }
-    },
-    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:1:admit": {
-      "digest": "2cbe3da87c9468e18412b8a01728d188200ed4893f7ffa1120f3c718fc14bf70",
-      "issue": 1517,
-      "message": {
-        "kind": "admitted",
-        "issue": 1517,
-        "at": 1795340243728,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "8cc632ede75a64efdb5cc9a2d1211a4d59966ab3",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return:return:1517": {
-      "digest": "b6283e2842b6a85e24082f6acfbb0fb38284c124a6c2d3985da5cbaedfb0a8cb",
-      "issue": 1517,
-      "message": {
-        "kind": "return",
-        "issue": 1517,
-        "at": 1795341468096,
-        "entry": 2,
-        "notice": {
-          "key": "2:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795341468096,
-          "entry": 2,
-          "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
-          "eventId": "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return:return:1517"
-        },
-        "delivered": true
-      }
-    },
-    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09": {
-      "digest": "db74ef98e58de83a8215b0f8e7e6c1a275f317993e66d87523e17224cea29eb9",
-      "issue": 1517,
-      "message": {
-        "kind": "queued",
-        "issue": 1517,
-        "at": 1795341558574,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09",
-        "delivered": true
-      }
-    },
-    "github:45014880529:1:tick:2:admit": {
-      "digest": "5ec5ede65ff4f31eaef1f305e7192a23c16a3c3ba3f28911f9fff4069aa80ee5",
-      "issue": 1517,
-      "message": {
-        "kind": "admitted",
-        "issue": 1517,
-        "at": 1795345049140,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:4:return:return:1517": {
-      "digest": "98f4ba8730b0ea9683ef37c6ae14931c4c75f1dd889369d6ef34db1d86485a89",
-      "issue": 1517,
-      "message": {
-        "kind": "return",
-        "issue": 1517,
-        "at": 1795346193293,
-        "entry": 3,
-        "notice": {
-          "key": "3:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795346193293,
-          "entry": 3,
-          "detail": "Браузер: room co2: failed",
-          "eventId": "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:4:return:return:1517"
-        },
-        "delivered": true
-      }
-    },
-    "finish:dad2c920-a8c3-4191-b77f-934f506da6c0": {
-      "digest": "549e9bfdcfcd46b08a60f6a696f51a9ae93b4ca8e494bfdbe3387485231ca751",
-      "issue": 1517,
-      "message": {
-        "kind": "queued",
-        "issue": 1517,
-        "at": 1795346351449,
-        "entry": 4,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "1494d496f7ab787af54914763fab2f0616afe909",
         "delivered": true
       }
     },
@@ -7442,41 +6580,6 @@
         "delivered": true
       }
     },
-    "github:45019490600:1:tick:2:admit": {
-      "digest": "722aae238a23da1e63192b75500f502c8b1946e93eb81a32c01088d928b75056",
-      "issue": 1517,
-      "message": {
-        "kind": "admitted",
-        "issue": 1517,
-        "at": 1795348428918,
-        "entry": 4,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "1494d496f7ab787af54914763fab2f0616afe909",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return:return:1517": {
-      "digest": "6e228ab591643e8be45f39c03d4b751aa32d1b74d4f671e8afbd160f157c013a",
-      "issue": 1517,
-      "message": {
-        "kind": "return",
-        "issue": 1517,
-        "at": 1795348441927,
-        "entry": 4,
-        "notice": {
-          "key": "4:rebase-conflict",
-          "reason": "rebase-conflict",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795348441927,
-          "entry": 4,
-          "eventId": "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return:return:1517"
-        },
-        "delivered": true
-      }
-    },
     "finish:f1091ebc-30a7-4bc2-b4bf-d27c7cd305c8:finish:2:admit": {
       "digest": "713ab16a083c98f316892841cfe8c80b40ebac9fee8e5aad43779ca244932d54",
       "issue": 1521,
@@ -7489,20 +6592,6 @@
         "layer": "product",
         "materialSha": "08da288393bdb764e1cea41028df383dbe1d18c0",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a": {
-      "digest": "7148656d6b63f7888977f22e1dd89de23931f01bef230eaeccd6842fd0c94761",
-      "issue": 1517,
-      "message": {
-        "kind": "queued",
-        "issue": 1517,
-        "at": 1795348523433,
-        "entry": 5,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
         "delivered": true
       }
     },
@@ -7527,21 +6616,6 @@
         "delivered": true
       }
     },
-    "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:1:admit": {
-      "digest": "667f3d9bb318445ec1a4ea8ec57b130198d43ed8fddc870f4b3e312c99e887ec",
-      "issue": 1517,
-      "message": {
-        "kind": "admitted",
-        "issue": 1517,
-        "at": 1795349448612,
-        "entry": 5,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:508ba61e-4e99-4285-a43b-bf4cc5c78798": {
       "digest": "c82909e6e7697136fc73495cdb88f1e00cb66cafc1c4d3e10f9cfa3db8dfe014",
       "issue": 1521,
@@ -7553,36 +6627,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "33ffea77c741f3874b71f6d7dcd3d38f549b50ed",
-        "delivered": true
-      }
-    },
-    "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:3:s6-complete": {
-      "digest": "f7bffd871926af57ed13d5f26aebca6631c63b04c3307bef31d9e5b441f33f18",
-      "issue": 1517,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1517,
-        "at": 1795350542954,
-        "entry": 5,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
-        "phase": "review",
-        "evidence": {
-          "id": "20261122T121101970-d0470f5a",
-          "name": "Тесты для задачи #1517 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T121101970-d0470f5a/report.json",
-          "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
-          "status": "passed",
-          "finishedAt": "2026-11-22T12:29:01.465Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Анализ на dev `5fa8459ea`, `spec-check` прошёл повторно. Проверены разные диаметры paint и solver у профиля и холодный запуск с устаревшей опорой. Исправленная редакция хранит текущую семантику допустимых legacy-групп и фиксирует детерминированный resize. Трек ask по S4. Код ещё не изменялся.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075864767).\n\n1. Неоднозначная legacy-опора → отдельные геометрические кандидаты при штатном размере и собственном размере карточки без профиля, явный выбор между ними, материализация только доказанного. В AC4 добавлена legacy-группа, созданная при нестандартном icon_size.\n2. Неопределённый безопасный t=0 и отличие от value-only → resize активен при различии диаметров запроса и reference, даже при одновременном появлении текста и постоянном переопределении. t=0 использует текущую относительную форму при опорных размерах. При невозможном t=0 старый безопасный fallback выполняется с явной индикацией. Чистое изменение формы при тех же диаметрах сохраняет #1003.\n3. Произвольная занятость → ограничения учитывают реально принятый результат или опорный размер соседа, а не запрошенную форму на старой позиции. Канонический геометрический порядок Y/X с ID только для точного равенства, занятость обновляется целиком на компонент. Изменение соседа снимает устаревший лимит. В AC3 добавлены два соседних растущих компонента, перестановка/переименование и одновременный resize с широкой надписью.\n4. Улучшения: кандидат распространяется от детерминированного корня с полной проверкой вместо общего поиска новых опор; метрики не зависят от ограниченного диаметра; обе устаревшие фразы DEVICE-PRESENTATION будут заменены.\n\n[Раунд 2](https://github.com/Matysh/houseplan-card/actions/runs/44997955145).\n\n- Ограничение и сообщение относятся только к компонентам с доказанным ребром или опорой стены. Свободные значки держат исходные центры и запрошенный размер без сообщения при изменении собственных или профильных размеров. Они участвуют как неподвижные препятствия для контактной группы своей фактической формой. Добавлены регрессии на плотную группу свободных значков, на индивидуальный размер и на соседство с контактной группой.\n- Граница resize использует CONTACT_EPS, отдельный случай несогласуемого цикла удерживает проверенный размер. AC2 фиксирует и замыкающие выравнивания.\n\n[Раунд 3](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075985189).\n\n- Изменение свободного значка больше не разрывает соседнюю группу. В конкуренции защищается baseline контакта, а затем ограничивается только запрошенный рост свободного значка при пересечении с принятой группой. Свободный значок остаётся на исходном центре. Перекрытия только свободных значков не включают лимит. В AC3 добавлены индивидуальный и профильный рост возле уже связанной группы.\n- При равном типе опоры точка группового роста выбирается по Y/X/ID. Угловая/стеновая опора имеет прежний приоритет.\n\n### Г-образная группа у двух стен\n\nПо уточнению владельца в общую панельную сцену добавлена группа из пяти устройств. Угловой значок опирается на обе стены, по два устройства продолжают каждое плечо. При изменении углового значка и общего масштаба профиля проверяются все четыре связи, обе стены, неизменная камера и возвращение к исходной форме в плоском виде и 2.5D. Внутреннее пересечение декоративных полей в месте поворота совместимо с доказанными стеновыми контактами. Пересечение самих значков ограничивает размер и сохраняет группу. Добавлена проверка открытия профиля с эквивалентным исходным размером после округления.\n\nКод и тесты сохранены в [18f68838d6](https://github.com/Matysh/houseplan-card/commit/18f68838d67043b44af4bf16f18182781c956958). В новом наборе 10 кандидатов по двум проекциям, из фактической панели с одинаковой камерой в пределах каждой проекции. Сценарий также добавлен в [HA E2E №100](https://github.com/Matysh/houseplan-e2e/issues/100).\n\n### Бейдж в середине группы при повороте и изменении значения\n\nПо уточнению владельца при повороте на 180° в плоском «Просмотре» бейдж остаётся на заданной стороне экрана, а горизонтальный ряд и вертикальная колонка сохраняют связи и выравнивание. Компоновка учитывает фактический габарит бейджа в новой ориентации. Обновление внешней сущности, выбранной источником бейджа, запускает новое измерение. Короткое, очень длинное и снова короткое значение в среднем устройстве должны сохранить все связи. Группа расширяется под длинное значение в пределах доступного места, при этом бейдж и соседние значки не перекрываются. Проверка выполняется на настоящем DOM в плоском виде при 0° и 180°, с контрольным возвращением и проверкой расположения в хранилище.\n\nПоворотная галерея из [предыдущего комментария](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076607704) служит материалом «до» для уточнения. Десять принятых кадров с исходным поворотом закреплены в `c8d80401a8`.\n\n### Материал к код-ревью\n\n- Согласованы и записаны 16 эталонов. [Первые десять](https://github.com/Matysh/houseplan-card/commit/c8d80401a8) приняты [в первом решении владельца](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049). [Шесть кадров поворотов](https://github.com/Matysh/houseplan-card/commit/d1b0172db3) приняты [после исправления бейджа](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076905544). Хеш каждого PNG сверен с принятой версией и индексом.\n- Адресная проверка прошла на сборке `70c7aaf9243672c33aa8fb6ab9686418804e6777`: 117 Node-тестов, 117 проверок Chromium живого бейджа, сцена семи типов контакта в двух проекциях, профиль и две отдельные карточки, прежние браузерные тесты reflow и углов. Проверка в каталоге относится к `devices` и выбирается в S6 по исходникам.\n- Защищены и числовая геометрия, и визуальная регистрация. При 0° и 180° длинный бейдж расширяет ряд с 288 до 360 px, не закрывая значки соседей. DOM-проверка контролирует обе связи у среднего устройства, расположение бейджа и возврат без дрейфа. Снимок View включает отдельную сущность, выбранную источником бейджа.\n- Реальный транспорт HA проверяется перед релизом по [House Plan E2E №100](https://github.com/Matysh/houseplan-e2e/issues/100). Локальные браузерные проверки монтируют продукт с синтетическим HA.\n\n### Первый S6 и исправление проверок\n\nНа материале `8cc632ede75a64efdb5cc9a2d1211a4d59966ab3` прошли 717 из 722 шагов, включая все браузерные проверки и повторное сравнение всех 16 принятых PNG без отличий. Пять отказов относятся к реестрам исходников и точным якорям проверок, причины воспроизведены отдельно. В [9ec59ff0cd](https://github.com/Matysh/houseplan-card/commit/9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09) зарегистрированы внутренний DOM-хук, источники совместимости и тестовая фикстура без сохранённых конфигов. Четыре мутационных якоря привязаны к изменившимся строкам с сохранением прежних проверок. На исправленном дереве прошли 108 адресных тестов, девять поведенческих проверок и браузерный сценарий диалога толщины стены. Проверка выбора нашла по одному плану для каждого из четырёх якорей. Задача повторно поставлена в общую очередь.\n\n### Повтор после слияния #1518\n\nНа ребейзе `784a4157b8` все 16 утверждённых эталонов снова совпали пиксель в пиксель. S6 дал 723 из 724 шагов. Единственный отказ возник в `smoke_room_co2` при ожидании двух карточек, Chromium вернул `Resulting promise was garbage collected`. Адресный повтор исходного теста на том же материале прошёл все 23 проверки. В [1494d496f](https://github.com/Matysh/houseplan-card/commit/1494d496f) синхронное монтирование вынесено отдельно, готовность ждёт Playwright по состоянию фактического DOM. Проверки CO₂ на kiosk и статической карточке, записи и геометрия остались прежними. Исправленный адресный тест также прошёл 23 из 23.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
