@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20220,
-  "nextTicket": 606,
+  "revision": 20221,
+  "nextTicket": 607,
   "nextFence": 606,
   "tasks": {
     "1024": {
@@ -5599,15 +5599,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1517-resize-contacts",
-      "materialSha": "d1b0172db324f973b64a0bfa551951dabda36357",
+      "materialSha": "8cc632ede75a64efdb5cc9a2d1211a4d59966ab3",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 604,
-      "queued": false,
+      "ticket": 606,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795338318571,
-      "reviewEntry": 1,
-      "reason": "rebase-conflict",
+      "readyAt": 1795340117068,
+      "reviewEntry": 2,
       "notice": {
         "key": "1:rebase-conflict",
         "reason": "rebase-conflict",
@@ -6276,7 +6275,9 @@
       "runId": 45007880183
     }
   },
-  "waiting": [],
+  "waiting": [
+    1517
+  ],
   "active": {
     "issue": 1518,
     "worker": "github-coordinator",
@@ -6973,6 +6974,19 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48": {
+      "digest": "730e4b62fad370d4351fdbdef26d1bcfe5f6ed63592394f0f42dc7d5e7785fb8",
+      "issue": 1517,
+      "message": {
+        "kind": "queued",
+        "issue": 1517,
+        "at": 1795340117068,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "8cc632ede75a64efdb5cc9a2d1211a4d59966ab3"
       }
     }
   },
