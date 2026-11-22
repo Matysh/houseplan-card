@@ -15,7 +15,7 @@ function faceOf(entry:IsoWallDepthQueueEntry,index:number,camera:IsoCamera,color
   let edge:readonly [PlanPoint,PlanPoint]|undefined, low=0, high=0, d='';
   if(entry.layer==='wall-side') {
     if(entry.face.roundColumn!==undefined)return null;
-    edge=entry.face.planEdge; high=entry.face.height??0; d=entry.face.d;
+    edge=entry.face.planEdge; low=entry.face.baseHeight??0; high=entry.face.height??0; d=entry.face.d;
   } else if(entry.layer==='opening' && entry.surface.material==='wall-side') {
     const points=entry.surface.points;
     if(!points?.length)return null;

@@ -8,6 +8,7 @@ import { spaceDisplayOf } from '../test-build/logic.js';
 import { physicalSpaceRecord } from '../test-build/structural-space-record.js';
 import { resolveIsoFramePresentation } from '../test-build/iso-scene-render.js';
 import { buildIsoWallGeometry } from '../test-build/iso-walls.js';
+import { connectTranslucentOpeningMasonry } from '../test-build/iso-masonry-joins.js';
 
 const wall = points => ({
   layer:'wall-side', depth:0, face:{ points, d:'M '+points.join(' L ')+' Z', height:10, polygon:0, ring:0, edge:0 },
@@ -82,6 +83,35 @@ test('#1518 opening masonry shows one exterior side and only the reveal facing t
         const jambs = visible.filter(face=>face.kind==='jamb-reveal').map(face=>face.jamb);
         assert.deepEqual(jambs,rotDeg===0 || rotDeg===180 ? [] : [rotDeg<180 ? 0 : 1]);
       }
+    }
+  }
+});
+
+test('#1518 masonry joins span the actual cut and keep only the exposed jamb', () => {
+  for (const rotDeg of [35,215]) {
+    for (const type of ['window','door']) {
+      const camera = {...ISO_CAMERA,rotDeg};
+      const basis = buildIsoOpeningBasis({
+        id:type, sourceIndex:0, type, x:100, y:100, angle:0, length:60,
+        flipH:false, flipV:false, face:{ox:0,oy:4,side:1},
+      });
+      const pad = .0017;
+      const wallRect = (a,b) => [[[a,96],[b,96],[b,104],[a,104]]];
+      const geometry = buildIsoWallGeometry([wallRect(0,70-pad),wallRect(130+pad,200)],camera,basis.wallHeight);
+      const joined = connectTranslucentOpeningMasonry({geometry,camera,openings:[basis]});
+      const cutFace = face => face.planEdge.every(([x]) => Math.abs(x-70)<.01 || Math.abs(x-130)<.01);
+      assert.equal(geometry.sides.filter(cutFace).length,1);
+      assert.equal(joined.sidesWithPanels.filter(cutFace).length,0);
+      const exposed = joined.sidesWithoutPanels.filter(cutFace);
+      assert.equal(exposed.length,1);
+      assert.equal(exposed[0].baseHeight,basis.windowProfile?.frameBottom ?? 0);
+      assert.equal(exposed[0].height,basis.windowProfile?.frameTop ?? basis.apertureTop);
+      assert.ok(joined.sidesWithPanels.some(face=>face.planEdge.every(([x])=>x===0 || x===200)),
+        'a real wall end outside the cut must remain');
+      const top = joined.surfaces.find(s=>s.material==='wall-top');
+      const xs = top.points.map(({point})=>point[0]);
+      assert.ok(Math.min(...xs) < 70-pad && Math.max(...xs) > 130+pad,
+        'the cap actually overlaps both ends of the cut');
     }
   }
 });

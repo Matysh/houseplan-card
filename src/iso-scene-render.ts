@@ -9,6 +9,7 @@
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
 import { architecturalPainter } from './iso-architectural-edges';
+import { connectTranslucentOpeningMasonry } from './iso-masonry-joins';
 import { difference, union, type Geom } from 'polyclip-ts';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_OPENINGS } from './iso-lab-camera';
 import { clipIsoOpeningDepthQueue, composeIsoTranslucentStructure, deviceWallOcclusion, furnitureOcclusion,
@@ -28,11 +29,14 @@ import { buildIsoWallDepthQueue, resolveIsoDecorationLayers, resolveIsoOpeningPa
   type IsoOverlayRenderScene, type IsoRenderScene, type IsoOpeningRenderSurface, type IsoWallDepthQueueEntry } from './iso-scene-geometry';
 export const ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
-const wallCutPaint = new WeakMap<object, string>();
+type WallCut = { geometry: ReturnType<typeof union>; d: string };
+const wallCutCache = new WeakMap<object, WallCut>();
+const wallCutPath = (parts: ReturnType<typeof union>): string => parts.flatMap(poly=>poly.map(ring=>
+  `M ${ring.map(p=>p.join(' ')).join(' L ')} Z`)).join(' ');
 /** Wall and lintel caps are one cut plane. Outline only their outer boundary;
  * the joints above a doorway are construction seams, not visible edges. */
-function continuousWallCut(scene:IsoRenderScene,queue:ReturnType<typeof buildIsoWallDepthQueue>):string {
-  const cached=wallCutPaint.get(queue);if(cached!==undefined)return cached;
+function continuousWallCut(scene:IsoRenderScene,queue:ReturnType<typeof buildIsoWallDepthQueue>):WallCut {
+  const cached=wallCutCache.get(queue);if(cached!==undefined)return cached;
   const parts:Geom[]=[];
   const ring=(points:readonly (readonly number[])[]):[number,number][]=>{
     const out=points.map(p=>[Number(p[0].toFixed(6)),Number(p[1].toFixed(6))] as [number,number]);
@@ -44,8 +48,8 @@ function continuousWallCut(scene:IsoRenderScene,queue:ReturnType<typeof buildIso
       parts.push([ring(entry.surface.points.map(p=>projectPlanPoint(p.point,p.z,scene.camera)))]);
   }
   const merged=parts.length ? union(parts[0],...parts.slice(1)) : [];
-  const result=merged.flatMap(poly=>poly.map(ring=>`M ${ring.map(p=>p.join(' ')).join(' L ')} Z`)).join(' ');
-  wallCutPaint.set(queue,result);return result;
+  const result = {geometry:merged,d:wallCutPath(merged)};
+  wallCutCache.set(queue,result);return result;
 }
 
 const shadowClips = new WeakMap<object, string | null>();
@@ -288,19 +292,21 @@ function renderIsoStructure(
       leaf: panel.leaf,
     }))),
   ] : scene.openingSurfaces.filter(surface => surface.material === 'wall-side' || surface.material === 'wall-top');
-  const projectedOpenings = transparentMasonry && scene.camera
-    ? openingSurfaces.filter(surface => !surface.hiddenInTranslucentMasonry)
-    : openingSurfaces;
-  const ordered = buildIsoWallDepthQueue(scene.geometry, projectedOpenings,
-    (scene.camera?.floorScaleY ?? 1) !== 1);
+  const uniformTopPlane = (scene.camera?.floorScaleY ?? 1) !== 1;
   if (transparentMasonry && scene.camera) {
-    return renderIsoTranslucentMasonry(scene, scene.camera, layers, ordered, cellCm,
+    const joins = connectTranslucentOpeningMasonry(scene);
+    const geometry = {...scene.geometry,sides:layers.panels ? joins.sidesWithPanels : joins.sidesWithoutPanels};
+    const visible = openingSurfaces.filter(surface => !surface.hiddenInTranslucentMasonry
+      && surface.material !== 'wall-side' && surface.material !== 'wall-top');
+    const joined = buildIsoWallDepthQueue(geometry,[...visible,...joins.surfaces],uniformTopPlane);
+    return renderIsoTranslucentMasonry(scene, scene.camera, layers, joined, cellCm,
       furniture, overlays, wallLights, wallColor, transparentMasonry);
   }
+  const ordered = buildIsoWallDepthQueue(scene.geometry, openingSurfaces, uniformTopPlane);
   const depthQueue = ISO_LAB_OPENINGS && scene.camera
     ? clipIsoOpeningDepthQueue(ordered,scene.camera,gridVisualScale(cellCm)) : ordered;
   const architecture = scene.camera ? architecturalPainter(depthQueue,scene.camera,wallColor) : {fill:()=>'',edges:nothing};
-  const wallCut = ISO_LAB_OPENINGS ? continuousWallCut(scene,depthQueue) : '';
+  const wallCut = ISO_LAB_OPENINGS ? continuousWallCut(scene,depthQueue).d : '';
   if (scene.camera && overlays) for (const placement of overlays.devices.values()) {
     placement.wallMask = deviceWallOcclusion(depthQueue,scene.camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
   }
@@ -452,10 +458,22 @@ function renderIsoOpeningSurface(surface: IsoOpeningRenderSurface, d:string, tex
 
 function renderIsoTranslucentMasonry(
   scene: IsoRenderScene, camera: IsoCamera, layers: IsoDecorationLayers,
-  queue: readonly IsoWallDepthQueueEntry[], cellCm: number, furniture: readonly IsoFurniturePaint[],
+  joined: readonly IsoWallDepthQueueEntry[], cellCm: number, furniture: readonly IsoFurniturePaint[],
   overlays: IsoOverlayRenderScene | null, wallLights: readonly IsoWallLightSource[],
   wallColor: string, masonry: IsoMasonryOpacity,
 ): Pick<IsoFramePresentation,'walls'|'foreground'|'shadowClip'> {
+  const {geometry:cut,d:wallCut} = continuousWallCut(scene,joined);
+  const capHeight = scene.geometry.topFaces[0]?.height ?? scene.openings[0]?.wallHeight;
+  // Feed the joined cap itself to the depth pass. Clipping each old cap to a
+  // shared fill still leaves an antialiased seam at every former joint.
+  const queue: readonly IsoWallDepthQueueEntry[] = wallCut ? [
+    ...joined.filter(entry => entry.layer !== 'wall-top'
+      && (entry.layer !== 'opening' || entry.surface.kind !== 'opening-lintel-top')),
+    ...cut.map((rings,component) => ({
+      layer:'wall-top' as const,depth:0,
+      face:{d:wallCutPath([rings]),component,depth:0,height:capHeight,projectedRings:rings},
+    })),
+  ] : joined;
   const solid = queue.filter(entry => {
     const kind = masonrySurface(entry);
     return !kind || masonry[kind] === 1;
@@ -465,7 +483,6 @@ function renderIsoTranslucentMasonry(
   }
   const architecture = architecturalPainter(queue,camera,wallColor);
   const paintWallLight = isoWallLightPainter(wallLights,camera,cellCm,scene.geometry);
-  const wallCut = continuousWallCut(scene,queue);
   const fragments = composeIsoTranslucentStructure(queue,camera,gridVisualScale(cellCm),masonry,furniture);
   const foreground = svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key} data-hp-translucent-masonry
     ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>

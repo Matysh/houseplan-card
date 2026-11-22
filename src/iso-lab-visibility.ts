@@ -95,7 +95,7 @@ function faceOf(entry:IsoWallDepthQueueEntry,camera:IsoCamera, coordinates?: Cli
   } else if(entry.layer==='wall-side') {
     const f=entry.face;if(f.height===undefined)return null;
     geom=[[f.points.map(p=>[p[0],p[1]] as Point)]];
-    vertices=geom[0][0].map((p,i)=>[...p,i<2?0:f.height!]);
+    vertices=geom[0][0].map((p,i)=>[...p,i<2?(f.baseHeight ?? 0):f.height!]);
   } else {
     const s=entry.surface;if(!s.points)return null;
     vertices=s.points.map(p=>[...projectPlanPoint(p.point,p.z,camera),p.z]);

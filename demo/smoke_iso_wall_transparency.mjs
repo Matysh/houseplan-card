@@ -53,6 +53,7 @@ try {
   const settle=()=>page.evaluate(()=>window.__hpTest.settled());
   const setIso=on=>page.evaluate(on=>window.__hpTest.setVolumetricView(on),on);
   const capture=async id=>{
+    if(reviewDir) await page.locator('houseplan-card [data-hp="toast"]').waitFor({state:'hidden'});
     const buffer=await stage.screenshot({animations:'disabled'});
     if(reviewDir){
       const file=id+'.png';
@@ -105,6 +106,39 @@ try {
     },dark);
     await settle();
   };
+  const openingJoins=()=>stage.evaluate(el=>{
+    const scene=window.__card._isoScene();
+    const camera=scene.camera;
+    const angle=camera.rotDeg*Math.PI/180;
+    const tilt=camera.tiltDeg*Math.PI/180;
+    const project=(x,y,z)=>{
+      const dx=x-camera.origin[0],dy=y-camera.origin[1];
+      return new DOMPoint(camera.origin[0]+camera.xyScale*(dx*Math.cos(angle)-dy*Math.sin(angle)),
+        camera.origin[1]+camera.xyScale*(camera.floorScaleY??1)*(dx*Math.sin(angle)+dy*Math.cos(angle))
+        -z*camera.zScale*Math.sin(tilt));
+    };
+    const pointAt=(basis,along,across,z)=>project(
+      basis.axis.center[0]+basis.axis.tangent[0]*along+basis.axis.normal[0]*across,
+      basis.axis.center[1]+basis.axis.tangent[1]*along+basis.axis.normal[1]*across,z);
+    const door=scene.openings.find(basis=>basis.id==='wt-door');
+    const windowBasis=scene.openings.find(basis=>basis.id==='wt-window');
+    const doorHalf=Math.hypot(door.axis.end[0]-door.axis.start[0],door.axis.end[1]-door.axis.start[1])/2;
+    const cap=el.querySelector('#hp-iso-translucent-cut-contour');
+    const sill=[...el.querySelectorAll('path[data-id="wt-window"][data-surface="window-sill"]')];
+    const apron=[...el.querySelectorAll('path[data-id="wt-window"][data-surface="window-apron-top"]')];
+    const windowHalf=Math.hypot(windowBasis.axis.end[0]-windowBasis.axis.start[0],
+      windowBasis.axis.end[1]-windowBasis.axis.start[1])/2;
+    const sillSpansOpening=[-.8,-.4,0,.4,.8].every(t=>[-.5,-.3,0,.3,.5].some(v=>{
+      const p=pointAt(windowBasis,t*windowHalf,v*windowBasis.face.depth,windowBasis.windowProfile.frameBottom);
+      return sill.some(path=>path.isPointInFill(p));
+    }));
+    const continuousLintel=!!cap&&[doorHalf,-doorHalf].every(end=>[-.0008,0,.0008].every(delta=>
+      [-.3,0,.3].every(v=>{
+        const p=pointAt(door,end+delta,v*door.face.depth,door.wallHeight);
+        return cap.isPointInFill(p)&&!cap.isPointInStroke(p);
+      })));
+    return {sillSpansOpening,continuousLintel,apronOpacity:apron[0]?.parentElement.getAttribute('opacity')??null};
+  });
   const fixtureFlatBefore=await signature();
   const control=await page.evaluate(async()=>{
     const {__hpTest:hp,__card:c}=window;
@@ -157,7 +191,7 @@ try {
   for(const [index, dark] of [false,true].entries()){
     const name=dark?'dark':'light';
     await theme(dark);
-    if(index) await page.locator('houseplan-card [data-hp="rotate-right"]').click();
+    if(index) for(let turn=0;turn<2;turn++) await page.locator('houseplan-card [data-hp="rotate-right"]').click();
     await settle();
     await setMaterial(undefined);
     const before=await signature(), opaque=await capture(name+'-white-base');
@@ -166,6 +200,9 @@ try {
     out[name+'DefaultMatchesOff']=JSON.stringify(before)===JSON.stringify(off)&&off.backing==='#ffffff';
     await setMaterial(true);
     const after=await signature(), transparent=await capture(name+'-transparent');
+    const joins=await openingJoins();
+    out[name+'WindowSillAndApron']=joins.sillSpansOpening&&joins.apronOpacity==='0.55';
+    out[name+'TopCutContinuousAtLintel']=joins.continuousLintel;
     out[name+'Materials']=after.backing===null&&after.side.join()==='0.38'&&after.top.join()==='0.55'
       &&after.topStops.includes('rgb(157, 106, 57)')&&after.round>0&&after.apron>0
       &&after.surfaces.some(surface=>surface.kind.includes('glass'));
@@ -229,7 +266,15 @@ try {
   out.zeroSideOnly=noSide.side.length===0&&noSide.top.join()==='0.55'&&noSide.backing===null;
   await setMaterial(true,.38,0);
   const noTop=await signature();
+  const noTopJoins=await openingJoins();
+  out.fullyTransparentTopKeepsOnlyTheIndependentSill=noTopJoins.sillSpansOpening&&noTopJoins.apronOpacity===null;
   out.zeroTopOnly=noTop.side.join()==='0.38'&&noTop.top.length===0&&noTop.backing===null;
+  await setMaterial(true,0,0);
+  const clearWalls=await signature(), clearJoins=await openingJoins();
+  out.fullyTransparentMasonryRetainsWindowSill=clearWalls.side.length===0&&clearWalls.top.length===0
+    &&clearJoins.sillSpansOpening;
+  if(reviewDir) await capture('both-wall-colours-transparent');
+  await setMaterial(true,.38,0);
   const disabled = await page.evaluate(async()=>{
     const {__hpTest:hp,__card:c}=window;
     const dialog=await hp.openSpaceDialog('edit','f1');

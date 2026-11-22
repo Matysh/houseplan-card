@@ -8,6 +8,7 @@ export interface IsoWallFace {
   roundColumn?: number;
   planEdge?: readonly [PlanPoint, PlanPoint];
   height?: number;
+  baseHeight?: number;
   /** Exact visible quad, reused by Stage 4 overlay collision geometry. */
   points: readonly ScenePoint[];
   depth: number;
@@ -22,6 +23,7 @@ export interface IsoWallTopFace {
   depth: number;
   component: number;
   projectedRings?: readonly (readonly ScenePoint[])[];
+  planRings?: readonly (readonly PlanPoint[])[];
   height?: number;
 }
 
@@ -138,6 +140,7 @@ export function buildIsoWallGeometry(
     const source = geometry[polygon];
     const componentPaths: string[] = [];
     const projectedRings: ScenePoint[][] = [];
+    const planRings: PlanPoint[][] = [];
     let componentDepth = -Infinity;
     for (let ring = 0; ring < (source || []).length; ring++) {
       const points = normalizedRing(source[ring], ring > 0);
@@ -145,6 +148,7 @@ export function buildIsoWallGeometry(
       const topPath = topRingPath(points, camera, height);
       tops.push(topPath);
       componentPaths.push(topPath);
+      planRings.push(points);
       projectedRings.push(points.map(point => projectPlanPoint(point,height,camera)));
       componentDepth = Math.max(componentDepth,
         ...points.map((point) => projectPlanPoint(point, height, camera)[1]));
@@ -172,7 +176,7 @@ export function buildIsoWallGeometry(
         d: componentPaths.join(' '),
         depth: componentDepth,
         component: polygon,
-        projectedRings, height,
+        projectedRings, planRings, height,
       });
     }
   }

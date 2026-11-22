@@ -567,10 +567,15 @@ export function isoOpeningMasonry(basis: IsoOpeningBasis) {
   });
 }
 
-export function projectIsoOpeningMasonry(basis: IsoOpeningBasis, camera: IsoCamera = ISO_CAMERA): readonly IsoOpeningSurface[] {
+export function projectIsoOpeningMasonry(
+  basis: IsoOpeningBasis, camera: IsoCamera = ISO_CAMERA,
+  joins?: readonly [start: number, end: number],
+): readonly IsoOpeningSurface[] {
   const volume = isoOpeningMasonry(basis);
   if (!volume) return [];
-  const {ring, bottom, top} = volume;
+  const {bottom, top} = volume;
+  const ring = joins ? volume.ring.map((point,index) =>
+    add(point,scaled(basis.axis.tangent,joins[index === 0 || index === 3 ? 0 : 1]))) : volume.ring;
   // Both end faces meet the host wall. Only its camera-facing exterior
   // continues through the opening apron or lintel as exposed masonry.
   const [cos,sin] = isoRotationBasis(camera);
