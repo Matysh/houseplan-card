@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19994,
+  "revision": 19995,
   "nextTicket": 602,
   "nextFence": 600,
   "tasks": {
@@ -5601,46 +5601,24 @@
     },
     "1519": {
       "issue": 1519,
+      "branch": "codex/1519-room-name-preview",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1519-room-name-preview",
-      "materialSha": "432662652229bf4bf58c2a4b94e954efa9f770c7",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 600,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795333927155,
-      "reviewEntry": 2,
-      "patchId": "dc5d10bee1a39c792922f3c51d5b8cb7cc9dfd17",
-      "changedFiles": [
-        "demo/smoke_direct_wall_geometry.mjs",
-        "demo/smoke_room_appearance.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/release-ledger/v1.86.0/1519.json",
-        "src/editors/space-form.ts"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
+      "status": "S8-merged",
+      "expectedBase": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
+      "mergedSha": "432662652229bf4bf58c2a4b94e954efa9f770c7",
+      "mergedAt": 1795334303259,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
         "status": "pending",
-        "fromStatus": "S6-in-progress",
-        "at": 1795333886183,
-        "entry": 1,
-        "detail": "Браузер: direct wall geometry: failed",
-        "eventId": "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return:return:1519"
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261122T075223807-b8bcd0b1",
-        "name": "Тесты для задачи #1519 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T075223807-b8bcd0b1/report.json",
-        "materialSha": "432662652229bf4bf58c2a4b94e954efa9f770c7",
-        "status": "passed",
-        "finishedAt": "2026-11-22T07:58:13.912Z",
-        "failures": []
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6183,18 +6161,7 @@
     1518,
     1515
   ],
-  "active": {
-    "issue": 1519,
-    "worker": "finish",
-    "token": "599:finish:15095b3d-9f7d-48b3-a937-80e8d66dea87:finish:1:admit",
-    "fence": 599,
-    "materialSha": "432662652229bf4bf58c2a4b94e954efa9f770c7",
-    "expectedBase": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795333930223,
-    "expiresAt": 1795337898361,
-    "patchId": "dc5d10bee1a39c792922f3c51d5b8cb7cc9dfd17"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6376,114 +6343,6 @@
       "digest": "715361cd0c6ccbe9c5cccee1b3bc0bd94b4217343f706b0aae70f4e05097db5c",
       "issue": 1517
     },
-    "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:2:synchronized": {
-      "digest": "82f47418150b8c4c4fa6c9824989f7e031f938f403c1589f04435f736f23b19b",
-      "issue": 1519
-    },
-    "finish:59395b39-13cf-4857-981a-55c9919400dd": {
-      "digest": "57dddda9c80375b48a5ee62aaacb09e2088304d03a48b0fd101984021429049c",
-      "issue": 1519
-    },
-    "github:44999193950:1:completions:message:8f2d7680f3475e8346c51f81c983d526e11386acc5f2f6c2a779a23b7f439eb1": {
-      "digest": "44bb30a862ec309866e5a7e2f04650b5a1b4b88b7ffe3522d8813fb22ada583a",
-      "issue": 1519
-    },
-    "finish:0055d9c8-2b68-4f7d-b398-34db553a2e30": {
-      "digest": "ff4625fe746504b29895a5654655ddfb0d44f347f3df84d424a38e8d236c5bbc",
-      "issue": 1519
-    },
-    "dev-build:44999112063:1:webhook": {
-      "digest": "b86d3b6b8827072652272da60871f27efc33b409e4ee0703c0653fc76ffbb487",
-      "issue": 1519
-    },
-    "dev-build:44999112063:1:webhook:b37d407a-c58e-4cc2-bf4e-f33060dd16cc:delivered": {
-      "digest": "9bbe348b5a3bb2a6e5a950f5141c154666ae7e08b5c10d0d06c13641ba430d0a",
-      "issue": 1519
-    },
-    "finish:1558413e-55f4-4f4d-b4b8-2d9a60cab6f5": {
-      "digest": "a9483a55ed0b14b680357fde05b82f7d7e51d5706c16c45e7f2661f27b17e6db",
-      "issue": 1519
-    },
-    "finish:8118898c-c2a1-4c22-9f79-28289b50a7bc": {
-      "digest": "cae9311566eb39a3e8ff6517973f79a84ec7fce4d2f5b3065ccd208772e95e6c",
-      "issue": 1519
-    },
-    "task:1513:completion:b6d5e3bfd:20261122:message:6d0b9016ef1c1d4859c6f6123a7da695d04ad706fba636cd28c5d830c698394d": {
-      "digest": "18e889d73e05918064fd845979cda68ad2d27c3510dac4f6a5549149a83ce0bd",
-      "issue": 1519
-    },
-    "task:1513:completion:b6d5e3bfd:20261122:message:5467a119510280c54ca509c9e7bd5a1a5ae0b8d18447d128916820938b03fec2": {
-      "digest": "4f0a1e76c4fe3b03e0466265571b8ce71f238b24d0f6ba8b96e075489504cac9",
-      "issue": 1519
-    },
-    "finish:d4f2b1cd-12b9-49d0-9a07-6bc98b5a8e3e": {
-      "digest": "938cd24886731c1181183e179c9174db725cc5d2fb4f995fcfc6f9e6c4b4b764",
-      "issue": 1519
-    },
-    "finish:87edb433-52b5-447d-95e4-19210c1c8bee": {
-      "digest": "a1a6efc4a1c09c2613d3016c1c23eafc723d5dc51b45ee469f0c6b48e1daa1f2",
-      "issue": 1519
-    },
-    "finish:21a51f7e-da23-415b-80e8-657e8c55c207": {
-      "digest": "eec7daf15a7f2bd69b6699c412b44771ee7fc4c6bf636a788585fd32dc8ce597",
-      "issue": 1519
-    },
-    "finish:5a5d0619-b868-4f35-9b5c-44d49237bf76": {
-      "digest": "ee9de6a90dd0550f3892a2f3c5197864ae7b772a8125de3eba4f9f96cfd6eca7",
-      "issue": 1519
-    },
-    "finish:c2d8a2c4-12b6-4d4a-a545-d428ff666efd": {
-      "digest": "4b93546bc609b152eb7b03f41b17fc1ebca1d1e5676b2295002bd2495d0b0ab4",
-      "issue": 1519
-    },
-    "finish:11a2f9bb-754d-4772-ab3a-9b79dfe68302": {
-      "digest": "4d9a59e7d8fa3cbc7c7a35e0ea49327719a72375b0fe8e22733c633fa3d9542a",
-      "issue": 1519
-    },
-    "finish:a5aa9501-35b0-496a-bd3d-7479748946f5": {
-      "digest": "bcfe311c4f5bcbcb4e97b62318aae0ca154957fc523f67320fa3cc2a20d3dafb",
-      "issue": 1519
-    },
-    "finish:5e1e86ed-c7ae-40fe-a0d5-249aeb1227c7": {
-      "digest": "478084baea7e6f1d75a442e77f2e5152384be31172b64ed1cf25254c5a527497",
-      "issue": 1519
-    },
-    "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return": {
-      "digest": "15a0fc74d24944ef40015b3e91d57e7ac5c9f756f8398541e97c8dbd791f9bd7",
-      "issue": 1519
-    },
-    "finish:f5086ada-7386-4bbf-8e48-dfbfdb1a09f3:finish:2:synchronized": {
-      "digest": "1649edc5d857a3015f38d7b89a97f37a6a930dbf687571d6299f9cf58f4d3ca5",
-      "issue": 1519
-    },
-    "finish:a5354a39-35c2-439f-8825-e8468c0e136e": {
-      "digest": "875743f044755e2bc3a9654d7b7d5b011dd862672484fc8c3cbf50bb8b6a8ed8",
-      "issue": 1519
-    },
-    "finish:19594b5f-0d06-42d3-bce5-7aad552b35f2": {
-      "digest": "58ea670cedbb820d9abb6077b4e03f0c71413301f12778419c079d323a49cda6",
-      "issue": 1519
-    },
-    "finish:6140f721-b8f0-4fd7-a4d2-245ea07386ae": {
-      "digest": "a539acd83c3e33ad2818ca1f9cd604ec9f52cdd2ed9e47fac5e3eaa08725d928",
-      "issue": 1519
-    },
-    "finish:721854a7-dba6-42d9-9a6b-c0aafdfac0f6": {
-      "digest": "c5c0320fd627430c9f4772e70939c4bafd7ad4db03314424d4e5b63a7d67153e",
-      "issue": 1519
-    },
-    "finish:272bb089-bfcb-4d0f-b8b9-4527a349a53e": {
-      "digest": "9fa20595a24bd65552b6fd6c493ed7330a809c41ffac819c17f9f4d637cfb829",
-      "issue": 1519
-    },
-    "finish:08aab3c5-710c-4149-9c6a-dcff7cda967d": {
-      "digest": "0fe8cabdef12536f2826db5fd5c384aa99ccada0058cf7cf781877489f262602",
-      "issue": 1519
-    },
-    "finish:f5086ada-7386-4bbf-8e48-dfbfdb1a09f3:finish:3:s6-complete": {
-      "digest": "d94ad13973914e05fb928b80071c87af81be47ad8305ed83c8e079c9b8064693",
-      "issue": 1519
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6510,20 +6369,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7": {
-      "digest": "8f6b9e2a176f66ef5641406a0d60b1270d52f8a0edbab6eb9dc40cb8d8730b2c",
-      "issue": 1519,
-      "message": {
-        "kind": "queued",
-        "issue": 1519,
-        "at": 1795331812207,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "01e04cdf8725e5cc3ad17d9ca3fd5889597d0f1e",
         "delivered": true
       }
     },
@@ -6609,21 +6454,6 @@
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:1:admit": {
-      "digest": "cb4d885d788755fb9b4e260019f32a4b4a3695ad800c65e4cf4c36207fab12b3",
-      "issue": 1519,
-      "message": {
-        "kind": "admitted",
-        "issue": 1519,
-        "at": 1795333170167,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "01e04cdf8725e5cc3ad17d9ca3fd5889597d0f1e",
-        "phase": "sync",
         "delivered": true
       }
     },
