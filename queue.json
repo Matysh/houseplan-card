@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20742,
+  "revision": 20743,
   "nextTicket": 619,
   "nextFence": 619,
   "tasks": {
@@ -5745,18 +5745,21 @@
       "status": "S6-in-progress",
       "readyAt": 1795355085295,
       "reviewEntry": 2,
-      "patchId": "a8b275ffa35ba7416f3e0e67320e82fd181f2b7d",
+      "patchId": "60f022e356e6f82043ef26c9a7ce77ee1954dd21",
       "changedFiles": [
         "demo/smoke_startup_floor.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.86.0/1520.json",
-        "scripts/mutation-registry.mjs",
         "src/houseplan-card.ts",
         "src/startup-floor-store.ts",
         "src/startup-floor-svg.ts",
         "src/startup-floor.ts",
         "src/styles/plan.styles.ts",
+        "test/floor-cache-day-cycle.test.mjs",
+        "test/isometric-contract.test.mjs",
+        "test/layout-write-reload.test.mjs",
+        "test/optional-space-model-contract.test.mjs",
         "test/startup-floor.test.mjs"
       ],
       "notice": {
@@ -6366,10 +6369,11 @@
     "token": "618:finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:1:admit",
     "fence": 618,
     "materialSha": "2a4cb0a37be86072052d4559a12cdc6278523753",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "0987240f1c33505bf9352be24a98a281f8a1d4e9",
+    "phase": "testing",
     "admittedAt": 1795355089199,
-    "expiresAt": 1795355389199
+    "expiresAt": 1795355395448,
+    "patchId": "60f022e356e6f82043ef26c9a7ce77ee1954dd21"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6506,6 +6510,10 @@
     },
     "finish:62d91283-82a3-45be-980a-9c42edc4c58e:finish:3:return": {
       "digest": "be8c1fef0d5e032e90f2bd956d6470fe95d49bc8b9ad25666a45b150009d09d1",
+      "issue": 1520
+    },
+    "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:2:synchronized": {
+      "digest": "41837dae17b2389e059c7ab9af60c7881eb629e6b9b23b2f2555876bf4186ba2",
       "issue": 1520
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
