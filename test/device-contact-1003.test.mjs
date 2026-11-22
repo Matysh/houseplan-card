@@ -265,6 +265,7 @@ test('#1517 a wall corner keeps both arms through resize and limits a core colli
     else near(resultElbow.diameter,size);
     return result;
   }
+  check(36 + 1e-12,false); // Equivalent size after a scale or storage round trip.
   check(45,false);
   check(28.8,false);
   check(8,true);

@@ -372,7 +372,7 @@ export class DeviceContactLayout {
     const candidateScene = new DeviceContactScene(projected.map(shape => shape.marker), walls, masonry);
     const members = new Set(placed.keys());
     const valid = projected.every(shape => (!occupied || this.safe(shape, occupied, members))
-      && this.safe(shape, candidateScene, new Set([shape.marker.id]), { sharedCorners: resize ? graph : undefined }))
+      && this.safe(shape, candidateScene, new Set([shape.marker.id]), { sharedCorners: graph }))
       && [...placed].every(([id, shape]) => {
         if (occupied && !this.safe(shape, occupied, members)) return false;
         const reference = graph.shapes.get(id)!;
