@@ -113,8 +113,6 @@ export function resolveIsoFramePresentation(input: {
   cellCm: number;
   furniture?: readonly IsoFurniturePaint[];
   wallLights?: readonly IsoWallLightSource[];
-  /** A separate renderer can opt out of the 2.5D material. */
-  transparency?: boolean;
 }): IsoFramePresentation {
   const layers = resolveIsoDecorationLayers(input.display);
   const panels = layers.panels
@@ -123,7 +121,7 @@ export function resolveIsoFramePresentation(input: {
   const overlays = input.overlays(layers);
   const smoothMaterials = ISO_LAB_FLOOR_MARKERS && !!input.scene?.camera;
   const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => {
-    const transparentMasonry = input.transparency !== false && input.display.transparentWalls3d
+    const transparentMasonry = input.display.transparentWalls3d
       ? { side:input.display.wallFill.a, top:Number.isFinite(input.display.opacity) ? input.display.opacity : 1 } : undefined;
     const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm,
       input.furniture, overlays, input.wallLights, input.display.wallFill?.c, transparentMasonry);
