@@ -194,8 +194,10 @@ try {
     cfg.spaces.find(s => s.id === 'f1').settings.card_font_scale = 1;
   }));
 
-  // Kiosk is a separate card configured through its public API, just like HA.
-  out.kioskAndStatic = await page.evaluate(async () => {
+  // Mount through the public API and observe both cards via a bounded
+  // Playwright wait, so their asynchronous reads stay independent.
+  await page.waitForFunction(() => Boolean(customElements.get('houseplan-space-card')));
+  await page.evaluate(() => {
     const source = window.__card, config = structuredClone(source._serverCfg);
     const hass = { ...source.hass, callWS: async msg => {
       if (msg.type === 'houseplan/config/get') return { config, rev: 920, can_write: true };
@@ -203,21 +205,28 @@ try {
       return source.hass.callWS(msg);
     } };
     const kiosk = document.createElement('houseplan-card');
+    kiosk.id = 'co2-smoke-kiosk';
     kiosk.setConfig({ type: 'custom:houseplan-card', space: 'f1', kiosk: true });
     kiosk.hass = hass;
-    document.body.appendChild(kiosk);
-    await customElements.whenDefined('houseplan-space-card');
     const fixed = document.createElement('houseplan-space-card');
+    fixed.id = 'co2-smoke-fixed';
     fixed.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', show_button: false });
     fixed.hass = hass;
-    document.body.appendChild(fixed);
-    const until = Date.now() + 10000;
-    while ((!kiosk.renderRoot?.querySelector('.rlm[aria-label*="1487"]')
-        || !fixed.renderRoot?.querySelector('[data-hp="room"]')) && Date.now() < until)
-      await new Promise(r => setTimeout(r, 50));
-    const ok = kiosk.renderRoot?.querySelector('.rlm[aria-label*="1487"]')?.textContent.trim() === '1487 ppm'
-      && fixed.renderRoot?.querySelectorAll('.rlmetrics, .rlm, .cpco2').length === 0;
-    kiosk.remove(); fixed.remove();
+    document.body.append(kiosk, fixed);
+  });
+  await page.waitForFunction(() => {
+    const kiosk = document.getElementById('co2-smoke-kiosk');
+    const fixed = document.getElementById('co2-smoke-fixed');
+    return kiosk?.renderRoot?.querySelector('.rlm[aria-label*="1487"]')?.textContent.trim() === '1487 ppm'
+      && Boolean(fixed?.renderRoot?.querySelector('[data-hp="room"]'));
+  });
+  out.kioskAndStatic = await page.evaluate(() => {
+    const kiosk = document.getElementById('co2-smoke-kiosk');
+    const fixed = document.getElementById('co2-smoke-fixed');
+    const ok = kiosk.renderRoot.querySelector('.rlm[aria-label*="1487"]')?.textContent.trim() === '1487 ppm'
+      && fixed.renderRoot.querySelectorAll('.rlmetrics, .rlm, .cpco2').length === 0;
+    kiosk.remove();
+    fixed.remove();
     return ok;
   });
   out.noServicesOrGeometryChanges = await page.evaluate(() => {
