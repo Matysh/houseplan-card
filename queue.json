@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20483,
-  "nextTicket": 612,
+  "revision": 20484,
+  "nextTicket": 613,
   "nextFence": 611,
   "tasks": {
     "1024": {
@@ -5872,6 +5872,20 @@
         "status": "published",
         "sourceSha": "432662652229bf4bf58c2a4b94e954efa9f770c7"
       }
+    },
+    "1521": {
+      "issue": 1521,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1521-floor-preparation-deadline",
+      "materialSha": "08da288393bdb764e1cea41028df383dbe1d18c0",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 612,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795348303050,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6444,7 +6458,8 @@
     }
   },
   "waiting": [
-    1517
+    1517,
+    1521
   ],
   "active": {
     "issue": 1516,
@@ -7516,6 +7531,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:f1091ebc-30a7-4bc2-b4bf-d27c7cd305c8": {
+      "digest": "40bc68a961fd4f3a923678122d1277ab33b0e55893fbadcad21c6cc05d67690e",
+      "issue": 1521,
+      "message": {
+        "kind": "queued",
+        "issue": 1521,
+        "at": 1795348303050,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "08da288393bdb764e1cea41028df383dbe1d18c0"
       }
     }
   },
