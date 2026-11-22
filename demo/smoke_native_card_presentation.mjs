@@ -54,7 +54,8 @@ try {
   const iso=(id,n)=>Promise.all([angle(id,n),find(id).locator('[data-projection="iso"]').waitFor({state:'visible',timeout:25000})]);
   await mount();
   await Promise.all([angle('main',0),angle('flat',90),iso('iso',45),iso('duplicate',45),iso('kiosk',315)]);
-  const out={independentInitialProjections:true};
+  const out={independentInitialProjections:await find('main').locator('[data-projection="iso"]').count()===0
+    && await find('flat').locator('[data-projection="iso"]').count()===0};
   out.lovelaceEditorDistinguishesAuthoredZeroAndLegacyFallback=await page.evaluate(async()=>{
     const ctor=customElements.get('houseplan-card'), editor=await ctor.getConfigElement();
     const legacy={type:'custom:houseplan-card',rotation:90};
