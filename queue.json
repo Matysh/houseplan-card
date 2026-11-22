@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21035,
+  "revision": 21036,
   "nextTicket": 626,
   "nextFence": 626,
   "tasks": {
@@ -5785,7 +5785,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795374361395,
       "reviewEntry": 3,
-      "patchId": "8fb135337bb930561e2f5c66ee60f1821c375137",
+      "patchId": "5fea2e9bbae768254540c4cce98ea4870ade7bb4",
       "changedFiles": [
         "custom_components/houseplan/command_adapter.py",
         "custom_components/houseplan/startup_floor_preview.py",
@@ -5795,6 +5795,8 @@
         "docs/CHANGELOG.ru.md",
         "docs/WARM-REMOUNT.md",
         "docs/release-ledger/v1.86.0/1522.json",
+        "scripts/config-compatibility-inventory.json",
+        "scripts/mutation-registry.mjs",
         "src/config-adoption.ts",
         "src/device-contact-card.ts",
         "src/houseplan-card.ts",
@@ -6413,10 +6415,11 @@
     "token": "625:finish:0270a8b0-ca2b-4e54-b4be-74d9d4e8fc0c:finish:1:admit",
     "fence": 625,
     "materialSha": "9624bf260356a6db38927ff44a1deb67321d192f",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
+    "phase": "testing",
     "admittedAt": 1795374364952,
-    "expiresAt": 1795374664952
+    "expiresAt": 1795374670995,
+    "patchId": "5fea2e9bbae768254540c4cce98ea4870ade7bb4"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6601,6 +6604,10 @@
     },
     "finish:d18fecea-27d3-41e0-b853-80f6a3e5638d": {
       "digest": "7ea535f33aa42111b7e78e7b62b8a741c188000ed4a9368a10f15dc5d475e458",
+      "issue": 1522
+    },
+    "finish:0270a8b0-ca2b-4e54-b4be-74d9d4e8fc0c:finish:2:synchronized": {
+      "digest": "cf5e0d56e4721ac0b538dc682582d2de17edf9af2ab8d833806001760a29dfb9",
       "issue": 1522
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
