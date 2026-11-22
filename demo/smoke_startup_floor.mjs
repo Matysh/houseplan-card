@@ -84,6 +84,12 @@ try {
       const installImage = () => {
         const card = window.__startupFixture();
         if (!card?._loadOk) { requestAnimationFrame(installImage); return; }
+        window.__startupStageCount = 0;
+        const countVisibleTree = () => {
+          window.__startupStageCount = Math.max(window.__startupStageCount,card.renderRoot.querySelectorAll('.stage').length);
+        };
+        new MutationObserver(countVisibleTree).observe(card.renderRoot,{childList:true,subtree:true});
+        countVisibleTree();
         card._decorAssets.set(asset, {asset_id:asset,url:floor.plan_url,mime:'image/png',name:'Synthetic tile',width:8,height:8,bytes:90});
         card.requestUpdate();
       };
@@ -113,6 +119,7 @@ try {
     });
     const seed = await page.evaluate(() => window.__startupFixture().houseplanStartupFloorDiagnostics());
     assert.ok(['stored','cached'].includes(seed.capture), label + ' seed failed: ' + JSON.stringify(seed));
+    assert.equal(await page.evaluate(() => window.__startupStageCount),1,label + ': no second stage during offscreen capture');
     await mount({projection,surface,hold:true});
     await page.waitForTimeout(160);
     assert.equal(await snapshot.count(), 0, label + ' never read from cold hint alone');

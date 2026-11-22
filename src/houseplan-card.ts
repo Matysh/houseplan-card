@@ -3015,6 +3015,15 @@ export class HouseplanCard extends LitElement {
 
   private async _captureStartupSvg(stage: HTMLElement, source: () => TemplateResult[], signal: AbortSignal): Promise<Blob> {
     const container = this.ownerDocument.createElement('div'), shell = this.ownerDocument.createElement('div');
+    // Resolve the same styles on a connected tree without publishing a second
+    // .stage to card observers, native selectors, or the accessibility tree.
+    const isolated = container.attachShadow({ mode: 'closed' });
+    if (this.renderRoot instanceof ShadowRoot && 'adoptedStyleSheets' in isolated)
+      isolated.adoptedStyleSheets = this.renderRoot.adoptedStyleSheets;
+    for (const child of this.renderRoot.children)
+      if (child.localName === 'style') isolated.appendChild(child.cloneNode(true));
+    for (const attr of ['panel-host', 'layout'])
+      if (this.hasAttribute(attr)) container.setAttribute(attr, this.getAttribute(attr)!);
     const wrap = this.ownerDocument.createElement('div'); wrap.className = 'zoomwrap';
     const scene = this.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
     shell.className = stage.className;
@@ -3032,7 +3041,7 @@ export class HouseplanCard extends LitElement {
     scene.setAttribute('viewBox', original.getAttribute('viewBox') ?? '');
     scene.setAttribute('preserveAspectRatio', original.getAttribute('preserveAspectRatio') || 'xMidYMid meet');
     if (stage.hasAttribute('data-hp-iso-floor-markers')) shell.setAttribute('data-hp-iso-floor-markers','true');
-    wrap.append(scene); shell.append(wrap); container.append(shell); this.renderRoot.appendChild(container);
+    wrap.append(scene); shell.append(wrap); isolated.append(shell); this.renderRoot.appendChild(container);
     try {
       for (const fragment of source()) {
         signal.throwIfAborted();
