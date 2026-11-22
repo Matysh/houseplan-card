@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19877,
+  "revision": 19878,
   "nextTicket": 599,
   "nextFence": 598,
   "tasks": {
@@ -6121,18 +6121,12 @@
       }
     },
     "1515": {
-      "requestId": "spec:1515:bc48a87a4e23ef295c1bf28969d7a820e7e13aef5999db0802c3b49ec3e63f45",
-      "contextDigest": "bc48a87a4e23ef295c1bf28969d7a820e7e13aef5999db0802c3b49ec3e63f45",
+      "requestId": "spec:1515:8648a0d173e27222dc209126aa7c5fd4355eb1547111525fb2f91d26d1434dcc",
+      "contextDigest": "8648a0d173e27222dc209126aa7c5fd4355eb1547111525fb2f91d26d1434dcc",
       "base": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795332168995,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44997507653",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795332245558
     },
     "1516": {
       "requestId": "spec:1516:0c4f3b45a85c1f8798b2b4c6ca1b300665a09dc5f8e3364bd3082591a50ba809",
@@ -6202,6 +6196,19 @@
       "presentation": {
         "round": 2,
         "occurredAt": "2026-11-22T07:23:44.705Z"
+      }
+    },
+    "spec:1515:spec:1515:8648a0d173e27222dc209126aa7c5fd4355eb1547111525fb2f91d26d1434dcc": {
+      "issue": 1515,
+      "kind": "spec",
+      "requestId": "spec:1515:8648a0d173e27222dc209126aa7c5fd4355eb1547111525fb2f91d26d1434dcc",
+      "materialSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+      "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+      "patchId": "8648a0d173e27222dc209126aa7c5fd4355eb1547111525fb2f91d26d1434dcc",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-22T07:24:05.558Z"
       }
     }
   },
@@ -6385,6 +6392,10 @@
       "digest": "c4c100ce198440fc8d20cc2f90ea9a4e3dbba1bb1fbe4f23b185038b24fc6be4",
       "issue": 1513
     },
+    "task:1515:s4:r2:20261122:spec-request": {
+      "digest": "d1fafedde9437cfa1cd2850f1bd6d2c174732e792d7682c5b6dd83fdcc2fae2c",
+      "issue": 1515
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6485,6 +6496,22 @@
         "round": 2,
         "requestId": "spec:1516:0c4f3b45a85c1f8798b2b4c6ca1b300665a09dc5f8e3364bd3082591a50ba809",
         "reviewChanges": "Зависимость #1515 отдаёт общий валидатор и нормализацию в view-frame.ts. В этой задаче меняются источники вида и угла, а не геометрия. У существующего профиля v2 уже отдельные default_view и space_views, v3 сохраняет их форму, а live-патч применяется через config adoption. Изучены текущие houseplan-card.ts, external-screens.ts, summary-panel-identity.ts, editors/external-screens.ts, editor.ts и серверная схема. Сохранённый старый угол и режим наследования выражаются отдельно. Внимание к cold/warm viewport и назначению localStorage per-card. Общие размеры устройств, положение группы и новый рендер #1514 здесь не реализуются.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1516#issuecomment-7075864152).\n\n- Смешанное окружение и откат. Вместо расширения строгой v2 схемы вводится профиль v3. Старая интеграция уже умеет сохранять будущие версии как непрозрачный bounded namespace, включая случай отсутствия поля в обычном запросе. Старые профили читаются без записи, а подтверждённый редактор отправляет v3 только при новой возможности backend. В AC5 добавлено подтверждение обычного config-write со старым валидатором после v3.\n- Прежний Lovelace GUI мог материализовать rotation:0 без осознанной правки. Новое явное поле plan_rotation не переинтерпретирует ни этот 0, ни другие legacy rotation. При отсутствии нового поля остаются прежние local → rotation → 0 и kiosk legacy fallback. UX наследования, повторная загрузка и intentional zero добавлены в AC.\n- Эксперимент #1472 отменяется в #1513. База финальной приёмки и слияния #1516 содержит #1513, а старый флаг real_3d после его отката не участвует в выборе. В тестах используются сохранённые данные с этим флагом.\n- Переход для киоска панели без валидного профиля описан явно. При отсутствии угла URL/профиля он следует заявленному порядку приоритетов и читает локальный угол, традиционный Lovelace kiosk сохраняет поведение.\n\nПо #1515 согласован неизменный логический формат градусов и нормализатор view-frame.ts. Решение владельца о точных прямых промежуточных камерах описано в #1515; оно не меняет формат #1516.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
+      }
+    },
+    "task:1515:s4:r2:20261122:spec-request:spec-resubmitted:1515": {
+      "digest": "d1fafedde9437cfa1cd2850f1bd6d2c174732e792d7682c5b6dd83fdcc2fae2c",
+      "issue": 1515,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1515,
+        "at": 1795332245558,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1515:8648a0d173e27222dc209126aa7c5fd4355eb1547111525fb2f91d26d1434dcc",
+        "reviewChanges": "Материал рассчитан на dev `5fa8459ea`, повторный spec-check прошёл. Решение владельца сохраняет четыре действующих физических ракурса и добавляет четыре прямых. #1516 переиспользует логические положения, а матрица, обратное преобразование и анимация используют один физический источник — текущую изометрическую камеру. `real_3d` от #1472 не является зависимостью.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1515#issuecomment-7075882883).\n\n- Был не определён момент фиксации 2D доворота. Фиксация локальная, по первому готовому постоянному Flat View конкретного пространства при выключенной общей установочной 2.5D. Это распространяется на собственное сохранение и принятый push. Редактор, пустой/загрузочный кадр, скрытые границы и fallback ничего автоматически не записывают. AC2 теперь проверяет дополнительное пространство, которое за время Flat не открывали, и входящий setting push.\n- Дельта берётся из фактической камеры, сохраняются точные ортогональные преобразования. Добавлена проверка прямого ракурса с плоскостью проёма ребром, сохраняются валидаторы старых card/profile/URL до отдельной #1516. Уточнено описание физических переходов между View 2D и 2.5D.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true
