@@ -39,7 +39,7 @@ try{
   ...fixture.config.spaces[0],plan_graph:undefined,wall_segments:[],walls:[],wall_columns:[],openings:[],
   rooms:[room('z',.1,.1,.8,.8),room('a',.25,.25,.25,.25),room('m',.7,.2,.25,.4)],
  }]}).config;
- await page.evaluate(async config=>{await window.__hpTest.setVolumetricView(false);window.__hpTest.setServerConfig(()=>config);},overlap);await frame();
+ await page.evaluate(async config=>{await window.__hpTest.setVolumetricView(false);await window.__hpTest.setServerConfig(()=>config);},overlap);await frame();
  assert.deepEqual(await page.locator('houseplan-card').locator('[data-hp="room"]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('data-id'))),['a','m','z']);
  const first=await page.locator('houseplan-card').locator('[data-hp="room"]').evaluateAll(nodes=>nodes.map(n=>[n.getAttribute('data-id'),n.getAttribute('d')||n.getAttribute('points')]));
  await page.evaluate(()=>window.__hpTest.setServerConfig(config=>{config.spaces[0].rooms.reverse();return config;}));await frame();
