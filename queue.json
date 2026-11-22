@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20402,
+  "revision": 20403,
   "nextTicket": 611,
   "nextFence": 610,
   "tasks": {
@@ -5702,14 +5702,14 @@
       "readyAt": 1795341558574,
       "reviewEntry": 3,
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795341468096,
-        "entry": 2,
-        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
-        "eventId": "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return:return:1517"
+        "at": 1795346193293,
+        "entry": 3,
+        "detail": "Браузер: room co2: failed",
+        "eventId": "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:4:return:return:1517"
       },
       "patchId": "b519411461274c52e20b9237b1ce32a6218040a7",
       "changedFiles": [
@@ -5768,7 +5768,8 @@
         "test/device-contact-screen.test.mjs",
         "test/device-contact-write.test.mjs",
         "test/fixtures/845-wall-corpus-current-identities.json"
-      ]
+      ],
+      "reason": "checks-failed"
     },
     "1518": {
       "issue": 1518,
@@ -6388,18 +6389,7 @@
   "waiting": [
     1516
   ],
-  "active": {
-    "issue": 1517,
-    "worker": "github-coordinator",
-    "token": "609:github:45014880529:1:tick:2:admit",
-    "fence": 609,
-    "materialSha": "784a4157b801e31910dec320e08734a7ef95bbb6",
-    "expectedBase": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
-    "phase": "testing",
-    "admittedAt": 1795345049140,
-    "expiresAt": 1795346433169,
-    "patchId": "b519411461274c52e20b9237b1ce32a6218040a7"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6877,6 +6867,10 @@
       "digest": "d3283f668469f14e870d630c065839205ca4764af150582b8ca50a382e32a34e",
       "issue": 1517
     },
+    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:4:return": {
+      "digest": "98f4ba8730b0ea9683ef37c6ae14931c4c75f1dd889369d6ef34db1d86485a89",
+      "issue": 1517
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7176,6 +7170,26 @@
         "track": "show",
         "layer": "product",
         "materialSha": "3e3cb32854b080df2e9dbb87a08689b95bc81aea"
+      }
+    },
+    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:4:return:return:1517": {
+      "digest": "98f4ba8730b0ea9683ef37c6ae14931c4c75f1dd889369d6ef34db1d86485a89",
+      "issue": 1517,
+      "message": {
+        "kind": "return",
+        "issue": 1517,
+        "at": 1795346193293,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795346193293,
+          "entry": 3,
+          "detail": "Браузер: room co2: failed",
+          "eventId": "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:4:return:return:1517"
+        }
       }
     }
   },
