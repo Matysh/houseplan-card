@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1521,
+  "baseStable": "v1.86.0",
+  "category": "stable-fix",
+  "rationale": "Fixes a reproducible floor preparation deadlock in the published v1.86.0 path.",
+  "summary": {
+    "ru": "Подготовка плана больше не оставляет бесконечный индикатор; загрузку можно повторить.",
+    "en": "Stalled plan preparation no longer leaves an endless indicator and can be retried."
+  }
+}

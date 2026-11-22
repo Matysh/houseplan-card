@@ -74,6 +74,7 @@
   "editor.disabled_action": "{action} недоступно: {reason}",
   "editor.loading": "Загрузка…",
   "plan.updating": "Обновляем план",
+  "plan.prepare_failed": "Не удалось подготовить план.",
   "editor.loading_aria": "Редактор плана загружается",
   "editor.load_failed": "Не удалось загрузить редактор.",
   "editor.refresh_advice": "Обновите страницу и повторите попытку.",

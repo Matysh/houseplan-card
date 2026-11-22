@@ -28,7 +28,7 @@ export class FloorCacheRuntime {
   private selected: Selection | null = null;
   private key = '';
   private readyKey = '';
-  private failed = new Set<string>();
+  private failure: 'unavailable' | 'invalid' | null = null;
   private disposed = false;
   private published = new Map<string, string>();
   private publishing = new Map<string, { generation: string }>();
@@ -45,7 +45,8 @@ export class FloorCacheRuntime {
     producers: [] as NonNullable<import('./floor-cache-job').FloorJobResult['producer']>[] };
   constructor(private readonly host: FloorRuntimeHost) { this.store.preopen(); }
   private selection(): Selection | null { try { return this.host.selection(); } catch { return null; } }
-  get pending(): boolean { return !!this.key && this.readyKey !== this.key && !this.failed.has(this.key); }
+  get pending(): boolean { return !!this.key && this.readyKey !== this.key && !this.failure; }
+  get failed() { return this.failure; }
   get publicationNeeded(): boolean {
     const publication = this.publication();
     return !!publication && this.published.get(publication.bucket) !== publication.generation
@@ -58,21 +59,31 @@ export class FloorCacheRuntime {
     return task && this.lightCurrent(task) ? this.memory.get(task.selection.persistentKey)?.light : undefined;
   }
   get fit() { return this.pending ? this.preview?.fit : undefined; }
-  get diagnostic() { return { ...this.metrics, store: this.store.metrics, scheduler: this.scheduler.metrics }; }
+  get diagnostic() { return { ...this.metrics, store: this.store.metrics, scheduler: this.scheduler.metrics,
+    stage: this.scheduler.stage, failure: this.failure }; }
+  get supportFacts() {
+    const last = this.scheduler.metrics.last;
+    return {
+      state: this.failure ? 'error' : this.pending ? 'pending' : this.selected ? 'ready' : 'idle',
+      ...(this.scheduler.stage ? { active: this.scheduler.stage } : {}),
+      ...(last ? { last_stage: last.stage, last_result: last.outcome } : {}),
+      ...(this.failure ? { failure: this.failure } : {}),
+    };
+  }
   get paintToken(): string { return `${this.key}|${this.selected?.fitKey || ''}`; }
   markPreviewPaint(token: string): void {
     if (token === this.paintToken && this.preview && this.same(this.selected, this.selection()) && !this.metrics.firstPreview)
       this.metrics.firstPreview = performance.now();
   }
   markPaint(fresh: boolean): void {
-    if (this.pending || !this.selected || !this.same(this.selected, this.selection())) return;
+    if (this.pending || this.failure || !this.selected || !this.same(this.selected, this.selection())) return;
     if (!fresh && !this.metrics.firstCachedFullFrame) this.metrics.firstCachedFullFrame = performance.now();
     if (fresh && !this.metrics.readyCurrentFrame) this.metrics.readyCurrentFrame = performance.now();
     this.preview = null;
   }
   rehydrate(): void {
     const selection = this.selected, entry = selection && this.memory.get(selection.persistentKey);
-    if (entry && !this.pending && this.same(selection, this.selection())) this.host.hydrate(entry.frame, entry.light);
+    if (entry && !this.pending && !this.failure && this.same(selection, this.selection())) this.host.hydrate(entry.frame, entry.light);
   }
   private same(a: Selection | null, b: Selection | null): boolean {
     return this.sameStructure(a, b) && a!.light.fingerprint === b!.light.fingerprint;
@@ -128,7 +139,7 @@ export class FloorCacheRuntime {
   }
   private publication() {
     const selection = this.selected;
-    if (!selection?.scope || this.pending) return null;
+    if (!selection?.scope || this.pending || this.failure) return null;
     const entry = this.memory.get(selection.persistentKey), address = this.address(selection);
     if (!entry?.payload || !address) return null;
     return { selection, entry, address, bucket: JSON.stringify([selection.scope, selection.input.raw.id]),
@@ -161,24 +172,20 @@ export class FloorCacheRuntime {
       return true;
     }
     const ready = this.memory.get(selection.persistentKey);
-    if (ready && !this.pending && this.sameStructure(this.selected, selection)) {
+    if (ready && !this.pending && !this.failure && this.sameStructure(this.selected, selection)) {
       if (this.selected!.fitKey !== selection.fitKey) this.metrics.memoryHits++;
       this.selected = selection;
       if (this.host.contains?.(ready.frame, ready.light) === false) this.host.hydrate(ready.frame, ready.light);
       this.refreshLight();
       return true;
     }
-    if (this.same(this.selected, selection)) {
+    if (this.sameStructure(this.selected, selection) && (this.pending || this.failure)) {
       if (this.selected!.fitKey !== selection.fitKey) {
         this.selected = selection;
         if (this.preview?.fitKey !== selection.fitKey) this.preview = null;
         if (this.pending) this.readPreview(selection, this.sequence);
-        if (!this.pending) this.metrics.memoryHits++;
       }
-      const entry = this.memory.get(selection.persistentKey);
-      if (!this.pending && entry && this.host.contains?.(entry.frame, entry.light) === false)
-        this.host.hydrate(entry.frame, entry.light);
-      return !this.pending;
+      return false;
     }
     const authorityChanged = this.memoryAuthority !== selection.authority
       || this.memoryConnection !== selection.connection || this.memoryScope !== selection.scope;
@@ -187,10 +194,10 @@ export class FloorCacheRuntime {
     this.lightTask = null; this.failedLight = '';
     const sequence = ++this.sequence; this.scheduler.cancel(); this.selected = selection;
     this.key = `${sequence}|${selection.persistentKey}|${selection.light.fingerprint}`;
-    this.failed.clear();
+    this.failure = null;
     this.preview = null;
     this.metrics.firstPreview = this.metrics.firstCachedFullFrame = this.metrics.readyCurrentFrame = 0;
-    const isCurrent = () => !this.disposed && sequence === this.sequence && this.same(selection, this.selection());
+    const isCurrent = () => !this.disposed && sequence === this.sequence && this.sameStructure(selection, this.selection());
     const memoryKey = selection.persistentKey;
     let warm = this.memory.get(memoryKey);
     if (warm?.lightKey === selection.light.fingerprint) {
@@ -213,7 +220,7 @@ export class FloorCacheRuntime {
           : { kind: 'geometry', input: selection.input, disk, light: selection.light });
         if (!isCurrent()) return;
         if (!result) {
-          this.failed.add(this.key); this.metrics.familyFallbacks++; this.preview = null; this.host.changed(); return;
+          this.failure = 'unavailable'; this.metrics.familyFallbacks++; this.preview = null; this.host.changed(); return;
         }
         this.metrics.workerMs.push(result.ms);
         if (this.metrics.workerMs.length > 100) this.metrics.workerMs.shift();
@@ -221,7 +228,9 @@ export class FloorCacheRuntime {
         if (this.metrics.producers.length > 50) this.metrics.producers.shift();
         const start = performance.now(), frame = warm?.frame ?? decodeGeometryValue(result.wire);
         if (!isFloorGeometryFrame(frame, selection.input)) throw new Error('floor-cache:frame');
-        const light = result.light ? decodeGeometryValue(result.light) : undefined;
+        // A fresher HA sample cannot restart structural preparation or use
+        // the obsolete light tables. The ordinary light refresh follows it.
+        const light = result.light && this.same(selection, this.selection()) ? decodeGeometryValue(result.light) : undefined;
         if (!isCurrent()) return;
         const entry: Entry = { frame, wire: warm?.wire ?? result.wire!, payload: warm?.payload ?? result.payload,
           lightKey: selection.light.fingerprint, light };
@@ -234,9 +243,9 @@ export class FloorCacheRuntime {
         this.host.changed();
       } catch {
         if (!isCurrent()) return;
-        // The shared canonical readers remain the last, bounded degraded
-        // path. Never retry an unsupported family on every Lit pass.
-        this.memory.delete(memoryKey); this.failed.add(this.key); this.metrics.familyFallbacks++;
+        // Never start expensive canonical readers on every render or claim
+        // the retained frame is current after preparation has failed.
+        this.memory.delete(memoryKey); this.failure = 'invalid'; this.metrics.familyFallbacks++;
         this.preview = null; this.host.changed();
       }
     })();
@@ -283,7 +292,7 @@ export class FloorCacheRuntime {
   }
   async area(raw: FloorGeometryInput['raw'], key: string, accepted: () => boolean): Promise<number | null | undefined> {
     const selection = this.selected, sequence = this.sequence;
-    if (!selection || this.disposed || this.pending) return undefined;
+    if (!selection || this.disposed || this.pending || this.failure) return undefined;
     const current = () => !this.disposed && sequence === this.sequence && this.same(selection, this.selection()) && accepted();
     if (this.areaMemory.has(key)) { const value = this.areaMemory.get(key)!; this.rememberArea(key, value); return value; }
     const address = selection.scope ? { scope: selection.scope, floor: String(raw.id), key } : null;
@@ -299,11 +308,15 @@ export class FloorCacheRuntime {
   }
   persistArea(raw: FloorGeometryInput['raw'], key: string, value: number | null, accepted: () => boolean): void {
     const selection = this.selected;
-    if (!selection?.scope || this.pending) return;
+    if (!selection?.scope || this.pending || this.failure) return;
     const current = () => !this.disposed && this.same(selection, this.selection()) && accepted();
     void this.store.publishArea({ scope: selection.scope, floor: String(raw.id), key }, value, current);
   }
+  retry(): boolean {
+    if (!this.failure || !this.sameStructure(this.selected, this.selection())) return false;
+    this.invalidate(); this.scheduler.retryWorker(); return true;
+  }
   invalidate(): void { this.sequence++; this.lightTask = null; this.failedLight = ''; this.scheduler.cancel(); this.selected = null;
-    this.key = ''; this.readyKey = ''; this.preview = null; }
+    this.key = ''; this.readyKey = ''; this.preview = null; this.failure = null; }
   dispose(): void { this.disposed = true; this.invalidate(); this.scheduler.dispose(); this.store.close(); }
 }

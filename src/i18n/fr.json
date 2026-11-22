@@ -74,6 +74,7 @@
   "editor.disabled_action": "{action} est indisponible : {reason}",
   "editor.loading": "Chargement…",
   "plan.updating": "Mise à jour du plan",
+  "plan.prepare_failed": "Impossible de préparer le plan.",
   "editor.loading_aria": "L'éditeur de plan est en cours de chargement",
   "editor.load_failed": "Impossible de charger l'éditeur.",
   "editor.refresh_advice": "Actualisez la page et réessayez.",

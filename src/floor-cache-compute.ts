@@ -11,7 +11,8 @@ import { payloadBytes } from './floor-cache-store';
 import { geometryWorkSnapshot } from './geometry-work';
 
 /** Same pure canonical algorithms in worker and one honest degraded fallback. */
-async function computeFloorJobImpl(job: FloorJob): Promise<FloorJobResult> {
+async function computeFloorJobImpl(job: FloorJob, signal?: AbortSignal): Promise<FloorJobResult> {
+  signal?.throwIfAborted();
   const started = performance.now();
   if (job.kind === 'area') {
     const config = { spaces: [job.raw] } as ServerConfig;
@@ -25,7 +26,8 @@ async function computeFloorJobImpl(job: FloorJob): Promise<FloorJobResult> {
     frame = decodeGeometryText(job.disk.text);
     hit = isFloorGeometryFrame(frame, job.input);
   } catch { frame = undefined; }
-  if (!isFloorGeometryFrame(frame, job.input)) frame = await prepareFloorGeometry(job.input);
+  if (!isFloorGeometryFrame(frame, job.input)) frame = await prepareFloorGeometry(job.input, signal);
+  signal?.throwIfAborted();
   if (!isFloorGeometryFrame(frame, job.input)) throw new Error('floor-cache:unusable-frame');
   restoreFloorGeometrySemantics(frame, job.input.raw);
   // Snapshot the persistent structural graph BEFORE the state-dependent recut.
@@ -50,9 +52,9 @@ async function computeFloorJobImpl(job: FloorJob): Promise<FloorJobResult> {
     hit, work: hit ? {} : frame.work, ms: performance.now() - started };
 }
 
-export async function computeFloorJob(job: FloorJob): Promise<FloorJobResult> {
+export async function computeFloorJob(job: FloorJob, signal?: AbortSignal): Promise<FloorJobResult> {
   const before = geometryWorkSnapshot();
-  const result = await computeFloorJobImpl(job), after = geometryWorkSnapshot();
+  const result = await computeFloorJobImpl(job, signal), after = geometryWorkSnapshot();
   return { ...result, producer: { owner: typeof document === 'undefined' ? 'worker' : 'main',
     counts: Object.fromEntries(Object.entries(after).map(([name, count]) => [name, count - before[name]])) } };
 }

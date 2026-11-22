@@ -62,3 +62,60 @@ test('#1454 an incompatible worker build cannot hydrate its result',async()=>{
   assert.notEqual(value.area,999999);assert.equal(typeof value.area,'number');
   assert.equal(owner.metrics.workerErrors,1);assert.equal(owner.metrics.fallbackJobs,1);owner.dispose();
 });
+
+const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
+const deferred = () => { let resolve; return { promise: new Promise(done => { resolve = done; }), resolve }; };
+test('#1521 a silent worker and stalled fallback import are bounded together', async ({ mock }) => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  let now = 0, computations = 0;
+  const loading = deferred(), owner = new FloorCacheScheduler(() => new WorkerFake(), () => loading.promise, () => now);
+  try {
+    const pending = owner.run(job({id:'A'})); const worker = WorkerFake.all.at(-1);
+    now = 15_000; mock.timers.tick(15_000); await flush();
+    assert.equal(worker.terminated, true);
+    assert.equal(owner.stage, 'fallback-load');
+    now = 18_000; mock.timers.tick(3_000);
+    assert.equal(await pending, null);
+    assert.deepEqual(owner.metrics.last, {stage:'fallback-load',outcome:'timeout'});
+    assert.equal(owner.metrics.workerTimeouts, 1);
+    loading.resolve({computeFloorJob(){ computations++; return {area:10,ms:1}; }});
+    await flush(); assert.equal(computations, 0);
+  } finally { owner.dispose(); }
+});
+
+test('#1521 pending fallback computation is aborted; late results cannot replace a retry', async ({ mock }) => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  const calculation = deferred(); let now = 0, signal;
+  const owner = new FloorCacheScheduler(() => new WorkerFake(), async () => ({
+    computeFloorJob(_job, abort) { signal = abort; return calculation.promise; },
+  }), () => now);
+  try {
+    const previous = owner.run(job({id:'A'}));
+    WorkerFake.all.at(-1).onerror(new Event('error')); await flush();
+    assert.equal(owner.stage, 'fallback-compute');
+    now = 3_000; mock.timers.tick(3_000);
+    assert.equal(await previous, null); assert.equal(signal.aborted, true);
+    assert.deepEqual(owner.metrics.last, {stage:'fallback-compute',outcome:'timeout'});
+    owner.retryWorker();
+    const retry = owner.run(job({id:'A'})); const worker = WorkerFake.all.at(-1);
+    calculation.resolve({area:99,ms:1}); await flush();
+    assert.equal(owner.stage, 'worker');
+    worker.complete({area:5,ms:1}); assert.deepEqual(await retry, {area:5,ms:1});
+  } finally { owner.dispose(); }
+});
+
+test('#1521 admission prevents expensive synchronous fallback and rejects load errors once', async () => {
+  let loads = 0;
+  const owner = new FloorCacheScheduler(() => { throw Error('unavailable'); }, async () => {
+    loads++; throw Error('missing module');
+  });
+  try {
+    const raw = { id: 'large', rooms: Array.from({length: 129}, () => ({})) };
+    assert.equal(await owner.run(job(raw)), null);
+    assert.equal(loads, 0);
+    assert.deepEqual(owner.metrics.last, {stage:'fallback-load',outcome:'limited'});
+    assert.equal(await owner.run(job({id:'small'})), null);
+    assert.equal(loads, 1);
+    assert.deepEqual(owner.metrics.last, {stage:'fallback-load',outcome:'error'});
+  } finally { owner.dispose(); }
+});

@@ -74,6 +74,7 @@
   "editor.disabled_action": "{action} is unavailable: {reason}",
   "editor.loading": "Loading…",
   "plan.updating": "Updating plan",
+  "plan.prepare_failed": "Could not prepare the plan.",
   "editor.loading_aria": "The plan editor is loading",
   "editor.load_failed": "Could not load the editor.",
   "editor.refresh_advice": "Refresh the page and try again.",

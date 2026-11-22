@@ -35,6 +35,22 @@ def client():
         "limited": False,
     }
 
+def test_floor_preparation_diagnostics_are_optional_and_closed():
+    payload = client()
+    validate(payload, CLIENT_INPUT)
+    facts = {
+        "state": "error",
+        "last_stage": "fallback-load",
+        "last_result": "timeout",
+        "failure": "unavailable",
+    }
+    payload["environment"]["floor_preparation"] = facts
+    validate(payload, CLIENT_INPUT)
+    facts["last_result"] = "custom_error_with_private_details"
+    with pytest.raises(WireRejected):
+        validate(payload, CLIENT_INPUT)
+
+
 
 @pytest.mark.parametrize("carrier", ["config", "client"])
 def test_issue1050_settings_action_has_closed_support_wire_parity(carrier):
@@ -63,7 +79,10 @@ def test_issue1050_settings_action_has_closed_support_wire_parity(carrier):
 def test_issue940_support_projects_only_public_boolean_and_bounded_empty_reason(flag):
     from custom_components.houseplan.support_diagnostic_values import DiagnosticIds
     from custom_components.houseplan.support_package import _project_marker
-    from custom_components.houseplan.support_wire_schema import QUALITY_REASON, VAC_CONFIG
+    from custom_components.houseplan.support_wire_schema import (
+        QUALITY_REASON,
+        VAC_CONFIG,
+    )
     marker = {"id": "robot", "binding": "entity:vacuum.private", "vacuum": {
         "new_run_after_dock": flag, "_policy": {"vacuum": "vacuum.private", "job": "private-job"}}}
     legacy = _project_marker(DiagnosticIds("940"), marker)

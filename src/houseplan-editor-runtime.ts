@@ -562,6 +562,7 @@ export interface HouseplanEditorHostPort {
   _syncDecorAssets: (config: ServerConfig | null) => Promise<void>;
   _rollbackOptimistic: (attempt: OptimisticAttempt<ServerConfig>) => boolean;
   readonly _adoption: ConfigAdoption; // #500: identity owner; _serverCfg/_cfgRev/_layout/_layoutRev delegate to it
+  floorPreparationSupportFacts?(): import('./floor-cache-runtime').FloorCacheRuntime['supportFacts'] | undefined;
   _alignDialog: OptimizePlansDialogState | null;
   _alignPoint: number[] | null;
   _allRoomsFlat: () => { value: string; label: string; }[];

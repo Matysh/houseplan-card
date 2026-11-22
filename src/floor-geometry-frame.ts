@@ -42,7 +42,8 @@ export interface FloorGeometryFrame {
   work: Record<string, number>;
 }
 
-export async function prepareFloorGeometry(input: FloorGeometryInput): Promise<FloorGeometryFrame> {
+export async function prepareFloorGeometry(input: FloorGeometryInput, signal?: AbortSignal): Promise<FloorGeometryFrame> {
+  signal?.throwIfAborted();
   const { raw, floorKey, cleanKey } = input;
   const space = spaceModels({ spaces: [raw] } as ServerConfig)[0];
   if (!space) throw new Error('floor-cache:missing-space');
@@ -91,6 +92,7 @@ export async function prepareFloorGeometry(input: FloorGeometryInput): Promise<F
   };
   if (input.projection === 'iso') {
     const iso = await import('./iso-scene-geometry');
+    signal?.throwIfAborted();
     const source = iso.createIsoStructuralSource({ space, walls, openCuts, openings,
       partitionCuts: () => partitionCuts, roomOpenings: () => roomOpenings,
       cellCm, gridPitch, wallKeyPitch, coordinateScale: NORM_W, onBuild: () => {} });

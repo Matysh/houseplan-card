@@ -23,7 +23,7 @@ async function result(input){
 function harness(initial){
   let current=initial;const hydrated=[],jobs=[],reads=[],publications=[],changes=[],frames=[];
   const owner=new FloorCacheRuntime({selection:()=>current,hydrate:(frame,light)=>{hydrated.push(frame.id);frames.push({frame,light});},changed:kind=>changes.push(kind)});
-  owner.scheduler={run(job,priority){const d=defer();jobs.push({...d,job,priority});return d.promise;},cancel(){this.cancels=(this.cancels||0)+1;},dispose(){this.disposed=true},metrics:{}};
+  owner.scheduler={run(job,priority){const d=defer();jobs.push({...d,job,priority});return d.promise;},cancel(){this.cancels=(this.cancels||0)+1;},retryWorker(){},dispose(){this.disposed=true},metrics:{}};
   owner.store={read(address,level){if(level==='preview')return Promise.resolve(null);const d=defer();reads.push({...d,address});return d.promise;},
     publish(value,isCurrent){publications.push({value,isCurrent});return Promise.resolve(isCurrent());},close(){this.closed=true},metrics:{}};
   return{owner,hydrated,jobs,reads,publications,changes,frames,set:value=>{current=value}};
@@ -53,13 +53,23 @@ test('#1454 late worker response and a retired user never hydrate or publish',as
   h.set(a);h.owner.ensure();assert.equal(h.publications[0].isCurrent(),false,'old deferred writer is fenced');
   h.owner.dispose();
 });
-test('#1454 absent scope stays ephemeral and a failed family exits loading once',async()=>{
+test('#1521 a failed family exits loading but stays unready until a valid explicit retry',async()=>{
   const selected=selection('A',{},undefined);delete selected.scope;
   const h=harness(selected);assert.equal(h.owner.ensure(),false);await flush();
   assert.equal(h.reads.length,0);assert.equal(h.jobs.length,1);
   h.jobs[0].resolve(null);await flush();assert.equal(h.owner.pending,false);
-  assert.equal(h.owner.ensure(),true);assert.equal(h.jobs.length,1,'ordinary canonical fallback, not an endless cache retry');
-  assert.equal(h.owner.metrics.familyFallbacks,1);h.owner.dispose();
+  assert.equal(h.owner.failed,'unavailable');assert.equal(h.owner.ensure(),false);
+  assert.equal(h.owner.supportFacts.state,'error');h.owner.markPaint(true);
+  assert.equal(h.owner.metrics.readyCurrentFrame,0);
+  assert.equal(h.owner.metrics.familyFallbacks,1);
+  h.set({...selected,light:{...selected.light,fingerprint:'new-motion-event'}});
+  assert.equal(h.owner.ensure(),false);await flush();assert.equal(h.jobs.length,1,'live updates cannot start automatic retries');
+  assert.equal(h.owner.retry(),true);
+  assert.equal(h.owner.retry(),false,'stale button cannot restart an already new intent');
+  h.owner.ensure();await flush();
+  h.jobs[1].resolve(await result(selected.input));await flush();
+  assert.equal(h.owner.ensure(),true);assert.equal(h.owner.failed,null);
+  assert.deepEqual(h.hydrated,['A']);h.owner.dispose();
 });
 test('#1454 memory beats disk but connection generation independently retires it',async()=>{
   const a=selection('A',{}), h=harness(a);h.owner.ensure();h.reads[0].resolve(null);await flush();

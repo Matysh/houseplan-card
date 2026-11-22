@@ -1093,6 +1093,7 @@ export class HouseplanCard extends LitElement {
       this._backupImportDialog = null; this._backupExportDialog = null;
     }
     if (authorityChanged) {
+      this._floorPreparation?.invalidate();
       this._floorPendingMode = null;
       this._decorAssetSyncToken++;
       this._renderLife.retireHass();
@@ -1124,6 +1125,7 @@ export class HouseplanCard extends LitElement {
       // A transport gap retires reads, not the same owner's accepted writes.
       // A→missing→A in one turn must not revive an old read's claim.
       const pendingRead = this._read.busy || this._read.pending;
+      this._floorPreparation?.invalidate(); this._floorPendingMode = null;
       this._configReloadAuthority.invalidateLifecycle();
       this._read.invalidate(); this._loading = false;
       if (pendingRead) this._read.defer();
@@ -2845,9 +2847,10 @@ export class HouseplanCard extends LitElement {
   private _floorPreparedRooms: { frame: FloorGeometryFrame; clean: Map<string, CleanFloorResult> } | null = null;
   private _floorPreviewDiagnostic: { shapes: number; invalid: string[] } | null = null;
   public houseplanFloorCacheDiagnostics() { return { cache: this._floorPreparation?.diagnostic, main: geometryWorkSnapshot(), preview: this._floorPreviewDiagnostic }; }
+  public floorPreparationSupportFacts() { return this._floorPreparation?.supportFacts; }
   private _floorCacheSelection() {
     const env = this.planHost.environment;
-    if (!this.isConnected || !env.ready || !env.permissions.read || this._mode !== 'view'
+    if (!this.isConnected || !env.ready || !env.connected || !env.permissions.read || this._mode !== 'view'
       || !this._serverCfg || this._fixedFloorState().kind === 'pending'
       || this._fixedFloorState().kind === 'invalid') return null;
     const raw = this._curSpaceCfg, space = this._spaceModel();
@@ -2907,7 +2910,10 @@ export class HouseplanCard extends LitElement {
         this._isoProjectionSnapshot = null;
         // A ready floor's live light tables are not a new spatial frame. Keep
         // the camera and input surface intact while repainting current HA UI.
-        if (kind === 'light') { this.requestUpdate(); return; }
+        if (kind === 'light' || this._floorPreparation?.failed) {
+          if (kind !== 'light') this._floorPendingMode = null;
+          this.requestUpdate(); return;
+        }
         if (!this._floorPreparation?.pending && this._warmViewportPending === 'projection') {
           this._floorRestoreZoom = null; // updated() owns the complete projection, not a passive/provisional base
         } else if (!this._floorPreparation?.pending && this._recoveryViewport) {
@@ -5898,6 +5904,12 @@ export class HouseplanCard extends LitElement {
     this._cfgPass.run(() => this._updatedModeReadScope(changed));
   }
   private _updatedModeReadScope(changed: PropertyValues): void {
+    if (this._floorPreparation?.failed) {
+      this._syncPlanViewportObservers();
+      this._stageEl?.removeAttribute('inert');
+      if (this._tip || this._hoverRoom) this._clearTransientHover(true);
+      return;
+    }
     if (this._floorPreparation?.pending || this._floorPassive) {
       this._syncPlanViewportObservers();
       this._summary?.updated();
@@ -13102,7 +13114,7 @@ export class HouseplanCard extends LitElement {
               </div>`
             : nothing}
           <span class="spacer"></span>
-          <div class="header-actions" ?inert=${!!this._floorPreparation?.pending}>
+          <div class="header-actions" ?inert=${!!(this._floorPreparation?.pending || this._floorPreparation?.failed)}>
           <div class="zoomctl hpf-icon-group hpf-camera-group">
             ${this._kiosk ? nothing : renderPlanRotationControls(key => this._t(key), direction => this._rotatePlan(direction))}
             <button class="btn zb hpf-icon-action" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} data-hp-tooltip=${this._t('title.zoom_out')} aria-label=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
@@ -13156,7 +13168,8 @@ export class HouseplanCard extends LitElement {
       ${moonLayer(this, this._sunGlobal(), this._moonSkyState(), weight)}`;
   }
   private _renderPendingFloor(): TemplateResult {
-    this._floorPassive = true;
+    const failed = !!this._floorPreparation?.failed;
+    this._floorPassive = !failed;
     const preview = this._floorPreparation?.preview || null;
     const base = preview?.fit.base || [0, 0, NORM_W, NORM_W];
     if (preview) this._adoptViewPlane(this._presentedViewPlane(preview.fit.projection));
@@ -13167,7 +13180,7 @@ export class HouseplanCard extends LitElement {
     // Do not flash its anonymous silhouette before the current floor is ready.
     const visiblePreview = this._desiredProjection === 'flat' && preview?.fit.projection === 'flat' ? preview : null;
     return this._renderPreparedFloorFrame(html`
-      <div class="stage mode-view${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}" data-hp-floor-cache=${visiblePreview ? 'preview' : 'preparing'}
+      <div class="stage mode-view${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}" data-hp-floor-cache=${failed ? 'error' : visiblePreview ? 'preview' : 'preparing'}
         style=${styleMap({ height: this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`,
           background: this._stageBg(disp) || undefined, '--wall-fill': disp.wallFill.c })}>
         ${this._renderStageEnvironment(dayCycle)}
@@ -13176,11 +13189,16 @@ export class HouseplanCard extends LitElement {
             ${renderFloorPreview(visiblePreview)}
           </svg>
         </div>` : nothing}
-        <div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite">
+        ${failed ? html`<div class="recoveryoverlay hpf-empty-state hpf-empty-state-overlay floor-preparation-error">
+          <ha-icon icon="mdi:alert-circle-outline" aria-hidden="true"></ha-icon>
+          <span role="status">${this._t('plan.prepare_failed')}</span>
+          <button type="button" class="btn on"
+            @click=${() => { if (this._floorPreparation?.retry()) this.requestUpdate(); }}>${this._t('continuity.retry')}</button>
+        </div>` : html`<div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite">
           <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span>
-        </div>
+        </div>`}
         ${this.planHost.capabilities.summary ? this._summary?.renderMeasure() : nothing}
-        ${this.planHost.capabilities.summary ? this._summary?.renderPanel() : nothing}
+        ${!failed && this.planHost.capabilities.summary ? this._summary?.renderPanel() : nothing}
       </div>
     `);
   }
@@ -13298,6 +13316,7 @@ export class HouseplanCard extends LitElement {
     const space = this._spaceModel();
     if (!space) return nothing;
     if (!this._ensureFloorPreparation()) {
+      if (this._floorPreparation?.failed) return this._renderPendingFloor();
       if (this._floorCompleteSpace === space.id && this._floorCompleteAuthority === this.planHost.authorityKey
         && this._loadOk && this._mode === 'view' && this.renderRoot.querySelector('.stage:not([data-hp-floor-cache])')) {
         this._floorHolding = true; return this._renderPreparedFloorFrame(noChange, diagnostics);
@@ -14012,18 +14031,19 @@ export class HouseplanCard extends LitElement {
       this._planHass, this._markers, (binding) => this._bindingStatus(binding), this._haRegistry,
     )): TemplateResult {
     const pending = !!this._floorPreparation?.pending || this._floorPassive;
+    const failed = !!this._floorPreparation?.failed;
     const deviceSnapshot = this._renderDeviceSnapshot;
     const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
       ? this._continuity.recoveryReason : null;
     return html`
       <ha-card
         ?data-hp-properties-wide=${this._editorRuntime?.properties.wide}
-        data-hp-state=${this._booting || pending ? 'booting' : 'ready'}
-        data-hp-floor-cache=${pending ? 'pending' : nothing} data-hp-mode=${this._mode}
+        data-hp-state=${failed ? 'error' : this._booting || pending ? 'booting' : 'ready'}
+        data-hp-floor-cache=${failed ? 'error' : pending ? 'pending' : nothing} data-hp-mode=${this._mode}
         data-continuity-state=${this._continuity.state}
         data-continuity-token=${this._continuity.token}
         data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
-        data-device-snapshot-sequence=${pending ? nothing : deviceSnapshot?.sourceSequence ?? nothing}
+        data-device-snapshot-sequence=${pending || failed ? nothing : deviceSnapshot?.sourceSequence ?? nothing}
         data-recovery-reason=${recoveryReason || nothing}
         data-ha-registry-access=${diagnostics.registry.access}
         data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}

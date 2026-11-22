@@ -240,11 +240,13 @@ export function collectSupportDiagnostics(host: Host): SupportDiagnosticInput {
   }
   const accepted = !!snapshot && snapshot.geometry === host._cfgEpoch && host._loadOk
     && contentFingerprint(host._serverCfg) === host._adoption.currentConfigFingerprint();
+  const preparation = host.floorPreparationSupportFacts?.();
   const input: SupportDiagnosticInput = { schema: 1, config_rev: host._cfgRev, layout_rev: host._layoutRev,
     age_ms: snapshot ? Date.now() - snapshot.capturedAt : 0, devices: observations, vacuums,
     environment: { mode: host._mode, projection: host._effectiveProjection(), space: host._space || null,
       accepted, write_pending: host._writesPending > 0 || host._saveConfigDebounced.pending() || host._dirtyPos.size > 0 || host._sentPos.size > 0,
-      recovery: accepted ? 'live' : 'holding', resources, rooms,
+      recovery: preparation?.state === 'error' ? 'blocked' : accepted ? 'live' : 'holding', resources, rooms,
+      ...(preparation ? { floor_preparation: preparation } : {}),
       panel: host._summary?.supportFacts() || { status: 'runtime_not_loaded' } }, limited };
   // Drop bounded observations, never slice JSON or silently lose whole config.
   while (new TextEncoder().encode(JSON.stringify(input)).byteLength > 512 * 1024) {

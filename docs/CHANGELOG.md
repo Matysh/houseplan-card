@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- End stalled floor preparation with a retryable error instead of leaving “Updating plan” on screen (#1521).
+
 - Move the room caption color to Names and readings, above Font sizes, with immediate preview while editing (#1519).
 - Configure independent plan views and rotation for full dashboard cards and external screens, with 45° steps in 2.5D (#1516).
 - Keep device wall anchors and groups when changing individual or per-screen icon sizes, with an explanation where the requested size cannot fit (#1517).
