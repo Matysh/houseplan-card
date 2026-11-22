@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20752,
+  "revision": 20753,
   "nextTicket": 619,
   "nextFence": 619,
   "tasks": {
@@ -5763,15 +5763,16 @@
         "test/startup-floor.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795355066953,
-        "entry": 1,
-        "detail": "Критичные данные, сохранение и права: failed; Поведение: test/floor-cache-day-cycle.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed",
-        "eventId": "finish:62d91283-82a3-45be-980a-9c42edc4c58e:finish:3:return:return:1520"
-      }
+        "at": 1795355679082,
+        "entry": 2,
+        "detail": "Браузер: device contact resize 1517: failed",
+        "eventId": "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:3:return:return:1520"
+      },
+      "reason": "checks-failed"
     },
     "1521": {
       "issue": 1521,
@@ -6363,18 +6364,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1520,
-    "worker": "finish",
-    "token": "618:finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:1:admit",
-    "fence": 618,
-    "materialSha": "2a4cb0a37be86072052d4559a12cdc6278523753",
-    "expectedBase": "0987240f1c33505bf9352be24a98a281f8a1d4e9",
-    "phase": "testing",
-    "admittedAt": 1795355089199,
-    "expiresAt": 1795355929431,
-    "patchId": "60f022e356e6f82043ef26c9a7ce77ee1954dd21"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6552,6 +6542,10 @@
       "digest": "2cc92770348000e3b5cb173d13d5950c2ec4745785f0356c5bfd4a0992ab272f",
       "issue": 1520
     },
+    "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:3:return": {
+      "digest": "b89c287e59957bc661ccbde72d99cb8312c17bc68dd14d1054ba1bef884e4229",
+      "issue": 1520
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6684,6 +6678,26 @@
         "layer": "product",
         "materialSha": "2a4cb0a37be86072052d4559a12cdc6278523753",
         "phase": "sync"
+      }
+    },
+    "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:3:return:return:1520": {
+      "digest": "b89c287e59957bc661ccbde72d99cb8312c17bc68dd14d1054ba1bef884e4229",
+      "issue": 1520,
+      "message": {
+        "kind": "return",
+        "issue": 1520,
+        "at": 1795355679082,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795355679082,
+          "entry": 2,
+          "detail": "Браузер: device contact resize 1517: failed",
+          "eventId": "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:3:return:return:1520"
+        }
       }
     }
   },
