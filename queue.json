@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19983,
-  "nextTicket": 600,
+  "revision": 19984,
+  "nextTicket": 601,
   "nextFence": 599,
   "tasks": {
     "1024": {
@@ -5590,14 +5590,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1519-room-name-preview",
-      "materialSha": "01e04cdf8725e5cc3ad17d9ca3fd5889597d0f1e",
+      "materialSha": "432662652229bf4bf58c2a4b94e954efa9f770c7",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 598,
-      "queued": false,
+      "ticket": 600,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795331812207,
-      "reviewEntry": 1,
+      "readyAt": 1795333927155,
+      "reviewEntry": 2,
       "patchId": "1dabbaf9a6ef6574443d9efd59617498cdbf34a0",
       "changedFiles": [
         "demo/smoke_room_appearance.mjs",
@@ -5608,7 +5608,6 @@
         "docs/release-ledger/v1.86.0/1519.json",
         "src/editors/space-form.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6157,7 +6156,8 @@
     }
   },
   "waiting": [
-    1518
+    1518,
+    1519
   ],
   "active": null,
   "events": {
@@ -6592,6 +6592,19 @@
           "detail": "Браузер: direct wall geometry: failed",
           "eventId": "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return:return:1519"
         }
+      }
+    },
+    "finish:f5086ada-7386-4bbf-8e48-dfbfdb1a09f3": {
+      "digest": "c9ac9e578f860e9109a011a28564ca6cb8e427ad2a67025ea222d681b25c3fcc",
+      "issue": 1519,
+      "message": {
+        "kind": "queued",
+        "issue": 1519,
+        "at": 1795333927155,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "432662652229bf4bf58c2a4b94e954efa9f770c7"
       }
     }
   },
