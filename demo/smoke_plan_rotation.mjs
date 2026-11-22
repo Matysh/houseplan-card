@@ -427,7 +427,11 @@ try {
       Storage.prototype.getItem = function(key) { if (key === 'houseplan_card_rotation_v1') throw new Error('denied'); return get.call(this, key); };
       Storage.prototype.setItem = function(key, value) { if (key === 'houseplan_card_rotation_v1') throw new Error('denied'); return set.call(this, key, value); };
       await import('/assets/houseplan-card.js');
-      const c = document.createElement('houseplan-card'); c.setConfig({ type: 'custom:houseplan-card' });
+      const c = document.createElement('houseplan-card');
+      c.panelHost = true;
+      c.layout = 'panel';
+      c.style.cssText = 'display:block;width:100%;height:calc(100vh - 16px)';
+      c.setConfig({ type: 'custom:houseplan-card' });
       document.getElementById('host').append(c); window.__card = c; c.hass = window.__mkHass();
     });
     await denied.page.waitForFunction(() => window.__card?._booting === false);
