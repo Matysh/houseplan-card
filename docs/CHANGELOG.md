@@ -5,6 +5,7 @@
 ## v1.86.1-beta.3 — 2026-11-23
 
 - The four straight-on 2.5D views add a subtle perspective while keeping wall edges vertical. [#1526](https://github.com/Matysh/houseplan-card/issues/1526)
+- Keep plan input locked throughout the rotation animation, and avoid refreshing startup proof when a read-only external screen receives a live profile update (#1525).
 
 ## v1.86.1-beta.2 — 2026-11-22
 

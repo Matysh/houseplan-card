@@ -191,10 +191,12 @@ const res = await page.evaluate(async () => {
   const settledBeforeHandover = settled;
   c._hdrH = (c._hdrH || 0) + 0.01;
   await c.updateComplete;
-  await frame();
+  // Check the commit itself. The header ResizeObserver can legitimately
+  // schedule another live repaint before the next animation frame.
   out.handoverHappened = settled - settledBeforeHandover >= 1;
   out.handoverGivesTheLayerBackToTheSettledScene = guideOwner() === 'settled'
     && sr().querySelector('[data-hp-live-editor]').childElementCount === 0;
+  await frame();
   out.handoverKeepsExactlyOneGuide = groups() === 1 && lines() === 1;
   out.handoverGuideStaysOnTheLivePoint = Math.abs(guideLineX() - atHandover.x) < 1e-6;
   // Настоящее движение — и слой снова у живого художника. Шаг вниз по той же

@@ -26,9 +26,10 @@ const snapshot = page => page.evaluate(() => {
   const label = name => rows.find(item => item.row.name === name);
   return { inert: editor.inert, busy: editor.getAttribute('aria-busy'),
     names: rows.map(({row}) => row.name), labels: forms.length ? rows.map(({row, form}) => form.computeLabel(row)) : null,
-    rotation: label('rotation')?.form.computeLabel({ name: 'rotation' }), title: label('title')?.form.computeLabel({ name: 'title' }),
+    rotation: label(window.__localeRotationKey)?.form.computeLabel({ name: window.__localeRotationKey }),
+    title: label('title')?.form.computeLabel({ name: 'title' }),
     error: editor.renderRoot.querySelector('.card-config-error')?.textContent.trim(),
-    saves: window.__localeSaves.length, value: window.__localeSaves.at(-1)?.rotation };
+    saves: window.__localeSaves.length, value: window.__localeSaves.at(-1)?.[window.__localeRotationKey] };
 });
 const settled = page => page.waitForFunction(() => {
   const editor = window.__localeEditor;
@@ -41,7 +42,9 @@ const createEditor = async (page, tag, lang) => {
   const editor = await customElements.get(tag).getConfigElement();
   editor.id = 'locale-editor';
   editor.hass = { ...window.__mkHass(), language: lang, locale: { language: lang } };
-  editor.setConfig({ type: `custom:${tag}`, space: 'home', rotation: 45 });
+  const rotationKey = tag === 'houseplan-card' ? 'plan_rotation' : 'rotation';
+  editor.setConfig({ type: `custom:${tag}`, space: 'home', [rotationKey]: 30 });
+  window.__localeRotationKey = rotationKey;
   window.__localeSaves = []; window.__localeFrames = [];
   editor.addEventListener('config-changed', event => window.__localeSaves.push(event.detail.config));
   window.__localeEditor = editor;
@@ -57,6 +60,14 @@ const createEditor = async (page, tag, lang) => {
   await editor.updateComplete; record();
   }, { tag, lang });
 };
+const saveRotation = page => page.evaluate(() => {
+  const key = window.__localeRotationKey;
+  const contains = rows => rows.some(row => row.name === key || contains(row.schema || []));
+  const form = [...window.__localeEditor.renderRoot.querySelectorAll('ha-form')]
+    .find(form => contains(form.schema || []));
+  if (!form) throw Error('No form owns the rotation field');
+  form.dispatchEvent(new CustomEvent('value-changed', { detail: { value: { [key]: '90' } } }));
+});
 const validLabels = state => state.labels?.length > 0 && state.labels.every((label, index) =>
   typeof label === 'string' && label.trim() && !label.startsWith('editor.') && label !== state.names[index]);
 
@@ -88,6 +99,8 @@ for (const mode of ['view','readonly','kiosk']) {
 }
 
 for (const tag of ['houseplan-card','houseplan-space-card']) {
+  const rotationKey = tag === 'houseplan-card' ? 'plan_rotation' : 'rotation';
+  const errorKey = tag === 'houseplan-card' ? 'editor.presentation_invalid' : 'editor.rotation_invalid';
   for (const lang of ['en','ru','de','fr']) {
     const { page, browser } = await launchPanelCold(); const requests = requestsOf(page);
     let release; const gate = new Promise(resolve => { release = resolve; });
@@ -104,8 +117,8 @@ for (const tag of ['houseplan-card','houseplan-space-card']) {
       const state = await snapshot(page), frames = await page.evaluate(() => window.__localeFrames);
       check(`${tag} ${lang} cold labels are complete and localized`, validLabels(state)
         && state.rotation === catalog[lang]['editor.rotation'] && state.title === catalog[lang]['editor.title']
-        && state.error === catalog[lang]['editor.rotation_invalid'] && frames.every(frame =>
-          frame.labels[frame.names.indexOf('rotation')] === catalog[lang]['editor.rotation']
+        && state.error === catalog[lang][errorKey] && frames.every(frame =>
+          frame.labels[frame.names.indexOf(rotationKey)] === catalog[lang]['editor.rotation']
           && frame.labels[frame.names.indexOf('title')] === catalog[lang]['editor.title']));
       check(`${tag} ${lang} never commits a raw or empty label`, frames.length > 0 && frames.every(validLabels));
       records.push({ tag, lang, mode: 'cold-gui', requests, state, frames });
@@ -123,16 +136,14 @@ for (const tag of ['houseplan-card','houseplan-space-card']) {
         editor.hass = { ...editor.hass, language: lang, locale: { language: lang } };
       }, lang);
       await page.waitForFunction(() => window.__localeEditor.inert);
-      await page.evaluate(() => window.__localeEditor.renderRoot.querySelector('ha-form')
-        .dispatchEvent(new CustomEvent('value-changed', { detail: { value: { rotation: '90' } } })));
+      await saveRotation(page);
       check(`${tag} ${lang} pending locale blocks a queued ha-form save`, (await snapshot(page)).saves === 0);
       release(); await settled(page);
       const state = await snapshot(page), frames = await page.evaluate(() => window.__localeFrames);
       check(`${tag} ${lang} two failed requests settle to complete English`, attempts === 2 && validLabels(state)
-        && state.rotation === catalog.en['editor.rotation'] && state.error === catalog.en['editor.rotation_invalid']
+        && state.rotation === catalog.en['editor.rotation'] && state.error === catalog.en[errorKey]
         && frames.every(validLabels));
-      await page.evaluate(() => window.__localeEditor.renderRoot.querySelector('ha-form')
-        .dispatchEvent(new CustomEvent('value-changed', { detail: { value: { rotation: '90' } } })));
+      await saveRotation(page);
       const saved = await snapshot(page);
       check(`${tag} ${lang} settled fallback permits one numeric save`, saved.saves === 1 && saved.value === 90);
       records.push({ tag, lang, mode: 'warm-fallback', requests, attempts, state, saved, frames });

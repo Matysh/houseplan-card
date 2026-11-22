@@ -1709,6 +1709,9 @@ export async function prepareGoldenScenario(page, scenario) {
       if (contract.requireNoMaterialDefs && materialDefs !== 0) {
         throw new Error(`Stage 4 solid fallback retained material definitions: ${scenario.id}`);
       }
+      if (contract.requireNoContactLimit && card._deviceContacts.resizeStatus) {
+        throw new Error(`Stage 4 material fixture must fit the authored device icons: ${scenario.id}`);
+      }
       if (contract.requireNoTetherCues) {
         const tether = card.renderRoot.querySelector('.iso-overlay-tether');
         const paintedFootprint = card.renderRoot.querySelector(

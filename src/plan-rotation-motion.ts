@@ -23,6 +23,8 @@ export class PlanRotationMotion {
   private restore: (() => void) | null = null;
   private active = false;
   get running(): boolean { return this.active; }
+  /** Only a mounted, animated stage owns the temporary input lock. */
+  get blocksInput(): boolean { return this.restore !== null; }
   constructor(private readonly port: PlanRotationMotionPort) {}
   rotate(direction: -1 | 1): void {
     this.queue.push({ direction, current: this.port.current() });

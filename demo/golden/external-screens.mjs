@@ -32,8 +32,13 @@ export async function prepareExternalScreens(page, scenario) {
       dialog.querySelector('[data-hp="external-screen-add"]').click();
       await wait(()=>root.querySelector('hp-dialog[data-kind="external-screen-constructor"]'),'constructor');
       const child=root.querySelector('hp-dialog[data-kind="external-screen-constructor"]');
-      if(child.querySelector('.hpf-card')||child.querySelectorAll('select').length!==8
-        ||child.querySelector('[data-field="external-screen-controls"]'))throw Error('external-screen constructor structure');
+      const required = ['space','cycle','idle','view','rotation','summary','icon_scale','font_scale'];
+      const find = key => child.querySelectorAll(`select[data-field="external-screen-${key}"]`);
+      if(child.querySelector('.hpf-card') || required.some(key => find(key).length !== 1)
+        || child.querySelector('[data-field="external-screen-controls"]'))
+        throw Error('external-screen constructor structure');
+      if ([...find('view')[0].options].map(option => option.value).join(',') !== ',flat,iso')
+        throw Error('external-screen constructor must offer inherited, Flat and 2.5D views');
       const icon=child.renderRoot.querySelector('ha-icon[icon="mdi:monitor"]');
       if(!icon?.shadowRoot?.querySelector('path')?.getAttribute('d'))throw Error('external-screen monitor icon absent in the HA fixture');
     }else if(!dialog.querySelector(scenario.externalScreens==='empty'?'[data-hp="external-screen-create"]':'[data-hp="external-screen-edit"]'))throw Error('external-screen section state missing');

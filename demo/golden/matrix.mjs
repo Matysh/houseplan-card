@@ -506,8 +506,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     stage3Golden: {
       requiredKinds: stage3RequiredOverlays, requireOneRise: true,
       requireNoMaterialDefs: true, requireNoTetherCues: true, requireNoGrounding: true,
+      requireNoContactLimit: true,
     },
-    layoutOverrides: stage3DenseLayout,
+    // Keep markers on both sides of the partition, with room for 3.4% icons.
+    // This scene tests filter fallback, not an infeasible legacy contact resize.
+    layoutOverrides: { ...stage3DenseLayout,
+      'golden-light-one': { ...stage3DenseLayout['golden-light-one'], x: 0.455 },
+      'golden-presence': { ...stage3DenseLayout['golden-presence'], x: 0.545 },
+    },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-view-dark-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

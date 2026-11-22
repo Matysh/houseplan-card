@@ -72,6 +72,7 @@ export async function installWallDrawClickHarness(page) {
       };
       countedSave.cancel = () => {};
       countedSave.flush = () => {};
+      countedSave.pending = () => false;
       card._saveConfigDebounced = countedSave;
     }
   });

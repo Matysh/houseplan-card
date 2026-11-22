@@ -2866,6 +2866,7 @@ export class HouseplanCard extends LitElement {
   private _startupSourceProof?: { authority: object; revision: string; source: readonly [string, string] };
   private _startupBackend?: object;
   private _startupProofRefresh?: { authority: object; revision: string };
+  private _startupStreamRevision?: { authority: object; configRev: number };
 
   private _startupRevision(): string | null {
     const accepted = this._adoption.snapshot(null);
@@ -2894,6 +2895,7 @@ export class HouseplanCard extends LitElement {
   private _refreshStartupSource(selection: StartupSelection): void {
     const host = this.planHost;
     if (this._startupBackend !== selection.authority || !startupWireAvailable()
+      || (this._startupStreamRevision?.authority === selection.authority && this._startupStreamRevision.configRev === this._cfgRev)
       || this._startupSourceProof?.revision === selection.revision
       || this._startupProofRefresh?.authority === selection.authority && this._startupProofRefresh.revision === selection.revision)
       return;
@@ -6596,6 +6598,12 @@ export class HouseplanCard extends LitElement {
    * continuity candidate → adopt → profile tail; see `adoptAuthoritativeGated`.
    */
   public _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult> {
+    if (input.profile === 'screen-event' && typeof input.cfgResp?.rev === 'number') {
+      // The authenticated profile stream is a complete adoption, not a
+      // reason to reload config/layout for an optional startup image.
+      this._startupProofRefresh = undefined;
+      this._startupStreamRevision = { authority: this.planHost.authorityKey, configRev: input.cfgResp.rev };
+    }
     return adoptAuthoritativeGated(this as unknown as ConfigAdoptionHostPort, input);
   }
 
@@ -14359,7 +14367,7 @@ export class HouseplanCard extends LitElement {
           data-hp-iso-floor-markers=${markerCamera ? 'true' : nothing}
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
-          ?inert=${live(this._modeTransition.active || !!this._startupStyle?.value && !this._startupStyle.value.remote)}
+          ?inert=${live(this._rotationMotion.blocksInput || this._modeTransition.active || !!this._startupStyle?.value && !this._startupStyle.value.remote)}
           ?data-hp-startup-finish=${this._startupStyle?.finishing}
           style=${styleMap({
             height: modeVisual && !this._modeTransitionPreparing ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`,

@@ -102,6 +102,7 @@ out.motion=await page.evaluate(async()=>{
  const original=c.render.bind(c);let runningRenders=0;c.render=(...args)=>{if(c._modeTransition.active)runningRenders++;return original(...args);};
  const screenScale=()=>{const matrix=root.querySelector('.plan-svg').getScreenCTM();return Math.hypot(matrix.a,matrix.b);};
  const ppu=screenScale();
+ const sceneWidth=root.querySelector('.plan-svg').viewBox.baseVal.width;
  const samples=[];
  c._setMode('plan');await frame();await frame();c._setMode('devices');await frame();c._setMode('decor');
  const start=performance.now();
@@ -109,7 +110,9 @@ out.motion=await page.evaluate(async()=>{
  await c.updateComplete;await frame();
  const stage=root.querySelector('.stage');
  console.log('Rapid observations',JSON.stringify({ppu,samples,runningRenders,requests}));return {rapidSettled:!c._modeTransitionBusy&&!stage.inert,
-   scaleKept:samples.length>0&&samples.every(value=>Math.abs(value-ppu)<1e-5),
+   // One before/after pair of CSS 1/64px quantizations across the visible
+   // scene is not a camera zoom. Preserve a subpixel, viewport-based limit.
+   scaleKept:samples.length>0&&samples.every(value=>Math.abs(value-ppu)*sceneWidth<=1/32),
    noFullRenderPerFrame:runningRenders===0,
    sceneStylesRetired:!root.querySelector('.zoomwrap').style.width&&!stage.style.width};
 });

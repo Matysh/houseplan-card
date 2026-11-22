@@ -260,6 +260,14 @@ try {
     });
     await card.locator('[data-hp="rotate-right"]').click();
     await page.waitForFunction(() => window.__card.renderRoot.querySelector('.zoomwrap').style.transform.startsWith('rotate('));
+    // An ordinary Lit render during the imperative turn must not unlock input.
+    const currentFrame = await page.evaluate(async () => {
+      const card = window.__card;
+      card.requestUpdate();
+      await card.updateComplete;
+      return { active: card._rotationMotion.blocksInput, inert: card.renderRoot.querySelector('.stage').inert };
+    });
+    assert.deepEqual(currentFrame, { active: true, inert: true });
     await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.zoomwrap').style.transform);
     await settled();
     const frames = await page.evaluate(() => { window.__1119TurnTracing = false; return window.__1119TurnFrames; });
@@ -269,14 +277,14 @@ try {
     assert.ok(frames.filter(frame => frame.transform.startsWith('rotate(')).length >= 2,
       'native rotation must have actual intermediate painted frames');
     assert.equal(new Set(frames.map(frame => frame.background)).size, 1);
-    assert.ok(frames.filter(frame => frame.transform).every(frame => frame.inert));
+    assert.ok(frames.filter(frame => frame.transform.startsWith('rotate(')).every(frame => frame.inert));
+    assert.equal(await card.locator('.stage').evaluate(element => element.inert), false);
     assert.ok(result.contours.length >= 10);
     turns.push({ ...result, frames });
     await card.locator('.stage').screenshot({ path: `${evidence}/contacts-${result.frame.rotation}.png` });
-    // The exact accepted replay has a standalone wall badge at 90 and a
-    // completely occluded free badge at 180. Native input must respect that
-    // same front-to-back composition rather than click through its neighbour.
-    const expected = { 0: [11, 7], 90: [10, 7], 180: [10, 6], 270: [11, 7] }[result.frame.rotation];
+    // #1517 preserves the free pair at 180 even though its upright badge
+    // swaps sides. The wall badge at 90 still has its native standalone hit.
+    const expected = { 0: [11, 7], 90: [10, 7], 180: [11, 7], 270: [11, 7] }[result.frame.rotation];
     assert.deepEqual([result.contours.length, result.groups], expected);
     for (const id of ['badge-designer-0', 'wall-double-designer-0']) {
       const hit = await card.locator(`.dev[data-id="${id}"]`).evaluate(marker => {
@@ -298,19 +306,16 @@ try {
           contains: path ? path.isPointInFill(new DOMPoint(center.x, center.y)
             .matrixTransform(path.getScreenCTM().inverse())) : null };
       });
-      const standalone = (id === 'wall-double-designer-0' && result.frame.rotation === 90)
-        || (id === 'badge-designer-0' && result.frame.rotation === 180);
+      const standalone = id === 'wall-double-designer-0' && result.frame.rotation === 90;
       assert.equal(hit.custom, !standalone, `${id}: accepted contact ownership at ${result.frame.rotation}`);
       if (hit.custom) assert.equal(hit.contains, true, `${id}: upright badge belongs to its real hit silhouette`);
       if (id === 'badge-designer-0' && result.frame.rotation === 180) {
-        assert.equal(hit.badgePoint, null, 'the accepted front neighbour must fully occlude this badge');
-        assert.equal(hit.centerOwner, 'badge-designer-1');
-        await page.mouse.click(hit.center.x, hit.center.y); await info.waitFor();
-        assert.equal(await info.evaluate(dialog => dialog.title), 'badge-designer-1');
-        await page.keyboard.press('Escape'); await info.waitFor({ state: 'hidden' });
-        assert.ok(hit.corePoint, 'the device must still have a visible native target');
-      } else assert.ok(hit.badgePoint, `${id}: an actual visible badge target must remain available`);
-      const point = hit.badgePoint || hit.corePoint;
+        const component = await card.locator('.device-contact-contour[data-component="badge-designer-0"]').getAttribute('data-grouped');
+        assert.equal(component, 'true', 'the pair still shares a contour after the badge swaps sides');
+        assert.equal(hit.centerOwner, id, 'the visible badge must not click through to its neighbour');
+      }
+      assert.ok(hit.badgePoint && hit.corePoint, `${id}: actual visible badge and icon targets must remain available`);
+      const point = id === 'badge-designer-0' && result.frame.rotation === 180 ? hit.center : hit.badgePoint;
       await page.mouse.click(point.x, point.y); await info.waitFor();
       assert.equal(await info.evaluate(dialog => dialog.title), id,
         'native visible hit must open the actual front device');

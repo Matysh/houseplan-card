@@ -73,14 +73,25 @@ for (const translucent of [false, true]) {
     await settleIsoPaint(page);
     const during = await stage.evaluate(async (el, zoomIn) => {
       const box = el.getBoundingClientRect(), deadline = performance.now() + 5000;
+      let attempt = 0;
       while (performance.now() < deadline) {
+        // Avoid repeatedly hitting one zoom limit while the raster prepares.
+        const inward = ++attempt % 2 ? zoomIn : !zoomIn;
         el.dispatchEvent(new WheelEvent('wheel', {
           clientX: box.x + box.width / 2, clientY: box.y + box.height / 2,
-          deltaY: zoomIn ? -80 : 80, bubbles: true, cancelable: true,
+          deltaY: inward ? -80 : 80, bubbles: true, cancelable: true,
         }));
-      await new Promise(resolve => setTimeout(resolve, 70));
-        const canvas = el.querySelector('.hp-iso-raster[data-hp-iso-raster="active"]');
-        if (!canvas || !el.querySelector('.iso-scene-surface[data-hp-raster-display]')) continue;
+        // Observe painted frames during one gesture; a fixed 70 ms sample can
+        // miss an otherwise valid active raster with a busy renderer.
+        const gesture = Math.min(deadline, performance.now() + 140);
+        let canvas;
+        do {
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          const active = el.querySelector('.hp-iso-raster[data-hp-iso-raster="active"]');
+          if (active && el.querySelector('.iso-scene-surface[data-hp-raster-display]')
+              && window.__rasterMaterialSources.length) { canvas = active; break; }
+        } while (performance.now() < gesture);
+        if (!canvas) continue;
         const copy = document.createElement('canvas');
         copy.width = canvas.width; copy.height = canvas.height;
         copy.getContext('2d').drawImage(canvas, 0, 0);

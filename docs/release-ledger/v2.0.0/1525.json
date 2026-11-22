@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1525,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Repair the rotation and preview interactions found in the 1.86.1 beta line's stable-candidate audit.",
+  "summary": {
+    "ru": "Блокировать ввод до конца поворота и не перезапрашивать настройки внешнего экрана при потоковом обновлении.",
+    "en": "Keep input locked through plan rotation and do not reload external-screen settings after a streamed update."
+  }
+}
