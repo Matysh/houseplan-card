@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20381,
+  "revision": 20382,
   "nextTicket": 611,
   "nextFence": 610,
   "tasks": {
@@ -5693,7 +5693,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1517-resize-contacts",
-      "materialSha": "9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09",
+      "materialSha": "784a4157b801e31910dec320e08734a7ef95bbb6",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 609,
@@ -5711,7 +5711,7 @@
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
         "eventId": "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return:return:1517"
       },
-      "patchId": "d21ed98286fbf6c553638278679c1865dac65e78",
+      "patchId": "b519411461274c52e20b9237b1ce32a6218040a7",
       "changedFiles": [
         "demo/fixtures/device-contact-resize-1517-layout.json",
         "demo/fixtures/device-contact-resize-1517.mjs",
@@ -5744,8 +5744,11 @@
         "docs/CHANGELOG.ru.md",
         "docs/CONFIG-COMPATIBILITY.md",
         "docs/DEVICE-PRESENTATION.md",
+        "docs/data-hp-contract.json",
         "docs/release-ledger/v1.86.0/1517.json",
         "process-next/lib/source-dependencies.mjs",
+        "scripts/config-compatibility-inventory.json",
+        "scripts/mutation-registry.mjs",
         "src/device-contact-card.ts",
         "src/device-contact-geometry.ts",
         "src/device-contact-layout.ts",
@@ -5763,11 +5766,9 @@
         "test/device-contact-1003.test.mjs",
         "test/device-contact-card.test.mjs",
         "test/device-contact-screen.test.mjs",
-        "test/device-contact-write.test.mjs"
-      ],
-      "automationError": "automation-error",
-      "automationSince": 1795345086174,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+        "test/device-contact-write.test.mjs",
+        "test/fixtures/845-wall-corpus-current-identities.json"
+      ]
     },
     "1518": {
       "issue": 1518,
@@ -6391,11 +6392,12 @@
     "worker": "github-coordinator",
     "token": "609:github:45014880529:1:tick:2:admit",
     "fence": 609,
-    "materialSha": "9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "784a4157b801e31910dec320e08734a7ef95bbb6",
+    "expectedBase": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
+    "phase": "testing",
     "admittedAt": 1795345049140,
-    "expiresAt": 1795345403060
+    "expiresAt": 1795345452892,
+    "patchId": "b519411461274c52e20b9237b1ce32a6218040a7"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6792,6 +6794,10 @@
     },
     "finish:301188be-6c60-41cd-ad1e-712ea299c4bb": {
       "digest": "fd754331bd7a91983985205ac5fe1a939b2183014b5ae1a9f092f02af7519542",
+      "issue": 1517
+    },
+    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:3:synchronized": {
+      "digest": "ca8ab1dd125aa420386a772e779684f08ab774c307846ca0cbf9250c8068cfd6",
       "issue": 1517
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
