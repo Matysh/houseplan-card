@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20013,
+  "revision": 20014,
   "nextTicket": 602,
   "nextFence": 601,
   "tasks": {
@@ -5590,14 +5590,44 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1518-iso-wall-transparency",
-      "materialSha": "f33508a66dd1dacd73206ebbd105e34587f171eb",
+      "materialSha": "b35e672cbfd9629e3a609bdc12f441e53ffb7831",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 599,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795333309410,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "bb95d046144f3f4742ba13cca04152d10bd16b59",
+      "changedFiles": [
+        "custom_components/houseplan/core/import_export.py",
+        "custom_components/houseplan/core/validation.py",
+        "demo/smoke_iso_wall_transparency.mjs",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/ISOMETRIC.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.86.0/1518.json",
+        "process-next/lib/source-dependencies.mjs",
+        "scripts/config-schema.json",
+        "src/editors/space-dialog-draft.ts",
+        "src/editors/space-form.ts",
+        "src/houseplan-card.ts",
+        "src/i18n/settings/de.json",
+        "src/i18n/settings/en.json",
+        "src/i18n/settings/fr.json",
+        "src/i18n/settings/ru.json",
+        "src/iso-architectural-edges.ts",
+        "src/iso-lab-visibility.ts",
+        "src/iso-scene-render.ts",
+        "src/logic.ts",
+        "src/space-dialog.ts",
+        "src/stairs-view.ts",
+        "src/structural-space-record.ts",
+        "src/styles/plan.styles.ts",
+        "test/iso-wall-transparency.test.mjs",
+        "tests_backend/test_ha_import_export.py"
+      ]
     },
     "1519": {
       "issue": 1519,
@@ -6165,11 +6195,12 @@
     "worker": "finish",
     "token": "600:finish:2f945ee5-a1f0-4976-85f3-b5ce814e74e5:finish:1:admit",
     "fence": 600,
-    "materialSha": "f33508a66dd1dacd73206ebbd105e34587f171eb",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "b35e672cbfd9629e3a609bdc12f441e53ffb7831",
+    "expectedBase": "432662652229bf4bf58c2a4b94e954efa9f770c7",
+    "phase": "testing",
     "admittedAt": 1795334318044,
-    "expiresAt": 1795334618044
+    "expiresAt": 1795334677642,
+    "patchId": "bb95d046144f3f4742ba13cca04152d10bd16b59"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6370,6 +6401,10 @@
     },
     "github:45000628243:1:completions:message:f7177a45b4a4a14eb8d271d28c84fb43111c0e8a3a13aff2603b1de8d2a9bab0": {
       "digest": "12ef4c3e6da57872adfec5913621d382fc7cedea518afeebdce79aae20f463a3",
+      "issue": 1518
+    },
+    "finish:15095b3d-9f7d-48b3-a937-80e8d66dea87:finish:2:synchronized": {
+      "digest": "1908cea337c557324a51870469ba5279739fb3904d6c10a068e835c4bd28765d",
       "issue": 1518
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
