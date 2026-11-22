@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20678,
+  "revision": 20679,
   "nextTicket": 617,
   "nextFence": 617,
   "tasks": {
@@ -5783,7 +5783,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795353713118,
       "reviewEntry": 4,
-      "patchId": "e060cfc0a7916c687dc9a118db9ad54a14c7f42f",
+      "patchId": "ef3f6ff8422c739adc3377a78d0498a3a6c380a2",
       "changedFiles": [
         "custom_components/houseplan/support_wire_schema.py",
         "demo/smoke_floor_preparation_deadline.mjs",
@@ -5791,6 +5791,7 @@
         "docs/CHANGELOG.ru.md",
         "docs/data-hp-contract.json",
         "docs/release-ledger/v1.86.0/1521.json",
+        "scripts/mutation-registry.mjs",
         "scripts/support-relay/README.md",
         "scripts/support-relay/hp_relay/support_wire_schema.py",
         "src/floor-cache-compute.ts",
@@ -5806,6 +5807,7 @@
         "src/i18n/ru.json",
         "src/support-diagnostics.ts",
         "test/data-hp-contract.test.mjs",
+        "test/floor-cache-publication.test.mjs",
         "test/floor-cache-runtime.test.mjs",
         "test/floor-cache-scheduler.test.mjs",
         "tests_backend/test_support_wire_schema.py"
@@ -6392,10 +6394,11 @@
     "token": "616:finish:bee7086f-6e14-4b4e-981c-0dc0d24160de:finish:1:admit",
     "fence": 616,
     "materialSha": "0987240f1c33505bf9352be24a98a281f8a1d4e9",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "8d413b8121306d906999556537096b8db5f00dfa",
+    "phase": "testing",
     "admittedAt": 1795353717032,
-    "expiresAt": 1795354017032
+    "expiresAt": 1795354023280,
+    "patchId": "ef3f6ff8422c739adc3377a78d0498a3a6c380a2"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6712,6 +6715,10 @@
     },
     "finish:2b87cb01-38eb-459a-a521-623e2a5fd8db:finish:3:return": {
       "digest": "41afea91460756de1950807db96c3cdd660991008ca39d5e8943c8e96812c3d7",
+      "issue": 1521
+    },
+    "finish:bee7086f-6e14-4b4e-981c-0dc0d24160de:finish:2:synchronized": {
+      "digest": "79653f4aefdd7350a34e562c0c4e2177b0ccb3333fbf2efda0529292d2f0028a",
       "issue": 1521
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
