@@ -145,6 +145,16 @@ try {
       await page.waitForFunction(() => window.__card._infoCard?.id === 'angled');
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => !window.__card._infoCard);
+      if (logical === 45 || logical === 225) {
+        // The door lies along world X, so these azimuths project its wall
+        // face edge-on. Its real raised lock remains a usable pointer target.
+        check('edge-on door is present at ' + logical, await page.evaluate(() =>
+          window.__card._renderIsoScene.openings.some(opening => opening.id === 'lock-door')));
+        await card.locator('.oplock[data-opening-id="lock-door"][data-hp-iso-raised="true"]').click();
+        await page.waitForFunction(() => window.__card._openingInfo?.id === 'lock-door');
+        await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !window.__card._openingInfo);
+      }
     }
     await rotate();
   }
@@ -230,10 +240,6 @@ try {
     c.setConfig({ type: 'custom:houseplan-card' });
   });
   await page.waitForFunction(() => document.getElementById('rotation-kiosk').renderRoot.querySelector('.stage')?.dataset.hpPlanRotation === '90');
-  await page.locator('#rotation-kiosk .stage:not([inert])').dblclick({ position: { x: 8, y: 8 } });
-  await page.waitForFunction(() => { const c = document.getElementById('rotation-kiosk'); return c._zoom === 1 && !c._cameraTransition.active; });
-  check('profile quarter-turn paints and fit-all settles at the rotated base',
-    await page.locator('#rotation-kiosk .stage').getAttribute('data-hp-plan-rotation') === '90');
   await page.evaluate(() => { document.getElementById('rotation-kiosk').routeKiosk = {
     enabled: true, position: null, profile: 1, overrides: { rotation: 270 } }; });
   await page.waitForFunction(() => document.getElementById('rotation-kiosk').renderRoot.querySelector('.stage')?.dataset.hpPlanRotation === '270');
@@ -316,6 +322,21 @@ try {
       live.rotation === '270' && live.transform === '' && !live.inert);
     check('profile event preserves ordinary preference, physical cache and card', live.preference && live.cache && live.element);
     check('bounded live rotation has no config GET or writer', live.gets === 0 && live.writes === 0);
+    // Fit on the real profile after a user zoom. The profile camera reports
+    // 100% against the measured reference, so its internal scalar can differ.
+    await p.waitForFunction(() => window.__card._screenAtReference && window.__card._continuity.state === 'steady');
+    const profileStage = c.locator('.stage:not([inert])');
+    const stageBox = await profileStage.boundingBox();
+    const background = { x: stageBox.width / 2, y: 12 };
+    await profileStage.hover({ position: background });
+    await p.mouse.wheel(0, -120);
+    await p.waitForFunction(() => window.__card._zoomBadge.percent > 100 && !window.__card._cameraTransition.active);
+    await profileStage.dblclick({ position: background });
+    await p.waitForFunction(() => window.__card._zoomBadge.percent === 100
+      && !window.__card._screenFitRequest && !window.__card._cameraTransition.active);
+    check('profile quarter-turn paints and fit-all settles at the rotated base',
+      await profileStage.getAttribute('data-hp-plan-rotation') === '270');
+
     const overrideRevision = await p.evaluate(() => {
       const card = window.__card;
       history.replaceState(null, '', '/houseplan?hpprofile=1&hprotate=180');

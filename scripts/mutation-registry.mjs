@@ -5635,9 +5635,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: '    const candidates = [false, true]\n'
-        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, planRotation(input.rotation)))',
+        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, flatPlanRotation(input.rotation)))',
       replace: '    const candidates = [pdfBoundsWidth(prepared.bounds) > pdfBoundsHeight(prepared.bounds)]\n'
-        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, planRotation(input.rotation)))',
+        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, flatPlanRotation(input.rotation)))',
     }],
   },
   {
@@ -5648,7 +5648,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: "    commands.push({ kind: 'vector',\n"
-        + '      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north + planRotation(input.rotation) }),\n'
+        + '      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north + flatPlanRotation(input.rotation) }),\n'
         + "      fill: INK, width: 0, fillRule: 'evenodd' });",
       replace: "    commands.push({ kind: 'line', points: [[nx, ny], [nx, ny - 11 * MM]],\n"
         + '      stroke: INK, width: 0.5 * MM });',
