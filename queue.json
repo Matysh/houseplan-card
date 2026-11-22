@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20226,
+  "revision": 20227,
   "nextTicket": 607,
   "nextFence": 607,
   "tasks": {
@@ -5616,7 +5616,61 @@
         "at": 1795340046013,
         "entry": 1,
         "eventId": "finish:e9e77efc-431d-4a45-be41-000dfb4e00ea:finish:2:return:return:1517"
-      }
+      },
+      "patchId": "d21ed98286fbf6c553638278679c1865dac65e78",
+      "changedFiles": [
+        "demo/fixtures/device-contact-resize-1517-layout.json",
+        "demo/fixtures/device-contact-resize-1517.mjs",
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/panel-device-contact-resize-flat-base.png",
+        "demo/golden/baselines/panel-device-contact-resize-flat-individual-larger.png",
+        "demo/golden/baselines/panel-device-contact-resize-flat-individual-smaller.png",
+        "demo/golden/baselines/panel-device-contact-resize-flat-profile-larger-rotation-180.png",
+        "demo/golden/baselines/panel-device-contact-resize-flat-profile-larger-rotation-270.png",
+        "demo/golden/baselines/panel-device-contact-resize-flat-profile-larger-rotation-90.png",
+        "demo/golden/baselines/panel-device-contact-resize-flat-profile-larger.png",
+        "demo/golden/baselines/panel-device-contact-resize-flat-profile-smaller.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-base.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-individual-larger.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-individual-smaller.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-180.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-270.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-90.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-smaller.png",
+        "demo/golden/device-contact-resize.mjs",
+        "demo/golden/harness.mjs",
+        "demo/golden/matrix.mjs",
+        "demo/smoke_device_contact_badges_1517.mjs",
+        "demo/smoke_device_contact_profile_1517.mjs",
+        "demo/smoke_device_contact_reflow.mjs",
+        "demo/smoke_device_contact_resize_1517.mjs",
+        "demo/srv/assets/icons.js",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/DEVICE-PRESENTATION.md",
+        "docs/release-ledger/v1.86.0/1517.json",
+        "process-next/lib/source-dependencies.mjs",
+        "src/device-contact-card.ts",
+        "src/device-contact-geometry.ts",
+        "src/device-contact-layout.ts",
+        "src/device-contact-render.ts",
+        "src/device-contact-screen.ts",
+        "src/device-contact-write.ts",
+        "src/houseplan-card.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
+        "src/iso-scene-geometry.ts",
+        "src/render-snapshot-capture.ts",
+        "src/styles/plan.styles.ts",
+        "test/device-contact-1003.test.mjs",
+        "test/device-contact-card.test.mjs",
+        "test/device-contact-screen.test.mjs",
+        "test/device-contact-write.test.mjs"
+      ]
     },
     "1518": {
       "issue": 1518,
@@ -6284,10 +6338,11 @@
     "token": "606:finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:1:admit",
     "fence": 606,
     "materialSha": "8cc632ede75a64efdb5cc9a2d1211a4d59966ab3",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c633b67b1a283ef013c3497641c5bcdf41884c87",
+    "phase": "testing",
     "admittedAt": 1795340243728,
-    "expiresAt": 1795340543728
+    "expiresAt": 1795340549603,
+    "patchId": "d21ed98286fbf6c553638278679c1865dac65e78"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6685,6 +6740,10 @@
     "hp1518-20261122-withdraw-window-join-update": {
       "digest": "1693d386cf282c1c114839c65d9859d275bf611d31561a52cf4b1908f7ac61aa",
       "issue": 1518
+    },
+    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:2:synchronized": {
+      "digest": "b591f09536da35b00cd5e922ca55b4ff6e2f8bed1a209dd142edea67e80be46b",
+      "issue": 1517
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
