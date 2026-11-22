@@ -137,7 +137,12 @@ try {
         const p=pointAt(door,end+delta,v*door.face.depth,door.wallHeight);
         return cap.isPointInFill(p)&&!cap.isPointInStroke(p);
       })));
-    return {sillSpansOpening,continuousLintel,apronOpacity:apron[0]?.parentElement.getAttribute('opacity')??null};
+    const bounds=el.getBoundingClientRect(), matrix=el.querySelector('.plan-svg').getScreenCTM();
+    const floorSamples=[[720,450],[720,475]].map(([x,y])=>{
+      const screen=project(x,y,0).matrixTransform(matrix);
+      return [(screen.x-bounds.x)/bounds.width,(screen.y-bounds.y)/bounds.height];
+    });
+    return {sillSpansOpening,continuousLintel,floorSamples,apronOpacity:apron[0]?.parentElement.getAttribute('opacity')??null};
   });
   const fixtureFlatBefore=await signature();
   const control=await page.evaluate(async()=>{
@@ -188,10 +193,18 @@ try {
   await page.evaluate(()=>window.__hpTest.setMode('view'));
   out.viewRestoresLocalOption=(await signature()).side.includes('0.38');
 
-  for(const [index, dark] of [false,true].entries()){
+  const cameraYaw=async()=>Number((await signature()).yaw);
+  const initialYaw=await cameraYaw();
+  const oppositeYaw=(initialYaw+180)%360;
+  for(const dark of [false,true]){
     const name=dark?'dark':'light';
     await theme(dark);
-    if(index) for(let turn=0;turn<2;turn++) await page.locator('houseplan-card [data-hp="rotate-right"]').click();
+    if(dark) for(let turn=0;turn<8&&(await cameraYaw())%360!==oppositeYaw;turn++){
+      const previous=await cameraYaw();
+      await page.locator('houseplan-card [data-hp="rotate-right"]').click();
+      await page.waitForFunction(previous=>Number(window.__card.renderRoot.querySelector('.plan-svg')?.dataset.yaw)!==previous,previous);
+      await settle();
+    }
     await settle();
     await setMaterial(undefined);
     const before=await signature(), opaque=await capture(name+'-white-base');
@@ -203,6 +216,7 @@ try {
     const joins=await openingJoins();
     out[name+'WindowSillAndApron']=joins.sillSpansOpening&&joins.apronOpacity==='0.55';
     out[name+'TopCutContinuousAtLintel']=joins.continuousLintel;
+    out[name+'ExpectedViewDirection']=Number(after.yaw)%360===(dark?oppositeYaw:initialYaw%360);
     out[name+'Materials']=after.backing===null&&after.side.join()==='0.38'&&after.top.join()==='0.55'
       &&after.topStops.includes('rgb(157, 106, 57)')&&after.round>0&&after.apron>0
       &&after.surfaces.some(surface=>surface.kind.includes('glass'));
@@ -273,7 +287,13 @@ try {
   const clearWalls=await signature(), clearJoins=await openingJoins();
   out.fullyTransparentMasonryRetainsWindowSill=clearWalls.side.length===0&&clearWalls.top.length===0
     &&clearJoins.sillSpansOpening;
-  if(reviewDir) await capture('both-wall-colours-transparent');
+  const clearFrame=PNG.sync.read(await capture('both-wall-colours-transparent'));
+  const [underColumn,nearbyFloor]=clearJoins.floorSamples.map(([x,y])=>{
+    const offset=(Math.floor(y*clearFrame.height)*clearFrame.width+Math.floor(x*clearFrame.width))*4;
+    return Array.from(clearFrame.data.subarray(offset,offset+3));
+  });
+  out.fullyTransparentWallShowsContinuousRoomColour=underColumn.length===3&&nearbyFloor.length===3
+    &&underColumn.every((channel,index)=>Math.abs(channel-nearbyFloor[index])<=8);
   await setMaterial(true,.38,0);
   const disabled = await page.evaluate(async()=>{
     const {__hpTest:hp,__card:c}=window;

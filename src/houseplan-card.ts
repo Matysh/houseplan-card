@@ -11318,22 +11318,23 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Paint geometry extends the existing room floor, not a second colored layer. */
-  private _roomFloorPaintFor(space: SpaceModel, viewEndpoint = false): Map<string, RoomFloorPaint> {
-    if ((!viewEndpoint && this._markup && !this._modeTransitionBusy) || !this._spaceWalls.length || !this._openingsR.length)
+  private _roomFloorPaintFor(space: SpaceModel, viewEndpoint = false, visibleUnderMasonry = false): Map<string, RoomFloorPaint> {
+    const hasTunnels = !!this._spaceWalls.length && !!this._openingsR.length;
+    if ((!viewEndpoint && this._markup && !this._modeTransitionBusy) || (!hasTunnels && !visibleUnderMasonry))
       return new Map();
     const openCuts = this._openCuts();
     const geometryInputs = this._openingsR.map(opening => ({
       x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
     }));
     const geometryFingerprint = geometryInputs.map(o => `${o.x},${o.y},${o.angle},${o.length}`).join(';');
-    const wallIndex = this._openingWallIndexFor(space, openCuts);
-    const cacheKey = `${wallIndex.key}|${geometryFingerprint}`;
-    const tunnels = this._openingTunnelCache = floorPoolEntry(this._openingTunnelPool, this._openingTunnelCache,
+    const wallIndex = hasTunnels ? this._openingWallIndexFor(space, openCuts) : null;
+    const cacheKey = wallIndex ? `${wallIndex.key}|${geometryFingerprint}` : '';
+    const tunnels = wallIndex ? (this._openingTunnelCache = floorPoolEntry(this._openingTunnelPool, this._openingTunnelCache,
       cacheKey, () => {
         this._floorCacheBuilds.openingTunnel++;
         return { key: cacheKey, value: openingTunnelGeometriesFromIndex(wallIndex.value, geometryInputs) };
-      });
-    const key = `${this._cleanFloorKey(space.id)}|${cacheKey}`;
+      })).value : [];
+    const key = `${this._cleanFloorKey(space.id)}|${cacheKey}${visibleUnderMasonry ? '|translucent-masonry' : ''}`;
     const frame = this._roomFloorPaintCache = floorPoolEntry(this._roomFloorPaintPool, this._roomFloorPaintCache, key, () => {
       this._floorCacheBuilds.roomFloorPaint++;
       const united = this._wallUnionGeometry();
@@ -11342,13 +11343,14 @@ export class HouseplanCard extends LitElement {
       try {
         const seeds = space.rooms.flatMap((room, index) => {
           const poly = polys[index]; if (!poly) return [];
-          const floor = room.id ? this._innerRoomContour(space, room.id, openCuts, united.roomGeom) || poly : poly;
-          const clean = this._cleanFloor(room, floor, space);
+          const floor = !visibleUnderMasonry && room.id
+            ? this._innerRoomContour(space, room.id, openCuts, united.roomGeom) || poly : poly;
+          const clean = visibleUnderMasonry ? null : this._cleanFloor(room, floor, space).geom;
           const holes = islandsOf(floor, polys.filter((p, i) => i !== index && !!p) as number[][][]);
-          return [{ id: room.id || '#' + index, geom: roomFloorGeometry(floor, holes, clean.geom) }];
+          return [{ id: room.id || '#' + index, geom: roomFloorGeometry(floor, holes, clean) }];
         });
-        return { key, value: buildRoomFloorPaint(seeds, this._openingsR, tunnels.value,
-          united.components.map(component => component.geom).filter(geom => geom?.length)) };
+        return { key, value: buildRoomFloorPaint(seeds, this._openingsR, tunnels,
+          visibleUnderMasonry ? [] : united.components.map(component => component.geom).filter(geom => geom?.length)) };
       } catch {
         // An unprovable extension never paints through masonry or replaces the
         // established clean floor; cache this fallback for the same geometry.
@@ -13443,6 +13445,10 @@ export class HouseplanCard extends LitElement {
               const allThickCuts = this._thickWallCuts();
               const roomWallGeometry = this._wallUnionGeometry()?.roomGeom;
               const floorPaint = planRoom ? new Map<string, RoomFloorPaint>() : this._roomFloorPaintFor(sceneSpace, true);
+              // Continue the existing room colour below translucent structure.
+              // Hit testing and light still use the physical clean floor.
+              const visibleFloor = !planRoom && iso && isoLayers?.structural && disp.transparentWalls3d
+                ? this._roomFloorPaintFor(sceneSpace, true, true) : null;
               const polyCache = new Map<any, number[][] | null>();
               const polyOf = (rr: any) => {
                 if (!polyCache.has(rr)) polyCache.set(rr, roomPoly(rr));
@@ -13528,14 +13534,17 @@ export class HouseplanCard extends LitElement {
               const pathD = (pts: number[][]) =>
                 'M ' + pts.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
               const obstaclePath = fillPoly ? this._cleanFloor(r, fillPoly, sceneSpace).path : '';
-              const paint = floorPaint.get(r.id || '#' + sceneSpace.rooms.indexOf(r));
+              const roomId = r.id || '#' + sceneSpace.rooms.indexOf(r);
+              const paint = floorPaint.get(roomId);
+              const visiblePaint = roomFills.byRoom.has(r) ? visibleFloor?.get(roomId)?.path : undefined;
+              const paintedPath = visiblePaint || paint?.path;
               // docs/STYLING-HOOKS.md §3 — the same three hooks whichever SVG
               // element this room happens to be drawn as today
               const hpId = r.id || nothing;
               const hpArea = r.area || nothing;
-              const shape = paint
+              const shape = paintedPath !== undefined
                 ? svg`<path data-mode-room-paint class="${cls}" style="${style};pointer-events:none" fill-rule="evenodd"
-                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing} d=${paint.path}></path>`
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing} d=${paintedPath}></path>`
                 : obstaclePath && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
@@ -13576,7 +13585,9 @@ export class HouseplanCard extends LitElement {
                     d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
                     style=${planRoom ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
                 : nothing;
-              const hit = paint ? svg`<path class=${canonical ? 'room-hit' : 'hp-mode-room-hit'} ?data-hp-room-hit=${canonical} data-id=${hpId} data-mode-room-id=${r.id || nothing} d=${paint.basePath} fill="transparent"
+              const hitPath = paint?.basePath ?? (visiblePaint && fillPoly
+                ? [obstaclePath || pathD(fillPoly),...holes.map(pathD)].join(' ') : undefined);
+              const hit = hitPath !== undefined ? svg`<path class=${canonical ? 'room-hit' : 'hp-mode-room-hit'} ?data-hp-room-hit=${canonical} data-id=${hpId} data-mode-room-id=${r.id || nothing} d=${hitPath} fill="transparent"
                 fill-rule="evenodd" stroke="none" pointer-events=${canonical ? 'fill' : 'none'}
                 @pointerenter=${enterRoom} @pointermove=${tip}
                 @pointerleave=${() => this._clearPointerHover()}></path>` : nothing;
