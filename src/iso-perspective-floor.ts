@@ -25,16 +25,14 @@ export function renderIsoPerspectiveFloor(camera: IsoCamera, content: TemplateRe
   </div>`;
 }
 
-export function resizeIsoPerspectiveFloor(svg: SVGElement, viewBox: string) {
+export function resizeIsoPerspectiveFloor(svg: SVGElement, viewBox: string, stageHeight: number | undefined) {
   const plane = svg.parentElement;
   const lens = plane?.getAttribute('data-lens');
-  if (!plane || !lens) return;
-  const width = plane.clientWidth, height = plane.clientHeight;
-  if (!width || !height) return;
+  if (!plane || !lens || !stageHeight) return;
   const [vx,vy,w,h] = viewBox.split(/\s+/).map(Number);
   if (!(w > 0 && h > 0)) return;
   const [x,y,rate,lift] = lens.split(' ').map(Number);
-  const {origin,matrix} = lensStyle({x:vx,y:vy,w,h},height,x,y,rate,lift);
+  const {origin,matrix} = lensStyle({x:vx,y:vy,w,h},stageHeight,x,y,rate,lift);
   if (plane.style.transformOrigin !== origin) plane.style.transformOrigin = origin;
   if (plane.style.transform !== matrix) plane.style.transform = matrix;
 }

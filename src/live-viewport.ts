@@ -16,6 +16,7 @@ interface LiveViewportFrame {
   floor: LiveViewBox;
   grid?: LiveViewBox;
   zoom: number;
+  stageHeight?: number;
   target?: LiveViewBox;
   badge?: { percent: number; hidden: boolean };
 }
@@ -64,6 +65,7 @@ interface LiveViewportHost {
   readonly _renderProjection?: 'iso' | 'flat';
   readonly _zoomBadge?: { percent: number; hidden: boolean };
   readonly _modeSceneClip?: string | null;
+  readonly _modeSceneSize?: readonly [number, number] | null;
   readonly _lastValidStageSize?: readonly [number, number] | null;
   _editorRuntime?: {wallDimensions?: {paintCamera(view:LiveViewBox):void}} | null;
   renderRoot: ParentNode;
@@ -188,9 +190,9 @@ const setLayerProjection = (
 };
 
 /** Атрибут пишется только когда строка действительно другая (#531). */
-const setViewBox = (svg: SVGElement, text: string): void => {
+const setViewBox = (svg: SVGElement, text: string, stageHeight?: number): void => {
   if (svg.getAttribute('viewBox') !== text) svg.setAttribute('viewBox', text);
-  resizeIsoPerspectiveFloor(svg,text);
+  resizeIsoPerspectiveFloor(svg,text,stageHeight);
 };
 
 const findViewportNodes = (root: ParentNode) => {
@@ -248,7 +250,7 @@ function rebaseMarkerPositions(nodes: ViewportNodes, from: LiveViewBox, anchor: 
   const box = liveViewBoxText(view);
   for (const svg of nodes.inherited) {
     if (!original.viewBoxes.has(svg)) original.viewBoxes.set(svg, svg.getAttribute('viewBox'));
-    setViewBox(svg, box);
+    setViewBox(svg, box, anchor.frame.stageHeight);
   }
 }
 
@@ -268,7 +270,7 @@ function restoreMarkerPaint(anchor: LiveViewportAnchor | null): void {
   }
   for (const [svg, box] of original.viewBoxes) {
     if (box === null) svg.removeAttribute('viewBox');
-    else setViewBox(svg, box);
+    else setViewBox(svg, box, anchor.frame.stageHeight);
   }
   anchor.markerPaint = undefined;
 }
@@ -315,7 +317,7 @@ export function paintLiveViewport(
     const viewBox = liveViewBoxText(next.frame.view);
     const floorBox = liveViewBoxText(next.frame.floor);
     for (const svg of nodes.camera) {
-      setViewBox(svg, viewBox);
+      setViewBox(svg, viewBox, next.frame.stageHeight);
     }
     for (const svg of nodes.floor) {
       setViewBox(svg, floorBox);
@@ -466,6 +468,7 @@ export function authoredHouseplanSceneViewport(host: object, markers: LiveViewBo
 
 const frameOf = (host: LiveViewportHost, view = host._viewOr(host._baseVb())): LiveViewportFrame => {
   return { view: { ...view }, floor: { ...host._floorView(view) }, zoom: host._zoom, badge: host._zoomBadge,
+    stageHeight: (host._modeSceneSize ?? host._lastValidStageSize)?.[1],
     target: host._liveViewportTarget?.(),
     ...(host._renderProjection !== 'iso' && host._planVisibleRect ? { grid: host._planVisibleRect(view) } : {}) };
 };

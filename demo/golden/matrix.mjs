@@ -1695,7 +1695,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     id, mode, fixture: 'visual', space: 'golden-geometry', rotation: 90,
     theme: 'light', language: 'en', viewport: { width, height: 844 }, ...page,
   })),
-  { id: 'panel-iso-straight-perspective-1526', fixture: 'direct-perspective', space: 'straight-perspective',
+  { id: 'panel-iso-straight-perspective-1526', fixture: 'visual', directPerspective: true, space: 'straight-perspective',
     panelHost: true, mode: 'view', projection: 'iso', rotation: 315, theme: 'light', language: 'en',
     viewport: { width: 1120, height: 780 }, ...stage },
   // #1113 append new scenes: established first-scene provenance fixture stays stable.

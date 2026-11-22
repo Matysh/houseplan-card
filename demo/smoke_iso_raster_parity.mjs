@@ -1,4 +1,5 @@
-// #1485 AC8 compares a native-density raster with the vector at the same camera.
+// #1485 AC8 compares gesture and settled paint at the same camera.
+// #1526 direct cameras keep the projective vector scene during gestures.
 import { createRequire } from 'node:module';
 import { check, finish } from './serve.mjs';
 import { settleIsoPaint, startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
@@ -21,14 +22,19 @@ async function setLightAndTheme(light, darkMode) {
   }, { light, darkMode });
 }
 const screenshot = async stage => PNG.sync.read(await stage.screenshot());
-async function imageAtSameCamera(page, stage) {
+async function imageAtSameCamera(page, stage, needsRaster) {
   await page.evaluate(() => {
     const card = window.__isoPaint;
     card._liveIsoRasterInput = () => 'wheel';
     card._liveVp(true);
   });
   try {
-    await stage.locator('.hp-iso-gesture-image').waitFor({ state: 'attached' });
+    const raster = stage.locator('.hp-iso-gesture-image');
+    if (needsRaster) await raster.waitFor({ state: 'attached' });
+    else {
+      await stage.locator('[data-hp-iso-perspective-floor]').first().waitFor({ state: 'visible' });
+      check('the direct gesture uses the live perspective plane', await raster.count(), 0);
+    }
     return await screenshot(stage);
   } finally {
     await page.evaluate(() => {
@@ -49,7 +55,7 @@ try {
       await waitReady(before);
       for (const rotation of [0, 45, 90, 135, 180, 225, 270, 315]) {
         const baseline = await screenshot(stage);
-        const active = await imageAtSameCamera(page, stage);
+        const active = await imageAtSameCamera(page, stage, rotation % 90 === 0);
         let different = 0;
         for (let i = 0; i < baseline.data.length; i += 4) {
           for (let c = 0; c < 4; c++) {
@@ -64,7 +70,7 @@ try {
         before = await ready();
         await card.locator('[data-hp="rotate-right"]').click();
         await settleIsoPaint(page);
-        await waitReady(before);
+        if (rotation % 90 === 45) await waitReady(before);
       }
     }
   }

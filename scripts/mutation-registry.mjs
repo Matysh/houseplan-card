@@ -388,8 +388,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-frame.test.mjs',
     because: '#1070 AC9/AC11: four distinct camera-facing edges share one physical build. Registered only; nightly execution.',
     patches: [{ file: 'src/iso-scene-geometry.ts',
-      find: 'const camera = isoCameraFor(rotation);',
-      replace: 'const camera = ISO_CAMERA;' }],
+      find: 'let camera = isoCameraFor(rotation);',
+      replace: 'let camera = ISO_CAMERA;' }],
   },
   {
     id: 'plan-rotation-pdf-keeps-zero-1070',

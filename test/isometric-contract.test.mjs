@@ -116,15 +116,16 @@ test('every browser smoke that explicitly selects Iso waits for its lazy runtime
 });
 
 test('Stage 4 composes ordered inert SVG groups below screen-facing HTML', () => {
-  const projection = section(card, '<div class="iso-scene-surface"', '</svg></div>');
+  const projection = section(card, '<div class="iso-scene-surface"', '${\'\'/* docs/CANVAS.md §6');
   let previous = -1;
-  for (const selector of ['iso-underlay-svg', 'iso-floor-scene', 'iso-shadows-svg', 'iso-walls-svg',
-    'iso-floor-shadow-plane', 'iso-furniture-foreground', 'iso-led-plane']) {
+  for (const selector of ['${isoUnderlay}', 'isoFloorInk()', 'iso-shadows-svg', 'iso-walls-svg',
+    'iso-floor-shadow-plane', 'iso-furniture-foreground', 'ledBody()']) {
     const position = projection.indexOf(selector);
     assert.ok(position > previous, selector);
     previous = position;
   }
-  assert.equal([...projection.matchAll(/<svg\b/g)].length, 1, 'architecture and floor share one authored SVG');
+  assert.match(projection, /floorCamera\?\.perspective \? nothing : isoFloorInk\(\)/,
+    'the affine scene paints the floor in the shared architecture SVG');
   assert.match(sceneRender, /class="iso-wall-top"/);
   assert.match(sceneRender, /class="iso-wall-side"/);
   assert.match(sceneRender, /class="iso-opening-panel iso-\$\{surface\.type\} iso-opening-\$\{surface\.kind\} iso-material-\$\{surface\.material\}"/);
@@ -274,7 +275,7 @@ test('show_borders:false keeps the Flat floor plane and removes every volume cue
   assert.match(card, /isoLayers && !isoLayers\.floorSymbols/);
   assert.match(card, /<svg class="plan-svg"[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
   // The browser parity test compares the painted plane, fit and input at all four turns.
-  assert.match(card, /class=\$\{iso \? 'iso-floor-scene' : nothing\} transform=\$\{this\._floorTransform\}/);
+  assert.match(card, /class="iso-floor-scene" transform=\$\{this\._floorTransform\}/);
   assert.match(card, /isoLayers\?\.structural \? svg`[\s\S]*?<g class="iso-shadows-svg"/);
   assert.match(card, /if \(!runtime \|\| !layers\?\.structural \|\| !structural\) return null/);
   const baseView = section(card, 'private _baseVb(', '/** How many objects');

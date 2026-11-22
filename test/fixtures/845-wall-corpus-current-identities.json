@@ -351,6 +351,10 @@
       "configs": 1
     },
     {
+      "file": "demo/fixtures/direct-perspective-room.mjs",
+      "configs": 1
+    },
+    {
       "file": "demo/fixtures/direct-wall-geometry.mjs",
       "configs": 0
     },
@@ -24118,6 +24122,44 @@
         }
       ],
       "fullConfigSha256": "f3ab40d9f9adaf22f36ead6bc158149d6a1ba2cc7c3ee7a582c7f6f7f6ad85b3"
+    },
+    {
+      "label": "demo/fixtures/direct-perspective-room.mjs:makeDirectPerspectiveFixture/config",
+      "fingerprint": "6d224a0067d6b57e145eb49c062716a51b727984c31c31a69497fe6823c9e451",
+      "ok": true,
+      "identity": [
+        {
+          "space": "straight-perspective",
+          "catalogue": [
+            "wall-5n3r74g2gqf5b27umbyi",
+            "wall-ggiicyhskjwy477n34bi",
+            "wall-pw5tthkhtdd2tgopyygp",
+            "wall-uki7ci64jkyi3utrh3jg"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-uki7ci64jkyi3utrh3jg",
+                "wall-5n3r74g2gqf5b27umbyi",
+                "wall-ggiicyhskjwy477n34bi",
+                "wall-pw5tthkhtdd2tgopyygp"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-uki7ci64jkyi3utrh3jg"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ],
+      "fullConfigSha256": "d81b85252532df35bd3a032d91b5598e87daa88a753a3e0ed9a88b204ba5c937"
     },
     {
       "label": "demo/fixtures/iso-paint.mjs:makeIsoPaintFixture/config",

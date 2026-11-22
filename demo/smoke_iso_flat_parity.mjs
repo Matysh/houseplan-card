@@ -93,19 +93,42 @@ const snapshot = page => page.evaluate(()=>{
   const card = window.__card, root = card.renderRoot;
   const stage = root.querySelector('.stage:not([inert])') || root.querySelector('.stage');
   const svg = stage.querySelector('svg.plan-svg');
-  const floor = svg.querySelector(':scope > .iso-floor-scene') ?? svg.querySelector(':scope > g');
+  const floor = stage.querySelector('.iso-floor-scene') ?? svg.querySelector(':scope > g');
   const bounds = svg.getBoundingClientRect(), matrix = floor.getScreenCTM();
   // _view is canonical; quarterturn display-fit may have a different width.
   // The root SVG matrix measures actual scene-units-to-pixels, independently
   // of the card's converter and without counting floor depth compression.
   const sceneMatrix = svg.getScreenCTM();
-  const point = new DOMPoint(bounds.left+bounds.width/2,bounds.top+bounds.height/2).matrixTransform(matrix.inverse());
+  const centre = new DOMPoint(bounds.left+bounds.width/2,bounds.top+bounds.height/2);
   const local = floor.transform.baseVal.consolidate()?.matrix || new DOMMatrix();
   const camera = card._renderIsoScene?.camera;
+  const probe = (x, y) => {
+    const node = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    for (const [name,value] of Object.entries({x,y,width:0,height:0})) node.setAttribute(name,value);
+    floor.append(node);
+    const pixel = node.getBoundingClientRect();
+    node.remove();
+    return {x:pixel.left,y:pixel.top,world:[x,y]};
+  };
+  let point = centre.matrixTransform(matrix.inverse());
+  if (camera?.perspective) {
+    // Measure the actual pixels of two floor rows. A projective map cannot
+    // be inverted via getScreenCTM(), which reports only an affine matrix.
+    const projected = [probe(220,220),probe(780,220),probe(780,780),probe(220,780)].sort((a,b)=>a.y-b.y);
+    const [a,b] = projected.slice(0,2).sort((a,b)=>a.x-b.x);
+    const [c,d] = projected.slice(2).sort((a,b)=>a.x-b.x);
+    const farWidth = b.x-a.x, nearWidth = d.x-c.x;
+    const fraction = (centre.y-a.y)/(c.y-a.y);
+    const width = farWidth+(nearWidth-farWidth)*fraction;
+    const across = (centre.x-a.x-(c.x-a.x)*fraction)/width;
+    const depth = fraction*nearWidth/width;
+    const world = a.world.map((v,i)=>v+across*(b.world[i]-v)+depth*(c.world[i]-v));
+    point = new DOMPoint(...world);
+  }
   const ids = selector=>[...new Set([...stage.querySelectorAll(selector)].map(node=>node.dataset.id))].sort();
   const anchors = selector=>Object.fromEntries([...stage.querySelectorAll(selector)]
     .filter(node=>node.dataset.id).map(node=>[node.dataset.id,[node.style.left,node.style.top]]));
-  const hitPoint = new DOMPoint(320,320).matrixTransform(matrix);
+  const hitPoint = camera?.perspective ? probe(320,320) : new DOMPoint(320,320).matrixTransform(matrix);
   const stageBounds = stage.getBoundingClientRect();
   const inverseHit = card._screenToVb(hitPoint.x-stageBounds.left-stage.clientLeft,
     hitPoint.y-stageBounds.top-stage.clientTop);

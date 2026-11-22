@@ -177,10 +177,15 @@ try {
       const bounds = scene.getBoundingClientRect();
       const at = camera.perspective ? card._screenToVb(spot.x-bounds.x,spot.y-bounds.y) : [270,445];
       marker.remove();
-      return {lens:!!camera.perspective,error:Math.hypot(at[0]-270,at[1]-445)};
+      const surface = scene.parentElement;
+      const validPaintOrder = camera.perspective
+        ? !!(floor.closest('[data-hp-iso-perspective-floor]').compareDocumentPosition(scene) & Node.DOCUMENT_POSITION_FOLLOWING)
+        : surface.childElementCount === 1 && scene.contains(floor) && !!scene.querySelector('.iso-underlay-svg');
+      return {lens:!!camera.perspective,validPaintOrder,error:Math.hypot(at[0]-270,at[1]-445)};
     });
     check('only direct ISO cameras use perspective at ' + logical, proof.lens === (logical % 90 === 45));
     check('perspective floor paint and pointer inverse agree at ' + logical, proof.error < .05);
+    check('floor and architectural paint remain ordered at ' + logical, proof.validPaintOrder);
     check('ISO accepted physical camera ' + logical,
       Number(await card.locator('svg.plan-svg').first().getAttribute('data-yaw')) === yaw);
     const labelAngle = labelByYaw.get(yaw) * Math.PI / 180;
