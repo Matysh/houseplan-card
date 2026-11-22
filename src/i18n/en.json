@@ -1,4 +1,6 @@
 {
+  "device.resize_limited": "Icon sizes are limited to keep their contacts.",
+  "device.resize_baseline_lost": "The original device contacts no longer fit here.",
   "standalone.host_error": "Cannot connect to this House Plan host. Check its availability, version and supported APIs, then reconnect.",
   "panel.actions": "Actions",
   "empty.plan_prompt": "The plan is empty. Let’s draw something.",

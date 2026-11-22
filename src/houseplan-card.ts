@@ -8251,6 +8251,7 @@ export class HouseplanCard extends LitElement {
       kioskIconScale: this._mode === 'view' ? this._effectiveKioskScale.icon : 1,
       kioskFontScale: this._mode === 'view' ? this._effectiveKioskScale.font : 1,
       positionOf: (device) => this._pos(device),
+      effectiveDiameterOf: (device) => this._deviceContacts?.diameter(device.id, this._pos(device, false)),
       presentationOf: (device, withLqi) => this._devicePresentation(device, withLqi),
       labelPositionOf: (room, spaceId) => this._labelPos(room, spaceId),
       labelScaleOf: (room) => this._labelScale(room),
@@ -13328,6 +13329,8 @@ export class HouseplanCard extends LitElement {
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     const deviceBasePct = effectiveDeviceBaseSize(iconPct);
+    const contactBaseDiameter = deviceBasePct * iconUnit(space) / 100
+      * (this._mode === 'view' ? this._effectiveKioskScale.icon : 1);
     let isoScene = iso ? this._renderIsoScene : null;
     this._adoptViewPlane(isoScene ? isoCameraFor(0) : null);
     let view = this._authoredView(this._viewOr(this._baseVb(projection, isoScene)), projection);
@@ -13961,7 +13964,7 @@ export class HouseplanCard extends LitElement {
             ${keyed(space.id, repeat(isoOverlays ? [...devs].sort((a,b) =>
               (isoOverlays.devices.get(a.id)?.floorScene[1] ?? 0) - (isoOverlays.devices.get(b.id)?.floorScene[1] ?? 0)
                 || a.id.localeCompare(b.id)) : devs, (d) => d.id, (d) => this._renderDevice(
-              d, view, showLqi, isoOverlays?.devices.get(d.id),
+              d, view, contactBaseDiameter, showLqi, isoOverlays?.devices.get(d.id),
             )))}
             ${ledDevs.map((d) => this._ledBadge(d, view, isoOverlays?.devices.get(d.id)))}
             ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}
@@ -13980,6 +13983,11 @@ export class HouseplanCard extends LitElement {
           `}
           </div>
           ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}
+          ${this._mode === 'view' && this._deviceContacts?.resizeStatus
+            ? html`<div class="device-resize-status" data-hp="device-resize-status" role="status">
+                ${this._t(this._deviceContacts.resizeStatus === 'baseline-lost'
+                  ? 'device.resize_baseline_lost' : 'device.resize_limited')}
+              </div>` : nothing}
           ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}
           <div class="zoombadge hpf-floating-badge hpf-floating-badge-scale" data-hp-live-zoom ?hidden=${this._zoomBadge.hidden}><span data-hp-live-zoom-value .textContent=${`${this._zoomBadge.percent}%`}></span></div>
           ${this._renderFarHint()}
@@ -14667,10 +14675,16 @@ export class HouseplanCard extends LitElement {
   private _renderDevice(
     d: DevItem,
     view: { x: number; y: number; w: number; h: number },
+    contactBaseDiameter: number,
     showLqi: import('./signal-visibility').SignalVisibility = true,
     isoPlacement?: IsoOverlayPlacement,
   ): TemplateResult {
-    return html`${guard([this._modeSceneRevision, this._devicePresentation(d, showLqi),
+    const resolved = this._devicePresentation(d, showLqi);
+    const effectiveDiameter = this._deviceContacts?.diameter(d.id, this._pos(d, false));
+    const requestedDiameter = contactBaseDiameter * resolved.scale;
+    const limitedSize = effectiveDiameter !== undefined && Math.abs(effectiveDiameter - requestedDiameter) > 1e-6
+      ? (effectiveDiameter / view.w * 100).toFixed(3) : null;
+    return html`${guard([this._modeSceneRevision, resolved, limitedSize,
       d.id, d.name, d.primary, d.area, d.virtual, d.hidden, d.userHidden, d.bindingStatus?.kind,
       ...(isoPlacement ? [view.x, view.y, view.w, view.h] : []),
       showLqi, isoPlacement, isoPlacement?.wallMask?.path, this._rotation, this._selId,
@@ -14681,10 +14695,10 @@ export class HouseplanCard extends LitElement {
       ? isoPlacement.visualScene
       : [pos.x, pos.y];
     const [left, top] = this._framePercent(point, view, !!isoPlacement);
-    const resolved = this._devicePresentation(d, showLqi);
     const presentation = this._rotation && !(this._isoFloorCamera && ISO_LAB_FLOOR_MARKERS) && typeof d.marker?.angle === 'number'
       ? { ...resolved, angle: resolved.angle + this._rotation } : resolved;
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
+    if (limitedSize !== null) st.push(`--dev-size:${limitedSize}cqw`);
     const wallMask = isoPlacement?.wallMask;
     const wallMaskId = `hp-device-wall-${encodeURIComponent(d.id)}`;
     if (wallMask) st.push(`--hp-device-wall-mask:url(#${wallMaskId})`);

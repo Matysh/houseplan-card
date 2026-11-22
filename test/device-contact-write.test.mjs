@@ -102,7 +102,7 @@ test('#1003 terminal basis identity is exactly the canonical placement without a
 test('#1003 metric-only Save materialises only its legacy component and checks server capability',async()=>{
   const f=fixture(),marker=(id,x)=>({id,x,y:200,diameter:40,box:{left:-25.375,right:25.375,top:-25.375,bottom:25.375}});
   const scene=new DeviceContactScene([marker('a',200),marker('b',245),marker('foreign',800)],[],[],true);
-  f.host._deviceContacts={scene,reference:id=>scene.shapes.get(id)?.marker};
+  f.host._deviceContacts={scene,reference:id=>scene.shapes.get(id)?.marker,referenceMembers:id=>scene.component(id)};
   const patch=await contactConfigPatch(f.host,{markers:[{id:'a',size:2}]});
   assert.deepEqual(Object.keys(patch).sort(),['a','b']);assert.equal(patch.a.contact_basis.legacy,true);
   assert.deepEqual(patch.a.contact_basis.at,{x:.2,y:.2,s:'floor'});
@@ -124,7 +124,7 @@ test('#1394 virtual-only contact placement and metric save use only the injected
   assert.equal(f.host._layout.a.x,.3);assert.equal(f.host._layout.b.x,.345);
   const marker=(id,x)=>({id,x,y:300,diameter:40,box:{left:-25.375,right:25.375,top:-25.375,bottom:25.375}});
   const scene=new DeviceContactScene([marker('a',300),marker('b',345)],[],[],true);
-  f.host._deviceContacts={scene,reference:id=>scene.shapes.get(id)?.marker};
+  f.host._deviceContacts={scene,reference:id=>scene.shapes.get(id)?.marker,referenceMembers:id=>scene.component(id)};
   lab.commands.length=0;
   const patch=await contactConfigPatch(f.host,{markers:[{id:'a',binding:'virtual',size:2}]});
   assert.deepEqual(Object.keys(patch).sort(),['a','b']);

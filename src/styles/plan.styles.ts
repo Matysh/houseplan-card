@@ -2,6 +2,12 @@
 import { css } from 'lit';
 
 export const planStyles = css`
+    .device-resize-status {
+      position: absolute; z-index: 2; left: .75rem; bottom: .75rem;
+      max-width: min(28rem, calc(100% - 1.5rem)); padding: .35rem .6rem;
+      border-radius: .4rem; background: var(--card-background-color);
+      color: var(--primary-text-color); font-size: .85rem; pointer-events: none;
+    }
     :host {
       --hp-room-outline-color: rgb(62,166,255);
       --hp-room-outline-fill-alpha: .06;

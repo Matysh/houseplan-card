@@ -199,8 +199,15 @@ for(const [name,width,height,dpr] of [['desktop',1400,1000,1],['tablet',900,1100
           return m.y+b.bottom<=top+.01||m.y+b.top>=bottom-.01;
         });
       });
-      checkAll({'tight-size-is-accepted':released.markers[0].diameter>tightBefore.markers[0].diameter*2,
-        'tight-releases-contact':released.members.length===1,'tight-no-masonry-overlap':masonrySafe});
+      const storedSize=await page.evaluate(()=>window.__card._serverCfg.markers.find(m=>m.id==='lg_sensor.row_a').size);
+      const resizeStatus=await page.evaluate(()=>window.__card._deviceContacts.resizeStatus);
+      checkAll({'tight-size-request-is-saved':storedSize===3,
+        'tight-limits-visible-size':released.markers[0].diameter>=before.markers[0].diameter &&
+          released.markers[0].diameter<before.markers[0].diameter*3 && resizeStatus==='limited',
+        'tight-keeps-contact':released.members.length===2,'tight-no-masonry-overlap':masonrySafe});
+      await page.evaluate(()=>window.__hpTest.setMode('view'));await settle();
+      check('tight-visible-size-explanation',await page.locator('[data-hp="device-resize-status"]').isVisible(),true);
+      await page.evaluate(()=>window.__hpTest.setMode('devices'));await settle();
       await saveSize('1.2');const restored=await state();
       checkAll({'tight-shrink-restores-contact':restored.members.length===2,
         'tight-shrink-restores-points':JSON.stringify(restored.markers)===JSON.stringify(tightBefore.markers)});

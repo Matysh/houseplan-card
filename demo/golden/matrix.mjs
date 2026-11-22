@@ -1575,6 +1575,16 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'card-editor-invalid-default-floor-dark-ru', fixture: 'visual',
     cardEditorInvalidDefaultFloor: 'removed-floor', language: 'ru', theme: 'dark',
     viewport: { width: 900, height: 760 }, ...page },
+  ...['flat','iso'].flatMap(projection => [
+    ['base',1.6,1], ['individual-larger',1.6,1.25], ['individual-smaller',1.6,.8],
+    ['profile-larger',2.05,1], ['profile-smaller',1.25,1],
+  ].map(([name, iconScale, markerScale]) => ({
+    id: 'panel-device-contact-resize-'+projection+'-'+name,
+    fixture:'visual', panelHost:true, panelKioskUrl:'/houseplan?hpprofile=1', preloadEditorRuntime:false,
+    space:'f1', projection, mode:'view', language:'en', theme:'light',
+    viewport:{width:1280,height:920}, deviceContactResize:{iconScale,markerScale},
+    ...stage,
+  }))),
   ...['light','dark'].map(theme=>({id:`device-contacts-designer-${theme}`,fixture:'visual',deviceContacts:true,
     space:'golden-contacts',mode:'view',iconSize:5,language:'en',theme,viewport:{width:1400,height:1100},...stage})),
   // #780: LED strips. The two design references keep all four strips of the

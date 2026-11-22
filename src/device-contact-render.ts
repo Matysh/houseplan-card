@@ -23,7 +23,7 @@ import type { IsoDeviceFace, IsoDeviceWallMask } from './iso-overlays';
 export interface DeviceContactFrame {
   key: string;
   enabled: boolean;
-  markers: readonly Omit<ContactMarker, 'box'>[];
+  markers: readonly (Omit<ContactMarker, 'box'> & { legacyDiameters?: readonly [number, number] })[];
   walls?: readonly ContactWall[];
   masonry?: ContactMasonry;
   floor?: { config: unknown; model: SpaceModel };
@@ -53,6 +53,8 @@ export class DeviceContactRenderer {
   };
   public scene: DeviceContactScene | null = null;
   public reflowed = false;
+  public appearanceChanged = false;
+  public resizeStatus: 'limited' | 'baseline-lost' | null = null;
   public readonly work = { measurements: 0, measurementBatches: 0, rebuilds: 0, paints: 0 };
   private readonly metrics = new Map<string, ContactRect>();
   private readonly faces = new Map<string, readonly IsoDeviceFace[]>();
@@ -77,7 +79,13 @@ export class DeviceContactRenderer {
     return source && shape && source.x===point.x && source.y===point.y
       ? {x:shape.marker.x,y:shape.marker.y} : point;
   }
+  public diameter(id: string, point: { x: number; y: number }): number | undefined {
+    const authored = this.authored.get(id);
+    return authored?.x === point.x && authored.y === point.y
+      ? this.scene?.shapes.get(id)?.marker.diameter : undefined;
+  }
   public reference(id:string):ContactMarker|undefined { return this.layout.reference(id); }
+  public referenceMembers(id: string): string[] { return this.layout.referenceMembers(id); }
 
   /** Optimize supplies positive owner/face evidence for all floors, including
    * ones not currently mounted. Uses this same production face/metric cache. */
@@ -97,6 +105,8 @@ export class DeviceContactRenderer {
     this.plane = undefined;
     this.preparedFont = null;
     this.reflowed=false;
+    this.resizeStatus=null;
+    this.appearanceChanged=false;
     this.retireElements(); this.layout.clear(); this.authored.clear();
     this.fontDocument?.fonts?.removeEventListener('loadingdone',this.fontsChanged);
     this.fontDocument=null;this.invalidate=undefined;
@@ -121,6 +131,7 @@ export class DeviceContactRenderer {
   /** Read in the retained endpoint's measure batch, before terminal DOM writes. */
   public prepare(root: ParentNode): void { this.preparedFont = { root, value: this.fontKey(root) }; }
   public sync(root: ParentNode, frame: DeviceContactFrame): boolean {
+    this.appearanceChanged = false;
     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
     const turned = this.rotation !== (frame.rotation ?? 0) || String(this.plane) !== String(frame.plane);
     this.rotation = frame.rotation ?? 0;
@@ -141,7 +152,7 @@ export class DeviceContactRenderer {
     const nodes = new Map([...root.querySelectorAll<HTMLElement>('.devlayer > .dev[data-hp="device"][data-id]')]
       .map((node) => [node.dataset.id!, node]));
     const key = frame.key + '|' + frame.markers.map((m) => [m.id, m.x, m.y, m.diameter,
-      m.virtual,JSON.stringify(frame.layout?.[m.id]?.contact_basis),
+      m.virtual,m.legacyDiameters?.join(','),JSON.stringify(frame.layout?.[m.id]?.contact_basis),
       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
     if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) {
       this.paintWallMasks(nodes);
@@ -168,7 +179,9 @@ export class DeviceContactRenderer {
       const metric = fresh.get(faceKey) || this.metrics.get(faceKey);
       if (!metric) continue;
       const box = Object.fromEntries(Object.entries(metric).map(([k,v]) => [k, v * m.diameter])) as unknown as ContactRect;
-      measured.push({ ...m, box }); nextElements.set(m.id, { element, ink });
+      const { legacyDiameters, ...marker } = m;
+      measured.push({ ...marker, box });
+      nextElements.set(m.id, { element, ink });
     }
     const bases=new Map<string,ContactMarker>();
     for(const m of measured) {
@@ -177,9 +190,16 @@ export class DeviceContactRenderer {
     }
     this.authored=new Map(measured.map(m=>[m.id,m]));
     const walls=frame.walls || floor?.walls || [],masonry=frame.masonry || floor?.masonry || [];
-    const effective=this.layout.resolve(measured,walls,masonry,bases,frame.key);
-    this.reflowed=effective.some((m,i)=>m.x!==measured[i].x||m.y!==measured[i].y);
+    const legacy = new Map(frame.markers.flatMap(m => m.legacyDiameters ? [[m.id, m.legacyDiameters]] : []));
+    const effective=this.layout.resolve(measured,walls,masonry,bases,frame.key,legacy.size ? legacy : undefined);
+    this.reflowed=effective.some((m,i)=>m.x!==measured[i].x||m.y!==measured[i].y||m.diameter!==measured[i].diameter);
     const previous = this.scene;
+    const nextStatus = this.layout.resizeBaselineLost ? 'baseline-lost' : this.layout.resizeLimited ? 'limited' : null;
+    this.appearanceChanged = nextStatus !== this.resizeStatus || !!previous && effective.some(marker => {
+      const old = previous.shapes.get(marker.id)?.marker;
+      return old && old.diameter !== marker.diameter;
+    });
+    this.resizeStatus = nextStatus;
     const sameGeometry = previous && this.floorKey === frame.key && measured.length === previous.shapes.size
       && effective.every((m) => {
         const old = previous.shapes.get(m.id)?.marker;
@@ -192,7 +212,7 @@ export class DeviceContactRenderer {
     if (sameGeometry) {
       this.elements = nextElements; this.frameKey = key;
       if (turned) this.paint(previous.shapes.keys());
-      return turned;
+      return turned || this.appearanceChanged;
     }
     const reusable=previous && this.floorKey===frame.key && effective.length===previous.shapes.size
       && effective.every(m=>previous.shapes.has(m.id)&&this.elements.get(m.id)?.element===nextElements.get(m.id)?.element);

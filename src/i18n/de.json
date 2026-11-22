@@ -1,4 +1,6 @@
 {
+  "device.resize_limited": "Die Symbolgröße ist begrenzt, damit die Kontakte erhalten bleiben.",
+  "device.resize_baseline_lost": "Die ursprünglichen Gerätekontakte passen hier nicht mehr.",
   "standalone.host_error": "Keine Verbindung mit diesem House-Plan-Host. Prüfen Sie seine Erreichbarkeit, Version und unterstützten APIs und verbinden Sie sich erneut.",
   "panel.actions": "Aktionen",
   "empty.plan_prompt": "Der Plan ist noch leer. Zeichnen wir etwas.",

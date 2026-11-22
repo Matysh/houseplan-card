@@ -1,4 +1,6 @@
 {
+  "device.resize_limited": "La taille des icônes est limitée pour conserver leurs contacts.",
+  "device.resize_baseline_lost": "Les contacts d’origine des appareils ne tiennent plus ici.",
   "standalone.host_error": "Connexion impossible à cet hôte House Plan. Vérifiez sa disponibilité, sa version et les API prises en charge, puis reconnectez-vous.",
   "panel.actions": "Actions",
   "empty.plan_prompt": "Le plan est encore vide. Dessinons quelque chose.",

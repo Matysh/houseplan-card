@@ -689,6 +689,10 @@ not a group/attachment ID. Only a valid block matching the entry's exact authore
 x/y/s participates. `legacy` records the old loose recognition of an explicitly
 materialised legacy component; a new drag writes an exact reference instead.
 No values, HA bindings, shell angle or displayed live positions are stored.
+#1517 stores a proved original basis on an explicit individual size edit.
+Per-card and screen profile scale stays presentation-only, as do derived
+centres and limited diameters. Legacy reads consider only the authored card
+size before profile overrides and the standard panel size.
 
 Reads never migrate a document. Malformed/stale/future blocks remain inert and
 lossless; changed known-v1 writes validate finite bounds/shape/identity and a 2 KiB

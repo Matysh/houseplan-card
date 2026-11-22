@@ -792,6 +792,7 @@ export interface IsoOverlaySceneInput {
   kioskIconScale: number;
   kioskFontScale: number;
   positionOf(device: DevItem): { x: number; y: number };
+  effectiveDiameterOf?(device: DevItem): number | undefined;
   presentationOf(device: DevItem, showLqi: import('./signal-visibility').SignalVisibility): ResolvedDevicePresentation;
   labelPositionOf(room: RoomCfg, spaceId: string): { x: number; y: number };
   labelScaleOf(room: RoomCfg): number;
@@ -955,7 +956,8 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     const pos = input.positionOf(device);
     const presentation = input.presentationOf(device, input.showLqi);
     // #649: the 2.5D tile is ICON_SCALE larger; layout and fit see that size.
-    const core = baseDeviceUnits * presentation.scale * (input.floorAlignedMarkers ? 1 : ISO_ICON_SCALE);
+    const core = (input.floorAlignedMarkers ? input.effectiveDiameterOf?.(device) : undefined)
+      ?? baseDeviceUnits * presentation.scale * (input.floorAlignedMarkers ? 1 : ISO_ICON_SCALE);
     const halfSize = isoRaisedOverlayHalfSize({ kind: 'device', core, presentation });
     const layoutHalfSize = isoRaisedOverlayHalfSize({
       kind: 'device', core, presentation: stateFreePresentation(presentation),

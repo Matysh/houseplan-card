@@ -4,6 +4,7 @@
 
 - Move the room caption color to Names and readings, above Font sizes, with immediate preview while editing (#1519).
 - Configure independent plan views and rotation for full dashboard cards and external screens, with 45° steps in 2.5D (#1516).
+- Keep device wall anchors and groups when changing individual or per-screen icon sizes, with an explanation where the requested size cannot fit (#1517).
 - Place a freestanding TV on a TV cabinet from the Background editor. The stand rests on the cabinet in 2.5D and moves with it (#1511).
 - 2.5D plan rotation adds four straight-on views between the existing diagonal views and rounds to a clockwise quarter when returning to Flat. (#1515)
 - Device settings: repair room-proved stale space references on writes and Optimize without relocating saved devices; explain invalid drafts across settings tabs. (#1512)

@@ -5,6 +5,7 @@ import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeMarkerAlertsFixture } from '../fixtures/marker-alerts.mjs';
 import { prepareMarkerAlerts } from './marker-alerts.mjs';
 import { makeDeviceContactsFixture, prepareDeviceContacts } from './device-contacts.mjs';
+import { makeDeviceContactResizeFixture, prepareDeviceContactResize } from './device-contact-resize.mjs';
 import { prepareApprovedUi } from './approved-ui.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
@@ -94,6 +95,7 @@ const fixtureFor = (scenario) => scenario.resizeJunction ? makeResizeJunctionFix
     fixture.layout['golden-cover-value'] = { s: scenario.space, x: 0.5, y: 0.5 };
     return fixture;
   })()
+  : scenario.deviceContactResize ? makeDeviceContactResizeFixture(scenario.deviceContactResize)
   : scenario.deviceContacts ? makeDeviceContactsFixture()
   : scenario.offlineBoard ? makeDeviceOfflineFixture()
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
@@ -1277,7 +1279,8 @@ export async function prepareGoldenScenario(page, scenario) {
           ...(scenario.approvedUi === 'summary' ? { summary_panel_api: 1 } : {}),
           ...(scenario.nodeMenuTool ? { wall_node_move_api: 1, wall_node_delete_api: 1 } : {}),
           ...(scenario.vacuumHistory?{vacuum_history_api:1}:{}),
-          ...(scenario.externalScreens?{external_screens_api:3,summary_panel_api:1}:{}),
+          ...((scenario.externalScreens || scenario.deviceContactResize)
+            ? { external_screens_api: scenario.externalScreens ? 3 : 2, summary_panel_api: 1 } : {}),
           ...(scenario.directLqi ? { zigbee_lqi_api: 1 } : {}),
           ...(Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')
             ? { integration_version: scenario.integrationVersion } : {}),
@@ -3279,6 +3282,7 @@ export async function prepareGoldenScenario(page, scenario) {
   }
   if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
   if (scenario.deviceContacts) result.deviceContacts = await prepareDeviceContacts(page);
+  if (scenario.deviceContactResize) result.deviceContactResize = await prepareDeviceContactResize(page, scenario.deviceContactResize);
   if (scenario.approvedUi) result.approvedUi = await prepareApprovedUi(page, scenario);
   if (scenario.offlineBoard) result.offlineBoard = await prepareDeviceOfflineBoard(page);
   if (scenario.revealHiddenDevices) {

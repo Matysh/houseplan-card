@@ -447,7 +447,7 @@ point, control, offline style or topology permission is changed.
 
 ## Implementation notes
 
-### Derived Flat contacts (#866)
+### Derived contacts in Flat and 2.5D (#866, #1451)
 
 #### Contact reflow and contour (#1003)
 
@@ -466,17 +466,24 @@ until explicit movement normalises the affected component. Temporary guide lines
 remain, but the redundant “Join outlines” / “Attach to wall” labels are gone.
 
 `device-contact-layout` derives effective positions from a stable reference,
-not the previous displayed frame: value/units/unavailable/size changes reflow
-connected members with a deterministic ID anchor, preferring wall/corner support.
-No live tick writes layout/config or creates history. If the geometry cannot fit,
-contacts may separate safely (owner decision), retaining their latent reference
-so shrinking can restore them. Unrelated groups and HA/room bindings do not move.
-The full card's shared position reader and static adapter expose these effective
-positions to paint/hit/selection/overlays. 2.5D retains authored individual tiles.
+not the previous displayed frame. Value-only changes follow #1003, including
+separation when the new face cannot fit. When the full card's requested diameter
+changes (#1517), a proved contact component keeps its wall faces and neighbour
+edges. The solver prefers a corner or wall, then the first original anchor by
+Y, X and ID. It checks the whole component after positioning. If the requested
+size cannot fit, the solver uses a checked size between the original and
+requested sizes and explains the limit in View. If even the original diameters
+with the current faces cannot fit, the existing safe separation is explained.
+An unrelated free marker keeps its centre. Growth into a proved neighbouring
+contact can limit that free marker's size.
 
-Applicable references are materialised only on explicit edits; see
-CONFIG-COMPATIBILITY.md. A cold legacy load cannot reconstruct an unknown earlier
-text width: its first observed face is the session reference.
+The same effective positions and diameters drive paint, hit testing and
+occlusion in Flat and floor-aligned 2.5D. This calculation stays local to each
+card or screen. Applicable references are materialised only on explicit edits;
+see CONFIG-COMPATIBILITY.md. On a cold legacy load, the full card proves
+contacts from saved centres and current faces at the card's unprofiled size
+and the standard panel size. It keeps a single proof when these disagree.
+An unknown earlier text width is still not reconstructed.
 Metrics are bounded and font-context aware;
 unchanged fitted geometry reuses indexes and solver results.
 

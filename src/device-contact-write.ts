@@ -31,13 +31,11 @@ export async function contactConfigPatch(value:object,candidate:ServerConfig):Pr
     JSON.stringify([m?.size??1,m?.display??null,m?.value_badge??null,m?.value_source??null,m?.use_climate_temp??false]);
   const changed=new Set((candidate.markers??[]).filter(m=>metric(old.get(m.id))!==metric(m)).map(m=>m.id));
   const patch:DeviceLayout={};
-  for(const id of changed) for(const member of scene.component(id)) {
+  for(const id of changed) for(const member of renderer.referenceMembers(id)) {
     const reference=renderer.reference(member),entry=host._layout[member];
     if(!reference || !entry || entry.s!==host._space || readContactBasis(entry.contact_basis))continue;
     // Future blocks are opaque. An unrelated marker edit must not downgrade one.
     if(Object.prototype.hasOwnProperty.call(entry,'contact_basis'))continue;
-    const group=scene.component(member);
-    if(group.length<2&&!Object.keys(scene.shapes.get(member)!.walls).length)continue;
     const basis={...makeContactBasis(reference,host._space),legacy:true};
     const pos=canonicalizePosition(entry);
     patch[member]={...pos,contact_basis:{...basis,at:{x:pos.x,y:pos.y,s:pos.s}}};

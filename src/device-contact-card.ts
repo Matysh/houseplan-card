@@ -18,7 +18,7 @@ interface ContactCard extends FloorKeySource {
   _renderProjection: string; _mode: string; _markup: boolean;
   readonly _rotation: PlanRotation;
   readonly _isoFloorMarkerPlane?: readonly number[];
-  _kioskScale: { icon: number };
+  readonly _effectiveKioskScale: { icon: number };
   _renderDevices: readonly DevItem[];
   _deviceHits: DeviceHitController;
   _spaceModel(): SpaceModel | undefined;
@@ -59,7 +59,12 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
   const host = value as ContactCard, space = host._spaceModel();
   if (host._deviceHits.contactGeometry !== renderer.hit) host._deviceHits.contactGeometry = renderer.hit;
   const plane = host._isoFloorMarkerPlane;
-  if (!space || host._renderProjection === 'iso' && !plane) { renderer.clear(); return; }
+  if (!space || host._renderProjection === 'iso' && !plane) {
+    const hadLimit = !!renderer.resizeStatus;
+    renderer.clear();
+    if (hadLimit) host.requestUpdate();
+    return;
+  }
   const visible = host._spaceDisplayForRender().showBorders || host._markup;
   let keyOf = wallKeys.get(host);
   if (!keyOf) { keyOf = floorGeometryKeyReader(host); wallKeys.set(host, keyOf); }
@@ -71,14 +76,18 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
     wallCache.set(host, wall);
   }
   const size = host._config?.icon_size ?? 2.5;
-  const base = effectiveDeviceBaseSize(size > 8 ? 2.5 : size) / 100 * iconUnit(space)
-    * (host._mode === 'view' ? host._kioskScale.icon : 1);
-  const wasReflowed=renderer.reflowed;
+  const unit = iconUnit(space) / 100;
+  const surfaceBase = effectiveDeviceBaseSize(size > 8 ? 2.5 : size) * unit;
+  const neutralBase = effectiveDeviceBaseSize(2.5) * unit;
+  const iconScale = host._mode === 'view' ? host._effectiveKioskScale.icon : 1;
+  const wasReflowed=renderer.reflowed, previousStatus = renderer.resizeStatus;
   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
     space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane,invalidate:()=>host.requestUpdate(),
-    markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => ({
-      id: d.id, ...host._pos(d,false), virtual:d.virtual===true||d.bindingKind==='virtual', diameter: base * host._devicePresentation(d).scale,
-    })) });
+    markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => {
+      const scale = host._devicePresentation(d).scale;
+      return { id: d.id, ...host._pos(d,false), virtual: d.virtual === true || d.bindingKind === 'virtual',
+        diameter: surfaceBase * scale * iconScale, legacyDiameters: [surfaceBase * scale, neutralBase * scale] };
+    }) });
   if (changed) {
     host._invalidateDeviceHitGeometry();
     const drag=host._deviceDrag,d=drag&&host._renderDevices.find(d=>d.id===drag.id);
@@ -86,6 +95,6 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
       ...drag.lastPointer,pointerId:drag.pointerId,
     }),d);
     // Painting a contour alone must not interrupt another editor's live layer.
-    if(wasReflowed||renderer.reflowed)host.requestUpdate();
+    if(wasReflowed||renderer.reflowed||renderer.appearanceChanged||previousStatus!==renderer.resizeStatus)host.requestUpdate();
   }
 }

@@ -4,7 +4,7 @@ import {contactAtCorner,contactBoxIn,contactContains,contactContourShapes,contac
   deriveContactShape,joinedContactSide} from '../test-build/device-contact-geometry.js';
 import {DeviceContactScene} from '../test-build/device-contact-scene.js';
 import {DeviceContactMagnet} from '../test-build/device-contact-snap.js';
-import {DeviceContactLayout} from '../test-build/device-contact-layout.js';
+import {DeviceContactLayout,resizeContactMarker} from '../test-build/device-contact-layout.js';
 import {contactBasisMarker,makeContactBasis,readContactBasis} from '../test-build/device-contact-basis.js';
 import {contactIntersectsMasonry} from '../test-build/device-contact-collision.js';
 const marker=(id,x=200,y=200,d=40)=>({id,x,y,diameter:d,box:{left:-d*.634375,right:d*.634375,top:-d*.634375,bottom:d*.634375}});
@@ -134,4 +134,64 @@ test('#1003 AC15 identical 200-marker frame does not rebuild indexes or solve ag
   assert.equal(layout.work.referenceBuilds,work.referenceBuilds);
   assert.equal(layout.work.occupancyBuilds,work.occupancyBuilds);
   assert.equal(layout.work.components-work.components,1);
+});
+
+test('#1517 cold profile and card resize preserve proved legacy wall position', () => {
+  const original = marker('a', 25.75);
+  const request = resizeContactMarker(original, 60);
+  for (const sources of [[60, 40], [40, 25]]) {
+    const layout = new DeviceContactLayout();
+    const [placed] = layout.resolve([request], [left], [], new Map(), 'floor', new Map([['a', sources]]));
+    near(placed.x, 38.625);
+    near(placed.y, original.y);
+    near(contactBoxIn(deriveContactShape(placed, [left])).left, 0);
+    assert.equal(layout.reference('a').diameter, 40);
+    assert.equal(placed.diameter, 60);
+    assert.equal(layout.resizeLimited, false);
+  }
+});
+
+test('#1517 constrained growth keeps a complete row within the corridor', () => {
+  const a = marker('a', 25.75), b = marker('b', 70.75);
+  const outside = marker('free', 400, 400);
+  const solid = [[[[115,150],[135,150],[135,260],[115,260],[115,150]]]];
+  const context = () => {
+    const layout = new DeviceContactLayout();
+    const bases = new Map([a,b,outside].map(m => [m.id, m]));
+    return { layout, resolve: points => layout.resolve(points, [left], solid, bases, 'floor', new Map()) };
+  };
+  const {layout, resolve} = context();
+  const baseline = [a,b,outside];
+  const enlarged = [resizeContactMarker(a, 75), resizeContactMarker(b, 75), outside];
+  const accepted = resolve(enlarged);
+  assert.equal(layout.resizeLimited, true);
+  assert.equal(layout.resizeBaselineLost, false);
+  assert.deepEqual(accepted[2], outside);
+  assert.ok(accepted[0].diameter > 40 && accepted[0].diameter < 75);
+  assert.equal(accepted[0].diameter, accepted[1].diameter);
+  const shapes=accepted.slice(0,2).map(m=>deriveContactShape(m,[left]));
+  near(contactBoxIn(shapes[0]).left,0);
+  assert.equal(joinedContactSide(...shapes),'right');
+  assert.ok(shapes.every(shape => !contactIntersectsMasonry(shape, solid)));
+  assert.deepEqual(resolve(baseline),baseline);
+  assert.deepEqual(resolve(enlarged),accepted);
+  const fresh = context().resolve([...enlarged].reverse());
+  assert.deepEqual(fresh.reverse(),accepted);
+});
+
+test('#1517 growing free marker retains its centre and yields to existing contact', () => {
+  const a = marker('a', 25.75), b = marker('b', 70.75), free = marker('free', 140);
+  const requested = [a,b,resizeContactMarker(free, 100)];
+  const layout = new DeviceContactLayout();
+  const result=layout.resolve(requested,[left],[],new Map([a,b,free].map(m=>[m.id,m])),'floor',new Map());
+  assert.equal(layout.resizeLimited,true);
+  assert.deepEqual(result.slice(0,2),[a,b]);
+  near(result[2].x,free.x);
+  assert.ok(result[2].diameter>40 && result[2].diameter<100);
+
+  const otherFree = marker('other', 198);
+  const independent = new DeviceContactLayout();
+  const two = [resizeContactMarker(free,100), resizeContactMarker(otherFree,100)];
+  assert.deepEqual(independent.resolve(two,[],[],new Map([free,otherFree].map(m=>[m.id,m])),'floor',new Map()),two);
+  assert.equal(independent.resizeLimited,false);
 });

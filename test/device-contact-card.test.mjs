@@ -7,7 +7,9 @@ import { floorGeometryKeyReader } from '../test-build/floor-geometry-key.js';
 test('#1451 floor-aligned View uses the native contact adapter in plan coordinates', () => {
   let frame,cleared=0;
   const host={_renderProjection:'iso',_mode:'view',_markup:false,_rotation:90,
-    _isoFloorMarkerPlane:[.8,.3,-.6,.5,0,0],_kioskScale:{icon:1},_renderDevices:[],
+    _isoFloorMarkerPlane:[.8,.3,-.6,.5,0,0],_kioskScale:{icon:1},_effectiveKioskScale:{icon:1.5},
+    _renderDevices:[{id:'lamp',space:'floor',bindingKind:'virtual'}],
+    _pos:()=>({x:20,y:40}),_devicePresentation:()=>({scale:1}),
     _deviceHits:{},renderRoot:{},_layout:{},_cfgEpoch:1,_renderCfg:{spaces:[]},
     _curSpaceCfg:{id:'floor',rooms:[],cell_cm:5},_spaceModel:()=>({id:'floor',rooms:[],cell_cm:5}),
     _spaceDisplayForRender:()=>({showBorders:true}),_wallUnionGeometry:()=>({components:[]}),_zeroWalls:()=>({lines:[]})};
@@ -15,6 +17,8 @@ test('#1451 floor-aligned View uses the native contact adapter in plan coordinat
   syncHouseplanDeviceContacts(host,renderer);
   assert.equal(cleared,0); assert.equal(frame.rotation,0,'the floor already turns the contour');
   assert.deepEqual(frame.plane,host._isoFloorMarkerPlane);
+  assert.ok(Math.abs(frame.markers[0].diameter-frame.markers[0].legacyDiameters[0]*1.5)<1e-9);
+  assert.ok(frame.markers[0].diameter>0);
   host._isoFloorMarkerPlane=undefined;
   syncHouseplanDeviceContacts(host,renderer);
   assert.equal(cleared,1,'ordinary dev is unchanged');
@@ -28,7 +32,7 @@ test('#1003 contour-only sync invalidates hits without scheduling another editor
     let updates = 0, hits = 0;
     const host = {
       _renderProjection: 'flat', _mode: 'plan', _markup: true,
-      _kioskScale: { icon: 1 }, _renderDevices: [], _deviceHits: {}, renderRoot: {},
+      _effectiveKioskScale: { icon: 1 }, _renderDevices: [], _deviceHits: {}, renderRoot: {},
       _layout: {}, _rotation: 0, _cfgEpoch: 1, _renderCfg: { spaces: [] },
       _curSpaceCfg: { id: 'floor', rooms: [], cell_cm: 5 },
       _spaceModel: () => ({ id: 'floor', rooms: [], cell_cm: 5 }),
@@ -61,7 +65,7 @@ test('#935 contact walls stay warm for decor edits, but follow every architectur
   const host = {
     _cfgEpoch: 1, _renderCfg: { spaces: [raw] }, _curSpaceCfg: raw,
     _renderProjection: 'flat', _mode: 'decor', _markup: false,
-    _kioskScale: { icon: 1 }, _renderDevices: [], _deviceHits: {}, renderRoot: {},
+    _effectiveKioskScale: { icon: 1 }, _renderDevices: [], _deviceHits: {}, renderRoot: {},
     _spaceModel: () => spaceModels(host._renderCfg)[0],
     _spaceDisplayForRender: () => ({ showBorders: true }),
     _wallUnionGeometry: () => { builds++; return { components: [] }; },

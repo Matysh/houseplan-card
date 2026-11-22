@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1517,
+  "baseStable": "v1.86.0",
+  "category": "stable-fix",
+  "rationale": "Correct marker wall contacts and group reflow when applying persisted marker size and per-screen scale in the released View.",
+  "summary": {
+    "en": "Keep device anchors and groups while resizing markers.",
+    "ru": "Сохранение привязок и групп при изменении размера устройств."
+  }
+}
