@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1216,
+  "revision": 1217,
   "active": "v1.86.1-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -199524,7 +199524,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.1-beta.1",
@@ -206986,7 +206986,8 @@
           "en": "## v1.86.1-beta.1 — 2026-11-22\n\n- End stalled floor preparation with a retryable error instead of leaving “Updating plan” on screen (#1521).\n- On a repeat open, Flat and 2.5D can show a matching, verified static SVG before live devices and lighting are ready; progress stays in the upper-left corner of the plan (#1520).\n- Opt in to translucent 2.5D walls per space while keeping the default opaque masonry (#1518).\n- Move the room caption color to Names and readings, above Font sizes, with immediate preview while editing (#1519).\n- Configure independent plan views and rotation for full dashboard cards and external screens, with 45° steps in 2.5D (#1516).\n- Keep device wall anchors and groups when changing individual or per-screen icon sizes, with an explanation where the requested size cannot fit (#1517).\n- Place a freestanding TV on a TV cabinet from the Background editor. The stand rests on the cabinet in 2.5D and moves with it (#1511).\n- 2.5D plan rotation adds four straight-on views between the existing diagonal views and rounds to a clockwise quarter when returning to Flat. (#1515)\n- Device settings: repair room-proved stale space references on writes and Optimize without relocating saved devices; explain invalid drafts across settings tabs. (#1512)\n- Advance the release cycle during stable return to dev and refuse automatic assignment to closed milestones (#1510).\n- Preserve window sunlight and its solar fade during 2.5D light-source transitions (#1509).\n- Publish a checked wheel and standalone editor ZIP for the website with ordinary stable releases, separate from the HACS package (#1465)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.1-beta.1"
     }
   },
   "published": {
@@ -213020,7 +213021,8 @@
     "beta-1861-owner-accepted-cold-render": "e018eefb97ffa5ed5b6bb8be4278ce457adba2a49e53b663dd1c8a42e65549bd",
     "beta-1861-publish:runner-report": "ba495753b00f511959303462eaded65335728a67016535051636533dd76e939b",
     "beta-1861-publish:metrics": "9798a6823c7e5248acb64d46de7cb46f05247d615934b4f759b40c053dcc5748",
-    "beta-1861-publish:prepared:7dd302da-3bd7-4e8f-8319-3dde5f99b031": "1642334d91a0c2da6efabfd21f11b33b548775083eec0c6340c6ad4e27dde266"
+    "beta-1861-publish:prepared:7dd302da-3bd7-4e8f-8319-3dde5f99b031": "1642334d91a0c2da6efabfd21f11b33b548775083eec0c6340c6ad4e27dde266",
+    "beta-1861-publish:started:1216": "6a339297cb41617ce7cfd4a07cc6b01e677684d42a339a6ac1bfa56f9285b19f"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
