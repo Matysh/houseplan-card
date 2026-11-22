@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20090,
+  "revision": 20091,
   "nextTicket": 602,
   "nextFence": 602,
   "tasks": {
@@ -5576,14 +5576,52 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1515-iso-eighth-turn",
-      "materialSha": "9d3d29c1aded13f47307703169eea867cd00e612",
+      "materialSha": "b9b1ede15ac44c53f655c13adc9fc5ef410d6cd9",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 601,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795333946103,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "d5e23870c7f0d947478753a77aacb324b1c71c35",
+      "changedFiles": [
+        "demo/benchmark_iso_paint.mjs",
+        "demo/smoke_closed_door_glow.mjs",
+        "demo/smoke_floor_persistent_cache.mjs",
+        "demo/smoke_iso_device_contours.mjs",
+        "demo/smoke_iso_flat_parity.mjs",
+        "demo/smoke_iso_label_bounds.mjs",
+        "demo/smoke_iso_raster_parity.mjs",
+        "demo/smoke_plan_rotation.mjs",
+        "demo/smoke_summary_camera.mjs",
+        "demo/smoke_swing_door_placement.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/ISOMETRIC.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.86.0/1515.json",
+        "process-next/lib/source-dependencies.mjs",
+        "scripts/mutation-registry.mjs",
+        "src/card-editor-validation.ts",
+        "src/floor-cache-preview.ts",
+        "src/houseplan-card.ts",
+        "src/iso-projection.ts",
+        "src/iso-scene-geometry.ts",
+        "src/pdf/pdf-scene.ts",
+        "src/plan-rotation-motion.ts",
+        "src/projection-view-camera.ts",
+        "src/room-fit.ts",
+        "src/screen-camera.ts",
+        "src/space-card.ts",
+        "src/view-frame-view.ts",
+        "src/view-frame.ts",
+        "test/iso-projection.test.mjs",
+        "test/plan-rotation-motion.test.mjs",
+        "test/projection-view-camera.test.mjs",
+        "test/view-frame.test.mjs"
+      ]
     },
     "1518": {
       "issue": 1518,
@@ -6221,11 +6259,12 @@
     "worker": "finish",
     "token": "601:finish:2f945ee5-a1f0-4976-85f3-b5ce814e74e5:finish:2:admit",
     "fence": 601,
-    "materialSha": "9d3d29c1aded13f47307703169eea867cd00e612",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "b9b1ede15ac44c53f655c13adc9fc5ef410d6cd9",
+    "expectedBase": "432662652229bf4bf58c2a4b94e954efa9f770c7",
+    "phase": "testing",
     "admittedAt": 1795336287285,
-    "expiresAt": 1795336587285
+    "expiresAt": 1795336599055,
+    "patchId": "d5e23870c7f0d947478753a77aacb324b1c71c35"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6571,6 +6610,10 @@
     "finish:15095b3d-9f7d-48b3-a937-80e8d66dea87:finish:3:return": {
       "digest": "11845962678886364d9a3daeb6902afcad25b40329b8f76c2ea0a2ce2cea8114",
       "issue": 1518
+    },
+    "finish:2f945ee5-a1f0-4976-85f3-b5ce814e74e5:finish:3:synchronized": {
+      "digest": "17273426d60173f2af61ed4e8935f957a4343eb651a83b319106b28b16c1c524",
+      "issue": 1515
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
