@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20277,
-  "nextTicket": 609,
+  "revision": 20278,
+  "nextTicket": 610,
   "nextFence": 608,
   "tasks": {
     "1024": {
@@ -5683,14 +5683,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1517-resize-contacts",
-      "materialSha": "8cc632ede75a64efdb5cc9a2d1211a4d59966ab3",
+      "materialSha": "9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 606,
-      "queued": false,
+      "ticket": 609,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795340117068,
-      "reviewEntry": 2,
+      "readyAt": 1795341558574,
+      "reviewEntry": 3,
       "notice": {
         "key": "2:checks-failed",
         "reason": "checks-failed",
@@ -5754,11 +5754,7 @@
         "test/device-contact-card.test.mjs",
         "test/device-contact-screen.test.mjs",
         "test/device-contact-write.test.mjs"
-      ],
-      "automationError": "automation-error",
-      "automationSince": 1795340262463,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
-      "reason": "checks-failed"
+      ]
     },
     "1518": {
       "issue": 1518,
@@ -6405,7 +6401,8 @@
     }
   },
   "waiting": [
-    1518
+    1518,
+    1517
   ],
   "active": {
     "issue": 1516,
@@ -7336,6 +7333,19 @@
         "layer": "product",
         "materialSha": "fb7e68b467fe8f663e230057323e681ca242de19",
         "phase": "sync"
+      }
+    },
+    "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09": {
+      "digest": "db74ef98e58de83a8215b0f8e7e6c1a275f317993e66d87523e17224cea29eb9",
+      "issue": 1517,
+      "message": {
+        "kind": "queued",
+        "issue": 1517,
+        "at": 1795341558574,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09"
       }
     }
   },
