@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19873,
+  "revision": 19874,
   "nextTicket": 599,
   "nextFence": 598,
   "tasks": {
@@ -6184,25 +6184,6 @@
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
     },
-    "spec:1515:spec:1515:bc48a87a4e23ef295c1bf28969d7a820e7e13aef5999db0802c3b49ec3e63f45": {
-      "issue": 1515,
-      "kind": "spec",
-      "requestId": "spec:1515:bc48a87a4e23ef295c1bf28969d7a820e7e13aef5999db0802c3b49ec3e63f45",
-      "materialSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-      "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-      "patchId": "bc48a87a4e23ef295c1bf28969d7a820e7e13aef5999db0802c3b49ec3e63f45",
-      "status": "pending",
-      "presentation": {
-        "round": 1,
-        "occurredAt": "2026-11-22T07:16:34.764Z",
-        "transition": {
-          "from": "S4-spec-review",
-          "to": "S3-spec",
-          "confirmed": true
-        }
-      },
-      "runId": 44997507653
-    },
     "spec:1517:spec:1517:b0d3af4bd1677b5a687f4ef1a6a298182fe1181dbe48999703c053139ce83f3f": {
       "issue": 1517,
       "kind": "spec",
@@ -6379,6 +6360,10 @@
     },
     "github:44997900807:1:spec:1515:spec-label": {
       "digest": "74e498c3a245c7cd8e791437fb0c465264064d7ba9dc261512ada130f0b1eb23",
+      "issue": 1515
+    },
+    "github:44997900807:1:completions:report:7059d32502a1921fc285fbb9b2c55e8b6074aec3f7e2e54305864a5a03f280e8": {
+      "digest": "4942857573fef7358e411680d3754028c0a8519bc54e9cf5fc08f907978624ef",
       "issue": 1515
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
