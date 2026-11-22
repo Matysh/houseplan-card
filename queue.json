@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19921,
+  "revision": 19922,
   "nextTicket": 599,
   "nextFence": 598,
   "tasks": {
@@ -5568,200 +5568,26 @@
     },
     "1513": {
       "issue": 1513,
+      "branch": "codex/1513-revert-real-3d",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1513-revert-real-3d",
-      "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 597,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795331384913,
-      "reviewEntry": 1,
-      "patchId": "99a4577ad4e0b540c3e68334f78e0d234d8849de",
-      "changedFiles": [
-        "THIRD_PARTY_NOTICES.md",
-        "custom_components/houseplan/THIRD_PARTY_NOTICES.md",
-        "custom_components/houseplan/core/house_commands.py",
-        "custom_components/houseplan/core/validation.py",
-        "custom_components/houseplan/licenses/three.txt",
-        "custom_components/houseplan/support_package.py",
-        "custom_components/houseplan/support_wire_schema.py",
-        "demo/compare-real-3d.mjs",
-        "demo/smoke_iso_real_3d.mjs",
-        "demo/smoke_isometric_contract.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/ISOMETRIC.md",
-        "docs/PDF-EXPORT.md",
-        "docs/SCOPE.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/release-ledger/v1.86.0/1472.json",
-        "docs/release-ledger/v1.86.0/1513.json",
-        "package-lock.json",
-        "package.json",
-        "scripts/bundle-manifest.mjs",
-        "scripts/config-schema.json",
-        "scripts/mutation-registry.mjs",
-        "scripts/standalone-build.mjs",
-        "scripts/support-relay/hp_relay/support_wire_schema.py",
-        "src/config-adoption.ts",
-        "src/editors/general-settings-dialog.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/i18n/de.json",
-        "src/i18n/en.json",
-        "src/i18n/fr.json",
-        "src/i18n/ru.json",
-        "src/iso-lab-furniture-render.ts",
-        "src/iso-lab-furniture.ts",
-        "src/iso-view-gl-mesh.ts",
-        "src/iso-view-gl-projection.ts",
-        "src/iso-view-gl-runtime.ts",
-        "src/live-viewport.ts",
-        "src/logic.ts",
-        "src/pdf/hp-pdf-dialog.ts",
-        "src/pdf/pdf-export.ts",
-        "src/pdf/svg-flat-stage.ts",
-        "src/pdf/svg-snapshot.ts",
-        "src/styles/plan.styles.ts",
-        "src/types.ts",
-        "test/iso-view-backend.test.mjs",
-        "test/iso-view-gl-mesh.test.mjs",
-        "test/iso-view-gl-projection.test.mjs",
-        "test/isometric-contract.test.mjs",
-        "test/wall-union-isolation.test.mjs",
-        "tests_backend/test_config_schema_manifest.py",
-        "tests_backend/test_ha_config_flow.py",
-        "tests_backend/test_ha_import_export.py",
-        "tests_backend/test_house_commands.py",
-        "tests_backend/test_support_config_projection.py",
-        "tsconfig.test.json"
-      ],
-      "s6": {
-        "id": "20261122T071003180-1c0e5576",
-        "name": "Тесты для задачи #1513 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T071003180-1c0e5576/report.json",
-        "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-        "status": "passed",
-        "finishedAt": "2026-11-22T07:33:19.176Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+      "mergedSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
+      "mergedAt": 1795333115444,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1513:1:99a4577ad4e0b540c3e68334f78e0d234d8849de:5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-      "reviewMaterial": {
-        "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-        "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-        "patchId": "99a4577ad4e0b540c3e68334f78e0d234d8849de"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1513,
-        "requestId": "review:1513:1:99a4577ad4e0b540c3e68334f78e0d234d8849de:5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-        "kind": "code",
-        "base": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-        "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-        "patchId": "99a4577ad4e0b540c3e68334f78e0d234d8849de",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1513,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1513",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Откат выполнен обратным diff по диапазону экспериментальных коммитов `333722798..5fa8459ea`. Ветка содержит отдельный обычный коммит поверх dev. Поза и подъём ТВ на тумбе уже входят в предшествующую реализацию #1511. Правка #1472 добавляла к той же позе только передачу в GPU; удаляется этот вызов. Защита pending physical writes остаётся на исходном вызове принятия конфигурации.\n\nОбщий серверный контракт допускает неизвестные ключи настроек. Сохранённый `real_3d` читается и переносится как неприменяемое старое поле, а клиент руководствуется `volumetric_view`. Проверки включают получение и запись восстановленных данных через HA, импорт полной копии и браузерный Flat / 2.5D с прежним флагом. Отдельный экспериментальный runtime, зависимости и пользовательские записи удаляются. История реализации и ревью остаётся в #1472 и Git.\n\nПеред следующим выпуском нужен [панельный HA E2E](https://github.com/Matysh/houseplan-e2e/issues/95). Адресные проверки восстановления, записи и импорта прошли в HA и backend."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Откат эксперимента «Реальное 3D» (#1472) сделан правильно и аккуратно. Это обратный diff ровно по шести коммитам #1472 (`5ec319fe…5fa8459e`) поверх `3337227988`. Фронтенд вернулся к состоянию до эксперимента: по сверенным фрагментам `src/houseplan-card.ts` (15846 строк в обеих версиях) и `src/config-adoption.ts` совпадают с `3337227988`. Изменения #1511 и #1512 лежат в истории до этого диапазона и не затронуты. Монтаж ТВ на тумбе (`tvCabinet`/`tvOnCabinet`/`tvCabinetSurfaceCm`) остался, удалена только передача позы в GPU. Старый флаг `settings.real_3d` безопасен: серверная схема settings задана с `extra=vol.ALLOW_EXTRA`, поэтому при чтении, записи, восстановлении и импорте ключ проходит как неизвестный. Клиент его не интерпретирует и сохраняет при записи настроек через `{ ...cfg.settings }`. Зависимости three/@types/three, лицензия, retry-чанк, i18n, документация и запись ledger #1472 удалены. В коде не осталось ссылок на `real3d`, `REAL_3D`, `iso-view-gl` и `svg-flat-stage`. Блокеров нет. Закрытие #1472 и HA E2E — шаги процесса после слияния, к коду не относятся.",
-          "understanding": "Задача: убрать из dev экспериментальный WebGL2/Three.js-режим #1472 и не потерять 2D/2.5D, независимые исправления и совместимость с уже сохранёнными конфигурациями и резервными копиями, где есть `real_3d`.\n\nДо отката: в настройках был переключатель `gs-real-3d`. В `HouseplanCard` работал жизненный цикл `_syncReal3d`/`_presentReal3d`/`_releaseReal3d` с ленивой загрузкой `iso-view-gl-runtime` и retry-ассетом, `_isoEnabled` включался ещё и через `_activeReal3d()`. Был `foreignObject` с canvas, плоский SVG-снимок `_flatSvgScene` для экспорта из 3D и CSS, скрывавший SVG-геометрию поверх готового GPU-кадра. В `config-adoption` камера сохранялась при неизменном этаже (`_keepsReal3dCameraForConfig`). На сервере `real_3d` был строгим bool в `CONFIG_TYPE_SCHEMA`, в support-проекции и в `target_appearance`.\n\nПосле отката всё это удалено. `_isoEnabled` снова зависит только от `volumetricViewOf(settings)`. `adoptStructuralResponses` безусловно вызывает `_clearRoomFocus(true)` и `_cancelCameraTransition(false)`, `_pendingPhysicalWrites.clear()` остаётся на том же месте. SVG-экспорт снова синхронный (`svgSource: () => SvgViewSource`). Сервер больше не знает о ключе, но и не отвергает его: settings задан с `extra=vol.ALLOW_EXTRA`.\n\nЧто разобрал по исходникам:\n- диапазон коммитов по `git_log`;\n- совпадение ключевых участков `houseplan-card.ts` и `config-adoption.ts` с `3337227988`;\n- схему `validation.py` (строки 2979–3044);\n- сохранение настроек `_saveSettingsDialog` (`{ ...cfg.settings }`);\n- support-проекцию и закрытую wire-схему relay;\n- запись ledger и то, как процесс выпуска читает категории;\n- поиск остатков по всему дереву;\n- новые и удалённые тесты (backend restore/import, браузерный smoke `smoke_isometric_contract`) и правки mutation-registry под восстановленный текст исходника.",
-          "analysis": [
-            {
-              "topic": "Точность отката и сохранение независимых изменений",
-              "assessment": "Обратный diff по точному диапазону даёт практически дерево `3337227988` плюс новые тесты и ledger. Это надёжнее ручной вычистки, и требование «не сбрасывать dev к старому SHA» выполнено: #1511/#1512 лежат ниже диапазона и не затронуты. Монтаж ТВ на тумбе остался. Удалён только `real3dFurniture.push(...)` и флаг `glOwned` в `renderIsoLabFurniture`. Хелпер `furniturePartsFor` вернулся внутрь `furnitureVolume`: он появился только в #1472, и других потребителей у него нет.",
-              "evidence": "`src/houseplan-card.ts:13295-13309` в head совпадает с тем же участком в `3337227988`, длина файла 15846 строк в обеих версиях. Импорты (стр. 340–349) совпадают. `src/config-adoption.ts:443-470` совпадает с `3337227988`. Поиск `furniturePartsFor`, `prepareFlatStage`, `data-hp-export-floor-light` ничего не находит."
-            },
-            {
-              "topic": "Совместимость сохранённого `settings.real_3d`",
-              "assessment": "Чтение безопасно: внутренняя схема settings открыта для неизвестных ключей, поэтому старый bool при валидации, записи `houseplan/config/set`, восстановлении previous_data и импорте полной копии проходит без ошибки. Клиент флаг не читает, вид определяется только `volumetric_view`. Сохранение общих настроек копирует существующие settings, так что флаг переносится как инертный. В ТЗ это допустимо: «читается и переносится как неприменяемое старое поле». Импорт пространства и house-transfer используют настройки целевой установки, флаг на них не влияет.",
-              "evidence": "`custom_components/houseplan/core/validation.py:2979-3042` (`extra=vol.ALLOW_EXTRA`). `src/houseplan-editor-runtime.ts:10226` (`{ ...cfg.settings }`). Тесты: `tests_backend/test_ha_config_flow.py:211-246` (restore → set → readback с сохранением settings/plan_graph), `tests_backend/test_ha_import_export.py:1602-1623` (полный импорт с `real_3d` true при обоих значениях `volumetric_view`)."
-            },
-            {
-              "topic": "Поведение 2D/2.5D со старым флагом",
-              "assessment": "Браузерный smoke проверяет оба направления. С `real_3d: true` и выключенным 2.5D план плоский, iso-runtime не запрашивается. После включения `volumetric_view` рисуется нативное SVG 2.5D без запросов `iso-view-gl`/`three-vendor`. Результаты проходят через `checkAll(out)`, то есть это настоящие утверждения, а не только вычисления.",
-              "evidence": "`demo/smoke_isometric_contract.mjs:65-72, 105-109, 618`. Результат S6 «Тесты для задачи #1513 (перед ревью)» — passed на `b6d5e3bf`."
-            },
-            {
-              "topic": "Сборка, зависимости, тестовые контракты",
-              "assessment": "three и @types/three вместе с транзитивными dev-пакетами убраны из package.json и lock. Лицензия убрана из notices и из standalone-сборки. Retry-чанк убран из `bundle-manifest`. В rollup не было отдельного three-чанка, правка не нужна. Статический тест `isometric-contract` снова запрещает three/webgl в package.json и `<foreignObject>` в карточке. Это хорошая защита от случайного возврата. Find-строки mutation-registry откатаны к тексту, который действительно есть в head (`const point = [cx, cy];`, `onConfigReplace();`).",
-              "evidence": "Диффы `package.json`, `package-lock.json`, `scripts/standalone-build.mjs`, `scripts/bundle-manifest.mjs`, `test/isometric-contract.test.mjs:405-411`, `scripts/mutation-registry.mjs:15145-15157, 16418-16428`. Поиск `real3d`, `REAL_3D`, `iso-view-gl`, `Three.txt`, `smoke_iso_real_3d` даёт только намеренные негативные проверки в smoke."
-            },
-            {
-              "topic": "Документация и учёт выпуска",
-              "assessment": "Записи CHANGELOG (en/ru), разделы ISOMETRIC/PDF-EXPORT/SCOPE и USER-GUIDE (en/ru) про «Реальное 3D» удалены. Остальной текст про SVG-экспорт и 2.5D не тронут. `1472.json` удалён, а `1513.json` с `line-fix` и без `summary` не попадёт в пользовательские заметки, поэтому отменённая функция не будет показана как новинка. `process-next/lib/release-data.mjs` проверяет только issue/baseStable/category, отсутствие `introducedBy` ему не мешает, и в текущей линии такие записи уже есть (1490, 1504).",
-              "evidence": "`docs/release-ledger/v1.86.0/1513.json`. `process-next/lib/release-data.mjs:3-16`. Поиск `issues/1472`, `(#1472)`, `Реальное 3D` по дереву не находит пользовательских упоминаний."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Relay поддержки: из закрытой wire-схемы `GLOBAL_SETTINGS` (и в интеграции, и в копии `scripts/support-relay/hp_relay/support_wire_schema.py`) удалён `\"real_3d\": BOOL`. Новая интеграция флаг больше не проецирует, так что для актуальных клиентов это корректно. Но если relay будет переразвёрнут из этого дерева, пока у кого-то стоит экспериментальная dev-сборка с включённым флагом, весь пакет такого пользователя получит `support_rejected`: схема закрытая, неизвестное поле — отказ (`scripts/support-relay/README.md:16-19, 70-72`). Затронут узкий круг: только dev-канал и только тем, кто включал эксперимент. Есть дешёвая альтернатива на переходный период: оставить `real_3d` в схеме relay как допустимое входящее поле, а `_global_settings` по-прежнему его не выдаёт. Цена — одна строка и комментарий о плане удаления. Перед деплоем relay стоит также свериться, разворачивался ли вообще relay с версией #1472.",
-            "Необязательно: при сохранении общих настроек можно удалять инертный `real_3d`, как это сделано для `weather_entity` (`validation.py:3012-3015`). Тогда старый ключ со временем исчезнет из хранилища и резервных копий. Текущее поведение (перенос без изменений) соответствует ТЗ, поэтому это лишь гигиена данных и не нужно, если владелец предпочитает не трогать сохранённые поля до следующей итерации #1514."
-          ],
-          "boundaries": "Сборку, тесты, smoke и HA E2E я не запускал. Опирался на квитанцию S6 «Тесты для задачи #1513 (перед ревью)» (status passed, материал `b6d5e3bf`, без failures) и на то, что автор сообщил о проверках в HA и backend. Совпадение `houseplan-card.ts` и `config-adoption.ts` с `3337227988` проверено выборочно по фрагментам и длине файла; полностью два дерева не сравнивались, такой возможности у меня нет. Diff в задаче усечён, поэтому изменённые файлы я читал отдельными вызовами `git_diff` и `read_file`. Удалённые `src/iso-view-gl-*.ts`, `src/pdf/svg-flat-stage.ts` и связанные тесты построчно не просматривал: убедился только, что в head на них никто не ссылается. Панельный HA E2E (houseplan-e2e#95), закрытие #1472 со ссылками на #1513/#1514 и возможный деплой relay — шаги процесса после слияния, в этом ревью они не проверялись. Учтите: коммиты #1472 с трейлером `Issue: #1472` остаются в истории, поэтому `buildCandidateMembership` включит #1472 в RELEASE-MEMBERSHIP следующего выпуска. Если к тому времени issue будет закрыта, как требует ТЗ, `release-completion` её пропустит. Если нет, выпуск может закрыть её как «выпущенную»."
-        },
-        "usage": {
-          "input_tokens": 84,
-          "cache_creation_input_tokens": 146530,
-          "cache_read_input_tokens": 4267624,
-          "output_tokens": 16758,
-          "output_tokens_details": {
-            "thinking_tokens": 5284
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 146530,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 890,
-              "cache_read_input_tokens": 136686,
-              "cache_creation_input_tokens": 14048,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 14048
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nОткат эксперимента «Реальное 3D» (#1472) сделан правильно и аккуратно. Это обратный diff ровно по шести коммитам #1472 (`5ec319fe…5fa8459e`) поверх `3337227988`. Фронтенд вернулся к состоянию до эксперимента: по сверенным фрагментам `src/houseplan-card.ts` (15846 строк в обеих версиях) и `src/config-adoption.ts` совпадают с `3337227988`. Изменения #1511 и #1512 лежат в истории до этого диапазона и не затронуты. Монтаж ТВ на тумбе (`tvCabinet`/`tvOnCabinet`/`tvCabinetSurfaceCm`) остался, удалена только передача позы в GPU. Старый флаг `settings.real_3d` безопасен: серверная схема settings задана с `extra=vol.ALLOW_EXTRA`, поэтому при чтении, записи, восстановлении и импорте ключ проходит как неизвестный. Клиент его не интерпретирует и сохраняет при записи настроек через `{ ...cfg.settings }`. Зависимости three/@types/three, лицензия, retry-чанк, i18n, документация и запись ledger #1472 удалены. В коде не осталось ссылок на `real3d`, `REAL_3D`, `iso-view-gl` и `svg-flat-stage`. Блокеров нет. Закрытие #1472 и HA E2E — шаги процесса после слияния, к коду не относятся.\n\n## Понимание решения\n\nЗадача: убрать из dev экспериментальный WebGL2/Three.js-режим #1472 и не потерять 2D/2.5D, независимые исправления и совместимость с уже сохранёнными конфигурациями и резервными копиями, где есть `real_3d`.\n\nДо отката: в настройках был переключатель `gs-real-3d`. В `HouseplanCard` работал жизненный цикл `_syncReal3d`/`_presentReal3d`/`_releaseReal3d` с ленивой загрузкой `iso-view-gl-runtime` и retry-ассетом, `_isoEnabled` включался ещё и через `_activeReal3d()`. Был `foreignObject` с canvas, плоский SVG-снимок `_flatSvgScene` для экспорта из 3D и CSS, скрывавший SVG-геометрию поверх готового GPU-кадра. В `config-adoption` камера сохранялась при неизменном этаже (`_keepsReal3dCameraForConfig`). На сервере `real_3d` был строгим bool в `CONFIG_TYPE_SCHEMA`, в support-проекции и в `target_appearance`.\n\nПосле отката всё это удалено. `_isoEnabled` снова зависит только от `volumetricViewOf(settings)`. `adoptStructuralResponses` безусловно вызывает `_clearRoomFocus(true)` и `_cancelCameraTransition(false)`, `_pendingPhysicalWrites.clear()` остаётся на том же месте. SVG-экспорт снова синхронный (`svgSource: () => SvgViewSource`). Сервер больше не знает о ключе, но и не отвергает его: settings задан с `extra=vol.ALLOW_EXTRA`.\n\nЧто разобрал по исходникам:\n- диапазон коммитов по `git_log`;\n- совпадение ключевых участков `houseplan-card.ts` и `config-adoption.ts` с `3337227988`;\n- схему `validation.py` (строки 2979–3044);\n- сохранение настроек `_saveSettingsDialog` (`{ ...cfg.settings }`);\n- support-проекцию и закрытую wire-схему relay;\n- запись ledger и то, как процесс выпуска читает категории;\n- поиск остатков по всему дереву;\n- новые и удалённые тесты (backend restore/import, браузерный smoke `smoke_isometric_contract`) и правки mutation-registry под восстановленный текст исходника.\n\n## Разбор решения\n\n### Точность отката и сохранение независимых изменений\n\nОбратный diff по точному диапазону даёт практически дерево `3337227988` плюс новые тесты и ledger. Это надёжнее ручной вычистки, и требование «не сбрасывать dev к старому SHA» выполнено: #1511/#1512 лежат ниже диапазона и не затронуты. Монтаж ТВ на тумбе остался. Удалён только `real3dFurniture.push(...)` и флаг `glOwned` в `renderIsoLabFurniture`. Хелпер `furniturePartsFor` вернулся внутрь `furnitureVolume`: он появился только в #1472, и других потребителей у него нет.\n\nОснование: `src/houseplan-card.ts:13295-13309` в head совпадает с тем же участком в `3337227988`, длина файла 15846 строк в обеих версиях. Импорты (стр. 340–349) совпадают. `src/config-adoption.ts:443-470` совпадает с `3337227988`. Поиск `furniturePartsFor`, `prepareFlatStage`, `data-hp-export-floor-light` ничего не находит.\n\n### Совместимость сохранённого `settings.real_3d`\n\nЧтение безопасно: внутренняя схема settings открыта для неизвестных ключей, поэтому старый bool при валидации, записи `houseplan/config/set`, восстановлении previous_data и импорте полной копии проходит без ошибки. Клиент флаг не читает, вид определяется только `volumetric_view`. Сохранение общих настроек копирует существующие settings, так что флаг переносится как инертный. В ТЗ это допустимо: «читается и переносится как неприменяемое старое поле». Импорт пространства и house-transfer используют настройки целевой установки, флаг на них не влияет.\n\nОснование: `custom_components/houseplan/core/validation.py:2979-3042` (`extra=vol.ALLOW_EXTRA`). `src/houseplan-editor-runtime.ts:10226` (`{ ...cfg.settings }`). Тесты: `tests_backend/test_ha_config_flow.py:211-246` (restore → set → readback с сохранением settings/plan_graph), `tests_backend/test_ha_import_export.py:1602-1623` (полный импорт с `real_3d` true при обоих значениях `volumetric_view`).\n\n### Поведение 2D/2.5D со старым флагом\n\nБраузерный smoke проверяет оба направления. С `real_3d: true` и выключенным 2.5D план плоский, iso-runtime не запрашивается. После включения `volumetric_view` рисуется нативное SVG 2.5D без запросов `iso-view-gl`/`three-vendor`. Результаты проходят через `checkAll(out)`, то есть это настоящие утверждения, а не только вычисления.\n\nОснование: `demo/smoke_isometric_contract.mjs:65-72, 105-109, 618`. Результат S6 «Тесты для задачи #1513 (перед ревью)» — passed на `b6d5e3bf`.\n\n### Сборка, зависимости, тестовые контракты\n\nthree и @types/three вместе с транзитивными dev-пакетами убраны из package.json и lock. Лицензия убрана из notices и из standalone-сборки. Retry-чанк убран из `bundle-manifest`. В rollup не было отдельного three-чанка, правка не нужна. Статический тест `isometric-contract` снова запрещает three/webgl в package.json и `<foreignObject>` в карточке. Это хорошая защита от случайного возврата. Find-строки mutation-registry откатаны к тексту, который действительно есть в head (`const point = [cx, cy];`, `onConfigReplace();`).\n\nОснование: Диффы `package.json`, `package-lock.json`, `scripts/standalone-build.mjs`, `scripts/bundle-manifest.mjs`, `test/isometric-contract.test.mjs:405-411`, `scripts/mutation-registry.mjs:15145-15157, 16418-16428`. Поиск `real3d`, `REAL_3D`, `iso-view-gl`, `Three.txt`, `smoke_iso_real_3d` даёт только намеренные негативные проверки в smoke.\n\n### Документация и учёт выпуска\n\nЗаписи CHANGELOG (en/ru), разделы ISOMETRIC/PDF-EXPORT/SCOPE и USER-GUIDE (en/ru) про «Реальное 3D» удалены. Остальной текст про SVG-экспорт и 2.5D не тронут. `1472.json` удалён, а `1513.json` с `line-fix` и без `summary` не попадёт в пользовательские заметки, поэтому отменённая функция не будет показана как новинка. `process-next/lib/release-data.mjs` проверяет только issue/baseStable/category, отсутствие `introducedBy` ему не мешает, и в текущей линии такие записи уже есть (1490, 1504).\n\nОснование: `docs/release-ledger/v1.86.0/1513.json`. `process-next/lib/release-data.mjs:3-16`. Поиск `issues/1472`, `(#1472)`, `Реальное 3D` по дереву не находит пользовательских упоминаний.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Relay поддержки: из закрытой wire-схемы `GLOBAL_SETTINGS` (и в интеграции, и в копии `scripts/support-relay/hp_relay/support_wire_schema.py`) удалён `\"real_3d\": BOOL`. Новая интеграция флаг больше не проецирует, так что для актуальных клиентов это корректно. Но если relay будет переразвёрнут из этого дерева, пока у кого-то стоит экспериментальная dev-сборка с включённым флагом, весь пакет такого пользователя получит `support_rejected`: схема закрытая, неизвестное поле — отказ (`scripts/support-relay/README.md:16-19, 70-72`). Затронут узкий круг: только dev-канал и только тем, кто включал эксперимент. Есть дешёвая альтернатива на переходный период: оставить `real_3d` в схеме relay как допустимое входящее поле, а `_global_settings` по-прежнему его не выдаёт. Цена — одна строка и комментарий о плане удаления. Перед деплоем relay стоит также свериться, разворачивался ли вообще relay с версией #1472.\n- Необязательно: при сохранении общих настроек можно удалять инертный `real_3d`, как это сделано для `weather_entity` (`validation.py:3012-3015`). Тогда старый ключ со временем исчезнет из хранилища и резервных копий. Текущее поведение (перенос без изменений) соответствует ТЗ, поэтому это лишь гигиена данных и не нужно, если владелец предпочитает не трогать сохранённые поля до следующей итерации #1514.\n\n## Границы анализа\n\nСборку, тесты, smoke и HA E2E я не запускал. Опирался на квитанцию S6 «Тесты для задачи #1513 (перед ревью)» (status passed, материал `b6d5e3bf`, без failures) и на то, что автор сообщил о проверках в HA и backend. Совпадение `houseplan-card.ts` и `config-adoption.ts` с `3337227988` проверено выборочно по фрагментам и длине файла; полностью два дерева не сравнивались, такой возможности у меня нет. Diff в задаче усечён, поэтому изменённые файлы я читал отдельными вызовами `git_diff` и `read_file`. Удалённые `src/iso-view-gl-*.ts`, `src/pdf/svg-flat-stage.ts` и связанные тесты построчно не просматривал: убедился только, что в head на них никто не ссылается. Панельный HA E2E (houseplan-e2e#95), закрытие #1472 со ссылками на #1513/#1514 и возможный деплой relay — шаги процесса после слияния, в этом ревью они не проверялись. Учтите: коммиты #1472 с трейлером `Issue: #1472` остаются в истории, поэтому `buildCandidateMembership` включит #1472 в RELEASE-MEMBERSHIP следующего выпуска. Если к тому времени issue будет закрыта, как требует ТЗ, `release-completion` её пропустит. Если нет, выпуск может закрыть её как «выпущенную».\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 5fa8459ea722365e0d1c479a25dc21bd73c549e5 → b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1513, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nОткат выполнен обратным diff по диапазону экспериментальных коммитов `333722798..5fa8459ea`. Ветка содержит отдельный обычный коммит поверх dev. Поза и подъём ТВ на тумбе уже входят в предшествующую реализацию #1511. Правка #1472 добавляла к той же позе только передачу в GPU; удаляется этот вызов. Защита pending physical writes остаётся на исходном вызове принятия конфигурации.\n\nОбщий серверный контракт допускает неизвестные ключи настроек. Сохранённый `real_3d` читается и переносится как неприменяемое старое поле, а клиент руководствуется `volumetric_view`. Проверки включают получение и запись восстановленных данных через HA, импорт полной копии и браузерный Flat / 2.5D с прежним флагом. Отдельный экспериментальный runtime, зависимости и пользовательские записи удаляются. История реализации и ревью остаётся в #1472 и Git.\n\nПеред следующим выпуском нужен [панельный HA E2E](https://github.com/Matysh/houseplan-e2e/issues/95). Адресные проверки восстановления, записи и импорта прошли в HA и backend.\n```\n\n</details>\n",
-        "createdAt": "2026-11-22T07:37:44.429Z",
-        "artifactId": 14745137141,
-        "runId": 44998798065,
-        "runAttempt": 1,
-        "completedAt": "2026-11-22T07:37:49Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44998798065",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795333113217,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1519": {
       "issue": 1519,
@@ -6349,19 +6175,7 @@
   "waiting": [
     1519
   ],
-  "active": {
-    "issue": 1513,
-    "worker": "finish",
-    "token": "597:finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:1:admit",
-    "fence": 597,
-    "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-    "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795331389554,
-    "expiresAt": 1795336710113,
-    "patchId": "99a4577ad4e0b540c3e68334f78e0d234d8849de",
-    "reviewRequest": "review:1513:1:99a4577ad4e0b540c3e68334f78e0d234d8849de:5fa8459ea722365e0d1c479a25dc21bd73c549e5"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6383,73 +6197,17 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:2:synchronized": {
-      "digest": "2fce8215ba4884cdee636f73a1faf6401549e3f56c0b4d32ec575cf2eccacfd4",
-      "issue": 1513
-    },
-    "github:44996927215:1:completions:message:93a6294f0e45236b2939a7568a5fd7663c395d5b4579f0eaa8d18fcc675853d8": {
-      "digest": "c4f43c9b4c57a588ad2fc4fca4405d0d7773143fd284ea9480eae6fae8faf8e9",
-      "issue": 1513
-    },
-    "github:44996927215:1:completions:message:8add36ae8051c22c49c1975453a6256e9fab88160c346c62e4b5cf1cbc8028b8": {
-      "digest": "0346a431d59d8a4095b335752a41646bf90cfda9d872391a3ceda98ce0dc7743",
-      "issue": 1513
-    },
-    "finish:26e79ad9-ff8d-4aff-a591-ba99eebe696f": {
-      "digest": "87e7e76638cc264038ef5ea8efa17b6eea99228e482e7d5f7c8080ed7280ad60",
-      "issue": 1513
-    },
-    "finish:926076b1-3691-4228-bcd2-b8613532a118": {
-      "digest": "f661d74934fb278a6db8a0d6011f382bd11809ffc340e8ffda65e0323299d1e9",
-      "issue": 1513
-    },
-    "finish:05e8b366-8f43-4237-9993-35a4566dc519": {
-      "digest": "be1fd291cd29c0f9a4984b0d2674d00c950189fd4fa3ac995e65352ed50dfb1f",
-      "issue": 1513
-    },
     "1516-s4-20261122-r1:spec-request": {
       "digest": "e33d4782f894bba27ce69066afad3cf3467d025d9071ffa052cac75a4759e3d4",
       "issue": 1516
-    },
-    "finish:85df7fe4-349c-4d76-82d7-e538e3e78113": {
-      "digest": "a6b35fa76e865d633b0ee566fde1cd28277ddf086132d5ff910ec5ee0046d694",
-      "issue": 1513
-    },
-    "finish:f356764b-c631-4bfe-83af-f97ba003ee7a": {
-      "digest": "84d138a029cef7644e7f3513229adee68add519a1513bf6a8f2e0fe33b6f0651",
-      "issue": 1513
     },
     "github:44997374940:1:label:spec-request": {
       "digest": "eb903fe27b91bd36300e68a4c80d65e348dfe683ef62d216cca303bbdf38d922",
       "issue": 1517
     },
-    "finish:52375c13-2298-4f6d-b065-d2644954a274": {
-      "digest": "90af09276c31d30ce7eb6331a9c0f474262785419385acab49a62e104f5b42c3",
-      "issue": 1513
-    },
     "task:1515:s4:20261122-owner-rotation:spec-request": {
       "digest": "b11d89824352d250076467919f526b5024e04990c9b61736462f484071c360bd",
       "issue": 1515
-    },
-    "finish:8f5c2a76-b16f-4c7c-9496-cf0549189687": {
-      "digest": "52411cfec381af155356b32d26575d5ed17b79d9c1bfde3bb0ca3e2d013bd1db",
-      "issue": 1513
-    },
-    "github:44997505636:1:completions:message:748906aff7a83d5c52602ca7d2c6f0b33f4a42b8225298f08bcc5e48403cf0d6": {
-      "digest": "b520ddbab6d59fe84bd8155183381d29369c1014322b2cf676ad0d24bf6e8496",
-      "issue": 1513
-    },
-    "finish:1758daa3-39cb-40f8-8a68-c6a71e9b448c": {
-      "digest": "6e2b3d56ebf7fb3820a401436e171ae0a6610eb9c21161e6b12772bae36f75a7",
-      "issue": 1513
-    },
-    "finish:d57997d3-60da-40f1-84cc-e2e9068c68ce": {
-      "digest": "27d491b53892a59e6acbc5cb87a599e0e78a2211ecde8221068daf85d8407d96",
-      "issue": 1513
-    },
-    "finish:d289ee50-fa1d-49ae-b3c9-099bbfd60e7b": {
-      "digest": "35b391c3baf481a5eae7101bbae4ba264ffb87ae5345adb85c55d7135a696cee",
-      "issue": 1513
     },
     "github:44997763185:1:spec:1517:spec-presentation": {
       "digest": "6875cb9ddfec0a7a900e416fb1623777dfdb06c0667ec5febb24f1cb7ce824ab",
@@ -6471,10 +6229,6 @@
       "digest": "dd3f6e00b4ccd7218be5280e82a5bb91cdd4ef13d0b0ebae62a1cb8f72ebc180",
       "issue": 1516
     },
-    "finish:1c446fde-fc18-4650-89e0-807a81307260": {
-      "digest": "6728b87ba8a58917487cf910607e232d887d0c45d008ba04faeeb9ab1cfc11f3",
-      "issue": 1513
-    },
     "github:44997763185:1:spec:1516:spec-label": {
       "digest": "34449281dd1a5972351cca35ce707e01039e7d73d68383c123c385bb04071166",
       "issue": 1516
@@ -6486,10 +6240,6 @@
     "github:44997763185:1:completions:report:4f4b51fc6ad594f33d56429ca11dcb915c2e6dc31a983ffb9090fb6b68999f75": {
       "digest": "e1b326b12046b983fbd6097ffbb25be3e26fd1db0c99f85ff7fe1652c9042b56",
       "issue": 1517
-    },
-    "finish:5ee0fe60-1ad8-42a6-8ab6-ecf3e942e4cd": {
-      "digest": "4ff5914aea0ea5d03889db95bddb71c12b323c88935bd8685eaeda9eee8ccd52",
-      "issue": 1513
     },
     "github:44997900807:1:spec:1517:spec-request": {
       "digest": "67dcc7bf73dd091cab62c5150da765d9f8d5aa4f0f1219c6641082b45d00b837",
@@ -6503,10 +6253,6 @@
       "digest": "8518895d3a450870204183fea001b4139b68edaddf1efe750ce08cee5990da77",
       "issue": 1515
     },
-    "finish:8e9b9c01-f70a-4407-89a1-abaffd5b910b": {
-      "digest": "9d72a985dc9503e946769bd131f055abe1c6dedf70e9b57bd402d2a407d57379",
-      "issue": 1513
-    },
     "github:44997900807:1:spec:1515:spec-label": {
       "digest": "74e498c3a245c7cd8e791437fb0c465264064d7ba9dc261512ada130f0b1eb23",
       "issue": 1515
@@ -6515,41 +6261,13 @@
       "digest": "4942857573fef7358e411680d3754028c0a8519bc54e9cf5fc08f907978624ef",
       "issue": 1515
     },
-    "github:44997900807:1:completions:message:dfd80cef49521d81c6d50015daa1fd8f3ff5572937ad2de62193ea5419295431": {
-      "digest": "6d270af52447a0768bc4b30ae4327cfda718b10f3173351741be78e697e3f900",
-      "issue": 1513
-    },
     "github:44998008525:1:label:spec-request": {
       "digest": "2a97cd6ac63950b814331aa704b1faa43af446aebf52e33f71d39a1d102be755",
       "issue": 1516
     },
-    "finish:b8a35859-f211-4edf-b8a7-239748a3c941": {
-      "digest": "c4c100ce198440fc8d20cc2f90ea9a4e3dbba1bb1fbe4f23b185038b24fc6be4",
-      "issue": 1513
-    },
     "task:1515:s4:r2:20261122:spec-request": {
       "digest": "d1fafedde9437cfa1cd2850f1bd6d2c174732e792d7682c5b6dd83fdcc2fae2c",
       "issue": 1515
-    },
-    "github:44998008525:1:completions:message:126369bc5030fa2f5110e20797cd35e05d743572457dba135cdf392f249a3b96": {
-      "digest": "46fff105ee67fec0d6b1dc244f85d5b8254c6bc99290ee5cabdee231bca72c74",
-      "issue": 1513
-    },
-    "finish:1426de3c-b155-40b5-bf65-7f2f70976001": {
-      "digest": "ce24934555f8bd6980ae3456547fddbd059a3fdc677f8cae1c05a15e27e82e58",
-      "issue": 1513
-    },
-    "github:44998020114:1:completions:message:b52d5f145932d93adf80b802d4fc52a4bf6346c200a8eec05781183f2b5b3f0d": {
-      "digest": "8ce07ed2dd7040445056a854af81ec22f8ffdf9fa125d3f738d99c5086bcd4de",
-      "issue": 1513
-    },
-    "finish:d7873f24-d4b8-4d43-aa63-31925568e158": {
-      "digest": "703c3de0b421eb90857dda78a17f6c1b0408a32661253e664b60f38223427815",
-      "issue": 1513
-    },
-    "finish:0ae99d90-2b6f-42d3-be82-208afca4fa6d": {
-      "digest": "6548d10f6072b750964400efa3c15130b4b329b5bb7d3ec8b7207795ffefe401",
-      "issue": 1513
     },
     "github:44998279529:1:spec:1517:spec-presentation": {
       "digest": "48f3a93b75dc290060c5f378961b4f916a3127f2125846006b619ba7b843b2f8",
@@ -6575,10 +6293,6 @@
       "digest": "1dbfe6cbcd28451b935a7f0b38632ce43bc59d54e9d7be8e181cdaa22d6941e4",
       "issue": 1515
     },
-    "finish:7108728b-fa7e-44b9-882e-6f649fb1ed03": {
-      "digest": "c78cec63c1ed5320272184856b19e3eb9260553ace3f5e6c104e2764211fa2a5",
-      "issue": 1513
-    },
     "github:44998279529:1:completions:report:68b1305f51a0468b68405b30ef696856fefadd32f40e86b4a392c8fa749b397f": {
       "digest": "5755eca9e9282660aef6f84f3503b4f14df283a226eac3c61cf7856350d5754b",
       "issue": 1517
@@ -6586,10 +6300,6 @@
     "github:44998279529:1:completions:report:98305b09a0882c31f1a2b05bf091f14b5ce697c5c256f0118010011a44da336d": {
       "digest": "ee4f40da4d2c9f740f32054c912555f91fb68e02c17834afdb3fd0ecdacc60f8",
       "issue": 1515
-    },
-    "finish:56d82926-81fc-463f-84dd-d12386a0942c": {
-      "digest": "c46d09e5edad7114c0265d0eac88fcf724d29dd18dbcc989a1877754e182182c",
-      "issue": 1513
     },
     "github:44998399588:1:spec:1517:spec-request": {
       "digest": "0f6cf9465991cf4bcd9dde5f3606d46020c2f32f111c1f7be540755a098e769f",
@@ -6607,25 +6317,9 @@
       "digest": "d8ea4dcad5539ff94252a401fba550add7c7ca4cb5df60a09274bc22350b48df",
       "issue": 1516
     },
-    "finish:5fe377b1-da04-44e6-be7c-0f433332a970": {
-      "digest": "13ad4f583e113cec1210c24aed1a2f4245a22f79786133b5229599cae33c99c0",
-      "issue": 1513
-    },
     "github:44998399588:1:completions:report:1cd68732a5c0857fe18cdab45f784207513f6817eeafa9c9fbfe628c29a65145": {
       "digest": "deec77dcc3a4e6ea183971e150cfbb308089fb8e684cf71ee25af9b8a7644e08",
       "issue": 1516
-    },
-    "github:44998399588:1:completions:message:9e18a2e5bea483b6f3193a1faf9099f0f36003dca5dd188817b504467c1603e6": {
-      "digest": "7a9944271521902028202ba2bf11daa4fb80c448745a67e3625eb2f269a249b2",
-      "issue": 1513
-    },
-    "finish:81a8c1bd-d3b0-4a3d-9544-858e99fc47e3": {
-      "digest": "45bdc50678d1fe08287d946ec865bb673d44840a65a399649612a45f9f88b7ab",
-      "issue": 1513
-    },
-    "finish:ef2f0d89-41fa-4226-8169-3d5985800fd5": {
-      "digest": "e32f6ffd95b6bd2b9254578b41504672f60462f5a5c0bb010c02a49eb9130013",
-      "issue": 1513
     },
     "github:44998716791:1:spec:1517:spec-presentation": {
       "digest": "4a10973d43f84dbb78b6cab3f0121afabc3634a6dce1dcac6b552d4e52c187e2",
@@ -6639,33 +6333,13 @@
       "digest": "3009b6b1330de8d37e6618225e61948262df5ff418be6b4199650bd290b5ebd6",
       "issue": 1517
     },
-    "finish:7f87f448-55dc-459b-b898-2e5d0d7f2149": {
-      "digest": "c55475370b7fe0fdb10ac0773b6f58d03ef6271b52e020c43faae6a942f87fa6",
-      "issue": 1513
-    },
     "github:44998716791:1:completions:report:bd336c6a7c0bf046ab4160880b6f7b58ea8c49569c860c54885a95ae1f36a63c": {
       "digest": "12ceb84291dd6f87751e5e64883505142ac0a5209eb7540fa398299046bd158a",
       "issue": 1517
     },
-    "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:3:s6-label": {
-      "digest": "e9f6c2072600bc598d1de5dc5aaa57792742940785a24c2f43b7b1ae3c3060f9",
-      "issue": 1513
-    },
-    "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:4:review-requested": {
-      "digest": "868498c4f3a8f37ede88d6fa8783056b016f38dffdb3915ce71910f6b05f0718",
-      "issue": 1513
-    },
-    "github:44998777264:1:completions:message:ede77d8042e0e3da8ea8d795af6e94a7373689c05f1a5fe9605bb0a2653dbacc": {
-      "digest": "5c6fd9b4ebd1aa94a9375614eec532444ba1a39e2fe200c92224af7d7e0c4c84",
-      "issue": 1513
-    },
     "github:44998869735:1:label:spec-request": {
       "digest": "598e3c4cb6d0344dd1974f97bb87b4872b2ec693e3dabf980312f17db6c3113f",
       "issue": 1517
-    },
-    "github:44998869735:1:completions:message:375e7cff76055961a69e08ffa65f56943d5862eed6e9f84b767fd92b6ab340a0": {
-      "digest": "2e3afca8c1ee292e7a8c46a31895cabee0a8ba3f91e86e2258bd745032be35ea",
-      "issue": 1513
     },
     "github:44999112063:1:spec:1517:spec-presentation": {
       "digest": "6a6bbee4c847bbdb6fa6d1e84dc30deb6405656de014af8170ceb39e2c4c439c",
@@ -6678,18 +6352,6 @@
     "github:44999112063:1:spec:1517:spec-label": {
       "digest": "dd06d36ecdd893e0e4140fd462abf5b1202d7acfe1797a97db5125a234653e71",
       "issue": 1517
-    },
-    "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:8:review-presentation": {
-      "digest": "73b6eaddb5432bcaf2cc24c76665554f2ada021f4e6cfc6e533630fb572d6534",
-      "issue": 1513
-    },
-    "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:8:review-complete": {
-      "digest": "cf7d62ee933443b35c511a88bd97b9ed4eae50a2c9b5241efea28feb1805364d",
-      "issue": 1513
-    },
-    "github:44999112063:1:tick:0:automation-pending": {
-      "digest": "6394522ea912e92957687cf46a280f46f1949d1cebb3696ce7370f94d8028af0",
-      "issue": 1513
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -6716,35 +6378,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:66edeb70-d92f-4337-9a8d-a902406a35da": {
-      "digest": "c52be3c228a0898d7d1614dc94ceba0421f3abc36ab64bc43f01da278281e08e",
-      "issue": 1513,
-      "message": {
-        "kind": "queued",
-        "issue": 1513,
-        "at": 1795331384913,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-        "delivered": true
-      }
-    },
-    "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:1:admit": {
-      "digest": "7ef2329867a753f25bec737feacb125f9f87049c690540cf5f28a8b37e1cc715",
-      "issue": 1513,
-      "message": {
-        "kind": "admitted",
-        "issue": 1513,
-        "at": 1795331389554,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
         "phase": "sync",
         "delivered": true
       }
@@ -6827,36 +6460,6 @@
         "reviewChanges": "Анализ на dev `5fa8459ea`, `spec-check` прошёл повторно. Проверены разные диаметры paint и solver у профиля и холодный запуск с устаревшей опорой. Исправленная редакция хранит текущую семантику допустимых legacy-групп и фиксирует детерминированный resize. Трек ask по S4. Код ещё не изменялся.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075864767).\n\n1. Неоднозначная legacy-опора → отдельные геометрические кандидаты при штатном размере и собственном размере карточки без профиля, явный выбор между ними, материализация только доказанного. В AC4 добавлена legacy-группа, созданная при нестандартном icon_size.\n2. Неопределённый безопасный t=0 и отличие от value-only → resize активен при различии диаметров запроса и reference, даже при одновременном появлении текста и постоянном переопределении. t=0 использует текущую относительную форму при опорных размерах. При невозможном t=0 старый безопасный fallback выполняется с явной индикацией. Чистое изменение формы при тех же диаметрах сохраняет #1003.\n3. Произвольная занятость → ограничения учитывают реально принятый результат или опорный размер соседа, а не запрошенную форму на старой позиции. Канонический геометрический порядок Y/X с ID только для точного равенства, занятость обновляется целиком на компонент. Изменение соседа снимает устаревший лимит. В AC3 добавлены два соседних растущих компонента, перестановка/переименование и одновременный resize с широкой надписью.\n4. Улучшения: кандидат распространяется от детерминированного корня с полной проверкой вместо общего поиска новых опор; метрики не зависят от ограниченного диаметра; обе устаревшие фразы DEVICE-PRESENTATION будут заменены.\n\n[Раунд 2](https://github.com/Matysh/houseplan-card/actions/runs/44997955145).\n\n- Ограничение и сообщение относятся только к компонентам с доказанным ребром или опорой стены. Свободные значки держат исходные центры и запрошенный размер без сообщения при изменении собственных или профильных размеров. Они участвуют как неподвижные препятствия для контактной группы своей фактической формой. Добавлены регрессии на плотную группу свободных значков, на индивидуальный размер и на соседство с контактной группой.\n- Граница resize использует CONTACT_EPS, отдельный случай несогласуемого цикла удерживает проверенный размер. AC2 фиксирует и замыкающие выравнивания.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:3:s6-complete": {
-      "digest": "f1ab762a4b1e60dc8a6c99dd1fe3c0ead5b01db4941f67d5f6b84a80eb7b261e",
-      "issue": 1513,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1513,
-        "at": 1795332803165,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-        "phase": "review",
-        "evidence": {
-          "id": "20261122T071003180-1c0e5576",
-          "name": "Тесты для задачи #1513 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T071003180-1c0e5576/report.json",
-          "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-          "status": "passed",
-          "finishedAt": "2026-11-22T07:33:19.176Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Откат выполнен обратным diff по диапазону экспериментальных коммитов `333722798..5fa8459ea`. Ветка содержит отдельный обычный коммит поверх dev. Поза и подъём ТВ на тумбе уже входят в предшествующую реализацию #1511. Правка #1472 добавляла к той же позе только передачу в GPU; удаляется этот вызов. Защита pending physical writes остаётся на исходном вызове принятия конфигурации.\n\nОбщий серверный контракт допускает неизвестные ключи настроек. Сохранённый `real_3d` читается и переносится как неприменяемое старое поле, а клиент руководствуется `volumetric_view`. Проверки включают получение и запись восстановленных данных через HA, импорт полной копии и браузерный Flat / 2.5D с прежним флагом. Отдельный экспериментальный runtime, зависимости и пользовательские записи удаляются. История реализации и ревью остаётся в #1472 и Git.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
       }
