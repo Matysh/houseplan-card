@@ -22,7 +22,7 @@ async function setLightAndTheme(light, darkMode) {
   }, { light, darkMode });
 }
 const screenshot = async stage => PNG.sync.read(await stage.screenshot());
-async function imageAtSameCamera(page, stage, needsRaster) {
+async function imageAtSameCamera(page, stage, needsRaster = true) {
   await page.evaluate(() => {
     const card = window.__isoPaint;
     card._liveIsoRasterInput = () => 'wheel';
