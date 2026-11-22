@@ -2138,7 +2138,10 @@ Omitting the namespace in an ordinary write preserves it. Ordinary writers
 cannot downgrade a stored namespace. Explicit authoritative import retains
 its replacement semantics. Versions above 3 remain opaque, bounded and
 read-only. An older backend treats v3 as an opaque future object so unrelated
-writes remain possible. The authoring capability is `external_screens_api:3`.
+writes remain possible. A rolled-back frontend falls back to unprofiled kiosk
+settings if its saved namespace is v3. New profiles start with angle 0 and
+inherit the installation view. The v3 rotation field is required and accepts
+null when the local angle should apply. The authoring capability is `external_screens_api:3`.
 Event capability and patch envelope remain version 1. The support projection
 includes typed v3 views and applies existing space pseudonyms.
 

@@ -45,9 +45,17 @@ const out=await page.evaluate(async()=>{
   settings().querySelector('[data-hp="external-screen-add"]').click();await admin.updateComplete;
   const child=()=>root.querySelector('hp-dialog[data-kind="external-screen-constructor"]');
   await until(()=>child(),'constructor');
-  result.constructorHasNoInnerCard=child().querySelectorAll('.hpf-card').length===0&&child().querySelectorAll('select').length===8;
+  result.constructorHasNoInnerCard=child().querySelectorAll('.hpf-card').length===0&&child().querySelectorAll('select').length===9;
   result.retiredControlsFieldAbsent=!child().querySelector('[data-field="external-screen-controls"]');
   const select=(key,value)=>{const el=child().querySelector(`[data-field="external-screen-${key}"]`);el.value=String(value);el.dispatchEvent(new Event('change',{bubbles:true}));};
+  select('view','iso');await admin.updateComplete;
+  result.isometricChoiceOffersAllEightAngles=[...child().querySelector('#screen-rotation').options]
+    .filter(option=>option.value!=='').map(option=>option.value).join(',')==='0,45,90,135,180,225,270,315';
+  select('rotation',315);await admin.updateComplete;
+  select('view','flat');await admin.updateComplete;
+  result.explicitFlatDovetailsClockwiseAtWrap=child().querySelector('#screen-rotation').value==='0'
+    && ![...child().querySelector('#screen-rotation').options].some(option=>option.value==='45');
+  select('view','');await admin.updateComplete;
   select('space',admin._model[0].id);await admin.updateComplete;
   result.oneSpaceDisablesCycle=child().querySelector('[data-field="external-screen-cycle"]').disabled;
   select('space','');select('cycle',30);await admin.updateComplete;
@@ -72,6 +80,14 @@ const out=await page.evaluate(async()=>{
   result.cancelDidNotChangeOuterOrServer=admin._settingsDialog.externalScreens.screens.length===1&&JSON.stringify(admin._serverCfg.settings.external_screens)===beforeSaved;
   settings().querySelector('[data-hp="external-screen-add"]').click();await admin.updateComplete;await until(()=>child(),'second constructor');
   select('summary','show');await admin.updateComplete;
+  select('edited-space',admin._model[0].id);await admin.updateComplete;
+  select('view','iso');await admin.updateComplete;select('rotation',315);await admin.updateComplete;
+  select('edited-space',admin._model[1].id);await admin.updateComplete;
+  select('view','flat');await admin.updateComplete;select('rotation',180);await admin.updateComplete;
+  select('edited-space',admin._model[0].id);await admin.updateComplete;
+  result.spaceSwitchPreservesSeparateViewAndRotation=child().querySelector('#screen-view').value==='iso'
+    && child().querySelector('#screen-rotation').value==='315';
+  if(!result.spaceSwitchPreservesSeparateViewAndRotation)throw Error('space draft:'+JSON.stringify({view:child().querySelector('#screen-view').value,angle:child().querySelector('#screen-rotation').value,draft:admin._editorRuntime.externalScreens.draft?.row.space_views,space:admin._editorRuntime.externalScreens.draft?.space}));
   child().querySelector('[data-hp="external-screen-ok"]').click();await admin.updateComplete;await sleep(250);
   result.okChangesOnlyOuterDraft=admin._settingsDialog.externalScreens.version===3&&admin._settingsDialog.externalScreens.screens.length===2&&JSON.stringify(admin._serverCfg.settings.external_screens)===beforeSaved&&!('controls' in admin._settingsDialog.externalScreens.screens[1]);
   settings().querySelector('[data-hp="external-screen-delete"]').click();await admin.updateComplete;

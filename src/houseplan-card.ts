@@ -352,7 +352,7 @@ import { renderIsoLabFurniture, furnitureShadow } from './iso-lab-furniture-rend
 import { isoLockGlass } from './iso-marker-outline';
 import { renderIsoMarkerGlass } from './iso-marker-glass';
 import {
-  PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation, planRotationForProjection, flatPlanRotation, validFlatPlanRotation,
+  PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation, planRotationForProjection, flatPlanRotation, validFlatPlanRotation, validPlanRotation,
   turnPoint, turnSceneVector, turnRect, turnMatrix, inversePlanRotation, framePercent,
   presentationViewport, physicalPlanCamera, planZoomTarget, type FrameRect, type PlanRotation, type PlanProjection,
 } from './view-frame';
@@ -496,7 +496,9 @@ const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const LS_NAV = 'houseplan_card_nav_v1'; // last space only; editor sessions never survive page navigation
-import { ExternalScreenResolver, externalScreenEventCandidate, type ResolvedScreen } from './external-screens';
+import { ExternalScreenResolver, externalScreenEventCandidate, validPlanView, type ResolvedScreen } from './external-screens';
+import { cardRotationPlacementSlot } from './summary-panel-identity';
+import { CardRotationPreference } from './card-rotation-preference';
 import { screenCameraTarget, screenFreeArea, onScreenReference, screenZoomBadge, type ScreenCameraTarget } from './screen-camera';
 
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
@@ -1144,6 +1146,7 @@ export class HouseplanCard extends LitElement {
   };
   public panelSidebarOpen = false;
   public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
+  public preview = false; public editMode = false;
   /** Stable owner supplied by the HA shell, even while another route is active. */
   public panelRoutePrefix: string | null = null;
   private readonly _panelHeaderMemo = new PanelHeaderMemo();
@@ -3762,8 +3765,10 @@ export class HouseplanCard extends LitElement {
 
   /** The positional-`floor` warning is worth saying once, not on every drop. */
   private _tabOrderWarned = false;
-  /** #649: one installation-wide switch in General settings › Display (no alpha, no per-device choice). */
-  private get _isoEnabled(): boolean { return volumetricViewOf(this._settings); }
+  private get _isoEnabled(): boolean {
+    const view = this.panelHost ? this._externalScreen.view : this._config?.view;
+    return validPlanView(view) ? view === 'iso' : volumetricViewOf(this._settings);
+  }
 
   private readonly _furnitureVolumeObserver = ((owner: HouseplanCard) => ({
     get isConnected() { return owner.isConnected; },
@@ -3983,6 +3988,7 @@ export class HouseplanCard extends LitElement {
     _dangerConfirm: { state: true },
     hass: { attribute: false },
     panelHost: { type: Boolean, attribute: 'panel-host', reflect: true },
+    preview: { attribute: false }, editMode: { attribute: false },
     panelSidebarOpen: { type: Boolean, attribute: false },
     layout: { type: String, reflect: true },
     narrow: { attribute: false },
@@ -4748,6 +4754,7 @@ export class HouseplanCard extends LitElement {
     const previousFixed = !!previousConfig
       && Object.prototype.hasOwnProperty.call(previousConfig, 'floor');
     this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
+    this._configureCardRotation();
     const fixedChanged = previousFixed !== this._hasFixedFloor
       || previousConfig?.floor !== this._config.floor;
     if (fixedChanged) {
@@ -5845,6 +5852,7 @@ export class HouseplanCard extends LitElement {
           .some(key => changed.has(key)))
       this._modeSceneRevision++;
     this._modeSceneRefreshRequested = false;
+    this._configureCardRotation();
     this._warmMarker.reconcile();
     if (changed.has('_serverCfg') || changed.has('_space') || changed.has('_openingInfo')) this._syncOpeningInfo();
     this._viewRuntimes.reconcile();
@@ -8416,8 +8424,22 @@ export class HouseplanCard extends LitElement {
     return this._view && this._view.w ? this._view : fitView(vb, this._stageAspect(vb));
   }
 
+  private readonly _cardRotation = new CardRotationPreference(() => this.ownerDocument.defaultView?.localStorage);
+  private _configureCardRotation(): void {
+    if (this.panelHost || !this._config) return;
+    const scope = this.planHost.cacheScope;
+    const slot = scope && this.isConnected ? cardRotationPlacementSlot(this) : null;
+    const pathname = this.ownerDocument.location?.pathname;
+    const address = scope && pathname && slot ? [scope, pathname, slot] : null;
+    this._cardRotation.configure(this.planHost.authorityKey, address,
+      [this._config.view, this._config.plan_rotation, this._config.rotation]);
+  }
   private get _requestedPlanRotation(): PlanRotation {
-    return devicePlanRotation.get(this._space, this._externalScreen.rotation ?? this._config?.rotation, this._kiosk);
+    const legacyAngle = this._config?.rotation;
+    if (this.panelHost) return this._externalScreen.rotation ?? devicePlanRotation.get(this._space, legacyAngle);
+    const authored = this._config?.plan_rotation;
+    return this._cardRotation.get(this._space)
+      ?? (validPlanRotation(authored) ? authored : devicePlanRotation.get(this._space, legacyAngle, this._kiosk));
   }
   private _rotationForProjection(projection: PlanProjection): PlanRotation {
     const rotation = this._requestedPlanRotation;
@@ -8433,13 +8455,20 @@ export class HouseplanCard extends LitElement {
     return camera ? isoViewTurn(camera) : this._rotation;
   }
   private _rememberPlanRotation(rotation: PlanRotation): void {
-    devicePlanRotation.set(this._space, rotation);
-    window.dispatchEvent(new Event(PLAN_ROTATION_EVENT));
+    if (this.panelHost) {
+      devicePlanRotation.set(this._space, rotation);
+      window.dispatchEvent(new Event(PLAN_ROTATION_EVENT));
+    } else {
+      this._configureCardRotation();
+      this._cardRotation.set(this._space, rotation);
+      this._isoProjectionSnapshot = null;
+      this.requestUpdate();
+    }
   }
   private _rememberPresentedFlatRotation(): void {
     // A Flat editor or interim Flat shell during a 2.5D startup must not
     // consume a preference until this space really presents ordinary 2D View.
-    if (this._mode !== 'view' || this._kiosk || this._isoEnabled || this._renderProjection !== 'flat'
+    if (!this.panelHost || this._mode !== 'view' || this._kiosk || this._isoEnabled || this._renderProjection !== 'flat'
         || !this._loadOk || this._booting || this._bootFading || this._modeTransitionBusy || !this._view
         || !this._spaceModel() || this._continuity.state !== 'steady' || !this._continuity.hasCompleteFrame) return;
     const rotation = this._requestedPlanRotation, flat = flatPlanRotation(rotation);

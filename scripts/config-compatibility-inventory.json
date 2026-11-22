@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "0da06e4565e147c2329fa12015631517d301c121f16ba93a02f727b9e04da1da",
+  "matchesSha256": "c7aa16d15476b4ff504aa32aac55f253d49d3b327986d7c801a47cd81ebb9022",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -4497,6 +4497,36 @@
       "kind": "branch",
       "owner": "wall-model-chain",
       "reason": "Persisted representation: catalogue-less rooms, old drafts, midpoint-only thickness/host evidence. Ambiguous wall ownership and malformed-but-readable old drafts cannot be guessed on load. Keep exact current proof/read paths; canonical walls[] is also a current projection ABI."
+    },
+    {
+      "id": "0e3b763df8583dc330780669",
+      "path": "src/houseplan-card.ts",
+      "line": 8545,
+      "text": "const legacyAngle = this._config?.rotation;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "full-card-rotation-fallback",
+      "reason": "Legacy Lovelace rotation retains its local-first fallback contract while plan_rotation explicitly overrides it."
+    },
+    {
+      "id": "226a1863de7c02f133b8c7fa",
+      "path": "src/houseplan-card.ts",
+      "line": 8546,
+      "text": "if (this.panelHost) return this._externalScreen.rotation ?? devicePlanRotation.get(this._space, legacyAngle);",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "full-card-rotation-fallback",
+      "reason": "Legacy Lovelace rotation retains its local-first fallback contract while plan_rotation explicitly overrides it."
+    },
+    {
+      "id": "a8729443fa19b9eab1402b85",
+      "path": "src/houseplan-card.ts",
+      "line": 8549,
+      "text": "?? (validPlanRotation(authored) ? authored : devicePlanRotation.get(this._space, legacyAngle, this._kiosk));",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "full-card-rotation-fallback",
+      "reason": "Legacy Lovelace rotation retains its local-first fallback contract while plan_rotation explicitly overrides it."
     },
     {
       "id": "6840d52201f0947f6ddfa3e2",

@@ -1,6 +1,7 @@
 import { planHostOf } from '../ha-plan-host';
 /** Outer General settings draft owns persistence; this controller owns one child. */
 import { html, nothing, type ReactiveController, type ReactiveControllerHost } from 'lit';
+import { live } from 'lit/directives/live.js';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import { langOf } from '../i18n';
 import { settingsT, type SettingsI18nKey } from '../i18n/settings';
@@ -141,7 +142,7 @@ export class ExternalScreensEditor implements ReactiveController {
       disabled = false, hint = '', help = '') => {
       if (!options.some(([n]) => n === value)) options.push([value, key === 'space' || key === 'edited-space' ? this.t('missing') : key === 'cycle' || key === 'idle' ? this.time(Number(value)) : `${Number(value) * 100} %`]);
       return field({ label, htmlFor: `screen-${key}`, hint, help: help ? html`<hp-help instant .text=${help} .ariaLabel=${label}></hp-help>` : nothing,
-        control: html`<hp-settings-select><select class="hpf-select" id=${`screen-${key}`} data-hp="field" data-field=${`external-screen-${key}`} aria-label=${label} ?disabled=${disabled}
+        control: html`<hp-settings-select><select class="hpf-select" id=${`screen-${key}`} data-hp="field" data-field=${`external-screen-${key}`} aria-label=${label} .value=${live(value)} ?disabled=${disabled}
           @change=${(e: Event) => pick((e.target as HTMLSelectElement).value)}>
           ${options.map(([n, text]) => html`<option value=${n} ?selected=${n === value}>${text}</option>`)}</select></hp-settings-select>` });
     };

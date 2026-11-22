@@ -10,6 +10,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['demo/smoke_floor_persistent_cache.mjs', ['src/floor-cache-preview.ts', 'src/projection-view-camera.ts']],
   ['demo/smoke_iso_flat_parity.mjs', ['src/iso-projection.ts', 'src/projection-view-camera.ts', 'src/screen-camera.ts']],
   ['demo/smoke_iso_raster_parity.mjs', ['src/iso-projection.ts', 'src/iso-scene-geometry.ts', 'src/projection-view-camera.ts']],
+  ['demo/smoke_native_card_presentation.mjs', ['src/houseplan-card.ts', 'src/card-rotation-preference.ts', 'src/external-screens.ts', 'src/panel-route-kiosk.ts']],
   ['demo/smoke_device_save_placement.mjs', ['src/marker-placement.ts', 'src/coordinate-canonicalization.ts', 'src/houseplan-editor-runtime.ts', 'src/editors/marker-dialog.ts', 'src/editors/marker-form-state.ts']],
   // #1423: this HA comparison imports the synthetic dispatcher as a Python
   // namespace outside custom_components; its transitive core is still real.

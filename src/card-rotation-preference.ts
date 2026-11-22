@@ -25,15 +25,22 @@ export class CardRotationPreference {
     this.author = authored;
     this.key = identity && `houseplan_card_rotation_slot_v1:${cacheSha256(identity)}`;
     this.values = EMPTY();
-    if (!read || !this.key) return;
+    if (read) this.values = this.read();
+  }
+
+  private read(): RotationValues {
+    const values = EMPTY();
+    if (!this.key) return values;
     try {
       const stored = JSON.parse(this.storage()?.getItem(this.key) ?? 'null');
-      if (!stored || stored.author !== authored || !stored.values || typeof stored.values !== 'object'
-        || Array.isArray(stored.values)) return;
-      for (const [space, angle] of Object.entries(stored.values)) {
-        if (space && validPlanRotation(angle)) this.values[space] = angle;
+      if (stored?.author === this.author && stored.values && typeof stored.values === 'object'
+        && !Array.isArray(stored.values)) {
+        for (const [space, angle] of Object.entries(stored.values)) {
+          if (space && validPlanRotation(angle)) values[space] = angle;
+        }
       }
     } catch { /* Invalid or unavailable storage falls back to this card's memory. */ }
+    return values;
   }
 
   get(space: string): PlanRotation | undefined { return this.values[space]; }
@@ -41,6 +48,8 @@ export class CardRotationPreference {
   set(space: string, angle: PlanRotation): void {
     this.values[space] = angle;
     if (!this.key) return;
+    // Another tab may have recorded a choice for a different space.
+    this.values = Object.assign(EMPTY(), this.values, this.read(), { [space]: angle });
     try { this.storage()?.setItem(this.key, JSON.stringify({ author: this.author, values: this.values })); }
     catch { /* An unavailable browser store does not block the current card. */ }
   }

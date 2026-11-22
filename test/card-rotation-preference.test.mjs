@@ -45,3 +45,16 @@ test('#1516 distinct descendants of a composite Lovelace card do not share a dur
   wrapper.preview=true;
   assert.equal(cardRotationPlacementSlot(a),null);
 });
+
+
+test('#1516 a second tab writing another space retains the first tab’s choice',()=>{
+  const values=new Map();
+  const storage=()=>({getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v)});
+  const inputs=[['ha-user','dashboard','masonry-v2:0'],['iso',45]];
+  const a=new CardRotationPreference(storage), b=new CardRotationPreference(storage);
+  a.configure({},...inputs);b.configure({},...inputs);
+  a.set('downstairs',90);b.set('upstairs',315);
+  const restored=new CardRotationPreference(storage);restored.configure({},...inputs);
+  assert.equal(restored.get('downstairs'),90);
+  assert.equal(restored.get('upstairs'),315);
+});
