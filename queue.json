@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20676,
-  "nextTicket": 616,
+  "revision": 20677,
+  "nextTicket": 617,
   "nextFence": 616,
   "tasks": {
     "1024": {
@@ -5775,14 +5775,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1521-floor-preparation-deadline",
-      "materialSha": "dc1f17424d52bde3afe021b40dbd41d2f646ba58",
+      "materialSha": "0987240f1c33505bf9352be24a98a281f8a1d4e9",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 615,
-      "queued": false,
+      "ticket": 616,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795352789685,
-      "reviewEntry": 3,
+      "readyAt": 1795353713118,
+      "reviewEntry": 4,
       "patchId": "e060cfc0a7916c687dc9a118db9ad54a14c7f42f",
       "changedFiles": [
         "custom_components/houseplan/support_wire_schema.py",
@@ -5833,8 +5833,7 @@
       "reviewCorrection": {
         "requestId": "review:1521:2:03f665a0259591b8c27ce8c05495e642a8a61b28:8d413b8121306d906999556537096b8db5f00dfa",
         "at": 1795352088573
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6386,7 +6385,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1521
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6922,6 +6923,28 @@
           "entry": 3,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/floor-cache-publication.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:2b87cb01-38eb-459a-a521-623e2a5fd8db:finish:3:return:return:1521"
+        }
+      }
+    },
+    "finish:bee7086f-6e14-4b4e-981c-0dc0d24160de": {
+      "digest": "381d0100e9e4f6f1c1571f410092ee9bec48e0f6e58aad70b2d94433bfaf17d3",
+      "issue": 1521,
+      "message": {
+        "kind": "queued",
+        "issue": 1521,
+        "at": 1795353713118,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0987240f1c33505bf9352be24a98a281f8a1d4e9",
+        "evidence": {
+          "id": "20261122T123631307-80ffa263",
+          "name": "Тесты для задачи #1521 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1521/.git/process-next/runs/20261122T123631307-80ffa263/report.json",
+          "materialSha": "f6a27ee7c94730c595f2d10b4093c5005d9d50a9",
+          "status": "passed",
+          "finishedAt": "2026-11-22T12:48:58.930Z",
+          "failures": []
         }
       }
     }
