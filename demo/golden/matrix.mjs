@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 115;
+export const GOLDEN_MATRIX_VERSION = 116;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1578,11 +1578,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   ...['flat','iso'].flatMap(projection => [
     ['base',1.6,1], ['individual-larger',1.6,1.25], ['individual-smaller',1.6,.8],
     ['profile-larger',2.05,1], ['profile-smaller',1.25,1],
-  ].map(([name, iconScale, markerScale]) => ({
+    ...[90,180,270].map(rotation => ['profile-larger-rotation-'+rotation,2.05,1,rotation]),
+  ].map(([name, iconScale, markerScale, screenRotation = 0]) => ({
     id: 'panel-device-contact-resize-'+projection+'-'+name,
     fixture:'visual', panelHost:true, panelKioskUrl:'/houseplan?hpprofile=1', preloadEditorRuntime:false,
     space:'f1', projection, mode:'view', language:'en', theme:'light',
-    viewport:{width:1280,height:920}, deviceContactResize:{iconScale,markerScale},
+    viewport:{width:1280,height:920}, deviceContactResize:{iconScale,markerScale,screenRotation},
     ...stage,
   }))),
   ...['light','dark'].map(theme=>({id:`device-contacts-designer-${theme}`,fixture:'visual',deviceContacts:true,
