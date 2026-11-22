@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 21259,
-  "nextTicket": 629,
+  "revision": 21260,
+  "nextTicket": 630,
   "nextFence": 629,
   "tasks": {
     "1024": {
@@ -5827,14 +5827,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1526-direct-25d-perspective",
-      "materialSha": "9275726e155a921a2bdb94c36c8c42a0457d228b",
+      "materialSha": "e768a8a485bed5056345217aed5ed6b0e372b2a8",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 628,
-      "queued": false,
+      "ticket": 629,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795390506089,
-      "reviewEntry": 1,
+      "readyAt": 1795391741029,
+      "reviewEntry": 2,
       "patchId": "5aa7b6ac58dd013e8609c663d87435862b98ee1d",
       "changedFiles": [
         "demo/fixtures/direct-perspective-room.mjs",
@@ -5860,7 +5860,6 @@
         "src/stairs-volume.ts",
         "test/iso-projection.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6450,7 +6449,9 @@
       "runId": 45061804725
     }
   },
-  "waiting": [],
+  "waiting": [
+    1526
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6641,6 +6642,19 @@
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/render-layout-read.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: iso flat parity: failed; Браузер: iso raster parity: failed",
           "eventId": "finish:1c03ec16-4175-4748-ac54-9e568ec7b025:finish:3:return:return:1526"
         }
+      }
+    },
+    "finish:ac522b01-99e4-4cd3-8c8a-c471bba1afd5": {
+      "digest": "5a104291a5c555a0dfb0cc3e5d3070eacef149de487ef4c86a0ba6ad8cc809d1",
+      "issue": 1526,
+      "message": {
+        "kind": "queued",
+        "issue": 1526,
+        "at": 1795391741029,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e768a8a485bed5056345217aed5ed6b0e372b2a8"
       }
     }
   },
