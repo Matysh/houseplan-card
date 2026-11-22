@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20739,
+  "revision": 20740,
   "nextTicket": 618,
   "nextFence": 618,
   "tasks": {
@@ -5758,7 +5758,18 @@
         "src/startup-floor.ts",
         "src/styles/plan.styles.ts",
         "test/startup-floor.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795355066953,
+        "entry": 1,
+        "detail": "Критичные данные, сохранение и права: failed; Поведение: test/floor-cache-day-cycle.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed",
+        "eventId": "finish:62d91283-82a3-45be-980a-9c42edc4c58e:finish:3:return:return:1520"
+      }
     },
     "1521": {
       "issue": 1521,
@@ -6350,18 +6361,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1520,
-    "worker": "finish",
-    "token": "617:finish:62d91283-82a3-45be-980a-9c42edc4c58e:finish:1:admit",
-    "fence": 617,
-    "materialSha": "15853d335dab075caa990fc33027b1544fd85493",
-    "expectedBase": "0987240f1c33505bf9352be24a98a281f8a1d4e9",
-    "phase": "testing",
-    "admittedAt": 1795354252230,
-    "expiresAt": 1795355331066,
-    "patchId": "a8b275ffa35ba7416f3e0e67320e82fd181f2b7d"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6495,6 +6495,10 @@
       "digest": "2e4ecd6ca47c7496d77ab2b4b193664b70353786d3d4365d91556d9df35d9d63",
       "issue": 1520
     },
+    "finish:62d91283-82a3-45be-980a-9c42edc4c58e:finish:3:return": {
+      "digest": "be8c1fef0d5e032e90f2bd956d6470fe95d49bc8b9ad25666a45b150009d09d1",
+      "issue": 1520
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6580,6 +6584,26 @@
         "track": "show",
         "layer": "product",
         "materialSha": "0987240f1c33505bf9352be24a98a281f8a1d4e9"
+      }
+    },
+    "finish:62d91283-82a3-45be-980a-9c42edc4c58e:finish:3:return:return:1520": {
+      "digest": "be8c1fef0d5e032e90f2bd956d6470fe95d49bc8b9ad25666a45b150009d09d1",
+      "issue": 1520,
+      "message": {
+        "kind": "return",
+        "issue": 1520,
+        "at": 1795355066953,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795355066953,
+          "entry": 1,
+          "detail": "Критичные данные, сохранение и права: failed; Поведение: test/floor-cache-day-cycle.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed",
+          "eventId": "finish:62d91283-82a3-45be-980a-9c42edc4c58e:finish:3:return:return:1520"
+        }
       }
     }
   },
