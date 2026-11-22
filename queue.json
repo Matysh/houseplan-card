@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19908,
+  "revision": 19909,
   "nextTicket": 599,
   "nextFence": 598,
   "tasks": {
@@ -5576,7 +5576,7 @@
       "ownerDecision": null,
       "ticket": 597,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795331384913,
       "reviewEntry": 1,
       "patchId": "99a4577ad4e0b540c3e68334f78e0d234d8849de",
@@ -5639,7 +5639,16 @@
         "tests_backend/test_house_commands.py",
         "tests_backend/test_support_config_projection.py",
         "tsconfig.test.json"
-      ]
+      ],
+      "s6": {
+        "id": "20261122T071003180-1c0e5576",
+        "name": "Тесты для задачи #1513 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T071003180-1c0e5576/report.json",
+        "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
+        "status": "passed",
+        "finishedAt": "2026-11-22T07:33:19.176Z",
+        "failures": []
+      }
     },
     "1519": {
       "issue": 1519,
@@ -6220,9 +6229,9 @@
     "fence": 597,
     "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
     "expectedBase": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795331389554,
-    "expiresAt": 1795333100563,
+    "expiresAt": 1795336403165,
     "patchId": "99a4577ad4e0b540c3e68334f78e0d234d8849de"
   },
   "events": {
@@ -6644,6 +6653,34 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:66edeb70-d92f-4337-9a8d-a902406a35da:finish:3:s6-complete": {
+      "digest": "f1ab762a4b1e60dc8a6c99dd1fe3c0ead5b01db4941f67d5f6b84a80eb7b261e",
+      "issue": 1513,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1513,
+        "at": 1795332803165,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
+        "phase": "review",
+        "evidence": {
+          "id": "20261122T071003180-1c0e5576",
+          "name": "Тесты для задачи #1513 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T071003180-1c0e5576/report.json",
+          "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
+          "status": "passed",
+          "finishedAt": "2026-11-22T07:33:19.176Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Откат выполнен обратным diff по диапазону экспериментальных коммитов `333722798..5fa8459ea`. Ветка содержит отдельный обычный коммит поверх dev. Поза и подъём ТВ на тумбе уже входят в предшествующую реализацию #1511. Правка #1472 добавляла к той же позе только передачу в GPU; удаляется этот вызов. Защита pending physical writes остаётся на исходном вызове принятия конфигурации.\n\nОбщий серверный контракт допускает неизвестные ключи настроек. Сохранённый `real_3d` читается и переносится как неприменяемое старое поле, а клиент руководствуется `volumetric_view`. Проверки включают получение и запись восстановленных данных через HA, импорт полной копии и браузерный Flat / 2.5D с прежним флагом. Отдельный экспериментальный runtime, зависимости и пользовательские записи удаляются. История реализации и ревью остаётся в #1472 и Git.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
