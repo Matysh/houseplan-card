@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20541,
+  "revision": 20542,
   "nextTicket": 614,
   "nextFence": 614,
   "tasks": {
@@ -5657,7 +5657,7 @@
         "entry": 4,
         "eventId": "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return:return:1517"
       },
-      "patchId": "b519411461274c52e20b9237b1ce32a6218040a7",
+      "patchId": "9fd0ef395ff0d23464edd8e10d3e7b960e3eb225",
       "changedFiles": [
         "demo/fixtures/device-contact-resize-1517-layout.json",
         "demo/fixtures/device-contact-resize-1517.mjs",
@@ -5685,6 +5685,7 @@
         "demo/smoke_device_contact_profile_1517.mjs",
         "demo/smoke_device_contact_reflow.mjs",
         "demo/smoke_device_contact_resize_1517.mjs",
+        "demo/smoke_room_co2.mjs",
         "demo/srv/assets/icons.js",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -6413,10 +6414,11 @@
     "token": "613:finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:1:admit",
     "fence": 613,
     "materialSha": "8d413b8121306d906999556537096b8db5f00dfa",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "29f32c05ed0932be242e766771b7cdaaf06472bc",
+    "phase": "testing",
     "admittedAt": 1795349448612,
-    "expiresAt": 1795349748612
+    "expiresAt": 1795349754565,
+    "patchId": "9fd0ef395ff0d23464edd8e10d3e7b960e3eb225"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6882,6 +6884,10 @@
     "finish:f1091ebc-30a7-4bc2-b4bf-d27c7cd305c8:finish:4:return": {
       "digest": "8183f8780e8a6cc900a15e4a78c087ff1bb04e18e4e686905d945eb55b57dcfb",
       "issue": 1521
+    },
+    "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:2:synchronized": {
+      "digest": "30a2a8fe2badb0905f4950368e4b323b8190bf3ed8004b1953d1ff27019b7902",
+      "issue": 1517
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
