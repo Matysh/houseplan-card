@@ -618,6 +618,7 @@ export interface ResolveIsoSceneInput {
   cache: Map<string, IsoSceneCacheEntry>;
   cellCm: number;
   liveFrame: Rect;
+  contentFrame?: Rect;
   /** Fixed production cameras only; arbitrary projection parameters are not a cache input. */
   rotation?: PlanRotation;
 }
@@ -650,9 +651,11 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
     const bounds = camera.rotDeg % 90 === 0 ? lensBounds(physical) : null;
     if (bounds) {
       // Older serialized entries store orthographic points at the same angle.
-      const lens = projected && isoPerspectiveCameras.get(projected);
-      if (!lens) projected = undefined;
-      camera = lens || isoPerspectiveCamera(camera, bounds);
+      const previous = projected && isoPerspectiveCameras.get(projected);
+      const next = isoPerspectiveCamera(camera,bounds,input.contentFrame);
+      const unchanged = previous?.perspective?.rate === next.perspective?.rate;
+      if (!previous || !unchanged) projected = undefined;
+      camera = previous && unchanged ? previous : next;
     }
     if (!projected) {
       projected = {

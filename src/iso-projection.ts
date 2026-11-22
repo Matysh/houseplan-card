@@ -51,12 +51,20 @@ export function isoCameraFor(rotation: PlanRotation): Readonly<IsoCamera> {
 // height coordinate never participates in its scale, so wall edges stay vertical.
 const DIRECT_WIDTH_RATIO = 1.16;
 
-export function isoPerspectiveCamera(camera: Readonly<IsoCamera>, frame: ViewRect): Readonly<IsoCamera> {
+export function isoPerspectiveCamera(camera: Readonly<IsoCamera>, frame: ViewRect,
+  content = frame): Readonly<IsoCamera> {
   if (camera.rotDeg % 90 !== 0) return camera;
   const center = applyIsoMatrix([frame.x + frame.w / 2, frame.y + frame.h / 2], isoFloorMatrix(camera));
   const depth = (camera.rotDeg % 180 ? frame.w : frame.h) * camera.xyScale * (camera.floorScaleY ?? 1);
   if (!(depth > 0) || !Number.isFinite(depth)) return camera;
-  return { ...camera, perspective: { center, rate: 2 * (DIRECT_WIDTH_RATIO - 1) / ((DIRECT_WIDTH_RATIO + 1) * depth) } };
+  const rate = 2 * (DIRECT_WIDTH_RATIO - 1) / ((DIRECT_WIDTH_RATIO + 1) * depth);
+  const projection = isoFloorMatrix(camera);
+  const low = applyIsoMatrix([content.x,content.y],projection)[1];
+  const high = applyIsoMatrix([content.x+content.w,content.y+content.h],projection)[1];
+  const extent = Math.max(Math.abs(low-center[1]),Math.abs(high-center[1]));
+  // The plan can contain a detached object well beyond its tight fit. Keep
+  // the entire committed domain in front of the lens, including Show Far.
+  return { ...camera, perspective: { center, rate: Math.min(rate, .5 / extent) } };
 }
 
 export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {

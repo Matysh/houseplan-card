@@ -35,6 +35,19 @@ test('#1526 direct cameras widen a square by 16% and preserve upright edges', ()
   }
 });
 
+test('#1526 keeps the whole floor in front of a direct camera with a distant object', () => {
+  const square = {x:450,y:450,w:100,h:100};
+  const content = {x:450,y:450,w:100,h:4100};
+  const base = isoCameraFor(315);
+  const camera = isoPerspectiveCamera(base,square,content);
+  assert.ok(camera.perspective.rate < isoPerspectiveCamera(base,square).perspective.rate);
+  const point = [525,4500];
+  const pixel = projectPlanPoint(point,0,camera);
+  assert.ok(pixel[1] > projectPlanPoint([525,550],0,camera)[1]);
+  const back = unprojectFloorPoint(pixel,camera);
+  close(back[0],point[0],1e-8); close(back[1],point[1],1e-8);
+});
+
 test('#1451 former lab preview cannot override live opening amounts or unknown state',()=>{
   const visual={mechanism:'swing',direction:'end',side:'negative',unsupported:false,
     leaves:[{id:'a',hinge:'start',amount:.3,unknown:false,sensorDriven:true},

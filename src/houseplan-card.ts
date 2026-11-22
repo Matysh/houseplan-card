@@ -8607,7 +8607,8 @@ export class HouseplanCard extends LitElement {
   private _isoScene(source: IsoStructuralSource | null = this._isoSource()): IsoRenderScene | null {
     const runtime = this._isoSceneRuntime;
     if (!runtime || !source) return null;
-    let liveFrame = this._frameOf().rect;
+    const content = this._frameOf();
+    let liveFrame = content.rect;
     const disp = this._spaceDisplayForRender();
     const space = this._spaceModel();
     if (space && disp.showNames) {
@@ -8617,7 +8618,7 @@ export class HouseplanCard extends LitElement {
     }
     const cfgSize = this._config?.icon_size ?? 2.5, iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     return runtime.resolveIsoFitScene({
-      source, cache: this._isoGeometryCache, cellCm: this._cellCm, liveFrame,
+      source, cache: this._isoGeometryCache, cellCm: this._cellCm, liveFrame, contentFrame: content.all,
       rotation: this._rotationForProjection('iso'),
       overlays: space && disp.showBorders ? (scene) => this._isoOverlayScene(
         space, this._renderDevices.filter((device) => device.space === space.id && !device.hidden),
