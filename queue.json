@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20753,
-  "nextTicket": 619,
+  "revision": 20754,
+  "nextTicket": 620,
   "nextFence": 619,
   "tasks": {
     "1024": {
@@ -5737,14 +5737,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1520-static-floor-start",
-      "materialSha": "2a4cb0a37be86072052d4559a12cdc6278523753",
+      "materialSha": "2c0573d0c08bab0c585111994aafbbdd56cf582c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 618,
-      "queued": false,
+      "ticket": 619,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795355085295,
-      "reviewEntry": 2,
+      "readyAt": 1795355690535,
+      "reviewEntry": 3,
       "patchId": "60f022e356e6f82043ef26c9a7ce77ee1954dd21",
       "changedFiles": [
         "demo/smoke_startup_floor.mjs",
@@ -5771,8 +5771,7 @@
         "entry": 2,
         "detail": "Браузер: device contact resize 1517: failed",
         "eventId": "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:3:return:return:1520"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1521": {
       "issue": 1521,
@@ -6363,7 +6362,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1520
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6698,6 +6699,19 @@
           "detail": "Браузер: device contact resize 1517: failed",
           "eventId": "finish:b86ce7e6-e5c7-4a33-965a-22c40ba97ba3:finish:3:return:return:1520"
         }
+      }
+    },
+    "finish:af292777-111c-45be-b574-3dcc8f782398": {
+      "digest": "2e979cac218fc7f375ff7457f70ba79947e00b814444d7cd90470730f965307f",
+      "issue": 1520,
+      "message": {
+        "kind": "queued",
+        "issue": 1520,
+        "at": 1795355690535,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "2c0573d0c08bab0c585111994aafbbdd56cf582c"
       }
     }
   },
