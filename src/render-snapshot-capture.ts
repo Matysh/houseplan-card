@@ -212,6 +212,9 @@ export function captureRenderDeviceSnapshot(
       const selected = presentations.get(presentationSnapshotKey(device.id, showLqi))?.stateSource;
       if (selected && (!selected.failure || selected.failure === 'unknown')) entityIds.add(selected.entityId);
     }
+    const badgeSource = presentations.get(presentationSnapshotKey(device.id, false))?.valueBadge?.source;
+    if (badgeSource?.kind === 'entity_state' || badgeSource?.kind === 'entity_attribute')
+      entityIds.add(badgeSource.entity_id);
   }
   for (const device of vacuumDevices) {
     for (const id of device.entities) entityIds.add(id);

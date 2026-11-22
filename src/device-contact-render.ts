@@ -31,6 +31,7 @@ export interface DeviceContactFrame {
   layout?: Readonly<Record<string,{x:number;y:number;s?:string;contact_basis?:unknown}|undefined>>;
   invalidate?: () => void;
   rotation?: PlanRotation;
+  uprightHalfTurn?: boolean;
   /** A floor-aligned presentation; contact layout stays in canonical plan units. */
   plane?: readonly number[];
 }
@@ -65,8 +66,9 @@ export class DeviceContactRenderer {
   private authored = new Map<string,ContactMarker>();
   private fontContext = '';
   private rotation: PlanRotation = 0;
+  private uprightHalfTurn = false;
   private plane: readonly number[] | undefined;
-  private screen: { source: DeviceContactScene; rotation: PlanRotation; scene: DeviceContactScene } | null = null;
+  private screen: { source: DeviceContactScene; rotation: PlanRotation; uprightHalfTurn: boolean; scene: DeviceContactScene } | null = null;
   private fontDocument: Document | null = null;
   private invalidate: (() => void) | undefined;
   private readonly fontsChanged = (): void => {
@@ -133,8 +135,11 @@ export class DeviceContactRenderer {
   public sync(root: ParentNode, frame: DeviceContactFrame): boolean {
     this.appearanceChanged = false;
     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
-    const turned = this.rotation !== (frame.rotation ?? 0) || String(this.plane) !== String(frame.plane);
+    const uprightHalfTurn = frame.uprightHalfTurn ?? false;
+    const turned = this.rotation !== (frame.rotation ?? 0) || this.uprightHalfTurn !== uprightHalfTurn
+      || String(this.plane) !== String(frame.plane);
     this.rotation = frame.rotation ?? 0;
+    this.uprightHalfTurn = uprightHalfTurn;
     this.plane = frame.plane;
     adoptDeviceContactStyles(root);
     this.invalidate=frame.invalidate;
@@ -151,7 +156,7 @@ export class DeviceContactRenderer {
     if (floor && !floor.safe) { const active = !!this.scene; if (active) this.clear(); return active; }
     const nodes = new Map([...root.querySelectorAll<HTMLElement>('.devlayer > .dev[data-hp="device"][data-id]')]
       .map((node) => [node.dataset.id!, node]));
-    const key = frame.key + '|' + frame.markers.map((m) => [m.id, m.x, m.y, m.diameter,
+    const key = frame.key + '|' + uprightHalfTurn + '|' + frame.markers.map((m) => [m.id, m.x, m.y, m.diameter,
       m.virtual,m.legacyDiameters?.join(','),JSON.stringify(frame.layout?.[m.id]?.contact_basis),
       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
     if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) {
@@ -191,7 +196,7 @@ export class DeviceContactRenderer {
     this.authored=new Map(measured.map(m=>[m.id,m]));
     const walls=frame.walls || floor?.walls || [],masonry=frame.masonry || floor?.masonry || [];
     const legacy = new Map(frame.markers.flatMap(m => m.legacyDiameters ? [[m.id, m.legacyDiameters]] : []));
-    const effective=this.layout.resolve(measured,walls,masonry,bases,frame.key,legacy.size ? legacy : undefined);
+    const effective=this.layout.resolve(measured,walls,masonry,bases,frame.key,legacy.size ? legacy : undefined, uprightHalfTurn);
     this.reflowed=effective.some((m,i)=>m.x!==measured[i].x||m.y!==measured[i].y||m.diameter!==measured[i].diameter);
     const previous = this.scene;
     const nextStatus = this.layout.resizeBaselineLost ? 'baseline-lost' : this.layout.resizeLimited ? 'limited' : null;
@@ -323,15 +328,16 @@ export class DeviceContactRenderer {
 
   private paint(ids: Iterable<string>): void {
     const source = this.scene!, affected = new Set(ids);
-    if (this.screen?.source !== source || this.screen.rotation !== this.rotation) {
-      this.screen = { source, rotation: this.rotation, scene: screenContactScene(source, this.rotation) };
+    if (this.screen?.source !== source || this.screen.rotation !== this.rotation || this.screen.uprightHalfTurn !== this.uprightHalfTurn) {
+      this.screen = { source, rotation: this.rotation, uprightHalfTurn: this.uprightHalfTurn,
+        scene: screenContactScene(source, this.rotation, this.uprightHalfTurn) };
     } else if (this.rotation) {
       // A live move refreshes just its old/new component in the screen index.
       // Never rebuild the full contact graph on every pointer event.
       for (const id of [...affected]) {
         const marker = source.shapes.get(id)?.marker;
         if (!marker) continue;
-        const next = screenContactMarker(marker, this.rotation), old = this.screen.scene.shapes.get(id)?.marker;
+        const next = screenContactMarker(marker, this.rotation, this.uprightHalfTurn), old = this.screen.scene.shapes.get(id)?.marker;
         if (!old || next.x !== old.x || next.y !== old.y || next.diameter !== old.diameter
             || next.virtual !== old.virtual || next.precise !== old.precise
             || (['left','right','top','bottom'] as const).some(side => next.box[side] !== old.box[side])) {

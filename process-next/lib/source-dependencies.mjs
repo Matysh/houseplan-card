@@ -6,6 +6,7 @@ const safeRelative = value => typeof value === 'string' && value && !value.start
 // repository paths conservative for both selection and result fingerprints.
 // Runtime witnesses name their owner; dynamic scanners name the text trees they read.
 const DECLARED_SOURCE_SCOPES = new Map([
+  ['demo/smoke_device_contact_badges_1517.mjs', ['src/device-contact-card.ts', 'src/device-contact-layout.ts', 'src/device-contact-screen.ts', 'src/device-contact-render.ts', 'src/houseplan-card.ts', 'src/render-snapshot-capture.ts', 'src/device-face.ts', 'src/styles/devices.styles.ts']],
   ['demo/smoke_device_contact_profile_1517.mjs', ['src/device-contact-card.ts', 'src/device-contact-layout.ts', 'src/device-contact-render.ts', 'src/houseplan-card.ts', 'src/external-screens.ts']],
   ['demo/smoke_device_contact_resize_1517.mjs', ['src/device-contact-card.ts', 'src/device-contact-layout.ts', 'src/device-contact-render.ts', 'src/houseplan-card.ts', 'src/iso-scene-geometry.ts']],
   ['demo/smoke_plan_rotation.mjs', ['src/view-frame.ts', 'src/iso-projection.ts', 'src/plan-rotation-motion.ts']],

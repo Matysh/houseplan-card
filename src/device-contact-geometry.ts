@@ -4,6 +4,9 @@ import { LATTICE_GRID_N, LATTICE_NOISE_STEPS } from './coordinate-canonicalizati
 
 export type ContactPoint = [number, number];
 export interface ContactRect { left: number; top: number; right: number; bottom: number }
+export function halfTurnContactBox({left, top, right, bottom}: ContactRect): ContactRect {
+  return {left: -right, top: -bottom, right: -left, bottom: -top};
+}
 export interface ContactMarker {
   id: string; x: number; y: number; diameter: number;
   virtual?: boolean;

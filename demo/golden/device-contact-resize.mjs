@@ -35,6 +35,17 @@ export async function prepareDeviceContactResize(page,{iconScale,screenRotation 
     const expectedYaw=(expectedRotation+(plan?.dataset.projection==='iso'?35:0))%360;
     if (!plan || (yaw+360)%360!==expectedYaw)
       throw Error('Painted plan rotation differs from the screen profile: '+yaw+' vs '+expectedYaw);
+    if (plan.dataset.projection === 'flat' && expectedRotation === 180) {
+      const nodes=['free-a','free-b','free-c'].map(id=>card.renderRoot.querySelector('.dev[data-id="'+id+'"]'));
+      const group=nodes[1]?.dataset.hpDeviceComponent;
+      const badge=nodes[1]?.querySelector('.value-badge')?.getBoundingClientRect();
+      const cores=nodes.map(node=>node?.querySelector('.device-core')?.getBoundingClientRect());
+      if (!group || nodes.some(node=>node?.dataset.hpDeviceComponent!==group) || !badge || cores.some(core=>!core)
+          || badge.left < cores[1].right-.5 || [cores[0],cores[2]].some(core=>
+            Math.min(core.right,badge.right)-Math.max(core.left,badge.left)>.5
+            && Math.min(core.bottom,badge.bottom)-Math.max(core.top,badge.top)>.5))
+        throw Error('Half-turn broke the painted group or let the badge overlap a neighbouring core');
+    }
     const supports=Object.fromEntries([...scene.shapes].map(([id,shape])=>[id,Object.values(shape.walls).sort()]));
     const components=['free','wall','angle'].map(prefix=>scene.component(prefix+'-b'));
     if(supports.straight.length!==1||supports.diagonal.length!==1||supports.corner.length!==2

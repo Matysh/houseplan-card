@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { DeviceContactScene, contactBounds } from '../test-build/device-contact-scene.js';
 import { contactContains } from '../test-build/device-contact-geometry.js';
 import { screenContactScene, projectedContactHit } from '../test-build/device-contact-screen.js';
+import { DeviceContactLayout } from '../test-build/device-contact-layout.js';
 import { isoFloorMatrix } from '../test-build/iso-projection.js';
 
 test('#1451 floor-aligned contact hit uses the inverse projection, preserving member ownership', () => {
@@ -49,4 +50,42 @@ test('#1119 wall faces, normals and masonry share the exact quarter-turn frame',
   assert.deepEqual(view.masonry[0][0][0], [550,390]);
   assert.ok(Object.values(view.shapes.get('a').walls).includes('wall'));
   assert.equal(JSON.stringify({walls:source.walls,masonry:source.masonry}), before);
+});
+
+test('#1517 flat half-turn preserves a live middle badge in a row and a column', () => {
+  const body = (id, x, y) => ({id,x,y,diameter:40,box:{left:-25.375,right:25.375,top:-25.375,bottom:25.375}});
+  const withBadge = (marker, extra) => ({...marker,box:{...marker.box,right:marker.box.right+extra}});
+  for (const [orientation, authored] of [
+    ['row', [body('a',200,400),withBadge(body('b',245,400),60),body('c',350,400)]],
+    ['column', [body('a',600,300),withBadge(body('b',600,345),60),body('c',600,390)]],
+  ]) {
+    const [a,b,c] = authored;
+    const restore = JSON.stringify(authored);
+    for (const turned of [false, true]) {
+      // Construct cold at either angle: the durable basis and native face
+      // remain the same even if this is the first frame of an external screen.
+      const layout = new DeviceContactLayout();
+      const measure = (width) => {
+        const input = [a,withBadge(body('b',b.x,b.y),width),c];
+        const shapes = layout.resolve(input,[],[],new Map(authored.map(m=>[m.id,m])),
+          'floor',new Map(),turned);
+        const scene=screenContactScene(new DeviceContactScene(shapes,[]),turned?180:0,turned);
+        assert.deepEqual([...scene.edges.get('b')].sort(),['a','c'],orientation);
+        const ordered=['a','b','c'].map(id=>scene.shapes.get(id).marker);
+        if (orientation==='column') assert.ok(ordered.every(m=>m.x===ordered[0].x),'keeps the uprights aligned');
+        assert.equal(ordered[1].box.left,b.box.left,'badge remains on the right on screen');
+        const bounds=ordered.map(m=>[m.x+m.box.left,m.x+m.box.right]);
+        if (orientation==='row') {
+          const neighbour=turned?bounds[0]:bounds[2];
+          assert.ok(bounds[1][1] <= neighbour[0] + 6,'only the normal shell join may overlap');
+        }
+        return {extent:Math.max(...bounds.map(([,right])=>right))-Math.min(...bounds.map(([left])=>left)),ordered};
+      };
+      const base = measure(60);
+      const wide = measure(150);
+      assert.ok(wide.extent > base.extent + 80,'the group widens with the middle value');
+      assert.deepEqual(measure(60),base,'returning to the small badge does not drift');
+      assert.equal(JSON.stringify(authored),restore);
+    }
+  }
 });

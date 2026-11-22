@@ -1,7 +1,7 @@
 /** Flat derived layout. Reference faces survive live values, never integrate drift. */
 import {
   CONTACT_EPS, contactAtCorner, contactAtWall, contactBoxIn, contactContourShapes, contactCoresOverlap, contactRotate,
-  contactShapeJoinDepth, deriveContactShape, joinedContactSide, oppositeContactSide, rotatedContactCapsule,
+  contactShapeJoinDepth, deriveContactShape, halfTurnContactBox, joinedContactSide, oppositeContactSide, rotatedContactCapsule,
   type ContactMarker, type ContactShape, type ContactWall,
 } from './device-contact-geometry';
 import {sameContactRect} from './device-contact-basis';
@@ -85,14 +85,18 @@ function anchored(shape:ContactShape,walls:readonly ContactWall[]):ContactShape 
     || a.key.localeCompare(b.key));
   return candidates[0]?.shape ?? {...shape,walls:{}};
 }
-function follow(a:ContactShape,b:ContactShape,ra:ContactShape,rb:ContactShape):ContactShape {
+function follow(a: ContactShape, b: ContactShape, ra: ContactShape, rb: ContactShape, uprightHalfTurn: boolean): ContactShape {
   const side=joinedContactSide(ra,rb,false);
   if(!side) return b;
   const ab=contactBoxIn(a),ar=contactBoxIn(ra),br=contactBoxIn(rb),box=b.box;
   const vertical=side==='top'||side==='bottom';
   const low=vertical?'left':'top',high=vertical?'right':'bottom';
-  const align=near(ar[low],br[low]) ? ab[low]-box[low]
-    : near(ar[high],br[high]) ? ab[high]-box[high] : (ab[low]+ab[high]-box[low]-box[high])/2;
+  const edge = near(ar[low],br[low]) ? low : near(ar[high],br[high]) ? high : null;
+  // Free rows and columns keep their visible alignment. A shared real wall
+  // keeps its world edge when the upright faces reverse in plan coordinates.
+  const wall = edge && ra.walls[edge];
+  const alignEdge = edge && uprightHalfTurn && (!wall || wall !== rb.walls[edge]) ? oppositeContactSide[edge] : edge;
+  const align = alignEdge ? ab[alignEdge]-box[alignEdge] : (ab[low]+ab[high]-box[low]-box[high])/2;
   const depth=contactShapeJoinDepth(a,b,side);
   const distance=side==='right'?ab.right-depth-box.left:side==='left'?ab.left+depth-box.right
     : side==='bottom'?ab.bottom-depth-box.top:ab.top+depth-box.bottom;
@@ -129,6 +133,7 @@ export class DeviceContactLayout {
   private readonly sources=new Map<string,{x:number;y:number;basis:ContactMarker|undefined}>();
   private graph:DeviceContactScene|null=null;
   private wallKey='';
+  private uprightHalfTurn = false;
   private inputKey='';
   private result:ContactMarker[]=[];
   private occupancy:DeviceContactScene|null=null;
@@ -150,11 +155,12 @@ export class DeviceContactLayout {
     return members.length > 1 || Object.keys(shape.walls).length ? members : [];
   }
   public resolve(markers:readonly ContactMarker[],walls:readonly ContactWall[],masonry:ContactMasonry,
-    bases:ReadonlyMap<string,ContactMarker>,wallKey:string, legacy?: LegacyContactDiameters):ContactMarker[] {
+    bases:ReadonlyMap<string,ContactMarker>,wallKey:string, legacy?: LegacyContactDiameters, uprightHalfTurn = false):ContactMarker[] {
     // Text can change while its fitted face stays identical. Such an HA tick
     // must not rebuild either index or run the component solver.
-    const inputKey=JSON.stringify([wallKey,markers,[...bases],legacy ? [...legacy] : null]);
+    const inputKey=JSON.stringify([wallKey,markers,[...bases],legacy ? [...legacy] : null,uprightHalfTurn]);
     if(this.inputKey===inputKey)return this.result;
+    this.uprightHalfTurn = uprightHalfTurn;
     const ids=new Set(markers.map(m=>m.id));
     let rebuild=this.wallKey!==wallKey;
     const changed:ContactMarker[]=[];
@@ -180,7 +186,10 @@ export class DeviceContactLayout {
       this.wallKey=wallKey;this.work.referenceBuilds++;
       this.occupancy=null;this.groupResults.clear();
     } else for(const m of changed)this.graph.replace(m);
-    const current=new Map(markers.map(m=>[m.id,m]));
+    // Reference recognition uses upright metrics at authored positions.
+    // The effective footprint reverses in plan coordinates at a half-turn.
+    const oriented = uprightHalfTurn ? markers.map(m => ({ ...m, box: halfTurnContactBox(m.box) })) : markers;
+    const current=new Map(oriented.map(m=>[m.id,m]));
     this.resizeLimited = false;
     this.resizeBaselineLost = false;
     const groups = this.graph.components();
@@ -193,8 +202,8 @@ export class DeviceContactLayout {
       this.result = markers.map(marker => output.get(marker.id)!);
       return this.result;
     }
-    if(!this.occupancy){this.occupancy=new DeviceContactScene(markers,walls,masonry,true);this.work.occupancyBuilds++;}
-    else for(const m of markers)if(JSON.stringify(m)!==JSON.stringify(this.previousInputs.get(m.id)))this.occupancy.replace(m);
+    if(!this.occupancy){this.occupancy=new DeviceContactScene(oriented,walls,masonry,true);this.work.occupancyBuilds++;}
+    else for(const m of oriented)if(JSON.stringify(m)!==JSON.stringify(this.previousInputs.get(m.id)))this.occupancy.replace(m);
     this.previousInputs=current;
     const occupied=this.occupancy;
     const output=new Map(current);
@@ -202,7 +211,7 @@ export class DeviceContactLayout {
     for(const group of groups) {
       const groupId=group[0].marker.id;
       activeGroups.add(groupId);
-      const groupKey=JSON.stringify([group,group.map(s=>current.get(s.marker.id))]);
+      const groupKey=JSON.stringify([group,group.map(s=>current.get(s.marker.id)),uprightHalfTurn]);
       const cached=this.groupResults.get(groupId);
       if(cached?.key===groupKey){for(const m of cached.markers)output.set(m.id,m);continue;}
       const members=new Set(group.map(s=>s.marker.id));
@@ -330,7 +339,7 @@ export class DeviceContactLayout {
       const ignore=new Set([...remaining,m.id]);
       const linked=[...(this.graph!.edges.get(id)??[])].flatMap(other=>{
         const parent=settled.get(other);if(!parent)return [];
-        const next=deriveContactShape(follow(parent,template(m,ref),this.graph!.shapes.get(other)!,ref).marker,walls);
+        const next=deriveContactShape(follow(parent,template(m,ref),this.graph!.shapes.get(other)!,ref,this.uprightHalfTurn).marker,walls);
         if(!joinedContactSide(parent,next)||!this.safe(next,occupied,ignore))return [];
         const linkedGroup=[...settled.values(),next];
         // Widening a short row's empty shell must not push the silhouette
@@ -362,7 +371,7 @@ export class DeviceContactLayout {
       for (const next of graph.edges.get(id) ?? []) {
         if (placed.has(next)) continue;
         const rb = graph.shapes.get(next)!;
-        placed.set(next, follow(a, template(current.get(next)!, rb), ra, rb));
+        placed.set(next, follow(a, template(current.get(next)!, rb), ra, rb, this.uprightHalfTurn));
         queue.push(next);
       }
     }
@@ -383,7 +392,7 @@ export class DeviceContactLayout {
           if (!neighbour || !joinedContactSide(shape, neighbour) || contactCoresOverlap(shape.marker, neighbour.marker)) return false;
           if (!resize) return true;
           const next = graph.shapes.get(other)!;
-          const expected = follow(shape, template(current.get(other)!, next), reference, next).marker;
+          const expected = follow(shape, template(current.get(other)!, next), reference, next, this.uprightHalfTurn).marker;
           return near(expected.x, neighbour.marker.x) && near(expected.y, neighbour.marker.y);
         });
       });

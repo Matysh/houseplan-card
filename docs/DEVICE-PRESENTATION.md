@@ -466,8 +466,10 @@ until explicit movement normalises the affected component. Temporary guide lines
 remain, but the redundant “Join outlines” / “Attach to wall” labels are gone.
 
 `device-contact-layout` derives effective positions from a stable reference,
-not the previous displayed frame. Value-only changes follow #1003, including
-separation when the new face cannot fit. When the full card's requested diameter
+not the previous displayed frame. A changing value in the middle of a group
+reflows the whole component from its reference. As the fitted badge widens,
+neighbours move to preserve their contacts and make room for the value.
+When the new face cannot fit, #1003 uses safe separation. When the full card's requested diameter
 changes (#1517), a proved contact component keeps its wall faces and neighbour
 edges. The solver prefers a corner or wall, then the first original anchor by
 Y, X and ID. It checks the whole component after positioning. If the requested
@@ -491,7 +493,10 @@ Quarter-turn contact presentation (#1119) derives a screen scene from these
 world positions. Marker anchors, wall endpoints/normals and masonry share the
 exact turn matrix; measured asymmetric badge boxes remain upright. Contours and
 individual hit silhouettes are recomputed in that frame rather than rotating
-the previous contour. Rotation does not re-author placement, clear physical
+the previous contour. At 180° in Flat View the solver reverses the current
+badge footprint in plan coordinates. The badge stays on its configured side on
+screen and a proved row or column refits around that footprint. A shared wall
+face still owns its alignment. Rotation does not re-author placement, clear physical
 pools or add a config/layout write; live moves update the affected screen index.
 
 The frozen designer handoff governs the shared outer silhouette. A free core
@@ -506,8 +511,8 @@ not prototype bbox approximations. Each member keeps its own status, alarm,
 activity, focus, tooltip, confirmation and action owner. Passive battery/LQI
 satellites do not enlarge the outline or hit area. Individual own silhouette
 wins before the usual core-centred 44px fallback. Static cards remain passive;
-isolated previews have no neighbours. In 2.5D all contact ink/style is removed:
-the previous individual tiles and exact saved coordinates remain authoritative.
+isolated previews have no neighbours. Floor-aligned 2.5D projects the same
+effective contacts and individual hit shapes onto the raised marker plane.
 
 Decor-only edits do not invalidate contact walls or the contact graph (#935).
 The wall key excludes only decor from the existing floor-record fingerprint;

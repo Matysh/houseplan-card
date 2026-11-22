@@ -1,8 +1,7 @@
 /** A screen-facing contact view, independent of authored placement/layout. */
 import { DeviceContactScene } from './device-contact-scene';
-import type { ContactMarker } from './device-contact-geometry';
+import { halfTurnContactBox, type ContactMarker, type ContactRect } from './device-contact-geometry';
 import { turnPoint, turnVector, type PlanRotation } from './view-frame';
-import type { ContactRect } from './device-contact-geometry';
 import type { DeviceHitCandidate } from './device-hit-owner';
 
 /** Apply the same floor basis to a member's hit contour; never make the whole
@@ -21,15 +20,16 @@ export function projectedContactHit(candidate: DeviceHitCandidate,
     return contact.contains((d*u-c*v)/det,(-b*u+a*v)/det);};
 }
 
-export function screenContactMarker(marker: ContactMarker, rotation: PlanRotation): ContactMarker {
+export function screenContactMarker(marker: ContactMarker, rotation: PlanRotation, uprightHalfTurn = false): ContactMarker {
   const [x, y] = turnPoint([marker.x, marker.y], rotation);
-  // Boxes describe the actual upright face. Only the core anchor turns.
-  return { ...marker, x, y };
+  // Reverse the footprint used by the half-turn solver back into screen axes.
+  const box = uprightHalfTurn ? halfTurnContactBox(marker.box) : marker.box;
+  return { ...marker, x, y, box };
 }
 
-export function screenContactScene(source: DeviceContactScene, rotation: PlanRotation): DeviceContactScene {
+export function screenContactScene(source: DeviceContactScene, rotation: PlanRotation, uprightHalfTurn = false): DeviceContactScene {
   if (!rotation) return source;
-  return new DeviceContactScene([...source.shapes.values()].map(shape => screenContactMarker(shape.marker, rotation)),
+  return new DeviceContactScene([...source.shapes.values()].map(shape => screenContactMarker(shape.marker, rotation, uprightHalfTurn)),
     source.walls.map(wall => ({ ...wall, a: turnPoint(wall.a, rotation), b: turnPoint(wall.b, rotation),
       normal: wall.normal ? turnVector(wall.normal, rotation) : null })),
     source.masonry.map(polygon => polygon.map(ring => ring.map(point => turnPoint([point[0], point[1]], rotation)))), true);

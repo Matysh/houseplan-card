@@ -82,7 +82,8 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
   const iconScale = host._mode === 'view' ? host._effectiveKioskScale.icon : 1;
   const wasReflowed=renderer.reflowed, previousStatus = renderer.resizeStatus;
   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
-    space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane,invalidate:()=>host.requestUpdate(),
+    space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane,
+    uprightHalfTurn: host._mode === 'view' && host._renderProjection === 'flat' && host._rotation === 180,invalidate:()=>host.requestUpdate(),
     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => {
       const scale = host._devicePresentation(d).scale;
       return { id: d.id, ...host._pos(d,false), virtual: d.virtual === true || d.bindingKind === 'virtual',
