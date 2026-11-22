@@ -1,6 +1,7 @@
 /** #1516: actual surfaces, same-space isolation, profile events and browser reload. */
 import { launch, checkAll, finish } from './serve.mjs';
 import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
+import { clickHeaderAction } from './helpers/header-actions.mjs';
 const {page,browser}=await launch({width:2050,height:1350},1,[],{},undefined,undefined,'/demo.html?external-screens=1');
 try {
   await page.emulateMedia({ reducedMotion:'reduce' });
@@ -106,6 +107,27 @@ try {
   });
   await Promise.all([angle('kiosk',180),angle('main',0),iso('duplicate',45)]);
   out.liveProfileAffectsOnlyExternalScreen=await find('kiosk').locator('[data-projection="iso"]').count()===0;
+  await clickHeaderAction(find('main'), 'rotate-left');
+  await Promise.all([angle('main',270),angle('kiosk',180),angle('flat',90),iso('duplicate',45)]);
+  await page.evaluate(() => {
+    const {kiosk,cards} = window.__surfaceCards;
+    kiosk.routeKiosk = { enabled:true, position:1 };
+    const card = cards[1];
+    card.setConfig({type:'custom:houseplan-card',floor:card._space,rotation:0});
+  });
+  await Promise.all([angle('kiosk',270),angle('iso',270)]);
+  await page.evaluate(() => {
+    const card = window.__surfaceCards.cards[1];
+    card.setConfig({...card._config,rotation:90,plan_rotation:0});
+  });
+  await angle('iso',0);
+  await page.evaluate(() => {
+    const card = window.__surfaceCards.cards[1];
+    const {plan_rotation, ...legacy} = card._config;
+    card.setConfig(legacy);
+  });
+  await Promise.all([angle('main',270),angle('iso',270),angle('kiosk',270),iso('duplicate',45)]);
+  out.legacyCardAndUnprofiledScreenInheritMainRotation=true;
   out.presentationDoesNotSendPlanWrites=await page.evaluate(()=>window.__surfaceWrites.length===0);
   checkAll(out);await finish(browser,out);
 }catch(error){
