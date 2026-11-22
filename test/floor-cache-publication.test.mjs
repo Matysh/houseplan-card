@@ -36,6 +36,18 @@ test('#1454 a changed fit/paint token cannot capture or consume an intent under 
   const h=harness();h.card._publishFloorCacheAfterPaint();h.runtime.paintToken='new-fit';await h.paint();
   assert.equal(h.card.entered,undefined);assert.equal(h.publications(),0);
 });
+test('#1521 a failed preparation cannot consume the queued editor request before a successful retry',async()=>{
+  for(const alreadyFailed of [false,true]){
+    const h=harness();
+    if(alreadyFailed)h.runtime.failed='unavailable';
+    h.card._publishFloorCacheAfterPaint();
+    h.runtime.failed='unavailable';await h.paint();
+    assert.equal(h.card.entered,undefined);assert.equal(h.publications(),0);
+    assert.equal(h.card._floorPendingMode.mode,'plan');
+    h.runtime.failed=null;h.card._publishFloorCacheAfterPaint();await h.paint();
+    assert.equal(h.card.entered,'plan');assert.equal(h.card._floorPendingMode,null);
+  }
+});
 test('#1454 a fresh read-only answer discards a previously queued direct editor command',async()=>{
   const h=harness();h.card._publishFloorCacheAfterPaint();h.card._canEdit=false;await h.paint();
   assert.equal(h.card.entered,undefined);assert.equal(h.card._floorPendingMode,null);assert.equal(h.publications(),0);
@@ -93,9 +105,11 @@ test('#1454 an explicit mode supersedes warm restoration before waiting for floo
   const find=node=>{if(ts.isMethodDeclaration(node)&&node.name.getText(source)==='_setMode')declaration=node.getText(source);ts.forEachChild(node,find);};
   find(source);const output=ts.transpileModule(`export class Fixture { ${declaration} }`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
   const exports={};new Function('exports',output)(exports);const card=new exports.Fixture();
-  Object.assign(card,{_pendingNavMode:'devices',_loadOk:false,_ensureFloorPreparation:()=>false,
+  let retries=0;
+  Object.assign(card,{_pendingNavMode:'devices',_loadOk:false,_ensureFloorPreparation:()=>false,_retryFloorPreparation(){retries++;},
     _cancelPendingWarmMode(){this._pendingNavMode=null;}});
   card._setMode('plan',false);assert.equal(card._pendingNavMode,null);
+  assert.equal(retries,1,'only the user request has the retry option');
   assert.deepEqual(card._floorPendingMode,{mode:'plan',animate:false,warm:false});
 });
 test('#1454 passive SVG follows an adopted camera without refitting, live writes or an update loop',()=>{

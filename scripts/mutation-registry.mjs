@@ -18160,8 +18160,8 @@ const MUTANT_DEFINITIONS = [
       + 'the eight-entry runtime pool must still increment misses, unlike a restored warm frame.',
     patches: [{
       file: 'src/floor-cache-runtime.ts',
-      find: '        if (warm) this.metrics.memoryHits++; else if (result.hit) this.metrics.diskHits++; else this.metrics.misses++;',
-      replace: '        if (warm) this.metrics.memoryHits++; else if (result.hit) this.metrics.diskHits++; else if (this.memory.size < 8) this.metrics.misses++;',
+      find: '        if (result.hit) this.metrics.diskHits++; else this.metrics.misses++;',
+      replace: '        if (result.hit) this.metrics.diskHits++; else if (this.memory.size < 8) this.metrics.misses++;',
     }],
   },
   {

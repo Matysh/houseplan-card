@@ -1166,6 +1166,7 @@
     "zigbee-topology-"
   ],
   "internalExactValues": [
+    "floor-error-support",
     "wall-side-dimensions",
     "dimension-witnesses",
     "dimension-list",
