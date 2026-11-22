@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20968,
+  "revision": 20969,
   "nextTicket": 623,
   "nextFence": 623,
   "tasks": {
@@ -6318,18 +6318,12 @@
       }
     },
     "1522": {
-      "requestId": "spec:1522:6df370f706eb0e559da76254fab1c6bc83d1e9c1cad6a7dcafec98ef4df75b1c",
-      "contextDigest": "6df370f706eb0e559da76254fab1c6bc83d1e9c1cad6a7dcafec98ef4df75b1c",
+      "requestId": "spec:1522:4806845822a7eff78c1b976da050fcf5427b66235541d4148e73b949d52f3443",
+      "contextDigest": "4806845822a7eff78c1b976da050fcf5427b66235541d4148e73b949d52f3443",
       "base": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795364703553,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45043227488",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795368871227
     }
   },
   "reviewPublications": {
@@ -6357,6 +6351,19 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
+      }
+    },
+    "spec:1522:spec:1522:4806845822a7eff78c1b976da050fcf5427b66235541d4148e73b949d52f3443": {
+      "issue": 1522,
+      "kind": "spec",
+      "requestId": "spec:1522:4806845822a7eff78c1b976da050fcf5427b66235541d4148e73b949d52f3443",
+      "materialSha": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
+      "expectedBase": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
+      "patchId": "4806845822a7eff78c1b976da050fcf5427b66235541d4148e73b949d52f3443",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-22T17:34:31.227Z"
       }
     }
   },
@@ -6403,6 +6410,10 @@
       "digest": "e104770604a7654c7622181343e2fb8a04dd6b89cb096d3ee10eb1a0b8c66882",
       "issue": 1522
     },
+    "github:45050194873:1:label:spec-request": {
+      "digest": "551b605f3e155cf96c213675951ddc8fffdba74457b4e2f1057fc600dcd69724",
+      "issue": 1522
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6430,6 +6441,22 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "github:45050194873:1:label:spec-request:spec-resubmitted:1522": {
+      "digest": "551b605f3e155cf96c213675951ddc8fffdba74457b4e2f1057fc600dcd69724",
+      "issue": 1522,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1522,
+        "at": 1795368871227,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1522:4806845822a7eff78c1b976da050fcf5427b66235541d4148e73b949d52f3443",
+        "reviewChanges": "### Исправления по предыдущему ревью\n\n- Несовпадение рамки: решение владельца — «нет, нужно точное совпадение. Мебель тоже включать в превью». По следующему уточнению («снимать не кадр, а всю геометрию, а потом уже подстраивать ее под кадр») материал разделён на geometry/world fit и текущую позу. Не допускаются приблизительное кадрирование и подстройка живой камеры во время появления. AC2 измеряет точное совпадение независимо.\n- Дублирование config/get: сервер отдаёт уже рассчитанные контуры/грани, мебель и подтверждаемую рамку, а не исходные комнаты и сегменты; старт запроса, где возможно, параллельный. Источник — один существующий рендерер/кэш, прямого Python-порта и каскада чтений нет. AC6 проверяет не только ранний кадр, но и время появления интерактивного плана.\n- Ревизии и ограничения: серверный ключ принятой версии и авторизация обязательны отдельно от клиентского fit key. Для установки без прогретой записи прямо предусмотрена обычная загрузка. Не утверждаем, что сохранённый кадр существует до первого просмотра этого поколения в любом браузере.\n\n[Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1522#issuecomment-7082062190).",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
