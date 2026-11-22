@@ -74,6 +74,24 @@ class HouseplanStore(Store):
     a single, tested upgrade path.
     """
 
+    # Runtime-only fence for optional, lock-free derivative reads. It is
+    # deliberately independent of the persisted rev (restores can reuse it).
+    content_epoch = 0
+
+    async def async_save(self, data: Any) -> None:
+        self.content_epoch += 1
+        try:
+            await super().async_save(data)
+        finally:
+            self.content_epoch += 1
+
+    async def async_remove(self) -> None:
+        self.content_epoch += 1
+        try:
+            await super().async_remove()
+        finally:
+            self.content_epoch += 1
+
     async def _async_migrate_func(
         self,
         old_major_version: int,
@@ -145,6 +163,8 @@ class HouseplanData:
     marker_history_owner: Any | None = None
     # #836: frontend fingerprint and dev label, read once at entry setup.
     build_identity: BuildIdentity = UNKNOWN_BUILD
+    # Render-only Store. Created lazily by the authenticated preview adapter.
+    startup_floor_previews: Any | None = None
 
     @property
     def integration_version(self) -> str:

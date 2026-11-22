@@ -46,7 +46,7 @@ import { gridVisualUnits } from './grid-scale';
 import { iconUnit, type Rect } from './space-geometry';
 import { lruRead, lruWrite } from './card-runtime';
 import type { ResolvedDevicePresentation } from './device-presentation';
-import { deviceTextScale, legacySupplementalMetrics } from './device-face';
+import { conservativeTextAdvance, ISO_TEXT_ADVANCE, isoDeviceFitInputs, nominalDeviceCore } from './iso-overlay-fit-inputs';
 import type { RenderOpening } from './interaction-types';
 import type { DevItem, RoomCfg, SpaceModel, OpeningFeatures } from './types';
 
@@ -181,11 +181,7 @@ export type IsoOverlayRenderScene = {
  * the shared face/room-label CSS changes.
  */
 export const ISO_RAISED_FOOTPRINT = Object.freeze({
-  textLatinAdvance: 0.72,
-  textWideAsciiAdvance: 1,
-  textWideAdvance: 1.1,
-  textSpaceAdvance: 0.4,
-  textWidthSafety: 1.08,
+  ...ISO_TEXT_ADVANCE,
   deviceShellInset: 0.134375,
   deviceShellGap: 0.1,
   deviceSectionGap: 0.08,
@@ -230,19 +226,6 @@ type IsoRaisedFootprintInput =
   | { kind: 'opening-lock'; size: number };
 
 type RelativeBounds = { left: number; right: number; top: number; bottom: number };
-
-function conservativeTextAdvance(text: string): number {
-  return [...String(text)].reduce((sum, char) => {
-    if (/\s/.test(char)) return sum + ISO_RAISED_FOOTPRINT.textSpaceAdvance;
-    if (/[MW@#%&]/.test(char)) return sum + ISO_RAISED_FOOTPRINT.textWideAsciiAdvance;
-    return sum + (char.codePointAt(0)! > 0xff
-      ? ISO_RAISED_FOOTPRINT.textWideAdvance : ISO_RAISED_FOOTPRINT.textLatinAdvance);
-  }, 0) * ISO_RAISED_FOOTPRINT.textWidthSafety;
-}
-
-function deviceFaceTextWidth(text: string, fullText: string): number {
-  return conservativeTextAdvance(text) * deviceTextScale(fullText || text);
-}
 
 function halfSizeOf(bounds: RelativeBounds, padding: number): PlanPoint {
   return [
@@ -299,24 +282,10 @@ export function isoRaisedOverlayHalfSize(input: IsoRaisedFootprintInput): PlanPo
   }
 
   const core = Number.isFinite(input.core) && input.core > 0 ? input.core : 0;
-  const presentation = input.presentation;
-  const coreWidth = presentation.valueText == null ? 1 : Math.max(1,
-    deviceFaceTextWidth(presentation.valueText,
-      presentation.valueFullText || presentation.valueText)
-      + ISO_RAISED_FOOTPRINT.deviceValueInlinePadding);
-  const sectionWidths: number[] = [];
-  if (presentation.valueBadge) {
-    sectionWidths.push(Math.max(ISO_RAISED_FOOTPRINT.deviceBadgeMinWidth,
-      deviceFaceTextWidth(presentation.valueBadge.text,
-        presentation.valueBadge.fullText || presentation.valueBadge.text)
-        + ISO_RAISED_FOOTPRINT.deviceBadgeInlinePadding));
-  }
-  for (const metric of legacySupplementalMetrics(presentation)) {
-    const text = metric.text + metric.suffix;
-    sectionWidths.push(Math.max(ISO_RAISED_FOOTPRINT.deviceBadgeMinWidth,
-      deviceFaceTextWidth(text, text) + ISO_RAISED_FOOTPRINT.deviceBadgeInlinePadding));
-  }
-  const position = presentation.valueBadge?.position || 'right';
+  const { value, sections, position, pulse, lqi } = isoDeviceFitInputs(input.presentation);
+  const coreWidth = value === null ? 1 : Math.max(1, value + ISO_RAISED_FOOTPRINT.deviceValueInlinePadding);
+  const sectionWidths = sections.map(width => Math.max(ISO_RAISED_FOOTPRINT.deviceBadgeMinWidth,
+    width + ISO_RAISED_FOOTPRINT.deviceBadgeInlinePadding));
   let bounds: RelativeBounds;
   if (sectionWidths.length && (position === 'left' || position === 'right')) {
     const sectionWidth = Math.max(...sectionWidths);
@@ -365,19 +334,18 @@ export function isoRaisedOverlayHalfSize(input: IsoRaisedFootprintInput): PlanPo
   bounds.right = Math.max(bounds.right, auxiliary);
   bounds.top = Math.min(bounds.top, -auxiliary);
   bounds.bottom = Math.max(bounds.bottom, auxiliary);
-  if (presentation.pulse.animated) {
-    const pulseRadius = Math.max(1, presentation.pulse.diameterScale) / 2;
+  if (pulse !== null) {
+    const pulseRadius = pulse;
     bounds.left = Math.min(bounds.left, -pulseRadius);
     bounds.right = Math.max(bounds.right, pulseRadius);
     bounds.top = Math.min(bounds.top, -pulseRadius);
     bounds.bottom = Math.max(bounds.bottom, pulseRadius);
   }
-  if (presentation.lqiText != null) {
-    const lqiTop = presentation.valueBadge?.position === 'bottom'
+  if (lqi !== null) {
+    const lqiTop = position === 'bottom'
       ? ISO_RAISED_FOOTPRINT.deviceLqiBelowBottomBadgeTop
       : ISO_RAISED_FOOTPRINT.deviceLqiTop;
-    const lqiHalfWidth = conservativeTextAdvance(presentation.lqiText)
-      * ISO_RAISED_FOOTPRINT.deviceLqiFontSize / 2;
+    const lqiHalfWidth = lqi * ISO_RAISED_FOOTPRINT.deviceLqiFontSize / 2;
     bounds.left = Math.min(bounds.left, -lqiHalfWidth);
     bounds.right = Math.max(bounds.right, lqiHalfWidth);
     bounds.bottom = Math.max(bounds.bottom,
@@ -957,7 +925,9 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     const presentation = input.presentationOf(device, input.showLqi);
     // #649: the 2.5D tile is ICON_SCALE larger; layout and fit see that size.
     const core = (input.floorAlignedMarkers ? input.effectiveDiameterOf?.(device) : undefined)
-      ?? baseDeviceUnits * presentation.scale * (input.floorAlignedMarkers ? 1 : ISO_ICON_SCALE);
+      ?? (input.floorAlignedMarkers
+        ? nominalDeviceCore(input.deviceBasePct, iconUnit(input.space), presentation.scale, input.kioskIconScale)
+        : baseDeviceUnits * presentation.scale * ISO_ICON_SCALE);
     const halfSize = isoRaisedOverlayHalfSize({ kind: 'device', core, presentation });
     const layoutHalfSize = isoRaisedOverlayHalfSize({
       kind: 'device', core, presentation: stateFreePresentation(presentation),

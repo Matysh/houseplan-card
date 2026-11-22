@@ -10,10 +10,10 @@ const flush = async () => { for (let i=0;i<12;i++) await Promise.resolve(); };
 const selection = {authority:{},connection:1,scope:'installation/account',floor:'A',variant:'a',revision:'one',size:[640,480],zoomHint:1};
 const packet = {image:new Blob(),zoomHint:1};
 
-function harness() {
+function harness(remote) {
   let current=selection;
   const paint=[],writes=[],reads=[];
-  const owner = new StartupFloor(() => current, () => paint.push('observed'));
+  const owner = new StartupFloor(() => current, () => paint.push('observed'), remote);
   owner.store={
     read(key){ reads.push(key); return Promise.resolve(null); },
     write(key,value,allowed){ if (!allowed()) return Promise.resolve(false); writes.push({key,value}); return Promise.resolve(true); },
@@ -108,4 +108,40 @@ test('#1520 explicit A→B→A retirement fences work even if no intermediate vi
   assert.equal(reachedDecoder,false);
   assert.equal(h.owner.facts.status,'reading');
   h.owner.dispose(); current.resolve(null); await flush();
+});
+
+const portable = { ...selection, remote:{source:['c','l'],variant:'fit',projection:'iso',rotation:45} };
+
+test('#1522 a browser entry is tried first and no remote read is made after a hit', async()=>{
+  const h=harness({read:async()=>assert.fail('a browser hit must not call HA')});
+  h.set(portable);
+  h.owner.store.read=async()=>({
+    size:portable.size, zoomHint:1, image:new Blob(['not-svg']), // reaches only the local decoder
+  });
+  h.owner.observe(portable);
+  await flush();
+  assert.equal(h.owner.facts.remote,'idle');
+  h.owner.dispose();
+});
+
+test('#1522 stale fit and accepted live View retire the same remote read owner', async()=>{
+  for(const change of ['fit','live','authority']) {
+    const first=defer();
+    let reads=0, signal;
+    const h=harness({
+      read:async(_sel,abort)=>{ if(++reads===1){signal=abort;return first.promise;} return null; },
+    });
+    h.set(portable);h.owner.observe(portable);await flush();
+    assert.equal(reads,1);
+    if(change==='live') h.owner.publishedLive();
+    else {
+      const next={...portable,...(change==='fit'?{remote:{...portable.remote,variant:'bigger-badge'}}:{authority:{}})};
+      h.set(next);h.owner.observe(next);
+    }
+    first.resolve({size:portable.size,zoomHint:1,get image(){assert.fail('old remote reply reached decode');}});
+    await flush();
+    assert.equal(signal.aborted,true);
+    assert.deepEqual(h.paint,[]);
+    h.owner.dispose();
+  }
 });

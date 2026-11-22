@@ -1,4 +1,5 @@
 import { STARTUP_IMAGE_LIMIT, STARTUP_VECTOR_LIMIT } from './startup-floor-store';
+import { STARTUP_WIRE_PAINT_BYTES, startupVector, type StartupVector } from './startup-floor-wire';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const tags = new Set(('svg g defs path rect circle ellipse line polyline polygon clipPath mask linearGradient radialGradient stop '
@@ -104,10 +105,12 @@ async function rasterData(blob: Blob, signal: AbortSignal): Promise<string> {
 
 /** Consume only a static template tree, not the live plan DOM. Drawn content
  * uses the same authored SVG parts and the same stylesheet scope as View. */
-export async function serializeStartupFloor(source: SVGSVGElement, readImage: ReadImage, signal: AbortSignal): Promise<Blob> {
+export async function serializeStartupFloor(source: SVGSVGElement, readImage: ReadImage, signal: AbortSignal,
+  portable?: (nodes: StartupVector[]) => void): Promise<Blob | null> {
   const doc = source.ownerDocument, output = doc.createElementNS(SVG, 'svg');
   const todo: Array<[Element, SVGElement]> = [[source, output]];
   const images = new Map<string, string>();
+  const excluded = portable ? new Set<Element>() : undefined;
   let slice = performance.now(), vectorBytes = 0, imageBytes = 0;
   for (let index = 0; index < todo.length; index++) {
     if (todo.length > 25_000) throw Error('vector-size');
@@ -117,6 +120,8 @@ export async function serializeStartupFloor(source: SVGSVGElement, readImage: Re
     const tag = input.localName, css = doc.defaultView!.getComputedStyle(input);
     // Do not discard definitions (which have no rendered boxes of their own).
     if (input !== source && css.display === 'none' && !input.closest('defs')) { node.remove(); continue; }
+    if (excluded && input.matches('.iso-opening-panel[data-leaf],.iso-opening-texture,.iso-material-texture,[data-hp-live-opening]'))
+      excluded.add(node);
     for (const attr of input.attributes) {
       const value = attr.value;
       if (attr.localName === 'href' && tag === 'image') {
@@ -142,7 +147,7 @@ export async function serializeStartupFloor(source: SVGSVGElement, readImage: Re
         node.setAttribute(name, value); vectorBytes += name.length + value.length + 4;
       }
     }
-    if (vectorBytes > STARTUP_VECTOR_LIMIT) throw Error('vector-size');
+    if (vectorBytes > (portable ? STARTUP_WIRE_PAINT_BYTES : STARTUP_VECTOR_LIMIT)) throw Error('vector-size');
     for (const child of input.childNodes) {
       if (child.nodeType === Node.TEXT_NODE && (tag === 'text' || tag === 'tspan')) {
         vectorBytes += (child.textContent ?? '').length;
@@ -155,9 +160,17 @@ export async function serializeStartupFloor(source: SVGSVGElement, readImage: Re
     }
   }
   signal.throwIfAborted();
+  if (portable && excluded) {
+    try { portable(startupVector(output, excluded)); }
+    catch { /* a local image is still usable without a portable packet */ }
+  }
+  if (portable && vectorBytes > STARTUP_VECTOR_LIMIT) return null;
   const text = new XMLSerializer().serializeToString(output);
   const blob = new Blob([text], { type: 'image/svg+xml' });
-  if (blob.size > STARTUP_IMAGE_LIMIT || blob.size - imageBytes > STARTUP_VECTOR_LIMIT) throw Error('vector-size');
+  if (blob.size > STARTUP_IMAGE_LIMIT || blob.size - imageBytes > STARTUP_VECTOR_LIMIT) {
+    if (portable) return null;
+    throw Error('vector-size');
+  }
   return blob;
 }
 
@@ -171,9 +184,9 @@ const cssDefault = new Map([
   ['vector-effect','none'],
 ]);
 
-export async function loadStartupFloorImage(blob: Blob, signal: AbortSignal): Promise<string | null> {
-  const source = await blob.text();
-  if (signal.aborted || !await isStartupSvg(source, signal) || signal.aborted) return null;
+export async function loadStartupFloorImage(blob: Blob, signal: AbortSignal, constructedFromTypedVector = false): Promise<string | null> {
+  if (signal.aborted || !constructedFromTypedVector && !await isStartupSvg(await blob.text(), signal) || signal.aborted)
+    return null;
   const url = URL.createObjectURL(blob);
   const revoke = () => URL.revokeObjectURL(url);
   signal.addEventListener('abort', revoke, { once: true });

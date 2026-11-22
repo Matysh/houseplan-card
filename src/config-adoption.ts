@@ -32,6 +32,7 @@ import {
 import { optimisticAttempt, type OptimisticAttempt } from './serialized-write-queue';
 
 export interface LayoutResponse {
+  readonly startup_floor_source?: unknown;
   readonly layout?: DeviceLayout | null;
   readonly rev?: number;
   readonly can_optimize_undo?: boolean;

@@ -312,6 +312,19 @@ async def dispatch_plan_command(hass, connection, message: dict[str, Any]) -> No
                     await undo_archive_locked(hass, connection, message, runtime, pair.config_data, pair.layout_data)
                     return
         result = await plan_commands(hass, connection, runtime).execute(message)
+        if (operation in {"houseplan/config/get", "houseplan/layout/get"}
+                and not any(message.get(key) is not None for key in ("space_id", "fields", "marker_fields"))):
+            from .startup_floor_preview import PreviewStorage, source_stamp
+
+            field = str(operation).split("/")[1]
+            try:
+                stamp = await hass.async_add_executor_job(source_stamp, runtime, field, result["rev"], result[field])
+            except (TypeError, ValueError):
+                pass  # An unavailable preview must not fail the plan read.
+            else:
+                if runtime.startup_floor_previews is None:
+                    runtime.startup_floor_previews = PreviewStorage(hass)
+                result["startup_floor_source"] = stamp
     except (CommandError, ImportFailure) as error:
         connection.send_error(message["id"], error.code, error.public_message)
         return

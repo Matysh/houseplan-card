@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1522,
+  "baseStable": "v1.86.0",
+  "category": "major",
+  "rationale": "Extends the existing verified startup presentation to a fresh browser on the same Home Assistant account.",
+  "summary": {
+    "ru": "Подготовленный план с мебелью может появиться раньше живого вида даже при первом открытии в новом браузере.",
+    "en": "A prepared plan with furniture can appear before the live view even on the first open in a fresh browser."
+  }
+}

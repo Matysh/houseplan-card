@@ -212,6 +212,7 @@ def async_register(hass: HomeAssistant) -> None:
         async_register as async_register_external_screens,
     )
     from .radar_websocket import async_register as async_register_radar
+    from .startup_floor_preview import async_register as async_register_startup_floor
     from .vacuum_ecovacs_websocket import async_register as async_register_ecovacs
     from .vacuum_history_websocket import async_register as async_register_history
     from .zigbee_lqi_websocket import async_register as async_register_zigbee_lqi
@@ -223,6 +224,7 @@ def async_register(hass: HomeAssistant) -> None:
     async_register_external_screens(hass)
     async_register_ecovacs(hass)
     async_register_history(hass)
+    async_register_startup_floor(hass)
     websocket_api.async_register_command(hass, ws_layout_set)
     websocket_api.async_register_command(hass, ws_geometry_repair)
     websocket_api.async_register_command(hass, ws_layout_update)

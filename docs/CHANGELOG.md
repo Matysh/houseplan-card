@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A prepared floor preview, including furniture, can appear on the first open in a fresh browser after the same Home Assistant account has viewed the plan (#1522).
+
 ## v1.86.1-beta.1 — 2026-11-22
 
 - End stalled floor preparation with a retryable error instead of leaving “Updating plan” on screen (#1521).

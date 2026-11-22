@@ -4,6 +4,7 @@ import type { DeviceContactRenderer } from './device-contact-render';
 import { positionableIconMarkers } from './device-icon-roster';
 import { ledStripsByMarker } from './led-strip-gate';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
+import { nominalDeviceCore } from './iso-overlay-fit-inputs';
 import { iconUnit } from './space-geometry';
 import type { DevItem, SpaceModel } from './types';
 import type { ResolvedDevicePresentation } from './device-presentation';
@@ -87,7 +88,8 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => {
       const scale = host._devicePresentation(d).scale;
       return { id: d.id, ...host._pos(d,false), virtual: d.virtual === true || d.bindingKind === 'virtual',
-        diameter: surfaceBase * scale * iconScale, legacyDiameters: [surfaceBase * scale, neutralBase * scale] };
+        diameter: nominalDeviceCore(effectiveDeviceBaseSize(size > 8 ? 2.5 : size), iconUnit(space), scale, iconScale),
+        legacyDiameters: [surfaceBase * scale, neutralBase * scale] };
     }) });
   if (changed) {
     host._invalidateDeviceHitGeometry();

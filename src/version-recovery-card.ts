@@ -65,6 +65,7 @@ export interface ConfigCapabilitiesCardPort extends PlanHostProvider {
 
 /** Fields returned by houseplan/config/get and consumed by full-card flows. */
 export interface AuthoritativeConfigResponse {
+  readonly startup_floor_source?: unknown;
   readonly config?: ServerConfig | null;
   readonly rev?: number;
   readonly can_write?: boolean;
