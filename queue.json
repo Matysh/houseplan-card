@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20227,
+  "revision": 20228,
   "nextTicket": 607,
   "nextFence": 607,
   "tasks": {
@@ -5670,7 +5670,10 @@
         "test/device-contact-card.test.mjs",
         "test/device-contact-screen.test.mjs",
         "test/device-contact-write.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1795340262463,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     },
     "1518": {
       "issue": 1518,
@@ -6743,6 +6746,10 @@
     },
     "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:2:synchronized": {
       "digest": "b591f09536da35b00cd5e922ca55b4ff6e2f8bed1a209dd142edea67e80be46b",
+      "issue": 1517
+    },
+    "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:3:automation-pending": {
+      "digest": "a88a3bfbf8fb0b7a01fe261a56c13ad5b91469f5401d8f525f9fd5ba302ddf62",
       "issue": 1517
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
