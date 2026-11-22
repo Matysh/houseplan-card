@@ -13,7 +13,7 @@ try {
     floor.settings={...floor.settings,show_borders:true};
     second.settings={...second.settings,show_borders:true};
     const view={zoom:1,summary:'hide',center_summary:false,icon_scale:null,font_scale:null};
-    config.settings={...config.settings,volumetric_view:false,
+    config.settings={...config.settings,volumetric_view:false,real_3d:true,
       external_screens:{version:3,next_id:2,screens:[{id:1,space:null,cycle:0,idle:120,
         default_view:{...view,view:'iso',rotation:315},
         space_views:{[second.id]:{...view,view:'flat',rotation:180}}}]}};
@@ -57,6 +57,9 @@ try {
   await Promise.all([angle('main',0),angle('flat',90),iso('iso',45),iso('duplicate',45),iso('kiosk',315)]);
   const out={independentInitialProjections:await find('main').locator('[data-projection="iso"]').count()===0
     && await find('flat').locator('[data-projection="iso"]').count()===0};
+  out.retiredReal3dFlagLeavesFlatAndIsoAvailable=await page.evaluate(
+    ()=>window.__surfaceCards.panel._serverCfg.settings.real_3d===true,
+  )&&out.independentInitialProjections;
   out.lovelaceEditorDistinguishesAuthoredZeroAndLegacyFallback=await page.evaluate(async()=>{
     const ctor=customElements.get('houseplan-card'), editor=await ctor.getConfigElement();
     const legacy={type:'custom:houseplan-card',rotation:90};
