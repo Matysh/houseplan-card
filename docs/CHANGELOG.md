@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+## v2.0.0-beta.1 — 2026-11-22
+
 - End stalled floor preparation with a retryable error instead of leaving “Updating plan” on screen (#1521).
 - On a repeat open, Flat and 2.5D can show a matching, verified static SVG before live devices and lighting are ready; progress stays in the upper-left corner of the plan (#1520).
-
+- Opt in to translucent 2.5D walls per space while keeping the default opaque masonry (#1518).
 - Move the room caption color to Names and readings, above Font sizes, with immediate preview while editing (#1519).
 - Configure independent plan views and rotation for full dashboard cards and external screens, with 45° steps in 2.5D (#1516).
 - Keep device wall anchors and groups when changing individual or per-screen icon sizes, with an explanation where the requested size cannot fit (#1517).
