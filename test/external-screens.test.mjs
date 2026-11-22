@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { defaultExternalScreen, emptyExternalScreens, externalScreensOf,
   upsertExternalScreen, ExternalScreenResolver } from '../test-build/external-screens.js';
 import { parseRouteKiosk, screenOverrides } from '../test-build/panel-route-kiosk.js';
+import { validPlanRotation } from '../test-build/view-frame.js';
 
 test('#1113 detached draft adds/edits/deletes without reusing numbers or overflowing20', () => {
   let d = emptyExternalScreens(); const original = structuredClone(d);
@@ -46,6 +47,10 @@ test('#1113 exact syntax and URL boundary matrix, including first repeated value
   assert.deepEqual(screenOverrides(new URLSearchParams('hprotate=44&hpcycle=3601&hpidle=-1&hpsummary=true&hphidden=01&hpcontrols=yes&hpicons=49&hptext=301')),{});
   for (const n of [50,51,52,53,54,55,299,300]) assert.equal(screenOverrides(new URLSearchParams('hpicons='+n)).icon_scale, Math.round(n/5)/20);
   assert.deepEqual(screenOverrides(new URLSearchParams('hpcycle=0&hpcycle=300&hpsummary=0&hpsummary=1')), {cycle:0,summary:false});
+  for (let angle = -1; angle <= 360; angle++) {
+    assert.equal(screenOverrides(new URLSearchParams({hprotate:String(angle)})).rotation,
+      validPlanRotation(angle) ? angle : undefined);
+  }
 });
 
 test('#1113 each explicit URL field overrides profile while local sentinels remain absent', () => {
