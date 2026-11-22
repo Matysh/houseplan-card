@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20242,
-  "nextTicket": 608,
+  "revision": 20243,
+  "nextTicket": 609,
   "nextFence": 607,
   "tasks": {
     "1024": {
@@ -5709,15 +5709,15 @@
       "issue": 1518,
       "track": "show",
       "layer": "product",
-      "branch": "codex/1518-iso-wall-transparency",
-      "materialSha": "d12669af73b0a856bce5b1e8b3e3d088f6e25674",
+      "branch": "codex/1518-iso-wall-window-support",
+      "materialSha": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 605,
-      "queued": false,
+      "ticket": 608,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795339163092,
-      "reviewEntry": 3,
+      "readyAt": 1795340663753,
+      "reviewEntry": 4,
       "patchId": "160810288ae7675534b218dd36fb2e08229b9b3b",
       "changedFiles": [
         "custom_components/houseplan/core/import_export.py",
@@ -5772,8 +5772,7 @@
       "reviewCorrection": {
         "requestId": "review:1518:2:160810288ae7675534b218dd36fb2e08229b9b3b:432662652229bf4bf58c2a4b94e954efa9f770c7",
         "at": 1795338685714
-      },
-      "reason": "owner-stopped"
+      }
     },
     "1519": {
       "issue": 1519,
@@ -6351,7 +6350,8 @@
     }
   },
   "waiting": [
-    1516
+    1516,
+    1518
   ],
   "active": {
     "issue": 1517,
@@ -7157,6 +7157,28 @@
         "layer": "product",
         "materialSha": "fb7e68b467fe8f663e230057323e681ca242de19",
         "delivered": true
+      }
+    },
+    "finish:4340f998-20c1-4689-b57f-aa743a2c66da": {
+      "digest": "a153ff824af9fa59dc4e19fd0e318a8d212a3509596e197fc9056afee0e3e630",
+      "issue": 1518,
+      "message": {
+        "kind": "queued",
+        "issue": 1518,
+        "at": 1795340663753,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
+        "evidence": {
+          "id": "20261122T085948695-0681fb22",
+          "name": "Тесты для задачи #1518 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T085948695-0681fb22/report.json",
+          "materialSha": "c53678a671e8f0b11ae838e3671ba965ff6660bb",
+          "status": "passed",
+          "finishedAt": "2026-11-22T09:01:01.040Z",
+          "failures": []
+        }
       }
     }
   },
