@@ -105,7 +105,7 @@ zoom-out or pan the marker layer can renew its coverage independently. Before
 the next plan template, the camera restores temporary marker writes so that
 unchanged Lit bindings still match the authored view.
 
-The direct cameras render the projected floor through a live viewport. Raster gestures and serialized startup paint continue on the affine cameras.
+The direct cameras render the projected floor through a live viewport, including during camera gestures. A portable startup image approximates the floor with small affine triangles while retaining the same projected volumes.
 
 The camera publishes one exact SVG view after the last input and retires the
 temporary surfaces in that commit. Scene inputs are tied to the current plan,

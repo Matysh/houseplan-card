@@ -345,7 +345,7 @@ import {
 import {
   isoDisplayWallHeight, isoCameraFor, directIsoRotation, isoViewTurn, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
-import {renderIsoPerspectiveFloor} from './iso-perspective-floor';
+import {renderIsoPerspectiveFloor, renderIsoPerspectiveSnapshot} from './iso-perspective-floor';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
 import type { IsoWallLightSource } from './iso-wall-light';
 import { IsoLightTransition } from './iso-light-transition';
@@ -2957,7 +2957,7 @@ export class HouseplanCard extends LitElement {
       || !this.isConnected || this._mode !== 'view' || this._modeTransitionBusy || this._rotationMotion.running
       || this._settingsDialog || this._spaceDialog || this._recoveryViewport) return null;
     const floor = this._space, projection = this._desiredProjection, rotation = this._rotationForProjection(projection);
-    if (!floor || projection === 'iso' && directIsoRotation(rotation)) return null;
+    if (!floor) return null;
     const envStyle = this._presentation.themes;
     const savedZoom = Number(this._zoomBySpace[floor]);
     const zoomHint = this._hasScreenProfile ? null : Number.isFinite(savedZoom) && savedZoom > 0 ? savedZoom
@@ -5712,10 +5712,12 @@ export class HouseplanCard extends LitElement {
     void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
       .then(() => {
         if (!current() || runtime !== this._floorPreparation || runtime.pending || runtime.failed) return;
-        if (runtime.publicationNeeded && accepted() && !this._isoFloorCamera?.perspective) {
+        if (runtime.publicationNeeded && accepted()) {
           const base = this._baseVb();
           const fit = { frame: this._frameOf(), base, display: this._displayBase(base), projection: this._renderProjection, rotation: this._rotation };
-          const preview = captureFloorPreview(this.renderRoot, fit, selection.fitKey, diagnostic => { this._floorPreviewDiagnostic = diagnostic; });
+          const projectedFloor = this._isoFloorCamera?.perspective ? this._renderIsoScene?.floor.footprintPath : undefined;
+          const preview = captureFloorPreview(this.renderRoot, fit, selection.fitKey,
+            diagnostic => { this._floorPreviewDiagnostic = diagnostic; }, projectedFloor);
           if (preview) {
             runtime.publish(preview, accepted);
             if (selection.scope) this._warmPatch({ floorPreview: {
@@ -14205,33 +14207,35 @@ export class HouseplanCard extends LitElement {
     // During the outgoing fade, the retained 2.5D scene keeps View styling
     // until the projection swap. The header already represents the edit mode.
     const stageMode = iso ? 'view' : this._mode;
-    if (this._mode === 'view' && projection === this._desiredProjection && !floorCamera?.perspective
-        && !isoFirstFramePending && !this._modeTransitionBusy) {
+    if (this._mode === 'view' && projection === this._desiredProjection && !isoFirstFramePending && !this._modeTransitionBusy) {
       const transform = this._floorTransform;
       const floorLayer = (content: unknown) => svg`<g class=${iso ? 'iso-floor-scene' : nothing} transform=${transform}>${content}</g>`;
       this._startupSource = previewView => {
         const neutral = iso ? this._startupIsoFrame(disp, isoScene, startupFurniture) : null;
         const fragments: TemplateResult[] = [];
+        const floorFragments: TemplateResult[] = [];
         if (neutral?.layers.structural) fragments.push(svg`<g class="iso-underlay-svg">${neutral.underlay}</g>`);
-        fragments.push(floorLayer(svg`${wallHatch}${renderPaperShapes(paperShapes)}`));
+        floorFragments.push(floorLayer(svg`${wallHatch}${renderPaperShapes(paperShapes)}`));
         if (space.bg) {
           if (!backdropHref || !backdropPaint) throw Error('asset-unavailable');
-          fragments.push(floorLayer(svg`<image class="hp-backdrop" href=${backdropHref}
+          floorFragments.push(floorLayer(svg`<image class="hp-backdrop" href=${backdropHref}
             x=${backdropPaint.x} y=${backdropPaint.y} width=${backdropPaint.w} height=${backdropPaint.h}
             opacity=${space.bg.opacity ?? 1} transform=${backdropPaint.transform ?? nothing} preserveAspectRatio="none"></image>`));
         }
-        fragments.push(floorLayer(renderRooms('view', true, this._resolvedRoomFills(space, disp, true))));
+        floorFragments.push(floorLayer(renderRooms('view', true, this._resolvedRoomFills(space, disp, true))));
         if (!disp.hideDecor) {
           if (this._decorList.some(item => item.kind === 'image' && !this._display(this._decorAssets.get(item.asset_id)?.url)))
             throw Error('asset-unavailable');
-          fragments.push(floorLayer(this._renderDecorLayer(undefined, previewView, useFurnitureVolume ? 'floor' : 'all', true)));
+          floorFragments.push(floorLayer(this._renderDecorLayer(undefined, previewView, useFurnitureVolume ? 'floor' : 'all', true)));
         }
-        fragments.push(floorLayer(this._stairsView.renderLayer(stairVolumes)));
+        floorFragments.push(floorLayer(this._stairsView.renderLayer(stairVolumes)));
         if (useFurnitureVolume && neutral?.layers.structural && furnitureShadows !== nothing)
-          fragments.push(floorLayer(furnitureShadows));
-        fragments.push(floorLayer(svg`${this._renderZeroWalls(disp)}${this._renderWallBodies(disp, true)}`));
+          floorFragments.push(floorLayer(furnitureShadows));
+        floorFragments.push(floorLayer(svg`${this._renderZeroWalls(disp)}${this._renderWallBodies(disp, true)}`));
         if (!disp.hideOpenings && (!neutral || neutral.layers.floorSymbols))
-          fragments.push(floorLayer(this._renderOpenings(disp, undefined, false, true)));
+          floorFragments.push(floorLayer(this._renderOpenings(disp, undefined, false, true)));
+        if (floorCamera?.perspective) fragments.push(renderIsoPerspectiveSnapshot(floorCamera,this._frameOf().all,floorFragments));
+        else fragments.push(...floorFragments);
         if (neutral?.layers.structural) fragments.push(svg`
           <g class="iso-shadows-svg">${neutral.shadows}</g><g class="iso-walls-svg">${neutral.walls}</g>`);
         if (neutral && neutral.foreground !== nothing) fragments.push(svg`<g class="iso-furniture-foreground">${neutral.foreground}</g>`);

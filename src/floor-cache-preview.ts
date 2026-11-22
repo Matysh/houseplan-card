@@ -37,13 +37,17 @@ export function validFloorPreview(value: unknown, fitKey?: string): value is Flo
         && (key === 'd' ? pathData : numeric).test(text) && finiteTokens(text)));
 }
 export function captureFloorPreview(root: ParentNode, fit: FloorFitPacket, fitKey: string,
-  diagnose?: (value: { shapes: number; invalid: string[] }) => void): FloorPreview | null {
+  diagnose?: (value: { shapes: number; invalid: string[] }) => void,
+  projectedFloor?: string): FloorPreview | null {
   // A structurally typed card frame also carries model/layout/device refs.
   // Pick only calculated anonymous extents; never serialize that runtime frame.
   const rect = (r: Rect): Rect => ({ x: r.x, y: r.y, w: r.w, h: r.h });
   fit = { frame: { rect: rect(fit.frame.rect), all: rect(fit.frame.all), outliers: fit.frame.outliers, hasContent: fit.frame.hasContent },
     base: [...fit.base], display: rect(fit.display), projection: fit.projection, rotation: fit.rotation };
   const shapes: Shape[] = [], seen = new Set<Element>();
+  // A passive preview is deliberately geometry-only. The direct camera's
+  // floor silhouette has already been projected by the structural builder.
+  if (projectedFloor) shapes.push({tag:'path',attributes:{d:projectedFloor},transforms:[],role:'floor'});
   const layers = [['.hp-paper,.iso-underlay-svg', 'floor'], ['[data-hp-mode-layer="rooms"],.plan-svg .room', 'floor'],
     ['[data-hp-mode-layer="decor"],.decorlayer', 'decor'], ['[data-hp-mode-layer="stairs"],.hp-stairs-layer', 'stairs'],
     ['[data-hp-mode-layer="walls"],.wallbodies,.iso-walls', 'wall'], ['[data-hp-mode-layer="zero-view"]', 'wall']] as const;
@@ -52,6 +56,7 @@ export function captureFloorPreview(root: ParentNode, fit: FloorFitPacket, fitKe
     const inverse = rootSvg?.getCTM()?.inverse();
     for (const element of [layer, ...layer.querySelectorAll('path,polygon,polyline,line,rect,circle,ellipse')]) {
       if (!tags.has(element.tagName.toLowerCase()) || seen.has(element)
+        || element.closest('[data-hp-iso-perspective-floor]')
         || element.closest('.roomlabel,.roomgear,.hp-stair-hit,[data-kind="image"],.room-hover,.hpf-arrival-highlight,.iso-opening-panel,.iso-opening-texture,.iso-ambient-shadow,.iso-material-texture,.room-hit,.hp-mode-room-hit')) continue;
       seen.add(element);
       const values: Record<string, string> = {};
