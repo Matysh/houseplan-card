@@ -14290,8 +14290,8 @@ const MUTANT_DEFINITIONS = [
       + 'builds and 4 config epochs against 18/3/3 (#520 AC6)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '          this._observeStartupFloor();\n          rebuildDevices();\n          this._primeStartupFloorRead();',
-      replace: '          this._observeStartupFloor();\n          this._primeStartupFloorRead();',
+      find: '          this._loadOk = true;\n          rebuildDevices();',
+      replace: '          this._loadOk = true;',
     }],
   },
   {

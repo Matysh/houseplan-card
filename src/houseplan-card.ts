@@ -6467,9 +6467,13 @@ export class HouseplanCard extends LitElement {
           // before the authoritative snapshot is usable, and it is usable
           // exactly here — the bodies are adopted.
           this._loadOk = true;
-          this._observeStartupFloor();
           rebuildDevices();
-          this._primeStartupFloorRead();
+          // The optional browser presentation cache cannot fail the accepted
+          // pair, device seed, or the enrichment that follows this adoption.
+          try {
+            this._observeStartupFloor();
+            this._primeStartupFloorRead();
+          } catch { this._startupFloor?.skipImage(); }
           if (this._warmRevivePending && this._mode === 'view') this._warmReviveDialog();
         },
       }), isCurrent);

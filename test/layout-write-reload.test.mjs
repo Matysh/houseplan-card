@@ -72,6 +72,7 @@ function harness() {
     _seedDecorStyle: noop, _adoptConfigCapabilities: noop, _syncDecorAssets: async () => {},
     _adoptInitialSpace: noop, _resumePendingNavMode: noop, _restoreZoom: noop, _restoreKioskViewport: () => false,
     _cacheSnapshot: event('cache'), _maybeRebuildDevices: event('devices'), _ensureLiveSyncSubscriptions: noop,
+    _observeStartupFloor: noop, _primeStartupFloorRead: noop,
     requestUpdate: event('update'), _showToast: message => events.push(message),
     // The port is card-only; execute the real capture method used by release/history.
     _toastPresentation: { captureContext: () => ({ owner: null }) },
@@ -220,6 +221,23 @@ for (const mode of ['view', 'kiosk']) test(`#902 AC3 passive ${mode} accepts one
   assert.deepEqual(h.host._serverCfg, h.store.config);
   assert.deepEqual(h.host._layout, h.store.layout);
   assert.deepEqual(h.messages, ['houseplan/config/get', 'houseplan/layout/get', 'houseplan/trail/get']);
+});
+test('#1520 optional startup cache failure cannot interrupt a fresh pair and its normal load tail',async()=>{
+  const h=harness();h.host._mode='view';h.host._loadOk=false;
+  h.store.config=config('new confirmed snapshot');h.store.cfgRev=4;
+  h.store.layout={point:pos(.7)};h.store.rev=6;
+  for(const port of ['_observeStartupFloor','_primeStartupFloorRead']){
+    const before=h.messages.length;
+    const restore=h.host[port];
+    let called=0;
+    h.host[port]=()=>{called++;throw Error('optional storage unavailable');};
+    await h.host._loadFromServer();
+    assert.equal(called,1);
+    assert.deepEqual(h.host._serverCfg,h.store.config);assert.deepEqual(h.host._layout,h.store.layout);
+    assert.equal(h.host._loadOk,true);assert.equal(h.events.includes('retry'),false);
+    assert.deepEqual(h.messages.slice(before),['houseplan/config/get','houseplan/layout/get','houseplan/trail/get']);
+    h.host[port]=restore;
+  }
 });
 
 for (const mode of ['connection', 'user', 'aba', 'detach']) for (const outcome of ['resolve', 'reject']) {
