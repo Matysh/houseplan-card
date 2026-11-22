@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 20274,
+  "revision": 20275,
   "nextTicket": 609,
-  "nextFence": 607,
+  "nextFence": 608,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -5620,7 +5620,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 607,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795340270583,
       "reviewEntry": 1
@@ -6352,10 +6352,19 @@
     }
   },
   "waiting": [
-    1516,
     1518
   ],
-  "active": null,
+  "active": {
+    "issue": 1516,
+    "worker": "finish",
+    "token": "607:finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:1:admit",
+    "fence": 607,
+    "materialSha": "fb7e68b467fe8f663e230057323e681ca242de19",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795341500823,
+    "expiresAt": 1795341800823
+  },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7251,6 +7260,20 @@
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
           "eventId": "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return:return:1517"
         }
+      }
+    },
+    "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:1:admit": {
+      "digest": "2b019a0e33db8bec0a757dbeafbcca59e846d6b7b3ccfd8f602c7f5d06baf4e4",
+      "issue": 1516,
+      "message": {
+        "kind": "admitted",
+        "issue": 1516,
+        "at": 1795341500823,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "fb7e68b467fe8f663e230057323e681ca242de19",
+        "phase": "sync"
       }
     }
   },
