@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20489,
+  "revision": 20490,
   "nextTicket": 613,
   "nextFence": 612,
   "tasks": {
@@ -5648,14 +5648,13 @@
       "readyAt": 1795346351449,
       "reviewEntry": 4,
       "notice": {
-        "key": "3:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
+        "key": "4:rebase-conflict",
+        "reason": "rebase-conflict",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795346193293,
-        "entry": 3,
-        "detail": "Браузер: room co2: failed",
-        "eventId": "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:4:return:return:1517"
+        "at": 1795348441927,
+        "entry": 4,
+        "eventId": "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return:return:1517"
       },
       "patchId": "b519411461274c52e20b9237b1ce32a6218040a7",
       "changedFiles": [
@@ -5714,7 +5713,8 @@
         "test/device-contact-screen.test.mjs",
         "test/device-contact-write.test.mjs",
         "test/fixtures/845-wall-corpus-current-identities.json"
-      ]
+      ],
+      "reason": "rebase-conflict"
     },
     "1518": {
       "issue": 1518,
@@ -6383,17 +6383,7 @@
   "waiting": [
     1521
   ],
-  "active": {
-    "issue": 1517,
-    "worker": "github-coordinator",
-    "token": "611:github:45019490600:1:tick:2:admit",
-    "fence": 611,
-    "materialSha": "1494d496f7ab787af54914763fab2f0616afe909",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1795348428918,
-    "expiresAt": 1795348728918
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6747,6 +6737,10 @@
       "digest": "de7f8c24b53bfe614b978faec819a2d693cc8d901581cc617bc1e7ade3ab4aa6",
       "issue": 1520
     },
+    "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return": {
+      "digest": "6e228ab591643e8be45f39c03d4b751aa32d1b74d4f671e8afbd160f157c013a",
+      "issue": 1517
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7033,6 +7027,25 @@
         "layer": "product",
         "materialSha": "1494d496f7ab787af54914763fab2f0616afe909",
         "phase": "sync"
+      }
+    },
+    "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return:return:1517": {
+      "digest": "6e228ab591643e8be45f39c03d4b751aa32d1b74d4f671e8afbd160f157c013a",
+      "issue": 1517,
+      "message": {
+        "kind": "return",
+        "issue": 1517,
+        "at": 1795348441927,
+        "entry": 4,
+        "notice": {
+          "key": "4:rebase-conflict",
+          "reason": "rebase-conflict",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795348441927,
+          "entry": 4,
+          "eventId": "finish:dad2c920-a8c3-4191-b77f-934f506da6c0:finish:1:return:return:1517"
+        }
       }
     }
   },
