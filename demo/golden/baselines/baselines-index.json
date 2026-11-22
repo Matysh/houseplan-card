@@ -424,7 +424,17 @@
     "panel-iso-value-badge-depth-0-1504": "0605f40ccfb8a503391defa7a7c4a5cd95c06268341991a1e8bda07b19f99f87",
     "panel-iso-value-badge-depth-90-1504": "3a0fc329afc922f2a1954a344ed3c5e7200035f5c9e5eba480af1944a6fcf6fd",
     "panel-iso-value-badge-depth-180-1504": "077bbb536dd676a2f89358bc513cbd8fb37992767c32ea0a64610b03889432a8",
-    "panel-iso-value-badge-depth-270-1504": "541205c29d6852774acda937fcf421951f878a6284ee0e898cca520d58f07b05"
+    "panel-iso-value-badge-depth-270-1504": "541205c29d6852774acda937fcf421951f878a6284ee0e898cca520d58f07b05",
+    "panel-device-contact-resize-flat-base": "6d16717d365aa53d49d7cec377bb0286cf4a76ea1458db4459e98033b1883a59",
+    "panel-device-contact-resize-flat-individual-larger": "a064d4a0ec86366002406b43a962a92bc381f294010042891e1643bd26f54995",
+    "panel-device-contact-resize-flat-individual-smaller": "ee1aba41fd31a2a1aa39f6cf9b7fdc708eafa07b5a20a26b202bdfb6f95d3b1d",
+    "panel-device-contact-resize-flat-profile-larger": "2c13f9d5967129bf10e2d31dadc7e4d7fee11eb84d79779ef6c488e00c74fff8",
+    "panel-device-contact-resize-flat-profile-smaller": "9da53b71e314d35cf7dce6595dce762f3a936a12659460428475c813c8d8d2d4",
+    "panel-device-contact-resize-iso-base": "f2dd6ff211aa04bac1b4be64d2c1ee806ebd7b8f3df8779b55efb08a7cbb2f2b",
+    "panel-device-contact-resize-iso-individual-larger": "7b2321925c01f872db20acdd8ec7e84b322e522d63761230b87a62bea0406b73",
+    "panel-device-contact-resize-iso-individual-smaller": "e6cce55a234a87eece7f236f3568ad619f139c1dd05ae05328e02681649f52d2",
+    "panel-device-contact-resize-iso-profile-larger": "eed4d1ce6775b2d1a699dbe0ac0a438af0c247db72926e3989f06e91379b85a7",
+    "panel-device-contact-resize-iso-profile-smaller": "58285b3ec440f99cd7907ebaa177b333c3b7d6e1fb8440992e948b7108742509"
   },
   "scenarioProvenance": {
     "panel-wide-view-light-en": {
@@ -7316,6 +7326,206 @@
       },
       "host": "panel",
       "sourceSceneId": "panel-iso-value-badge-depth-270-1504"
+    },
+    "panel-device-contact-resize-flat-base": {
+      "acceptedAt": "2026-11-22T08:30:27.075Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "b6d4996746407c5f56023ad61f475d6bf55f9072645e64d604baca70fa7ebcb9",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-flat-base"
+    },
+    "panel-device-contact-resize-flat-individual-larger": {
+      "acceptedAt": "2026-11-22T08:30:27.086Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "452debeb2b280f144c1362451bced5d677e8af9856eb41c02c58e67ea4410c08",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-flat-individual-larger"
+    },
+    "panel-device-contact-resize-flat-individual-smaller": {
+      "acceptedAt": "2026-11-22T08:30:27.096Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "375af391e3ed58f7a130ba498eebe01a6c3bb120f71db268781d6d05e5c5dcd3",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-flat-individual-smaller"
+    },
+    "panel-device-contact-resize-flat-profile-larger": {
+      "acceptedAt": "2026-11-22T08:30:27.105Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "a9d1a7f07c591b9b48cc969e75f80cc6fe52cddf351262c400a5ceda7e7619a8",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-flat-profile-larger"
+    },
+    "panel-device-contact-resize-flat-profile-smaller": {
+      "acceptedAt": "2026-11-22T08:30:27.114Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "986ab4ca9c54ba9ed1d4754bf2c5fc2dea27987bcefaa44da314043233f17176",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-flat-profile-smaller"
+    },
+    "panel-device-contact-resize-iso-base": {
+      "acceptedAt": "2026-11-22T08:30:27.123Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "b5acd17aef1026782ab16751bc80b0f6c44c0ac4e176e9580d19d1522a26236e",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-iso-base"
+    },
+    "panel-device-contact-resize-iso-individual-larger": {
+      "acceptedAt": "2026-11-22T08:30:27.134Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "348e71d048326340b4e036fb728a7629be50a65eca673f83c33b6aa75291b37f",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-iso-individual-larger"
+    },
+    "panel-device-contact-resize-iso-individual-smaller": {
+      "acceptedAt": "2026-11-22T08:30:27.144Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "fb5f5869d3649d088f54cbe66e56322db076d88bcccf69c8011b919f593be81c",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-iso-individual-smaller"
+    },
+    "panel-device-contact-resize-iso-profile-larger": {
+      "acceptedAt": "2026-11-22T08:30:27.153Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "b51f4a8a8d7f1d2697e6fadcd8d7c2ab434547044462d81ca965e5684b48c898",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-iso-profile-larger"
+    },
+    "panel-device-contact-resize-iso-profile-smaller": {
+      "acceptedAt": "2026-11-22T08:30:27.163Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7076557049",
+      "reportSha256": "10224523c58fe506557f9bb1e0009a5e2b5753df174158c2d18f11fad3dfe656",
+      "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+      "sourceFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+      "matrixVersion": 115,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "18f68838d67043b44af4bf16f18182781c956958",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "269c2a4f055eb06e143c42537e7325a5508a71e802c5377875b7f652624df3c8",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-contact-resize-iso-profile-smaller"
     }
   }
 }
