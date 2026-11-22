@@ -7,6 +7,9 @@ requirePinnedBrowser('static-wall-openings-1171');
 const {page,browser}=await launch({width:1100,height:900},1,[],{hasTouch:true});
 const out=await page.evaluate(async ({fixture,diagonalFixture,linePlanFixture,beforeOnly})=>{
   const T=window.__hpTest,c=window.__card, result={};
+  // The static card inherits the main panel's angle, independently of dashboard cards.
+  c.panelHost=true; c.layout='panel';
+  c.style.cssText='display:block;width:100%;height:calc(100vh - 16px)';
   const frame=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   const until=async predicate=>{const end=performance.now()+6000;while(!predicate()){if(performance.now()>end)throw Error('1171 fixture did not settle '+JSON.stringify({transform:root()?.querySelector('[data-id="wall-door"]')?.getAttribute('transform'),opening:el._snap?.config?.spaces[0]?.openings?.[0],result}));await frame();}};
   await T.waitForWrites(); await T.setServerConfig(fixture);

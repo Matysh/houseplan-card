@@ -152,13 +152,17 @@ if(!screenOnly) {
       const editor = await snapshot(page);
       await page.evaluate(()=>window.__hpTest.setMode('view'));await settled(page);
       const back = await snapshot(page);
+      const flatAngle = (Math.round(rotation / 90) * 90) % 360;
       const result = {rotation,moved,centrePreserved:[flat,restored,editor,back]
         .every(state=>close(state.worldCenter,before.worldCenter)),
         scalePreserved:[flat,restored,editor,back].every(state=>Math.abs(state.pixelsPerSceneUnit-before.pixelsPerSceneUnit)<.002),
         editorFlat:editor.projection==='flat' && editor.volumeIds.length===0 && editor.flatIds.length===5,
         dataPreserved:equal(before.stored,back.stored),
         hitCorrect:close(before.inverseHit,[320,320]) && close(flat.inverseHit,[320,320]),
-        profile:before.camera?.yaw===yaw.get(rotation) && restored.camera?.yaw===yaw.get((Math.round(rotation/90)*90)%360)};
+        // This is a full Lovelace card. Its local angle survives the inherited
+        // Flat view and the editor; only the main panel rounds it permanently.
+        profile:before.camera?.yaw===yaw.get(rotation) && flat.rotation===flatAngle && editor.rotation===flatAngle
+          && restored.camera?.yaw===yaw.get(rotation) && back.camera?.yaw===yaw.get(rotation)};
       out['roundtrip'+rotation] = Object.entries(result).filter(([key])=>key!=='rotation').every(([,value])=>value);
       turns.push({...result,centres:[before,flat,restored,editor,back].map(state=>state.worldCenter),
         widths:[before,flat,restored,editor,back].map(state=>state.view.w),

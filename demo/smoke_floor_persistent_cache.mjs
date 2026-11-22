@@ -57,7 +57,12 @@ try {
         }, callService: async () => { writes++; }, localize: () => null,
         formatEntityState: state => state.state, config: { unit_system: { length: 'km' } } };
       card.hass = hass; card.setConfig({ type: 'custom:houseplan-card', title: 'Cache fixture', icon_size: 3.4 });
-      document.getElementById('host').replaceChildren(card); return card;
+      // Re-create the same logical Lovelace slot on every cold mount.
+      const dashboard = document.createElement('hui-masonry-view');
+      dashboard.style.display = 'block';
+      dashboard.cards = [card];
+      dashboard.append(card);
+      document.getElementById('host').replaceChildren(dashboard); return card;
     };
     const settle = async card => {
       await until(() => card._loadOk && card._floorPreparation && !card._floorPreparation.pending

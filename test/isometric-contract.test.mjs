@@ -33,11 +33,13 @@ const styleBodiesFor = (...selectorParts) => [...styles.matchAll(/([^{}]+)\{([^{
   .map((match) => match[2])
   .join('\n');
 
-test('#649 2.5D is the General settings switch, presentation-only and absent from the space card', () => {
-  assert.match(card, /private get _isoEnabled\(\): boolean \{ return volumetricViewOf\(this\._settings\); \}/);
+test('#649/#1516 full plan surfaces inherit 2.5D, while the space card remains Flat', () => {
+  const preference = section(card, 'private get _isoEnabled()', 'private readonly _furnitureVolumeObserver');
+  assert.match(preference, /this\.panelHost \? this\._externalScreen\.view : this\._config\?\.view/);
+  assert.match(preference, /return validPlanView\(view\) \? view === 'iso' : volumetricViewOf\(this\._settings\);/);
   assert.match(card, /return this\._mode === 'view' && this\._isoEnabled \? 'iso' : 'flat';/);
   assert.doesNotMatch(card, /data-hp="projection-toggle"|_viewPreference|houseplan_card_view_v1|_labsIso/,
-    'no per-device choice, no header button, no alpha gate');
+    'no browser-wide projection preference, header button or alpha gate');
   assert.doesNotMatch(labs, /id: 'iso'/, 'the alpha registry no longer ships 2.5D');
   assert.match(card, /iso \? `projection-iso \$\{deviceThemeClass\(this\._renderPlanHass\)\}` : ''/);
   assert.doesNotMatch(card, /projection-\$\{projection\}/,
