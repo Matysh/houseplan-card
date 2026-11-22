@@ -15,6 +15,11 @@ try {
     await page.evaluate(async ({ fixture, projection, surface, user, rev, hold, silent }) => {
       const config = fixture.config, host = document.getElementById('host');
       const floor = config.spaces[0], rotation = projection === 'iso' ? 45 : 0;
+      floor.settings.wall_fill = {c:'#476277',a:1};
+      const contact = 'binary_sensor.startup_door_contact';
+      const door = floor.openings.find(opening => opening.type === 'door');
+      door.contact = contact;
+      fixture.states[contact] = {entity_id:contact,state:'off',attributes:{},last_changed:new Date(0).toISOString()};
       config.settings = { ...config.settings, volumetric_view: surface === 'external' ? projection !== 'iso' : projection === 'iso',
         external_screens: { version:3, next_id:2, screens:[{ id:1,space:floor.id,cycle:0,idle:0,
           default_view:{ view:projection, rotation, zoom:1, summary:'hide', center_summary:false,
@@ -145,7 +150,7 @@ try {
       };
       requestAnimationFrame(sample);
       return { imageOnly: svg.localName === 'svg' && !svg.querySelector('foreignObject, script, [data-hp], [tabindex]')
-        && !text.includes('sensor.') && !text.includes('424242')
+        && !text.includes('sensor.') && !text.includes('424242') && !text.includes('startup_door_contact')
         && svg.querySelectorAll('image[href^="data:image/png"]').length >= 2,
         status: status.left >= bounds.left && status.left < bounds.left + 36 && status.top >= bounds.top && status.top < bounds.top + 36,
         view: svg.getAttribute('viewBox'), bytes: text.length, anchors,
