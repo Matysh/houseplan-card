@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "c7aa16d15476b4ff504aa32aac55f253d49d3b327986d7c801a47cd81ebb9022",
+  "matchesSha256": "39d58c6fb98db844d2fbc66b50cb96ee11b1c9886ad8833efda552b6c82a0ed2",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -3019,6 +3019,16 @@
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
     },
     {
+      "id": "391238c6c561b55d94955c77",
+      "path": "src/device-contact-card.ts",
+      "line": 90,
+      "text": "diameter: surfaceBase * scale * iconScale, legacyDiameters: [surfaceBase * scale, neutralBase * scale] };",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
       "id": "9bce9a20b29939e6aaba4a2e",
       "path": "src/device-contact-geometry.ts",
       "line": 133,
@@ -3027,6 +3037,126 @@
       "kind": "exclusion",
       "owner": "current-feature",
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
+    },
+    {
+      "id": "6686f704232c273872bd1827",
+      "path": "src/device-contact-layout.ts",
+      "line": 23,
+      "text": "export type LegacyContactDiameters = ReadonlyMap<string, readonly [number, number]>;",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "14ec972eccc99dd6e299a203",
+      "path": "src/device-contact-layout.ts",
+      "line": 25,
+      "text": "function legacyReferences(",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "7d5944679f2df3b6bec98576",
+      "path": "src/device-contact-layout.ts",
+      "line": 27,
+      "text": "sizes: LegacyContactDiameters, walls: readonly ContactWall[], masonry: ContactMasonry,",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "b256c15590de5ff65a022e49",
+      "path": "src/device-contact-layout.ts",
+      "line": 158,
+      "text": "bases:ReadonlyMap<string,ContactMarker>,wallKey:string, legacy?: LegacyContactDiameters, uprightHalfTurn = false):ContactMarker[] {",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "33d3fef55d67e66c87b18347",
+      "path": "src/device-contact-layout.ts",
+      "line": 161,
+      "text": "const inputKey=JSON.stringify([wallKey,markers,[...bases],legacy ? [...legacy] : null,uprightHalfTurn]);",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "d81d449d6c1a2aadfc98bb99",
+      "path": "src/device-contact-layout.ts",
+      "line": 176,
+      "text": "const inferred = updated.length && legacy?.size ? legacyReferences(markers, fixed, legacy, walls, masonry) : null;",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "2ddf142c52973522821ec7a8",
+      "path": "src/device-contact-layout.ts",
+      "line": 196,
+      "text": "if (legacy && groups.some(group => group.some(shape =>",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "692d1ff29704f126da57fd9f",
+      "path": "src/device-contact-render.ts",
+      "line": 26,
+      "text": "markers: readonly (Omit<ContactMarker, 'box'> & { legacyDiameters?: readonly [number, number] })[];",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "af8ca4e9073662ed15e99959",
+      "path": "src/device-contact-render.ts",
+      "line": 160,
+      "text": "m.virtual,m.legacyDiameters?.join(','),JSON.stringify(frame.layout?.[m.id]?.contact_basis),",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "98981ef1e06f5fc8e64609ff",
+      "path": "src/device-contact-render.ts",
+      "line": 187,
+      "text": "const { legacyDiameters, ...marker } = m;",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "7ae94d7aff82c86d935e0358",
+      "path": "src/device-contact-render.ts",
+      "line": 198,
+      "text": "const legacy = new Map(frame.markers.flatMap(m => m.legacyDiameters ? [[m.id, m.legacyDiameters]] : []));",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
+    },
+    {
+      "id": "1e8328c284b9eafc79d49dda",
+      "path": "src/device-contact-render.ts",
+      "line": 199,
+      "text": "const effective=this.layout.resolve(measured,walls,masonry,bases,frame.key,legacy.size ? legacy : undefined, uprightHalfTurn);",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current optional contact geometry: layout entries without a measured basis use the pre-scale marker diameters for read-only contact inference. The stored layout and its supported representation are unchanged."
     },
     {
       "id": "f1ae36e6126c6f615f8f65b3",

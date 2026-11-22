@@ -339,6 +339,10 @@
       "configs": 0
     },
     {
+      "file": "demo/fixtures/device-contact-resize-1517.mjs",
+      "configs": 0
+    },
+    {
       "file": "demo/fixtures/device-issues.mjs",
       "configs": 0
     },

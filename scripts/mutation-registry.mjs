@@ -1733,7 +1733,13 @@ const MUTANT_DEFINITIONS = [
     id: 'wall-dialog-back-inside-camera-layer',
     guard: compiledNodeSmoke('smoke_canvas_surface_gestures'),
     because: '#900 AC4 depends on measured intermediate DOM rectangles during live camera CSS projection, before the terminal viewBox clears that projection.',
-    patches: [{ file: 'src/houseplan-card.ts', find: '          </div>\n          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}\n          ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}', replace: '          ${dialogPresence(this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing)}\n          </div>\n          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}' }],
+    patches: [
+      { file: 'src/houseplan-card.ts',
+        find: '          </div>\n          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}',
+        replace: '          ${dialogPresence(this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing)}\n'
+          + '          </div>\n          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}' },
+      { file: 'src/houseplan-card.ts', find: '          ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}\n', replace: '' },
+    ],
   },
   {
     id: 'layout-full-read-ignores-overlapping-own-write',
@@ -8143,8 +8149,8 @@ const MUTANT_DEFINITIONS = [
       + 'otherwise raised tiles overlap; this witness targets that branch only.',
     patches: [{
       file: 'src/iso-scene-geometry.ts',
-      find: '    const core = baseDeviceUnits * presentation.scale * (input.floorAlignedMarkers ? 1 : ISO_ICON_SCALE);',
-      replace: '    const core = baseDeviceUnits * presentation.scale;',
+      find: '      ?? baseDeviceUnits * presentation.scale * (input.floorAlignedMarkers ? 1 : ISO_ICON_SCALE);',
+      replace: '      ?? baseDeviceUnits * presentation.scale;',
     }],
   },
   {
@@ -18881,7 +18887,7 @@ const contact1003GuardCases=[
   {
     id:'contact-contour-only-forces-axis-frame-1003',guard:'node --test test/device-contact-card.test.mjs',
     because:'#1003 AC14/AC15: a contour-only adapter change invalidates hits without requesting an extra editor frame; a real contact reflow still requests one. The browser frame smoke separately covers the live/axis layer.',
-    patches:[{file:'src/device-contact-card.ts',find:'    if(wasReflowed||renderer.reflowed)host.requestUpdate();',
+    patches:[{file:'src/device-contact-card.ts',find:'    if(wasReflowed||renderer.reflowed||renderer.appearanceChanged||previousStatus!==renderer.resizeStatus)host.requestUpdate();',
       replace:'    host.requestUpdate();'}],
   },
   {
@@ -19597,7 +19603,7 @@ const approvedUi1119Cases = [
   {id:'screen-contact-rotates-upright-box-1119',
     guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-contact-screen.test.mjs',
     because:'#1119 AC2: an asymmetric actual face stays upright at each transformed anchor; painted hit must include it.',
-    patches:[{file:'src/device-contact-screen.ts',find:'return { ...marker, x, y };',replace:'return { ...marker, x, y, box: {left:marker.box.top,right:marker.box.bottom,top:marker.box.left,bottom:marker.box.right} };'}]},
+    patches:[{file:'src/device-contact-screen.ts',find:'return { ...marker, x, y, box };',replace:'return { ...marker, x, y, box: {left:box.top,right:box.bottom,top:box.left,bottom:box.right} };'}]},
   {id:'foreign-control-powers-owner-off-1119',
     guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-presentation.test.mjs',
     because:'#1119 AC7: selected foreign value/control cannot supply the owner power state.',

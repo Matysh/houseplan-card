@@ -1177,6 +1177,7 @@
     "archive-summary",
     "backup-recovery",
     "opening-orphan",
-    "vacuum-route-missing-group"
+    "vacuum-route-missing-group",
+    "device-resize-status"
   ]
 }
