@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20691,
+  "revision": 20692,
   "nextTicket": 617,
   "nextFence": 617,
   "tasks": {
@@ -6788,6 +6788,10 @@
       "digest": "c640884281d2c2a8401e9d16b8e88fa818d436be4f5a34f87b85fc1ff78b9c8f",
       "issue": 1521
     },
+    "github:45027391721:1:completions:message:51b2b4164d790120947b7365a0e16a19624fcabb5ed6e23530c5b47974151214": {
+      "digest": "cceee56140f4d9722f03e3e68a4fb8ca00309da54d531bf6d0c439cff46d117c",
+      "issue": 1521
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7007,7 +7011,8 @@
           "entry": 3,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/floor-cache-publication.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:2b87cb01-38eb-459a-a521-623e2a5fd8db:finish:3:return:return:1521"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:bee7086f-6e14-4b4e-981c-0dc0d24160de": {
