@@ -22,13 +22,15 @@ try {
       fixture.states[contact] = {entity_id:contact,state:'off',attributes:{},last_changed:new Date(0).toISOString()};
       config.settings = { ...config.settings, volumetric_view: surface === 'external' ? projection !== 'iso' : projection === 'iso',
         external_screens: { version:3, next_id:2, screens:[{ id:1,space:floor.id,cycle:0,idle:0,
-          default_view:{ view:projection, rotation, zoom:1, summary:'hide', center_summary:false,
+          default_view:{ view:projection, rotation, zoom:1.15, summary:'hide', center_summary:false,
             icon_scale:null, font_scale:null }, space_views:{} }] } };
       // Locally available synthetic raster: no application-owner plan is used.
       const canvas = document.createElement('canvas'); canvas.width = 8; canvas.height = 8;
       const paint = canvas.getContext('2d'); paint.fillStyle = '#d0dddf'; paint.fillRect(0,0,8,8);
       floor.plan_url = canvas.toDataURL('image/png');
       const asset = 'a'.repeat(64);
+      const svgAsset = 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#9aa4b9"/></svg>');
       floor.decor.push({ id:'startup-owned-image',kind:'image',asset_id:asset,x:.2,y:.2,w:.04,h:.04,opacity:.75 });
       floor.decor.push({ id:'startup-volume',kind:'furniture',symbol:'table',x:.2,y:.28,w:.12,h:.08,
         color:'#344759',opacity:1,angle:0 });
@@ -90,7 +92,7 @@ try {
         };
         new MutationObserver(countVisibleTree).observe(card.renderRoot,{childList:true,subtree:true});
         countVisibleTree();
-        card._decorAssets.set(asset, {asset_id:asset,url:floor.plan_url,mime:'image/png',name:'Synthetic tile',width:8,height:8,bytes:90});
+        card._decorAssets.set(asset, {asset_id:asset,url:svgAsset,mime:'image/svg+xml',name:'Synthetic tile',width:8,height:8,bytes:90});
         card.requestUpdate();
       };
       requestAnimationFrame(installImage);
@@ -226,6 +228,85 @@ try {
     await ready('flat','card');
     const facts = await page.evaluate(() => window.__startupFixture().houseplanStartupFloorDiagnostics());
     check('never shows mismatched ' + Object.keys(changed)[0], facts.shown === 0);
+  }
+  const cameraCase = process.env.HP_STARTUP_CASE;
+  for (const projection of ['flat','iso']) {
+    if (cameraCase && cameraCase !== 'camera/'+projection) continue;
+    const surface = 'card', user = 'camera-'+projection;
+    const savedStorage = await page.evaluate(() => localStorage.getItem('houseplan_card_zoom_v1'));
+    const camera = () => page.evaluate(async () => {
+      const c = window.__startupFixture(), sel = c._startupSelection();
+      const packet = await c._startupFloor.store.read(sel);
+      return { view:c._view, zoom:c._zoom, saved:c._zoomBySpace[c._space], variant:sel.variant,
+        packet:packet && {view:packet.view,zoom:packet.zoom,zoomHint:packet.zoomHint},
+        svg:c.renderRoot.querySelector('.stage svg.plan-svg')?.getAttribute('viewBox'),
+        facts:c.houseplanStartupFloorDiagnostics() };
+    });
+    const storedZoom = async zoom => {
+      let state;
+      for(let attempt=0;attempt<85;attempt++){
+        state=await camera();
+        if(state.packet?.zoomHint===zoom) return state;
+        await page.waitForTimeout(90);
+      }
+      throw Error('snapshot was not stored at confirmed centred zoom '+zoom+': '+JSON.stringify(state));
+    };
+    const cmp = (a,b) => a.trim().split(/\s+/).map(Number).every((n,i)=>Math.abs(n-b.trim().split(/\s+/).map(Number)[i]) <= .001);
+    try {
+      await mount({projection,surface,user}); await ready(projection,surface);
+      const initial = await storedZoom(1);
+      const stage = page.locator('.stage');
+      const box = await stage.boundingBox();
+      await page.mouse.move(box.x+box.width*.77,box.y+box.height*.79);
+      await page.mouse.wheel(0,-175);
+      await page.waitForFunction(() => {
+        const c = window.__startupFixture(); return c._zoomBySpace[c._space] > 1.1 && !c._cameraTransition.active;
+      });
+      const offCentre = await camera();
+      assert.notEqual(offCentre.svg,initial.svg,'wheel uses an off-centre anchor');
+      assert.equal(offCentre.variant,initial.variant,'wheel does not allocate another variant');
+      await page.waitForTimeout(1_250);
+      assert.deepEqual((await camera()).packet,initial.packet,'off-centre interaction cannot replace the stored camera');
+
+      await mount({projection,surface,user,hold:true});
+      await page.evaluate(() => window.__releaseStartupFixture());
+      await ready(projection,surface);
+      const fresh = await camera();
+      assert.equal(fresh.facts.shown,0);
+      assert.ok(['miss','camera-miss'].includes(fresh.facts.status),
+        'incompatible zoom must not paint a stale snapshot: '+JSON.stringify({fresh,initial}));
+      assert.notEqual(fresh.svg,offCentre.svg,'a normal reload centres the saved zoom');
+      assert.equal(fresh.zoom,offCentre.saved);
+      const centred = await storedZoom(offCentre.saved);
+      assert.equal(centred.variant,initial.variant,'the new canonical snapshot replaces the same slot');
+      assert.deepEqual(centred.view,centred.packet.view);
+
+      const panBox = await page.locator('.stage').boundingBox();
+      await page.mouse.move(panBox.x+panBox.width*.62,panBox.y+panBox.height*.82);
+      await page.mouse.down();
+      await page.mouse.move(panBox.x+panBox.width*.77,panBox.y+panBox.height*.86,{steps:5});
+      await page.mouse.up();
+      const panned = await camera();
+      assert.notEqual(panned.svg,centred.svg,'pan really moved live camera at the same zoom');
+      assert.equal(panned.zoom,centred.zoom);
+      assert.deepEqual(panned.packet,centred.packet);
+      await mount({projection,surface,user,hold:true});
+      await page.evaluate(() => window.__releaseStartupFixture());
+      await snapshot.waitFor({state:'visible',timeout:6_000});
+      const previewView = await snapshot.evaluate(async img => {
+        const raw = await (await fetch(img.src)).text();
+        return new DOMParser().parseFromString(raw,'image/svg+xml').documentElement.getAttribute('viewBox');
+      });
+      await ready(projection,surface);
+      assert.ok(cmp(previewView,centred.svg) && cmp(previewView,(await camera()).svg),
+        'saved centred camera is identical in the passive image and the real repaint');
+      check(projection+' cold camera after native wheel and pan',true);
+    } finally {
+      await page.evaluate(value=>{
+        if(value===null) localStorage.removeItem('houseplan_card_zoom_v1');
+        else localStorage.setItem('houseplan_card_zoom_v1',value);
+      },savedStorage);
+    }
   }
   if (!process.env.HP_STARTUP_CASE) {
     // The passive image can lead a cold opening, but must neither cover an

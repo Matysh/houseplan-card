@@ -313,7 +313,7 @@ test('one frame resolves one structural source and latches late topology/project
   const startup = section(card, 'private _startupIsoFrame(', 'private async _captureStartupSvg(');
   assert.match(startup, /resolveIsoFramePresentation\([\s\S]*?amountOf: opening => resolvedOpeningAmount\(opening, \(\) => null\)/,
     'a separate idle snapshot can reuse structure without live opening state');
-  assert.match(renderBody, /this\._startupSource = \(\) => \{[\s\S]*?this\._startupIsoFrame\(/,
+  assert.match(renderBody, /this\._startupSource = previewView => \{[\s\S]*?this\._startupIsoFrame\(/,
     'only the deferred capture runs the neutral pass');
   assert.doesNotMatch(renderBody, /this\._isoScene\(/);
   assert.match(renderBody, /catch \(error\)[\s\S]*?_latchIsoFallback[\s\S]*?_cancelCameraTransition\(false\)[\s\S]*?projection = 'flat'; iso = false/);

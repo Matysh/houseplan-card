@@ -5,11 +5,12 @@ export interface StartupSelection extends StartupAddress {
   authority: object;
   connection: number;
   size: readonly [number, number] | null;
+  zoomHint: number | null;
 }
 interface Ready extends StartupFloorView { url: string }
 const key = (s: StartupSelection) => JSON.stringify([s.scope, s.floor, s.variant, s.revision]);
 const same = (a: StartupSelection, b: StartupSelection) =>
-  a.authority === b.authority && a.connection === b.connection && key(a) === key(b);
+  a.authority === b.authority && a.connection === b.connection && a.zoomHint === b.zoomHint && key(a) === key(b);
 const sameSize = (a: readonly [number, number], b: readonly [number, number]) =>
   Math.abs(a[0] - b[0]) <= .5 && Math.abs(a[1] - b[1]) <= .5;
 
@@ -29,6 +30,9 @@ export class StartupFloor {
   constructor(private readonly current: () => StartupSelection | null, private readonly changed: () => void) {}
   prepare(): void { if (!this.disposed) this.store.preopen(); }
   get awaitsLive(): boolean { return !this.ready && !this.disposed; }
+  canCapture(selection: StartupSelection): boolean {
+    return !this.disposed && !this.writing && !this.written.has(key(selection));
+  }
   skipImage(): void { this.ready = true; this.revoke(); }
   private matches(selection: StartupSelection, size = false): boolean {
     const current = !this.disposed && this.current();
@@ -57,6 +61,7 @@ export class StartupFloor {
           this.facts.status = this.store.readStatus;
           return;
         }
+        if (packet.zoomHint !== selection.zoomHint) { this.facts.status = 'camera-miss'; return; }
         const url = await loadStartupFloorImage(packet.image, owner.abort.signal);
         if (!current()) { if (url) URL.revokeObjectURL(url); return; }
         if (!url) { this.facts.status = 'invalid'; return; }
@@ -88,7 +93,7 @@ export class StartupFloor {
 
   capture(selection: StartupSelection, work: (signal: AbortSignal) => Promise<StartupFloorView>, confirmed: () => boolean): void {
     const id = key(selection);
-    if (this.disposed || this.writing || this.written.has(id)) return;
+    if (!this.canCapture(selection)) return;
     const owner = this.writing = { selection, abort: new AbortController() };
     const current = () => this.writing === owner && this.matches(selection, true) && confirmed();
     const remember = () => {
@@ -101,7 +106,8 @@ export class StartupFloor {
       try {
         if (!current()) return;
         const existing = await this.store.read(selection);
-        if (existing && selection.size && sameSize(existing.size, selection.size) && this.facts.status !== 'invalid') {
+        if (existing && existing.zoomHint === selection.zoomHint && selection.size
+          && sameSize(existing.size, selection.size) && this.facts.status !== 'invalid') {
           if (current()) { remember(); this.facts.capture = 'cached'; } return;
         }
         if (!current()) return;

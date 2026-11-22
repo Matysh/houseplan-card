@@ -18,6 +18,8 @@ export interface StartupFloorView {
   /** The view plane and device scale owned by this already accepted paint. */
   view: { x: number; y: number; w: number; h: number };
   zoom: number;
+  /** Persisted cold camera preference, deliberately not part of the IDB key. */
+  zoomHint: number | null;
   fit: FloorFitPacket;
 }
 interface Row extends StartupAddress, StartupFloorView { key: string; floorScope: string; used: number }
@@ -34,6 +36,7 @@ function validPacket(p?: StartupFloorView): p is StartupFloorView {
     && Array.isArray(p.size) && p.size.length === 2 && p.size.every(n => saneNumber(n) && n > 0 && n <= 16384)
     && !!p.view && [p.view.x, p.view.y, p.view.w, p.view.h].every(saneNumber)
     && p.view.w > 0 && p.view.h > 0 && saneNumber(p.zoom) && p.zoom > 0
+    && (p.zoomHint === null || saneNumber(p.zoomHint) && p.zoomHint > 0)
     && validFloorPreview({ version: 1, fitKey: '0'.repeat(64), fit: p.fit, shapes: [] });
 }
 
@@ -91,7 +94,8 @@ export class StartupFloorStore {
       })]);
       this._readStatus = timedOut ? 'timeout' : found ? 'hit' : 'miss';
       if (found) void this.touch(found);
-      return found ? { image: found.image, size: found.size, view: found.view, zoom: found.zoom, fit: found.fit } : null;
+      return found ? { image: found.image, size: found.size, view: found.view, zoom: found.zoom,
+        zoomHint: found.zoomHint, fit: found.fit } : null;
     } catch { this._readStatus = 'error'; return null; }
     finally { clearTimeout(timer); }
   }
@@ -129,8 +133,10 @@ export class StartupFloorStore {
       }
       let bytes = packet.image.size + rows.reduce((sum, row) => sum + row.bytes, 0);
       while (bytes > TOTAL_LIMIT && rows.length) { bytes -= rows[0].bytes; remove(rows[0]); }
-      const { image, size, view, zoom, fit } = packet;
-      views.put({ ...address, image, size, view, zoom, fit, key, floorScope: scope, used }, key);
+      const { image, size, view, zoom, zoomHint, fit } = packet;
+      const { scope: owner, floor, variant, revision } = address;
+      views.put({ scope: owner, floor, variant, revision, image, size, view, zoom, zoomHint, fit,
+        key, floorScope: scope, used }, key);
       sizes.put({ key, floorScope: scope, revision: address.revision, bytes: packet.image.size, used } satisfies Entry, key);
       return await committed;
     } catch { return false; }

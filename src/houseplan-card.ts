@@ -2856,9 +2856,8 @@ export class HouseplanCard extends LitElement {
   private _startupFloor?: StartupFloor;
   private _startupStyle?: { value: ReturnType<StartupFloor['observe']>; finishing: boolean };
   private _startupCamera?: { temporary: FrameRect; before: FrameRect | null; zoom: number };
-  private _startupSource?: () => TemplateResult[];
+  private _startupSource?: (view: FrameRect) => TemplateResult[];
   private _startupPresentation?: { inputs: unknown[]; selection: StartupSelection | null };
-  private _startupReadyPaint = false;
   private _startupReadProbe?: ReturnType<typeof setTimeout>;
 
   private _startupSelection(): StartupSelection | null {
@@ -2867,19 +2866,22 @@ export class HouseplanCard extends LitElement {
       ? [stage.clientWidth, stage.clientHeight] as const : this._lastValidStageSize;
     if (!this._loadOk || !scope || !env.connected || !env.permissions.read
       || !this.isConnected || this._mode !== 'view' || this._modeTransitionBusy || this._rotationMotion.running
-      || this._settingsDialog || this._spaceDialog) return null;
+      || this._settingsDialog || this._spaceDialog || this._recoveryViewport
+      || this._centerSummary && (!this._screenReference || this._screenReferencePending)) return null;
     const floor = this._space, projection = this._desiredProjection, rotation = this._rotationForProjection(projection);
     if (!floor) return null;
     const envStyle = this._presentation.themes;
-    const zoom = this._warmViewportPending ? this._warmVp?.zoom ?? this._zoom : this._zoom;
+    const savedZoom = Number(this._zoomBySpace[floor]);
+    const zoomHint = this._hasScreenProfile ? null : Number.isFinite(savedZoom) && savedZoom > 0 ? savedZoom
+      : this._usesScreenCamera ? null : 1;
     const configFingerprint = this._adoption.currentConfigFingerprint();
     const accepted = this._adoption.snapshot(null);
     const looks = [projection, rotation, this.panelHost, this.panelSidebarOpen, this.narrow, this.layout, this._kiosk,
-      this.panelHost ? null : cardRotationPlacementSlot(this), this._config, this._externalScreen, this._showFar, zoom,
+      this.panelHost ? null : cardRotationPlacementSlot(this), this._config, this._externalScreen, this._showFar,
       envStyle, this._presentation.language, window.innerWidth, window.innerHeight, window.devicePixelRatio,
       this._effectiveKioskScale.icon, this._effectiveKioskScale.font];
     const inputs = [this.planHost.authorityKey, env.connectionRevision, scope, floor, this._cfgRev,
-      this._layoutRev, this._layout, this._cfgEpoch, configFingerprint, accepted?.config, accepted?.layout, size?.[0], size?.[1],
+      this._layoutRev, this._layout, this._cfgEpoch, configFingerprint, accepted?.config, accepted?.layout, size?.[0], size?.[1], zoomHint,
       this._cfgWriting, this._writesPending, this._dirtyPos.size, this._saveConfigDebounced.pending(),
       this._persistLayout.pending(), ...looks];
     if (this._startupPresentation && inputs.every((input, index) => input === this._startupPresentation!.inputs[index]))
@@ -2897,7 +2899,7 @@ export class HouseplanCard extends LitElement {
     // Read then; a byte hit remains private until its measured size also matches.
     const variant = cacheSha256([ENTRY_BUILD_FINGERPRINT, ...looks]);
     const selection: StartupSelection = { authority: this.planHost.authorityKey, connection: env.connectionRevision || 0,
-      scope, floor, variant, revision, size: size?.[0] && size[1] ? [size[0], size[1]] : null };
+      scope, floor, variant, revision, zoomHint, size: size?.[0] && size[1] ? [size[0], size[1]] : null };
     this._startupPresentation = { inputs, selection };
     return selection;
   }
@@ -2915,7 +2917,16 @@ export class HouseplanCard extends LitElement {
       && this.renderRoot.querySelector('.stage:not([data-hp-floor-cache]) .zoomwrap')) {
       this._startupFloor?.publishedLive();
     }
-    const value = this._startupFloor?.observe(this._startupSelection());
+    const selection = this._startupSelection();
+    let value = this._startupFloor?.observe(selection);
+    // A summary that reserves part of the viewport is only compatible with
+    // an already measured reference, not the previous session's placement.
+    if (value && selection && this._centerSummary) {
+      const target = this._startupColdCamera(selection, value.fit.base);
+      if (!target || !sameCameraState(target, { zoom: value.zoom, viewBox: value.view })) {
+        this._startupFloor?.skipImage(); value = undefined;
+      }
+    }
     if (this._startupStyle?.value !== value) {
       const old = this._startupCamera;
       if (old && this._view === old.temporary) { this._view = old.before; this._zoom = old.zoom; }
@@ -2960,6 +2971,27 @@ export class HouseplanCard extends LitElement {
       <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span></div>`;
   }
 
+  private _startupColdCamera(selection: StartupSelection, base: number[]): CameraState | null {
+    const size = selection.size;
+    if (!size) return null;
+    if (this._usesScreenCamera) {
+      const reference = this._screenReference;
+      if (!reference || this._screenReferencePending) return null;
+      if (selection.zoomHint === null) return reference.camera;
+      const panel = this._summary?.screenGeometry(false)?.panel ?? null;
+      return screenCameraTarget(base, this._displayBase(base), this._sceneRotation, size,
+        screenFreeArea(...size, panel), selection.zoomHint / reference.camera.zoom, this._sceneDepthScale)?.camera ?? null;
+    }
+    const fit = fitView(base, size[0] / size[1]), zoom = this._boundedZoom(selection.zoomHint ?? 1);
+    return { zoom, viewBox: { x: fit.x + fit.w / 2 - fit.w / (2 * zoom),
+      y: fit.y + fit.h / 2 - fit.h / (2 * zoom), w: fit.w / zoom, h: fit.h / zoom } };
+  }
+
+  private _startupCameraBusy(): boolean {
+    return this._roomFocus !== null || this._cameraTransition.active || this._modeTransitionBusy
+      || this._pointers.size > 0 || !!this._panStart || !!this._pinchStart || this._viewportGestureDirty;
+  }
+
   private _updateStartupFloor(): void {
     const store = this._startupFloor, stage = this._stageEl;
     if (!store || !stage) return;
@@ -2971,7 +3003,7 @@ export class HouseplanCard extends LitElement {
       || this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) return;
     const selection = this._startupSelection(), source = this._startupSource;
     const size = selection?.size;
-    if (!selection || !size || !source || this._startupReadyPaint) return;
+    if (!selection || !size || !source) return;
     // VisualContinuity already confirmed the current scene's paint. The
     // optional image must not add another two frames before input is live.
     if (store.publishedLive()) {
@@ -2982,24 +3014,23 @@ export class HouseplanCard extends LitElement {
         if (this._startupStyle === transition) { this._startupStyle = undefined; this.requestUpdate(); }
       }, 160);
     }
-    this._startupReadyPaint = true;
-    void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
-      .then(() => {
-        this._startupReadyPaint = false;
-        if (store !== this._startupFloor || !this.isConnected || this._stageEl !== stage
-          || selection !== this._startupSelection() || this._floorPassive || this._floorHolding
-          || this._floorPreparation?.pending || this._booting || this._bootFading
-          || this._continuity.state !== 'steady' || !this._continuityAssetsReady()) return;
-        const zoom = this._zoom;
-        const base = [...this._baseVb()], frame = this._frameOf();
-        const view = { ...this._cameraView(base) };
-        const fit = { base, frame: { rect: { ...frame.rect }, all: { ...frame.all }, outliers: frame.outliers,
-          hasContent: frame.hasContent }, display: { ...this._displayBase(base) },
-          projection: this._renderProjection, rotation: this._rotation };
-        store.capture(selection, async signal => ({
-          image: await this._captureStartupSvg(stage, source, signal), size, view: { ...view }, zoom, fit,
-        }), () => this._floorSourceAccepted());
-      });
+    if (!store.canCapture(selection) || this._startupCameraBusy()) return;
+    const base = [...this._baseVb()], cold = this._startupColdCamera(selection, base);
+    const camera = { zoom: this._zoom, viewBox: { ...this._cameraView(base) } };
+    // Pan, room focus and off-centre zoom are transient View intents, not
+    // alternate snapshots. Only the normal fresh-opening pose may be stored.
+    if (!cold || !sameCameraState(cold, camera)) return;
+    const { zoom, viewBox: view } = camera, frame = this._frameOf(), hadCamera = !!this._view;
+    const presented = this._presentationView(view, zoom, base);
+    const fit = { base, frame: { rect: { ...frame.rect }, all: { ...frame.all }, outliers: frame.outliers,
+      hasContent: frame.hasContent }, display: { ...this._displayBase(base) },
+      projection: this._renderProjection, rotation: this._rotation };
+    store.capture(selection, async signal => ({
+      image: await this._captureStartupSvg(stage, () => source(presented), presented, signal),
+      size, view, zoom, zoomHint: selection.zoomHint, fit,
+    }), () => this._stageEl === stage && !!this._view === hadCamera && !this._startupCameraBusy()
+      && sameCameraState(camera, { zoom: this._zoom, viewBox: this._view ?? view })
+      && this._continuity.state === 'steady' && this._floorSourceAccepted());
   }
 
   /** Separate optional idle capture from the live frame's failure boundary. */
@@ -3013,7 +3044,7 @@ export class HouseplanCard extends LitElement {
     }) ?? null;
   }
 
-  private async _captureStartupSvg(stage: HTMLElement, source: () => TemplateResult[], signal: AbortSignal): Promise<Blob> {
+  private async _captureStartupSvg(stage: HTMLElement, source: () => TemplateResult[], view: FrameRect, signal: AbortSignal): Promise<Blob> {
     const container = this.ownerDocument.createElement('div'), shell = this.ownerDocument.createElement('div');
     // Resolve the same styles on a connected tree without publishing a second
     // .stage to card observers, native selectors, or the accessibility tree.
@@ -3038,7 +3069,7 @@ export class HouseplanCard extends LitElement {
     if (!original) throw Error('unsupported-vector');
     scene.classList.add('plan-svg');
     scene.setAttribute('width', String(rect.width)); scene.setAttribute('height', String(rect.height));
-    scene.setAttribute('viewBox', original.getAttribute('viewBox') ?? '');
+    scene.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
     scene.setAttribute('preserveAspectRatio', original.getAttribute('preserveAspectRatio') || 'xMidYMid meet');
     if (stage.hasAttribute('data-hp-iso-floor-markers')) shell.setAttribute('data-hp-iso-floor-markers','true');
     wrap.append(scene); shell.append(wrap); isolated.append(shell); this.renderRoot.appendChild(container);
@@ -14004,7 +14035,7 @@ export class HouseplanCard extends LitElement {
     if (this._mode === 'view' && projection === this._desiredProjection && !isoFirstFramePending && !this._modeTransitionBusy) {
       const transform = this._floorTransform;
       const floorLayer = (content: unknown) => svg`<g class=${iso ? 'iso-floor-scene' : nothing} transform=${transform}>${content}</g>`;
-      this._startupSource = () => {
+      this._startupSource = previewView => {
         const neutral = iso ? this._startupIsoFrame(disp, isoScene, startupFurniture) : null;
         const fragments: TemplateResult[] = [];
         if (neutral?.layers.structural) fragments.push(svg`<g class="iso-underlay-svg">${neutral.underlay}</g>`);
@@ -14019,7 +14050,7 @@ export class HouseplanCard extends LitElement {
         if (!disp.hideDecor) {
           if (this._decorList.some(item => item.kind === 'image' && !this._display(this._decorAssets.get(item.asset_id)?.url)))
             throw Error('asset-unavailable');
-          fragments.push(floorLayer(this._renderDecorLayer(undefined, view, useFurnitureVolume ? 'floor' : 'all', true)));
+          fragments.push(floorLayer(this._renderDecorLayer(undefined, previewView, useFurnitureVolume ? 'floor' : 'all', true)));
         }
         fragments.push(floorLayer(this._stairsView.renderLayer(stairVolumes)));
         if (useFurnitureVolume && neutral?.layers.structural && furnitureShadows !== nothing)

@@ -7,8 +7,8 @@ const defer = () => {
   return {promise:new Promise(done => { resolve=done; }), resolve};
 };
 const flush = async () => { for (let i=0;i<12;i++) await Promise.resolve(); };
-const selection = {authority:{},connection:1,scope:'installation/account',floor:'A',variant:'a',revision:'one',size:[640,480]};
-const packet = {image:new Blob()};
+const selection = {authority:{},connection:1,scope:'installation/account',floor:'A',variant:'a',revision:'one',size:[640,480],zoomHint:1};
+const packet = {image:new Blob(),zoomHint:1};
 
 function harness() {
   let current=selection;
@@ -36,6 +36,29 @@ test('#1520 a confirmed View alone can publish its presentation revision',async 
   h.owner.capture(selection,capture,()=>true);
   mock.timers.tick(200); await flush();
   assert.equal(captures,1,'a published key cannot schedule work on each render');
+  assert.equal(h.owner.canCapture({...selection,zoomHint:1.4}),false,'zoom does not use another key or schedule another capture');
+  h.owner.dispose();
+});
+
+test('#1520 a different cold zoom is a miss before any SVG decode',async()=>{
+  const h=harness();
+  let decoded=false;
+  h.owner.store.read=async()=>({zoomHint:2,get image(){decoded=true;return new Blob();}});
+  h.owner.observe(selection);await flush();
+  assert.equal(h.owner.facts.status,'camera-miss');assert.equal(decoded,false);
+  h.owner.dispose();
+});
+
+test('#1520 a pan during idle capture cannot publish a mixed camera packet',async ({mock})=>{
+  mock.timers.enable({apis:['setTimeout']});
+  const h=harness(), rendering=defer();
+  let centred=true;
+  h.owner.capture(selection,()=>rendering.promise,()=>centred);
+  mock.timers.tick(200);await flush();
+  assert.equal(h.owner.facts.capture,'working');
+  centred=false;rendering.resolve(packet);await flush();
+  assert.deepEqual(h.writes,[]);
+  assert.equal(h.owner.canCapture(selection),true,'an abandoned capture does not consume its useful slot');
   h.owner.dispose();
 });
 
@@ -63,11 +86,11 @@ test('#1520 an image read from a retired navigation cannot set presentation fact
   assert.equal(h.owner.observe(selection),undefined);
   const b={...selection,floor:'B'};
   h.set(b); h.owner.observe(b);
-  first.resolve({get image(){ assert.fail('retired image cannot reach the decoder'); }});
+  first.resolve({zoomHint:1,get image(){ assert.fail('retired image cannot reach the decoder'); }});
   await flush();
   assert.equal(h.owner.facts.status,'reading'); assert.deepEqual(h.paint,[]);
   h.owner.publishedLive();
-  second.resolve({get image(){ assert.fail('optional bytes cannot reclaim a live frame'); }});
+  second.resolve({zoomHint:1,get image(){ assert.fail('optional bytes cannot reclaim a live frame'); }});
   await flush();
   assert.equal(h.owner.awaitsLive,false); assert.deepEqual(h.paint,[]);
   h.owner.dispose();
@@ -80,7 +103,7 @@ test('#1520 explicit A→B→A retirement fences work even if no intermediate vi
   h.set({...selection,floor:'B'}); h.owner.retire();
   h.set(selection); h.owner.retire(); h.owner.observe(selection);
   let reachedDecoder=false;
-  old.resolve({get image(){ reachedDecoder=true; return new Blob(); }});
+  old.resolve({zoomHint:1,get image(){ reachedDecoder=true; return new Blob(); }});
   await flush();
   assert.equal(reachedDecoder,false);
   assert.equal(h.owner.facts.status,'reading');

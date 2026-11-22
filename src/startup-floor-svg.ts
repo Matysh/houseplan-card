@@ -68,17 +68,30 @@ async function isStartupSvg(text: string, signal: AbortSignal): Promise<boolean>
  * the interactive tree. Slice the expensive, read-only computed-paint walk. */
 const yieldTask = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 
-async function rasterData(blob: Blob): Promise<string> {
+async function rasterData(blob: Blob, signal: AbortSignal): Promise<string> {
+  if (blob.size > STARTUP_IMAGE_LIMIT) throw Error('asset-size');
   let raster = blob;
   if (blob.type === 'image/svg+xml') {
-    const bitmap = await createImageBitmap(blob);
+    // Decode as an isolated image, the same way the ordinary SVG <image>
+    // renders this asset. Direct createImageBitmap(svgBlob) is not portable.
+    const url = URL.createObjectURL(blob), image = new Image();
+    const revoke = () => URL.revokeObjectURL(url);
+    signal.addEventListener('abort', revoke, { once: true });
     try {
-      if (bitmap.width <= 0 || bitmap.height <= 0 || bitmap.width * bitmap.height > 4_000_000) throw Error('asset-bounds');
-      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-      canvas.getContext('2d')?.drawImage(bitmap, 0, 0);
-      raster = await canvas.convertToBlob({ type: 'image/png' });
-    } finally { bitmap.close(); }
+      signal.throwIfAborted(); image.src = url;
+      try { await image.decode(); } catch { signal.throwIfAborted(); throw Error('asset-format'); }
+      signal.throwIfAborted();
+      const width = image.naturalWidth, height = image.naturalHeight;
+      if (width <= 0 || height <= 0 || width * height > 4_000_000) throw Error('asset-bounds');
+      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) throw Error('asset-format');
+      context.drawImage(image, 0, 0);
+      raster = await new Promise<Blob>((resolve, reject) => canvas.toBlob(
+        result => result ? resolve(result) : reject(Error('asset-format')), 'image/png'));
+    } finally { signal.removeEventListener('abort', revoke); revoke(); }
   }
+  signal.throwIfAborted();
   if (!['image/png', 'image/jpeg', 'image/webp'].includes(raster.type) || raster.size > STARTUP_IMAGE_LIMIT)
     throw Error('asset-format');
   return await new Promise((resolve, reject) => {
@@ -111,7 +124,7 @@ export async function serializeStartupFloor(source: SVGSVGElement, readImage: Re
         if (!data) {
           const blob = await readImage(value, signal); signal.throwIfAborted();
           if (!blob) throw Error('asset-unavailable');
-          data = await rasterData(blob); images.set(value, data);
+          data = await rasterData(blob, signal); images.set(value, data);
         }
         imageBytes += data.length;
         if (imageBytes > STARTUP_IMAGE_LIMIT) throw Error('asset-size');
