@@ -3026,7 +3026,18 @@ export async function prepareGoldenScenario(page, scenario) {
   }, { fixture, scenario, cardVersion, attemptKey: VERSION_RELOAD_ATTEMPT_KEY });
   if (scenario.rotation !== undefined) {
     result.rotation = await page.evaluate(({ expected, isIso }) => {
-      const root = window.__goldenCard.renderRoot;
+      const card = window.__goldenCard, root = card.renderRoot;
+      if (isIso && expected % 90 === 45) {
+        const scene = card._renderIsoScene;
+        const floor = root.querySelector('[data-hp-iso-perspective-floor] .iso-floor-scene');
+        const expectedYaw = (expected + 45) % 360;
+        if (!floor?.querySelector('.hp-paper') || !scene?.camera.perspective || scene.camera.rotDeg !== expectedYaw)
+          throw Error('missing projective floor or direct camera');
+        const sides = scene.geometry.sides;
+        if (!sides.length || sides.some(({points:[a,b,c,d]}) => Math.abs(a[0]-d[0]) > 1e-8 || Math.abs(b[0]-c[0]) > 1e-8))
+          throw Error('the direct camera must keep wall edges upright');
+        return {expected,yaw:expectedYaw,verticalEdges:sides.length*2};
+      }
       const layer = root.querySelector('.decorlayer'), matrix = layer?.getScreenCTM();
       if (!matrix || !layer.children.length) throw Error('rotation frame has no painted decor');
       const a = new DOMPoint(0, 0).matrixTransform(matrix);
