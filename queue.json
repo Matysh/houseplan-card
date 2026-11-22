@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20344,
+  "revision": 20345,
   "nextTicket": 611,
   "nextFence": 609,
   "tasks": {
@@ -7221,6 +7221,10 @@
       "digest": "ba6d4fe643c840a30bc78d94ce35346a7b02db2a930588b85125043f04e80948",
       "issue": 1516
     },
+    "github:45014443548:1:completions:message:c6b91f6165f146eda590b9f8c709c217853e2e9ea636a08a27729532b42df7ab": {
+      "digest": "7b3a5559e74e0959a212ffe38d16751d31b1decd6841098422313ead0458346b",
+      "issue": 1518
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7656,7 +7660,8 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed",
           "eventId": "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:3:return:return:1516"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09:finish:1:admit": {
