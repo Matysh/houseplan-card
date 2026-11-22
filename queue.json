@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19996,
+  "revision": 19997,
   "nextTicket": 602,
   "nextFence": 601,
   "tasks": {
@@ -6352,6 +6352,10 @@
       "digest": "715361cd0c6ccbe9c5cccee1b3bc0bd94b4217343f706b0aae70f4e05097db5c",
       "issue": 1517
     },
+    "github:45000628243:1:completions:message:7f0785997a9822257eced83e15cb2ea1384fea041137710842ffde600ddbeed7": {
+      "digest": "6223b9f0c9a834b26f87cca1e4a107cd59a1e2bed27d63fc31eea8e39cb6f657",
+      "issue": 1518
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6478,26 +6482,6 @@
         "layer": "product",
         "materialSha": "f33508a66dd1dacd73206ebbd105e34587f171eb",
         "delivered": true
-      }
-    },
-    "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return:return:1519": {
-      "digest": "15a0fc74d24944ef40015b3e91d57e7ac5c9f756f8398541e97c8dbd791f9bd7",
-      "issue": 1519,
-      "message": {
-        "kind": "return",
-        "issue": 1519,
-        "at": 1795333886183,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795333886183,
-          "entry": 1,
-          "detail": "Браузер: direct wall geometry: failed",
-          "eventId": "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return:return:1519"
-        }
       }
     },
     "finish:f5086ada-7386-4bbf-8e48-dfbfdb1a09f3": {
