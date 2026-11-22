@@ -8,6 +8,14 @@ import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
 requirePinnedBrowser();
 const { page, browser } = await launch({ width: 2000, height: 1000 });
+// The native panel owns the common per-space angle. Full dashboard cards
+// now use a separate placement-scoped preference, covered in #1516.
+await page.evaluate(() => {
+  const card = window.__card;
+  card.panelHost = true;
+  card.layout = 'panel';
+  card.style.cssText = 'display:block;width:100%;height:calc(100vh - 16px)';
+});
 await prepareDesktopControls(page);
 const evidence = process.env.HP_ROTATION_EVIDENCE || 'artifacts/plan-rotation-1070';
 mkdirSync(evidence, { recursive: true });
@@ -113,7 +121,7 @@ try {
         requestAnimationFrame(sample);
       }; requestAnimationFrame(sample);
     });
-    await card.locator(mode === 'view' ? '.closex[data-hp="editor-close"]' : `.modetab[data-mode="${mode}"]`).click(); await wait();
+    await clickHeaderAction(card, `mode-${mode}`); await wait();
     const trace = await page.evaluate(() => { window.__rotationTraceActive = false; return window.__rotationModeTrace; });
     const end = await snapshot();
     const centers = [start,end].map(state => [state.camera.view.x + state.camera.view.w/2, state.camera.view.y + state.camera.view.h/2]);
@@ -247,24 +255,26 @@ try {
     for (const [tag,type] of [['houseplan-card','full'],['houseplan-space-card','static']]) {
       const editor = await customElements.get(tag).getConfigElement();
       editor.id = `rotation-${type}-editor`; editor.hass = window.__card.hass;
-      editor.setConfig({type:`custom:${tag}`,space:'f1',rotation:45}); document.getElementById('host').append(editor);
+      const key = type === 'full' ? 'plan_rotation' : 'rotation';
+      editor.setConfig({type:`custom:${tag}`,space:'f1',[key]:12}); document.getElementById('host').append(editor);
       await editor.updateComplete;
-      const schema = [...editor.renderRoot.querySelectorAll('ha-form')].flatMap(form => form.schema || []);
-      const rotation = schema.find(row => row.name === 'rotation');
+      const form = [...editor.renderRoot.querySelectorAll('ha-form')].find(item => item.schema?.some(row => row.name === key));
+      const rotation = form.schema.find(row => row.name === key);
       const invalid = !!editor.renderRoot.querySelector('[role="alert"]');
       let saved;
       editor.addEventListener('config-changed', event => { saved = event.detail.config; editor.setConfig(saved); });
       // HA's ha-form is the integration boundary in this synthetic page. Its
       // value-changed event carries a select string; the editor must emit a numeric YAML value.
-      editor.renderRoot.querySelector('ha-form').dispatchEvent(new CustomEvent('value-changed', {detail:{value:{rotation:'270'}}}));
+      form.dispatchEvent(new CustomEvent('value-changed', {detail:{value:{[key]:'270'}}}));
       await editor.updateComplete;
-      output.push({invalid,options:rotation?.selector.select.options.map(option => option.value),saved:saved?.rotation,
+      output.push({invalid,options:rotation?.selector.select.options.map(option => option.value),saved:saved?.[key],
         cleared:!editor.renderRoot.querySelector('.card-config-error')});
     }
     return output;
   });
-  check('both Lovelace editors expose four choices, show invalid YAML, and emit numeric rotation', configEditors.every(editor => editor.invalid
-    && JSON.stringify(editor.options) === JSON.stringify(['0','90','180','270']) && editor.saved === 270 && editor.cleared));
+  check('both Lovelace editors expose quarter turns, flag invalid YAML, and emit numeric rotation', configEditors.every((editor,index) => editor.invalid
+    && JSON.stringify(editor.options) === JSON.stringify(index === 0 ? ['', '0','90','180','270'] : ['0','90','180','270'])
+    && editor.saved === 270 && editor.cleared));
   await page.evaluate(async () => {
     const c = document.getElementById('rotation-kiosk'); c.setConfig({type:'custom:houseplan-card',floor:'f1',kiosk:true,rotation:45}); await c.updateComplete;
   });

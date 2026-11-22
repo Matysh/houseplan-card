@@ -178,7 +178,7 @@ class HouseplanCardEditor extends LitElement {
       ${form(schema.slice(3))}
       ${invalidFullCardPresentation(this._config) ? html`<div class="card-config-error" role="alert"
         style="color:var(--error-color,#db4437)">${settingsT(L, 'editor.presentation_invalid')}</div>` : nothing}
-      ${invalidCardRotation(this._config) ? html`<div class="card-config-error" role="alert"
+      ${this._config.plan_rotation === undefined && invalidCardRotation(this._config) ? html`<div class="card-config-error" role="alert"
         style="color:var(--error-color,#db4437)">${settingsT(L, 'editor.rotation_invalid')}</div>` : nothing}
     `;
   }
