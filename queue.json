@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19993,
+  "revision": 19994,
   "nextTicket": 602,
   "nextFence": 600,
   "tasks": {
@@ -5632,6 +5632,15 @@
         "entry": 1,
         "detail": "Браузер: direct wall geometry: failed",
         "eventId": "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return:return:1519"
+      },
+      "s6": {
+        "id": "20261122T075223807-b8bcd0b1",
+        "name": "Тесты для задачи #1519 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T075223807-b8bcd0b1/report.json",
+        "materialSha": "432662652229bf4bf58c2a4b94e954efa9f770c7",
+        "status": "passed",
+        "finishedAt": "2026-11-22T07:58:13.912Z",
+        "failures": []
       }
     }
   },
@@ -6181,9 +6190,9 @@
     "fence": 599,
     "materialSha": "432662652229bf4bf58c2a4b94e954efa9f770c7",
     "expectedBase": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795333930223,
-    "expiresAt": 1795334595489,
+    "expiresAt": 1795337898361,
     "patchId": "dc5d10bee1a39c792922f3c51d5b8cb7cc9dfd17"
   },
   "events": {
@@ -6469,6 +6478,10 @@
     },
     "finish:08aab3c5-710c-4149-9c6a-dcff7cda967d": {
       "digest": "0fe8cabdef12536f2826db5fd5c384aa99ccada0058cf7cf781877489f262602",
+      "issue": 1519
+    },
+    "finish:f5086ada-7386-4bbf-8e48-dfbfdb1a09f3:finish:3:s6-complete": {
+      "digest": "d94ad13973914e05fb928b80071c87af81be47ad8305ed83c8e079c9b8064693",
       "issue": 1519
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
