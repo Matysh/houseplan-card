@@ -1133,7 +1133,8 @@
     },
     "data-hp-state": {
       "element": "ha-card",
-      "values": ["booting", "ready"],
+      "values": ["booting", "ready", "error"],
+      "description": "A floor-preparation refusal is separate from active boot and an interactive ready frame; the retry surface is present only when that refusal belongs to the current view.",
       "since": "1.73.0-beta.7"
     }
   },

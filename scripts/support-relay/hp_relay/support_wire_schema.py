@@ -811,6 +811,16 @@ ENVIRONMENT = Object(
         "space": nullable(Reference("space")),
         **fields("write_pending accepted", BOOL),
         "recovery": enum("live", "holding", "recovering", "blocked", "unknown"),
+        "floor_preparation": Object(
+            {
+                "state": enum("idle", "pending", "ready", "error"),
+                "active": enum("worker", "fallback-load", "fallback-compute"),
+                "last_stage": enum("worker", "fallback-load", "fallback-compute"),
+                "last_result": enum("ready", "timeout", "error", "limited", "cancelled"),
+                "failure": enum("unavailable", "invalid"),
+            },
+            frozenset({"state"}),
+        ),
         "resources": Array(RESOURCE, 2000),
         "rooms": Array(ROOM_FACT, 2000),
         "panel": Object(
