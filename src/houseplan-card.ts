@@ -13312,7 +13312,7 @@ export class HouseplanCard extends LitElement {
         for(const [id,volume] of stairVolumes){
           const item = new Map([[id,volume]]);
           const transform = isoFloorMatrixCss(camera);
-          const depthPaint = disp.transparentWalls3d && !real3d;
+          const depthPaint = disp.transparentWalls3d;
           furniture.push({...volume,lift:0,
             shadow:furnitureShadow(volume.mesh,scale,false),
             body:svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume',depthPaint ? 'paint' : 'all')}</g>`,
@@ -13328,7 +13328,7 @@ export class HouseplanCard extends LitElement {
       }
       isoFrame = isoRuntime?.resolveIsoFramePresentation({
         projection, display: disp, scene: isoScene, openings: this._openingsR, furniture,
-        wallLights: isoWallLights, transparency: !real3d,
+        wallLights: isoWallLights,
         amountOf: opening => this._openingAmtForProjection(opening, projection), cellCm: this._cellCm,
         visualOf: opening => resolveOpeningVisual(opening,
           eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null,
@@ -13681,7 +13681,7 @@ export class HouseplanCard extends LitElement {
             '--wall-fill': disp.wallFill.c, '--wall-fill-op': String(disp.wallFill.a),
             '--iso-wall-side-op': iso ? String(disp.wallFill.a) : undefined,
             ...(iso ? isoOpeningMaterialVars(disp.openingAccent3d?.c, disp.openingAccent3d?.a) : {}),
-            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.color, disp.wallFill.c, disp.transparentWalls3d && !real3d ? 1 : disp.opacity).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
+            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.color, disp.wallFill.c, disp.transparentWalls3d ? 1 : disp.opacity).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
           })}
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
