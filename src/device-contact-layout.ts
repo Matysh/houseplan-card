@@ -1,7 +1,7 @@
 /** Flat derived layout. Reference faces survive live values, never integrate drift. */
 import {
   CONTACT_EPS, contactAtCorner, contactAtWall, contactBoxIn, contactContourShapes, contactCoresOverlap, contactRotate,
-  contactShapeJoinDepth, deriveContactShape, joinedContactSide, rotatedContactCapsule,
+  contactShapeJoinDepth, deriveContactShape, joinedContactSide, oppositeContactSide, rotatedContactCapsule,
   type ContactMarker, type ContactShape, type ContactWall,
 } from './device-contact-geometry';
 import {sameContactRect} from './device-contact-basis';
@@ -98,6 +98,28 @@ function follow(a:ContactShape,b:ContactShape,ra:ContactShape,rb:ContactShape):C
     : side==='bottom'?ab.bottom-depth-box.top:ab.top+depth-box.bottom;
   const [x,y]=contactRotate(vertical?[align,distance]:[distance,align],a.angle);
   return {...b,marker:{...b.marker,x,y}};
+}
+
+/** Orthogonal arms at a shared corner can meet in their decorative padding.
+ * The core checks still apply to both arms, even without a direct edge. */
+function sharesWallCorner(graph: DeviceContactScene, aId: string, bId: string): boolean {
+  const a = graph.shapes.get(aId), b = graph.shapes.get(bId);
+  if (!a || !b) return false;
+  const bNeighbours = graph.edges.get(bId);
+  for (const id of graph.edges.get(aId) ?? []) {
+    if (!bNeighbours?.has(id)) continue;
+    const corner = graph.shapes.get(id)!;
+    const aSide = joinedContactSide(corner, a, false), bSide = joinedContactSide(corner, b, false);
+    if (!aSide || !bSide) continue;
+    const aVertical = aSide === 'top' || aSide === 'bottom';
+    const bVertical = bSide === 'top' || bSide === 'bottom';
+    if (aVertical === bVertical) continue;
+    const aWall = oppositeContactSide[bSide], bWall = oppositeContactSide[aSide];
+    const aSupport = corner.walls[aWall], bSupport = corner.walls[bWall];
+    if (aSupport && bSupport && aSupport !== bSupport && a.walls[aWall] === aSupport && b.walls[bWall] === bSupport)
+      return true;
+  }
+  return false;
 }
 
 /** Stateful only for old documents without a durable basis: capture once at
@@ -278,7 +300,7 @@ export class DeviceContactLayout {
       const contacts = new DeviceContactScene([...contactIds].map(id => output.get(id)!), walls);
       for (const [id, base] of growingFree) {
         const desired = requested.get(id)!;
-        const fits = (marker: ContactMarker) => this.safe(deriveContactShape(marker, []), contacts, new Set(), true);
+        const fits = (marker: ContactMarker) => this.safe(deriveContactShape(marker, []), contacts, new Set(), { noJoin: true });
         if (fits(desired)) { output.set(id, desired); continue; }
         this.resizeLimited = true;
         let low = base.diameter, high = desired.diameter;
@@ -350,7 +372,7 @@ export class DeviceContactLayout {
     const candidateScene = new DeviceContactScene(projected.map(shape => shape.marker), walls, masonry);
     const members = new Set(placed.keys());
     const valid = projected.every(shape => (!occupied || this.safe(shape, occupied, members))
-      && this.safe(shape, candidateScene, new Set([shape.marker.id])))
+      && this.safe(shape, candidateScene, new Set([shape.marker.id]), { sharedCorners: resize ? graph : undefined }))
       && [...placed].every(([id, shape]) => {
         if (occupied && !this.safe(shape, occupied, members)) return false;
         const reference = graph.shapes.get(id)!;
@@ -368,7 +390,9 @@ export class DeviceContactLayout {
     return { placed, queue, valid };
   }
 
-  private safe(s:ContactShape,scene:DeviceContactScene,ignore:ReadonlySet<string>,noJoin=false):boolean {
+  private safe(s: ContactShape, scene: DeviceContactScene, ignore: ReadonlySet<string>,
+    { noJoin = false, sharedCorners }: { noJoin?: boolean; sharedCorners?: DeviceContactScene } = {},
+  ): boolean {
     if(!Number.isFinite(s.marker.x)||!Number.isFinite(s.marker.y)||Math.abs(s.marker.x)>5e6||Math.abs(s.marker.y)>5e6
       || contactIntersectsMasonry(s,scene.masonry))return false;
     const b=contactBounds(s);
@@ -379,12 +403,13 @@ export class DeviceContactLayout {
       if(noJoin && Math.min(a.right,b.right)-Math.max(a.left,b.left)>=-CONTACT_EPS
         && Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>=-CONTACT_EPS)return false;
       if(Math.min(a.right,b.right)-Math.max(a.left,b.left)>CONTACT_EPS
-        && Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>CONTACT_EPS && !joinedContactSide(s,n)) return false;
+        && Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>CONTACT_EPS && !joinedContactSide(s,n)
+        && !(sharedCorners && sharesWallCorner(sharedCorners,s.marker.id,n.marker.id))) return false;
     }
     return true;
   }
   private separate(s:ContactShape,scene:DeviceContactScene,ignore:ReadonlySet<string>,walls:readonly ContactWall[]):ContactShape {
-    if(this.safe(s,scene,ignore,true))return s;
+    if(this.safe(s,scene,ignore,{ noJoin: true }))return s;
     const m=s.marker,step=Math.max(m.diameter,s.box.right-s.box.left,s.box.bottom-s.box.top)+CONTACT_EPS*4;
     // Bounded increasing neighbourhood; deterministic nearest safe candidate in
     // each ring. No random jitter, accumulated offset or movement of outsiders.
@@ -393,7 +418,7 @@ export class DeviceContactLayout {
       for(const [x,y] of [[0,-1],[-1,0],[1,0],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]) {
         const next=deriveContactShape({...m,x:m.x+x*distance,y:m.y+y*distance},walls);
         this.work.fallbackProbes++;
-        if(this.safe(next,scene,ignore,true))candidates.push(next);
+        if(this.safe(next,scene,ignore,{ noJoin: true }))candidates.push(next);
       }
       candidates.sort((a,b)=>Math.hypot(a.marker.x-m.x,a.marker.y-m.y)-Math.hypot(b.marker.x-m.x,b.marker.y-m.y)
         || a.marker.y-b.marker.y || a.marker.x-b.marker.x);

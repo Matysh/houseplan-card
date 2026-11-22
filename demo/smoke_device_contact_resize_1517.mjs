@@ -5,7 +5,8 @@ import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {launch,checkAll,finish} from './serve.mjs';
 import {fitVisibleView} from './helpers/view-controls.mjs';
-import {authorContactResizePositions,contactResizePartitions,contactResizeSeeds} from './fixtures/device-contact-resize-1517.mjs';
+import {authorContactResizePositions,contactResizePartitions,contactResizeSeeds,
+  hasElbowResizeContacts,individuallyResizedContacts} from './fixtures/device-contact-resize-1517.mjs';
 
 const artifactDir=process.env.HP_CONTACT_RESIZE_ARTIFACTS || 'artifacts/1517/contact-resize';
 const sizes=Object.fromEntries(contactResizeSeeds.map(([id,,,size])=>[id,size]));
@@ -21,7 +22,6 @@ const variants=[
   ['surface-smaller',.78,1],
   ['restored',1,1],
 ];
-const individual=new Set(['straight','corner','free-b','wall-c','angle-b']);
 const {page,browser}=await launch({width:1280,height:920});
 const out={},frames=[];
 mkdirSync(artifactDir,{recursive:true});
@@ -34,11 +34,12 @@ const sample=()=>page.evaluate(()=>{
   const shapes=Object.fromEntries([...scene.shapes].map(([id,s])=>[id,s.marker]));
   const edges=Object.fromEntries([...scene.edges].map(([id,edges])=>[id,[...edges].sort()]));
   const walls=Object.fromEntries([...scene.shapes].map(([id,s])=>[id,Object.values(s.walls).sort()]));
+  const wallFaces=Object.fromEntries([...scene.shapes].map(([id,s])=>[id,s.walls]));
   const visible=Object.fromEntries([...scene.shapes].map(([id])=>{
     const node=c.renderRoot.querySelector('.dev[data-id="'+id+'"]');
     return [id,!!node && node.getBoundingClientRect().width>0];
   }));
-  return {shapes,edges,walls,visible,wallSegments:scene.walls,layout:structuredClone(c._layout),
+  return {shapes,edges,walls,wallFaces,visible,wallSegments:scene.walls,layout:structuredClone(c._layout),
     view:structuredClone(c._view),zoom:c._zoom,status:c._deviceContacts.resizeStatus};
 });
 try{
@@ -55,7 +56,7 @@ try{
       cfg.markers=markers;
       return cfg;
     });
-    await window.__hpTest.setLayout(Object.fromEntries(markers.map(({id},i)=>[id,{s:'f1',x:.10+(i%6)*.14,y:i<6?.10:.88}])));
+    await window.__hpTest.setLayout(Object.fromEntries(markers.map(({id},i)=>[id,{s:'f1',x:.10+(i%6)*.14,y:i<6?.10:i<12?.88:.52}])));
     await window.__hpTest.setMode('view');
   },{parts:contactResizePartitions,markers});
   await page.waitForFunction(n=>window.__card._deviceContacts?.scene?.shapes.size===n,markers.length);
@@ -76,7 +77,7 @@ try{
       if (next.every((m,i)=>m.size===cfg.markers[i].size)) return null;
       cfg.markers=next;
       return window.__pushServerConfig(cfg);
-    },{factor,sizes,individual:[...individual]});
+    },{factor,sizes,individual:[...individuallyResizedContacts]});
     if (revision!==null) await page.waitForFunction(rev=>window.__card._cfgRev>=rev,revision);
     await page.evaluate(iconSize=>{
       const c=window.__card;
@@ -93,7 +94,7 @@ try{
     },iso);
     await fitVisibleView(page);await settle();
     const base=await sample();
-    out[projection+':six cases']=base.walls.straight.length===1 && base.walls.diagonal.length===1
+    out[projection+':existing contact cases']=base.walls.straight.length===1 && base.walls.diagonal.length===1
       && base.walls.corner.length===2 && ['free','wall','angle'].every(prefix=>base.edges[prefix+'-b']?.length===2)
       && base.walls['wall-a'].length===1 && base.walls['angle-a'].length===2;
     for(const [variant,multiplier,factor] of variants){
@@ -104,11 +105,12 @@ try{
         && JSON.stringify(frame.walls)===JSON.stringify(base.walls);
       out[prefix+':layout and camera']=JSON.stringify(frame.layout)===JSON.stringify(base.layout)
         && JSON.stringify(frame.view)===JSON.stringify(base.view)&&Math.abs(frame.zoom-base.zoom)<1e-6;
+      out[prefix+':elbow preserves both arms']=hasElbowResizeContacts(frame.wallFaces,frame.edges);
       out[prefix+':visible']=Object.values(frame.visible).every(Boolean) && !frame.status;
       const direction=Math.sign(multiplier*factor-1);
       out[prefix+':size']=Object.keys(frame.shapes).every(id=>{
         const difference=frame.shapes[id].diameter-base.shapes[id].diameter;
-        const expected=multiplier!==1||individual.has(id)?direction:0;
+        const expected=multiplier!==1||individuallyResizedContacts.has(id)?direction:0;
         return expected===0?Math.abs(difference)<1e-6:Math.sign(difference)===expected && Math.abs(difference)>1e-6;
       });
       if(variant==='restored')out[projection+':exact return']=JSON.stringify(frame.shapes)===JSON.stringify(base.shapes);

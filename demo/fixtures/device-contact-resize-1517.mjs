@@ -11,12 +11,37 @@ export const contactResizeSeeds = [
   ['angle-a',829,657,1.1,'mdi:motion-sensor'],
   ['angle-b',0,0,1,'mdi:gesture-tap'],
   ['angle-c',0,0,.9,'mdi:access-point'],
+  ['elbow',188,758,1,'mdi:lightbulb'],
+  ['elbow-right',0,0,1.05,'mdi:power-socket-eu'],
+  ['elbow-right-end',0,0,.9,'mdi:light-switch'],
+  ['elbow-bottom',0,0,.95,'mdi:motion-sensor'],
+  ['elbow-bottom-end',0,0,.85,'mdi:thermometer'],
 ];
 export const contactResizePartitions = [
   [[.14,.18],[.14,.44]], [[.39,.18],[.55,.43]],
   [[.64,.17],[.86,.17]], [[.86,.17],[.86,.41]],
   [[.16,.63],[.44,.63]], [[.62,.62],[.86,.62]], [[.86,.62],[.86,.85]],
+  [[.16,.73],[.43,.73]], [[.16,.73],[.16,.92]],
 ].map(([a,b],index)=>({id:'partition-'+index,a,b,cm:12}));
+
+export const individuallyResizedContacts = new Set(['straight','corner','free-b','wall-c','angle-b','elbow']);
+
+export function hasElbowResizeContacts(walls, edges) {
+  const {top, left} = walls.elbow ?? {};
+  if (!top || !left || top === left || Object.keys(walls.elbow).length !== 2) return false;
+  const expected = [
+    ['elbow', null, ['elbow-right','elbow-bottom']],
+    ['elbow-right', 'top', ['elbow','elbow-right-end']],
+    ['elbow-right-end', 'top', ['elbow-right']],
+    ['elbow-bottom', 'left', ['elbow','elbow-bottom-end']],
+    ['elbow-bottom-end', 'left', ['elbow-bottom']],
+  ];
+  return expected.every(([id, side, neighbours]) => {
+    const contact = walls[id];
+    return contact && (!side || Object.keys(contact).length === 1 && contact[side] === walls.elbow[side])
+      && edges[id]?.length === neighbours.length && neighbours.every(other => edges[id].includes(other));
+  });
+}
 
 export async function authorContactResizePositions(sample, walls, space) {
   const {contactAtCorner, contactAtWall, contactBoxIn, contactRotate, contactShapeJoinDepth,
@@ -32,10 +57,10 @@ export async function authorContactResizePositions(sample, walls, space) {
   };
   const nearest = (marker,candidates) => candidates.sort((a,b)=>
     Math.hypot(a.x-marker.x,a.y-marker.y)-Math.hypot(b.x-marker.x,b.y-marker.y))[0];
-  for (const id of ['straight','diagonal','corner','free-a','wall-a','angle-a']) {
+  for (const id of ['straight','diagonal','corner','free-a','wall-a','angle-a','elbow']) {
     const marker = raw(id);
     const proposal = id === 'free-a' ? null : nearest(marker,
-      id === 'corner' || id === 'angle-a' ? contactAtCorner(marker,walls)
+      ['corner','angle-a','elbow'].includes(id) ? contactAtCorner(marker,walls)
         : walls.flatMap(wall=>contactAtWall(marker,wall)));
     if (id !== 'free-a' && (!proposal || Math.hypot(proposal.x-marker.x,proposal.y-marker.y)>70))
       throw Error('Missing nearby wall support for '+id);
@@ -48,8 +73,12 @@ export async function authorContactResizePositions(sample, walls, space) {
       const box=rotatedContactCapsule(marker.box,previous.angle,inset);
       const shape={...freeContactShape(marker),angle:previous.angle,box};
       const depth=contactShapeJoinDepth(previous,shape,side);
-      const x=side==='right'?a.right-depth-box.left:a.left+depth-box.right;
-      for(const y of [a.top-box.top,a.bottom-box.bottom,(a.top+a.bottom-box.top-box.bottom)/2]){
+      const positions = side === 'bottom'
+        ? [a.left-box.left,a.right-box.right,(a.left+a.right-box.left-box.right)/2]
+          .map(x => [x,a.bottom-depth-box.top])
+        : [a.top-box.top,a.bottom-box.bottom,(a.top+a.bottom-box.top-box.bottom)/2]
+          .map(y => [side === 'right' ? a.right-depth-box.left : a.left+depth-box.right,y]);
+      for (const [x,y] of positions) {
         const [cx,cy]=contactRotate([x,y],previous.angle),candidate={...marker,x:cx,y:cy};
         const actual=deriveContactShape(candidate,walls);
         if (joinedContactSide(previous,actual)===side && (!attached || Object.keys(actual.walls).length)) {
@@ -64,6 +93,10 @@ export async function authorContactResizePositions(sample, walls, space) {
     append(prefix+'-b',prefix+'-a',side);
     append(prefix+'-c',prefix+'-b',side);
   }
+  append('elbow-right','elbow','right');
+  append('elbow-right-end','elbow-right','right');
+  append('elbow-bottom','elbow','bottom');
+  append('elbow-bottom-end','elbow-bottom','bottom');
   return Object.fromEntries([...authored].map(([id,marker])=>{
     const contact_basis=makeContactBasis(marker,space);
     return [id,{...contact_basis.at,contact_basis}];

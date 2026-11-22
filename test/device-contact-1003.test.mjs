@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {contactAtCorner,contactBoxIn,contactContains,contactContourShapes,contactOutline,contactRotate,
-  deriveContactShape,joinedContactSide} from '../test-build/device-contact-geometry.js';
+  deriveContactShape,joinedContactSide,contactCoresOverlap} from '../test-build/device-contact-geometry.js';
 import {DeviceContactScene} from '../test-build/device-contact-scene.js';
 import {DeviceContactMagnet} from '../test-build/device-contact-snap.js';
 import {DeviceContactLayout,resizeContactMarker} from '../test-build/device-contact-layout.js';
@@ -240,4 +240,33 @@ test('#1517 resizing a distant component retains exact authored legacy contacts 
   const result=layout.resolve([a,b,resizeContactMarker(c,48),resizeContactMarker(d,48)],[],[],bases,'floor',new Map());
   assert.deepEqual(result.slice(0,2),[a,b]);
   assert.equal(result[2].diameter,48);
+});
+
+test('#1517 a wall corner keeps both arms through resize and limits a core collision', () => {
+  const walls = [left, {id:'top',a:[0,0],b:[500,0],normal:[0,1]}];
+  const elbow = marker('elbow',23.175,23.175,36);
+  const across = marker('across',64.83375,24.33375,37.8);
+  const down = marker('down',22.01625,62.80875,34.2);
+  const authored = [elbow,across,down];
+  const bases = new Map(authored.map(m => [m.id,m]));
+  const layout = new DeviceContactLayout();
+  function check(size, limited) {
+    const result = layout.resolve([resizeContactMarker(elbow,size),across,down],walls,[],bases,'corner',new Map());
+    const scene = new DeviceContactScene(result,walls);
+    assert.deepEqual(scene.component('elbow'),['across','down','elbow']);
+    assert.deepEqual(scene.shapes.get('elbow').walls,{left:'left',top:'top'});
+    assert.deepEqual(scene.shapes.get('across').walls,{top:'top'});
+    assert.deepEqual(scene.shapes.get('down').walls,{left:'left'});
+    const [resultElbow,resultAcross,resultDown] = result;
+    assert.equal(layout.resizeLimited,limited);
+    assert.equal(layout.resizeBaselineLost,false);
+    assert.equal(contactCoresOverlap(resultAcross,resultDown),false);
+    if (limited) assert.ok(resultElbow.diameter>size && resultElbow.diameter<elbow.diameter);
+    else near(resultElbow.diameter,size);
+    return result;
+  }
+  check(45,false);
+  check(28.8,false);
+  check(8,true);
+  assert.deepEqual(check(36,false),authored);
 });

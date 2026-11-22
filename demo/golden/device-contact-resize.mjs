@@ -1,13 +1,12 @@
 /** One frozen set of authored supports reused by both native panel projections. */
 import {readFileSync} from 'node:fs';
-import {contactResizeSeeds, contactResizePartitions} from '../fixtures/device-contact-resize-1517.mjs';
+import {contactResizeSeeds, contactResizePartitions, individuallyResizedContacts, hasElbowResizeContacts} from '../fixtures/device-contact-resize-1517.mjs';
 
 const layout = JSON.parse(readFileSync(new URL('../fixtures/device-contact-resize-1517-layout.json',import.meta.url),'utf8'));
-const individual = new Set(['straight','corner','free-b','wall-c','angle-b']);
 
 export function makeDeviceContactResizeFixture({iconScale,markerScale}) {
   const markers=contactResizeSeeds.map(([id,,,size,icon])=>({
-    id,binding:'virtual',name:id,icon,size:size*(individual.has(id)?markerScale:1),space:'f1',area:null,
+    id,binding:'virtual',name:id,icon,size:size*(individuallyResizedContacts.has(id)?markerScale:1),space:'f1',area:null,
     display:id==='free-b'?'icon':'static_icon',tap_action:'info',
     ...(id==='free-b'?{value_badge:{enabled:true,position:'right',source:{kind:'entity_state',entity_id:'sensor.living_temp'}}}:{}),
   }));
@@ -26,9 +25,9 @@ export function makeDeviceContactResizeFixture({iconScale,markerScale}) {
 }
 
 export async function prepareDeviceContactResize(page,{iconScale}) {
-  await page.waitForFunction(scale=>window.__goldenPanel && window.__goldenCard._effectiveKioskScale.icon===scale
-    && window.__goldenCard._deviceContacts?.scene?.shapes.size===12,iconScale);
-  return page.evaluate(()=>{
+  await page.waitForFunction(({scale,count})=>window.__goldenPanel && window.__goldenCard._effectiveKioskScale.icon===scale
+    && window.__goldenCard._deviceContacts?.scene?.shapes.size===count,{scale:iconScale,count:contactResizeSeeds.length});
+  const proof = await page.evaluate(()=>{
     const card=window.__goldenCard,scene=card._deviceContacts.scene;
     const supports=Object.fromEntries([...scene.shapes].map(([id,shape])=>[id,Object.values(shape.walls).sort()]));
     const components=['free','wall','angle'].map(prefix=>scene.component(prefix+'-b'));
@@ -36,6 +35,11 @@ export async function prepareDeviceContactResize(page,{iconScale}) {
       ||supports['wall-a'].length!==1||supports['angle-a'].length!==2
       ||components.some(ids=>ids.length!==3)||card._deviceContacts.resizeStatus)
       throw Error('Invalid contact resize fixture: '+JSON.stringify({supports,components,status:card._deviceContacts.resizeStatus}));
-    return {supports,components, camera:{view:card._viewOr(card._baseVb()),zoom:card._zoom},profileScale:card._effectiveKioskScale.icon};
+    const wallFaces=Object.fromEntries([...scene.shapes].map(([id,shape])=>[id,shape.walls]));
+    const edges=Object.fromEntries([...scene.edges].map(([id,neighbours])=>[id,[...neighbours]]));
+    return {supports,components,wallFaces,edges, camera:{view:card._viewOr(card._baseVb()),zoom:card._zoom},profileScale:card._effectiveKioskScale.icon};
   });
+  if (!hasElbowResizeContacts(proof.wallFaces,proof.edges))
+    throw Error('Corner group lost an arm or a wall contact: '+JSON.stringify(proof));
+  return proof;
 }
