@@ -288,7 +288,10 @@ function renderIsoStructure(
       leaf: panel.leaf,
     }))),
   ] : scene.openingSurfaces.filter(surface => surface.material === 'wall-side' || surface.material === 'wall-top');
-  const ordered = buildIsoWallDepthQueue(scene.geometry, openingSurfaces,
+  const projectedOpenings = transparentMasonry && scene.camera
+    ? openingSurfaces.filter(surface => !surface.hiddenInTranslucentMasonry)
+    : openingSurfaces;
+  const ordered = buildIsoWallDepthQueue(scene.geometry, projectedOpenings,
     (scene.camera?.floorScaleY ?? 1) !== 1);
   if (transparentMasonry && scene.camera) {
     return renderIsoTranslucentMasonry(scene, scene.camera, layers, ordered, cellCm,
@@ -491,12 +494,13 @@ function renderIsoTranslucentMasonry(
             style=${kind === 'side' ? architecture.fill(index) : nothing} fill-rule="evenodd"
             data-id=${opening?.id ?? nothing} data-kind=${opening?.type ?? nothing}
             data-surface=${opening?.kind ?? nothing}></path>`;
+        const paintsContinuousCut = wallCut && (entry.layer === 'wall-top' || opening?.kind === 'opening-lintel-top');
         const lightFace = opening ? { ...entry, layer:'opening' as const, surface:{...opening,d} }
           : entry.layer === 'wall-side' ? { ...entry, face:{...entry.face,d} } : null;
         return svg`<g class="iso-translucent-masonry-face" data-material=${kind} opacity=${masonry[kind]}>
-          ${kind === 'top' && wallCut ? nothing : face}
+          ${paintsContinuousCut ? nothing : face}
           ${kind === 'side' ? svg`<g class="iso-architectural-edges">${architecture.edge(index,d,fragment)}</g>`
-            : wallCut ? svg`<defs><clipPath id=${clip}><path d=${d} clip-rule="evenodd"></path></clipPath></defs>
+            : paintsContinuousCut ? svg`<defs><clipPath id=${clip}><path d=${d} clip-rule="evenodd"></path></clipPath></defs>
                 <use href="#hp-iso-translucent-cut-paint" clip-path=${'url(#'+clip+')'}></use>
                 <use href="#hp-iso-translucent-cut-contour" clip-path=${'url(#'+clip+')'}></use>` : nothing}
           ${lightFace ? paintWallLight(lightFace,fragment) : nothing}

@@ -75,7 +75,8 @@ try {
       topStops:all('stop.iso-top-hi').map(node=>getComputedStyle(node).stopColor),
       side:seen('side'),top:seen('top'),surfaces,
       round:all('[data-hp-round-column]').length,
-      apron:all('.iso-wall-side[data-surface]').length,
+      apron:all('.iso-wall-side[data-surface="window-apron-side"]').length,
+      lintelUnderside:all('.iso-wall-side[data-surface="opening-lintel-underside"]').length,
       background:getComputedStyle(el).getPropertyValue('--wall-fill-op'),
       stairLinks:all('[data-hp="stair"][data-id="wt-stairs"][role="link"]').length,
     };
@@ -168,10 +169,13 @@ try {
     out[name+'Materials']=after.backing===null&&after.side.join()==='0.38'&&after.top.join()==='0.55'
       &&after.topStops.includes('rgb(157, 106, 57)')&&after.round>0&&after.apron>0
       &&after.surfaces.some(surface=>surface.kind.includes('glass'));
-    const openings=p=>new Set(p.surfaces.map(s=>JSON.stringify(s)));
-    out[name+'OpeningMaterialsUnchanged']=[...openings(before)].every(s=>openings(after).has(s));
+    const materialSignature=p=>new Set(p.surfaces
+      .filter(surface=>surface.kind!=='jamb-reveal').map(surface=>JSON.stringify(surface)));
+    const afterMaterials=materialSignature(after);
+    out[name+'OpeningMaterialsUnchanged']=[...materialSignature(before)].every(s=>afterMaterials.has(s));
     out[name+'CameraUnchanged']=before.rotation===after.rotation&&before.yaw===after.yaw;
     out[name+'UniqueStairTarget']=after.stairLinks===1;
+    out[name+'NoHiddenLintelUnderside']=after.lintelUnderside===0;
     out[name+'PixelsDiffer']=!opaque.equals(transparent);
   }
   // Compare a known colour painted below the real structural pass. Saturated
