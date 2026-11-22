@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19982,
+  "revision": 19983,
   "nextTicket": 600,
   "nextFence": 599,
   "tasks": {
@@ -5607,7 +5607,18 @@
         "docs/USER-GUIDE.ru.md",
         "docs/release-ledger/v1.86.0/1519.json",
         "src/editors/space-form.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795333886183,
+        "entry": 1,
+        "detail": "Браузер: direct wall geometry: failed",
+        "eventId": "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return:return:1519"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6148,18 +6159,7 @@
   "waiting": [
     1518
   ],
-  "active": {
-    "issue": 1519,
-    "worker": "finish",
-    "token": "598:finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:1:admit",
-    "fence": 598,
-    "materialSha": "01e04cdf8725e5cc3ad17d9ca3fd5889597d0f1e",
-    "expectedBase": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
-    "phase": "testing",
-    "admittedAt": 1795333170167,
-    "expiresAt": 1795334156833,
-    "patchId": "1dabbaf9a6ef6574443d9efd59617498cdbf34a0"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6413,6 +6413,10 @@
       "digest": "478084baea7e6f1d75a442e77f2e5152384be31172b64ed1cf25254c5a527497",
       "issue": 1519
     },
+    "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return": {
+      "digest": "15a0fc74d24944ef40015b3e91d57e7ac5c9f756f8398541e97c8dbd791f9bd7",
+      "issue": 1519
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6568,6 +6572,26 @@
         "layer": "product",
         "materialSha": "f33508a66dd1dacd73206ebbd105e34587f171eb",
         "delivered": true
+      }
+    },
+    "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return:return:1519": {
+      "digest": "15a0fc74d24944ef40015b3e91d57e7ac5c9f756f8398541e97c8dbd791f9bd7",
+      "issue": 1519,
+      "message": {
+        "kind": "return",
+        "issue": 1519,
+        "at": 1795333886183,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795333886183,
+          "entry": 1,
+          "detail": "Браузер: direct wall geometry: failed",
+          "eventId": "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7:finish:3:return:return:1519"
+        }
       }
     }
   },
