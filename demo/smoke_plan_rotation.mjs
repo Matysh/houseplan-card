@@ -40,7 +40,8 @@ try {
           { id: 'lock-door', type: 'door', x: .7, y: .2, angle: 0, length: .1, lock: 'lock.front_door' }],
         decor: [{ id: 'caption', kind: 'text', x: .3, y: .45, text: 'Plan text', size: .025, color: '#123456' },
           { id: 'rect', kind: 'rect', x: .65, y: .25, w: .1, h: .1, color: '#0080ff', fill: true }] },
-      { id: 'f2', title: 'Other', cell_cm: 5, rooms: [], decor: [] }],
+      { id: 'f2', title: 'Other', cell_cm: 5, settings: { show_borders: true },
+        rooms: [{ id: 'other-room', name: 'Other room', poly: [[.1,.1],[.4,.1],[.4,.3],[.1,.3]] }], decor: [] }],
       markers: [{ id: 'plain', binding: 'entity:sensor.living_temp', space: 'f1', name: 'Plain', icon: 'mdi:home',
         value_badge: { enabled: true, source: { kind: 'entity_state', entity_id: 'sensor.living_temp' }, position: 'right' } },
         { id: 'angled', binding: 'virtual', space: 'f1', name: 'Angled', icon: 'mdi:arrow-up', angle: 30, tap_action: 'info' }],
@@ -179,11 +180,30 @@ try {
     await page.evaluate(() => window.__hpTest.setVolumetricView(true)); await wait();
     check('return to ISO starts at the already rounded angle ' + isoAngle, (await snapshot()).rotation === flatAngle);
   }
-  await page.evaluate(() => window.__hpTest.setVolumetricView(false)); await wait();
-  await page.evaluate(async () => { await window.__hpTest.switchSpace('f2'); }); await wait();
+  const switchSpace = async id => { await page.evaluate(space => window.__hpTest.switchSpace(space), id); await wait(); };
+  const toggleIso = async enabled => { await page.evaluate(on => window.__hpTest.setVolumetricView(on), enabled); await wait(); };
+  await switchSpace('f2');
   check('another space has an independent default', (await snapshot()).rotation === 0);
-  await page.evaluate(() => window.__hpTest.switchSpace('f1')); await wait();
-  check('returning to a space restores its own choice', (await snapshot()).rotation === 90);
+  await rotate();
+  check('the second space stores its own intermediate angle', (await snapshot()).rotation === 45);
+  await switchSpace('f1');
+  await toggleIso(false);
+  check('returning to the first space keeps its quarter', (await snapshot()).rotation === 90);
+  await toggleIso(true);
+  await switchSpace('f2');
+  check('space never opened in ordinary Flat retains the intermediate angle', (await snapshot()).rotation === 45);
+  const showBorders = async enabled => {
+    await page.evaluate(on => window.__hpTest.setServerConfig(cfg => {
+      cfg.spaces.find(space => space.id === 'f2').settings.show_borders = on;
+    }), enabled);
+    await wait();
+  };
+  await showBorders(false);
+  check('hidden borders paint the effective Flat quarter', (await snapshot()).rotation === 90);
+  await showBorders(true);
+  check('hidden borders did not replace the intermediate choice', (await snapshot()).rotation === 45);
+  await switchSpace('f1');
+  await toggleIso(false);
   await page.evaluate(async () => {
     const main = window.__card;
     const kiosk = document.createElement('houseplan-card'); kiosk.id = 'rotation-kiosk';
