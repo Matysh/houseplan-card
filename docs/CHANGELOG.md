@@ -3,6 +3,7 @@
 ## Unreleased
 
 - End stalled floor preparation with a retryable error instead of leaving “Updating plan” on screen (#1521).
+- On a repeat open, Flat and 2.5D can show a matching, verified static SVG before live devices and lighting are ready; progress stays in the upper-left corner of the plan (#1520).
 
 - Move the room caption color to Names and readings, above Font sizes, with immediate preview while editing (#1519).
 - Configure independent plan views and rotation for full dashboard cards and external screens, with 45° steps in 2.5D (#1516).

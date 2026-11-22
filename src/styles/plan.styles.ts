@@ -25,6 +25,20 @@ export const planStyles = css`
     }
     /* Browser text selection must not turn the next scene pan into native drag. */
     .stage > .zoomwrap { user-select:none; -webkit-user-select:none; }
+    .hp-startup-view { position:absolute; inset:0; width:100%; height:100%; z-index:73; pointer-events:none; }
+    .stage:has(> .hp-startup-view) > .zoomwrap { visibility:hidden; }
+    .floor-status-over-retained { position:absolute; inset-inline:0; bottom:0; pointer-events:none; z-index:74; }
+    .editorloading.floor-preparation-status {
+      position:absolute; z-index:74; left:max(12px, env(safe-area-inset-left));
+      top:max(12px, env(safe-area-inset-top)); transform:none; pointer-events:none;
+    }
+    .stage[data-hp-startup-finish] :is(.devlayer,.roomlabel,.iso-sunwash,.glow-pools-frame,.iso-wall-light) {
+      animation:hp-startup-live-in 160ms ease-out both;
+    }
+    @keyframes hp-startup-live-in { from { opacity:0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .stage[data-hp-startup-finish] :is(.devlayer,.roomlabel,.iso-sunwash,.glow-pools-frame,.iso-wall-light) { animation:none; }
+    }
     .stage > .zoomwrap :is(input,textarea,[contenteditable]:not([contenteditable='false'])) {
       user-select:text; -webkit-user-select:text;
     }

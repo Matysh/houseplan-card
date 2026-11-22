@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1520,
+  "baseStable": "v1.86.0",
+  "category": "major",
+  "rationale": "Adds an optional static startup presentation for the existing plan views.",
+  "summary": {
+    "ru": "При повторном открытии браузер может показать подтверждённую планировку раньше живых слоёв.",
+    "en": "On a repeat open, a verified static floor plan can appear before live layers."
+  }
+}

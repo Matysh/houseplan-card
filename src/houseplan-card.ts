@@ -3,6 +3,8 @@ import { HaPlanHost } from './ha-plan-host';
 import { FloorCacheRuntime } from './floor-cache-runtime';
 import { floorCacheKeys, cacheSha256 } from './floor-cache-key';
 import { captureFloorPreview, renderFloorPreview } from './floor-cache-preview';
+import { StartupFloor, type StartupSelection } from './startup-floor';
+import { serializeStartupFloor } from './startup-floor-svg';
 import { restoreFloorGeometrySemantics, type FloorGeometryFrame } from './floor-geometry-frame';
 import { cleanFloorFromData } from './clean-floor';
 import { geometryWorkSnapshot } from './geometry-work';
@@ -55,7 +57,7 @@ import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-setti
 import { effectiveShowLqi, signalVisibilityOverrideOf } from './signal-visibility';
 import { ZoomScaleActivity } from './zoom-scale-activity';
 import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWallsNote } from './led-strip-card';
-import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
+import { LitElement, html, svg, render as renderDetached, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
@@ -1095,6 +1097,7 @@ export class HouseplanCard extends LitElement {
     }
     if (authorityChanged) {
       this._floorPreparation?.invalidate();
+      this._startupFloor?.retire();
       this._floorPendingMode = null;
       this._decorAssetSyncToken++;
       this._renderLife.retireHass();
@@ -1115,6 +1118,7 @@ export class HouseplanCard extends LitElement {
     if (this._read.observe(context)) { this._loading = false; if (waiting) this._read.defer(); }
     if (authorityChanged) this._read.defer();
     if (before && before.permissions.read !== environment.permissions.read) {
+      this._startupFloor?.retire();
       this._floorPreparation?.invalidate(); this._floorPendingMode = null;
       this._loadOk = false;
       if (environment.permissions.read) this._read.defer();
@@ -1123,6 +1127,7 @@ export class HouseplanCard extends LitElement {
     if (before && before.permissions.admin !== environment.permissions.admin) this._read.defer();
     if (!this.isConnected) return;
     if (before?.connected && !environment.connected) {
+      this._startupFloor?.retire();
       // A transport gap retires reads, not the same owner's accepted writes.
       // A→missing→A in one turn must not revive an old read's claim.
       const pendingRead = this._read.busy || this._read.pending;
@@ -2845,6 +2850,192 @@ export class HouseplanCard extends LitElement {
   private _floorCompleteAuthority?: object;
   private _floorHolding = false;
   private _floorPassive = false;
+  private _startupFloor?: StartupFloor;
+  private _startupStyle?: { value: ReturnType<StartupFloor['observe']>; finishing: boolean };
+  private _startupCamera?: { temporary: FrameRect; before: FrameRect | null; zoom: number };
+  private _startupSource?: () => TemplateResult[];
+  private _startupPresentation?: { inputs: unknown[]; selection: StartupSelection | null };
+  private _startupReadyPaint = false;
+  private _startupReadProbe?: ReturnType<typeof setTimeout>;
+
+  private _startupSelection(): StartupSelection | null {
+    const env = this.planHost.environment, scope = this.planHost.cacheScope, stage = this._stageEl;
+    const size = stage?.clientWidth && stage.clientHeight
+      ? [stage.clientWidth, stage.clientHeight] as const : this._lastValidStageSize;
+    if (!this._loadOk || !scope || !env.connected || !env.permissions.read
+      || !this.isConnected || this._mode !== 'view' || this._modeTransitionBusy || this._rotationMotion.running
+      || this._settingsDialog || this._spaceDialog) return null;
+    const floor = this._space, projection = this._desiredProjection, rotation = this._rotationForProjection(projection);
+    if (!floor) return null;
+    const envStyle = this._presentation.themes;
+    const zoom = this._warmViewportPending ? this._warmVp?.zoom ?? this._zoom : this._zoom;
+    const configFingerprint = this._adoption.currentConfigFingerprint();
+    const accepted = this._adoption.snapshot(null);
+    const looks = [projection, rotation, this.panelHost, this.panelSidebarOpen, this.narrow, this.layout, this._kiosk,
+      this.panelHost ? null : cardRotationPlacementSlot(this), this._config, this._externalScreen, this._showFar, zoom,
+      envStyle, this._presentation.language, window.innerWidth, window.innerHeight, window.devicePixelRatio,
+      this._effectiveKioskScale.icon, this._effectiveKioskScale.font];
+    const inputs = [this.planHost.authorityKey, env.connectionRevision, scope, floor, this._cfgRev,
+      this._layoutRev, this._layout, this._cfgEpoch, configFingerprint, accepted?.config, accepted?.layout, size?.[0], size?.[1],
+      this._cfgWriting, this._writesPending, this._dirtyPos.size, this._saveConfigDebounced.pending(),
+      this._persistLayout.pending(), ...looks];
+    if (this._startupPresentation && inputs.every((input, index) => input === this._startupPresentation!.inputs[index]))
+      return this._startupPresentation.selection;
+    // An unrelated acknowledgement can be pending during admin startup.
+    // Read the saved SVG if the actual bodies still equal the accepted pair;
+    // only publication needs the stronger no-writes-in-flight barrier.
+    if (!accepted || accepted.rev !== this._cfgRev || accepted.layout_rev !== this._layoutRev
+      || contentFingerprint(this._serverCfg) !== accepted.config_fingerprint
+      || contentFingerprint(this._layout) !== accepted.layout_fingerprint) {
+      this._startupPresentation = { inputs, selection: null }; return null;
+    }
+    const revision = cacheSha256([this._cfgRev, this._layoutRev, accepted.config_fingerprint, accepted.layout_fingerprint]);
+    // Placement and viewport are known before the painted stage settles.
+    // Read then; a byte hit remains private until its measured size also matches.
+    const variant = cacheSha256([ENTRY_BUILD_FINGERPRINT, ...looks]);
+    const selection: StartupSelection = { authority: this.planHost.authorityKey, connection: env.connectionRevision || 0,
+      scope, floor, variant, revision, size: size?.[0] && size[1] ? [size[0], size[1]] : null };
+    this._startupPresentation = { inputs, selection };
+    return selection;
+  }
+
+  private _observeStartupFloor(): void {
+    if (!this._startupFloor && this.planHost.cacheScope) {
+      this._startupFloor = new StartupFloor(() => this._startupSelection(), () => this.requestUpdate());
+      // A placement restored from this document's warm slot already owns an
+      // inexpensive first frame. Do not add a second provisional handoff.
+      if (!this._booting && this._warmSlot && this._warmVp) this._startupFloor.skipImage();
+    }
+    const env = this.planHost.environment;
+    if (this._loadOk && env.connected && env.permissions.read) this._startupFloor?.prepare();
+    if (!this._startupStyle?.value && !this._booting && !this._bootFading && this._continuity.hasCompleteFrame
+      && this.renderRoot.querySelector('.stage:not([data-hp-floor-cache]) .zoomwrap')) {
+      this._startupFloor?.publishedLive();
+    }
+    const value = this._startupFloor?.observe(this._startupSelection());
+    if (this._startupStyle?.value !== value) {
+      const old = this._startupCamera;
+      if (old && this._view === old.temporary) { this._view = old.before; this._zoom = old.zoom; }
+      this._startupCamera = undefined;
+      if (value) {
+        const temporary = { ...value.view };
+        this._startupCamera = { temporary, before: this._view, zoom: this._zoom };
+        this._zoom = value.zoom;
+        this._view = temporary;
+      }
+    }
+    if (value || this._startupStyle?.value) this._startupStyle = { value, finishing: false };
+  }
+
+  private _primeStartupFloorRead(): void {
+    const owner = this._startupFloor;
+    if (!owner?.awaitsLive || this._startupReadProbe) return;
+    const end = performance.now() + 2_000;
+    const check = () => {
+      this._startupReadProbe = undefined;
+      if (owner !== this._startupFloor || !owner.awaitsLive || !this.isConnected
+        || !this.planHost.cacheScope || !this.planHost.environment.connected) return;
+      const selection = this._startupSelection();
+      if (selection) { owner.observe(selection); return; }
+      // A startup write can settle without a Lit update while the old boot
+      // veil is waiting for 2.5D. Probe eligibility only; do not render or
+      // call storage until the current pair actually matches its ACK.
+      if (performance.now() < end) this._startupReadProbe = setTimeout(check, 50);
+    };
+    check();
+  }
+
+  private _renderStartupFloor() {
+    const value = this._startupStyle?.value;
+    return value ? html`<img class="hp-startup-view" src=${value.url} alt="" aria-hidden="true" draggable="false">` : nothing;
+  }
+
+  public houseplanStartupFloorDiagnostics() { return this._startupFloor ? { ...this._startupFloor.facts } : null; }
+
+  private _startupStatus() {
+    return html`<div class="editorloading hpf-loading-pill hpf-motion floor-preparation-status" role="status" aria-live="polite">
+      <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span></div>`;
+  }
+
+  private _updateStartupFloor(): void {
+    const store = this._startupFloor, stage = this._stageEl;
+    if (!store || !stage) return;
+    if (stage.querySelector('.hp-startup-view')) store.shown();
+    if (!this._loadOk || this._floorPassive || this._floorHolding || this._floorPreparation?.pending
+      || this._booting || this._bootFading || this._continuity.state !== 'steady'
+      || !this._continuity.hasCompleteFrame || !this._continuityAssetsReady()
+      || this._mode !== 'view' || this._renderProjection !== this._desiredProjection
+      || this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) return;
+    const selection = this._startupSelection(), source = this._startupSource;
+    const size = selection?.size;
+    if (!selection || !size || !source || this._startupReadyPaint) return;
+    // VisualContinuity already confirmed the current scene's paint. The
+    // optional image must not add another two frames before input is live.
+    if (store.publishedLive()) {
+      this._startupCamera = undefined;
+      const transition = this._startupStyle = { value: undefined, finishing: !this._reducedMotion };
+      this.requestUpdate();
+      if (transition.finishing) setTimeout(() => {
+        if (this._startupStyle === transition) { this._startupStyle = undefined; this.requestUpdate(); }
+      }, 160);
+    }
+    this._startupReadyPaint = true;
+    void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+      .then(() => {
+        this._startupReadyPaint = false;
+        if (store !== this._startupFloor || !this.isConnected || this._stageEl !== stage
+          || selection !== this._startupSelection() || this._floorPassive || this._floorHolding
+          || this._floorPreparation?.pending || this._booting || this._bootFading
+          || this._continuity.state !== 'steady' || !this._continuityAssetsReady()) return;
+        const zoom = this._zoom;
+        const base = [...this._baseVb()], frame = this._frameOf();
+        const view = { ...this._cameraView(base) };
+        const fit = { base, frame: { rect: { ...frame.rect }, all: { ...frame.all }, outliers: frame.outliers,
+          hasContent: frame.hasContent }, display: { ...this._displayBase(base) },
+          projection: this._renderProjection, rotation: this._rotation };
+        store.capture(selection, async signal => ({
+          image: await this._captureStartupSvg(stage, source, signal), size, view: { ...view }, zoom, fit,
+        }), () => this._floorSourceAccepted());
+      });
+  }
+
+  private async _captureStartupSvg(stage: HTMLElement, source: () => TemplateResult[], signal: AbortSignal): Promise<Blob> {
+    const container = this.ownerDocument.createElement('div'), shell = this.ownerDocument.createElement('div');
+    const wrap = this.ownerDocument.createElement('div'); wrap.className = 'zoomwrap';
+    const scene = this.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    shell.className = stage.className;
+    shell.classList.remove('hpboot', 'hpsettle', 'hpiso-pending', 'mode-transition');
+    shell.style.cssText = stage.style.cssText;
+    const rect = stage.getBoundingClientRect();
+    Object.assign(shell.style, { width: rect.width + 'px', height: rect.height + 'px' });
+    Object.assign(container.style, { position: 'absolute', left: '-100000px', top: '0', width: '0', height: '0',
+      overflow: 'hidden', visibility: 'hidden', pointerEvents: 'none' });
+    container.setAttribute('inert', ''); container.setAttribute('aria-hidden','true');
+    const original = stage.querySelector<SVGSVGElement>('svg.plan-svg');
+    if (!original) throw Error('unsupported-vector');
+    scene.classList.add('plan-svg');
+    scene.setAttribute('width', String(rect.width)); scene.setAttribute('height', String(rect.height));
+    scene.setAttribute('viewBox', original.getAttribute('viewBox') ?? '');
+    scene.setAttribute('preserveAspectRatio', original.getAttribute('preserveAspectRatio') || 'xMidYMid meet');
+    if (stage.hasAttribute('data-hp-iso-floor-markers')) shell.setAttribute('data-hp-iso-floor-markers','true');
+    wrap.append(scene); shell.append(wrap); container.append(shell); this.renderRoot.appendChild(container);
+    try {
+      for (const fragment of source()) {
+        signal.throwIfAborted();
+        const layer = this.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'g');
+        scene.append(layer);
+        renderDetached(fragment, layer as unknown as HTMLElement);
+        await new Promise<void>(resolve => setTimeout(resolve, 0));
+      }
+      return await serializeStartupFloor(scene, async (url, abort) => {
+        const target = new URL(url, this.ownerDocument.baseURI);
+        const owned = target.origin === location.origin && target.pathname.startsWith('/api/houseplan/content/');
+        if (!owned && target.protocol !== 'blob:' && target.protocol !== 'data:') return null;
+        const resource = await fetch(target, owned ? { signal: abort, mode: 'same-origin', cache: 'only-if-cached' } : { signal: abort });
+        return resource.ok ? resource.blob() : null;
+      }, signal);
+    } finally { container.remove(); }
+  }
   private _floorPreparedRooms: { frame: FloorGeometryFrame; clean: Map<string, CleanFloorResult> } | null = null;
   private _floorPreviewDiagnostic: { shapes: number; invalid: string[] } | null = null;
   public houseplanFloorCacheDiagnostics() { return { cache: this._floorPreparation?.diagnostic, main: geometryWorkSnapshot(), preview: this._floorPreviewDiagnostic }; }
@@ -2920,7 +3111,7 @@ export class HouseplanCard extends LitElement {
           this._floorRestoreZoom = null; // the measured stage will consume its exact camera
         } else if (!this._floorPreparation?.pending && this._floorRestoreZoom !== null) {
           const carousel = this._floorRestoreZoom; this._floorRestoreZoom = null; this._restoreZoom(carousel);
-        } else if (!this._floorPreparation?.pending) this._refitView();
+        } else if (!this._floorPreparation?.pending && !this._startupStyle?.value) this._refitView();
         this.requestUpdate();
       },
     });
@@ -3807,7 +3998,7 @@ export class HouseplanCard extends LitElement {
   private _viewFrameSpace = '';
 
   private get _presentedPreviewFit() {
-    return this._floorPassive ? this._floorPreparation?.preview?.fit ?? null : null;
+    return this._floorPassive ? this._startupStyle?.value?.fit ?? this._floorPreparation?.preview?.fit ?? null : null;
   }
 
   private _presentedViewPlane(projection: 'flat'|'iso' = this._renderProjection): ViewPlane {
@@ -4208,6 +4399,10 @@ export class HouseplanCard extends LitElement {
 
   public disconnectedCallback(): void {
     this._floorPreparation?.dispose(); this._floorPreparation = null; this._floorPendingMode = null;
+    this._startupFloor?.dispose(); this._startupFloor = undefined; this._startupStyle = undefined;
+    clearTimeout(this._startupReadProbe); this._startupReadProbe = undefined;
+    this._startupCamera = undefined;
+    this._startupPresentation = this._startupSource = undefined;
     this._buttonTabFocusRelease?.();
     this._buttonTabFocusRelease = null;
     ++this._headerActionsRequest; this._headerActionsMenu?.dispose();
@@ -5913,6 +6108,7 @@ export class HouseplanCard extends LitElement {
       if (this._tip || this._hoverRoom) this._clearTransientHover(true);
       return;
     }
+    this._updateStartupFloor();
     if (this._floorPreparation?.pending || this._floorPassive) {
       this._syncPlanViewportObservers();
       this._summary?.updated();
@@ -5922,7 +6118,7 @@ export class HouseplanCard extends LitElement {
         // provisional aspect on a narrow/quarter-turned stage.
         const size = this._lastValidStageSize;
         const stage = this._stageEl;
-        if (!this._usesScreenCamera && stage && (!size
+        if (!this._startupStyle?.value && !this._usesScreenCamera && stage && (!size
           || Math.abs(size[0] - stage.clientWidth) > .5 || Math.abs(size[1] - stage.clientHeight) > .5)) this._refitView();
         this._syncScreenCamera();
         const next = this._lastValidStageSize;
@@ -6268,7 +6464,9 @@ export class HouseplanCard extends LitElement {
           // before the authoritative snapshot is usable, and it is usable
           // exactly here — the bodies are adopted.
           this._loadOk = true;
+          this._observeStartupFloor();
           rebuildDevices();
+          this._primeStartupFloorRead();
           if (this._warmRevivePending && this._mode === 'view') this._warmReviveDialog();
         },
       }), isCurrent);
@@ -8069,7 +8267,7 @@ export class HouseplanCard extends LitElement {
   private _contentFrameMemo: { model: SpaceModel; layout: unknown; devs: unknown; missingDecor: boolean;
     value: ReturnType<typeof contentFrame> } | null = null;
   private _frameOf(): { rect: Rect; all: Rect; outliers: number; hasContent: boolean } {
-    if (this._floorPassive && this._floorPreparation?.preview) return this._floorPreparation.preview.fit.frame;
+    if (this._presentedPreviewFit) return this._presentedPreviewFit.frame;
     if (!this._ensureFloorPreparation()) {
       const fallback = { x: 0, y: 0, w: NORM_W, h: NORM_W };
       return this._floorPreparation?.fit?.frame || { rect: fallback, all: fallback, outliers: 0, hasContent: false };
@@ -8205,7 +8403,7 @@ export class HouseplanCard extends LitElement {
     console.warn('HOUSEPLAN ISO FALLBACK: #89/#160', safeRuntimeDiagnostic('structural', fingerprint, true));
   }
   private _effectiveProjection(): 'flat' | 'iso' {
-    if (this._floorPassive && this._floorPreparation?.preview) return this._floorPreparation.preview.fit.projection;
+    if (this._presentedPreviewFit) return this._presentedPreviewFit.projection;
     if (!this._ensureFloorPreparation()) return this._desiredProjection;
     if (this._isoProjectionSnapshot) return this._isoProjectionSnapshot;
     const finish = (value: 'flat' | 'iso') => this._isoProjectionSnapshot = value;
@@ -8278,7 +8476,7 @@ export class HouseplanCard extends LitElement {
     projection: 'flat' | 'iso' = this._effectiveProjection(),
     scene: IsoRenderScene | null = this._renderIsoScene,
   ): number[] {
-    if (this._floorPassive && this._floorPreparation?.preview) return this._floorPreparation.preview.fit.base;
+    if (this._presentedPreviewFit) return this._presentedPreviewFit.base;
     if (!this._ensureFloorPreparation()) return this._floorPreparation?.fit?.base || [0, 0, NORM_W, NORM_W];
     if (projection === 'iso' && scene) {
       const frame = scene.canonicalFrame ?? scene.frame;
@@ -8527,7 +8725,7 @@ export class HouseplanCard extends LitElement {
     this._rotationMotion.rotate(direction);
   }
   private _displayBase(vb = this._baseVb()): FrameRect {
-    if (this._floorPassive && this._floorPreparation?.preview) return this._floorPreparation.preview.fit.display;
+    if (this._presentedPreviewFit) return this._presentedPreviewFit.display;
     if (this._effectiveProjection() === 'iso' && this._renderIsoScene) return this._renderIsoScene.frame;
     return turnRect({ x: vb[0], y: vb[1], w: vb[2], h: vb[3] }, this._rotationForProjection('flat'));
   }
@@ -10758,6 +10956,7 @@ export class HouseplanCard extends LitElement {
     onlyId?: string | readonly string[] | null,
     planView = this._viewOr(this._baseVb()),
     paint: 'all' | 'floor' | 'volume' = 'all',
+    staticOnly = false,
   ): TemplateResult {
     const W = NORM_W, H = this._decorH;
     const editing = this._mode === 'decor';
@@ -10931,9 +11130,9 @@ export class HouseplanCard extends LitElement {
         // entity `liveText` gives the stored text back byte-for-byte, so a
         // plain label is the plain label it always was (docs/DECOR-EDITOR.md §5).
         const fs = this._decorTextUnits(sh);
-        const frozenText = this._renderDeviceSnapshot?.facts.get(`decor:${this._space}:${sh.id}`);
+        const frozenText = staticOnly ? undefined : this._renderDeviceSnapshot?.facts.get(`decor:${this._space}:${sh.id}`);
         const lines = decorTextLines(typeof frozenText === 'string' ? frozenText : liveText(
-          sh.text, sh, this._renderPlanHass, (eid) => this._renderEntityAvailable(eid),
+          sh.text, sh, staticOnly ? null : this._renderPlanHass, (eid) => !staticOnly && this._renderEntityAvailable(eid),
         ));
         const ax = sh.x * W, ay = sh.y * H;
         const ang = Number(sh.angle) || 0;
@@ -10952,7 +11151,7 @@ export class HouseplanCard extends LitElement {
     }));
     // живое превью рисуемой фигуры
     let draft: unknown = nothing;
-    const d = this._decorDraft;
+    const d = staticOnly ? null : this._decorDraft;
     if (d) {
       const st = this._decorStyle;
       const sw = decorCmToUnits(st.widthCm, this._cellCm, this._gridPitch);
@@ -10969,7 +11168,7 @@ export class HouseplanCard extends LitElement {
               stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${sw}" fill="${st.fill ? st.fillColor : 'none'}" fill-opacity="${st.fill ? st.fillOpacity : 0}"></ellipse>`;
       }
     }
-    return svg`<g class="decorlayer">${shapes}${draft}${this._editorRuntime?._renderFurniturePlacementPreview(furnitureScreenScale) ?? nothing}${this._editorRuntime?._renderDecorImagePlacementPreview() ?? nothing}</g>` as unknown as TemplateResult;
+    return svg`<g class="decorlayer">${shapes}${draft}${staticOnly ? nothing : this._editorRuntime?._renderFurniturePlacementPreview(furnitureScreenScale) ?? nothing}${staticOnly ? nothing : this._editorRuntime?._renderDecorImagePlacementPreview() ?? nothing}</g>` as unknown as TemplateResult;
   }
 
   // ================= shared editor secondary surface =================
@@ -11267,7 +11466,7 @@ export class HouseplanCard extends LitElement {
    * thick-wall opening tunnels consume the same object, so a live HA tick can
    * never update one without the other or drift in palette semantics.
    */
-  private _resolvedRoomFills(space: SpaceModel, disp: SpaceDisplay): RoomFillFrame {
+  private _resolvedRoomFills(space: SpaceModel, disp: SpaceDisplay, staticOnly = false): RoomFillFrame {
     const byRoom = new Map<RoomCfg, ResolvedRoomFill | null>();
     const byId = new Map<string, ResolvedRoomFill | null>();
     for (const room of space.rooms) {
@@ -11283,13 +11482,13 @@ export class HouseplanCard extends LitElement {
         this._roomTempMin, this._roomTempMax, this._roomDialog && room.id === this._roomEditId);
       const resolved = resolveEffectiveRoomFill(
         mode,
-        mode === 'lqi' && room.area ? this._roomLqi(room.area) : null,
-        mode === 'light'
+        !staticOnly && mode === 'lqi' && room.area ? this._roomLqi(room.area) : null,
+        !staticOnly && mode === 'light'
           ? resolvedLightState(resolvedLightSources(
             this._renderPlanHass, this._renderDevices, room, this._virtualLights,
           ))
           : 'none',
-        mode === 'temp' ? this._roomTemp(room) : null,
+        !staticOnly && mode === 'temp' ? this._roomTemp(room) : null,
         tempRange.min,
         tempRange.max,
         this._fillColors,
@@ -13038,8 +13237,8 @@ export class HouseplanCard extends LitElement {
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
     if (this._tapConfirm || this._kioskDialog || this._backdropGuard) ensureCompactDialogStyles(this);
-    return html`${body}${this._floorHolding ? html`<div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite">
-      <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span></div>` : nothing}
+    return html`${body}${this._floorHolding ? html`<div class="floor-status-over-retained" style=${styleMap({top: this._kiosk ? '0px' : `${this._hdrH}px`})}>
+      ${this._startupStatus()}</div>` : nothing}
       ${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;
   }
 
@@ -13183,12 +13382,14 @@ export class HouseplanCard extends LitElement {
     const dayCycle = this._dayCycleState();
     // L1 remains a fit/camera hint in 2.5D, not a material-complete scene.
     // Do not flash its anonymous silhouette before the current floor is ready.
-    const visiblePreview = this._desiredProjection === 'flat' && preview?.fit.projection === 'flat' ? preview : null;
+    const visiblePreview = !failed && !this._startupFloor?.awaitsLive && this._desiredProjection === 'flat'
+      && preview?.fit.projection === 'flat' ? preview : null;
     return this._renderPreparedFloorFrame(html`
       <div class="stage mode-view${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}" data-hp-floor-cache=${failed ? 'error' : visiblePreview ? 'preview' : 'preparing'}
         style=${styleMap({ height: this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`,
           background: this._stageBg(disp) || undefined, '--wall-fill': disp.wallFill.c })}>
         ${this._renderStageEnvironment(dayCycle)}
+        ${failed ? nothing : this._renderStartupFloor()}
         ${visiblePreview ? html`<div class="zoomwrap" inert style="pointer-events:none">
           <svg class="plan-svg" data-hp-cache-preview data-hp-live-viewbox="camera" aria-hidden="true" viewBox="${view.x} ${view.y} ${view.w} ${view.h}">
             ${renderFloorPreview(visiblePreview)}
@@ -13200,9 +13401,7 @@ export class HouseplanCard extends LitElement {
           <button type="button" class="btn on" @click=${this._retryFloorPreparation}>${this._t('continuity.retry')}</button>
           ${this._norm && this._canEdit && !this._kiosk ? html`<button type="button" class="btn"
             data-hp="floor-error-support" @click=${this._openSupportDialog}>${this._t('support.title')}</button>` : nothing}
-        </div>` : html`<div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite">
-          <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span>
-        </div>`}
+        </div>` : this._startupStatus()}
         ${this.planHost.capabilities.summary ? this._summary?.renderMeasure() : nothing}
         ${!failed && this.planHost.capabilities.summary ? this._summary?.renderPanel() : nothing}
       </div>
@@ -13210,6 +13409,8 @@ export class HouseplanCard extends LitElement {
   }
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     this._floorHolding = false; this._floorPassive = false;
+    this._startupSource = undefined;
+    this._observeStartupFloor();
     if (!this._config || !this.planHost.environment.ready) {
       this._floorPreparation?.invalidate(); this._floorPendingMode = null; return nothing;
     }
@@ -13322,7 +13523,11 @@ export class HouseplanCard extends LitElement {
     const space = this._spaceModel();
     if (!space) return nothing;
     if (!this._ensureFloorPreparation()) {
-      if (this._floorPreparation?.failed) return this._renderPendingFloor();
+      if (this._floorPreparation?.failed) {
+        this._startupFloor?.skipImage();
+        this._observeStartupFloor();
+        return this._renderPendingFloor();
+      }
       if (this._floorCompleteSpace === space.id && this._floorCompleteAuthority === this.planHost.authorityKey
         && this._loadOk && this._mode === 'view' && this.renderRoot.querySelector('.stage:not([data-hp-floor-cache])')) {
         this._floorHolding = true; return this._renderPreparedFloorFrame(noChange, diagnostics);
@@ -13336,6 +13541,9 @@ export class HouseplanCard extends LitElement {
     this._editorRuntime?._beginResizeBaseFrame();
     const vb = space.vb;
     let projection = this._effectiveProjection();
+    if (this._startupStyle?.value && this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) === 'fallback') {
+      this._startupFloor?.publishedLive(); this._observeStartupFloor();
+    }
     this._renderProjection = projection;
     if (this._labs.active.length) noteLabsRender();
     let iso = projection === 'iso';
@@ -13367,6 +13575,7 @@ export class HouseplanCard extends LitElement {
     let useFurnitureVolume = iso && disp.showBorders && ISO_LAB_FURNITURE && this._mode === 'view';
     let furnitureShadows: TemplateResult | TemplateResult[] | typeof nothing = nothing;
     let stairVolumes: ReturnType<StairViewRuntime['volumeItems']> | undefined;
+    let startupFurniture: (() => IsoFurniturePaint[]) | undefined;
     try {
       if (iso) {
         const glow = this._renderGlowLayer(space, disp, view, sources => isoWallLights.push(...sources));
@@ -13386,6 +13595,8 @@ export class HouseplanCard extends LitElement {
       } else this._isoLight.clear();
       const sampleFurnitureLight = isoRuntime?.isoFurnitureLightSampler(isoWallLights, isoScene?.geometry);
       const camera = isoScene?.camera;
+      const neutralFurniture: Array<() => IsoFurniturePaint> = [];
+      startupFurniture = () => neutralFurniture.map(paint => paint());
       const furniture: (IsoFurniturePaint & {lift:number;shadow:TemplateResult|typeof nothing})[] = useFurnitureVolume && camera && !disp.hideDecor
         ? this._decorList.filter((item): item is Extract<DecorShape,{kind:'furniture'}> => item.kind === 'furniture')
           .flatMap(item=>{
@@ -13396,6 +13607,9 @@ export class HouseplanCard extends LitElement {
             if (!volume) return [];
             const {mesh,footprint,height} = volume;
             const style = this._decorResolvedStyle(item);
+            neutralFurniture.push(() => ({footprint,height,mesh,lift,opacity:1,
+              body:svg`<g transform=${isoFloorMatrixCss(camera)}>
+                ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,scale,false)}</g>`}));
             return [{footprint,height,mesh,lift,opacity:1,
               shadow:lift ? nothing : furnitureShadow(mesh,scale,false),
               body:svg`<g transform=${isoFloorMatrixCss(camera)}>
@@ -13411,6 +13625,8 @@ export class HouseplanCard extends LitElement {
             shadow:furnitureShadow(volume.mesh,scale,false),
             body:svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume',depthPaint ? 'paint' : 'all')}</g>`,
             hit:depthPaint ? svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume','hit')}</g>` : undefined});
+          neutralFurniture.push(() => ({...volume,lift:0,hit:undefined,
+            body:svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume','paint')}</g>`}));
         }
         const [,b,,d]=isoFloorMatrix(camera);
         const depth=(item:typeof furniture[number])=>item.footprint.reduce((sum,p)=>sum+b*p[0]+d*p[1],0)/item.footprint.length;
@@ -13493,7 +13709,7 @@ export class HouseplanCard extends LitElement {
     const wallHatch = svg`<defs><pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
         width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)"><path d="M0 0 L0 ${hatchStep}" stroke="${disp.color || '#607d8b'}" stroke-width="${stripe}"></path></pattern></defs>`;
     const sceneSpace = space;
-    const renderRooms = (roomMode: HouseplanMode, canonical = true): TemplateResult => {
+    const renderRooms = (roomMode: HouseplanMode, canonical = true, fills = roomFills): TemplateResult => {
       const planRoom = roomMode === 'plan';
 
               // audit L1: hoisted out of the per-room map — these depend on the
@@ -13529,7 +13745,7 @@ export class HouseplanCard extends LitElement {
                 st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
                 // One frame-local resolver drives both this room and every
                 // thick-wall opening tunnel that continues its floor colour.
-                const fillC = roomFills.byRoom.get(r) || null;
+                const fillC = fills.byRoom.get(r) || null;
                 if (fillC) {
                   cls += ' filled';
                   st.push(`--room-fill:${iso ? architecturalFloorTone(fillC.color, disp.wallFill.c, effFill === 'custom') : fillC.color}`, `--room-fill-op:${fillC.opacity}`);
@@ -13593,7 +13809,7 @@ export class HouseplanCard extends LitElement {
               const obstaclePath = fillPoly ? this._cleanFloor(r, fillPoly, sceneSpace).path : '';
               const roomId = r.id || '#' + sceneSpace.rooms.indexOf(r);
               const paint = floorPaint.get(roomId);
-              const visiblePaint = roomFills.byRoom.has(r) ? visibleFloor?.get(roomId)?.path : undefined;
+              const visiblePaint = fills.byRoom.has(r) ? visibleFloor?.get(roomId)?.path : undefined;
               const paintedPath = visiblePaint || paint?.path;
               // docs/STYLING-HOOKS.md §3 — the same three hooks whichever SVG
               // element this room happens to be drawn as today
@@ -13758,6 +13974,43 @@ export class HouseplanCard extends LitElement {
     // During the outgoing fade, the retained 2.5D scene keeps View styling
     // until the projection swap. The header already represents the edit mode.
     const stageMode = iso ? 'view' : this._mode;
+    if (this._mode === 'view' && projection === this._desiredProjection && !isoFirstFramePending && !this._modeTransitionBusy) {
+      const transform = this._floorTransform;
+      const floorLayer = (content: unknown) => svg`<g class=${iso ? 'iso-floor-scene' : nothing} transform=${transform}>${content}</g>`;
+      this._startupSource = () => {
+        const neutral = iso && isoRuntime ? isoRuntime.resolveIsoFramePresentation({
+          projection, display: disp, scene: isoScene, openings: this._openingsR.filter(o => !o.orphanReason),
+          cellCm: this._cellCm, amountOf: opening => resolvedOpeningAmount(opening, () => null),
+          visualOf: opening => resolveOpeningVisual(opening, () => null, resolvedOpeningAmount(opening, () => null)),
+          overlays: () => null, furniture: startupFurniture?.(), wallLights: [],
+        }) : null;
+        const fragments: TemplateResult[] = [];
+        if (neutral?.layers.structural) fragments.push(svg`<g class="iso-underlay-svg">${neutral.underlay}</g>`);
+        fragments.push(floorLayer(svg`${wallHatch}${renderPaperShapes(paperShapes)}`));
+        if (space.bg) {
+          if (!backdropHref || !backdropPaint) throw Error('asset-unavailable');
+          fragments.push(floorLayer(svg`<image class="hp-backdrop" href=${backdropHref}
+            x=${backdropPaint.x} y=${backdropPaint.y} width=${backdropPaint.w} height=${backdropPaint.h}
+            opacity=${space.bg.opacity ?? 1} transform=${backdropPaint.transform ?? nothing} preserveAspectRatio="none"></image>`));
+        }
+        fragments.push(floorLayer(renderRooms('view', true, this._resolvedRoomFills(space, disp, true))));
+        if (!disp.hideDecor) {
+          if (this._decorList.some(item => item.kind === 'image' && !this._display(this._decorAssets.get(item.asset_id)?.url)))
+            throw Error('asset-unavailable');
+          fragments.push(floorLayer(this._renderDecorLayer(undefined, view, useFurnitureVolume ? 'floor' : 'all', true)));
+        }
+        fragments.push(floorLayer(this._stairsView.renderLayer(stairVolumes)));
+        if (useFurnitureVolume && neutral?.layers.structural && furnitureShadows !== nothing)
+          fragments.push(floorLayer(furnitureShadows));
+        fragments.push(floorLayer(svg`${this._renderZeroWalls(disp)}${this._renderWallBodies(disp, true)}`));
+        if (!disp.hideOpenings && (!neutral || neutral.layers.floorSymbols))
+          fragments.push(floorLayer(this._renderOpenings(disp, undefined, false, true)));
+        if (neutral?.layers.structural) fragments.push(svg`
+          <g class="iso-shadows-svg">${neutral.shadows}</g><g class="iso-walls-svg">${neutral.walls}</g>`);
+        if (neutral && neutral.foreground !== nothing) fragments.push(svg`<g class="iso-furniture-foreground">${neutral.foreground}</g>`);
+        return fragments;
+      };
+    }
     const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${stageMode === 'plan' ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${stageMode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${stageMode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
     this._modePreparedStageClass = stageClass;
     const stage = html`
@@ -13767,7 +14020,8 @@ export class HouseplanCard extends LitElement {
           data-hp-iso-floor-markers=${markerCamera ? 'true' : nothing}
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
-          ?inert=${live(this._modeTransition.active)}
+          ?inert=${live(this._modeTransition.active || !!this._startupStyle?.value)}
+          ?data-hp-startup-finish=${this._startupStyle?.finishing}
           style=${styleMap({
             height: modeVisual && !this._modeTransitionPreparing ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`,
             width: modeVisual && !this._modeTransitionPreparing ? `${modeVisual.stageWidth}px` : undefined,
@@ -13803,6 +14057,8 @@ export class HouseplanCard extends LitElement {
           }}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderStageEnvironment(dayCycle, dayCycleWeight)}
+          ${this._renderStartupFloor()}
+          ${this._startupStyle?.value ? this._startupStatus() : nothing}
           ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
           ${this._ledEditor?.chrome() ?? nothing}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
@@ -14036,7 +14292,7 @@ export class HouseplanCard extends LitElement {
     diagnostics = this._renderLife.diagnostics(
       this._planHass, this._markers, (binding) => this._bindingStatus(binding), this._haRegistry,
     )): TemplateResult {
-    const pending = !!this._floorPreparation?.pending || this._floorPassive;
+    const pending = !!this._floorPreparation?.pending || this._floorPassive || !!this._startupStyle?.value;
     const failed = !!this._floorPreparation?.failed;
     const deviceSnapshot = this._renderDeviceSnapshot;
     const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
@@ -15325,8 +15581,8 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderOpeningPlacementPreview();
   }
 
-  private _renderOpenings(disp: SpaceDisplay, onlyIds?: readonly string[], interactive = true): TemplateResult {
-    const items = onlyIds ? this._openingsR.filter((item) => onlyIds.includes(item.id)) : this._openingsR;
+  private _renderOpenings(disp: SpaceDisplay, onlyIds?: readonly string[], interactive = true, staticOnly = false): TemplateResult {
+    const items = this._openingsR.filter(item => (!onlyIds || onlyIds.includes(item.id)) && (!staticOnly || !item.orphanReason));
     if (!items.length) return svg``;
     const space = this._spaceModel();
     if (!space) return svg``;
@@ -15348,8 +15604,8 @@ export class HouseplanCard extends LitElement {
         <circle r=${gridVisualUnits(this._gridPitch * 0.55, this._cellCm)}></circle>
         <text text-anchor="middle" dominant-baseline="central">!</text>
       </g>`;
-      const amt = this._openingAmt(o);
-      const active = amt > 0 && !!o.contact && this._renderOpeningEntityAvailable(o.contact);
+      const amt = staticOnly ? resolvedOpeningAmount(o, () => null) : this._openingAmt(o);
+      const active = !staticOnly && amt > 0 && !!o.contact && this._renderOpeningEntityAvailable(o.contact);
       const tone = active ? 'var(--hp-open)' : base;
       // A normal door/window uses the selected room-side face. A gate's
       // architectural symbol sits and opens on the opposite (exterior) face;
@@ -15363,7 +15619,7 @@ export class HouseplanCard extends LitElement {
         : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
       const visibleSpec: OpeningVisibleSpec = {
         type: o.type,
-        visual: resolveOpeningVisual(o, eid => this._renderOpeningEntityAvailable(eid)
+        visual: resolveOpeningVisual(o, eid => !staticOnly && this._renderOpeningEntityAvailable(eid)
           ? this._renderPlanHass.states[eid] : null, amt),
         handleSides: openingWindowHandleSides(o, space.rooms, face.cm, this._cellCm, this._gridPitch),
         length: o.rlen,
@@ -15374,7 +15630,7 @@ export class HouseplanCard extends LitElement {
         base,
         tone,
         sensorActive: active,
-        sensorDriven: !!o.contact,
+        sensorDriven: !staticOnly && !!o.contact,
         swingDepth: openingSwingDepth(o, openingWallIndex),
         cellCm: this._cellCm,
         gridPitch: this._gridPitch,
