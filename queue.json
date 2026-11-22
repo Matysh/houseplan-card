@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20487,
+  "revision": 20488,
   "nextTicket": 613,
   "nextFence": 611,
   "tasks": {
@@ -5613,208 +5613,25 @@
     },
     "1516": {
       "issue": 1516,
+      "branch": "codex/1516-surface-view",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1516-surface-view",
-      "materialSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 610,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795343188162,
-      "reviewEntry": 2,
-      "patchId": "73e78a967e2f9573cd15a5920fe46875834c3f1c",
-      "changedFiles": [
-        "custom_components/houseplan/command_adapter.py",
-        "custom_components/houseplan/core/validation.py",
-        "custom_components/houseplan/support_config_projection.py",
-        "custom_components/houseplan/support_wire_schema.py",
-        "demo/golden/harness.mjs",
-        "demo/smoke_external_screens.mjs",
-        "demo/smoke_floor_persistent_cache.mjs",
-        "demo/smoke_iso_flat_parity.mjs",
-        "demo/smoke_native_card_presentation.mjs",
-        "demo/smoke_plan_rotation.mjs",
-        "demo/smoke_static_wall_openings.mjs",
-        "demo/srv/fixture-state.js",
-        "demo/ui-lab/mock-ha.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/release-ledger/v1.86.0/1516.json",
-        "process-next/lib/source-dependencies.mjs",
-        "process-next/lib/task-selection.mjs",
-        "scripts/config-compatibility-catalog.mjs",
-        "scripts/config-compatibility-inventory.json",
-        "scripts/config-field-registry.mjs",
-        "scripts/config-schema.json",
-        "scripts/mutation-registry.mjs",
-        "scripts/support-relay/README.md",
-        "scripts/support-relay/hp_relay/support_wire_schema.py",
-        "src/card-editor-validation.ts",
-        "src/card-rotation-preference.ts",
-        "src/editor.ts",
-        "src/editors/external-screens.ts",
-        "src/external-screens.ts",
-        "src/houseplan-card.ts",
-        "src/i18n/settings/de.json",
-        "src/i18n/settings/en.json",
-        "src/i18n/settings/fr.json",
-        "src/i18n/settings/ru.json",
-        "src/panel-route-kiosk.ts",
-        "src/summary-panel-identity.ts",
-        "src/types.ts",
-        "src/version-recovery-card.ts",
-        "test/card-editor-validation.test.mjs",
-        "test/card-rotation-preference.test.mjs",
-        "test/external-screen-views.test.mjs",
-        "test/external-screens.test.mjs",
-        "test/isometric-contract.test.mjs",
-        "test/version-recovery-card.test.mjs",
-        "tests_backend/test_external_screens.py",
-        "tests_backend/test_ha_external_screens_websocket.py",
-        "tests_backend/test_support_config_projection.py"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795343076004,
-        "entry": 1,
-        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed",
-        "eventId": "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:3:return:return:1516"
-      },
-      "s6": {
-        "id": "20261122T111656122-36867120",
-        "name": "Тесты для задачи #1516 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T111656122-36867120/report.json",
-        "materialSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-        "status": "passed",
-        "finishedAt": "2026-11-22T11:47:43.254Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
+      "mergedSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
+      "mergedAt": 1795348421894,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1516:2:73e78a967e2f9573cd15a5920fe46875834c3f1c:3e3cb32854b080df2e9dbb87a08689b95bc81aea",
-      "reviewMaterial": {
-        "materialSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-        "expectedBase": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
-        "patchId": "73e78a967e2f9573cd15a5920fe46875834c3f1c"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1516:2:73e78a967e2f9573cd15a5920fe46875834c3f1c:3e3cb32854b080df2e9dbb87a08689b95bc81aea",
-        "eventId": "github:45019060532:1:tick:0:review-retry",
-        "at": 1795348085893,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1516,
-        "requestId": "review:1516:2:73e78a967e2f9573cd15a5920fe46875834c3f1c:3e3cb32854b080df2e9dbb87a08689b95bc81aea",
-        "kind": "code",
-        "base": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
-        "materialSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-        "patchId": "73e78a967e2f9573cd15a5920fe46875834c3f1c",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1516,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1516",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Зависимость #1515 отдаёт общий валидатор и нормализацию в view-frame.ts. В этой задаче меняются источники вида и угла, а не геометрия. У существующего профиля v2 уже отдельные default_view и space_views, v3 сохраняет их форму, а live-патч применяется через config adoption. Изучены текущие houseplan-card.ts, external-screens.ts, summary-panel-identity.ts, editors/external-screens.ts, editor.ts и серверная схема. Сохранённый старый угол и режим наследования выражаются отдельно. Внимание к cold/warm viewport и назначению localStorage per-card. Общие размеры устройств, положение группы и новый рендер #1514 здесь не реализуются.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1516#issuecomment-7075864152).\n\n- Смешанное окружение и откат. Вместо расширения строгой v2 схемы вводится профиль v3. Старая интеграция уже умеет сохранять будущие версии как непрозрачный bounded namespace, включая случай отсутствия поля в обычном запросе. Старые профили читаются без записи, а подтверждённый редактор отправляет v3 только при новой возможности backend. В AC5 добавлено подтверждение обычного config-write со старым валидатором после v3.\n- Прежний Lovelace GUI мог материализовать rotation:0 без осознанной правки. Новое явное поле plan_rotation не переинтерпретирует ни этот 0, ни другие legacy rotation. При отсутствии нового поля остаются прежние local → rotation → 0 и kiosk legacy fallback. UX наследования, повторная загрузка и intentional zero добавлены в AC.\n- Эксперимент #1472 отменяется в #1513. База финальной приёмки и слияния #1516 содержит #1513, а старый флаг real_3d после его отката не участвует в выборе. В тестах используются сохранённые данные с этим флагом.\n- Переход для киоска панели без валидного профиля описан явно. При отсутствии угла URL/профиля он следует заявленному порядку приоритетов и читает локальный угол, традиционный Lovelace kiosk сохраняет поведение.\n\nПо #1515 согласован неизменный логический формат градусов и нормализатор view-frame.ts. Решение владельца о точных прямых промежуточных камерах описано в #1515; оно не меняет формат #1516.\n\n### Реализация и предварительная проверка S6\n\nПодготовлены собственные коммиты #1516 до `8b28614463` в `codex/1516-surface-view`. Локальная база проверки включает общую модель углов #1515 (`7b25a3c1be`). Эта база временная, финальный diff и очередь используют актуальный dev после #1513/#1515.\n\n- Профиль v3 с отдельным view и обязательным rotation, 0 по умолчанию, null наследует угол. Строгие форматы v1/v2 сохранены при чтении. Новый v3 редактируется при явном API 3, старый backend принимает его как непрозрачный namespace. Проверено на исходной базе `5fa8459ea`: обычная запись show_lqi, не приславшая профиль, сохранила v3 и остальные данные.\n- В Lovelace поле plan_rotation отдельно задаёт явный угол, legacy rotation остаётся запасным. Ротация с кнопок запоминается по логическому размещению, пользователю/установке и пространству, привязка учитывает авторские параметры и признак HA preview. Приоритет: валидное локальное значение своего экземпляра → plan_rotation → существующий общий угол → legacy rotation → 0. Lovelace kiosk сохраняет свой прежний fallback, внешний экран применяет URL → профиль → локальный угол → 0.\n- Выбор вида/угла в конструкторе проходит существующий outer draft и config adoption. Исправлены значения нативного select при переключении пространства: HTML-поле следует активному черновику. Перечитывание своего ключа перед записью сохраняет настройки других пространств, изменённых из соседней вкладки.\n- Предварительные проверки: сборка/типы, 44 Node, 75 backend вместе с настоящим HA WebSocket, 40 проверок каталога. Browser smoke конструктора и новая нативная проверка одновременно смонтированных карточек, редактора конфигурации, reload и live-профиля прошли. Финальный S6 будет выполнен в общей очереди на актуализированном материале. Результат этого прогона к нему заранее не приравнивается.\n- Настоящий dashboard и панельный E2E до следующей беты: [houseplan-e2e#99](https://github.com/Matysh/houseplan-e2e/issues/99). Если версия с v3 будет доставляться, relay должен использовать соответствующий зеркальный support decoder. В текущей задаче внешние службы не обновлялись."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Изменение реализует принятое ТЗ, существенных дефектов я не нашёл. Источники вида и угла разведены по трём поверхностям, каждая со своей цепочкой приоритетов:\n- панель и её киоск: URL → профиль → общий локальный угол → 0;\n- Lovelace-карточка: свой локальный выбор → `plan_rotation` → общий локальный угол → legacy `rotation` → 0;\n- статическая карточка: прежний путь.\n\nПрофили оформлены как v3. Старый backend по-прежнему считает их непрозрачной будущей версией, v1/v2 остаются строгими. Конструктор пишет только после подтверждения и только при `external_screens_api:3`. Штатный редактор карточки больше не подставляет `rotation: 0` и не трогает старый `rotation`.\n\nПроверки S6 перед ревью прошли (материал `29f32c05`). Реальный HA E2E по ТЗ вынесен в houseplan-e2e#99 до беты. Остались необязательные уточнения:\n- поведение карточки в режиме редактирования дашборда HA;\n- локальный выбор карточки в Lovelace-киоске;\n- запись из устаревшей вкладки;\n- упоминание изменения для киоска панели в changelog.",
-          "understanding": "**Проблема.** В base вид 2.5D задавался одним флагом установки (`volumetricViewOf`). Ручной поворот лежал в одном ключе браузера на пространство, общем для панели и всех карточек. Профили экранов v2 и `hprotate` знали только четверть-обороты.\n\n**Как работает решение.**\n\nВид:\n- `_isoEnabled` для панели берёт `view` эффективного профиля (`_externalScreen.view`), для Lovelace-карточки — `config.view`, иначе общую настройку.\n- Смена вида проходит через прежний `_syncVolumetricSetting` → `_convertProjectionView`. Поэтому смена пространства в профиле и live-правка используют тот же путь, что и смена общей настройки.\n\nУгол (`_requestedPlanRotation`):\n- для панели: `_externalScreen.rotation` (в нём уже учтён hprotate) → `devicePlanRotation` без флага kiosk. Значит, киоск без профиля теперь читает локальный угол, как требует ТЗ;\n- для карточки: `CardRotationPreference` → `plan_rotation` → прежний `devicePlanRotation.get(space, rotation, kiosk)`.\n\nЗапись поворота с кнопок (`_rememberPlanRotation`):\n- панель пишет общий ключ и рассылает событие;\n- карточка пишет свой ключ `houseplan_card_rotation_slot_v1:<sha(scope, pathname, slot)>`. Запись хранит отпечаток авторских `view`/`plan_rotation`/`rotation`; при расхождении отпечатка запись удаляется при чтении.\n- Слот даёт `cardRotationPlacementSlot`: логический индекс Masonry, путь внутри `hui-view` либо null (тогда только память) для preview, editMode, диалога редактора и неразрешённых контейнеров.\n- `_rememberPresentedFlatRotation` (постоянное округление при Flat) теперь только у панели.\n\nРедактор и профили:\n- Редактор карточки через `fullCardPresentationConfig` удаляет пустые значения наследования, приводит угол к числу и округляет его при явном переходе на Flat. `rotation` больше не входит в схему формы.\n- Конструктор экранов получил выбор вида и наследование угла (`null`); select привязан через `live()`.\n- Профили: `externalScreensOf` проверяет v2 строго, v3 — с правилом «явный flat ⇒ четверть». `externalScreensForEdit` переводит v1/v2 в отсоединённый v3 и убирает из v2 лишнее поле `view`. Exact-successor event пропускает непрозрачные версии от 4.\n- Backend: `EXTERNAL_SCREENS_V3_SCHEMA` с `_screen_view_rotation_consistent`, будущие версии начинаются с 4. Проверка ссылок и защита от понижения версии учитывают v3. Добавлены обезличенная support-проекция и зеркальная relay-схема.\n\n**Что разобрано по исходникам head:**\n- в houseplan-card.ts: `_isoEnabled`, `_syncVolumetricSetting`, `_requestedPlanRotation`, `_rotationMotion`, `_rotationChanged`, `_externalScreen`, `_floorCacheSelection`;\n- external-screens.ts, editors/external-screens.ts, panel-route-kiosk.ts, summary-panel-identity.ts, card-rotation-preference.ts, editor.ts, card-editor-validation.ts, view-frame.ts (`PlanRotationPreference`);\n- core/validation.py: схемы, событие, сохранение namespace при обычной записи, проверка ссылок;\n- version-recovery-card.ts, i18n ru;\n- тесты card-rotation-preference, card-editor-validation, isometric-contract и браузерный smoke_native_card_presentation.",
-          "analysis": [
-            {
-              "topic": "Разделение источников угла по поверхностям",
-              "assessment": "Решение простое и соответствует ТЗ: ветвление по `panelHost` в одном геттере, без отдельного хранилища для киоска. Профиль и URL не могут попасть в локальные preferences: кнопки и `_rememberPresentedFlatRotation` заблокированы при `_kiosk`, а карточки пишут только свой ключ. Карточка без переопределения по-прежнему следует общему ключу панели и реагирует на `PLAN_ROTATION_EVENT`, что и есть заявленное наследование. Старый `rotation:0`, материализованный прежним GUI, остаётся под локальным углом.",
-              "evidence": "src/houseplan-card.ts:8437-8443 (`_requestedPlanRotation`), 8457-8467 (`_rememberPlanRotation`), 8471 (`!this.panelHost` в `_rememberPresentedFlatRotation`), 8481 и 8510 (`!this._kiosk`); view-frame.ts:187-191. Smoke: `legacyCardAndUnprofiledScreenInheritMainRotation`, `controlsAffectOnlyOneLogicalPlacement`."
-            },
-            {
-              "topic": "Локальный выбор карточки: слот, отпечаток и хранение",
-              "assessment": "Удачно переиспользован проверенный resolver Masonry, а для прочих контейнеров добавлен путь внутри `hui-view`. Отпечаток авторской конфигурации с удалением при расхождении даёт точную семантику ТЗ: смена конфигурации сбрасывает выбор, возврат к прежней его не воскрешает. Одна запись на слот и перечитывание перед записью решают замечание S4 о гонке между вкладками для разных пространств. Слабые места пограничные и вынесены в улучшения: устаревшая вкладка с другим отпечатком, режим редактирования дашборда, Lovelace-киоск.",
-              "evidence": "src/card-rotation-preference.ts:18-58; src/summary-panel-identity.ts:225-237; houseplan-card.ts:8428-8436. Вызов `_configureCardRotation` есть и в `setConfig`, и в `willUpdate`, поэтому слот подхватывается после подключения или разрешения Masonry. Тесты test/card-rotation-preference.test.mjs и reload-сценарии в smoke_native_card_presentation."
-            },
-            {
-              "topic": "Профиль v3 и совместимость backend/frontend",
-              "assessment": "Механизм версии выбран правильно, его стоит сохранить. Строгая v2 вынесена в общую фабрику без изменения правил. Для v3 добавлены `null`, восемь углов и проверка flat/odd. Будущие версии начинаются с 4, проверка ссылок и защита от понижения расширены на v3. Перевод v2 → v3 убирает только зарезервированное поле `view`, остальные неизвестные поля сохраняются. Frontend и backend требуют одинаковые инварианты. Новый конструктор отключается при API ≠ 3, старый — при API ≠ 2, поэтому mixed-версии показывают штатный статус.",
-              "evidence": "core/validation.py:2777-2842, 2871-2896; src/external-screens.ts:50-56 (`viewOf`), 86-104 (`externalScreensForEdit`), 151-156 (событие); editors/external-screens.ts:41, 96, 109; version-recovery-card.ts:125-126; command_adapter.py (`external_screens_api: 3`)."
-            },
-            {
-              "topic": "Конструктор и редактор карточки",
-              "assessment": "Наследование представлено отсутствием поля, а не 0. Соседняя правка не материализует угол: `rotation` убран из схемы формы и проходит без изменений. Явный переход на Flat округляет угол с доворотом по часовой стрелке, наследуемый вид сырой угол не переписывает. Если угол вне текущего набора, он добавляется в список, чтобы не сбросить загруженное значение без действия пользователя. `live()` исправляет рассинхрон нативного select при смене пространства. Тот же паттерн с пустой строкой уже использовался для `floor`, поэтому зависимость от поведения ha-form не новая.",
-              "evidence": "src/card-editor-validation.ts:24-44; src/editor.ts:57-60, 89-131, 186-189; editors/external-screens.ts:153-176; test/card-editor-validation.test.mjs (#1516); smoke_external_screens (`explicitFlatDovetailsClockwiseAtWrap`, `spaceSwitchPreservesSeparateViewAndRotation`)."
-            },
-            {
-              "topic": "Вид по пространству профиля, кеш и тёплые кадры",
-              "assessment": "При смене пространства профиля `_isoEnabled` меняется в том же цикле обновления, что и `_space`. Переход выполняет прежний `_syncVolumetricSetting`, а не новый механизм. Ключ кеша этажа строится из `_desiredProjection`, `_rotationForProjection`, `_config`, `_settings` и `_externalScreen`. Поэтому смена профиля, вида карточки или её локального угла инвалидирует подгонку кадра без записи layout/config. Автолистание отдельным тестом не прогнано, но идёт тем же путём смены `_space`, что и проверенная смена позиции киоска.",
-              "evidence": "houseplan-card.ts:3768-3771, 3891-3904, 2860-2875; smoke_native_card_presentation: позиции 1/2 киоска с разными видами, `liveProfileAffectsOnlyExternalScreen`, `presentationDoesNotSendPlanWrites`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Режим редактирования дашборда. В режиме редактирования HA, по-видимому, выставляет `preview` реальным карточкам. Это знание об исходниках HA, в репозитории не проверялось; подтвердит E2E houseplan-e2e#99. Тогда `cardRotationPlacementSlot` вернёт null, и карточка на время редактирования покажет унаследованный угол вместо своего, а после выхода вернётся обратно. Данные не теряются, но картинка прыгает. Альтернатива: в preview читать сохранённый ключ, а запрещать только запись (например, отдельный флаг readOnly в `CardRotationPreference`). Цена — одна ветка; выгода — стабильный вид при редактировании.",
-            "Lovelace-киоск. Отпечаток автора включает только `view`/`plan_rotation`/`rotation`, но не `kiosk`. Если карточку повернули кнопками, а потом включили `kiosk: true`, локальный угол продолжит действовать в киоске. ТЗ же говорит, что в Lovelace-киоске без `plan_rotation` действуют legacy `rotation`, затем 0. Достаточно не читать `_cardRotation` при `_kiosk` или добавить `kiosk` в отпечаток.",
-            "Устаревшая вкладка. Если в одной вкладке ещё прежний отпечаток, её `set()` получит пустой результат из `read()` и перезапишет ключ своим отпечатком, затерев выбор вкладки с новой конфигурацией. Это редкий сценарий, но его можно закрыть одной проверкой: перед записью, если в хранилище отпечаток другой, не перезаписывать его, а оставить выбор в памяти.",
-            "Changelog. Киоск панели без профиля (или с недействительным номером, или с профилем, где угол `null`) теперь применяет локальный угол браузера, хотя раньше начинал с 0°. Это видимое изменение для настенных экранов; его стоит одной фразой упомянуть в docs/CHANGELOG*.md рядом с записью #1516."
-          ],
-          "boundaries": "Сборку, тесты и браузер я не запускал. Использован только результат S6 «Тесты для задачи #1516 (перед ревью)»: passed, материал `29f32c05`, без failures. Подробный состав прогона из чтения материала недоступен.\n\nВыводы основаны на чтении diff и исходников head: houseplan-card.ts (вид и угол, кеш этажа), external-screens.ts, editors/external-screens.ts, editor.ts, card-editor-validation.ts, card-rotation-preference.ts, summary-panel-identity.ts, panel-route-kiosk.ts, view-frame.ts, core/validation.py, version-recovery-card.ts, ru.json, а также тестов card-rotation-preference, card-editor-validation, isometric-contract и smoke_native_card_presentation.\n\nНе изучал подробно:\n- support-проекцию и relay-схему: прочитан только diff;\n- реестры совместимости и инвентарь: механически не сверял, это зона каталога S6;\n- изменения process-next;\n- полный текст backend-тестов.\n\nПоведение HA (`preview` в режиме редактирования, ha-form и пустые значения select) известно по исходникам HA и здесь не проверялось. Реальный dashboard и аутентифицированный киоск панели по ТЗ проверяются отдельно в houseplan-e2e#99. Геометрия промежуточных камер относится к #1515 и не оценивалась."
-        },
-        "usage": {
-          "input_tokens": 58,
-          "cache_creation_input_tokens": 158371,
-          "cache_read_input_tokens": 3434388,
-          "output_tokens": 24189,
-          "output_tokens_details": {
-            "thinking_tokens": 15046
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 158371,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 978,
-              "cache_read_input_tokens": 145380,
-              "cache_creation_input_tokens": 17195,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 17195
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИзменение реализует принятое ТЗ, существенных дефектов я не нашёл. Источники вида и угла разведены по трём поверхностям, каждая со своей цепочкой приоритетов:\n- панель и её киоск: URL → профиль → общий локальный угол → 0;\n- Lovelace-карточка: свой локальный выбор → `plan_rotation` → общий локальный угол → legacy `rotation` → 0;\n- статическая карточка: прежний путь.\n\nПрофили оформлены как v3. Старый backend по-прежнему считает их непрозрачной будущей версией, v1/v2 остаются строгими. Конструктор пишет только после подтверждения и только при `external_screens_api:3`. Штатный редактор карточки больше не подставляет `rotation: 0` и не трогает старый `rotation`.\n\nПроверки S6 перед ревью прошли (материал `29f32c05`). Реальный HA E2E по ТЗ вынесен в houseplan-e2e#99 до беты. Остались необязательные уточнения:\n- поведение карточки в режиме редактирования дашборда HA;\n- локальный выбор карточки в Lovelace-киоске;\n- запись из устаревшей вкладки;\n- упоминание изменения для киоска панели в changelog.\n\n## Понимание решения\n\n**Проблема.** В base вид 2.5D задавался одним флагом установки (`volumetricViewOf`). Ручной поворот лежал в одном ключе браузера на пространство, общем для панели и всех карточек. Профили экранов v2 и `hprotate` знали только четверть-обороты.\n\n**Как работает решение.**\n\nВид:\n- `_isoEnabled` для панели берёт `view` эффективного профиля (`_externalScreen.view`), для Lovelace-карточки — `config.view`, иначе общую настройку.\n- Смена вида проходит через прежний `_syncVolumetricSetting` → `_convertProjectionView`. Поэтому смена пространства в профиле и live-правка используют тот же путь, что и смена общей настройки.\n\nУгол (`_requestedPlanRotation`):\n- для панели: `_externalScreen.rotation` (в нём уже учтён hprotate) → `devicePlanRotation` без флага kiosk. Значит, киоск без профиля теперь читает локальный угол, как требует ТЗ;\n- для карточки: `CardRotationPreference` → `plan_rotation` → прежний `devicePlanRotation.get(space, rotation, kiosk)`.\n\nЗапись поворота с кнопок (`_rememberPlanRotation`):\n- панель пишет общий ключ и рассылает событие;\n- карточка пишет свой ключ `houseplan_card_rotation_slot_v1:<sha(scope, pathname, slot)>`. Запись хранит отпечаток авторских `view`/`plan_rotation`/`rotation`; при расхождении отпечатка запись удаляется при чтении.\n- Слот даёт `cardRotationPlacementSlot`: логический индекс Masonry, путь внутри `hui-view` либо null (тогда только память) для preview, editMode, диалога редактора и неразрешённых контейнеров.\n- `_rememberPresentedFlatRotation` (постоянное округление при Flat) теперь только у панели.\n\nРедактор и профили:\n- Редактор карточки через `fullCardPresentationConfig` удаляет пустые значения наследования, приводит угол к числу и округляет его при явном переходе на Flat. `rotation` больше не входит в схему формы.\n- Конструктор экранов получил выбор вида и наследование угла (`null`); select привязан через `live()`.\n- Профили: `externalScreensOf` проверяет v2 строго, v3 — с правилом «явный flat ⇒ четверть». `externalScreensForEdit` переводит v1/v2 в отсоединённый v3 и убирает из v2 лишнее поле `view`. Exact-successor event пропускает непрозрачные версии от 4.\n- Backend: `EXTERNAL_SCREENS_V3_SCHEMA` с `_screen_view_rotation_consistent`, будущие версии начинаются с 4. Проверка ссылок и защита от понижения версии учитывают v3. Добавлены обезличенная support-проекция и зеркальная relay-схема.\n\n**Что разобрано по исходникам head:**\n- в houseplan-card.ts: `_isoEnabled`, `_syncVolumetricSetting`, `_requestedPlanRotation`, `_rotationMotion`, `_rotationChanged`, `_externalScreen`, `_floorCacheSelection`;\n- external-screens.ts, editors/external-screens.ts, panel-route-kiosk.ts, summary-panel-identity.ts, card-rotation-preference.ts, editor.ts, card-editor-validation.ts, view-frame.ts (`PlanRotationPreference`);\n- core/validation.py: схемы, событие, сохранение namespace при обычной записи, проверка ссылок;\n- version-recovery-card.ts, i18n ru;\n- тесты card-rotation-preference, card-editor-validation, isometric-contract и браузерный smoke_native_card_presentation.\n\n## Разбор решения\n\n### Разделение источников угла по поверхностям\n\nРешение простое и соответствует ТЗ: ветвление по `panelHost` в одном геттере, без отдельного хранилища для киоска. Профиль и URL не могут попасть в локальные preferences: кнопки и `_rememberPresentedFlatRotation` заблокированы при `_kiosk`, а карточки пишут только свой ключ. Карточка без переопределения по-прежнему следует общему ключу панели и реагирует на `PLAN_ROTATION_EVENT`, что и есть заявленное наследование. Старый `rotation:0`, материализованный прежним GUI, остаётся под локальным углом.\n\nОснование: src/houseplan-card.ts:8437-8443 (`_requestedPlanRotation`), 8457-8467 (`_rememberPlanRotation`), 8471 (`!this.panelHost` в `_rememberPresentedFlatRotation`), 8481 и 8510 (`!this._kiosk`); view-frame.ts:187-191. Smoke: `legacyCardAndUnprofiledScreenInheritMainRotation`, `controlsAffectOnlyOneLogicalPlacement`.\n\n### Локальный выбор карточки: слот, отпечаток и хранение\n\nУдачно переиспользован проверенный resolver Masonry, а для прочих контейнеров добавлен путь внутри `hui-view`. Отпечаток авторской конфигурации с удалением при расхождении даёт точную семантику ТЗ: смена конфигурации сбрасывает выбор, возврат к прежней его не воскрешает. Одна запись на слот и перечитывание перед записью решают замечание S4 о гонке между вкладками для разных пространств. Слабые места пограничные и вынесены в улучшения: устаревшая вкладка с другим отпечатком, режим редактирования дашборда, Lovelace-киоск.\n\nОснование: src/card-rotation-preference.ts:18-58; src/summary-panel-identity.ts:225-237; houseplan-card.ts:8428-8436. Вызов `_configureCardRotation` есть и в `setConfig`, и в `willUpdate`, поэтому слот подхватывается после подключения или разрешения Masonry. Тесты test/card-rotation-preference.test.mjs и reload-сценарии в smoke_native_card_presentation.\n\n### Профиль v3 и совместимость backend/frontend\n\nМеханизм версии выбран правильно, его стоит сохранить. Строгая v2 вынесена в общую фабрику без изменения правил. Для v3 добавлены `null`, восемь углов и проверка flat/odd. Будущие версии начинаются с 4, проверка ссылок и защита от понижения расширены на v3. Перевод v2 → v3 убирает только зарезервированное поле `view`, остальные неизвестные поля сохраняются. Frontend и backend требуют одинаковые инварианты. Новый конструктор отключается при API ≠ 3, старый — при API ≠ 2, поэтому mixed-версии показывают штатный статус.\n\nОснование: core/validation.py:2777-2842, 2871-2896; src/external-screens.ts:50-56 (`viewOf`), 86-104 (`externalScreensForEdit`), 151-156 (событие); editors/external-screens.ts:41, 96, 109; version-recovery-card.ts:125-126; command_adapter.py (`external_screens_api: 3`).\n\n### Конструктор и редактор карточки\n\nНаследование представлено отсутствием поля, а не 0. Соседняя правка не материализует угол: `rotation` убран из схемы формы и проходит без изменений. Явный переход на Flat округляет угол с доворотом по часовой стрелке, наследуемый вид сырой угол не переписывает. Если угол вне текущего набора, он добавляется в список, чтобы не сбросить загруженное значение без действия пользователя. `live()` исправляет рассинхрон нативного select при смене пространства. Тот же паттерн с пустой строкой уже использовался для `floor`, поэтому зависимость от поведения ha-form не новая.\n\nОснование: src/card-editor-validation.ts:24-44; src/editor.ts:57-60, 89-131, 186-189; editors/external-screens.ts:153-176; test/card-editor-validation.test.mjs (#1516); smoke_external_screens (`explicitFlatDovetailsClockwiseAtWrap`, `spaceSwitchPreservesSeparateViewAndRotation`).\n\n### Вид по пространству профиля, кеш и тёплые кадры\n\nПри смене пространства профиля `_isoEnabled` меняется в том же цикле обновления, что и `_space`. Переход выполняет прежний `_syncVolumetricSetting`, а не новый механизм. Ключ кеша этажа строится из `_desiredProjection`, `_rotationForProjection`, `_config`, `_settings` и `_externalScreen`. Поэтому смена профиля, вида карточки или её локального угла инвалидирует подгонку кадра без записи layout/config. Автолистание отдельным тестом не прогнано, но идёт тем же путём смены `_space`, что и проверенная смена позиции киоска.\n\nОснование: houseplan-card.ts:3768-3771, 3891-3904, 2860-2875; smoke_native_card_presentation: позиции 1/2 киоска с разными видами, `liveProfileAffectsOnlyExternalScreen`, `presentationDoesNotSendPlanWrites`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Режим редактирования дашборда. В режиме редактирования HA, по-видимому, выставляет `preview` реальным карточкам. Это знание об исходниках HA, в репозитории не проверялось; подтвердит E2E houseplan-e2e#99. Тогда `cardRotationPlacementSlot` вернёт null, и карточка на время редактирования покажет унаследованный угол вместо своего, а после выхода вернётся обратно. Данные не теряются, но картинка прыгает. Альтернатива: в preview читать сохранённый ключ, а запрещать только запись (например, отдельный флаг readOnly в `CardRotationPreference`). Цена — одна ветка; выгода — стабильный вид при редактировании.\n- Lovelace-киоск. Отпечаток автора включает только `view`/`plan_rotation`/`rotation`, но не `kiosk`. Если карточку повернули кнопками, а потом включили `kiosk: true`, локальный угол продолжит действовать в киоске. ТЗ же говорит, что в Lovelace-киоске без `plan_rotation` действуют legacy `rotation`, затем 0. Достаточно не читать `_cardRotation` при `_kiosk` или добавить `kiosk` в отпечаток.\n- Устаревшая вкладка. Если в одной вкладке ещё прежний отпечаток, её `set()` получит пустой результат из `read()` и перезапишет ключ своим отпечатком, затерев выбор вкладки с новой конфигурацией. Это редкий сценарий, но его можно закрыть одной проверкой: перед записью, если в хранилище отпечаток другой, не перезаписывать его, а оставить выбор в памяти.\n- Changelog. Киоск панели без профиля (или с недействительным номером, или с профилем, где угол `null`) теперь применяет локальный угол браузера, хотя раньше начинал с 0°. Это видимое изменение для настенных экранов; его стоит одной фразой упомянуть в docs/CHANGELOG*.md рядом с записью #1516.\n\n## Границы анализа\n\nСборку, тесты и браузер я не запускал. Использован только результат S6 «Тесты для задачи #1516 (перед ревью)»: passed, материал `29f32c05`, без failures. Подробный состав прогона из чтения материала недоступен.\n\nВыводы основаны на чтении diff и исходников head: houseplan-card.ts (вид и угол, кеш этажа), external-screens.ts, editors/external-screens.ts, editor.ts, card-editor-validation.ts, card-rotation-preference.ts, summary-panel-identity.ts, panel-route-kiosk.ts, view-frame.ts, core/validation.py, version-recovery-card.ts, ru.json, а также тестов card-rotation-preference, card-editor-validation, isometric-contract и smoke_native_card_presentation.\n\nНе изучал подробно:\n- support-проекцию и relay-схему: прочитан только diff;\n- реестры совместимости и инвентарь: механически не сверял, это зона каталога S6;\n- изменения process-next;\n- полный текст backend-тестов.\n\nПоведение HA (`preview` в режиме редактирования, ha-form и пустые значения select) известно по исходникам HA и здесь не проверялось. Реальный dashboard и аутентифицированный киоск панели по ТЗ проверяются отдельно в houseplan-e2e#99. Геометрия промежуточных камер относится к #1515 и не оценивалась.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 3e3cb32854b080df2e9dbb87a08689b95bc81aea → 29f32c05ed0932be242e766771b7cdaaf06472bc\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1516, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nЗависимость #1515 отдаёт общий валидатор и нормализацию в view-frame.ts. В этой задаче меняются источники вида и угла, а не геометрия. У существующего профиля v2 уже отдельные default_view и space_views, v3 сохраняет их форму, а live-патч применяется через config adoption. Изучены текущие houseplan-card.ts, external-screens.ts, summary-panel-identity.ts, editors/external-screens.ts, editor.ts и серверная схема. Сохранённый старый угол и режим наследования выражаются отдельно. Внимание к cold/warm viewport и назначению localStorage per-card. Общие размеры устройств, положение группы и новый рендер #1514 здесь не реализуются.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1516#issuecomment-7075864152).\n\n- Смешанное окружение и откат. Вместо расширения строгой v2 схемы вводится профиль v3. Старая интеграция уже умеет сохранять будущие версии как непрозрачный bounded namespace, включая случай отсутствия поля в обычном запросе. Старые профили читаются без записи, а подтверждённый редактор отправляет v3 только при новой возможности backend. В AC5 добавлено подтверждение обычного config-write со старым валидатором после v3.\n- Прежний Lovelace GUI мог материализовать rotation:0 без осознанной правки. Новое явное поле plan_rotation не переинтерпретирует ни этот 0, ни другие legacy rotation. При отсутствии нового поля остаются прежние local → rotation → 0 и kiosk legacy fallback. UX наследования, повторная загрузка и intentional zero добавлены в AC.\n- Эксперимент #1472 отменяется в #1513. База финальной приёмки и слияния #1516 содержит #1513, а старый флаг real_3d после его отката не участвует в выборе. В тестах используются сохранённые данные с этим флагом.\n- Переход для киоска панели без валидного профиля описан явно. При отсутствии угла URL/профиля он следует заявленному порядку приоритетов и читает локальный угол, традиционный Lovelace kiosk сохраняет поведение.\n\nПо #1515 согласован неизменный логический формат градусов и нормализатор view-frame.ts. Решение владельца о точных прямых промежуточных камерах описано в #1515; оно не меняет формат #1516.\n\n### Реализация и предварительная проверка S6\n\nПодготовлены собственные коммиты #1516 до `8b28614463` в `codex/1516-surface-view`. Локальная база проверки включает общую модель углов #1515 (`7b25a3c1be`). Эта база временная, финальный diff и очередь используют актуальный dev после #1513/#1515.\n\n- Профиль v3 с отдельным view и обязательным rotation, 0 по умолчанию, null наследует угол. Строгие форматы v1/v2 сохранены при чтении. Новый v3 редактируется при явном API 3, старый backend принимает его как непрозрачный namespace. Проверено на исходной базе `5fa8459ea`: обычная запись show_lqi, не приславшая профиль, сохранила v3 и остальные данные.\n- В Lovelace поле plan_rotation отдельно задаёт явный угол, legacy rotation остаётся запасным. Ротация с кнопок запоминается по логическому размещению, пользователю/установке и пространству, привязка учитывает авторские параметры и признак HA preview. Приоритет: валидное локальное значение своего экземпляра → plan_rotation → существующий общий угол → legacy rotation → 0. Lovelace kiosk сохраняет свой прежний fallback, внешний экран применяет URL → профиль → локальный угол → 0.\n- Выбор вида/угла в конструкторе проходит существующий outer draft и config adoption. Исправлены значения нативного select при переключении пространства: HTML-поле следует активному черновику. Перечитывание своего ключа перед записью сохраняет настройки других пространств, изменённых из соседней вкладки.\n- Предварительные проверки: сборка/типы, 44 Node, 75 backend вместе с настоящим HA WebSocket, 40 проверок каталога. Browser smoke конструктора и новая нативная проверка одновременно смонтированных карточек, редактора конфигурации, reload и live-профиля прошли. Финальный S6 будет выполнен в общей очереди на актуализированном материале. Результат этого прогона к нему заранее не приравнивается.\n- Настоящий dashboard и панельный E2E до следующей беты: [houseplan-e2e#99](https://github.com/Matysh/houseplan-e2e/issues/99). Если версия с v3 будет доставляться, relay должен использовать соответствующий зеркальный support decoder. В текущей задаче внешние службы не обновлялись.\n```\n\n</details>\n",
-        "createdAt": "2026-11-22T11:53:01.760Z",
-        "artifactId": 14753217144,
-        "runId": 45019082217,
-        "runAttempt": 1,
-        "completedAt": "2026-11-22T11:53:05Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45019082217",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "3e3cb32854b080df2e9dbb87a08689b95bc81aea"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1517": {
@@ -6567,19 +6384,7 @@
     1517,
     1521
   ],
-  "active": {
-    "issue": 1516,
-    "worker": "finish",
-    "token": "610:finish:504bc629-7831-4a8d-9970-388f758069fe:finish:1:admit",
-    "fence": 610,
-    "materialSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-    "expectedBase": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795346199138,
-    "expiresAt": 1795352018823,
-    "patchId": "73e78a967e2f9573cd15a5920fe46875834c3f1c",
-    "reviewRequest": "review:1516:2:73e78a967e2f9573cd15a5920fe46875834c3f1c:3e3cb32854b080df2e9dbb87a08689b95bc81aea"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6601,10 +6406,6 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "1516-s4-20261122-r1:spec-request": {
-      "digest": "e33d4782f894bba27ce69066afad3cf3467d025d9071ffa052cac75a4759e3d4",
-      "issue": 1516
-    },
     "github:44997374940:1:label:spec-request": {
       "digest": "eb903fe27b91bd36300e68a4c80d65e348dfe683ef62d216cca303bbdf38d922",
       "issue": 1517
@@ -6621,22 +6422,6 @@
       "digest": "9d825cdc9bf4e041035dcd56795fc5462ac3daca46533868815acf95a8cd4a2a",
       "issue": 1517
     },
-    "github:44997763185:1:spec:1516:spec-presentation": {
-      "digest": "40f6343f9243b896245d36418ca49e7ee1efe5bdf515bbfe191bfa3877fceae7",
-      "issue": 1516
-    },
-    "github:44997763185:1:spec:1516:spec-complete": {
-      "digest": "dd3f6e00b4ccd7218be5280e82a5bb91cdd4ef13d0b0ebae62a1cb8f72ebc180",
-      "issue": 1516
-    },
-    "github:44997763185:1:spec:1516:spec-label": {
-      "digest": "34449281dd1a5972351cca35ce707e01039e7d73d68383c123c385bb04071166",
-      "issue": 1516
-    },
-    "github:44997763185:1:completions:report:71d3cd815cba1d41b71f7530e9efbfdfd4149d04d30828a1b330f2d73acaa471": {
-      "digest": "2239b33553429d65010ec0518434ecf3ddd18106861976bc092433ce75c5f506",
-      "issue": 1516
-    },
     "github:44997763185:1:completions:report:4f4b51fc6ad594f33d56429ca11dcb915c2e6dc31a983ffb9090fb6b68999f75": {
       "digest": "e1b326b12046b983fbd6097ffbb25be3e26fd1db0c99f85ff7fe1652c9042b56",
       "issue": 1517
@@ -6644,10 +6429,6 @@
     "github:44997900807:1:spec:1517:spec-request": {
       "digest": "67dcc7bf73dd091cab62c5150da765d9f8d5aa4f0f1219c6641082b45d00b837",
       "issue": 1517
-    },
-    "github:44998008525:1:label:spec-request": {
-      "digest": "2a97cd6ac63950b814331aa704b1faa43af446aebf52e33f71d39a1d102be755",
-      "issue": 1516
     },
     "github:44998279529:1:spec:1517:spec-presentation": {
       "digest": "48f3a93b75dc290060c5f378961b4f916a3127f2125846006b619ba7b843b2f8",
@@ -6668,22 +6449,6 @@
     "github:44998399588:1:spec:1517:spec-request": {
       "digest": "0f6cf9465991cf4bcd9dde5f3606d46020c2f32f111c1f7be540755a098e769f",
       "issue": 1517
-    },
-    "github:44998399588:1:spec:1516:spec-presentation": {
-      "digest": "27a659def1b6c998c5081c8f14a31addffb851e1c566ca66e497819ec540a02d",
-      "issue": 1516
-    },
-    "github:44998399588:1:spec:1516:spec-complete": {
-      "digest": "76f66d9d9b0b1a6b42d1604057d9bb2c87154ca0b2e480fa1e031d36f698ab37",
-      "issue": 1516
-    },
-    "github:44998399588:1:spec:1516:spec-label": {
-      "digest": "d8ea4dcad5539ff94252a401fba550add7c7ca4cb5df60a09274bc22350b48df",
-      "issue": 1516
-    },
-    "github:44998399588:1:completions:report:1cd68732a5c0857fe18cdab45f784207513f6817eeafa9c9fbfe628c29a65145": {
-      "digest": "deec77dcc3a4e6ea183971e150cfbb308089fb8e684cf71ee25af9b8a7644e08",
-      "issue": 1516
     },
     "github:44998716791:1:spec:1517:spec-presentation": {
       "digest": "4a10973d43f84dbb78b6cab3f0121afabc3634a6dce1dcac6b552d4e52c187e2",
@@ -6845,125 +6610,9 @@
       "digest": "b6283e2842b6a85e24082f6acfbb0fb38284c124a6c2d3985da5cbaedfb0a8cb",
       "issue": 1517
     },
-    "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:2:synchronized": {
-      "digest": "af894eacf859e72102ac11bde1ea2968129c2a7368e456e749c79dbbc85a13b4",
-      "issue": 1516
-    },
-    "finish:4ca4d660-5bea-46f4-8663-85c5a0109a4c": {
-      "digest": "09b9f195a8a2b907168f7cadc652bdc9637919879c0deb472f813ae60ab80ad0",
-      "issue": 1516
-    },
-    "finish:552be856-6c33-4c8e-a07b-6af3fe4725e5": {
-      "digest": "5d2359be60d53dd34934e747bb41e3103344dccf588354516589fc966f69f250",
-      "issue": 1516
-    },
-    "finish:66a4d6b5-52d7-4422-bdd8-f802ed5ca824": {
-      "digest": "e97581581cce1c8cfefa38a37a5faf77a2c6bcae2e5ecfa00ad24c86e41fafc0",
-      "issue": 1516
-    },
-    "finish:3231f75a-6eb2-4b20-abe1-08f3983e534f": {
-      "digest": "f943fbadb24fff5b43e8c8cb6f1632352703994e9ed82826143ea5a330d75135",
-      "issue": 1516
-    },
-    "finish:75a91462-e0b0-4dd8-af95-cdcde965cb25": {
-      "digest": "a1e6927091cbdb135e400b3b6ea9a742e8e20d141321f0096e32ff2dcb81275d",
-      "issue": 1516
-    },
-    "finish:5ce95b34-28c6-452d-8f61-16849b568259": {
-      "digest": "1c1d9db44364c55bd4e773718720242862d1f73dce2b7170570f433ec1307ce5",
-      "issue": 1516
-    },
-    "finish:97bc3b13-f2c5-46dd-8306-d7d75b683e85": {
-      "digest": "a10c3fa400b8267959b7a257af9d5361522e80bbc6a466b0e3a08cbe96fdfffd",
-      "issue": 1516
-    },
-    "finish:460595a0-ffb4-4bf0-b829-d67ae1c644ea": {
-      "digest": "d0df6faca1875f024e662a9f316e58a9497bbd005be4344f9f0c1a1ca2de88d0",
-      "issue": 1516
-    },
-    "finish:c65aa4e4-8f33-405d-b914-2c68f428e7d3": {
-      "digest": "4719ab49948ed6b7ee64d4418406b4369942f2b7fb84d5bbf2abe1f9563938d5",
-      "issue": 1516
-    },
-    "finish:ec38fa09-758d-4a7d-9450-5685971fddee": {
-      "digest": "ebc11de65423adaf3aa12e85953eccfd9912a97cddf9271513e3187cdc44f2d5",
-      "issue": 1516
-    },
-    "finish:23cd24cc-2235-4eb7-9919-9c55ebd7003b": {
-      "digest": "0727496a65ca981fda9d287397894655a8694f142748247954fa0674e107b519",
-      "issue": 1516
-    },
-    "finish:32eb394b-7ddf-408e-b836-7421705f1447": {
-      "digest": "30f8fd810913894b2bc9997468dc2e130643753723a90c4bb3c2ccdcac5957eb",
-      "issue": 1516
-    },
-    "finish:c4738eea-6a51-4549-9147-667de625a9f4": {
-      "digest": "497a2077c3d442fd0d3ef5740665e7e17ce5ec4363ed1b32a65184a98a18d64d",
-      "issue": 1516
-    },
-    "finish:13ba02ad-810b-40b5-a819-52932c0a4167": {
-      "digest": "c27c3be62cdc8a8c4cae22f0f494b60198e2c80623188d7354e2bab77c3ca9d1",
-      "issue": 1516
-    },
-    "finish:a7f61c76-b0c0-49e7-afcd-4c34dc02a97a": {
-      "digest": "cb5206f7d84a34a49386388c428bf14606e15e1ca336c8f3ca1103d635e234c5",
-      "issue": 1516
-    },
-    "finish:8a5ec0bc-e215-437f-864f-f6aac4917013": {
-      "digest": "fa074eae8f9db0dece0f097b7660e5075d2a10fc8026e59ef8a095dc94388257",
-      "issue": 1516
-    },
-    "finish:40733528-db5a-4840-bcda-625c5268351b": {
-      "digest": "f63430fc0c8999bce07816c058a5d658437fadc2f9269d5c6cc6e109a7faacbb",
-      "issue": 1516
-    },
-    "finish:bc9576a5-31e2-4c0d-a323-07438f1e9e6e": {
-      "digest": "7b8859d62bd461c81dfaf3285fb72a64c6bb79bac452c2f91edb1dcb61b572bc",
-      "issue": 1516
-    },
-    "finish:1df97bb7-ffae-413d-861d-c5d2cae93fc2": {
-      "digest": "eb00b218e2aa98ac8c7aca65b023e4c0658ba9238967c55753f92618a44755e5",
-      "issue": 1516
-    },
-    "finish:abf34821-4197-4b7f-9227-51db6fe0800c": {
-      "digest": "2602810ac6249cfbbae5899aa0451044201daae8febad595a8ad8b5908bf7d52",
-      "issue": 1516
-    },
-    "finish:463ad24a-45b3-42e8-8af9-e01a5201ec2e": {
-      "digest": "601605d38092f66f4bfc074cfce221b9948626563449a4b154f74dc93c22c991",
-      "issue": 1516
-    },
-    "finish:986151e4-1c73-488c-a70b-f16ea9af1cd2": {
-      "digest": "b5585fbddce1bfe5b884fbe0034bb63c65e6323bbb1df9961190d7cdbb790adb",
-      "issue": 1516
-    },
-    "finish:16149661-71da-4ffa-ab84-a2106ee8e46a": {
-      "digest": "afcbad2552cd5a6389f596cf9bb46dd51bb3fee59b415264a694fe047bb9e971",
-      "issue": 1516
-    },
-    "finish:fa578802-1293-40a6-ad3d-babdf5c527d5": {
-      "digest": "8253a5febeb09d7910e87ae66b169d6d23850e440ad3862f992b93a311c03027",
-      "issue": 1516
-    },
-    "finish:c4018be4-9645-4744-b9f1-13db150c729d": {
-      "digest": "bd922f5d43d34bcbbc355171f0de85839ee1100b671ae74b4885182db047b1fd",
-      "issue": 1516
-    },
-    "finish:f48f2e44-3af1-4571-88a9-076e5191b8a0": {
-      "digest": "8c383c5ee115ee0f822148a61c4cb7652d3d9e280dbaf5e9ee28705ac0f18624",
-      "issue": 1516
-    },
-    "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:3:return": {
-      "digest": "2c381231988572c0e56b8b01ab53716ac398f9deade727a7b0009a3dd6e53bab",
-      "issue": 1516
-    },
     "github:45014443548:1:completions:notice:4f21d0c378720561e605155303095561f88d409b4e4176d59740728b80f7490d": {
       "digest": "95372727403ea7dd6ded7ef0909983cd578fa72a171ddb59da14ae9e2e64ae4f",
       "issue": 1517
-    },
-    "github:45014443548:1:completions:notice:c6b91f6165f146eda590b9f8c709c217853e2e9ea636a08a27729532b42df7ab": {
-      "digest": "ba6d4fe643c840a30bc78d94ce35346a7b02db2a930588b85125043f04e80948",
-      "issue": 1516
     },
     "github:45014880529:1:completions:message:819cf76598fc34914a2db518fd2eb7f279a08c2345b8133390b433d063d394f6": {
       "digest": "594cd7a333a6ba08d47666b77956df71fd370d94f6e3590c31cf280e2685b783",
@@ -7061,149 +6710,13 @@
       "digest": "98f4ba8730b0ea9683ef37c6ae14931c4c75f1dd889369d6ef34db1d86485a89",
       "issue": 1517
     },
-    "finish:504bc629-7831-4a8d-9970-388f758069fe:finish:2:synchronized": {
-      "digest": "d2d9900b41608f58dc356d55ce76a2afa65282838e52dcb138bbada9de15cb47",
-      "issue": 1516
-    },
-    "finish:5761aff9-d23b-4587-8d28-f022d3144940": {
-      "digest": "22e1b064bfb64881d2ba645aa3edd6fb43d49ff80d6bfd55712767beb61ad90d",
-      "issue": 1516
-    },
-    "finish:210c28e0-1e64-40f6-931d-bd5ef2bd6be4": {
-      "digest": "a8573f746fdfee26c9ed3d55b74845aad25408f106e7b5846e16e187455da9d4",
-      "issue": 1516
-    },
-    "finish:055797ee-1f5d-4e8f-aae1-c92e55dc42c4": {
-      "digest": "ce9ecaba1863c93e9e22096aec57b99128776333ecec01731d1c070cd46a32fa",
-      "issue": 1516
-    },
-    "finish:a8c2ab00-6fa0-4268-bd9a-a57c15f84cbd": {
-      "digest": "8d94f94b213ddef8f2aa7cf05be63a7d4cac685af813ad04fe44910ff583390c",
-      "issue": 1516
-    },
-    "finish:841446bf-6f99-4c73-9d98-105bac64c357": {
-      "digest": "a50a98434f4371499d89c2595da4181d49d1225666495a18791e59408ba5b889",
-      "issue": 1516
-    },
-    "finish:bfef9c0e-a7de-42f0-903c-2f054c06a286": {
-      "digest": "1172a58d036809a9d0e043b09817bf2ac67d3e97689a71daca742eb12b4a075d",
-      "issue": 1516
-    },
-    "finish:1bd2d852-78fb-4cb6-9ac6-3558038c7454": {
-      "digest": "18aef1adfa7e74f1af85d7d6c3af18c6a17de67c45d452d48940f7229ad8bfdf",
-      "issue": 1516
-    },
-    "finish:7a454264-9841-40d2-84d6-f091f5e5673f": {
-      "digest": "cfcf24563cff9653da6a9dd134fc309afa3e1f936319323e619dd352ed3a82ef",
-      "issue": 1516
-    },
-    "finish:e3581d13-c60e-45c3-a299-97668f8be268": {
-      "digest": "d38778bbb9efda19b02591a5b1ac0a5a8eb518891828b27352cf1e05af9cf101",
-      "issue": 1516
-    },
-    "finish:e2f73c90-1c73-4139-8047-edc68a5bdb56": {
-      "digest": "820c5ac293141e517104914857a0779fe4e07069436ba617cb652c156f6b8cc3",
-      "issue": 1516
-    },
-    "finish:a9dd7ec5-25da-4a39-ab81-c9344a97a826": {
-      "digest": "fbd9fceeddb3c32763c9e5881f59c40983a038ae90f44bccb68c0c1ab6a2a5d7",
-      "issue": 1516
-    },
-    "finish:8ca8dd06-4725-44e5-8e20-5bd793a23662": {
-      "digest": "f4e91111ad0bf23b7cd92e33cc31958ec87dfb68d4b36f47e4e9e898c5e56756",
-      "issue": 1516
-    },
-    "finish:b689a229-7468-4792-9e72-02e0a8254cbb": {
-      "digest": "f52705e78ac352a605a7ae05beef1bc4610001ba4f6e37fa7178602f75d5034e",
-      "issue": 1516
-    },
-    "finish:f15c875f-de5c-45d9-b453-2fcfee1e9034": {
-      "digest": "1d0d5a4906f915c84b132f52fb57780466f1cdd00918e03fed4bef0819d49b72",
-      "issue": 1516
-    },
-    "finish:b9eb1c4d-11d0-4afc-b379-3ed4c1f91fa4": {
-      "digest": "ff1f9cb22d6f197f7bc42094467d28a15dcae5ac4fc9bdad7c59420becc1f519",
-      "issue": 1516
-    },
-    "finish:bf84a93d-0f87-49ad-9bd5-2a15cfab0c63": {
-      "digest": "3bb682c3ea3aea4bada99f6f2c3fefa1ff15f0059d41871f46d5f6339f2ff462",
-      "issue": 1516
-    },
-    "finish:794db6ac-80b1-47dd-9582-1c53de73a551": {
-      "digest": "fda84360a9f35e53fd9cc106087b749c65d096a8220b414f11c8d8a0a62dc87a",
-      "issue": 1516
-    },
-    "finish:5b555590-723e-4d6a-a0fe-b0aa796309ab": {
-      "digest": "919ab0c6e5caa1b9e5a898786de8877715b209a60ca869849588c0953c2bfc0a",
-      "issue": 1516
-    },
-    "finish:f3133594-3977-4493-8f7b-5b14429a6449": {
-      "digest": "94d819433070c9d536976c3407e08843c5dea72624c29b0a05f9f24ebdd07936",
-      "issue": 1516
-    },
-    "finish:0446485d-8590-4d53-8b14-c839e9525c96": {
-      "digest": "2042e0c2703d4f190bfe8f10dc69e52ae29b03194cad209bf2c008ed3abf1c6b",
-      "issue": 1516
-    },
-    "finish:0516db82-3675-46b9-b4dc-65ae205af4b4": {
-      "digest": "0170fb2e86b32d8a763c3b94331552afa18754ee01a9933e96684e7358deafe1",
-      "issue": 1516
-    },
-    "finish:eafb1ae6-7c5d-4625-a31e-1792f4075ff9": {
-      "digest": "2e3b773d1774b6a78833dfcc247fdce74364f9e421d49ec06488de32a67b1524",
-      "issue": 1516
-    },
-    "finish:9b745c72-8a83-4f24-8ffa-6a386065d1eb": {
-      "digest": "39719b679bf02a70be3bd2aa14963775d8b2f6d42b37d80720c8044a4be11479",
-      "issue": 1516
-    },
     "github:45018425208:1:label:spec-request": {
       "digest": "d9d0dab580460451a82a37c164cc6c458a477b866c62f7f85a345062cb4b902a",
       "issue": 1520
     },
-    "finish:f5a67979-be86-4631-a0f0-922df935e588": {
-      "digest": "8a3c8d570b257a661e912aca5126f50ba3f429df3786b2017444d9c3bfc12578",
-      "issue": 1516
-    },
-    "github:45018425208:1:completions:message:ee7e18a4aa45d15c5ef30df44f355c87c02fc231e6e70d2af9651d9771836d61": {
-      "digest": "e63d4892e5680185c7b122f75becc56d0c2f8d462c2af7214f17e2b5338730e1",
-      "issue": 1516
-    },
-    "github:45018425208:1:completions:message:c738a6dd3f6d122dd30c5f9f52cc5400af6500846f6f12884fc97f5d0d6adab7": {
-      "digest": "947525eb013ca304119db429b913a1209d7dfc61fabf42fce2dc28397f7f4fb0",
-      "issue": 1516
-    },
-    "github:45018425208:1:completions:message:a186bc9d1bfff885c02aba32b0328cf95608cafbda60be8802fc36275aaf3bf3": {
-      "digest": "e3b921b29d4d6bfd0f4d4736fd7968952820cf9a7147bf7e96edb3ca4552d75b",
-      "issue": 1516
-    },
     "github:45018425208:1:completions:notice:04ec144c67e8788393692094df7ca280628dbf35d2f32e7cc13115497f0f5a96": {
       "digest": "e7cd04ad240849654537c535ae32f929c6b47ced3a6d8e870cd8c7e0fce48a77",
       "issue": 1517
-    },
-    "github:45018425208:1:completions:message:04ec144c67e8788393692094df7ca280628dbf35d2f32e7cc13115497f0f5a96": {
-      "digest": "bab28933da456b144d863ee97fa57051e87ebac2f4269f440c064e78ef5c90ec",
-      "issue": 1516
-    },
-    "finish:a13f61ac-d4a8-4aa7-b3c3-dafea290ebc8": {
-      "digest": "0a109a183636db57348ee11107ccb7f952b0c9077cbbaf254e24b8b022a1e607",
-      "issue": 1516
-    },
-    "finish:ea134dd7-c2dc-428a-917e-8052be9c5dcc": {
-      "digest": "7059c8767a4615138c9d0e90225ddfda73cc2575eb5f38d80c9125f72f671835",
-      "issue": 1516
-    },
-    "finish:a0ab3556-2ce6-4527-a41d-898c77f61ffb": {
-      "digest": "9c15ab48dacfc565b4f9c470631fff44000b0562ec279c90fdc1f89626646172",
-      "issue": 1516
-    },
-    "finish:bc07a8f0-60a3-42dc-9985-7b4d64803706": {
-      "digest": "f92f74e3ffae502fac88eaaa416338594abe41fa88166adb1abaebc364e4ff13",
-      "issue": 1516
-    },
-    "finish:b996bc2c-94d6-468f-aa51-d27cfdc078d3": {
-      "digest": "c3bf880ff465b7bf1582316b97b2d54966d50a297a78534819992961050136ff",
-      "issue": 1516
     },
     "github:45018907719:1:spec:1520:spec-presentation": {
       "digest": "0954ce7f71f625de353ab79e3242ca757d1e00d200069886b3bce7c091204da4",
@@ -7217,53 +6730,13 @@
       "digest": "03edb786b6bea04971a7e4d4c05c1d45328ad8a76048034268c6ecea597e08cf",
       "issue": 1520
     },
-    "finish:586bc675-0f4b-4570-b90f-279f15640a39": {
-      "digest": "e44dc15782838f265cda788ff5cbc430b86504dd5c7283bd68d12fa914d673da",
-      "issue": 1516
-    },
     "github:45018907719:1:completions:report:6eac948d97cd870ca392f0418bd0c818a5e179f2503a3ee8577c4edd0dea43da": {
       "digest": "cceec716fe5e6927127ca2bb4300bad81e80edab930c393f36b9a329211d9986",
       "issue": 1520
     },
-    "finish:ca135d80-6ed8-42d4-9ce8-9e3531387c44": {
-      "digest": "0a68fbad30ea755045ed4c7ce0186551da78fbc2c59432204f44cfeb4b8984a2",
-      "issue": 1516
-    },
-    "finish:504bc629-7831-4a8d-9970-388f758069fe:finish:3:s6-label": {
-      "digest": "0e5c2df3c2a867bb8a348d503745d8b30b399eeb0b09764051ca8ddf79518340",
-      "issue": 1516
-    },
-    "finish:504bc629-7831-4a8d-9970-388f758069fe:finish:4:review-requested": {
-      "digest": "f4b78a2e852b103332fd7f9b0976a77c5ad7ea6999da35acb49c1f27b4370bec",
-      "issue": 1516
-    },
-    "github:45019060532:1:tick:0:review-retry": {
-      "digest": "e16d8b1953a95bfa9cd877ecc3b1c084e3ce27ab11058da73bbadba735762107",
-      "issue": 1516
-    },
-    "github:45019060532:1:completions:message:2939aea763934a8f922f460793d5589b2fd1c6f7fd62b45036656a5d87bbba9c": {
-      "digest": "9647a900c719fafd32d8bade96028647a0a900f8b930e28e97c0e5a42f996f4b",
-      "issue": 1516
-    },
     "github:45019205017:1:label:spec-request": {
       "digest": "de7f8c24b53bfe614b978faec819a2d693cc8d901581cc617bc1e7ade3ab4aa6",
       "issue": 1520
-    },
-    "github:45019205017:1:completions:message:901767beeec6a94072986dde4fb05b0be65da3c3f6affde8e74829973f5f5e2f": {
-      "digest": "cc35ad9782456973c1d66c2642b9c55b61a24063e249ecb1577c4fc49ec1fbf8",
-      "issue": 1516
-    },
-    "github:45019373117:1:completions:message:38d7a9bb4718b59c923556a92d731753e1a46936120202c5571c634eb8a33b65": {
-      "digest": "88b71539c7d6110d2b2dc35644ad9c79852ef3f5497f62b97006c9d280cfcaf0",
-      "issue": 1516
-    },
-    "github:45019490600:1:tick:0:review-presentation": {
-      "digest": "de8d51e28253536fa1318ba1335b85f349bdbe6d048d314bdbcfcf07bd1e5a8c",
-      "issue": 1516
-    },
-    "github:45019490600:1:tick:0:review-complete": {
-      "digest": "5a0366a6a83c4625f1ec06b2c9d14335457aacf8698db0fd0296e88364d17375",
-      "issue": 1516
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7305,23 +6778,6 @@
         "round": 2,
         "requestId": "spec:1517:b0d3af4bd1677b5a687f4ef1a6a298182fe1181dbe48999703c053139ce83f3f",
         "reviewChanges": "Анализ на dev `5fa8459ea`, `spec-check` прошёл повторно. Проверены разные диаметры paint и solver у профиля и холодный запуск с устаревшей опорой. Исправленная редакция хранит текущую семантику допустимых legacy-групп и фиксирует детерминированный resize. Трек ask по S4. Код ещё не изменялся.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1517#issuecomment-7075864767).\n\n1. Неоднозначная legacy-опора → отдельные геометрические кандидаты при штатном размере и собственном размере карточки без профиля, явный выбор между ними, материализация только доказанного. В AC4 добавлена legacy-группа, созданная при нестандартном icon_size.\n2. Неопределённый безопасный t=0 и отличие от value-only → resize активен при различии диаметров запроса и reference, даже при одновременном появлении текста и постоянном переопределении. t=0 использует текущую относительную форму при опорных размерах. При невозможном t=0 старый безопасный fallback выполняется с явной индикацией. Чистое изменение формы при тех же диаметрах сохраняет #1003.\n3. Произвольная занятость → ограничения учитывают реально принятый результат или опорный размер соседа, а не запрошенную форму на старой позиции. Канонический геометрический порядок Y/X с ID только для точного равенства, занятость обновляется целиком на компонент. Изменение соседа снимает устаревший лимит. В AC3 добавлены два соседних растущих компонента, перестановка/переименование и одновременный resize с широкой надписью.\n4. Улучшения: кандидат распространяется от детерминированного корня с полной проверкой вместо общего поиска новых опор; метрики не зависят от ограниченного диаметра; обе устаревшие фразы DEVICE-PRESENTATION будут заменены.",
-        "fromStatus": "S3-spec",
-        "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "github:44998008525:1:label:spec-request:spec-resubmitted:1516": {
-      "digest": "2a97cd6ac63950b814331aa704b1faa43af446aebf52e33f71d39a1d102be755",
-      "issue": 1516,
-      "message": {
-        "kind": "spec-resubmitted",
-        "issue": 1516,
-        "at": 1795332224705,
-        "previousRound": 1,
-        "round": 2,
-        "requestId": "spec:1516:0c4f3b45a85c1f8798b2b4c6ca1b300665a09dc5f8e3364bd3082591a50ba809",
-        "reviewChanges": "Зависимость #1515 отдаёт общий валидатор и нормализацию в view-frame.ts. В этой задаче меняются источники вида и угла, а не геометрия. У существующего профиля v2 уже отдельные default_view и space_views, v3 сохраняет их форму, а live-патч применяется через config adoption. Изучены текущие houseplan-card.ts, external-screens.ts, summary-panel-identity.ts, editors/external-screens.ts, editor.ts и серверная схема. Сохранённый старый угол и режим наследования выражаются отдельно. Внимание к cold/warm viewport и назначению localStorage per-card. Общие размеры устройств, положение группы и новый рендер #1514 здесь не реализуются.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1516#issuecomment-7075864152).\n\n- Смешанное окружение и откат. Вместо расширения строгой v2 схемы вводится профиль v3. Старая интеграция уже умеет сохранять будущие версии как непрозрачный bounded namespace, включая случай отсутствия поля в обычном запросе. Старые профили читаются без записи, а подтверждённый редактор отправляет v3 только при новой возможности backend. В AC5 добавлено подтверждение обычного config-write со старым валидатором после v3.\n- Прежний Lovelace GUI мог материализовать rotation:0 без осознанной правки. Новое явное поле plan_rotation не переинтерпретирует ни этот 0, ни другие legacy rotation. При отсутствии нового поля остаются прежние local → rotation → 0 и kiosk legacy fallback. UX наследования, повторная загрузка и intentional zero добавлены в AC.\n- Эксперимент #1472 отменяется в #1513. База финальной приёмки и слияния #1516 содержит #1513, а старый флаг real_3d после его отката не участвует в выборе. В тестах используются сохранённые данные с этим флагом.\n- Переход для киоска панели без валидного профиля описан явно. При отсутствии угла URL/профиля он следует заявленному порядку приоритетов и читает локальный угол, традиционный Lovelace kiosk сохраняет поведение.\n\nПо #1515 согласован неизменный логический формат градусов и нормализатор view-frame.ts. Решение владельца о точных прямых промежуточных камерах описано в #1515; оно не меняет формат #1516.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
@@ -7440,20 +6896,6 @@
         "delivered": true
       }
     },
-    "finish:67da1912-f4ff-434a-a58b-600cc7d16387": {
-      "digest": "acc835882bd8e88c7dd66b0dc8eb37973f5ff3bef30cb8377235345b55d9633a",
-      "issue": 1516,
-      "message": {
-        "kind": "queued",
-        "issue": 1516,
-        "at": 1795340270583,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "fb7e68b467fe8f663e230057323e681ca242de19",
-        "delivered": true
-      }
-    },
     "finish:af4ff37a-2b78-4124-918d-db21a1a9bc48:finish:5:return:return:1517": {
       "digest": "b6283e2842b6a85e24082f6acfbb0fb38284c124a6c2d3985da5cbaedfb0a8cb",
       "issue": 1517,
@@ -7475,21 +6917,6 @@
         "delivered": true
       }
     },
-    "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:1:admit": {
-      "digest": "2b019a0e33db8bec0a757dbeafbcca59e846d6b7b3ccfd8f602c7f5d06baf4e4",
-      "issue": 1516,
-      "message": {
-        "kind": "admitted",
-        "issue": 1516,
-        "at": 1795341500823,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "fb7e68b467fe8f663e230057323e681ca242de19",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:66d6f3f7-8f65-4858-a0aa-d43c8ce87d09": {
       "digest": "db74ef98e58de83a8215b0f8e7e6c1a275f317993e66d87523e17224cea29eb9",
       "issue": 1517,
@@ -7501,41 +6928,6 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "9ec59ff0cd3d3aa487ae86249a565b93f6b7ce09",
-        "delivered": true
-      }
-    },
-    "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:3:return:return:1516": {
-      "digest": "2c381231988572c0e56b8b01ab53716ac398f9deade727a7b0009a3dd6e53bab",
-      "issue": 1516,
-      "message": {
-        "kind": "return",
-        "issue": 1516,
-        "at": 1795343076004,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795343076004,
-          "entry": 1,
-          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed",
-          "eventId": "finish:67da1912-f4ff-434a-a58b-600cc7d16387:finish:3:return:return:1516"
-        },
-        "delivered": true
-      }
-    },
-    "finish:504bc629-7831-4a8d-9970-388f758069fe": {
-      "digest": "38905b9d5e9ce2bd534b47c8578d5d1af22e3ada6e87b4b79cf1e800e54487ae",
-      "issue": 1516,
-      "message": {
-        "kind": "queued",
-        "issue": 1516,
-        "at": 1795343188162,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "2bb7609d2bf6a30db11d69cd0873a67a1402f322",
         "delivered": true
       }
     },
@@ -7575,21 +6967,6 @@
         "delivered": true
       }
     },
-    "finish:504bc629-7831-4a8d-9970-388f758069fe:finish:1:admit": {
-      "digest": "ff1f5d3925d1e2eb62a3c37ff9f575e0843b87483e0fc1633afe8a8a60791185",
-      "issue": 1516,
-      "message": {
-        "kind": "admitted",
-        "issue": 1516,
-        "at": 1795346199138,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "2bb7609d2bf6a30db11d69cd0873a67a1402f322",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:dad2c920-a8c3-4191-b77f-934f506da6c0": {
       "digest": "549e9bfdcfcd46b08a60f6a696f51a9ae93b4ca8e494bfdbe3387485231ca751",
       "issue": 1517,
@@ -7601,36 +6978,6 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "1494d496f7ab787af54914763fab2f0616afe909",
-        "delivered": true
-      }
-    },
-    "finish:504bc629-7831-4a8d-9970-388f758069fe:finish:3:s6-complete": {
-      "digest": "4b5e981dbe7d57ce07adb455ec55d9bbfd79118f47655cd545937a5cac83e580",
-      "issue": 1516,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1516,
-        "at": 1795348064620,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-        "phase": "review",
-        "evidence": {
-          "id": "20261122T111656122-36867120",
-          "name": "Тесты для задачи #1516 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T111656122-36867120/report.json",
-          "materialSha": "29f32c05ed0932be242e766771b7cdaaf06472bc",
-          "status": "passed",
-          "finishedAt": "2026-11-22T11:47:43.254Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Зависимость #1515 отдаёт общий валидатор и нормализацию в view-frame.ts. В этой задаче меняются источники вида и угла, а не геометрия. У существующего профиля v2 уже отдельные default_view и space_views, v3 сохраняет их форму, а live-патч применяется через config adoption. Изучены текущие houseplan-card.ts, external-screens.ts, summary-panel-identity.ts, editors/external-screens.ts, editor.ts и серверная схема. Сохранённый старый угол и режим наследования выражаются отдельно. Внимание к cold/warm viewport и назначению localStorage per-card. Общие размеры устройств, положение группы и новый рендер #1514 здесь не реализуются.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1516#issuecomment-7075864152).\n\n- Смешанное окружение и откат. Вместо расширения строгой v2 схемы вводится профиль v3. Старая интеграция уже умеет сохранять будущие версии как непрозрачный bounded namespace, включая случай отсутствия поля в обычном запросе. Старые профили читаются без записи, а подтверждённый редактор отправляет v3 только при новой возможности backend. В AC5 добавлено подтверждение обычного config-write со старым валидатором после v3.\n- Прежний Lovelace GUI мог материализовать rotation:0 без осознанной правки. Новое явное поле plan_rotation не переинтерпретирует ни этот 0, ни другие legacy rotation. При отсутствии нового поля остаются прежние local → rotation → 0 и kiosk legacy fallback. UX наследования, повторная загрузка и intentional zero добавлены в AC.\n- Эксперимент #1472 отменяется в #1513. База финальной приёмки и слияния #1516 содержит #1513, а старый флаг real_3d после его отката не участвует в выборе. В тестах используются сохранённые данные с этим флагом.\n- Переход для киоска панели без валидного профиля описан явно. При отсутствии угла URL/профиля он следует заявленному порядку приоритетов и читает локальный угол, традиционный Lovelace kiosk сохраняет поведение.\n\nПо #1515 согласован неизменный логический формат градусов и нормализатор view-frame.ts. Решение владельца о точных прямых промежуточных камерах описано в #1515; оно не меняет формат #1516.\n\n### Реализация и предварительная проверка S6\n\nПодготовлены собственные коммиты #1516 до `8b28614463` в `codex/1516-surface-view`. Локальная база проверки включает общую модель углов #1515 (`7b25a3c1be`). Эта база временная, финальный diff и очередь используют актуальный dev после #1513/#1515.\n\n- Профиль v3 с отдельным view и обязательным rotation, 0 по умолчанию, null наследует угол. Строгие форматы v1/v2 сохранены при чтении. Новый v3 редактируется при явном API 3, старый backend принимает его как непрозрачный namespace. Проверено на исходной базе `5fa8459ea`: обычная запись show_lqi, не приславшая профиль, сохранила v3 и остальные данные.\n- В Lovelace поле plan_rotation отдельно задаёт явный угол, legacy rotation остаётся запасным. Ротация с кнопок запоминается по логическому размещению, пользователю/установке и пространству, привязка учитывает авторские параметры и признак HA preview. Приоритет: валидное локальное значение своего экземпляра → plan_rotation → существующий общий угол → legacy rotation → 0. Lovelace kiosk сохраняет свой прежний fallback, внешний экран применяет URL → профиль → локальный угол → 0.\n- Выбор вида/угла в конструкторе проходит существующий outer draft и config adoption. Исправлены значения нативного select при переключении пространства: HTML-поле следует активному черновику. Перечитывание своего ключа перед записью сохраняет настройки других пространств, изменённых из соседней вкладки.\n- Предварительные проверки: сборка/типы, 44 Node, 75 backend вместе с настоящим HA WebSocket, 40 проверок каталога. Browser smoke конструктора и новая нативная проверка одновременно смонтированных карточек, редактора конфигурации, reload и live-профиля прошли. Финальный S6 будет выполнен в общей очереди на актуализированном материале. Результат этого прогона к нему заранее не приравнивается.\n- Настоящий dashboard и панельный E2E до следующей беты: [houseplan-e2e#99](https://github.com/Matysh/houseplan-e2e/issues/99). Если версия с v3 будет доставляться, relay должен использовать соответствующий зеркальный support decoder. В текущей задаче внешние службы не обновлялись.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
