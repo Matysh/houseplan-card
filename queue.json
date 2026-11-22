@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20100,
-  "nextTicket": 602,
+  "revision": 20101,
+  "nextTicket": 603,
   "nextFence": 602,
   "tasks": {
     "1024": {
@@ -5628,14 +5628,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1518-iso-wall-transparency",
-      "materialSha": "b35e672cbfd9629e3a609bdc12f441e53ffb7831",
+      "materialSha": "c53678a671e8f0b11ae838e3671ba965ff6660bb",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 599,
-      "queued": false,
+      "ticket": 602,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795333309410,
-      "reviewEntry": 1,
+      "readyAt": 1795336366550,
+      "reviewEntry": 2,
       "patchId": "bb95d046144f3f4742ba13cca04152d10bd16b59",
       "changedFiles": [
         "custom_components/houseplan/core/import_export.py",
@@ -5666,7 +5666,6 @@
         "test/iso-wall-transparency.test.mjs",
         "tests_backend/test_ha_import_export.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6253,7 +6252,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1518
+  ],
   "active": {
     "issue": 1515,
     "worker": "finish",
@@ -6822,6 +6823,19 @@
         "materialSha": "9d3d29c1aded13f47307703169eea867cd00e612",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:bd486558-966e-4661-a3d3-631fbe7b3a2b": {
+      "digest": "c36433c8185a7edd4b1b585c0213e5a61f8f27e9f07a24e5feef22721a4d438e",
+      "issue": 1518,
+      "message": {
+        "kind": "queued",
+        "issue": 1518,
+        "at": 1795336366550,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c53678a671e8f0b11ae838e3671ba965ff6660bb"
       }
     }
   },
