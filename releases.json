@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1214,
+  "revision": 1215,
   "active": "v1.86.1-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -212862,7 +212862,8 @@
     "beta-1861-record-run": "dc697bb566e4d84a1bc8c607d1f43f57f148ed4a22af8f17e7316407fc1da3db",
     "beta-1861-record-isolated-measurement": "c51f62f29b7a343c7336724aa6eba9f65918ea90336d029076572d67a4dd30db",
     "beta-1861-owner-accepted-cold-render": "e018eefb97ffa5ed5b6bb8be4278ce457adba2a49e53b663dd1c8a42e65549bd",
-    "beta-1861-publish:runner-report": "ba495753b00f511959303462eaded65335728a67016535051636533dd76e939b"
+    "beta-1861-publish:runner-report": "ba495753b00f511959303462eaded65335728a67016535051636533dd76e939b",
+    "beta-1861-publish:metrics": "9798a6823c7e5248acb64d46de7cb46f05247d615934b4f759b40c053dcc5748"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
