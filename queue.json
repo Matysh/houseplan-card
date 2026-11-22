@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 19853,
-  "nextTicket": 598,
+  "revision": 19854,
+  "nextTicket": 599,
   "nextFence": 598,
   "tasks": {
     "1024": {
@@ -5640,6 +5640,20 @@
         "tests_backend/test_support_config_projection.py",
         "tsconfig.test.json"
       ]
+    },
+    "1519": {
+      "issue": 1519,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1519-room-name-preview",
+      "materialSha": "01e04cdf8725e5cc3ad17d9ca3fd5889597d0f1e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 598,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795331812207,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6198,7 +6212,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1519
+  ],
   "active": {
     "issue": 1513,
     "worker": "finish",
@@ -6340,6 +6356,19 @@
         "materialSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:4eb4fa0a-ac01-4706-a6ea-27f5c387ddc7": {
+      "digest": "8f6b9e2a176f66ef5641406a0d60b1270d52f8a0edbab6eb9dc40cb8d8730b2c",
+      "issue": 1519,
+      "message": {
+        "kind": "queued",
+        "issue": 1519,
+        "at": 1795331812207,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "01e04cdf8725e5cc3ad17d9ca3fd5889597d0f1e"
       }
     }
   },
