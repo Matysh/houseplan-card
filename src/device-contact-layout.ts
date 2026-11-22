@@ -228,17 +228,24 @@ export class DeviceContactLayout {
     const planned = constrained.map(group => {
       const active = group.some(({marker}) => !near(marker.diameter, requested.get(marker.id)!.diameter));
       const baseline = interpolate(group, active ? 0 : 1);
-      const placed = this.place(group, baseline, null, walls, masonry, active);
+      const unchangedGroup = !active && group.every(({marker}) => unchanged(marker, requested.get(marker.id)!));
+      const placed = unchangedGroup ? {
+        placed: new Map(group.map(shape => [shape.marker.id, { ...shape, marker: requested.get(shape.marker.id)! }])),
+        queue: group.map(shape => shape.marker.id),
+        valid: contactContourShapes(group).every(shape => !contactIntersectsMasonry(shape, masonry)),
+      } : this.place(group, baseline, null, walls, masonry, active);
       if (placed.valid) store(placed.placed);
       else for (const [id, marker] of baseline) output.set(id, marker);
-      return { anchor: resizeAnchor(group), group, baseline, active, placed };
+      return { anchor: resizeAnchor(group), group, baseline, active, unchangedGroup, placed };
     }).sort((a, b) => anchorOrder(a.anchor, b.anchor));
     const occupied = new DeviceContactScene([...output.values()], walls, masonry, true);
     this.work.occupancyBuilds++;
-    for (const { group, baseline, active, placed } of planned) {
+    for (const { group, baseline, active, unchangedGroup, placed } of planned) {
       const members = new Set(group.map(shape => shape.marker.id));
       this.work.components++;
       if (!active) {
+        if (unchangedGroup && placed.valid
+            && contactContourShapes(group).every(shape => this.safe(shape, occupied, members))) continue;
         const stable = this.place(group, baseline, occupied, walls, masonry);
         if (stable.valid) store(stable.placed, occupied);
         else this.releaseContacts(stable.queue, members, baseline, occupied, walls, output);

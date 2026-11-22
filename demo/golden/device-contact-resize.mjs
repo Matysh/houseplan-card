@@ -36,6 +36,6 @@ export async function prepareDeviceContactResize(page,{iconScale}) {
       ||supports['wall-a'].length!==1||supports['angle-a'].length!==2
       ||components.some(ids=>ids.length!==3)||card._deviceContacts.resizeStatus)
       throw Error('Invalid contact resize fixture: '+JSON.stringify({supports,components,status:card._deviceContacts.resizeStatus}));
-    return {supports,components, camera:{view:card._view,zoom:card._zoom},profileScale:card._effectiveKioskScale.icon};
+    return {supports,components, camera:{view:card._viewOr(card._baseVb()),zoom:card._zoom},profileScale:card._effectiveKioskScale.icon};
   });
 }

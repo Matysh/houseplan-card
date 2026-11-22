@@ -195,3 +195,49 @@ test('#1517 growing free marker retains its centre and yields to existing contac
   assert.deepEqual(independent.resolve(two,[],[],new Map([free,otherFree].map(m=>[m.id,m])),'floor',new Map()),two);
   assert.equal(independent.resizeLimited,false);
 });
+
+test('#1517 simultaneous growth leaves each neighbour its feasible baseline', () => {
+  const points = [marker('zz-a',200), marker('zz-b',245), marker('aa-a',345), marker('aa-b',390)];
+  const solve = order => {
+    const layout = new DeviceContactLayout();
+    const bases = new Map(order.map(m=>[m.id,m]));
+    const result = layout.resolve(order.map(m=>resizeContactMarker(m,70)),[],[],bases,'floor',new Map());
+    assert.equal(layout.resizeLimited,true);
+    assert.equal(layout.resizeBaselineLost,false);
+    return result.sort((a,b)=>a.x-b.x);
+  };
+  const result = solve(points);
+  assert.deepEqual(solve([...points].reverse()),result);
+  const renamed=solve(points.map((m,i)=>({...m,id:'reordered-'+(points.length-i)})));
+  assert.deepEqual(renamed.map(({id,...m})=>m),result.map(({id,...m})=>m));
+  assert.ok(result[0].diameter>result[2].diameter, 'earlier canonical anchor gets its safe larger share');
+  const shapes=result.map(m=>deriveContactShape(m,[]));
+  assert.equal(joinedContactSide(shapes[0],shapes[1]),'right');
+  assert.equal(joinedContactSide(shapes[2],shapes[3]),'right');
+  assert.equal(joinedContactSide(shapes[1],shapes[2]),null);
+  near(result[0].x,points[0].x);near(result[2].x,points[2].x);
+});
+
+test('#1517 if the current face cannot fit even at the original diameter, report lost contacts', () => {
+  const a=marker('a'), b=marker('b',245), outside=marker('free',400,400);
+  const masonry=[[[[325,150],[345,150],[345,260],[325,260],[325,150]]]];
+  const layout=new DeviceContactLayout(),bases=new Map([a,b,outside].map(m=>[m.id,m]));
+  const newFace={...a,box:{...a.box,right:120}};
+  const request=[resizeContactMarker(newFace,60),b,outside];
+  const effective=layout.resolve(request,[],masonry,bases,'floor',new Map());
+  assert.equal(layout.resizeLimited,true);
+  assert.equal(layout.resizeBaselineLost,true);
+  assert.equal(effective[0].diameter,a.diameter);
+  assert.deepEqual(effective[2],outside);
+  assert.ok(effective.every(m=>!contactIntersectsMasonry(deriveContactShape(m,[]),masonry)));
+});
+
+test('#1517 resizing a distant component retains exact authored legacy contacts elsewhere', () => {
+  const a=marker('a',200), b=marker('b',246);
+  const c=marker('c',500), d=marker('d',545);
+  assert.equal(joinedContactSide(deriveContactShape(a,[]),deriveContactShape(b,[]),false),'right');
+  const layout=new DeviceContactLayout(),bases=new Map([a,b,c,d].map(m=>[m.id,m]));
+  const result=layout.resolve([a,b,resizeContactMarker(c,48),resizeContactMarker(d,48)],[],[],bases,'floor',new Map());
+  assert.deepEqual(result.slice(0,2),[a,b]);
+  assert.equal(result[2].diameter,48);
+});
