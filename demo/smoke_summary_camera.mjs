@@ -113,7 +113,7 @@ out.isometricBottomFits = await page.evaluate(async () => { await window.__summa
 out.isometricRotationsFit = await page.evaluate(async () => {
   const c = window.__summaryCameraCard, sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   let result = true;
-  for (let turn = 0; turn < 4; turn++) {
+  for (let turn = 0; turn < 8; turn++) {
     c.renderRoot.querySelector('[data-hp="rotate-right"]').click();
     await sleep(350); await window.__summaryCameraFit(); result &&= window.__summaryCameraCentered();
   }

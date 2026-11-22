@@ -87,7 +87,7 @@ try {
     return result;
   };
   const halfTurn = async () => {
-    for (let n = 0; n < 2; n++) {
+    for (let n = 0; n < 4; n++) {
       await page.locator('houseplan-card [data-hp="rotate-right"]').click();
       await settle();
     }
@@ -143,7 +143,7 @@ try {
   await page.mouse.move(stage.x+stage.width*.25,stage.y+stage.height*.5); await page.mouse.down();
   await page.mouse.move(stage.x+stage.width*.25+30,stage.y+stage.height*.5+20,{steps:3}); await page.mouse.up(); await settle();
   await page.locator('houseplan-card [data-hp="rotate-right"]').click(); await settle();
-  assert.deepEqual((await prepareClosedDoorLight(page,fixture)).clip,iso.clip,'camera zoom/pan/quarter-turn never changes ground transport');
+  assert.deepEqual((await prepareClosedDoorLight(page,fixture)).clip,iso.clip,'camera zoom/pan/rotation never changes ground transport');
   assert.equal(await stored(),isoStored,'camera-only actions write no plan');
   await page.evaluate(() => window.__hpTest.setVolumetricView(false)); await settle();
   assert.deepEqual((await prepareClosedDoorLight(page,fixture)).clip,flat.clip,'switching back cannot retain Iso placement');

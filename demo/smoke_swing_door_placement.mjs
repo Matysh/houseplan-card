@@ -132,7 +132,7 @@ try {
   await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('[data-hp="iso-walls"]'));
   assert.equal(await isoOffset(), halfDepth);
   if (capture) await page.screenshot({ animations: 'disabled', path: join(capture, 'iso-positive.png') });
-  for (let rotation = 0; rotation < 4; rotation++) {
+  for (let rotation = 0; rotation < 8; rotation++) {
     await page.evaluate(async () => {
       window.__card._rotatePlan(1);
       await window.__hpTest.settled();
