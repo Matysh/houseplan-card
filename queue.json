@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21258,
+  "revision": 21259,
   "nextTicket": 629,
   "nextFence": 629,
   "tasks": {
@@ -5859,7 +5859,18 @@
         "src/room-fit.ts",
         "src/stairs-volume.ts",
         "test/iso-projection.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795391686061,
+        "entry": 1,
+        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/render-layout-read.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: iso flat parity: failed; Браузер: iso raster parity: failed",
+        "eventId": "finish:1c03ec16-4175-4748-ac54-9e568ec7b025:finish:3:return:return:1526"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6440,18 +6451,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1526,
-    "worker": "finish",
-    "token": "628:finish:1c03ec16-4175-4748-ac54-9e568ec7b025:finish:1:admit",
-    "fence": 628,
-    "materialSha": "9275726e155a921a2bdb94c36c8c42a0457d228b",
-    "expectedBase": "e38612b43a41121dcd0f1e72c37176a95477e6e7",
-    "phase": "testing",
-    "admittedAt": 1795390509799,
-    "expiresAt": 1795391949482,
-    "patchId": "5aa7b6ac58dd013e8609c663d87435862b98ee1d"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6561,6 +6561,10 @@
       "digest": "0e3a757618aebfbc36d50d5f45a3ee3b77a588266c5df0c82bbfa6d352bbf9c4",
       "issue": 1526
     },
+    "finish:1c03ec16-4175-4748-ac54-9e568ec7b025:finish:3:return": {
+      "digest": "75c278d7b00b8b90695793b6293bf67d4c6d185dd7e2915e9e929671ea402d0d",
+      "issue": 1526
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6617,6 +6621,26 @@
         "materialSha": "9275726e155a921a2bdb94c36c8c42a0457d228b",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:1c03ec16-4175-4748-ac54-9e568ec7b025:finish:3:return:return:1526": {
+      "digest": "75c278d7b00b8b90695793b6293bf67d4c6d185dd7e2915e9e929671ea402d0d",
+      "issue": 1526,
+      "message": {
+        "kind": "return",
+        "issue": 1526,
+        "at": 1795391686061,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795391686061,
+          "entry": 1,
+          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/render-layout-read.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: iso flat parity: failed; Браузер: iso raster parity: failed",
+          "eventId": "finish:1c03ec16-4175-4748-ac54-9e568ec7b025:finish:3:return:return:1526"
+        }
       }
     }
   },
