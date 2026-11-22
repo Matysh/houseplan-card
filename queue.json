@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20461,
+  "revision": 20462,
   "nextTicket": 612,
   "nextFence": 611,
   "tasks": {
@@ -6381,18 +6381,12 @@
       }
     },
     "1520": {
-      "requestId": "spec:1520:497d4f1b3e68b587a8880cfde9f17dee2b698959c172617865b6a76c11bc808b",
-      "contextDigest": "497d4f1b3e68b587a8880cfde9f17dee2b698959c172617865b6a76c11bc808b",
+      "requestId": "spec:1520:5d16dcb59e2eeeb3f96a8926ba96a451b31757f543524a1b3defe1527a062d91",
+      "contextDigest": "5d16dcb59e2eeeb3f96a8926ba96a451b31757f543524a1b3defe1527a062d91",
       "base": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795347981403,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45018473081",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795348196756
     }
   },
   "reviewPublications": {
@@ -6433,6 +6427,19 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-22T11:47:55.111Z"
+      }
+    },
+    "spec:1520:spec:1520:5d16dcb59e2eeeb3f96a8926ba96a451b31757f543524a1b3defe1527a062d91": {
+      "issue": 1520,
+      "kind": "spec",
+      "requestId": "spec:1520:5d16dcb59e2eeeb3f96a8926ba96a451b31757f543524a1b3defe1527a062d91",
+      "materialSha": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
+      "expectedBase": "3e3cb32854b080df2e9dbb87a08689b95bc81aea",
+      "patchId": "5d16dcb59e2eeeb3f96a8926ba96a451b31757f543524a1b3defe1527a062d91",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-22T11:49:56.756Z"
       }
     }
   },
@@ -7117,6 +7124,10 @@
       "digest": "9647a900c719fafd32d8bade96028647a0a900f8b930e28e97c0e5a42f996f4b",
       "issue": 1516
     },
+    "github:45019205017:1:label:spec-request": {
+      "digest": "de7f8c24b53bfe614b978faec819a2d693cc8d901581cc617bc1e7ade3ab4aa6",
+      "issue": 1520
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7484,6 +7495,22 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "github:45019205017:1:label:spec-request:spec-resubmitted:1520": {
+      "digest": "de7f8c24b53bfe614b978faec819a2d693cc8d901581cc617bc1e7ade3ab4aa6",
+      "issue": 1520,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1520,
+        "at": 1795348196756,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1520:5d16dcb59e2eeeb3f96a8926ba96a451b31757f543524a1b3defe1527a062d91",
+        "reviewChanges": "Ключевой выбор: отдельный локальный SVG с теми же статическими рендерами, показываемый как img после текущих config/layout; серверная поставка и новые разрешения не нужны. Сначала устраняем бесконечное ожидание в #1521. Числа AC6 — критерии ещё не проведённого измерения.\n\n### Исправления по предыдущему ревью\n\n- Нет отдельного заголовка и возможен двойной переход → критерий принятия по реальным полным config/layout текущей authority; #890 даёт только штатный прогрев, L1 остаётся fit без силуэта, недросселированный замер теперь имеет порог частоты и lead.\n- Неясны заливка, поза, подпись → указан явный статический проход общих рендереров, базовый материал без динамического тона, штатная unavailable-поза, подпись целиком в live. Handoff принимает сохранённый fit/камеру без вторичного Fit.\n- Image-backed планы и лимиты → управляемые ассеты включаются в обе проекции через проверенные байты, внешний/превысивший бюджет ресурс даёт диагностируемый промах. Лимиты заданы на кадр, пространство и origin; репрезентативный тест AC8 с подложкой и декором обязателен.\n- Порции работы и изоляция → ограниченные фоновые проходы, SVG-as-image с валидированным пакетом и отдельными SVG defs, проверка long tasks. Индикатор отступает ниже верхнего chrome внутри области плана.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
