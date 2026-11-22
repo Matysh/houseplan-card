@@ -305,26 +305,32 @@ function renderPlanUpload(port: SpaceFormPort, d: SpaceDialogState): TemplateRes
     ${d.pickSaved ? port.renderServerPlans(d) : nothing}`;
 }
 
-function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) => string, problemFor: ProblemFor): TemplateResult {
-  const { host } = port, t = host._t.bind(host), { st,shelp } = settingsCopy(host);
+function renderRoomColor(
+  port: SpaceFormPort, d: SpaceDialogState, id: (name: string) => string,
+  kind: 'border' | 'fill' | 'name' | 'wall-fill',
+): TemplateResult {
+  const { host } = port, t = host._t.bind(host), { st, shelp } = settingsCopy(host);
   const appearance = spaceDraftAppearanceOf(d, d.mode === 'edit' ? host._curSpaceCfg : undefined, host._settings);
-  const color = (kind: 'border' | 'fill' | 'name' | 'wall-fill') => {
-    const value = kind === 'border' ? {c:d.roomColor,a:d.roomOpacity} : kind === 'name' ? appearance.nameColor
-      : kind === 'wall-fill' ? appearance.wallFill : d.customFill || DEFAULT_CUSTOM_FILL;
-    const label = kind === 'border' ? t('space.room_color') : kind === 'name' ? st('space.name_color')
-      : kind === 'wall-fill' ? st('space.wall_fill') : t('space.custom_fill');
-    const fieldId = id(kind === 'wall-fill' ? 'wall-fill' : `${kind}-color`);
-    return colorRow({label, help:shelp(kind === 'border' ? 'space.border_color.help' : kind === 'name' ? 'space.name_color.help'
-      : kind === 'wall-fill' ? 'space.wall_fill.help' : 'space.fill_color.help'),picker:colorField({hex:value.c,
-      opacity:value.a,
-      picker:html`<hp-color-opacity data-hp="field" data-field=${fieldId} .label=${label} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
-        .pickerLabels=${host._colorPickerLabels} .color=${value.c}
-        .opacity=${value.a}
-        @hp-color-opacity-change=${(e: CustomEvent<{color:string;opacity:number}>) => set(port, kind === 'border'
-          ? {...d,roomColor:e.detail.color,roomOpacity:e.detail.opacity}
-          : {...d,[kind === 'name' ? 'nameColor' : kind === 'wall-fill' ? 'wallFill' : 'customFill']:
-            {...value,c:e.detail.color,a:e.detail.opacity}})}></hp-color-opacity>`})});
-  };
+  const value = kind === 'border' ? {c:d.roomColor,a:d.roomOpacity} : kind === 'name' ? appearance.nameColor
+    : kind === 'wall-fill' ? appearance.wallFill : d.customFill || DEFAULT_CUSTOM_FILL;
+  const label = kind === 'border' ? t('space.room_color') : kind === 'name' ? st('space.name_color')
+    : kind === 'wall-fill' ? st('space.wall_fill') : t('space.custom_fill');
+  const fieldId = id(kind === 'wall-fill' ? 'wall-fill' : `${kind}-color`);
+  return colorRow({label, help:shelp(kind === 'border' ? 'space.border_color.help' : kind === 'name' ? 'space.name_color.help'
+    : kind === 'wall-fill' ? 'space.wall_fill.help' : 'space.fill_color.help'),picker:colorField({hex:value.c,
+    opacity:value.a,
+    picker:html`<hp-color-opacity data-hp="field" data-field=${fieldId} .label=${label} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
+      .pickerLabels=${host._colorPickerLabels} .color=${value.c}
+      .opacity=${value.a}
+      @hp-color-opacity-change=${(e: CustomEvent<{color:string;opacity:number}>) => set(port, kind === 'border'
+        ? {...d,roomColor:e.detail.color,roomOpacity:e.detail.opacity}
+        : {...d,[kind === 'name' ? 'nameColor' : kind === 'wall-fill' ? 'wallFill' : 'customFill']:
+          {...value,c:e.detail.color,a:e.detail.opacity}})}></hp-color-opacity>`})});
+}
+
+function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) => string, problemFor: ProblemFor): TemplateResult {
+  const { host } = port, t = host._t.bind(host), { st, shelp } = settingsCopy(host);
+  const color = (kind: 'border' | 'fill' | 'wall-fill') => renderRoomColor(port, d, id, kind);
   const temperature = (side: 'min' | 'max') => {
     const fieldId = id(`temp-${side}`), problem = problemFor(fieldId);
     return field({label:st(side === 'min' ? 'space.range_from' : 'space.range_to'), htmlFor:fieldId,
@@ -344,7 +350,6 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
       name:id('zero-wall-style'),value:d.zeroWallStyle,ariaLabel:st('space.virtual_walls'),
       options:[{value:'dashed',label:st('space.virtual_dashed')},{value:'solid',label:st('space.virtual_solid')}],
       onChange:v => set(port,{...d,zeroWallStyle:v})})}),
-          color('name'),
           color('border'),
           color('wall-fill'),
           colorRow({label:st('space.opening_accent_3d'),help:shelp('space.opening_accent_3d.help'),
@@ -391,6 +396,7 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string
           c.devices ? html`<div class="hpf-field">${subsection({title:st('space.room_metrics')})}
       <p class="hpf-hint">${st('space.metrics_source_hint')}</p>
       <div class="hpf-room-metrics">${tiles.filter(tile => !tile.id.endsWith('labelLqi') || c.zigbee).map(tile => toggleRow({id:tile.id,title:tile.label,help:shelp(tile.helpKey),checked:tile.checked,disabled:!d.showNames,onChange:tile.onChange}))}</div></div>` : nothing,
+          renderRoomColor(port, d, id, 'name'),
           html`${subsection({title:st('space.font_sizes')})}${sizes}`,
           html`<div class="hpf-tint hpf-preview">${roomCardPreview(t,st('preview.room_name'),d.cardNameScale,1,1,
       d.labelCo2 ? 820 : undefined,d.cardLabelScale,{temp:d.labelTemp,hum:d.labelHum,lqi:d.labelLqi,light:d.labelLight,showName:d.showNames},

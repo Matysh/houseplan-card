@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1519,
+  "baseStable": "v1.86.0",
+  "category": "stable-fix",
+  "rationale": "Correct the placement and verify the live preview of the existing caption color selector shipped in 1.86.0.",
+  "summary": {
+    "ru": "Цвет названий находится рядом с размерами шрифтов, а образец обновляется при выборе цвета.",
+    "en": "Edit caption color beside font sizes with immediate preview."
+  }
+}

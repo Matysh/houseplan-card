@@ -16,12 +16,14 @@ try {
     const select=async(d,id,v)=>{const n=d.querySelector(`[data-field="${id}"]`);n.value=v;n.dispatchEvent(new Event('change',{bubbles:true}));await settle();};
     const reveal=async(n)=>{const section=n.closest('[data-settings-section]');
       if(section)n.closest('hp-dialog').querySelector(`[data-section-target="${section.dataset.settingsSection}"]`)?.click();await settle();};
-    const color=async(d,id,hex,a)=>{
+    const color=async(d,id,hex,a,onLiveChange)=>{
       const picker=d.querySelector(`[data-field="${id}"]`);await reveal(picker);
       picker.shadowRoot.querySelector('[data-field="colour-open"]').click();await settle();
       await hp.input(picker.shadowRoot.querySelector('[data-field="colour-hex"]'),hex);
       const alpha=picker.shadowRoot.querySelector('input[type="number"][data-field="colour-opacity"]');
       if(alpha)await hp.input(alpha,String(a*100));
+      await settle();
+      onLiveChange?.();
       picker.shadowRoot.querySelector('[data-action="colour-confirm"]').click();await settle();
     };
     const discard=async(d)=>{const result=await hp.close(d,{via:'cancel'});if(result.confirm){result.confirm.querySelector('[data-hp="dialog-confirm"]').click();await settle();}};
@@ -54,8 +56,25 @@ try {
     const custom=d.querySelector('[data-field="space-fill-color"]'),wall=d.querySelector('[data-field="space-wall-fill"]');
     // UI-025: wall fill precedes the fill-mode/custom-fill sections.
     o.wallFillPrecedesCustom=!!(wall.compareDocumentPosition(custom)&Node.DOCUMENT_POSITION_FOLLOWING);
-    await color(d,'space-name-color','#aa1122',.4);
-    o.livePreviewAndMetrics=caption(roomId).color==='rgb(170, 17, 34)'&&caption(roomId).opacity===.4&&caption(roomId).metrics;
+    const nameField=d.querySelector('[data-field="space-name-color"]');
+    const names=d.querySelector('[data-settings-section="room-cards"]');
+    const preview=()=>getComputedStyle(names.querySelector('.cardpreview'));
+    o.nameColorImmediatelyBeforeFonts=nameField.closest('.hpf-section').nextElementSibling?.querySelector('h4')?.textContent==='Размеры шрифтов'
+      && names.contains(nameField) && !d.querySelector('[data-settings-section="appearance"] [data-field="space-name-color"]')
+      && d.querySelectorAll('[data-field="space-name-color"]').length===1;
+    const originalName={hex:nameField.color,alpha:nameField.opacity,color:preview().color,opacity:preview().opacity};
+    await color(d,'space-name-color','#aa1122',.4,()=>{
+      o.livePreviewAndMetrics=preview().color==='rgb(170, 17, 34)'&&Number(preview().opacity)===.4
+        && caption(roomId).color===preview().color&&caption(roomId).opacity===.4&&caption(roomId).metrics
+        && JSON.stringify(saved())===before;
+    });
+    await color(d,'space-name-color','#11aa22',.8,()=>{
+      o.secondDraftColorBeforeConfirm=preview().color==='rgb(17, 170, 34)'&&Number(preview().opacity)===.8;
+    });
+    await color(d,'space-name-color',originalName.hex,originalName.alpha,()=>{
+      o.returnToOriginalColorBeforeConfirm=preview().color===originalName.color&&preview().opacity===originalName.opacity;
+    });
+    await color(d,'space-name-color','#1122cc',.25);
     await discard(d);o.cancelNoWrites=JSON.stringify(saved())===before;
     d=await hp.openSpaceDialog('edit','f1');
     await color(d,'space-border-color','#223344',.7);await color(d,'space-name-color','#aa1122',.4);await color(d,'space-wall-fill','#556677',.3);
@@ -81,7 +100,10 @@ try {
     o.zeroAlphaPreview=caption(roomId).opacity===0;
     d.querySelector('[data-hp="dialog-confirm"]').click();await hp.waitForWrites();await settle();
     o.roomOverrideSaved=floor().rooms.find(r=>r.id===roomId).settings.name_color.a===0;
-    d=await hp.openSpaceDialog('edit','f1');await color(d,'space-name-color','#11aa22',.8);
+    d=await hp.openSpaceDialog('edit','f1');
+    const reopened=d.querySelector('[data-field="space-name-color"]');
+    o.reopenUsesSavedCaptionColor=reopened.color==='#aa1122'&&reopened.opacity===.4;
+    await color(d,'space-name-color','#11aa22',.8);
     d.querySelector('[data-hp="dialog-confirm"]').click();await hp.waitForWrites();await settle();
     o.spaceChangeRetainsRoomOverride=caption(roomId).opacity===0;
     d=await hp.openRoomEdit(roomId);await select(d,'room-name-color-mode','inherit');

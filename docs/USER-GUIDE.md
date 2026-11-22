@@ -559,7 +559,7 @@ lovelace:
 
 ### Space settings
 
-&emsp;&emsp;The four room-appearance colours belong only to this space; wall fill is no longer in General Settings. Room Settings → **Name color** offers **As in the space / Custom color**, affecting both name and readings. Returning to inherit removes only this caption override, not room fill or font sizes. Alpha zero is an explicit colour, not inheritance.
+&emsp;&emsp;The space has separate colours for wall lines, wall fill, room fill and captions. In **Names and readings**, change **Name color** above **Font sizes** to see the caption update immediately in the preview. Room Settings → **Name color** offers **As in the space / Custom color**, affecting both name and readings. Returning to inherit removes only this caption override, not room fill or font sizes. Alpha zero is an explicit colour, not inheritance.
 
 &emsp;&emsp;Existing plans retain their colours and opacity before the first save; a space colour change keeps room overrides.
 
@@ -569,9 +569,10 @@ lovelace:
 | Plan and scale | Decorative layer | Hides decor in View; Background still shows it for editing |
 | Room appearance | Show room borders, including doors and windows | Controls outlines and opening symbols together; sensors, physical bodies and light calculations remain |
 | Room appearance | Zero-thickness walls | Dashed passes artificial light and sunlight; Solid blocks them even if its outline is hidden |
-| Room appearance | Wall color / Name color | Independent wall lines/outlines/hatching and entire room captions (names and readings), each with opacity |
+| Room appearance | Wall color | Wall lines, outlines and hatching, with opacity |
 | Room appearance | Custom room fill / Wall fill color | Custom room colour is used in Custom mode. Wall-body colour below hatching immediately follows it and is available in every fill mode; Zigbee, Lights and Temperature remain unchanged |
 | Names and readings | Room names, temperature, humidity, CO₂, signal and light | Readings appear only with a usable source; turning names off keeps the selected metrics. CO₂ is not added to the static card |
+| Names and readings | Name color | Colour and opacity of the entire caption, with a live preview |
 | Names and readings | Name size / readings size | Independent 50–300% sliders with exact values and a live sample; room multipliers apply to the corresponding size |
 | Names and readings | Device battery / Zigbee signal | Inherit General or use a space value; device hide options can suppress an indicator further |
 | Background and lighting | Background | Inherit the read-only General mode/colour, or choose this space’s Static / Follow the sun value |
