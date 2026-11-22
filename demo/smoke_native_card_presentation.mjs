@@ -129,6 +129,11 @@ try {
   await Promise.all([angle('main',270),angle('iso',270),angle('kiosk',270),iso('duplicate',45)]);
   out.legacyCardAndUnprofiledScreenInheritMainRotation=true;
   out.presentationDoesNotSendPlanWrites=await page.evaluate(()=>window.__surfaceWrites.length===0);
+  await page.reload({waitUntil:'load'});
+  await page.waitForFunction(()=>window.__mkHass && customElements.get('houseplan-card'));
+  await mount();
+  await Promise.all([angle('main',270),iso('iso',45),iso('duplicate',45),iso('kiosk',315)]);
+  out.previousConfigurationDoesNotResurrectItsLocalAngle=true;
   checkAll(out);await finish(browser,out);
 }catch(error){
   const scene=await page.evaluate(()=>[...document.querySelectorAll('houseplan-card[data-surface]')].map(card=>({

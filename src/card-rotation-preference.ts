@@ -1,7 +1,7 @@
 import { cacheSha256 } from './floor-cache-key';
 import { validPlanRotation, type PlanRotation } from './view-frame';
 
-type RotationStorage = Pick<Storage, 'getItem' | 'setItem'>;
+type RotationStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 type RotationValues = Record<string, PlanRotation>;
 const EMPTY = (): RotationValues => Object.create(null);
 
@@ -19,22 +19,26 @@ export class CardRotationPreference {
     const identity = address && JSON.stringify(address);
     const authored = JSON.stringify(author);
     if (owner === this.owner && identity === this.address && authored === this.author) return;
-    const read = owner !== this.owner || identity !== this.address;
     this.owner = owner;
     this.address = identity;
     this.author = authored;
     this.key = identity && `houseplan_card_rotation_slot_v1:${cacheSha256(identity)}`;
-    this.values = EMPTY();
-    if (read) this.values = this.read();
+    this.values = this.read(true);
   }
 
-  private read(): RotationValues {
+  private read(discardPreviousAuthor = false): RotationValues {
     const values = EMPTY();
     if (!this.key) return values;
     try {
-      const stored = JSON.parse(this.storage()?.getItem(this.key) ?? 'null');
-      if (stored?.author === this.author && stored.values && typeof stored.values === 'object'
-        && !Array.isArray(stored.values)) {
+      const storage = this.storage();
+      const stored = JSON.parse(storage?.getItem(this.key) ?? 'null');
+      if (stored?.author !== this.author) {
+        // The author may later return to the previous configuration. Its old
+        // per-card button choice must not reappear after a reload.
+        if (discardPreviousAuthor && typeof stored?.author === 'string') storage?.removeItem(this.key);
+        return values;
+      }
+      if (stored.values && typeof stored.values === 'object' && !Array.isArray(stored.values)) {
         for (const [space, angle] of Object.entries(stored.values)) {
           if (space && validPlanRotation(angle)) values[space] = angle;
         }

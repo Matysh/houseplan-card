@@ -5,7 +5,7 @@ import {cardRotationPlacementSlot} from '../test-build/summary-panel-identity.js
 
 test('#1516 matching Lovelace configurations have distinct per-slot durable rotation',()=>{
   const stored = new Map(), owner = {};
-  const storage = () => ({getItem:key=>stored.get(key),setItem:(key,value)=>stored.set(key,value)});
+  const storage = () => ({getItem:key=>stored.get(key),setItem:(key,value)=>stored.set(key,value),removeItem:key=>stored.delete(key)});
   const one = new CardRotationPreference(storage), two = new CardRotationPreference(storage);
   const author = ['iso',45,null];
   one.configure(owner,['ha-user','dashboard','masonry-v2:0'],author);
@@ -20,6 +20,9 @@ test('#1516 matching Lovelace configurations have distinct per-slot durable rota
   assert.equal(restored.get('floor'),315);
   restored.configure({},['ha-user','dashboard','masonry-v2:0'],['flat',0,null]);
   assert.equal(restored.get('floor'),undefined,'configuration change supersedes the old local button choice');
+  const returned = new CardRotationPreference(storage);
+  returned.configure({},['ha-user','dashboard','masonry-v2:0'],author);
+  assert.equal(returned.get('floor'),undefined,'restoring the former configuration never resurrects its local choice');
   restored.configure({},['another-user','dashboard','masonry-v2:0'],author);
   assert.equal(restored.get('floor'),undefined);
 });
@@ -49,7 +52,7 @@ test('#1516 distinct descendants of a composite Lovelace card do not share a dur
 
 test('#1516 a second tab writing another space retains the first tab’s choice',()=>{
   const values=new Map();
-  const storage=()=>({getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v)});
+  const storage=()=>({getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)});
   const inputs=[['ha-user','dashboard','masonry-v2:0'],['iso',45]];
   const a=new CardRotationPreference(storage), b=new CardRotationPreference(storage);
   a.configure({},...inputs);b.configure({},...inputs);
