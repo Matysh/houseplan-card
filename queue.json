@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21037,
+  "revision": 21038,
   "nextTicket": 626,
   "nextFence": 626,
   "tasks": {
@@ -5818,7 +5818,10 @@
         "at": 1795374333776,
         "entry": 2,
         "eventId": "finish:72947272-b741-4e1f-aeb3-644ff3429ac1:finish:1:expire:return:1522"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1795374443723,
+      "automationDetail": "fetch failed"
     },
     "1523": {
       "issue": 1523,
@@ -6612,6 +6615,10 @@
     },
     "finish:575dda81-5489-4b63-83a5-a040c9c1ef2e": {
       "digest": "4cae00ba1fcc0efda0886743fbc0c71c34d63cc8e93f3e15f8f26166c7935bdb",
+      "issue": 1522
+    },
+    "finish:0270a8b0-ca2b-4e54-b4be-74d9d4e8fc0c:finish:3:automation-pending": {
+      "digest": "4b58c2281c911282e31563fa3af2fa27655c47e7e18924a449f3a9721fcbc946",
       "issue": 1522
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
