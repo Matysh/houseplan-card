@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20224,
+  "revision": 20225,
   "nextTicket": 607,
   "nextFence": 606,
   "tasks": {
@@ -5685,7 +5685,8 @@
       "reviewCorrection": {
         "requestId": "review:1518:2:160810288ae7675534b218dd36fb2e08229b9b3b:432662652229bf4bf58c2a4b94e954efa9f770c7",
         "at": 1795338685714
-      }
+      },
+      "reason": "owner-stopped"
     },
     "1519": {
       "issue": 1519,
@@ -6279,17 +6280,7 @@
   "waiting": [
     1517
   ],
-  "active": {
-    "issue": 1518,
-    "worker": "github-coordinator",
-    "token": "605:github:45008151983:1:tick:0:admit",
-    "fence": 605,
-    "materialSha": "d12669af73b0a856bce5b1e8b3e3d088f6e25674",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1795340062035,
-    "expiresAt": 1795340362035
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6681,6 +6672,10 @@
     },
     "dev-build:45008085071:1:webhook:1747269f-8fe7-47a9-80d9-b44b4ca4b130:delivered": {
       "digest": "db1e667165fc8ae90a4da37973d31e58f74300f41cd9474a0867ec216cf7bfe4",
+      "issue": 1518
+    },
+    "hp1518-20261122-withdraw-window-join-update": {
+      "digest": "1693d386cf282c1c114839c65d9859d275bf611d31561a52cf4b1908f7ac61aa",
       "issue": 1518
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
