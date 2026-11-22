@@ -2452,6 +2452,9 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      // Do not let a late read/write survive a same-turn A → B → A even
+      // when Lit coalesces the intermediate space out of the paint.
+      this._startupFloor?.retire();
       this._floorPendingMode = null;
       if (!authority) { this._warmViewportPending = null; this._warmCameraAdopted = false; this._warmVp = null; }
       this._stairsView.clearArrival();

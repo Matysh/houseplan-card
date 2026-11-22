@@ -72,3 +72,17 @@ test('#1520 an image read from a retired navigation cannot set presentation fact
   assert.equal(h.owner.awaitsLive,false); assert.deepEqual(h.paint,[]);
   h.owner.dispose();
 });
+test('#1520 explicit A→B→A retirement fences work even if no intermediate view paints',async()=>{
+  const h=harness(), old=defer(), current=defer();
+  let read=0;
+  h.owner.store.read=()=> (++read===1?old:current).promise;
+  h.owner.observe(selection);
+  h.set({...selection,floor:'B'}); h.owner.retire();
+  h.set(selection); h.owner.retire(); h.owner.observe(selection);
+  let reachedDecoder=false;
+  old.resolve({get image(){ reachedDecoder=true; return new Blob(); }});
+  await flush();
+  assert.equal(reachedDecoder,false);
+  assert.equal(h.owner.facts.status,'reading');
+  h.owner.dispose(); current.resolve(null); await flush();
+});
