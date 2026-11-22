@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20569,
+  "revision": 20570,
   "nextTicket": 615,
   "nextFence": 614,
   "tasks": {
@@ -7027,6 +7027,10 @@
       "digest": "5843177743d6d6cb9a8a12202a979c438924f4675dcfcdad44a30fb257595e43",
       "issue": 1521
     },
+    "github:45022504446:1:completions:message:e942d423408802f606365a294862ea5b18611a3ba6b27180c86d0606dcb7f1cd": {
+      "digest": "23982cf6ce8d15a5ddbc7bc162e96772337b36787e611ac4f7b33d3e1c885da3",
+      "issue": 1517
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7382,7 +7386,8 @@
           "entry": 1,
           "detail": "Поведение: test/data-hp-contract.test.mjs: failed; Backend: tests_backend/test_plan_graph_support.py: failed",
           "eventId": "finish:f1091ebc-30a7-4bc2-b4bf-d27c7cd305c8:finish:4:return:return:1521"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:d98f5ba0-1183-45fe-b4d6-db76c944079a:finish:1:admit": {
