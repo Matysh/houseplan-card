@@ -440,7 +440,8 @@
     "panel-device-contact-resize-flat-profile-larger-rotation-180": "a6af8c6a5692e25575f1b7988045726ae2dbbfb07bd2b5dc917dba347e966624",
     "panel-device-contact-resize-iso-profile-larger-rotation-180": "8e07863d564ed09b33f3ffbb389d44ed9b926642692218d1da0536bd27fbc671",
     "panel-device-contact-resize-flat-profile-larger-rotation-270": "04be3f469837ce2586752463a0574ad0faaf8502b8b71b7aad6efc638160eff3",
-    "panel-device-contact-resize-iso-profile-larger-rotation-270": "c68257b4749ce3a9d81fa5066e11e48fcccf0aeabbac80e5676ed2bd1c3028e0"
+    "panel-device-contact-resize-iso-profile-larger-rotation-270": "c68257b4749ce3a9d81fa5066e11e48fcccf0aeabbac80e5676ed2bd1c3028e0",
+    "panel-iso-straight-perspective-1526": "47e3f959b17d0894f86d4bb7494fd229ea323960972cc41dbe5ab227877d7e7b"
   },
   "scenarioProvenance": {
     "panel-wide-view-light-en": {
@@ -7652,6 +7653,26 @@
       },
       "host": "panel",
       "sourceSceneId": "panel-device-contact-resize-iso-profile-larger-rotation-270"
+    },
+    "panel-iso-straight-perspective-1526": {
+      "acceptedAt": "2026-11-22T23:28:58.972Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1526",
+      "reportSha256": "97692b38c9dcc14d6d558034a51a92523498c712e5fc949e9e5e8ba82f80ca3a",
+      "sourceSha": "f2ddcfd2bf3fcf63c892057d93e7aba9fd5f59ed",
+      "sourceFingerprint": "f7da786797f352a1a083ab7aff2c9c8133f18313ed95fd7ad0d15d82e20e451b",
+      "matrixVersion": 117,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "f2ddcfd2bf3fcf63c892057d93e7aba9fd5f59ed",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "f7da786797f352a1a083ab7aff2c9c8133f18313ed95fd7ad0d15d82e20e451b",
+        "harnessIconsSha256": "0acc86546e5ad49d574465b7054cdb7dc597fff5f35dc3bfa5164c2f49ae0717",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-iso-straight-perspective-1526"
     }
   }
 }
