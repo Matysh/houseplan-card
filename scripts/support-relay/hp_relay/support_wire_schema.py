@@ -324,6 +324,21 @@ GLOBAL_SETTINGS = Object(
                     "summary": enum("local", "show", "hide"), "center_summary": BOOL,
                 })),
             })),
+        }), Object({
+            "version": enum(3), "next_id": NUMBER,
+            "screens": Array(Object({
+                **fields("id cycle idle", NUMBER), "space": REF_OR_NULL,
+                "default_view": Object({
+                    **fields("rotation zoom icon_scale font_scale", nullable(NUMBER)),
+                    "summary": enum("local", "show", "hide"), "center_summary": BOOL,
+                    "view": enum("flat", "iso"),
+                }),
+                "space_views": Mapping(REF, Object({
+                    **fields("rotation zoom icon_scale font_scale", nullable(NUMBER)),
+                    "summary": enum("local", "show", "hide"), "center_summary": BOOL,
+                    "view": enum("flat", "iso"),
+                })),
+            })),
         }))),
         "exclude_integrations": Array(REF_OR_NULL),
         "radar": Object({"show_live": nullable(BOOL)}),

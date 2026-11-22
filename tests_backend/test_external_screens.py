@@ -73,7 +73,7 @@ def test_external_screens_stale_writer_and_future_namespace_lossless():
         assert got["settings"]["external_screens"] is not value
         assert previous == config(value)
     with pytest.raises(vol.Invalid):
-        ordinary(config(dict(version=3, opaque="x" * (128 * 1024))))
+        ordinary(config(dict(version=4, opaque="x" * (128 * 1024))))
 
 
 def test_external_screens_only_unchanged_broken_reference_is_retained():
@@ -175,5 +175,37 @@ def test_v2_bounded_utf8_and_future_stay_lossless_without_recognizing_bad_v2():
     value = namespace2(row2()); value["opaque"] = "я" * 70000
     with pytest.raises(vol.Invalid):
         ordinary(config(value))
-    future = {"version": 3, "opaque": {"still": [1, None]}}
+    future = {"version": 4, "opaque": {"still": [1, None]}}
     assert ordinary(config(), config(future))["settings"]["external_screens"] == future
+
+
+@pytest.mark.parametrize("projection,rotation", [("flat", 0), ("iso", 315), (None, 45), ("iso", None)])
+def test_1516_v3_keeps_existing_profile_fields_and_preserves_known_view(projection, rotation):
+    value = namespace2(row2())
+    value["version"] = 3
+    view = value["screens"][0]["default_view"]
+    view["rotation"] = rotation
+    if projection is not None:
+        view["view"] = projection
+    view["unknown"] = {"keep": [False, 0]}
+    previous = config(namespace2(row2()))
+    saved = ordinary(config(value), previous)
+    assert saved["settings"]["external_screens"] == value
+    unrelated = config()
+    unrelated["settings"]["show_lqi"] = False
+    assert ordinary(unrelated, saved)["settings"]["external_screens"] == value
+    with pytest.raises(vol.Invalid, match="version cannot be downgraded"):
+        ordinary(previous, saved)
+
+
+@pytest.mark.parametrize("view_patch", [
+    {"view": "real3d"}, {"view": None}, {"view": "flat", "rotation": 45},
+    {"rotation": True}, {"rotation": "45"}, {"rotation": 360},
+    {"rotation": 45.0}, {"rotation": -45},
+])
+def test_1516_rejects_malformed_v3_view(view_patch):
+    value = namespace2(row2())
+    value["version"] = 3
+    value["screens"][0]["default_view"].update(view_patch)
+    with pytest.raises(vol.Invalid):
+        ordinary(config(value))

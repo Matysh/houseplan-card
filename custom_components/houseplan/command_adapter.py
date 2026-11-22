@@ -220,7 +220,7 @@ class HaCommandEvidence:
         return {"virtual_lights": virtual_lights, "support_api": SUPPORT_API_VERSION,
             "support_package_versions": list(PACKAGE_VERSIONS), "vacuum_dock_restart_api": 1,
             "vacuum_history_api": 1, "device_contact_api": 1, "device_history_api": 1,
-            "summary_panel_api": SUMMARY_PANEL_API_VERSION, "external_screens_api": 2,
+            "summary_panel_api": SUMMARY_PANEL_API_VERSION, "external_screens_api": 3,
             "external_screens_events_api": 1,
             **({"radar_stage1_api": 1} if runtime.radar_coordinator is not None else {}),
             **({"zigbee_scan_api": 1, "zigbee_maps_api": 1} if runtime.zigbee_coordinator is not None

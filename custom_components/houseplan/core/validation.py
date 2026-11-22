@@ -2775,33 +2775,66 @@ def _bounded_external_screens(value: dict) -> dict:
     return value
 
 
-_EXTERNAL_SCREEN_VIEW_SCHEMA = vol.Schema({
-    vol.Required("rotation"): _screen_rotation,
+_EXTERNAL_SCREEN_VIEW_FIELDS = {
     vol.Required("zoom"): _screen_zoom,
     vol.Required("summary"): vol.In(("local", "show", "hide")),
     vol.Required("center_summary"): bool,
     vol.Required("icon_scale"): _screen_scale,
     vol.Required("font_scale"): _screen_scale,
+}
+
+
+def _screen_v3_rotation(value: object) -> int | None:
+    if value is None or (type(value) is int and value in range(0, 360, 45)):
+        return value
+    raise vol.Invalid("screen rotation must be null or a multiple of 45 from 0 to 315")
+
+
+def _screen_view_rotation_consistent(view: dict) -> dict:
+    angle = view["rotation"]
+    if view.get("view") == "flat" and angle is not None and angle % 90:
+        raise vol.Invalid("flat screen rotation must be a quarter turn")
+    return view
+
+
+_EXTERNAL_SCREEN_VIEW_SCHEMA = vol.Schema({
+    **_EXTERNAL_SCREEN_VIEW_FIELDS, vol.Required("rotation"): _screen_rotation,
 }, extra=vol.ALLOW_EXTRA)
-_EXTERNAL_SCREEN_V2_SCHEMA = vol.Schema({
-    vol.Required("id"): _screen_int,
-    vol.Required("space"): vol.Any(None, _NONEMPTY_TEXT),
-    vol.Required("cycle"): _screen_seconds,
-    vol.Required("idle"): _screen_seconds,
-    vol.Required("default_view"): _EXTERNAL_SCREEN_VIEW_SCHEMA,
-    vol.Required("space_views"): {_NONEMPTY_TEXT: _EXTERNAL_SCREEN_VIEW_SCHEMA},
-}, extra=vol.ALLOW_EXTRA)
-EXTERNAL_SCREENS_V2_SCHEMA = vol.All(vol.Schema({
-    vol.Required("version"): vol.All(_screen_int, vol.Equal(2)),
-    vol.Required("next_id"): _screen_int,
-    vol.Required("screens"): vol.All([_EXTERNAL_SCREEN_V2_SCHEMA], vol.Length(max=20)),
-}, extra=vol.ALLOW_EXTRA), _external_screen_invariants, _bounded_external_screens)
+_EXTERNAL_SCREEN_VIEW_V3 = vol.All(vol.Schema({
+    **_EXTERNAL_SCREEN_VIEW_FIELDS, vol.Required("rotation"): _screen_v3_rotation,
+    vol.Optional("view"): vol.In(("flat", "iso")),
+}, extra=vol.ALLOW_EXTRA), _screen_view_rotation_consistent)
+
+
+def _external_screen_profile_schema(view_schema):
+    return vol.Schema({
+        vol.Required("id"): _screen_int,
+        vol.Required("space"): vol.Any(None, _NONEMPTY_TEXT),
+        vol.Required("cycle"): _screen_seconds,
+        vol.Required("idle"): _screen_seconds,
+        vol.Required("default_view"): view_schema,
+        vol.Required("space_views"): {_NONEMPTY_TEXT: view_schema},
+    }, extra=vol.ALLOW_EXTRA)
+
+
+def _external_screen_namespace_schema(version: int, row_schema: vol.Schema):
+    return vol.All(vol.Schema({
+        vol.Required("version"): vol.All(_screen_int, vol.Equal(version)),
+        vol.Required("next_id"): _screen_int,
+        vol.Required("screens"): vol.All([row_schema], vol.Length(max=20)),
+    }, extra=vol.ALLOW_EXTRA), _external_screen_invariants, _bounded_external_screens)
+
+
+_EXTERNAL_SCREEN_V2_SCHEMA = _external_screen_profile_schema(_EXTERNAL_SCREEN_VIEW_SCHEMA)
+_EXTERNAL_SCREEN_V3_SCHEMA = _external_screen_profile_schema(_EXTERNAL_SCREEN_VIEW_V3)
+EXTERNAL_SCREENS_V2_SCHEMA = _external_screen_namespace_schema(2, _EXTERNAL_SCREEN_V2_SCHEMA)
+EXTERNAL_SCREENS_V3_SCHEMA = _external_screen_namespace_schema(3, _EXTERNAL_SCREEN_V3_SCHEMA)
 # Keep the named known-schema entry point for import/support consumers.
-EXTERNAL_SCREENS_SCHEMA = vol.Any(EXTERNAL_SCREENS_V1_SCHEMA, EXTERNAL_SCREENS_V2_SCHEMA)
+EXTERNAL_SCREENS_SCHEMA = vol.Any(EXTERNAL_SCREENS_V1_SCHEMA, EXTERNAL_SCREENS_V2_SCHEMA, EXTERNAL_SCREENS_V3_SCHEMA)
 
 
 def _future_external_screens(value: object) -> dict:
-    if not isinstance(value, dict) or type(value.get("version")) is not int or value["version"] <= 2:
+    if not isinstance(value, dict) or type(value.get("version")) is not int or value["version"] <= 3:
         raise vol.Invalid("unsupported external screens version")
     return _bounded_external_screens(value)
 
@@ -2837,13 +2870,13 @@ def preserve_external_screens_namespace(config: dict, previous: dict | None) -> 
 
 def validate_external_screens_references(config: dict, previous: dict | None) -> None:
     value = (config.get("settings") or {}).get("external_screens")
-    if not isinstance(value, dict) or value.get("version") not in (1, 2):
+    if not isinstance(value, dict) or value.get("version") not in (1, 2, 3):
         return
     old = ((previous or {}).get("settings") or {}).get("external_screens")
     old = old if isinstance(old, dict) else {}
     if type(old.get("version")) is int and old["version"] > value["version"]:
         raise vol.Invalid("external screen version cannot be downgraded by an ordinary writer")
-    old = old if old.get("version") in (1, 2) else {}
+    old = old if old.get("version") in (1, 2, 3) else {}
     if value["next_id"] < old.get("next_id", 1):
         raise vol.Invalid("external screen next_id cannot decrease")
     old_rows = {row["id"]: row for row in old.get("screens", [])}

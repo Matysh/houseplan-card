@@ -304,7 +304,7 @@ def extend_config_projection(config: dict, projected: dict, ids: DiagnosticIds) 
         safe_settings["summary_panel"] = _summary(settings["summary_panel"], ids)
     if "external_screens" in settings:
         screens = settings["external_screens"]
-        if isinstance(screens, dict) and type(screens.get("version")) is int and screens["version"] in (1, 2):
+        if isinstance(screens, dict) and type(screens.get("version")) is int and screens["version"] in (1, 2, 3):
             rows = []
             for row in screens.get("screens", []):
                 if not isinstance(row, dict):
@@ -314,12 +314,15 @@ def extend_config_projection(config: dict, projected: dict, ids: DiagnosticIds) 
                     if row.get(key) in ("local", "show", "hide"):
                         safe[key] = row[key]
                 safe["space"] = ids.get("space", row["space"]) if row.get("space") else None
-                if screens["version"] == 2:
+                if screens["version"] >= 2:
                     safe = _scalars(row, numbers=("id", "cycle", "idle"))
                     safe["space"] = ids.get("space", row["space"]) if row.get("space") else None
                     def view(source):
+                        enums = {"summary": {"local", "show", "hide"}}
+                        if screens["version"] == 3:
+                            enums["view"] = {"flat", "iso"}
                         return _scalars(source, numbers=("rotation", "zoom", "icon_scale", "font_scale"),
-                                        booleans=("center_summary",), enums={"summary": {"local", "show", "hide"}})
+                                        booleans=("center_summary",), enums=enums)
                     safe["default_view"] = view(row.get("default_view"))
                     values = row.get("space_views")
                     values = values if isinstance(values, dict) else {}

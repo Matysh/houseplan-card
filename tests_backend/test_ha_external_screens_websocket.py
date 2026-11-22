@@ -60,7 +60,7 @@ def profiles(config):
 async def test_profile_stream_real_viewer_receives_exact_patch_and_unsubscribes(hass, hass_ws_client, group):
     admin, viewer, _, full = await setup(hass, hass_ws_client, group)
     assert full["external_screens_events_api"] == 1
-    assert full["external_screens_api"] == 2
+    assert full["external_screens_api"] == 3
     count = hass.bus.async_listeners().get(EVENT, 0)
     ident, initial = await subscribe(viewer, full["rev"])
     assert initial == {"kind": "ready", "rev": full["rev"]}
@@ -91,17 +91,20 @@ async def test_profile_stream_initial_projection_does_not_claim_a_full_revision(
     assert (await viewer.receive_json())["event"] == {"rev": next_rev}
 
 
-async def test_v2_migration_storage_event_and_old_writer_fence_on_real_ha(hass, hass_ws_client):
+@pytest.mark.parametrize("version", [2, 3])
+async def test_profile_migration_storage_event_and_old_writer_fence_on_real_ha(hass, hass_ws_client, version):
     admin, viewer, _, full = await setup(hass, hass_ws_client)
     legacy = profiles(full["config"])
     rev = await write(admin, legacy, full["rev"])
     await subscribe(viewer, rev)
     migrated = copy.deepcopy(legacy)
     namespace = migrated["settings"]["external_screens"]
-    namespace["version"] = 2
+    namespace["version"] = version
     namespace["screens"] = [{"id": 1, "space": None, "cycle": 0, "idle": 30,
         "default_view": {"rotation": 90, "zoom": 2, "summary": "show",
             "center_summary": True, "icon_scale": None, "font_scale": None}, "space_views": {}}]
+    if version == 3:
+        namespace["screens"][0]["default_view"].update(view="iso", rotation=315)
     saved_rev = await write(admin, migrated, rev)
     assert (await viewer.receive_json())["event"] == {"rev": saved_rev,
         "external_screens_update": {"version": 1, "base_rev": rev, "value": namespace}}
