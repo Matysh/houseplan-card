@@ -5,8 +5,8 @@ import {workstationParts} from './iso-lab-workstation';
 import {FURNITURE_VOLUME_RUNTIME} from './furniture-volume-runtime';
 import type {FurniturePart} from './furniture-volume-types';
 export type {FurniturePart} from './furniture-volume-types';
-import { ISO_WALL_HEIGHT, isoRotationBasis, projectPlanPoint, unprojectFloorPoint,
-  type IsoCamera, type PlanPoint } from './iso-projection';
+import { ISO_WALL_HEIGHT, isoRotationBasis, projectPlanPoint, unprojectIsoAffine,
+  applyIsoMatrix, isoFloorMatrix, type IsoCamera, type PlanPoint } from './iso-projection';
 
 const part = (name: string, x: number, y: number, w: number, h: number,
   bottom: number, top: number, radius = .06): FurniturePart =>
@@ -129,7 +129,8 @@ export function furnitureVolume(shape: FurnitureSubject,
   const transform=(p:PlanPoint) => furniturePlanPoint(shape,p,canvasW,canvasH);
   // These paths live inside the existing floor matrix. Inverting that matrix
   // once lets z remain vertical on screen at every camera turn.
-  const atHeight=(p:PlanPoint,z:number) => unprojectFloorPoint(projectPlanPoint(p,z+lift,camera),camera);
+  const atHeight=(p:PlanPoint,z:number) => unprojectIsoAffine(projectPlanPoint(p,z+lift,camera),camera);
+  const affine = isoFloorMatrix(camera);
   const meshes=parts.map(p => {
     const center=transform([p.x+p.w/2,p.y+p.h/2]);
     const depth=(center[0]*sin+center[1]*cos)*Math.cos(elevation)+((p.bottom+p.top)/2*scale+lift)*Math.sin(elevation);
@@ -141,7 +142,7 @@ export function furnitureVolume(shape: FurnitureSubject,
           const vertices=loop.map(([x,y,z])=>atHeight(transform([x,y]),z*scale));
           return vertices;
         });
-        const projected=loops[0].map(v=>projectPlanPoint(v,0,camera));
+        const projected=loops[0].map(v=>applyIsoMatrix(v,affine));
         const area=projected.reduce((sum,a,i)=>{const b=projected[(i+1)%projected.length];return sum+a[0]*b[1]-b[0]*a[1];},0);
         if(area*(!!shape.flip_h!==!!shape.flip_v?-1:1)>1e-8){
           if(face.cap)caps.push(loops.map(path).join(' '));

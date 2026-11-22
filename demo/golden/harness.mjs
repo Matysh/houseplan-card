@@ -1,6 +1,7 @@
 import { addExternalScreenFixture, prepareExternalScreens } from './external-screens.mjs';
 import { prepareDeviceIconPicker } from './device-icon-picker.mjs';
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
+import { makeDirectPerspectiveFixture } from '../fixtures/direct-perspective-room.mjs';
 import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeMarkerAlertsFixture } from '../fixtures/marker-alerts.mjs';
 import { prepareMarkerAlerts } from './marker-alerts.mjs';
@@ -72,7 +73,8 @@ const wallUnionIsolationFixture = JSON.parse(readFileSync(
 const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
-const fixtureFor = (scenario) => scenario.resizeJunction ? makeResizeJunctionFixture(scenario.resizeJunction.kind,scenario.resizeJunction.obstacle) : scenario.staticWallOpenings ? {
+const fixtureFor = (scenario) => scenario.fixture === 'direct-perspective' ? makeDirectPerspectiveFixture()
+  : scenario.resizeJunction ? makeResizeJunctionFixture(scenario.resizeJunction.kind,scenario.resizeJunction.obstacle) : scenario.staticWallOpenings ? {
   config:makeStaticWallOpeningsFixture(scenario.staticWallOpenings),layout:{},devices:{},entities:{},states:{},areas:{},
 } : scenario.deviceAlerts ? makeMarkerAlertsFixture(scenario.deviceAlerts) : scenario.deviceIssues ? (() => {
   const fixture = makeVisualMatrixFixture(), sample = makeDeviceIssuesFixture();
@@ -1419,9 +1421,9 @@ export async function prepareGoldenScenario(page, scenario) {
     // Panel has no Lovelace rotation option: set the current space's turn
     // through the same toolbar controls used by the real panel.
     if (scenario.panelHost && scenario.rotation !== undefined) {
-      for (let step = 0; step < 3 && card._rotation !== scenario.rotation; step++) {
+      for (let step = 0; step < 4 && card._rotation !== scenario.rotation; step++) {
         const previous = card._rotation;
-        const direction = (scenario.rotation - previous + 360) % 360 === 270 ? 'left' : 'right';
+        const direction = (scenario.rotation - previous + 360) % 360 > 180 ? 'left' : 'right';
         const button = card.renderRoot.querySelector(`[data-hp="rotate-${direction}"]`);
         if (!button || button.disabled) throw Error(`golden panel rotation control unavailable: ${scenario.id}`);
         button.click();

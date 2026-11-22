@@ -22,7 +22,7 @@ import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import { NORM_W, iconUnit } from './space-geometry';
 import { roomGlowOf, roomPoly } from './logic';
 import { ISO_ICON_SCALE, isoTileShadow } from './iso-tiles';
-import { isoCameraFor, isoDisplayWallHeight, isoFloorMatrix } from './iso-projection';
+import { isoCameraFor, isoDisplayWallHeight, isoFloorMatrix, type IsoCamera } from './iso-projection';
 import { gridVisualUnits } from './grid-scale';
 import { deviceThemeClass } from './device-face';
 import type { VirtualLightSnapshot } from './virtual-light-state';
@@ -496,6 +496,7 @@ export interface LedCardHost {
   _mode: string;
   _showAll: boolean;
   _stageEl: HTMLElement | null;
+  readonly _isoFloorCamera?: IsoCamera;
   readonly _renderPixelsPerUnit?: (view: { w: number }) => number;
   _lightBarriers: (space: SpaceModel, polys: { r: RoomCfg; poly: number[][] }[]) => LightBarrierScene;
   _pointInRoom: (point: number[], room: RoomCfg) => boolean;
@@ -611,7 +612,7 @@ export function renderLedLayerFor(
   const theme = deviceThemeClass(host._renderPlanHass) === 'theme-dark' ? 'dark' : 'light';
   const lightFloor = !!host._isoLightFloors?.size;
   const shadow = isoTileShadow(theme, lightFloor);
-  const camera=isoCameraFor(host._rotation ?? 0);
+  const camera=host._isoFloorCamera ?? isoCameraFor(host._rotation ?? 0);
   const stripes = renderLedStripes({
     views: frame.views,
     d,
@@ -619,7 +620,7 @@ export function renderLedLayerFor(
     iso: iso ? {
       rotation: host._rotation,
       plane: isoFloorMatrix(camera),
-      lift: gridVisualUnits(isoDisplayWallHeight(),host._cellCm)*camera.zScale*Math.sin(camera.tiltDeg*Math.PI/180),
+      lift: camera.perspective ? 0 : gridVisualUnits(isoDisplayWallHeight(),host._cellCm)*camera.zScale*Math.sin(camera.tiltDeg*Math.PI/180),
       depth: frame.d * .075,
       edge: '#808080',
       shadow: { dx: 0, dy: 0, sigma: shadow.sigma * d, opacity: shadow.opacityWhite },

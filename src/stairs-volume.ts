@@ -2,7 +2,7 @@
 import { cachedStairRenderGeometry, type Stair } from './stairs';
 import { NORM_W } from './canvas-constants';
 import { gridVisualUnits } from './grid-scale';
-import { isoCameraDepth, isoDisplayWallHeight, projectPlanPoint, unprojectFloorPoint,
+import { isoCameraDepth, isoDisplayWallHeight, projectPlanPoint, unprojectIsoAffine,
   type IsoCamera, type PlanPoint } from './iso-projection';
 import type { FurnitureMesh, FurnitureMeshPart } from './iso-lab-furniture';
 
@@ -24,7 +24,7 @@ export function stairVolume(stair:Stair,cellCm:number,camera:IsoCamera):StairVol
     const screen=vertices.map(([x,y,z])=>projectPlanPoint([x,y],z,camera));
     const area=screen.reduce((sum,p,i)=>{const q=screen[(i+1)%screen.length];return sum+p[0]*q[1]-q[0]*p[1];},0);
     if(area<=1e-8)return;
-    const ink=path(screen.map(p=>unprojectFloorPoint(p,camera)));
+    const ink=path(screen.map(p=>unprojectIsoAffine(p,camera)));
     const center = (axis: 0 | 1) => vertices.reduce((sum, p) => sum + p[axis], 0) / vertices.length;
     parts.push({name,top:cap?ink:'',side:cap?'':ink,
       depth:vertices.reduce((sum,[x,y,z])=>sum+isoCameraDepth([x,y],z,camera),0)/vertices.length,
@@ -65,7 +65,8 @@ export function stairVolume(stair:Stair,cellCm:number,camera:IsoCamera):StairVol
   }
   parts.sort((a,b)=>a.depth-b.depth);
   const footprint=geometry.outline.map(p=>[p[0],p[1]] as PlanPoint);
-  const points=[...footprint,...footprint.map(p=>unprojectFloorPoint(projectPlanPoint(p,height,camera),camera))];
+  const floor=camera.perspective ? footprint.map(p=>unprojectIsoAffine(projectPlanPoint(p,0,camera),camera)) : footprint;
+  const points=[...floor,...footprint.map(p=>unprojectIsoAffine(projectPlanPoint(p,height,camera),camera))];
   const left=Math.min(...points.map(p=>p[0]))-1,top=Math.min(...points.map(p=>p[1]))-1;
   const lightBox=[left,top,Math.max(...points.map(p=>p[0]))-left+1,Math.max(...points.map(p=>p[1]))-top+1] as const;
   const result={mesh:{parts,shadow:path(footprint),lightBox},footprint,height,steps,hit:parts.map(p=>p.top+' '+p.side).join(' ')};

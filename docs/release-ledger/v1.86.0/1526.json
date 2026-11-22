@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1526,
+  "baseStable": "v1.86.0",
+  "category": "major",
+  "rationale": "Adds depth perspective to the four straight-on 2.5D viewpoints.",
+  "summary": {
+    "ru": "Лёгкая перспектива в четырёх прямых ракурсах 2.5D при вертикальных рёбрах стен.",
+    "en": "Subtle perspective in the four straight-on 2.5D views with upright wall edges."
+  }
+}

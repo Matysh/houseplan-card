@@ -13,6 +13,7 @@ export interface IsoCamera {
   origin: PlanPoint;
   /** Orthographic floor depth scale; omitted means an unsqueezed test camera. */
   floorScaleY?: number;
+  perspective?: Readonly<{ center: ScenePoint; rate: number }>;
 }
 
 export interface ViewRect { x: number; y: number; w: number; h: number; }
@@ -46,6 +47,18 @@ export function isoCameraFor(rotation: PlanRotation): Readonly<IsoCamera> {
   }
   return camera;
 }
+// The calibrated floor spans the far and near ends of this lens. The
+// height coordinate never participates in its scale, so wall edges stay vertical.
+const DIRECT_WIDTH_RATIO = 1.16;
+
+export function isoPerspectiveCamera(camera: Readonly<IsoCamera>, frame: ViewRect): Readonly<IsoCamera> {
+  if (camera.rotDeg % 90 !== 0) return camera;
+  const center = applyIsoMatrix([frame.x + frame.w / 2, frame.y + frame.h / 2], isoFloorMatrix(camera));
+  const depth = (camera.rotDeg % 180 ? frame.w : frame.h) * camera.xyScale * (camera.floorScaleY ?? 1);
+  if (!(depth > 0) || !Number.isFinite(depth)) return camera;
+  return { ...camera, perspective: { center, rate: 2 * (DIRECT_WIDTH_RATIO - 1) / ((DIRECT_WIDTH_RATIO + 1) * depth) } };
+}
+
 export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {
   return rotationBasis(camera.rotDeg);
 }
@@ -69,6 +82,14 @@ export const ISO_FLOOR_EDGE_HEIGHT = 10;
 export const ISO_OVERLAY_VISUAL_OFFSET = 4;
 export const ISO_RAISED_OVERLAY_HEIGHT = ISO_OVERLAY_VISUAL_OFFSET;
 
+export function directIsoRotation(rotation: PlanRotation): boolean {
+  return rotation % 90 === 45;
+}
+
+export function isoHeightLift(camera: IsoCamera, height: number): number {
+  return height * camera.zScale * Math.sin(camera.tiltDeg * Math.PI / 180);
+}
+
 function finiteCamera(camera: IsoCamera): boolean {
   return [camera.rotDeg, camera.tiltDeg, camera.xyScale, camera.zScale,
     camera.origin[0], camera.origin[1]].every(Number.isFinite)
@@ -81,12 +102,29 @@ export function projectPlanPoint(
 ): ScenePoint {
   if (!Number.isFinite(point[0]) || !Number.isFinite(point[1]))
     throw new Error('invalid isometric projection input');
-  return applyIsoMatrix(point, isoPlaneMatrix(zUnits, camera));
+  const lens = camera.perspective;
+  if (!lens) return applyIsoMatrix(point, isoPlaneMatrix(zUnits, camera));
+  if (!Number.isFinite(zUnits)) throw new Error('invalid isometric height');
+  const [x, floorY] = applyIsoMatrix(point, isoFloorMatrix(camera));
+  const [cx, cy] = lens.center;
+  const divisor = Math.min(4, Math.max(.25, 1 - lens.rate * (floorY - cy)));
+  return [cx + (x - cx) / divisor, cy + (floorY - cy - isoHeightLift(camera, zUnits)) / divisor];
 }
 
 export function unprojectFloorPoint(
   point: ScenePoint, camera: IsoCamera = ISO_CAMERA,
 ): PlanPoint {
+  const lens = camera.perspective;
+  if (!lens) return unprojectIsoAffine(point, camera);
+  const [cx, cy] = lens.center;
+  // Outside the plan, bounded affine extensions keep arbitrary pan/zoom
+  // and pointer coordinates away from the projective horizon.
+  const d = 1 / Math.min(4, Math.max(.25, 1 + lens.rate * (point[1] - cy)));
+  return unprojectIsoAffine([cx + (point[0] - cx) * d, cy + (point[1] - cy) * d], camera);
+}
+
+/** Inverse of the SVG affine embedding used for already projected meshes. */
+export function unprojectIsoAffine(point: ScenePoint, camera: IsoCamera = ISO_CAMERA): PlanPoint {
   if (!finiteCamera(camera) || !Number.isFinite(point[0]) || !Number.isFinite(point[1]))
     throw new Error('invalid isometric projection input');
   const [cos, sin] = isoRotationBasis(camera);

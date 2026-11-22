@@ -1,5 +1,5 @@
 import {
-  ISO_CAMERA, ISO_WALL_HEIGHT, projectPlanPoint, isoRotationBasis,
+  ISO_CAMERA, ISO_WALL_HEIGHT, applyIsoMatrix, isoFloorMatrix, projectPlanPoint, isoRotationBasis,
   type IsoCamera, type PlanPoint, type ScenePoint,
 } from './iso-projection';
 
@@ -111,7 +111,14 @@ function visibleNormalY(a: PlanPoint, b: PlanPoint, camera: IsoCamera): number {
   // Normal points to the right of a normalized edge, away from the solid.
   const nx = b[1] - a[1], ny = -(b[0] - a[0]);
   const [cos, sin] = isoRotationBasis(camera);
-  return nx * sin + ny * cos;
+  const orientation = nx * sin + ny * cos;
+  const lens = camera.perspective;
+  if (!lens) return orientation;
+  const [sx, sy] = applyIsoMatrix(a, isoFloorMatrix(camera));
+  const side = nx * cos - ny * sin;
+  const depthScale = camera.floorScaleY ?? 1;
+  return orientation * (1 - lens.rate * (sy - lens.center[1]))
+    + lens.rate * depthScale * side * (lens.center[0] - sx);
 }
 
 /** Build one top surface and at most one side per canonical ring edge: O(E). */

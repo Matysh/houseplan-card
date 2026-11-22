@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 116;
+export const GOLDEN_MATRIX_VERSION = 117;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1695,6 +1695,9 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     id, mode, fixture: 'visual', space: 'golden-geometry', rotation: 90,
     theme: 'light', language: 'en', viewport: { width, height: 844 }, ...page,
   })),
+  { id: 'panel-iso-straight-perspective-1526', fixture: 'direct-perspective', space: 'straight-perspective',
+    panelHost: true, mode: 'view', projection: 'iso', rotation: 315, theme: 'light', language: 'en',
+    viewport: { width: 1120, height: 780 }, ...stage },
   // #1113 append new scenes: established first-scene provenance fixture stays stable.
   ...['empty','list','constructor'].flatMap(externalScreens => ['light','dark'].map(theme => ({
     id:`settings-external-screens-${externalScreens}-${theme}`, fixture:'visual', space:'golden-geometry',

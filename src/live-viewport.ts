@@ -2,6 +2,7 @@ import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor, 
   type ViewportExposureLimits } from './viewport-exposure';
 import { IsoCameraRaster, type IsoRasterInput } from './iso-camera-raster';
 import { rasterSmoothing } from './iso-raster-geometry';
+import { resizeIsoPerspectiveFloor } from './iso-perspective-floor';
 
 export interface LiveViewBox {
   x: number;
@@ -189,6 +190,7 @@ const setLayerProjection = (
 /** Атрибут пишется только когда строка действительно другая (#531). */
 const setViewBox = (svg: SVGElement, text: string): void => {
   if (svg.getAttribute('viewBox') !== text) svg.setAttribute('viewBox', text);
+  resizeIsoPerspectiveFloor(svg,text);
 };
 
 const findViewportNodes = (root: ParentNode) => {

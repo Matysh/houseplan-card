@@ -6,11 +6,34 @@ import {
   ISO_CAMERA, ISO_OVERLAY_VISUAL_OFFSET, ISO_RAISED_OVERLAY_HEIGHT,
   ISO_WALL_HEIGHT, applyIsoMatrix, clientToScenePoint, isoFloorMatrix,
   isoOverlayVisualHeight, isoPlaneMatrix, isoPlaneMatrixCss, projectPlanPoint,
-  projectedFrame, unprojectFloorPoint, isoFloorLinearCss, isoTileDepthStyles, isoCameraFor, isoDisplayWallHeight, isoCameraDepth,
+  projectedFrame, unprojectFloorPoint, isoFloorLinearCss, isoTileDepthStyles, isoCameraFor, isoDisplayWallHeight, isoCameraDepth, isoPerspectiveCamera,
 } from '../test-build/iso-projection.js';
 
 const close = (actual, expected, epsilon = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
+
+test('#1526 direct cameras widen a square by 16% and preserve upright edges', () => {
+  const rect = {x:1800,y:-270,w:560,h:560};
+  const corners = [[1800,-270],[2360,-270],[2360,290],[1800,290]];
+  for (const rotation of [0,45,90,135,180,225,270,315]) {
+    const base = isoCameraFor(rotation);
+    const camera = isoPerspectiveCamera(base,rect);
+    if (rotation % 90 === 0) {
+      assert.equal(camera,base);
+      continue;
+    }
+    const rows = corners.map(p => projectPlanPoint(p,0,camera)).sort((a,b) => a[1]-b[1]);
+    const width = (a,b) => Math.abs(a[0]-b[0]);
+    close(width(rows[2],rows[3])/width(rows[0],rows[1]),1.16);
+    for (const point of [...corners,[-80_000,90_000]]) {
+      const floor = projectPlanPoint(point,0,camera);
+      close(floor[0],projectPlanPoint(point,140,camera)[0]);
+      const recovered = unprojectFloorPoint(floor,camera);
+      close(recovered[0],point[0],1e-8);
+      close(recovered[1],point[1],1e-8);
+    }
+  }
+});
 
 test('#1451 former lab preview cannot override live opening amounts or unknown state',()=>{
   const visual={mechanism:'swing',direction:'end',side:'negative',unsupported:false,

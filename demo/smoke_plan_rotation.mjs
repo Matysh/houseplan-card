@@ -162,6 +162,25 @@ try {
     const state = await snapshot(), logical = (90 + n * 45) % 360;
     check('ISO logical rotation ' + logical, state.rotation === logical);
     const yaw = yawByRotation.get(logical);
+    const proof = await stage.evaluate(element => {
+      const card = window.__card;
+      const camera = card._renderIsoScene.camera;
+      const scene = element.querySelector('svg.plan-svg');
+      const floor = element.querySelector('.iso-floor-scene');
+      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      marker.setAttribute('x','270');
+      marker.setAttribute('y','445');
+      marker.setAttribute('width','0');
+      marker.setAttribute('height','0');
+      floor.append(marker);
+      const spot = marker.getBoundingClientRect();
+      const bounds = scene.getBoundingClientRect();
+      const at = camera.perspective ? card._screenToVb(spot.x-bounds.x,spot.y-bounds.y) : [270,445];
+      marker.remove();
+      return {lens:!!camera.perspective,error:Math.hypot(at[0]-270,at[1]-445)};
+    });
+    check('only direct ISO cameras use perspective at ' + logical, proof.lens === (logical % 90 === 45));
+    check('perspective floor paint and pointer inverse agree at ' + logical, proof.error < .05);
     check('ISO accepted physical camera ' + logical,
       Number(await card.locator('svg.plan-svg').first().getAttribute('data-yaw')) === yaw);
     const labelAngle = labelByYaw.get(yaw) * Math.PI / 180;

@@ -10,7 +10,7 @@ export function roomFitPlanBounds(input: {
   room: RoomCfg; space: SpaceModel; walls: WallEntry[]; openCuts: number[][];
   innerFloor(): number[][] | null; wallNodes?: MultiWallNodeMap | null;
   borders: boolean; wallKeyPitch: number; cellCm: number; gridPitch: number;
-  coordinateScale: number; projection: 'flat' | 'iso'; rotation: PlanRotation;
+  coordinateScale: number; projection: 'flat' | 'iso'; rotation: PlanRotation; camera?: IsoCamera;
 }) {
   const { room, space, walls, openCuts, borders, cellCm, rotation } = input;
   const projection = borders ? input.projection : 'flat';
@@ -24,7 +24,7 @@ export function roomFitPlanBounds(input: {
     if (profile) wall = outsetContour(profile.poly, profile.offsets, input.wallNodes) || profile.poly;
   }
   const bounds = roomFitGeometryBounds({
-    camera: isoCameraFor(rotation), floor, wall, projection,
+    camera: input.camera ?? isoCameraFor(rotation), floor, wall, projection,
     wallHeight: projection === 'iso' && borders ? gridVisualUnits(isoDisplayWallHeight(), cellCm) : 0,
     floorDepth: projection === 'iso' && borders ? gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, cellCm) : 0,
     padding: borders ? gridVisualUnits(1.25, cellCm) : 0,

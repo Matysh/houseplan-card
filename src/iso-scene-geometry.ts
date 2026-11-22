@@ -15,7 +15,7 @@ import { clampScale, fitView, islandsOf, roomPoly, type SpaceDisplay } from './l
 import {
   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
   ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT, isoDisplayWallHeight,
-  projectedFrame, isoCameraFor, isoFloorMatrix, type PlanPoint, type ScenePoint, type IsoCamera,
+  projectedFrame, isoCameraFor, isoPerspectiveCamera, isoFloorMatrix, type PlanPoint, type ScenePoint, type IsoCamera,
 } from './iso-projection';
 import { planRotation, type PlanRotation } from './view-frame';
 import {
@@ -386,6 +386,32 @@ export type IsoStructuralSource = {
 // side. Each projected viewpoint shares this one immutable physical build.
 type IsoPhysicalScene = ReturnType<IsoStructuralSource['build']>;
 const isoPhysicalScenes = new WeakMap<IsoSceneCacheEntry, IsoPhysicalScene>();
+const isoPhysicalBounds = new WeakMap<IsoPhysicalScene, Rect | null>();
+const isoPerspectiveCameras = new WeakMap<IsoSceneCacheEntry, Readonly<IsoCamera>>();
+function lensBounds(physical: IsoPhysicalScene): Rect | null {
+  if (isoPhysicalBounds.has(physical)) return isoPhysicalBounds.get(physical) ?? null;
+  const bounds = (geometry: unknown) => {
+    const limits = [Infinity, Infinity, -Infinity, -Infinity];
+    if (Array.isArray(geometry)) for (const polygon of geometry) {
+      if (!Array.isArray(polygon)) continue;
+      for (const ring of polygon) {
+        if (!Array.isArray(ring)) continue;
+        for (const point of ring) {
+          if (!Array.isArray(point) || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) continue;
+          limits[0] = Math.min(limits[0], point[0]);
+          limits[1] = Math.min(limits[1], point[1]);
+          limits[2] = Math.max(limits[2], point[0]);
+          limits[3] = Math.max(limits[3], point[1]);
+        }
+      }
+    }
+    const [x, y, right, bottom] = limits;
+    return right > x && bottom > y ? {x, y, w: right - x, h: bottom - y} : null;
+  };
+  const result = bounds(physical.floor) ?? bounds(physical.walls);
+  isoPhysicalBounds.set(physical, result);
+  return result;
+}
 const isoProjectedScenes = new WeakMap<IsoSceneCacheEntry, Map<number, IsoSceneCacheEntry>>();
 export interface IsoCacheSnapshot {
   entry: IsoSceneCacheEntry;
@@ -598,7 +624,7 @@ export interface ResolveIsoSceneInput {
 
 export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
   const rotation = planRotation(input.rotation);
-  const camera = isoCameraFor(rotation);
+  let camera = isoCameraFor(rotation);
   const wallHeight = gridVisualUnits(isoDisplayWallHeight(), input.cellCm);
   const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);
   const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);
@@ -618,10 +644,17 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
   if (rotation !== 0) {
     let projections = isoProjectedScenes.get(value);
     if (!projections) { projections = new Map(); isoProjectedScenes.set(value, projections); }
+    const physical = isoPhysicalScenes.get(value);
+    if (!physical) throw new Error('missing physical isometric source');
     let projected = projections.get(rotation);
+    const bounds = camera.rotDeg % 90 === 0 ? lensBounds(physical) : null;
+    if (bounds) {
+      // Older serialized entries store orthographic points at the same angle.
+      const lens = projected && isoPerspectiveCameras.get(projected);
+      if (!lens) projected = undefined;
+      camera = lens || isoPerspectiveCamera(camera, bounds);
+    }
     if (!projected) {
-      const physical = isoPhysicalScenes.get(value);
-      if (!physical) throw new Error('missing physical isometric source');
       projected = {
         geometry: buildIsoWallGeometry(physical.walls, camera, wallHeight, physical.roundColumnRings),
         floor: buildIsoFloorGeometry(physical.floor, floorEdgeHeight, camera),
@@ -633,6 +666,7 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
       };
       projections.set(rotation, projected);
     }
+    if (camera.perspective) isoPerspectiveCameras.set(projected, camera);
     value = projected;
   }
   const openingFrame = isoOpeningBounds(value.openings, ISO_LAB_OPENINGS);

@@ -46,8 +46,9 @@ wall/column cut   = 140 physical centimetres, converted by the space scale
 reference-scale constant. It is not the physical wall-cut height; call
 `isoDisplayWallHeight()` for that height before the usual grid conversion.
 
-`isoPlaneMatrix()` projects every floor/height point; its inverse maps clicks
-back to plan coordinates. Fit, room fit, SVG floor, volume faces, HTML device
+The direct cameras use a depth-dependent scale. On a square room the near floor edge is 16% wider than the far edge. Scale depends on the plan depth of the point, so changing its height never moves it sideways. The four diagonal cameras keep the affine projection.
+
+`projectPlanPoint()` projects each floor or height point and `unprojectFloorPoint()` maps a floor hit back to plan coordinates. Fit, room fit, SVG floor, volume faces, HTML device
 anchors, locks, LED geometry and vacuum placement use the same effective
 snapshot. `isoCameraDepth()` supplies the compatible orthographic depth.
 The controls move one logical position at a time in 2.5D. Physical clockwise
@@ -103,6 +104,8 @@ on the same live camera. Their positions stay fixed during zoom-in. During
 zoom-out or pan the marker layer can renew its coverage independently. Before
 the next plan template, the camera restores temporary marker writes so that
 unchanged Lit bindings still match the authored view.
+
+The direct cameras render the projected floor through a live viewport. Raster gestures and serialized startup paint continue on the affine cameras.
 
 The camera publishes one exact SVG view after the last input and retires the
 temporary surfaces in that commit. Scene inputs are tied to the current plan,
