@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 20307,
-  "nextTicket": 610,
+  "revision": 20308,
+  "nextTicket": 611,
   "nextFence": 609,
   "tasks": {
     "1024": {
@@ -5616,14 +5616,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1516-surface-view",
-      "materialSha": "fb7e68b467fe8f663e230057323e681ca242de19",
+      "materialSha": "2bb7609d2bf6a30db11d69cd0873a67a1402f322",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 607,
-      "queued": false,
+      "ticket": 610,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795340270583,
-      "reviewEntry": 1,
+      "readyAt": 1795343188162,
+      "reviewEntry": 2,
       "patchId": "c758439828ddd96fa1b414201bb9b89f2445ed7f",
       "changedFiles": [
         "custom_components/houseplan/command_adapter.py",
@@ -5677,7 +5677,6 @@
         "tests_backend/test_ha_external_screens_websocket.py",
         "tests_backend/test_support_config_projection.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6415,7 +6414,8 @@
     }
   },
   "waiting": [
-    1517
+    1517,
+    1516
   ],
   "active": {
     "issue": 1518,
@@ -7514,6 +7514,19 @@
           "finishedAt": "2026-11-22T09:01:01.040Z",
           "failures": []
         }
+      }
+    },
+    "finish:504bc629-7831-4a8d-9970-388f758069fe": {
+      "digest": "38905b9d5e9ce2bd534b47c8578d5d1af22e3ada6e87b4b79cf1e800e54487ae",
+      "issue": 1516,
+      "message": {
+        "kind": "queued",
+        "issue": 1516,
+        "at": 1795343188162,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "2bb7609d2bf6a30db11d69cd0873a67a1402f322"
       }
     }
   },
