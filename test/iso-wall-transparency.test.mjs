@@ -38,12 +38,13 @@ test('#1530 an opaque cut fully hides the device side and glass behind it', () =
     const [x,y] = visualScene;
     const placement = {floorAnchor,visualScene,deviceSize};
     const [, , , floorScale] = isoFloorMatrix(camera);
-    const top = cut([[x-12,y+17],[x+12,y+17],[x+12,y+21],[x-12,y+21]]);
+    const top = cut([[x-30,y+17],[x+30,y+17],[x+30,y+21],[x-30,y+21]]);
     const side = wall([[x-12,y+26],[x+12,y+26],[x+12,y+19],[x-12,y+19]]);
     const mask = deviceWallOcclusion([top,side],camera,placement,height);
     const shape = [{left:-.5,right:.5,top:-.5,bottom:.5,rx:.15,ry:.15}];
     const body = mask.bodyMask(shape);
     assert.ok(contains(body.cut,x+.12,y+18));
+    assert.ok(contains(body.cut,x+21,y+18),'cover the antialiased body edge inside the wall silhouette');
     assert.ok(contains(body.occluded,x+.12,y+22));
     assert.ok(!contains(body.cut,x+.12,y+12));
     const [u,v] = floorAnchor;
@@ -51,6 +52,7 @@ test('#1530 an opaque cut fully hides the device side and glass behind it', () =
     const glass = [[[u-20,rim,0],[u+20,rim,0],[u+20,rim+9.6/floorScale,9.6],
       [u-20,rim+9.6/floorScale,9.6]]];
     assert.ok(contains(mask.glassMask(glass).cut,u+.12,v+18/floorScale));
+    assert.ok(contains(mask.glassMask(glass).cut,u+21,v+18/floorScale),'cover glass ink beyond the face polygon');
     assert.ok(contains(mask.glassMask(glass).occluded,u+.12,v+22/floorScale));
     const transparentCut = deviceWallOcclusion([side],camera,placement,height);
     assert.equal(transparentCut.bodyMask(shape).cut,'');

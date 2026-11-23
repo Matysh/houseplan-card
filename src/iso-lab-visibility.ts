@@ -215,6 +215,16 @@ let deviceQueue:readonly IsoWallDepthQueueEntry[]|undefined,deviceCamera:IsoCame
 let deviceFaces:Face[]=[];
 const noDeviceOcclusion: IsoDeviceOcclusion = {occluded:'',cut:''};
 
+function wallCutAtHeight({entry}:Face,height:number):boolean {
+  return entry.layer==='wall-top' ? entry.face.height===height
+    : entry.layer==='opening' && entry.surface.kind==='opening-lintel-top' && entry.surface.points?.[0]?.z===height;
+}
+
+function wallCutRing(ring:Point[],[left,top,right,bottom]:number[]):Point[] {
+  const horizontal=halfPlane(halfPlane(ring,[1,0,-left]),[-1,0,right]);
+  return halfPlane(halfPlane(horizontal,[0,1,-top]),[0,-1,bottom]);
+}
+
 function deviceOccluder(wall: Face, ring: Point[], plane: Plane): Multi {
   const delta=wall.plane.map((n,i)=>n-plane[i]) as Plane;
   const sign=Math.sign(area(ring));
@@ -284,7 +294,20 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
       }
     }
     const hidden:Multi=[],cut:Multi=[];
+    // At the device-cap height the wall is in front of every extruded side.
+    // Mask the actual wall silhouette so anti-aliased edges of the body are
+    // covered as well. Preserve the equal-height device faces themselves.
+    const levelCuts = new Set(nearby.filter(wall=>wallCutAtHeight(wall,height)));
+    for(const wall of levelCuts)for(const [ring] of wall.geom) {
+      const cover=wallCutRing(ring,[cx-r,cy-r,cx+r,cy+r]);
+      if(!cover.length)continue;
+      if(area(cover)<0)cover.reverse();
+      let visible:Multi=[[cover]];
+      for(const cap of caps)visible=visible.flatMap(poly=>subtractConvex(poly[0],cap));
+      cut.push(...visible);
+    }
     for(const side of sides)for(const wall of nearby){
+      if(levelCuts.has(wall))continue;
       let visible=deviceOccluder(wall,side.ring,side.plane);
       // The device cap is nearer than every device side, including another badge's side.
       for(const cap of caps)visible=visible.flatMap(poly=>subtractConvex(poly[0],cap));
@@ -297,6 +320,8 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
   const glassMask=(surfaces:readonly IsoDeviceSurface[]):IsoDeviceOcclusion=>{
     const cached=glassMasks.get(surfaces);if(cached)return cached;
     const hidden:Multi=[],cut:Multi=[];
+    const levelCuts=new Set<Face>();
+    const envelope=[Infinity,Infinity,-Infinity,-Infinity],margin=size*.12;
     for(const surface of surfaces){
       const vertices=surface.map(([x,y,drop])=>{
         const u=x-anchorX,v=y-anchorY;
@@ -308,9 +333,26 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
       const ring=vertices.map(p=>[p[0],p[1]] as Point),plane=heightPlane(vertices);
       if(!plane)continue;
       const bounds=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
+      envelope[0]=Math.min(envelope[0],bounds[0]);envelope[1]=Math.min(envelope[1],bounds[1]);
+      envelope[2]=Math.max(envelope[2],bounds[2]);envelope[3]=Math.max(envelope[3],bounds[3]);
       for(const wall of structureFaces){
+        if(wallCutAtHeight(wall,height)){
+          if(wall.bounds[2]>=bounds[0]-margin&&wall.bounds[0]<=bounds[2]+margin&&
+            wall.bounds[3]>=bounds[1]-margin&&wall.bounds[1]<=bounds[3]+margin)levelCuts.add(wall);
+          continue;
+        }
         if(wall.bounds[2]<bounds[0]||wall.bounds[0]>bounds[2]||wall.bounds[3]<bounds[1]||wall.bounds[1]>bounds[3])continue;
         (masonrySurface(wall.entry)==='top' ? cut : hidden).push(...deviceOccluder(wall,ring,plane));
+      }
+    }
+    // The upper/lower glass rims are CSS strokes beyond their side polygons.
+    // Include their paint in the same level cut.
+    const bounds=envelope.map((n,i)=>n+(i<2?-margin:margin));
+    for(const wall of levelCuts)for(const [ring] of wall.geom){
+      const cover=wallCutRing(ring,bounds);
+      if(cover.length){
+        if(area(cover)<0)cover.reverse();
+        cut.push([cover]);
       }
     }
     const local=([x,y]:Point):Point=>[anchorX+(d*(x-cx)-c*(y-cy))/det,anchorY+(-b*(x-cx)+a*(y-cy))/det];
