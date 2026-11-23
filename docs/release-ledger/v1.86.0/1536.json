@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1536,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Separates the Zigbee caption from the wall-cut body mask introduced on this beta line.",
+  "summary": {
+    "ru": "Маска корпуса устройства не обрезает число Zigbee в 2.5D.",
+    "en": "The 2.5D device body mask leaves the Zigbee reading intact."
+  }
+}

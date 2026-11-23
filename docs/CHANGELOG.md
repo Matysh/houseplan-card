@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Keep the ends of wall-mounted device outlines vertical at the wall cut in straight-on 2.5D views (#1534, #1537).
+- Keep Zigbee signal readings legible when a wall cuts across a device body in 2.5D (#1536).
+- Join wall-mounted device outlines to the wall cut in straight-on 2.5D views without a dangling lower rim (#1534).
 
 ## v1.86.1-beta.4 — 2026-11-23
 

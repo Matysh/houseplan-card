@@ -11,6 +11,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['demo/smoke_device_contact_resize_1517.mjs', ['src/device-contact-card.ts', 'src/device-contact-layout.ts', 'src/device-contact-render.ts', 'src/houseplan-card.ts', 'src/iso-scene-geometry.ts']],
   ['demo/smoke_plan_rotation.mjs', ['src/view-frame.ts', 'src/iso-projection.ts', 'src/plan-rotation-motion.ts']],
   ['demo/smoke_floor_persistent_cache.mjs', ['src/floor-cache-preview.ts', 'src/projection-view-camera.ts']],
+  ['demo/smoke_iso_device_signal.mjs', ['src/device-face.ts', 'src/styles/devices.styles.ts', 'src/styles/iso-lab-markers.styles.ts', 'src/iso-lab-visibility.ts']],
   ['demo/smoke_iso_flat_parity.mjs', ['src/iso-projection.ts', 'src/projection-view-camera.ts', 'src/screen-camera.ts']],
   ['demo/smoke_iso_raster_parity.mjs', ['src/iso-projection.ts', 'src/iso-scene-geometry.ts', 'src/projection-view-camera.ts']],
   ['tests_backend/test_plan_graph_support.py', ['custom_components/houseplan/support_wire_schema.py', 'scripts/support-relay/hp_relay/support_wire_schema.py']],

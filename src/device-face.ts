@@ -112,6 +112,12 @@ export function renderDeviceFace(
     hasSections ? `with-values pos-${shellPosition}` : '',
     legacyMetrics.length ? 'with-legacy' : '',
   ].filter(Boolean).join(' ');
+  // LQI is a caption, outside the wall mask for the extruded device sides.
+  const signal = presentation.lqiText != null
+    ? html`<span class="${lqiClassName(presentation.valueBadge)}${presentation.lqiBand ? ` band-${presentation.lqiBand}` : ''}"
+        style=${presentation.lqiColor ? `color:${presentation.lqiColor}` : nothing}
+        aria-hidden=${occlusionBody ? 'true' : nothing}>${presentation.lqiText}</span>`
+    : nothing;
   const content = html`
     ${pulse.kind !== 'none' && pulse.reducedMotionIndicator !== 'dot'
       ? html`<span class="device-pulse activity-ring ${pulse.kind} ${pulse.reason} reason-${pulse.reason} ${gen2 ? 'gen2' : ''}"
@@ -163,14 +169,12 @@ export function renderDeviceFace(
         <ha-icon icon="mdi:alert-outline"></ha-icon>
       </span>` : nothing}
     </span>
-    ${presentation.lqiText != null
-      ? html`<span class="${lqiClassName(presentation.valueBadge)}${presentation.lqiBand ? ` band-${presentation.lqiBand}` : ''}"
-          style=${presentation.lqiColor ? `color:${presentation.lqiColor}` : nothing}>${presentation.lqiText}</span>`
-      : nothing}
+    ${occlusionBody ? nothing : signal}
   `;
   return occlusionBody ? html`
     ${options.contactInk !== false ? html`<span class="device-contact-ink" aria-hidden="true"></span>` : nothing}
     <span class="device-occlusion-body" aria-hidden="true">${content}</span>
+    ${signal}
   ` : content;
 }
 

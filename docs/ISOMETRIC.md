@@ -170,6 +170,7 @@ locks and room captions share a reading direction. On the four diagonal
 views they follow the existing two plan axes. In each straight-on view the
 text and glyphs read horizontally. The device's own icon angle still applies.
 Bodies, anchors, hit targets and downward depth follow the actual camera.
+The Zigbee number is a caption outside the device body mask (#1536).
 
 A nearer wall dims covered parts of device bodies, badges and common frames.
 The core-sized body mask belongs to a separate paint container. Shared contact

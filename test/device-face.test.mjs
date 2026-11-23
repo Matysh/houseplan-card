@@ -22,7 +22,7 @@ test('#1482 only interactive ISO wraps body paint, leaving shared contact ink ou
   assert.equal((iso.match(/class="device-contact-ink"/g)||[]).length,1);
   const ink=iso.indexOf('class="device-contact-ink"'),body=iso.indexOf('class="device-occlusion-body"');
   assert.ok(ink>=0&&body>ink);
-  assert.ok(iso.indexOf('device-core')>body&&iso.indexOf('device-battery')>body&&iso.indexOf('lqi')>body);
+  assert.match(iso.slice(body),/device-core[\s\S]*device-battery[\s\S]*<\/span>\s*<\/span>\s*<\/span>\s*<span class="lqi"[^>]*aria-hidden=true>155/);
   for(const surface of ['interactive-plan','static-card','preview']){
     const html=flatten(renderDeviceFace(p,{surface}));
     assert.doesNotMatch(html,/device-occlusion-body/);
