@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21333,
+  "revision": 21334,
   "nextTicket": 633,
   "nextFence": 633,
   "tasks": {
@@ -5790,7 +5790,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795395377838,
       "reviewEntry": 5,
-      "patchId": "8eae1d0f8dd39cce58d82c6d3dff5cc8af5edd19",
+      "patchId": "a9e08d6407557cdf1949d88bb48a2a8d5ef6e74e",
       "changedFiles": [
         "demo/fixtures/direct-perspective-room.mjs",
         "demo/golden/baselines/baselines-index.json",
@@ -6423,10 +6423,11 @@
     "token": "632:finish:857a738a-edba-497e-a5b9-b43eb8ae69f1:finish:1:admit",
     "fence": 632,
     "materialSha": "6a93c8f551c4bb39c492f0d43f78ebf0d2036131",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "e38612b43a41121dcd0f1e72c37176a95477e6e7",
+    "phase": "testing",
     "admittedAt": 1795395381781,
-    "expiresAt": 1795395681781
+    "expiresAt": 1795395687631,
+    "patchId": "a9e08d6407557cdf1949d88bb48a2a8d5ef6e74e"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6767,6 +6768,10 @@
     },
     "finish:f5d5885f-e699-4aa8-b46d-95af73c82837:finish:3:return": {
       "digest": "ba8d0b2cdd384de242bc164bb11d50cef31a0e3b85a7419d835b1067067f7520",
+      "issue": 1526
+    },
+    "finish:857a738a-edba-497e-a5b9-b43eb8ae69f1:finish:2:synchronized": {
+      "digest": "00a31b502afdc60aa2f4aff47509232482f9f3ee99c53087624d4c809e3afd9d",
       "issue": 1526
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
