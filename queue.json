@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 21583,
-  "nextTicket": 636,
+  "revision": 21584,
+  "nextTicket": 637,
   "nextFence": 636,
   "tasks": {
     "1024": {
@@ -5853,6 +5853,20 @@
       "devBuild": {
         "status": "pending"
       }
+    },
+    "1529": {
+      "issue": 1529,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1529-wall-cap",
+      "materialSha": "10a2afb7389b0308e6290e5b596b7a9520445295",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 636,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795415230400,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6418,7 +6432,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1529
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6468,6 +6484,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:f009ab78-f7aa-40f0-b710-6a876d102663": {
+      "digest": "0c3edbcb0c6a0f4d832ad356f695188a5efafbee014420d4d5a620df1d4c4d99",
+      "issue": 1529,
+      "message": {
+        "kind": "queued",
+        "issue": 1529,
+        "at": 1795415230400,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "10a2afb7389b0308e6290e5b596b7a9520445295"
       }
     }
   },
