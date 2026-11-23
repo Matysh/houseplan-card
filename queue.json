@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21647,
+  "revision": 21648,
   "nextTicket": 638,
   "nextFence": 638,
   "tasks": {
@@ -2235,44 +2235,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "24f98e2081b460f7b14a76a186155b574a6bbb45"
-      }
-    },
-    "1423": {
-      "issue": 1423,
-      "branch": "codex/1423-standalone-entry",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-      "mergedSha": "17e097cc5028767c96277023575ac2052d59ef8b",
-      "mergedAt": 1794665058069,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1423:3:42729b347ff7985c803c68f0ff1f94f120c35011:a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "17e097cc5028767c96277023575ac2052d59ef8b"
       }
     },
     "1426": {
@@ -5850,7 +5812,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "10a2afb7389b0308e6290e5b596b7a9520445295"
       }
     },
     "1530": {
@@ -6560,6 +6523,18 @@
         "materialSha": "781296e04296243ef7501f0b6fa85dc32390bb5a",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:45124360033:1:1529": {
+      "digest": "7bd6a48ad9d9675cbd56c46ebed53f60f7166e26d72fecd78b70fe31b4319238",
+      "issue": 1529,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1529,
+        "at": 1795415564384,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "10a2afb7389b0308e6290e5b596b7a9520445295"
       }
     }
   },
