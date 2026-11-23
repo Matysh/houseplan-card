@@ -1,11 +1,15 @@
-<!-- release: v1.86.1-beta.3 -->
-<!-- base: v1.86.1-beta.2 -->
+<!-- release: v1.86.1-beta.4 -->
+<!-- base: v1.86.1-beta.3 -->
 <!-- language: ru -->
-## Houseplan 1.86.1-beta.3
+## House Plan 1.86.1-beta.4
 
-В четырёх прямых ракурсах 2.5D появилась лёгкая перспектива. Ближняя часть плана стала шире, а вертикальные рёбра стен сохраняют своё направление. [#1526](https://github.com/Matysh/houseplan-card/issues/1526)
+В перспективных ракурсах 2.5D исправлены артефакты на дверях и стенах. Непрозрачные срезы корректно перекрывают остекление и корпуса устройств, а общие обводки повторяют расположение устройств в группе. (#1528, #1529, #1530, #1531)
+
+Ввод блокируется до завершения поворота. Обновление профиля внешнего экрана в режиме просмотра не пересоздаёт стартовое превью. (#1525)
 
 <!-- language: en -->
-## Houseplan 1.86.1-beta.3
+## House Plan 1.86.1-beta.4
 
-The four straight-on 2.5D views now show subtle perspective. The near side of the plan looks wider and vertical wall edges stay upright. [#1526](https://github.com/Matysh/houseplan-card/issues/1526)
+Straight-on 2.5D views now resolve door and wall overlaps correctly. Opaque wall cuts cover glass and device bodies where they overlap, and shared outlines follow their device groups. (#1528, #1529, #1530, #1531)
+
+Plan input stays locked until rotation finishes. Live profile updates on read-only external screens leave the startup preview in place. (#1525)

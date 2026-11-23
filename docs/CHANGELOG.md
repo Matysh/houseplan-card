@@ -2,13 +2,13 @@
 
 ## Unreleased
 
-- Align shared device outlines with their markers in perspective 2.5D views (#1531).
-
-- Hide the portions of 2.5D device bodies and glass outlines occluded by opaque upper wall cuts (#1530).
-
-- Keep window panes behind opaque upper wall cuts in straight-on 2.5D views (#1529).
+## v1.86.1-beta.4 — 2026-11-23
 
 - Resolve crossing door and wall surfaces with perspective-correct depth in straight-on 2.5D views (#1528).
+- Keep window panes behind opaque upper wall cuts in straight-on 2.5D views (#1529).
+- Hide the portions of 2.5D device bodies and glass outlines occluded by opaque upper wall cuts (#1530).
+- Align shared device outlines with their markers in perspective 2.5D views (#1531).
+- Keep plan input locked throughout rotation and avoid refreshing the startup preview when a read-only external screen receives a profile update (#1525).
 
 ## v1.86.1-beta.3 — 2026-11-23
 
