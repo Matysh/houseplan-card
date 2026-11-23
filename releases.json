@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1319,
+  "revision": 1320,
   "active": "v1.86.1-beta.5",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -240305,7 +240305,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "102a12eb144d923bfb8b350b4e15390369677986",
       "portToDev": [
         {
           "from": "3a6245cb4e6381e61d6a0af120e0baf54a570fde",
@@ -240321,6 +240321,12 @@
         "selectionDigest": "fbd66e5ebe2ee1aa35bdc1531d83eca45e038a8bcc00a591b5fd25402671fd4b",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "metricsDecision": {
+        "decisionId": "beta5-owner-size-approval",
+        "source": "chat",
+        "sourceRef": "chat:houseplan-v1.86.1-beta.5:beta5-owner-size-and-golden-approval",
+        "decisionText": "все размеры и новые эталоны для беты принимаю"
       }
     }
   },
@@ -246480,7 +246486,8 @@
     "beta5-candidate:102a12eb144d923bfb8b350b4e15390369677986": "34e870142e7813e4be14c0571cde8fe7795e86e045583085ffd1d2bceec0fe87",
     "ship-review:prepare:d6e9297f-7058-45d1-88bc-676b28144be6": "f9d288e18b28f1588ca46010fc46d3a209f0e39a7e371f0fb2bb5746a8404b2f",
     "ship-review:result:1e658591-292c-41c5-bcf7-7978f82d14a4": "0a1ce395c55bfafcfef7a4f5f3d8aafd37bfa2f5fcae3f92a2e25b0bc83f4027",
-    "beta5-metrics:102a12eb144d923bfb8b350b4e15390369677986": "76e24782ff89493f966220b7519f4b1ac935a9718c3ac1af5759b461f7d8cfe0"
+    "beta5-metrics:102a12eb144d923bfb8b350b4e15390369677986": "76e24782ff89493f966220b7519f4b1ac935a9718c3ac1af5759b461f7d8cfe0",
+    "beta5-metrics-accepted:102a12eb144d923bfb8b350b4e15390369677986": "ccecc844901a3eadf479578c6702970367c35cb5d8218e6d8d36ab0b9ba92411"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
