@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21766,
+  "revision": 21767,
   "nextTicket": 640,
   "nextFence": 640,
   "tasks": {
@@ -6597,6 +6597,10 @@
       "digest": "1ee3b2089f69d6b21c81257bbd2941edae7ad0bf09146768e223f968d766070c",
       "issue": 1531
     },
+    "github:45131704208:1:completions:message:49eb662d3a204ab36b97663652c7b43b0a130149d3f2ee2351fb4d930965a4b5": {
+      "digest": "2a801e29839e796fc96d4ca4d98eb234bf64e8fb56d1bf571dd1d5f9b6b2ea60",
+      "issue": 1531
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6681,7 +6685,8 @@
         "reviewChanges": "Центры устройств уже использовали перспективу #1526, а общий контур строился в исходной плоскости и крепился к одному маркеру. Контур учитывает перспективное смещение центров, сохраняя отступы на краях и открытые стыки со стенами. Тест проверяет шесть примагниченных устройств во всех четырёх прямых ракурсах.\n\n[Вердикт по E2E](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1531.md)\n\nСинтетическая сцена SVG в закреплённом Chromium 151.0.7922.34. Слева сборка из тега `v1.86.1-beta.3`, справа рабочая ветка с исправлениями #1528–#1531. [Сравнение «до/после»](https://github.com/Matysh/houseplan-card/blob/52ef4ff488a878d08b681153e9cbe4aab3efcb1c/docs/issue-evidence/1531/comparison.png).",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
