@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22631,
+  "revision": 22632,
   "nextTicket": 653,
   "nextFence": 653,
   "tasks": {
@@ -2602,43 +2602,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "56f51be8175594bb994bc9c5af159ab071dd0999"
-      }
-    },
-    "1444": {
-      "issue": 1444,
-      "branch": "codex/1444-context-menu-footprint",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "45faf4e7c16d5feb2e0f30727784d69a52429960",
-      "mergedSha": "75925bfe1019b343cfa0b04891b08dd1074abc7e",
-      "mergedAt": 1794688324566,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "75925bfe1019b343cfa0b04891b08dd1074abc7e"
       }
     },
     "1445": {
@@ -5935,7 +5898,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "ad765cf67f737e5d1b8ccd669d9672c3ef0f7b7a"
       }
     }
   },
@@ -6552,6 +6516,18 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:45289449563:1:1540": {
+      "digest": "558f94877dc49c8290d2a24dd66e8a94d2e77c39bb8b86458ce569a15250d462",
+      "issue": 1540,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1540,
+        "at": 1795476863834,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ad765cf67f737e5d1b8ccd669d9672c3ef0f7b7a"
       }
     }
   },
