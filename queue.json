@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 21933,
-  "nextTicket": 642,
+  "revision": 21934,
+  "nextTicket": 643,
   "nextFence": 642,
   "tasks": {
     "1024": {
@@ -5845,6 +5845,20 @@
         "src/live-viewport.ts",
         "src/styles/plan.styles.ts"
       ]
+    },
+    "1534": {
+      "issue": 1534,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/iso-wall-contact-cut",
+      "materialSha": "f2575b174d52d20648253006eecdf82cd0a5d02e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 642,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795430692446,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6410,7 +6424,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1534
+  ],
   "active": {
     "issue": 1533,
     "worker": "finish",
@@ -6560,6 +6576,19 @@
         "materialSha": "5923f94b1ddf65af4bd80f40cb2cb5c2a95c7f05",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:91b9e05a-2ec8-48d0-98a5-ecafd8a6f92d": {
+      "digest": "6f9011ba6d65ca23c4705879558d164bf04589d60d477860a9131a0ae0e4ef00",
+      "issue": 1534,
+      "message": {
+        "kind": "queued",
+        "issue": 1534,
+        "at": 1795430692446,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f2575b174d52d20648253006eecdf82cd0a5d02e"
       }
     }
   },
