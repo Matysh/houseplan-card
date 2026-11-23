@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep window panes behind opaque upper wall cuts in straight-on 2.5D views (#1529).
+
 - Resolve crossing door and wall surfaces with perspective-correct depth in straight-on 2.5D views (#1528).
 
 ## v1.86.1-beta.3 — 2026-11-23

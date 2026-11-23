@@ -281,6 +281,30 @@ test('#1528 crossing door and wall faces keep a single straight depth boundary i
   }
 });
 
+test('#1529 an opaque wall cut hides the overlapping upper corner of a window pane', () => {
+  const camera = { ...cam(0), perspective: { center: [100,100], rate: .002 } };
+  const height = 100;
+  const walls = buildIsoWallGeometry([[[[0,210],[90,210],[90,322],[0,322]]]],camera,height);
+  const points = [{point:[0,242],z:17},{point:[200,48],z:17},
+    {point:[200,48],z:93},{point:[0,242],z:93}];
+  const pane = {id:'pane',sourceIndex:0,type:'window',kind:'window-glass',material:'glass-side',
+    points,depth:0,d:'M '+points.map(p=>projectPlanPoint(p.point,p.z,camera).join(' ')).join(' L ')+' Z'};
+  const queue = buildIsoWallDepthQueue(walls,[pane],true);
+  const cut = walls.topFaces[0].d;
+  const opaque = clipIsoOpeningDepthQueue(queue,camera).find(e=>e.layer==='opening')?.surface.d ?? '';
+  const paneIndex = queue.findIndex(e=>e.layer==='opening');
+  const glass = top => composeIsoTranslucentStructure(queue,camera,1,{side:0,top},[])
+    .filter(fragment=>fragment.index===paneIndex).map(fragment=>fragment.d).join(' ');
+  const opaqueCut = glass(1), translucentCut = glass(.5);
+  const overlap = projectPlanPoint([15,227.45],91,camera);
+  const outside = projectPlanPoint([130,115.9],65,camera);
+  assert.ok(contains(pane.d,...overlap) && contains(cut,...overlap));
+  assert.ok(contains(pane.d,...outside) && !contains(cut,...outside));
+  assert.ok(!contains(opaque,...overlap) && !contains(opaqueCut,...overlap));
+  assert.ok(contains(translucentCut,...overlap));
+  assert.ok(contains(opaque,...outside) && contains(opaqueCut,...outside));
+});
+
 test('#1478 a disjoint foreground face with overlapping bounds leaves one uncut wall polygon', () => {
   const camera = cam(0);
   const face = (id, corners, z) => ({ layer: 'opening', depth: z, surface: {
