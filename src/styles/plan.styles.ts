@@ -203,6 +203,7 @@ export const planStyles = css`
     .hp-mode-scene-camera > svg,
     .zoomwrap > svg,
     .iso-scene-surface > svg,
+    .iso-perspective-light-frame > svg,
     .hp-mode-crossfade > svg {
       position: absolute;
       inset: 0;
@@ -231,10 +232,12 @@ export const planStyles = css`
     /* Keep the idle SVG composited without freezing its raster density at
        the previous zoom. Camera motion supplies its own transform hint. */
     .iso-scene-surface { filter:var(--hp-iso-gesture-blur, none); will-change:opacity; }
-    .iso-scene-surface > svg { overflow:visible; }
+    .iso-perspective-light-frame { position:absolute; inset:0; }
+    .iso-scene-surface > svg,
+    .iso-perspective-light-frame > svg { overflow:visible; }
     .iso-scene-surface[data-hp-light-mixing] { isolation:isolate; }
-    .iso-scene-surface[data-hp-light-mixing] > svg { mix-blend-mode:plus-lighter; }
-    .iso-scene-surface > svg[data-hp-retained-light] { pointer-events:none; }
+    .iso-scene-surface[data-hp-light-mixing] > :is(svg, .iso-perspective-light-frame) { mix-blend-mode:plus-lighter; }
+    .iso-scene-surface > [data-hp-retained-light] { pointer-events:none; }
     .iso-scene-surface[data-hp-raster-display] { opacity:0; }
     .iso-scene-surface[data-hp-raster-handoff] { isolation:isolate; }
     .hp-iso-raster-handoff {

@@ -1885,8 +1885,10 @@ export class HouseplanCard extends LitElement {
     glow: TemplateResult; led: TemplateResult | undefined; lights: IsoWallLightSource[];
   }>(() => this.requestUpdate(), () => refreshHouseplanViewportNodes(this));
 
-  private _isoAuthoredScene(): SVGSVGElement | null {
-    return this.renderRoot.querySelector('.iso-scene-surface > svg:not([data-hp-retained-light])');
+  private _isoAuthoredScene(): SVGSVGElement | HTMLDivElement | null {
+    return this.renderRoot.querySelector(
+      '.iso-scene-surface > :is(.plan-svg, .iso-perspective-light-frame):not([data-hp-retained-light])',
+    );
   }
 
   private _modeGlowInputs: readonly unknown[] | null = null;
@@ -13832,7 +13834,7 @@ export class HouseplanCard extends LitElement {
           source.key, source.color, source.alpha, source.radius, source.points,
         ]));
         const field = this._isoLight.choose(scope, signature, { glow, led, lights: isoWallLights },
-          this._isoAuthoredScene(), !this._reducedMotion && !isoScene?.camera.perspective && !this._modeTransitionBusy && !this._floorPassive);
+          this._isoAuthoredScene(), !this._reducedMotion && !this._modeTransitionBusy && !this._floorPassive);
         isoGlowLayer = field.glow;
         isoLedField = field.led;
         isoWallLights = field.lights;
@@ -13914,6 +13916,9 @@ export class HouseplanCard extends LitElement {
     }
     const sceneView = iso ? authoredHouseplanSceneViewport(this, view) : view;
     const floorCamera = this._isoFloorCamera;
+    const isoLightFrame = (content: TemplateResult) => floorCamera?.perspective
+      ? html`<div class="iso-perspective-light-frame">${content}</div>`
+      : content;
     const markerCamera = ISO_LAB_FLOOR_MARKERS && floorCamera;
     // Opposite views share the same lettering. In a direct view the
     // horizontal plan axis determines the reading direction.
@@ -14415,6 +14420,7 @@ export class HouseplanCard extends LitElement {
             style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}${this._modeProjectionCrossing ? `;opacity:${this._modeProjectionOpacity}` : ''}${modeVisual && !this._modeTransitionPreparing ? `;width:${this._modeSceneSize?.[0] ?? modeVisual.stageWidth}px;height:${this._modeSceneSize?.[1] ?? modeVisual.stageHeight}px` : ''}">
           ${this._modeProjectionSource && this._modeProjectionScene ? this._modeProjectionScene : this._modeProjectionScene = html`
           ${iso ? html`<div class="iso-scene-surface" data-hp-live-scene="camera">
+          ${isoLightFrame(html`
           ${floorCamera?.perspective ? html`
             ${svg`<svg data-hp-live-viewbox="camera" aria-hidden="true" style="pointer-events:none" preserveAspectRatio="none"
               viewBox="${sceneView.x} ${sceneView.y} ${sceneView.w} ${sceneView.h}">${isoUnderlay}</svg>`}
@@ -14474,7 +14480,7 @@ export class HouseplanCard extends LitElement {
             ${floorCamera?.perspective ? nothing : ledBody()}
           </svg>
           ${floorCamera?.perspective && leds.size ? renderIsoPerspectiveFloor(floorCamera,ledBody(),sceneView,perspectiveSize,
-            gridVisualUnits(isoDisplayWallHeight(),this._cellCm),'led') : nothing}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
+            gridVisualUnits(isoDisplayWallHeight(),this._cellCm),'led') : nothing}`)}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always
                  had, restored by the owner. `iconCqw` is `iconPct * iconUnit

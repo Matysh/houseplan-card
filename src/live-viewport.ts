@@ -499,7 +499,7 @@ function configureCameraRaster(host: LiveViewportHost, state: LiveViewportState,
 }
 
 function isoLightMixing(state: LiveViewportState): boolean {
-  return state.nodes?.camera[0]?.parentElement?.hasAttribute('data-hp-light-mixing') === true;
+  return !!state.nodes?.camera[0]?.closest('[data-hp-light-mixing]');
 }
 
 /** HA changes can be adopted during an ISO gesture while the scene pixels

@@ -1,7 +1,10 @@
+type LightFrame = SVGSVGElement | HTMLDivElement;
+
 /** Retain one complete geometry layer while the next light field is painted. */
 export class IsoLightTransition<T> {
   private field?: { scope: string; signature: string; value: T };
-  private snapshot: SVGSVGElement | null = null;
+  private snapshot: LightFrame | null = null;
+  private live: LightFrame | null = null;
   private effects: Animation[] = [];
   private pending = false;
   private frame = 0;
@@ -9,7 +12,7 @@ export class IsoLightTransition<T> {
 
   public constructor(private readonly onPending: () => void, private readonly onRetire: () => void) {}
 
-  public choose(scope: string, signature: string, value: T, scene: SVGSVGElement | null, animate: boolean): T {
+  public choose(scope: string, signature: string, value: T, scene: LightFrame | null, animate: boolean): T {
     const previous = this.field;
     if (!previous || previous.scope !== scope || !animate || !scene) {
       this.clear();
@@ -25,7 +28,7 @@ export class IsoLightTransition<T> {
       return previous.value;
     }
     this.field = { scope, signature, value };
-    const clone = scene.cloneNode(true) as SVGSVGElement;
+    const clone = scene.cloneNode(true) as LightFrame;
     const prefix = `hp-iso-retained-${++this.revision}-`;
     const ids = new Map([...clone.querySelectorAll('[id]')].map(el => [el.id, prefix + el.id]));
     for (const el of [clone, ...clone.querySelectorAll('*')]) {
@@ -37,15 +40,17 @@ export class IsoLightTransition<T> {
         if (attr.localName === 'href' && attr.value.startsWith('#') && ids.has(attr.value.slice(1))) {
           el.setAttributeNS(attr.namespaceURI, attr.name, '#' + ids.get(attr.value.slice(1)));
         }
-        if (attr.name.startsWith('data-hp-live-') && el !== clone) el.removeAttribute(attr.name);
+        // The perspective floor, walls and LED plane must follow the same camera as the live frame.
+        if (attr.name.startsWith('data-hp-live-') && attr.name !== 'data-hp-live-viewbox') el.removeAttribute(attr.name);
       }
+      if (el.getAttribute('data-hp') === 'stage') el.removeAttribute('data-hp');
     }
     clone.setAttribute('inert', '');
     clone.setAttribute('aria-hidden', 'true');
     clone.setAttribute('data-hp-retained-light', '');
-    clone.removeAttribute('data-hp');
     clone.style.opacity = '1';
     this.snapshot = clone;
+    this.live = scene;
     scene.after(clone);
     // A cloned CSS animation starts at zero when attached. Sunlight belongs
     // to the solar timeline, not this lamp crossfade: retain both settled
@@ -66,13 +71,13 @@ export class IsoLightTransition<T> {
     return value;
   }
 
-  public present(scene: SVGSVGElement | null): void {
+  public present(scene: LightFrame | null): void {
     const old = this.snapshot;
     if (!old || !scene || this.frame || this.effects.length) return;
     const win = scene.ownerDocument.defaultView;
     if (!win) { this.clear(); return; }
     const parent = scene.parentElement;
-    if (!parent || old.parentElement !== parent) { this.clear(); return; }
+    if (scene !== this.live || !parent || old.parentElement !== parent) { this.clear(); return; }
     parent.setAttribute('data-hp-light-mixing', '');
     scene.style.opacity = '0';
     // Both animations start together after the new SVG has had a paint.
@@ -100,8 +105,8 @@ export class IsoLightTransition<T> {
     const win = old?.ownerDocument.defaultView;
     if (this.frame) win?.cancelAnimationFrame(this.frame);
     this.frame = 0;
-    const current = parent?.querySelector<SVGSVGElement>('svg:not([data-hp-retained-light])');
-    current?.style.removeProperty('opacity');
+    this.live?.style.removeProperty('opacity');
+    this.live = null;
     parent?.removeAttribute('data-hp-light-mixing');
     for (const effect of this.effects) effect.cancel();
     this.effects = [];
