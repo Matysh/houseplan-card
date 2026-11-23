@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { composeIsoTranslucentStructure } from '../test-build/iso-lab-visibility.js';
-import { ISO_CAMERA } from '../test-build/iso-projection.js';
+import { composeIsoTranslucentStructure, deviceWallOcclusion } from '../test-build/iso-lab-visibility.js';
+import { isoFloorMatrix, ISO_CAMERA, projectPlanPoint } from '../test-build/iso-projection.js';
 import { buildIsoOpeningBasis, projectIsoOpeningStructure } from '../test-build/iso-openings.js';
 import { savedSpaceDialogDraft, spaceDialogSettings } from '../test-build/editors/space-dialog-draft.js';
 import { spaceDisplayOf } from '../test-build/logic.js';
@@ -29,6 +29,34 @@ function contains(path, x, y) {
   return inside;
 }
 const orderAt = (result,x,y) => result.filter(fragment => contains(fragment.d,x,y)).map(fragment=>fragment.index);
+
+test('#1530 an opaque cut fully hides the device side and glass behind it', () => {
+  for (const lens of [undefined,{center:[100,100],rate:.002}]) {
+    const camera = {...ISO_CAMERA,origin:[0,0],rotDeg:0,perspective:lens};
+    const height = 10, floorAnchor = [50,100], deviceSize = 40;
+    const visualScene = projectPlanPoint(floorAnchor,height,camera);
+    const [x,y] = visualScene;
+    const placement = {floorAnchor,visualScene,deviceSize};
+    const [, , , floorScale] = isoFloorMatrix(camera);
+    const top = cut([[x-12,y+17],[x+12,y+17],[x+12,y+21],[x-12,y+21]]);
+    const side = wall([[x-12,y+26],[x+12,y+26],[x+12,y+19],[x-12,y+19]]);
+    const mask = deviceWallOcclusion([top,side],camera,placement,height);
+    const shape = [{left:-.5,right:.5,top:-.5,bottom:.5,rx:.15,ry:.15}];
+    const body = mask.bodyMask(shape);
+    assert.ok(contains(body.cut,x+.12,y+18));
+    assert.ok(contains(body.occluded,x+.12,y+22));
+    assert.ok(!contains(body.cut,x+.12,y+12));
+    const [u,v] = floorAnchor;
+    const rim = v+20;
+    const glass = [[[u-20,rim,0],[u+20,rim,0],[u+20,rim+9.6/floorScale,9.6],
+      [u-20,rim+9.6/floorScale,9.6]]];
+    assert.ok(contains(mask.glassMask(glass).cut,u+.12,v+18/floorScale));
+    assert.ok(contains(mask.glassMask(glass).occluded,u+.12,v+22/floorScale));
+    const transparentCut = deviceWallOcclusion([side],camera,placement,height);
+    assert.equal(transparentCut.bodyMask(shape).cut,'');
+    assert.equal(transparentCut.glassMask(glass).cut,'');
+  }
+});
 
 test('#1518 intersecting translucent faces are painted in the local depth order', () => {
   const a=wall([[0,20],[20,10],[20,0],[0,10]]);

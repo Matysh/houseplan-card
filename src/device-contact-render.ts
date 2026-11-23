@@ -160,8 +160,9 @@ export class DeviceContactRenderer {
       m.virtual,m.legacyDiameters?.join(','),JSON.stringify(frame.layout?.[m.id]?.contact_basis),
       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
     if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) {
-      this.paintWallMasks(nodes);
-      if (turned && this.scene) this.paint(this.scene.shapes.keys());
+      const changedMasks = this.paintWallMasks(nodes);
+      if (this.scene && (turned || changedMasks.size))
+        this.paint(turned ? this.scene.shapes.keys() : changedMasks);
       return turned;
     }
     const measured: ContactMarker[] = [];
@@ -175,7 +176,7 @@ export class DeviceContactRenderer {
       }
     }
     const fresh = this.measure(pending);
-    this.paintWallMasks(nodes);
+    const changedMasks = this.paintWallMasks(nodes);
     for (const m of frame.markers) {
       const element = nodes.get(m.id), shell = element?.querySelector<HTMLElement>('.device-shell');
       const ink = element?.querySelector<HTMLElement>('.device-contact-ink');
@@ -216,13 +217,13 @@ export class DeviceContactRenderer {
     // not the complete spatial graph; the shared face already paints the text.
     if (sameGeometry) {
       this.elements = nextElements; this.frameKey = key;
-      if (turned) this.paint(previous.shapes.keys());
+      if (turned || changedMasks.size) this.paint(turned ? previous.shapes.keys() : changedMasks);
       return turned || this.appearanceChanged;
     }
     const reusable=previous && this.floorKey===frame.key && effective.length===previous.shapes.size
       && effective.every(m=>previous.shapes.has(m.id)&&this.elements.get(m.id)?.element===nextElements.get(m.id)?.element);
     if(reusable) {
-      const affected=new Set<string>();
+      const affected=changedMasks;
       for(const m of effective){const old=previous.shapes.get(m.id)!.marker;
         if(old.x!==m.x||old.y!==m.y||old.diameter!==m.diameter||old.virtual!==m.virtual||old.precise!==m.precise
           || ['left','right','top','bottom'].some(side=>old.box[side as keyof ContactRect]!==m.box[side as keyof ContactRect]))
@@ -286,11 +287,18 @@ export class DeviceContactRenderer {
   }
 
   private readonly wallPaint = new WeakMap<SVGSVGElement, [IsoDeviceWallMask, readonly IsoDeviceFace[]]>();
+  private readonly glassWall = new WeakMap<HTMLElement, IsoDeviceWallMask>();
 
-  private paintWallMasks(nodes: ReadonlyMap<string, HTMLElement>): void {
-    if (!this.plane) return;
+  private paintWallMasks(nodes: ReadonlyMap<string, HTMLElement>): Set<string> {
+    const changed = new Set<string>();
+    if (!this.plane) return changed;
     for (const [id, node] of nodes) {
       const mask = (node as HTMLElement & { hpIsoWallMask?: IsoDeviceWallMask }).hpIsoWallMask;
+      if (this.glassWall.get(node) !== mask) {
+        changed.add(id);
+        if (mask) this.glassWall.set(node, mask);
+        else this.glassWall.delete(node);
+      }
       const slot = node.querySelector<SVGSVGElement>('[data-hp-wall-mask-slot]');
       const faces = this.faces.get(metricKey(node.querySelector('.device-shell')));
       if (!mask || !slot || !faces?.length) {
@@ -300,9 +308,9 @@ export class DeviceContactRenderer {
       const previous = this.wallPaint.get(slot);
       if (previous?.[0] === mask && previous[1] === faces) continue;
       this.wallPaint.set(slot, [mask, faces]);
-      const { occluded } = mask.bodyMask(faces);
-      node.toggleAttribute('data-hp-device-occlusion', !!occluded);
-      if (!occluded) { render(nothing, slot); continue; }
+      const { occluded, cut } = mask.bodyMask(faces);
+      node.toggleAttribute('data-hp-device-occlusion', !!(occluded || cut));
+      if (!occluded && !cut) { render(nothing, slot); continue; }
       // Include the local shell and satellites without allocating a viewport
       // for every marker. Coordinates are in units of the measured core.
       const x = Math.min(...faces.map(face => face.left)) + .15;
@@ -313,9 +321,11 @@ export class DeviceContactRenderer {
         maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox"
         x=${x} y=${y} width=${width} height=${height} style="mask-type:luminance">
         <rect x=${x} y=${y} width=${width} height=${height} fill="white"></rect>
-        <path d=${occluded} transform=${mask.transform} fill="#4d4d4d"></path>
+        ${occluded ? svg`<path d=${occluded} transform=${mask.transform} fill="#4d4d4d"></path>` : nothing}
+        ${cut ? svg`<path d=${cut} transform=${mask.transform} fill="black"></path>` : nothing}
       </mask></defs>`, slot);
     }
+    return changed;
   }
 
   public move(id: string, x: number, y: number): void {

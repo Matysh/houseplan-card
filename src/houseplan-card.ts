@@ -15227,7 +15227,7 @@ export class HouseplanCard extends LitElement {
     return html`${guard([this._modeSceneRevision, resolved, limitedSize,
       d.id, d.name, d.primary, d.area, d.virtual, d.hidden, d.userHidden, d.bindingStatus?.kind,
       ...(isoPlacement ? [view.x, view.y, view.w, view.h] : []),
-      showLqi, isoPlacement, isoPlacement?.wallMask?.path, this._rotation, this._selId,
+      showLqi, isoPlacement, isoPlacement?.wallMask, this._rotation, this._selId,
       this._mode === 'devices' && this._selId === d.id], () => {
     this._modeSceneBuilds['device-shells'] = (this._modeSceneBuilds['device-shells'] || 0) + 1;
     const pos = this._pos(d);

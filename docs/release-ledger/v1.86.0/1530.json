@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1530,
+  "baseStable": "v1.86.0",
+  "category": "stable-fix",
+  "rationale": "The existing raised device masks intentionally attenuate side-wall occlusion and incorrectly reused that attenuation over opaque wall caps.",
+  "summary": {
+    "ru": "Устройства в 2.5D больше не просвечивают сквозь непрозрачные верхние срезы стен.",
+    "en": "2.5D devices no longer show through opaque upper wall cuts."
+  }
+}

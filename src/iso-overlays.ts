@@ -49,10 +49,14 @@ export interface IsoDeviceFace {
 }
 /** Plan-plane XY plus vertical screen drop below the marker's top plane. */
 export type IsoDeviceSurface = readonly (readonly [number, number, number])[];
+export interface IsoDeviceOcclusion {
+  occluded: string;
+  cut: string;
+}
 export interface IsoDeviceWallMask {
-  path: string; transform: string;
-  bodyMask: (faces: readonly IsoDeviceFace[]) => { body: string; occluded: string };
-  glassMask: (faces: readonly IsoDeviceSurface[]) => string;
+  transform: string;
+  bodyMask: (faces: readonly IsoDeviceFace[]) => IsoDeviceOcclusion;
+  glassMask: (faces: readonly IsoDeviceSurface[]) => IsoDeviceOcclusion;
 }
 export interface IsoOverlayPlacement {
   deviceSize?: number;

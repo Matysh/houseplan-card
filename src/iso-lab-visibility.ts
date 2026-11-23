@@ -2,7 +2,7 @@
  * hidden by a nearer opaque face; never change plan coordinates or leaf poses.
  * A single average depth cannot order an open leaf crossing a long wall. */
 import { isoFloorMatrix, isoHeightLift, isoProjectedDepth, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
-import type { IsoDeviceFace, IsoDeviceSurface, IsoOverlayPlacement } from './iso-overlays';
+import type { IsoDeviceFace, IsoDeviceOcclusion, IsoDeviceSurface, IsoOverlayPlacement } from './iso-overlays';
 import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
 
 type Point = [number,number];
@@ -212,7 +212,27 @@ export function furnitureOcclusion(queue: readonly IsoWallDepthQueueEntry[], cam
 
 let deviceMasks=new WeakMap<IsoOverlayPlacement,IsoOverlayPlacement['wallMask']>();
 let deviceQueue:readonly IsoWallDepthQueueEntry[]|undefined,deviceCamera:IsoCamera|undefined;
-let deviceFaces:(Face|null)[]=[];
+let deviceFaces:Face[]=[];
+const noDeviceOcclusion: IsoDeviceOcclusion = {occluded:'',cut:''};
+
+function deviceOccluder(wall: Face, ring: Point[], plane: Plane): Multi {
+  const delta=wall.plane.map((n,i)=>n-plane[i]) as Plane;
+  const sign=Math.sign(area(ring));
+  const result: Multi=[];
+  for(const [wallRing] of wall.geom) {
+    let overlap=halfPlane(wallRing,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
+    for(let i=0;i<ring.length&&overlap.length;i++) {
+      const p=ring[i],q=ring[(i+1)%ring.length];
+      overlap=halfPlane(overlap,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
+    }
+    if(overlap.length) {
+      if(area(overlap)<0)overlap.reverse();
+      result.push([overlap]);
+    }
+  }
+  return result;
+}
+
 /** Glass occupies the wall-cut band. Solid faces additionally compare their
  * actual surface depth, so a wall behind a cap never cuts into its top. */
 export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],camera:IsoCamera,
@@ -220,29 +240,27 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
   const size=placement.deviceSize;
   if(!size)return undefined;
   if(queue!==deviceQueue||camera!==deviceCamera){
-    deviceQueue=queue;deviceCamera=camera;deviceFaces=queue.map(entry=>faceOf(entry,camera));deviceMasks=new WeakMap();
+    deviceQueue=queue;deviceCamera=camera;
+    deviceFaces=queue.map(entry=>faceOf(entry,camera)).filter((face):face is Face=>!!face?.opaque);
+    deviceMasks=new WeakMap();
   }
   if(deviceMasks.has(placement))return deviceMasks.get(placement);
   const lift=isoHeightLift(camera,1);
-  const [cx,cy]=placement.visualScene,r=size*5,covered:Multi=[];
+  const [cx,cy]=placement.visualScene,r=size*5;
   const minBodyDepth=isoProjectedDepth([cx,cy-r],height,camera)-size*.24/lift;
   const nearby:Face[]=[];
   for(const face of deviceFaces){
-    if(!face?.opaque)continue;
     const [x0,y0,x1,y1]=face.bounds;
     if(x1<cx-r||x0>cx+r||y1<cy-r||y0>cy+r)continue;
-    nearby.push(face);
-    for(const [ring] of face.geom){
-      const clipped=halfPlane(ring,[face.plane[0],face.plane[1],
-        face.plane[2]-minBodyDepth]);
-      if(clipped.length){if(area(clipped)<0)clipped.reverse();covered.push([clipped]);}
-    }
+    if(face.geom.some(([ring])=>ring.some(p=>at(face.plane,p)>minBodyDepth))) nearby.push(face);
   }
-  const mask=path(covered);
-  if(!mask){deviceMasks.set(placement,undefined);return undefined;}
-  const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c,[x,y]=placement.visualScene;
-  let lastFaces:readonly IsoDeviceFace[]|undefined,lastBody={body:'',occluded:''};
+  const structureFaces=deviceFaces;
+  if(!structureFaces.length){deviceMasks.set(placement,undefined);return undefined;}
+  const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c;
+  const [anchorX,anchorY]=placement.floorAnchor;
+  let lastFaces:readonly IsoDeviceFace[]|undefined,lastBody=noDeviceOcclusion;
   const bodyMask=(faces:readonly IsoDeviceFace[])=>{
+    if(!nearby.length)return noDeviceOcclusion;
     if(faces===lastFaces)return lastBody;
     const caps:Point[][]=[],sides:{ring:Point[];plane:Plane}[]=[];
     for(const face of faces){
@@ -265,61 +283,42 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
         if(plane)sides.push({ring:[p,q,lowQ,lowP],plane});
       }
     }
-    const hidden:Multi=[];
+    const hidden:Multi=[],cut:Multi=[];
     for(const side of sides)for(const wall of nearby){
-      const delta=wall.plane.map((n,i)=>n-side.plane[i]) as Plane;
-      for(const [ring] of wall.geom){
-        let overlap=halfPlane(ring,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
-        const sign=Math.sign(area(side.ring));
-        for(let i=0;i<side.ring.length&&overlap.length;i++){
-          const p=side.ring[i],q=side.ring[(i+1)%side.ring.length];
-          overlap=halfPlane(overlap,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
-        }
-        if(!overlap.length)continue;
-        // The cap is nearer than every side, including another badge's side.
-        let visible:Multi=[[overlap]];
-        for(const cap of caps)visible=visible.flatMap(poly=>subtractConvex(poly[0],cap));
-        hidden.push(...visible);
-      }
+      let visible=deviceOccluder(wall,side.ring,side.plane);
+      // The device cap is nearer than every device side, including another badge's side.
+      for(const cap of caps)visible=visible.flatMap(poly=>subtractConvex(poly[0],cap));
+      (masonrySurface(wall.entry)==='top' ? cut : hidden).push(...visible);
     }
-    const solid:Multi=[...caps.map(cap=>[cap]),...sides.map(side=>[side.ring])];
-    for(const geom of [solid,hidden])for(const [ring] of geom)if(area(ring)<0)ring.reverse();
-    lastFaces=faces;return lastBody={body:path(solid),occluded:path(hidden)};
+    lastFaces=faces;
+    return lastBody={occluded:path(hidden),cut:path(cut)};
   };
-  const glassMasks=new WeakMap<readonly IsoDeviceSurface[],string>();
-  const structureFaces=deviceFaces;
-  const glassMask=(surfaces:readonly IsoDeviceSurface[]):string=>{
-    const cached=glassMasks.get(surfaces);if(cached!==undefined)return cached;
-    const hidden:Multi=[];
+  const glassMasks=new WeakMap<readonly IsoDeviceSurface[],IsoDeviceOcclusion>();
+  const glassMask=(surfaces:readonly IsoDeviceSurface[]):IsoDeviceOcclusion=>{
+    const cached=glassMasks.get(surfaces);if(cached)return cached;
+    const hidden:Multi=[],cut:Multi=[];
     for(const surface of surfaces){
       const vertices=surface.map(([x,y,drop])=>{
-        const point=projectPlanPoint([x,y],height,camera);
+        const u=x-anchorX,v=y-anchorY;
+        // The SVG is embedded in the marker's local affine frame at the
+        // projected anchor. Its vertices must follow that same paint transform.
+        const point:Point=[cx+a*u+c*v,cy+b*u+d*v];
         return [...point,isoProjectedDepth([point[0],point[1]-drop],height,camera)-drop/lift];
       });
       const ring=vertices.map(p=>[p[0],p[1]] as Point),plane=heightPlane(vertices);
       if(!plane)continue;
-      const sign=Math.sign(area(ring));
       const bounds=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
       for(const wall of structureFaces){
-        if(!wall?.opaque||wall.bounds[2]<bounds[0]||wall.bounds[0]>bounds[2]||wall.bounds[3]<bounds[1]||wall.bounds[1]>bounds[3])continue;
-        const delta=wall.plane.map((n,i)=>n-plane[i]) as Plane;
-        for(const [wallRing] of wall.geom){
-          let overlap=halfPlane(wallRing,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
-          for(let i=0;i<ring.length&&overlap.length;i++){
-            const p=ring[i],q=ring[(i+1)%ring.length];
-            overlap=halfPlane(overlap,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
-          }
-          if(overlap.length){if(area(overlap)<0)overlap.reverse();hidden.push([overlap]);}
-        }
+        if(wall.bounds[2]<bounds[0]||wall.bounds[0]>bounds[2]||wall.bounds[3]<bounds[1]||wall.bounds[1]>bounds[3])continue;
+        (masonrySurface(wall.entry)==='top' ? cut : hidden).push(...deviceOccluder(wall,ring,plane));
       }
     }
-    const origin=projectPlanPoint([0,0],height,camera);
-    const local=hidden.map(poly=>poly.map(ring=>ring.map(p=>{
-      const x=p[0]-origin[0],y=p[1]-origin[1];return [(d*x-c*y)/det,(-b*x+a*y)/det] as Point;
-    })));
-    const result=path(local);glassMasks.set(surfaces,result);return result;
+    const local=([x,y]:Point):Point=>[anchorX+(d*(x-cx)-c*(y-cy))/det,anchorY+(-b*(x-cx)+a*(y-cy))/det];
+    const result={occluded:path(hidden,local),cut:path(cut,local)};
+    glassMasks.set(surfaces,result);
+    return result;
   };
-  const result={path:mask,bodyMask,glassMask,transform:`matrix(${d/det/size} ${-b/det/size} ${-c/det/size} ${a/det/size} ${.5-(d*x-c*y)/det/size} ${.5-(-b*x+a*y)/det/size})`};
+  const result={bodyMask,glassMask,transform:`matrix(${d/det/size} ${-b/det/size} ${-c/det/size} ${a/det/size} ${.5-(d*cx-c*cy)/det/size} ${.5-(-b*cx+a*cy)/det/size})`};
   deviceMasks.set(placement,result);return result;
 }
 
