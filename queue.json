@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 22291,
-  "nextTicket": 647,
+  "revision": 22292,
+  "nextTicket": 648,
   "nextFence": 647,
   "tasks": {
     "1024": {
@@ -5871,14 +5871,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1536-zigbee-lqi-mask",
-      "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
+      "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 646,
-      "queued": false,
+      "ticket": 647,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795442593410,
-      "reviewEntry": 1,
+      "readyAt": 1795444412031,
+      "reviewEntry": 2,
       "patchId": "79f91f2723ea49871d851cf46828a2eee50e71ec",
       "changedFiles": [
         "demo/smoke_iso_device_signal.mjs",
@@ -5900,20 +5900,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1536:1:79f91f2723ea49871d851cf46828a2eee50e71ec:c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-      "reviewMaterial": {
-        "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
-        "expectedBase": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-        "patchId": "79f91f2723ea49871d851cf46828a2eee50e71ec"
-      },
-      "reviewRetry": {
-        "requestId": "review:1536:1:79f91f2723ea49871d851cf46828a2eee50e71ec:c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-        "eventId": "github:45194612776:1:tick:0:review-retry",
-        "at": 1795444139669,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1536:1:79f91f2723ea49871d851cf46828a2eee50e71ec:c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
         "at": 1795444337414
@@ -6531,7 +6517,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1536
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6756,6 +6744,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:4f3cf128-fd86-43e5-8214-d15a81f7c0e7": {
+      "digest": "baf3d5e91da020e3e2d918149240507a23991e8164dee72a2a80c2fb4a29ebe4",
+      "issue": 1536,
+      "message": {
+        "kind": "queued",
+        "issue": 1536,
+        "at": 1795444412031,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
+        "evidence": {
+          "id": "20261123T141558730-01a09e3b",
+          "name": "Тесты для задачи #1536 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T141558730-01a09e3b/report.json",
+          "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
+          "status": "passed",
+          "finishedAt": "2026-11-23T14:28:29.622Z",
+          "failures": []
+        }
       }
     }
   },
