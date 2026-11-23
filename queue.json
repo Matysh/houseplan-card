@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21937,
+  "revision": 21938,
   "nextTicket": 643,
   "nextFence": 642,
   "tasks": {
@@ -5834,7 +5834,7 @@
       "ownerDecision": null,
       "ticket": 641,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795429911010,
       "reviewEntry": 1,
       "patchId": "f9f87c7bd107517a77e7e4701108bc35cd553606",
@@ -5844,7 +5844,16 @@
         "src/iso-light-transition.ts",
         "src/live-viewport.ts",
         "src/styles/plan.styles.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261123T103208185-339c237f",
+        "name": "Тесты для задачи #1533 (перед ревью)",
+        "reportPath": "/home/sergey/hp-stable-audit-1860-beta3/.git/process-next/runs/20261123T103208185-339c237f/report.json",
+        "materialSha": "5923f94b1ddf65af4bd80f40cb2cb5c2a95c7f05",
+        "status": "passed",
+        "finishedAt": "2026-11-23T10:47:12.271Z",
+        "failures": []
+      }
     },
     "1534": {
       "issue": 1534,
@@ -6434,9 +6443,9 @@
     "fence": 641,
     "materialSha": "5923f94b1ddf65af4bd80f40cb2cb5c2a95c7f05",
     "expectedBase": "bf6b5c73d88c6e6736297eb331d5af36a9ba208b",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795429915048,
-    "expiresAt": 1795431133758,
+    "expiresAt": 1795434436862,
     "patchId": "f9f87c7bd107517a77e7e4701108bc35cd553606"
   },
   "events": {
@@ -6601,6 +6610,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "f2575b174d52d20648253006eecdf82cd0a5d02e"
+      }
+    },
+    "finish:7aa50e11-2f5c-4c33-8ae1-641a357e2545:finish:3:s6-complete": {
+      "digest": "da1177e12437f6c412c08ff8e10e5dc79eac12308dc5a4347c894f668de4cf23",
+      "issue": 1533,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1533,
+        "at": 1795430836862,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "5923f94b1ddf65af4bd80f40cb2cb5c2a95c7f05",
+        "phase": "review",
+        "evidence": {
+          "id": "20261123T103208185-339c237f",
+          "name": "Тесты для задачи #1533 (перед ревью)",
+          "reportPath": "/home/sergey/hp-stable-audit-1860-beta3/.git/process-next/runs/20261123T103208185-339c237f/report.json",
+          "materialSha": "5923f94b1ddf65af4bd80f40cb2cb5c2a95c7f05",
+          "status": "passed",
+          "finishedAt": "2026-11-23T10:47:12.271Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Перспективный пол, объёмные элементы и LED-плоскость сгруппированы в один кадр. Действующий 500-мс переход плавно смешивает полный предыдущий и новый кадры. Сохранённые части перспективного кадра получают те же изменения камеры, что и живые. Повёрнутый вид по-прежнему использует свой один SVG. Уменьшение движения сохраняет мгновенную смену.\n\n`node demo/smoke_iso_light_fade.mjs`: до правки оба перехода в повёрнутом виде проходили, в прямом включение падало на отсутствии анимации. С правкой прошли включение и выключение в обеих ориентациях, проверка опацитета в середине 500 мс, совмещение слоёв при зуме и мгновенное обновление в reduced motion. `node demo/smoke_iso_sun.mjs` прошёл. Сцена `panel-iso-straight-perspective-1526` даёт побайтово одинаковый кадр с правкой и на `bf6b5c73d`; расхождение со старым эталоном на 496 пикселей уже было в dev.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
