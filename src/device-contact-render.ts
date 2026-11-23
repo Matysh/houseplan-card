@@ -43,7 +43,14 @@ const metricKey = (shell: Element | null | undefined): string => shell
   ? JSON.stringify([shell.className, ...[...shell.querySelectorAll('.valtext,.value-badge')]
     .map((node) => [node.textContent, node.getAttribute('style')])]) : '';
 
+let nextMaskScope = 0;
+
 export class DeviceContactRenderer {
+  private readonly maskScope = ++nextMaskScope;
+
+  public wallMaskId(deviceId: string): string {
+    return `hp-device-wall-${this.maskScope}-${encodeURIComponent(deviceId)}`;
+  }
   private readonly hitShapes = new WeakMap<HTMLElement, {
     bounds: ContactRect; contains: (x: number, y: number) => boolean;
   }>();
@@ -395,7 +402,7 @@ export class DeviceContactRenderer {
       const bounds = isoDeviceFaceBounds(faces);
       const x = Math.min(-2, bounds.left), y = Math.min(-2, bounds.top);
       const width = Math.max(3, bounds.right + 1) - x, height = Math.max(3, bounds.bottom + 1) - y;
-      render(svg`<defs><mask id=${'hp-device-wall-' + encodeURIComponent(id)}
+      render(svg`<defs><mask id=${this.wallMaskId(id)}
         maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox"
         x=${x} y=${y} width=${width} height=${height} style="mask-type:luminance">
         <rect x=${x} y=${y} width=${width} height=${height} fill="white"></rect>
@@ -541,7 +548,7 @@ export class DeviceContactRenderer {
         // stacking context produced seams and multiplied translucent edges.
         const wallMask=(item.element as HTMLElement&{hpIsoWallMask?:IsoDeviceWallMask}).hpIsoWallMask;
         render(svg`${glass && (s===owner || s===frontOwner) ? renderIsoMarkerGlass(glass,glassBox,virtual,
-          wallMask ? {id:`hp-glass-wall-${encodeURIComponent(s.marker.id)}`,mask:wallMask,
+          wallMask ? {id:`hp-glass-wall-${this.maskScope}-${encodeURIComponent(s.marker.id)}`,mask:wallMask,
             origin:glassAnchor} : undefined,
           owner===frontOwner ? 'both' : s===owner ? 'back' : 'front') : nothing}
         <svg viewBox=${viewBox}

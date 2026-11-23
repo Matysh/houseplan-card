@@ -68,34 +68,65 @@ try {
           const large = scene.shapes.get('large'), standard = scene.shapes.get('standard');
           const device = (id) => card.renderRoot.querySelector('[data-hp="device"][data-id="' + id + '"]');
           const owner = device(device('large').dataset.hpDeviceComponent ?? 'large');
-          const top = owner.querySelector(iso ? '.iso-marker-glass.front .glass-rim.upper' : '.device-contact-contour');
-          const bottom = owner.querySelector('.iso-marker-glass.rear .glass-rim.lower');
+          const members = grouped ? [device('large'), device('standard')] : [device('large')];
+          const rims = selector => members.flatMap(el => [...el.querySelectorAll(selector)]);
+          const top = iso ? rims('.iso-marker-glass .glass-rim.upper') : [owner.querySelector('.device-contact-contour')];
+          const bottom = iso ? rims('.iso-marker-glass .glass-rim.lower') : [];
+          const projection = card._deviceContacts.glassProjection;
+          // Reconstruct each rim in the authored plane before measuring it.
+          // In 2.5D the same outline is shared by the two depth-sorted SVGs,
+          // and the straight views also project it through the perspective lens.
+          const reverseProjection = (point, dx, dy) => {
+            if (!projection) return [point.x - dx, point.y - dy];
+            const {camera, height} = projection;
+            const r = camera.rotDeg * Math.PI / 180;
+            const fx = point.x - dx - camera.origin[0], fy = point.y - dy - camera.origin[1];
+            let sx = camera.origin[0] + (fx * Math.cos(r) - fy * Math.sin(r)) * camera.xyScale;
+            let sy = camera.origin[1] + (fx * Math.sin(r) + fy * Math.cos(r)) * camera.xyScale * (camera.floorScaleY ?? 1);
+            const lift = height * camera.zScale * Math.sin(camera.tiltDeg * Math.PI / 180);
+            if (camera.perspective) {
+              const [cx, cy] = camera.perspective.center;
+              const rate = camera.perspective.rate;
+              const divisor = (1 - rate * lift) / (1 + rate * (sy - cy));
+              sx = cx + (sx - cx) * divisor;
+              sy = cy + (sy - cy) * divisor;
+            }
+            sy += lift;
+            const px = (sx - camera.origin[0]) / camera.xyScale;
+            const py = (sy - camera.origin[1]) / camera.xyScale / (camera.floorScaleY ?? 1);
+            return [camera.origin[0] + px * Math.cos(r) + py * Math.sin(r),
+              camera.origin[1] - px * Math.sin(r) + py * Math.cos(r)];
+          };
           const cornerX = large.marker.x + large.box.right, cornerY = large.marker.y + large.box.top;
           // A quarter-circle of radius r clears its original corner by r(√2−1).
-          // Sample SVG path geometry in its native coordinates in both views.
-          const radius = (stroke, x, y) => {
-            const length = stroke?.getTotalLength();
-            if (!length) throw new Error('No painted contact outline');
+          // Sample both rim paths, then compare clearance in plan units.
+          const radius = (strokes, x, y, { projected = false, dx = 0, dy = 0 } = {}) => {
             let clearance = Infinity;
-            for (let i = 0; i <= 256; i++) {
-              const p = stroke.getPointAtLength(i * length / 256);
-              clearance = Math.min(clearance, Math.hypot(p.x - x, p.y - y));
+            for (const stroke of strokes) {
+              const length = stroke?.getTotalLength();
+              if (!length) continue;
+              for (let i = 0; i <= 2048; i++) {
+                const p = stroke.getPointAtLength(i * length / 2048);
+                const [px, py] = projected ? reverseProjection(p, dx, dy) : [p.x, p.y];
+                clearance = Math.min(clearance, Math.hypot(px - x, py - y));
+              }
             }
+            if (!Number.isFinite(clearance)) throw new Error('No painted contact outline');
             return clearance / (Math.SQRT2 - 1);
           };
           const result = {
-            upperRadius: radius(top, cornerX, cornerY),
-            hitRadius: radius(device('large').querySelector('.device-contact-hit'), cornerX, cornerY),
+            upperRadius: radius(top, cornerX, cornerY, { projected: iso }),
+            hitRadius: radius([device('large').querySelector('.device-contact-hit')], cornerX, cornerY),
             standardRadius: grouped ? radius(top, standard.marker.x + standard.box.right,
-              standard.marker.y + standard.box.bottom) : null,
+              standard.marker.y + standard.box.bottom, { projected: iso }) : null,
             sizes: large.marker.diameter / standard.marker.diameter,
             wallContact: large.walls.left === expected.wall && (!grouped || standard.walls.left === expected.wall),
-            dashed: getComputedStyle(top).stroke !== 'none' && top.getAttribute('stroke-dasharray') === (iso ? '6 5' : '4 3'),
+            dashed: getComputedStyle(top[0]).stroke !== 'none' && top[0].getAttribute('stroke-dasharray') === (iso ? '6 5' : '4 3'),
           };
           if (iso) {
             const [a, b, c, d] = card._isoFloorMarkerPlane;
             const depth = large.marker.diameter * .24 / (a * d - b * c);
-            result.lowerRadius = radius(bottom, cornerX - c * depth, cornerY + a * depth);
+            result.lowerRadius = radius(bottom, cornerX, cornerY, { projected: true, dx: -c * depth, dy: a * depth });
           }
           return result;
         }, { iso, grouped, expected });

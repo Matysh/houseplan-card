@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1540,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Repairs 2.5D device mask ownership during remount and fade-out retirement on the current release line.",
+  "summary": {
+    "ru": "Устройства у стен остаются видимыми после пересоздания 2,5D, подсветка сохраняется до последнего кадра затухания.",
+    "en": "Wall-mounted devices remain visible after 2.5D remounts, and glow survives the final frame of its fade-out."
+  }
+}

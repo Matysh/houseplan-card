@@ -74,8 +74,16 @@ test('off before the entry frame preserves its peers and fade-out duration', () 
   const timer = fade.timer;
   assert.equal(r.timers.get(timer).delay, GLOW_FADE_MS + 34);
   assert.equal(r.state.renderedSources.has('s|a'), true, 'off node survives through fade');
-  r.timers.get(timer).cb();
+  const {cb: expire} = r.timers.get(timer);
+  r.timers.delete(timer);
+  expire();
+  const fallback = fade.timer;
+  assert.equal(r.state.renderedSources.has('s|a'), true, 'allow the final CSS frame to paint');
+  r.frame();
+  assert.equal(r.state.renderedSources.has('s|a'), true);
+  r.frame();
   assert.equal(r.state.renderedSources.has('s|a'), false);
+  assert.equal(r.timers.has(fallback), false, 'final paint cancels the fallback timer');
   assert.equal(r.state.renderedSources.has('s|b'), true);
   r.dispose();
 });

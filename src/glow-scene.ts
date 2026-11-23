@@ -599,15 +599,28 @@ export function transitionGlowSource(
     suspendGlowFeather(state, host);
     const fade: GlowFade = { frame: null, timer: null };
     state.fadeTimers.set(key, fade);
+    const finish = () => {
+      if (state.fadeTimers.get(key) !== fade) return;
+      cancelGlowFade(state, host, key);
+      state.renderedSources.delete(key);
+      state.lastAppearance.delete(key);
+      if (host.isConnected()) host.requestUpdate();
+    };
     const arm = () => {
       if (state.fadeTimers.get(key) !== fade) return;
       fade.frame = null;
       fade.timer = win.setTimeout(() => {
+        fade.timer = null;
         if (state.fadeTimers.get(key) !== fade) return;
-        state.fadeTimers.delete(key);
-        state.renderedSources.delete(key);
-        state.lastAppearance.delete(key);
-        if (host.isConnected()) host.requestUpdate();
+        if (host.reducedMotion() || win.document?.hidden) { finish(); return; }
+        // A delayed render can reach its final opacity on the same frame as
+        // this deadline. Allow the browser to paint it and emit transitionend
+        // while the node is still connected.
+        fade.frame = win.requestAnimationFrame(() => {
+          if (state.fadeTimers.get(key) === fade) fade.frame = win.requestAnimationFrame(finish);
+        });
+        // A visible tab can be hidden after arming the final frame.
+        fade.timer = win.setTimeout(finish, 100);
       }, GLOW_FADE_MS + 34);
     };
     // Render precedes the CSS transition's first painted frame. Retain the

@@ -209,7 +209,10 @@ const res = await page.evaluate(async () => {
 
   // ================= F. baseline комнаты: clean и dirty ===================
   await c._requestMode('plan'); await c.updateComplete;
-  await waitFor(() => !c._modeTransitionBusy);
+  // Preparation can defer the requested mode before any transition is busy.
+  if (!await waitFor(() => c._mode === 'plan' && !c._modeTransitionBusy)) {
+    throw new Error('Plan editor did not become ready for the room remount fixture');
+  }
   const room = c._curSpaceCfg?.rooms?.[0];
   out.fRoomFixtureExists = !!room;
   if (room) {

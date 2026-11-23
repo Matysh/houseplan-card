@@ -15246,8 +15246,10 @@ export class HouseplanCard extends LitElement {
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
     if (limitedSize !== null) st.push(`--dev-size:${limitedSize}cqw`);
     const wallMask = isoPlacement?.wallMask;
-    const wallMaskId = `hp-device-wall-${encodeURIComponent(d.id)}`;
-    if (wallMask) st.push(`--hp-device-wall-mask:url(#${wallMaskId})`);
+    // A warm remount can paint the same ids at a different size. Reference
+    // this renderer's definitions so Chromium cannot reuse detached SVG masks.
+    const wallMaskId = this._deviceContacts?.wallMaskId(d.id);
+    if (wallMask && wallMaskId) st.push(`--hp-device-wall-mask:url(#${wallMaskId})`);
     const floorLight = this._isoLightFloors?.has(isoPlacement?.owner?.id ?? (this._isoLightFloors.size ? this._spaceModel()?.rooms.find((r) => this._pointInRoom([pos.x, pos.y], r))?.id : '') ?? '') ? 'iso-floor-light' : '';
     const disabledReason = presentation.disabledReason;
     const ghostLabel = presentation.haDisabled

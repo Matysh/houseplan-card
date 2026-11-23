@@ -206,7 +206,12 @@ const result = await page.evaluate(async () => {
 
   currentSource.dispatchEvent(mouse('pointerout', root().querySelector('.stage')));
   await window.__hpHarnessProjection(card, 'flat');
-  await card.updateComplete;
+  await wait(() => {
+    const layer = root().querySelector('.devlayer');
+    return card._renderProjection === 'flat' && card._continuity.state === 'steady'
+      && layer?.querySelector('.dev[data-id="d_light1"]')
+      && root().querySelector('[data-hp="stage"][data-projection="flat"]');
+  }, 'Flat scene committed after leaving 2.5D');
   await frame();
 
   const source = root().querySelector('.dev[data-id="d_light1"]');

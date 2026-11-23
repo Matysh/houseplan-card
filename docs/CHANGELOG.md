@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep wall-mounted devices visible when the 2.5D plan remounts at a different device size (#1540).
+- Keep Glow and LED fields connected through the final frame of their fade-out (#1540).
+
 ## v1.86.1-beta.5 — 2026-11-23
 
 - Keep shared device outlines aligned with walls and turn value capsules with their text in all 2.5D views (#1538).

@@ -174,10 +174,15 @@ const out = await page.evaluate(async () => {
   await card._editorRuntime.optimizePlans.run();
   await card.updateComplete;
   result.applyUsesExactAtomicEndpoint = calls.filter((type) => type === 'houseplan/plan/optimize').length === 1;
-  const restored = card._devices.find((device) => device.id === 'orphan');
-  result.applyRestoresMarkerToView = restored?.space === 'home'
-    && restored.icon === 'mdi:washing-machine'
-    && !!card.renderRoot.querySelector('.dev[data-id="orphan"]');
+  // The ACK updates the model before the next complete View is published.
+  const markerRestored = () => {
+    const restored = card._devices.find(device => device.id === 'orphan');
+    return restored?.space === 'home' && restored.icon === 'mdi:washing-machine'
+      && !!card.renderRoot.querySelector('.dev[data-id="orphan"]');
+  };
+  const restoreDeadline = performance.now() + 5000;
+  while (!markerRestored() && performance.now() < restoreDeadline) await new Promise(requestAnimationFrame);
+  result.applyRestoresMarkerToView = markerRestored();
 
   await card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
