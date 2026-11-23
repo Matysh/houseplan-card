@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1294,
+  "revision": 1295,
   "active": "v1.86.1-beta.4",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -224802,7 +224802,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.86.1-beta.4",
         "candidate": "306742f589d12a6c79846868b4d8be696b89abfc",
         "base": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
         "issues": [
@@ -232410,6 +232410,228 @@
         "selectionDigest": "a367b12a26d8422d4ef32e808b4b3ed9965b0d66a0acee4fa7d848efb87e1c60",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.86.1-beta.4",
+          "candidate": "306742f589d12a6c79846868b4d8be696b89abfc",
+          "base": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
+          "issues": [
+            {
+              "number": 1465,
+              "commits": [
+                "d6756f108caf162b987bc3e217ac7492ab113e66",
+                "ddbc1d9243bfb699293d3755e52faa3b60d64517"
+              ]
+            },
+            {
+              "number": 1472,
+              "commits": [
+                "1adfb020ee47e52b7897612624cd84b1196dca8b",
+                "288508bdbb5e26de30b891b71a358f30e0ba121e",
+                "5ec319fe96ff3d8c7922031d75d2d3e2ae4c8146",
+                "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
+                "812ec1e9a25bf88ab4db658cd4247bcd1d94b311",
+                "ba2f06b8ec121a5a93c0432ad6b374fcfdb1d505"
+              ]
+            },
+            {
+              "number": 1508,
+              "commits": [
+                "646c31987cf144d9676b827403321a6e91e7a92a",
+                "d87079131e98ffa2f0e6ab447c83819ae1689afe"
+              ]
+            },
+            {
+              "number": 1509,
+              "commits": [
+                "3c82c0f1801173caa5aa6a5a7cfe19445c746305"
+              ]
+            },
+            {
+              "number": 1510,
+              "commits": [
+                "36af10803c20dbf027b922553b37419d112023a9",
+                "76009cd13974a5e96df68196c10ce09f1131551d"
+              ]
+            },
+            {
+              "number": 1511,
+              "commits": [
+                "5237ec475be4adf61d102ffc4e3954de19cb68ab",
+                "6ecc2be9098933a914064093f8fff82bf7e6edbe",
+                "82eea3dea6cc361417766fb2465c9f98c34d86ad"
+              ]
+            },
+            {
+              "number": 1512,
+              "commits": [
+                "3337227988d528e977cf8f978a112c7e8a730cfa",
+                "501aeb434a7d9258a2ef10663a3c778875d8e9a5",
+                "9051fc47cd84b0bbce7d466fe909d91588726f14",
+                "b813d183d073f5a30b5489d6fb35922399cb0c3c",
+                "d57250c1b30dea3b55e6e3c4b884949493686d33",
+                "f06fae6e2846106241e67f117c8e814004c7fd40"
+              ]
+            },
+            {
+              "number": 1513,
+              "commits": [
+                "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585"
+              ]
+            },
+            {
+              "number": 1515,
+              "commits": [
+                "b9b1ede15ac44c53f655c13adc9fc5ef410d6cd9",
+                "c633b67b1a283ef013c3497641c5bcdf41884c87"
+              ]
+            },
+            {
+              "number": 1516,
+              "commits": [
+                "29f32c05ed0932be242e766771b7cdaaf06472bc"
+              ]
+            },
+            {
+              "number": 1517,
+              "commits": [
+                "235643a7c47ccdf359165e706c2388971605bcb1",
+                "8304dda874ff028e068e56b0a1397ada5c6fd27c",
+                "8d413b8121306d906999556537096b8db5f00dfa",
+                "a1fe29b487968318c70d906049ad4cf9e2e13702"
+              ]
+            },
+            {
+              "number": 1518,
+              "commits": [
+                "3e3cb32854b080df2e9dbb87a08689b95bc81aea"
+              ]
+            },
+            {
+              "number": 1519,
+              "commits": [
+                "01e04cdf8725e5cc3ad17d9ca3fd5889597d0f1e",
+                "432662652229bf4bf58c2a4b94e954efa9f770c7"
+              ]
+            },
+            {
+              "number": 1520,
+              "commits": [
+                "15853d335dab075caa990fc33027b1544fd85493",
+                "208889308ff5aa413c7e0abe4f9f9284889c7f38",
+                "2a4cb0a37be86072052d4559a12cdc6278523753",
+                "2c0573d0c08bab0c585111994aafbbdd56cf582c",
+                "369f9c9bd852f8daeab42bc2f7134aa569946656",
+                "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
+                "66dfecb5e8db3a176f0a3d88ddea207ac76313ab",
+                "8e5c631d31289c36078e0238a532e94aab0ab25a",
+                "aa8f585f75a909ddf03dc12125a93e3545e439cb",
+                "c67f55e7e54c5cee4e30ecdfcfc9430969b67c15"
+              ]
+            },
+            {
+              "number": 1521,
+              "commits": [
+                "0987240f1c33505bf9352be24a98a281f8a1d4e9",
+                "dc1f17424d52bde3afe021b40dbd41d2f646ba58",
+                "f6a27ee7c94730c595f2d10b4093c5005d9d50a9",
+                "fb32f15eccce770ebef9700e314f0f11ff9e37ed"
+              ]
+            },
+            {
+              "number": 1522,
+              "commits": [
+                "1491bbcc013a11677b843dccc08b963981691966",
+                "9624bf260356a6db38927ff44a1deb67321d192f",
+                "b6bf06be77f1ae247a52f75886c5c6195fc28aea",
+                "d89fbfb352eaefaac7f88dadd1adc1df210b9e1d",
+                "ec73fa6e474fe9e87021f1ead36817beffd89a8d"
+              ]
+            },
+            {
+              "number": 1525,
+              "commits": [
+                "3fe84f8b24afadef9267c7359f0013f64ee879b9",
+                "d8300c5c4206e6d89d2c174b6185d6b55cd20fc6",
+                "eda43602b27606e9ac2b39c64661202d45ba9f27"
+              ]
+            },
+            {
+              "number": 1526,
+              "commits": [
+                "0a7b255aaa061ca57aca8e80ddcd3a97c7fad3ab",
+                "0d8066595460e1ab6f28ab69094791f86b62b9b6",
+                "247c9142b550e38ddaa900cd75d271944ee0ec51",
+                "329c971d57cfd7b722f21817ec302a5f88b36c7a",
+                "43d12ccd6e2a890f0b6c92538918302d5b4d7ab3",
+                "6a93c8f551c4bb39c492f0d43f78ebf0d2036131",
+                "6c7d6bd393a3c9fac5ae86c12af8c60642e90b80",
+                "9275726e155a921a2bdb94c36c8c42a0457d228b",
+                "e768a8a485bed5056345217aed5ed6b0e372b2a8",
+                "f2ddcfd2bf3fcf63c892057d93e7aba9fd5f59ed"
+              ]
+            },
+            {
+              "number": 1528,
+              "commits": [
+                "0fbada88c0c18ffe176ea7ad82c1a3983db6470f"
+              ]
+            },
+            {
+              "number": 1529,
+              "commits": [
+                "10a2afb7389b0308e6290e5b596b7a9520445295"
+              ]
+            },
+            {
+              "number": 1530,
+              "commits": [
+                "781296e04296243ef7501f0b6fa85dc32390bb5a",
+                "dd959d0df6aff02b8174583ab0b308bd2f9e21e7",
+                "e571d2269650e27e08526d518b12698e61d91357"
+              ]
+            },
+            {
+              "number": 1531,
+              "commits": [
+                "84aca2afee27c80ec214da23516cc0c67198c2fd"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1465,
+          1472,
+          1508,
+          1509,
+          1510,
+          1511,
+          1512,
+          1513,
+          1515,
+          1516,
+          1517,
+          1518,
+          1519,
+          1520,
+          1521,
+          1522,
+          1525,
+          1526,
+          1528,
+          1529,
+          1530,
+          1531
+        ],
+        "version": "1.86.1-beta.4",
+        "body": "<!-- release: v1.86.1-beta.4 -->\n<!-- base: v1.86.1-beta.3 -->\n<!-- language: ru -->\n## House Plan 1.86.1-beta.4\n\nВ перспективных ракурсах 2.5D исправлены артефакты на дверях и стенах. Непрозрачные срезы корректно перекрывают остекление и корпуса устройств, а общие обводки повторяют расположение устройств в группе. (#1528, #1529, #1530, #1531)\n\nВвод блокируется до завершения поворота. Обновление профиля внешнего экрана в режиме просмотра не пересоздаёт стартовое превью. (#1525)\n\n<!-- language: en -->\n## House Plan 1.86.1-beta.4\n\nStraight-on 2.5D views now resolve door and wall overlaps correctly. Opaque wall cuts cover glass and device bodies where they overlap, and shared outlines follow their device groups. (#1528, #1529, #1530, #1531)\n\nPlan input stays locked until rotation finishes. Live profile updates on read-only external screens leave the startup preview in place. (#1525)\n",
+        "technical": {
+          "ru": "## v1.86.1-beta.4 — 2026-11-23\n\n- В прямых ракурсах 2.5D пересекающиеся поверхности стен и дверей перекрываются с учётом перспективы (#1528).\n- Верхние срезы непрозрачных стен перекрывают оконные стёкла в прямых ракурсах 2.5D (#1529).\n- Непрозрачные верхние срезы стен скрывают перекрытые части корпусов и обводок устройств в 2.5D (#1530).\n- В перспективных ракурсах 2.5D обводки групп следуют за расположением устройств (#1531).\n- План блокирует ввод до завершения поворота. Обновление профиля внешнего экрана в режиме просмотра не пересоздаёт стартовое превью (#1525).",
+          "en": "## v1.86.1-beta.4 — 2026-11-23\n\n- Resolve crossing door and wall surfaces with perspective-correct depth in straight-on 2.5D views (#1528).\n- Keep window panes behind opaque upper wall cuts in straight-on 2.5D views (#1529).\n- Hide the portions of 2.5D device bodies and glass outlines occluded by opaque upper wall cuts (#1530).\n- Align shared device outlines with their markers in perspective 2.5D views (#1531).\n- Keep plan input locked throughout rotation and avoid refreshing the startup preview when a read-only external screen receives a profile update (#1525)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -238522,7 +238744,8 @@
     "ship-review:prepare:a98f6ee5-b637-42ed-9764-c67458b8dacd": "b6647cf8889d40b2840697de5ad68f1e5850e1dee8df77c5d6bc94a09beda1a3",
     "ship-review:result:093bb4be-eb8f-44a6-88fe-4a581929f3db": "1cf1fed5ba3aaa00bb9bd5b7257179ecfd2458a5fdc065b9c5690a6236c2cac3",
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:runner-report": "c6f79dac24aa12d2d5fa429459750cd9dc0023f8bcd00026cd0bed6149ae3017",
-    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:metrics": "f3308b99d456619f419f0fd8b150cb2b4b329aed6c05bd84cad844ca35771c54"
+    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:metrics": "f3308b99d456619f419f0fd8b150cb2b4b329aed6c05bd84cad844ca35771c54",
+    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:prepared:c3eedd07-8716-4f4e-8941-6d6dc9479de2": "abe1a983b73540231af18cdbf32c310bf4797a426f6ec36318a00d3126c88a63"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
