@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22294,
+  "revision": 22295,
   "nextTicket": 648,
   "nextFence": 648,
   "tasks": {
@@ -5876,7 +5876,7 @@
       "ownerDecision": null,
       "ticket": 647,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795444412031,
       "reviewEntry": 2,
       "patchId": "724e1cdea65c096ba3497a5d5ef9fc27acdde809",
@@ -5891,19 +5891,15 @@
         "test/device-face.test.mjs"
       ],
       "s6": {
-        "id": "20261123T141558730-01a09e3b",
-        "name": "Тесты для задачи #1536 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T141558730-01a09e3b/report.json",
-        "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
+        "id": "20261123T143349288-fe48ff3c",
+        "name": "Тесты для задачи #1536 (правки после ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T143349288-fe48ff3c/report.json",
+        "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
         "status": "passed",
-        "finishedAt": "2026-11-23T14:28:29.622Z",
+        "finishedAt": "2026-11-23T14:34:22.687Z",
         "failures": []
       },
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1536:1:79f91f2723ea49871d851cf46828a2eee50e71ec:c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-        "at": 1795444337414
-      },
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -6525,9 +6521,9 @@
     "fence": 647,
     "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
     "expectedBase": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795444416437,
-    "expiresAt": 1795444722606,
+    "expiresAt": 1795448064264,
     "patchId": "724e1cdea65c096ba3497a5d5ef9fc27acdde809"
   },
   "events": {
@@ -6802,6 +6798,34 @@
           "finishedAt": "2026-11-23T14:28:29.622Z",
           "failures": []
         }
+      }
+    },
+    "finish:4f3cf128-fd86-43e5-8214-d15a81f7c0e7:finish:3:s6-complete": {
+      "digest": "9b5f2726c42d3ac79d4bdc9d548d3861e598c2482e7a7f1d2425e511455abe69",
+      "issue": 1536,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1536,
+        "at": 1795444464264,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
+        "phase": "review",
+        "evidence": {
+          "id": "20261123T143349288-fe48ff3c",
+          "name": "Тесты для задачи #1536 (правки после ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T143349288-fe48ff3c/report.json",
+          "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
+          "status": "passed",
+          "finishedAt": "2026-11-23T14:34:22.687Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "- Маска корпуса ошибочно применялась к вложенному числу LQI. Контейнер корпуса, значки заряда и значений по-прежнему маскируются стеной. Число вынесено в соседний узел с теми же координатами, цветом, тенью, правилами видимости и ARIA-семантикой. Изменение локально для интерактивного 2.5D.\n- На синтетической сцене до правки два показателя 255 на увеличении 218% теряли 660 и 610 зелёных пикселей. После правки все три показателя совпадают попиксельно с контрольным рендером при отключённой маске корпуса. Переключение маски по-прежнему меняет более 11 тысяч пикселей корпуса на этом увеличении. Результат просмотрен также в диагональном и прямом ракурсах при 100%. Проверка подтверждает исходные показания в плоском виде, отсутствие записей и 10 unit-контрактов лица. Синтетический тест запускается в закреплённом Chromium и падает на исходном коммите.\n- Новых PNG-эталонов нет. Логика считывания LQI и транспорт HA прежние, для этого дефекта достаточно проверки отрисовки в браузере.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1536#issuecomment-7104158877).\n\n- Удалена устаревшая строка #1534, которую сохранил автоматический rebase в обеих версиях changelog. Diff относительно dev добавляет по одной записи о Zigbee. Общая запись #1534 и #1537 сохранена в обеих версиях.\n- Проверены diff обоих changelog относительно c5f6bd491a и отсутствие изменений в исходниках, тестах и каталоге проверок относительно проверенного 008350154d. Повторная передача использует текущий материал с чистым журналом.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
