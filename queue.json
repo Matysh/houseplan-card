@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22302,
+  "revision": 22303,
   "nextTicket": 648,
   "nextFence": 648,
   "tasks": {
@@ -5868,145 +5868,25 @@
     },
     "1536": {
       "issue": 1536,
+      "branch": "codex/1536-zigbee-lqi-mask",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1536-zigbee-lqi-mask",
-      "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 647,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795444412031,
-      "reviewEntry": 2,
-      "patchId": "724e1cdea65c096ba3497a5d5ef9fc27acdde809",
-      "changedFiles": [
-        "demo/smoke_iso_device_signal.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/ISOMETRIC.md",
-        "docs/release-ledger/v1.86.0/1536.json",
-        "process-next/lib/source-dependencies.mjs",
-        "src/device-face.ts",
-        "test/device-face.test.mjs"
-      ],
-      "s6": {
-        "id": "20261123T143349288-fe48ff3c",
-        "name": "Тесты для задачи #1536 (правки после ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T143349288-fe48ff3c/report.json",
-        "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
-        "status": "passed",
-        "finishedAt": "2026-11-23T14:34:22.687Z",
-        "failures": []
-      },
-      "reviewRound": 2,
-      "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795444337414,
-        "entry": 1,
-        "requestId": "review:1536:1:79f91f2723ea49871d851cf46828a2eee50e71ec:c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-        "transitionConfirmed": true
-      },
+      "status": "S8-merged",
+      "expectedBase": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
+      "mergedSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
+      "mergedAt": 1795444621008,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1536:2:724e1cdea65c096ba3497a5d5ef9fc27acdde809:c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-      "reviewMaterial": {
-        "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
-        "expectedBase": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-        "patchId": "724e1cdea65c096ba3497a5d5ef9fc27acdde809"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1536,
-        "requestId": "review:1536:2:724e1cdea65c096ba3497a5d5ef9fc27acdde809:c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-        "kind": "code",
-        "base": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-        "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
-        "patchId": "724e1cdea65c096ba3497a5d5ef9fc27acdde809",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1536,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1536",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "- Маска корпуса ошибочно применялась к вложенному числу LQI. Контейнер корпуса, значки заряда и значений по-прежнему маскируются стеной. Число вынесено в соседний узел с теми же координатами, цветом, тенью, правилами видимости и ARIA-семантикой. Изменение локально для интерактивного 2.5D.\n- На синтетической сцене до правки два показателя 255 на увеличении 218% теряли 660 и 610 зелёных пикселей. После правки все три показателя совпадают попиксельно с контрольным рендером при отключённой маске корпуса. Переключение маски по-прежнему меняет более 11 тысяч пикселей корпуса на этом увеличении. Результат просмотрен также в диагональном и прямом ракурсах при 100%. Проверка подтверждает исходные показания в плоском виде, отсутствие записей и 10 unit-контрактов лица. Синтетический тест запускается в закреплённом Chromium и падает на исходном коммите.\n- Новых PNG-эталонов нет. Логика считывания LQI и транспорт HA прежние, для этого дефекта достаточно проверки отрисовки в браузере.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1536#issuecomment-7104158877).\n\n- Удалена устаревшая строка #1534, которую сохранил автоматический rebase в обеих версиях changelog. Diff относительно dev добавляет по одной записи о Zigbee. Общая запись #1534 и #1537 сохранена в обеих версиях.\n- Проверены diff обоих changelog относительно c5f6bd491a и отсутствие изменений в исходниках, тестах и каталоге проверок относительно проверенного 008350154d. Повторная передача использует текущий материал с чистым журналом."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Единственный блокер первого раунда устранён: устаревшая строка #1534 удалена из обоих changelog. Теперь `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` в разделе Unreleased/Не выпущено содержат общую запись «(#1534, #1537)» и одну новую строку о #1536. Код исправления не менялся. Число LQI в интерактивном 2.5D вынесено из маскируемого `.device-occlusion-body` в соседний узел. Стена по-прежнему маскирует корпус, значки заряда и значений, а число больше не обрезается. Координаты, стили, ARIA-семантика и плоский вид сохраняются. Блокеров нет, работу можно принять.",
-          "understanding": "Дефект: в интерактивном 2.5D `renderDeviceFace` заворачивал всё лицо устройства, включая подпись `.lqi`, в `.device-occlusion-body`. На этом контейнере висит маска стены `--hp-device-wall-mask`, поэтому маска срезала цифры LQI по контуру. После правки разметка подписи собирается один раз в переменную `signal`. Вне режима маски она выводится внутри `content`, как раньше. В режиме маски она стоит сразу после `.device-occlusion-body` и получает собственный `aria-hidden=true`, потому что раньше подпись скрывал от чтецов `aria-hidden` контейнера. Во втором раунде я сверил исправление changelog с прежним блокером и повторно прочитал `renderDeviceFace` на head (src/device-face.ts:98-179). Изменения кода с первого раунда отсутствуют: diff относительно base совпадает с ранее разобранным, отличаются только строки changelog.",
-          "analysis": [
-            {
-              "topic": "Закрытие блокера раунда 1 (changelog)",
-              "assessment": "Устранено. В обоих файлах устаревшая строка #1534 «without a dangling lower rim» больше не возвращается. Diff добавляет ровно по одной строке о #1536, а объединённая запись #1534/#1537 из c5f6bd4 сохранена без изменений.",
-              "evidence": "docs/CHANGELOG.md:3-6, docs/CHANGELOG.ru.md:9-12 на head 3aa45b00; git_diff для обоих файлов показывает только добавление строки (#1536)."
-            },
-            {
-              "topic": "Само исправление маски",
-              "assessment": "Без изменений с раунда 1, и выводы прежнего разбора остаются в силе. Вынести подпись из маскируемого контейнера проще и надёжнее, чем менять геометрию маски. `.device-occlusion-body` имеет `inset:0`, поэтому позиционирование `.lqi` не меняется. Единый шаблон `signal` не даст плоскому варианту и варианту с маской разойтись. Цена решения: число теперь не маскируется и не приглушается стеной, даже когда корпус за стеной. Это поведение и требует задача: подпись читаема, как подписи комнат.",
-              "evidence": "src/device-face.ts:115-120, 172, 174-178."
-            },
-            {
-              "topic": "Адресная проверка",
-              "assessment": "Smoke-тест сравнивает пиксели подписи с маской корпуса и без неё в трёх ракурсах и масштабах. Отдельно он подтверждает, что маска стены по-прежнему меняет пиксели корпуса, и проверяет плоский вид без записей. Unit-тест закрепляет структуру: подпись идёт соседом контейнера и имеет aria-hidden. Для этого дефекта этого достаточно.",
-              "evidence": "demo/smoke_iso_device_signal.mjs; test/device-face.test.mjs:25; receipt S6 20261123T143349288-fe48ff3c (passed) на материале 3aa45b00."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Остаётся в силе необязательное предложение раунда 1: добавить в smoke-тест кадр с видимым `.iso-marker-glass`. Тогда порядок наложения подписи и стеклянной обводки будет зафиксирован тестом, а не только чтением исходников. Цена — ещё один кадр на ракурс."
-          ],
-          "boundaries": "Сборку, тесты и smoke-тест я не запускал: это правило S7. Использован успешный набор S6 «Тесты для задачи #1536 (правки после ревью)» (receipt 20261123T143349288-fe48ff3c) на материале 3aa45b00. Во втором раунде по исходникам перечитаны changelog на head и `renderDeviceFace`. Остальной разбор (CSS `.lqi` и маски, ARIA `.dev`, регистрация smoke-теста в process-next) опирается на первый раунд, поскольку эти файлы не менялись. Пиксельные цифры до и после правки и падение теста на исходном коммите известны только со слов исполнителя. Снимок владельца с реальной сценой мне недоступен."
-        },
-        "usage": {
-          "input_tokens": 6,
-          "cache_creation_input_tokens": 35264,
-          "cache_read_input_tokens": 67634,
-          "output_tokens": 2957,
-          "output_tokens_details": {
-            "thinking_tokens": 251
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 35264,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 582,
-              "cache_read_input_tokens": 33572,
-              "cache_creation_input_tokens": 5896,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 5896
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nЕдинственный блокер первого раунда устранён: устаревшая строка #1534 удалена из обоих changelog. Теперь `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` в разделе Unreleased/Не выпущено содержат общую запись «(#1534, #1537)» и одну новую строку о #1536. Код исправления не менялся. Число LQI в интерактивном 2.5D вынесено из маскируемого `.device-occlusion-body` в соседний узел. Стена по-прежнему маскирует корпус, значки заряда и значений, а число больше не обрезается. Координаты, стили, ARIA-семантика и плоский вид сохраняются. Блокеров нет, работу можно принять.\n\n## Понимание решения\n\nДефект: в интерактивном 2.5D `renderDeviceFace` заворачивал всё лицо устройства, включая подпись `.lqi`, в `.device-occlusion-body`. На этом контейнере висит маска стены `--hp-device-wall-mask`, поэтому маска срезала цифры LQI по контуру. После правки разметка подписи собирается один раз в переменную `signal`. Вне режима маски она выводится внутри `content`, как раньше. В режиме маски она стоит сразу после `.device-occlusion-body` и получает собственный `aria-hidden=true`, потому что раньше подпись скрывал от чтецов `aria-hidden` контейнера. Во втором раунде я сверил исправление changelog с прежним блокером и повторно прочитал `renderDeviceFace` на head (src/device-face.ts:98-179). Изменения кода с первого раунда отсутствуют: diff относительно base совпадает с ранее разобранным, отличаются только строки changelog.\n\n## Разбор решения\n\n### Закрытие блокера раунда 1 (changelog)\n\nУстранено. В обоих файлах устаревшая строка #1534 «without a dangling lower rim» больше не возвращается. Diff добавляет ровно по одной строке о #1536, а объединённая запись #1534/#1537 из c5f6bd4 сохранена без изменений.\n\nОснование: docs/CHANGELOG.md:3-6, docs/CHANGELOG.ru.md:9-12 на head 3aa45b00; git_diff для обоих файлов показывает только добавление строки (#1536).\n\n### Само исправление маски\n\nБез изменений с раунда 1, и выводы прежнего разбора остаются в силе. Вынести подпись из маскируемого контейнера проще и надёжнее, чем менять геометрию маски. `.device-occlusion-body` имеет `inset:0`, поэтому позиционирование `.lqi` не меняется. Единый шаблон `signal` не даст плоскому варианту и варианту с маской разойтись. Цена решения: число теперь не маскируется и не приглушается стеной, даже когда корпус за стеной. Это поведение и требует задача: подпись читаема, как подписи комнат.\n\nОснование: src/device-face.ts:115-120, 172, 174-178.\n\n### Адресная проверка\n\nSmoke-тест сравнивает пиксели подписи с маской корпуса и без неё в трёх ракурсах и масштабах. Отдельно он подтверждает, что маска стены по-прежнему меняет пиксели корпуса, и проверяет плоский вид без записей. Unit-тест закрепляет структуру: подпись идёт соседом контейнера и имеет aria-hidden. Для этого дефекта этого достаточно.\n\nОснование: demo/smoke_iso_device_signal.mjs; test/device-face.test.mjs:25; receipt S6 20261123T143349288-fe48ff3c (passed) на материале 3aa45b00.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Остаётся в силе необязательное предложение раунда 1: добавить в smoke-тест кадр с видимым `.iso-marker-glass`. Тогда порядок наложения подписи и стеклянной обводки будет зафиксирован тестом, а не только чтением исходников. Цена — ещё один кадр на ракурс.\n\n## Границы анализа\n\nСборку, тесты и smoke-тест я не запускал: это правило S7. Использован успешный набор S6 «Тесты для задачи #1536 (правки после ревью)» (receipt 20261123T143349288-fe48ff3c) на материале 3aa45b00. Во втором раунде по исходникам перечитаны changelog на head и `renderDeviceFace`. Остальной разбор (CSS `.lqi` и маски, ARIA `.dev`, регистрация smoke-теста в process-next) опирается на первый раунд, поскольку эти файлы не менялись. Пиксельные цифры до и после правки и падение теста на исходном коммите известны только со слов исполнителя. Снимок владельца с реальной сценой мне недоступен.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: c5f6bd491a81aa7febcf48f395d6272f9c6754b5 → 3aa45b00ca8755c1a515fc17e29f2eeaf026aff8\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1536, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n- Маска корпуса ошибочно применялась к вложенному числу LQI. Контейнер корпуса, значки заряда и значений по-прежнему маскируются стеной. Число вынесено в соседний узел с теми же координатами, цветом, тенью, правилами видимости и ARIA-семантикой. Изменение локально для интерактивного 2.5D.\n- На синтетической сцене до правки два показателя 255 на увеличении 218% теряли 660 и 610 зелёных пикселей. После правки все три показателя совпадают попиксельно с контрольным рендером при отключённой маске корпуса. Переключение маски по-прежнему меняет более 11 тысяч пикселей корпуса на этом увеличении. Результат просмотрен также в диагональном и прямом ракурсах при 100%. Проверка подтверждает исходные показания в плоском виде, отсутствие записей и 10 unit-контрактов лица. Синтетический тест запускается в закреплённом Chromium и падает на исходном коммите.\n- Новых PNG-эталонов нет. Логика считывания LQI и транспорт HA прежние, для этого дефекта достаточно проверки отрисовки в браузере.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1536#issuecomment-7104158877).\n\n- Удалена устаревшая строка #1534, которую сохранил автоматический rebase в обеих версиях changelog. Diff относительно dev добавляет по одной записи о Zigbee. Общая запись #1534 и #1537 сохранена в обеих версиях.\n- Проверены diff обоих changelog относительно c5f6bd491a и отсутствие изменений в исходниках, тестах и каталоге проверок относительно проверенного 008350154d. Повторная передача использует текущий материал с чистым журналом.\n```\n\n</details>\n",
-        "createdAt": "2026-11-23T14:36:26.313Z",
-        "artifactId": 14828925766,
-        "runId": 45195707174,
-        "runAttempt": 1,
-        "completedAt": "2026-11-23T14:36:30Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45195707174",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1537": {
@@ -6626,19 +6506,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1536,
-    "worker": "finish",
-    "token": "647:finish:4f3cf128-fd86-43e5-8214-d15a81f7c0e7:finish:1:admit",
-    "fence": 647,
-    "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
-    "expectedBase": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795444416437,
-    "expiresAt": 1795448217638,
-    "patchId": "724e1cdea65c096ba3497a5d5ef9fc27acdde809",
-    "reviewRequest": "review:1536:2:724e1cdea65c096ba3497a5d5ef9fc27acdde809:c5f6bd491a81aa7febcf48f395d6272f9c6754b5"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6659,154 +6527,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "finish:41ee4401-4fbc-4213-9a61-184a985d8157:finish:1:synchronized": {
-      "digest": "c36a79eefca4ea929f8d74e1438b747e7e9a691bcdae93ce1fdb882cc7199c81",
-      "issue": 1536
-    },
-    "github:45191938029:1:completions:message:1ec803804c1d9a7e8258a5a62fce5e8a09a31b7c6464b3ae578f833a5445997e": {
-      "digest": "f4b1abfd7d701754903a5206681562b9482b7b2e12fd3f365b4a68f425118186",
-      "issue": 1536
-    },
-    "finish:41ee4401-4fbc-4213-9a61-184a985d8157:finish:2:automation-pending": {
-      "digest": "4de6f63e76ad4cc0b88e490e26b7d61f3bf534d817ac3df7190147064051cee0",
-      "issue": 1536
-    },
-    "finish:4dd4261d-69af-4365-872c-23eff1e2806d": {
-      "digest": "ec9d245e99725acec80c8c2081f8fb7a486b55815868e9dd0985600d40806658",
-      "issue": 1536
-    },
-    "finish:3e4dbe53-e29d-448e-a176-dafa720778e6": {
-      "digest": "3f9678eca4e75c062a98eeebcaed3c8666ec07b8aa14e38d671610abacb6f602",
-      "issue": 1536
-    },
-    "finish:4d725344-e648-4f47-aca1-576771430f94": {
-      "digest": "b74f70f88d2eea7807a761a663d881ef20d6d8f4931a166b9fbb9f7026ea3e86",
-      "issue": 1536
-    },
-    "dev-build:45191938029:1:webhook": {
-      "digest": "3ba22d4178acb098eccaa6950481fcc4b7bbd499e2501ce37a1092017f3a14db",
-      "issue": 1536
-    },
-    "dev-build:45191938029:1:webhook:c8a37d31-3ba7-47bd-80ef-d3f1b2d3c062:delivered": {
-      "digest": "3870ef262b10817a05a042babd9265cc282bc04608419248acc7160348599561",
-      "issue": 1536
-    },
-    "finish:6763554b-6d1e-4eb4-b2be-2f8c00d965d4": {
-      "digest": "7dbc9eb38451bbeaa82a5a3ac046bb5c31ba13e83a9a9f2bae605295d94a5c87",
-      "issue": 1536
-    },
-    "finish:6eed465c-6685-4cb3-b3cb-cc3d2564ee3e": {
-      "digest": "340bf39e27815f08f523a4a8a734d8464a20492d60f32aa193c760b4c8246404",
-      "issue": 1536
-    },
-    "finish:157a4097-fadf-42d4-9a3e-5d19211405d6": {
-      "digest": "1474cae0d0a1084bafaa2838806d1d957d3de29658dde2b5b6d58dbae1576513",
-      "issue": 1536
-    },
-    "finish:30f64288-7c18-479b-98ad-1eca68603825": {
-      "digest": "79972ecd076c4f25ce5d1346a8a87f3eafb8869a6fb850b0868bcc80038ba1ad",
-      "issue": 1536
-    },
-    "finish:ef141594-9616-4510-ac7f-a67f772ce7b0": {
-      "digest": "6eac8c94ce6f176614b8b66f9244d1997d60841f8a0a6d4e2aad73802af62df4",
-      "issue": 1536
-    },
-    "finish:fed1e558-cc84-4b31-ab22-c8b208e7c04e": {
-      "digest": "c4b33431031a0d97fa0964ade7bfb888e82497279f782b4db223e0b8dc51dc63",
-      "issue": 1536
-    },
-    "finish:37ca5958-5ab5-465e-a61a-cf7f5d2ab1da": {
-      "digest": "c4975c666bbf14ae0453733dab88bdeb9cbd0efac24699ab9aa564b3b41c1855",
-      "issue": 1536
-    },
-    "finish:22c9cbeb-a3b6-4172-880c-ef88a0abe700": {
-      "digest": "d4ce94d88d188d823892bbd2dfdcc603baa4a412a14da27a5ba5a4ece685050c",
-      "issue": 1536
-    },
-    "finish:2f0818d6-d666-45c0-9e53-3644594f1be6": {
-      "digest": "0737a488246d10712b55eb5d6d2db4a40ec32804b2511535c0161a550bb0ff45",
-      "issue": 1536
-    },
-    "finish:3b0acdf1-7e5a-4436-a948-24685691215a": {
-      "digest": "984cf9711cdfe32991538fc06ccf988196f618d39e19367ef44bcd09a1453eb4",
-      "issue": 1536
-    },
-    "finish:5ad580cb-8eb8-4158-bb37-9aae7348adab": {
-      "digest": "c8378d479b658b07c1401142b726a82e5d6e337b0a232f32b5e46386dc313272",
-      "issue": 1536
-    },
-    "finish:41ee4401-4fbc-4213-9a61-184a985d8157:finish:3:s6-label": {
-      "digest": "904859e11b4faf60c1ce86f0fa463c84dd7c585a43de35486ae423baba221843",
-      "issue": 1536
-    },
-    "finish:41ee4401-4fbc-4213-9a61-184a985d8157:finish:4:review-requested": {
-      "digest": "4fa108fa2508b796c6feb58b2d08381806cb6cb8ca6bc172afd91a71db4d8ebb",
-      "issue": 1536
-    },
-    "github:45194612776:1:tick:0:review-retry": {
-      "digest": "6365bf9d823bfc4227a8ce4d3f407c094f4bcbe08ce403a98930c1de0e1991d3",
-      "issue": 1536
-    },
-    "github:45194612776:1:completions:message:38a9aa13a521ffe1b0c8f35afe27b9abfcad3ce039df7fa1340baf3a9b3e6834": {
-      "digest": "15007240df98b8236215353189858e7263714a067fa68c39458ca54cd120bdda",
-      "issue": 1536
-    },
-    "github:45194612776:1:completions:message:fe62f56dea2cf382f072128347e0d82cbccf2c169609acd4ea31da689c06d8a1": {
-      "digest": "a2f6ebe174d49647e5043da5d3ecd4ad67fc5134c1777eaa13600c69570937ec",
-      "issue": 1536
-    },
-    "github:45195166800:1:tick:0:review-presentation": {
-      "digest": "ef0476f6a45c796ea14753f6bf2a1a17b5699f112f1305ab02cd03eb4d28d461",
-      "issue": 1536
-    },
-    "github:45195166800:1:tick:0:return": {
-      "digest": "03976f43dda7fe24cc99f6f01f5f25f93d3a7c6749377e9d6a6437c57b562a1f",
-      "issue": 1536
-    },
-    "github:45195166800:1:tick:0:return-label": {
-      "digest": "ea0fb3b07195a68de34a837e72a6d98759371d319e4b2dac04892f89730330a8",
-      "issue": 1536
-    },
-    "github:45195166800:1:completions:report:8ffe64e4bcac5207a449372aa1445cafb3dc27e566a3b623552e40420466c06e": {
-      "digest": "6b11397dfd7f7b0521c4b22fa8cb1884961b6c0e4d498a50cbeb7c0ad5242aee",
-      "issue": 1536
-    },
-    "github:45195166800:1:completions:metadata:a9b6d12c-bd09-45a2-8c41-4ae8bf26cbfe:task-notice:1536::": {
-      "digest": "22c10414e4bfb11c4bcf29abc6d85015a01d150351821e582891415cfaf3fd85",
-      "issue": 1536
-    },
-    "finish:4f3cf128-fd86-43e5-8214-d15a81f7c0e7:finish:2:synchronized": {
-      "digest": "3c25cd6243b97f67056aaf40d928b0b72cbddf6d2bf82bab8793c7e0e5d05aae",
-      "issue": 1536
-    },
-    "finish:4f3cf128-fd86-43e5-8214-d15a81f7c0e7:finish:3:s6-label": {
-      "digest": "bf8930a9dd6e8427c28ec21fc64121fe069dfcbf46eddcea6ba82599ff5aad1a",
-      "issue": 1536
-    },
-    "finish:4f3cf128-fd86-43e5-8214-d15a81f7c0e7:finish:4:review-requested": {
-      "digest": "f680efeb2bcb49e142cf6a2c2d8f7dd4b06f354970090f6149dd700a4a202854",
-      "issue": 1536
-    },
-    "github:45195658872:1:completions:message:865cf9783a0e5839e3c0a112e72fbf5f6b6503888179bc9b5c127cfde916f855": {
-      "digest": "cff83beaaf7872d341e6e9343c115e4ba17ce31e0353bff293233f0723b06390",
-      "issue": 1536
-    },
-    "github:45195658872:1:completions:message:cac2dff57fdece7daeaeb0c7fac8647ae908fd60286de7c0cecaa1123f948f33": {
-      "digest": "c8e5293523b3d238ec318eec4c9283fad03cec46d91aa086c07156829ee9889f",
-      "issue": 1536
-    },
-    "github:45195658872:1:completions:message:222435d0b3c00dfbef728dae689eeda85bb0f0f41db4f6db53447af2745262ca": {
-      "digest": "e05bbb571d654252feddb43f66078ab1fb0088c246c4a61b8848fe5113c4f266",
-      "issue": 1536
-    },
-    "github:45196035561:1:tick:0:review-presentation": {
-      "digest": "4b1b7b52858e9dee4a1179b34487164b57160faf5ae3f97c23505d0580a718f3",
-      "issue": 1536
-    },
-    "github:45196035561:1:tick:0:review-complete": {
-      "digest": "7727cf0be51e6042cd28a823de4197c4071115b82d2a6391239466316bee1a21",
-      "issue": 1536
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -6834,142 +6554,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:41ee4401-4fbc-4213-9a61-184a985d8157": {
-      "digest": "282dea4b830b4862b75e31a040dedb6dcca8ac2a00c22b11ed0b1e6db8769516",
-      "issue": 1536,
-      "message": {
-        "kind": "queued",
-        "issue": 1536,
-        "at": 1795442593410,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a87e92236713be44c6a050b0380a36781946899c",
-        "delivered": true
-      }
-    },
-    "github:45191938029:1:tick:2:admit": {
-      "digest": "b853f73d512ae61df7739817320ba80724e4ebc3f001e831de3924da55af19d7",
-      "issue": 1536,
-      "message": {
-        "kind": "admitted",
-        "issue": 1536,
-        "at": 1795443267637,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a87e92236713be44c6a050b0380a36781946899c",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:41ee4401-4fbc-4213-9a61-184a985d8157:finish:3:s6-complete": {
-      "digest": "452b1e84dff74db4ac0e02016f7370882ad6ff541a21aeec4711828714b0c35b",
-      "issue": 1536,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1536,
-        "at": 1795444111230,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
-        "phase": "review",
-        "evidence": {
-          "id": "20261123T141558730-01a09e3b",
-          "name": "Тесты для задачи #1536 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T141558730-01a09e3b/report.json",
-          "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
-          "status": "passed",
-          "finishedAt": "2026-11-23T14:28:29.622Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "- Маска корпуса ошибочно применялась к вложенному числу LQI. Контейнер корпуса, значки заряда и значений по-прежнему маскируются стеной. Число вынесено в соседний узел с теми же координатами, цветом, тенью, правилами видимости и ARIA-семантикой. Изменение локально для интерактивного 2.5D.\n- На синтетической сцене до правки два показателя 255 на увеличении 218% теряли 660 и 610 зелёных пикселей. После правки все три показателя совпадают попиксельно с контрольным рендером при отключённой маске корпуса. Переключение маски по-прежнему меняет более 11 тысяч пикселей корпуса на этом увеличении. Результат просмотрен также в диагональном и прямом ракурсах при 100%. Проверка подтверждает исходные показания в плоском виде, отсутствие записей и 10 unit-контрактов лица. Синтетический тест запускается в закреплённом Chromium и падает на исходном коммите.\n- Новых PNG-эталонов нет. Логика считывания LQI и транспорт HA прежние, для этого дефекта достаточно проверки отрисовки в браузере.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:4f3cf128-fd86-43e5-8214-d15a81f7c0e7": {
-      "digest": "baf3d5e91da020e3e2d918149240507a23991e8164dee72a2a80c2fb4a29ebe4",
-      "issue": 1536,
-      "message": {
-        "kind": "queued",
-        "issue": 1536,
-        "at": 1795444412031,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
-        "evidence": {
-          "id": "20261123T141558730-01a09e3b",
-          "name": "Тесты для задачи #1536 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T141558730-01a09e3b/report.json",
-          "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
-          "status": "passed",
-          "finishedAt": "2026-11-23T14:28:29.622Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:4f3cf128-fd86-43e5-8214-d15a81f7c0e7:finish:1:admit": {
-      "digest": "bde8103ff3c71d0baba7478fe03be65acd3c246c2b7f5f15526b8affe997b38f",
-      "issue": 1536,
-      "message": {
-        "kind": "admitted",
-        "issue": 1536,
-        "at": 1795444416437,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261123T141558730-01a09e3b",
-          "name": "Тесты для задачи #1536 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T141558730-01a09e3b/report.json",
-          "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
-          "status": "passed",
-          "finishedAt": "2026-11-23T14:28:29.622Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:4f3cf128-fd86-43e5-8214-d15a81f7c0e7:finish:3:s6-complete": {
-      "digest": "9b5f2726c42d3ac79d4bdc9d548d3861e598c2482e7a7f1d2425e511455abe69",
-      "issue": 1536,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1536,
-        "at": 1795444464264,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
-        "phase": "review",
-        "evidence": {
-          "id": "20261123T143349288-fe48ff3c",
-          "name": "Тесты для задачи #1536 (правки после ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T143349288-fe48ff3c/report.json",
-          "materialSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
-          "status": "passed",
-          "finishedAt": "2026-11-23T14:34:22.687Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "- Маска корпуса ошибочно применялась к вложенному числу LQI. Контейнер корпуса, значки заряда и значений по-прежнему маскируются стеной. Число вынесено в соседний узел с теми же координатами, цветом, тенью, правилами видимости и ARIA-семантикой. Изменение локально для интерактивного 2.5D.\n- На синтетической сцене до правки два показателя 255 на увеличении 218% теряли 660 и 610 зелёных пикселей. После правки все три показателя совпадают попиксельно с контрольным рендером при отключённой маске корпуса. Переключение маски по-прежнему меняет более 11 тысяч пикселей корпуса на этом увеличении. Результат просмотрен также в диагональном и прямом ракурсах при 100%. Проверка подтверждает исходные показания в плоском виде, отсутствие записей и 10 unit-контрактов лица. Синтетический тест запускается в закреплённом Chromium и падает на исходном коммите.\n- Новых PNG-эталонов нет. Логика считывания LQI и транспорт HA прежние, для этого дефекта достаточно проверки отрисовки в браузере.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1536#issuecomment-7104158877).\n\n- Удалена устаревшая строка #1534, которую сохранил автоматический rebase в обеих версиях changelog. Diff относительно dev добавляет по одной записи о Zigbee. Общая запись #1534 и #1537 сохранена в обеих версиях.\n- Проверены diff обоих changelog относительно c5f6bd491a и отсутствие изменений в исходниках, тестах и каталоге проверок относительно проверенного 008350154d. Повторная передача использует текущий материал с чистым журналом.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
