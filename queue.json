@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22080,
+  "revision": 22081,
   "nextTicket": 645,
   "nextFence": 645,
   "tasks": {
@@ -5874,13 +5874,14 @@
       "status": "S6-in-progress",
       "readyAt": 1795437788942,
       "reviewEntry": 2,
-      "patchId": "41c8e854ba588c307e7766d6dccc598031d6b7d6",
+      "patchId": "cb703393bc3ddedd6ced2accec9481d845803b68",
       "changedFiles": [
         "demo/smoke_iso_device_contours.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/ISOMETRIC.md",
         "docs/release-ledger/v1.86.0/1534.json",
+        "src/device-contact-geometry.ts",
         "src/iso-marker-outline.ts",
         "test/iso-marker-outline.test.mjs"
       ],
@@ -6516,10 +6517,11 @@
     "token": "644:finish:4ef7004d-8236-4272-81e7-ff9dfe13a9d7:finish:1:admit",
     "fence": 644,
     "materialSha": "b76fbfac8794d97f4dffabecaf1c19a6bdc3f861",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
+    "phase": "testing",
     "admittedAt": 1795437795953,
-    "expiresAt": 1795438095953
+    "expiresAt": 1795438105506,
+    "patchId": "cb703393bc3ddedd6ced2accec9481d845803b68"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6632,6 +6634,10 @@
     },
     "github:45164562294:1:completions:metadata:865a18af-607e-4cd0-8c6e-eb67a7a90898:task-notice:1534::": {
       "digest": "6910d1b590f16d9d84303075bb87586ae495df801b8a06d298734c0a4c42646a",
+      "issue": 1534
+    },
+    "finish:4ef7004d-8236-4272-81e7-ff9dfe13a9d7:finish:2:synchronized": {
+      "digest": "bff8457e6a4623081585364a2a832037959ab8604b3fa0e1e844fafe56b19428",
       "issue": 1534
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
