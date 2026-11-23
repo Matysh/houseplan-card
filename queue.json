@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 21403,
-  "nextTicket": 634,
+  "revision": 21404,
+  "nextTicket": 635,
   "nextFence": 634,
   "tasks": {
     "1024": {
@@ -5745,6 +5745,20 @@
         "sourceSha": "e38612b43a41121dcd0f1e72c37176a95477e6e7"
       }
     },
+    "1525": {
+      "issue": 1525,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/stable-audit-1861-beta2-fixes",
+      "materialSha": "cb44c49a07dfa4949ebf5804a9a7880a8f80d1f5",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 634,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795411572636,
+      "reviewEntry": 1
+    },
     "1526": {
       "issue": 1526,
       "branch": "codex/1526-direct-25d-perspective",
@@ -6385,7 +6399,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1525
+  ],
   "active": {
     "issue": 1527,
     "worker": "finish",
@@ -6511,6 +6527,19 @@
         "materialSha": "3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:514e9b31-5618-4e69-a317-eb97524e7439": {
+      "digest": "880acf0f60b0bfeda76df2fd142164adc655a79e10a090676cfd8fb2e0910d93",
+      "issue": 1525,
+      "message": {
+        "kind": "queued",
+        "issue": 1525,
+        "at": 1795411572636,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "cb44c49a07dfa4949ebf5804a9a7880a8f80d1f5"
       }
     }
   },
