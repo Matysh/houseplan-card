@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 22078,
-  "nextTicket": 644,
+  "revision": 22079,
+  "nextTicket": 645,
   "nextFence": 644,
   "tasks": {
     "1024": {
@@ -5866,14 +5866,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/iso-wall-contact-cut",
-      "materialSha": "27a8c001663794c92f9aaa2f2c84dc46f4819eba",
+      "materialSha": "b76fbfac8794d97f4dffabecaf1c19a6bdc3f861",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 642,
-      "queued": false,
+      "ticket": 644,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795430692446,
-      "reviewEntry": 1,
+      "readyAt": 1795437788942,
+      "reviewEntry": 2,
       "patchId": "41c8e854ba588c307e7766d6dccc598031d6b7d6",
       "changedFiles": [
         "demo/smoke_iso_device_contours.mjs",
@@ -5894,20 +5894,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1534:1:41c8e854ba588c307e7766d6dccc598031d6b7d6:d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
-      "reviewMaterial": {
-        "materialSha": "27a8c001663794c92f9aaa2f2c84dc46f4819eba",
-        "expectedBase": "d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
-        "patchId": "41c8e854ba588c307e7766d6dccc598031d6b7d6"
-      },
-      "reviewRetry": {
-        "requestId": "review:1534:1:41c8e854ba588c307e7766d6dccc598031d6b7d6:d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
-        "eventId": "github:45163815197:1:tick:0:review-retry",
-        "at": 1795432656081,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1534:1:41c8e854ba588c307e7766d6dccc598031d6b7d6:d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
         "at": 1795432958429
@@ -6523,7 +6509,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1534
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6724,6 +6712,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:4ef7004d-8236-4272-81e7-ff9dfe13a9d7": {
+      "digest": "84c0c4a1dffd9e7225d7f445d4eedae0dbe078931175dc4ed828992a3c926121",
+      "issue": 1534,
+      "message": {
+        "kind": "queued",
+        "issue": 1534,
+        "at": 1795437788942,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b76fbfac8794d97f4dffabecaf1c19a6bdc3f861",
+        "evidence": {
+          "id": "20261123T110653623-dbcbfa19",
+          "name": "Тесты для задачи #1534 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261123T110653623-dbcbfa19/report.json",
+          "materialSha": "27a8c001663794c92f9aaa2f2c84dc46f4819eba",
+          "status": "passed",
+          "finishedAt": "2026-11-23T11:17:05.877Z",
+          "failures": []
+        }
       }
     }
   },
