@@ -51,15 +51,26 @@ export const isoLabMarkersStyles = css`
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
     --hp-glyph-depth: calc(var(--battery-frame) * .15);
   }
-  /* Read glyphs along the same axes as room labels. Rotate only
-     their contents: bodies, contact frames and badge anchors stay in place.
+  /* Read glyphs along the same axes as room labels.
+     Value capsules below turn with their content.
      Independent rotate also preserves a device icon's configured angle. */
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core > ha-icon,
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core > .valtext,
-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .value-badge-content,
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon,
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-core > ha-icon {
     rotate: var(--hp-iso-content-turn);
+  }
+  /* The value and its solid capsule share one reading plane. */
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core:has(> .valtext),
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .value-badge {
+    rotate: var(--hp-iso-content-turn);
+    transform-origin: center;
+    --hp-iso-rim-x: calc(var(--hp-iso-d) * var(--hp-iso-room-edge-x) * 1.090909091);
+    --hp-iso-rim-y: calc(var(--hp-iso-d) * var(--hp-iso-room-edge-y) * 1.090909091);
+    --hp-iso-edge-unit-x: var(--hp-iso-room-edge-x);
+    --hp-iso-edge-unit-y: var(--hp-iso-room-edge-y);
+  }
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-shell {
+    translate: calc(var(--dev-size) * var(--hp-value-shift-x, 0)) calc(var(--dev-size) * var(--hp-value-shift-y, 0));
   }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi {
     /* Keep the centring translation outside the glyph's local rotation. */
@@ -157,7 +168,7 @@ export const isoLabMarkersStyles = css`
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .glass-front { fill: rgb(245 251 255 / 30%); }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .glass-rim {
     fill: none; stroke-width: var(--device-shell-border-width, var(--oplock-stroke-width));
-    stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke;
+    stroke-linecap: butt; stroke-linejoin: round; vector-effect: non-scaling-stroke;
   }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .glass-rim.upper {
     stroke: color-mix(in srgb, var(--device-shell-stroke, var(--oplock-shell-stroke)) 52%, rgb(255 255 255 / 65%));

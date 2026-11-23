@@ -89,7 +89,7 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
   const wasReflowed=renderer.reflowed, previousStatus = renderer.resizeStatus;
   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
     space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane,
-    glassProjection: camera?.perspective ? {camera,height:gridVisualUnits(isoDisplayWallHeight(),host._cellCm)} : undefined,
+    glassProjection: camera ? {camera,height:gridVisualUnits(isoDisplayWallHeight(),host._cellCm)} : undefined,
     uprightHalfTurn: host._mode === 'view' && host._renderProjection === 'flat' && host._rotation === 180,invalidate:()=>host.requestUpdate(),
     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => {
       const scale = host._devicePresentation(d).scale;

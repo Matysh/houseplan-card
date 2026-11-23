@@ -343,7 +343,7 @@ import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
 import {
-  isoDisplayWallHeight, isoCameraFor, directIsoRotation, isoViewTurn, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
+  isoDisplayWallHeight, isoCameraFor, directIsoRotation, isoViewTurn, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, isoReadingYaw, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
 import {renderIsoPerspectiveFloor, renderIsoPerspectiveSnapshot} from './iso-perspective-floor';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
@@ -13923,7 +13923,7 @@ export class HouseplanCard extends LitElement {
     // Opposite views share the same lettering. In a direct view the
     // horizontal plan axis determines the reading direction.
     const roomLabelCamera = markerCamera ? { ...markerCamera,
-      rotDeg: markerCamera.rotDeg % 90 === 0 ? 0 : ((markerCamera.rotDeg + 90) % 180 + 180) % 180 - 90 } : null;
+      rotDeg: isoReadingYaw(markerCamera.rotDeg) } : null;
     const roomLabelDepth = roomLabelCamera ? isoTileDepthStyles(roomLabelCamera) : null;
     const isoLayers = isoFrame?.layers ?? null;
     const isoOverlays = isoFrame?.overlays ?? null;

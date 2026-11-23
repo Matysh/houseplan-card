@@ -15,8 +15,10 @@ In ordinary View, right-click a device to choose Device settings, HA more-info, 
 In 2.5D View, device faces, badge faces, LED tape and lock markers sit on the
 shared 140 cm wall-cut plane. Bodies keep their authored top shape and fixed
 gray sides. Occlusion affects body, badge and contact outline independently.
-The two readable glyph orientations also apply to values, battery, Zigbee and
-locks. The configured device glyph angle composes around its own centre.
+The readable axes also apply to values, battery, Zigbee and locks. A value
+capsule and its text turn around the capsule's measured centre. Wall-contact
+offsets apply only to the raised presentation (#1538). The configured device
+glyph angle composes around its own centre.
 Filled floor shadows and visible positions never replace saved layout
 anchors. See [full 2.5D contract](ISOMETRIC.md).
 

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1538,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Corrects the raised marker geometry and outline ordering on the current 2.5D beta line.",
+  "summary": {
+    "ru": "Обводки, плашки значений и зазор до стен согласованы во всех ракурсах 2.5D.",
+    "en": "Device outlines and value capsules follow the camera and keep wall clearance in all 2.5D views."
+  }
+}

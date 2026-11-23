@@ -1,7 +1,7 @@
 /** Shared Flat DOM adapter. Face geometry is measured only on metric invalidation. */
 import { nothing, render, svg } from 'lit';
 import {
-  contactContains, contactContourShapes, contactOutline, freeContactShape, joinedContactSide,
+  contactContains, contactContourShapes, contactOutline, joinedContactSide,
   type ContactMarker, type ContactRect, type ContactShape, type ContactWall,
 } from './device-contact-geometry';
 import { contactBounds, DeviceContactScene } from './device-contact-scene';
@@ -16,8 +16,10 @@ import { contactBasisMarker } from './device-contact-basis';
 import { DeviceContactLayout } from './device-contact-layout';
 import { screenContactMarker, screenContactScene, projectedContactHit } from './device-contact-screen';
 import type { PlanRotation } from './view-frame';
-import { isoMarkerBodyOutline, isoMarkerGlass, isoMarkerGlassAnchor, type IsoMarkerGlassProjection } from './iso-marker-outline';
+import { isoMarkerGlass, isoMarkerGlassAnchor, type IsoMarkerGlassProjection } from './iso-marker-outline';
 import { renderIsoMarkerGlass } from './iso-marker-glass';
+import { isoReadingYaw } from './iso-projection';
+import { isoDeviceFaceBounds, orientIsoDeviceFace } from './iso-device-face';
 import type { IsoDeviceFace, IsoDeviceWallMask } from './iso-overlays';
 
 export interface DeviceContactFrame {
@@ -74,7 +76,7 @@ export class DeviceContactRenderer {
   private fontDocument: Document | null = null;
   private invalidate: (() => void) | undefined;
   private readonly fontsChanged = (): void => {
-    this.metrics.clear(); this.frameKey=''; this.invalidate?.();
+    this.metrics.clear(); this.faces.clear(); this.frameKey=''; this.invalidate?.();
   };
 
   /** Never return a previous snapshot's effective point for a newly authored drag. */
@@ -121,6 +123,10 @@ export class DeviceContactRenderer {
       element.removeAttribute('data-hp-device-contact');
       element.removeAttribute('data-hp-device-component');
       element.removeAttribute('data-hp-iso-body-outline');
+      const shell=element.querySelector<HTMLElement>('.device-shell');
+      shell?.style.removeProperty('--hp-value-shift-x');
+      shell?.style.removeProperty('--hp-value-shift-y');
+      this.presentations.delete(element);
       this.hitShapes.delete(element); render(nothing, ink);
     }
     this.elements.clear(); this.frameKey = ''; this.floorKey = ''; this.scene = null;
@@ -157,7 +163,7 @@ export class DeviceContactRenderer {
     }
     const context = this.preparedFont?.root === root ? this.preparedFont.value : this.fontKey(root);
     this.preparedFont = null;
-    if(context!==this.fontContext){this.metrics.clear();this.fontContext=context;this.frameKey='';}
+    if(context!==this.fontContext){this.metrics.clear();this.faces.clear();this.fontContext=context;this.frameKey='';}
     const floor = frame.floor ? deviceContactFloor(frame.floor.config, frame.floor.model) : null;
     if (floor && !floor.safe) { const active = !!this.scene; if (active) this.clear(); return active; }
     const nodes = new Map([...root.querySelectorAll<HTMLElement>('.devlayer > .dev[data-hp="device"][data-id]')]
@@ -165,11 +171,12 @@ export class DeviceContactRenderer {
     const key = frame.key + '|' + uprightHalfTurn + '|' + frame.markers.map((m) => [m.id, m.x, m.y, m.diameter,
       m.virtual,m.legacyDiameters?.join(','),JSON.stringify(frame.layout?.[m.id]?.contact_basis),
       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
+    const changedMasks = this.changedWallMasks(nodes);
     if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) {
-      const changedMasks = this.paintWallMasks(nodes);
       if (this.scene && (turned || changedMasks.size))
         this.paint(turned ? this.scene.shapes.keys() : changedMasks);
-      return turned;
+      this.paintWallMasks(nodes);
+      return turned || changedMasks.size > 0;
     }
     const measured: ContactMarker[] = [];
     const nextElements = new Map<string, MeasuredMarker>();
@@ -182,7 +189,12 @@ export class DeviceContactRenderer {
       }
     }
     const fresh = this.measure(pending);
-    const changedMasks = this.paintWallMasks(nodes);
+    if (this.plane) for (const [id,node] of nodes) {
+      const painted = this.presentations.get(node);
+      const shell = node.querySelector('.device-shell');
+      if (painted && (painted.shell !== shell || painted.metrics !== this.faces.get(metricKey(shell))))
+        changedMasks.add(id);
+    }
     for (const m of frame.markers) {
       const element = nodes.get(m.id), shell = element?.querySelector<HTMLElement>('.device-shell');
       const ink = element?.querySelector<HTMLElement>('.device-contact-ink');
@@ -224,7 +236,8 @@ export class DeviceContactRenderer {
     if (sameGeometry) {
       this.elements = nextElements; this.frameKey = key;
       if (turned || changedMasks.size) this.paint(turned ? previous.shapes.keys() : changedMasks);
-      return turned || this.appearanceChanged;
+      this.paintWallMasks(nodes);
+      return turned || changedMasks.size > 0 || this.appearanceChanged;
     }
     const reusable=previous && this.floorKey===frame.key && effective.length===previous.shapes.size
       && effective.every(m=>previous.shapes.has(m.id)&&this.elements.get(m.id)?.element===nextElements.get(m.id)?.element);
@@ -235,12 +248,16 @@ export class DeviceContactRenderer {
           || ['left','right','top','bottom'].some(side=>old.box[side as keyof ContactRect]!==m.box[side as keyof ContactRect]))
           for(const id of previous.replace(m))affected.add(id);
       }
-      this.elements=nextElements;this.frameKey=key;this.paint(turned ? previous.shapes.keys() : affected);return true;
+      this.elements=nextElements;this.frameKey=key;
+      this.paint(turned ? previous.shapes.keys() : affected);
+      this.paintWallMasks(nodes);
+      return true;
     }
     this.retireElements(); this.elements = nextElements;
     this.frameKey = key; this.floorKey = frame.key;
     this.scene = new DeviceContactScene(effective, walls, masonry, true);
     this.work.rebuilds++; this.paint(this.scene.shapes.keys());
+    this.paintWallMasks(nodes);
     return true;
   }
 
@@ -260,6 +277,12 @@ export class DeviceContactRenderer {
       probe.setAttribute('data-hp-device-contact', ''); probe.removeAttribute('data-id');
       probe.removeAttribute('data-hp'); probe.setAttribute('aria-hidden', 'true'); probe.inert = true;
       probe.style.cssText = 'position:absolute;left:0;top:0;margin:0;width:800px;height:800px;--dev-size:800px;transform:none;visibility:hidden;pointer-events:none';
+      probe.style.setProperty('--hp-iso-content-turn','0deg');
+      probe.style.setProperty('--hp-value-shift-x','0');
+      probe.style.setProperty('--hp-value-shift-y','0');
+      const shell=probe.querySelector<HTMLElement>('.device-shell');
+      shell?.style.removeProperty('--hp-value-shift-x');
+      shell?.style.removeProperty('--hp-value-shift-y');
       probe.querySelector('.device-contact-ink')?.replaceChildren();
       element.parentElement?.append(probe);
       return { key, probe };
@@ -292,10 +315,44 @@ export class DeviceContactRenderer {
     return result;
   }
 
+  private readonly presentations = new WeakMap<HTMLElement, {
+    shell: HTMLElement;
+    source: ContactShape;
+    metrics: readonly IsoDeviceFace[];
+    turn: number;
+    joined: boolean;
+    valueCore: boolean;
+    presentation: ReturnType<typeof orientIsoDeviceFace>;
+  }>();
+
+  private get contentTurn(): number {
+    const yaw = this.glassProjection?.camera.rotDeg ?? 0;
+    return (isoReadingYaw(yaw) - yaw) * Math.PI / 180;
+  }
+
+  private present(shape: ContactShape, joined: boolean): ContactShape {
+    const node = this.elements.get(shape.marker.id)?.element;
+    const shell = node?.querySelector<HTMLElement>('.device-shell');
+    if (!node || !shell) return shape;
+    const metrics = this.faces.get(metricKey(shell));
+    if (!metrics?.length) return shape;
+    const turn = this.contentTurn, valueCore = node.classList.contains('valonly');
+    const existing = this.presentations.get(node);
+    if (existing?.shell === shell && existing.source === shape && existing.metrics === metrics
+        && existing.turn === turn && existing.joined === joined && existing.valueCore === valueCore)
+      return existing.presentation.shape;
+    const presentation = orientIsoDeviceFace(shape, metrics, turn, valueCore, joined);
+    this.presentations.set(node, { shell, source: shape, metrics, turn, joined, valueCore, presentation });
+    const [x, y] = presentation.shift;
+    shell.style.setProperty('--hp-value-shift-x', String(x));
+    shell.style.setProperty('--hp-value-shift-y', String(y));
+    return presentation.shape;
+  }
+
   private readonly wallPaint = new WeakMap<SVGSVGElement, [IsoDeviceWallMask, readonly IsoDeviceFace[]]>();
   private readonly glassWall = new WeakMap<HTMLElement, IsoDeviceWallMask>();
 
-  private paintWallMasks(nodes: ReadonlyMap<string, HTMLElement>): Set<string> {
+  private changedWallMasks(nodes: ReadonlyMap<string, HTMLElement>): Set<string> {
     const changed = new Set<string>();
     if (!this.plane) return changed;
     for (const [id, node] of nodes) {
@@ -305,8 +362,20 @@ export class DeviceContactRenderer {
         if (mask) this.glassWall.set(node, mask);
         else this.glassWall.delete(node);
       }
+    }
+    return changed;
+  }
+
+  private paintWallMasks(nodes: ReadonlyMap<string, HTMLElement>): void {
+    if (!this.plane) return;
+    const turn = this.contentTurn;
+    for (const [id,node] of nodes) {
+      const mask = (node as HTMLElement & { hpIsoWallMask?: IsoDeviceWallMask }).hpIsoWallMask;
       const slot = node.querySelector<SVGSVGElement>('[data-hp-wall-mask-slot]');
-      const faces = this.faces.get(metricKey(node.querySelector('.device-shell')));
+      const shell = node.querySelector('.device-shell');
+      const geometry = this.presentations.get(node);
+      const faces = geometry && geometry.shell === shell && geometry.turn === turn
+        ? geometry.presentation.faces : this.faces.get(metricKey(shell));
       if (!mask || !slot || !faces?.length) {
         node.removeAttribute('data-hp-device-occlusion');
         if (slot && this.wallPaint.delete(slot)) render(nothing,slot);
@@ -321,10 +390,9 @@ export class DeviceContactRenderer {
       // The white mask background must include status satellites outside the
       // measured face, including simultaneous attention and maintenance.
       // Coordinates are in units of the measured core.
-      const x = Math.min(-2, ...faces.map(face => face.left + .5));
-      const y = Math.min(-2, ...faces.map(face => face.top + .5));
-      const width = Math.max(3, ...faces.map(face => face.right + .5)) - x;
-      const height = Math.max(3, ...faces.map(face => face.bottom + .5)) - y;
+      const bounds = isoDeviceFaceBounds(faces);
+      const x = Math.min(-2, bounds.left), y = Math.min(-2, bounds.top);
+      const width = Math.max(3, bounds.right + 1) - x, height = Math.max(3, bounds.bottom + 1) - y;
       render(svg`<defs><mask id=${'hp-device-wall-' + encodeURIComponent(id)}
         maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox"
         x=${x} y=${y} width=${width} height=${height} style="mask-type:luminance">
@@ -333,7 +401,6 @@ export class DeviceContactRenderer {
         ${cut ? svg`<path d=${cut} transform=${mask.transform} fill="black"></path>` : nothing}
       </mask></defs>`, slot);
     }
-    return changed;
   }
 
   public move(id: string, x: number, y: number): void {
@@ -365,13 +432,23 @@ export class DeviceContactRenderer {
     }
     const scene = this.screen.scene;
     for (const rawGroup of scene.components(affected)) {
-      const group=contactContourShapes(rawGroup);
+      // Build the projected envelope from live faces without changing the
+      // authored contact graph or using the orientation in the reflow solver.
+      const oriented = this.plane ? rawGroup.map(shape => this.present(shape, rawGroup.length > 1)) : rawGroup;
+      const group = contactContourShapes(oriented);
       const joined = group.length > 1;
-      // The full shared glass starts behind every solid member. Each nearer
-      // member repaints only its own front-glass intersection below.
-      const owner = this.plane ? group.reduce((back,s) =>
-        this.plane![1]*s.marker.x+this.plane![3]*s.marker.y <
-        this.plane![1]*back.marker.x+this.plane![3]*back.marker.y ? s : back) : group[0];
+      // Split the single group shell across the farthest and nearest member's
+      // stacking contexts. Neither half is repainted per device.
+      let owner = group[0], frontOwner = owner;
+      if (this.plane) {
+        for (const shape of group.slice(1)) {
+          const node = this.elements.get(shape.marker.id)?.element;
+          const back = this.elements.get(owner.marker.id)?.element;
+          const front = this.elements.get(frontOwner.marker.id)?.element;
+          if (node && back && (node.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING)) owner = shape;
+          if (node && front && (front.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)) frontOwner = shape;
+        }
+      }
       const active = joined || Object.keys(owner.walls).length > 0;
       const outline = active && !this.plane ? contactOutline(group,true) : '';
       const glass = this.plane ? isoMarkerGlass(group,this.plane,true,this.glassProjection) : null;
@@ -394,29 +471,18 @@ export class DeviceContactRenderer {
             top: s.box.top / s.marker.diameter, bottom: s.box.bottom / s.marker.diameter }, radius: s.radius / s.marker.diameter };
         this.hitShapes.set(item.element, { bounds: contactBounds(normalized),
           contains: (x, y) => contactContains(normalized, [x,y]) });
-        if (!custom && !this.plane) { render(nothing, item.ink); continue; }
         const d = s.marker.diameter;
         const viewBox=`${s.marker.x - d / 2} ${s.marker.y - d / 2} ${d} ${d}`;
         const glassAnchor=isoMarkerGlassAnchor([s.marker.x,s.marker.y],this.glassProjection);
         const [glassX,glassY]=glassAnchor;
         const glassBox=`${glassX-d/2} ${glassY-d/2} ${d} ${d}`;
-        // A transformed member is its own stacking context. Repaint just the
-        // shared near glass over its opaque body; keep the rest on the owner
-        // so neighbouring shells never accumulate translucent coats.
-        let memberGlass: {id:string;clip:string}|undefined;
-        if(glass && this.plane && s!==owner){
-          const [a,b,c,e]=this.plane,det=a*e-b*c;
-          const box={left:-d/2,right:d/2,top:-d/2,bottom:d/2};
-          if(item.element.classList.contains('valonly') && !item.element.querySelector('.with-values')){
-            box.left=s.marker.box.left+d*.134375;box.right=s.marker.box.right-d*.134375;
-          }
-          const body=freeContactShape({...s.marker,x:glassX-c/det*d*.12,y:glassY+a/det*d*.12,box});
-          memberGlass={id:`hp-glass-member-${encodeURIComponent(s.marker.id)}`,clip:isoMarkerBodyOutline([body],this.plane)};
-        }
+        // One shell per component. Repainting pieces in each member's
+        // stacking context produced seams and multiplied translucent edges.
         const wallMask=(item.element as HTMLElement&{hpIsoWallMask?:IsoDeviceWallMask}).hpIsoWallMask;
-        render(svg`${glass ? renderIsoMarkerGlass(glass,glassBox,virtual,memberGlass,
+        render(svg`${glass && (s===owner || s===frontOwner) ? renderIsoMarkerGlass(glass,glassBox,virtual,
           wallMask ? {id:`hp-glass-wall-${encodeURIComponent(s.marker.id)}`,mask:wallMask,
-            origin:this.glassProjection ? glassAnchor : undefined} : undefined) : nothing}
+            origin:glassAnchor} : undefined,
+          owner===frontOwner ? 'both' : s===owner ? 'back' : 'front') : nothing}
         <svg viewBox=${viewBox}
           preserveAspectRatio="none" aria-hidden="true">
           ${s === owner && !glass ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} stroke-dasharray=${virtual?'4 3':'none'} d=${outline}></path>` : nothing}

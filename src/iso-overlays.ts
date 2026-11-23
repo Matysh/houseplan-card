@@ -45,6 +45,8 @@ export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
 }
 
 export interface IsoDeviceFace {
+  /** Local rotation of a value capsule around its measured centre. */
+  angle?: number;
   left: number; top: number; right: number; bottom: number; rx: number; ry: number;
 }
 /** Plan-plane XY plus vertical screen drop below the marker's top plane. */

@@ -172,13 +172,20 @@ text and glyphs read horizontally. The device's own icon angle still applies.
 Bodies, anchors, hit targets and downward depth follow the actual camera.
 The Zigbee number is a caption outside the device body mask (#1536).
 
-A nearer wall dims covered parts of device bodies, badges and common frames.
-The core-sized body mask belongs to a separate paint container. Shared contact
-glass is its sibling and uses its own surface/depth masks: one member's body
-mask must never crop the group's overflowing rims or panes (#1482).
-In straight perspective, an open wall contact uses the wall's projected cut
-point for the upper rim. It keeps the same screen-vertical extrusion as the rest
-of the frame. The wall mask hides any part behind the masonry (#1534, #1537).
+A nearer wall masks covered parts of device bodies and badges. The shared
+outline has independent surface masks: opaque masonry hides its covered fill,
+both rims and wall returns. The rear and front paint once per component in
+the farthest and nearest member's normal paint order. The complete boundary
+is projected as one plan surface before the screen-vertical extrusion, which
+keeps straight wall-normal returns straight. The Zigbee caption stays outside
+the body mask (#1482, #1536, #1538).
+
+Main value capsules and satellites rotate about their measured centres with
+their text. Around an authored wall contact, the shell uses the support of
+the rotated faces to preserve clearance along the wall normal. Both contact
+sides are preserved at right-angle corners, including rotated corners. The
+raised contour, body mask and hit shape follow the resulting display, while
+contact membership and saved layout use the original plan coordinates.
 The room captions and their metrics and Area links are painted over masonry
 and furniture. Their room-fit and Area link inputs retain the native keyboard
 and touch policy. Filled shadows project directly underneath onto the floor.

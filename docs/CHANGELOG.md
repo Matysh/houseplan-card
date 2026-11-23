@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Keep shared device outlines aligned with walls and turn value capsules with their text in all 2.5D views (#1538).
 - Keep the ends of wall-mounted device outlines vertical at the wall cut in straight-on 2.5D views (#1534, #1537).
 - Keep Zigbee signal readings legible when a wall cuts across a device body in 2.5D (#1536).
 

@@ -214,6 +214,11 @@ export function isoFloorMatrixCss(camera: IsoCamera = ISO_CAMERA): string {
   return isoPlaneMatrixCss(0, camera);
 }
 
+/** Captions, whole value capsules and room labels use the same reading axes. */
+export function isoReadingYaw(yaw: number): number {
+  return yaw % 90 === 0 ? 0 : ((yaw + 90) % 180 + 180) % 180 - 90;
+}
+
 /** Marker-local vectors use the floor basis, without translating its origin.
  * The inverse keeps the invisible minimum hit area screen-facing. */
 export function isoFloorLinearCss(camera: IsoCamera = ISO_CAMERA, inverse = false): string {

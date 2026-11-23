@@ -33,7 +33,7 @@ test('glass remains open at a wall and follows a concave group instead of a boun
   assert.ok(!contains(segments(l.top),[110,110]),'concavity remains empty');
 });
 
-test('#1531 shared glass follows every projected anchor and retains its open wall edge',()=>{
+test('#1538 shared glass projects the whole boundary and retains its open wall edge',()=>{
   const group=Array.from({length:6},(_,i)=>shape(180,175+i*90));
   for(const marker of group)marker.walls.left='wall';
   const saved=JSON.stringify(group), height=100, frame={x:0,y:0,w:800,h:800};
@@ -51,9 +51,10 @@ test('#1531 shared glass follows every projected anchor and retains its open wal
       const anchor=isoMarkerGlassAnchor([marker.x,marker.y],projection);
       const projected=projectPlanPoint([marker.x,marker.y],height,camera);
       assert.ok(applyIsoMatrix(anchor,plane).every((n,i)=>Math.abs(n-projected[i])<1e-7));
-      const [x,y]=anchor;
-      assert.ok(edges.some(edge=>distance([x+box.right,y],edge)<1e-4),`right rim follows member ${marker.id} in ${rotation}°`);
-      assert.ok(edges.every(edge=>distance([x+box.left,y],edge)>5),'wall still owns the open rim edge');
+      const outside=isoMarkerGlassAnchor([marker.x+box.right,marker.y],projection);
+      const wall=isoMarkerGlassAnchor([marker.x+box.left,marker.y],projection);
+      assert.ok(edges.some(edge=>distance(outside,edge)<1e-4),`right rim follows member ${marker.id} in ${rotation}°`);
+      assert.ok(edges.every(edge=>distance(wall,edge)>5),'wall still owns the open rim edge');
     }
   }
   assert.equal(JSON.stringify(group),saved);

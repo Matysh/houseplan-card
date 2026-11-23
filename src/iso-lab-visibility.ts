@@ -277,14 +277,16 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
     if(faces===lastFaces)return lastBody;
     const caps:Point[][]=[],sides:{ring:Point[];plane:Plane}[]=[];
     for(const face of faces){
-      const {left:l,right:r,top:t,bottom:bt,rx,ry}=face,cap:Point[]=[];
+      const {left:l,right:r,top:t,bottom:bt,rx,ry,angle:turn=0}=face,cap:Point[]=[];
+      const cos=Math.cos(turn),sin=Math.sin(turn),ox=(l+r)/2,oy=(t+bt)/2;
       // Match the real rounded DOM face, including fitted numeric pills and
       // badges. All coordinates come from the existing cached measure batch.
       for(let corner=0;corner<4;corner++)for(let step=0;step<=16;step++){
         const angle=(-90+corner*90+step*90/16)*Math.PI/180;
         const px=(corner<2?r-rx:l+rx)+Math.cos(angle)*rx;
         const py=(corner===0||corner===3?t+ry:bt-ry)+Math.sin(angle)*ry;
-        cap.push([cx+(a*px+c*py)*size,cy+(b*px+d*py)*size]);
+        const u=ox+cos*(px-ox)-sin*(py-oy),v=oy+sin*(px-ox)+cos*(py-oy);
+        cap.push([cx+(a*u+c*v)*size,cy+(b*u+d*v)*size]);
       }
       caps.push(cap);
       for(let i=0;i<cap.length;i++){
@@ -336,8 +338,11 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
             wall.bounds[3]>=bounds[1]-margin&&wall.bounds[1]<=bounds[3]+margin)levelCuts.add(wall);
           continue;
         }
-        if(wall.bounds[2]<bounds[0]||wall.bounds[0]>bounds[2]||wall.bounds[3]<bounds[1]||wall.bounds[1]>bounds[3])continue;
-        (masonrySurface(wall.entry)==='top' ? cut : hidden).push(...deviceOccluder(wall,ring,plane));
+        const stroke=size*.025;
+        if(wall.bounds[2]<bounds[0]-stroke||wall.bounds[0]>bounds[2]+stroke
+          ||wall.bounds[3]<bounds[1]-stroke||wall.bounds[1]>bounds[3]+stroke)continue;
+        // Include the rim stroke outside the side polygon in the wall cut.
+        (masonrySurface(wall.entry)==='top' ? cut : hidden).push(...deviceOccluder(wall,ring,plane,stroke));
       }
     }
     // The upper/lower glass rims are CSS strokes beyond their side polygons.
