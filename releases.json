@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1276,
+  "revision": 1277,
   "active": "v1.86.1-beta.3",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -216305,7 +216305,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.1-beta.3",
@@ -224011,7 +224011,8 @@
           "en": "## v1.86.1-beta.3 — 2026-11-23\n\n- The four straight-on 2.5D views add a subtle perspective while keeping wall edges vertical. [#1526](https://github.com/Matysh/houseplan-card/issues/1526)"
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.1-beta.3"
     }
   },
   "published": {
@@ -230106,7 +230107,8 @@
     "ship-review:result:4ac2b011-817f-41b5-beae-cc964616f83e": "ac672fbf415317d6b10dba65dbc2e6972c5bc490cdadbc76f97cb01ecc1b725d",
     "1526-beta3-publish:2cadfb172034649165e2833867de16294094e36e:runner-report": "3b856249e5f280152a9d2eeddf48b0e8ee13e46c2d512e1366a5450ce79a78b7",
     "1526-beta3-publish:2cadfb172034649165e2833867de16294094e36e:metrics": "ecb51a84628af6ea493c3127ae7fd833aa1e273b55d2e732dd2bbb3ffd05ca36",
-    "1526-beta3-publish:2cadfb172034649165e2833867de16294094e36e:prepared:58e1d30b-0a42-4618-85ad-f9af2343244a": "16bc495aaf34350503534d9a05649866270b8bed5b5d6cc79328b4b345369265"
+    "1526-beta3-publish:2cadfb172034649165e2833867de16294094e36e:prepared:58e1d30b-0a42-4618-85ad-f9af2343244a": "16bc495aaf34350503534d9a05649866270b8bed5b5d6cc79328b4b345369265",
+    "1526-beta3-publish:2cadfb172034649165e2833867de16294094e36e:started:1276": "d70956cd5f2c34c4634ae1a4bd43b501f5d4afbe81a646a0525d6bf192f8a779"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
