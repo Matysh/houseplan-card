@@ -56,7 +56,7 @@ export interface IsoDeviceOcclusion {
 export interface IsoDeviceWallMask {
   transform: string;
   bodyMask: (faces: readonly IsoDeviceFace[]) => IsoDeviceOcclusion;
-  glassMask: (faces: readonly IsoDeviceSurface[]) => IsoDeviceOcclusion;
+  glassMask: (faces: readonly IsoDeviceSurface[], origin?: PlanPoint) => IsoDeviceOcclusion;
 }
 export interface IsoOverlayPlacement {
   deviceSize?: number;

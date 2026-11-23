@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isoMarkerBodyOutline,isoLockBodyOutline,isoMarkerGlass} from '../test-build/iso-marker-outline.js';
+import {isoMarkerBodyOutline,isoLockBodyOutline,isoMarkerGlass,isoMarkerGlassAnchor} from '../test-build/iso-marker-outline.js';
 import {freeContactShape,contactOutline} from '../test-build/device-contact-geometry.js';
+import {isoCameraFor,isoPerspectiveCamera,isoFloorMatrix,applyIsoMatrix,projectPlanPoint} from '../test-build/iso-projection.js';
 const shape=(x=0,y=0,diameter=80)=>freeContactShape({id:`${x}:${y}`,x,y,diameter,
   box:{left:-diameter*.634375,right:diameter*.634375,top:-diameter*.634375,bottom:diameter*.634375}});
 const plane=(yaw,elevation)=>{const a=yaw*Math.PI/180,s=Math.sin(elevation*Math.PI/180);return[Math.cos(a),s*Math.sin(a),-Math.sin(a),s*Math.cos(a)];};
@@ -30,6 +31,32 @@ test('glass remains open at a wall and follows a concave group instead of a boun
   }
   const l=isoMarkerGlass([shape(),shape(90,0),shape(0,90)],m);
   assert.ok(!contains(segments(l.top),[110,110]),'concavity remains empty');
+});
+
+test('#1531 shared glass follows every projected anchor and retains its open wall edge',()=>{
+  const group=Array.from({length:6},(_,i)=>shape(180,175+i*90));
+  for(const marker of group)marker.walls.left='wall';
+  const saved=JSON.stringify(group), height=100, frame={x:0,y:0,w:800,h:800};
+  const distance=([px,py],[[ax,ay],[bx,by]])=>{
+    const dx=bx-ax,dy=by-ay;
+    const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy)));
+    return Math.hypot(px-ax-t*dx,py-ay-t*dy);
+  };
+  for(const rotation of [45,135,225,315]){
+    const camera=isoPerspectiveCamera(isoCameraFor(rotation),frame,frame,height), plane=isoFloorMatrix(camera);
+    const projection={camera,height};
+    const glass=isoMarkerGlass(group,plane,true,projection);
+    const edges=segments(glass.top).filter(([a,b])=>Math.hypot(a[0]-b[0],a[1]-b[1])>1e-8);
+    for(const {marker,box} of group){
+      const anchor=isoMarkerGlassAnchor([marker.x,marker.y],projection);
+      const projected=projectPlanPoint([marker.x,marker.y],height,camera);
+      assert.ok(applyIsoMatrix(anchor,plane).every((n,i)=>Math.abs(n-projected[i])<1e-7));
+      const [x,y]=anchor;
+      assert.ok(edges.some(edge=>distance([x+box.right,y],edge)<1e-4),`right rim follows member ${marker.id} in ${rotation}°`);
+      assert.ok(edges.every(edge=>distance([x+box.left,y],edge)>5),'wall still owns the open rim edge');
+    }
+  }
+  assert.equal(JSON.stringify(group),saved);
 });
 test('whole body fits inside the border at every lab camera quadrant and elevation',()=>{
   for(const yaw of[25,35,45,125,215,305])for(const elevation of[30,35,40]){

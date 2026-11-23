@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Align shared device outlines with their markers in perspective 2.5D views (#1531).
+
 - Hide the portions of 2.5D device bodies and glass outlines occluded by opaque upper wall cuts (#1530).
 
 - Keep window panes behind opaque upper wall cuts in straight-on 2.5D views (#1529).

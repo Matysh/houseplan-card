@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1531,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Aligns shared device contours with the perspective cameras introduced on the current beta line.",
+  "summary": {
+    "ru": "Общая обводка устройств следует за их центрами в перспективных ракурсах 2.5D.",
+    "en": "Shared device outlines follow their markers in perspective 2.5D views."
+  }
+}

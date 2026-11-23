@@ -2,10 +2,12 @@
 import { nothing, svg } from 'lit';
 import type { IsoMarkerGlass } from './iso-marker-outline';
 import type { IsoDeviceOcclusion, IsoDeviceWallMask } from './iso-overlays';
+import type { PlanPoint } from './iso-projection';
 
 export function renderIsoMarkerGlass(glass:IsoMarkerGlass,viewBox:string,virtual=false,
-  member?:{id:string;clip:string},wall?:{id:string;mask:IsoDeviceWallMask}) {
-  const front=wall?.mask.glassMask(glass.frontFaces),back=member ? undefined : wall?.mask.glassMask(glass.backFaces);
+  member?:{id:string;clip:string},wall?:{id:string;mask:IsoDeviceWallMask;origin?:PlanPoint}) {
+  const front=wall?.mask.glassMask(glass.frontFaces,wall.origin);
+  const back=member ? undefined : wall?.mask.glassMask(glass.backFaces,wall.origin);
   const points=[...glass.frontFaces,...glass.backFaces].flat();
   const x=Math.min(...points.map(p=>p[0]))-1,y=Math.min(...points.map(p=>p[1]))-1;
   const w=Math.max(...points.map(p=>p[0]))-x+1,h=Math.max(...points.map(p=>p[1]))-y+1;

@@ -16,7 +16,7 @@ import { contactBasisMarker } from './device-contact-basis';
 import { DeviceContactLayout } from './device-contact-layout';
 import { screenContactMarker, screenContactScene, projectedContactHit } from './device-contact-screen';
 import type { PlanRotation } from './view-frame';
-import { isoMarkerBodyOutline, isoMarkerGlass } from './iso-marker-outline';
+import { isoMarkerBodyOutline, isoMarkerGlass, isoMarkerGlassAnchor, type IsoMarkerGlassProjection } from './iso-marker-outline';
 import { renderIsoMarkerGlass } from './iso-marker-glass';
 import type { IsoDeviceFace, IsoDeviceWallMask } from './iso-overlays';
 
@@ -34,6 +34,7 @@ export interface DeviceContactFrame {
   uprightHalfTurn?: boolean;
   /** A floor-aligned presentation; contact layout stays in canonical plan units. */
   plane?: readonly number[];
+  glassProjection?: IsoMarkerGlassProjection;
 }
 interface MeasuredMarker { element: HTMLElement; ink: HTMLElement }
 const metricKey = (shell: Element | null | undefined): string => shell
@@ -68,6 +69,7 @@ export class DeviceContactRenderer {
   private rotation: PlanRotation = 0;
   private uprightHalfTurn = false;
   private plane: readonly number[] | undefined;
+  private glassProjection: IsoMarkerGlassProjection | undefined;
   private screen: { source: DeviceContactScene; rotation: PlanRotation; uprightHalfTurn: boolean; scene: DeviceContactScene } | null = null;
   private fontDocument: Document | null = null;
   private invalidate: (() => void) | undefined;
@@ -105,6 +107,7 @@ export class DeviceContactRenderer {
 
   public clear(): void {
     this.plane = undefined;
+    this.glassProjection = undefined;
     this.preparedFont = null;
     this.reflowed=false;
     this.resizeStatus=null;
@@ -137,10 +140,13 @@ export class DeviceContactRenderer {
     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
     const uprightHalfTurn = frame.uprightHalfTurn ?? false;
     const turned = this.rotation !== (frame.rotation ?? 0) || this.uprightHalfTurn !== uprightHalfTurn
-      || String(this.plane) !== String(frame.plane);
+      || String(this.plane) !== String(frame.plane)
+      || this.glassProjection?.camera !== frame.glassProjection?.camera
+      || this.glassProjection?.height !== frame.glassProjection?.height;
     this.rotation = frame.rotation ?? 0;
     this.uprightHalfTurn = uprightHalfTurn;
     this.plane = frame.plane;
+    this.glassProjection = frame.glassProjection;
     adoptDeviceContactStyles(root);
     this.invalidate=frame.invalidate;
     const doc=(root as ShadowRoot).ownerDocument;
@@ -303,6 +309,7 @@ export class DeviceContactRenderer {
       const faces = this.faces.get(metricKey(node.querySelector('.device-shell')));
       if (!mask || !slot || !faces?.length) {
         node.removeAttribute('data-hp-device-occlusion');
+        if (slot && this.wallPaint.delete(slot)) render(nothing,slot);
         continue;
       }
       const previous = this.wallPaint.get(slot);
@@ -366,8 +373,8 @@ export class DeviceContactRenderer {
         this.plane![1]*s.marker.x+this.plane![3]*s.marker.y <
         this.plane![1]*back.marker.x+this.plane![3]*back.marker.y ? s : back) : group[0];
       const active = joined || Object.keys(owner.walls).length > 0;
-      const outline = active ? contactOutline(group,true) : '';
-      const glass = this.plane ? isoMarkerGlass(group,this.plane,true) : null;
+      const outline = active && !this.plane ? contactOutline(group,true) : '';
+      const glass = this.plane ? isoMarkerGlass(group,this.plane,true,this.glassProjection) : null;
       const virtual=group.every(s=>s.marker.virtual===true);
       for (const s of group) {
         const item = this.elements.get(s.marker.id); if (!item) continue;
@@ -390,6 +397,9 @@ export class DeviceContactRenderer {
         if (!custom && !this.plane) { render(nothing, item.ink); continue; }
         const d = s.marker.diameter;
         const viewBox=`${s.marker.x - d / 2} ${s.marker.y - d / 2} ${d} ${d}`;
+        const glassAnchor=isoMarkerGlassAnchor([s.marker.x,s.marker.y],this.glassProjection);
+        const [glassX,glassY]=glassAnchor;
+        const glassBox=`${glassX-d/2} ${glassY-d/2} ${d} ${d}`;
         // A transformed member is its own stacking context. Repaint just the
         // shared near glass over its opaque body; keep the rest on the owner
         // so neighbouring shells never accumulate translucent coats.
@@ -400,12 +410,13 @@ export class DeviceContactRenderer {
           if(item.element.classList.contains('valonly') && !item.element.querySelector('.with-values')){
             box.left=s.marker.box.left+d*.134375;box.right=s.marker.box.right-d*.134375;
           }
-          const body=freeContactShape({...s.marker,x:s.marker.x-c/det*d*.12,y:s.marker.y+a/det*d*.12,box});
+          const body=freeContactShape({...s.marker,x:glassX-c/det*d*.12,y:glassY+a/det*d*.12,box});
           memberGlass={id:`hp-glass-member-${encodeURIComponent(s.marker.id)}`,clip:isoMarkerBodyOutline([body],this.plane)};
         }
         const wallMask=(item.element as HTMLElement&{hpIsoWallMask?:IsoDeviceWallMask}).hpIsoWallMask;
-        render(svg`${glass ? renderIsoMarkerGlass(glass,viewBox,virtual,memberGlass,
-          wallMask ? {id:`hp-glass-wall-${encodeURIComponent(s.marker.id)}`,mask:wallMask} : undefined) : nothing}
+        render(svg`${glass ? renderIsoMarkerGlass(glass,glassBox,virtual,memberGlass,
+          wallMask ? {id:`hp-glass-wall-${encodeURIComponent(s.marker.id)}`,mask:wallMask,
+            origin:this.glassProjection ? glassAnchor : undefined} : undefined) : nothing}
         <svg viewBox=${viewBox}
           preserveAspectRatio="none" aria-hidden="true">
           ${s === owner && !glass ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} stroke-dasharray=${virtual?'4 3':'none'} d=${outline}></path>` : nothing}

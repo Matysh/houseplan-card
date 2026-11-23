@@ -271,7 +271,6 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
   }
   if(!structureFaces.length){deviceMasks.set(placement,undefined);return undefined;}
   const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c;
-  const [anchorX,anchorY]=placement.floorAnchor;
   let lastFaces:readonly IsoDeviceFace[]|undefined,lastBody=noDeviceOcclusion;
   const bodyMask=(faces:readonly IsoDeviceFace[])=>{
     if(!nearby.length)return noDeviceOcclusion;
@@ -310,9 +309,11 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
     lastFaces=faces;
     return lastBody={occluded:path(hidden),cut:path(cut)};
   };
-  const glassMasks=new WeakMap<readonly IsoDeviceSurface[],IsoDeviceOcclusion>();
-  const glassMask=(surfaces:readonly IsoDeviceSurface[]):IsoDeviceOcclusion=>{
-    const cached=glassMasks.get(surfaces);if(cached)return cached;
+  const glassMasks=new WeakMap<readonly IsoDeviceSurface[],{origin:PlanPoint;result:IsoDeviceOcclusion}>();
+  const glassMask=(surfaces:readonly IsoDeviceSurface[],origin=placement.floorAnchor):IsoDeviceOcclusion=>{
+    const [anchorX,anchorY]=origin;
+    const cached=glassMasks.get(surfaces);
+    if(cached?.origin[0]===anchorX && cached.origin[1]===anchorY)return cached.result;
     const hidden:Multi=[],cut:Multi=[];
     const levelCuts=new Set<Face>();
     const envelope=[Infinity,Infinity,-Infinity,-Infinity],margin=size*.12;
@@ -351,7 +352,7 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
     }
     const local=([x,y]:Point):Point=>[anchorX+(d*(x-cx)-c*(y-cy))/det,anchorY+(-b*(x-cx)+a*(y-cy))/det];
     const result={occluded:path(hidden,local),cut:path(cut,local)};
-    glassMasks.set(surfaces,result);
+    glassMasks.set(surfaces,{origin,result});
     return result;
   };
   const result={bodyMask,glassMask,transform:`matrix(${d/det/size} ${-b/det/size} ${-c/det/size} ${a/det/size} ${.5-(d*cx-c*cy)/det/size} ${.5-(-b*cx+a*cy)/det/size})`};

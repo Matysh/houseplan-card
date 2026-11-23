@@ -1,6 +1,7 @@
 /** Local #1451 paint envelope. Native contact layout and hit ownership stay Flat. */
 import { intersection, union, type Geom } from 'polyclip-ts';
 import type { IsoDeviceSurface } from './iso-overlays';
+import { projectPlanPoint, unprojectIsoAffine, type IsoCamera, type PlanPoint } from './iso-projection';
 import { contactOutline, contactRotate, freeContactShape,
   type ContactPoint as Point, type ContactShape, type ContactSide } from './device-contact-geometry';
 
@@ -142,10 +143,51 @@ export interface IsoMarkerGlass {
   front: string; back: string; top: string; bottom: string;
   frontFaces: IsoDeviceSurface[]; backFaces: IsoDeviceSurface[];
 }
+export interface IsoMarkerGlassProjection {
+  camera: IsoCamera;
+  height: number;
+}
+
+/** Absolute position in the affine SVG embedding used by each device node. */
+export function isoMarkerGlassAnchor(point: PlanPoint, projection?: IsoMarkerGlassProjection): PlanPoint {
+  return projection ? unprojectIsoAffine(projectPlanPoint(point,projection.height,projection.camera),projection.camera) : point;
+}
+
+function glassChainProjector(anchors: readonly ContactShape[], projection: IsoMarkerGlassProjection) {
+  if (anchors.length === 1) {
+    const {x,y}=anchors[0].marker;
+    const [u,v]=isoMarkerGlassAnchor([x,y],projection);
+    return (chain:Point[])=>chain.map(([a,b]):Point=>[a+u-x,b+v-y]);
+  }
+  const bounds = [
+    [Math.min(...anchors.map(s=>s.marker.x)), Math.max(...anchors.map(s=>s.marker.x))],
+    [Math.min(...anchors.map(s=>s.marker.y)), Math.max(...anchors.map(s=>s.marker.y))],
+  ];
+  const projected = ([x,y]:Point):Point => {
+    // Between member centers the rim follows the perspective lens. Outside
+    // their span keep the local offset so the end devices retain their margin.
+    const u = Math.max(bounds[0][0],Math.min(bounds[0][1],x));
+    const v = Math.max(bounds[1][0],Math.min(bounds[1][1],y));
+    const [a,b] = isoMarkerGlassAnchor([u,v],projection);
+    return [x+a-u,y+b-v];
+  };
+  return (chain:Point[]):Point[]=>{
+    const result = [projected(chain[0])];
+    for (let i=1;i<chain.length;i++) {
+      const start=chain[i-1], vector=sub(chain[i],start);
+      const crossings=bounds.flatMap((axis,index)=>vector[index] ? axis.map(v=>(v-start[index])/vector[index]) : [])
+        .filter(t=>t>1e-7 && t<1-1e-7);
+      for (const t of [...new Set(crossings)].sort((a,b)=>a-b)) result.push(projected(add(start,vector,t)));
+      result.push(projected(chain[i]));
+    }
+    return result;
+  };
+}
 /** Extrude the native open contact boundary, not its already swept silhouette.
  * Front and rear surfaces are separate paint layers around the unchanged face.
  * Wall-owned edges stay open and grouped contours retain their concavities. */
-export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly number[],topAnchored=false):IsoMarkerGlass {
+export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly number[],topAnchored=false,
+  projection?:IsoMarkerGlassProjection):IsoMarkerGlass {
   const result:IsoMarkerGlass={front:'',back:'',top:'',bottom:'',frontFaces:[],backFaces:[]};
   if(!shapes.length)return result;
   const [a,b,c,d]=plane,det=a*d-b*c;
@@ -157,7 +199,9 @@ export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly num
   const lip=topAnchored ? 0 : -5/3;
   const bottom=topAnchored ? 2 : 1;
   const path=(points:Point[])=>points.map((p,i)=>`${i?'L':'M'}${p.map(n=>+n.toFixed(7)).join(' ')}`).join(' ');
-  for(const chain of rings(contactOutline(shapes,true),true)) {
+  const project=projection && glassChainProjector(shapes,projection);
+  for(const source of rings(contactOutline(shapes,true),true)) {
+    const chain=project ? project(source) : source;
     result.top+=path(chain.map(p=>add(p,v,lip)))+' ';
     result.bottom+=path(chain.map(p=>add(p,v,bottom)))+' ';
     let run:Point[]=[];let front=false;

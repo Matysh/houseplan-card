@@ -12,6 +12,8 @@ import type { DeviceHitController } from './device-hit-owner';
 import { floorGeometryKeyReader, type FloorKeySource } from './floor-geometry-key';
 import type { HassRenderSnapshot } from './render-invalidation';
 import type { PlanRotation } from './view-frame';
+import { isoDisplayWallHeight, type IsoCamera } from './iso-projection';
+import { gridVisualUnits } from './grid-scale';
 
 interface ContactCard extends FloorKeySource {
   renderRoot: ParentNode;
@@ -19,6 +21,8 @@ interface ContactCard extends FloorKeySource {
   _renderProjection: string; _mode: string; _markup: boolean;
   readonly _rotation: PlanRotation;
   readonly _isoFloorMarkerPlane?: readonly number[];
+  readonly _isoFloorCamera?: IsoCamera;
+  readonly _cellCm: number;
   readonly _effectiveKioskScale: { icon: number };
   _renderDevices: readonly DevItem[];
   _deviceHits: DeviceHitController;
@@ -60,6 +64,7 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
   const host = value as ContactCard, space = host._spaceModel();
   if (host._deviceHits.contactGeometry !== renderer.hit) host._deviceHits.contactGeometry = renderer.hit;
   const plane = host._isoFloorMarkerPlane;
+  const camera = plane ? host._isoFloorCamera : undefined;
   if (!space || host._renderProjection === 'iso' && !plane) {
     const hadLimit = !!renderer.resizeStatus;
     renderer.clear();
@@ -84,6 +89,7 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
   const wasReflowed=renderer.reflowed, previousStatus = renderer.resizeStatus;
   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
     space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane,
+    glassProjection: camera?.perspective ? {camera,height:gridVisualUnits(isoDisplayWallHeight(),host._cellCm)} : undefined,
     uprightHalfTurn: host._mode === 'view' && host._renderProjection === 'flat' && host._rotation === 180,invalidate:()=>host.requestUpdate(),
     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => {
       const scale = host._devicePresentation(d).scale;

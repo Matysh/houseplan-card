@@ -65,6 +65,38 @@ for(const dpr of [1,2]) {
           check(`${label}: glass has no inherited body mask`,result.clean&&result.glass>0);
           check(`${label}: body keeps its registered wall mask`,result.devices===23&&result.masked>0&&result.registered&&result.ownMasks>0);
           check(`${label}: individual and group ink keep virtual/physical styles`,result.groups>=4&&result.virtual>0&&result.solid>0);
+          let registration;
+          if(rotation===45) {
+            registration=await page.evaluate(()=>{
+              const card=window.__isoPaint,root=card.renderRoot;
+              const members=Array.from({length:6},(_,i)=>root.querySelector(`.dev[data-id="contour-${i+3}"]`));
+              const ownerId=members[0]?.dataset.hpDeviceComponent;
+              const owner=members.find(node=>node?.dataset.id===ownerId);
+              const rim=owner?.querySelector('.iso-marker-glass.front .glass-rim.upper');
+              if(!rim||!members.every(node=>node?.dataset.hpDeviceComponent===ownerId))return null;
+              const matrix=rim.getScreenCTM(),edges=[];
+              let previous;
+              for(const [,command,x,y] of rim.getAttribute('d').matchAll(/([ML])([-\d.e+]+) ([-\d.e+]+)/g)){
+                const point=new DOMPoint(+x,+y).matrixTransform(matrix);
+                if(command==='L')edges.push([previous,point]);
+                previous=point;
+              }
+              const distance=(p,[a,b])=>{
+                const dx=b.x-a.x,dy=b.y-a.y;
+                const span=dx*dx+dy*dy;
+                const t=span ? Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/span)) : 0;
+                return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
+              };
+              return members.map(node=>{
+                const {marker,box}=card._deviceContacts.scene.shapes.get(node.dataset.id);
+                const local=node.querySelector('.device-contact-hit').getScreenCTM();
+                const point=new DOMPoint(marker.x,marker.y+box.top).matrixTransform(local);
+                return Math.min(...edges.map(edge=>distance(point,edge)));
+              });
+            });
+            check(`${label}: the open glass rim tracks all six wall-contact anchors`,
+              registration?.length===6&&registration.every(distance=>distance<1));
+          }
           // Compare actual glass pixels with/without the legacy root mask.
           // Hide bodies but retain their boxes/occlusion state; glass keeps its
           // own masks. Old parent scoping changes these pixels, correct scoping
@@ -84,7 +116,7 @@ for(const dpr of [1,2]) {
             writeFileSync(`${dir}/dpr${dpr}-correct.png`,reference);writeFileSync(`${dir}/dpr${dpr}-legacy-negative.png`,legacy);
           }
           await page.evaluate(()=>{const r=window.__isoPaint.renderRoot;r.querySelector('#contour-probe').remove();r.querySelector('#contour-mask-control').remove();});
-          evidence.push({label,...result,comparison});
+          evidence.push({label,...result,comparison,registration});
         }
       }
       for(let i=0;i<2;i++){await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);}
