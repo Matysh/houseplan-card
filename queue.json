@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21942,
+  "revision": 21943,
   "nextTicket": 643,
   "nextFence": 642,
   "tasks": {
@@ -6585,6 +6585,10 @@
       "digest": "a56e9bfe84701aab24b48550c4e150405cd8a91f8e0af63ceab57cfc2e0993ef",
       "issue": 1533
     },
+    "github:45159273283:1:completions:message:d884839148199691f9fa8fab9384be5b580f59ffd6b2b2b229c0f17574aef855": {
+      "digest": "9e7ff1d0392c2cb518af5ade2c730b800252b7909b1b15a794fdaa49cdd55391",
+      "issue": 1533
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6683,7 +6687,8 @@
         "reviewChanges": "Перспективный пол, объёмные элементы и LED-плоскость сгруппированы в один кадр. Действующий 500-мс переход плавно смешивает полный предыдущий и новый кадры. Сохранённые части перспективного кадра получают те же изменения камеры, что и живые. Повёрнутый вид по-прежнему использует свой один SVG. Уменьшение движения сохраняет мгновенную смену.\n\n`node demo/smoke_iso_light_fade.mjs`: до правки оба перехода в повёрнутом виде проходили, в прямом включение падало на отсутствии анимации. С правкой прошли включение и выключение в обеих ориентациях, проверка опацитета в середине 500 мс, совмещение слоёв при зуме и мгновенное обновление в reduced motion. `node demo/smoke_iso_sun.mjs` прошёл. Сцена `panel-iso-straight-perspective-1526` даёт побайтово одинаковый кадр с правкой и на `bf6b5c73d`; расхождение со старым эталоном на 496 пикселей уже было в dev.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
