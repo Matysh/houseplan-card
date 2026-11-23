@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21665,
+  "revision": 21666,
   "nextTicket": 638,
   "nextFence": 638,
   "tasks": {
@@ -6537,6 +6537,10 @@
       "digest": "730843a2b7e02139a1d47010d4faf4a745e1c216b7e5274a13add3bb8610b91c",
       "issue": 1530
     },
+    "finish:e733a819-dad6-4fe2-84d6-dd95c0071895:finish:4:s6-label": {
+      "digest": "48b4c7e1d6fcc4e83b6c6c8a6232d971ff1a7cb87b467de47441f6f5fd90f138",
+      "issue": 1530
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6632,7 +6636,8 @@
         "resubmission": false,
         "reviewChanges": "Верхний срез и боковая грань использовали одинаковую маску с остаточной видимостью 30%. Теперь непрозрачный срез полностью скрывает перекрытые части корпуса и обводки. Боковое затенение и настройка прозрачности сохранены. Регрессия измеряет обе маски отдельно, включая видимую верхнюю часть маркера.\n\n[Вердикт по E2E](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1530.md)\n\nСинтетическая сцена SVG в закреплённом Chromium 151.0.7922.34. Слева сборка из тега `v1.86.1-beta.3`, справа рабочая ветка с исправлениями #1528–#1531. [Сравнение «до/после»](https://github.com/Matysh/houseplan-card/blob/52ef4ff488a878d08b681153e9cbe4aab3efcb1c/docs/issue-evidence/1530/comparison.png).",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
