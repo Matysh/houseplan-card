@@ -273,10 +273,9 @@ test('#1246 Optimize retains its action toast callback across an awaited failure
 test('#642 open: preview never writes, and cancel closes without a write', async () => {
   const { dialog, state, calls } = fakePort();
   state.config = { spaces: [space('a', 'Alpha', 0.5), space('b', 'Beta', 0.50337)], markers: [], settings: {} };
-  dialog.open();
-  await Promise.resolve();
-  assert.ok(state.dialog?.changed && state.dialog.preflight?.ok, 'a writable preview is open');
+  await dialog.open();
   assert.deepEqual(calls.commit, [], 'opening the preview must not persist anything');
+  assert.ok(state.dialog?.changed && state.dialog.preflight?.ok, 'a writable preview is open');
   handlerFor(dialog.render(), 'click', 'data-hp="dialog-cancel"')();
   assert.equal(state.dialog, null);
   assert.deepEqual(calls.commit, []);
