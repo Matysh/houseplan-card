@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 22339,
-  "nextTicket": 648,
+  "revision": 22340,
+  "nextTicket": 649,
   "nextFence": 648,
   "tasks": {
     "1024": {
@@ -5927,6 +5927,20 @@
         "status": "published",
         "sourceSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5"
       }
+    },
+    "1538": {
+      "issue": 1538,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1538-iso-device-presentation",
+      "materialSha": "ddefc1b3d5e11ca34befd6c45bfc354c5aeed1d2",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 648,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795462686208,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6506,7 +6520,9 @@
       "runId": 45195707174
     }
   },
-  "waiting": [],
+  "waiting": [
+    1538
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6556,6 +6572,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:ecd2b136-3dc2-4bc6-bf82-c0122ee34418": {
+      "digest": "164df524f774f83298820b7da061a4b517318905fd6c7a33ce101fe2f0cd898b",
+      "issue": 1538,
+      "message": {
+        "kind": "queued",
+        "issue": 1538,
+        "at": 1795462686208,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ddefc1b3d5e11ca34befd6c45bfc354c5aeed1d2"
       }
     }
   },
