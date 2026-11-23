@@ -311,12 +311,13 @@ export class DeviceContactRenderer {
       const { occluded, cut } = mask.bodyMask(faces);
       node.toggleAttribute('data-hp-device-occlusion', !!(occluded || cut));
       if (!occluded && !cut) { render(nothing, slot); continue; }
-      // Include the local shell and satellites without allocating a viewport
-      // for every marker. Coordinates are in units of the measured core.
-      const x = Math.min(...faces.map(face => face.left)) + .15;
-      const y = Math.min(...faces.map(face => face.top)) + .15;
-      const width = Math.max(...faces.map(face => face.right)) - x + 1;
-      const height = Math.max(...faces.map(face => face.bottom)) - y + 1.45;
+      // The white mask background must include status satellites outside the
+      // measured face, including simultaneous attention and maintenance.
+      // Coordinates are in units of the measured core.
+      const x = Math.min(-2, ...faces.map(face => face.left + .5));
+      const y = Math.min(-2, ...faces.map(face => face.top + .5));
+      const width = Math.max(3, ...faces.map(face => face.right + .5)) - x;
+      const height = Math.max(3, ...faces.map(face => face.bottom + .5)) - y;
       render(svg`<defs><mask id=${'hp-device-wall-' + encodeURIComponent(id)}
         maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox"
         x=${x} y=${y} width=${width} height=${height} style="mask-type:luminance">

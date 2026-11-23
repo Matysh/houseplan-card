@@ -210,9 +210,10 @@ export function furnitureOcclusion(queue: readonly IsoWallDepthQueueEntry[], cam
   return result;
 }
 
-let deviceMasks=new WeakMap<IsoOverlayPlacement,IsoOverlayPlacement['wallMask']>();
-let deviceQueue:readonly IsoWallDepthQueueEntry[]|undefined,deviceCamera:IsoCamera|undefined;
-let deviceFaces:Face[]=[];
+const deviceOcclusionScenes=new WeakMap<readonly IsoWallDepthQueueEntry[],WeakMap<IsoCamera,{
+  faces:Face[];
+  masks:WeakMap<IsoOverlayPlacement,IsoOverlayPlacement['wallMask']>;
+}>>();
 const noDeviceOcclusion: IsoDeviceOcclusion = {occluded:'',cut:''};
 
 function wallCutAtHeight({entry}:Face,height:number):boolean {
@@ -225,7 +226,7 @@ function wallCutRing(ring:Point[],[left,top,right,bottom]:number[]):Point[] {
   return halfPlane(halfPlane(horizontal,[0,1,-top]),[0,-1,bottom]);
 }
 
-function deviceOccluder(wall: Face, ring: Point[], plane: Plane): Multi {
+function deviceOccluder(wall: Face, ring: Point[], plane: Plane, margin=0): Multi {
   const delta=wall.plane.map((n,i)=>n-plane[i]) as Plane;
   const sign=Math.sign(area(ring));
   const result: Multi=[];
@@ -233,7 +234,8 @@ function deviceOccluder(wall: Face, ring: Point[], plane: Plane): Multi {
     let overlap=halfPlane(wallRing,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
     for(let i=0;i<ring.length&&overlap.length;i++) {
       const p=ring[i],q=ring[(i+1)%ring.length];
-      overlap=halfPlane(overlap,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
+      const padding=margin ? margin*Math.hypot(q[0]-p[0],q[1]-p[1]) : 0;
+      overlap=halfPlane(overlap,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign+padding]);
     }
     if(overlap.length) {
       if(area(overlap)<0)overlap.reverse();
@@ -243,28 +245,30 @@ function deviceOccluder(wall: Face, ring: Point[], plane: Plane): Multi {
   return result;
 }
 
-/** Glass occupies the wall-cut band. Solid faces additionally compare their
- * actual surface depth, so a wall behind a cap never cuts into its top. */
+/** A near opaque cut hides the body; a side wall leaves residual visibility.
+ * Limit body occlusion to its measured extruded faces and preserve the caps. */
 export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],camera:IsoCamera,
   placement:IsoOverlayPlacement,height:number):IsoOverlayPlacement['wallMask'] {
   const size=placement.deviceSize;
   if(!size)return undefined;
-  if(queue!==deviceQueue||camera!==deviceCamera){
-    deviceQueue=queue;deviceCamera=camera;
-    deviceFaces=queue.map(entry=>faceOf(entry,camera)).filter((face):face is Face=>!!face?.opaque);
-    deviceMasks=new WeakMap();
+  let cameras=deviceOcclusionScenes.get(queue);
+  if(!cameras)deviceOcclusionScenes.set(queue,cameras=new WeakMap());
+  let scene=cameras.get(camera);
+  if(!scene){
+    scene={faces:queue.map(entry=>faceOf(entry,camera)).filter((face):face is Face=>!!face?.opaque),masks:new WeakMap()};
+    cameras.set(camera,scene);
   }
+  const {faces:structureFaces,masks:deviceMasks}=scene;
   if(deviceMasks.has(placement))return deviceMasks.get(placement);
   const lift=isoHeightLift(camera,1);
   const [cx,cy]=placement.visualScene,r=size*5;
   const minBodyDepth=isoProjectedDepth([cx,cy-r],height,camera)-size*.24/lift;
   const nearby:Face[]=[];
-  for(const face of deviceFaces){
+  for(const face of structureFaces){
     const [x0,y0,x1,y1]=face.bounds;
     if(x1<cx-r||x0>cx+r||y1<cy-r||y0>cy+r)continue;
     if(face.geom.some(([ring])=>ring.some(p=>at(face.plane,p)>minBodyDepth))) nearby.push(face);
   }
-  const structureFaces=deviceFaces;
   if(!structureFaces.length){deviceMasks.set(placement,undefined);return undefined;}
   const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c;
   const [anchorX,anchorY]=placement.floorAnchor;
@@ -294,24 +298,14 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
       }
     }
     const hidden:Multi=[],cut:Multi=[];
-    // At the device-cap height the wall is in front of every extruded side.
-    // Mask the actual wall silhouette so anti-aliased edges of the body are
-    // covered as well. Preserve the equal-height device faces themselves.
-    const levelCuts = new Set(nearby.filter(wall=>wallCutAtHeight(wall,height)));
-    for(const wall of levelCuts)for(const [ring] of wall.geom) {
-      const cover=wallCutRing(ring,[cx-r,cy-r,cx+r,cy+r]);
-      if(!cover.length)continue;
-      if(area(cover)<0)cover.reverse();
-      let visible:Multi=[[cover]];
-      for(const cap of caps)visible=visible.flatMap(poly=>subtractConvex(poly[0],cap));
-      cut.push(...visible);
-    }
     for(const side of sides)for(const wall of nearby){
-      if(levelCuts.has(wall))continue;
-      let visible=deviceOccluder(wall,side.ring,side.plane);
+      const top=masonrySurface(wall.entry)==='top';
+      // Include the painted edge at the rounded body perimeter. Padding the
+      // body leaves the wall silhouette and nearby status indicators intact.
+      let visible=deviceOccluder(wall,side.ring,side.plane,top ? size*.025 : 0);
       // The device cap is nearer than every device side, including another badge's side.
       for(const cap of caps)visible=visible.flatMap(poly=>subtractConvex(poly[0],cap));
-      (masonrySurface(wall.entry)==='top' ? cut : hidden).push(...visible);
+      (top ? cut : hidden).push(...visible);
     }
     lastFaces=faces;
     return lastBody={occluded:path(hidden),cut:path(cut)};

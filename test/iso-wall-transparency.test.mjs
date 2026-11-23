@@ -44,7 +44,8 @@ test('#1530 an opaque cut fully hides the device side and glass behind it', () =
     const shape = [{left:-.5,right:.5,top:-.5,bottom:.5,rx:.15,ry:.15}];
     const body = mask.bodyMask(shape);
     assert.ok(contains(body.cut,x+.12,y+18));
-    assert.ok(contains(body.cut,x+21,y+18),'cover the antialiased body edge inside the wall silhouette');
+    assert.ok(contains(body.cut,x+20.5,y+18),'cover the antialiased body edge inside the wall silhouette');
+    assert.ok(!contains(body.cut,x+25,y+18),'the cap does not hide paint outside the device body');
     assert.ok(contains(body.occluded,x+.12,y+22));
     assert.ok(!contains(body.cut,x+.12,y+12));
     const [u,v] = floorAnchor;
@@ -57,6 +58,9 @@ test('#1530 an opaque cut fully hides the device side and glass behind it', () =
     const transparentCut = deviceWallOcclusion([side],camera,placement,height);
     assert.equal(transparentCut.bodyMask(shape).cut,'');
     assert.equal(transparentCut.glassMask(glass).cut,'');
+    const nearbyCut = cut([[x-12,y+50],[x+12,y+50],[x+12,y+61],[x-12,y+61]]);
+    const nearby = deviceWallOcclusion([nearbyCut],camera,placement,height);
+    assert.deepEqual(nearby.bodyMask(shape),{cut:'',occluded:''},'a nearby wall without overlap produces no body mask');
   }
 });
 
@@ -166,17 +170,24 @@ test('#1518 hidden opening panels keep the window apron at its own top opacity',
       .map(face=>({...face,id:basis.id,type:basis.type,sourceIndex:0})),
   };
   const display=spaceDisplayOf({settings:{transparent_walls_3d:true,wall_fill:{c:'#2f786e',a:.38}}});
+  const placement={floorAnchor:[75,110],visualScene:projectPlanPoint([75,110],basis.wallHeight,camera),deviceSize:40};
+  const overlays={devices:new Map([['device',placement]])};
   const render = opacity=>resolveIsoFramePresentation({
     projection:'iso', display:{...display,showBorders:true,hideOpenings:true,opacity},
-    scene, openings:[], amountOf:()=>0, overlays:()=>null, cellCm:5,
+    scene, openings:[], amountOf:()=>0, overlays:()=>overlays, cellCm:5,
   });
   const opaque = render(1);
+  const first=placement.wallMask;
+  assert.ok(first);
+  render(1);
+  assert.equal(placement.wallMask,first,'unchanged translucent scene reuses its device mask');
   assert.equal(opaque.layers.panels,false);
   const markup = templateMarkup(opaque.foreground);
   assert.match(markup,/id="hp-iso-translucent-cut-paint"[^>]+d=M /);
   assert.match(markup,/data-material=top opacity=1[^>]*>\s*<path class=iso-wall-top[^>]+data-surface=window-apron-top/);
   assert.doesNotMatch(markup,/class="iso-opening-panel/);
   assert.doesNotMatch(templateMarkup(render(0).foreground),/data-surface=window-apron-top/);
+  assert.equal(placement.wallMask,undefined,'turning the cut transparent invalidates the previous mask');
 });
 
 test('#1518 space draft saves a local opt-in without changing colours or geometry identity', () => {

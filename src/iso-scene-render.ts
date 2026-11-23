@@ -13,7 +13,7 @@ import { connectTranslucentOpeningMasonry } from './iso-masonry-joins';
 import { difference, union, type Geom } from 'polyclip-ts';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_OPENINGS } from './iso-lab-camera';
 import { clipIsoOpeningDepthQueue, composeIsoTranslucentStructure, deviceWallOcclusion, furnitureOcclusion,
-  masonrySurface, type IsoMasonryOpacity } from './iso-lab-visibility';
+  masonrySurface, transparentSurface, type IsoMasonryOpacity } from './iso-lab-visibility';
 import { isoWallLightPainter, type IsoWallLightSource } from './iso-wall-light';
 export { isoFurnitureLightSampler } from './iso-wall-light';
 import type { ResolvedOpeningVisual } from './opening-features';
@@ -31,6 +31,7 @@ export const ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 type WallCut = { geometry: ReturnType<typeof union>; d: string };
 const wallCutCache = new WeakMap<object, WallCut>();
+const solidMaskQueues = new WeakMap<IsoWallGeometry,{key:string;queue:readonly IsoWallDepthQueueEntry[]}>();
 const wallCutPath = (parts: ReturnType<typeof union>): string => parts.flatMap(poly=>poly.map(ring=>
   `M ${ring.map(p=>p.join(' ')).join(' L ')} Z`)).join(' ');
 /** Wall and lintel caps are one cut plane. Outline only their outer boundary;
@@ -478,8 +479,20 @@ function renderIsoTranslucentMasonry(
     const kind = masonrySurface(entry);
     return !kind || masonry[kind] === 1;
   });
-  if (overlays) for (const placement of overlays.devices.values()) {
-    placement.wallMask = deviceWallOcclusion(solid,camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
+  if (overlays?.devices.size) {
+    // The translucent painter creates fresh queue rows on every render.
+    // Compare exact occluder inputs before invalidating the device masks.
+    const inputs=solid.filter(entry=>!transparentSurface(entry));
+    const key=JSON.stringify(inputs.map(entry=>entry.layer==='wall-side'
+      ? [entry.layer,entry.face.points,entry.face.baseHeight,entry.face.height]
+      : entry.layer==='wall-top' ? [entry.layer,entry.face.projectedRings,entry.face.height]
+        : [entry.layer,entry.surface.kind,entry.surface.material,entry.surface.points]));
+    const cached=solidMaskQueues.get(scene.geometry);
+    if(cached?.key!==key)solidMaskQueues.set(scene.geometry,{key,queue:inputs});
+    const occluders=cached?.key===key?cached.queue:inputs;
+    for(const placement of overlays.devices.values()){
+      placement.wallMask=deviceWallOcclusion(occluders,camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
+    }
   }
   const architecture = architecturalPainter(queue,camera,wallColor);
   const paintWallLight = isoWallLightPainter(wallLights,camera,cellCm,scene.geometry);
