@@ -156,6 +156,46 @@ for (const angled of [false,true]) {
         if(dir)await page.screenshot({path:`${dir}/${key.replace('/','-')}-zoom.png`});
         await zoomIsoPaint(page,1);
       }
+      if (!angled && step===7) {
+        const layers = () => page.evaluate(()=>{
+          const root=window.__isoPaint.renderRoot, target=root.querySelector('.dev[data-id="free-b"]');
+          const head=target.dataset.hpDeviceComponent;
+          const group=[...root.querySelectorAll('.dev[data-hp-device-component]')].filter(n=>n.dataset.hpDeviceComponent===head);
+          return {z:getComputedStyle(target).zIndex,
+            focused:target.matches(':focus-visible'),
+            front:group.filter(n=>n.querySelector('.iso-marker-glass.front')).map(n=>n.dataset.id)};
+        });
+        const original=await layers();
+        check('fixture can observe a different front owner after promotion',!original.front.includes('free-b'));
+        for (const attr of ['data-hp-device-hover','data-hp-zigbee-topology-endpoint']) {
+          const hadHover=await page.evaluate(attr=>{
+            const card=window.__isoPaint;
+            const hadHover=card.hasAttribute('data-pointer-hover');
+            card.setAttribute('data-pointer-hover','');
+            card.renderRoot.querySelector('.dev[data-id="free-b"]').setAttribute(attr,'');
+            return hadHover;
+          },attr);
+          await settleIsoPaint(page);
+          const raised=await layers();
+          check(`${attr}: nearest glass follows the actual raised stacking context`,
+            Number(raised.z)>Number(original.z)&&JSON.stringify(raised.front)===JSON.stringify(['free-b']));
+          await page.evaluate(({attr,hadHover})=>{
+            const card=window.__isoPaint;
+            card.toggleAttribute('data-pointer-hover',hadHover);
+            card.renderRoot.querySelector('.dev[data-id="free-b"]').removeAttribute(attr);
+          },{attr,hadHover});
+          await settleIsoPaint(page);
+          check(`${attr}: clearing promotion restores the stable owner`,(await layers()).front,original.front);
+        }
+        await page.evaluate(()=>window.__isoPaint.renderRoot.querySelector('.dev[data-id="free-b"]').focus({focusVisible:true}));
+        await settleIsoPaint(page);
+        const focused=await layers();
+        check('keyboard focus lifts the front glass along with the focused card',
+          focused.focused&&focused.z==='5'&&JSON.stringify(focused.front)===JSON.stringify(['free-b']));
+        await page.evaluate(()=>window.__isoPaint.renderRoot.querySelector('.dev[data-id="free-b"]').blur());
+        await settleIsoPaint(page);
+        check('focus release restores the stable owner',(await layers()).front,original.front);
+      }
       if(step===8)check(`${key}: a full rotation restores the exact initial wall offset`,
         JSON.stringify(Object.values(frame.values).map(v=>v.shift))===JSON.stringify(Object.values(initial.values).map(v=>v.shift)));
       measurements.push({key,maskCount:frame.glassMasks.length,values:frame.values,wallGapError:frame.wallGapError,correctStacks:frame.correctStacks,stackIssues:frame.stackIssues});

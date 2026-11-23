@@ -111,6 +111,7 @@ export class DeviceContactRenderer {
     this.plane = undefined;
     this.glassProjection = undefined;
     this.preparedFont = null;
+    this.observeStacking(null);
     this.reflowed=false;
     this.resizeStatus=null;
     this.appearanceChanged=false;
@@ -153,6 +154,7 @@ export class DeviceContactRenderer {
     this.uprightHalfTurn = uprightHalfTurn;
     this.plane = frame.plane;
     this.glassProjection = frame.glassProjection;
+    this.observeStacking(this.plane && 'host' in root ? root as ShadowRoot : null);
     adoptDeviceContactStyles(root);
     this.invalidate=frame.invalidate;
     const doc=(root as ShadowRoot).ownerDocument;
@@ -411,7 +413,67 @@ export class DeviceContactRenderer {
     this.frameKey = '';
   }
 
-  private paint(ids: Iterable<string>): void {
+  private stackRoot: ShadowRoot | null = null;
+  private stackObserver?: MutationObserver;
+  private readonly dirtyStack = new Set<string>();
+  private stackPending = false;
+
+  private noteStackChange(target: EventTarget | null): void {
+    if (!(target instanceof Element)) return;
+    const id = target.closest<HTMLElement>('.dev[data-hp-device-component]')?.dataset.id;
+    if (!id || !this.elements.has(id)) return;
+    this.dirtyStack.add(id);
+    if (this.stackPending) return;
+    this.stackPending = true;
+    queueMicrotask(() => {
+      this.stackPending = false;
+      // The projection can be retired while a focus/hover update is queued.
+      if (this.plane && this.scene && this.dirtyStack.size) this.paint(this.dirtyStack, true);
+      this.dirtyStack.clear();
+    });
+  }
+
+  private readonly onStackFocus = (event: Event) => this.noteStackChange(event.target);
+
+  private observeStacking(root: ShadowRoot | null): void {
+    if (root === this.stackRoot) return;
+    this.stackRoot?.removeEventListener('focusin', this.onStackFocus);
+    this.stackRoot?.removeEventListener('focusout', this.onStackFocus);
+    this.stackObserver?.disconnect();
+    this.stackRoot = root;
+    this.dirtyStack.clear();
+    if (!root) return;
+    this.stackObserver ??= new MutationObserver(records => {
+      for (const {target} of records) {
+        if (target === this.stackRoot?.host) {
+          for (const marker of this.stackRoot.querySelectorAll('.dev[data-hp-device-hover]'))
+            this.noteStackChange(marker);
+        } else this.noteStackChange(target);
+      }
+    });
+    this.stackObserver.observe(root, {subtree: true, attributes: true,
+      attributeFilter: ['data-hp-device-hover', 'data-hp-zigbee-topology-endpoint']});
+    this.stackObserver.observe(root.host, {attributes: true, attributeFilter: ['data-pointer-hover']});
+    root.addEventListener('focusin', this.onStackFocus);
+    root.addEventListener('focusout', this.onStackFocus);
+  }
+
+  /** DOM depth order is sufficient until an interaction promotes a member. */
+  private glassOwners(group: readonly ContactShape[]): [ContactShape, ContactShape] {
+    const members = group.flatMap(shape => {
+      const node = this.elements.get(shape.marker.id)?.element;
+      if (!node) return [];
+      const promoted = node.hasAttribute('data-hp-device-hover')
+        || node.hasAttribute('data-hp-zigbee-topology-endpoint') || node.matches(':focus-visible');
+      const z = promoted ? Number(getComputedStyle(node).zIndex) : 2;
+      return [{shape, node, z}];
+    });
+    members.sort((a, b) => a.z - b.z
+      || (a.node.compareDocumentPosition(b.node) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    return [members[0]?.shape ?? group[0], members[members.length - 1]?.shape ?? group[0]];
+  }
+
+  private paint(ids: Iterable<string>, stackingOnly = false): void {
     const source = this.scene!, affected = new Set(ids);
     if (this.screen?.source !== source || this.screen.rotation !== this.rotation || this.screen.uprightHalfTurn !== this.uprightHalfTurn) {
       this.screen = { source, rotation: this.rotation, uprightHalfTurn: this.uprightHalfTurn,
@@ -439,15 +501,14 @@ export class DeviceContactRenderer {
       const joined = group.length > 1;
       // Split the single group shell across the farthest and nearest member's
       // stacking contexts. Neither half is repainted per device.
-      let owner = group[0], frontOwner = owner;
-      if (this.plane) {
-        for (const shape of group.slice(1)) {
-          const node = this.elements.get(shape.marker.id)?.element;
-          const back = this.elements.get(owner.marker.id)?.element;
-          const front = this.elements.get(frontOwner.marker.id)?.element;
-          if (node && back && (node.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING)) owner = shape;
-          if (node && front && (front.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)) frontOwner = shape;
-        }
+      const [owner, frontOwner] = this.plane ? this.glassOwners(group) : [group[0], group[0]];
+      if (stackingOnly) {
+        const hasHalf = (shape: ContactShape, side: 'rear' | 'front') =>
+          !!this.elements.get(shape.marker.id)?.ink.querySelector(`.iso-marker-glass.${side}`);
+        // Empty wall-owned halves have no ink to move.
+        const oldRear = group.find(shape => hasHalf(shape, 'rear'));
+        const oldFront = group.find(shape => hasHalf(shape, 'front'));
+        if ((!oldRear || oldRear === owner) && (!oldFront || oldFront === frontOwner)) continue;
       }
       const active = joined || Object.keys(owner.walls).length > 0;
       const outline = active && !this.plane ? contactOutline(group,true) : '';
@@ -458,7 +519,7 @@ export class DeviceContactRenderer {
         const custom = joined || Object.keys(s.walls).length > 0;
         item.element.toggleAttribute('data-hp-device-contact', custom);
         item.element.toggleAttribute('data-hp-iso-body-outline',!!this.plane);
-        if (joined) item.element.dataset.hpDeviceComponent = owner.marker.id;
+        if (joined) item.element.dataset.hpDeviceComponent = group[0].marker.id;
         else item.element.removeAttribute('data-hp-device-component');
         if (!custom && !this.plane) { this.hitShapes.delete(item.element); render(nothing, item.ink); continue; }
         const sides: ContactShape['walls'] = { ...s.walls };
