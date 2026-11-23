@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1313,
+  "revision": 1314,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -232400,7 +232400,8 @@
           "from": "84aca2afee27c80ec214da23516cc0c67198c2fd",
           "to": "306742f589d12a6c79846868b4d8be696b89abfc",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "bf6b5c73d88c6e6736297eb331d5af36a9ba208b"
         }
       ],
       "diagnostics": [],
@@ -233045,7 +233046,8 @@
           "sha": "2cadfb172034649165e2833867de16294094e36e"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "bf6b5c73d88c6e6736297eb331d5af36a9ba208b",
           "issue": 1532,
           "branch": "issue/1532-release-return-306742f589d1",
           "worktree": "/home/matysh/hp-perspective-devices/artifacts/process-next/return-worktrees/306742f589d1",
@@ -239204,7 +239206,8 @@
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:057ded33-5e7f-4a33-b002-e288f47e07a8": "02e7e50dfa68c8bec057a885816c23af43ee689436cf125ac8c4bdf27633b95e",
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:852122f5-1f7a-4030-83aa-0b82f6e26763": "2c8337a4ece8e55dce9561a584f9991f3e58014d564ef71974924e10553306a1",
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:18a5d02b-496a-48e3-b69b-dca91bb82242": "bdaff4a24a7f10dc94e5a82b5869d422b40c4d3cf5cda4172dd899bc1df3ec66",
-    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:1abfe57e-f348-4836-9505-97841ca82703": "d0272c91c20d197ee89139149bec1db168a66fb4aacda8d198eba26386374f25"
+    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:1abfe57e-f348-4836-9505-97841ca82703": "d0272c91c20d197ee89139149bec1db168a66fb4aacda8d198eba26386374f25",
+    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:01126ff4-1b6e-4d53-bd9a-f374a0f6478d": "11f47dfea116e384a997b1dd486ee0da9d2228df1407910a1fbb0e1e5c1cce4e"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
