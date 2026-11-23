@@ -175,6 +175,9 @@ A nearer wall dims covered parts of device bodies, badges and common frames.
 The core-sized body mask belongs to a separate paint container. Shared contact
 glass is its sibling and uses its own surface/depth masks: one member's body
 mask must never crop the group's overflowing rims or panes (#1482).
+In the straight perspective views, the open ends of a wall-contact frame use
+the wall cut's exact projected points. The lower rim meets the upper one at
+these ends; the free sides keep their normal depth (#1534).
 The room captions and their metrics and Area links are painted over masonry
 and furniture. Their room-fit and Area link inputs retain the native keyboard
 and touch policy. Filled shadows project directly underneath onto the floor.

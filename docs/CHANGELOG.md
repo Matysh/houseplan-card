@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Join wall-mounted device outlines to the wall cut in straight-on 2.5D views without a dangling lower rim (#1534).
+
 ## v1.86.1-beta.4 — 2026-11-23
 
 - Resolve crossing door and wall surfaces with perspective-correct depth in straight-on 2.5D views (#1528).

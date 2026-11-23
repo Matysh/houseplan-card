@@ -36,7 +36,7 @@ for(const dpr of [1,2]) {
       await page.evaluate(async dark=>{const c=window.__isoPaint;c.hass={...c.hass,themes:{darkMode:dark}};await c.updateComplete;},dark);
       for(const [rotation, steps] of [[0,0],[45,1],[90,1],[180,2],[270,2]]) {
         for(let i=0;i<steps;i++){await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);}
-        for(const zoom of rotation === 45 ? [1.33] : [.73,1,1.33,2.18,3.17]) {
+        for(const zoom of rotation === 45 ? [1.33,2.18] : [.73,1,1.33,2.18,3.17]) {
           await zoomIsoPaint(page,zoom);
           await page.evaluate(()=>{const c=window.__isoPaint,root=c.renderRoot;
             const owners=[...root.querySelectorAll('.dev[data-hp-device-occlusion]')]
@@ -66,7 +66,30 @@ for(const dpr of [1,2]) {
           check(`${label}: body keeps its registered wall mask`,result.devices===23&&result.masked>0&&result.registered&&result.ownMasks>0);
           check(`${label}: individual and group ink keep virtual/physical styles`,result.groups>=4&&result.virtual>0&&result.solid>0);
           let registration;
+          let wallJoins;
           if(rotation===45) {
+            wallJoins=await page.evaluate(()=>{
+              const c=window.__isoPaint,root=c.renderRoot;
+              const samples=[];
+              // Opposite walls give the near and far cases in the same camera.
+              for(const id of ['contour-0','contour-9','contour-3','contour-12']){
+                const shape=c._deviceContacts.scene.shapes.get(id);
+                const node=root.querySelector(`.dev[data-id="${id}"]`);
+                const owner=root.querySelector(`.dev[data-id="${node?.dataset.hpDeviceComponent}"]`);
+                const upper=owner?.querySelector('.iso-marker-glass.front .glass-rim.upper');
+                const lower=owner?.querySelector('.iso-marker-glass.rear .glass-rim.lower');
+                if(!upper||!lower||!shape||!Object.values(shape.walls).length)return null;
+                const ends=path=>[0,path.getTotalLength()].map(length=>{
+                  const p=path.getPointAtLength(length);
+                  return p.matrixTransform(path.getScreenCTM());
+                });
+                const a=ends(upper),b=ends(lower);
+                samples.push(a.map((p,i)=>Math.hypot(p.x-b[i].x,p.y-b[i].y)));
+              }
+              return samples.flat();
+            });
+            check(`${label}: wall returns meet on the cut, not on a lower rim`,
+              wallJoins?.length===8&&wallJoins.every(delta=>delta<.05));
             registration=await page.evaluate(()=>{
               const card=window.__isoPaint,root=card.renderRoot;
               const members=Array.from({length:6},(_,i)=>root.querySelector(`.dev[data-id="contour-${i+3}"]`));
@@ -116,7 +139,7 @@ for(const dpr of [1,2]) {
             writeFileSync(`${dir}/dpr${dpr}-correct.png`,reference);writeFileSync(`${dir}/dpr${dpr}-legacy-negative.png`,legacy);
           }
           await page.evaluate(()=>{const r=window.__isoPaint.renderRoot;r.querySelector('#contour-probe').remove();r.querySelector('#contour-mask-control').remove();});
-          evidence.push({label,...result,comparison,registration});
+          evidence.push({label,...result,comparison,registration,wallJoins});
         }
       }
       for(let i=0;i<2;i++){await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);}

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1534,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Corrects the wall-contact rim in the straight perspective cameras introduced on the current beta line.",
+  "summary": {
+    "ru": "Обводка пристенной группы совпадает со срезом стены в прямых ракурсах 2.5D.",
+    "en": "Wall-mounted device outlines meet the wall cut in straight-on 2.5D views."
+  }
+}

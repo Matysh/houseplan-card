@@ -200,26 +200,41 @@ export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly num
   const bottom=topAnchored ? 2 : 1;
   const path=(points:Point[])=>points.map((p,i)=>`${i?'L':'M'}${p.map(n=>+n.toFixed(7)).join(' ')}`).join(' ');
   const project=projection && glassChainProjector(shapes,projection);
+  const hasWallJoin=topAnchored && projection?.camera.perspective
+    && shapes.some(s=>Object.keys(s.walls).length>0);
   for(const source of rings(contactOutline(shapes,true),true)) {
     const chain=project ? project(source) : source;
-    result.top+=path(chain.map(p=>add(p,v,lip)))+' ';
-    result.bottom+=path(chain.map(p=>add(p,v,bottom)))+' ';
-    let run:Point[]=[];let front=false;
-    const flush=()=>{
-      if(run.length<2)return;
-      result[front?'front':'back']+=path([...run.map(p=>add(p,v,lip)),...[...run].reverse().map(p=>add(p,v,bottom))])+' Z ';
+    const last=source[source.length-1];
+    const joinsWall=hasWallJoin && Math.hypot(...sub(source[0],last))>1e-6;
+    if(joinsWall) {
+      // Member-relative offsets keep the free rim aligned with the icon, but
+      // the open chain ends belong to the wall at their real plan coordinates.
+      chain[0]=[...isoMarkerGlassAnchor(source[0],projection)];
+      chain[chain.length-1]=[...isoMarkerGlassAnchor(last,projection)];
+      if(chain.length===2)chain.splice(1,0,add(chain[0],sub(chain[1],chain[0]),.5));
+    }
+    const upper=chain.map(p=>add(p,v,lip));
+    // The rim closes onto the wall cut instead of exposing its lower end
+    // in front of the receding wall. Keep full depth at every free vertex.
+    const depth=chain.map((_,i)=>joinsWall && (i===0 || i===chain.length-1) ? 0 : bottom);
+    const lower=chain.map((p,i)=>add(p,v,depth[i]));
+    result.top+=path(upper)+' ';
+    result.bottom+=path(lower)+' ';
+    let start=0;let front=false;
+    const flush=(end:number)=>{
+      if(end-start<2)return;
+      result[front?'front':'back']+=path([...upper.slice(start,end),...lower.slice(start,end).reverse()])+' Z ';
     };
     for(let i=1;i<chain.length;i++) {
       const p=chain[i-1],q=chain[i],dx=a*(q[0]-p[0])+c*(q[1]-p[1]);
       const next=dx<0;
       if(Math.hypot(q[0]-p[0],q[1]-p[1])>1e-8)result[next?'frontFaces':'backFaces'].push([
-        [...add(p,v,lip),half*lip],[...add(q,v,lip),half*lip],
-        [...add(q,v,bottom),half*bottom],[...add(p,v,bottom),half*bottom],
+        [...upper[i-1],half*lip],[...upper[i],half*lip],
+        [...lower[i],half*depth[i]],[...lower[i-1],half*depth[i-1]],
       ]);
-      if(run.length && next!==front){flush();run=[];}
-      front=next;if(!run.length)run.push(p);run.push(q);
+      if(next!==front){flush(i);start=i-1;front=next;}
     }
-    flush();
+    flush(chain.length);
   }
   return result;
 }
