@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22228,
+  "revision": 22229,
   "nextTicket": 647,
   "nextFence": 647,
   "tasks": {
@@ -2271,43 +2271,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0"
-      }
-    },
-    "1431": {
-      "issue": 1431,
-      "branch": "codex/1431-focus-layout",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "e756b482350cf5589228d4d282642e5d8c03ced5",
-      "mergedSha": "1e83119d95d0acabbb45de022d9dac0756d085ce",
-      "mergedAt": 1794684408329,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "1e83119d95d0acabbb45de022d9dac0756d085ce"
       }
     },
     "1432": {
@@ -5965,7 +5928,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5"
       }
     }
   },
@@ -6650,6 +6614,18 @@
         "materialSha": "a87e92236713be44c6a050b0380a36781946899c",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:45191938029:1:1537": {
+      "digest": "79600815e3589b46c596c154f66bd9ba518bf421e206ade5062288e789d7a1b6",
+      "issue": 1537,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1537,
+        "at": 1795443445254,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5"
       }
     }
   },
