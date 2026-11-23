@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21998,
+  "revision": 21999,
   "nextTicket": 644,
   "nextFence": 643,
   "tasks": {
@@ -5864,30 +5864,24 @@
     },
     "1535": {
       "issue": 1535,
+      "branch": "codex/1535-optimize-confirmation-witness",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1535-optimize-confirmation-witness",
-      "materialSha": "d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 643,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795431156169,
-      "reviewEntry": 1,
-      "patchId": "7c560c4ac9e52ecda3f027776d1007f18f64572c",
-      "changedFiles": [
-        "test/optimize-plans-dialog.test.mjs"
-      ],
-      "s6": {
-        "id": "20261123T105737962-284edb9d",
-        "requestId": "s6:1535:03b3e39bc3f35f0847ca0345bdafecea",
-        "runId": 45160441309,
-        "materialSha": "d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
-        "status": "passed",
-        "finishedAt": "2026-11-23T11:04:39.172Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45160441309",
-        "execution": "github"
+      "status": "S8-merged",
+      "expectedBase": "5923f94b1ddf65af4bd80f40cb2cb5c2a95c7f05",
+      "mergedSha": "d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
+      "mergedAt": 1795431938320,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6471,18 +6465,7 @@
   "waiting": [
     1534
   ],
-  "active": {
-    "issue": 1535,
-    "worker": "github-coordinator",
-    "token": "642:github:45160036554:1:tick:1:admit",
-    "fence": 642,
-    "materialSha": "d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
-    "expectedBase": "5923f94b1ddf65af4bd80f40cb2cb5c2a95c7f05",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795431209799,
-    "expiresAt": 1795435532776,
-    "patchId": "7c560c4ac9e52ecda3f027776d1007f18f64572c"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6503,74 +6486,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "github:45160036554:1:completions:message:6b1d2e65405dfeb38230b94798f804e84c5de682490378a2ed5580a25bdecd36": {
-      "digest": "ca4814daf5ee5e3a9e00e6587158656a77921a2cfd15cf5af6f0bdb4f77c0744",
-      "issue": 1535
-    },
-    "finish:7adb8802-0093-4840-b494-ed672cca3e5e:finish:1:automation-pending": {
-      "digest": "ce5afae7870e0191ec6e006c8d2a577c0e52ac9647a47ef1192e7eba966e2e73",
-      "issue": 1535
-    },
-    "finish:24df59fa-5c08-43b4-8ba0-4f87105d05ce": {
-      "digest": "01ef44422c96f9b888eca7619ee5667dcd714056ff8fa3c981068092c1dd01a6",
-      "issue": 1535
-    },
-    "finish:7adb8802-0093-4840-b494-ed672cca3e5e:finish:2:synchronized": {
-      "digest": "0fefcc337825b55051c421e1c70bb16d56b8f8dda2d0bd35a8a7ed79464d6c85",
-      "issue": 1535
-    },
-    "finish:d5ca80db-12ad-4337-a990-fd66687729d3": {
-      "digest": "804736b60ccfdb02cfd7269d3b5c3762d3791a9e6b96220da1a5096daf2c8b14",
-      "issue": 1535
-    },
-    "dev-build:45160036554:1:webhook": {
-      "digest": "b9d687c97b3097ce1d2f49b8a5eadd626a215e7ad2ccab72a1879471c8360cd0",
-      "issue": 1535
-    },
-    "dev-build:45160036554:1:webhook:e0931696-e277-46f3-9a71-4dd7bf74f399:delivered": {
-      "digest": "d21cbe40e78d5be766a42b35f1e3d1ca1bcc57b613b0a9e21c6f6214142de83f",
-      "issue": 1535
-    },
-    "finish:3da699b9-01a2-448a-9bf9-5a2a94514174": {
-      "digest": "a22344b1783b9e5b8a098368c702ea3c271bef8ec0c9754f32d878ee82a468ee",
-      "issue": 1535
-    },
-    "finish:bbc3c3c8-26f2-4e4b-a7ee-7883dc13f0a3": {
-      "digest": "734b1772544b573cde2594a5c88be411484ae0aa0f8c4bf2c1e9fee406bbb9f4",
-      "issue": 1535
-    },
-    "finish:6104f416-0112-45bf-a598-5b8d005888ff": {
-      "digest": "3d2bbc4c1a46edae36c1c580f22919cc8bad60b8e1c4538f391616c4b37c8c9c",
-      "issue": 1535
-    },
-    "finish:a9c6ad4d-eb92-4f5a-99e3-13951b3ac543": {
-      "digest": "5ccc181568b6462708ae7a9e6de7a3b2756a4ac62012be8116dbd3b3eaffdf70",
-      "issue": 1535
-    },
-    "finish:3317c92e-bb69-4cfb-8b43-93ea6c7b9a12": {
-      "digest": "b561f0f13ff60ab082d5e5d588825fc89b31a26f9da70381a3cb887a2c66c212",
-      "issue": 1535
-    },
-    "finish:7d9d1831-31ea-4226-bc62-2fd0bdbd0eba": {
-      "digest": "16287f4f2335bbf453652db75305d3a5a5c1422cb3977e2ed535a4413f6998c6",
-      "issue": 1535
-    },
-    "finish:ff59dd08-dd61-437b-a59d-67b5087528b2": {
-      "digest": "86ad3579ef13feea8b3f0a67e869946cd56db86eb726378fc9be177b7b46e982",
-      "issue": 1535
-    },
-    "finish:b044338a-838e-41b6-8dd3-8288332a6a81": {
-      "digest": "a732645a00f239fc606fd39563872d1681b335087f06f4a05cecd3ef201b229e",
-      "issue": 1535
-    },
-    "finish:ed7cf8d0-2b66-4ec3-a25e-4a061a5c847e": {
-      "digest": "bfd98918a64166ff75b97cf75d23481fe5c3685aceb73d039f3a1c41eb6675ba",
-      "issue": 1535
-    },
-    "finish:7adb8802-0093-4840-b494-ed672cca3e5e:finish:3:s6-complete": {
-      "digest": "2d4d64fce5abffb46380287978beb6ca74be91a16ac7fbf0d657c8b6dfea0e61",
-      "issue": 1535
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -6612,35 +6527,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "f2575b174d52d20648253006eecdf82cd0a5d02e",
-        "delivered": true
-      }
-    },
-    "finish:7adb8802-0093-4840-b494-ed672cca3e5e": {
-      "digest": "5d2f0132254a3691755a800884388ab426b0a03067adfae38927152d037d95d2",
-      "issue": 1535,
-      "message": {
-        "kind": "queued",
-        "issue": 1535,
-        "at": 1795431156169,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "cc4318e8d7beff708be68bd4da5625bba8633911",
-        "delivered": true
-      }
-    },
-    "github:45160036554:1:tick:1:admit": {
-      "digest": "65d27b09ab1ceb015eed775633035ad999baf0bcc6a85bb923f97f83261a3fb9",
-      "issue": 1535,
-      "message": {
-        "kind": "admitted",
-        "issue": 1535,
-        "at": 1795431209799,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "cc4318e8d7beff708be68bd4da5625bba8633911",
-        "phase": "sync",
         "delivered": true
       }
     },
