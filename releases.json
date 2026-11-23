@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1295,
+  "revision": 1296,
   "active": "v1.86.1-beta.4",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -224799,7 +224799,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.1-beta.4",
@@ -232632,7 +232632,8 @@
           "en": "## v1.86.1-beta.4 — 2026-11-23\n\n- Resolve crossing door and wall surfaces with perspective-correct depth in straight-on 2.5D views (#1528).\n- Keep window panes behind opaque upper wall cuts in straight-on 2.5D views (#1529).\n- Hide the portions of 2.5D device bodies and glass outlines occluded by opaque upper wall cuts (#1530).\n- Align shared device outlines with their markers in perspective 2.5D views (#1531).\n- Keep plan input locked throughout rotation and avoid refreshing the startup preview when a read-only external screen receives a profile update (#1525)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.1-beta.4"
     }
   },
   "published": {
@@ -238745,7 +238746,8 @@
     "ship-review:result:093bb4be-eb8f-44a6-88fe-4a581929f3db": "1cf1fed5ba3aaa00bb9bd5b7257179ecfd2458a5fdc065b9c5690a6236c2cac3",
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:runner-report": "c6f79dac24aa12d2d5fa429459750cd9dc0023f8bcd00026cd0bed6149ae3017",
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:metrics": "f3308b99d456619f419f0fd8b150cb2b4b329aed6c05bd84cad844ca35771c54",
-    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:prepared:c3eedd07-8716-4f4e-8941-6d6dc9479de2": "abe1a983b73540231af18cdbf32c310bf4797a426f6ec36318a00d3126c88a63"
+    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:prepared:c3eedd07-8716-4f4e-8941-6d6dc9479de2": "abe1a983b73540231af18cdbf32c310bf4797a426f6ec36318a00d3126c88a63",
+    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:started:1295": "02d03ec280b849c5f17421b0a82723b072ea65f67915ea81fa4815d38cf354f3"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
