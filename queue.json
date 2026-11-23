@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22205,
+  "revision": 22206,
   "nextTicket": 647,
   "nextFence": 647,
   "tasks": {
@@ -5926,7 +5926,10 @@
         "process-next/lib/source-dependencies.mjs",
         "src/device-face.ts",
         "test/device-face.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1795443291086,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     },
     "1537": {
       "issue": 1537,
@@ -6569,6 +6572,10 @@
     },
     "github:45191938029:1:completions:message:1ec803804c1d9a7e8258a5a62fce5e8a09a31b7c6464b3ae578f833a5445997e": {
       "digest": "f4b1abfd7d701754903a5206681562b9482b7b2e12fd3f365b4a68f425118186",
+      "issue": 1536
+    },
+    "finish:41ee4401-4fbc-4213-9a61-184a985d8157:finish:2:automation-pending": {
+      "digest": "4de6f63e76ad4cc0b88e490e26b7d61f3bf534d817ac3df7190147064051cee0",
       "issue": 1536
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
