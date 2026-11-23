@@ -14491,7 +14491,7 @@ export class HouseplanCard extends LitElement {
               d, view, contactBaseDiameter, showLqi, isoOverlays?.devices.get(d.id),
             )))}
             ${ledDevs.map((d) => this._ledBadge(d, view, isoOverlays?.devices.get(d.id)))}
-            ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}
+            ${this._renderVacuums(this._renderVacuumDevices, view, space.id, perspectiveSize)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view, isoOverlays?.locks)}
             ${raiseRoomLabels
@@ -15090,7 +15090,8 @@ export class HouseplanCard extends LitElement {
    * living in `marker.space`, but the puck and the trails belong to the space
    * of the active route, which is the whole point of #162.
    */
-  private _renderVacuums(devs: readonly DevItem[], view: { x: number; y: number; w: number; h: number }, spaceId: string): TemplateResult | typeof nothing {
+  private _renderVacuums(devs: readonly DevItem[], view: FrameRect, spaceId: string,
+    perspectiveSize: readonly [number, number]): TemplateResult | typeof nothing {
     if (this._markup || this._mode === 'decor') return nothing;
     const viewKey = this._space + '|' + view.x + '|' + view.y + '|' + view.w + '|' + view.h;
     const jumpAll = this._vacJumpOnce || viewKey !== this._vacViewKey;
@@ -15196,7 +15197,7 @@ export class HouseplanCard extends LitElement {
     const trailInk = svg`<g data-hp-plan-rotation-frame transform=${this._floorTransform}>${trails}</g>`;
     return html`
       ${trails.length ? floor?.perspective ? renderIsoPerspectiveFloor(floor,trailInk,view,
-        this._lastValidStageSize ?? [view.w,view.h],0,'vacuum') : svg`<svg class="vactrail" data-hp="vacuum-trail"
+        perspectiveSize,0,'vacuum') : svg`<svg class="vactrail" data-hp="vacuum-trail"
         data-hp-live-inherited-scene="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trailInk}</svg>` : nothing}
       ${pucks}`;
   }

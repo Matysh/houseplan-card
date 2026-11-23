@@ -205,6 +205,15 @@ try {
   const inspect = () => root.locator('hp-zigbee-topology-overlay').evaluate(overlay => {
     const cardRoot = window.__card.renderRoot;
     const project = (node, x, y) => {
+      if (node.closest('[data-hp-iso-perspective-floor]')) {
+        const probe = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        probe.setAttribute('x', x);
+        probe.setAttribute('y', y);
+        node.parentElement.append(probe);
+        const box = probe.getBoundingClientRect();
+        probe.remove();
+        return { x: box.x, y: box.y };
+      }
       const p = new DOMPoint(Number(x), Number(y)).matrixTransform(node.getScreenCTM());
       return { x: p.x, y: p.y };
     };
@@ -216,12 +225,16 @@ try {
       const centre = { x: r.x + r.width / 2, y: r.y + r.height / 2 };
       const paint = [...overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-led-participant"]')]
         .find(n => n.dataset.id === halo.dataset.id);
+      const body = path.closest('[data-led-strip]');
+      const nativeOutline = body.querySelector('.led-topology-outline');
       return { id: halo.dataset.id, expected, centre, aligned: distance(expected, centre) < .8,
         width: r.width, height: r.height,
-        realShape: [...paint.querySelectorAll(':scope > path')].every(n => n.getAttribute('d') === path.getAttribute('d')),
-        inert: [...paint.querySelectorAll('path')].every(n => getComputedStyle(n).pointerEvents === 'none')
+        realShape: !!paint && [...paint.querySelectorAll(':scope > path')].every(n => n.getAttribute('d') === path.getAttribute('d')),
+        inert: !!paint && [...paint.querySelectorAll('path')].every(n => getComputedStyle(n).pointerEvents === 'none')
           && !paint.querySelector('[data-hp="device"], [tabindex], [role="button"]'),
-        bodyBorrowed: getComputedStyle(path.closest('[data-led-strip]').querySelector('.led-core')).visibility === 'hidden',
+        bodyBorrowed: getComputedStyle(body.querySelector('.led-core')).visibility === 'hidden',
+        nativeHighlight: !paint && nativeOutline?.getAttribute('d') === path.getAttribute('d')
+          && getComputedStyle(nativeOutline).visibility === 'visible' && getComputedStyle(nativeOutline).pointerEvents === 'none',
       };
     });
     const lines = [...overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-line"]')].map(line => ({
@@ -241,19 +254,25 @@ try {
       active: true, points: [[.68, .15], [.84, .15], [.84, .42], [.68, .42], [.68, .15]] });
   }));
   const callsBeforeCamera = await page.evaluate(() => ({ ...window.__ledTopologyCalls }));
-  for (const iso of [false, true]) for (const theme of ['light', 'dark']) {
+  for (const mode of ['flat', 'direct', 'iso']) for (const theme of ['light', 'dark']) {
+    const iso = mode !== 'flat';
     await page.evaluate(async ({ iso, theme }) => {
       await window.__hpTest.setVolumetricView(iso);
       const c = window.__card;
       c.hass = { ...c.hass, themes: { ...c.hass.themes, darkMode: theme === 'dark' } };
     }, { iso, theme });
+    if (theme === 'light' && iso) {
+      await root.locator(mode === 'direct' ? '[data-hp="rotate-right"]' : '[data-hp="rotate-left"]').click();
+      await page.waitForFunction(direct => !!window.__card._isoFloorCamera?.perspective === direct, mode === 'direct');
+    }
     await hover('d_light1', true);
-    const geometry = await inspect(), name = `${iso ? 'iso' : 'flat'}-${theme}`;
+    const geometry = await inspect(), name = mode + '-' + theme;
     samples.push({ name, geometry });
     check(`${name} LED-to-LED and LED-to-icon routes remain directed`, geometry.lines, 2);
     check(`${name} both real LED endpoints are aligned`, geometry.anchors.length === 2 && geometry.anchors.every(a => a.aligned));
     check(`${name} halo remains fourteen screen pixels`, geometry.anchors.every(a => Math.abs(a.width - 14) < .25 && Math.abs(a.height - 14) < .25));
-    check(`${name} visible paths rather than bounding boxes are highlighted`, geometry.anchors.every(a => a.realShape && a.inert && a.bodyBorrowed));
+    check(name + ' visible LED paths are highlighted', geometry.anchors.every(a => mode === 'direct'
+      ? a.nativeHighlight && !a.bodyBorrowed : a.realShape && a.inert && a.bodyBorrowed));
     check(`${name} line ends reach real LED anchors`, geometry.localEndpoints);
     check(`${name} incoming arrow stops at the fixed LED halo`, geometry.ledArrow);
     await page.screenshot({ path: fileURLToPath(new URL(`${name}.png`, artifacts)), scale: 'css' });

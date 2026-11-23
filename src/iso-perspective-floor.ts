@@ -14,13 +14,17 @@ export function renderIsoPerspectiveFloor(camera: IsoCamera, content: TemplateRe
   const {center:[x,y],rate} = camera.perspective!;
   const lift = isoHeightLift(camera,height);
   const {origin,matrix} = lensStyle(view,size[1],x,y,rate,lift);
-  return html`<div data-hp-iso-perspective-floor data-lens=${[x,y,rate,lift].join(' ')}
+  const viewBox = [view.x,view.y,view.w,view.h].join(' ');
+  return html`${layer === 'vacuum' ? svg`<svg data-hp-perspective-reference aria-hidden="true"
+    data-hp-live-inherited-scene="camera" viewBox=${viewBox} preserveAspectRatio="none"
+    style="position:absolute;inset:0;width:100%;height:100%;visibility:hidden;pointer-events:none"></svg>` : nothing}
+    <div data-hp-iso-perspective-floor data-lens=${[x,y,rate,lift].join(' ')}
     class=${layer === 'vacuum' ? 'vactrail' : nothing} data-hp=${layer === 'vacuum' ? 'vacuum-trail' : nothing}
     style=${'position:absolute;inset:0;pointer-events:none;transform-origin:' + origin + ';transform:' + matrix
       + (layer === 'led' ? ';z-index:2' : '')}>
     ${svg`<svg data-hp-live-viewbox=${layer === 'vacuum' ? nothing : 'camera'}
       data-hp-live-inherited-scene=${layer === 'vacuum' ? 'camera' : nothing}
-      viewBox=${[view.x,view.y,view.w,view.h].join(' ')} preserveAspectRatio="none"
+      viewBox=${viewBox} preserveAspectRatio="none"
       style="display:block;width:100%;height:100%;overflow:visible;pointer-events:none">${content}</svg>`}
   </div>`;
 }

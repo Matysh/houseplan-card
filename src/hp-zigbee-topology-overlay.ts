@@ -524,6 +524,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
 
   private _ledParticipant(id: string, position: MarkerPosition, index: number) {
     const paint = position.led!;
+    if (!('d' in paint)) return nothing;
     const ring = `hp-zigbee-led-ring-${index}`, hollow = `hp-zigbee-led-off-${index}`;
     const path = (stroke: string, width: number) => svg`<path d=${paint.d} stroke=${stroke} stroke-width=${width}></path>`;
     return svg`<g data-hp="zigbee-topology-led-participant" data-id=${id} transform=${paint.transform}

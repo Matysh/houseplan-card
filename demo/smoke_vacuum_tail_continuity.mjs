@@ -2,12 +2,18 @@
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {launchPanelCold,requirePinnedBrowser,check,finish} from './serve.mjs';
 import {assertFreshDemoBundleUnlessAllowed} from './bundle-freshness.mjs';
+import {fixtureWallKey} from './fixtures/wall-key.mjs';
 requirePinnedBrowser('#1175 continuous native/live vacuum path');
 const folder='artifacts/1175-vacuum-tail';mkdirSync(folder,{recursive:true});
 const {page,browser}=await launchPanelCold({width:1200,height:900});
 const evidence={modes:[]};let controlWrites=0;
 try{
- await page.evaluate(async()=>{
+ const poly=[[.07,.08],[.88,.08],[.88,.73],[.07,.73]];
+ const walls=poly.map((a,index)=>{
+   const b=poly[(index+1)%poly.length];
+   return {key:fixtureWallKey(a,b),a,b,cm:8};
+ });
+ await page.evaluate(async({poly,walls})=>{
   const base=window.__mkHass(),ws=base.callWS.bind(base),subscribe=base.connection.subscribeEvents.bind(base.connection);
   window.__addRegistryEntity('vacuum.tail1175',null,'cleaning');
   window.__addRegistryEntity('camera.tail1175',null,'idle');
@@ -15,8 +21,9 @@ try{
    trail_mode:'always',trail_color:'#FF00FF',trail_opacity:1,map_routes:[{id:'route1175',source:'camera.tail1175',
     map_id:'floor',space:'f1',calibration:[1,0,0,0,1,0]}]}};
   const {config}=await ws({type:'houseplan/config/get'}),{layout}=await ws({type:'houseplan/layout/get'});
+  const room={id:'vacuum-projection-room',name:'Vacuum test',poly};
   window.__pushServerConfig({...config,markers:[...config.markers,marker],
-   spaces:config.spaces.map(s=>s.id==='f1'?{...s,cell_cm:1}:s)});
+   spaces:config.spaces.map(s=>s.id==='f1'?{...s,cell_cm:1,rooms:[room],walls,plan_url:null,settings:{...s.settings,show_borders:true}}:s)});
   window.__pushServerLayout({...layout,[marker.id]:{s:'f1',x:.1,y:.1}});
   const now=Date.now(),stamp=now-11000;
   const f=window.__tail1175={listeners:new Set(),writes:0,reads:0,stamp,run:{map_id:'floor',route_id:'route1175',path_format:2,
@@ -48,7 +55,19 @@ try{
   f.measure=()=>{
    const c=window.__card,root=c.renderRoot,line=root.querySelector('line.tip[data-mid="e_tail1175"]');
    const puck=root.querySelector('.vacpuck[data-mid="e_tail1175"]'),box=puck?.getBoundingClientRect();
-   const matrix=line?.getScreenCTM(),end=matrix?new DOMPoint(+line.getAttribute('x2'),+line.getAttribute('y2')).matrixTransform(matrix):null;
+   let end=null;
+   if (line?.closest('[data-hp-iso-perspective-floor]')) {
+     // Observe the painted endpoint. getScreenCTM misses the HTML lens.
+     const probe=document.createElementNS('http://www.w3.org/2000/svg','rect');
+     probe.setAttribute('x',line.getAttribute('x2'));
+     probe.setAttribute('y',line.getAttribute('y2'));
+     line.parentElement.append(probe);
+     end=probe.getBoundingClientRect();
+     probe.remove();
+   } else if (line) {
+     const matrix=line.getScreenCTM();
+     end=matrix ? new DOMPoint(+line.getAttribute('x2'),+line.getAttribute('y2')).matrixTransform(matrix) : null;
+   }
    return {gap:end&&box?Math.hypot(end.x-box.left-box.width/2,end.y-box.top-box.height/2):null,
     puck:box?[box.left+box.width/2,box.top+box.height/2]:null,
     d:root.querySelector('.vactrail path.core')?.getAttribute('d')||'',
@@ -57,7 +76,7 @@ try{
     pending:structuredClone(c._vacRt.get('e_tail1175')?.livePending?.paths),
     native:structuredClone(c._vacSrvTrails.e_tail1175?.current?.paths)};
   };
- });
+ },{poly,walls});
  await page.waitForFunction(()=>{
   const c=window.__tail1175.panel.shadowRoot?.querySelector('houseplan-card');
   if(!c?._loadOk||c._booting||!c._vacSrvTrails.e_tail1175)return false;window.__card=c;return true;
@@ -67,8 +86,17 @@ try{
   const rows=[],start=performance.now();const tick=()=>{rows.push(window.__tail1175.measure());
    if(performance.now()-start>=350)resolve(rows);else requestAnimationFrame(tick);};requestAnimationFrame(tick);
  }));
- for(const iso of [false,true]){
-  await page.evaluate(value=>window.__hpTest.setVolumetricView(value),iso);
+ for(const mode of ['flat','iso','direct']){
+  const iso=mode!=='flat';
+  if (mode==='direct') {
+    await page.waitForFunction(()=>!!window.__card._isoFloorCamera);
+    await page.locator('houseplan-panel houseplan-card [data-hp="rotate-right"]').click();
+    await page.evaluate(()=>window.__hpTest.settled());
+    const camera=await page.evaluate(()=>({rotation:window.__card._rotation, lens:!!window.__card._isoFloorCamera?.perspective}));
+    if (!camera.lens) throw Error('Expected a direct 2.5D viewpoint: '+JSON.stringify(camera));
+  } else {
+    await page.evaluate(value=>window.__hpTest.setVolumetricView(value),iso);
+  }
   controlWrites=await page.evaluate(()=>window.__tail1175.writes);
   await page.waitForFunction(iso=>window.__card.renderRoot.querySelector('.stage:not(.hpboot):not(.hpiso-pending)')?.classList.contains('projection-iso')===iso,iso);
   await page.evaluate(()=>{const c=window.__card,f=window.__tail1175;f.run.revision=`reset-${Date.now()}`;
@@ -85,29 +113,29 @@ try{
   await page.evaluate(()=>window.__tail1175.move(400,240));
   await page.waitForTimeout(100);
   let rows=await samples();
-  check(`delay-${iso}: continuous tip after an ordinary eleven-second telemetry gap`,rows.every(r=>r.gap!==null&&r.gap<1));
+  check(`delay-${mode}: continuous tip after an ordinary eleven-second telemetry gap`,rows.every(r=>r.gap!==null&&r.gap<1));
   await page.evaluate(()=>window.__tail1175.move(400,310));await page.waitForTimeout(150);
   await page.evaluate(()=>window.__tail1175.move(500,310));await page.waitForTimeout(100);
   await page.evaluate(()=>{const f=window.__tail1175;f.run.paths=[[[100,100],[200,100],[200,240],[400,240],[400,310]]];
    f.run.live_tail.paths=[[[400,310,f.stamp-100],[500,310,f.stamp]]];f.run.revision=`partial-${Date.now()}`;f.publish();});
   await page.waitForFunction(()=>window.__card._vacSrvTrails.e_tail1175.current.revision===window.__tail1175.run.revision);
-  const partial=await samples();check(`partial-${iso}: unacknowledged suffix stays at the puck`,partial.every(r=>r.gap!==null&&r.gap<1));
+  const partial=await samples();check(`partial-${mode}: unacknowledged suffix stays at the puck`,partial.every(r=>r.gap!==null&&r.gap<1));
   // A full ACK may arrive while a real CSS position tween is still running.
   await page.evaluate(()=>window.__tail1175.move(600,310));await page.waitForTimeout(80);
   await page.evaluate(()=>{const f=window.__tail1175;
    f.run.paths=[[[100,100],[200,100],[200,240],[400,240],[400,310],[500,310],[600,310]]];
    f.run.live_tail.paths=[[[600,310,f.stamp]]];f.run.revision=`full-${Date.now()}`;f.publish();});
   await page.waitForFunction(()=>window.__card._vacSrvTrails.e_tail1175.current.revision===window.__tail1175.run.revision);
-  const full=await samples();check(`full-${iso}: full ACK retains live endpoint in intermediate frames`,full.every(r=>r.gap!==null&&r.gap<1));
+  const full=await samples();check(`full-${mode}: full ACK retains live endpoint in intermediate frames`,full.every(r=>r.gap!==null&&r.gap<1));
   check(`full-${iso}: static path stops before the future target`,full.every(r=>!r.d.endsWith('600 310')));
   await page.evaluate(()=>{const f=window.__tail1175;f.run.paths[0].at(-1)[0]=599.5;
    f.run.live_tail.paths=[[[599.5,310,f.stamp]]];f.run.revision=`near-ack-${Date.now()}`;f.publish();});
   await page.waitForFunction(()=>window.__card._vacSrvTrails.e_tail1175.current.revision===window.__tail1175.run.revision);
-  const near=await samples();check(`near-${iso}: calibrated ACK correspondence retains the real puck endpoint`,near.every(r=>r.gap!==null&&r.gap<1));
+  const near=await samples();check(`near-${mode}: calibrated ACK correspondence retains the real puck endpoint`,near.every(r=>r.gap!==null&&r.gap<1));
   await page.evaluate(()=>window.__tail1175.publish());await page.waitForTimeout(80);
-  const repeated=await samples();check(`repeat-${iso}: same native snapshot keeps the tip`,repeated.every(r=>r.gap!==null&&r.gap<1));
-  await page.screenshot({path:`${folder}/${iso?'iso':'flat'}-full-ack.png`});
-  evidence.modes.push({iso,delay:rows,partial,full,near,repeated});
+  const repeated=await samples();check(`repeat-${mode}: same native snapshot keeps the tip`,repeated.every(r=>r.gap!==null&&r.gap<1));
+  await page.screenshot({path:`${folder}/${mode}-full-ack.png`});
+  evidence.modes.push({mode,iso,delay:rows,partial,full,near,repeated});
  }
  // Availability is not a cleanup boundary, including the default display and format-1 reserve.
  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>({...cfg,markers:cfg.markers.map(m=>m.id==='e_tail1175'
@@ -144,9 +172,10 @@ try{
  await page.evaluate(()=>window.__tail1175.move(9900,9900,'unavailable'));await page.evaluate(()=>window.__hpTest.settled());
  check('unknown state retires the active puck',await page.evaluate(()=>!window.__card.renderRoot.querySelector('.vacpuck[data-mid="e_tail1175"]')));
  const counts=await page.evaluate(()=>({reads:window.__tail1175.reads,writes:window.__tail1175.writes}));
- check('rendering never writes or polls the provider',counts.writes===controlWrites&&counts.reads<=14);
+ // The extra direct view publishes the same five controlled trail notifications.
+ check('rendering never writes or polls the provider',counts.writes===controlWrites&&counts.reads<=19);
  evidence.counts=counts;evidence.teleport=teleport;
  writeFileSync(`${folder}/observations.json`,JSON.stringify(evidence,null,2));
- console.log(JSON.stringify({modes:evidence.modes.map(m=>({iso:m.iso,frames:m.full.length,maxGap:Math.max(...m.full.map(r=>r.gap??Infinity))})),counts}));
+ console.log(JSON.stringify({modes:evidence.modes.map(m=>({mode:m.mode,iso:m.iso,frames:m.full.length,maxGap:Math.max(...m.full.map(r=>r.gap??Infinity))})),counts}));
 }catch(error){await page.screenshot({path:`${folder}/failure.png`}).catch(()=>{});throw error;}
 finally{await finish(browser);}

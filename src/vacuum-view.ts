@@ -1,3 +1,5 @@
+import { readIsoPerspectiveSvg } from './svg-perspective-coordinates';
+
 /** Current painted SVG inverse, never a cached camera view (#871). */
 export interface ScreenAffine {
   a: number; b: number; c: number; d: number; e: number; f: number;
@@ -28,20 +30,23 @@ export function syncVacuumTips(root: ParentNode): boolean {
   }
   const writes: { line: SVGLineElement; point: readonly [number, number] }[] = [];
   let paired = false;
-  for (const svg of root.querySelectorAll<SVGSVGElement>('.vactrail')) {
-    if (!svg.isConnected) continue;
-    const plane = svg.querySelector?.<SVGGraphicsElement>('[data-hp-plan-rotation-frame]') || svg;
-    const matrix = plane.getScreenCTM();
+  for (const trail of root.querySelectorAll<SVGSVGElement | HTMLElement>('.vactrail')) {
+    if (!trail.isConnected) continue;
+    const plane = trail.querySelector?.<SVGGraphicsElement>('[data-hp-plan-rotation-frame]');
+    const perspective = trail.hasAttribute?.('data-hp-iso-perspective-floor');
+    const lens = perspective && plane ? readIsoPerspectiveSvg(plane) : null;
+    const matrix = perspective ? null : (plane ?? trail as SVGSVGElement).getScreenCTM();
     const centres = new Map<string, readonly [number, number] | null>();
-    for (const line of svg.querySelectorAll<SVGLineElement>('line.tip[data-mid]')) {
+    for (const line of trail.querySelectorAll<SVGLineElement>('line.tip[data-mid]')) {
       const mid = line.getAttribute('data-mid')!;
       const puck = pucks.get(mid);
       if (!puck || !line.isConnected) continue;
       paired = true;
       if (!centres.has(mid)) {
         const box = puck.getBoundingClientRect();
+        const x = box.left + box.width / 2, y = box.top + box.height / 2;
         centres.set(mid, box.width > 0 && box.height > 0
-          ? vacuumScreenPoint(matrix, box.left + box.width / 2, box.top + box.height / 2) : null);
+          ? lens ? lens.fromScreen(x, y) : vacuumScreenPoint(matrix, x, y) : null);
       }
       const point = centres.get(mid);
       if (point) writes.push({ line, point });

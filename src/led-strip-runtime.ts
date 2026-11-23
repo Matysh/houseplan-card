@@ -11,6 +11,7 @@
  * while the same wall/door scene still clips the light.
  */
 import { nothing, svg, type TemplateResult } from 'lit';
+import { readIsoPerspectiveSvg } from './svg-perspective-coordinates';
 import { turnVector, inversePlanRotation, type PlanRotation } from './view-frame';
 import { repeat } from 'lit/directives/repeat.js';
 import {
@@ -208,6 +209,7 @@ export interface LedHandlers {
 export interface LedIsoStyle {
   rotation?: PlanRotation;
   plane?: readonly number[];
+  perspective?: boolean;
   /** Screen-space lift to the common wall/device top plane. */
   lift: number;
   /** Shallow vertical edge, matching the room-name extrusion. */
@@ -273,15 +275,17 @@ export function ledStripePath(strip: LedStripModel, faces: FaceContext | null, d
  */
 function nearestOwner(e: Event & { clientX: number; clientY: number }, fallback: LedStripView,
   input: LedStripeInput): LedStripView {
-  // Screen → plan through the hit path's own CTM: no card coordinate helper.
   const target = e.currentTarget as SVGGraphicsElement | null;
-  const ctm = target?.getScreenCTM?.();
-  if (!ctm || input.views.length < 2) return fallback;
-  const inverse = ctm.inverse();
-  const plan: Pt = [
-    inverse.a * e.clientX + inverse.c * e.clientY + inverse.e,
-    inverse.b * e.clientX + inverse.d * e.clientY + inverse.f,
-  ];
+  if (!target || input.views.length < 2) return fallback;
+  let plan: Pt | null;
+  if (input.iso?.perspective) {
+    plan = readIsoPerspectiveSvg(target)?.fromScreen(e.clientX, e.clientY) ?? null;
+  } else {
+    const inverse = target.getScreenCTM()?.inverse();
+    plan = inverse ? [inverse.a * e.clientX + inverse.c * e.clientY + inverse.e,
+      inverse.b * e.clientX + inverse.d * e.clientY + inverse.f] : null;
+  }
+  if (!plan) return fallback;
   const strips = input.views.map((view) => {
     const { t, path } = ledStripePath(view.strip, input.faces, input.d);
     return {
@@ -312,13 +316,16 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       .led-strip .led-hit { fill: none; stroke: transparent; cursor: pointer; outline: none; }
       /* Only active topology participants lend their top paint to the inert
          overlay. Keeping the off core in both layers would double its alpha. */
-      .led-strip:has(.led-hit[data-hp-zigbee-topology-endpoint]) .led-outline,
-      .led-strip:has(.led-hit[data-hp-zigbee-topology-endpoint]) .led-core { visibility: hidden; }
+      .led-strip:not([data-hp-projective]):has(.led-hit[data-hp-zigbee-topology-endpoint]) .led-outline,
+      .led-strip:not([data-hp-projective]):has(.led-hit[data-hp-zigbee-topology-endpoint]) .led-core { visibility: hidden; }
+      .led-topology-outline { visibility: hidden; }
+      .led-strip:has(.led-hit[data-hp-zigbee-topology-endpoint]) .led-topology-outline { visibility: visible; }
     </style>
     ${repeat(ordered, (view) => view.strip.id, (view) => {
       const { t, path, d } = ledStripePath(view.strip, input.faces, input.d);
       const off = view.state === 'off';
       const cutout = `hp-led-off-${Array.from(view.strip.id, c => c.codePointAt(0)!.toString(16)).join('-')}`;
+      const halo = cutout + '-topology';
       const xs = path.points.map(p => p[0]), ys = path.points.map(p => p[1]), pad = input.d * 2;
       const mx = Math.min(...xs) - pad, my = Math.min(...ys) - pad;
       const mw = Math.max(...xs) - mx + pad, mh = Math.max(...ys) - my + pad;
@@ -342,13 +349,19 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
         filter="url(#hp-led-iso-shadow)" pointer-events="none" transform=${shift(iso.shadow.dx,iso.shadow.dy)}></path>` : nothing;
       if(input.paint==='shadow')return shadow;
       return svg`${shadow}<g class="led-strip state-${view.state}" data-led-strip="${view.strip.id}"
-          data-marker="${dev.id}" data-state="${view.state}" data-closed="${path.closed ? 'true' : 'false'}">
+          ?data-hp-projective=${!!iso?.perspective} data-marker="${dev.id}" data-state="${view.state}" data-closed="${path.closed ? 'true' : 'false'}">
         ${off ? svg`<defs><mask id="${cutout}" maskUnits="userSpaceOnUse" x="${mx}" y="${my}" width="${mw}" height="${mh}">
           <rect x="${mx}" y="${my}" width="${mw}" height="${mh}" fill="white"></rect>
           <path d="${d}" fill="none" stroke="black" stroke-width="${t / 2}"
             stroke-linecap="round" stroke-linejoin="round"></path>
         </mask></defs>` : nothing}
-        <g transform=${lifted}><g class="led-body" mask=${off ? `url(#${cutout})` : nothing}>
+        <g transform=${lifted}>
+        ${iso?.perspective && h ? svg`<defs><mask id=${halo} maskUnits="userSpaceOnUse" x=${mx} y=${my} width=${mw} height=${mh}>
+          <path d=${d} fill="none" stroke="white" stroke-width=${t * 1.7} stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d=${d} fill="none" stroke="black" stroke-width=${t} stroke-linecap="round" stroke-linejoin="round"></path>
+        </mask></defs><path class="led-topology-outline" d=${d} fill="none" stroke="rgba(120,190,220,.82)" stroke-width=${t * 1.7}
+          stroke-linecap="round" stroke-linejoin="round" mask=${'url(#' + halo + ')'} pointer-events="none"></path>` : nothing}
+        <g class="led-body" mask=${off ? `url(#${cutout})` : nothing}>
         ${iso ? svg`${[1,.875,.75,.625,.5,.375,.25,.125].map((k) => svg`<path class="led-iso-edge" d="${d}" fill="none" stroke="${iso.edge}"
           stroke-width="${t}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"
           transform=${shift(0, iso.depth * k)}></path>`)}` : nothing}
@@ -620,6 +633,7 @@ export function renderLedLayerFor(
     iso: iso ? {
       rotation: host._rotation,
       plane: isoFloorMatrix(camera),
+      perspective: !!camera.perspective,
       lift: camera.perspective ? 0 : gridVisualUnits(isoDisplayWallHeight(),host._cellCm)*camera.zScale*Math.sin(camera.tiltDeg*Math.PI/180),
       depth: frame.d * .075,
       edge: '#808080',

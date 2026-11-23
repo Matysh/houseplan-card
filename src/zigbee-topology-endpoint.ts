@@ -1,3 +1,4 @@
+import { readIsoPerspectiveSvg } from './svg-perspective-coordinates';
 import type { ZigbeePixelPoint } from './zigbee-topology-geometry';
 
 /** LED endpoints use the painted path, never the hidden icon's saved position. */
@@ -15,7 +16,7 @@ export interface ZigbeeLedPaint {
   scaleX: number;
   scaleY: number;
 }
-export type ZigbeeEndpoint = ZigbeePixelPoint & { width: number; height: number; led?: ZigbeeLedPaint };
+export type ZigbeeEndpoint = ZigbeePixelPoint & { width: number; height: number; led?: ZigbeeLedPaint | Pick<ZigbeeLedPaint, 'scaleX' | 'scaleY'> };
 type Matrix = { a: number; b: number; c: number; d: number; e: number; f: number };
 type Layer = { left: number; top: number; width: number; height: number };
 
@@ -50,13 +51,22 @@ export function readZigbeeLedEndpoint(path: SVGPathElement, layer: HTMLElement):
   const core = body?.querySelector<SVGPathElement>('.led-core');
   if (!outline || !core || getComputedStyle(path).visibility === 'hidden') return null;
   const d = path.getAttribute('d'), thickness = Number(outline.getAttribute('stroke-width'));
-  const matrix = path.getScreenCTM();
-  if (!d || !matrix || !Number.isFinite(thickness) || thickness <= 0) return null;
-  const projection = zigbeeLedProjection(matrix, layer.getBoundingClientRect(), layer.clientWidth, layer.clientHeight);
-  if (!projection) return null;
+  if (!d || !Number.isFinite(thickness) || thickness <= 0) return null;
   const length = path.getTotalLength();
   if (!Number.isFinite(length) || length <= 0) return null;
   const anchor = path.getPointAtLength(length / 2);
+  const bounds = layer.getBoundingClientRect();
+  const width = layer.clientWidth, height = layer.clientHeight;
+  if (path.closest('[data-hp-iso-perspective-floor]')) {
+    const point = readIsoPerspectiveSvg(path)?.toScreen(anchor.x, anchor.y);
+    const scaleX = bounds.width / width, scaleY = bounds.height / height;
+    if (!point?.every(Number.isFinite) || !(scaleX > 0 && scaleY > 0 && width > 0 && height > 0)) return null;
+    return { x: (point[0] - bounds.left) / scaleX, y: (point[1] - bounds.top) / scaleY,
+      width: ZIGBEE_LED_HALO_RADIUS * 2, height: ZIGBEE_LED_HALO_RADIUS * 2, led: { scaleX, scaleY } };
+  }
+  const matrix = path.getScreenCTM();
+  const projection = matrix && zigbeeLedProjection(matrix, bounds, width, height);
+  if (!projection) return null;
   const box = path.getBBox(), pad = thickness * 2;
   const x = projection.a * anchor.x + projection.c * anchor.y + projection.e;
   const y = projection.b * anchor.x + projection.d * anchor.y + projection.f;

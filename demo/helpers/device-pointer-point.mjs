@@ -13,8 +13,19 @@ export async function devicePointerPoint(page, locator, { strip = false, vertica
       let point = { x: rect.x + rect.width / 2, y: rect.y + rect.height * vertical };
       if (strip && matrix) {
         const closed = node.closest('[data-led-strip]').dataset.closed === 'true';
-        const p = node.getPointAtLength(node.getTotalLength() * (closed ? .85 : .3)).matrixTransform(matrix);
-        point = { x: p.x, y: p.y };
+        const p = node.getPointAtLength(node.getTotalLength() * (closed ? .85 : .3));
+        if (node.closest('[data-hp-iso-perspective-floor]')) {
+          const probe = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          probe.setAttribute('x', p.x);
+          probe.setAttribute('y', p.y);
+          node.parentElement.append(probe);
+          const painted = probe.getBoundingClientRect();
+          point = { x: painted.x, y: painted.y };
+          probe.remove();
+        } else {
+          const painted = p.matrixTransform(matrix);
+          point = { x: painted.x, y: painted.y };
+        }
       }
       const hit = node.getRootNode().elementFromPoint(point.x, point.y);
       return { point, rect: rect.toJSON(), matrix: matrix ? [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f] : null,
