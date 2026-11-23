@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21502,
+  "revision": 21503,
   "nextTicket": 636,
   "nextFence": 635,
   "tasks": {
@@ -5747,166 +5747,26 @@
     },
     "1525": {
       "issue": 1525,
+      "branch": "codex/stable-audit-1861-beta2-fixes",
       "track": "show",
       "layer": "product",
-      "branch": "codex/stable-audit-1861-beta2-fixes",
-      "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 634,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795411572636,
-      "reviewEntry": 1,
-      "patchId": "e631391f909466969ed9028142a414c66bd18395",
-      "changedFiles": [
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/card-editor-invalid-default-floor-dark-ru.png",
-        "demo/golden/baselines/card-editor-invalid-default-floor-light-en.png",
-        "demo/golden/baselines/isometric-stage3-no-filter-dark.png",
-        "demo/golden/baselines/settings-external-screens-constructor-dark.png",
-        "demo/golden/baselines/settings-external-screens-constructor-light.png",
-        "demo/golden/baselines/space-room-color-popover-desktop-ru.png",
-        "demo/golden/external-screens.mjs",
-        "demo/golden/harness.mjs",
-        "demo/golden/matrix.mjs",
-        "demo/smoke_align_guides.mjs",
-        "demo/smoke_approved_ui.mjs",
-        "demo/smoke_approved_ui_1207.mjs",
-        "demo/smoke_iso_raster_materials.mjs",
-        "demo/smoke_lovelace_editor_locale_1070.mjs",
-        "demo/wall-draw-click-harness.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v2.0.0/1525.json",
-        "src/houseplan-card.ts",
-        "src/plan-rotation-motion.ts"
-      ],
-      "s6": {
-        "id": "20261123T054137198-b11a35fd",
-        "name": "Тесты для задачи #1525 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261123T054137198-b11a35fd/report.json",
-        "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
-        "status": "passed",
-        "finishedAt": "2026-11-23T05:57:18.522Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
+      "mergedSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
+      "mergedAt": 1795413707146,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1525:1:e631391f909466969ed9028142a414c66bd18395:3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
-      "reviewMaterial": {
-        "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
-        "expectedBase": "3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
-        "patchId": "e631391f909466969ed9028142a414c66bd18395"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1525:1:e631391f909466969ed9028142a414c66bd18395:3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
-        "eventId": "github:45120970182:1:tick:0:review-retry",
-        "at": 1795413466998,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1525,
-        "requestId": "review:1525:1:e631391f909466969ed9028142a414c66bd18395:3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
-        "kind": "code",
-        "base": "3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
-        "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
-        "patchId": "e631391f909466969ed9028142a414c66bd18395",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1525,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1525",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\n\n- Интерактивный план не принимает ввод до конца анимации поворота, даже если другая причина вызвала перерисовку Lit.\n- Аутентифицированный поток профиля внешнего экрана не вызывает лишних config/layout GET только ради необязательного стартового превью. Обычный путь восстановления, если событие не принято, сохраняется.\n\n### Решение и места для внимания\n\n- Проп `inert` в `houseplan-card.ts` учитывает фактическое владение смонтированной стадией у `PlanRotationMotion`. Нативная проверка насильно вызывает Lit-обновление внутри поворота и убеждается, что до его конца ввод заблокирован, а потом восстановлен.\n- Запрет необязательного чтения привязан к паре «authority + принятая ревизия». Внимательно проверить момент установки в атомарном `afterAdopt`: не принятое событие не может отменить запрос актуальной конфигурации. Выбор/показ серверного превью по-прежнему требует доказанной ревизии.\n- Golden-фикстуры актуализированы под согласованные восемь поворотов, форму Lovelace и настройки внешних экранов. Отдельная сцена 2.5D без SVG-фильтров разносит только два тестовых значка и проверяет отсутствие не относящегося к фильтрам уведомления. Владелец принял конкретные шесть кадров; остальные PNG не входят в замену. Отдельный E2E PR: Matysh/houseplan-e2e#105.\n\n### Проверки и ограничения\n\nАдресно до совмещения с новым dev: 6/6 упавших браузерных проверок, 6/6 согласованных кадров (побайтовое совпадение), старые кадры 180°/270° без замены, 12/12 в реальном HA для совместного набора профилей и #1522; отдельно проверка принятия и удаления профиля после финальной перестановки guard. Веточный предварительный набор — 699 шагов без отказов. Продуктовая beta.2 не перепубликовывалась, stable не выпускался.\n\nПосле завершения #1527, на базе dev `3e50c658`, собрали ветку `eda43602b` и пересняли все шесть принятых сцен: во всех 0 отличающихся пикселей, SHA-256 каждого PNG совпал с ранее принятым. Два старых кадра поворотов 180°/270° также совпали без замены. Сохранили новый шаблон 2.5D и используемый в dev обход кратчайшим путём поворота."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокеров нет, работу можно принимать. Оба исправления в продукте узкие и закрывают подтверждённые причины отказов.\n1) `?inert` стадии теперь учитывает `PlanRotationMotion.blocksInput`. Посторонняя перерисовка Lit посреди поворота больше не снимает блокировку ввода. В конце поворота `settled → requestUpdate` возвращает правильное значение.\n2) После принятого потокового события профиля внешнего экрана `afterAdopt` гасит необязательное повторное чтение config/layout для стартового превью. Если событие не принято, `afterAdopt` не вызывается, и обычный путь восстановления через `_reloadConfigOnly` остаётся.\nИзменения тестов соответствуют обновлённым контрактам (#1517, `plan_rotation`, `pending()` у писателя, субпиксельный допуск). Заменены ровно шесть кадров, которые принял владелец.\nОдно необязательное замечание. Запрет повторного чтения привязан к `configRev`, а не к полной ревизии пары config+layout. Поэтому после изменения только раскладки превью может остаться без серверного подтверждения до следующего полного чтения. Это ухудшает только необязательную функцию и принятие не блокирует.",
-          "understanding": "Задача — разобрать отказы stable-профиля на v1.86.1-beta.2. В продукте было два дефекта.\n(а) Анимация поворота в `PlanRotationMotion` императивно ставила `stage.inert = true`. Но `?inert=${live(...)}` в `render()` не знал о повороте. Любой `requestUpdate` посреди анимации через `live()` сверял атрибут с ложным выражением и снимал `inert`, и план начинал принимать ввод до конца поворота.\n(б) На панели в режиме kiosk (`_routeKiosk`) потоковое событие `houseplan_config_updated` с дельтой профиля внешнего экрана принималось через `_adoptAuthoritative(profile: 'screen-event')`. Ревизия при этом менялась, и `_refreshStartupSource` через 250 мс делал лишние `config/get` + `layout/get` только ради необязательного серверного подтверждения превью. Это и ловил HA E2E.\n\nПосле исправления:\n(а) Геттер `blocksInput` (`restore !== null`) истинен ровно с момента, когда стадия захвачена анимацией (строки 51–55), до `finish`/`cancel`. `render` включает его в выражение `inert`. `finish` вызывает `port.settled` → `requestUpdate`, поэтому после поворота Lit пересчитывает `inert` уже без блокировки.\n(б) В `afterAdopt` (он синхронно идёт в той же задаче, что и принятие, после всех проверок `isCurrent`, config-adoption.ts:545–588) сбрасывается `_startupProofRefresh`, поэтому уже запланированный таймер находит другого владельца и ничего не читает. Там же запоминается `{authority: connection, configRev: candidate.rev}`. `_refreshStartupSource` выходит раньше, пока совпадают authority и `_cfgRev`.\n\nРазобранные пути: `PlanRotationMotion.next/finish/cancel` и все вызовы `cancel` (`_prepareCameraCommand`, `disconnectedCallback`, `_setMode`, storage-событие); порт мотора в houseplan-card.ts:8932–8953; `_startupSelection`/`_startupRevision`/`_rememberStartupSource`/`_refreshStartupSource`; обработчик config-событий в `_ensureLiveSyncSubscriptions` (`connection === host.authorityKey`, та же идентичность, что `selection.authority`); `adoptAuthoritativeGated` и `adoptStructuralResponses`. Тестовые изменения прочитаны по diff, а smoke_iso_raster_materials — в контексте всего цикла.",
-          "analysis": [
-            {
-              "topic": "Блокировка ввода во время поворота",
-              "assessment": "Решение верное и минимальное. Императивную блокировку на время анимации теперь знает и декларативный рендер, поэтому `live()` больше не снимает `inert`. Ключевое: `blocksInput` основан на `restore`, а не на `running`. `running` истинен и до `updated()`, и при reduced motion, а тогда стадию никто не захватывал. Если бы блокировка шла от `running`, то при reduced motion или без `.zoomwrap` render между `changed` и `updated` ставил бы `inert`, а снимать его было бы некому до следующего рендера. Значение `inert`, которое `restore` запоминает (строка 49), снимается после рендера, где `blocksInput` ещё ложен, поэтому лишняя блокировка в него не попадает. Если стадию перерисовали посреди поворота, `finish` → `settled` → `requestUpdate` приводит Lit к правильному значению. Лишний сценарий: `cancel()` не вызывает `settled`. Если стадию пересоздали посреди анимации и затем отменили поворот без последующего рендера, новая стадия может остаться с `inert`. Все найденные вызывающие `cancel` сами ведут к перерисовке (смена режима, камера, storage с `requestUpdate`), поэтому это лишь гипотеза для крайнего случая, не дефект.",
-              "evidence": "src/plan-rotation-motion.ts:27, 33–37, 49–59; src/houseplan-card.ts:8951 (`settled: () => this.requestUpdate()`), 14372; demo/smoke_approved_ui.mjs: `requestUpdate()` внутри поворота → `{active:true, inert:true}`, после поворота `inert === false`."
-            },
-            {
-              "topic": "Запрет лишнего чтения после потокового события профиля",
-              "assessment": "Момент установки выбран правильно. `afterAdopt` вызывается только при статусе `adopted`, после последней проверки `isCurrent` и в одной синхронной задаче с принятием. Не принятое событие (`superseded`, `asset-wait`, исключение) запрет не ставит и уходит в `fallback` → `_reloadConfigOnly`. Сброс `_startupProofRefresh` гасит уже запланированный таймер на 250 мс: его `current()` сравнивает владельца. Серверное превью (`selection.remote`) по-прежнему требует `proof.revision === revision`, поэтому без чтения ничего непроверенного не показывается: превью просто остаётся локальным. Слабое место в ключе (подробнее в improvements): сверяется только `configRev`. Изменение одной раскладки (`_layoutRev`) запрет не снимает, хотя `selection.revision` меняется. Описание исполнителя («authority + принятая ревизия») здесь точнее реализации.",
-              "evidence": "src/houseplan-card.ts:2895–2914, 6852–6867; src/config-adoption.ts:550–588; `_startupSelection` 2993–3002."
-            },
-            {
-              "topic": "Тестовые изменения и согласованные контракты",
-              "assessment": "Правки отражают изменившиеся контракты, а не ослабляют проверки без причины. В smoke_approved_ui для 180° ожидание переведено на сохранение пары после #1517, а проверка реального попадания по видимому значку стала даже строже (`badgePoint && corePoint`). В 1207 допуск ограничен 1/32 px на ширину сцены, это реальная субпиксельная граница, а не произвольный эпсилон. Lovelace-тест переведён на `plan_rotation` и `editor.presentation_invalid`, и этот ключ действительно используется в src/editor.ts:180. Заглушка писателя получила `pending()`: его вызывает новый код (`this._saveConfigDebounced.pending()`). В smoke_align_guides проверка передачи слоя перенесена до `frame()` с объяснением про ResizeObserver. В smoke_iso_raster_materials направление колеса чередуется, но `zoomIn` там фактически означает `translucent`, и утверждения касаются содержимого растра, а не направления зума, так что ослабления нет. Проверка `inert` в кадрах сужена до кадров с `rotate(`, зато добавлена явная проверка снятия блокировки после поворота.",
-              "evidence": "diff demo/*.mjs; src/editor.ts:180; demo/smoke_iso_raster_materials.mjs:74–110."
-            },
-            {
-              "topic": "Golden-кадры и фикстуры",
-              "assessment": "Индекс меняет ровно шесть записей. У каждой проставлены решение владельца #1525, общий sourceSha 4b81ecb4, matrixVersion 116, другие эталоны не тронуты. Сцена 2.5D без фильтров разносит только два значка: в `layoutOverrides` переопределено `x` у двух записей, остальная раскладка `stage3DenseLayout` наследуется. Новое условие `requireNoContactLimit` в harness явно не даёт этой сцене снова тестовать невыполнимое изменение размера контактов вместо отката фильтров. Проверка конструктора внешних экранов стала адресной (по `data-field`, а не по числу `select`) и проверяет набор видов `,flat,iso`, что устойчивее прежнего подсчёта.",
-              "evidence": "demo/golden/baselines/baselines-index.json (шесть записей); demo/golden/matrix.mjs:505–517; demo/golden/harness.mjs:1712; demo/golden/external-screens.mjs:35–42."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Привязать `_startupStreamRevision` к полной ревизии пары, а не только к `configRev`. Сейчас `_refreshStartupSource` выходит, пока `this._cfgRev` равен ревизии события (houseplan-card.ts:2898). Если затем придёт событие только раскладки (`_onLayoutEvent` → новый `_layoutRev`, `_cfgRev` прежний), то `selection.revision` изменится, а повторное подтверждение превью останется подавленным до следующей ревизии config или полного `_loadFromServer`. Внешний экран на это время теряет серверное (portable) стартовое превью #1522. Корректность не страдает, страдает только необязательная функция. Направление: в `afterAdopt` сохранять `this._startupRevision()`, если оно уже вычислимо, и сравнивать с `selection.revision`. Либо сравнивать и `_layoutRev`. Цена — одна строка. Выгода: реализация совпадёт с заявленным контрактом «authority + принятая ревизия», и запрет не будет распространяться на последующие изменения раскладки. Проверить это можно юнит-тестом: поток config-события, затем layout-событие, и ожидается один запрос config/layout для подтверждения превью.",
-            "По желанию: вызывать `port.settled?.()` и в `PlanRotationMotion.cancel()`, когда `restore` был установлен. Тогда снятие блокировки не зависит от того, запросит ли вызывающий перерисовку сам. Сейчас все известные вызывающие это делают, так что это страховка от будущих путей отмены, а не исправление дефекта.",
-            "В test/plan-rotation-motion.test.mjs можно добавить дешёвый юнит-тест на `blocksInput`: ложен до `updated()` и при reduced motion, истинен во время кадров, ложен после `finish` и `cancel`. Сейчас контракт закреплён только браузерной проверкой."
-          ],
-          "boundaries": "Сборку, тесты, golden и HA E2E я не запускал. Опираюсь на квитанцию S6 «Тесты для задачи #1525 (перед ревью)» на материале eda43602 (статус passed, отказов нет) и на описание исполнителя (6/6 браузерных проверок, 6/6 кадров с совпадением SHA-256, 12/12 в реальном HA) как на заявленные, но не воспроизведённые мной результаты. Сами PNG визуально не сравнивал: принятие шести кадров — решение владельца, я проверил только, что в индексе изменены ровно эти шесть записей. Не смотрел Matysh/houseplan-e2e#105 (другой репозиторий). Логику `inert`, `afterAdopt` и вызывающих путей изучил по исходникам head: plan-rotation-motion.ts, houseplan-card.ts (порт мотора, стартовое превью, live sync), config-adoption.ts. Подавление подтверждения превью после изменения только раскладки выведено из чтения кода, не проверено запуском."
-        },
-        "usage": {
-          "input_tokens": 40,
-          "cache_creation_input_tokens": 79740,
-          "cache_read_input_tokens": 923005,
-          "output_tokens": 12642,
-          "output_tokens_details": {
-            "thinking_tokens": 4956
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 79740,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 964,
-              "cache_read_input_tokens": 62662,
-              "cache_creation_input_tokens": 17078,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 17078
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокеров нет, работу можно принимать. Оба исправления в продукте узкие и закрывают подтверждённые причины отказов.\n1) `?inert` стадии теперь учитывает `PlanRotationMotion.blocksInput`. Посторонняя перерисовка Lit посреди поворота больше не снимает блокировку ввода. В конце поворота `settled → requestUpdate` возвращает правильное значение.\n2) После принятого потокового события профиля внешнего экрана `afterAdopt` гасит необязательное повторное чтение config/layout для стартового превью. Если событие не принято, `afterAdopt` не вызывается, и обычный путь восстановления через `_reloadConfigOnly` остаётся.\nИзменения тестов соответствуют обновлённым контрактам (#1517, `plan_rotation`, `pending()` у писателя, субпиксельный допуск). Заменены ровно шесть кадров, которые принял владелец.\nОдно необязательное замечание. Запрет повторного чтения привязан к `configRev`, а не к полной ревизии пары config+layout. Поэтому после изменения только раскладки превью может остаться без серверного подтверждения до следующего полного чтения. Это ухудшает только необязательную функцию и принятие не блокирует.\n\n## Понимание решения\n\nЗадача — разобрать отказы stable-профиля на v1.86.1-beta.2. В продукте было два дефекта.\n(а) Анимация поворота в `PlanRotationMotion` императивно ставила `stage.inert = true`. Но `?inert=${live(...)}` в `render()` не знал о повороте. Любой `requestUpdate` посреди анимации через `live()` сверял атрибут с ложным выражением и снимал `inert`, и план начинал принимать ввод до конца поворота.\n(б) На панели в режиме kiosk (`_routeKiosk`) потоковое событие `houseplan_config_updated` с дельтой профиля внешнего экрана принималось через `_adoptAuthoritative(profile: 'screen-event')`. Ревизия при этом менялась, и `_refreshStartupSource` через 250 мс делал лишние `config/get` + `layout/get` только ради необязательного серверного подтверждения превью. Это и ловил HA E2E.\n\nПосле исправления:\n(а) Геттер `blocksInput` (`restore !== null`) истинен ровно с момента, когда стадия захвачена анимацией (строки 51–55), до `finish`/`cancel`. `render` включает его в выражение `inert`. `finish` вызывает `port.settled` → `requestUpdate`, поэтому после поворота Lit пересчитывает `inert` уже без блокировки.\n(б) В `afterAdopt` (он синхронно идёт в той же задаче, что и принятие, после всех проверок `isCurrent`, config-adoption.ts:545–588) сбрасывается `_startupProofRefresh`, поэтому уже запланированный таймер находит другого владельца и ничего не читает. Там же запоминается `{authority: connection, configRev: candidate.rev}`. `_refreshStartupSource` выходит раньше, пока совпадают authority и `_cfgRev`.\n\nРазобранные пути: `PlanRotationMotion.next/finish/cancel` и все вызовы `cancel` (`_prepareCameraCommand`, `disconnectedCallback`, `_setMode`, storage-событие); порт мотора в houseplan-card.ts:8932–8953; `_startupSelection`/`_startupRevision`/`_rememberStartupSource`/`_refreshStartupSource`; обработчик config-событий в `_ensureLiveSyncSubscriptions` (`connection === host.authorityKey`, та же идентичность, что `selection.authority`); `adoptAuthoritativeGated` и `adoptStructuralResponses`. Тестовые изменения прочитаны по diff, а smoke_iso_raster_materials — в контексте всего цикла.\n\n## Разбор решения\n\n### Блокировка ввода во время поворота\n\nРешение верное и минимальное. Императивную блокировку на время анимации теперь знает и декларативный рендер, поэтому `live()` больше не снимает `inert`. Ключевое: `blocksInput` основан на `restore`, а не на `running`. `running` истинен и до `updated()`, и при reduced motion, а тогда стадию никто не захватывал. Если бы блокировка шла от `running`, то при reduced motion или без `.zoomwrap` render между `changed` и `updated` ставил бы `inert`, а снимать его было бы некому до следующего рендера. Значение `inert`, которое `restore` запоминает (строка 49), снимается после рендера, где `blocksInput` ещё ложен, поэтому лишняя блокировка в него не попадает. Если стадию перерисовали посреди поворота, `finish` → `settled` → `requestUpdate` приводит Lit к правильному значению. Лишний сценарий: `cancel()` не вызывает `settled`. Если стадию пересоздали посреди анимации и затем отменили поворот без последующего рендера, новая стадия может остаться с `inert`. Все найденные вызывающие `cancel` сами ведут к перерисовке (смена режима, камера, storage с `requestUpdate`), поэтому это лишь гипотеза для крайнего случая, не дефект.\n\nОснование: src/plan-rotation-motion.ts:27, 33–37, 49–59; src/houseplan-card.ts:8951 (`settled: () => this.requestUpdate()`), 14372; demo/smoke_approved_ui.mjs: `requestUpdate()` внутри поворота → `{active:true, inert:true}`, после поворота `inert === false`.\n\n### Запрет лишнего чтения после потокового события профиля\n\nМомент установки выбран правильно. `afterAdopt` вызывается только при статусе `adopted`, после последней проверки `isCurrent` и в одной синхронной задаче с принятием. Не принятое событие (`superseded`, `asset-wait`, исключение) запрет не ставит и уходит в `fallback` → `_reloadConfigOnly`. Сброс `_startupProofRefresh` гасит уже запланированный таймер на 250 мс: его `current()` сравнивает владельца. Серверное превью (`selection.remote`) по-прежнему требует `proof.revision === revision`, поэтому без чтения ничего непроверенного не показывается: превью просто остаётся локальным. Слабое место в ключе (подробнее в improvements): сверяется только `configRev`. Изменение одной раскладки (`_layoutRev`) запрет не снимает, хотя `selection.revision` меняется. Описание исполнителя («authority + принятая ревизия») здесь точнее реализации.\n\nОснование: src/houseplan-card.ts:2895–2914, 6852–6867; src/config-adoption.ts:550–588; `_startupSelection` 2993–3002.\n\n### Тестовые изменения и согласованные контракты\n\nПравки отражают изменившиеся контракты, а не ослабляют проверки без причины. В smoke_approved_ui для 180° ожидание переведено на сохранение пары после #1517, а проверка реального попадания по видимому значку стала даже строже (`badgePoint && corePoint`). В 1207 допуск ограничен 1/32 px на ширину сцены, это реальная субпиксельная граница, а не произвольный эпсилон. Lovelace-тест переведён на `plan_rotation` и `editor.presentation_invalid`, и этот ключ действительно используется в src/editor.ts:180. Заглушка писателя получила `pending()`: его вызывает новый код (`this._saveConfigDebounced.pending()`). В smoke_align_guides проверка передачи слоя перенесена до `frame()` с объяснением про ResizeObserver. В smoke_iso_raster_materials направление колеса чередуется, но `zoomIn` там фактически означает `translucent`, и утверждения касаются содержимого растра, а не направления зума, так что ослабления нет. Проверка `inert` в кадрах сужена до кадров с `rotate(`, зато добавлена явная проверка снятия блокировки после поворота.\n\nОснование: diff demo/*.mjs; src/editor.ts:180; demo/smoke_iso_raster_materials.mjs:74–110.\n\n### Golden-кадры и фикстуры\n\nИндекс меняет ровно шесть записей. У каждой проставлены решение владельца #1525, общий sourceSha 4b81ecb4, matrixVersion 116, другие эталоны не тронуты. Сцена 2.5D без фильтров разносит только два значка: в `layoutOverrides` переопределено `x` у двух записей, остальная раскладка `stage3DenseLayout` наследуется. Новое условие `requireNoContactLimit` в harness явно не даёт этой сцене снова тестовать невыполнимое изменение размера контактов вместо отката фильтров. Проверка конструктора внешних экранов стала адресной (по `data-field`, а не по числу `select`) и проверяет набор видов `,flat,iso`, что устойчивее прежнего подсчёта.\n\nОснование: demo/golden/baselines/baselines-index.json (шесть записей); demo/golden/matrix.mjs:505–517; demo/golden/harness.mjs:1712; demo/golden/external-screens.mjs:35–42.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Привязать `_startupStreamRevision` к полной ревизии пары, а не только к `configRev`. Сейчас `_refreshStartupSource` выходит, пока `this._cfgRev` равен ревизии события (houseplan-card.ts:2898). Если затем придёт событие только раскладки (`_onLayoutEvent` → новый `_layoutRev`, `_cfgRev` прежний), то `selection.revision` изменится, а повторное подтверждение превью останется подавленным до следующей ревизии config или полного `_loadFromServer`. Внешний экран на это время теряет серверное (portable) стартовое превью #1522. Корректность не страдает, страдает только необязательная функция. Направление: в `afterAdopt` сохранять `this._startupRevision()`, если оно уже вычислимо, и сравнивать с `selection.revision`. Либо сравнивать и `_layoutRev`. Цена — одна строка. Выгода: реализация совпадёт с заявленным контрактом «authority + принятая ревизия», и запрет не будет распространяться на последующие изменения раскладки. Проверить это можно юнит-тестом: поток config-события, затем layout-событие, и ожидается один запрос config/layout для подтверждения превью.\n- По желанию: вызывать `port.settled?.()` и в `PlanRotationMotion.cancel()`, когда `restore` был установлен. Тогда снятие блокировки не зависит от того, запросит ли вызывающий перерисовку сам. Сейчас все известные вызывающие это делают, так что это страховка от будущих путей отмены, а не исправление дефекта.\n- В test/plan-rotation-motion.test.mjs можно добавить дешёвый юнит-тест на `blocksInput`: ложен до `updated()` и при reduced motion, истинен во время кадров, ложен после `finish` и `cancel`. Сейчас контракт закреплён только браузерной проверкой.\n\n## Границы анализа\n\nСборку, тесты, golden и HA E2E я не запускал. Опираюсь на квитанцию S6 «Тесты для задачи #1525 (перед ревью)» на материале eda43602 (статус passed, отказов нет) и на описание исполнителя (6/6 браузерных проверок, 6/6 кадров с совпадением SHA-256, 12/12 в реальном HA) как на заявленные, но не воспроизведённые мной результаты. Сами PNG визуально не сравнивал: принятие шести кадров — решение владельца, я проверил только, что в индексе изменены ровно эти шесть записей. Не смотрел Matysh/houseplan-e2e#105 (другой репозиторий). Логику `inert`, `afterAdopt` и вызывающих путей изучил по исходникам head: plan-rotation-motion.ts, houseplan-card.ts (порт мотора, стартовое превью, live sync), config-adoption.ts. Подавление подтверждения превью после изменения только раскладки выведено из чтения кода, не проверено запуском.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 3e50c658df6ce58f9e7dcfae43dc623793ffc70f → eda43602b27606e9ac2b39c64661202d45ba9f27\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1525, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и результат\n\n- Интерактивный план не принимает ввод до конца анимации поворота, даже если другая причина вызвала перерисовку Lit.\n- Аутентифицированный поток профиля внешнего экрана не вызывает лишних config/layout GET только ради необязательного стартового превью. Обычный путь восстановления, если событие не принято, сохраняется.\n\n### Решение и места для внимания\n\n- Проп `inert` в `houseplan-card.ts` учитывает фактическое владение смонтированной стадией у `PlanRotationMotion`. Нативная проверка насильно вызывает Lit-обновление внутри поворота и убеждается, что до его конца ввод заблокирован, а потом восстановлен.\n- Запрет необязательного чтения привязан к паре «authority + принятая ревизия». Внимательно проверить момент установки в атомарном `afterAdopt`: не принятое событие не может отменить запрос актуальной конфигурации. Выбор/показ серверного превью по-прежнему требует доказанной ревизии.\n- Golden-фикстуры актуализированы под согласованные восемь поворотов, форму Lovelace и настройки внешних экранов. Отдельная сцена 2.5D без SVG-фильтров разносит только два тестовых значка и проверяет отсутствие не относящегося к фильтрам уведомления. Владелец принял конкретные шесть кадров; остальные PNG не входят в замену. Отдельный E2E PR: Matysh/houseplan-e2e#105.\n\n### Проверки и ограничения\n\nАдресно до совмещения с новым dev: 6/6 упавших браузерных проверок, 6/6 согласованных кадров (побайтовое совпадение), старые кадры 180°/270° без замены, 12/12 в реальном HA для совместного набора профилей и #1522; отдельно проверка принятия и удаления профиля после финальной перестановки guard. Веточный предварительный набор — 699 шагов без отказов. Продуктовая beta.2 не перепубликовывалась, stable не выпускался.\n\nПосле завершения #1527, на базе dev `3e50c658`, собрали ветку `eda43602b` и пересняли все шесть принятых сцен: во всех 0 отличающихся пикселей, SHA-256 каждого PNG совпал с ранее принятым. Два старых кадра поворотов 180°/270° также совпали без замены. Сохранили новый шаблон 2.5D и используемый в dev обход кратчайшим путём поворота.\n```\n\n</details>\n",
-        "createdAt": "2026-11-23T06:01:02.767Z",
-        "artifactId": 14794085828,
-        "runId": 45121006127,
-        "runAttempt": 1,
-        "completedAt": "2026-11-23T06:01:07Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45121006127",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "3e50c658df6ce58f9e7dcfae43dc623793ffc70f"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795413702647,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1526": {
       "issue": 1526,
@@ -6566,19 +6426,7 @@
   "waiting": [
     1528
   ],
-  "active": {
-    "issue": 1525,
-    "worker": "github-coordinator",
-    "token": "634:github:45119008171:1:tick:0:admit",
-    "fence": 634,
-    "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
-    "expectedBase": "3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795412296587,
-    "expiresAt": 1795417298467,
-    "patchId": "e631391f909466969ed9028142a414c66bd18395",
-    "reviewRequest": "review:1525:1:e631391f909466969ed9028142a414c66bd18395:3e50c658df6ce58f9e7dcfae43dc623793ffc70f"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6599,110 +6447,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "github:45119008171:1:completions:message:5d53048746e412e55ec8695f001cd3774653bd4bde19a7e9f02d0211463a7492": {
-      "digest": "5b120712ff76f15908bf69f096104891c4ac9546f07fecfb09fdfc2b7c70c49b",
-      "issue": 1525
-    },
-    "dev-build:45119008171:1:webhook": {
-      "digest": "9f15f1b22d323e1837b966ad4d3208af1bac90671171f96b8c5348816e5fb038",
-      "issue": 1525
-    },
-    "dev-build:45119008171:1:webhook:6e18cccc-e827-4fdb-8332-60bd2a50a6e0:delivered": {
-      "digest": "bef3b9fe3c83f2baf5e84ff54e777cdf869992ddd579c120c4e291047275e182",
-      "issue": 1525
-    },
-    "finish:44d317c3-e218-4cac-bd0f-48df946c9754:finish:1:synchronized": {
-      "digest": "dd6ea46faa81e3568bfbe64594992afb3d12f45bf8b3414719f35c79d83ecb4d",
-      "issue": 1525
-    },
-    "finish:d69fbcc1-2b01-4ad9-a450-ae89f03b44f4": {
-      "digest": "acc90217fff00498dbe0e31f3829851c771d5012e40930144ef4f975e4f2b504",
-      "issue": 1525
-    },
-    "finish:a4594f6c-4fd1-40e5-9057-761c1880c828": {
-      "digest": "09023bc52eaa6bb226f51141f6d08671a1e1f0d3e6b64348497b749e5348c5b0",
-      "issue": 1525
-    },
-    "finish:214a3f0f-b6f2-40a7-a9b6-8b8eb7f9565a": {
-      "digest": "e2287ba0c9b7e7ad075d09aa6ff5a3db5ce575a0bb418cd3d834bdc166eee4bb",
-      "issue": 1525
-    },
-    "github:45119667335:1:completions:message:eb1f3fbc1d3bd1832c9be1a04ccec90edcf7bd9c64de26569721fdc7a2c62e7a": {
-      "digest": "638e93bc4877c3ef23fcba1664f0b7fec9984617d8a9e6e2a2c7da0eb17d34f3",
-      "issue": 1525
-    },
-    "finish:e1219249-1863-4f47-befc-7680e3485126": {
-      "digest": "43cc3f3a38f67e9a876b53f0a1a560e09005fb0fd88493c022b2a7cacfd92cb0",
-      "issue": 1525
-    },
-    "finish:638a6511-a0f7-46ed-9878-dd04299361be": {
-      "digest": "fc2158834c53a554f0307f47b44a6a9006860882c0a709248f03fee1ba5d8945",
-      "issue": 1525
-    },
-    "finish:4035d92c-4950-44b2-bf6c-40236775cc44": {
-      "digest": "c8fcf654cfa60370699237d5d3feb470ec56df508e2ecf0ec7773772fbffba76",
-      "issue": 1525
-    },
-    "finish:ff98c6cb-907c-4a56-b11b-457286266f0b": {
-      "digest": "fc483c329e3b75b7d6bc0cb1264334ce9696fe38243245de347829550df7607f",
-      "issue": 1525
-    },
-    "finish:0736cf57-db09-4f12-9b8c-90a80866b674": {
-      "digest": "c426151c719bfe7886b0ba3e12e09bc9b6ff0986908bbd1decbf8546618eeb8e",
-      "issue": 1525
-    },
-    "github:45120332886:1:completions:message:e90528f9060eed25eba5ef890c933a4d3d958f635954bcfa6ca99fbdd02fdcc3": {
-      "digest": "3323377d23aad8a2ecbd0959a52f880ccf0c6fcbf29abb1e8aeb57429761ef33",
-      "issue": 1525
-    },
-    "finish:3bef3a95-9fd9-4a2e-902a-bbfe6e73d67d": {
-      "digest": "7f5f120d7a78e6832b169a82e5f32b52053c49626fa02a82c21bacc63c7592cf",
-      "issue": 1525
-    },
-    "finish:66a9528a-1253-4e77-848f-045a9a3ef805": {
-      "digest": "61bdc1eb24c428495b1c602a80fa7b53fe08598fdecccfb808080bc80909b6f5",
-      "issue": 1525
-    },
-    "finish:adec25b3-d274-4ebf-88d2-b2fb7d579356": {
-      "digest": "3b90a39884a307f97ca3af96f79dcf4bb0d7f9fd670349c89511290928d44b58",
-      "issue": 1525
-    },
-    "finish:40641d34-9092-445f-a04a-a6e27d63fbf3": {
-      "digest": "b000b61a10fc0283cf851559da9fa1d37f5ded79a6f6671fdc46b84ffd192a90",
-      "issue": 1525
-    },
-    "finish:ed667731-e591-419f-ac2c-57ad96f26cb1": {
-      "digest": "ba4cb34c11f233bf178405ac3223e310f08b2b871ba1863f2f728a152e4eb5b1",
-      "issue": 1525
-    },
-    "finish:44d317c3-e218-4cac-bd0f-48df946c9754:finish:2:s6-label": {
-      "digest": "0920052eca0991b447a5055e4419e38fbe45841bbe8713276db53e89ba45ed0e",
-      "issue": 1525
-    },
-    "finish:44d317c3-e218-4cac-bd0f-48df946c9754:finish:3:review-requested": {
-      "digest": "742508d95f3ba30aafffc202cdf96c80444cb1908408b179dfe0bdba81b73411",
-      "issue": 1525
-    },
-    "github:45120970182:1:tick:0:review-retry": {
-      "digest": "f23da7f0cdb06340ff18038ae38239b3418df5383f591fbe21522724c98ef1fa",
-      "issue": 1525
-    },
-    "github:45120970182:1:completions:message:dca5dd6cb151a00dba7b71c063a8b90d03d6ffb8ca2eeaf5bce2fa6cd39fa10d": {
-      "digest": "6e5ccf59ef0df7fcf42b4a877e3a8237e418e8272f032e5829e6ab336ca1707a",
-      "issue": 1525
-    },
-    "finish:44d317c3-e218-4cac-bd0f-48df946c9754:finish:6:review-presentation": {
-      "digest": "f750fed96eb2cdadb4b2e33051871e075b70d4c3a460c4bc336308598ba92160",
-      "issue": 1525
-    },
-    "finish:44d317c3-e218-4cac-bd0f-48df946c9754:finish:6:review-complete": {
-      "digest": "4583be7915b00afa94c600646c3aee13226e91c353f5f4fac9ad5c0db1035ee0",
-      "issue": 1525
-    },
-    "github:45121362546:1:tick:0:automation-pending": {
-      "digest": "2d66dbfac794a3fbf6e4034274af0b6058fb07a6d4e1d5d8af1065a5f43585e5",
-      "issue": 1525
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -6733,35 +6477,6 @@
         "delivered": true
       }
     },
-    "finish:514e9b31-5618-4e69-a317-eb97524e7439": {
-      "digest": "880acf0f60b0bfeda76df2fd142164adc655a79e10a090676cfd8fb2e0910d93",
-      "issue": 1525,
-      "message": {
-        "kind": "queued",
-        "issue": 1525,
-        "at": 1795411572636,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cb44c49a07dfa4949ebf5804a9a7880a8f80d1f5",
-        "delivered": true
-      }
-    },
-    "github:45119008171:1:tick:0:admit": {
-      "digest": "4a5b7f33fc3f2b4e80ab28fd16e403009472ed6bac5547c5f709a960ce911bd9",
-      "issue": 1525,
-      "message": {
-        "kind": "admitted",
-        "issue": 1525,
-        "at": 1795412296587,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cb44c49a07dfa4949ebf5804a9a7880a8f80d1f5",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:5ff81b66-43df-4f51-93c2-8377da76b06e": {
       "digest": "5bb22c9fe241ebddba5a977629086c8bc534025512ce3f70660441ac2c8b813a",
       "issue": 1528,
@@ -6773,36 +6488,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "6075447448f4ef4b687e79827f14a1d8c52a5d31",
-        "delivered": true
-      }
-    },
-    "finish:44d317c3-e218-4cac-bd0f-48df946c9754:finish:2:s6-complete": {
-      "digest": "a30865f31412e326b56e75856cd0d82c0b8129322457710bd379b64662bcc81c",
-      "issue": 1525,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1525,
-        "at": 1795413439964,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
-        "phase": "review",
-        "evidence": {
-          "id": "20261123T054137198-b11a35fd",
-          "name": "Тесты для задачи #1525 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261123T054137198-b11a35fd/report.json",
-          "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
-          "status": "passed",
-          "finishedAt": "2026-11-23T05:57:18.522Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Цель и результат\n\n- Интерактивный план не принимает ввод до конца анимации поворота, даже если другая причина вызвала перерисовку Lit.\n- Аутентифицированный поток профиля внешнего экрана не вызывает лишних config/layout GET только ради необязательного стартового превью. Обычный путь восстановления, если событие не принято, сохраняется.\n\n### Решение и места для внимания\n\n- Проп `inert` в `houseplan-card.ts` учитывает фактическое владение смонтированной стадией у `PlanRotationMotion`. Нативная проверка насильно вызывает Lit-обновление внутри поворота и убеждается, что до его конца ввод заблокирован, а потом восстановлен.\n- Запрет необязательного чтения привязан к паре «authority + принятая ревизия». Внимательно проверить момент установки в атомарном `afterAdopt`: не принятое событие не может отменить запрос актуальной конфигурации. Выбор/показ серверного превью по-прежнему требует доказанной ревизии.\n- Golden-фикстуры актуализированы под согласованные восемь поворотов, форму Lovelace и настройки внешних экранов. Отдельная сцена 2.5D без SVG-фильтров разносит только два тестовых значка и проверяет отсутствие не относящегося к фильтрам уведомления. Владелец принял конкретные шесть кадров; остальные PNG не входят в замену. Отдельный E2E PR: Matysh/houseplan-e2e#105.\n\n### Проверки и ограничения\n\nАдресно до совмещения с новым dev: 6/6 упавших браузерных проверок, 6/6 согласованных кадров (побайтовое совпадение), старые кадры 180°/270° без замены, 12/12 в реальном HA для совместного набора профилей и #1522; отдельно проверка принятия и удаления профиля после финальной перестановки guard. Веточный предварительный набор — 699 шагов без отказов. Продуктовая beta.2 не перепубликовывалась, stable не выпускался.\n\nПосле завершения #1527, на базе dev `3e50c658`, собрали ветку `eda43602b` и пересняли все шесть принятых сцен: во всех 0 отличающихся пикселей, SHA-256 каждого PNG совпал с ранее принятым. Два старых кадра поворотов 180°/270° также совпали без замены. Сохранили новый шаблон 2.5D и используемый в dev обход кратчайшим путём поворота.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
