@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22203,
+  "revision": 22204,
   "nextTicket": 647,
   "nextFence": 647,
   "tasks": {
@@ -5908,14 +5908,25 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1536-zigbee-lqi-mask",
-      "materialSha": "a87e92236713be44c6a050b0380a36781946899c",
+      "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 646,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795442593410,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "79f91f2723ea49871d851cf46828a2eee50e71ec",
+      "changedFiles": [
+        "demo/smoke_iso_device_signal.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/ISOMETRIC.md",
+        "docs/release-ledger/v1.86.0/1536.json",
+        "process-next/lib/source-dependencies.mjs",
+        "src/device-face.ts",
+        "test/device-face.test.mjs"
+      ]
     },
     "1537": {
       "issue": 1537,
@@ -6524,11 +6535,12 @@
     "worker": "github-coordinator",
     "token": "646:github:45191938029:1:tick:2:admit",
     "fence": 646,
-    "materialSha": "a87e92236713be44c6a050b0380a36781946899c",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "008350154de32b770f77e689ba7118cb1cda9344",
+    "expectedBase": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
+    "phase": "testing",
     "admittedAt": 1795443267637,
-    "expiresAt": 1795443567637
+    "expiresAt": 1795443578298,
+    "patchId": "79f91f2723ea49871d851cf46828a2eee50e71ec"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6550,6 +6562,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "finish:41ee4401-4fbc-4213-9a61-184a985d8157:finish:1:synchronized": {
+      "digest": "c36a79eefca4ea929f8d74e1438b747e7e9a691bcdae93ce1fdb882cc7199c81",
+      "issue": 1536
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
