@@ -1,6 +1,13 @@
 // The two synthetic floors from the approved #1538 replay, with unrelated demo data removed.
 const straight = {
-  id: "f1", title: "Обводки · 2,5D", rooms: [{"id": "outline-lab", "name": "", "poly": [[0.05, 0.07], [0.95, 0.07], [0.95, 0.94], [0.05, 0.94]]}],
+  id: "f1", title: "Обводки · 2,5D",
+  rooms: [{"id": "outline-lab", "name": "", "poly": [[0.05, 0.07], [0.95, 0.07], [0.95, 0.94], [0.05, 0.94]], "wall_ids": ["wall-iganf6oei4qhjn3nc2pd", "wall-mwsca7e6nbwosfoxxz34", "wall-vmryvfhfilqxwovvbrsh", "wall-ykvglstzpmm2ksrkycd6"]}],
+  wall_segments: [
+    {"id": "wall-iganf6oei4qhjn3nc2pd", "a": [0.05, 0.07], "b": [0.95, 0.07], "cm": 0},
+    {"id": "wall-mwsca7e6nbwosfoxxz34", "a": [0.95, 0.07], "b": [0.95, 0.94], "cm": 0},
+    {"id": "wall-vmryvfhfilqxwovvbrsh", "a": [0.05, 0.94], "b": [0.95, 0.94], "cm": 0},
+    {"id": "wall-ykvglstzpmm2ksrkycd6", "a": [0.05, 0.07], "b": [0.05, 0.94], "cm": 0},
+  ],
   partitions: [
     {"id": "partition-0", "a": [0.14, 0.18], "b": [0.14, 0.44], "cm": 12},
     {"id": "partition-1", "a": [0.39, 0.18], "b": [0.55, 0.43], "cm": 12},
@@ -37,7 +44,14 @@ const straight = {
 };
 
 const angled = {
-  id: "f-angle", title: "Обводки · наклонные стены", rooms: [{"id": "outline-angle", "name": "", "poly": [[0.3742077691738418, 0.06987853498833779], [0.9353922308261581, 0.39387853498833775], [0.6221922308261582, 0.9363568479189102], [0.06100776917384193, 0.6123568479189102]]}],
+  id: "f-angle", title: "Обводки · наклонные стены",
+  rooms: [{"id": "outline-angle", "name": "", "poly": [[0.3742077691738418, 0.06987853498833779], [0.9353922308261581, 0.39387853498833775], [0.6221922308261582, 0.9363568479189102], [0.06100776917384193, 0.6123568479189102]], "wall_ids": ["wall-6udju5hlmuvzcfk7k57u", "wall-xg2gmfeh2vo6vsnk4w43", "wall-dgm4hgyilwilsyrdwce7", "wall-3qeqctv7pdrblikmhqyn"]}],
+  wall_segments: [
+    {"id": "wall-3qeqctv7pdrblikmhqyn", "a": [0.06100776917384193, 0.6123568479189102], "b": [0.3742077691738418, 0.06987853498833779], "cm": 0},
+    {"id": "wall-6udju5hlmuvzcfk7k57u", "a": [0.3742077691738418, 0.06987853498833779], "b": [0.9353922308261581, 0.39387853498833775], "cm": 0},
+    {"id": "wall-dgm4hgyilwilsyrdwce7", "a": [0.06100776917384193, 0.6123568479189102], "b": [0.6221922308261582, 0.9363568479189102], "cm": 0},
+    {"id": "wall-xg2gmfeh2vo6vsnk4w43", "a": [0.6221922308261582, 0.9363568479189102], "b": [0.9353922308261581, 0.39387853498833775], "cm": 0},
+  ],
   partitions: [
     {"id": "partition-0", "a": [0.3907262153390735, 0.1708677469680654], "b": [0.29712621533907346, 0.3329877025565123], "cm": 8.64},
     {"id": "partition-1", "a": [0.5466107880202724, 0.26086774696806536], "b": [0.5563769145362398, 0.4743523196492643], "cm": 8.64},
@@ -71,8 +85,8 @@ const angled = {
 };
 
 export function makeIsoDevicePresentationFixture(diagonal = false) {
-  const {id, title, rooms, partitions, markers} = diagonal ? angled : straight;
-  const space = {id, title, rooms, partitions, view_box: [0,0,1,1], cell_cm: 5,
+  const {id, title, rooms, wall_segments, partitions, markers} = diagonal ? angled : straight;
+  const space = {id, title, rooms, walls: [], wall_segments, partitions, view_box: [0,0,1,1], cell_cm: 5,
     settings: {show_names: false, show_borders: true, fill_mode: 'custom',
       custom_fill: {c:'#697480', a:1}, glow_enabled: false, bg_color:'#152332'}};
   const devices={}, entities={}, states={}, layout={};
@@ -105,4 +119,8 @@ export function makeIsoDevicePresentationFixture(diagonal = false) {
         new_device_ids:[], known_devices:Object.keys(devices), bg_color:'#152332'}},
     devices, entities, states, layout, areas:{},
   });
+}
+
+export function makeAngledIsoDevicePresentationFixture() {
+  return makeIsoDevicePresentationFixture(true);
 }

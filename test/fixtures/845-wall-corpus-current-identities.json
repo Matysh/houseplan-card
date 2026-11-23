@@ -367,6 +367,10 @@
       "configs": 1
     },
     {
+      "file": "demo/fixtures/iso-device-presentation.mjs",
+      "configs": 2
+    },
+    {
       "file": "demo/fixtures/iso-paint.mjs",
       "configs": 1
     },
@@ -24160,6 +24164,86 @@
         }
       ],
       "fullConfigSha256": "d81b85252532df35bd3a032d91b5598e87daa88a753a3e0ed9a88b204ba5c937"
+    },
+    {
+      "label": "demo/fixtures/iso-device-presentation.mjs:makeAngledIsoDevicePresentationFixture/config",
+      "fingerprint": "ee2aaafa1eb87f9ebcf7415aa7498ac0664aec800e606116ffb0e9cd33853022",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f-angle",
+          "catalogue": [
+            "wall-3qeqctv7pdrblikmhqyn",
+            "wall-6udju5hlmuvzcfk7k57u",
+            "wall-dgm4hgyilwilsyrdwce7",
+            "wall-xg2gmfeh2vo6vsnk4w43"
+          ],
+          "rooms": [
+            {
+              "id": "outline-angle",
+              "walls": [
+                "wall-6udju5hlmuvzcfk7k57u",
+                "wall-xg2gmfeh2vo6vsnk4w43",
+                "wall-dgm4hgyilwilsyrdwce7",
+                "wall-3qeqctv7pdrblikmhqyn"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-0",
+            "partition-1",
+            "partition-2",
+            "partition-3",
+            "partition-4",
+            "partition-5",
+            "partition-6",
+            "partition-7",
+            "partition-8"
+          ]
+        }
+      ],
+      "fullConfigSha256": "29c421965fe3431ac3a898e1b7f83c9d7f57d7832d98f3ee52565e9e0ce316ba"
+    },
+    {
+      "label": "demo/fixtures/iso-device-presentation.mjs:makeIsoDevicePresentationFixture/config",
+      "fingerprint": "e366c17cb7e0f78cc27d4d155bb2615ff65de7dbc7571ccd0f69d4f7e093e5f2",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-iganf6oei4qhjn3nc2pd",
+            "wall-mwsca7e6nbwosfoxxz34",
+            "wall-vmryvfhfilqxwovvbrsh",
+            "wall-ykvglstzpmm2ksrkycd6"
+          ],
+          "rooms": [
+            {
+              "id": "outline-lab",
+              "walls": [
+                "wall-iganf6oei4qhjn3nc2pd",
+                "wall-mwsca7e6nbwosfoxxz34",
+                "wall-vmryvfhfilqxwovvbrsh",
+                "wall-ykvglstzpmm2ksrkycd6"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-0",
+            "partition-1",
+            "partition-2",
+            "partition-3",
+            "partition-4",
+            "partition-5",
+            "partition-6",
+            "partition-7",
+            "partition-8"
+          ]
+        }
+      ],
+      "fullConfigSha256": "ff38bcaebaf84c16e6940272e3b5d38150cd9555018ac4a709a29d5396c64dfa"
     },
     {
       "label": "demo/fixtures/iso-paint.mjs:makeIsoPaintFixture/config",

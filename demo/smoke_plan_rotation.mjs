@@ -149,11 +149,16 @@ try {
     const axis = matrix => [matrix.a, matrix.b];
     const glyph = selector => {
       const element = stage.querySelector(selector);
-      return element ? axis(markerPlane.rotate(parseFloat(getComputedStyle(element).rotate))) : null;
+      if (!element) return null;
+      const angle = node => parseFloat(getComputedStyle(node).rotate) || 0;
+      const capsule = element.closest('.value-badge');
+      const inherited = capsule && capsule !== element ? angle(capsule) : 0;
+      return axis(markerPlane.rotate(inherited + angle(element)));
     };
     return [
       room ? axis(new DOMMatrixReadOnly(getComputedStyle(room).transform)) : null,
       glyph('.dev[data-id="plain"] .device-core > ha-icon'),
+      glyph('.dev[data-id="plain"] .value-badge'),
       glyph('.dev[data-id="plain"] .value-badge-content'),
       glyph('.oplock[data-opening-id="lock-door"] .oplock-core > ha-icon'),
     ];
@@ -191,7 +196,7 @@ try {
     const labelAngle = labelByYaw.get(yaw) * Math.PI / 180;
     const baseline = [Math.cos(labelAngle), Math.sin(labelAngle) * Math.sin(40 * Math.PI / 180)];
     const axes = await readingAxes();
-    check('room caption, device icon, badge, and lock read along the expected axis at ' + logical,
+    check('room caption, device icon, badge with its text, and lock read along the expected axis at ' + logical,
       axes.every(axis => axis && Math.hypot(axis[0] - baseline[0], axis[1] - baseline[1]) < 1e-5));
     sides.push(await card.locator('.iso-walls-svg').evaluate(svg => svg.innerHTML));
     await frame('iso-' + logical);
