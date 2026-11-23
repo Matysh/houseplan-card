@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21666,
+  "revision": 21667,
   "nextTicket": 638,
   "nextFence": 638,
   "tasks": {
@@ -5849,6 +5849,13 @@
         "status": "passed",
         "finishedAt": "2026-11-23T06:47:38.037Z",
         "failures": []
+      },
+      "reviewRound": 1,
+      "reviewRequest": "review:1530:1:20face6af6c9f33187c8a13a500027b7732f949b:10a2afb7389b0308e6290e5b596b7a9520445295",
+      "reviewMaterial": {
+        "materialSha": "781296e04296243ef7501f0b6fa85dc32390bb5a",
+        "expectedBase": "10a2afb7389b0308e6290e5b596b7a9520445295",
+        "patchId": "20face6af6c9f33187c8a13a500027b7732f949b"
       }
     }
   },
@@ -6413,6 +6420,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "code:1530:review:1530:1:20face6af6c9f33187c8a13a500027b7732f949b:10a2afb7389b0308e6290e5b596b7a9520445295": {
+      "issue": 1530,
+      "kind": "code",
+      "requestId": "review:1530:1:20face6af6c9f33187c8a13a500027b7732f949b:10a2afb7389b0308e6290e5b596b7a9520445295",
+      "materialSha": "781296e04296243ef7501f0b6fa85dc32390bb5a",
+      "expectedBase": "10a2afb7389b0308e6290e5b596b7a9520445295",
+      "patchId": "20face6af6c9f33187c8a13a500027b7732f949b",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-23T06:47:48.620Z"
+      }
     }
   },
   "waiting": [],
@@ -6426,7 +6446,8 @@
     "phase": "review",
     "admittedAt": 1795415407341,
     "expiresAt": 1795420059605,
-    "patchId": "20face6af6c9f33187c8a13a500027b7732f949b"
+    "patchId": "20face6af6c9f33187c8a13a500027b7732f949b",
+    "reviewRequest": "review:1530:1:20face6af6c9f33187c8a13a500027b7732f949b:10a2afb7389b0308e6290e5b596b7a9520445295"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6539,6 +6560,10 @@
     },
     "finish:e733a819-dad6-4fe2-84d6-dd95c0071895:finish:4:s6-label": {
       "digest": "48b4c7e1d6fcc4e83b6c6c8a6232d971ff1a7cb87b467de47441f6f5fd90f138",
+      "issue": 1530
+    },
+    "finish:e733a819-dad6-4fe2-84d6-dd95c0071895:finish:5:review-requested": {
+      "digest": "83a77373b7f6a535007be0aca06d800fd757f785e9630dad9d981e4c9f3cf33f",
       "issue": 1530
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
