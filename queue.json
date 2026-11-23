@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 22369,
-  "nextTicket": 650,
+  "revision": 22370,
+  "nextTicket": 651,
   "nextFence": 650,
   "tasks": {
     "1024": {
@@ -5933,14 +5933,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1538-iso-device-presentation",
-      "materialSha": "9f7e0e2a80aaf93384f8b4c1ddc1dc43fbd9c711",
+      "materialSha": "3a6245cb4e6381e61d6a0af120e0baf54a570fde",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 649,
-      "queued": false,
+      "ticket": 650,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795463182246,
-      "reviewEntry": 2,
+      "readyAt": 1795464361046,
+      "reviewEntry": 3,
       "patchId": "14cce9251fe37067d0c394dadd09edfea19ede02",
       "changedFiles": [
         "demo/fixtures/iso-device-presentation.mjs",
@@ -5974,8 +5974,7 @@
         "entry": 2,
         "detail": "Критичные данные, сохранение и права: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: floor persistent cache: failed; Браузер: plan rotation: failed",
         "eventId": "finish:2f93f2dc-dc9b-4a3a-988d-4324d9bc1f86:finish:3:return:return:1538"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6555,7 +6554,9 @@
       "runId": 45195707174
     }
   },
-  "waiting": [],
+  "waiting": [
+    1538
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6802,6 +6803,19 @@
           "detail": "Критичные данные, сохранение и права: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: floor persistent cache: failed; Браузер: plan rotation: failed",
           "eventId": "finish:2f93f2dc-dc9b-4a3a-988d-4324d9bc1f86:finish:3:return:return:1538"
         }
+      }
+    },
+    "finish:a701f0f1-68cb-4160-8b64-088c401ac32b": {
+      "digest": "bb9e5d18df2f9dbd28377d2082978a8e0ac8c95051835fd3a7268a4905c2fcca",
+      "issue": 1538,
+      "message": {
+        "kind": "queued",
+        "issue": 1538,
+        "at": 1795464361046,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3a6245cb4e6381e61d6a0af120e0baf54a570fde"
       }
     }
   },
