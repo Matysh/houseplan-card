@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 21470,
-  "nextTicket": 635,
+  "revision": 21471,
+  "nextTicket": 636,
   "nextFence": 635,
   "tasks": {
     "1024": {
@@ -5845,6 +5845,20 @@
         "status": "published",
         "sourceSha": "3e50c658df6ce58f9e7dcfae43dc623793ffc70f"
       }
+    },
+    "1528": {
+      "issue": 1528,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/issue-1528-perspective-depth",
+      "materialSha": "6075447448f4ef4b687e79827f14a1d8c52a5d31",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 635,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795413063795,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6410,7 +6424,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1528
+  ],
   "active": {
     "issue": 1525,
     "worker": "github-coordinator",
@@ -6552,6 +6568,19 @@
         "materialSha": "cb44c49a07dfa4949ebf5804a9a7880a8f80d1f5",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:5ff81b66-43df-4f51-93c2-8377da76b06e": {
+      "digest": "5bb22c9fe241ebddba5a977629086c8bc534025512ce3f70660441ac2c8b813a",
+      "issue": 1528,
+      "message": {
+        "kind": "queued",
+        "issue": 1528,
+        "at": 1795413063795,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6075447448f4ef4b687e79827f14a1d8c52a5d31"
       }
     }
   },
