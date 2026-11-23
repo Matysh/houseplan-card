@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 22348,
-  "nextTicket": 649,
+  "revision": 22349,
+  "nextTicket": 650,
   "nextFence": 649,
   "tasks": {
     "1024": {
@@ -5933,14 +5933,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1538-iso-device-presentation",
-      "materialSha": "ddefc1b3d5e11ca34befd6c45bfc354c5aeed1d2",
+      "materialSha": "9f7e0e2a80aaf93384f8b4c1ddc1dc43fbd9c711",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 648,
-      "queued": false,
+      "ticket": 649,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795462686208,
-      "reviewEntry": 1,
+      "readyAt": 1795463182246,
+      "reviewEntry": 2,
       "patchId": "ef129df835e5ce09c5151f62f25231accce7e911",
       "changedFiles": [
         "demo/fixtures/iso-device-presentation.mjs",
@@ -5965,7 +5965,6 @@
         "test/iso-device-face.test.mjs",
         "test/iso-marker-outline.test.mjs"
       ],
-      "reason": "candidate-correction",
       "notice": {
         "key": "1:candidate-correction",
         "reason": "candidate-correction",
@@ -6554,7 +6553,9 @@
       "runId": 45195707174
     }
   },
-  "waiting": [],
+  "waiting": [
+    1538
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6678,6 +6679,19 @@
           "entry": 1,
           "eventId": "return:1538:d89ff7a8-02be-4264-b2b1-f1950659d0ae:return:1538"
         }
+      }
+    },
+    "finish:2f93f2dc-dc9b-4a3a-988d-4324d9bc1f86": {
+      "digest": "16f22cf87bbcc0efdddcf1b2c49160f27b7751c5e31532cca6b793b2f9ba8aba",
+      "issue": 1538,
+      "message": {
+        "kind": "queued",
+        "issue": 1538,
+        "at": 1795463182246,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9f7e0e2a80aaf93384f8b4c1ddc1dc43fbd9c711"
       }
     }
   },
