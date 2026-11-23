@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21646,
+  "revision": 21647,
   "nextTicket": 638,
   "nextFence": 638,
   "tasks": {
@@ -2235,44 +2235,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "24f98e2081b460f7b14a76a186155b574a6bbb45"
-      }
-    },
-    "1422": {
-      "issue": 1422,
-      "branch": "codex/1422-standalone-presentation",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "c0724ea4179e2c6971033c383ef37a441983960f",
-      "mergedSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-      "mergedAt": 1794657144187,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1422:3:ad54bb5d85e80865b5f1819342f4eff3e74a8a01:c0724ea4179e2c6971033c383ef37a441983960f",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07"
       }
     },
     "1423": {
@@ -5851,7 +5813,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "0fbada88c0c18ffe176ea7ad82c1a3983db6470f"
       }
     },
     "1529": {
