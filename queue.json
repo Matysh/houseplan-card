@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21440,
+  "revision": 21441,
   "nextTicket": 635,
   "nextFence": 635,
   "tasks": {
@@ -5750,14 +5750,38 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/stable-audit-1861-beta2-fixes",
-      "materialSha": "cb44c49a07dfa4949ebf5804a9a7880a8f80d1f5",
+      "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 634,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795411572636,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "e631391f909466969ed9028142a414c66bd18395",
+      "changedFiles": [
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/card-editor-invalid-default-floor-dark-ru.png",
+        "demo/golden/baselines/card-editor-invalid-default-floor-light-en.png",
+        "demo/golden/baselines/isometric-stage3-no-filter-dark.png",
+        "demo/golden/baselines/settings-external-screens-constructor-dark.png",
+        "demo/golden/baselines/settings-external-screens-constructor-light.png",
+        "demo/golden/baselines/space-room-color-popover-desktop-ru.png",
+        "demo/golden/external-screens.mjs",
+        "demo/golden/harness.mjs",
+        "demo/golden/matrix.mjs",
+        "demo/smoke_align_guides.mjs",
+        "demo/smoke_approved_ui.mjs",
+        "demo/smoke_approved_ui_1207.mjs",
+        "demo/smoke_iso_raster_materials.mjs",
+        "demo/smoke_lovelace_editor_locale_1070.mjs",
+        "demo/wall-draw-click-harness.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v2.0.0/1525.json",
+        "src/houseplan-card.ts",
+        "src/plan-rotation-motion.ts"
+      ]
     },
     "1526": {
       "issue": 1526,
@@ -6392,11 +6416,12 @@
     "worker": "github-coordinator",
     "token": "634:github:45119008171:1:tick:0:admit",
     "fence": 634,
-    "materialSha": "cb44c49a07dfa4949ebf5804a9a7880a8f80d1f5",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27",
+    "expectedBase": "3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
+    "phase": "testing",
     "admittedAt": 1795412296587,
-    "expiresAt": 1795412596587
+    "expiresAt": 1795412787394,
+    "patchId": "e631391f909466969ed9028142a414c66bd18395"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6429,6 +6454,10 @@
     },
     "dev-build:45119008171:1:webhook:6e18cccc-e827-4fdb-8332-60bd2a50a6e0:delivered": {
       "digest": "bef3b9fe3c83f2baf5e84ff54e777cdf869992ddd579c120c4e291047275e182",
+      "issue": 1525
+    },
+    "finish:44d317c3-e218-4cac-bd0f-48df946c9754:finish:1:synchronized": {
+      "digest": "dd6ea46faa81e3568bfbe64594992afb3d12f45bf8b3414719f35c79d83ecb4d",
       "issue": 1525
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
