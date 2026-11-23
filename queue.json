@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21312,
+  "revision": 21313,
   "nextTicket": 632,
   "nextFence": 632,
   "tasks": {
@@ -5790,16 +5790,19 @@
       "status": "S6-in-progress",
       "readyAt": 1795394313332,
       "reviewEntry": 4,
-      "patchId": "c21a51d97b0022dfcec27c56f854f814c5cb9def",
+      "patchId": "8eae1d0f8dd39cce58d82c6d3dff5cc8af5edd19",
       "changedFiles": [
         "demo/fixtures/direct-perspective-room.mjs",
         "demo/golden/baselines/baselines-index.json",
         "demo/golden/baselines/panel-iso-straight-perspective-1526.png",
         "demo/golden/harness.mjs",
         "demo/golden/matrix.mjs",
+        "demo/helpers/device-pointer-point.mjs",
         "demo/smoke_iso_flat_parity.mjs",
         "demo/smoke_iso_raster_parity.mjs",
         "demo/smoke_plan_rotation.mjs",
+        "demo/smoke_vacuum_tail_continuity.mjs",
+        "demo/smoke_zigbee_led_topology.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/ISOMETRIC.md",
@@ -5807,6 +5810,7 @@
         "scripts/mutation-registry.mjs",
         "src/floor-cache-preview.ts",
         "src/houseplan-card.ts",
+        "src/hp-zigbee-topology-overlay.ts",
         "src/iso-lab-furniture.ts",
         "src/iso-perspective-floor.ts",
         "src/iso-projection.ts",
@@ -5816,6 +5820,9 @@
         "src/live-viewport.ts",
         "src/room-fit.ts",
         "src/stairs-volume.ts",
+        "src/svg-perspective-coordinates.ts",
+        "src/vacuum-view.ts",
+        "src/zigbee-topology-endpoint.ts",
         "test/fixtures/845-wall-corpus-current-identities.json",
         "test/iso-projection.test.mjs",
         "test/isometric-contract.test.mjs"
@@ -6416,10 +6423,11 @@
     "token": "631:finish:f5d5885f-e699-4aa8-b46d-95af73c82837:finish:1:admit",
     "fence": 631,
     "materialSha": "0d8066595460e1ab6f28ab69094791f86b62b9b6",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "e38612b43a41121dcd0f1e72c37176a95477e6e7",
+    "phase": "testing",
     "admittedAt": 1795394317800,
-    "expiresAt": 1795394617800
+    "expiresAt": 1795394623661,
+    "patchId": "8eae1d0f8dd39cce58d82c6d3dff5cc8af5edd19"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6684,6 +6692,10 @@
     },
     "github:45088661810:1:completions:metadata:adafceb8-f5f2-45d7-9d0a-c0ba1140c73d:task-notice:1526::": {
       "digest": "34b0c039551bbf6911ea4b75f2d82fb918829736eb08d808412f15dd9b4f7653",
+      "issue": 1526
+    },
+    "finish:f5d5885f-e699-4aa8-b46d-95af73c82837:finish:2:synchronized": {
+      "digest": "b9742924f45c6102470e04630f34d5efda33d97d2c7cd192ac7abf386dc2835e",
       "issue": 1526
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
