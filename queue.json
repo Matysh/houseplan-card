@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21997,
+  "revision": 21998,
   "nextTicket": 644,
   "nextFence": 643,
   "tasks": {
@@ -5878,7 +5878,17 @@
       "patchId": "7c560c4ac9e52ecda3f027776d1007f18f64572c",
       "changedFiles": [
         "test/optimize-plans-dialog.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261123T105737962-284edb9d",
+        "requestId": "s6:1535:03b3e39bc3f35f0847ca0345bdafecea",
+        "runId": 45160441309,
+        "materialSha": "d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
+        "status": "passed",
+        "finishedAt": "2026-11-23T11:04:39.172Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45160441309",
+        "execution": "github"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6468,9 +6478,9 @@
     "fence": 642,
     "materialSha": "d1f1ba4f226bc1c0a15b605e97530c098b45ce5b",
     "expectedBase": "5923f94b1ddf65af4bd80f40cb2cb5c2a95c7f05",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795431209799,
-    "expiresAt": 1795432178823,
+    "expiresAt": 1795435532776,
     "patchId": "7c560c4ac9e52ecda3f027776d1007f18f64572c"
   },
   "events": {
@@ -6556,6 +6566,10 @@
     },
     "finish:ed7cf8d0-2b66-4ec3-a25e-4a061a5c847e": {
       "digest": "bfd98918a64166ff75b97cf75d23481fe5c3685aceb73d039f3a1c41eb6675ba",
+      "issue": 1535
+    },
+    "finish:7adb8802-0093-4840-b494-ed672cca3e5e:finish:3:s6-complete": {
+      "digest": "2d4d64fce5abffb46380287978beb6ca74be91a16ac7fbf0d657c8b6dfea0e61",
       "issue": 1535
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
