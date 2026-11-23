@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22587,
+  "revision": 22588,
   "nextTicket": 653,
   "nextFence": 653,
   "tasks": {
@@ -5911,7 +5911,7 @@
       "ownerDecision": null,
       "ticket": 652,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795475208675,
       "reviewEntry": 1,
       "patchId": "37f45be96ddb1b2a7543cf0885af1620903b33dc",
@@ -5948,7 +5948,16 @@
         "src/glow-scene.ts",
         "src/houseplan-card.ts",
         "test/glow-entry-batch.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261123T230706416-aa4e54ea",
+        "name": "Тесты для задачи #1540 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T230706416-aa4e54ea/report.json",
+        "materialSha": "ad765cf67f737e5d1b8ccd669d9672c3ef0f7b7a",
+        "status": "passed",
+        "finishedAt": "2026-11-23T23:27:16.447Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6522,9 +6531,9 @@
     "fence": 652,
     "materialSha": "ad765cf67f737e5d1b8ccd669d9672c3ef0f7b7a",
     "expectedBase": "b587e24291535effa36ad1cc03ce8acdf282a07b",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795475213302,
-    "expiresAt": 1795476711879,
+    "expiresAt": 1795480037874,
     "patchId": "37f45be96ddb1b2a7543cf0885af1620903b33dc"
   },
   "events": {
@@ -6686,6 +6695,34 @@
         "layer": "product",
         "materialSha": "ad765cf67f737e5d1b8ccd669d9672c3ef0f7b7a",
         "phase": "sync"
+      }
+    },
+    "finish:3fa0ba41-1f9d-4e99-8aa0-aab317393fac:finish:3:s6-complete": {
+      "digest": "97f9609dd0f06186ffff0cfe7932c740ef59ea5cf3694a96c9d6559264481b0a",
+      "issue": 1540,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1540,
+        "at": 1795476437874,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ad765cf67f737e5d1b8ccd669d9672c3ef0f7b7a",
+        "phase": "review",
+        "evidence": {
+          "id": "20261123T230706416-aa4e54ea",
+          "name": "Тесты для задачи #1540 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T230706416-aa4e54ea/report.json",
+          "materialSha": "ad765cf67f737e5d1b8ccd669d9672c3ef0f7b7a",
+          "status": "passed",
+          "finishedAt": "2026-11-23T23:27:16.447Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "- Повтор исходной последовательности из 17 кадров перед individual-larger поймал исходный SHA 1c3698c1… и исчезновение пяти маркеров. Смена ссылки на SVG-маску в том же DOM вернула их. Реализация закрепляет ID за экземпляром renderer для масок корпусов и стекла, сохраняя обрезку стенами. После правки три захвата и три повтора совпали с SHA aecb19be…, включая исходную последовательность.\n- Очистка затухающего слоя больше не может удалить подключённый SVG на кадре окончания 500-мс перехода. Таймер, финальные кадры и запасная очистка отменяются одной записью при повторном включении и демонтаже. CSS-длительность и reduced motion сохранены. Проверки жизненного цикла Glow, LED и Static прошли (24/24).\n- Все пять прежних отказов browser smoke повторно прошли, включая неизменную проверку transitionend. Радиусы измеряются по двум частям контура в координатах плана. Оптимизация, восстановление диалога и Zigbee дожидаются актуального кадра, сохраняя наблюдаемые проверки.\n- Все 20 новых эталонов приняты владельцем. Девятнадцать PNG приняты из исходного прогона beta.5. Для исправленного individual-larger принят конкретный SHA aecb19be… и повтор после обновления сравнения прошёл. Общий визуальный повтор дал 78/78 beta и 284/285 stable до замены последнего эталона. Остальные эталоны и допуски сравнения сохранены.\n- Восемь прежних отказов в реальном HA повторены на локальном пакете с исправлениями. Семь прошли в адресном наборе, подсказка прошла в отдельном повторе после уточнения считывания реального pointermove. Ветка тестов слита в [houseplan-e2e#107](https://github.com/Matysh/houseplan-e2e/pull/107), main b9add21b….",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
