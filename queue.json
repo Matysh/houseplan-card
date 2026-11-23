@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21820,
+  "revision": 21821,
   "nextTicket": 640,
   "nextFence": 640,
   "tasks": {
@@ -349,7 +349,7 @@
         },
         "labelsFrom": "S6-in-progress",
         "removedToRelease": false,
-        "classificationAt": "3e50c658df6ce58f9e7dcfae43dc623793ffc70f",
+        "classificationAt": "84aca2afee27c80ec214da23516cc0c67198c2fd",
         "commentCurrent": true,
         "commentDigest": "461782c36f016e0e633c",
         "commentFacts": {
