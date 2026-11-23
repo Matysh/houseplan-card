@@ -1,7 +1,7 @@
 /** Local #1451 visibility in the common projection. Remove only the portions
  * hidden by a nearer opaque face; never change plan coordinates or leaf poses.
  * A single average depth cannot order an open leaf crossing a long wall. */
-import { isoFloorMatrix, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
+import { isoFloorMatrix, isoHeightLift, isoProjectedDepth, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
 import type { IsoDeviceFace, IsoDeviceSurface, IsoOverlayPlacement } from './iso-overlays';
 import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
 
@@ -10,10 +10,29 @@ type Polygon = Point[][];
 type Multi = Polygon[];
 type Plane = [number,number,number];
 type Face = { entry: IsoWallDepthQueueEntry; geom: Multi; plane: Plane; bounds: number[]; opaque: boolean };
-type ClipCoordinates = { point: (p: Point) => Point; height: (z: number) => number };
+type ClipCoordinates = {
+  point: (p: Point) => Point;
+  height: (z: number) => number;
+  vertex: (p: Point) => Point;
+  depth: (z: number) => number;
+};
 // Keep calculations at full precision. Rounding a face before comparing it
 // with its own height plane creates false self-occlusion at shared edges.
 const DEPTH_EPS=1e-5;
+
+function depthClipCoordinates(camera: IsoCamera, scale: number) {
+  const [x0,y0] = projectPlanPoint([0,0],0,camera);
+  const snap = (value: number) => Math.round(value * 1e6) / 1e6;
+  const vertex = ([x,y]:Point):Point => [(x-x0)/scale,(y-y0)/scale];
+  const coordinates: ClipCoordinates = {
+    point: p => vertex(p).map(snap) as Point,
+    height: z => snap(z/scale),
+    vertex,
+    depth: z => z/scale,
+  };
+  const restore = ([x,y]:Point):Point => [x*scale+x0,y*scale+y0];
+  return {coordinates,restore};
+}
 
 function heightPlane(vertices: readonly (readonly number[])[]): Plane | null {
   const p=vertices[0];
@@ -102,8 +121,15 @@ function faceOf(entry:IsoWallDepthQueueEntry,camera:IsoCamera, coordinates?: Cli
     geom=[[vertices.map(p=>[p[0],p[1]] as Point)]];
     opaque=!['glass-side','glass-top','glass-over-fabric','light-window'].includes(s.material);
   }
+  if (camera.perspective) {
+    vertices = vertices.map(([x,y,z]) => [x,y,isoProjectedDepth([x,y],z,camera)]);
+  }
   if (coordinates) {
-    vertices = vertices.map(([x,y,z]) => [...coordinates.point([x,y]), coordinates.height(z)]);
+    // Keep the perspective plane coefficients independent of polygon snapping.
+    // Rounding even a tiny sliver's vertices can tilt a coplanar face.
+    vertices = vertices.map(([x,y,z]) => camera.perspective
+      ? [...coordinates.vertex([x,y]), coordinates.depth(z)]
+      : [...coordinates.point([x,y]), coordinates.height(z)]);
     geom = geom.map(poly => poly.map(ring => ring.map(coordinates.point)));
   }
   const plane=heightPlane(vertices);if(!plane)return null;
@@ -155,8 +181,9 @@ export function furnitureOcclusion(queue: readonly IsoWallDepthQueueEntry[], cam
   };
   const slope = (edgeY(right)-edgeY(left))/Math.max(right-left,1e-7);
   const intercept = edgeY(left)-slope*left;
-  const lift = projectPlanPoint([0,0],0,camera)[1]-projectPlanPoint([0,0],1,camera)[1];
-  const box = [left-2,Math.min(...points.map(p=>p[1]))-height*lift-2,right+2,Math.max(...points.map(p=>p[1]))+2];
+  const lift = isoHeightLift(camera,1);
+  const top = Math.min(...footprint.map(p=>projectPlanPoint(p,height,camera)[1]));
+  const box = [left-2,top-2,right+2,Math.max(...points.map(p=>p[1]))+2];
   const opaque: Multi = [], frontGlass: number[] = [];
   cachedFaces.forEach((face,index)=>{
     if (!face) return;
@@ -196,8 +223,9 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
     deviceQueue=queue;deviceCamera=camera;deviceFaces=queue.map(entry=>faceOf(entry,camera));deviceMasks=new WeakMap();
   }
   if(deviceMasks.has(placement))return deviceMasks.get(placement);
-  const lift=projectPlanPoint([0,0],0,camera)[1]-projectPlanPoint([0,0],1,camera)[1];
-  const bottom=height-size*.24/lift,[cx,cy]=placement.visualScene,r=size*5,covered:Multi=[];
+  const lift=isoHeightLift(camera,1);
+  const [cx,cy]=placement.visualScene,r=size*5,covered:Multi=[];
+  const minBodyDepth=isoProjectedDepth([cx,cy-r],height,camera)-size*.24/lift;
   const nearby:Face[]=[];
   for(const face of deviceFaces){
     if(!face?.opaque)continue;
@@ -205,7 +233,8 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
     if(x1<cx-r||x0>cx+r||y1<cy-r||y0>cy+r)continue;
     nearby.push(face);
     for(const [ring] of face.geom){
-      const clipped=halfPlane(ring,[face.plane[0],face.plane[1],face.plane[2]-bottom]);
+      const clipped=halfPlane(ring,[face.plane[0],face.plane[1],
+        face.plane[2]-minBodyDepth]);
       if(clipped.length){if(area(clipped)<0)clipped.reverse();covered.push([clipped]);}
     }
   }
@@ -231,7 +260,8 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
         const p=cap[i],q=cap[(i+1)%cap.length];
         if(q[0]>=p[0]-1e-8)continue; // only camera-facing vertical sides
         const lowP:Point=[p[0],p[1]+size*.24],lowQ:Point=[q[0],q[1]+size*.24];
-        const plane=heightPlane([[...p,height],[...q,height],[...lowQ,bottom]]);
+        const pDepth=isoProjectedDepth(p,height,camera),qDepth=isoProjectedDepth(q,height,camera);
+        const plane=heightPlane([[...p,pDepth],[...q,qDepth],[...lowQ,qDepth-size*.24/lift]]);
         if(plane)sides.push({ring:[p,q,lowQ,lowP],plane});
       }
     }
@@ -262,7 +292,10 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
     const cached=glassMasks.get(surfaces);if(cached!==undefined)return cached;
     const hidden:Multi=[];
     for(const surface of surfaces){
-      const vertices=surface.map(([x,y,drop])=>[...projectPlanPoint([x,y],height,camera),height-drop/lift]);
+      const vertices=surface.map(([x,y,drop])=>{
+        const point=projectPlanPoint([x,y],height,camera);
+        return [...point,isoProjectedDepth([point[0],point[1]-drop],height,camera)-drop/lift];
+      });
       const ring=vertices.map(p=>[p[0],p[1]] as Point),plane=heightPlane(vertices);
       if(!plane)continue;
       const sign=Math.sign(area(ring));
@@ -298,13 +331,7 @@ export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry
   if(key===lastKey)return lastResult;
   // Resolve coincident edges in the same physical coordinate system for
   // coarse and fine grids. Subpixel differences otherwise create fragments.
-  const [x0,y0]=projectPlanPoint([0,0],0,camera);
-  const normalize = (value: number) => Math.round(value / scale * 1e6) / 1e6;
-  const coordinates: ClipCoordinates = {
-    point: ([x,y]) => [normalize(x-x0), normalize(y-y0)],
-    height: normalize,
-  };
-  const restore = ([x,y]:Point): Point => [x*scale+x0,y*scale+y0];
+  const {coordinates,restore}=depthClipCoordinates(camera,scale);
   const faces=entries.map(e=>faceOf(e,camera,coordinates));
   const result=entries.flatMap((entry,i)=>{
     // Structural caps share H, the highest plane in this model. Keep their
@@ -371,8 +398,8 @@ function furnitureDepthSurface(item: IsoDepthFurniture, camera: IsoCamera, coord
     const atX = points.filter(p => Math.abs(p[0]-x) < 1e-7);
     return atX.reduce((sum, p) => sum+p[1], 0)/atX.length;
   };
-  const lift = projectPlanPoint([0,0],0,camera)[1] - projectPlanPoint([0,0],1,camera)[1];
-  const minY = Math.min(...points.map(p => p[1])) - item.height * lift - 2;
+  const lift = isoHeightLift(camera,1);
+  const minY = Math.min(...item.footprint.map(p => projectPlanPoint(p,item.height,camera)[1])) - 2;
   const maxY = Math.max(...points.map(p => p[1])) + 2;
   const [x0,y0] = coordinates.point([left[0]-2,minY]);
   const [x1,y1] = coordinates.point([right[0]+2,maxY]);
@@ -407,12 +434,7 @@ export function composeIsoTranslucentStructure(
     queue.map(entry => entry.layer === 'opening' ? [entry.surface.material,entry.surface.kind,entry.surface.d]
       : [entry.layer,entry.face.d])]);
   if (key === transparentKey) return transparentResult;
-  const [x0,y0] = projectPlanPoint([0,0],0,camera);
-  const normalize = (value: number) => Math.round(value / scale * 1e6) / 1e6;
-  const coordinates: ClipCoordinates = {
-    point: ([x,y]) => [normalize(x-x0),normalize(y-y0)], height: normalize,
-  };
-  const restore = ([x,y]:Point):Point => [x*scale+x0,y*scale+y0];
+  const {coordinates,restore} = depthClipCoordinates(camera,scale);
   const masonryKinds = queue.map(masonrySurface);
   const faces: (DepthSurface | null)[] = [...queue.map((entry,index) => {
     const kind = masonryKinds[index];

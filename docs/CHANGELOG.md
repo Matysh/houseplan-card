@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Resolve crossing door and wall surfaces with perspective-correct depth in straight-on 2.5D views (#1528).
+
 ## v1.86.1-beta.3 — 2026-11-23
 
 - The four straight-on 2.5D views add a subtle perspective while keeping wall edges vertical. [#1526](https://github.com/Matysh/houseplan-card/issues/1526)

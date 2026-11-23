@@ -52,7 +52,7 @@ export function isoCameraFor(rotation: PlanRotation): Readonly<IsoCamera> {
 const DIRECT_WIDTH_RATIO = 1.16;
 
 export function isoPerspectiveCamera(camera: Readonly<IsoCamera>, frame: ViewRect,
-  content = frame): Readonly<IsoCamera> {
+  content = frame, structureHeight = ISO_WALL_HEIGHT): Readonly<IsoCamera> {
   if (camera.rotDeg % 90 !== 0) return camera;
   const center = applyIsoMatrix([frame.x + frame.w / 2, frame.y + frame.h / 2], isoFloorMatrix(camera));
   const depth = (camera.rotDeg % 180 ? frame.w : frame.h) * camera.xyScale * (camera.floorScaleY ?? 1);
@@ -64,7 +64,10 @@ export function isoPerspectiveCamera(camera: Readonly<IsoCamera>, frame: ViewRec
   const extent = Math.max(Math.abs(low-center[1]),Math.abs(high-center[1]));
   // The plan can contain a detached object well beyond its tight fit. Keep
   // the entire committed domain in front of the lens, including Show Far.
-  return { ...camera, perspective: { center, rate: Math.min(rate, .5 / extent) } };
+  // The lens must also look down onto the highest cut plane. On a very
+  // shallow plan floor bounds alone let the lens cross that plane.
+  return { ...camera, perspective: { center,
+    rate: Math.min(rate, .5 / extent, .5 / isoHeightLift(camera, structureHeight)) } };
 }
 
 export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {
@@ -117,6 +120,17 @@ export function projectPlanPoint(
   const [cx, cy] = lens.center;
   const divisor = Math.min(4, Math.max(.25, 1 - lens.rate * (floorY - cy)));
   return [cx + (x - cx) / divisor, cy + (floorY - cy - isoHeightLift(camera, zUnits)) / divisor];
+}
+
+/** Perspective-correct height at a projected vertex. Along the same camera
+ * ray this increases toward the viewer. On a planar face it is affine in
+ * screen coordinates, so comparing two faces yields a straight cut. */
+export function isoProjectedDepth(point: ScenePoint, height: number, camera: IsoCamera): number {
+  const lens = camera.perspective;
+  if (!lens) return height;
+  const inverseDivisor = (1 + lens.rate * (point[1] - lens.center[1]))
+    / (1 - lens.rate * isoHeightLift(camera, height));
+  return height * inverseDivisor;
 }
 
 export function unprojectFloorPoint(

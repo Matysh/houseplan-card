@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { clipIsoOpeningDepthQueue } from '../test-build/iso-lab-visibility.js';
+import { clipIsoOpeningDepthQueue, composeIsoTranslucentStructure } from '../test-build/iso-lab-visibility.js';
 import { buildIsoOpeningBasis, projectIsoOpening, projectIsoOpeningStructure, isoOpeningBounds } from '../test-build/iso-openings.js';
 import { buildIsoWallGeometry } from '../test-build/iso-walls.js';
 import { buildIsoWallDepthQueue } from '../test-build/iso-scene-geometry.js';
@@ -251,6 +251,34 @@ test('#1451 visibility removes only nearer portions, independent of painter orde
   assert.ok(Math.abs(area(forward.find(e=>e.surface.id==='back').surface.d))<Math.abs(area(back.surface.d)));
   const reverse=clipIsoOpeningDepthQueue([back,front],c);
   assert.deepEqual(forward.map(e=>[e.surface.id,e.surface.d]).sort(),reverse.map(e=>[e.surface.id,e.surface.d]).sort());
+});
+
+test('#1528 crossing door and wall faces keep a single straight depth boundary in perspective', () => {
+  const camera = { ...cam(0), perspective: { center: [100,100], rate: .002 } };
+  const face = (id, from, to) => {
+    const points = [{point:from,z:0},{point:to,z:0},{point:to,z:120},{point:from,z:120}];
+    return {layer:'opening',depth:0,surface:{id,type:'door',sourceIndex:0,
+      kind:'leaf-front',material:'matte-leaf',points,
+      d:'M '+points.map(p=>projectPlanPoint(p.point,p.z,camera).join(' ')).join(' L ')+' Z'}};
+  };
+  const leaf = face('leaf',[0,48],[200,248]);
+  const wall = face('wall',[0,248],[200,48]);
+  const queue = [wall,leaf];
+  const clipped = clipIsoOpeningDepthQueue(queue,camera);
+  const fragments = composeIsoTranslucentStructure(queue,camera,1,{side:1,top:1},[]);
+  for (const [index,entry] of queue.entries()) {
+    const {id} = entry.surface;
+    const regular = clipped.find(e=>e.surface.id===id)?.surface.d ?? '';
+    const layered = fragments.filter(fragment=>fragment.index===index).map(fragment=>fragment.d).join(' ');
+    // Both vertical planes intersect at plan [100,148] and project to one
+    // vertical line. Select pixels well inside both projected faces.
+    for (const x of [94,98,102,106]) for (const y of [23,36,51,66,82]) {
+      assert.ok(queue.every(e=>contains(e.surface.d,x,y)));
+      const nearer = id === (x > 100 ? 'leaf' : 'wall');
+      assert.equal(contains(regular,x,y),nearer,`${id} at ${x},${y}`);
+      assert.equal(contains(layered,x,y),nearer,`layered ${id} at ${x},${y}`);
+    }
+  }
 });
 
 test('#1478 a disjoint foreground face with overlapping bounds leaves one uncut wall polygon', () => {

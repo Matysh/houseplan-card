@@ -652,7 +652,7 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
     if (bounds) {
       // Older serialized entries store orthographic points at the same angle.
       const previous = projected && isoPerspectiveCameras.get(projected);
-      const next = isoPerspectiveCamera(camera,bounds,input.contentFrame);
+      const next = isoPerspectiveCamera(camera,bounds,input.contentFrame,wallHeight);
       const unchanged = previous?.perspective?.rate === next.perspective?.rate;
       if (!previous || !unchanged) projected = undefined;
       camera = previous && unchanged ? previous : next;

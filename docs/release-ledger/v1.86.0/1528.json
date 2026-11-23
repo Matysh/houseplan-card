@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1528,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Corrects 2.5D surface clipping for the perspective camera introduced on the current beta line.",
+  "summary": {
+    "ru": "Глубина стен и дверных полотен в прямых ракурсах 2.5D учитывает перспективу.",
+    "en": "Walls and door leaves use perspective-correct depth in straight-on 2.5D views."
+  }
+}
