@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21547,
+  "revision": 21548,
   "nextTicket": 636,
   "nextFence": 636,
   "tasks": {
@@ -5842,7 +5842,7 @@
       "ownerDecision": null,
       "ticket": 635,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795413063795,
       "reviewEntry": 1,
       "patchId": "c126a168b6292096e1ccadb084710b9e472fd520",
@@ -5854,7 +5854,16 @@
         "src/iso-projection.ts",
         "src/iso-scene-geometry.ts",
         "test/iso-opening-refinement.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261123T060255920-c1503f38",
+        "name": "Тесты для задачи #1528 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261123T060255920-c1503f38/report.json",
+        "materialSha": "0fbada88c0c18ffe176ea7ad82c1a3983db6470f",
+        "status": "passed",
+        "finishedAt": "2026-11-23T06:20:40.445Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6442,9 +6451,9 @@
     "fence": 635,
     "materialSha": "0fbada88c0c18ffe176ea7ad82c1a3983db6470f",
     "expectedBase": "eda43602b27606e9ac2b39c64661202d45ba9f27",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795413756789,
-    "expiresAt": 1795415111129,
+    "expiresAt": 1795418441714,
     "patchId": "c126a168b6292096e1ccadb084710b9e472fd520"
   },
   "events": {
@@ -6624,6 +6633,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "eda43602b27606e9ac2b39c64661202d45ba9f27"
+      }
+    },
+    "finish:5ff81b66-43df-4f51-93c2-8377da76b06e:finish:3:s6-complete": {
+      "digest": "b9af4864b6ede67c04e9d733793dd520c6c97663dd6eb7bf3d48c1a192ace9c9",
+      "issue": 1528,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1528,
+        "at": 1795414841714,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0fbada88c0c18ffe176ea7ad82c1a3983db6470f",
+        "phase": "review",
+        "evidence": {
+          "id": "20261123T060255920-c1503f38",
+          "name": "Тесты для задачи #1528 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261123T060255920-c1503f38/report.json",
+          "materialSha": "0fbada88c0c18ffe176ea7ad82c1a3983db6470f",
+          "status": "passed",
+          "finishedAt": "2026-11-23T06:20:40.445Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Старый клиппер сравнивал физическую высоту, линейно интерполированную по уже спроецированным вершинам. При перспективе это давало ложную диагональную границу перекрытия. Регрессия на пересечении двери и стены воспроизводит ошибку старого расчёта и проходит с исправлением в обоих путях отрисовки. Та же причина подтверждена в #1529.\n\n[Вердикт по E2E](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1528.md)",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
