@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21548,
+  "revision": 21549,
   "nextTicket": 636,
   "nextFence": 636,
   "tasks": {
@@ -6565,6 +6565,10 @@
       "digest": "2b56df3da9c1fe99d8da018479a0222862776506e3e307739db5afbdcef9d57a",
       "issue": 1528
     },
+    "finish:5ff81b66-43df-4f51-93c2-8377da76b06e:finish:3:s6-label": {
+      "digest": "2c926c041196a6ffe6d60df370e9bbb0c57aa2fb100471751dfd48f90e4ecbbc",
+      "issue": 1528
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6660,7 +6664,8 @@
         "resubmission": false,
         "reviewChanges": "Старый клиппер сравнивал физическую высоту, линейно интерполированную по уже спроецированным вершинам. При перспективе это давало ложную диагональную границу перекрытия. Регрессия на пересечении двери и стены воспроизводит ошибку старого расчёта и проходит с исправлением в обоих путях отрисовки. Та же причина подтверждена в #1529.\n\n[Вердикт по E2E](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1528.md)",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
