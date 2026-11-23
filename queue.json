@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22350,
+  "revision": 22351,
   "nextTicket": 650,
   "nextFence": 650,
   "tasks": {
@@ -5941,7 +5941,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795463182246,
       "reviewEntry": 2,
-      "patchId": "ef129df835e5ce09c5151f62f25231accce7e911",
+      "patchId": "14cce9251fe37067d0c394dadd09edfea19ede02",
       "changedFiles": [
         "demo/fixtures/iso-device-presentation.mjs",
         "demo/smoke_iso_device_contours.mjs",
@@ -6560,10 +6560,11 @@
     "token": "649:finish:2f93f2dc-dc9b-4a3a-988d-4324d9bc1f86:finish:1:admit",
     "fence": 649,
     "materialSha": "9f7e0e2a80aaf93384f8b4c1ddc1dc43fbd9c711",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
+    "phase": "testing",
     "admittedAt": 1795463186365,
-    "expiresAt": 1795463486365
+    "expiresAt": 1795463492965,
+    "patchId": "14cce9251fe37067d0c394dadd09edfea19ede02"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6612,6 +6613,10 @@
     },
     "return:1538:d89ff7a8-02be-4264-b2b1-f1950659d0ae": {
       "digest": "1d30ea9b59a87f0a71db71492a3e8bb71523c2a1d079921ebb02eaf44253cb16",
+      "issue": 1538
+    },
+    "finish:2f93f2dc-dc9b-4a3a-988d-4324d9bc1f86:finish:2:synchronized": {
+      "digest": "fb6212b4f109d135596349c59f989c5c79dac3fbf8ff96d715c0f7d2ee1e670b",
       "issue": 1538
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
