@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22518,
+  "revision": 22519,
   "nextTicket": 652,
   "nextFence": 652,
   "tasks": {
@@ -5932,50 +5932,24 @@
     "1539": {
       "issue": 1539,
       "branch": "issue/1539-release-return-102a12eb144d",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "102a12eb144d923bfb8b350b4e15390369677986",
-      "releaseTag": "v1.86.1-beta.5",
-      "materialSha": "b587e24291535effa36ad1cc03ce8acdf282a07b",
-      "ownerDecision": null,
-      "ticket": 651,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795467047139,
-      "reviewEntry": 1,
-      "patchId": "f1d71a80ad56b7a4c38ac7790eb9c54d09f81443",
-      "review": {
-        "source": "published-release",
-        "sourceSha": "102a12eb144d923bfb8b350b4e15390369677986",
-        "tag": "v1.86.1-beta.5",
-        "verdict": "accepted",
-        "patchId": "f1d71a80ad56b7a4c38ac7790eb9c54d09f81443",
-        "materialSha": "b587e24291535effa36ad1cc03ce8acdf282a07b"
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "3a6245cb4e6381e61d6a0af120e0baf54a570fde",
+      "mergedSha": "b587e24291535effa36ad1cc03ce8acdf282a07b",
+      "mergedAt": 1795468674432,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/panel-isometric-large-warm-remount-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "package-lock.json",
-        "package.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "s6": {
-        "id": "20261123T205117294-fb01775d",
-        "name": "Тесты для задачи #1539 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261123T205117294-fb01775d/report.json",
-        "materialSha": "b587e24291535effa36ad1cc03ce8acdf282a07b",
-        "status": "passed",
-        "finishedAt": "2026-11-23T21:17:46.231Z",
-        "failures": []
+      "releaseTag": "v1.86.1-beta.5",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6557,18 +6531,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1539,
-    "worker": "finish",
-    "token": "651:release-return-finish:f74d7727-c466-47d8-88cd-5caa97dac9a0:finish:1:admit",
-    "fence": 651,
-    "materialSha": "b587e24291535effa36ad1cc03ce8acdf282a07b",
-    "expectedBase": "3a6245cb4e6381e61d6a0af120e0baf54a570fde",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795467056801,
-    "expiresAt": 1795472267605,
-    "patchId": "f1d71a80ad56b7a4c38ac7790eb9c54d09f81443"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6589,126 +6552,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "release-return-finish:f74d7727-c466-47d8-88cd-5caa97dac9a0:finish:2:synchronized": {
-      "digest": "5b4ec6e9f97816922c24d0d46232767688c6e9ad99a5f64a1ca5fae6b191baf7",
-      "issue": 1539
-    },
-    "github:45263443422:1:completions:message:7e6e540489632daa2ca2fc75fe977d06df59b1d3fa15ade06f032b9a0cc3d66b": {
-      "digest": "c1c9f73f0aa73704bb74eb68072272c0644c843554c253c9afa0c7da80d2eafb",
-      "issue": 1539
-    },
-    "github:45263443422:1:completions:message:2f884a8e2a22cb714f94dab5267305075a4adc92769e96f204226aa688f5e90d": {
-      "digest": "c25f278fac8914b489f8471bd0a603f11a287a7549c8fc341d27c5a82f901b2d",
-      "issue": 1539
-    },
-    "finish:f7fdd63d-ed2d-4788-87ad-91f2f9946fd1": {
-      "digest": "2fbf9e5d17ff561b043f3459af76a6e2b4748b45ea1d1915e0c7f45192062813",
-      "issue": 1539
-    },
-    "finish:cb4a1030-e22d-4de7-9349-217c39020271": {
-      "digest": "0d9d29862e65b454c433984471a50db16adddfa43ca04884e505707c6b483567",
-      "issue": 1539
-    },
-    "finish:30dac946-10dc-401a-9781-854dab66b4dd": {
-      "digest": "1e5ff4a1dc69355d10355a13011478e274dc7645c385757579c8c36a20337b5c",
-      "issue": 1539
-    },
-    "finish:b930e963-acd9-4264-a5e6-67d485138819": {
-      "digest": "71c9b48ab0b2631e99f9f0923c90511cbcbf68437d851e8ce0c654fab5ee07a8",
-      "issue": 1539
-    },
-    "finish:e4f69517-cb4a-4e30-9d79-63e182cf56ab": {
-      "digest": "d72969d877c567b4da86d95223ea978f9733e66ed523cdc912029d9fe81b6cef",
-      "issue": 1539
-    },
-    "finish:ae3aa0e0-b5f2-42f1-99fc-e460bf661cd5": {
-      "digest": "c6b7b3974a57c48c341b4c9363085f45bb82c83341b6ca17b9cb4ddc91ce6671",
-      "issue": 1539
-    },
-    "finish:3f7e2d2b-03eb-46f5-8050-8e8cf49bf8fb": {
-      "digest": "abc2595440e0af124400229421c8a498f13171b79d2f5d2f068b9b296191f703",
-      "issue": 1539
-    },
-    "finish:79397734-7593-4380-b8a7-a5dd73f7729b": {
-      "digest": "a14e38689796ea4daa6034c1250b6a3b5537b6f33e7e4cdb62853baeaff31d5d",
-      "issue": 1539
-    },
-    "finish:087a724b-eeb5-41b3-837e-afc02fcefc69": {
-      "digest": "c8d57de4a6f78b488abd83b192dd4dde3acd474472611b814a7aa9c1a376529c",
-      "issue": 1539
-    },
-    "finish:2d14442c-1163-4fc7-a609-ad04983c5cd9": {
-      "digest": "59b6cd393fe1741ae884e0a4a2eb17f82025ab75e7116632d944c6684ed6b865",
-      "issue": 1539
-    },
-    "finish:c075915a-4aaa-4a97-8116-84b8a955039f": {
-      "digest": "b588657f14d041acd9d2e8c2374df5b40b9400fda37b3a7085c287e07c7300a7",
-      "issue": 1539
-    },
-    "finish:99c71c55-2372-433f-8faf-0b054ea43065": {
-      "digest": "7cccb4ae9b7a3eb8b20c78605a0bd7724f66aab0660d5297dc5dcf126b15f920",
-      "issue": 1539
-    },
-    "finish:9d2e8cd1-b575-4ce5-b04f-ec8eef303888": {
-      "digest": "ebf68bb9b1a44c60c90025134f2b383e47adae0c4b2e6b6cfc630792a9ebcb31",
-      "issue": 1539
-    },
-    "finish:fa725f3c-5d88-49da-8161-5730c56c91a3": {
-      "digest": "0ac9ad8c96613ee790a8885c408e5327db1b236e44384946fc36973cc4d6e584",
-      "issue": 1539
-    },
-    "finish:34e1cd02-b756-4d5e-9692-b7903c51460e": {
-      "digest": "48a35ea85468759d53aeeea3c62ad9f7ba143a4a55b5695644865f71f94392d6",
-      "issue": 1539
-    },
-    "finish:d1f50039-bc91-4b91-8286-4a00c48d4963": {
-      "digest": "843ce03531b36166fa502195d0ed81c6fd4a7a12d329631b8e5c2f66493b27ba",
-      "issue": 1539
-    },
-    "finish:d3f312c6-067c-4516-b0dc-8e05b8af5311": {
-      "digest": "d2eeb82706ef323c905c0718d6ecb43b8c9751434bcad4ee57f4d9c25f6e24a1",
-      "issue": 1539
-    },
-    "finish:db184bab-c7ef-405d-a6ea-40fddd9a728a": {
-      "digest": "8162c97c4220636dc0c95268cf2f6089396bea19219e97a6d2dce6e5e243ee84",
-      "issue": 1539
-    },
-    "finish:2e585778-a989-4fad-a1e7-796e62bc3927": {
-      "digest": "d714faaca61804d155640de95e9074ee238ae7f806f96620b4958c5316de95d2",
-      "issue": 1539
-    },
-    "finish:47fdf2e8-37a9-4a66-b40c-332daf88d44e": {
-      "digest": "c3eda4aec58c46bc2f2b8fa4b620d4c95a05403de0fc0306b6af4d58907341f6",
-      "issue": 1539
-    },
-    "finish:f00b499a-6274-4ce4-9f3a-c322fe2fc411": {
-      "digest": "b8c60ad09d4784b1b84b83185c322e0b2d95efebe580724c9c57546bc9546bfe",
-      "issue": 1539
-    },
-    "finish:c8718551-d995-4797-b893-81ec52702764": {
-      "digest": "b86dacb5667fdb85a7df2107cb5f0bdde86900ceeb7ad9d22c2a642128e36cee",
-      "issue": 1539
-    },
-    "finish:f0f195e7-9c91-4b8c-aab7-9a29099778ff": {
-      "digest": "f7e3011418defe61bb781c0c7e09b899769647cb8f735629deb47de41bfd7cfe",
-      "issue": 1539
-    },
-    "finish:4ac88623-23e8-4e40-bed0-020654a21944": {
-      "digest": "3ff0838a5edf7a1d39c8eaeda8f231838a0eaa83c2f2da052b2130ac417bbd77",
-      "issue": 1539
-    },
-    "finish:d58813bd-c266-4044-95c8-ac49dab1caaf": {
-      "digest": "64d53c0c5afcb63850f63e64c5506406cfd63b2925d8ee7943e75340bd967a8a",
-      "issue": 1539
-    },
-    "finish:c3ec2afb-4756-408c-b41d-a53514599ffa": {
-      "digest": "21adb19255e97b5524d9047a316193d7af09772822c6d07cc6ad9ba0a2590425",
-      "issue": 1539
-    },
-    "release-return-finish:f74d7727-c466-47d8-88cd-5caa97dac9a0:finish:3:s6-complete": {
-      "digest": "ba7a459d1e40bcbcb5c4420d00dde7eb6bd5aa2a933aeabe685d45f6e25e65a8",
-      "issue": 1539
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -6735,35 +6578,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-return:f74d7727-c466-47d8-88cd-5caa97dac9a0": {
-      "digest": "50d5b20cb8690ce388e133e8b176c030dd187c45b6466f490e15f4faa73491ef",
-      "issue": 1539,
-      "message": {
-        "kind": "queued",
-        "issue": 1539,
-        "at": 1795467047139,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b587e24291535effa36ad1cc03ce8acdf282a07b",
-        "delivered": true
-      }
-    },
-    "release-return-finish:f74d7727-c466-47d8-88cd-5caa97dac9a0:finish:1:admit": {
-      "digest": "2d5019893ee852ab7ac5871845c92ea1dc21ac429350d5d27229c6fae2358e72",
-      "issue": 1539,
-      "message": {
-        "kind": "admitted",
-        "issue": 1539,
-        "at": 1795467056801,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b587e24291535effa36ad1cc03ce8acdf282a07b",
         "phase": "sync",
         "delivered": true
       }
