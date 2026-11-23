@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22371,
+  "revision": 22372,
   "nextTicket": 651,
   "nextFence": 651,
   "tasks": {
@@ -5941,11 +5941,12 @@
       "status": "S6-in-progress",
       "readyAt": 1795464361046,
       "reviewEntry": 3,
-      "patchId": "14cce9251fe37067d0c394dadd09edfea19ede02",
+      "patchId": "d7d5ac44717b37604b4f13ee7e84682716cbfd32",
       "changedFiles": [
         "demo/fixtures/iso-device-presentation.mjs",
         "demo/smoke_iso_device_contours.mjs",
         "demo/smoke_iso_device_presentation.mjs",
+        "demo/smoke_plan_rotation.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/DEVICE-PRESENTATION.md",
@@ -5962,6 +5963,7 @@
         "src/iso-overlays.ts",
         "src/iso-projection.ts",
         "src/styles/iso-lab-markers.styles.ts",
+        "test/fixtures/845-wall-corpus-current-identities.json",
         "test/iso-device-face.test.mjs",
         "test/iso-marker-outline.test.mjs"
       ],
@@ -6561,10 +6563,11 @@
     "token": "650:finish:a701f0f1-68cb-4160-8b64-088c401ac32b:finish:1:admit",
     "fence": 650,
     "materialSha": "3a6245cb4e6381e61d6a0af120e0baf54a570fde",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
+    "phase": "testing",
     "admittedAt": 1795464367399,
-    "expiresAt": 1795464667399
+    "expiresAt": 1795464676535,
+    "patchId": "d7d5ac44717b37604b4f13ee7e84682716cbfd32"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6689,6 +6692,10 @@
     },
     "finish:2f93f2dc-dc9b-4a3a-988d-4324d9bc1f86:finish:3:return": {
       "digest": "42479368091fee130a2837495171bd747caadaae482658579ed01e94046eeebf",
+      "issue": 1538
+    },
+    "finish:a701f0f1-68cb-4160-8b64-088c401ac32b:finish:2:synchronized": {
+      "digest": "a45acd0d4a0385ec2218a59c33f53a06a65e751bc41cf05b8abe8bb704fb5c6f",
       "issue": 1538
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
