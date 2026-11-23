@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21376,
+  "revision": 21377,
   "nextTicket": 633,
   "nextFence": 633,
   "tasks": {
@@ -2235,38 +2235,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "24f98e2081b460f7b14a76a186155b574a6bbb45"
-      }
-    },
-    "1415": {
-      "issue": 1415,
-      "branch": "codex/1415-ship-review-retry",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "9ed0f88801ada63035ccafa464683960da8104e9",
-      "mergedSha": "746c8b9c77268d3e809c51221ccbfb46c5072499",
-      "mergedAt": 1794649629476,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1421": {
@@ -5812,7 +5780,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "6a93c8f551c4bb39c492f0d43f78ebf0d2036131"
       }
     }
   },
@@ -6429,6 +6398,18 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:45092394323:1:1526": {
+      "digest": "dc7623dc25eb1fb5a37adbe76d9b9e779f4949da1ea7b054910b4cf5a39f6886",
+      "issue": 1526,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1526,
+        "at": 1795396023395,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6a93c8f551c4bb39c492f0d43f78ebf0d2036131"
       }
     }
   },
