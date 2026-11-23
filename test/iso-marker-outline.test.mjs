@@ -58,7 +58,7 @@ test('#1531 shared glass follows every projected anchor and retains its open wal
   }
   assert.equal(JSON.stringify(group),saved);
 });
-test('#1534 only actual wall joins meet the cut; free subpath ends retain their depth',()=>{
+test('#1537 true wall joins meet the cut and every vertex keeps vertical extrusion',()=>{
   const extent={x:0,y:0,w:800,h:800},height=100;
   const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
   const vertices=path=>[...path.matchAll(/[ML]([-\d.e+]+) ([-\d.e+]+)/g)].map(m=>[+m[1],+m[2]]);
@@ -85,10 +85,9 @@ test('#1534 only actual wall joins meet the cut; free subpath ends retain their 
       upper.forEach((point,i)=>{
         const a=applyIsoMatrix(point,m),b=applyIsoMatrix(lower[i],m);
         const join=joins.findIndex(target=>distance(a,target)<1e-6);
-        const drop=join<0?19.2:0;
         if(join>=0)seen.add(join);
-        assert.ok(Math.abs(b[0]-a[0])<1e-6 && Math.abs(b[1]-a[1]-drop)<1e-6,
-          `${label}: ${join<0?'free rim keeps full depth':'both rims reach the wall cut'} at ${a}`);
+        assert.ok(Math.abs(b[0]-a[0])<1e-6 && Math.abs(b[1]-a[1]-19.2)<1e-6,
+          `${label}: full vertical depth at ${a}`);
       });
       assert.equal(seen.size,joins.length,`${label}: both physical ends are present`);
     }

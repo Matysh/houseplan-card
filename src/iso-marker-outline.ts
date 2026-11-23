@@ -200,60 +200,39 @@ export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly num
   const bottom=topAnchored ? 2 : 1;
   const path=(points:Point[])=>points.map((p,i)=>`${i?'L':'M'}${p.map(n=>+n.toFixed(7)).join(' ')}`).join(' ');
   const project=projection && glassChainProjector(shapes,projection);
-  const spans=topAnchored && projection?.camera.perspective ? contactWallSpans(shapes) : [];
-  const onWall=(point:Point):boolean=>{
-    if(!spans.length)return false;
+  const wallSpans=topAnchored && projection?.camera.perspective ? contactWallSpans(shapes) : [];
+  const wallJoin=(point:Point):boolean=>{
     const [x,y]=contactRotate(point,-shapes[0].angle);
-    // Spans are axis-aligned in the contact frame. The boundary also splits
-    // paths at its arbitrary first vertex, which need not touch a wall.
-    return spans.some(([[l,t],[r,b]])=>x>=l-CONTACT_EPS&&x<=r+CONTACT_EPS
-      &&y>=t-CONTACT_EPS&&y<=b+CONTACT_EPS);
-  };
-  // Finish the transition within one projected glass depth of the cut,
-  // rather than tapering along the whole first straight segment.
-  const shoulder=(from:Point,to:Point,max:number)=>{
-    const [x,y]=sub(to,from),span=Math.hypot(a*x+c*y,b*x+d*y);
-    const t=Math.min(max,half*bottom/span);
-    return span>1e-8&&t<1 ? add(from,[x,y],t) : null;
+    return wallSpans.some(([[left,top],[right,bottom]])=>
+      x>=left-CONTACT_EPS && x<=right+CONTACT_EPS && y>=top-CONTACT_EPS && y<=bottom+CONTACT_EPS);
   };
   for(const source of rings(contactOutline(shapes,true),true)) {
     const chain=project ? project(source) : source;
-    const last=source[source.length-1];
-    const open=Math.hypot(...sub(source[0],last))>1e-6;
-    const startJoin=open&&onWall(source[0]),endJoin=open&&onWall(last);
-    // Member-relative offsets keep the free rim aligned with the icon, but
-    // true wall joins use their own exact positions on the cut plane.
-    if(startJoin)chain[0]=[...isoMarkerGlassAnchor(source[0],projection)];
-    if(endJoin)chain[chain.length-1]=[...isoMarkerGlassAnchor(last,projection)];
-    const bothOnOneSegment=startJoin&&endJoin&&chain.length===2;
-    const fraction=bothOnOneSegment ? .5 : 1;
-    const fromStart=startJoin?shoulder(chain[0],chain[1],fraction):null;
-    const fromEnd=endJoin?shoulder(chain[chain.length-1],chain[chain.length-2],fraction):null;
-    if(fromStart)chain.splice(1,0,fromStart);
-    if(fromEnd&&(!bothOnOneSegment||!fromStart||Math.hypot(...sub(fromStart,fromEnd))>1e-8))
-      chain.splice(chain.length-1,0,fromEnd);
-    const upper=chain.map(p=>add(p,v,lip));
-    // The rim closes onto the wall cut instead of exposing its lower end
-    // in front of the receding wall. Keep full depth at every free vertex.
-    const depth=chain.map((_,i)=>(startJoin&&i===0)||(endJoin&&i===chain.length-1) ? 0 : bottom);
-    const lower=chain.map((p,i)=>add(p,v,depth[i]));
-    result.top+=path(upper)+' ';
-    result.bottom+=path(lower)+' ';
-    let start=0;let front=false;
-    const flush=(end:number)=>{
-      if(end-start<2)return;
-      result[front?'front':'back']+=path([...upper.slice(start,end),...lower.slice(start,end).reverse()])+' Z ';
+    // Register wall contacts at the cut height. Extrude along the same
+    // screen-vertical vector as the free rim and let masonry mask hidden paint.
+    const last=source.length-1;
+    if(wallSpans.length && Math.hypot(...sub(source[0],source[last]))>1e-6) {
+      if(wallJoin(source[0]))chain[0]=[...isoMarkerGlassAnchor(source[0],projection)];
+      if(wallJoin(source[last]))chain[chain.length-1]=[...isoMarkerGlassAnchor(source[last],projection)];
+    }
+    result.top+=path(chain.map(p=>add(p,v,lip)))+' ';
+    result.bottom+=path(chain.map(p=>add(p,v,bottom)))+' ';
+    let run:Point[]=[];let front=false;
+    const flush=()=>{
+      if(run.length<2)return;
+      result[front?'front':'back']+=path([...run.map(p=>add(p,v,lip)),...[...run].reverse().map(p=>add(p,v,bottom))])+' Z ';
     };
     for(let i=1;i<chain.length;i++) {
       const p=chain[i-1],q=chain[i],dx=a*(q[0]-p[0])+c*(q[1]-p[1]);
       const next=dx<0;
       if(Math.hypot(q[0]-p[0],q[1]-p[1])>1e-8)result[next?'frontFaces':'backFaces'].push([
-        [...upper[i-1],half*lip],[...upper[i],half*lip],
-        [...lower[i],half*depth[i]],[...lower[i-1],half*depth[i-1]],
+        [...add(p,v,lip),half*lip],[...add(q,v,lip),half*lip],
+        [...add(q,v,bottom),half*bottom],[...add(p,v,bottom),half*bottom],
       ]);
-      if(next!==front){flush(i);start=i-1;front=next;}
+      if(run.length && next!==front){flush();run=[];}
+      front=next;if(!run.length)run.push(p);run.push(q);
     }
-    flush(chain.length);
+    flush();
   }
   return result;
 }

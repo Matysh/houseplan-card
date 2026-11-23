@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1537,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Replaces the tapered wall-contact ends introduced on this beta line.",
+  "summary": {
+    "ru": "Торцы обводок устройств у стен остаются вертикальными в прямых ракурсах 2.5D.",
+    "en": "Wall-mounted device outlines keep vertical ends in straight-on 2.5D views."
+  }
+}

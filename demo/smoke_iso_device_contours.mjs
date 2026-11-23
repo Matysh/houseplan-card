@@ -30,7 +30,7 @@ async function measureWallJoins(page) {
   const height=gridVisualUnits(isoDisplayWallHeight(),frame.cell);
   const screen=([a,b,c,d,e,f],[x,y])=>[a*x+c*y+e,b*x+d*y+f];
   const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
-  const joins=[],freeErrors=[];
+  const joins=[],verticalErrors=[],depthErrors=[];
   for(const group of frame.groups){
     if(!group||group.members.length!==(group.along===1?3:6))return null;
     // The synthetic fixture supplies four rows of equal-size icons. Use their
@@ -49,14 +49,13 @@ async function measureWallJoins(page) {
     if(a.length!==b.length||!a.length)return null;
     const targets=[wall[0],wall.at(-1)].map(p=>screen(group.upper.matrix,
       unprojectIsoAffine(projectPlanPoint(p,height,frame.camera),frame.camera)));
-    joins.push(...targets.map(target=>Math.min(...a.map((p,i)=>Math.max(distance(p,target),distance(b[i],target))))));
-    const drops=a.map((p,i)=>distance(p,b[i])),full=Math.max(...drops);
+    joins.push(...targets.map(target=>Math.min(...a.map(point=>distance(point,target)))));
+    const drops=a.map((p,i)=>b[i][1]-p[1]),full=Math.max(...drops);
     if(full<1)return null;
-    const free=a.flatMap((p,i)=>targets.every(target=>distance(p,target)>.05)?[Math.abs(full-drops[i])]:[]);
-    if(!free.length)return null;
-    freeErrors.push(...free);
+    verticalErrors.push(...a.map((p,i)=>Math.abs(b[i][0]-p[0])));
+    depthErrors.push(...drops.map(drop=>Math.abs(full-drop)));
   }
-  return {joins,freeErrors};
+  return {joins,maxVerticalError:Math.max(...verticalErrors),maxDepthError:Math.max(...depthErrors)};
 }
 
 const dir=process.env.HP_ISO_CONTOUR_OUTPUT||'artifacts/1482';mkdirSync(dir,{recursive:true});
@@ -123,10 +122,11 @@ for(const dpr of [1,2]) {
           let wallJoins;
           if(rotation===45) {
             wallJoins=await measureWallJoins(page);
-            check(`${label}: wall returns meet on the cut, not on a lower rim`,
+            check(`${label}: upper rim meets the actual wall cut at both ends`,
               wallJoins?.joins.length===8&&wallJoins.joins.every(delta=>delta<.05));
-            check(`${label}: free vertices, including SVG split points, keep the full depth`,
-              !!wallJoins?.freeErrors.length&&wallJoins.freeErrors.every(delta=>delta<.05));
+            check(`${label}: the ends and the rest of the rim keep full vertical extrusion`,
+              wallJoins?.maxVerticalError<.05&&wallJoins?.maxDepthError<.05);
+            if(dark)await page.screenshot({path:`${dir}/dpr${dpr}-straight-${zoom}.png`});
             registration=await page.evaluate(()=>{
               const card=window.__isoPaint,root=card.renderRoot;
               const members=Array.from({length:6},(_,i)=>root.querySelector(`.dev[data-id="contour-${i+3}"]`));
