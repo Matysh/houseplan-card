@@ -1,0 +1,430 @@
+diff --git a/src/device-contact-card.ts b/src/device-contact-card.ts
+index 36a2352..0fa12a8 100644
+--- a/src/device-contact-card.ts
++++ b/src/device-contact-card.ts
+@@ -89,7 +89,7 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
+   const wasReflowed=renderer.reflowed, previousStatus = renderer.resizeStatus;
+   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
+     space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane,
+-    glassProjection: camera?.perspective ? {camera,height:gridVisualUnits(isoDisplayWallHeight(),host._cellCm)} : undefined,
++    glassProjection: camera ? {camera,height:gridVisualUnits(isoDisplayWallHeight(),host._cellCm)} : undefined,
+     uprightHalfTurn: host._mode === 'view' && host._renderProjection === 'flat' && host._rotation === 180,invalidate:()=>host.requestUpdate(),
+     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => {
+       const scale = host._devicePresentation(d).scale;
+diff --git a/src/device-contact-render.ts b/src/device-contact-render.ts
+index 05ab6e7..f18037c 100644
+--- a/src/device-contact-render.ts
++++ b/src/device-contact-render.ts
+@@ -1,7 +1,7 @@
+ /** Shared Flat DOM adapter. Face geometry is measured only on metric invalidation. */
+ import { nothing, render, svg } from 'lit';
+ import {
+-  contactContains, contactContourShapes, contactOutline, freeContactShape, joinedContactSide,
++  contactContains, contactContourShapes, contactOutline, contactRotate, rotatedContactCapsule, joinedContactSide,
+   type ContactMarker, type ContactRect, type ContactShape, type ContactWall,
+ } from './device-contact-geometry';
+ import { contactBounds, DeviceContactScene } from './device-contact-scene';
+@@ -16,7 +16,7 @@ import { contactBasisMarker } from './device-contact-basis';
+ import { DeviceContactLayout } from './device-contact-layout';
+ import { screenContactMarker, screenContactScene, projectedContactHit } from './device-contact-screen';
+ import type { PlanRotation } from './view-frame';
+-import { isoMarkerBodyOutline, isoMarkerGlass, isoMarkerGlassAnchor, type IsoMarkerGlassProjection } from './iso-marker-outline';
++import { isoMarkerGlass, isoMarkerGlassAnchor, type IsoMarkerGlassProjection } from './iso-marker-outline';
+ import { renderIsoMarkerGlass } from './iso-marker-glass';
+ import type { IsoDeviceFace, IsoDeviceWallMask } from './iso-overlays';
+ 
+@@ -121,6 +121,9 @@ export class DeviceContactRenderer {
+       element.removeAttribute('data-hp-device-contact');
+       element.removeAttribute('data-hp-device-component');
+       element.removeAttribute('data-hp-iso-body-outline');
++      const shell=element.querySelector<HTMLElement>('.device-shell');
++      shell?.style.removeProperty('--hp-value-shift-x');
++      shell?.style.removeProperty('--hp-value-shift-y');
+       this.hitShapes.delete(element); render(nothing, ink);
+     }
+     this.elements.clear(); this.frameKey = ''; this.floorKey = ''; this.scene = null;
+@@ -260,6 +263,12 @@ export class DeviceContactRenderer {
+       probe.setAttribute('data-hp-device-contact', ''); probe.removeAttribute('data-id');
+       probe.removeAttribute('data-hp'); probe.setAttribute('aria-hidden', 'true'); probe.inert = true;
+       probe.style.cssText = 'position:absolute;left:0;top:0;margin:0;width:800px;height:800px;--dev-size:800px;transform:none;visibility:hidden;pointer-events:none';
++      probe.style.setProperty('--hp-iso-content-turn','0deg');
++      probe.style.setProperty('--hp-value-shift-x','0');
++      probe.style.setProperty('--hp-value-shift-y','0');
++      const shell=probe.querySelector<HTMLElement>('.device-shell');
++      shell?.style.removeProperty('--hp-value-shift-x');
++      shell?.style.removeProperty('--hp-value-shift-y');
+       probe.querySelector('.device-contact-ink')?.replaceChildren();
+       element.parentElement?.append(probe);
+       return { key, probe };
+@@ -292,6 +301,25 @@ export class DeviceContactRenderer {
+     return result;
+   }
+ 
++  private readonly valueShifts = new Map<string, readonly [number,number]>();
++  private readonly turnedFaces = new WeakMap<readonly IsoDeviceFace[],Map<string,readonly IsoDeviceFace[]>>();
++  /** Envelope of individually rotated faces in the wall's local basis. */
++  private faceBounds(faces:readonly IsoDeviceFace[],basis:number,turn:number,valueCore:boolean):ContactRect {
++    const boxes=faces.map((face,i)=>{
++      const cx=(face.left+face.right)/2,cy=(face.top+face.bottom)/2;
++      const center=contactRotate([cx,cy],-basis);
++      const box=rotatedContactCapsule({left:face.left-cx,right:face.right-cx,
++        top:face.top-cy,bottom:face.bottom-cy},basis-(i>0||valueCore?turn:0));
++      return {left:box.left+center[0],right:box.right+center[0],top:box.top+center[1],bottom:box.bottom+center[1]};
++    });
++    return {left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),
++      top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))};
++  }
++  private get contentTurn(): number {
++    const yaw=this.glassProjection?.camera.rotDeg ?? 0;
++    const readYaw=yaw%90===0 ? 0 : ((yaw+90)%180+180)%180-90;
++    return (readYaw-yaw)*Math.PI/180;
++  }
+   private readonly wallPaint = new WeakMap<SVGSVGElement, [IsoDeviceWallMask, readonly IsoDeviceFace[]]>();
+   private readonly glassWall = new WeakMap<HTMLElement, IsoDeviceWallMask>();
+ 
+@@ -306,7 +334,18 @@ export class DeviceContactRenderer {
+         else this.glassWall.delete(node);
+       }
+       const slot = node.querySelector<SVGSVGElement>('[data-hp-wall-mask-slot]');
+-      const faces = this.faces.get(metricKey(node.querySelector('.device-shell')));
++      let faces = this.faces.get(metricKey(node.querySelector('.device-shell')));
++      if(faces) {
++        const shift=this.valueShifts.get(id)??[0,0],valueCore=node.classList.contains('valonly');
++        const key=[this.contentTurn,valueCore,...shift].join(':');
++        let variants=this.turnedFaces.get(faces);
++        if(!variants)this.turnedFaces.set(faces,variants=new Map());
++        let oriented=variants.get(key);
++        if(!oriented)variants.set(key,oriented=faces.map((face,i)=>({...face,
++          left:face.left+shift[0],right:face.right+shift[0],top:face.top+shift[1],bottom:face.bottom+shift[1],
++          angle:i>0||valueCore?this.contentTurn:0})));
++        faces=oriented;
++      }
+       if (!mask || !slot || !faces?.length) {
+         node.removeAttribute('data-hp-device-occlusion');
+         if (slot && this.wallPaint.delete(slot)) render(nothing,slot);
+@@ -365,13 +404,52 @@ export class DeviceContactRenderer {
+     }
+     const scene = this.screen.scene;
+     for (const rawGroup of scene.components(affected)) {
+-      const group=contactContourShapes(rawGroup);
++      // UI Lab: keep authored membership, rebuild the visible envelope for the
++      // live reading orientation. Contact-owned edges remain on their walls.
++      const turn=this.contentTurn;
++      const oriented=this.plane ? rawGroup.map(s=>{
++        const node=this.elements.get(s.marker.id)?.element;
++        if(!node)return s;
++        const faces=this.faces.get(metricKey(node.querySelector('.device-shell')));
++        if(!faces?.length)return s;
++        const valueCore=node.classList.contains('valonly');
++        const base=this.faceBounds(faces,s.angle,0,valueCore),bounds=this.faceBounds(faces,s.angle,turn,valueCore);
++        // Keep the actual device edge at the same distance from each attached
++        // wall. This is a presentation offset, never a saved layout mutation.
++        const dx=s.walls.left?base.left-bounds.left:s.walls.right?base.right-bounds.right:0;
++        const dy=s.walls.top?base.top-bounds.top:s.walls.bottom?base.bottom-bounds.bottom:0;
++        const shift=contactRotate([dx,dy],s.angle);
++        this.valueShifts.set(s.marker.id,shift);
++        const shell=node.querySelector<HTMLElement>('.device-shell')!;
++        shell.style.setProperty('--hp-value-shift-x',String(shift[0]));
++        shell.style.setProperty('--hp-value-shift-y',String(shift[1]));
++        if(valueCore&&faces.length===1&&!Object.keys(s.walls).length&&rawGroup.length===1) {
++          const b=s.marker.box,cx=(b.left+b.right)/2,cy=(b.top+b.bottom)/2;
++          const c=contactRotate([cx,cy],-turn);
++          return {...s,angle:turn,box:{left:b.left+c[0]-cx,right:b.right+c[0]-cx,
++            top:b.top+c[1]-cy,bottom:b.bottom+c[1]-cy}};
++        }
++        bounds.left+=dx;bounds.right+=dx;bounds.top+=dy;bounds.bottom+=dy;
++        const box={...s.box};
++        for(const edge of ['left','right','top','bottom'] as const) {
++          if(s.walls[edge])continue;
++          // Connected shells keep their joining span while gaining clearance
++          // around the newly oriented value capsule.
++          const target=s.box[edge]+(bounds[edge]-base[edge])*s.marker.diameter;
++          box[edge]=edge==='left'||edge==='top' ? Math.min(box[edge],target) : Math.max(box[edge],target);
++        }
++        return {...s,box};
++      }) : rawGroup;
++      const group=contactContourShapes(oriented);
+       const joined = group.length > 1;
+-      // The full shared glass starts behind every solid member. Each nearer
+-      // member repaints only its own front-glass intersection below.
++      // Split the single group shell across the farthest and nearest member's
++      // stacking contexts. Neither half is repainted per device.
+       const owner = this.plane ? group.reduce((back,s) =>
+         this.plane![1]*s.marker.x+this.plane![3]*s.marker.y <
+         this.plane![1]*back.marker.x+this.plane![3]*back.marker.y ? s : back) : group[0];
++      const frontOwner = this.plane ? group.reduce((near,s) =>
++        this.plane![1]*s.marker.x+this.plane![3]*s.marker.y >=
++        this.plane![1]*near.marker.x+this.plane![3]*near.marker.y ? s : near) : owner;
+       const active = joined || Object.keys(owner.walls).length > 0;
+       const outline = active && !this.plane ? contactOutline(group,true) : '';
+       const glass = this.plane ? isoMarkerGlass(group,this.plane,true,this.glassProjection) : null;
+@@ -400,23 +478,13 @@ export class DeviceContactRenderer {
+         const glassAnchor=isoMarkerGlassAnchor([s.marker.x,s.marker.y],this.glassProjection);
+         const [glassX,glassY]=glassAnchor;
+         const glassBox=`${glassX-d/2} ${glassY-d/2} ${d} ${d}`;
+-        // A transformed member is its own stacking context. Repaint just the
+-        // shared near glass over its opaque body; keep the rest on the owner
+-        // so neighbouring shells never accumulate translucent coats.
+-        let memberGlass: {id:string;clip:string}|undefined;
+-        if(glass && this.plane && s!==owner){
+-          const [a,b,c,e]=this.plane,det=a*e-b*c;
+-          const box={left:-d/2,right:d/2,top:-d/2,bottom:d/2};
+-          if(item.element.classList.contains('valonly') && !item.element.querySelector('.with-values')){
+-            box.left=s.marker.box.left+d*.134375;box.right=s.marker.box.right-d*.134375;
+-          }
+-          const body=freeContactShape({...s.marker,x:glassX-c/det*d*.12,y:glassY+a/det*d*.12,box});
+-          memberGlass={id:`hp-glass-member-${encodeURIComponent(s.marker.id)}`,clip:isoMarkerBodyOutline([body],this.plane)};
+-        }
++        // One shell per component. Repainting pieces in each member's
++        // stacking context produced seams and multiplied translucent edges.
+         const wallMask=(item.element as HTMLElement&{hpIsoWallMask?:IsoDeviceWallMask}).hpIsoWallMask;
+-        render(svg`${glass ? renderIsoMarkerGlass(glass,glassBox,virtual,memberGlass,
++        render(svg`${glass && (s===owner || s===frontOwner) ? renderIsoMarkerGlass(glass,glassBox,virtual,undefined,
+           wallMask ? {id:`hp-glass-wall-${encodeURIComponent(s.marker.id)}`,mask:wallMask,
+-            origin:this.glassProjection ? glassAnchor : undefined} : undefined) : nothing}
++            origin:this.glassProjection ? glassAnchor : undefined} : undefined,
++          owner===frontOwner ? 'both' : s===owner ? 'back' : 'front') : nothing}
+         <svg viewBox=${viewBox}
+           preserveAspectRatio="none" aria-hidden="true">
+           ${s === owner && !glass ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} stroke-dasharray=${virtual?'4 3':'none'} d=${outline}></path>` : nothing}
+@@ -425,5 +493,6 @@ export class DeviceContactRenderer {
+         this.work.paints++;
+       }
+     }
++    if(this.plane)this.paintWallMasks(new Map([...this.elements].map(([id,item])=>[id,item.element])));
+   }
+ }
+diff --git a/src/iso-lab-visibility.ts b/src/iso-lab-visibility.ts
+index e03767b..dface00 100644
+--- a/src/iso-lab-visibility.ts
++++ b/src/iso-lab-visibility.ts
+@@ -284,7 +284,10 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
+         const angle=(-90+corner*90+step*90/16)*Math.PI/180;
+         const px=(corner<2?r-rx:l+rx)+Math.cos(angle)*rx;
+         const py=(corner===0||corner===3?t+ry:bt-ry)+Math.sin(angle)*ry;
+-        cap.push([cx+(a*px+c*py)*size,cy+(b*px+d*py)*size]);
++        const cos=Math.cos(face.angle ?? 0),sin=Math.sin(face.angle ?? 0);
++        const ox=(l+r)/2,oy=(t+bt)/2;
++        const u=ox+cos*(px-ox)-sin*(py-oy),v=oy+sin*(px-ox)+cos*(py-oy);
++        cap.push([cx+(a*u+c*v)*size,cy+(b*u+d*v)*size]);
+       }
+       caps.push(cap);
+       for(let i=0;i<cap.length;i++){
+@@ -337,7 +340,8 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
+           continue;
+         }
+         if(wall.bounds[2]<bounds[0]||wall.bounds[0]>bounds[2]||wall.bounds[3]<bounds[1]||wall.bounds[1]>bounds[3])continue;
+-        (masonrySurface(wall.entry)==='top' ? cut : hidden).push(...deviceOccluder(wall,ring,plane));
++        // Include the rim stroke outside the side polygon in the wall cut.
++        (masonrySurface(wall.entry)==='top' ? cut : hidden).push(...deviceOccluder(wall,ring,plane,size*.025));
+       }
+     }
+     // The upper/lower glass rims are CSS strokes beyond their side polygons.
+diff --git a/src/iso-marker-glass.ts b/src/iso-marker-glass.ts
+index af8a9a0..019ff93 100644
+--- a/src/iso-marker-glass.ts
++++ b/src/iso-marker-glass.ts
+@@ -5,9 +5,13 @@ import type { IsoDeviceOcclusion, IsoDeviceWallMask } from './iso-overlays';
+ import type { PlanPoint } from './iso-projection';
+ 
+ export function renderIsoMarkerGlass(glass:IsoMarkerGlass,viewBox:string,virtual=false,
+-  member?:{id:string;clip:string},wall?:{id:string;mask:IsoDeviceWallMask;origin?:PlanPoint}) {
++  member?:{id:string;clip:string},wall?:{id:string;mask:IsoDeviceWallMask;origin?:PlanPoint},
++  layer:'both'|'front'|'back'='both') {
+   const front=wall?.mask.glassMask(glass.frontFaces,wall.origin);
+   const back=member ? undefined : wall?.mask.glassMask(glass.backFaces,wall.origin);
++  // Both rims run around the whole shell, unlike the front/back face fills.
++  // Their wall mask must therefore include both halves of the extrusion.
++  const rim=wall?.mask.glassMask([...glass.frontFaces,...glass.backFaces],wall.origin);
+   const points=[...glass.frontFaces,...glass.backFaces].flat();
+   const x=Math.min(...points.map(p=>p[0]))-1,y=Math.min(...points.map(p=>p[1]))-1;
+   const w=Math.max(...points.map(p=>p[0]))-x+1,h=Math.max(...points.map(p=>p[1]))-y+1;
+@@ -17,24 +21,33 @@ export function renderIsoMarkerGlass(glass:IsoMarkerGlass,viewBox:string,virtual
+     <mask id=${id} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse"
+       x=${x} y=${y} width=${w} height=${h} style="mask-type:luminance">
+       <rect x=${x} y=${y} width=${w} height=${h} fill="white"></rect>
+-      ${occlusion.occluded ? svg`<path d=${occlusion.occluded} fill="#4d4d4d"></path>` : nothing}
++      ${occlusion.occluded ? svg`<path d=${occlusion.occluded} fill="black"></path>` : nothing}
+       ${occlusion.cut ? svg`<path d=${occlusion.cut} fill="black"></path>` : nothing}
+     </mask></defs>` : nothing;
+   const frontId=maskId('front',front),backId=maskId('back',back);
++  const upperId=maskId('upper-rim',rim),lowerId=maskId('lower-rim',rim);
+   return svg`
+-    ${member ? nothing : svg`<svg class=${`iso-marker-glass rear${virtual?' virtual':''}`} viewBox=${viewBox} preserveAspectRatio="none" aria-hidden="true">
++    ${member || layer==='front' ? nothing : svg`<svg class=${`iso-marker-glass rear${virtual?' virtual':''}`} viewBox=${viewBox} preserveAspectRatio="none" aria-hidden="true">
+       ${mask(backId,back)}
++      ${mask(lowerId,rim)}
+       <g mask=${backId ? `url(#${backId})` : nothing}>
+       <path class="glass-back" d=${glass.back}></path>
+-      <path class="glass-rim lower" stroke-dasharray=${virtual?'6 5':'none'} d=${glass.bottom}></path>
++      </g>
++      <g mask=${lowerId ? `url(#${lowerId})` : nothing}>
++      <path class="glass-rim lower" stroke-dasharray=${virtual?'6 5':'none'} d=${glass.backBottom}></path>
++      <path class="glass-rim upper" stroke-dasharray=${virtual?'6 5':'none'} d=${glass.backTop}></path>
+       </g>
+     </svg>`}
+-    <svg class=${`iso-marker-glass front${virtual?' virtual':''}`} viewBox=${viewBox} preserveAspectRatio="none" aria-hidden="true">
++    ${layer==='back' ? nothing : svg`<svg class=${`iso-marker-glass front${virtual?' virtual':''}`} viewBox=${viewBox} preserveAspectRatio="none" aria-hidden="true">
+       ${mask(frontId,front)}
++      ${mask(upperId,rim)}
+       ${member ? svg`<defs><clipPath id=${member.id}><path d=${member.clip}></path></clipPath></defs>` : nothing}
+       <g clip-path=${member ? `url(#${member.id})` : nothing} mask=${frontId ? `url(#${frontId})` : nothing}>
+       <path class="glass-front" d=${glass.front}></path>
+-      <path class="glass-rim upper" stroke-dasharray=${virtual?'6 5':'none'} d=${glass.top}></path>
+       </g>
+-    </svg>`;
++      <g clip-path=${member ? `url(#${member.id})` : nothing} mask=${upperId ? `url(#${upperId})` : nothing}>
++      <path class="glass-rim upper" stroke-dasharray=${virtual?'6 5':'none'} d=${glass.frontTop}></path>
++      <path class="glass-rim lower" stroke-dasharray=${virtual?'6 5':'none'} d=${glass.frontBottom}></path>
++      </g>
++    </svg>`}`;
+ }
+diff --git a/src/iso-marker-outline.ts b/src/iso-marker-outline.ts
+index 30e0560..879ca94 100644
+--- a/src/iso-marker-outline.ts
++++ b/src/iso-marker-outline.ts
+@@ -2,7 +2,7 @@
+ import { intersection, union, type Geom } from 'polyclip-ts';
+ import type { IsoDeviceSurface } from './iso-overlays';
+ import { projectPlanPoint, unprojectIsoAffine, type IsoCamera, type PlanPoint } from './iso-projection';
+-import { CONTACT_EPS, contactOutline, contactRotate, contactWallSpans, freeContactShape,
++import { CONTACT_EPS, contactOutline, contactRotate, freeContactShape,
+   type ContactPoint as Point, type ContactShape, type ContactSide } from './device-contact-geometry';
+ 
+ /** Flatten only the closed M/L/circular-A/Z paths emitted by contactOutline.
+@@ -141,6 +141,7 @@ export function isoLockBodyOutline(plane:readonly number[]):string {
+ 
+ export interface IsoMarkerGlass {
+   front: string; back: string; top: string; bottom: string;
++  frontTop: string; backTop: string; frontBottom: string; backBottom: string;
+   frontFaces: IsoDeviceSurface[]; backFaces: IsoDeviceSurface[];
+ }
+ export interface IsoMarkerGlassProjection {
+@@ -153,42 +154,12 @@ export function isoMarkerGlassAnchor(point: PlanPoint, projection?: IsoMarkerGla
+   return projection ? unprojectIsoAffine(projectPlanPoint(point,projection.height,projection.camera),projection.camera) : point;
+ }
+ 
+-function glassChainProjector(anchors: readonly ContactShape[], projection: IsoMarkerGlassProjection) {
+-  if (anchors.length === 1) {
+-    const {x,y}=anchors[0].marker;
+-    const [u,v]=isoMarkerGlassAnchor([x,y],projection);
+-    return (chain:Point[])=>chain.map(([a,b]):Point=>[a+u-x,b+v-y]);
+-  }
+-  const bounds = [
+-    [Math.min(...anchors.map(s=>s.marker.x)), Math.max(...anchors.map(s=>s.marker.x))],
+-    [Math.min(...anchors.map(s=>s.marker.y)), Math.max(...anchors.map(s=>s.marker.y))],
+-  ];
+-  const projected = ([x,y]:Point):Point => {
+-    // Between member centers the rim follows the perspective lens. Outside
+-    // their span keep the local offset so the end devices retain their margin.
+-    const u = Math.max(bounds[0][0],Math.min(bounds[0][1],x));
+-    const v = Math.max(bounds[1][0],Math.min(bounds[1][1],y));
+-    const [a,b] = isoMarkerGlassAnchor([u,v],projection);
+-    return [x+a-u,y+b-v];
+-  };
+-  return (chain:Point[]):Point[]=>{
+-    const result = [projected(chain[0])];
+-    for (let i=1;i<chain.length;i++) {
+-      const start=chain[i-1], vector=sub(chain[i],start);
+-      const crossings=bounds.flatMap((axis,index)=>vector[index] ? axis.map(v=>(v-start[index])/vector[index]) : [])
+-        .filter(t=>t>1e-7 && t<1-1e-7);
+-      for (const t of [...new Set(crossings)].sort((a,b)=>a-b)) result.push(projected(add(start,vector,t)));
+-      result.push(projected(chain[i]));
+-    }
+-    return result;
+-  };
+-}
+ /** Extrude the native open contact boundary, not its already swept silhouette.
+  * Front and rear surfaces are separate paint layers around the unchanged face.
+  * Wall-owned edges stay open and grouped contours retain their concavities. */
+ export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly number[],topAnchored=false,
+   projection?:IsoMarkerGlassProjection):IsoMarkerGlass {
+-  const result:IsoMarkerGlass={front:'',back:'',top:'',bottom:'',frontFaces:[],backFaces:[]};
++  const result:IsoMarkerGlass={front:'',back:'',top:'',bottom:'',frontTop:'',backTop:'',frontBottom:'',backBottom:'',frontFaces:[],backFaces:[]};
+   if(!shapes.length)return result;
+   const [a,b,c,d]=plane,det=a*d-b*c;
+   if(!Number.isFinite(det)||Math.abs(det)<1e-8)return result;
+@@ -199,28 +170,19 @@ export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly num
+   const lip=topAnchored ? 0 : -5/3;
+   const bottom=topAnchored ? 2 : 1;
+   const path=(points:Point[])=>points.map((p,i)=>`${i?'L':'M'}${p.map(n=>+n.toFixed(7)).join(' ')}`).join(' ');
+-  const project=projection && glassChainProjector(shapes,projection);
+-  const wallSpans=topAnchored && projection?.camera.perspective ? contactWallSpans(shapes) : [];
+-  const wallJoin=(point:Point):boolean=>{
+-    const [x,y]=contactRotate(point,-shapes[0].angle);
+-    return wallSpans.some(([[left,top],[right,bottom]])=>
+-      x>=left-CONTACT_EPS && x<=right+CONTACT_EPS && y>=top-CONTACT_EPS && y<=bottom+CONTACT_EPS);
+-  };
++  // UI Lab: the entire rim is one raised plane, including wall contacts.
++  // Projecting member centres and then patching only the endpoints bends a
++  // straight wall-normal segment. A single projective map preserves lines.
+   for(const source of rings(contactOutline(shapes,true),true)) {
+-    const chain=project ? project(source) : source;
+-    // Register wall contacts at the cut height. Extrude along the same
+-    // screen-vertical vector as the free rim and let masonry mask hidden paint.
+-    const last=source.length-1;
+-    if(wallSpans.length && Math.hypot(...sub(source[0],source[last]))>1e-6) {
+-      if(wallJoin(source[0]))chain[0]=[...isoMarkerGlassAnchor(source[0],projection)];
+-      if(wallJoin(source[last]))chain[chain.length-1]=[...isoMarkerGlassAnchor(source[last],projection)];
+-    }
++    const chain=projection ? source.map(p=>[...isoMarkerGlassAnchor(p,projection)] as Point) : source;
+     result.top+=path(chain.map(p=>add(p,v,lip)))+' ';
+     result.bottom+=path(chain.map(p=>add(p,v,bottom)))+' ';
+     let run:Point[]=[];let front=false;
+     const flush=()=>{
+       if(run.length<2)return;
+       result[front?'front':'back']+=path([...run.map(p=>add(p,v,lip)),...[...run].reverse().map(p=>add(p,v,bottom))])+' Z ';
++      result[front?'frontTop':'backTop']+=path(run.map(p=>add(p,v,lip)))+' ';
++      result[front?'frontBottom':'backBottom']+=path(run.map(p=>add(p,v,bottom)))+' ';
+     };
+     for(let i=1;i<chain.length;i++) {
+       const p=chain[i-1],q=chain[i],dx=a*(q[0]-p[0])+c*(q[1]-p[1]);
+diff --git a/src/iso-overlays.ts b/src/iso-overlays.ts
+index c4e8f9d..3dc577f 100644
+--- a/src/iso-overlays.ts
++++ b/src/iso-overlays.ts
+@@ -45,6 +45,8 @@ export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
+ }
+ 
+ export interface IsoDeviceFace {
++  /** Local rotation of a value capsule around its measured centre. */
++  angle?: number;
+   left: number; top: number; right: number; bottom: number; rx: number; ry: number;
+ }
+ /** Plan-plane XY plus vertical screen drop below the marker's top plane. */
+diff --git a/src/styles/iso-lab-markers.styles.ts b/src/styles/iso-lab-markers.styles.ts
+index 2ccb4d2..ac8364f 100644
+--- a/src/styles/iso-lab-markers.styles.ts
++++ b/src/styles/iso-lab-markers.styles.ts
+@@ -51,16 +51,27 @@ export const isoLabMarkersStyles = css`
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
+     --hp-glyph-depth: calc(var(--battery-frame) * .15);
+   }
+-  /* Read glyphs along the same axes as room labels. Rotate only
+-     their contents: bodies, contact frames and badge anchors stay in place.
++  /* Read glyphs along the same axes as room labels.
++     Value capsules below turn with their content.
+      Independent rotate also preserves a device icon's configured angle. */
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core > ha-icon,
+-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core > .valtext,
+-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .value-badge-content,
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon,
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-core > ha-icon {
+     rotate: var(--hp-iso-content-turn);
+   }
++  /* UI Lab: the value and its solid capsule share one reading plane. */
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core:has(> .valtext),
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .value-badge {
++    rotate: var(--hp-iso-content-turn);
++    transform-origin: center;
++    --hp-iso-rim-x: calc(var(--hp-iso-d) * var(--hp-iso-room-edge-x) * 1.090909091);
++    --hp-iso-rim-y: calc(var(--hp-iso-d) * var(--hp-iso-room-edge-y) * 1.090909091);
++    --hp-iso-edge-unit-x: var(--hp-iso-room-edge-x);
++    --hp-iso-edge-unit-y: var(--hp-iso-room-edge-y);
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-shell {
++    translate: calc(var(--dev-size) * var(--hp-value-shift-x, 0)) calc(var(--dev-size) * var(--hp-value-shift-y, 0));
++  }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi {
+     /* Keep the centring translation outside the glyph's local rotation. */
+     transform: translateX(-50%) rotate(var(--hp-iso-content-turn));

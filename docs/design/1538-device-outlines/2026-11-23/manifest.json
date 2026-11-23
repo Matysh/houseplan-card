@@ -1,0 +1,38 @@
+{
+  "approvedOn": "2026-11-23",
+  "sourceFingerprint": "cda7f974ff5d9010998e8581417b45aa5570a0e66683dedee67d36f13b3153b3",
+  "files": [
+    {
+      "sha256": "2119eb111859baf7b2961a599d650cb93612e55517bd729839cbaa7fba8015d7",
+      "path": "fixture.json"
+    },
+    {
+      "sha256": "ffe840b058f6860b2c2801cff531ea7f77f10a9e0a7e0714b1bba3015f727528",
+      "path": "frontal.jpg"
+    },
+    {
+      "sha256": "7e7d81c1bc0a28bd0d0d333762667a7477054605b5677fb221b469d6a8134230",
+      "path": "overview.jpg"
+    },
+    {
+      "sha256": "b4237776420d38d577ca9757ce92159c053610c060b3d10a4c0d1465a7991787",
+      "path": "prototype.patch"
+    },
+    {
+      "sha256": "9f697683db5d22a5e223b77130883088f6971342f2ccc11d32840672454bd856",
+      "path": "README.md"
+    },
+    {
+      "sha256": "9931e00705493003f0008a0dd1ebdcefeebe4d082a32169cb271507dbabea90e",
+      "path": "replay.mjs"
+    },
+    {
+      "sha256": "17555a6ba485f178e5f8654168b01c7119ddee6ec04dd46f9cbfb5f529800aa9",
+      "path": "SPEC.md"
+    }
+  ],
+  "dataset": "synthetic",
+  "productVersion": "1.86.1-beta.4",
+  "baseCommit": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8",
+  "issue": 1538
+}
