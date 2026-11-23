@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21643,
+  "revision": 21644,
   "nextTicket": 638,
   "nextFence": 638,
   "tasks": {
@@ -5914,7 +5914,10 @@
         "src/iso-marker-glass.ts",
         "src/iso-overlays.ts",
         "test/iso-wall-transparency.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1795415489466,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     }
   },
   "ownerDecisions": {},
@@ -6524,6 +6527,10 @@
     },
     "finish:e733a819-dad6-4fe2-84d6-dd95c0071895:finish:1:synchronized": {
       "digest": "b0f80d5fff1db61f0881ce169e457afc03a75455000e09451210780d2d2e5d2f",
+      "issue": 1530
+    },
+    "finish:e733a819-dad6-4fe2-84d6-dd95c0071895:finish:2:automation-pending": {
+      "digest": "ecff6a52e71c193a221ce923652424c1d393a2c210f651dacfda17d571a1396b",
       "issue": 1530
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
