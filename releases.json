@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1323,
+  "revision": 1324,
   "active": "v1.86.1-beta.5",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -233401,7 +233401,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.1-beta.5",
@@ -240933,7 +240933,8 @@
           "en": "## v1.86.1-beta.5 — 2026-11-23\n\n- Keep shared device outlines aligned with walls and turn value capsules with their text in all 2.5D views (#1538).\n- Keep the ends of wall-mounted device outlines vertical at the wall cut in straight-on 2.5D views (#1534, #1537).\n- Keep Zigbee signal readings legible when a wall cuts across a device body in 2.5D (#1536).\n- Restore smooth switching of light sources in straight-on 2.5D views (#1533)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.1-beta.5"
     }
   },
   "published": {
@@ -247096,7 +247097,8 @@
     "beta5-metrics-accepted:102a12eb144d923bfb8b350b4e15390369677986": "ccecc844901a3eadf479578c6702970367c35cb5d8218e6d8d36ab0b9ba92411",
     "beta5-publish:102a12eb144d923bfb8b350b4e15390369677986:runner-report": "8c86c30cd75ac76c0488c6971971236403d9d6bfaca2bfa2db56224c36fd2ccb",
     "beta5-publish:102a12eb144d923bfb8b350b4e15390369677986:metrics": "4950a2d17cdd91cac125030935deb69c5eeac8061e5ed1ac97518c07956f85c3",
-    "beta5-publish:102a12eb144d923bfb8b350b4e15390369677986:prepared:2f1808aa-ae3f-4a7a-b767-cc478020206d": "ad3c2d95689b167008ce23b15f3187803a814eab24bc4f9dfca452c7dc5f2e3b"
+    "beta5-publish:102a12eb144d923bfb8b350b4e15390369677986:prepared:2f1808aa-ae3f-4a7a-b767-cc478020206d": "ad3c2d95689b167008ce23b15f3187803a814eab24bc4f9dfca452c7dc5f2e3b",
+    "beta5-publish:102a12eb144d923bfb8b350b4e15390369677986:started:1323": "ab4191dacfe43244e9d9302a9f412928baa71b30d183b20c3332661b0cdbb07e"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
