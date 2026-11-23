@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22400,
+  "revision": 22401,
   "nextTicket": 651,
   "nextFence": 651,
   "tasks": {
@@ -6843,6 +6843,10 @@
       "digest": "d5594a7368c0218dede3d71a5a0e4b8974ab2c43b3d5692a195a5224e3d36fad",
       "issue": 1538
     },
+    "github:45258704977:1:completions:message:c773d095f28141f97cdae2ec90119505d10040392f77ec3cbe9f8d9bc6cb0760": {
+      "digest": "bcb481b81deb8787af79339039750fabc769dc62d7515e7c74856bee6a4a472b",
+      "issue": 1538
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6967,7 +6971,8 @@
           "entry": 2,
           "detail": "Критичные данные, сохранение и права: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: floor persistent cache: failed; Браузер: plan rotation: failed",
           "eventId": "finish:2f93f2dc-dc9b-4a3a-988d-4324d9bc1f86:finish:3:return:return:1538"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:a701f0f1-68cb-4160-8b64-088c401ac32b": {
