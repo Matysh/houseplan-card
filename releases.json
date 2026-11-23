@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1311,
+  "revision": 1312,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -233043,6 +233043,13 @@
           "status": "completed",
           "branch": "release/1.86.1-beta.3",
           "sha": "2cadfb172034649165e2833867de16294094e36e"
+        },
+        "return-to-dev": {
+          "status": "running",
+          "issue": 1532,
+          "branch": "issue/1532-release-return-306742f589d1",
+          "worktree": "/home/matysh/hp-perspective-devices/artifacts/process-next/return-worktrees/306742f589d1",
+          "nextCycle": null
         }
       }
     }
@@ -239195,7 +239202,8 @@
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:95835ab8-138a-46a6-893f-4fc576132f32": "4389178eefbdf2549a43971dde8bc01cc1ca89b4c8b1666e3af24e4cd9688671",
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:d280c949-fbec-4c55-ac60-5ce5097df24f": "cd0ea8acdd47e0a29fd546877d7b96e3e345629b2982d96ff723b0e7595c93f4",
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:057ded33-5e7f-4a33-b002-e288f47e07a8": "02e7e50dfa68c8bec057a885816c23af43ee689436cf125ac8c4bdf27633b95e",
-    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:852122f5-1f7a-4030-83aa-0b82f6e26763": "2c8337a4ece8e55dce9561a584f9991f3e58014d564ef71974924e10553306a1"
+    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:852122f5-1f7a-4030-83aa-0b82f6e26763": "2c8337a4ece8e55dce9561a584f9991f3e58014d564ef71974924e10553306a1",
+    "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:18a5d02b-496a-48e3-b69b-dca91bb82242": "bdaff4a24a7f10dc94e5a82b5869d422b40c4d3cf5cda4172dd899bc1df3ec66"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
