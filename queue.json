@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 21332,
+  "revision": 21333,
   "nextTicket": 633,
-  "nextFence": 632,
+  "nextFence": 633,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -5786,7 +5786,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 632,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795395377838,
       "reviewEntry": 5,
@@ -6416,10 +6416,18 @@
       }
     }
   },
-  "waiting": [
-    1526
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1526,
+    "worker": "finish",
+    "token": "632:finish:857a738a-edba-497e-a5b9-b43eb8ae69f1:finish:1:admit",
+    "fence": 632,
+    "materialSha": "6a93c8f551c4bb39c492f0d43f78ebf0d2036131",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795395381781,
+    "expiresAt": 1795395681781
+  },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7025,6 +7033,29 @@
         "track": "show",
         "layer": "product",
         "materialSha": "6a93c8f551c4bb39c492f0d43f78ebf0d2036131",
+        "evidence": {
+          "id": "20261122T235919260-6435bd66",
+          "name": "Тесты для задачи #1526 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261122T235919260-6435bd66/report.json",
+          "materialSha": "247c9142b550e38ddaa900cd75d271944ee0ec51",
+          "status": "passed",
+          "finishedAt": "2026-11-23T00:16:51.550Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:857a738a-edba-497e-a5b9-b43eb8ae69f1:finish:1:admit": {
+      "digest": "82a4627051beab0d545037923d17f23749d615e35b6c53b3696d1a0266426e13",
+      "issue": 1526,
+      "message": {
+        "kind": "admitted",
+        "issue": 1526,
+        "at": 1795395381781,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6a93c8f551c4bb39c492f0d43f78ebf0d2036131",
+        "phase": "sync",
         "evidence": {
           "id": "20261122T235919260-6435bd66",
           "name": "Тесты для задачи #1526 (перед ревью)",
