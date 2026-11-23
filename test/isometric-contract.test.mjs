@@ -171,7 +171,7 @@ test('2.5D treats wall-cut overlays and their floor shadows as separate visual p
   for (const renderer of [
     '_renderDecorLayer(undefined, view)', '_renderRoomHoverFill(roomHover)', '_renderGlowLayer(space, disp, view)',
     '_renderSunRays(space)', '_renderOpenings(disp)',
-    '_renderVacuums(this._renderVacuumDevices, view, space.id)',
+    '_renderVacuums(this._renderVacuumDevices, view, space.id, perspectiveSize)',
   ]) assert.ok(card.includes(renderer), `missing ${renderer}`);
   const floorShadows = readFileSync(new URL('../src/iso-floor-shadows.ts', import.meta.url), 'utf8');
   assert.match(floorShadows, /const \[x, y\] = placement.floorScene/);

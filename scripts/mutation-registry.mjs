@@ -3278,8 +3278,8 @@ const MUTANT_DEFINITIONS = [
     because: '#871 AC2: screen coordinates mistakenly written into SVG fail against '
       + 'the actual animated puck during native camera frames, independent of unit inverse math.',
     patches: [{ file: 'src/vacuum-view.ts',
-      find: 'vacuumScreenPoint(matrix, box.left + box.width / 2, box.top + box.height / 2) : null',
-      replace: '[box.left + box.width / 2, box.top + box.height / 2] as const : null',
+      find: 'vacuumScreenPoint(matrix, x, y)',
+      replace: '[x, y] as const',
     }],
   },
   {
@@ -6725,8 +6725,8 @@ const MUTANT_DEFINITIONS = [
       + 'never appear on its second floor (#162, AC2)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '            ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}',
-      replace: '            ${this._renderVacuums(devs, view, space.id)}',
+      find: '            ${this._renderVacuums(this._renderVacuumDevices, view, space.id, perspectiveSize)}',
+      replace: '            ${this._renderVacuums(devs, view, space.id, perspectiveSize)}',
     }],
   },
   {
