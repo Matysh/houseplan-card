@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21761,
+  "revision": 21762,
   "nextTicket": 640,
   "nextFence": 640,
   "tasks": {
@@ -5850,7 +5850,7 @@
       "ownerDecision": null,
       "ticket": 639,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795418359887,
       "reviewEntry": 1,
       "patchId": "c84552ca8211bfa93fd8bdf8fc481244908e0278",
@@ -5866,7 +5866,16 @@
         "src/iso-marker-outline.ts",
         "src/iso-overlays.ts",
         "test/iso-marker-outline.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261123T071936225-5e0e21b7",
+        "name": "Тесты для задачи #1531 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261123T071936225-5e0e21b7/report.json",
+        "materialSha": "84aca2afee27c80ec214da23516cc0c67198c2fd",
+        "status": "passed",
+        "finishedAt": "2026-11-23T07:31:12.150Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6454,9 +6463,9 @@
     "fence": 639,
     "materialSha": "84aca2afee27c80ec214da23516cc0c67198c2fd",
     "expectedBase": "dd959d0df6aff02b8174583ab0b308bd2f9e21e7",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795418363914,
-    "expiresAt": 1795419323245,
+    "expiresAt": 1795422673541,
     "patchId": "c84552ca8211bfa93fd8bdf8fc481244908e0278"
   },
   "events": {
@@ -6612,6 +6621,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "dd959d0df6aff02b8174583ab0b308bd2f9e21e7"
+      }
+    },
+    "finish:83112740-89cf-4b86-a165-1217529a52ef:finish:3:s6-complete": {
+      "digest": "87dde4a30e089cd0907923542049b2c7d63db3f320bc78633f269343bdaf4426",
+      "issue": 1531,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1531,
+        "at": 1795419073541,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "84aca2afee27c80ec214da23516cc0c67198c2fd",
+        "phase": "review",
+        "evidence": {
+          "id": "20261123T071936225-5e0e21b7",
+          "name": "Тесты для задачи #1531 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261123T071936225-5e0e21b7/report.json",
+          "materialSha": "84aca2afee27c80ec214da23516cc0c67198c2fd",
+          "status": "passed",
+          "finishedAt": "2026-11-23T07:31:12.150Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Центры устройств уже использовали перспективу #1526, а общий контур строился в исходной плоскости и крепился к одному маркеру. Контур учитывает перспективное смещение центров, сохраняя отступы на краях и открытые стыки со стенами. Тест проверяет шесть примагниченных устройств во всех четырёх прямых ракурсах.\n\n[Вердикт по E2E](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1531.md)\n\nСинтетическая сцена SVG в закреплённом Chromium 151.0.7922.34. Слева сборка из тега `v1.86.1-beta.3`, справа рабочая ветка с исправлениями #1528–#1531. [Сравнение «до/после»](https://github.com/Matysh/houseplan-card/blob/52ef4ff488a878d08b681153e9cbe4aab3efcb1c/docs/issue-evidence/1531/comparison.png).",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
