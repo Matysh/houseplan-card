@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21664,
+  "revision": 21665,
   "nextTicket": 638,
   "nextFence": 638,
   "tasks": {
@@ -5826,7 +5826,7 @@
       "ownerDecision": null,
       "ticket": 637,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795415357118,
       "reviewEntry": 1,
       "patchId": "20face6af6c9f33187c8a13a500027b7732f949b",
@@ -5841,9 +5841,15 @@
         "src/iso-overlays.ts",
         "test/iso-wall-transparency.test.mjs"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1795415489466,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
+      "s6": {
+        "id": "20261123T063348283-4399ba22",
+        "name": "Тесты для задачи #1530 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261123T063348283-4399ba22/report.json",
+        "materialSha": "781296e04296243ef7501f0b6fa85dc32390bb5a",
+        "status": "passed",
+        "finishedAt": "2026-11-23T06:47:38.037Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6417,9 +6423,9 @@
     "fence": 637,
     "materialSha": "781296e04296243ef7501f0b6fa85dc32390bb5a",
     "expectedBase": "10a2afb7389b0308e6290e5b596b7a9520445295",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795415407341,
-    "expiresAt": 1795416733837,
+    "expiresAt": 1795420059605,
     "patchId": "20face6af6c9f33187c8a13a500027b7732f949b"
   },
   "events": {
@@ -6599,6 +6605,34 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "10a2afb7389b0308e6290e5b596b7a9520445295"
+      }
+    },
+    "finish:e733a819-dad6-4fe2-84d6-dd95c0071895:finish:4:s6-complete": {
+      "digest": "d85a89d7bca2076b168aeff0a914ec55b6209069d3ee0fecfc8c307bcf1d9a21",
+      "issue": 1530,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1530,
+        "at": 1795416459605,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "781296e04296243ef7501f0b6fa85dc32390bb5a",
+        "phase": "review",
+        "evidence": {
+          "id": "20261123T063348283-4399ba22",
+          "name": "Тесты для задачи #1530 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261123T063348283-4399ba22/report.json",
+          "materialSha": "781296e04296243ef7501f0b6fa85dc32390bb5a",
+          "status": "passed",
+          "finishedAt": "2026-11-23T06:47:38.037Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Верхний срез и боковая грань использовали одинаковую маску с остаточной видимостью 30%. Теперь непрозрачный срез полностью скрывает перекрытые части корпуса и обводки. Боковое затенение и настройка прозрачности сохранены. Регрессия измеряет обе маски отдельно, включая видимую верхнюю часть маркера.\n\n[Вердикт по E2E](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/houseplan-card-1530.md)\n\nСинтетическая сцена SVG в закреплённом Chromium 151.0.7922.34. Слева сборка из тега `v1.86.1-beta.3`, справа рабочая ветка с исправлениями #1528–#1531. [Сравнение «до/после»](https://github.com/Matysh/houseplan-card/blob/52ef4ff488a878d08b681153e9cbe4aab3efcb1c/docs/issue-evidence/1530/comparison.png).",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
