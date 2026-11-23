@@ -2,7 +2,7 @@
 import { intersection, union, type Geom } from 'polyclip-ts';
 import type { IsoDeviceSurface } from './iso-overlays';
 import { projectPlanPoint, unprojectIsoAffine, type IsoCamera, type PlanPoint } from './iso-projection';
-import { contactOutline, contactRotate, freeContactShape,
+import { CONTACT_EPS, contactOutline, contactRotate, contactWallSpans, freeContactShape,
   type ContactPoint as Point, type ContactShape, type ContactSide } from './device-contact-geometry';
 
 /** Flatten only the closed M/L/circular-A/Z paths emitted by contactOutline.
@@ -200,23 +200,42 @@ export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly num
   const bottom=topAnchored ? 2 : 1;
   const path=(points:Point[])=>points.map((p,i)=>`${i?'L':'M'}${p.map(n=>+n.toFixed(7)).join(' ')}`).join(' ');
   const project=projection && glassChainProjector(shapes,projection);
-  const hasWallJoin=topAnchored && projection?.camera.perspective
-    && shapes.some(s=>Object.keys(s.walls).length>0);
+  const spans=topAnchored && projection?.camera.perspective ? contactWallSpans(shapes) : [];
+  const onWall=(point:Point):boolean=>{
+    if(!spans.length)return false;
+    const [x,y]=contactRotate(point,-shapes[0].angle);
+    // Spans are axis-aligned in the contact frame. The boundary also splits
+    // paths at its arbitrary first vertex, which need not touch a wall.
+    return spans.some(([[l,t],[r,b]])=>x>=l-CONTACT_EPS&&x<=r+CONTACT_EPS
+      &&y>=t-CONTACT_EPS&&y<=b+CONTACT_EPS);
+  };
+  // Finish the transition within one projected glass depth of the cut,
+  // rather than tapering along the whole first straight segment.
+  const shoulder=(from:Point,to:Point,max:number)=>{
+    const [x,y]=sub(to,from),span=Math.hypot(a*x+c*y,b*x+d*y);
+    const t=Math.min(max,half*bottom/span);
+    return span>1e-8&&t<1 ? add(from,[x,y],t) : null;
+  };
   for(const source of rings(contactOutline(shapes,true),true)) {
     const chain=project ? project(source) : source;
     const last=source[source.length-1];
-    const joinsWall=hasWallJoin && Math.hypot(...sub(source[0],last))>1e-6;
-    if(joinsWall) {
-      // Member-relative offsets keep the free rim aligned with the icon, but
-      // the open chain ends belong to the wall at their real plan coordinates.
-      chain[0]=[...isoMarkerGlassAnchor(source[0],projection)];
-      chain[chain.length-1]=[...isoMarkerGlassAnchor(last,projection)];
-      if(chain.length===2)chain.splice(1,0,add(chain[0],sub(chain[1],chain[0]),.5));
-    }
+    const open=Math.hypot(...sub(source[0],last))>1e-6;
+    const startJoin=open&&onWall(source[0]),endJoin=open&&onWall(last);
+    // Member-relative offsets keep the free rim aligned with the icon, but
+    // true wall joins use their own exact positions on the cut plane.
+    if(startJoin)chain[0]=[...isoMarkerGlassAnchor(source[0],projection)];
+    if(endJoin)chain[chain.length-1]=[...isoMarkerGlassAnchor(last,projection)];
+    const bothOnOneSegment=startJoin&&endJoin&&chain.length===2;
+    const fraction=bothOnOneSegment ? .5 : 1;
+    const fromStart=startJoin?shoulder(chain[0],chain[1],fraction):null;
+    const fromEnd=endJoin?shoulder(chain[chain.length-1],chain[chain.length-2],fraction):null;
+    if(fromStart)chain.splice(1,0,fromStart);
+    if(fromEnd&&(!bothOnOneSegment||!fromStart||Math.hypot(...sub(fromStart,fromEnd))>1e-8))
+      chain.splice(chain.length-1,0,fromEnd);
     const upper=chain.map(p=>add(p,v,lip));
     // The rim closes onto the wall cut instead of exposing its lower end
     // in front of the receding wall. Keep full depth at every free vertex.
-    const depth=chain.map((_,i)=>joinsWall && (i===0 || i===chain.length-1) ? 0 : bottom);
+    const depth=chain.map((_,i)=>(startJoin&&i===0)||(endJoin&&i===chain.length-1) ? 0 : bottom);
     const lower=chain.map((p,i)=>add(p,v,depth[i]));
     result.top+=path(upper)+' ';
     result.bottom+=path(lower)+' ';

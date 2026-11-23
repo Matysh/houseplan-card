@@ -4,6 +4,60 @@ import {check,finish} from './serve.mjs';
 import {startIsoPaintScene,settleIsoPaint,zoomIsoPaint} from './helpers/iso-paint-scene.mjs';
 import {makeDeviceContactsFixture} from './golden/device-contacts.mjs';
 import {compareInPage} from '../scripts/png-identical.mjs';
+import {contactRotate} from '../test-build/device-contact-geometry.js';
+import {isoDisplayWallHeight,projectPlanPoint,unprojectIsoAffine} from '../test-build/iso-projection.js';
+import {gridVisualUnits} from '../test-build/grid-scale.js';
+
+async function measureWallJoins(page) {
+  const frame=await page.evaluate(()=>{
+    const card=window.__isoPaint,root=card.renderRoot,scene=card._deviceContacts.scene;
+    const read=path=>{
+      const {a,b,c,d,e,f}=path.getScreenCTM();
+      return {matrix:[a,b,c,d,e,f],points:[...path.getAttribute('d').matchAll(/[ML]([-\d.e+]+) ([-\d.e+]+)/g)]
+        .map(m=>[+m[1],+m[2]])};
+    };
+    const groups=[['contour-0',1],['contour-9',1],['contour-3',0],['contour-12',0]].map(([id,along])=>{
+      const node=root.querySelector(`.dev[data-id="${id}"]`);
+      const owner=root.querySelector(`.dev[data-id="${node?.dataset.hpDeviceComponent}"]`);
+      const upper=owner?.querySelector('.iso-marker-glass.front .glass-rim.upper');
+      const lower=owner?.querySelector('.iso-marker-glass.rear .glass-rim.lower');
+      return upper&&lower?{along,upper:read(upper),lower:read(lower),
+        members:scene.component(id).map(key=>scene.shapes.get(key))}:null;
+    });
+    return {groups,camera:card._isoFloorCamera,cell:card._cellCm};
+  });
+  if(!frame.camera?.perspective)return null;
+  const height=gridVisualUnits(isoDisplayWallHeight(),frame.cell);
+  const screen=([a,b,c,d,e,f],[x,y])=>[a*x+c*y+e,b*x+d*y+f];
+  const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+  const joins=[],freeErrors=[];
+  for(const group of frame.groups){
+    if(!group||group.members.length!==(group.along===1?3:6))return null;
+    // The synthetic fixture supplies four rows of equal-size icons. Use their
+    // actual wall-contact faces, not the arbitrary start/end of the SVG path.
+    const wall=group.members.flatMap(({marker,box,angle,walls})=>{
+      const edges={left:[[box.left,box.top],[box.left,box.bottom]],right:[[box.right,box.top],[box.right,box.bottom]],
+        top:[[box.left,box.top],[box.right,box.top]],bottom:[[box.left,box.bottom],[box.right,box.bottom]]};
+      return Object.keys(walls).flatMap(side=>edges[side].map(point=>{
+        const [x,y]=contactRotate(point,angle);
+        return [marker.x+x,marker.y+y];
+      }));
+    }).sort((a,b)=>a[group.along]-b[group.along]);
+    if(wall.length!==group.members.length*2)return null;
+    const a=group.upper.points.map(p=>screen(group.upper.matrix,p));
+    const b=group.lower.points.map(p=>screen(group.lower.matrix,p));
+    if(a.length!==b.length||!a.length)return null;
+    const targets=[wall[0],wall.at(-1)].map(p=>screen(group.upper.matrix,
+      unprojectIsoAffine(projectPlanPoint(p,height,frame.camera),frame.camera)));
+    joins.push(...targets.map(target=>Math.min(...a.map((p,i)=>Math.max(distance(p,target),distance(b[i],target))))));
+    const drops=a.map((p,i)=>distance(p,b[i])),full=Math.max(...drops);
+    if(full<1)return null;
+    const free=a.flatMap((p,i)=>targets.every(target=>distance(p,target)>.05)?[Math.abs(full-drops[i])]:[]);
+    if(!free.length)return null;
+    freeErrors.push(...free);
+  }
+  return {joins,freeErrors};
+}
 
 const dir=process.env.HP_ISO_CONTOUR_OUTPUT||'artifacts/1482';mkdirSync(dir,{recursive:true});
 const evidence=[],negativeControls=[];
@@ -68,28 +122,11 @@ for(const dpr of [1,2]) {
           let registration;
           let wallJoins;
           if(rotation===45) {
-            wallJoins=await page.evaluate(()=>{
-              const c=window.__isoPaint,root=c.renderRoot;
-              const samples=[];
-              // Opposite walls give the near and far cases in the same camera.
-              for(const id of ['contour-0','contour-9','contour-3','contour-12']){
-                const shape=c._deviceContacts.scene.shapes.get(id);
-                const node=root.querySelector(`.dev[data-id="${id}"]`);
-                const owner=root.querySelector(`.dev[data-id="${node?.dataset.hpDeviceComponent}"]`);
-                const upper=owner?.querySelector('.iso-marker-glass.front .glass-rim.upper');
-                const lower=owner?.querySelector('.iso-marker-glass.rear .glass-rim.lower');
-                if(!upper||!lower||!shape||!Object.values(shape.walls).length)return null;
-                const ends=path=>[0,path.getTotalLength()].map(length=>{
-                  const p=path.getPointAtLength(length);
-                  return p.matrixTransform(path.getScreenCTM());
-                });
-                const a=ends(upper),b=ends(lower);
-                samples.push(a.map((p,i)=>Math.hypot(p.x-b[i].x,p.y-b[i].y)));
-              }
-              return samples.flat();
-            });
+            wallJoins=await measureWallJoins(page);
             check(`${label}: wall returns meet on the cut, not on a lower rim`,
-              wallJoins?.length===8&&wallJoins.every(delta=>delta<.05));
+              wallJoins?.joins.length===8&&wallJoins.joins.every(delta=>delta<.05));
+            check(`${label}: free vertices, including SVG split points, keep the full depth`,
+              !!wallJoins?.freeErrors.length&&wallJoins.freeErrors.every(delta=>delta<.05));
             registration=await page.evaluate(()=>{
               const card=window.__isoPaint,root=card.renderRoot;
               const members=Array.from({length:6},(_,i)=>root.querySelector(`.dev[data-id="contour-${i+3}"]`));

@@ -58,31 +58,40 @@ test('#1531 shared glass follows every projected anchor and retains its open wal
   }
   assert.equal(JSON.stringify(group),saved);
 });
-test('#1534 both open ends of a wall group meet the projected cut without a hanging rim',()=>{
-  const group=[shape(180,265),shape(180,355),shape(180,445)];
-  for(const s of group)s.walls.left='wall';
+test('#1534 only actual wall joins meet the cut; free subpath ends retain their depth',()=>{
   const extent={x:0,y:0,w:800,h:800},height=100;
-  const native=segments(contactOutline(group,true));
-  const joins=[native[0][0],native.at(-1)[1]];
   const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+  const vertices=path=>[...path.matchAll(/[ML]([-\d.e+]+) ([-\d.e+]+)/g)].map(m=>[+m[1],+m[2]]);
   for(const rotation of [45,135,225,315]){
     const camera=isoPerspectiveCamera(isoCameraFor(rotation),extent,extent,height);
     const m=isoFloorMatrix(camera),options={camera,height};
-    const glass=isoMarkerGlass(group,m,true,options);
-    const upper=segments(glass.top),lower=segments(glass.bottom);
-    assert.equal(upper.length,lower.length);
-    for(const [i,edge,point] of [[0,0,0],[1,upper.length-1,1]]){
-      const wall=projectPlanPoint(joins[i],height,camera);
-      assert.ok(distance(applyIsoMatrix(upper[edge][point],m),wall)<1e-6,`${rotation}°: upper rim reaches the exact wall cut`);
-      assert.ok(distance(applyIsoMatrix(lower[edge][point],m),wall)<1e-6,`${rotation}°: no rim hangs below the join`);
+    for(const side of ['left','top','right','bottom'])for(const count of [0,1,3,2]){
+      const alongY=side==='left'||side==='right';
+      const group=Array.from({length:count||1},(_,i)=>alongY?shape(180,265+i*90):shape(265+i*90,180));
+      // Only the first member touches a finite wall in the two-member case;
+      // being on its infinite supporting line must not create a wall join.
+      const attached=count===2?group.slice(0,1):count?group:[];
+      for(const s of attached)s.walls[side]='wall';
+      const edge=s=>s.marker[alongY?'x':'y']+s.box[side];
+      const low=s=>s.marker[alongY?'y':'x']+s.box[alongY?'top':'left'];
+      const high=s=>s.marker[alongY?'y':'x']+s.box[alongY?'bottom':'right'];
+      const joins=attached.length?[low(attached[0]),high(attached.at(-1))].map(t=>
+        projectPlanPoint(alongY?[edge(attached[0]),t]:[t,edge(attached[0])],height,camera)):[];
+      const glass=isoMarkerGlass(group,m,true,options);
+      const upper=vertices(glass.top),lower=vertices(glass.bottom);
+      assert.equal(upper.length,lower.length);
+      const seen=new Set();
+      const label=`${rotation}° / wall ${side} / ${count}`;
+      upper.forEach((point,i)=>{
+        const a=applyIsoMatrix(point,m),b=applyIsoMatrix(lower[i],m);
+        const join=joins.findIndex(target=>distance(a,target)<1e-6);
+        const drop=join<0?19.2:0;
+        if(join>=0)seen.add(join);
+        assert.ok(Math.abs(b[0]-a[0])<1e-6 && Math.abs(b[1]-a[1]-drop)<1e-6,
+          `${label}: ${join<0?'free rim keeps full depth':'both rims reach the wall cut'} at ${a}`);
+      });
+      assert.equal(seen.size,joins.length,`${label}: both physical ends are present`);
     }
-    assert.ok(upper.some(([p],i)=>Math.abs(applyIsoMatrix(lower[i][0],m)[1]-applyIsoMatrix(p,m)[1]-19.2)<1e-6),
-      'the free part still has the normal glass depth');
-    const free=isoMarkerGlass([shape(180,355)],m,true,options);
-    const freeBottom=segments(free.bottom);
-    segments(free.top).forEach(([p],i)=>assert.ok(Math.abs(
-      applyIsoMatrix(freeBottom[i][0],m)[1]-applyIsoMatrix(p,m)[1]-19.2)<1e-6,
-      'unattached rims keep their full depth'));
   }
 });
 test('whole body fits inside the border at every lab camera quadrant and elevation',()=>{

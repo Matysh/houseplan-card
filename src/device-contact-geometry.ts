@@ -259,25 +259,33 @@ export function contactContourShapes(shapes: readonly ContactShape[]): ContactSh
   });
 }
 
-/** Visible portions of a straight boundary, excluding finite wall contacts. */
-function freeBoundary(a: ContactPoint, b: ContactPoint, shapes: readonly ContactShape[]): ContactPoint[][] {
-  const dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy);
-  if(length<=1e-9) return [];
-  const intervals: [number,number][]=[];
+/** Finite wall-owned spans in the same group frame as the contour union. */
+export function contactWallSpans(shapes: readonly ContactShape[]): [ContactPoint,ContactPoint][] {
+  const spans: [ContactPoint,ContactPoint][]=[];
   for(const s of shapes) {
+    const sides=Object.keys(s.walls) as ContactSide[];
+    if(!sides.length) continue;
     const box=contactBoxIn(s,shapes[0].angle);
     const edges: Record<ContactSide,[ContactPoint,ContactPoint]>={
       top:[[box.left,box.top],[box.right,box.top]],bottom:[[box.left,box.bottom],[box.right,box.bottom]],
       left:[[box.left,box.top],[box.left,box.bottom]],right:[[box.right,box.top],[box.right,box.bottom]]};
-    for(const side of Object.keys(s.walls) as ContactSide[]) {
-      const [p,q]=edges[side];
-      if(Math.abs((p[0]-a[0])*dy-(p[1]-a[1])*dx)>CONTACT_EPS*length
-          || Math.abs((q[0]-a[0])*dy-(q[1]-a[1])*dx)>CONTACT_EPS*length) continue;
-      const u=((p[0]-a[0])*dx+(p[1]-a[1])*dy)/length**2;
-      const v=((q[0]-a[0])*dx+(q[1]-a[1])*dy)/length**2;
-      const lo=Math.max(0,Math.min(u,v)),hi=Math.min(1,Math.max(u,v));
-      if(hi>lo) intervals.push([lo,hi]);
-    }
+    for(const side of sides)spans.push(edges[side]);
+  }
+  return spans;
+}
+
+/** Visible portions of a straight boundary, excluding finite wall contacts. */
+function freeBoundary(a: ContactPoint, b: ContactPoint, spans: readonly [ContactPoint,ContactPoint][]): ContactPoint[][] {
+  const dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy);
+  if(length<=1e-9) return [];
+  const intervals: [number,number][]=[];
+  for(const [p,q] of spans) {
+    if(Math.abs((p[0]-a[0])*dy-(p[1]-a[1])*dx)>CONTACT_EPS*length
+        || Math.abs((q[0]-a[0])*dy-(q[1]-a[1])*dx)>CONTACT_EPS*length) continue;
+    const u=((p[0]-a[0])*dx+(p[1]-a[1])*dy)/length**2;
+    const v=((q[0]-a[0])*dx+(q[1]-a[1])*dy)/length**2;
+    const lo=Math.max(0,Math.min(u,v)),hi=Math.min(1,Math.max(u,v));
+    if(hi>lo) intervals.push([lo,hi]);
   }
   intervals.sort((a,b)=>a[0]-b[0]);
   const point=(t:number):ContactPoint=>[a[0]+dx*t,a[1]+dy*t],out:ContactPoint[][]=[];
@@ -291,6 +299,7 @@ function freeBoundary(a: ContactPoint, b: ContactPoint, shapes: readonly Contact
 export function contactOutline(shapes: readonly ContactShape[], stroke = false): string {
   if (!shapes.length) return '';
   const angle = shapes[0].angle;
+  const spans = stroke ? contactWallSpans(shapes) : [];
   const boxes = shapes.map((s) => contactBoxIn(s, angle));
   const rects: Geom[] = boxes.map((b) => [[[b.left, b.top], [b.right, b.top], [b.right, b.bottom], [b.left, b.bottom], [b.left, b.top]]]);
   const polygons = union(rects[0], ...rects.slice(1));
@@ -336,7 +345,7 @@ export function contactOutline(shapes: readonly ContactShape[], stroke = false):
     };
     return corners.map(({entry,exit,r},i)=>{
       const prev=corners[(i+corners.length-1)%corners.length].exit;
-      const lines=freeBoundary(prev,entry,shapes).map(([a,b])=>{
+      const lines=freeBoundary(prev,entry,spans).map(([a,b])=>{
         const segment=`${start(a)}L${fmt(b)}`;cursor=b;return segment;
       }).join(' ');
       const arc=r?`${start(entry)}A${r} ${r} 0 0 1 ${fmt(exit)}`:'';
