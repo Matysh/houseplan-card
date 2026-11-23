@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21289,
+  "revision": 21290,
   "nextTicket": 631,
   "nextFence": 631,
   "tasks": {
@@ -6717,6 +6717,10 @@
       "digest": "9ac1fef1c5d04044308c27ee8f6572a8acbddc028c6cb1916da571525a095db7",
       "issue": 1526
     },
+    "github:45087843982:1:completions:message:d0392c4e8756d535af435b662fd61b3ef9d3ca6b9dc3ebdfea904b586096f59a": {
+      "digest": "9d2e3b8cc0373b157ac5e5fad871456ceba6f3c4ed6f271736f6d3c1d931cf85",
+      "issue": 1526
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6792,7 +6796,8 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/render-layout-read.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: iso flat parity: failed; Браузер: iso raster parity: failed",
           "eventId": "finish:1c03ec16-4175-4748-ac54-9e568ec7b025:finish:3:return:return:1526"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:ac522b01-99e4-4cd3-8c8a-c471bba1afd5": {
