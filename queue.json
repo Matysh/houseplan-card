@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 22153,
-  "nextTicket": 646,
+  "revision": 22154,
+  "nextTicket": 647,
   "nextFence": 646,
   "tasks": {
     "1024": {
@@ -5921,6 +5921,20 @@
         "sourceSha": "d1f1ba4f226bc1c0a15b605e97530c098b45ce5b"
       }
     },
+    "1536": {
+      "issue": 1536,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1536-zigbee-lqi-mask",
+      "materialSha": "a87e92236713be44c6a050b0380a36781946899c",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 646,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795442593410,
+      "reviewEntry": 1
+    },
     "1537": {
       "issue": 1537,
       "track": "show",
@@ -6523,7 +6537,9 @@
       "runId": 45177422884
     }
   },
-  "waiting": [],
+  "waiting": [
+    1536
+  ],
   "active": {
     "issue": 1537,
     "worker": "finish",
@@ -6657,6 +6673,19 @@
         "materialSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:41ee4401-4fbc-4213-9a61-184a985d8157": {
+      "digest": "282dea4b830b4862b75e31a040dedb6dcca8ac2a00c22b11ed0b1e6db8769516",
+      "issue": 1536,
+      "message": {
+        "kind": "queued",
+        "issue": 1536,
+        "at": 1795442593410,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a87e92236713be44c6a050b0380a36781946899c"
       }
     }
   },
