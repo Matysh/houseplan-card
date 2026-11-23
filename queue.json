@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22176,
+  "revision": 22177,
   "nextTicket": 647,
   "nextFence": 646,
   "tasks": {
@@ -5945,7 +5945,7 @@
       "ownerDecision": null,
       "ticket": 645,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795442100679,
       "reviewEntry": 1,
       "patchId": "04d7e1eeec682a86d7929a54de8076d2ed8a3405",
@@ -5957,7 +5957,16 @@
         "docs/release-ledger/v1.86.0/1537.json",
         "src/iso-marker-outline.ts",
         "test/iso-marker-outline.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261123T135517891-89600a17",
+        "name": "Тесты для задачи #1537 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T135517891-89600a17/report.json",
+        "materialSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
+        "status": "passed",
+        "finishedAt": "2026-11-23T14:10:23.333Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6547,9 +6556,9 @@
     "fence": 645,
     "materialSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
     "expectedBase": "b76fbfac8794d97f4dffabecaf1c19a6bdc3f861",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795442105380,
-    "expiresAt": 1795443304047,
+    "expiresAt": 1795446625055,
     "patchId": "04d7e1eeec682a86d7929a54de8076d2ed8a3405"
   },
   "events": {
@@ -6715,6 +6724,34 @@
         "layer": "product",
         "materialSha": "a87e92236713be44c6a050b0380a36781946899c",
         "delivered": true
+      }
+    },
+    "finish:6fdb1714-3fb1-45bf-ace5-2b37c66b8676:finish:3:s6-complete": {
+      "digest": "9a706b68304de780bf520a27def7143c7eec203ca2b5677137844cefedb06cc3",
+      "issue": 1537,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1537,
+        "at": 1795443025055,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
+        "phase": "review",
+        "evidence": {
+          "id": "20261123T135517891-89600a17",
+          "name": "Тесты для задачи #1537 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261123T135517891-89600a17/report.json",
+          "materialSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
+          "status": "passed",
+          "finishedAt": "2026-11-23T14:10:23.333Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "- Убрана деформация торцов из обоих коммитов #1534. Верх склеивается с проекцией точной точки контакта со стеной. Верх и низ обводки имеют общий экранный X и полную толщину. Скрытые за непрозрачной кладкой части по-прежнему определяет существующая маска стены. Сохранены позиции и контуры плоского вида, имена, стили и действия устройств.\n- Пиксельные кадры на синтетическом плане до и после просмотрены в закреплённом Chromium. В наборе 88 сцен, включая 8 прямых сочетаний тем, DPR и масштаба. Для обоих концов на каждой из четырёх стен сверены экранные координаты, высота среза и толщина. Максимальное отклонение у стыка и по толщине меньше 0,000001 CSS px. Unit проверяет четыре прямых камеры, одиночный, групповой и частичный контакт. На исходном b76fbfac87 конструкция заканчивается нулевой толщиной и такую проверку не проходит.\n- PNG-эталоны не обновлялись. Проверка проверяет реальную отрисовку в браузере без изменения HA, поскольку правка касается только проекции обводки.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
