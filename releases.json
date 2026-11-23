@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1317,
+  "revision": 1318,
   "active": "v1.86.1-beta.5",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -233340,7 +233340,7 @@
         "sha": "102a12eb144d923bfb8b350b4e15390369677986",
         "requestId": "ship-review:6cc9d8697302a05bdef49b63be84fbedfd029d51d410a6d81fdc42ebae14b8d7",
         "selectionDigest": "fbd66e5ebe2ee1aa35bdc1531d83eca45e038a8bcc00a591b5fd25402671fd4b",
-        "status": "pending",
+        "status": "accepted",
         "inventoryComplete": true
       }
     }
@@ -239499,7 +239499,8 @@
     "beta4-publish:306742f589d12a6c79846868b4d8be696b89abfc:completion:01126ff4-1b6e-4d53-bd9a-f374a0f6478d": "11f47dfea116e384a997b1dd486ee0da9d2228df1407910a1fbb0e1e5c1cce4e",
     "beta5-create": "71c998faa3c37a2ff463cc5fbefb2e2bd1fa5ab5ddb8848142031abcd4bd15e2",
     "beta5-candidate:102a12eb144d923bfb8b350b4e15390369677986": "34e870142e7813e4be14c0571cde8fe7795e86e045583085ffd1d2bceec0fe87",
-    "ship-review:prepare:d6e9297f-7058-45d1-88bc-676b28144be6": "f9d288e18b28f1588ca46010fc46d3a209f0e39a7e371f0fb2bb5746a8404b2f"
+    "ship-review:prepare:d6e9297f-7058-45d1-88bc-676b28144be6": "f9d288e18b28f1588ca46010fc46d3a209f0e39a7e371f0fb2bb5746a8404b2f",
+    "ship-review:result:1e658591-292c-41c5-bcf7-7978f82d14a4": "0a1ce395c55bfafcfef7a4f5f3d8aafd37bfa2f5fcae3f92a2e25b0bc83f4027"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -259855,7 +259856,88 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "version": 1,
+        "kind": "ship-batch",
+        "requestId": "ship-review:6cc9d8697302a05bdef49b63be84fbedfd029d51d410a6d81fdc42ebae14b8d7",
+        "candidateId": "v1.86.1-beta.5",
+        "base": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
+        "materialSha": "102a12eb144d923bfb8b350b4e15390369677986",
+        "selectionDigest": "fbd66e5ebe2ee1aa35bdc1531d83eca45e038a8bcc00a591b5fd25402671fd4b",
+        "releaseVersion": "v1.86.1-beta.5",
+        "workflowRunId": 45260863392,
+        "workflowRunAttempt": 1,
+        "verdict": "accepted",
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Задача #1535 исправляет тест, через который проходил мутант `near-axis-optimize-confirmation-bypassed`. Тест теперь ждёт полного завершения `open()` и только после этого проверяет, что записи не было. Код продукта не менялся, поэтому регрессия для пользователя беты исключена. По коду видно, что мутант (open → preview → run) теперь неизбежно вызывает `commit` до проверки, и тест его ловит. Блокеров нет.",
+          "understanding": "Ночной мутационный прогон, часть 5/7, нашёл сбежавшего мутанта. Он подменяет `OptimizePlansDialog.open()` (src/optimize-plans-dialog.ts:357) на `Promise.resolve(this.preview(false)).then(() => this.run())`, то есть открытие превью сразу запускает запись. В фейковом порту `present()` возвращает `undefined`, поэтому `preview()` выполняется синхронно (строки 320–321). Старый тест вызывал `dialog.open()` без `await` и ждал одну микрозадачу через `await Promise.resolve()`. При мутанте за этот тик `run()` успевает дойти только до `await this.port.present()` (строка 426). Проверка `calls.commit` оставалась пустой, затем срабатывал клик «Отмена» с `state.dialog = null`. После этого `run()` выходил на проверке владения/операции раньше `commit()`, и мутант не обнаруживался. Новый тест делает `await dialog.open()`. В нормальном коде это ожидание завершения превью. При мутанте это ожидание всей цепочки `run()` до `commit()` (строка 435) включительно, и проверка `deepEqual(calls.commit, [])` падает. Я разобрал реестр мутантов (scripts/mutation-registry.mjs:10636–10650), реализацию `preview`/`open`/`run` в кандидате, фейковый порт в тесте (строки 84–134; `commit` записывает вызов в `calls.commit`) и сам diff.",
+          "analysis": [
+            {
+              "topic": "Причина ухода мутанта и корректность исправления",
+              "assessment": "Диагноз исполнителя верен. Старый тест зависел от точного числа микрозадач и успевал проверить и закрыть диалог раньше, чем мутантный `run()` доходил до записи. `await dialog.open()` убирает эту зависимость от тайминга: проверка выполняется после всего, что запустило открытие. Для нормального кода поведение теста не меняется: `open()` возвращает `undefined` или promise от `present().then(calculate)`, и `await` корректно ждёт оба варианта. Проверка «превью открыто и пригодно для записи» перенесена после проверки отсутствия записи. При мутанте это важно: после `commit` диалог переходит в фазу result, и упасть должна именно проверка записи, а не проверка состояния. Порядок выбран осознанно.",
+              "evidence": "src/optimize-plans-dialog.ts:285–322 (`preview` синхронен, если `present()` → undefined), 357 (`open`), 405–441 (`run`: `await present()` → `owns`/`operation` → `commit`); scripts/mutation-registry.mjs:10645–10648; test/optimize-plans-dialog.test.mjs:121–125 (`commit` записывает вызов), diff строк 273–281."
+            },
+            {
+              "topic": "Сохранение исходного смысла теста",
+              "assessment": "Обе части проверки на месте: «открытие не пишет» и «Отмена закрывает диалог без записи». Название теста не менялось, поэтому `--test-name-pattern=\"preview never writes\"` в guard реестра по-прежнему находит этот тест. Расширять мутационный реестр не понадобилось.",
+              "evidence": "test/optimize-plans-dialog.test.mjs:273–283; guard в scripts/mutation-registry.mjs:10639–10641."
+            },
+            {
+              "topic": "Взаимодействие с остальным кандидатом",
+              "assessment": "Изменение затрагивает только тестовый файл, и других тестов diff не касается. Задачи #1519 и #1529 переиспользованы с принятым ревью, в эту часть batch они не входят и с диалогом оптимизации не пересекаются.",
+              "evidence": "batch.changes: единственный коммит d1f1ba4f, changedFiles = test/optimize-plans-dialog.test.mjs."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Необязательно. Можно добавить короткий комментарий у `await dialog.open()`: ожидание всего promise нужно, чтобы поймать отложенный `run()` после `await present()`. Иначе при будущей «оптимизации» его могут снова заменить на один тик микрозадачи. Цена — одна строка комментария."
+          ],
+          "boundaries": "Анализ выполнен только чтением кода: тесты и mutation-gate я не запускал. Сценарий мутанта я разобрал вручную по исходникам кандидата 102a12eb. Результаты исполнителя (мутант пойман 1/1, файл 52/52) использованы как контекст; это не моя проверка. Полный шард 5/7, по словам исполнителя, не прогонялся; в пакете это не проверялось. Задачи #1519 и #1529 повторно не разбирались (reused)."
+        },
+        "usage": {
+          "input_tokens": 18,
+          "cache_creation_input_tokens": 31886,
+          "cache_read_input_tokens": 173355,
+          "output_tokens": 4397,
+          "output_tokens_details": {
+            "thinking_tokens": 652
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 31886,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 690,
+              "cache_read_input_tokens": 27027,
+              "cache_creation_input_tokens": 6580,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 6580
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Пакетное код-ревью ship перед v1.86.1-beta.5 — принято\n\n## Вывод\n\nЗадача #1535 исправляет тест, через который проходил мутант `near-axis-optimize-confirmation-bypassed`. Тест теперь ждёт полного завершения `open()` и только после этого проверяет, что записи не было. Код продукта не менялся, поэтому регрессия для пользователя беты исключена. По коду видно, что мутант (open → preview → run) теперь неизбежно вызывает `commit` до проверки, и тест его ловит. Блокеров нет.\n\n## Понимание решения\n\nНочной мутационный прогон, часть 5/7, нашёл сбежавшего мутанта. Он подменяет `OptimizePlansDialog.open()` (src/optimize-plans-dialog.ts:357) на `Promise.resolve(this.preview(false)).then(() => this.run())`, то есть открытие превью сразу запускает запись. В фейковом порту `present()` возвращает `undefined`, поэтому `preview()` выполняется синхронно (строки 320–321). Старый тест вызывал `dialog.open()` без `await` и ждал одну микрозадачу через `await Promise.resolve()`. При мутанте за этот тик `run()` успевает дойти только до `await this.port.present()` (строка 426). Проверка `calls.commit` оставалась пустой, затем срабатывал клик «Отмена» с `state.dialog = null`. После этого `run()` выходил на проверке владения/операции раньше `commit()`, и мутант не обнаруживался. Новый тест делает `await dialog.open()`. В нормальном коде это ожидание завершения превью. При мутанте это ожидание всей цепочки `run()` до `commit()` (строка 435) включительно, и проверка `deepEqual(calls.commit, [])` падает. Я разобрал реестр мутантов (scripts/mutation-registry.mjs:10636–10650), реализацию `preview`/`open`/`run` в кандидате, фейковый порт в тесте (строки 84–134; `commit` записывает вызов в `calls.commit`) и сам diff.\n\n## Разбор решения\n\n### Причина ухода мутанта и корректность исправления\n\nДиагноз исполнителя верен. Старый тест зависел от точного числа микрозадач и успевал проверить и закрыть диалог раньше, чем мутантный `run()` доходил до записи. `await dialog.open()` убирает эту зависимость от тайминга: проверка выполняется после всего, что запустило открытие. Для нормального кода поведение теста не меняется: `open()` возвращает `undefined` или promise от `present().then(calculate)`, и `await` корректно ждёт оба варианта. Проверка «превью открыто и пригодно для записи» перенесена после проверки отсутствия записи. При мутанте это важно: после `commit` диалог переходит в фазу result, и упасть должна именно проверка записи, а не проверка состояния. Порядок выбран осознанно.\n\nОснование: src/optimize-plans-dialog.ts:285–322 (`preview` синхронен, если `present()` → undefined), 357 (`open`), 405–441 (`run`: `await present()` → `owns`/`operation` → `commit`); scripts/mutation-registry.mjs:10645–10648; test/optimize-plans-dialog.test.mjs:121–125 (`commit` записывает вызов), diff строк 273–281.\n\n### Сохранение исходного смысла теста\n\nОбе части проверки на месте: «открытие не пишет» и «Отмена закрывает диалог без записи». Название теста не менялось, поэтому `--test-name-pattern=\"preview never writes\"` в guard реестра по-прежнему находит этот тест. Расширять мутационный реестр не понадобилось.\n\nОснование: test/optimize-plans-dialog.test.mjs:273–283; guard в scripts/mutation-registry.mjs:10639–10641.\n\n### Взаимодействие с остальным кандидатом\n\nИзменение затрагивает только тестовый файл, и других тестов diff не касается. Задачи #1519 и #1529 переиспользованы с принятым ревью, в эту часть batch они не входят и с диалогом оптимизации не пересекаются.\n\nОснование: batch.changes: единственный коммит d1f1ba4f, changedFiles = test/optimize-plans-dialog.test.mjs.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательно. Можно добавить короткий комментарий у `await dialog.open()`: ожидание всего promise нужно, чтобы поймать отложенный `run()` после `await present()`. Иначе при будущей «оптимизации» его могут снова заменить на один тик микрозадачи. Цена — одна строка комментария.\n\n## Границы анализа\n\nАнализ выполнен только чтением кода: тесты и mutation-gate я не запускал. Сценарий мутанта я разобрал вручную по исходникам кандидата 102a12eb. Результаты исполнителя (мутант пойман 1/1, файл 52/52) использованы как контекст; это не моя проверка. Полный шард 5/7, по словам исполнителя, не прогонялся; в пакете это не проверялось. Задачи #1519 и #1529 повторно не разбирались (reused).\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 2725feedd276c5c1c19d9223c99b1adcdefefaa1 → 102a12eb144d923bfb8b350b4e15390369677986\n\n## Переданный контекст исполнителя\n\nЗамороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: #1535.\n\nКоммиты: d1f1ba4f226bc1c0a15b605e97530c098b45ce5b.\n\nРанее принятое ревью сохранено для задач: #1519, #1529.\n\n</details>\n",
+        "createdAt": "2026-11-23T20:36:52.746Z",
+        "artifactId": 14859803401,
+        "runId": 45260863392,
+        "runAttempt": 1,
+        "completedAt": "2026-11-23T20:36:56Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45260863392"
+      }
     }
   }
 }
