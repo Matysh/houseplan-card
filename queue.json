@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23390,
+  "revision": 23391,
   "nextTicket": 669,
   "nextFence": 668,
   "tasks": {
@@ -5901,157 +5901,25 @@
     },
     "1549": {
       "issue": 1549,
+      "branch": "codex/1549-current-optimize-preview",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1549-current-optimize-preview",
-      "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 667,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795523137865,
-      "reviewEntry": 2,
-      "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41",
-      "changedFiles": [
-        "demo/smoke_hide_room_names.mjs",
-        "src/optimize-plans-dialog.ts",
-        "test/optimize-plans-dialog.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795522770693,
-        "entry": 1,
-        "detail": "Поведение: test/beta3-geometry-repairs.test.mjs: failed; Поведение: test/build-identity.test.mjs: failed; Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/coincident-partitions.test.mjs: failed; Поведение: test/color-picker.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: cancelled; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: hide room names: Подготовка не завершена успешно; Браузер: iso wall transparency: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
-        "eventId": "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return:return:1549"
-      },
-      "s6": {
-        "id": "20261124T122557488-ac092820",
-        "name": "Тесты для задачи #1549 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T122557488-ac092820/report.json",
-        "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
-        "status": "passed",
-        "finishedAt": "2026-11-24T12:32:00.178Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "74a1f34a97cb4e307401db06ad9a96d1ef88966a",
+      "mergedSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
+      "mergedAt": 1795523739256,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1549:2:6e1d1429fef7037a78149463bc2fadb189727d41:74a1f34a97cb4e307401db06ad9a96d1ef88966a",
-      "reviewMaterial": {
-        "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
-        "expectedBase": "74a1f34a97cb4e307401db06ad9a96d1ef88966a",
-        "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1549:2:6e1d1429fef7037a78149463bc2fadb189727d41:74a1f34a97cb4e307401db06ad9a96d1ef88966a",
-        "eventId": "github:45394443254:1:tick:0:review-retry",
-        "at": 1795523550600,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1549,
-        "requestId": "review:1549:2:6e1d1429fef7037a78149463bc2fadb189727d41:74a1f34a97cb4e307401db06ad9a96d1ef88966a",
-        "kind": "code",
-        "base": "74a1f34a97cb4e307401db06ad9a96d1ef88966a",
-        "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
-        "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1549,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1549",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление точечное и подходит для задачи. Предпросмотр без согласия на удаление позиций («Оптимизировать планы» при открытии, после «Проверить снова» или после сброса согласия) больше не падает с `optimize_preview_changed`, если за кадр «Проверяем планы» сменилась пара конфигурации и расположения или отпечаток реестра. Расчёт берёт актуальную пару, и опубликованный предпросмотр привязан к её `source`, поэтому проверки Apply (`sourceMatches` в `run()` и guard в `commit`) работают как раньше. Если пользователь выбрал удаление позиций (live или invalid), смена источника за кадр по-прежнему приводит к отказу, то есть согласие не переносится на новые данные. Проверки полномочий, соединения и владельца операции остались прежними. Исправление в smoke-сценарии меняет только ожидание на общий `window.__hpTest.settled()`, который этот же файл уже использует ниже. Блокеров нет.",
-          "understanding": "Проблема. `preview()` при старте сохраняет `config` и `source`, показывает состояние `checking` и ждёт `present()`, то есть `updateComplete` плюс два rAF. До исправления `calculate()` требовал, чтобы сохранённый `source` полностью совпадал с текущим `port.source()`. В `ownersFingerprint` входят ревизия и ключи HA-реестра, `stateIds` и зоны устройств. После сохранения первого пространства реестр и состояния часто обновляются, поэтому при первом открытии за этот кадр менялся отпечаток, и пользователь видел ложный отказ «контекст изменился».\n\nПосле исправления `calculate()` синхронно читает `currentConfig`, `currentSource` и `canWrite`. Отказ теперь возникает, если нет права на запись, нет конфигурации, план не готов (`planReady`) или выбрано удаление позиций при несовпадении источника. В остальных случаях `calculatePreview` получает `currentConfig` и `currentSource`. `layout()` и `referenceContext()` внутри него тоже читаются синхронно в той же задаче, поэтому конфигурация, расположение, реестр и `source` образуют согласованный снимок. У старого кода здесь был иной риск: `config` брался старым, а layout текущим, но сравнение источников делало это безопасным.\n\nРазобранные пути:\n- `open()` → `preview(false)`;\n- `toggleLivePositions` и `toggleInvalidPositions` → `refreshChanged` → `preview(false,false)`;\n- `retryRegistry` → `preview(false,false,replacesUndo)`;\n- `run()`: сравнение `d.source` с текущим источником и guard, передаваемый в `commitPlanOptimization`;\n- `owns` и `publish`: владение операцией проверяется по старому `pending.source`, то есть по соединению и claim `ConfigWriteContext`, а не по ревизиям;\n- ленивый загрузчик `optimize-plans-loader.ts`: он сравнивает только соединение и полномочия, поэтому отдельного ложного отказа при холодной загрузке чанка не даёт;\n- реальный порт `optimizeSource` в `houseplan-editor-runtime.ts:1190-1203`.",
-          "analysis": [
-            {
-              "topic": "Согласованность пары, по которой строится предпросмотр",
-              "assessment": "Надёжно. Опубликованное состояние содержит `config`, `layout`, `report` и `source` из одного синхронного чтения. Значит, Apply запишет ровно ту пару, которая показана, и сравнит её с тем `source`, по которому она посчитана. Это сохраняет главный инвариант модуля: «commit не может отличаться от предпросмотра».",
-              "evidence": "`src/optimize-plans-dialog.ts:309-323`: `currentConfig` и `currentSource` читаются до `calculatePreview`, а `layout()` и `referenceContext()` читаются внутри него без await (332-339). В `run()` (422) сравниваются `d.source` и `port.source()`. Guard `commit` (443-445) получает `source: d.source`."
-            },
-            {
-              "topic": "Согласие на удаление позиций не переносится на новые данные",
-              "assessment": "Требование ТЗ выполнено. При `removeLive || removeInvalid` и смене источника остаётся прежний отказ `optimize_preview_changed`, а `referenceContext` с согласием не вызывается. Это согласуется с `retryRegistry`, который сам сбрасывает согласие (403). Переход из состояния с согласием в состояние без согласия (`toggle` → false,false) идёт по ветке нового чтения, и это правильно: согласие там не используется.",
-              "evidence": "`src/optimize-plans-dialog.ts:312,315-316`. Тест `Optimize preview refuses to carry removal consent across source changes during checking` проверяет фазу `failure`, код и пустые `referenceContext` и `commit`."
-            },
-            {
-              "topic": "Проверки полномочий и владения",
-              "assessment": "Не ослаблены. Перед любым расчётом проверяется `owns(source)` (claim `_configWriteGuard` и соединение) и что показан именно этот `pending`. `canWrite` теперь читается один раз, поэтому код отказа (`unauthorized` или `changed`) согласован с самим условием. Новая защита от `!currentConfig` и `!planReady()` закрывает случай, когда конфигурация пропала за кадр: раньше `calculatePreview` упал бы на сохранённой старой паре или посчитал бы её.",
-              "evidence": "`src/optimize-plans-dialog.ts:179-181, 307-308, 311, 315-318`. `src/houseplan-card.ts:10560-10563`: claim не зависит от ревизий конфигурации, поэтому смена пары не делает `owns` ложным."
-            },
-            {
-              "topic": "Регрессионные тесты",
-              "assessment": "Тесты адресные и воспроизводят исходный сценарий: смена конфигурации, ревизий и `ownersFingerprint` между `checking` и концом кадра. Первый тест проверяет, что предпросмотр построен по новой паре (`spaces` = ['b']) и привязан к текущему `source`, а записи не было. Фейковый порт строит `source` из того же `state`, поэтому проверка содержательная.",
-              "evidence": "`test/optimize-plans-dialog.test.mjs:1148-1179`, `fakePort` в 84-134 (`source()` читает `state.configRev`, `layoutRev`, `ownersFingerprint` и `config`)."
-            },
-            {
-              "topic": "Smoke `smoke_hide_room_names`",
-              "assessment": "Замена локального `settle()` на общий `window.__hpTest.settled()` на первом кадре соответствует ТЗ: дождаться готовности сцены и проверить те же подписи, масштаб и значок зоны. Утверждения сценария не изменились. Этот хелпер уже используется в том же файле (строка 122), поэтому новых зависимостей нет.",
-              "evidence": "`demo/smoke_hide_room_names.mjs:36, 38-45, 122`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Можно смягчить отказ, когда во время кадра проверки меняется источник, а пользователь уже выбрал удаление. Сейчас он видит терминальный `failure` без отчёта и должен закрыть и заново открыть диалог. Вместо этого можно сделать так же, как `refreshChanged`: построить свежий предпросмотр без согласия (`preview(false,false,replacesUndo)`) и показать тост `gs.optimize_preview_changed`. Требование «нужно новое согласие» по-прежнему выполняется, а пользователь сразу видит актуальный отчёт. Цена — ещё одна ветка в `calculate()` и тест. Поведение не регрессирует, оно совпадает с прежним, поэтому это только пожелание."
-          ],
-          "boundaries": "Сборку, тесты и браузерные сценарии сам не запускал. Использован результат S6 «Тесты для задачи #1549 (перед ревью)» (run `20261124T122557488-ac092820`, статус passed, материал `8eba09fb`). Заявления из issue о 117 Node-кейсах и HA first-run на `03e62954ba` не перепроверял. По исходникам изучены:\n- `src/optimize-plans-dialog.ts`: `preview`, `calculatePreview`, `toggle*`, `refreshChanged`, `retryRegistry`, `run`, `owns`, `publish`;\n- `src/optimize-source.ts`;\n- `src/optimize-plans-loader.ts`: `open` и холодная загрузка;\n- порт `optimizeSource` и `present()` в `src/houseplan-editor-runtime.ts`;\n- `_configWriteGuard` в `src/houseplan-card.ts`;\n- `fakePort` и новые тесты;\n- smoke-файл целиком.\n\nРеальную последовательность обновлений реестра в HA 2026.11.0 после сохранения первого пространства по коду не воспроизводил. Причину отказа (смена `ownersFingerprint` или ревизий за кадр) принимаю по описанию issue и по составу `optimizeSource`."
-        },
-        "usage": {
-          "input_tokens": 26,
-          "cache_creation_input_tokens": 46854,
-          "cache_read_input_tokens": 302226,
-          "output_tokens": 7895,
-          "output_tokens_details": {
-            "thinking_tokens": 2327
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 46854,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 935,
-              "cache_read_input_tokens": 36449,
-              "cache_creation_input_tokens": 10405,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 10405
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление точечное и подходит для задачи. Предпросмотр без согласия на удаление позиций («Оптимизировать планы» при открытии, после «Проверить снова» или после сброса согласия) больше не падает с `optimize_preview_changed`, если за кадр «Проверяем планы» сменилась пара конфигурации и расположения или отпечаток реестра. Расчёт берёт актуальную пару, и опубликованный предпросмотр привязан к её `source`, поэтому проверки Apply (`sourceMatches` в `run()` и guard в `commit`) работают как раньше. Если пользователь выбрал удаление позиций (live или invalid), смена источника за кадр по-прежнему приводит к отказу, то есть согласие не переносится на новые данные. Проверки полномочий, соединения и владельца операции остались прежними. Исправление в smoke-сценарии меняет только ожидание на общий `window.__hpTest.settled()`, который этот же файл уже использует ниже. Блокеров нет.\n\n## Понимание решения\n\nПроблема. `preview()` при старте сохраняет `config` и `source`, показывает состояние `checking` и ждёт `present()`, то есть `updateComplete` плюс два rAF. До исправления `calculate()` требовал, чтобы сохранённый `source` полностью совпадал с текущим `port.source()`. В `ownersFingerprint` входят ревизия и ключи HA-реестра, `stateIds` и зоны устройств. После сохранения первого пространства реестр и состояния часто обновляются, поэтому при первом открытии за этот кадр менялся отпечаток, и пользователь видел ложный отказ «контекст изменился».\n\nПосле исправления `calculate()` синхронно читает `currentConfig`, `currentSource` и `canWrite`. Отказ теперь возникает, если нет права на запись, нет конфигурации, план не готов (`planReady`) или выбрано удаление позиций при несовпадении источника. В остальных случаях `calculatePreview` получает `currentConfig` и `currentSource`. `layout()` и `referenceContext()` внутри него тоже читаются синхронно в той же задаче, поэтому конфигурация, расположение, реестр и `source` образуют согласованный снимок. У старого кода здесь был иной риск: `config` брался старым, а layout текущим, но сравнение источников делало это безопасным.\n\nРазобранные пути:\n- `open()` → `preview(false)`;\n- `toggleLivePositions` и `toggleInvalidPositions` → `refreshChanged` → `preview(false,false)`;\n- `retryRegistry` → `preview(false,false,replacesUndo)`;\n- `run()`: сравнение `d.source` с текущим источником и guard, передаваемый в `commitPlanOptimization`;\n- `owns` и `publish`: владение операцией проверяется по старому `pending.source`, то есть по соединению и claim `ConfigWriteContext`, а не по ревизиям;\n- ленивый загрузчик `optimize-plans-loader.ts`: он сравнивает только соединение и полномочия, поэтому отдельного ложного отказа при холодной загрузке чанка не даёт;\n- реальный порт `optimizeSource` в `houseplan-editor-runtime.ts:1190-1203`.\n\n## Разбор решения\n\n### Согласованность пары, по которой строится предпросмотр\n\nНадёжно. Опубликованное состояние содержит `config`, `layout`, `report` и `source` из одного синхронного чтения. Значит, Apply запишет ровно ту пару, которая показана, и сравнит её с тем `source`, по которому она посчитана. Это сохраняет главный инвариант модуля: «commit не может отличаться от предпросмотра».\n\nОснование: `src/optimize-plans-dialog.ts:309-323`: `currentConfig` и `currentSource` читаются до `calculatePreview`, а `layout()` и `referenceContext()` читаются внутри него без await (332-339). В `run()` (422) сравниваются `d.source` и `port.source()`. Guard `commit` (443-445) получает `source: d.source`.\n\n### Согласие на удаление позиций не переносится на новые данные\n\nТребование ТЗ выполнено. При `removeLive || removeInvalid` и смене источника остаётся прежний отказ `optimize_preview_changed`, а `referenceContext` с согласием не вызывается. Это согласуется с `retryRegistry`, который сам сбрасывает согласие (403). Переход из состояния с согласием в состояние без согласия (`toggle` → false,false) идёт по ветке нового чтения, и это правильно: согласие там не используется.\n\nОснование: `src/optimize-plans-dialog.ts:312,315-316`. Тест `Optimize preview refuses to carry removal consent across source changes during checking` проверяет фазу `failure`, код и пустые `referenceContext` и `commit`.\n\n### Проверки полномочий и владения\n\nНе ослаблены. Перед любым расчётом проверяется `owns(source)` (claim `_configWriteGuard` и соединение) и что показан именно этот `pending`. `canWrite` теперь читается один раз, поэтому код отказа (`unauthorized` или `changed`) согласован с самим условием. Новая защита от `!currentConfig` и `!planReady()` закрывает случай, когда конфигурация пропала за кадр: раньше `calculatePreview` упал бы на сохранённой старой паре или посчитал бы её.\n\nОснование: `src/optimize-plans-dialog.ts:179-181, 307-308, 311, 315-318`. `src/houseplan-card.ts:10560-10563`: claim не зависит от ревизий конфигурации, поэтому смена пары не делает `owns` ложным.\n\n### Регрессионные тесты\n\nТесты адресные и воспроизводят исходный сценарий: смена конфигурации, ревизий и `ownersFingerprint` между `checking` и концом кадра. Первый тест проверяет, что предпросмотр построен по новой паре (`spaces` = ['b']) и привязан к текущему `source`, а записи не было. Фейковый порт строит `source` из того же `state`, поэтому проверка содержательная.\n\nОснование: `test/optimize-plans-dialog.test.mjs:1148-1179`, `fakePort` в 84-134 (`source()` читает `state.configRev`, `layoutRev`, `ownersFingerprint` и `config`).\n\n### Smoke `smoke_hide_room_names`\n\nЗамена локального `settle()` на общий `window.__hpTest.settled()` на первом кадре соответствует ТЗ: дождаться готовности сцены и проверить те же подписи, масштаб и значок зоны. Утверждения сценария не изменились. Этот хелпер уже используется в том же файле (строка 122), поэтому новых зависимостей нет.\n\nОснование: `demo/smoke_hide_room_names.mjs:36, 38-45, 122`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Можно смягчить отказ, когда во время кадра проверки меняется источник, а пользователь уже выбрал удаление. Сейчас он видит терминальный `failure` без отчёта и должен закрыть и заново открыть диалог. Вместо этого можно сделать так же, как `refreshChanged`: построить свежий предпросмотр без согласия (`preview(false,false,replacesUndo)`) и показать тост `gs.optimize_preview_changed`. Требование «нужно новое согласие» по-прежнему выполняется, а пользователь сразу видит актуальный отчёт. Цена — ещё одна ветка в `calculate()` и тест. Поведение не регрессирует, оно совпадает с прежним, поэтому это только пожелание.\n\n## Границы анализа\n\nСборку, тесты и браузерные сценарии сам не запускал. Использован результат S6 «Тесты для задачи #1549 (перед ревью)» (run `20261124T122557488-ac092820`, статус passed, материал `8eba09fb`). Заявления из issue о 117 Node-кейсах и HA first-run на `03e62954ba` не перепроверял. По исходникам изучены:\n- `src/optimize-plans-dialog.ts`: `preview`, `calculatePreview`, `toggle*`, `refreshChanged`, `retryRegistry`, `run`, `owns`, `publish`;\n- `src/optimize-source.ts`;\n- `src/optimize-plans-loader.ts`: `open` и холодная загрузка;\n- порт `optimizeSource` и `present()` в `src/houseplan-editor-runtime.ts`;\n- `_configWriteGuard` в `src/houseplan-card.ts`;\n- `fakePort` и новые тесты;\n- smoke-файл целиком.\n\nРеальную последовательность обновлений реестра в HA 2026.11.0 после сохранения первого пространства по коду не воспроизводил. Причину отказа (смена `ownersFingerprint` или ревизий за кадр) принимаю по описанию issue и по составу `optimizeSource`.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 74a1f34a97cb4e307401db06ad9a96d1ef88966a → 8eba09fb2b2326e9a0d8bdca80292f8341612acb\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-24T12:34:52.290Z",
-        "artifactId": 14919514176,
-        "runId": 45394483268,
-        "runAttempt": 1,
-        "completedAt": "2026-11-24T12:34:58Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45394483268",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "74a1f34a97cb4e307401db06ad9a96d1ef88966a"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1550": {
@@ -6686,19 +6554,7 @@
   "waiting": [
     1551
   ],
-  "active": {
-    "issue": 1549,
-    "worker": "finish",
-    "token": "667:finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8:finish:1:admit",
-    "fence": 667,
-    "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
-    "expectedBase": "74a1f34a97cb4e307401db06ad9a96d1ef88966a",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795523141764,
-    "expiresAt": 1795527336438,
-    "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41",
-    "reviewRequest": "review:1549:2:6e1d1429fef7037a78149463bc2fadb189727d41:74a1f34a97cb4e307401db06ad9a96d1ef88966a"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6719,198 +6575,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "finish:fcafa4dc-9352-4a4a-ada7-19cee3c0a9ee:finish:2:synchronized": {
-      "digest": "af77713936d80acb962b25184ed455d0b32b2becd9472efe85d6968a8db9c436",
-      "issue": 1549
-    },
-    "finish:fcafa4dc-9352-4a4a-ada7-19cee3c0a9ee:finish:3:automation-pending": {
-      "digest": "835710025a58838dde5d4b85ef9aa5d05afbb2f7164931db2fafc039cc8a2fef",
-      "issue": 1549
-    },
-    "finish:90731da4-b0ff-4e7b-a41f-ae96be4aedb0": {
-      "digest": "cc3af7f77005ed2b7a582e9ba06fbfc45a501afe461d7764c43ccd8c11af2bd6",
-      "issue": 1549
-    },
-    "finish:f279ed2e-3a2b-473d-8658-228119986c10": {
-      "digest": "75ef5f638a8a39df4dd79d40585bb8aeefcf77f85465560b242a1bf7f12aa182",
-      "issue": 1549
-    },
-    "finish:8abe036d-3d18-4b22-bba0-82574f5d5336": {
-      "digest": "5ee58846aea623b5876ba28a96c41940e02dc75da485cb7766ee32e28748c235",
-      "issue": 1549
-    },
-    "finish:0d6bca03-6c4d-4c5b-a751-59ca6f5d3bfe": {
-      "digest": "ad8faa7826089da326f73aa9102ccfb4afe618060f6ffb8fb88ca43e31f09d67",
-      "issue": 1549
-    },
-    "finish:e1deefee-d716-4cc2-8cc9-86bdd16bb34d": {
-      "digest": "2a9e9d639757a2a9a8d35b298420ffc761015b6f46f6fde40ffac1263e24e955",
-      "issue": 1549
-    },
-    "finish:4f2d80c3-59da-4ea2-ba07-1e2dedeb0b81": {
-      "digest": "98f753ac20750f9f94fe4fb72884ec571cf6b810a1329890eea6f02a3aa961d1",
-      "issue": 1549
-    },
-    "finish:d1512908-ad49-4380-b39b-32836f37da3e": {
-      "digest": "b2c295d7f803d54b3230b80488938d1f9fc560a55b5a9bd68fc9d5969f859922",
-      "issue": 1549
-    },
-    "finish:922c4dd7-6e33-474b-ba13-d2d391a0a220": {
-      "digest": "8d45a3b102eda653667bf4f1554660f423cffaf3b894e7b051674c1f995dbb5a",
-      "issue": 1549
-    },
-    "finish:da2b41f2-0e9f-4cd8-b760-bf539bb3162b": {
-      "digest": "e680fda799b0b877d8f9fd1ef06f57d46f822c1e52006d7c7048cef422592bf4",
-      "issue": 1549
-    },
-    "finish:fb6c0d3d-2b38-4c8a-b8f5-5be9040c699f": {
-      "digest": "c36a3bf0e597a906f74fa5fc872250ac86dfd4058f51b732e01b1de283b1b342",
-      "issue": 1549
-    },
-    "finish:272f613b-aef1-4368-ae4b-de87bb9531e1": {
-      "digest": "d5620f7a195baa45b83c11edf40c04a3b60efedeaf90847e2e3ade0b6c9036fb",
-      "issue": 1549
-    },
-    "finish:51c9d7e7-16bc-497a-9a3e-5a73d0eb999b": {
-      "digest": "dae2d6b750d9982e84a7180a369bd3265fe9324f9dae5f63b5543cd2b9b9c8f8",
-      "issue": 1549
-    },
-    "finish:18aca2ee-5e1b-497a-b63e-762418743c87": {
-      "digest": "04843985449b50cd9d1b55fdd9d0689c72eca68452d9386d981d6d83310bb95d",
-      "issue": 1549
-    },
-    "finish:a16f836b-d5a5-43cc-9ad0-6197daaa665a": {
-      "digest": "ec5e26ec6421baf496bc0ae2861768434c308ff4dea03dff8e913af4c914edda",
-      "issue": 1549
-    },
-    "finish:b079be84-f727-4dea-9a08-57c1093b0a50": {
-      "digest": "bd652c030c87cbaf10ddf547dc9c7a12ee869e635851978b1a72323124d52ae4",
-      "issue": 1549
-    },
-    "finish:5161ddb7-325a-446b-862f-a27f5ddfb8f4": {
-      "digest": "b1048e777fd3ab8d1e4f3c86bb4c15da53d79092bfa687424802dd19bc14cbf0",
-      "issue": 1549
-    },
-    "finish:c1753467-eed1-4e78-9476-fffda33a9ee0": {
-      "digest": "c7f976074dd9a863125144ee4c9e5ceedb02d5a0c1952383e7d8e70c56030e78",
-      "issue": 1549
-    },
-    "finish:bdcc28fa-9b26-4928-b921-4d8ac831e73e": {
-      "digest": "2a13c3b8ab43ed3b97c85a1403bd18dbfefb0345b1d2daec767070b73d88e550",
-      "issue": 1549
-    },
-    "finish:15736697-2ea1-44ba-80f9-e876a395f97a": {
-      "digest": "ef1c3563e1e5f478838ff7a1f196dcfa9fa4c661effe8533702a63da93cf991a",
-      "issue": 1549
-    },
-    "finish:5c00e5ad-072a-4b1b-81c1-34902da297bf": {
-      "digest": "b48e0e86b231465d205085b1e70efd4dae090f6728fe9e493cb612dfa7825d9d",
-      "issue": 1549
-    },
-    "finish:2bd96dfc-edee-4585-b7b0-6b1f0a0efb45": {
-      "digest": "2683ac3f022a51a19c24362e96c45f96948540dbbc62291859d4ace87a1f04aa",
-      "issue": 1549
-    },
-    "finish:ed89ee47-691a-443d-9434-117fe18b0833": {
-      "digest": "dd01fc5cec0b732346e89c938a0efa3f80d734e6499f2c7c1daa0ca719225271",
-      "issue": 1549
-    },
-    "finish:b15eb2cb-e331-4225-baba-048e8f38bc22": {
-      "digest": "a470969db00ef14f2328725d9d7932febb480d92bf88279b4e31fb1485e6314a",
-      "issue": 1549
-    },
-    "github:45392117408:1:completions:message:61a3c88f01ea0e58340b7d77aa53f56cef6ff21f8e9c34af7a2bb31904e7e8e0": {
-      "digest": "b94aacbbbe80067962e1bd9d5909b9137b754f179db2193a3f9470b701c741bd",
-      "issue": 1549
-    },
-    "github:45392117408:1:completions:message:fce187a9f98d6466775efca442702318731cc4a211cc203ba0716b099098739b": {
-      "digest": "bf6856181bcb684b0c375b9d4a8bd812e9b7480805a5cf1b9c397c16c5147245",
-      "issue": 1549
-    },
-    "github:45392117408:1:completions:message:5857c4809842a8dca6a65028439ad705e1a480ae21183b0a7cc87a6f7211a99b": {
-      "digest": "9a4dc89d8f21d133e10f5feb7752fc59e0e56a119f6126db4445cacd08e9f6a8",
-      "issue": 1549
-    },
-    "finish:64530d9b-1147-4238-83bc-42dbbd13d65f": {
-      "digest": "7206254f677a862660a69bb5964dd2bed833ad4030b54662b5cfb2ea6a47131a",
-      "issue": 1549
-    },
-    "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return": {
-      "digest": "636b6412e846127eb1d32a70d77e44ea6c883d339b62896aff2e221b45564ff4",
-      "issue": 1549
-    },
-    "github:45393058560:1:completions:notice:1caa14ff8c54f1f1b9795e9c12099af51f875b10872bf0a3c5fafb8b85a6397f": {
-      "digest": "e32826ed12aedd16a5f1df76d0bc375856ba56eee75befe1475dd4ebf198d132",
-      "issue": 1549
-    },
-    "finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8:finish:2:synchronized": {
-      "digest": "ef2d89e565fac7492a7953723087c71ae59457a97ca91727237469ba17bd0206",
-      "issue": 1549
-    },
-    "finish:278288b4-2afe-4ef1-8e93-cf7d258cd6c4": {
-      "digest": "826b9d412215dddc850354f9d97fd97455cd3b3513502328c66a256c18fae892",
-      "issue": 1549
-    },
-    "finish:bb5f9a56-a416-4147-a5fb-fb738171d76a": {
-      "digest": "a2ec32b6c20e132928ded9fcccb632cbd7fbeaac8b7e2f5fee74c56ae98b434a",
-      "issue": 1549
-    },
-    "github:45393673156:1:completions:message:2f5c5abe0dd677a045be5e3c8ae08e377ebe5fb0b00b7c01634ccf47cd481c9a": {
-      "digest": "e8ea3d5d9907966bf1fd1cb3790f49c6e9a1719e25cb9eb160c248acb11435cd",
-      "issue": 1549
-    },
-    "github:45393673156:1:completions:message:bba6c9e0c47866d7fc0e33a9b96c05b2bf22910ad55230f6d7ba3a3da45e36c5": {
-      "digest": "80f300a50d5630cd49b47848a0bfb572ca0c82f8930c2d9d797cb863a3308605",
-      "issue": 1549
-    },
-    "github:45393673156:1:completions:message:2fc66536f1f9821212e6c77ba1b933d9be0f5e4b25f3679001037a7adf414640": {
-      "digest": "abebc5e2dfecb4708b53c40f6c503b99d4eb55de97c51eb4e21e56d6928bbd82",
-      "issue": 1549
-    },
-    "github:45393673156:1:completions:message:d551c3ab9cbeb3f2f19e3eb0799da2d03663351f69b95efd8aa2749a3ab38e46": {
-      "digest": "8c0284518a5e4e8afda879f3b0dceb11eedc6f8c6fcfba84f344d2b748c7a1ba",
-      "issue": 1549
-    },
-    "finish:21584394-4ae9-459b-8fa8-0fc373956f96": {
-      "digest": "d3044bc3e4d411e5eee860809f7e927f93c6fb2c52e8896fb0b8a32dd8982ce7",
-      "issue": 1549
-    },
-    "finish:5c7fe761-88a8-4a13-808b-7cb56eda8bc1": {
-      "digest": "b9c5d7919a479040d36f9ea145614d966b6822f3db62038c61ade99b8011fd00",
-      "issue": 1549
-    },
-    "finish:70fe3807-6764-4ab7-bc2e-6ccbdd427b0c": {
-      "digest": "30b9277661cee92e550865e1f71cdc6c28ab1b77dbfd134bb4c14bf0dcc121c0",
-      "issue": 1549
-    },
-    "finish:8266aa10-f9ce-4efa-88dd-e050479aa1f4": {
-      "digest": "d5c667667b22b74c7b9ad1bdd925577e870c696a8e9b79a72af2a6be7ca4eb53",
-      "issue": 1549
-    },
-    "finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8:finish:3:s6-label": {
-      "digest": "2e13b07c5439ecf8b14a98431f70a0964af0f6933be4443c34a419c4c6545170",
-      "issue": 1549
-    },
-    "finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8:finish:4:review-requested": {
-      "digest": "68d3c4c0ac7cf2b46c1a4c22f4ed4babb88be1a9d5fecd07a2937dc0651d3a1e",
-      "issue": 1549
-    },
-    "github:45394443254:1:tick:0:review-retry": {
-      "digest": "aa117f70363cb4003dd7bab3591c3567821345f7899962da09090efd4754df2d",
-      "issue": 1549
-    },
-    "github:45394443254:1:completions:message:684a0e68e3ebc1d8febbe13056f0ecfadc06df742b4151956d8af5cfa907140b": {
-      "digest": "2b9465d36871ed2a0c397b47e7d6ad8e5e4725445acd2c2e7ca01468ab8f0678",
-      "issue": 1549
-    },
-    "github:45394909694:1:tick:0:review-presentation": {
-      "digest": "f4223f170dd66e2e93de8e8e0b822779d2d6a4624a478796919a5a63a2fd6cfd",
-      "issue": 1549
-    },
-    "github:45394909694:1:tick:0:review-complete": {
-      "digest": "f48a7813e573038c48dcf3b459833901017161d9d9fb0ef59a6f558fa6ba3da9",
-      "issue": 1549
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -6941,85 +6605,6 @@
         "delivered": true
       }
     },
-    "finish:fcafa4dc-9352-4a4a-ada7-19cee3c0a9ee": {
-      "digest": "07c3dccf6c0f763ee39968cb57acf07ccc896387cba21a2215f02a99d9a7236a",
-      "issue": 1549,
-      "message": {
-        "kind": "queued",
-        "issue": 1549,
-        "at": 1795521902481,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228",
-        "delivered": true
-      }
-    },
-    "finish:fcafa4dc-9352-4a4a-ada7-19cee3c0a9ee:finish:1:admit": {
-      "digest": "93c5aa497aef6d5b12c59e9f4a7362861ac5439529fdb553aea2bec9d148f58d",
-      "issue": 1549,
-      "message": {
-        "kind": "admitted",
-        "issue": 1549,
-        "at": 1795521907167,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return:return:1549": {
-      "digest": "636b6412e846127eb1d32a70d77e44ea6c883d339b62896aff2e221b45564ff4",
-      "issue": 1549,
-      "message": {
-        "kind": "return",
-        "issue": 1549,
-        "at": 1795522770693,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795522770693,
-          "entry": 1,
-          "detail": "Поведение: test/beta3-geometry-repairs.test.mjs: failed; Поведение: test/build-identity.test.mjs: failed; Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/coincident-partitions.test.mjs: failed; Поведение: test/color-picker.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: cancelled; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: hide room names: Подготовка не завершена успешно; Браузер: iso wall transparency: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
-          "eventId": "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return:return:1549"
-        },
-        "delivered": true
-      }
-    },
-    "finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8": {
-      "digest": "445f1e75b8aed687c334fa79a95dd76b51d22c5d5803402b5595723a24fe8597",
-      "issue": 1549,
-      "message": {
-        "kind": "queued",
-        "issue": 1549,
-        "at": 1795523137865,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228",
-        "delivered": true
-      }
-    },
-    "finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8:finish:1:admit": {
-      "digest": "7d68fb11e14795c5040e161ea7330d277d7fc2d3da70c215bbc3d32d90897f1c",
-      "issue": 1549,
-      "message": {
-        "kind": "admitted",
-        "issue": 1549,
-        "at": 1795523141764,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:c1254cae-2e76-4292-9c77-82e185c521c8": {
       "digest": "44c4249483463ac9b9b576bb3cf24fe4f2164acf75788fd84729f72f6e9a63aa",
       "issue": 1551,
@@ -7031,36 +6616,6 @@
         "track": "ship",
         "layer": "infra",
         "materialSha": "cbe258c0af6ebbbbbd97d21c7e3dcf504a648104",
-        "delivered": true
-      }
-    },
-    "finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8:finish:3:s6-complete": {
-      "digest": "0e7bf1b665b11b8039a778223bfe0e7286a9132f4e30ea5252d9a2f90d0da7a0",
-      "issue": 1549,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1549,
-        "at": 1795523524590,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
-        "phase": "review",
-        "evidence": {
-          "id": "20261124T122557488-ac092820",
-          "name": "Тесты для задачи #1549 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T122557488-ac092820/report.json",
-          "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
-          "status": "passed",
-          "finishedAt": "2026-11-24T12:32:00.178Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
