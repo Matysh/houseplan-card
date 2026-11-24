@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23023,
+  "revision": 23024,
   "nextTicket": 660,
   "nextFence": 660,
   "tasks": {
@@ -2526,38 +2526,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491"
-      }
-    },
-    "1448": {
-      "issue": 1448,
-      "branch": "codex/1448-power-scheme-identity",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
-      "mergedSha": "98ceda7f4d6517050c929536263c426f0dfbac1d",
-      "mergedAt": 1794695811156,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1449": {
@@ -5916,10 +5884,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
