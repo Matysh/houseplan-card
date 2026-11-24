@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23320,
+  "revision": 23321,
   "nextTicket": 667,
   "nextFence": 666,
   "tasks": {
@@ -5920,7 +5920,18 @@
       ],
       "automationError": "automation-error",
       "automationSince": 1795521928136,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795522770693,
+        "entry": 1,
+        "detail": "Поведение: test/beta3-geometry-repairs.test.mjs: failed; Поведение: test/build-identity.test.mjs: failed; Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/coincident-partitions.test.mjs: failed; Поведение: test/color-picker.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: cancelled; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: hide room names: Подготовка не завершена успешно; Браузер: iso wall transparency: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
+        "eventId": "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return:return:1549"
+      }
     },
     "1550": {
       "issue": 1550,
@@ -6517,18 +6528,7 @@
   "waiting": [
     1550
   ],
-  "active": {
-    "issue": 1549,
-    "worker": "finish",
-    "token": "665:finish:fcafa4dc-9352-4a4a-ada7-19cee3c0a9ee:finish:1:admit",
-    "fence": 665,
-    "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228",
-    "expectedBase": "3e883db04d9ed6689cf6bfe5352175c5c9166572",
-    "phase": "testing",
-    "admittedAt": 1795521907167,
-    "expiresAt": 1795523033319,
-    "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6666,6 +6666,10 @@
       "digest": "7206254f677a862660a69bb5964dd2bed833ad4030b54662b5cfb2ea6a47131a",
       "issue": 1549
     },
+    "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return": {
+      "digest": "636b6412e846127eb1d32a70d77e44ea6c883d339b62896aff2e221b45564ff4",
+      "issue": 1549
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6736,6 +6740,26 @@
         "layer": "product",
         "materialSha": "35874b1ee2c4e6ae71f7a07cde5cac16029ffc61",
         "delivered": true
+      }
+    },
+    "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return:return:1549": {
+      "digest": "636b6412e846127eb1d32a70d77e44ea6c883d339b62896aff2e221b45564ff4",
+      "issue": 1549,
+      "message": {
+        "kind": "return",
+        "issue": 1549,
+        "at": 1795522770693,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795522770693,
+          "entry": 1,
+          "detail": "Поведение: test/beta3-geometry-repairs.test.mjs: failed; Поведение: test/build-identity.test.mjs: failed; Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/coincident-partitions.test.mjs: failed; Поведение: test/color-picker.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: cancelled; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: hide room names: Подготовка не завершена успешно; Браузер: iso wall transparency: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
+          "eventId": "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return:return:1549"
+        }
       }
     }
   },
