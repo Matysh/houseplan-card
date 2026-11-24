@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23835,
+  "revision": 23836,
   "nextTicket": 678,
   "nextFence": 678,
   "tasks": {
@@ -6596,18 +6596,6 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
-      }
-    },
-    "dev-build:45492718074:1:1555": {
-      "digest": "da5668b99370550f3ae67dd48afd81d247acf4166eb3bcd46bc3f492d6842822",
-      "issue": 1555,
-      "message": {
-        "kind": "dev-build",
-        "issue": 1555,
-        "at": 1795556368973,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "978d5cade9349fb9d4b286de5a2a6ccf8b3dca6c"
       }
     }
   },
