@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1378,
+  "revision": 1379,
   "active": "v1.86.1-beta.7",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -250195,7 +250195,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.1-beta.7",
@@ -258157,7 +258157,8 @@
         "selectionDigest": "ce6db51cdf6486a9615d1961a8c62368c11e6e57be226f74899fb5a7a48b6418",
         "status": "not-required",
         "inventoryComplete": true
-      }
+      },
+      "tag": "v1.86.1-beta.7"
     }
   },
   "published": {
@@ -264348,7 +264349,8 @@
     "beta7-publish:3d959edbc2135c23a033b6ab826273ebfb53aed5:metrics": "abb962c43dba30f1fa04af9348d5d1713285bf453bf8e832672d73b203cebc7e",
     "beta7-publish:3d959edbc2135c23a033b6ab826273ebfb53aed5:prepared:24ded1cb-4530-4fb9-8a62-1f328f712d0a": "3e2b303d44f752ca7d00314f9f1ee30d644988b0e15fb2a51b6c501959904c5b",
     "ship-review:prepare:f1718635-3606-4329-8476-ba020db65b81": "8db4881dafa902a73a52711700a57c9f06954868185d4410313004fdb14e368d",
-    "ship-review:result:0de94231-62c6-4db7-970e-3c6772355342": "47f16ca28b699e7f05e5838c151d43da866c080907fb535e27a2b7a50ffb6831"
+    "ship-review:result:0de94231-62c6-4db7-970e-3c6772355342": "47f16ca28b699e7f05e5838c151d43da866c080907fb535e27a2b7a50ffb6831",
+    "beta7-publish:3d959edbc2135c23a033b6ab826273ebfb53aed5:started:1378": "c1f9a26e051ff506506c601c6a8d65e6fa0b36408e1554c09bbf4958d684e2bb"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
