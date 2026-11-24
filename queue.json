@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23075,
-  "nextTicket": 661,
+  "revision": 23076,
+  "nextTicket": 662,
   "nextFence": 661,
   "tasks": {
     "1024": {
@@ -5838,14 +5838,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1545-unified-startup",
-      "materialSha": "03f109adfb04dde5218408ad394ab34dd2b39ffc",
+      "materialSha": "d946d3af0eb3e6595b93732abb3649626a1eaf26",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 660,
-      "queued": false,
+      "ticket": 661,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795514373051,
-      "reviewEntry": 1,
+      "readyAt": 1795515196254,
+      "reviewEntry": 2,
       "patchId": "17fd49c04d7f75e8013adba8737fdf9ce2675729",
       "changedFiles": [
         "demo/capture_ui_kit_transients.mjs",
@@ -5874,7 +5874,6 @@
         "src/styles/reading-kit.styles.ts",
         "test/startup-floor.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6534,7 +6533,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1545
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6744,6 +6745,19 @@
           "detail": "Поведение: test/floor-cache-day-cycle.test.mjs: failed",
           "eventId": "finish:b9a7f81e-bd7f-49a9-9eeb-a5a1f347ba07:finish:3:return:return:1545"
         }
+      }
+    },
+    "finish:ac9f8011-027f-4f1f-9851-4a29cd60216d": {
+      "digest": "4e1d17439f09543530b6dbbc8ad667534028c202c08bd43cb6983daba72bcf0a",
+      "issue": 1545,
+      "message": {
+        "kind": "queued",
+        "issue": 1545,
+        "at": 1795515196254,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "d946d3af0eb3e6595b93732abb3649626a1eaf26"
       }
     }
   },
