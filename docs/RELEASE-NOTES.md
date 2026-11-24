@@ -1,11 +1,11 @@
-<!-- release: v1.86.1-beta.8 -->
-<!-- base: v1.86.1-beta.7 -->
+<!-- release: v1.86.1-beta.9 -->
+<!-- base: v1.86.1-beta.8 -->
 <!-- language: ru -->
-## House Plan 1.86.1-beta.8
+## House Plan 1.86.1-beta.9
 
-Исправлен ложный отказ при открытии «Оптимизировать планы» после сохранения первого пространства. Предпросмотр рассчитывается по актуальным данным (#1549).
+В 2.5D основание стен теперь показано на всю толщину и непрерывно под окнами; разрывы под дверями и мягкая тень сохранены. Убраны светлые швы возле мебели и при масштабировании или перемещении плана (#1555).
 
 <!-- language: en -->
-## House Plan 1.86.1-beta.8
+## House Plan 1.86.1-beta.9
 
-Fixed a false context-change error when opening Optimize Plans after saving the first space. The preview now uses the current plan data (#1549).
+The 2.5D wall base now spans its full thickness beneath windows without closing doorway gaps or losing the soft shadow. Removed false seams beside furniture and when zooming or panning the plan (#1555).
