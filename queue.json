@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 24005,
-  "nextTicket": 682,
+  "revision": 24006,
+  "nextTicket": 683,
   "nextFence": 682,
   "tasks": {
     "1024": {
@@ -6008,6 +6008,20 @@
       "devBuild": {
         "status": "pending"
       }
+    },
+    "1559": {
+      "issue": 1559,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1559-warm-floor-smoke",
+      "materialSha": "cacec600b505819a88a48c3e49e2dc78bdbcf03b",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 682,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795561013063,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6587,7 +6601,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1559
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6637,6 +6653,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:c9e4eb0f-e039-4de9-ab0a-62edfeafcc03": {
+      "digest": "53c5fd73e4b1fe3a9a8640347d13a20b754a24a6db5a15a7c624287f701014be",
+      "issue": 1559,
+      "message": {
+        "kind": "queued",
+        "issue": 1559,
+        "at": 1795561013063,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "cacec600b505819a88a48c3e49e2dc78bdbcf03b"
       }
     }
   },
