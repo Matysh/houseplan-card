@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23314,
-  "nextTicket": 666,
+  "revision": 23315,
+  "nextTicket": 667,
   "nextFence": 666,
   "tasks": {
     "1024": {
@@ -5921,6 +5921,20 @@
       "automationError": "automation-error",
       "automationSince": 1795521928136,
       "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
+    },
+    "1550": {
+      "issue": 1550,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1550-stable-smoke-readiness",
+      "materialSha": "35874b1ee2c4e6ae71f7a07cde5cac16029ffc61",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 666,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795522686383,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6500,7 +6514,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1550
+  ],
   "active": {
     "issue": 1549,
     "worker": "finish",
@@ -6684,6 +6700,19 @@
         "layer": "product",
         "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228",
         "phase": "sync"
+      }
+    },
+    "finish:abcc5a29-5ba0-4380-b253-e75841321dc0": {
+      "digest": "ffc272449e8512bf1f5dde513b88c46853f5e565a42e1b47bdd005ca64535dd0",
+      "issue": 1550,
+      "message": {
+        "kind": "queued",
+        "issue": 1550,
+        "at": 1795522686383,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "35874b1ee2c4e6ae71f7a07cde5cac16029ffc61"
       }
     }
   },
