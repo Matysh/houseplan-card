@@ -73,10 +73,28 @@ const res = await page.evaluate(async () => {
   };
   const href = async () => { const im = await stage(); return im ? im.getAttribute('href') : null; };
 
+  const waitForProtectedFrame = async (path, signature) => {
+    const deadline = performance.now() + 6000;
+    const signedUrl = path + '?authSig=SIG' + signature;
+    const painted = () => signCalls === signature && !card._loading && !card._read.busy
+      && card._continuity.state === 'steady'
+      && card._snap?.config?.spaces?.find(space => space.id === 'f1')?.plan_url === path
+      && card.renderRoot.querySelector('.hp-static-stage svg image')?.getAttribute('href') === signedUrl;
+    while (!painted()) {
+      if (performance.now() > deadline) throw Error('Protected static frame did not settle: ' + JSON.stringify({
+        path, signCalls, loading: card._loading, busy: card._read.busy, continuity: card._continuity.state,
+        candidate: card._snap?.config?.spaces?.find(space => space.id === 'f1')?.plan_url,
+        href: card.renderRoot.querySelector('.hp-static-stage svg image')?.getAttribute('href'),
+      }));
+      await new Promise(resolve => setTimeout(resolve, 20));
+      await card.updateComplete;
+    }
+    return signedUrl;
+  };
+
   // Establish a decoded protected baseline first. A failed replacement must
   // retain this exact URL, not an unrelated public image from the warm cache.
-  await stage();
-  const baselineHref = await href();
+  const baselineHref = await waitForProtectedFrame(baselineRaw, 1);
   servedCfg = candidateCfg;
   await card._load(true);
 
@@ -93,25 +111,8 @@ const res = await page.evaluate(async () => {
   await new Promise((r) => setTimeout(r, 150));
   out.noRetryStorm = signCalls === 2;
 
-  // 3) The static card retries its retained candidate on a one-second timer.
-  // A tick just before the two-second signer backoff ends legitimately moves
-  // the successful attempt to the next tick. Await that actual accepted and
-  // painted candidate, not a fixed sleep followed by inspection of old DOM.
-  const retryDeadline = performance.now() + 6000;
-  const candidatePainted = () => signCalls === 3 && !card._loading && !card._read.busy
-    && card._continuity.state === 'steady'
-    && card._snap?.config?.spaces?.find(space => space.id === 'f1')?.plan_url === raw
-    && card.renderRoot.querySelector('.hp-static-stage svg image')?.getAttribute('href') === raw + '?authSig=SIG3';
-  while (!candidatePainted()) {
-    if (performance.now() > retryDeadline) throw Error('Protected static candidate did not settle: ' + JSON.stringify({
-      signCalls, loading: card._loading, busy: card._read.busy, continuity: card._continuity.state,
-      candidate: card._snap?.config?.spaces?.find(space => space.id === 'f1')?.plan_url,
-      href: card.renderRoot.querySelector('.hp-static-stage svg image')?.getAttribute('href'),
-    }));
-    await new Promise(resolve => setTimeout(resolve, 20));
-    await card.updateComplete;
-  }
-  out.hrefAfterRetry = await href();
+  // 3) The static card retries its retained candidate after signer backoff.
+  out.hrefAfterRetry = await waitForProtectedFrame(raw, 3);
   out.retried = signCalls === 3;
 
   // 4) повторный рендер не теряет подпись и не просит её заново

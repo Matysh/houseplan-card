@@ -210,6 +210,9 @@ try {
     });
     await page.evaluate(() => window.__hpTest.settled());
     await waitForKioskViewport(page);
+    // Input can be ready while the first live scene is still fading in.
+    await page.waitForFunction(() => !window.__card.renderRoot.querySelector(
+      '.stage[data-hp-startup-pending], .stage[data-hp-startup-finish]'));
   };
   for (const iso of [false, true]) {
     await page.evaluate(async iso => { await window.__hpTest.setVolumetricView(iso); }, iso);

@@ -60,7 +60,8 @@ const out = await page.evaluate(async () => {
     clientX: rect.left + anchor.x, clientY: rect.top + anchor.y,
   }));
   const firstToken = card._cameraTransition.state?.token;
-  await frame();
+  // The RAF that starts a tween can still present its starting camera.
+  do { await frame(); } while (card._cameraTransition.active && close(card._zoom, 1, 0.001));
   const presentedCameraBeforeReverse = camera();
   const presentedBeforeReverse = presentedCameraBeforeReverse.zoom;
   const worldAtReverse = {
