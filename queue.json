@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23887,
+  "revision": 23888,
   "nextTicket": 679,
   "nextFence": 679,
   "tasks": {
@@ -5981,10 +5981,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "releaseTag": "v1.86.1-beta.9",
       "devBuild": {
