@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23531,
+  "revision": 23532,
   "nextTicket": 671,
   "nextFence": 671,
   "tasks": {
@@ -5943,7 +5943,7 @@
       "ownerDecision": null,
       "ticket": 670,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795535929908,
       "reviewEntry": 1,
       "patchId": "1e25991cf3902c49e7f71b6989e33f71fdaae4de",
@@ -5955,7 +5955,16 @@
         "docs/release-ledger/v1.86.0/1552.json",
         "docs/testing-notes/mutation-browser-guards.md",
         "scripts/mutation-registry.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261124T155907405-98ef0814",
+        "name": "Тесты для задачи #1552 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261124T155907405-98ef0814/report.json",
+        "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
+        "status": "passed",
+        "finishedAt": "2026-11-24T16:09:09.477Z",
+        "failures": []
+      }
     },
     "1553": {
       "issue": 1553,
@@ -6577,9 +6586,9 @@
     "fence": 670,
     "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
     "expectedBase": "eac079439108305ffa252e0693738fc2f20294a5",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795535934141,
-    "expiresAt": 1795536773099,
+    "expiresAt": 1795540150921,
     "patchId": "1e25991cf3902c49e7f71b6989e33f71fdaae4de"
   },
   "events": {
@@ -6707,6 +6716,34 @@
         "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:506b2474-de53-470f-b9d3-7e3156e712e7:finish:3:s6-complete": {
+      "digest": "da1878eb56e3b7cc6ccf820807c786229121e71705eec1bde764133f462712ee",
+      "issue": 1552,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1552,
+        "at": 1795536550921,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
+        "phase": "review",
+        "evidence": {
+          "id": "20261124T155907405-98ef0814",
+          "name": "Тесты для задачи #1552 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261124T155907405-98ef0814/report.json",
+          "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
+          "status": "passed",
+          "finishedAt": "2026-11-24T16:09:09.477Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\n\nДва браузерных свидетеля из фоновой части 6/7 должны проходить на чистой сборке и падать на содержательной проверке при применении уже зарегистрированного дефекта. Код продукта, патчи мутаций, порядок и состав шардов не изменены.\n\n### Причина и исправление\n\n- `first-space-converter-writer-only`: стабильная попытка без `callWS` не меняла поколение контекста, поэтому лишняя привязка информационного модуля к правам могла остаться незаметной. Нативный Retry удерживается сетевым барьером; смена пользователя HA без транспорта не должна сбрасывать текущую плашку восстановления и возвращать кнопку Retry. После освобождения запроса остаётся проверка появления ссылки, исчезновения ошибки, ровно двух запросов чанка и отсутствия записей.\n- `mounted-authority-same-object-lit-dedup-1056`: новый ответ config/layout мог вызвать свой Lit-кадр и скрыть потерянное уведомление об окружении. При неизменной authority тот же объект HA получает только новый язык. Смок проверяет переведённую кнопку «Вписать всё» после этого одного присваивания, прежний план и отсутствие нового чтения config/layout.\n\n### Проверки\n\nНа `dev@eac079439` оба исходных свидетеля прошли и оба мутанта выжили. На исправлении проверены два чистых браузерных прогона и те же две мутации по одному, с явной проверкой точного упавшего утверждения. Полный ночной шард не запускался. Реальный HA E2E не требуется: меняется только чувствительность синтетических браузерных проверок; API, данные и сборка продукта не меняются.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
