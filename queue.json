@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23329,
+  "revision": 23330,
   "nextTicket": 667,
   "nextFence": 667,
   "tasks": {
@@ -6755,7 +6755,8 @@
           "entry": 1,
           "detail": "Поведение: test/beta3-geometry-repairs.test.mjs: failed; Поведение: test/build-identity.test.mjs: failed; Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/coincident-partitions.test.mjs: failed; Поведение: test/color-picker.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: cancelled; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: hide room names: Подготовка не завершена успешно; Браузер: iso wall transparency: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
           "eventId": "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return:return:1549"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:abcc5a29-5ba0-4380-b253-e75841321dc0:finish:1:admit": {
