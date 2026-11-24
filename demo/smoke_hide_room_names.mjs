@@ -33,7 +33,7 @@ const out = await page.evaluate(async () => {
   card._cfgEpoch++;
   card._regSignature = '';
   card.requestUpdate();
-  await settle();
+  await window.__hpTest.settled();
 
   const first = root().querySelector(`[data-hp="room-label"][data-id="${room.id}"]`);
   const savedLayout = JSON.stringify(card._layout[layoutKey]);

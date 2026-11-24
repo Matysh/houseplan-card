@@ -306,13 +306,21 @@ export class OptimizePlansDialog {
     const calculate = (): void => {
       if (this.operation !== owner || !this.owns(source)) return;
       if (this.port.dialog() !== pending) { this.operation = null; return; }
-      if (!this.port.canWrite() || !this.options.sourceMatches(source, this.port.source())) {
+      const currentConfig = this.port.config();
+      const currentSource = this.port.source();
+      const canWrite = this.port.canWrite();
+      const confirmsRemoval = removeLiveMissingPositions || removeInvalidMissingPositions;
+      // The checking frame can outlive a registry refresh. A fresh preview can
+      // read the new pair, while removal consent belongs to the previous pair.
+      if (!canWrite || !currentConfig || !this.port.planReady()
+        || (confirmsRemoval && !this.options.sourceMatches(source, currentSource))) {
         this.publish(owner, { ...pending, phase: 'failure', busy: false,
-          failure: this.options.feedback.failure({ code: this.port.canWrite() ? 'optimize_preview_changed' : 'unauthorized' }, config, 'checking') });
+          failure: this.options.feedback.failure({ code: canWrite ? 'optimize_preview_changed' : 'unauthorized' }, config, 'checking') });
         this.operation = null; return;
       }
       try {
-        this.publish(owner, this.calculatePreview(config, source, removeLiveMissingPositions, removeInvalidMissingPositions, replacesUndo));
+        this.publish(owner, this.calculatePreview(currentConfig, currentSource,
+          removeLiveMissingPositions, removeInvalidMissingPositions, replacesUndo));
       } catch (error) {
         this.publish(owner, { ...pending, phase: 'failure', busy: false, failure: this.options.feedback.failure(error, config, 'checking') });
       } finally { if (this.operation === owner) this.operation = null; }

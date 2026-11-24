@@ -1145,6 +1145,39 @@ test('#1170 initial calculation waits for a presented busy frame and never write
   assert.equal(calculated, 1); assert.ok(h.state.dialog.report);
 });
 
+test('unconfirmed Optimize preview reads the latest pair after its checking frame', async () => {
+  const frame = deferred();
+  const h = fakePort({ present: () => frame.promise });
+  const opening = h.dialog.open();
+  assert.equal(h.state.dialog.phase, 'checking');
+
+  h.state.config = { ...h.state.config, spaces: [space('b', 'Ground floor', 0.6)] };
+  h.state.configRev = 2;
+  h.state.layoutRev = 3;
+  h.state.ownersFingerprint = 'registry loaded';
+  frame.resolve();
+  await opening;
+
+  assert.ok(h.state.dialog.report);
+  assert.deepEqual(h.state.dialog.config.spaces.map(space => space.id), ['b']);
+  assert.deepEqual(h.state.dialog.source, h.port.source());
+  assert.deepEqual(h.calls.commit, []);
+});
+
+test('Optimize preview refuses to carry removal consent across source changes during checking', async () => {
+  const frame = deferred();
+  const h = fakePort({ present: () => frame.promise });
+  const preview = h.dialog.preview(true, true);
+  h.state.ownersFingerprint = 'registry loaded';
+  frame.resolve();
+  await preview;
+
+  assert.equal(h.state.dialog.phase, 'failure');
+  assert.equal(h.state.dialog.failure.code, 'optimize_preview_changed');
+  assert.deepEqual(h.calls.referenceContext, []);
+  assert.deepEqual(h.calls.commit, []);
+});
+
 test('#1170 closing and reopening a sent Apply restores one operation, not a duplicate write', async () => {
   const gate = deferred(); let writes = 0;
   const h = readyController(); const commit = h.port.commit;
