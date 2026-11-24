@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23982,
+  "revision": 23983,
   "nextTicket": 682,
   "nextFence": 682,
   "tasks": {
@@ -6003,7 +6003,16 @@
       "patchId": "95e520db3017b26403a3de7e46134a3f8d4c8333",
       "changedFiles": [
         "demo/smoke_linked_virtual_light.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261124T225337858-b460e21b",
+        "name": "Тесты для задачи #1558 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261124T225337858-b460e21b/report.json",
+        "materialSha": "226632dad25303d8067e1bb4bb5b2d967a6d1891",
+        "status": "passed",
+        "finishedAt": "2026-11-24T22:54:20.599Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6591,9 +6600,9 @@
     "fence": 681,
     "materialSha": "226632dad25303d8067e1bb4bb5b2d967a6d1891",
     "expectedBase": "facb8a447b6a137bbb6d2e05f5f87b9311ad80c8",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795560805303,
-    "expiresAt": 1795561111411,
+    "expiresAt": 1795564461680,
     "patchId": "95e520db3017b26403a3de7e46134a3f8d4c8333"
   },
   "events": {
@@ -6627,6 +6636,10 @@
     },
     "github:45505068705:1:completions:message:8861e959f02af858a95c6cfb2f9e775b892a29e6d190bc28fd7e7b108cd7b00f": {
       "digest": "b7ae0bc79f0df09be10688b6fd6d0c488677d5990568c92c36800ac91364b7d8",
+      "issue": 1558
+    },
+    "finish:465570b7-ada5-48cd-b1c0-1771f096afc0:finish:3:s6-complete": {
+      "digest": "2f15e41f973e3731c8f08ab1b374ca2cc3f68010015690723d788539008f6405",
       "issue": 1558
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
