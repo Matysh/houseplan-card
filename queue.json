@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23711,
+  "revision": 23712,
   "nextTicket": 675,
   "nextFence": 675,
   "tasks": {
@@ -5999,7 +5999,9 @@
         "test/iso-architectural-tone.test.mjs",
         "test/iso-wall-transparency.test.mjs",
         "test/live-viewport.test.mjs"
-      ]
+      ],
+      "automationError": "checks-unavailable",
+      "automationSince": 1795552715087
     }
   },
   "ownerDecisions": {},
@@ -6671,6 +6673,10 @@
     },
     "finish:16a232ca-1151-47c5-8425-74a1dae7c6dd": {
       "digest": "f48e555ffb432e2f9ba855a6456a2708f999a8fa14bab9114225a1e502384436",
+      "issue": 1555
+    },
+    "finish:416c7bfa-8806-4db3-9dc3-aee576ae0747:finish:3:automation-pending": {
+      "digest": "8956e33d2bf070f2bff526b039d2e9f56801674035da406c1a7d1e2adc1de490",
       "issue": 1555
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
