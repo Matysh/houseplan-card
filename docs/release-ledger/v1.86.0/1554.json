@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1554,
+  "baseStable": "v1.86.0",
+  "category": "infra",
+  "rationale": "Changes only UI Lab persistence and the owner-approved offline default fixture; package metadata adds an IndexedDB test dependency, not product behavior.",
+  "summary": {
+    "ru": "UI Lab сохраняет сессии в IndexedDB и запускает согласованный двухэтажный план по умолчанию.",
+    "en": "UI Lab stores sessions in IndexedDB and starts with the approved two-floor plan by default."
+  }
+}
