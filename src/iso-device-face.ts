@@ -48,11 +48,16 @@ export function orientIsoDeviceFace(shape: ContactShape, faces: readonly IsoDevi
         top: box.top + y - cy, bottom: box.bottom + y - cy } } };
   }
   const d = marker.diameter, box = { ...shape.box };
-  // Keep group overlaps and the fixed wall edge. Extend the free edges
-  // only where the current presentation needs additional room.
-  if (!walls.left) box.left = Math.min(box.left, box.left + (current.left + dx - base.left) * d);
-  if (!walls.right) box.right = Math.max(box.right, box.right + (current.right + dx - base.right) * d);
-  if (!walls.top) box.top = Math.min(box.top, box.top + (current.top + dy - base.top) * d);
-  if (!walls.bottom) box.bottom = Math.max(box.bottom, box.bottom + (current.bottom + dy - base.bottom) * d);
-  return { faces: oriented, shift, shape: { ...shape, box } };
+  const offset = { left: dx, right: dx, top: dy, bottom: dy };
+  // Follow both expansion and contraction of a standalone face. A joined
+  // member also provides the overlap that keeps the common shell connected.
+  for (const side of ['left','right','top','bottom'] as const) {
+    if (walls[side]) continue;
+    const delta = (current[side] + offset[side] - base[side]) * d;
+    if (!joined) box[side] += delta;
+    else if (side === 'left' || side === 'top') box[side] += Math.min(0,delta);
+    else box[side] += Math.max(0,delta);
+  }
+  const radius = Math.min(shape.radius,(box.right-box.left)/2,(box.bottom-box.top)/2);
+  return { faces: oriented, shift, shape: { ...shape, box, radius } };
 }

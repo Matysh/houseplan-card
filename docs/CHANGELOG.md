@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep the outline snug around wide standalone value tiles when rotating the 2.5D plan (#1542).
+
 - Keep wall-mounted devices visible when the 2.5D plan remounts at a different device size (#1540).
 - Keep Glow and LED fields connected through the final frame of their fade-out (#1540).
 

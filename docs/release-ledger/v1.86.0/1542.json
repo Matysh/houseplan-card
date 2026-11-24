@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1542,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Corrects the outline around rotated wide standalone values introduced by #1538 on the beta line.",
+  "summary": {
+    "ru": "Обводка одиночной широкой плашки в 2.5D подстраивается под её поворот.",
+    "en": "Wide standalone value outlines follow their rotation in 2.5D."
+  }
+}

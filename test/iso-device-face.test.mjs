@@ -48,3 +48,27 @@ test('free pill keeps its own off-centre pivot and performs no contact translati
   near(bounds.top,-.7);
   near(bounds.bottom,.7);
 });
+
+test('#1542 standalone wall outlines retain their margins around wide rotated values', () => {
+  const wide = {left:-1.35,right:1.35,top:-.5,bottom:.5,rx:.5,ry:.5};
+  for (const faces of [[wide],[core,badge]]) for (const angle of [0,.51]) {
+    for (const walls of [{left:'wall'},{left:'wall',bottom:'corner'}]) {
+      const diameter = 20, base = isoDeviceFaceBounds(faces,angle);
+      const shape = {...freeContactShape({id:'wide',x:40,y:50,diameter,box:{
+        left:base.left*diameter-3,right:base.right*diameter+3,
+        top:base.top*diameter-3,bottom:base.bottom*diameter+3,
+      }}),angle,walls};
+      for (const rotation of [0,45,90,135,180,225,270,315]) {
+        const {rotDeg:yaw} = isoCameraFor(rotation);
+        const turn = (isoReadingYaw(yaw)-yaw)*Math.PI/180;
+        const result = orientIsoDeviceFace(shape,faces,turn,true,false);
+        const visible = isoDeviceFaceBounds(result.faces,angle);
+        for (const side of ['left','right','top','bottom']) {
+          near(result.shape.box[side]-visible[side]*diameter,shape.box[side]-base[side]*diameter);
+          if (walls[side]) assert.equal(result.shape.box[side],shape.box[side]);
+        }
+        assert.equal(result.shape.marker,shape.marker);
+      }
+    }
+  }
+});

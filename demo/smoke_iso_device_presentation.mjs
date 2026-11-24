@@ -53,13 +53,14 @@ for (const angled of [false,true]) {
           shift:[...['x','y'].map(axis=>Number(shell.style.getPropertyValue('--hp-value-shift-'+axis)))]};
       }
     }
-    let wallGapError = null;
+    let wallGapError = null, outlineGapError = null;
     const wallMarker = all.find(node=>node.dataset.id==='straight');
     const wallShape = shape.straight;
     if (wallMarker && wallShape && Object.keys(wallShape.walls).length) {
       // Compare real DOM cap supports with CSS rotation/offset reset in place.
       // Sample the rounded faces independently from the production support solver.
-      const svg=wallMarker.querySelector('.device-contact-hit').ownerSVGElement;
+      const outline=wallMarker.querySelector('.device-contact-hit');
+      const svg=outline.ownerSVGElement;
       const plan=svg.getScreenCTM().inverse();
       const unit=svg.viewBox.baseVal.width/parseFloat(getComputedStyle(wallMarker).width);
       const row = [...wallMarker.querySelectorAll('.device-core,.value-badge')];
@@ -93,10 +94,18 @@ for (const angled of [false,true]) {
       reset.remove();
       wallGapError=Math.max(...['left','right','top','bottom'].flatMap((side,i)=>side in wallShape.walls
         ? [Math.abs(after[i]-before[i])/unit] : []));
+      if (wallShape.member.length===1 && wallShape.angle===0) {
+        const {marker,box}=scene.shapes.get('straight');
+        const authored=[marker.x+box.left,marker.x+box.right,marker.y+box.top,marker.y+box.bottom];
+        const bounds=outline.getBBox();
+        const displayed=[bounds.x,bounds.x+bounds.width,bounds.y,bounds.y+bounds.height];
+        outlineGapError=Math.max(...displayed.map((edge,i)=>
+          Math.abs((edge-after[i])-(authored[i]-before[i]))/unit));
+      }
     }
     const style=getComputedStyle(root.querySelector('.stage'));
     const glassMasks=[...root.querySelectorAll('.iso-marker-glass mask > path')].map(n=>n.getAttribute('fill'));
-    return {shape,values,wallGapError,correctStacks:stackIssues.length===0,stackIssues,glassMasks,turn:parseFloat(style.getPropertyValue('--hp-iso-content-turn')),
+    return {shape,values,wallGapError,outlineGapError,correctStacks:stackIssues.length===0,stackIssues,glassMasks,turn:parseFloat(style.getPropertyValue('--hp-iso-content-turn')),
       layout:JSON.stringify(card._layout),config:JSON.stringify(card._serverCfg), writes:window.__isoPaintWrites.length};
   });
   try {
@@ -145,6 +154,8 @@ for (const angled of [false,true]) {
       }
       if (!angled) check(`${key}: actual rotated capsules keep the wall gap`,
         frame.wallGapError!==null&&frame.wallGapError<.25);
+      if (!angled) check(`${key}: a standalone wide outline keeps its padding at every turn (${frame.outlineGapError?.toFixed(2)} px)`,
+        frame.outlineGapError!==null&&frame.outlineGapError<.35);
       maskCount+=frame.glassMasks.length;
       shifts+=Number(Math.hypot(...(frame.values.straight?.shift??[0,0]))>.001);
       if(step<8 && dir)await page.screenshot({path:`${dir}/${key.replace('/','-')}.png`});
