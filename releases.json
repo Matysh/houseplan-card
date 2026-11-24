@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1371,
+  "revision": 1372,
   "active": "v1.86.1-beta.7",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -250158,7 +250158,7 @@
         "sha": "5dd70ff4076698882af9eb5cc1b46d8848b75d3a",
         "requestId": "ship-review:7c515125f5615f86c5a30ce738f8a1324df9815bbc1199f51f25bc304aa72381",
         "selectionDigest": "ce6db51cdf6486a9615d1961a8c62368c11e6e57be226f74899fb5a7a48b6418",
-        "status": "pending",
+        "status": "accepted",
         "inventoryComplete": true
       }
     }
@@ -256344,7 +256344,8 @@
     "beta6-publish:305ad2a133e3e3b5f613026b10c723104981ba35:completion:2affc93f-efcf-4f5f-ae85-93d7c6b4fa4e": "625131fcb7c8e89c667e36142e4ea8efdbaff616c740ac8bf47870aa479ca2af",
     "beta7-create": "835b2d7d2e20389798f2c489b99e220efe632fe515f6c7d9f37a232a88b2f80e",
     "beta7-candidate:5dd70ff4076698882af9eb5cc1b46d8848b75d3a": "0a39cab87e593a315827d295544cdabed96386c02f8ba12fedf31fa051939c73",
-    "ship-review:prepare:3f103cc8-52cd-48c1-9c0c-a9a03173b012": "70f14cb8573c0602ac5006ca7e9a46f00a13c1275b44fd866aa1000fd9c12952"
+    "ship-review:prepare:3f103cc8-52cd-48c1-9c0c-a9a03173b012": "70f14cb8573c0602ac5006ca7e9a46f00a13c1275b44fd866aa1000fd9c12952",
+    "ship-review:result:6cb86fc4-4032-47cb-8d84-bd7264dd0a25": "7af4b4b78b700de30a63f1ca34c1749c96f56266912aedb8ca396607afdeda57"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -277051,7 +277052,88 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "version": 1,
+        "kind": "ship-batch",
+        "requestId": "ship-review:7c515125f5615f86c5a30ce738f8a1324df9815bbc1199f51f25bc304aa72381",
+        "candidateId": "v1.86.1-beta.7",
+        "base": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
+        "materialSha": "5dd70ff4076698882af9eb5cc1b46d8848b75d3a",
+        "selectionDigest": "ce6db51cdf6486a9615d1961a8c62368c11e6e57be226f74899fb5a7a48b6418",
+        "releaseVersion": "v1.86.1-beta.7",
+        "workflowRunId": 45381104284,
+        "workflowRunAttempt": 1,
+        "verdict": "accepted",
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "В пакете на разбор была одна задача — #1547, остальные четыре переиспользованы и повторно не разбирались. Правка задаёт целью текущего цикла `v1.86.1` и milestone №19 «1.86.1» в `docs/release-ledger/cycle.json`. Это ровно то, что поручил владелец. Формат записи проходит проверку `verifyReleaseCycle` в `process-next/lib/release-cycle.mjs`: цель старше базы `v1.86.0`, номер milestone — положительное целое, а его название совпадает с версией цели. Серьёзных (High) дефектов нет. Одно замечание для владельца, не блокирующее бету: задачи, влитые до этой правки, по-прежнему привязаны к milestone 18 «2.0.0», потому что цикл читается на коммите каждой задачи. Пересмотр этих назначений по формулировке #1547 в задачу не входит.",
+          "understanding": "До правки в `cycle.json` на `dev` стояла цель `v2.0.0` с milestone 18 «2.0.0». Её записал коммит 76009cd (#1510) после выхода stable `v1.86.0`. Владелец решил, что следующим stable будет 1.86.1. Коммит 9d03f86 меняет только `targetStable` и `milestone`: теперь это 19/«1.86.1». `baseStable: v1.86.0` и `schema: 1` не тронуты. Я проследил, кто читает файл в процессе process-next. `readTaskReleaseMilestone` в `release-data.mjs` берёт цикл на коммите задачи (materialSha) и для категорий major и stable-fix выдаёт `cycle.milestone.number`. `planStableCycle` и `verifyReleaseCycle` в `release-cycle.mjs` переносят и проверяют цикл после выхода stable. Читатели из `legacy/process-v1` к новому процессу не относятся.",
+          "analysis": [
+            {
+              "topic": "Соответствие требованию #1547",
+              "assessment": "Всё, что требовалось, сделано: цель заменена на `v1.86.1`, указан milestone №19 «1.86.1», база осталась опубликованным `v1.86.0`. Версии и назначения задач правка не трогает, как и оговорено в задаче.",
+              "evidence": "Diff 9d03f86: `docs/release-ledger/cycle.json`, строки 4–7. В кандидате head файл такой же."
+            },
+            {
+              "topic": "Совместимость с проверками цикла",
+              "assessment": "Запись проходит `verifyReleaseCycle`: цель 1.86.1 старше базы 1.86.0, номер milestone — безопасное целое больше нуля, название «1.86.1» сравнивается с целью и совпадает. Название без префикса `v` — то же соглашение, что у `planStableCycle`, где `targetStable` получается из `'v' + title`. Если после 1.86.1 milestone 19 будет ещё открыт, `planStableCycle` тоже обработает его корректно.",
+              "evidence": "`process-next/lib/release-cycle.mjs`, строки 1–3 и 26–40."
+            },
+            {
+              "topic": "Задачи, влитые до смены цели",
+              "assessment": "`readTaskReleaseMilestone` читает `cycle.json` на коммите задачи. Значит, задачи категорий major или stable-fix, влитые между 76009cd и 9d03f86, получают milestone 18 «2.0.0», а не 19. В коде есть комментарий, что исходный цикл задачи неизменяем и новый цикл старую задачу не переназначает. #1547 прямо исключает изменение существующих назначений, поэтому это не дефект правки, а следствие, которое владелец должен учесть при подготовке 1.86.1.",
+              "evidence": "`process-next/lib/release-data.mjs`, строки 9–28 (комментарий в строках 22–23). Порядок коммитов по `git_log` для `cycle.json`: 76009cd (21.11) → 9d03f86 (24.11)."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Это не дефект #1547, а замечание для владельца перед stable 1.86.1. Задачи, влитые под циклом «2.0.0» (между 76009cd и 9d03f86), по правилу `readTaskReleaseMilestone` остаются в milestone 18. Если какие-то из них должны войти в состав и примечания 1.86.1, их назначения нужно отдельно сверить и при необходимости поправить. Делать это лучше отдельной задачей: тихое переназначение в рамках #1547 противоречило бы её объёму."
+          ],
+          "boundaries": "Разобран только коммит 9d03f86 задачи #1547. Задачи #1519, #1529, #1535 и #1542 переиспользованы из принятых ранее ревью и повторно не разбирались. Я сверил содержимое `cycle.json` в head, историю файла и код, который его читает в process-next (`release-cycle.mjs`, `release-data.mjs`). Проверить в GitHub, что milestone №19 существует, открыт и называется «1.86.1», я не мог: это внешнее состояние, мне недоступное. Тесты и Validate не запускались; результатов S6 по этой задаче в материале нет."
+        },
+        "usage": {
+          "input_tokens": 10,
+          "cache_creation_input_tokens": 34325,
+          "cache_read_input_tokens": 97620,
+          "output_tokens": 3686,
+          "output_tokens_details": {
+            "thinking_tokens": 794
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 34325,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 555,
+              "cache_read_input_tokens": 29949,
+              "cache_creation_input_tokens": 6097,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 6097
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Пакетное код-ревью ship перед v1.86.1-beta.7 — принято\n\n## Вывод\n\nВ пакете на разбор была одна задача — #1547, остальные четыре переиспользованы и повторно не разбирались. Правка задаёт целью текущего цикла `v1.86.1` и milestone №19 «1.86.1» в `docs/release-ledger/cycle.json`. Это ровно то, что поручил владелец. Формат записи проходит проверку `verifyReleaseCycle` в `process-next/lib/release-cycle.mjs`: цель старше базы `v1.86.0`, номер milestone — положительное целое, а его название совпадает с версией цели. Серьёзных (High) дефектов нет. Одно замечание для владельца, не блокирующее бету: задачи, влитые до этой правки, по-прежнему привязаны к milestone 18 «2.0.0», потому что цикл читается на коммите каждой задачи. Пересмотр этих назначений по формулировке #1547 в задачу не входит.\n\n## Понимание решения\n\nДо правки в `cycle.json` на `dev` стояла цель `v2.0.0` с milestone 18 «2.0.0». Её записал коммит 76009cd (#1510) после выхода stable `v1.86.0`. Владелец решил, что следующим stable будет 1.86.1. Коммит 9d03f86 меняет только `targetStable` и `milestone`: теперь это 19/«1.86.1». `baseStable: v1.86.0` и `schema: 1` не тронуты. Я проследил, кто читает файл в процессе process-next. `readTaskReleaseMilestone` в `release-data.mjs` берёт цикл на коммите задачи (materialSha) и для категорий major и stable-fix выдаёт `cycle.milestone.number`. `planStableCycle` и `verifyReleaseCycle` в `release-cycle.mjs` переносят и проверяют цикл после выхода stable. Читатели из `legacy/process-v1` к новому процессу не относятся.\n\n## Разбор решения\n\n### Соответствие требованию #1547\n\nВсё, что требовалось, сделано: цель заменена на `v1.86.1`, указан milestone №19 «1.86.1», база осталась опубликованным `v1.86.0`. Версии и назначения задач правка не трогает, как и оговорено в задаче.\n\nОснование: Diff 9d03f86: `docs/release-ledger/cycle.json`, строки 4–7. В кандидате head файл такой же.\n\n### Совместимость с проверками цикла\n\nЗапись проходит `verifyReleaseCycle`: цель 1.86.1 старше базы 1.86.0, номер milestone — безопасное целое больше нуля, название «1.86.1» сравнивается с целью и совпадает. Название без префикса `v` — то же соглашение, что у `planStableCycle`, где `targetStable` получается из `'v' + title`. Если после 1.86.1 milestone 19 будет ещё открыт, `planStableCycle` тоже обработает его корректно.\n\nОснование: `process-next/lib/release-cycle.mjs`, строки 1–3 и 26–40.\n\n### Задачи, влитые до смены цели\n\n`readTaskReleaseMilestone` читает `cycle.json` на коммите задачи. Значит, задачи категорий major или stable-fix, влитые между 76009cd и 9d03f86, получают milestone 18 «2.0.0», а не 19. В коде есть комментарий, что исходный цикл задачи неизменяем и новый цикл старую задачу не переназначает. #1547 прямо исключает изменение существующих назначений, поэтому это не дефект правки, а следствие, которое владелец должен учесть при подготовке 1.86.1.\n\nОснование: `process-next/lib/release-data.mjs`, строки 9–28 (комментарий в строках 22–23). Порядок коммитов по `git_log` для `cycle.json`: 76009cd (21.11) → 9d03f86 (24.11).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Это не дефект #1547, а замечание для владельца перед stable 1.86.1. Задачи, влитые под циклом «2.0.0» (между 76009cd и 9d03f86), по правилу `readTaskReleaseMilestone` остаются в milestone 18. Если какие-то из них должны войти в состав и примечания 1.86.1, их назначения нужно отдельно сверить и при необходимости поправить. Делать это лучше отдельной задачей: тихое переназначение в рамках #1547 противоречило бы её объёму.\n\n## Границы анализа\n\nРазобран только коммит 9d03f86 задачи #1547. Задачи #1519, #1529, #1535 и #1542 переиспользованы из принятых ранее ревью и повторно не разбирались. Я сверил содержимое `cycle.json` в head, историю файла и код, который его читает в process-next (`release-cycle.mjs`, `release-data.mjs`). Проверить в GitHub, что milestone №19 существует, открыт и называется «1.86.1», я не мог: это внешнее состояние, мне недоступное. Тесты и Validate не запускались; результатов S6 по этой задаче в материале нет.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 2725feedd276c5c1c19d9223c99b1adcdefefaa1 → 5dd70ff4076698882af9eb5cc1b46d8848b75d3a\n\n## Переданный контекст исполнителя\n\nЗамороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: #1547.\n\nКоммиты: 9d03f86ffc3894b7131a03490b6eef7f548506fd.\n\nРанее принятое ревью сохранено для задач: #1519, #1529, #1535, #1542.\n\n</details>\n",
+        "createdAt": "2026-11-24T11:08:03.287Z",
+        "artifactId": 14914516512,
+        "runId": 45381104284,
+        "runAttempt": 1,
+        "completedAt": "2026-11-24T11:08:07Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45381104284"
+      }
     }
   }
 }
