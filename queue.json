@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23415,
+  "revision": 23416,
   "nextTicket": 669,
   "nextFence": 669,
   "tasks": {
@@ -5962,7 +5962,16 @@
       "changedFiles": [
         "process-next/lib/catalog.mjs",
         "process-next/test/catalog.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261124T123607705-715cb5e1",
+        "name": "Тесты для задачи #1551 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T123607705-715cb5e1/report.json",
+        "materialSha": "7339985139eb17d7eededdc951eedd31bea05de3",
+        "status": "passed",
+        "finishedAt": "2026-11-24T12:36:37.055Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6564,9 +6573,9 @@
     "fence": 668,
     "materialSha": "7339985139eb17d7eededdc951eedd31bea05de3",
     "expectedBase": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795523745822,
-    "expiresAt": 1795524109935,
+    "expiresAt": 1795527413384,
     "patchId": "38b054e60e15312d85df7baaa39debd56c265095"
   },
   "events": {
@@ -6600,6 +6609,10 @@
     },
     "finish:2ab6b654-0a81-4c68-a231-dbb6485bd368": {
       "digest": "50b2089cda2cfa42d6e2bbac57b7cd6ac93137e02f1aeaf34426498e668ea495",
+      "issue": 1551
+    },
+    "finish:c1254cae-2e76-4292-9c77-82e185c521c8:finish:2:s6-complete": {
+      "digest": "30e7e34246ab4f061638d92ac973818942bebdddbd5c8784461484ed9af42710",
       "issue": 1551
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
