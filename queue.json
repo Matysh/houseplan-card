@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23020,
+  "revision": 23021,
   "nextTicket": 660,
   "nextFence": 660,
   "tasks": {
@@ -2307,44 +2307,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "891bdbb8d7153de0d5eb6ba7f864622332849878"
-      }
-    },
-    "1438": {
-      "issue": 1438,
-      "branch": "codex/1438-kiosk-camera",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "c5d7a23892c69ad0504cf3048589344e03525810",
-      "mergedSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-      "mergedAt": 1794692159797,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1438:1:24150e2851c51f085b8304cb2280c8e661a4aa33:c5d7a23892c69ad0504cf3048589344e03525810",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "662309e6efe19b5187841aa0eeaca0b6047f0388"
       }
     },
     "1439": {
@@ -5920,10 +5882,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "releaseTag": "v1.86.1-beta.6",
       "devBuild": {
