@@ -16,7 +16,6 @@ const out = await page.evaluate(async () => {
   const root = card.renderRoot;
   const stage = () => root.querySelector('.stage');
   const frames = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-  const task = () => new Promise((done) => setTimeout(done, 0));
   // A raised tile and its floor shadow both carry the class; the shadow names its owner.
   const lightDevices = () => [...root.querySelectorAll('.dev.iso-floor-light')]
     .map((node) => node.getAttribute('data-shadow-of')
@@ -79,9 +78,11 @@ const out = await page.evaluate(async () => {
     paperProbes = 0;
     veils = 0;
     root.querySelector(`[data-hp="space-tab"][data-id="${id}"]`)?.click();
-    await card.updateComplete;
-    await task();
-    const inTask = { updates, paperProbes, veils };
+    // Measure the Lit update batch started by this click. Waiting for a timer
+    // also admits independent work; updateComplete is false for a follow-up
+    // update requested by the render itself.
+    const updateSettled = await card.updateComplete;
+    const inTask = { updates, updateSettled, paperProbes, veils };
     await frames();
     await hp.settled();
     const light = lightDevices();
@@ -98,7 +99,7 @@ const out = await page.evaluate(async () => {
   observer.disconnect();
   result.switches = switches;
   result.everySwitchReachesItsFloor = switches.every((row) => row.active === row.id);
-  result.everySwitchRendersOnce = switches.every((row) => row.updates === 1);
+  result.everySwitchRendersOnce = switches.every((row) => row.updates === 1 && row.updateSettled === true);
   result.noSwitchProbesThePaperAgain = switches.every((row) => row.paperProbes === 0);
   result.noSwitchInsertsTheVeil = switches.every((row) => row.veils === 0);
   result.everySwitchEndsReady = switches.every((row) => row.readiness === 'ready');
