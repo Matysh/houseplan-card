@@ -8,8 +8,8 @@ import {html, nothing} from 'lit';
 // absent, so a loading-screen fix cannot start a canonical scene pull.
 const source=ts.createSourceFile('card.ts',readFileSync(new URL('../src/houseplan-card.ts',import.meta.url),'utf8'),ts.ScriptTarget.Latest,true);
 const methods=[];
-function visit(node){if(ts.isMethodDeclaration(node)&&['_renderPendingFloor','_renderStageEnvironment','_renderStartupFloor','_startupStatus'].includes(node.name.getText(source)))methods.push(node.getText(source));ts.forEachChild(node,visit);}
-visit(source);assert.equal(methods.length,4);
+function visit(node){if(ts.isMethodDeclaration(node)&&['_renderPendingFloor','_renderStageEnvironment','_renderStartupFloor','_startupStatus','_floorStageHeight'].includes(node.name.getText(source)))methods.push(node.getText(source));ts.forEachChild(node,visit);}
+visit(source);assert.equal(methods.length,5);
 const code=ts.transpileModule(`export class Fixture { ${methods.join('\n')} }`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
 function harness(projection,dayCycle,hasPreview=true){
   const exports={},calls={environment:[],preview:0},moon={kind:'moon'},global={moon:true};
@@ -20,7 +20,7 @@ function harness(projection,dayCycle,hasPreview=true){
   Object.assign(card,{_desiredProjection:projection,_mode:'view',_modeTransitionVisual:null,_containerOwnedHeight:false,_kiosk:false,_hdrH:80,
     _floorPreparation:{preview:hasPreview?{fit:{base:[0,0,1000,1000],projection}}:null},
     _presentedViewPlane:p=>p,_adoptViewPlane(){},_viewOr:()=>({x:0,y:0,w:1000,h:1000}),
-    _spaceDisplayForRender:()=>({wallFill:{c:'#fff'}}),_stageBg:()=>'#1b2d50',
+    _spaceModel:()=>({bg:null}),_spaceDisplayForRender:()=>({wallFill:{c:'#fff'}}),_stageBg:()=>'#1b2d50',
     _dayCycleState:()=>dayCycle,_sunGlobal:()=>global,_moonSkyState:()=>null,_t:x=>x,_renderPreparedFloorFrame:x=>x,
     planHost:{capabilities:{summary:false}}});
   return{card,calls,moon};
@@ -46,10 +46,12 @@ test('#1490 Flat keeps its passive preview; static background stays a stage styl
 test('#1520 cold SVG and numeric silhouette never compete for the same pending stage',()=>{
   const h=harness('flat',{phase:'night'});
   h.card._startupFloor={awaitsLive:true};
-  h.card._startupStyle={value:{url:'blob:verified'}};
+  const element={className:'hp-startup-view'};
+  h.card._startupStyle={value:{element}};
   const result=h.card._renderPendingFloor();
   assert.equal(h.calls.preview,0);
   assert.equal(h.calls.environment.length,1);
-  assert.ok(result.values.some(value=>value?.strings?.join('').includes('class="hp-startup-view"')));
-  assert.ok(result.values.some(value=>value?.strings?.join('').includes('floor-preparation-status')));
+  const startup=result.values.find(template=>template?.values?.includes(element));
+  assert.ok(startup,'the verified image is carried as the same decoded element');
+  assert.equal(startup.values.filter(value=>value?.strings?.join('').includes('floor-preparation-status')).length,1);
 });
