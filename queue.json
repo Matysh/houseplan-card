@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23624,
+  "revision": 23625,
   "nextTicket": 674,
   "nextFence": 674,
   "tasks": {
@@ -6028,7 +6028,7 @@
       "notice": {
         "key": "2:Complete infrastructure release classification because package-lock changes cause product classification in the coordinator.",
         "reason": "Complete infrastructure release classification because package-lock changes cause product classification in the coordinator.",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1795541840076,
         "entry": 2,
@@ -6834,6 +6834,10 @@
     },
     "github:45453332630:1:completions:message:dc3be19b715540fe2ef3d7aaedf0f523d0f5688bf668a252c23d046b5ca6a571": {
       "digest": "a365c1c7f74f85df17f2d31f7e26aae0890bf5ae93b11d8f1ef9ae0d8c396be7",
+      "issue": 1554
+    },
+    "github:45453332630:1:completions:notice:4d4c2469636f7a66ceddd26df9fadc6a20b558272be98f51cf88e56e7f020fa3": {
+      "digest": "a922be82948aafb9e53bfcfe48fadfba0e9168c83de8466eb7a4790865fa652a",
       "issue": 1554
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
