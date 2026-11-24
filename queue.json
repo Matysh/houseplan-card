@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23128,
-  "nextTicket": 663,
+  "revision": 23129,
+  "nextTicket": 664,
   "nextFence": 663,
   "tasks": {
     "1024": {
@@ -5838,14 +5838,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1545-unified-startup",
-      "materialSha": "60dd05c150e261f685b39d2489cea1b2874d2076",
+      "materialSha": "f01f24eebfac9e6964d9865530368b9cddcf1f6e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 662,
-      "queued": false,
+      "ticket": 663,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795516369844,
-      "reviewEntry": 3,
+      "readyAt": 1795517592755,
+      "reviewEntry": 4,
       "patchId": "0429ef13efee88c91748b6bbc636b8f05f0e3670",
       "changedFiles": [
         "demo/capture_ui_kit_transients.mjs",
@@ -5901,8 +5901,7 @@
       "reviewCorrection": {
         "requestId": "review:1545:2:cd79a9f073d935c435150b26f0f94c01c9122652:9d03f86ffc3894b7131a03490b6eef7f548506fd",
         "at": 1795515622887
-      },
-      "reason": "checks-failed"
+      }
     },
     "1546": {
       "issue": 1546,
@@ -6552,7 +6551,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1545
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7028,6 +7029,28 @@
           "entry": 3,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:116bbdeb-7daa-4b49-9861-0abd0d82c23c:finish:3:return:return:1545"
+        }
+      }
+    },
+    "finish:493667de-16b9-48a5-9650-5b775468fd69": {
+      "digest": "4d0de1e4248528ea6abb93d405292b5434855063f58e2630cf7ab66d820b5061",
+      "issue": 1545,
+      "message": {
+        "kind": "queued",
+        "issue": 1545,
+        "at": 1795517592755,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "f01f24eebfac9e6964d9865530368b9cddcf1f6e",
+        "evidence": {
+          "id": "20261124T101333585-13d6a9f9",
+          "name": "Тесты для задачи #1545 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T101333585-13d6a9f9/report.json",
+          "materialSha": "d946d3af0eb3e6595b93732abb3649626a1eaf26",
+          "status": "passed",
+          "finishedAt": "2026-11-24T10:14:20.008Z",
+          "failures": []
         }
       }
     }
