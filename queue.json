@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22686,
+  "revision": 22687,
   "nextTicket": 655,
   "nextFence": 655,
   "tasks": {
@@ -6553,6 +6553,10 @@
       "digest": "73da4ae089f59420ada2aecddcf14579f5de36741eb13445d1cc9f7ecc173cc0",
       "issue": 1541
     },
+    "github:45330898525:1:completions:message:05ef09827d47c5c88bdf73c9d3ab024afb8a6dc2f6d1522a60d8dccdc6e06e1d": {
+      "digest": "d91451d568ee5a69317be0597b2203724564a5701004182eb2dc13d148865adb",
+      "issue": 1541
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6580,20 +6584,6 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
-      }
-    },
-    "finish:87bed79d-c6ef-4976-8f77-ad0f28a647a0:finish:1:admit": {
-      "digest": "eacd5c51f6777596bcb70298cecac668e0fe57c2ca420da9ba8756be8235536e",
-      "issue": 1542,
-      "message": {
-        "kind": "admitted",
-        "issue": 1542,
-        "at": 1795496059211,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "d16bad768e880d28cfe505f72d74ae59580e9bc4",
-        "phase": "sync"
       }
     },
     "finish:8d16183d-e352-429c-9b81-2a9b3786fc02": {
