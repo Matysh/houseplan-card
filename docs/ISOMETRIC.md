@@ -211,6 +211,9 @@ behind them. A surface with zero opacity contributes no paint or visual
 occlusion. Masonry around openings and columns shares the same rule.
 Opening frames, glass, furniture and raised device overlays keep their own
 materials. Geometry and sun/light barriers still follow the physical plan.
+In both wall modes, each visible opening face is painted as a continuous
+contour at its existing depth rank. Physical holes, separate visible regions
+and edges between opening materials remain in the silhouette (#1541).
 Windows and doors use their own material. The
 optional opening accent tints frames, leaves, reveals and all sill faces.
 Its alpha controls tint strength. White and zero strength reproduce the

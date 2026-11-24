@@ -305,6 +305,34 @@ test('#1529 an opaque wall cut hides the overlapping upper corner of a window pa
   assert.ok(contains(opaque,...outside) && contains(opaqueCut,...outside));
 });
 
+test('#1541 a clipped opening keeps a clean outer contour and a real hole', () => {
+  const camera = cam(0);
+  const lift = Math.sin(camera.tiltDeg * Math.PI / 180);
+  const face = (id, type, kind, material, corners, z) => ({ layer: 'opening', depth: z, surface: {
+    id, type, kind, material, sourceIndex: 0, d: id,
+    points: corners.map(([x, y]) => ({ point: [x, (y + z * lift) / camera.floorScaleY], z })),
+  } });
+  const cover = face('cover', 'door', 'leaf-front', 'matte-leaf', [[35,30],[65,30],[65,70],[35,70]], 20);
+  for (const [type, kind, material] of [
+    ['window', 'window-glass', 'glass-side'],
+    ['window', 'window-sill', 'light-sill'],
+    ['window', 'window-sash-top', 'light-frame'],
+    ['door', 'leaf-front', 'matte-leaf'],
+  ]) {
+    const sheet = face(kind, type, kind, material, [[0,0],[100,0],[100,100],[0,100]], 0);
+    const queue = [sheet, cover];
+    const opaque = clipIsoOpeningDepthQueue(queue, camera).find(entry => entry.surface.id === kind).surface.d;
+    const translucent = composeIsoTranslucentStructure(queue, camera, 1, { side:.5, top:.5 }, [])
+      .find(fragment => fragment.index === 0).d;
+    for (const d of [opaque, translucent]) {
+      assert.equal(d.match(/M/g).length, 2, kind + ' has only its boundary and the occluded hole');
+      assert.equal(Math.abs(area(d)), 8800, kind);
+      assert.ok(contains(d, 20, 50) && contains(d, 80, 50), kind);
+      assert.ok(!contains(d, 50, 50), kind);
+    }
+  }
+});
+
 test('#1478 a disjoint foreground face with overlapping bounds leaves one uncut wall polygon', () => {
   const camera = cam(0);
   const face = (id, corners, z) => ({ layer: 'opening', depth: z, surface: {

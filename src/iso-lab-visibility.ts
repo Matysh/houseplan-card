@@ -4,6 +4,7 @@
 import { isoFloorMatrix, isoHeightLift, isoProjectedDepth, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
 import type { IsoDeviceFace, IsoDeviceOcclusion, IsoDeviceSurface, IsoOverlayPlacement } from './iso-overlays';
 import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
+import { union } from 'polyclip-ts';
 
 type Point = [number,number];
 type Polygon = Point[][];
@@ -104,6 +105,30 @@ function convexParts(poly:Polygon):Multi {
 }
 const path=(geom:Multi, restore?: (p: Point) => Point)=>geom.flatMap(poly=>poly.map(ring=>
   `M ${ring.map(p=>(restore ? restore(p) : p).map(v=>Number(v.toFixed(4))).join(' ')).join(' ')} Z`)).join(' ');
+
+function openingPaintContours(geom: Multi): Multi {
+  if (geom.length < 2) return geom;
+  // These are working partitions of one physical face. Merge them before
+  // SVG paints their shared edges. Snap only in normalized paint coordinates.
+  const snapped = geom.map(poly => poly.map(ring =>
+    ring.map(([x,y]):Point => [Number(x.toFixed(6)), Number(y.toFixed(6))])));
+  try {
+    const contours = union(snapped);
+    if (!contours.length) return geom;
+    return contours.map(([outer,...holes]) => [outer,...holes.filter(hole => {
+      const perimeter = hole.reduce((sum, [x,y], i) => {
+        const [nextX,nextY] = hole[(i+1)%hole.length];
+        return sum + Math.hypot(nextX-x,nextY-y);
+      },0);
+      // Intersections that straddle a rounding grid line can leave a zero-
+      // width hole after SVG path rounding. Genuine cutouts survive this.
+      return Math.abs(area(hole)) > perimeter * 1e-6;
+    })]);
+  } catch {
+    // A numerically degenerate union must not remove the face or stop paint.
+    return geom;
+  }
+}
 
 function faceOf(entry:IsoWallDepthQueueEntry,camera:IsoCamera, coordinates?: ClipCoordinates):Face|null {
   let geom:Multi,vertices:number[][],opaque=true;
@@ -399,7 +424,8 @@ export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry
       }
     }
     if(!visible.length)return [];
-    const d=path(visible,restore);
+    const d=path(entry.layer === 'opening' && !masonrySurface(entry)
+      ? openingPaintContours(visible) : visible,restore);
     return [entry.layer==='opening'?{...entry,surface:{...entry.surface,d}}:{...entry,face:{...entry.face,d}}] as IsoWallDepthQueueEntry[];
   });
   // Transparent faces have already been clipped by every nearer opaque
@@ -539,7 +565,14 @@ export function composeIsoTranslucentStructure(
         visible = next;
       }
     }
-    for (const [rank,geom] of visible) result.push({index,rank,d:path(geom,restore)});
+    const entry = queue[index];
+    const opening = entry?.layer === 'opening' && !masonryKinds[index];
+    for (const [rank,geom] of visible) {
+      // A depth rank remains independent, but its working partitions must
+      // paint as one sheet so transparency is applied once at shared edges.
+      const paint = opening ? openingPaintContours(geom) : geom;
+      result.push({index,rank,d:path(paint,restore)});
+    }
   }
   result.sort((a,b) => b.rank-a.rank || a.index-b.index);
   transparentKey = key;
