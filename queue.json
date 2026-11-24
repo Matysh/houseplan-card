@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23785,
+  "revision": 23786,
   "nextTicket": 678,
   "nextFence": 678,
   "tasks": {
@@ -6946,6 +6946,10 @@
       "digest": "b6d2e22b09552a810511349fab894232dadd2987c13a003bcdf9d2e765ba0635",
       "issue": 1555
     },
+    "github:45492105089:1:completions:message:236243ce4af602634a2090e00eaf13c9503fcdddf5ec1c45e943d89f281eba0a": {
+      "digest": "11bd776671c27bb81da14f45ead98c033015880ede7852f59d1e068f3eacff2e",
+      "issue": 1555
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7148,7 +7152,8 @@
           "entry": 3,
           "detail": "Браузер: iso floor switch: failed",
           "eventId": "finish:5431e0e2-b2ab-4470-b3ca-f142f3e6ea4f:finish:3:return:return:1555"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:1b4ee87c-f873-4a8c-9069-97766e6ef5ad": {
