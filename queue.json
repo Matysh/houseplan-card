@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23110,
+  "revision": 23111,
   "nextTicket": 663,
   "nextFence": 663,
   "tasks": {
@@ -5846,11 +5846,12 @@
       "status": "S6-in-progress",
       "readyAt": 1795516369844,
       "reviewEntry": 3,
-      "patchId": "cd79a9f073d935c435150b26f0f94c01c9122652",
+      "patchId": "0429ef13efee88c91748b6bbc636b8f05f0e3670",
       "changedFiles": [
         "demo/capture_ui_kit_transients.mjs",
         "demo/golden/harness.mjs",
         "demo/smoke_danger_confirm_branches.mjs",
+        "demo/smoke_floor_persistent_cache.mjs",
         "demo/smoke_iso_first_frame.mjs",
         "demo/smoke_iso_floor_switch.mjs",
         "demo/smoke_preloader.mjs",
@@ -5866,12 +5867,14 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.86.0/1545.json",
+        "src/config-adoption.ts",
         "src/houseplan-card.ts",
         "src/startup-floor-svg.ts",
         "src/startup-floor.ts",
         "src/styles/base.styles.ts",
         "src/styles/plan.styles.ts",
         "src/styles/reading-kit.styles.ts",
+        "test/config-adoption.test.mjs",
         "test/floor-cache-day-cycle.test.mjs",
         "test/startup-floor.test.mjs"
       ],
@@ -6555,10 +6558,11 @@
     "token": "662:finish:116bbdeb-7daa-4b49-9861-0abd0d82c23c:finish:1:admit",
     "fence": 662,
     "materialSha": "60dd05c150e261f685b39d2489cea1b2874d2076",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "9d03f86ffc3894b7131a03490b6eef7f548506fd",
+    "phase": "testing",
     "admittedAt": 1795516374931,
-    "expiresAt": 1795516674931
+    "expiresAt": 1795516681498,
+    "patchId": "0429ef13efee88c91748b6bbc636b8f05f0e3670"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6743,6 +6747,10 @@
     },
     "github:45373765462:1:completions:metadata:87000422-d0d2-40ac-b04f-197056200a20:task-notice:1545::": {
       "digest": "b14acfb1509aa2d001a2b0fb57c78806b4d60aa992ff4afb2cc343e93068fee8",
+      "issue": 1545
+    },
+    "finish:116bbdeb-7daa-4b49-9861-0abd0d82c23c:finish:2:synchronized": {
+      "digest": "784aa7e660608eb64402aedd552d9c0523b68da584fbb9b068993fc37f57d2d0",
       "issue": 1545
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
