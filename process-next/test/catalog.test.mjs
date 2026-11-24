@@ -216,15 +216,17 @@ test('new product/backend/browser tests are discovered without regenerating the 
   assert.match(ship.name, /перед слиянием/);
 });
 
-test('#1295 isolates the complete selective timing family and connected profile in task and stable plans', async () => {
+test('timing smoke checks run without competing steps in task and stable plans', async () => {
   // These are planner metadata, not imports/reads of the browser programs.
   const files=['selective_invalidation_history0','selective_invalidation_history320','selective_invalidation_inactive',
     'selective_invalidation_visible','wall_node_connected'].map(name=>'demo/smoke_'+name+'.mjs');
-  const expected=files.map(f=>`smoke:${f.replace('demo/','').replace('.mjs','')}`).sort();
+  const summaryFile = ['demo', 'smoke_summary_panel.mjs'].join('/');
+  const expected = [...files, summaryFile].map(f=>`smoke:${f.replace('demo/','').replace('.mjs','')}`).sort();
   for(const event of ['task','stable']) {
-    const p=await planProfile({root,event,areaTests:[...files,['demo','smoke_summary_weather.mjs'].join('/')],version:'1.84.0'});
+    const p=await planProfile({root,event,areaTests:[...files,summaryFile,['demo','smoke_summary_weather.mjs'].join('/')],version:'1.84.0'});
     assert.deepEqual(p.steps.filter(s=>s.exclusive && s.id.startsWith('smoke:')).map(s=>s.id).sort(),expected);
     for(const file of files)assert.deepEqual(p.steps.find(s=>s.command?.[1]===file).command,['node',file,'--diagnostic-timing']);
+    assert.deepEqual(p.steps.find(s => s.command?.[1] === summaryFile).command, ['node', summaryFile]);
     if(event==='task') assert.ok(p.steps.some(s=>s.id==='startup-view'&&!s.exclusive));
     assert.ok(p.steps.some(s=>s.id.startsWith('smoke:')&&!s.exclusive));
   }

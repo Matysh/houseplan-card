@@ -154,7 +154,7 @@ function nodeStep(id, name, files, requires = []) {
 }
 // These profiles report diagnostic wall-clock/long-task budgets on one browser series.
 // Do not change their budgets or serialize ordinary behavioral smoke checks.
-const exclusiveSmokes = new Set([
+const diagnosticTimingSmokes = new Set([
   'demo/smoke_selective_invalidation_history0.mjs',
   'demo/smoke_selective_invalidation_history320.mjs',
   'demo/smoke_selective_invalidation_inactive.mjs',
@@ -163,10 +163,12 @@ const exclusiveSmokes = new Set([
 ]);
 function smokeStep(smoke) {
   const pythonBacked = pythonBackedTests.has(smoke.file);
+  const diagnosticTiming = diagnosticTimingSmokes.has(smoke.file);
+  const exclusive = diagnosticTiming || smoke.file === 'demo/smoke_summary_panel.mjs';
   return step(`smoke:${smoke.file.replace(/^demo\//, '').replace(/\.mjs$/, '')}`, `Браузер: ${smoke.name || smoke.file.replace('demo/smoke_', '').replace('.mjs', '').replaceAll('_', ' ')}`,
-    ['node', smoke.file, ...smoke.args, ...(exclusiveSmokes.has(smoke.file)?['--diagnostic-timing']:[])], pythonBacked ? [...browserInputs, ...pythonInputs, '.python-version'] : browserInputs,
+    ['node', smoke.file, ...smoke.args, ...(diagnosticTiming ? ['--diagnostic-timing'] : [])], pythonBacked ? [...browserInputs, ...pythonInputs, '.python-version'] : browserInputs,
     ['demo-assets', 'test-build'], { timeoutMs: 600000,
-      ...(exclusiveSmokes.has(smoke.file) ? { exclusive: true } : {}),
+      ...(exclusive ? { exclusive: true } : {}),
       ...(smoke.file.endsWith('smoke_editor_draft_exit.mjs') ? { env: { HP_SMOKE_WIDTH: '1100' } } : {}) });
 }
 /** Pure planning: never installs dependencies, starts HA, builds, or executes a test. */
