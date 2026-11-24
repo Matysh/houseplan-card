@@ -64,7 +64,11 @@ try {
   };
   const signature=()=>stage.evaluate(el => {
     const all=(s)=>[...el.querySelectorAll(s)];
-    const seen=kind=>[...new Set(all('.iso-translucent-masonry-face[data-material="'+kind+'"]').map(node=>getComputedStyle(node).opacity))];
+    // Read the paint itself: translucent faces no longer composite opacity
+    // on their parent group. Continuous cut fragments paint through <use>.
+    const seen=kind=>[...new Set(all('.iso-translucent-masonry-face[data-material="'+kind+'"]')
+      .map(node=>node.querySelector('.iso-wall-side,.iso-wall-top,[data-hp-round-column],use[href="#hp-iso-translucent-cut-paint"]'))
+      .map(node=>node ? getComputedStyle(node).fillOpacity : null))];
     const surfaces=all('.iso-opening-panel').map(node=>({
       kind:node.dataset.surface, fill:getComputedStyle(node).fill, alpha:getComputedStyle(node).fillOpacity,
     }));
@@ -73,6 +77,7 @@ try {
       yaw:el.querySelector('.plan-svg')?.dataset.yaw,
       mode:el.classList.contains('projection-iso')?'iso':'flat',
       backing:el.querySelector('.iso-wall-side-backing')?.getAttribute('fill')??null,
+      basePaper:all('.iso-wall-base-paper').length,
       topStops:all('stop.iso-top-hi').map(node=>getComputedStyle(node).stopColor),
       side:seen('side'),top:seen('top'),surfaces,
       round:all('[data-hp-round-column]').length,
@@ -142,7 +147,8 @@ try {
       const screen=project(x,y,0).matrixTransform(matrix);
       return [(screen.x-bounds.x)/bounds.width,(screen.y-bounds.y)/bounds.height];
     });
-    return {sillSpansOpening,continuousLintel,floorSamples,apronOpacity:apron[0]?.parentElement.getAttribute('opacity')??null};
+    return {sillSpansOpening,continuousLintel,floorSamples,
+      apronOpacity:apron[0]?getComputedStyle(apron[0]).fillOpacity:null};
   });
   const fixtureFlatBefore=await signature();
   const control=await page.evaluate(async()=>{
@@ -220,6 +226,7 @@ try {
     out[name+'Materials']=after.backing===null&&after.side.join()==='0.38'&&after.top.join()==='0.55'
       &&after.topStops.includes('rgb(157, 106, 57)')&&after.round>0&&after.apron>0
       &&after.surfaces.some(surface=>surface.kind.includes('glass'));
+    out[name+'TranslucentMasonryRetainsFloorBase']=after.basePaper>0;
     const materialSignature=p=>new Set(p.surfaces
       .filter(surface=>surface.kind!=='jamb-reveal').map(surface=>JSON.stringify(surface)));
     const afterMaterials=materialSignature(after);
@@ -277,12 +284,12 @@ try {
   out.fullOpacityDrawsBoth=solid.side.join()==='1'&&solid.top.join()==='1';
   await setMaterial(true,0,.55);
   const noSide=await signature();
-  out.zeroSideOnly=noSide.side.length===0&&noSide.top.join()==='0.55'&&noSide.backing===null;
+  out.zeroSideOnly=noSide.side.length===0&&noSide.top.join()==='0.55'&&noSide.backing===null&&noSide.basePaper>0;
   await setMaterial(true,.38,0);
   const noTop=await signature();
   const noTopJoins=await openingJoins();
   out.fullyTransparentTopKeepsOnlyTheIndependentSill=noTopJoins.sillSpansOpening&&noTopJoins.apronOpacity===null;
-  out.zeroTopOnly=noTop.side.join()==='0.38'&&noTop.top.length===0&&noTop.backing===null;
+  out.zeroTopOnly=noTop.side.join()==='0.38'&&noTop.top.length===0&&noTop.backing===null&&noTop.basePaper>0;
   await setMaterial(true,0,0);
   const clearWalls=await signature(), clearJoins=await openingJoins();
   out.fullyTransparentMasonryRetainsWindowSill=clearWalls.side.length===0&&clearWalls.top.length===0
@@ -292,7 +299,7 @@ try {
     const offset=(Math.floor(y*clearFrame.height)*clearFrame.width+Math.floor(x*clearFrame.width))*4;
     return Array.from(clearFrame.data.subarray(offset,offset+3));
   });
-  out.fullyTransparentWallShowsContinuousRoomColour=underColumn.length===3&&nearbyFloor.length===3
+  out.fullyTransparentWallShowsContinuousRoomColour=clearWalls.basePaper===0&&underColumn.length===3&&nearbyFloor.length===3
     &&underColumn.every((channel,index)=>Math.abs(channel-nearbyFloor[index])<=8);
   await setMaterial(true,.38,0);
   const disabled = await page.evaluate(async()=>{

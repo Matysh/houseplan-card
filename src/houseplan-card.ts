@@ -11908,6 +11908,11 @@ export class HouseplanCard extends LitElement {
       return this._editorRuntime._renderOpeningDragBodies(disp, true);
     if (disp && !disp.showBorders && (this._mode === 'view' || this._mode === 'devices'))
       return svg`` as unknown as TemplateResult;
+    // With both masonry surfaces explicitly invisible, keep the floor
+    // continuous through the wall footprint. A translucent wall still has
+    // a full base; openings and the physical model are unchanged in both cases.
+    if (this._renderProjection === 'iso' && disp.transparentWalls3d && disp.wallFill.a === 0 && disp.opacity === 0)
+      return svg`` as unknown as TemplateResult;
     const united = this._renderProjection === 'iso'
       ? this._isoWallBaseGeometry() : this._wallUnionGeometry();
     if (!united) return svg`` as unknown as TemplateResult;
