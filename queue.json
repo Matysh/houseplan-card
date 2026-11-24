@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23457,
+  "revision": 23458,
   "nextTicket": 670,
   "nextFence": 670,
   "tasks": {
@@ -5985,7 +5985,27 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795527971123,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "6348130e165d2c466b3a96cc1cada862131f9d1a",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "d4004f33edee67b2953b769431dc887c8ff7f32a",
+        "tag": "v1.86.1-beta.8",
+        "verdict": "accepted",
+        "patchId": "6348130e165d2c466b3a96cc1cada862131f9d1a",
+        "materialSha": "eac079439108305ffa252e0693738fc2f20294a5"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -6572,10 +6592,11 @@
     "token": "669:release-return-finish:57aaaf7c-f420-405d-9847-a5ac1decc038:finish:1:admit",
     "fence": 669,
     "materialSha": "eac079439108305ffa252e0693738fc2f20294a5",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "7339985139eb17d7eededdc951eedd31bea05de3",
+    "phase": "testing",
     "admittedAt": 1795527976847,
-    "expiresAt": 1795528276847
+    "expiresAt": 1795528283559,
+    "patchId": "6348130e165d2c466b3a96cc1cada862131f9d1a"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6597,6 +6618,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "release-return-finish:57aaaf7c-f420-405d-9847-a5ac1decc038:finish:2:synchronized": {
+      "digest": "1151c00399b10145b8ab452acc8d27cd4878dd4cfa49741f1ac2a169cf93de1b",
+      "issue": 1553
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
