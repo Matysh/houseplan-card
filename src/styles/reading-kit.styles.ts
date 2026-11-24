@@ -122,8 +122,5 @@ export const readingKitStyles = unsafeCSS(css`
   .hpf-loading-pill { display:flex; align-items:center; gap:8px; padding:8px 16px; border:1px solid color-mix(in srgb,var(--primary-color) 45%,transparent); border-radius:999px; background:color-mix(in srgb,var(--ha-card-background,var(--card-background-color,#111)) 92%,transparent); color:var(--primary-text-color); box-shadow:0 6px 22px rgb(0 0 0 / 18%); animation:hp-ui-appear var(--hpf-appear-duration) var(--hpf-appear-easing) both; }
   .hpf-loading-pill > ha-icon { --mdc-icon-size:22px; color:var(--primary-color); animation:hp-ui-spin var(--hpf-spin-duration) var(--hpf-spin-easing) infinite; }
   .hpf-spinner { animation:hp-ui-spin var(--hpf-spin-duration) var(--hpf-spin-easing) infinite; }
-  .hpf-boot { color:var(--primary-color); background:var(--card-background-color,#16212e); opacity:1; transition:opacity var(--hpf-leave-duration) var(--hpf-leave-easing); }
-  .hpf-boot.off { opacity:0; }
-  .hpf-boot > svg { width:56px; height:56px; fill:currentColor; opacity:.85; animation:hp-ui-pulse var(--hpf-pulse-duration) var(--hpf-pulse-easing) infinite; }
 `.cssText + staticReadingCss('.hpf-heading') + settingsActionsCss(':is(.hpf-empty-state, .hpf-floating-badge, .hpf-reading-entry) button.btn')
-  + controlReducedMotionCss('.hpf-loading-value > i, .hpf-reading-pair > strong, .hpf-loading-pill, .hpf-loading-pill > ha-icon, .hpf-boot > svg, .hpf-empty-state-overlay, .hpf-spinner'));
+  + controlReducedMotionCss('.hpf-loading-value > i, .hpf-reading-pair > strong, .hpf-loading-pill, .hpf-loading-pill > ha-icon, .hpf-empty-state-overlay, .hpf-spinner'));

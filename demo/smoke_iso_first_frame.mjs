@@ -54,12 +54,13 @@ async function observe({ volumetric = true, kiosk = false, delay = 0, fail = fal
       // An empty preparation SVG is not an intermediate Flat plan. Any actual
       // architectural L1 pixels still count; do not skip a populated preview.
       const painted = !!wrap?.querySelector('path, polygon, polyline, rect, circle, ellipse, line, image');
-      const visible = painted && getComputedStyle(wrap).visibility !== 'hidden';
+      const visible = painted && getComputedStyle(wrap).visibility === 'visible' && +getComputedStyle(wrap).opacity > 0;
       const iso = !!stage?.classList.contains('projection-iso');
       const light = !!stage?.querySelector('.dev.iso-floor-light');
       const shadow = stage?.querySelector('.iso-tile-shadow');
       records.push({ visible, iso, light, readiness: stage?.dataset.hpIsoReadiness || '',
-        veil: !!stage?.querySelector('.bootveil:not(.off)'),
+        status: !!stage?.querySelector('.floor-preparation-status'),
+        waitsForLive: stage?.hasAttribute('data-hp-startup-pending') ?? false,
         shadowOpacity: shadow ? getComputedStyle(shadow).opacity : null,
         shadowPlane: !!stage?.querySelector('.iso-floor-shadow-plane'),
         markerPlacement: stage?.querySelector('.dev')?.getAttribute('data-hp-iso-floor') || null });
@@ -90,16 +91,16 @@ const out = {
     && ordinary.firstVisible.light === true && ordinary.firstVisible.readiness === 'ready'
     && ordinary.firstVisible.shadowOpacity === '1',
   ordinaryPendingOutlivesBootCap: ordinary.records.some((row) =>
-    !row.visible && row.readiness === 'pending' && row.veil),
+    !row.visible && row.readiness === 'pending' && row.status),
   kioskNeverShowsIntermediateFlat: kiosk.records
     .filter((row) => row.visible).every((row) => row.iso),
   kioskFirstVisibleIsSettledIso: kiosk.firstVisible?.iso === true
     && kiosk.firstVisible.light === true && kiosk.firstVisible.readiness === 'ready'
     && kiosk.firstVisible.shadowOpacity === '1',
   failedChunkReleasesFiniteFlatFallback: failed.firstVisible?.iso === false
-    && failed.firstVisible.readiness === 'fallback' && failed.firstVisible.veil === false,
+    && failed.firstVisible.readiness === 'fallback' && failed.firstVisible.waitsForLive === false,
   flatKioskHasNoIsoWait: flat.firstVisible?.iso === false
-    && flat.firstVisible.readiness === '' && flat.firstVisible.veil === false,
+    && flat.firstVisible.readiness === '' && flat.firstVisible.waitsForLive === false,
 };
 
 checkAll(out);

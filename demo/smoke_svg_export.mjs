@@ -71,7 +71,7 @@ await page.locator('.radar-target').waitFor({ state: 'attached' });
 const ready = () => page.waitForFunction(() => {
   const root = document.querySelector('houseplan-card')?.shadowRoot;
   const stage = root?.querySelector('.stage'), plan = root?.querySelector('.plan-svg');
-  return stage && plan && !root.querySelector('.bootveil')
+  return stage && plan && !root.querySelector('.floor-preparation-status')
     && !stage.matches('.hpboot,.hpiso-pending,.mode-transition') && getComputedStyle(plan).visibility === 'visible';
 });
 await ready();

@@ -191,7 +191,7 @@ const cssDefault = new Map([
   ['vector-effect','none'],
 ]);
 
-export async function loadStartupFloorImage(blob: Blob, signal: AbortSignal, constructedFromTypedVector = false): Promise<string | null> {
+export async function loadStartupFloorImage(blob: Blob, signal: AbortSignal, constructedFromTypedVector = false): Promise<HTMLImageElement | null> {
   if (signal.aborted || !constructedFromTypedVector && !await isStartupSvg(await blob.text(), signal) || signal.aborted)
     return null;
   const url = URL.createObjectURL(blob);
@@ -202,7 +202,7 @@ export async function loadStartupFloorImage(blob: Blob, signal: AbortSignal, con
     image.src = url;
     await image.decode();
     signal.throwIfAborted();
-    return url;
+    return image;
   } catch { revoke(); return null; }
   finally { signal.removeEventListener('abort', revoke); }
 }

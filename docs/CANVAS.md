@@ -127,6 +127,16 @@ config/layout writer and permits direct plan-Store writes only inside
 `async_save_config_state()`/`async_save_layout_state()`; the trail recorder's
 operational Store is the one explicit exception (#291).
 
+## First opening
+
+The preparation and live render paths use one canvas background and loading
+status. A compatible, non-interactive image from browser storage or the server
+can appear while geometry and the viewport settle. The live scene can accept
+input once ready. It fades in on the measured camera while the already painted
+image stays underneath. If the image becomes incompatible during that fade,
+remove it and expose the complete live scene in the same frame. Reduced motion
+publishes the live scene in one frame (#1545).
+
 ## Model
 
 - Canvas: an unbounded plane in the same units as the historical square

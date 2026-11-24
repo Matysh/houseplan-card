@@ -21,21 +21,20 @@ const runtime = manifest.files.find(file => /houseplan-editor-runtime-[^/]+\.js$
 assert.ok(runtime);
 for (const theme of themes) for (const width of widths) {
   // waitForCard=false: observe cold entry before the ordinary launch helper
-  // waits for the veil to leave. Every context starts without persisted data.
+  // waits for the plan to be ready. Every context starts without persisted data.
   const { page, browser } = await launchColdView({ width, height: 1000 }, 1, [], {}, undefined, undefined, undefined, false);
   try {
     // The general smoke harness defaults to a 780px host. This matrix measures
-    // the actual requested card width, including while its boot veil owns it.
+    // the actual requested card width, while the startup status is visible.
     await page.locator('#host').evaluate(host => { host.style.cssText = 'width:100%;max-width:100%;margin:0;padding:0'; });
-    const bootGeometry = await page.locator('houseplan-card .bootveil').evaluate(element => {
-      const frame = element.getBoundingClientRect(), glyph = element.querySelector('svg').getBoundingClientRect();
-      return { width:frame.width, glyphWidth:glyph.width, glyphHeight:glyph.height,
-        dx:(glyph.left+glyph.right-frame.left-frame.right)/2, dy:(glyph.top+glyph.bottom-frame.top-frame.bottom)/2 };
+    const startupGeometry = await page.locator('houseplan-card .floor-preparation-status').evaluate(element => {
+      const stage = element.closest('.stage').getBoundingClientRect(), status = element.getBoundingClientRect();
+      return { width:stage.width, pillWidth:status.width, dx:status.left-stage.left, dy:status.top-stage.top };
     });
-    assert.ok(bootGeometry.width <= width && Math.abs(bootGeometry.glyphWidth-56)<.1
-      && Math.abs(bootGeometry.glyphHeight-56)<.1 && Math.abs(bootGeometry.dx)<1 && Math.abs(bootGeometry.dy)<1,
-      JSON.stringify(bootGeometry));
-    await captureUiKitSurface(page, 'boot-loading-states', 'houseplan-card .bootveil');
+    assert.ok(startupGeometry.width <= width && startupGeometry.pillWidth > 0
+      && startupGeometry.dx >= 0 && startupGeometry.dx < 36 && startupGeometry.dy >= 0 && startupGeometry.dy < 36,
+      JSON.stringify(startupGeometry));
+    await captureUiKitSurface(page, 'boot-loading-states', 'houseplan-card .stage');
     await assertFreshDemoBundle(page);
     await page.waitForFunction(() => window.__card?._loadOk && !window.__card._booting && window.__card._continuity.hasCompleteFrame);
     await applyUiKitTheme(page, theme);

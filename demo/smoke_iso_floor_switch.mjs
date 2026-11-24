@@ -35,7 +35,7 @@ const out = await page.evaluate(async () => {
   result.demoHasTwoBackdropFloors = tabs.includes('f1') && tabs.includes('garden')
     && ['f1', 'garden'].every((id) => !!card._model.find((space) => space.id === id)?.bg);
   result.isoReadyWithResolvedPaper = !!stage()?.classList.contains('projection-iso')
-    && stage()?.dataset.hpIsoReadiness === 'ready' && !root.querySelector('.bootveil:not(.off)');
+    && stage()?.dataset.hpIsoReadiness === 'ready' && !root.querySelector('.floor-preparation-status');
 
   // First visits may prepare a passive floor asynchronously. The strict
   // one-render contract below measures already prepared floor switches.
@@ -50,7 +50,7 @@ const out = await page.evaluate(async () => {
   let veils = 0;
   const observer = new MutationObserver((records) => {
     for (const record of records) for (const node of record.addedNodes) {
-      if (node.nodeType === 1 && (node.matches('.bootveil') || node.querySelector('.bootveil'))) veils += 1;
+      if (node.nodeType === 1 && (node.matches('[data-hp-startup-pending]') || node.querySelector('[data-hp-startup-pending]'))) veils += 1;
     }
   });
   observer.observe(root, { childList: true, subtree: true });

@@ -46,7 +46,7 @@ const rec = await page.evaluate(async () => {
   const wrapEl = stage && stage.querySelector(':scope > .zoomwrap');
   out.planVisibleAfterReconnect = !!wrapEl && getComputedStyle(wrapEl).visibility === 'visible';
   out.noHpbootClass = !!stage && !stage.classList.contains('hpboot');
-  out.veilGone = !sr().querySelector('.bootveil');
+  out.statusGone = !sr().querySelector('.floor-preparation-status');
 
   // A detach during resume/mode motion kills the one RAF owner. The transient
   // state must die with it, otherwise the same element comes back inert or
@@ -86,14 +86,14 @@ const rec = await page.evaluate(async () => {
   c2.hass = window.__card.hass;
   wrap.appendChild(c2);
   const t1 = performance.now();
-  while (c2._booting && performance.now() - t1 < 2000) await sleep(50);
-  // _bootFading is true for ~220 ms after the reveal — detach right inside it
+  while (!c2._bootFading && performance.now() - t1 < 2000) await sleep(16);
+  out.detachedDuringFade = c2._bootFading;
   c2.remove();
   await sleep(30);
   wrap.appendChild(c2);
   await sleep(400);
   const sr2 = c2.shadowRoot || c2.renderRoot;
-  out.fadeVeilGoneAfterReattach = !sr2.querySelector('.bootveil') && c2._bootFading === false;
+  out.statusGoneAfterFadeReattach = !sr2.querySelector('.floor-preparation-status') && c2._bootFading === false;
   wrap.remove();
   return out;
 });
@@ -129,13 +129,11 @@ for (const shiftMs of shifts) {
         }
         const stage = sr().querySelector('.stage');
         if (stage) {
-          const veil = sr().querySelector('.bootveil');
           const wrapEl = stage.querySelector(':scope > .zoomwrap');
           const preview = !!stage.querySelector('[data-hp-cache-preview]');
           const planHidden =
             !wrapEl ||
-            getComputedStyle(wrapEl).visibility === 'hidden' ||
-            (veil && !veil.classList.contains('off') && getComputedStyle(veil).opacity !== '0');
+            getComputedStyle(wrapEl).visibility === 'hidden' || getComputedStyle(wrapEl).opacity === '0';
           frames.push({ t: Math.round(t), planVisible: !planHidden && !preview, stageH: stage.clientHeight,
             previewSafe: !preview || (!!wrapEl?.inert && getComputedStyle(wrapEl).pointerEvents === 'none'
               && !stage.querySelector('[data-hp="device"],.roomlabel,[data-hp-live-editor],.glowlayer')) });

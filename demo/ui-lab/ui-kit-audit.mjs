@@ -118,7 +118,7 @@ try {
       await page.waitForFunction(() => {
         const card = window.__lab?.card, root = card?.shadowRoot;
         return root?.querySelector('ha-card[data-hp-state="ready"]')
-          && !root.querySelector('.bootveil') && !root.querySelector('.stage.hpboot');
+          && !root.querySelector('.floor-preparation-status') && !root.querySelector('.stage.hpboot');
       });
       await page.mouse.move(0, 0);
       await capture('view');

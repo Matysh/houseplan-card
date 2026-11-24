@@ -22,7 +22,7 @@ try{
   try{
    await context.route('**/*',route=>{const u=new URL(route.request().url());return u.origin===origin||['data:','blob:'].includes(u.protocol)?route.continue():route.abort()});
    const page=await context.newPage();page.on('pageerror',e=>errors.push({profile:id,error:e.message}));await page.goto(origin);
-   await page.waitForFunction(()=>{const c=window.__lab?.card,r=c?.shadowRoot;return r?.querySelector('ha-card[data-hp-state=ready]')&&!r.querySelector('.bootveil')&&!r.querySelector('.stage.hpboot')});
+   await page.waitForFunction(()=>{const c=window.__lab?.card,r=c?.shadowRoot;return r?.querySelector('ha-card[data-hp-state=ready]')&&!r.querySelector('.floor-preparation-status')&&!r.querySelector('.stage.hpboot')});
    await assertFreshDemoBundle(page,root);
    await page.locator('#lab-launcher').click();await page.locator('#lab-theme').selectOption(theme);await page.locator('#lab-close').click();
    const capture=async(name,scope)=>{

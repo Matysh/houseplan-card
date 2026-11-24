@@ -127,16 +127,49 @@ test('#1522 optional fit is no longer recalculated in steady View after one acce
   h.owner.dispose();
 });
 
-test('#1522 a browser entry is tried first and no remote read is made after a hit', async()=>{
-  const h=harness({read:async()=>assert.fail('a browser hit must not call HA')});
+test('#1545 an undecodable browser image falls back to the compatible server preview', async()=>{
+  let calls=0;
+  const h=harness({read:async()=>{calls++;return null;}});
   h.set(portable);
   h.owner.store.read=async()=>({
-    size:portable.size, zoomHint:1, image:new Blob(['not-svg']), // reaches only the local decoder
+    size:portable.size, zoomHint:1, image:new Blob(['<?xml version="1.0"?>']),
   });
   h.owner.observe(portable);
   await flush();
-  assert.equal(h.owner.facts.remote,'idle');
+  assert.equal(calls,1);
+  assert.equal(h.owner.facts.status,'invalid');
+  assert.equal(h.owner.facts.remote,'miss');
   h.owner.dispose();
+});
+
+test('#1545 live publication retains the same decoded image only for the current visual identity', async(t)=>{
+  const originalImage = Object.getOwnPropertyDescriptor(globalThis,'Image');
+  class DecodedImage {
+    dataset = {};
+    async decode() {}
+    setAttribute() {}
+  }
+  Object.defineProperty(globalThis,'Image',{value:DecodedImage,configurable:true});
+  t.after(()=>{
+    if (originalImage) Object.defineProperty(globalThis,'Image',originalImage);
+    else delete globalThis.Image;
+  });
+  const h=harness({read:async()=>({...packet,size:portable.size})});
+  t.after(()=>h.owner.dispose());
+  h.set(portable);
+  h.owner.observe(portable);
+  await flush();
+  const preview=h.owner.observe(portable);
+  assert.ok(preview?.remote);
+  h.owner.shown();
+  h.owner.publishedLive(true);
+  assert.equal(h.owner.awaitsLive,false);
+  assert.strictEqual(h.owner.observe(portable).element,preview.element);
+  const changed={...portable,revision:'updated'};
+  h.set(changed);
+  assert.equal(h.owner.observe(changed),undefined);
+  assert.equal(h.owner.observe(portable),undefined);
+  assert.equal(h.reads.length,1,'the fade cannot schedule another image read');
 });
 
 test('#1522 stale fit and accepted live View retire the same remote read owner', async()=>{

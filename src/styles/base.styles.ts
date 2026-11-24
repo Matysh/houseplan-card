@@ -166,18 +166,6 @@ export const baseStyles = [readingKitStyles, navigationStyles, iconActionStyles,
     .spacer {
       flex: 1;
     }
-    .bootveil {
-      position: absolute;
-      inset: 0;
-      z-index: 40;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    .bootveil .boothouse {
-      position: static; /* the main .zoomwrap SVG is pinned to inset:0 — not this icon */
-    }
     @keyframes hp-pulse-short {
       0% { transform: scale(1); opacity: 0.55; }
       70% { opacity: 0.22; }

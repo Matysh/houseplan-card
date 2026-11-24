@@ -28,7 +28,7 @@ try {
     await page.evaluate(() => window.__hpTest.settled());
     await page.waitForFunction(() => {
       const r = window.__card.shadowRoot, s = r.querySelector('.stage');
-      return s && !r.querySelector('.bootveil') && !s.matches('.hpboot,.hpiso-pending,.mode-transition')
+      return s && !r.querySelector('.floor-preparation-status') && !s.matches('.hpboot,.hpiso-pending,.mode-transition')
         && !window.__card._cameraTransition?.active;
     });
   };

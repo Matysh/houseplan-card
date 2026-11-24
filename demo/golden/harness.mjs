@@ -1054,7 +1054,7 @@ export function prepareGoldenFixture(scenario) {
  * Keep the full scene/persistence oracle; a live Resize preview is intentional.
  */
 async function preparePlanKeyboardCapture(page, scenario) {
-  await page.waitForFunction(() => !window.__goldenCard.renderRoot.querySelector('.bootveil, .stage.hpsettle'),
+  await page.waitForFunction(() => !window.__goldenCard.renderRoot.querySelector('.floor-preparation-status, .stage.hpsettle'),
     undefined, { timeout: 9000 });
   const guard = await page.evaluateHandle(({ space, tool }) => {
     const card = window.__goldenCard, root = card.renderRoot;

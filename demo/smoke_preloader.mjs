@@ -1,11 +1,4 @@
-// HP-1552: residual jump on first open in NORMAL (non-kiosk) mode. The stage is
-// calc(100dvh - _hdrH) and _hdrH is measured from HA's chrome, which loads
-// AFTER the card's first paint — so the plan painted, then jumped when the
-// panels landed. The fix hides the plan behind a boot veil (pulsing house)
-// until the height reads the same twice in a row (or ~600 ms). This smoke
-// simulates the late HA panel: a spacer above the card grows 0 → 56 px at
-// t=300 ms. Assertions: the veil is shown, and there is NOT A SINGLE frame
-// where the plan is visible at a non-final stage height. Kiosk: no veil ever.
+// #1545 and #1552: a single first-open status covers measured HA chrome.
 import { launch, check, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 820, height: 760 });
@@ -38,21 +31,19 @@ const res = await page.evaluate(async () => {
       }
       const stage = sr().querySelector('.stage');
       if (stage) {
-        const veil = sr().querySelector('.bootveil');
+        const status = stage.querySelector('.floor-preparation-status');
         const wrapEl = stage.querySelector(':scope > .zoomwrap');
         const preview = !!stage.querySelector('[data-hp-cache-preview]');
-        const planHidden =
-          !wrapEl ||
-          getComputedStyle(wrapEl).visibility === 'hidden' ||
-          (veil && !veil.classList.contains('off') && getComputedStyle(veil).opacity !== '0');
+        const style = wrapEl && getComputedStyle(wrapEl);
         frames.push({
           t: Math.round(t),
-          planVisible: !planHidden && !preview,
-          previewSafe: !preview || (!!wrapEl?.inert && getComputedStyle(wrapEl).pointerEvents === 'none'
+          planVisible: !!style && style.visibility === 'visible' && +style.opacity > 0 && !preview,
+          previewSafe: !preview || (!!wrapEl?.inert && style.pointerEvents === 'none'
             && !stage.querySelector('[data-hp="device"],.roomlabel,[data-hp-live-editor],.glowlayer')),
-          veil: !!veil,
-          veilBg: veil ? getComputedStyle(veil).backgroundColor : null,
-          house: !!(veil && veil.querySelector('.boothouse path')),
+          status: status && stage.querySelectorAll('.floor-preparation-status').length,
+          opacity: style?.visibility === 'visible' ? +style.opacity : 0,
+          background: getComputedStyle(stage).backgroundColor,
+          house: !!sr().querySelector('.bootveil,.boothouse'),
           stageH: stage.clientHeight,
         });
       } else {
@@ -68,12 +59,11 @@ const res = await page.evaluate(async () => {
   const finalH = seen[seen.length - 1].stageH;
   out.sampledFrames = seen.length > 40;
   out.cachedPreviewIsPassiveWithoutLiveLayersOrNames = seen.every(f => f.previewSafe);
-  out.veilShownWhileSettling = seen.some((f) => f.veil && !f.planVisible && f.house);
-  out.veilIsDark = (() => {
-    const f = seen.find((x) => x.veilBg);
-    const m = f && f.veilBg.match(/(\d+),\s*(\d+),\s*(\d+)/);
-    return !!m && +m[1] + +m[2] + +m[3] < 300; // dark, not white/transparent
-  })();
+  out.singleStatusWhileSettling = seen.some(f => f.status === 1 && !f.planVisible)
+    && seen.every(f => !f.status || f.status === 1);
+  out.noHouse = seen.every(f => !f.house);
+  out.oneStageBackground = new Set(seen.map(f => f.background)).size === 1;
+  out.fullSceneFadesOverBackground = seen.some(f => f.status === 1 && f.opacity > 0 && f.opacity < 1);
   // THE assertion: no frame may show the plan at a stale (pre-panel) height
   const bad = seen.filter((f) => f.planVisible && Math.abs(f.stageH - finalH) > 2);
   out.noVisibleFrameAtStaleHeight = bad.length === 0
@@ -81,14 +71,14 @@ const res = await page.evaluate(async () => {
     : `plan visible at h=${bad[0].stageH} (final ${finalH}) at t=${bad[0].t}ms — the jump is visible`;
   const shown = seen.filter((f) => f.planVisible);
   out.planShownAfterSettle = shown.length >= 5 && Math.abs(shown[0].stageH - finalH) <= 2;
-  out.veilGoneInTheEnd = !seen[seen.length - 1].veil;
+  out.statusGoneInTheEnd = !seen.at(-1).status && seen.at(-1).opacity === 1;
   out.heightReactedToPanel = finalH !== seen[0].stageH; // the simulated panel actually moved the stage
   wrap.remove();
   return out;
 });
 for (const [k, v] of Object.entries(res)) check(k, v);
 
-// ---------- phase 2: kiosk never shows the veil ----------
+// ---------- phase 2: kiosk uses the same status for preparation ----------
 const kiosk = await page.evaluate(async () => {
   const out = {};
   const c = document.createElement('houseplan-card');
@@ -98,7 +88,7 @@ const kiosk = await page.evaluate(async () => {
   document.body.appendChild(c);
   const sr = () => c.shadowRoot || c.renderRoot;
   let veilEver = false;
-  let planHiddenEver = false;
+  let statusSeen = false, liveSeen = false;
   const t0 = performance.now();
   await new Promise((done) => {
     const sample = () => {
@@ -106,7 +96,8 @@ const kiosk = await page.evaluate(async () => {
       if (stage) {
         if (sr().querySelector('.bootveil')) veilEver = true;
         const wrapEl = stage.querySelector(':scope > .zoomwrap');
-        if (wrapEl && getComputedStyle(wrapEl).visibility === 'hidden') planHiddenEver = true;
+        statusSeen ||= !!stage.querySelector('.floor-preparation-status');
+        liveSeen ||= !stage.inert && !!wrapEl && getComputedStyle(wrapEl).opacity === '1';
       }
       if (performance.now() - t0 < 900) requestAnimationFrame(sample);
       else done();
@@ -114,14 +105,14 @@ const kiosk = await page.evaluate(async () => {
     requestAnimationFrame(sample);
   });
   out.kioskNoVeil = !veilEver;
-  out.kioskPlanNeverHidden = !planHiddenEver;
+  out.kioskStatusThenLive = statusSeen && liveSeen;
   c.remove();
   return out;
 });
 check('kioskNoVeil', kiosk.kioskNoVeil);
-check('kioskPlanNeverHidden', kiosk.kioskPlanNeverHidden);
+check('kioskStatusThenLive', kiosk.kioskStatusThenLive);
 
-// ---------- phase 3: prefers-reduced-motion → the house does not pulse ----------
+// ---------- phase 3: prefers-reduced-motion publishes in one frame ----------
 // The wait lives on the Playwright side: an in-page promise that only a
 // requestAnimationFrame chain keeps alive was reported as "garbage collected"
 // on a CI runner (#506 beta.9 candidate) while the same phase passed locally.
@@ -137,16 +128,22 @@ await page.evaluate(() => {
   c.hass = window.__card.hass;
   c.style.cssText = 'position:fixed;left:0;top:0;width:800px;z-index:99';
   document.body.appendChild(c);
-  window.__preloaderReduced = { card: c, started: performance.now() };
+  window.__preloaderReduced = { card: c, showedStatus: false, faded: false };
 });
 const reduced = await page.waitForFunction(() => {
   const probe = window.__preloaderReduced;
-  const root = probe.card.shadowRoot || probe.card.renderRoot;
-  const house = root?.querySelector('.bootveil .boothouse');
-  if (house) return { anim: getComputedStyle(house).animationName };
-  return performance.now() - probe.started > 500 ? { anim: 'missed' } : null;
-}, null, { polling: 'raf', timeout: 5000 }).then((handle) => handle.jsonValue());
+  const stage = probe.card.renderRoot.querySelector('.stage');
+  if (!stage) return null;
+  probe.showedStatus ||= !!stage.querySelector('.floor-preparation-status');
+  probe.faded ||= stage.hasAttribute('data-hp-startup-finish');
+  const wrap = stage.querySelector('.zoomwrap');
+  return wrap && !stage.inert && probe.card.houseplanStartupFloorDiagnostics()?.live > 0
+    ? { reducedStatusWasShown: probe.showedStatus, reducedHasNoFade: !probe.faded,
+      reducedIsFullyVisible: getComputedStyle(wrap).visibility === 'visible'
+        && getComputedStyle(wrap).opacity === '1' && !stage.querySelector('.floor-preparation-status') }
+    : null;
+}, null, { polling: 'raf', timeout: 5000 }).then(handle => handle.jsonValue());
 await page.evaluate(() => { window.__preloaderReduced.card.remove(); delete window.__preloaderReduced; });
-check('reducedMotionStaticHouse', reduced.anim, 'none');
+for (const [key, value] of Object.entries(reduced)) check(key,value);
 
 await finish(browser, { ...res, ...kiosk, ...reduced });

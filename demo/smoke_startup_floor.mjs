@@ -7,18 +7,32 @@ const { page, browser } = await launchPanelCold({ width: 1440, height: 1000 });
 const fixture = makeLargeHouseFixture({ floors:2, roomsPerFloor:8, devices:24, openings:10,
   partitions:3, columns:2, decor:12, stairs:2 });
 const results = {};
+const serverPackets = new Map();
+await page.exposeFunction('startupFixtureServer', ({ type, packet, ...address }) => {
+  const key = JSON.stringify(address);
+  if (type.endsWith('/put')) { serverPackets.set(key, packet); return { stored:true }; }
+  return { packet:serverPackets.get(key) ?? null };
+});
+const serverFixture = makeLargeHouseFixture({ floors:2, roomsPerFloor:4, devices:4, openings:2,
+  partitions:1, columns:0, decor:0, stairs:0 });
 try {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const mount = async ({ projection, surface, user = 'startup-fixture', rev = 1, hold = false, silent = false }) => {
+  const mount = async ({ projection, surface, user = 'startup-fixture', rev = 1, hold = false, silent = false,
+    server = false, browserMiss = false, serverDelay = false, trace = false }) => {
     await page.goto('http://demo.local/demo.html?panel-cold=1', { waitUntil:'domcontentloaded' });
     await page.waitForFunction(() => typeof window.__mkHass === 'function');
-    await page.evaluate(async ({ fixture, projection, surface, user, rev, hold, silent }) => {
+    await page.evaluate(async ({ fixture, projection, surface, user, rev, hold, silent, server, browserMiss, serverDelay, trace }) => {
+      if (browserMiss) await new Promise((resolve,reject) => {
+        const request = indexedDB.deleteDatabase('houseplan-static-view-v1');
+        request.onsuccess = resolve;
+        request.onerror = request.onblocked = () => reject(Error('Cannot clear the synthetic browser preview cache'));
+      });
       const config = fixture.config, host = document.getElementById('host');
       const floor = config.spaces[0], rotation = projection === 'iso' ? 45 : 0;
       floor.settings.wall_fill = {c:'#476277',a:1};
       const contact = 'binary_sensor.startup_door_contact';
       const door = floor.openings.find(opening => opening.type === 'door');
-      door.contact = contact;
+      if (door) door.contact = contact;
       fixture.states[contact] = {entity_id:contact,state:'off',attributes:{},last_changed:new Date(0).toISOString()};
       config.settings = { ...config.settings, volumetric_view: surface === 'external' ? projection !== 'iso' : projection === 'iso',
         external_screens: { version:3, next_id:2, screens:[{ id:1,space:floor.id,cycle:0,idle:0,
@@ -27,11 +41,11 @@ try {
       // Locally available synthetic raster: no application-owner plan is used.
       const canvas = document.createElement('canvas'); canvas.width = 8; canvas.height = 8;
       const paint = canvas.getContext('2d'); paint.fillStyle = '#d0dddf'; paint.fillRect(0,0,8,8);
-      floor.plan_url = canvas.toDataURL('image/png');
+      if (!server) floor.plan_url = canvas.toDataURL('image/png');
       const asset = 'a'.repeat(64);
       const svgAsset = 'data:image/svg+xml,' + encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#9aa4b9"/></svg>');
-      floor.decor.push({ id:'startup-owned-image',kind:'image',asset_id:asset,x:.2,y:.2,w:.04,h:.04,opacity:.75 });
+      if (!server) floor.decor.push({ id:'startup-owned-image',kind:'image',asset_id:asset,x:.2,y:.2,w:.04,h:.04,opacity:.75 });
       floor.decor.push({ id:'startup-volume',kind:'furniture',symbol:'table',x:.2,y:.28,w:.12,h:.08,
         color:'#344759',opacity:1,angle:0 });
       const sensor = 'sensor.startup_reading';
@@ -42,6 +56,10 @@ try {
       let release;
       const held = hold ? new Promise(resolve => { release = resolve; }) : null;
       window.__releaseStartupFixture = release;
+      let releaseServer;
+      const heldServer = serverDelay ? new Promise(resolve => { releaseServer = resolve; }) : null;
+      window.__releaseStartupServer = releaseServer;
+      window.__readStartupServer = false;
       if (hold) {
         const NativeWorker = window.Worker;
         window.Worker = class extends NativeWorker {
@@ -58,11 +76,20 @@ try {
         callWS: async message => {
           if (message.type === 'houseplan/config/get') {
             await held;
-            return {config:structuredClone(config),rev,can_write:false,external_screens_api:3};
+            return {config:structuredClone(config),rev,can_write:false,external_screens_api:3,
+              ...(server ? {startup_floor_source:'a'.repeat(64)} : {})};
           }
           if (message.type === 'houseplan/layout/get') {
             await held;
-            return {layout:structuredClone(fixture.layout),rev};
+            return {layout:structuredClone(fixture.layout),rev,
+              ...(server ? {startup_floor_source:'b'.repeat(64)} : {})};
+          }
+          if (server && message.type.startsWith('houseplan/startup_floor/')) {
+            if (message.type.endsWith('/get')) {
+              window.__readStartupServer = true;
+              await heldServer;
+            }
+            return window.startupFixtureServer(message);
           }
           return nativeCall(message);
         },
@@ -96,7 +123,33 @@ try {
         card.requestUpdate();
       };
       requestAnimationFrame(installImage);
-    }, {fixture, projection, surface, user, rev, hold, silent});
+      if (trace) {
+        window.__startupTrace = [];
+        const start = performance.now();
+        let firstImage;
+        const sample = () => {
+          const card = window.__startupFixture();
+          const stage = card?.renderRoot.querySelector('.stage');
+          if (stage) {
+            const img = stage.querySelector('img.hp-startup-view');
+            const wrap = stage.querySelector(':scope > .zoomwrap');
+            const style = wrap && getComputedStyle(wrap);
+            if (img) firstImage ??= img;
+            window.__startupTrace.push({ t:performance.now()-start,
+              source:img?.dataset.hpStartupSource ?? null, sameImage:!img || img === firstImage,
+              previewOpacity:img ? +getComputedStyle(img).opacity : 0,
+              interactive:!stage.inert && !!wrap && !wrap.inert && stage.querySelector('.dev') !== null,
+              opacity:style?.visibility === 'visible' ? +style.opacity : 0,
+              status:stage.querySelectorAll('.floor-preparation-status').length,
+              fade:stage.hasAttribute('data-hp-startup-finish'),
+              view:wrap?.querySelector('svg.plan-svg')?.getAttribute('viewBox') ?? null });
+          }
+          if (performance.now()-start < 18_000) requestAnimationFrame(sample);
+        };
+        requestAnimationFrame(sample);
+      }
+    }, {fixture:server ? serverFixture : fixture, projection, surface, user, rev, hold, silent,
+      server, browserMiss, serverDelay, trace});
   };
   const ready = (projection, surface) => page.waitForFunction(({projection,surface}) => {
     const c = window.__startupFixture(), root = c?.renderRoot;
@@ -308,9 +361,117 @@ try {
       },savedStorage);
     }
   }
+  const done = () => page.waitForFunction(() => {
+    const c = window.__startupFixture();
+    return c.houseplanStartupFloorDiagnostics()?.live > 0 && !c._bootFading
+      && !c.renderRoot.querySelector('.floor-preparation-status');
+  });
+  if (!process.env.HP_STARTUP_CASE || process.env.HP_STARTUP_CASE === 'motion/browser') {
+    const opts = {projection:'flat',surface:'panel',user:'startup-motion'};
+    await mount(opts);
+    await ready(opts.projection,opts.surface);
+    await page.waitForFunction(() => window.__startupFixture().houseplanStartupFloorDiagnostics().capture === 'stored');
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await mount({...opts,hold:true,trace:true});
+    await page.evaluate(() => window.__releaseStartupFixture());
+    await snapshot.waitFor({state:'visible',timeout:6000});
+    await done();
+    const frames = await page.evaluate(() => window.__startupTrace);
+    const first = frames.findIndex(f => f.source);
+    const shown = frames.slice(first).filter(f => f.source);
+    assert.ok(first >= 0 && shown.every(f => f.source === 'browser' && f.sameImage && f.status === 1));
+    assert.ok(shown.some(f => f.fade && f.interactive && f.opacity > 0 && f.opacity < 1 && f.previewOpacity === 1),
+      'same decoded browser image remains beneath the interactive live fade');
+    assert.ok(frames.slice(first).every(f => f.source || f.opacity > 0),
+      'a decoded browser image carries the plan across the pending/live templates');
+    const box = await page.locator('.stage').boundingBox();
+    await mount({...opts,hold:true,trace:true});
+    await page.evaluate(() => window.__releaseStartupFixture());
+    await snapshot.waitFor({state:'visible',timeout:6000});
+    await page.mouse.move(box.x+box.width*.61,box.y+box.height*.72);
+    await page.evaluate(() => {
+      const card = window.__startupFixture();
+      const observe = (event) => {
+        const stage = card.renderRoot.querySelector('.stage');
+        const wrap = stage.querySelector(':scope > .zoomwrap');
+        window.__startupInput = { trusted:event.isTrusted, duringFade:stage.hasAttribute('data-hp-startup-finish'),
+          preview:!!stage.querySelector('.hp-startup-view'), view:wrap.querySelector('.plan-svg').getAttribute('viewBox') };
+      };
+      card.renderRoot.addEventListener('wheel',observe,{once:true,capture:true});
+    });
+    await page.waitForFunction(() => {
+      const stage = window.__startupFixture().renderRoot.querySelector('.stage[data-hp-startup-finish]:not([inert])');
+      return !!stage?.querySelector('.hp-startup-view');
+    });
+    await page.mouse.wheel(0,-120);
+    await page.waitForFunction(() => {
+      const c = window.__startupFixture(), d = window.__startupInput;
+      const stage = c.renderRoot.querySelector('.stage');
+      return d?.trusted && !stage.querySelector('.hp-startup-view')
+        && stage.querySelector('.plan-svg')?.getAttribute('viewBox') !== d.view;
+    });
+    const cancelled = await page.evaluate(() => {
+      const samples = window.__startupTrace;
+      const lastWithImage = samples.findLastIndex(f=>f.source);
+      return { input:window.__startupInput, after:samples[lastWithImage+1] };
+    });
+    assert.ok(cancelled.input.duringFade && cancelled.input.preview,
+      'the native wheel event was handled during the preview fade');
+    assert.ok(cancelled.after && !cancelled.after.fade && cancelled.after.opacity === 1,
+      'the first frame after invalidating the image is already fully opaque');
+    check('native wheel input during the fade cancels the obsolete image in the same frame', true);
+    await page.emulateMedia({reducedMotion:'reduce'});
+  }
+  for (const projection of ['flat','iso']) {
+    if (process.env.HP_STARTUP_CASE && process.env.HP_STARTUP_CASE !== 'server/'+projection) continue;
+    const opts = {projection,surface:'panel',user:'startup-server-'+projection,server:true};
+    await mount(opts);
+    await ready(projection,'panel');
+    await page.waitForFunction(() => window.__startupFixture().houseplanStartupFloorDiagnostics().remote === 'stored',
+      undefined,{timeout:12_000});
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await mount({...opts,hold:true,browserMiss:true,trace:true});
+    await page.evaluate(() => window.__releaseStartupFixture());
+    const serverImage = page.locator('img[data-hp-startup-source=server]');
+    await serverImage.waitFor({state:'visible',timeout:8000});
+    const referenceView = await serverImage.evaluate(async img => {
+      const xml = await (await fetch(img.src)).text();
+      return new DOMParser().parseFromString(xml,'image/svg+xml').documentElement.getAttribute('viewBox');
+    });
+    await done();
+    const frames = await page.evaluate(() => window.__startupTrace);
+    const first = frames.findIndex(f => f.source === 'server');
+    const shown = frames.slice(first).filter(f => f.source);
+    const live = frames.find(f => f.interactive && f.fade);
+    assert.ok(first >= 0 && shown.every(f => f.source === 'server' && f.sameImage && f.status === 1));
+    assert.ok(live && shown.some(f => f.fade && f.interactive && f.opacity > 0 && f.opacity < 1 && f.previewOpacity === 1),
+      projection+': same decoded server image remains beneath the interactive live fade');
+    assert.ok(frames.slice(first).every(f => f.source || f.opacity > 0),
+      projection+': server preview carries the plan across the pending/live templates');
+    const a = referenceView.trim().split(/\s+/).map(Number), b = live.view.trim().split(/\s+/).map(Number);
+    assert.ok(a.length === 4 && a.every((n,i)=>Math.abs(n-b[i]) < .001), projection+': preview and live agree on camera');
+    results['server/'+projection] = {status:frames.find(f=>f.status)?.t, preview:shown[0].t, live:live.t};
+    check(projection+' server hits from empty browser cache survive live handoff',true);
+    // A delayed server reply cannot join a scene that was already published.
+    await mount({...opts,browserMiss:true,serverDelay:true,trace:true});
+    await page.waitForFunction(() => window.__readStartupServer);
+    await done();
+    await page.evaluate(() => window.__releaseStartupServer());
+    await page.waitForTimeout(350);
+    const late = await page.evaluate(() => ({ facts:window.__startupFixture().houseplanStartupFloorDiagnostics(),
+      frames:window.__startupTrace }));
+    assert.ok(late.facts.live > 0 && late.facts.shown === 0 && late.frames.every(f=>!f.source),
+      projection+': late reply cannot replace or delay a published scene');
+    await page.emulateMedia({reducedMotion:'reduce'});
+  }
   if (!process.env.HP_STARTUP_CASE) {
     // The passive image can lead a cold opening, but must neither cover an
     // explicit #1521 deadline error nor leave the retry controls inert.
+    // The server matrix previously started from an empty browser cache.
+    await mount({projection:'flat',surface:'panel'});
+    await ready('flat','panel');
+    await page.waitForFunction(() =>
+      ['stored','cached'].includes(window.__startupFixture().houseplanStartupFloorDiagnostics().capture));
     await page.clock.install();
     await mount({projection:'flat',surface:'panel',hold:true,silent:true});
     await page.evaluate(() => window.__releaseStartupFixture());

@@ -33,12 +33,12 @@ const res = await evaluateRetainedAction(page, async () => {
   const c1 = mk();
   out.coldBoots = c1._booting === true;
   const t0 = performance.now();
-  let veilSeen = false;
+  let statusSeen = false;
   while (c1._booting && performance.now() - t0 < 2500) {
-    if ((c1.shadowRoot || c1.renderRoot).querySelector('.bootveil')) veilSeen = true;
+    if ((c1.shadowRoot || c1.renderRoot).querySelector('.floor-preparation-status')) statusSeen = true;
     await sleep(30);
   }
-  out.coldVeilSeen = veilSeen;
+  out.coldStatusSeen = statusSeen;
   out.coldSettled = c1._booting === false;
   await sleep(300); // fade out + soft grace start
   const stage1 = (c1.shadowRoot || c1.renderRoot).querySelector('.stage');
@@ -63,7 +63,7 @@ const res = await evaluateRetainedAction(page, async () => {
         const zw = stage.querySelector(':scope > .zoomwrap');
         frames.push({
           t: Math.round(performance.now() - t1),
-          veil: !!sr2().querySelector('.bootveil'),
+          reveal: !!sr2().querySelector('[data-hp-startup-pending], [data-hp-startup-finish]'),
           planVisible: !!zw && getComputedStyle(zw).visibility === 'visible',
           rooms: stage.querySelectorAll('.room').length,
           previewShapes: stage.querySelector('[data-hp-cache-preview]')?.querySelectorAll('path, polygon, polyline, rect, circle, ellipse, line, image').length || 0,
@@ -84,7 +84,7 @@ const res = await evaluateRetainedAction(page, async () => {
     requestAnimationFrame(sample);
   });
   out.framesSampled = frames.length > 20;
-  out.warmNoVeilEver = !frames.some((f) => f.veil);
+  out.warmNoStartupReveal = !frames.some((f) => f.reveal);
   out.warmPlanVisibleEveryFrame = frames.length > 0 && frames.every((f) => f.planVisible)
     ? true : 'a frame hid the plan';
   const badH = frames.filter((f) => Math.abs(f.stageH - hFinal) > 2);
@@ -125,10 +125,10 @@ const rez = await evaluateRetainedAction(page, async () => {
   const t0 = performance.now();
   let veil = false;
   while (c._booting && performance.now() - t0 < 2500) {
-    if (sr().querySelector('.bootveil')) veil = true;
+    if (sr().querySelector('.floor-preparation-status')) veil = true;
     await sleep(30);
   }
-  out.resizedVeilShown = veil;
+  out.resizedStatusShown = veil;
   out.resizedSettles = c._booting === false;
   wrap.remove();
   return out;

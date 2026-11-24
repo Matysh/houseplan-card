@@ -32,12 +32,13 @@ const out = await page.evaluate(async failure => {
   let exposed = false, missingReferenceFrames = 0;
   const end = performance.now() + 12000;
   while (performance.now() < end) {
-    const c = panel.shadowRoot?.querySelector('houseplan-card'), veil = c?.renderRoot.querySelector('.bootveil');
+    const c = panel.shadowRoot?.querySelector('houseplan-card');
+    const wrap = c?.renderRoot.querySelector('.stage > .zoomwrap');
     if (c?._loadOk && !c._booting && !c._screenReference) {
       missingReferenceFrames++;
-      exposed ||= !veil || getComputedStyle(veil).opacity === '0';
+      exposed ||= !!wrap && getComputedStyle(wrap).visibility === 'visible' && +getComputedStyle(wrap).opacity > 0;
     }
-    if (c?._screenReference && !c._booting && c._continuity.state === 'steady') break;
+    if (c?._screenReference && !c._booting && !c._bootFading && c.houseplanStartupFloorDiagnostics()?.live > 0) break;
     await sleep(25);
   }
   Storage.prototype.getItem = get;
@@ -48,7 +49,7 @@ const out = await page.evaluate(async failure => {
   return { observedLateReference: missingReferenceFrames > 0, neverRevealedWrongCamera: !exposed,
     finalOrdinaryReferenceReady: !!c._screenReference && !c._kiosk && c._continuity.state === 'steady',
     boundaryOutcomeMatches: c._viewRuntimes.summary.unavailable === failure,
-    finalVeilReleased: !c.renderRoot.querySelector('.bootveil:not(.off)'),
+    finalStatusReleased: !c.renderRoot.querySelector('.floor-preparation-status'),
     finalPlanCenteredInExpectedArea: (failure ? !p : !!p)
       && Math.abs((b.x + b.w / 2 - v.x) * ppu - (failure ? s.width : p.left - s.left) / 2) < 1 };
 }, failure);

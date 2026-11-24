@@ -9,7 +9,7 @@ export interface StartupSelection extends StartupAddress {
   zoomHint: number | null;
   remote?: StartupRemoteAddress;
 }
-interface Ready extends StartupFloorView { url: string; remote: boolean }
+interface Ready extends StartupFloorView { element: HTMLImageElement; remote: boolean }
 export interface StartupCapture extends Omit<StartupFloorView, 'image'> { image: Blob | null; geometry?: StartupGeometry }
 export interface StartupRemoteSource {
   read(selection: StartupSelection, signal: AbortSignal): Promise<StartupFloorView | null>;
@@ -51,6 +51,7 @@ export class StartupFloor {
     if (this.published.size > 32) this.published.delete(this.published.values().next().value!);
   }
   private ready = false;
+  private acceptsPreview = true;
   private disposed = false;
   readonly facts = { status: 'idle', capture: 'idle', bytes: 0, shown: 0, live: 0, remote: 'idle' };
 
@@ -64,7 +65,8 @@ export class StartupFloor {
     return !this.disposed && !this.writing && (!this.written.has(key(selection))
       || !!selection.remote && !!this.remote && !this.published.has(this.remoteId(selection)));
   }
-  skipImage(): void { this.ready = true; this.revoke(); }
+  skipImage(): void { this.ready = true; this.disablePreview(); }
+  disablePreview(): void { this.acceptsPreview = false; this.releasePreview(); }
   private matches(selection: StartupSelection, size = false): boolean {
     const current = !this.disposed && this.current();
     return !!current && same(current, selection)
@@ -77,13 +79,15 @@ export class StartupFloor {
       || !selection.size || !this.writing.selection.size || !sameSize(this.writing.selection.size, selection.size))) {
       this.writing.abort.abort(); this.writing = undefined;
     }
-    if (this.disposed || this.ready) return;
-    if (this.tried && (!selection || !same(this.tried, selection))) this.revoke();
-    if (!selection || this.tried) return this.image && selection?.size && sameSize(selection.size, this.image.size) ? this.image : undefined;
+    if (this.disposed) return;
+    if (this.tried && (!selection || !same(this.tried, selection))) this.releasePreview();
+    if (!selection || this.tried || !this.acceptsPreview) {
+      return this.image && selection?.size && sameSize(selection.size, this.image.size) ? this.image : undefined;
+    }
     this.tried = selection;
     this.facts.status = 'reading';
     const owner = this.reading = { selection, abort: new AbortController() };
-    const current = () => this.reading === owner && !this.ready && this.matches(selection);
+    const current = () => this.reading === owner && this.acceptsPreview && this.matches(selection);
     void (async () => {
       try {
         let packet = await this.store.read(selection);
@@ -93,21 +97,29 @@ export class StartupFloor {
           if (packet) this.facts.status = 'camera-miss';
           packet = null;
         }
-        if (!packet && selection.remote && this.remote) {
+        let element = packet && await loadStartupFloorImage(packet.image, owner.abort.signal);
+        if (!current()) { if (element) URL.revokeObjectURL(element.src); return; }
+        if (packet && !element) this.facts.status = 'invalid';
+        if (!element && selection.remote && this.remote) {
           this.facts.remote = 'reading';
           packet = await this.remote.read(selection, owner.abort.signal);
           if (!current()) return;
           this.facts.remote = packet ? 'decoded' : 'miss';
-          remote = !!packet;
+          if (packet) element = await loadStartupFloorImage(packet.image, owner.abort.signal, true);
+          if (!current()) { if (element) URL.revokeObjectURL(element.src); return; }
+          remote = !!element;
         }
-        if (!packet) {
-          if (this.facts.status !== 'camera-miss') this.facts.status = this.store.readStatus;
+        if (!packet || !element) {
+          if (packet) this.facts.status = 'invalid';
+          if (this.facts.status === 'reading') this.facts.status = this.store.readStatus;
           return;
         }
-        const url = await loadStartupFloorImage(packet.image, owner.abort.signal, remote);
-        if (!current()) { if (url) URL.revokeObjectURL(url); return; }
-        if (!url) { this.facts.status = 'invalid'; return; }
-        this.image = { ...packet, url, remote };
+        element.className = 'hp-startup-view';
+        element.dataset.hpStartupSource = remote ? 'server' : 'browser';
+        element.alt = '';
+        element.setAttribute('aria-hidden', 'true');
+        element.draggable = false;
+        this.image = { ...packet, element, remote };
         this.facts.status = 'decoded';
         this.changed();
       } catch { if (current()) { this.facts.status = 'invalid'; if (this.facts.remote === 'reading') this.facts.remote = 'invalid'; } }
@@ -120,16 +132,24 @@ export class StartupFloor {
     this.facts.shown = performance.now(); this.facts.status = 'shown';
     if (this.image.remote) this.facts.remote = 'shown';
   }
-  publishedLive(): boolean {
-    if (this.ready) { if (!this.facts.live) this.facts.live = performance.now(); return false; }
-    const shown = !!this.facts.shown;
-    this.ready = true; this.facts.live = performance.now();
-    this.revoke();
-    return shown;
+  publishedLive(keepShown = false): void {
+    if (!this.facts.live) this.facts.live = performance.now();
+    if (this.ready) return;
+    this.ready = true;
+    this.acceptsPreview = false;
+    // A known image may remain mounted for the fade. Pending work must
+    // lose its owner at the moment the live view is published.
+    if (keepShown && this.image && this.facts.shown) this.cancelRead();
+    else this.releasePreview();
   }
-  private revoke(): void {
-    this.reading?.abort.abort(); this.reading = undefined;
-    if (this.image) URL.revokeObjectURL(this.image.url);
+
+  private cancelRead(): void {
+    this.reading?.abort.abort();
+    this.reading = undefined;
+  }
+  releasePreview(): void {
+    this.cancelRead();
+    if (this.image) URL.revokeObjectURL(this.image.element.src);
     this.image = this.tried = undefined;
     if (!this.ready) this.facts.shown = 0;
   }
@@ -194,7 +214,7 @@ export class StartupFloor {
     }, 150);
   }
   retire(): void {
-    this.revoke();
+    this.releasePreview();
     this.writing?.abort.abort(); this.writing = undefined;
   }
   dispose(): void { this.disposed = true; this.retire(); this.store.close(); }

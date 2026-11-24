@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1545,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Unifies first-open loading and preview handoff on the current release line.",
+  "summary": {
+    "ru": "При открытии плана одна плашка загрузки, а живой вид плавно проявляется поверх подходящего превью.",
+    "en": "Show one loading status and reveal the live plan over a compatible preview."
+  }
+}

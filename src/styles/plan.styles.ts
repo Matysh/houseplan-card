@@ -25,19 +25,20 @@ export const planStyles = css`
     }
     /* Browser text selection must not turn the next scene pan into native drag. */
     .stage > .zoomwrap { user-select:none; -webkit-user-select:none; }
-    .hp-startup-view { position:absolute; inset:0; width:100%; height:100%; z-index:73; pointer-events:none; }
-    .stage:has(> .hp-startup-view) > .zoomwrap { visibility:hidden; }
+    /* The image precedes the live layer in the same stacking level. */
+    .hp-startup-view { position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
+    .stage[data-hp-startup-pending] > :is(.zoomwrap,.zoombadge,.homearrow) { visibility:hidden; }
     .floor-status-over-retained { position:absolute; inset-inline:0; bottom:0; pointer-events:none; z-index:74; }
     .editorloading.floor-preparation-status {
       position:absolute; z-index:74; left:max(12px, env(safe-area-inset-left));
       top:max(12px, env(safe-area-inset-top)); transform:none; pointer-events:none;
     }
-    .stage[data-hp-startup-finish] :is(.devlayer,.roomlabel,.iso-sunwash,.glow-pools-frame,.iso-wall-light) {
+    .stage[data-hp-startup-finish] > :is(.zoomwrap,.zoombadge,.homearrow) {
       animation:hp-startup-live-in 160ms ease-out both;
     }
     @keyframes hp-startup-live-in { from { opacity:0; } }
     @media (prefers-reduced-motion: reduce) {
-      .stage[data-hp-startup-finish] :is(.devlayer,.roomlabel,.iso-sunwash,.glow-pools-frame,.iso-wall-light) { animation:none; }
+      .stage[data-hp-startup-finish] > :is(.zoomwrap,.zoombadge,.homearrow) { animation:none; }
     }
     .stage > .zoomwrap :is(input,textarea,[contenteditable]:not([contenteditable='false'])) {
       user-select:text; -webkit-user-select:text;
@@ -152,14 +153,14 @@ export const planStyles = css`
     .compass:active {
       cursor: grabbing;
     }
-    /* HP-1552: first-open boot veil — the plan hides until the stage height settles */
+    /* Keep the plan hidden until the measured viewport and projection are ready. */
     .stage.hpboot .zoomwrap,
     .stage.hpboot .zoombadge,
     .stage.hpiso-pending .zoomwrap,
     .stage.hpiso-pending .zoombadge {
       visibility: hidden;
     }
-    /* AUD-1552-02: post-veil grace — HA chrome landing after the cap moves
+    /* AUD-1552-02: post-startup grace — HA chrome landing after the cap moves
        the stage height smoothly; the viewport ResizeObserver refits the plan
        along the transition, so a late panel glides instead of jumping. */
     .stage.hpsettle {

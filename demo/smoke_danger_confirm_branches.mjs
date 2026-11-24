@@ -17,7 +17,7 @@ const { page, browser } = await launch(
 // launch reveals the ready plan before the veil fade and soft-stage grace end.
 // Snapshot only after that unrelated startup DOM cleanup: otherwise removing
 // the veil or hpsettle class is mistaken for a warm-gate redraw.
-await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.bootveil, .stage.hpsettle'),
+await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.floor-preparation-status, .stage.hpsettle'),
   undefined, { timeout: 9000 });
 
 // Hold the first German chunk request so the card remains in the real `warm`
