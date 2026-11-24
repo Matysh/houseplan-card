@@ -11,6 +11,7 @@ const result = await page.evaluate(async () => {
   const driverId = 'switch.kettle';
   const spaceId = 'f1';
   const roomId = 'r2';
+  const glowKey = `${spaceId}|${sourceId}`;
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const frame = () => new Promise((resolve) => requestAnimationFrame(
     () => requestAnimationFrame(resolve),
@@ -135,7 +136,7 @@ const result = await page.evaluate(async () => {
       labelExists: !!label,
       labelLit: !!label?.classList.contains('lit'),
       labelText: label?.textContent?.trim() || '',
-      glow: card._glowRenderedSources.has(`${spaceId}|${sourceId}`),
+      glow: card._glowRenderedSources.has(glowKey),
     };
   };
   const setDriver = async (state) => {
@@ -205,7 +206,8 @@ const result = await page.evaluate(async () => {
     && JSON.stringify(targetsOf(sourceCall)) === JSON.stringify([driverId]);
   const noOptimisticVisual = isOn(sourceId) && roomVisual().glow;
   await setDriver('off');
-  await wait(560); // Glow keeps its DOM node for the deliberate fade-out.
+  // Cleanup follows the painted fade and its final frames, not the HA tick.
+  await until(() => !card._glowRenderedSources.has(glowKey), 2500, 'linked light glow did not leave after fading out');
   await card.updateComplete;
   const off = roomVisual();
   const offSource = !isOn(sourceId);
