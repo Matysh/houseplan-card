@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23351,
-  "nextTicket": 667,
+  "revision": 23352,
+  "nextTicket": 668,
   "nextFence": 667,
   "tasks": {
     "1024": {
@@ -5907,21 +5907,17 @@
       "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 665,
-      "queued": false,
+      "ticket": 667,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795521902481,
-      "reviewEntry": 1,
+      "readyAt": 1795523137865,
+      "reviewEntry": 2,
       "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41",
       "changedFiles": [
         "demo/smoke_hide_room_names.mjs",
         "src/optimize-plans-dialog.ts",
         "test/optimize-plans-dialog.test.mjs"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1795521928136,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6533,7 +6529,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1549
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6757,6 +6755,19 @@
           "eventId": "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return:return:1549"
         },
         "delivered": true
+      }
+    },
+    "finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8": {
+      "digest": "445f1e75b8aed687c334fa79a95dd76b51d22c5d5803402b5595723a24fe8597",
+      "issue": 1549,
+      "message": {
+        "kind": "queued",
+        "issue": 1549,
+        "at": 1795523137865,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228"
       }
     }
   },
