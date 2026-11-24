@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 22672,
-  "nextTicket": 654,
+  "revision": 22673,
+  "nextTicket": 655,
   "nextFence": 654,
   "tasks": {
     "1024": {
@@ -5902,6 +5902,20 @@
         "sourceSha": "ad765cf67f737e5d1b8ccd669d9672c3ef0f7b7a"
       }
     },
+    "1541": {
+      "issue": 1541,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1541-window-seams",
+      "materialSha": "67f168edf26bce0b4bffe707e9e57f1316136683",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 654,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795496266809,
+      "reviewEntry": 1
+    },
     "1542": {
       "issue": 1542,
       "track": "ship",
@@ -6489,7 +6503,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1541
+  ],
   "active": {
     "issue": 1542,
     "worker": "finish",
@@ -6593,6 +6609,19 @@
         "layer": "product",
         "materialSha": "d16bad768e880d28cfe505f72d74ae59580e9bc4",
         "phase": "sync"
+      }
+    },
+    "finish:8d16183d-e352-429c-9b81-2a9b3786fc02": {
+      "digest": "b14253d1a0a4ebd70e6e7985d2ef1d2ee30136f89bcf1f4dc3e63be5122ade24",
+      "issue": 1541,
+      "message": {
+        "kind": "queued",
+        "issue": 1541,
+        "at": 1795496266809,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "67f168edf26bce0b4bffe707e9e57f1316136683"
       }
     }
   },
