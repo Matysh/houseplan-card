@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23366,
+  "revision": 23367,
   "nextTicket": 669,
   "nextFence": 668,
   "tasks": {
@@ -5909,7 +5909,7 @@
       "ownerDecision": null,
       "ticket": 667,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795523137865,
       "reviewEntry": 2,
       "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41",
@@ -5927,6 +5927,15 @@
         "entry": 1,
         "detail": "Поведение: test/beta3-geometry-repairs.test.mjs: failed; Поведение: test/build-identity.test.mjs: failed; Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/coincident-partitions.test.mjs: failed; Поведение: test/color-picker.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: cancelled; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: hide room names: Подготовка не завершена успешно; Браузер: iso wall transparency: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
         "eventId": "finish:fb4dc3e8-c949-4e38-8588-de9b533ebe12:finish:1:return:return:1549"
+      },
+      "s6": {
+        "id": "20261124T122557488-ac092820",
+        "name": "Тесты для задачи #1549 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T122557488-ac092820/report.json",
+        "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
+        "status": "passed",
+        "finishedAt": "2026-11-24T12:32:00.178Z",
+        "failures": []
       }
     },
     "1550": {
@@ -6554,9 +6563,9 @@
     "fence": 667,
     "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
     "expectedBase": "74a1f34a97cb4e307401db06ad9a96d1ef88966a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795523141764,
-    "expiresAt": 1795523804609,
+    "expiresAt": 1795527124590,
     "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41"
   },
   "events": {
@@ -6868,6 +6877,34 @@
         "layer": "infra",
         "materialSha": "cbe258c0af6ebbbbbd97d21c7e3dcf504a648104",
         "delivered": true
+      }
+    },
+    "finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8:finish:3:s6-complete": {
+      "digest": "0e7bf1b665b11b8039a778223bfe0e7286a9132f4e30ea5252d9a2f90d0da7a0",
+      "issue": 1549,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1549,
+        "at": 1795523524590,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
+        "phase": "review",
+        "evidence": {
+          "id": "20261124T122557488-ac092820",
+          "name": "Тесты для задачи #1549 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T122557488-ac092820/report.json",
+          "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
+          "status": "passed",
+          "finishedAt": "2026-11-24T12:32:00.178Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
