@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v1.86.1-beta.8 — 2026-11-24
+
+- Fix the first Optimize Plans preview after saving a new plan (#1549).
+- Wait for rendered browser test fixtures and isolate the summary timing check (#1549, #1550, #1551).
+
 ## v1.86.1-beta.7 — 2026-11-24
 
 - Show one loading status when opening a plan and fade the live plan over a compatible browser/server preview or the canvas background (#1545).
