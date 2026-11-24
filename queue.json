@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22943,
+  "revision": 22944,
   "nextTicket": 658,
   "nextFence": 658,
   "tasks": {
@@ -5941,7 +5941,7 @@
       "ownerDecision": null,
       "ticket": 657,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795509442396,
       "reviewEntry": 1,
       "patchId": "660bb2158142717e7f69737f2a316075352a5235",
@@ -5953,7 +5953,16 @@
         "src/iso-lab-visibility.ts",
         "src/iso-scene-render.ts",
         "test/iso-wall-transparency.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261124T083741450-9e353dfe",
+        "name": "Тесты для задачи #1546 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T083741450-9e353dfe/report.json",
+        "materialSha": "e6a072121bc6f57efb6ab85a8e9fd3044a407c30",
+        "status": "passed",
+        "finishedAt": "2026-11-24T08:43:49.218Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6527,9 +6536,9 @@
     "fence": 657,
     "materialSha": "e6a072121bc6f57efb6ab85a8e9fd3044a407c30",
     "expectedBase": "ea307da3741c870b90ca0ed3cb0f6d52554aebab",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795509447495,
-    "expiresAt": 1795510106574,
+    "expiresAt": 1795513430347,
     "patchId": "660bb2158142717e7f69737f2a316075352a5235"
   },
   "events": {
@@ -6635,6 +6644,34 @@
         "layer": "product",
         "materialSha": "e6a072121bc6f57efb6ab85a8e9fd3044a407c30",
         "phase": "sync"
+      }
+    },
+    "finish:cb7c1358-93f6-4f53-9273-0cbdc0bff258:finish:3:s6-complete": {
+      "digest": "adb2cd2572f544fd02e2510e4ce5c98abd56a846d894dd32424a068aa6c7fb80",
+      "issue": 1546,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1546,
+        "at": 1795509830347,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e6a072121bc6f57efb6ab85a8e9fd3044a407c30",
+        "phase": "review",
+        "evidence": {
+          "id": "20261124T083741450-9e353dfe",
+          "name": "Тесты для задачи #1546 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T083741450-9e353dfe/report.json",
+          "materialSha": "e6a072121bc6f57efb6ab85a8e9fd3044a407c30",
+          "status": "passed",
+          "finishedAt": "2026-11-24T08:43:49.218Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Ключ маски теней включает границы кадра и спроецированные контуры, переданные в полигональную операцию. Кэш устройств общий для непрозрачной и прозрачной кладки и сопоставляет проекцию, координаты и высоты непрозрачных препятствий. Ключи отдельных масок учитывают положение и размеры устройства, геометрию граней и координаты поверхности стекла. Хранятся до восьми масок теней и до четырёх сцен устройств, в каждой до 512 позиций и до четырёх вариантов стекла на позицию.\n\nДва регрессионных теста проверяют границы маски при повторном использовании очереди, попадание в кэш при создании копий геометрии, пересчёт после изменения стен, ракурса, размеров и вытеснение записей. По четырём адресным файлам прошло 70 тестов. В финальной сборке прошли 49 визуальных сцен с существующими эталонами. На пользовательском бэкапе SVG-маски финальной сборки совпали с beta.6 во всех 18 сравнениях. У промежуточной сборки с кэшем теней в одном захвате при смене этажа отличалась контрольная сумма масок стекла. Три измерения на Chromium со SwiftShader. Медиана после одного шага зума — 1152 → 638 → 642 мс, последнего шага серии зума — 820 → 646 → 476 мс, возврата на первый этаж — 769 → 603 → 546 мс (beta.6 → кэш теней → оба кэша). [Решение по HA E2E](https://github.com/Matysh/houseplan-e2e/issues/111).",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
