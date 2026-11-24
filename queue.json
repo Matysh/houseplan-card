@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23810,
+  "revision": 23811,
   "nextTicket": 678,
   "nextFence": 678,
   "tasks": {
@@ -5981,10 +5981,25 @@
       "removedToRelease": false,
       "reviewRequest": "review:1555:4:75a022dd3f765d2ce265b9ae4e192d86a004bbf1:5d66d02c75b2e4f453d2d351157ba0b3025136c7",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": 19,
+          "cycleMilestone": 19
+        },
+        "milestoneTitle": "1.86.1",
+        "commentCurrent": true,
+        "commentDigest": "10f515bc1fa6aff29eea",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": 19
+        }
       },
       "devBuild": {
         "status": "pending"
