@@ -1,15 +1,15 @@
-<!-- release: v1.86.1-beta.6 -->
-<!-- base: v1.86.1-beta.5 -->
+<!-- release: v1.86.1-beta.7 -->
+<!-- base: v1.86.1-beta.6 -->
 <!-- language: ru -->
-## House Plan 1.86.1-beta.6
+## House Plan 1.86.1-beta.7
 
-В 2,5D устранены швы на стёклах, рамах, подоконниках и дверных полотнах, в том числе диагональные линии вокруг ручек в косых ракурсах (#1541, #1543).
+При открытии плана видна одна плашка «Обновляем план». Готовый вид плавно появляется на месте совместимого статичного превью из браузера или с сервера. Если превью нет, план проявляется поверх фона. При недоступной подложке план всё равно открывается (#1545).
 
-Пристенные устройства остаются видимыми после пересоздания вида, подсветка сохраняется до последнего кадра затухания. Обводки широких плашек сохраняют зазор при повороте плана (#1540, #1542).
+В 2,5D маски теней и устройств переиспользуются при совпадении геометрии. Серия зума и возврат на уже показанный этаж могут завершаться быстрее (#1546).
 
 <!-- language: en -->
-## House Plan 1.86.1-beta.6
+## House Plan 1.86.1-beta.7
 
-2.5D window panes, frames, sills and door leaves paint without internal seams, including the diagonal lines around door handles in oblique views (#1541, #1543).
+Opening the plan shows a single loading status. The live plan fades in over a compatible static preview from the browser or server, or over the canvas background when there is no preview. The plan still opens if its backdrop is unavailable (#1545).
 
-Wall-mounted devices stay visible after the view remounts, and lighting remains visible through the final fade-out frame. Outlines keep their clearance around wide value tiles when the plan rotates (#1540, #1542).
+2.5D reuses shadow and device masks when their geometry matches. This can shorten settling after repeated zoom and returning to an already displayed floor (#1546).
