@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23008,
-  "nextTicket": 659,
+  "revision": 23009,
+  "nextTicket": 660,
   "nextFence": 659,
   "tasks": {
     "1024": {
@@ -5963,16 +5963,15 @@
       "materialSha": "9d03f86ffc3894b7131a03490b6eef7f548506fd",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 658,
-      "queued": false,
+      "ticket": 659,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795512929037,
-      "reviewEntry": 1,
+      "readyAt": 1795513040912,
+      "reviewEntry": 2,
       "patchId": "423a8cce0c58610efea004023dfb8ae72fb963f1",
       "changedFiles": [
         "docs/release-ledger/cycle.json"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6583,7 +6582,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1547
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6702,6 +6703,19 @@
           "detail": "Синтаксис и типы изменённых инструментов: failed",
           "eventId": "finish:b3261afd-0358-4b32-aba9-2b842a8740f2:finish:3:return:return:1547"
         }
+      }
+    },
+    "finish:cad97b38-01d5-4433-bec2-bcc04be7bf98": {
+      "digest": "d8a474516c76bd68be506ee4371ea28120f995c225e68d50969584ec52d5a396",
+      "issue": 1547,
+      "message": {
+        "kind": "queued",
+        "issue": 1547,
+        "at": 1795513040912,
+        "entry": 2,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "9d03f86ffc3894b7131a03490b6eef7f548506fd"
       }
     }
   },
