@@ -27,6 +27,7 @@ export function floorCacheSnapshot(card) {
     // #744: the union is pooled per floor, and the inner contours are the
     // second structural cache of a floor visit.
     wallUnionPool: card._wallUnionPool?.size ?? 0,
+    isoWallBasePool: card._isoWallBasePool?.size ?? 0,
     innerContour: card._innerContourCache?.size ?? 0,
     openingTunnel: card._openingTunnelCache ? 1 : 0,
     // #814: the per-floor pools (≤ 8); 0 for a base without them.
@@ -54,7 +55,7 @@ export function floorCacheBuilds(card) {
  * Returns `{ ok, supported, builds, failures }`; each failure names the family
  * and its growth.
  */
-export function judgeSwitchCycle({ before, after, switches, isoBefore = null, isoAfter = null, pooled = false }) {
+export function judgeSwitchCycle({ before, after, switches, isoBefore = null, isoAfter = null, pooled = false, isoBasePooled = false }) {
   const judged = {
     wallUnion: 'wall union',
     innerContour: 'inner contour',
@@ -65,6 +66,8 @@ export function judgeSwitchCycle({ before, after, switches, isoBefore = null, is
   };
   const perFloor = { physicalBodies: 'physical bodies', openingTunnel: 'opening tunnel' };
   if (pooled) Object.assign(judged, perFloor);
+  if (isoBasePooled || before?.isoWallBase !== undefined || after?.isoWallBase !== undefined)
+    judged.isoWallBase = '2.5D wall base';
   const reported = { ...(pooled ? {} : perFloor), lightPhysicalBodies: 'light physical bodies' };
   const failures = [];
   const supported = !!before && !!after && typeof before === 'object' && typeof after === 'object';

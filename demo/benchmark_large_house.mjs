@@ -59,6 +59,7 @@ const requiresFloorCacheBuildCounters = cardSource.includes('private _floorCache
 // #814: a target that pools its bodies and tunnels per floor has both judged at zero.
 const requiresFloorBodyPools = cardSource.includes('private _physicalBodiesPool')
   && cardSource.includes('private _openingTunnelPool');
+const requiresIsoWallBasePool = cardSource.includes('private _isoWallBasePool');
 const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
 const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-face-graph.ts'));
 const requiresInteraction = interaction && existsSync(resolve(targetRoot, 'src/live-viewport.ts'));
@@ -158,7 +159,7 @@ try {
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
       requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo, requiresOffFloorIsolation, planRotation,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresIsoWallBasePool, requiresLightGeometryMemo, requiresOffFloorIsolation, planRotation,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -1349,6 +1350,7 @@ try {
       const switchCycleVerdict = guard.judge({
         before: switchCycleFloorBuildsBefore, after: guard.builds(card), switches: switchCycleSwitches,
         isoBefore: switchCycleBuildsBefore, isoAfter: switchCycleBuildsAfter, pooled: requiresFloorBodyPools,
+        isoBasePooled: requiresIsoWallBasePool,
       });
       if (!switchCycleVerdict.ok)
         throw new Error(`${profile} switchCycle built a floor inside the window: ${switchCycleVerdict.failures.join(', ')}`);
@@ -1498,7 +1500,7 @@ try {
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
       interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo, requiresOffFloorIsolation, planRotation,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresIsoWallBasePool, requiresLightGeometryMemo, requiresOffFloorIsolation, planRotation,
     });
     if (profile === 'large-house-v1' && measuredSample >= 0) {
       try {

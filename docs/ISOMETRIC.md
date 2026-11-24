@@ -137,7 +137,10 @@ continues under windows, while doors, gates and passages cut through it.
 Its white base, tint, outline and hatch use the same path and scale rules
 as Flat. When both masonry surfaces in transparent wall mode are explicitly
 at zero opacity, omit the base paint as well so the room floor remains
-continuous. The base is not a second wall model or a new saved setting.
+continuous. The floor worker prepares and persists only the needed base
+paint paths and hatch depth; a floor without windows reuses the flat union.
+The renderer retains eight keyed bases and counts synchronous misses in
+the warm-switch guard. This is not a second wall model or a new saved setting.
 
 Opening flips, host face, hinges and hardware follow the same leaf. Live
 positions come from the ordinary opening resolver, including manual states,

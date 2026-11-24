@@ -119,6 +119,8 @@ test('#1454 prepared frame is a bounded lossless runtime-cache payload, includin
   assert.deepEqual(restored.clean,frame.clean);
   assert.equal(restored.union.value?.d,frame.union.value?.d);
   assert.equal(restored.union.value?.sourceFingerprint,frame.union.value?.sourceFingerprint);
+  assert.deepEqual(restored.iso.wallBase,frame.iso.wallBase);
+  assert.ok(restored.iso.wallBase.value?.paths.length,'persisted 2.5D masonry has paint');
   const iso=await import('../test-build/iso-scene-render.js');
   const cache=new Map([[restored.iso.key,iso.restoreIsoCache(restored.iso.value)]]);
   for(const rotation of [90,180,270]) {
@@ -131,6 +133,9 @@ test('#1454 prepared frame is a bounded lossless runtime-cache payload, includin
   for (const [label, change] of [
     ['physical bodies key',frame=>{frame.bodies.key='wrong'}],
     ['wall union key',frame=>{frame.union.key='wrong'}],
+    ['missing 2.5D wall base',frame=>{delete frame.iso.wallBase}],
+    ['2.5D wall base key',frame=>{frame.iso.wallBase.key='wrong'}],
+    ['broken 2.5D wall base path',frame=>{frame.iso.wallBase.value.paths[0].fillRule='invalid'}],
     ['opening index key',frame=>{frame.openingIndex.key='wrong'}],
     ['opening tunnel key',frame=>{frame.tunnels.key='wrong'}],
     ['floor paint key',frame=>{frame.floorPaint.key='wrong'}],

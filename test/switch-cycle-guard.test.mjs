@@ -79,6 +79,14 @@ test('#769 AC6: the 2.5D structural counter is still judged', () => {
   }).ok, true, 'a base without the 2.5D counter is not judged');
 });
 
+test('#1555: a 2.5D wall base rebuilt on a warm floor is a failure', () => {
+  const before = counters({ isoWallBase: 1 });
+  const judge = (after) => judgeSwitchCycle({ before, after, switches: 2, isoBasePooled: true });
+  assert.equal(judge(counters({ isoWallBase: 1 })).builds.isoWallBase, 0);
+  assert.deepEqual(judge(counters({ isoWallBase: 2 })).failures, ['2.5D wall base +1']);
+  assert.deepEqual(judge(counters()).failures, ['2.5D wall base counter is missing']);
+});
+
 test('#769 AC7: a cold build in a full LRU keeps every size and still fails', () => {
   // A full union pool: the cold floor's union is built and one entry is
   // evicted, so the pool stays at 8; the floor's contours and clean floors
@@ -103,7 +111,7 @@ test('#769: the size snapshot reads the real size of the opening wall index', ()
     _openingWallIndexCache: new Map([[1, 1], [2, 2], [3, 3]]),
   };
   assert.deepEqual(floorCacheSnapshot(card), {
-    cleanFloor: 1, glowClip: 0, wallUnion: 1, wallUnionPool: 2, innerContour: 0,
+    cleanFloor: 1, glowClip: 0, wallUnion: 1, wallUnionPool: 2, isoWallBasePool: 0, innerContour: 0,
     openingTunnel: 0, openingTunnelPool: 0, physicalBodiesPool: 0,
     openingWallIndex: 3, isoGeometry: 0, planSnapGeometry: 0, wallFaceGraph: 0,
   });

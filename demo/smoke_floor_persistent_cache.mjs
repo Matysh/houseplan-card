@@ -85,6 +85,7 @@ try {
     const sameFit = JSON.stringify(firstFrame.base) === JSON.stringify(card._baseVb());
     const diskBuilds = { ...card._floorCacheBuilds };
     const projection = card._renderProjection, isoBuilds = card._isoStructuralBuildCount;
+    const hasDiskWallBase = !!card.renderRoot.querySelector('.iso-wall-base-paper');
     const quarterTurnBuilds = [];
     if (projection === 'iso') for (const rotation of [45, 90, 135, 180, 225, 270, 315, 0]) {
       card._rotatePlan(1);
@@ -254,7 +255,7 @@ try {
     card=await mount();await settle(card);
     const missingAsset=card._floorPreparation.diagnostic.scheduler;
     card.requestUpdate();await until(()=>card._floorPreparation.diagnostic.store.writes>0,'cold document seed');
-    return { cold, disk, warm, cachedBeforeFresh, sameFit, diskBuilds, projection, isoBuilds, quarterTurnBuilds,
+    return { cold, disk, warm, cachedBeforeFresh, sameFit, diskBuilds, projection, isoBuilds, quarterTurnBuilds, hasDiskWallBase,
       preview, summary, authority, corruptionRecovered, degraded, missingAsset, publicationSource, memoryReturned, noDeviceWritesFromCache: writes === savedWrites, current: card._space, first: source.config.spaces[0].id };
   }, { fixture, expectedArea, expectedChanged, contact });
   // A real new document retires warmBoot's JS memo as well as the card. Merely
@@ -323,6 +324,10 @@ try {
     && result.degraded.diagnostics.scheduler.fallbackJobs >= 1 && result.degraded.diagnostics.familyFallbacks === 0);
   check('projection remains the requested one', result.projection, isometric ? 'iso' : 'flat');
   check('a missing worker asset falls back once without an unhandled failure', result.missingAsset.workerErrors===1&&result.missingAsset.fallbackJobs===1);
-  if(isometric)check('restored iso quarter turns never rebuild the physical source',
-    result.isoBuilds === 0 && result.quarterTurnBuilds.every(count=>count===0));
+  if(isometric) {
+    check('restored iso quarter turns never rebuild the physical source',
+      result.isoBuilds === 0 && result.quarterTurnBuilds.every(count=>count===0));
+    check('persistent ISO loads wall-base paint with no renderer rebuild',
+      result.hasDiskWallBase && result.diskBuilds.isoWallBase === 0);
+  }
 } finally { await finish(browser); }

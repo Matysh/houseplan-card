@@ -1,14 +1,14 @@
 /** One canonical preparation shared by the worker and the degraded path.
  * The renderer still owns its existing cache keys and consumers. This frame
  * supplies their values before a pull reader can enter an expensive miss. */
-import type { ServerConfig } from './types';
+import type { ServerConfig, SpaceModel } from './types';
 import { spaceModels, NORM_W, GRID_PITCH, GRID_STEP_N } from './space-geometry';
 import { roomPoly, islandsOf } from './logic';
 import { resolveZeroWalls } from './zero-walls';
-import { geometryOpenings, geometryPartitionOpeningCuts, geometryRoomOpeningInputs } from './plan-geometry-preflight';
+import { geometryOpenings, geometryPartitionOpeningCuts, geometryRoomOpeningInputs, type GeometryOpeningProjection } from './plan-geometry-preflight';
 import { physicalBodyParts, type PhysicalBodyParts } from './physical-geometry';
 import { wallBodiesUnionPath, innerContourForRoom, openingWallIndex, openingTunnelGeometriesFromIndex,
-  type OpeningWallIndex, type OpeningTunnelGeometry } from './wall-thickness';
+  type OpeningWallIndex, type OpeningTunnelGeometry, type WallEntry } from './wall-thickness';
 import { cleanFloorForRoom, cleanFloorData, type CleanFloorData } from './clean-floor';
 import { buildRoomFloorPaint, roomFloorGeometry, type RoomFloorPaint } from './room-floor-paint';
 import { physicalBodiesKey, openingWallIndexKey, wallUnionKey, wallUnionPoolEntry } from './floor-geometry-key';
@@ -24,6 +24,34 @@ export interface FloorGeometryInput {
   cleanKey: string;
   projection: 'flat' | 'iso';
 }
+type WallPaintGeometry = Pick<NonNullable<ReturnType<typeof wallBodiesUnionPath>>, 'paths' | 'depthUnits'>;
+export type IsoWallBaseEntry = { key: string; value: WallPaintGeometry | null };
+
+/** Keep only the paint needed at ground level. No window means the ordinary
+ * union is already exact; a room window never revokes a partition's body. */
+export function prepareIsoWallBase(input: {
+  space: SpaceModel; walls: WallEntry[]; openCuts: number[][]; openings: readonly GeometryOpeningProjection[];
+  cellCm: number; gridPitch: number; wallKeyPitch: number; flatUnion: () => WallPaintGeometry | null;
+  flatBodies: () => number[][][];
+}): WallPaintGeometry | null {
+  const { space, walls, openCuts, openings, cellCm, gridPitch, wallKeyPitch } = input;
+  const windows = openings.filter(opening => opening.type === 'window');
+  let base: WallPaintGeometry | null;
+  if (!windows.length) base = input.flatUnion();
+  else {
+    const groundOpenings = openings.filter(opening => opening.type !== 'window');
+    const bodies = windows.some(opening => opening.partitionHost)
+      ? physicalBodyParts(space, cellCm, gridPitch, gridPitch * .0002, geometryPartitionOpeningCuts(groundOpenings)).all
+      : input.flatBodies();
+    base = walls.length || bodies.length
+      ? wallBodiesUnionPath(space.rooms, walls, openCuts,
+        geometryRoomOpeningInputs(groundOpenings, space, walls, openCuts, wallKeyPitch, cellCm, gridPitch, NORM_W),
+        wallKeyPitch, cellCm, gridPitch, NORM_W, bodies)
+      : null;
+  }
+  return base ? { paths: base.paths, depthUnits: base.depthUnits } : null;
+}
+
 export interface FloorGeometryFrame {
   version: 1;
   id: string;
@@ -38,7 +66,7 @@ export interface FloorGeometryFrame {
   openingIndex: { key: string; value: OpeningWallIndex };
   tunnels: { key: string; value: Array<OpeningTunnelGeometry | null> };
   floorPaint: { key: string; value: Map<string, RoomFloorPaint> };
-  iso?: { key: string; value: IsoCacheSnapshot };
+  iso?: { key: string; value: IsoCacheSnapshot; wallBase: IsoWallBaseEntry };
   work: Record<string, number>;
 }
 
@@ -101,8 +129,12 @@ export async function prepareFloorGeometry(input: FloorGeometryInput, signal?: A
       iso.resolveIsoScene({ source, cache, cellCm, liveFrame: { x: 0, y: 0, w: NORM_W, h: NORM_W }, rotation });
     const snapshot = iso.captureIsoCache(cache.get(source.key));
     if (!snapshot) throw new Error('floor-cache:missing-iso-physical');
-    frame.iso = { key: source.key, value: snapshot };
+    frame.iso = { key: source.key, value: snapshot, wallBase: {
+      key: united.key, value: prepareIsoWallBase({ space, walls, openCuts, openings,
+        cellCm, gridPitch, wallKeyPitch, flatUnion: () => value, flatBodies: () => parts.all }),
+    } };
     frame.work.isoStructural = 1;
+    frame.work.isoWallBase = Number(openings.some(opening => opening.type === 'window'));
   }
   return frame;
 }
@@ -185,6 +217,11 @@ export function isFloorGeometryFrame(value: unknown, input: FloorGeometryInput):
   }
   if (input.projection === 'iso') {
     const iso = frame.iso?.value;
+    const base = frame.iso?.wallBase;
+    if (!base || base.key !== frame.union.key || base.value !== null && (!base.value
+      || !Number.isFinite(base.value.depthUnits) || base.value.depthUnits < 0 || !Array.isArray(base.value.paths)
+      || !base.value.paths.every(path => !!path && typeof path.id === 'string' && typeof path.d === 'string'
+        && path.d.length > 0 && path.fillRule === 'evenodd'))) return false;
     if (!iso?.physical || !Array.isArray(iso.physical.openings) || !Array.isArray(iso.physical.openingSurfaces)
       || !geom(iso.physical.walls) || !geom(iso.physical.floor) || !(iso.projections instanceof Map)
       || ![90, 180, 270].every(rotation => iso.projections.has(rotation))) return false;

@@ -8,7 +8,7 @@ import { serializeStartupFloor } from './startup-floor-svg';
 import { decodeStartupGeometry, encodeStartupGeometry, isStartupSourceStamp, startupGeometryImage,
   startupWireAvailable, type StartupGeometry, type StartupVector } from './startup-floor-wire';
 import { isoDeviceFitInputs, nominalDeviceCore } from './iso-overlay-fit-inputs';
-import { restoreFloorGeometrySemantics, type FloorGeometryFrame } from './floor-geometry-frame';
+import { prepareIsoWallBase, restoreFloorGeometrySemantics, type FloorGeometryFrame, type IsoWallBaseEntry } from './floor-geometry-frame';
 import { cleanFloorFromData } from './clean-floor';
 import { geometryWorkSnapshot } from './geometry-work';
 import { haValueFormatters } from './ha-value-formatters';
@@ -383,7 +383,7 @@ import { StairViewRuntime, type StairViewHostPort } from './stairs-view';
 import { cleanFloorForRoom, type CleanFloorResult } from './clean-floor';
 import {
   cleanFloorFingerprint, floorGeometryKeyReader, floorPoolEntry, openingWallIndexKey, physicalBodiesKey, sunGeometryKey, sunRoomSettingsKey, wallUnionKey,
-  wallUnionPoolEntry, writeWallUnionPool, type FloorKeySource, type SunWindow,
+  wallUnionPoolEntry, writeWallUnionPool, WALL_UNION_POOL_LIMIT, type FloorKeySource, type SunWindow,
 } from './floor-geometry-key';
 import {
   DECOR_ASSETS_API_VERSION, decorAssetIds, projectDecorImage,
@@ -2780,6 +2780,7 @@ export class HouseplanCard extends LitElement {
     key: string;
     value: ReturnType<typeof wallBodiesUnionPath>;
   }>();
+  private _isoWallBasePool = new Map<string, IsoWallBaseEntry>();
   /** Keep the historical cache property observable by performance/smoke
    * contracts. Explicit test/product invalidation also clears the pool. */
   private get _wallUnionCache(): {
@@ -2793,13 +2794,12 @@ export class HouseplanCard extends LitElement {
     value: ReturnType<typeof wallBodiesUnionPath>;
   } | null) {
     this._wallUnionCacheValue = value;
-    if (value === null) this._wallUnionPool.clear();
+    if (value === null) {
+      this._wallUnionPool.clear();
+      this._isoWallBasePool.clear();
+    }
   }
   private _isoGeometryCache = new Map<string, IsoSceneCacheEntry>();
-  private _isoWallBaseCache: {
-    key: string;
-    value: ReturnType<typeof wallBodiesUnionPath>;
-  } | null = null;
   private _renderIsoScene: IsoRenderScene | null = null;
   private _isoProjectionSnapshot: 'flat' | 'iso' | null = null;
   /** Observable Stage 4 performance seam: increments only for a real
@@ -2811,7 +2811,7 @@ export class HouseplanCard extends LitElement {
    * and the floor-cache smoke judge them; nothing in the product reads them.
    * #814: the sun wedges (Flat, 2.5D) count theirs for the floor-cache-reuse smoke. */
   private _floorCacheBuilds = {
-    wallUnion: 0, innerContour: 0, cleanFloor: 0, openingWallIndex: 0, lightBarrier: 0,
+    wallUnion: 0, isoWallBase: 0, innerContour: 0, cleanFloor: 0, openingWallIndex: 0, lightBarrier: 0,
     glowClip: 0, physicalBodies: 0, openingTunnel: 0, roomFloorPaint: 0, lightPhysicalBodies: 0, sunRays: 0, isoSun: 0,
   };
   private _isoFallback = new Set<string>();
@@ -3382,6 +3382,7 @@ export class HouseplanCard extends LitElement {
     return this._floorPreparedRooms?.frame === frame
       && this._physicalBodiesPool.get(frame.bodies.key) === frame.bodies
       && this._wallUnionPool.get(frame.union.key) === frame.union
+      && (!frame.iso || this._isoWallBasePool.get(frame.iso.wallBase.key) === frame.iso.wallBase)
       && this._openingWallIndexCache.get(frame.openingIndex.key) === frame.openingIndex.value
       && this._openingTunnelPool.get(frame.tunnels.key) === frame.tunnels
       && this._roomFloorPaintPool.get(frame.floorPaint.key) === frame.floorPaint
@@ -3396,6 +3397,7 @@ export class HouseplanCard extends LitElement {
       restoreFloorGeometrySemantics(frame, raw);
       lruWrite(this._physicalBodiesPool, frame.bodies.key, frame.bodies, 8); this._physicalBodiesCache = frame.bodies;
       writeWallUnionPool(this._wallUnionPool, frame.union); this._wallUnionCache = frame.union;
+      if (frame.iso) lruWrite(this._isoWallBasePool, frame.iso.wallBase.key, frame.iso.wallBase, WALL_UNION_POOL_LIMIT);
       for (const [key, value] of frame.inner) lruWrite(this._innerContourCache, key, value, 600);
       const clean = new Map(frame.clean.map(([key, value]) => [key, cleanFloorFromData(value, space.stairs)]));
       this._floorPreparedRooms = { frame, clean };
@@ -11655,23 +11657,22 @@ export class HouseplanCard extends LitElement {
 
   /** Ground-level masonry keeps the full window sill footprint. Doorways and
    * passages still cut the base; use the same union and paint as the 2D plan. */
-  private _isoWallBaseGeometry(): ReturnType<typeof wallBodiesUnionPath> {
+  private _isoWallBaseGeometry(): IsoWallBaseEntry['value'] {
     const space = this._spaceModel();
     if (!space) return null;
     const key = wallUnionKey(this._floorKey(space.id), space.rooms.length);
-    if (this._isoWallBaseCache?.key === key) return this._isoWallBaseCache.value;
-    const groundOpening = (opening: OpeningCfg) => opening.type !== 'window';
-    const extras = physicalBodyParts(
-      space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
-      this._partitionOpeningCuts(space, groundOpening),
-    ).all;
-    const walls = this._spaceWalls;
-    const value = !walls.length && !extras.length ? null : wallBodiesUnionPath(
-      space.rooms, walls, this._openCuts(),
-      this._roomWallOpeningInputs(this._openingsR.filter(groundOpening), space),
-      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
-    );
-    this._isoWallBaseCache = { key, value };
+    const cached = lruRead(this._isoWallBasePool, key);
+    if (cached.hit) return cached.value.value;
+    // A canonical View has already hydrated this entry from the worker.
+    // Count any synchronous miss, even if it only projects the flat union.
+    this._floorCacheBuilds.isoWallBase++;
+    const value = prepareIsoWallBase({
+      space, walls: this._spaceWalls, openCuts: this._openCuts(),
+      openings: this._openingsR as readonly GeometryOpeningProjection[],
+      wallKeyPitch: this._wallKeyPitch, cellCm: this._cellCm, gridPitch: this._gridPitch,
+      flatUnion: () => this._wallUnionGeometry(), flatBodies: () => this._physicalBodiesR(),
+    });
+    lruWrite(this._isoWallBasePool, key, { key, value }, WALL_UNION_POOL_LIMIT);
     return value;
   }
 

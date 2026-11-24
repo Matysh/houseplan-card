@@ -25,6 +25,18 @@ const out = await page.evaluate(async () => {
     .sort().join(',');
   const result = {};
 
+  // The default image-backed demo has only thin room lines. Add genuine
+  // masonry and a sill on both floors while retaining their different paper.
+  await hp.setServerConfig(cfg => {
+    for (const [i, floor] of cfg.spaces.entries()) {
+      const id = 'base-switch-' + floor.id, y = .35 + i * .12;
+      floor.settings = { ...floor.settings, show_borders:true };
+      floor.partitions = [{ id, a:[.14,y], b:[.43,y], cm:24 }];
+      floor.openings = [{ id: id + '-window', type:'window', x:.27, y, angle:0, length:.08,
+        host:{kind:'partition',id,t:.45} }];
+    }
+    return cfg;
+  });
   document.documentElement.style.setProperty('--ha-card-background', '#fff');
   await hp.switchSpace('f1');
   await hp.setVolumetricView(true);
@@ -41,6 +53,11 @@ const out = await page.evaluate(async () => {
   // one-render contract below measures already prepared floor switches.
   await hp.switchSpace('garden'); await hp.settled();
   await hp.switchSpace('f1'); await hp.settled();
+  const wallBase = () => root.querySelector('.iso-wall-base-paper')?.getAttribute('d');
+  const firstBase = wallBase();
+  const warmed = card._floorCacheBuilds.isoWallBase;
+  result.wallBaseWasPrepared = typeof firstBase === 'string' && firstBase.length > 0
+    && warmed === 0 && card._isoWallBasePool.size >= 2;
   let updates = 0;
   const update = card.update.bind(card);
   card.update = (changed) => { updates += 1; return update(changed); };
@@ -74,6 +91,8 @@ const out = await page.evaluate(async () => {
       active: root.querySelector('[data-hp="space-tab"][aria-current="page"]')?.getAttribute('data-id'),
       readiness: stage()?.dataset.hpIsoReadiness || '',
       light, sameLight: light === firstShow.get(id),
+      baseRebuilds: card._floorCacheBuilds.isoWallBase - warmed,
+      sameBase: typeof wallBase() === 'string' && (wallBase() === firstBase) === (id === 'f1'),
     });
   }
   observer.disconnect();
@@ -85,6 +104,7 @@ const out = await page.evaluate(async () => {
   result.everySwitchEndsReady = switches.every((row) => row.readiness === 'ready');
   result.lightFloorsMatchFirstShow = switches.every((row) => row.sameLight)
     && [...firstShow.values()].some((light) => light.length > 0);
+  result.wallBasesStayPrepared = switches.every(row => row.sameBase && row.baseRebuilds === 0);
   return result;
 });
 const { switches, ...checks } = out;

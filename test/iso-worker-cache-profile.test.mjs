@@ -31,6 +31,7 @@ test('#1451 worker preparation and main hydration share the accepted camera at a
     const restored = decodeGeometryText(text);
     assert.ok(isFloorGeometryFrame(restored,input));
     assert.equal(restored.iso.key,main.iso.key,'worker and main identify the same structural producer');
+    assert.deepEqual(restored.iso.wallBase,main.iso.wallBase,'worker transports the exact 2.5D base paint');
     assert.deepEqual(restored.iso.value.physical.roundColumnRings,main.iso.value.physical.roundColumnRings);
     const entry = restoreIsoCache(restored.iso.value);
     const cache = new Map([[restored.iso.key,entry]]);
