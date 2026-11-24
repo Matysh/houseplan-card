@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23353,
+  "revision": 23354,
   "nextTicket": 668,
   "nextFence": 668,
   "tasks": {
@@ -5904,7 +5904,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1549-current-optimize-preview",
-      "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228",
+      "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 667,
@@ -6535,11 +6535,12 @@
     "worker": "finish",
     "token": "667:finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8:finish:1:admit",
     "fence": 667,
-    "materialSha": "1a122a6bf2dbac386464955e8dbc100e9ef23228",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
+    "expectedBase": "74a1f34a97cb4e307401db06ad9a96d1ef88966a",
+    "phase": "testing",
     "admittedAt": 1795523141764,
-    "expiresAt": 1795523441764
+    "expiresAt": 1795523450248,
+    "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6684,6 +6685,10 @@
     },
     "github:45393058560:1:completions:notice:1caa14ff8c54f1f1b9795e9c12099af51f875b10872bf0a3c5fafb8b85a6397f": {
       "digest": "e32826ed12aedd16a5f1df76d0bc375856ba56eee75befe1475dd4ebf198d132",
+      "issue": 1549
+    },
+    "finish:8dafb967-5868-412d-b1d8-0ef01ec6c7e8:finish:2:synchronized": {
+      "digest": "ef2d89e565fac7492a7953723087c71ae59457a97ca91727237469ba17bd0206",
       "issue": 1549
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
