@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.86.1-beta.7 — 2026-11-24
+
 - Show one loading status when opening a plan and fade the live plan over a compatible browser/server preview or the canvas background (#1545).
 
 - Reuse unchanged floor shadow, device body and glass masks in 2.5D (#1546).
