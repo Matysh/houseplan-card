@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23926,
+  "revision": 23927,
   "nextTicket": 680,
   "nextFence": 680,
   "tasks": {
@@ -5969,14 +5969,57 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1557-2-5d-goldens",
-      "materialSha": "6b6e87b8682b92df2405ae99fd3ec083f221520e",
+      "materialSha": "facb8a447b6a137bbb6d2e05f5f87b9311ad80c8",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 679,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795559675300,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "3331cef3116b7d0e25d1b3e9bd8fc31142eabb56",
+      "changedFiles": [
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/device-alert-alarm-iso.png",
+        "demo/golden/baselines/device-alert-attention-iso.png",
+        "demo/golden/baselines/direct-zigbee-lqi-iso-dark.png",
+        "demo/golden/baselines/hidden-devices-iso-dark.png",
+        "demo/golden/baselines/iso-led-strip-dark.png",
+        "demo/golden/baselines/isometric-geometry-view-dark.png",
+        "demo/golden/baselines/isometric-live-layers-dark.png",
+        "demo/golden/baselines/isometric-stage3-no-filter-dark.png",
+        "demo/golden/baselines/isometric-stage3-openings-dark.png",
+        "demo/golden/baselines/isometric-stage3-overlays-light.png",
+        "demo/golden/baselines/isometric-stage6-dark-darkfloor.png",
+        "demo/golden/baselines/isometric-stage6-dark-lightfloor.png",
+        "demo/golden/baselines/isometric-stage6-light-darkfloor.png",
+        "demo/golden/baselines/isometric-stage6-light-lightfloor.png",
+        "demo/golden/baselines/isometric-touch-kiosk-dark.png",
+        "demo/golden/baselines/isometric-wall-junctions-dark.png",
+        "demo/golden/baselines/lighting-closed-door-panel-iso-dark.png",
+        "demo/golden/baselines/lighting-interior-window-iso-dark.png",
+        "demo/golden/baselines/lighting-sun-transparent-chain-iso.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-base.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-individual-larger.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-individual-smaller.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-180.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-270.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-90.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger.png",
+        "demo/golden/baselines/panel-device-contact-resize-iso-profile-smaller.png",
+        "demo/golden/baselines/panel-iso-straight-perspective-1526.png",
+        "demo/golden/baselines/panel-iso-value-badge-depth-0-1504.png",
+        "demo/golden/baselines/panel-iso-value-badge-depth-180-1504.png",
+        "demo/golden/baselines/panel-iso-value-badge-depth-270-1504.png",
+        "demo/golden/baselines/panel-iso-value-badge-depth-90-1504.png",
+        "demo/golden/baselines/plan-rotation-iso-0-1070.png",
+        "demo/golden/baselines/plan-rotation-iso-180-1070.png",
+        "demo/golden/baselines/plan-rotation-iso-270-1070.png",
+        "demo/golden/baselines/plan-rotation-iso-90-1070.png",
+        "demo/golden/baselines/room-co2-iso-dark.png",
+        "demo/golden/baselines/view-device-menu-iso-edge-dark.png",
+        "demo/golden/baselines/zigbee-led-iso-dark.png"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -6562,11 +6605,12 @@
     "worker": "finish",
     "token": "679:finish:7c054390-fbd1-4b24-83e9-fe725b285ddd:finish:1:admit",
     "fence": 679,
-    "materialSha": "6b6e87b8682b92df2405ae99fd3ec083f221520e",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "facb8a447b6a137bbb6d2e05f5f87b9311ad80c8",
+    "expectedBase": "410744c2628055756a3dfd1cb83d069539aa8353",
+    "phase": "testing",
     "admittedAt": 1795559679452,
-    "expiresAt": 1795559979452
+    "expiresAt": 1795560002572,
+    "patchId": "3331cef3116b7d0e25d1b3e9bd8fc31142eabb56"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6599,6 +6643,10 @@
     },
     "github:45502130039:1:completions:message:34e88d84264bc866403175d29a91207d760635cb994ee87b17f1f651398ad0c9": {
       "digest": "6d3f225b183b5bcc58f970d32d79e1c94a461d176bf0cf4966009c4b9aed93ce",
+      "issue": 1557
+    },
+    "finish:7c054390-fbd1-4b24-83e9-fe725b285ddd:finish:2:synchronized": {
+      "digest": "2a49cbb26fedca916f1078d4d76b200a479c36f56c2c006bf6f6a49e44fb91f9",
       "issue": 1557
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
