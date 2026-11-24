@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 22782,
-  "nextTicket": 655,
+  "revision": 22783,
+  "nextTicket": 656,
   "nextFence": 655,
   "tasks": {
     "1024": {
@@ -5924,6 +5924,20 @@
         "status": "published",
         "sourceSha": "d16bad768e880d28cfe505f72d74ae59580e9bc4"
       }
+    },
+    "1543": {
+      "issue": 1543,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1543-opening-t-junctions",
+      "materialSha": "95f59387cf53be7b5e7f242e641ec9b4e85bc526",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 655,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795499139990,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6503,7 +6517,9 @@
       "runId": 45331736695
     }
   },
-  "waiting": [],
+  "waiting": [
+    1543
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6565,6 +6581,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "279fe4b4b88d5d19ac0348e841100da9783fa4b3"
+      }
+    },
+    "finish:09aecaa5-f31c-4384-990c-71c4034e6521": {
+      "digest": "57baf0f398071aa3a09f61b7502e9fe40a5d7628fe239c79e900b1fd40b7859c",
+      "issue": 1543,
+      "message": {
+        "kind": "queued",
+        "issue": 1543,
+        "at": 1795499139990,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "95f59387cf53be7b5e7f242e641ec9b4e85bc526"
       }
     }
   },
