@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22687,
+  "revision": 22688,
   "nextTicket": 655,
   "nextFence": 655,
   "tasks": {
@@ -6557,6 +6557,10 @@
       "digest": "d91451d568ee5a69317be0597b2203724564a5701004182eb2dc13d148865adb",
       "issue": 1541
     },
+    "github:45330898525:1:completions:message:590a23496c579abd3d839e5d6452950caa2c57ecd303ec063381bd85f6a50756": {
+      "digest": "1e8f2c80f20a25729228c292414a6dfb81c574d5f3adae77c11c8d5a56e6a114",
+      "issue": 1541
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6596,7 +6600,8 @@
         "entry": 1,
         "track": "show",
         "layer": "product",
-        "materialSha": "67f168edf26bce0b4bffe707e9e57f1316136683"
+        "materialSha": "67f168edf26bce0b4bffe707e9e57f1316136683",
+        "delivered": true
       }
     },
     "finish:8d16183d-e352-429c-9b81-2a9b3786fc02:finish:1:admit": {
