@@ -1,4 +1,4 @@
-import { installNetworkGuard, MAX_SESSION_BYTES, parseSession, saveSession, serializeSession } from './session.mjs';
+import { installNetworkGuard, MAX_SESSION_BYTES, parseSession, saveBrowserSession, resetBrowserSession, serializeSession } from './session.mjs';
 
 installNetworkGuard(window);
 const notice = document.querySelector('#lab-notice');
@@ -46,8 +46,9 @@ try {
     mock.setDarkMode(theme.value === 'dark'); savePreferences();
   };
   const language = document.querySelector('#lab-language'); language.value = mock.hass.language;
-  language.onchange = () => {
-    mock.persist(); preferences.language = language.value; savePreferences(); location.reload();
+  language.onchange = async () => {
+    if (!await mock.persist()) return;
+    preferences.language = language.value; savePreferences(); location.reload();
   };
 
   const confirmDialog = document.querySelector('#lab-confirm');
@@ -61,13 +62,13 @@ try {
   };
   document.querySelector('#lab-confirm-cancel').onclick = () => confirmDialog.close();
   confirmDialog.addEventListener('close', () => { pendingConfirmation = undefined; });
-  document.querySelector('#lab-confirm-accept').onclick = () => {
+  document.querySelector('#lab-confirm-accept').onclick = async () => {
     const action = pendingConfirmation; pendingConfirmation = undefined; confirmDialog.close();
-    try { action?.(); } catch (error) { notify(error.message); }
+    try { await action?.(); } catch (error) { notify(error.message); }
   };
   document.querySelector('#lab-reset').onclick = () => confirm('Вернуть исходный снимок?',
     'Текущие локальные правки этого набора данных будут заменены исходными. Другие сессии и настоящий HA не изменятся. При необходимости сначала экспортируйте сессию.',
-    () => { localStorage.removeItem(mock.sessionKey); location.reload(); });
+    async () => { await resetBrowserSession(mock.identity); location.reload(); });
   document.querySelector('#lab-export').onclick = () => {
     try {
       const url = URL.createObjectURL(new Blob([serializeSession(mock.identity, mock.snapshot())], { type: 'application/json' }));
@@ -85,7 +86,7 @@ try {
       const snapshot = parseSession(await file.text(), mock.identity);
       confirm('Заменить текущую локальную сессию?',
         'Правки и состояния этого стенда будут заменены импортированной сессией. Набор данных и сборка проверены. Это не импорт в настоящий House Plan.',
-        () => { saveSession(localStorage, mock.identity, snapshot); location.reload(); });
+        async () => { await saveBrowserSession(mock.identity, snapshot); location.reload(); });
     } catch (error) { notify(`Импорт отклонён: ${error.message}`); }
   };
 

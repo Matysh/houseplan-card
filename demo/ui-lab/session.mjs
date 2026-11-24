@@ -79,6 +79,67 @@ export function loadSession(storage, identity) {
   return text === null ? null : parseSession(text, identity);
 }
 
+// Large local fixtures and historical builds share localStorage's small quota.
+// Keep session envelopes in IndexedDB; legacy records stay intact for recovery.
+let sessionDatabase;
+function openSessionDatabase() {
+  if (!sessionDatabase) {
+    sessionDatabase = new Promise((resolve, reject) => {
+      const request = indexedDB.open('houseplan-ui-lab-sessions', 1);
+      let blocked = false;
+      request.onupgradeneeded = () => request.result.createObjectStore('sessions');
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => {
+        blocked = true;
+        reject(new Error('Закройте другие вкладки UI Lab и повторите сохранение'));
+      };
+      request.onsuccess = () => {
+        const db = request.result;
+        if (blocked) { db.close(); return; }
+        db.onversionchange = () => { db.close(); sessionDatabase = undefined; };
+        resolve(db);
+      };
+    }).catch(error => { sessionDatabase = undefined; throw error; });
+  }
+  return sessionDatabase;
+}
+
+async function sessionRecord(key, write, value) {
+  const db = await openSessionDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('sessions', write ? 'readwrite' : 'readonly');
+    const store = tx.objectStore('sessions');
+    const request = write ? store.put(value, key) : store.get(key);
+    // Request success is insufficient: quota errors can abort at commit time.
+    tx.oncomplete = () => resolve(request.result);
+    tx.onabort = () => reject(tx.error || request.error || new Error('Сохранение сессии прервано'));
+    tx.onerror = () => { /* onabort reports the failed transaction. */ };
+  });
+}
+
+export async function loadBrowserSession(identity) {
+  const key = sessionKey(identity);
+  const text = await sessionRecord(key, false);
+  if (text === null) return null; // Explicit reset; do not resurrect a legacy copy.
+  if (text !== undefined) return parseSession(text, identity);
+  const legacy = localStorage.getItem(key);
+  if (legacy === null) return null;
+  const snapshot = parseSession(legacy, identity);
+  await sessionRecord(key, true, legacy);
+  return snapshot;
+}
+
+export async function saveBrowserSession(identity, snapshot) {
+  // Validate and capture now, before waiting for the transaction, so successive
+  // writes preserve their invocation order and cannot observe later mutations.
+  const text = serializeSession(identity, snapshot);
+  await sessionRecord(sessionKey(identity), true, text);
+}
+
+export async function resetBrowserSession(identity) {
+  await sessionRecord(sessionKey(identity), true, null);
+}
+
 // Defence in depth, installed before HA or product modules. The localhost
 // server separately enforces GET/HEAD-only static routes and a restrictive CSP.
 export function installNetworkGuard(win) {

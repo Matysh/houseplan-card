@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- UI Lab: store sessions in IndexedDB without exhausting localStorage and start with the approved two-floor demonstration plan (#1554).
+
 - Tests: catch lost converter retries and dropped updates on reused Home Assistant snapshots (#1552).
 
 ## v1.86.1-beta.8 — 2026-11-24

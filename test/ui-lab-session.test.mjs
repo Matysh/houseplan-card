@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { IDBFactory, IDBDatabase } from 'fake-indexeddb';
 import {
   createSession, importSession, installNetworkGuard, loadSession, MAX_SESSION_BYTES,
   parseSession, saveSession, serializeSession, sessionKey,
@@ -73,6 +74,113 @@ test('storage keys isolate datasets/builds and failed quota leaves previous valu
   storage.setItem = () => { throw Error('QuotaExceededError'); };
   assert.throws(() => importSession(storage, identity, serializeSession(identity, initial)), /QuotaExceeded/);
   assert.equal(storage.getItem(sessionKey(identity)), previous);
+});
+
+let storageCase = 0;
+async function browserStorage(t, legacy = makeStorage()) {
+  for (const [key, value] of Object.entries({ indexedDB: new IDBFactory(), localStorage: legacy })) {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, key);
+    Object.defineProperty(globalThis, key, { configurable: true, value });
+    t.after(() => descriptor ? Object.defineProperty(globalThis, key, descriptor) : delete globalThis[key]);
+  }
+  return import(`../demo/ui-lab/session.mjs?storage-case=${++storageCase}`);
+}
+
+test('IndexedDB saves a large session with full localStorage and preserves historical records', async t => {
+  const legacy = makeStorage();
+  legacy.setItem('houseplan-ui-lab:session:v1', 'historic-session');
+  legacy.setItem = () => { throw new DOMException('Full', 'QuotaExceededError'); };
+  const api = await browserStorage(t, legacy);
+  const large = structuredClone(initial);
+  large.config.settings.large_test_field = 'x'.repeat(2 * 1024 * 1024);
+  await api.saveBrowserSession(identity, large);
+  // A fresh module instance represents a newly opened page, with no RAM cache.
+  const reloaded = await import(`../demo/ui-lab/session.mjs?reload=${storageCase}`);
+  assert.deepEqual(await reloaded.loadBrowserSession(identity), large);
+  assert.equal(legacy.getItem('houseplan-ui-lab:session:v1'), 'historic-session');
+  assert.equal(legacy.getItem(sessionKey(identity)), null);
+});
+
+test('legacy session migrates unchanged; explicit reset does not resurrect it', async t => {
+  const legacy = makeStorage();
+  saveSession(legacy, identity, initial);
+  const original = legacy.getItem(sessionKey(identity));
+  const api = await browserStorage(t, legacy);
+  assert.deepEqual(await api.loadBrowserSession(identity), initial);
+  await api.resetBrowserSession(identity);
+  assert.equal(await api.loadBrowserSession(identity), null);
+  assert.equal(legacy.getItem(sessionKey(identity)), original, 'recoverable legacy copy remains');
+  await api.saveBrowserSession(identity, initial);
+  assert.deepEqual(await api.loadBrowserSession(identity), initial);
+});
+
+test('IndexedDB commit failure rejects without replacing a previously saved session', async t => {
+  const api = await browserStorage(t);
+  await api.saveBrowserSession(identity, initial);
+  const transaction = IDBDatabase.prototype.transaction;
+  let failWrite = true;
+  t.mock.method(IDBDatabase.prototype, 'transaction', function (...args) {
+    const tx = transaction.apply(this, args);
+    if (failWrite && args[1] === 'readwrite') queueMicrotask(() => tx.abort());
+    return tx;
+  });
+  const changed = structuredClone(initial);
+  changed.layout.lab_ceiling.x = 0.91;
+  await assert.rejects(api.saveBrowserSession(identity, changed));
+  failWrite = false;
+  assert.deepEqual(await api.loadBrowserSession(identity), initial);
+  await assert.rejects(api.saveBrowserSession(identity, { ...initial, layout: [] }), /invalid/);
+  assert.deepEqual(await api.loadBrowserSession(identity), initial);
+});
+
+test('IndexedDB captures ordered writes and isolates dataset/build identities', async t => {
+  const api = await browserStorage(t);
+  const changed = structuredClone(initial);
+  const writes = [api.saveBrowserSession(identity, changed)];
+  changed.layout.lab_ceiling.x = 0.41;
+  writes.push(api.saveBrowserSession(identity, changed));
+  changed.layout.lab_ceiling.x = 0.82;
+  await Promise.all(writes);
+  assert.equal((await api.loadBrowserSession(identity)).layout.lab_ceiling.x, 0.41);
+  for (const other of [{ ...identity, datasetId: 'other' }, { ...identity, productFingerprint: 'other' }]) {
+    assert.equal(await api.loadBrowserSession(other), null);
+    await api.saveBrowserSession(other, initial);
+    await api.resetBrowserSession(other);
+  }
+  assert.equal((await api.loadBrowserSession(identity)).layout.lab_ceiling.x, 0.41);
+});
+
+test('malformed legacy data is kept for recovery and never migrated as a valid session', async t => {
+  const legacy = makeStorage();
+  legacy.setItem(sessionKey(identity), '{broken');
+  const api = await browserStorage(t, legacy);
+  await assert.rejects(api.loadBrowserSession(identity), /invalid JSON/);
+  assert.equal(legacy.getItem(sessionKey(identity)), '{broken');
+  await api.resetBrowserSession(identity);
+  assert.equal(await api.loadBrowserSession(identity), null);
+});
+
+test('default two-floor scene is portable, self-contained and uses demonstration identities', async () => {
+  const data = await readFile(new URL('../demo/ui-lab/default-plan/fixture.json', import.meta.url), 'utf8');
+  const scene = JSON.parse(data);
+  assert.deepEqual(scene.config.spaces.map(s => s.title), ['Ground floor', '2nd floor']);
+  assert.equal(scene.config.spaces.reduce((count, s) => count + s.rooms.length, 0), 16);
+  assert.equal(scene.config.markers.length, 195);
+  assert.ok(Object.keys(scene.devices).every(id => id.startsWith('lab_')));
+  assert.ok(Object.keys(scene.entities).every(id => /^[a-z_]+\.lab_/.test(id)));
+  assert.ok(scene.config.markers.every(m => m.binding === 'virtual' || /^(device:lab_|entity:[a-z_]+\.lab_)/.test(m.binding)));
+  assert.doesNotMatch(data, /https?:\/\/|0x[0-9a-f]{16}|192\.168\.|access_token|api_key/i);
+  for (const [id, entity] of Object.entries(scene.entities)) {
+    assert.equal(entity.entity_id, id);
+    if (entity.device_id) assert.ok(scene.devices[entity.device_id], id);
+  }
+  for (const position of Object.values(scene.layout)) assert.ok(scene.config.spaces.some(s => s.id === position.s));
+  for (const asset of scene.assets) {
+    const bytes = await readFile(new URL(`../demo/ui-lab/default-plan/assets/${asset.asset_id}.png`, import.meta.url));
+    const { createHash } = await import('node:crypto');
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.asset_id);
+  }
+  parseSession(serializeSession(identity, { config: scene.config, layout: scene.layout, states: scene.states, virtualLightsOff: scene.virtualLightsOff }), identity);
 });
 
 function fakeWindow() {

@@ -23,6 +23,9 @@ function fixture(t) {
   const repoRoot = join(root, 'repo'), labRoot = join(repoRoot, 'demo/ui-lab'), haCache = join(root, 'ha');
   const snapshot = { config: { spaces: [], markers: [] }, layout: {}, states: {}, devices: {}, entities: {}, areas: {} };
   write(labRoot, 'fixture.json', snapshot);
+  write(labRoot, 'default-plan/fixture.json', snapshot);
+  write(labRoot, 'default-plan/theme.css', '/* default scene */');
+  mkdirSync(join(labRoot, 'default-plan/assets'), { recursive: true });
   write(labRoot, 'index.html', '<!doctype html><title>UI Lab</title>');
   write(labRoot, 'app.mjs', 'export const local = true;');
   write(labRoot, 'session.mjs', 'export const session = true;');
@@ -78,6 +81,19 @@ test('UI Lab validates portable CLI options and missing inputs', () => {
   assert.throws(() => resolveOptions({ port: NaN }), /port/);
   assert.throws(() => resolveOptions({ port: 65536 }), /port/);
   assert.throws(() => resolveOptions({ fixture: '/missing-ui-lab-fixture.json' }), /existing file/);
+});
+
+test('default scene supplies its own assets/theme, explicit fixtures do not inherit them', t => {
+  const input = fixture(t);
+  const defaults = resolveOptions(input);
+  assert.equal(defaults.fixture, join(input.labRoot, 'default-plan/fixture.json'));
+  assert.equal(defaults.assets, join(input.labRoot, 'default-plan/assets'));
+  assert.equal(defaults.theme, join(input.labRoot, 'default-plan/theme.css'));
+  assert.equal(defaults.privateDataset, false);
+  const explicit = resolveOptions({ ...input, fixture: join(input.labRoot, 'fixture.json') });
+  assert.equal(explicit.privateDataset, true);
+  assert.equal(explicit.assets, undefined);
+  assert.equal(explicit.theme, undefined);
 });
 
 test('UI Lab serves actual bundle and authentic-loader shim without HA bootstrap', async t => {

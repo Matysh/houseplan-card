@@ -1,5 +1,5 @@
 import { createFixtureStore } from '/fixture-state.js';
-import { loadSession, saveSession, sessionIdentity, sessionKey } from './session.mjs';
+import { loadBrowserSession, saveBrowserSession, sessionIdentity, sessionKey } from './session.mjs';
 export async function createMockHa(notify) {
   const provenance = await (await fetch('/provenance.json')).json();
   const fixture = await (await fetch('/fixture.json')).json();
@@ -7,8 +7,12 @@ export async function createMockHa(notify) {
   // Never overwrite sessions for other datasets, product builds or old labs.
   const KEY = sessionKey(identity);
   let saved;
-  try { saved = loadSession(localStorage, identity); }
-  catch (error) { notify(`Сессия не загружена: ${error.message}. Исходная запись сохранена.`); }
+  let persistenceReady = true;
+  try { saved = await loadBrowserSession(identity); }
+  catch (error) {
+    persistenceReady = false;
+    notify(`Сессия не загружена: ${error.message}. Исходная запись сохранена; автосохранение отключено до импорта или сброса.`);
+  }
   const listeners = new Map();
   const emit = (type, rev, extra) => queueMicrotask(() => {
     for (const fn of listeners.get(type) || []) fn({ event_type: type, data: { rev, ...extra } });
@@ -24,8 +28,12 @@ export async function createMockHa(notify) {
   services.vacuum = { start: {}, pause: {}, stop: {}, return_to_base: {} };
   services.climate = { turn_on: {}, turn_off: {}, toggle: {}, set_hvac_mode: {}, set_temperature: {} };
   const snapshot = () => ({ config: store.handle({ type: 'houseplan/config/get' }).config, layout: store.handle({ type: 'houseplan/layout/get' }).layout, states: runtime.states, virtualLightsOff: [...virtualOff] });
-  const persist = () => {
-    try { saveSession(localStorage, identity, snapshot()); return true; }
+  const persist = async () => {
+    if (!persistenceReady) {
+      notify('Сначала импортируйте локальную сессию или явно верните исходный снимок в панели UI LAB.');
+      return false;
+    }
+    try { await saveBrowserSession(identity, snapshot()); return true; }
     catch (error) { notify(`Не удалось сохранить локальную сессию: ${error.message}`); return false; }
   };
   const connection = {
@@ -81,13 +89,14 @@ export async function createMockHa(notify) {
         if (!marker) throw Object.assign(Error('Marker is not a manual virtual light'), { code: 'not_toggleable' });
         if (virtualOff.has(marker.id)) virtualOff.delete(marker.id); else virtualOff.add(marker.id);
         const result = { marker_id: marker.id, on: !virtualOff.has(marker.id), rev: ++virtualRev };
-        persist(); for (const fn of listeners.get('houseplan_virtual_light_updated') || []) fn({ event_type: 'houseplan_virtual_light_updated', data: result });
+        if (!await persist()) throw Error('Локальная сессия не сохранена');
+        for (const fn of listeners.get('houseplan_virtual_light_updated') || []) fn({ event_type: 'houseplan_virtual_light_updated', data: result });
         return result;
       }
       const result = store.handle(message, Object.values(runtime.entities));
       if (result !== undefined) {
         if (type === 'houseplan/config/get') return { ...result, integration_version: provenance.productVersion, opening_features_api: 1, decor_assets_api: 1, summary_panel_api: 1, external_screens_api: 3, wall_node_move_api: 1, radar_stage1_api: 1, zigbee_scan_api: 1, zigbee_maps_api: 1, virtual_lights: { rev: virtualRev, config_rev: store.configRev, off: [...virtualOff] } };
-        if (type !== 'houseplan/layout/get') persist();
+        if (type !== 'houseplan/layout/get' && !await persist()) throw Error('Локальная сессия не сохранена');
         return result;
       }
       if (/houseplan\/(plans|assets)\/list$/.test(type)) return { plans: [], assets: [] };
@@ -124,7 +133,8 @@ export async function createMockHa(notify) {
         runtime.states = { ...runtime.states, [id]: { ...old, state, attributes, last_updated: new Date().toISOString() } };
       }
       hass.states = runtime.states; if (panel) panel.hass = { ...hass };
-      persist(); notify('Демо: изменено только локальное состояние');
+      if (!await persist()) throw Error('Локальная сессия не сохранена');
+      notify('Демо: изменено только локальное состояние');
       return { response: null };
     },
   };

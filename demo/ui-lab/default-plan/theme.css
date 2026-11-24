@@ -1,0 +1,31 @@
+/* Amber demonstration theme for the default two-floor plan. */
+:root:not([data-theme="light"]) {
+  --primary-color: rgb(224, 138, 0); --accent-color: rgb(224, 138, 0);
+  --primary-text-color: rgb(228, 228, 231); --secondary-text-color: rgb(138, 140, 153);
+  --card-background-color: rgb(35, 36, 43); --divider-color: rgb(16, 18, 21);
+  --primary-background-color: rgb(16, 18, 21); --secondary-background-color: rgb(28, 29, 33);
+  --error-color: rgb(234, 114, 135); --ha-card-border-radius: 20px;
+  --ha-color-border-primary-normal: hsl(from rgb(224, 138, 0) h s calc(l * 1.45));
+  --ha-color-fill-neutral-quiet-hover: rgb(46, 48, 56);
+  --ha-color-fill-neutral-quiet-resting: rgb(35, 36, 43);
+  --ha-color-fill-primary-loud-resting: rgb(224, 138, 0);
+  --ha-color-fill-primary-loud-hover: hsl(from rgb(224, 138, 0) h s calc(l * 0.70));
+  --ha-color-fill-primary-normal-resting: rgba(224, 138, 0, 0.15);
+  --ha-color-fill-primary-normal-hover: rgba(224, 138, 0, 0.25);
+  --ha-color-on-primary-loud: rgb(240, 243, 255);
+  --ha-color-on-primary-normal: hsl(from rgb(224, 138, 0) h s calc(l * 1.30));
+  --ha-color-form-background: rgb(46, 48, 56);
+  --ha-color-text-primary: rgb(240, 243, 255);
+  --ha-color-text-secondary: color-mix(in srgb, rgb(158, 158, 158) 40%, white);
+  --ha-card-border: none; --ha-card-border-width: 0;
+  --ha-card-border-color: rgba(0,0,0,0); --ha-color-focus: hsl(from rgb(158,158,158) h s calc(l * 1.30));
+  --state-active-color: rgb(224,138,0); --state-inactive-color: rgb(138,140,153);
+  --state-light-active-color: rgb(255,211,99); --state-binary_sensor-active-color: rgb(255,211,99);
+  --state-fan-active-color: rgb(0,188,212); --state-media_player-active-color: rgb(3,169,244);
+  --state-sensor-battery-high-color: rgb(32,126,71); --state-sensor-battery-medium-color: rgb(224,138,0);
+  --ha-color-on-disabled-loud: rgba(158,158,158,.55);
+  --ha-color-text-disabled: hsl(from rgb(158,158,158) h s calc(l * 1.30));
+  --wa-color-surface-default: rgb(35,36,43); --wa-color-brand-border-loud: rgb(224,138,0);
+  --wa-color-brand-fill-normal: rgba(224,138,0,.15);
+  --wa-color-brand-on-normal: hsl(from rgb(224,138,0) h s calc(l * 1.30));
+}

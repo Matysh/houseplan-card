@@ -30,9 +30,15 @@ export function resolveOptions(options = {}) {
   const port = options.port ?? 8891;
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('UI Lab --port must be an integer from 0 to 65535');
   const result = { repoRoot, labRoot, port, haCache: resolve(options.haCache ?? DEFAULT_CACHE),
-    fixture: resolve(options.fixture ?? resolve(labRoot, 'fixture.json')), privateDataset: !!options.fixture };
+    fixture: resolve(options.fixture ?? resolve(labRoot, 'default-plan/fixture.json')), privateDataset: !!options.fixture };
+  // Keep the published two-floor scene together across clones. An explicit
+  // private fixture never silently inherits the shared scene's assets/theme.
+  const defaults = options.fixture ? {} : {
+    assets: resolve(labRoot, 'default-plan/assets'),
+    theme: resolve(labRoot, 'default-plan/theme.css'),
+  };
   for (const [name, type] of [['fixture', 'file'], ['assets', 'directory'], ['theme', 'file'], ['overrides', 'directory']]) {
-    const value = name === 'fixture' ? result.fixture : options[name] && resolve(options[name]);
+    const value = name === 'fixture' ? result.fixture : options[name] ? resolve(options[name]) : defaults[name];
     if (!value) continue;
     if (!existsSync(value) || !(type === 'file' ? statSync(value).isFile() : statSync(value).isDirectory())) {
       throw new Error(`UI Lab --${name} must name an existing ${type}`);

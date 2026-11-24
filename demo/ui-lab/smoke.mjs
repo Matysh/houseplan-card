@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { chromium, expect } from 'playwright/test';
 import { attestLaunchedBrowser } from '../../scripts/browser-attestation.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
@@ -13,6 +14,7 @@ import { createLabServer } from './server.mjs';
 const { values } = parseArgs({ options: { 'ha-cache': { type: 'string' } } });
 const server = await createLabServer({
   port: 0,
+  fixture: fileURLToPath(new URL('./fixture.json', import.meta.url)),
   ...(values['ha-cache'] ? { haCache: values['ha-cache'] } : {}),
 });
 let browser;
