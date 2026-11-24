@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1546,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Reduces repeated 2.5D mask calculations on the current release line.",
+  "summary": {
+    "ru": "Ускорена повторная отрисовка теней, корпусов и стекла устройств в 2,5D.",
+    "en": "Speed up repeated rendering of floor shadows, device bodies and glass outlines in 2.5D."
+  }
+}

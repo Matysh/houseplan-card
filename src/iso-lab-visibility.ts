@@ -2,9 +2,10 @@
  * hidden by a nearer opaque face; never change plan coordinates or leaf poses.
  * A single average depth cannot order an open leaf crossing a long wall. */
 import { isoFloorMatrix, isoHeightLift, isoProjectedDepth, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
-import type { IsoDeviceFace, IsoDeviceOcclusion, IsoDeviceSurface, IsoOverlayPlacement } from './iso-overlays';
+import type { IsoDeviceFace, IsoDeviceOcclusion, IsoDeviceSurface, IsoDeviceWallMask, IsoOverlayPlacement } from './iso-overlays';
 import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
 import { union } from 'polyclip-ts';
+import { lruRead, lruWrite } from './card-runtime';
 
 type Point = [number,number];
 type Polygon = Point[][];
@@ -253,10 +254,38 @@ export function furnitureOcclusion(queue: readonly IsoWallDepthQueueEntry[], cam
   return result;
 }
 
-const deviceOcclusionScenes=new WeakMap<readonly IsoWallDepthQueueEntry[],WeakMap<IsoCamera,{
-  faces:Face[];
-  masks:WeakMap<IsoOverlayPlacement,IsoOverlayPlacement['wallMask']>;
-}>>();
+const DEVICE_OCCLUSION_SCENE_CACHE_LIMIT = 4;
+const DEVICE_WALL_MASK_CACHE_LIMIT = 512;
+const DEVICE_GLASS_MASK_CACHE_LIMIT = 4;
+type DeviceOcclusionScene = { faces: Face[]; masks: Map<string, IsoDeviceWallMask> };
+const deviceOcclusionScenes = new Map<string, DeviceOcclusionScene>();
+let lastDeviceOcclusionScene: {
+  queue: readonly IsoWallDepthQueueEntry[];
+  camera: IsoCamera;
+  scene: DeviceOcclusionScene;
+} | undefined;
+
+function deviceOcclusionScene(queue: readonly IsoWallDepthQueueEntry[], camera: IsoCamera): DeviceOcclusionScene {
+  if (lastDeviceOcclusionScene?.queue === queue && lastDeviceOcclusionScene.camera === camera) {
+    return lastDeviceOcclusionScene.scene;
+  }
+  // The painters can reconstruct the same occluders after a zoom or floor
+  // change. Use the coordinates, heights and cut kind read by the mask.
+  const opaque = queue.filter(entry => !transparentSurface(entry));
+  const key = JSON.stringify([camera, opaque.map(entry => {
+    if (entry.layer === 'wall-top') return [entry.layer, entry.face.projectedRings, entry.face.height];
+    if (entry.layer === 'wall-side') return [entry.layer, entry.face.points, entry.face.baseHeight, entry.face.height];
+    return [entry.layer, entry.surface.kind, entry.surface.points];
+  })]);
+  const cached = lruRead(deviceOcclusionScenes, key);
+  const scene = cached.hit ? cached.value : {
+    faces: opaque.map(entry => faceOf(entry, camera)).filter((face): face is Face => face !== null),
+    masks: new Map<string, IsoDeviceWallMask>(),
+  };
+  if (!cached.hit) lruWrite(deviceOcclusionScenes, key, scene, DEVICE_OCCLUSION_SCENE_CACHE_LIMIT);
+  lastDeviceOcclusionScene = {queue, camera, scene};
+  return scene;
+}
 const noDeviceOcclusion: IsoDeviceOcclusion = {occluded:'',cut:''};
 
 function wallCutAtHeight({entry}:Face,height:number):boolean {
@@ -294,17 +323,16 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
   placement:IsoOverlayPlacement,height:number):IsoOverlayPlacement['wallMask'] {
   const size=placement.deviceSize;
   if(!size)return undefined;
-  let cameras=deviceOcclusionScenes.get(queue);
-  if(!cameras)deviceOcclusionScenes.set(queue,cameras=new WeakMap());
-  let scene=cameras.get(camera);
-  if(!scene){
-    scene={faces:queue.map(entry=>faceOf(entry,camera)).filter((face):face is Face=>!!face?.opaque),masks:new WeakMap()};
-    cameras.set(camera,scene);
-  }
-  const {faces:structureFaces,masks:deviceMasks}=scene;
-  if(deviceMasks.has(placement))return deviceMasks.get(placement);
-  const lift=isoHeightLift(camera,1);
-  const [cx,cy]=placement.visualScene,r=size*5;
+  const {faces:structureFaces,masks:deviceMasks} = deviceOcclusionScene(queue, camera);
+  if (!structureFaces.length) return undefined;
+  // A new placement object can describe the same measured device. Membership
+  // and labels are irrelevant to its projection and physical occlusion.
+  const [cx,cy] = placement.visualScene;
+  const floorAnchor: PlanPoint = [placement.floorAnchor[0], placement.floorAnchor[1]];
+  const key = JSON.stringify([cx,cy,floorAnchor,size,height]);
+  const cached = lruRead(deviceMasks, key);
+  if (cached.hit) return cached.value;
+  const lift=isoHeightLift(camera,1),r=size*5;
   const minBodyDepth=isoProjectedDepth([cx,cy-r],height,camera)-size*.24/lift;
   const nearby:Face[]=[];
   for(const face of structureFaces){
@@ -312,12 +340,17 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
     if(x1<cx-r||x0>cx+r||y1<cy-r||y0>cy+r)continue;
     if(face.geom.some(([ring])=>ring.some(p=>at(face.plane,p)>minBodyDepth))) nearby.push(face);
   }
-  if(!structureFaces.length){deviceMasks.set(placement,undefined);return undefined;}
   const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c;
-  let lastFaces:readonly IsoDeviceFace[]|undefined,lastBody=noDeviceOcclusion;
+  let lastFaces:readonly IsoDeviceFace[]|undefined,lastBody=noDeviceOcclusion,lastFacesKey='';
   const bodyMask=(faces:readonly IsoDeviceFace[])=>{
     if(!nearby.length)return noDeviceOcclusion;
     if(faces===lastFaces)return lastBody;
+    const facesKey = JSON.stringify(faces.map(({left,top,right,bottom,rx,ry,angle}) =>
+      [left,top,right,bottom,rx,ry,angle ?? 0]));
+    if (facesKey === lastFacesKey) {
+      lastFaces = faces;
+      return lastBody;
+    }
     const caps:Point[][]=[],sides:{ring:Point[];plane:Plane}[]=[];
     for(const face of faces){
       const {left:l,right:r,top:t,bottom:bt,rx,ry,angle:turn=0}=face,cap:Point[]=[];
@@ -352,13 +385,15 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
       (top ? cut : hidden).push(...visible);
     }
     lastFaces=faces;
+    lastFacesKey=facesKey;
     return lastBody={occluded:path(hidden),cut:path(cut)};
   };
-  const glassMasks=new WeakMap<readonly IsoDeviceSurface[],{origin:PlanPoint;result:IsoDeviceOcclusion}>();
-  const glassMask=(surfaces:readonly IsoDeviceSurface[],origin=placement.floorAnchor):IsoDeviceOcclusion=>{
+  const glassMasks = new Map<string, IsoDeviceOcclusion>();
+  const glassMask=(surfaces:readonly IsoDeviceSurface[],origin=floorAnchor):IsoDeviceOcclusion=>{
     const [anchorX,anchorY]=origin;
-    const cached=glassMasks.get(surfaces);
-    if(cached?.origin[0]===anchorX && cached.origin[1]===anchorY)return cached.result;
+    const glassKey = JSON.stringify([anchorX,anchorY,surfaces]);
+    const cachedGlass = lruRead(glassMasks, glassKey);
+    if (cachedGlass.hit) return cachedGlass.value;
     const hidden:Multi=[],cut:Multi=[];
     const levelCuts=new Set<Face>();
     const envelope=[Infinity,Infinity,-Infinity,-Infinity],margin=size*.12;
@@ -400,11 +435,12 @@ export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],came
     }
     const local=([x,y]:Point):Point=>[anchorX+(d*(x-cx)-c*(y-cy))/det,anchorY+(-b*(x-cx)+a*(y-cy))/det];
     const result={occluded:path(hidden,local),cut:path(cut,local)};
-    glassMasks.set(surfaces,{origin,result});
+    lruWrite(glassMasks, glassKey, result, DEVICE_GLASS_MASK_CACHE_LIMIT);
     return result;
   };
   const result={bodyMask,glassMask,transform:`matrix(${d/det/size} ${-b/det/size} ${-c/det/size} ${a/det/size} ${.5-(d*cx-c*cy)/det/size} ${.5-(-b*cx+a*cy)/det/size})`};
-  deviceMasks.set(placement,result);return result;
+  lruWrite(deviceMasks, key, result, DEVICE_WALL_MASK_CACHE_LIMIT);
+  return result;
 }
 
 let lastKey='',lastResult:readonly IsoWallDepthQueueEntry[]=[];

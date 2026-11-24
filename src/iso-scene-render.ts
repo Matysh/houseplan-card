@@ -11,9 +11,10 @@ import { nothing, svg, type TemplateResult } from 'lit';
 import { architecturalPainter } from './iso-architectural-edges';
 import { connectTranslucentOpeningMasonry } from './iso-masonry-joins';
 import { difference, union, type Geom } from 'polyclip-ts';
+import { lruRead, lruWrite } from './card-runtime';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_OPENINGS } from './iso-lab-camera';
 import { clipIsoOpeningDepthQueue, composeIsoTranslucentStructure, deviceWallOcclusion, furnitureOcclusion,
-  masonrySurface, transparentSurface, type IsoMasonryOpacity } from './iso-lab-visibility';
+  masonrySurface, type IsoMasonryOpacity } from './iso-lab-visibility';
 import { isoWallLightPainter, type IsoWallLightSource } from './iso-wall-light';
 export { isoFurnitureLightSampler } from './iso-wall-light';
 import type { ResolvedOpeningVisual } from './opening-features';
@@ -31,7 +32,6 @@ export const ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 type WallCut = { geometry: ReturnType<typeof union>; d: string };
 const wallCutCache = new WeakMap<object, WallCut>();
-const solidMaskQueues = new WeakMap<IsoWallGeometry,{key:string;queue:readonly IsoWallDepthQueueEntry[]}>();
 const wallCutPath = (parts: ReturnType<typeof union>): string => parts.flatMap(poly=>poly.map(ring=>
   `M ${ring.map(p=>p.join(' ')).join(' L ')} Z`)).join(' ');
 /** Wall and lintel caps are one cut plane. Outline only their outer boundary;
@@ -53,12 +53,15 @@ function continuousWallCut(scene:IsoRenderScene,queue:ReturnType<typeof buildIso
   wallCutCache.set(queue,result);return result;
 }
 
-const shadowClips = new WeakMap<object, string | null>();
+const SHADOW_CLIP_CACHE_LIMIT = 8;
+const shadowClips = new WeakMap<object, { frameKey: string; clip: string | null }>();
+const recentShadowClips = new Map<string, string>();
 
 function shadowVisibility(scene: IsoRenderScene, queue: ReturnType<typeof buildIsoWallDepthQueue>): string | null {
   if (!scene.camera || !scene.frame) return null;
+  const frameKey = JSON.stringify([scene.frame, scene.camera]);
   const existing = shadowClips.get(queue);
-  if (existing !== undefined) return existing;
+  if (existing?.frameKey === frameKey) return existing.clip;
   const camera = scene.camera;
   const ring = (points: readonly (readonly number[])[]): [number, number][] =>
     points.map(([x, y]) => [Number(x.toFixed(5)), Number(y.toFixed(5))]);
@@ -74,15 +77,22 @@ function shadowVisibility(scene: IsoRenderScene, queue: ReturnType<typeof buildI
   }
   const {x,y,w,h} = scene.frame;
   const bounds: Geom = [[[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]]];
-  // One opaque clip shared by all floor shadows. Boundaries and holes are
-  // computed in projected coordinates, outside the live camera path.
+  // A new queue can carry identical occluders after a camera gesture or
+  // a floor remount. Key the exact boolean inputs, including the bounds.
+  const key = JSON.stringify([bounds, silhouettes]);
+  const cached = lruRead(recentShadowClips, key);
+  if (cached.hit) {
+    shadowClips.set(queue, { frameKey, clip: cached.value });
+    return cached.value;
+  }
   try {
     const visible = difference(bounds, ...silhouettes);
     const clip = visible.flatMap(poly => poly.map(points => `M ${points.map(p => p.join(' ')).join(' L ')} Z`)).join(' ');
-    shadowClips.set(queue, clip);
+    lruWrite(recentShadowClips, key, clip, SHADOW_CLIP_CACHE_LIMIT);
+    shadowClips.set(queue, { frameKey, clip });
     return clip;
   } catch {
-    shadowClips.set(queue, null);
+    shadowClips.set(queue, { frameKey, clip: null });
     return null;
   }
 }
@@ -479,20 +489,8 @@ function renderIsoTranslucentMasonry(
     const kind = masonrySurface(entry);
     return !kind || masonry[kind] === 1;
   });
-  if (overlays?.devices.size) {
-    // The translucent painter creates fresh queue rows on every render.
-    // Compare exact occluder inputs before invalidating the device masks.
-    const inputs=solid.filter(entry=>!transparentSurface(entry));
-    const key=JSON.stringify(inputs.map(entry=>entry.layer==='wall-side'
-      ? [entry.layer,entry.face.points,entry.face.baseHeight,entry.face.height]
-      : entry.layer==='wall-top' ? [entry.layer,entry.face.projectedRings,entry.face.height]
-        : [entry.layer,entry.surface.kind,entry.surface.material,entry.surface.points]));
-    const cached=solidMaskQueues.get(scene.geometry);
-    if(cached?.key!==key)solidMaskQueues.set(scene.geometry,{key,queue:inputs});
-    const occluders=cached?.key===key?cached.queue:inputs;
-    for(const placement of overlays.devices.values()){
-      placement.wallMask=deviceWallOcclusion(occluders,camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
-    }
+  if (overlays) for (const placement of overlays.devices.values()) {
+    placement.wallMask = deviceWallOcclusion(solid,camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
   }
   const architecture = architecturalPainter(queue,camera,wallColor);
   const paintWallLight = isoWallLightPainter(wallLights,camera,cellCm,scene.geometry);

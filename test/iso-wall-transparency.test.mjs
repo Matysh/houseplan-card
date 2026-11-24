@@ -64,6 +64,65 @@ test('#1530 an opaque cut fully hides the device side and glass behind it', () =
   }
 });
 
+test('#1546 masks reuse equivalent measured shapes and invalidate changed inputs', () => {
+  const camera = {...ISO_CAMERA,origin:[0,0],rotDeg:0};
+  const height = 10, floorAnchor = [50,100], deviceSize = 40;
+  const visualScene = projectPlanPoint(floorAnchor,height,camera);
+  const [x,y] = visualScene;
+  const queue = [cut([[x-30,y+17],[x+30,y+17],[x+30,y+21],[x-30,y+21]])];
+  const placement = {floorAnchor,visualScene,deviceSize};
+  const mask = deviceWallOcclusion(queue,camera,placement,height);
+  const faces = [{left:-.5,right:.5,top:-.5,bottom:.5,rx:.15,ry:.15}];
+  const body = mask.bodyMask(faces);
+  assert.ok(body.cut);
+  const fresh = deviceWallOcclusion(structuredClone(queue),structuredClone(camera),structuredClone(placement),height);
+  assert.strictEqual(fresh,mask);
+  assert.strictEqual(fresh.bodyMask(structuredClone(faces)),body);
+  assert.notDeepEqual(mask.bodyMask([{...faces[0],right:.25}]),body);
+
+  const [, , , scale] = isoFloorMatrix(camera);
+  const surfaces = [[[30,120,0],[70,120,0],[70,120+9.6/scale,9.6],[30,120+9.6/scale,9.6]]];
+  const glass = mask.glassMask(surfaces);
+  assert.ok(glass.cut);
+  const alternate = [[[31,120,0],[71,120,0],[71,120+9.6/scale,9.6],[31,120+9.6/scale,9.6]]];
+  assert.notDeepEqual(mask.glassMask(alternate),glass);
+  assert.strictEqual(fresh.glassMask(structuredClone(surfaces),[...floorAnchor]),glass);
+  assert.notStrictEqual(mask.glassMask(surfaces,[51,100]),glass);
+  assert.notEqual(deviceWallOcclusion(queue,camera,{...placement,deviceSize:30},height).transform,mask.transform);
+  assert.notEqual(deviceWallOcclusion(queue,camera,{...placement,visualScene:[x+3,y]},height),mask);
+  assert.notEqual(deviceWallOcclusion(queue,camera,placement,height+1),mask);
+  assert.notEqual(deviceWallOcclusion(queue,{...camera,rotDeg:35},placement,height),mask);
+  const movedWall = [cut([[x-30,y+15],[x+30,y+15],[x+30,y+21],[x-30,y+21]])];
+  assert.notDeepEqual(deviceWallOcclusion(movedWall,camera,placement,height).bodyMask(faces),body);
+  assert.equal(deviceWallOcclusion([],camera,placement,height),undefined);
+  assert.strictEqual(deviceWallOcclusion(queue,camera,placement,height),mask);
+  for (let offset=0;offset<4;offset++) mask.glassMask(surfaces,[55+offset,100]);
+  const restoredGlass = mask.glassMask(surfaces);
+  assert.notStrictEqual(restoredGlass,glass);
+  assert.deepEqual(restoredGlass,glass);
+  for (let offset=0;offset<512;offset++) {
+    deviceWallOcclusion(queue,camera,{...placement,visualScene:[x+100+offset,y]},height);
+  }
+  const restored = deviceWallOcclusion(queue,camera,placement,height);
+  assert.notStrictEqual(restored,mask);
+  assert.deepEqual(restored.bodyMask(faces),body);
+});
+
+test('#1546 the shadow mask follows the frame bounds when the opaque queue is reused', () => {
+  const camera = {...ISO_CAMERA,origin:[0,0],rotDeg:0};
+  const geometry = buildIsoWallGeometry([[[[15,15],[45,15],[45,23],[15,23]]]],camera,10);
+  const scene = {key:'shadow-frame-bounds',geometry,camera,openings:[],openingSurfaces:[],
+    floor:{footprintPath:'',sides:[]}};
+  const draw = w => resolveIsoFramePresentation({
+    projection:'iso',display:{showBorders:true,hideOpenings:true},openings:[],amountOf:()=>0,
+    scene:{...scene,frame:{x:0,y:0,w,h:100}},overlays:()=>null,cellCm:5,
+  }).shadowClip;
+  const narrow = draw(100), wide = draw(180);
+  assert.ok(narrow && wide);
+  assert.ok(!contains(narrow,150,90) && contains(wide,150,90));
+  assert.equal(draw(100),narrow);
+});
+
 test('#1518 intersecting translucent faces are painted in the local depth order', () => {
   const a=wall([[0,20],[20,10],[20,0],[0,10]]);
   const b=wall([[0,10],[20,20],[20,10],[0,0]]);

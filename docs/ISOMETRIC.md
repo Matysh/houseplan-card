@@ -224,6 +224,12 @@ materials.
 
 ## Caches and safe failure
 
+The floor shadow clip reuses the same cut across equivalent projected
+silhouettes and frame bounds. Device masks reuse identical measured geometry
+per opaque scene and camera. Device anchors, body dimensions, face rotation
+and glass surface depths all participate in the relevant cache keys. Recent
+entries have bounded capacity (#1546).
+
 Furniture materials sample the room-light field per part. Visible regions of
 furniture are clipped against the foreground masonry. Furniture and stairs
 ascending from this floor share the material opacity multiplier .65. Downstairs
