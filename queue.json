@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23774,
+  "revision": 23775,
   "nextTicket": 678,
   "nextFence": 678,
   "tasks": {
@@ -6620,10 +6620,11 @@
     "token": "677:finish:1b4ee87c-f873-4a8c-9069-97766e6ef5ad:finish:1:admit",
     "fence": 677,
     "materialSha": "978d5cade9349fb9d4b286de5a2a6ccf8b3dca6c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
+    "phase": "testing",
     "admittedAt": 1795555723756,
-    "expiresAt": 1795556023756
+    "expiresAt": 1795556094149,
+    "patchId": "75a022dd3f765d2ce265b9ae4e192d86a004bbf1"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6880,6 +6881,10 @@
     },
     "finish:5431e0e2-b2ab-4470-b3ca-f142f3e6ea4f:finish:3:return": {
       "digest": "fa20099e4cef692156f143eb971d6ec420905d1dd68cf1cdcaa10f622cbb65ea",
+      "issue": 1555
+    },
+    "finish:1b4ee87c-f873-4a8c-9069-97766e6ef5ad:finish:3:synchronized": {
+      "digest": "b64a9df872d9e9437ac1e2f8fab2f9f678f814ec9aaeb8ddceae5cef8bcc8d9d",
       "issue": 1555
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
