@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23916,
-  "nextTicket": 679,
+  "revision": 23917,
+  "nextTicket": 680,
   "nextFence": 679,
   "tasks": {
     "1024": {
@@ -5963,6 +5963,20 @@
         "status": "published",
         "sourceSha": "410744c2628055756a3dfd1cb83d069539aa8353"
       }
+    },
+    "1557": {
+      "issue": 1557,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1557-2-5d-goldens",
+      "materialSha": "6b6e87b8682b92df2405ae99fd3ec083f221520e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 679,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795559675300,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6542,7 +6556,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1557
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6604,6 +6620,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "410744c2628055756a3dfd1cb83d069539aa8353"
+      }
+    },
+    "finish:7c054390-fbd1-4b24-83e9-fe725b285ddd": {
+      "digest": "36f7df87393292b5b23aac18c086af672372c11b3ad7e9fd679cd43be1087df3",
+      "issue": 1557,
+      "message": {
+        "kind": "queued",
+        "issue": 1557,
+        "at": 1795559675300,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "6b6e87b8682b92df2405ae99fd3ec083f221520e"
       }
     }
   },
