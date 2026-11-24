@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22730,
+  "revision": 22731,
   "nextTicket": 655,
   "nextFence": 655,
   "tasks": {
@@ -5874,7 +5874,7 @@
       "ownerDecision": null,
       "ticket": 654,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795496266809,
       "reviewEntry": 1,
       "patchId": "8ecd21f94906802ee9eaa86cb5a7ad8d9499aaf3",
@@ -5885,7 +5885,16 @@
         "docs/release-ledger/v1.86.0/1541.json",
         "src/iso-lab-visibility.ts",
         "test/iso-opening-refinement.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261124T050625566-c9feef37",
+        "name": "Тесты для задачи #1541 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T050625566-c9feef37/report.json",
+        "materialSha": "279fe4b4b88d5d19ac0348e841100da9783fa4b3",
+        "status": "passed",
+        "finishedAt": "2026-11-24T05:12:49.219Z",
+        "failures": []
+      }
     },
     "1542": {
       "issue": 1542,
@@ -6496,9 +6505,9 @@
     "fence": 654,
     "materialSha": "279fe4b4b88d5d19ac0348e841100da9783fa4b3",
     "expectedBase": "d16bad768e880d28cfe505f72d74ae59580e9bc4",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795496763255,
-    "expiresAt": 1795497410771,
+    "expiresAt": 1795500770486,
     "patchId": "8ecd21f94906802ee9eaa86cb5a7ad8d9499aaf3"
   },
   "events": {
@@ -6642,6 +6651,34 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "d16bad768e880d28cfe505f72d74ae59580e9bc4"
+      }
+    },
+    "finish:8d16183d-e352-429c-9b81-2a9b3786fc02:finish:3:s6-complete": {
+      "digest": "ca8a3ecddfafc5b1ddb1e253117ac80838aabce1848ae0c8ea911e4cacb60da8",
+      "issue": 1541,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1541,
+        "at": 1795497170486,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "279fe4b4b88d5d19ac0348e841100da9783fa4b3",
+        "phase": "review",
+        "evidence": {
+          "id": "20261124T050625566-c9feef37",
+          "name": "Тесты для задачи #1541 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T050625566-c9feef37/report.json",
+          "materialSha": "279fe4b4b88d5d19ac0348e841100da9783fa4b3",
+          "status": "passed",
+          "finishedAt": "2026-11-24T05:12:49.219Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "- Воспроизведено в Chromium на синтетическом плане с двухстворчатым окном и дверью рядом с пересекающей стеной. При вычитании ближних поверхностей одно дверное полотно получало 32 SVG-контура. На внутренних границах из-за сглаживания проступали линии. Исправление объединяет временные части отдельной декоративной поверхности перед записью SVG, сохраняя границы материалов и физических отверстий.\n- В режиме прозрачных стен объединение выполняется в пределах прежнего ранга глубины. Кладка сохраняет собственный путь отрисовки. Округление используется только на выходе в нормализованных координатах, а вырожденный результат возвращает исходные фрагменты.\n- Пять пар кадров при масштабе 192% проверены визуально. Включены открытая и закрытая дверь, открытая и закрытая оконная створка, непрозрачная и прозрачная кладка, светлая и тёмная темы, прямой и косой ракурсы. Диагональные швы на плоскостях окна и двери исчезли, сохранились створки, ручки, петли и перекрытие стеной.\n- Прошли 92 Node-теста. Регрессия #1541 фиксирует исчезновение внутренних стыков при сохранении реального выреза, площади и видимой области стекла, подоконника, рамы и полотна. Ранее этот контур распадался на четыре части. Все 49 сцен 2,5D прошли проверку с действующими эталонами и допусками. Решение по [HA E2E](https://github.com/Matysh/houseplan-e2e/issues/109) зафиксировано.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
