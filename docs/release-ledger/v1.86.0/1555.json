@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1555,
+  "baseStable": "v1.86.0",
+  "category": "stable-fix",
+  "rationale": "Repairs the independently clipped camera-raster join and decorative perimeter strip already present in stable, and reconciles the current beta's transparent masonry with accepted UI-063.",
+  "summary": {
+    "ru": "Основание стен в 2.5D сохраняет полную ширину и разрывы под дверями; убраны ложные швы возле мебели и при движении камеры.",
+    "en": "The full-width 2.5D wall base retains door gaps; false seams beside furniture and during camera gestures are removed."
+  }
+}

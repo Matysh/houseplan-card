@@ -83,6 +83,16 @@ export function planIsoUnderlay(view: LiveViewBox, limits: RasterViewport): IsoR
   return dimensions(limits.content ?? view, view, limits, ISO_UNDERLAY_PIXELS);
 }
 
+/** Snap inward: a clip never reaches unguarded or undecoded bitmap pixels. */
+export function snapRasterCoverage(view:LiveViewBox, coverage:LiveViewBox, limits:RasterViewport):LiveViewBox {
+  const [width,height]=limits.stageSize, dx=view.w/(width*limits.dpr), dy=view.h/(height*limits.dpr);
+  const x=view.x+Math.ceil((coverage.x-view.x)/dx-epsilon)*dx;
+  const y=view.y+Math.ceil((coverage.y-view.y)/dy-epsilon)*dy;
+  const right=view.x+Math.floor((coverage.x+coverage.w-view.x)/dx+epsilon)*dx;
+  const bottom=view.y+Math.floor((coverage.y+coverage.h-view.y)/dy+epsilon)*dy;
+  return {x,y,w:Math.max(0,right-x),h:Math.max(0,bottom-y)};
+}
+
 /** The underlay never contributes alpha inside the current scene frame. */
 export function rasterUnderlayClip(bounds: LiveViewBox, coverage: LiveViewBox): string {
   const cut = rasterIntersection(bounds, coverage);

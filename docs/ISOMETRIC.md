@@ -91,8 +91,12 @@ camera. The frame planner prioritizes visible detail, with at most 8.3 million
 pixels per frame. It uses the accepted camera target and measured preparation
 time to request improved density or coverage before the current image runs
 out. A full-plan image of at most 1.2 million pixels fills newly exposed
-areas. Its clip excludes the rectangle of the current scene frame, so that
-transparent gaps and shadows keep their original alpha. Dragging keeps the
+areas. Its clip excludes the current scene rectangle on the same stage as
+the detail bitmap. The retained edge is guarded against filtering outside
+decoded pixels and snapped inward to physical pixels. The two complementary
+clips add coverage within an isolated plan stack, without adding the backdrop
+twice (#1555). Without the needed composition support, a fully covering
+bitmap can still paint; an uncovered view goes back to exact SVG. Dragging keeps the
 sharp vector reserve while it covers the camera. A pinch also keeps that
 reserve for modest scale changes. A direct gesture forecasts from the
 cadence of the sampled input. Its prepared bitmap replaces the reserve
@@ -123,6 +127,13 @@ Windows have masonry below their sill; reveals start at the sill, the neutral
 white frame reaches the cut and handles face the room. Doors and passages
 have a lintel. Gates use the accepted metal sections, ribs and vertical handles.
 Round columns retain a smooth projected ring.
+
+UI-063 (#1555) removes the decorative extrusion along the outside of the
+floor; the soft ground shadow remains. The cached floor-level wall footprint
+uses the full wall-width union, including partition joins and columns. It
+continues under windows, while doors, gates and passages cut through it.
+Its white base, tint, outline and hatch use the same path and scale rules
+as Flat. The base is not a second wall model or a new saved setting.
 
 Opening flips, host face, hinges and hardware follow the same leaf. Live
 positions come from the ordinary opening resolver, including manual states,
@@ -216,6 +227,11 @@ contour at its existing depth rank. Physical holes, separate visible regions
 and edges between opening materials remain in the silhouette (#1541).
 Shared edges align at T-junctions before rounding the paint coordinates, so
 hardware cutouts do not leave diagonal seams across door leaves (#1543).
+Visible fragments of a continuous translucent surface are combined when
+their actual overlaps admit a single depth order. A real order cycle keeps
+local ranks; the fill alpha applies to the paint, not a separately composited
+bounding group. Padded coplanar opening joints do not draw vertical ink;
+physical corners and real gaps still do (#1555).
 Windows and doors use their own material. The
 optional opening accent tints frames, leaves, reveals and all sill faces.
 Its alpha controls tint strength. White and zero strength reproduce the

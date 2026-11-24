@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep the full wall base beneath windows in 2.5D, preserve doorway gaps and soft shadows, and remove false seams beside furniture and during zoom or pan (#1555).
+
 - UI Lab: store sessions in IndexedDB without exhausting localStorage and start with the approved two-floor demonstration plan (#1554).
 
 - Tests: catch lost converter retries and dropped updates on reused Home Assistant snapshots (#1552).

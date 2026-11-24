@@ -30,6 +30,17 @@ function contains(path, x, y) {
 }
 const orderAt = (result,x,y) => result.filter(fragment => contains(fragment.d,x,y)).map(fragment=>fragment.index);
 
+test('a furniture envelope does not cut a continuous wall into separate paint sheets', () => {
+  const camera={...ISO_CAMERA,origin:[0,0],rotDeg:0};
+  const face=wall([[0,0],[20,0],[20,10],[0,10]].map(([x,z])=>projectPlanPoint([x,0],z,camera)));
+  const furniture=[{footprint:[[5,3],[15,3],[15,5],[5,5]],height:5}];
+  const fragments=composeIsoTranslucentStructure([face],camera,1,{side:.63,top:.5},furniture);
+  assert.equal(fragments.filter(f=>f.index===0).length,1);
+  // The wall remains behind the table where their projected pixels overlap.
+  const point=projectPlanPoint([10,0],2,camera);
+  assert.deepEqual(orderAt(fragments,...point),[0,1]);
+});
+
 test('#1530 an opaque cut fully hides the device side and glass behind it', () => {
   for (const lens of [undefined,{center:[100,100],rate:.002}]) {
     const camera = {...ISO_CAMERA,origin:[0,0],rotDeg:0,perspective:lens};
@@ -243,7 +254,7 @@ test('#1518 hidden opening panels keep the window apron at its own top opacity',
   assert.equal(opaque.layers.panels,false);
   const markup = templateMarkup(opaque.foreground);
   assert.match(markup,/id="hp-iso-translucent-cut-paint"[^>]+d=M /);
-  assert.match(markup,/data-material=top opacity=1[^>]*>\s*<path class=iso-wall-top[^>]+data-surface=window-apron-top/);
+  assert.match(markup,/data-material=top[^>]*>\s*<path class=iso-wall-top[^>]+fill-opacity=1[^>]+data-surface=window-apron-top/);
   assert.doesNotMatch(markup,/class="iso-opening-panel/);
   assert.doesNotMatch(templateMarkup(render(0).foreground),/data-surface=window-apron-top/);
   assert.equal(placement.wallMask,undefined,'turning the cut transparent invalidates the previous mask');

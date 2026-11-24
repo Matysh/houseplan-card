@@ -3,7 +3,8 @@ import { check, finish } from './serve.mjs';
 import { settleIsoPaint, startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
 
 const mode = process.argv[2] ?? 'underlay';
-if (!['underlay', 'backdrop', 'fallback', 'light'].includes(mode)) throw Error('Choose underlay, backdrop, fallback or light');
+if (!['underlay', 'backdrop', 'fallback', 'composition-fallback', 'light'].includes(mode))
+  throw Error('Choose underlay, backdrop, fallback, composition-fallback or light');
 const readyMark = 'houseplan.iso.raster.ready';
 const { browser, page } = await startIsoPaintScene({
   width: 1408, height: 952, dpr: 2, reducedMotion: 'no-preference',
@@ -11,7 +12,11 @@ const { browser, page } = await startIsoPaintScene({
     fixture.config.spaces[0].plan_url = '/assets/f1.svg?raster-session';
     fixture.config.spaces[0].plan_aspect = 1;
   } : undefined,
-  initScript: mode === 'fallback' ? () => { window.createImageBitmap = undefined; } : undefined,
+  initScript: mode === 'fallback' ? () => { window.createImageBitmap = undefined; }
+    : mode === 'composition-fallback' ? () => {
+      const supports = CSS.supports.bind(CSS);
+      CSS.supports = (...args) => args[0] === 'mix-blend-mode' && args[1] === 'plus-lighter' ? false : supports(...args);
+    } : undefined,
 });
 
 try {
@@ -36,7 +41,8 @@ try {
     }));
     const create = window.createImageBitmap;
     const start = performance.now();
-    if (mode === 'underlay') {
+    const slow = mode === 'underlay' || mode === 'composition-fallback';
+    if (slow) {
       window.createImageBitmap = async (...args) => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         return create(...args);
@@ -45,6 +51,7 @@ try {
     const lightId = Object.keys(card.hass.states).find(id => id.startsWith('light.'));
     const light = lightId && card.hass.states[lightId];
     let sawUnderlay = false, sawRaster = false, sawVectorWrite = false, samples = 0;
+    let splitSamples = 0, alignedSplit = true;
     let lightChanged = false, lightMix = false, rasterAfterLight = false;
     let previousView = firstView;
     const tick = () => new Promise(resolve => requestAnimationFrame(resolve));
@@ -68,29 +75,48 @@ try {
           previousView = nextView;
           lightMix ||= mixing;
           const image = root.querySelector('.hp-iso-gesture-image');
-          const underlay = root.querySelector('.hp-iso-gesture-underlay');
+          const underlay = root.querySelector('.hp-iso-gesture-underlay-layer');
           const raster = !!image && scene.hasAttribute('data-hp-raster-display');
           sawRaster ||= raster;
           rasterAfterLight ||= lightMix && !mixing && raster;
           sawUnderlay ||= !!underlay && underlay.style.clipPath.includes('evenodd');
+          if (raster && underlay) {
+            splitSamples++;
+            const detail = image.parentElement;
+            const percent = node => [...node.style.clipPath.matchAll(/(-?[\d.]+)%/g)].map(m => Number(m[1]));
+            const bounds = detail.getBoundingClientRect(), edges = percent(detail);
+            const cut = percent(underlay).slice(-10);
+            const quantized = edges.every((v,i) => {
+              const px = v / 100 * (i % 2 ? bounds.height : bounds.width) * devicePixelRatio;
+              return Math.abs(px - Math.round(px)) < .002;
+            });
+            alignedSplit &&= edges.length === 8 && cut.length === 10 && quantized
+              && detail.parentElement === underlay.parentElement
+              && getComputedStyle(detail).mixBlendMode === 'plus-lighter'
+              && edges.every((value,i) => Math.abs(Math.min(100,Math.max(0,value))-cut[i])<.001);
+          }
         }
         time = await tick();
         if (time - start > 6000) throw Error('The synthetic wheel series did not settle');
       }
       const finalLight = lightId && Boolean(scene.querySelector('.glow-spot[data-glow-source="' + lightId + '"]'));
-      return { samples, sawRaster, sawUnderlay, sawVectorWrite, lightMix, rasterAfterLight,
+      return { samples, sawRaster, sawUnderlay, sawVectorWrite, lightMix, rasterAfterLight, splitSamples, alignedSplit,
         finalLightMatches: finalLight === (light?.state !== 'on'),
         cameraMoved: svg.getAttribute('viewBox') !== firstView };
     } finally {
-      if (mode === 'underlay') window.createImageBitmap = create;
+      if (slow) window.createImageBitmap = create;
     }
   }, mode);
   await settleIsoPaint(page);
   check('wheel produced active frames', result.samples > 0);
   check('wheel reached a different exact SVG view', result.cameraMoved);
-  check('vector writes during wheel follow capability', result.sawVectorWrite, mode === 'fallback');
+  check('vector writes during wheel follow capability', result.sawVectorWrite,
+    mode === 'fallback' || mode === 'composition-fallback');
   check('raster surface follows capability', result.sawRaster, mode !== 'fallback');
   if (mode === 'underlay') check('slow preparation uses a cut-out underlay', result.sawUnderlay);
+  if (mode === 'underlay') check('live split shares a stage and complementary physical-pixel clips',
+    result.splitSamples > 0 && result.alignedSplit);
+  if (mode === 'composition-fallback') check('no split paint without additive composition', result.sawUnderlay, false);
   if (mode === 'light') {
     check('the old and new light states share the short SVG fade', result.lightMix);
     check('the raster path returns during the same gesture', result.rasterAfterLight);

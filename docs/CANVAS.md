@@ -360,6 +360,12 @@ produce a zero-sized SVG `viewBox`.
 
 ## §5 Zoom and pan
 
+* **2.5D raster joins (#1555).** Detail and overview own complementary
+  clips on one untransformed stage. The shared edge stays inside decodable
+  pixels and is aligned to the device pixel grid; neither bitmap changes the
+  camera transform or the SVG hit surface. If split composition is unavailable,
+  covered frames can still use one bitmap, with exact SVG for uncovered
+  views. See [ISOMETRIC](ISOMETRIC.md) for the hold and handoff contract.
 * **Vacuum path attachment (#871).** The SVG path inside the HTML device
   layer inherits that layer's camera once. Its `viewBox` and clip follow the
   marker layer's authored basis on a 2.5D rebase. Its animated tip uses the

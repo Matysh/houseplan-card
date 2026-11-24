@@ -1,5 +1,6 @@
 /** UI-062: shade trimmed masonry and ink only its physical floor/vertical edges. */
 import { nothing, svg, type TemplateResult } from 'lit';
+import { GRID_PITCH } from './canvas-constants';
 import { colorLuma, parseCssColor, type Rgb } from './iso-materials';
 import { architecturalWallTone } from './iso-architectural-tone';
 import { isoRotationBasis, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
@@ -10,6 +11,9 @@ type Paint = { fill:(index:number)=>string; edges:TemplateResult|typeof nothing;
   edge:(index:number,d:string,fragment:number)=>TemplateResult|typeof nothing };
 const memo=new WeakMap<object,{key:string;paint:Paint}>();
 const epsilon=1e-4;
+// Opening masonry overlaps its padded host cut by a small Boolean tolerance.
+// Those near-coincident ends are construction joints, not visible corners.
+const seamTolerance=GRID_PITCH*.001;
 const same=(a:PlanPoint,b:PlanPoint)=>Math.hypot(a[0]-b[0],a[1]-b[1])<epsilon;
 function faceOf(entry:IsoWallDepthQueueEntry,index:number,camera:IsoCamera,color:Rgb):Face|null {
   let edge:readonly [PlanPoint,PlanPoint]|undefined, low=0, high=0, d='';
@@ -44,17 +48,26 @@ export function architecturalPainter(queue:readonly IsoWallDepthQueueEntry[],cam
   const faces=queue.flatMap((entry,i)=>{const f=faceOf(entry,i,camera,rgb);return f?[f]:[];});
   const colors=new Map(faces.map(f=>[f.index,`--iso-face-fill:${f.color}`]));
   const byEnd=new Map<string,Face[]>();
-  const key=(p:PlanPoint)=>p.map(v=>v.toFixed(3)).join(',');
+  const cell=(p:PlanPoint)=>p.map(v=>Math.floor(v/seamTolerance));
+  const key=(p:PlanPoint)=>cell(p).join(',');
   for(const face of faces)for(const point of [face.a,face.b]){
     const k=key(point), peers=byEnd.get(k);
     if(peers)peers.push(face);else byEnd.set(k,[face]);
   }
+  const peersAt=(point:PlanPoint):Face[]=>{
+    const [x,y]=cell(point), peers=new Set<Face>();
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)
+      for(const other of byEnd.get(`${x+dx},${y+dy}`)??[])
+        if([other.a,other.b].some(end=>Math.hypot(end[0]-point[0],end[1]-point[1])<=seamTolerance))
+          peers.add(other);
+    return [...peers];
+  };
   const renderEdge = (face:Face,d:string,fragment:number) => {
     const segments:{a:PlanPoint;b:PlanPoint;z1:number;z2:number}[]=[];
     if(face.low<epsilon)segments.push({a:face.a,b:face.b,z1:0,z2:0});
     for(const point of [face.a,face.b]) {
       let intervals=[[face.low,face.high]];
-      for(const other of byEnd.get(key(point))??[]) {
+      for(const other of peersAt(point)) {
         if(other===face || Math.abs(face.nx*other.ny-face.ny*other.nx)>epsilon)continue;
         // Remove shared coplanar construction seams, including apron/lintel joins.
         intervals=intervals.flatMap(([a,b])=>other.high<=a+epsilon||other.low>=b-epsilon?[[a,b]]:

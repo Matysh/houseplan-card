@@ -1,12 +1,14 @@
 import type { LiveViewBox } from './live-viewport';
 import { captureIsoRasterSource, decodeIsoRaster, isoRasterHoverSelector } from './iso-raster-source';
 import { planIsoRaster, planIsoUnderlay, rasterCovers, rasterDensity, rasterImproves, rasterSmoothing, rasterUnderlayClip,
+  snapRasterCoverage,
   type IsoRasterFrame, type RasterViewport } from './iso-raster-geometry';
 import { forecastExposure } from './viewport-exposure';
 
 export type IsoRasterInput = 'wheel' | 'pan' | 'pinch';
 
 interface Surface {
+  layer: HTMLDivElement;
   canvas: HTMLCanvasElement;
   context: ImageBitmapRenderingContext;
   frame?: IsoRasterFrame;
@@ -28,6 +30,7 @@ interface RasterSession {
   authority: string;
   styleKey: string;
   observer: MutationObserver;
+  composeCoverage: boolean;
   sceneImage: Surface;
   underlay: Surface;
   view: LiveViewBox;
@@ -65,11 +68,16 @@ function makeSurface(doc: Document, type: string): Surface | undefined {
   canvas.className = 'hp-iso-raster ' + type;
   canvas.setAttribute('aria-hidden', 'true');
   canvas.inert = true;
-  return { canvas, context };
+  const layer = doc.createElement('div');
+  layer.className = 'hp-iso-raster-layer ' + type + '-layer';
+  layer.inert = true;
+  layer.setAttribute('aria-hidden', 'true');
+  layer.append(canvas);
+  return { layer, canvas, context };
 }
 
 function clearSurface(surface: Surface): void {
-  surface.canvas.remove();
+  surface.layer.remove();
   surface.context.transferFromImageBitmap(null);
   surface.frame = undefined;
   surface.revision = undefined;
@@ -158,6 +166,8 @@ export class IsoCameraRaster {
     });
     const session: RasterSession = {
       scene, surface, stage, win, limits, authority, styleKey, observer, sceneImage, underlay,
+      composeCoverage: CSS.supports('mix-blend-mode', 'plus-lighter') &&
+        CSS.supports('clip-path', 'polygon(evenodd, 0 0, 100% 0, 100% 100%)'),
       view, vector: vectorFrame(view, coverage, limits), failed: false, revision: 0, prepareMs: 280,
     };
     this.session = session;
@@ -182,8 +192,10 @@ export class IsoCameraRaster {
 
   public supports(scene: SVGSVGElement, view: LiveViewBox, coverage: LiveViewBox): boolean {
     const session = this.session;
-    return !!session && session.scene === scene && !session.failed && !session.sunFading &&
-      (!!session.underlay.frame || rasterCovers(coverage, view, session.limits.content));
+    return !!session && session.scene === scene && !session.failed && !session.sunFading
+      && (rasterCovers(coverage, view, session.limits.content)
+        || !!session.sceneImage.frame && (rasterCovers(session.sceneImage.frame.bounds, view, session.limits.content)
+          || session.composeCoverage && !!session.underlay.frame));
   }
 
   public get hasActiveImage(): boolean {
@@ -327,7 +339,7 @@ export class IsoCameraRaster {
     if (!candidate) return;
     const { sceneImage, view, limits } = session;
     const covers = rasterCovers(candidate.frame.bounds, view, limits.content);
-    if (candidate.revision !== session.revision || (!covers && !session.underlay.frame)) {
+    if (candidate.revision !== session.revision || (!covers && (!session.composeCoverage || !session.underlay.frame))) {
       candidate.bitmap.close();
       session.prepared = undefined;
       return;
@@ -356,11 +368,15 @@ export class IsoCameraRaster {
     const { surface, sceneImage, underlay, view, limits } = session;
     const frame = sceneImage.frame;
     const cover = frame && rasterCovers(frame.bounds, view, limits.content);
-    const underlayReady = !!underlay.frame && rasterCovers(underlay.frame.bounds, view, limits.content);
+    // Keep fully covering bitmaps usable without additive composition. An
+    // uncovered frame must use the exact vector path instead of a split seam.
+    const underlayReady = session.composeCoverage && !!underlay.frame
+      && rasterCovers(underlay.frame.bounds, view, limits.content);
     // A drag or pinch starts with the already sharp vector reserve. Only
     // replace it when the prepared bitmap improves the visible result.
     const showRaster = !!frame && (!!cover || underlayReady) &&
-      (session.input === 'wheel' || rasterImproves(session.vector, frame, view, limits));
+      (session.input === 'wheel' || rasterImproves(session.vector, frame, view, limits)
+        || !rasterCovers(session.vector.bounds,view,limits.content));
     if (surface.hasAttribute('data-hp-raster-display') !== showRaster)
       surface.toggleAttribute('data-hp-raster-display', showRaster);
     const vectorBlur = showRaster || keepsVectorReserve(session) ? 0 :
@@ -372,23 +388,41 @@ export class IsoCameraRaster {
     } else if (surface.style.getPropertyValue(blurVariable)) {
       surface.style.removeProperty(blurVariable);
     }
-    const coverage = showRaster ? frame!.bounds : session.vector.bounds;
+    // Keep the handoff edge inside decoded pixels. Blur and resampling must
+    // never sample the transparent outside of the bitmap at that boundary.
+    const density = showRaster ? rasterDensity(frame!,view,limits) : 1;
+    const guard = showRaster && underlayReady && !cover
+      ? Math.min(Math.ceil(3 * rasterSmoothing(density) + 2 * density) + 1,
+        (Math.min(frame!.width,frame!.height)-1)/2) : 0;
+    const rawCoverage = showRaster ? {
+      x:frame!.bounds.x + guard * frame!.bounds.w / frame!.width,
+      y:frame!.bounds.y + guard * frame!.bounds.h / frame!.height,
+      w:frame!.bounds.w * (1 - 2 * guard / frame!.width),
+      h:frame!.bounds.h * (1 - 2 * guard / frame!.height),
+    } : session.vector.bounds;
+    // Clip ownership on the physical pixel grid. Two separately filtered
+    // fractional edges cannot guarantee complementary coverage at high DPI.
+    const coverage = guard ? snapRasterCoverage(view,rawCoverage,limits) : rawCoverage;
     const showUnderlay = underlayReady && !rasterCovers(coverage, view, limits.content);
     if (showUnderlay) {
       place(underlay, view, limits, true);
-      const clip = rasterUnderlayClip(underlay.frame!.bounds, coverage);
-      if (underlay.canvas.style.clipPath !== clip) underlay.canvas.style.clipPath = clip;
-      if (!underlay.canvas.isConnected) surface.before(underlay.canvas);
-    } else underlay.canvas.remove();
+      // Both masks live in the untransformed stage, not in two bitmaps with
+      // different texel grids. Their antialiased coverage is complementary.
+      const clip = rasterUnderlayClip(view, coverage);
+      if (underlay.layer.style.clipPath !== clip) underlay.layer.style.clipPath = clip;
+      if (!underlay.canvas.isConnected) surface.before(underlay.layer);
+    } else underlay.layer.remove();
     if (showRaster) {
       place(sceneImage, view, limits);
-      const clip = showUnderlay && sceneImage.canvas.style.filter ? 'inset(0px)' : '';
-      if (sceneImage.canvas.style.clipPath !== clip) sceneImage.canvas.style.clipPath = clip;
+      const left=(coverage.x-view.x)*100/view.w, top=(coverage.y-view.y)*100/view.h;
+      const right=left+coverage.w*100/view.w, bottom=top+coverage.h*100/view.h;
+      const clip = showUnderlay ? `polygon(${left}% ${top}%, ${right}% ${top}%, ${right}% ${bottom}%, ${left}% ${bottom}%)` : '';
+      if (sceneImage.layer.style.clipPath !== clip) sceneImage.layer.style.clipPath = clip;
       if (!sceneImage.canvas.isConnected) {
-        surface.after(sceneImage.canvas);
+        surface.after(sceneImage.layer);
         sceneImage.canvas.dataset.hpIsoRaster = 'active';
       }
-    } else sceneImage.canvas.remove();
+    } else sceneImage.layer.remove();
   }
 
   private beginHandoff(session: RasterSession): boolean {
@@ -406,8 +440,8 @@ export class IsoCameraRaster {
     layer.className = 'hp-iso-raster-handoff';
     layer.inert = true;
     layer.setAttribute('aria-hidden', 'true');
-    if (underlay.canvas.isConnected) layer.append(underlay.canvas);
-    layer.append(sceneImage.canvas);
+    if (underlay.canvas.isConnected) layer.append(underlay.layer);
+    layer.append(sceneImage.layer);
     surface.append(layer);
     surface.setAttribute('data-hp-raster-handoff', '');
     surface.removeAttribute('data-hp-raster-display');
@@ -470,8 +504,8 @@ export class IsoCameraRaster {
       // its own raster arrives, so the old light cannot flash on again.
       clearSurface(session.sceneImage);
       session.requested = undefined;
-    } else session.sceneImage.canvas.remove();
-    session.underlay.canvas.remove();
+    } else session.sceneImage.layer.remove();
+    session.underlay.layer.remove();
   }
 
   public clear(): void {

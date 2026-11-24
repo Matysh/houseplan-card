@@ -40,3 +40,18 @@ test('#1495 an apron shares the wall tone, a raised lintel has no floor contact'
   assert.equal(paint.fill(0),paint.fill(2));
   assert.deepEqual(edgePaths(architecturalPainter([masonry(15,20)],ISO_CAMERA,'#9ab5b2')).map(p=>p.segments),[2]);
 });
+
+test('#1555 padded masonry joins hide the apron seam, not a physical corner or a gap', () => {
+  const apron = (a,b) => ({layer:'opening',surface:{material:'wall-side',
+    d:'M 0 0 L 100 0 L 100 20 Z',
+    points:[{point:b,z:0},{point:a,z:0},{point:a,z:5},{point:b,z:5}]}});
+  const wall = makeFace([0,0],[100,0]);
+  const adjacent = apron([100.002,0],[150,0]);
+  const corner = makeFace([150,0],[150,45]);
+  const detached = makeFace([150,45],[155,45]);
+  const ink = queue => edgePaths(architecturalPainter(queue,ISO_CAMERA,'#9ab5b2')).map(p=>p.segments);
+  assert.deepEqual(ink([wall,adjacent,corner,detached]),[3,2,3,3],
+    'only the shared low vertical span at the padded apron join is excluded');
+  assert.deepEqual(ink([wall,apron([102,0],[150,0])]),[3,3],
+    'a real gap retains both ends');
+});

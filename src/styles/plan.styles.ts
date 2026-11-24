@@ -241,9 +241,18 @@ export const planStyles = css`
     .iso-scene-surface > [data-hp-retained-light] { pointer-events:none; }
     .iso-scene-surface[data-hp-raster-display] { opacity:0; }
     .iso-scene-surface[data-hp-raster-handoff] { isolation:isolate; }
-    .hp-iso-raster-handoff {
-      position:absolute; inset:0; z-index:1; pointer-events:none; mix-blend-mode:plus-lighter;
+    /* Complementary camera regions must add coverage at a fractional device
+       pixel. Source-over leaves a pale seam (half + half becomes 3/4 alpha).
+       Isolate only the plan stack so the stage colour is not added twice. */
+    .zoomwrap:has(> .hp-iso-gesture-underlay-layer) { isolation:isolate; }
+    .zoomwrap:has(> .hp-iso-gesture-underlay-layer) > :is(.iso-scene-surface, .hp-iso-gesture-image-layer) {
+      mix-blend-mode:plus-lighter;
     }
+    .hp-iso-raster-handoff {
+      position:absolute; inset:0; z-index:1; pointer-events:none; mix-blend-mode:plus-lighter; isolation:isolate;
+    }
+    .hp-iso-raster-handoff > .hp-iso-gesture-image-layer { mix-blend-mode:plus-lighter; }
+    .hp-iso-raster-layer { position:absolute; inset:0; z-index:1; pointer-events:none; }
     .hp-iso-raster {
       position:absolute; top:0; left:0; z-index:1; pointer-events:none;
       transform-origin:0 0; will-change:transform; image-rendering:auto;

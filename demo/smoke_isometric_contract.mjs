@@ -142,8 +142,9 @@ const out = await page.evaluate(async () => {
   const roomLabel = root().querySelector('[data-hp="room-label"]');
   const openingLock = root().querySelector('.oplock');
   const stage = root().querySelector('.stage');
-  result.isoRendered = !!root().querySelector('[data-hp="iso-underlay"] .iso-floor-side')
+  result.isoRendered = !!root().querySelector('[data-hp="iso-underlay"] .iso-ambient-shadow')
     && !!root().querySelector('[data-hp="iso-walls"] .iso-wall-top');
+  result.noDecorativeFloorStrip = !root().querySelector('.iso-floor-side, .iso-floor-edge');
   result.stage4RevisionAdvertised = stage?.getAttribute('data-hp-iso-stage') === '4';
   const projectionRoot = root().querySelector('.plan-svg[data-projection="iso"]');
   result.sharedProjectionSnapshot = root().querySelectorAll('[data-hp-live-viewbox="camera"]').length === 1
@@ -165,6 +166,19 @@ const out = await page.evaluate(async () => {
     && shadowNodes[0].getAttribute('transform') === fixedLightTransform
     && !root().querySelector('.iso-contact-shadow, .iso-leaf-shadow,'
       + ' #hp-iso-contact-shadow, #hp-iso-leaf-shadow');
+  const wallBase = [...projectionRoot.querySelectorAll('.iso-wall-base-paper')];
+  const sample = document.createElement('canvas').getContext('2d');
+  const insideBase = (x,y) => wallBase.some(path => sample.isPointInPath(
+    new Path2D(path.getAttribute('d')),x,y,'evenodd'));
+  const halfWidth = 15 * card._gridPitch / card._cellCm / 2;
+  result.fullWidthBaseUnderWindow = [-.95,0,.95].every(f => insideBase(500,wallAxisY + f*halfWidth))
+    && [-1.1,1.1].every(f => !insideBase(500,wallAxisY + f*halfWidth));
+  result.doorAndGateKeepGroundGaps = [325,605,745].every(x =>
+    [-.85,0,.85].every(f => !insideBase(x,wallAxisY + f*halfWidth)));
+  result.wallBaseUsesFlatMasonryPaint = wallBase.length > 0 && wallBase.every(path =>
+    path.getAttribute('fill') === '#ffffff' && path.nextElementSibling.matches('.wallbody-fill')
+    && path.nextElementSibling.nextElementSibling.matches('.wallbody')
+    && path.getAttribute('d') === path.nextElementSibling.nextElementSibling.getAttribute('d'));
   const hasOpeningSurface = (id, surface, material) => !!root().querySelector(
     `[data-hp="iso-openings"] [data-id="${id}"][data-surface="${surface}"].iso-material-${material}`,
   );

@@ -80,6 +80,16 @@ function subtractConvex(subject:Point[],clip:Point[]):Multi {
   // that case so later occluders do not process those artificial fragments.
   return inside.length ? out : [[subject]];
 }
+
+function intersectConvex(subject:Point[],clip:Point[]):Point[] {
+  const sign=Math.sign(area(clip)); let inside=subject;
+  for(let i=0;i<clip.length&&inside.length;i++) {
+    const a=clip[i],b=clip[(i+1)%clip.length];
+    if(Math.hypot(b[0]-a[0],b[1]-a[1])<1e-7)continue;
+    inside=halfPlane(inside,[(a[1]-b[1])*sign,(b[0]-a[0])*sign,(a[0]*b[1]-b[0]*a[1])*sign]);
+  }
+  return inside;
+}
 /** Even-odd vertical slabs turn a wall cap, including courtyard holes, into
  * convex trapezoids. This local display operation never invokes or changes
  * the plan's boolean geometry kernel. */
@@ -107,7 +117,7 @@ function convexParts(poly:Polygon):Multi {
 const path=(geom:Multi, restore?: (p: Point) => Point)=>geom.flatMap(poly=>poly.map(ring=>
   `M ${ring.map(p=>(restore ? restore(p) : p).map(v=>Number(v.toFixed(4))).join(' ')).join(' ')} Z`)).join(' ');
 
-function openingPaintContours(geom: Multi): Multi {
+function depthPaintContours(geom: Multi): Multi {
   if (geom.length < 2) return geom;
   // These are working partitions of one physical face. Merge them before
   // SVG paints their shared edges. Snap only in normalized paint coordinates.
@@ -479,7 +489,7 @@ export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry
     }
     if(!visible.length)return [];
     const d=path(entry.layer === 'opening' && !masonrySurface(entry)
-      ? openingPaintContours(visible) : visible,restore);
+      ? depthPaintContours(visible) : visible,restore);
     return [entry.layer==='opening'?{...entry,surface:{...entry.surface,d}}:{...entry,face:{...entry.face,d}}] as IsoWallDepthQueueEntry[];
   });
   // Transparent faces have already been clipped by every nearer opaque
@@ -509,6 +519,76 @@ type DepthSurface = Pick<Face, 'geom' | 'plane' | 'bounds' | 'opaque'>;
 export interface IsoDepthFragment {
   index: number;
   d: string;
+}
+
+type RankedFragment = {index:number; rank:number; geom:Multi};
+
+/** Keep the opening reveal foremost at the host cut, even when its sorted
+ * slot precedes the wall. All other coincident faces keep stable queue order. */
+function coplanarNearer(queue:readonly IsoWallDepthQueueEntry[], index:number, otherIndex:number):boolean {
+  const current=queue[index], other=queue[otherIndex];
+  const reveal=(entry:IsoWallDepthQueueEntry|undefined)=>entry?.layer==='opening' && entry.surface.kind==='jamb-reveal';
+  if(current?.layer==='wall-side' && reveal(other))return true;
+  if(reveal(current) && other?.layer==='wall-side')return false;
+  return otherIndex>index;
+}
+
+/** Paint a surface only once whenever the actual overlapping pixels admit a
+ * whole-surface order. A rank change caused by an unrelated furniture envelope
+ * is not a material edge. Only genuine order cycles retain partitioned paint. */
+function coalesceDepthPaint(fragments: RankedFragment[], faces:(DepthSurface|null)[],
+  queue:readonly IsoWallDepthQueueEntry[]): RankedFragment[] {
+  const groups = new Map<number,RankedFragment[]>();
+  for(const fragment of fragments) {
+    const group=groups.get(fragment.index);
+    if(group)group.push(fragment); else groups.set(fragment.index,[fragment]);
+  }
+  const ids=[...groups.keys()], edges=new Map(ids.map(id=>[id,new Set<number>()]));
+  const geometry=new Map(ids.map(id=>[id,groups.get(id)!.flatMap(part=>part.geom)]));
+  for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++) {
+    const left=ids[i],right=ids[j],a=faces[left]!,b=faces[right]!;
+    if(Math.min(a.bounds[2],b.bounds[2])-Math.max(a.bounds[0],b.bounds[0])<1e-6 ||
+       Math.min(a.bounds[3],b.bounds[3])-Math.max(a.bounds[1],b.bounds[1])<1e-6)continue;
+    const delta=b.plane.map((n,k)=>n-a.plane[k]) as Plane;
+    let nearer=false,farther=false,overlaps=false;
+    pieces: for(const [subject] of geometry.get(left)!)for(const [clip] of geometry.get(right)!) {
+      const overlap=intersectConvex(subject,clip);
+      if(!overlap.length)continue;
+      overlaps=true;
+      for(const point of overlap) {
+        const depth=at(delta,point);
+        if(depth>DEPTH_EPS)nearer=true;
+        if(depth<-DEPTH_EPS)farther=true;
+      }
+      if(nearer&&farther)break pieces;
+    }
+    if(overlaps&&!nearer&&!farther) {
+      nearer=coplanarNearer(queue,left,right); farther=!nearer;
+    }
+    if(nearer)edges.get(left)!.add(right);
+    if(farther)edges.get(right)!.add(left);
+  }
+  // Collapse strongly connected components; their internal rank order remains
+  // authoritative, while unrelated walls/furniture need no artificial cuts.
+  let serial=0;
+  const numbers=new Map<number,number>(),low=new Map<number,number>(),stack:number[]=[],active=new Set<number>();
+  const components:number[][]=[];
+  const visit=(id:number)=>{
+    numbers.set(id,serial);low.set(id,serial++);stack.push(id);active.add(id);
+    for(const next of edges.get(id)!) {
+      if(!numbers.has(next)){visit(next);low.set(id,Math.min(low.get(id)!,low.get(next)!));}
+      else if(active.has(next))low.set(id,Math.min(low.get(id)!,numbers.get(next)!));
+    }
+    if(low.get(id)!==numbers.get(id))return;
+    const component:number[]=[];let next:number;
+    do {next=stack.pop()!;active.delete(next);component.push(next);} while(next!==id);
+    components.push(component);
+  };
+  for(const id of ids)if(!numbers.has(id))visit(id);
+  // Tarjan emits sink components first; the painter needs far to near.
+  return components.reverse().flatMap(component=>component.length===1
+    ? [{index:component[0],rank:0,geom:geometry.get(component[0])!}]
+    : component.flatMap(id=>groups.get(id)!).sort((a,b)=>b.rank-a.rank||a.index-b.index));
 }
 
 function furnitureDepthSurface(item: IsoDepthFurniture, camera: IsoCamera, coordinates: ClipCoordinates): DepthSurface | null {
@@ -564,7 +644,7 @@ export function composeIsoTranslucentStructure(
     if (face && kind) face.opaque = masonry[kind] === 1;
     return face;
   }), ...furniture.map(item => furnitureDepthSurface(item,camera,coordinates))];
-  const result: {index:number;d:string;rank:number}[] = [];
+  const result: RankedFragment[] = [];
   for (const [index,face] of faces.entries()) {
     if (!face) continue;
     let visible = new Map<number, Multi>([[0,face.geom]]);
@@ -579,13 +659,8 @@ export function composeIsoTranslucentStructure(
       // coincident faces keep their original stable order. Duplicate masonry
       // in the same plane is one material, so it never darkens itself.
       if (coplanar) {
-        const current = queue[index], next = queue[otherIndex];
-        const reveal = next?.layer === 'opening' && next.surface.kind === 'jamb-reveal';
-        const currentReveal = current?.layer === 'opening' && current.surface.kind === 'jamb-reveal';
-        if (current?.layer === 'wall-side' && reveal) delta = [0,0,1];
-        else if (currentReveal && next?.layer === 'wall-side') continue;
-        else if (otherIndex > index) delta = [0,0,1];
-        else continue;
+        if (!coplanarNearer(queue,index,otherIndex)) continue;
+        delta = [0,0,1];
       }
       const duplicateMasonry = coplanar && masonryKinds[index] !== undefined
         && masonryKinds[index] === masonryKinds[otherIndex];
@@ -607,29 +682,20 @@ export function composeIsoTranslucentStructure(
             if (other.opaque || duplicateMasonry) continue;
             // Clip the current subject to the same convex cover for the
             // portion visible through this pane or wall.
-            const sign = Math.sign(area(cover));
-            let inside = subject;
-            for (let i = 0; i < cover.length && inside.length; i++) {
-              const p = cover[i], q = cover[(i+1)%cover.length];
-              inside = halfPlane(inside,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
-            }
+            const inside = intersectConvex(subject,cover);
             if (inside.length) add(rank+1,[[inside]]);
           }
         }
         visible = next;
       }
     }
-    const entry = queue[index];
-    const opening = entry?.layer === 'opening' && !masonryKinds[index];
     for (const [rank,geom] of visible) {
       // A depth rank remains independent, but its working partitions must
       // paint as one sheet so transparency is applied once at shared edges.
-      const paint = opening ? openingPaintContours(geom) : geom;
-      result.push({index,rank,d:path(paint,restore)});
+      result.push({index,rank,geom});
     }
   }
-  result.sort((a,b) => b.rank-a.rank || a.index-b.index);
+  transparentResult = coalesceDepthPaint(result,faces,queue).map(({index,geom})=>({index,d:path(depthPaintContours(geom),restore)}));
   transparentKey = key;
-  transparentResult = result;
-  return result;
+  return transparentResult;
 }

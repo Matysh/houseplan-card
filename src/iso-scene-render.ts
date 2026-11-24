@@ -134,7 +134,6 @@ export function resolveIsoFramePresentation(input: {
     ? resolveIsoOpeningPanels(layers, input.scene, input.openings, input.amountOf, input.visualOf)
     : [];
   const overlays = input.overlays(layers);
-  const smoothMaterials = ISO_LAB_FLOOR_MARKERS && !!input.scene?.camera;
   const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => {
     const transparentMasonry = input.display.transparentWalls3d
       ? { side:input.display.wallFill.a, top:Number.isFinite(input.display.opacity) ? input.display.opacity : 1 } : undefined;
@@ -143,7 +142,7 @@ export function resolveIsoFramePresentation(input: {
     const indicators = renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing;
     return {
       layers: renderLayers, panels, overlays,
-      underlay: renderIsoUnderlay(renderLayers, input.scene?.floor, input.cellCm, smoothMaterials),
+      underlay: renderIsoUnderlay(renderLayers, input.scene?.floor, input.cellCm),
       shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
       walls: svg`${structure.walls}${structure.foreground === nothing ? indicators : nothing}`,
       foreground: structure.foreground === nothing ? nothing : svg`${structure.foreground}${indicators}`,
@@ -247,7 +246,6 @@ export function renderIsoUnderlay(
   layers: IsoDecorationLayers,
   floor: IsoFloorGeometry | undefined,
   cellCm: number,
-  smoothMaterials = false,
 ): TemplateResult {
   if (!layers.structural || !floor) return emptySvg();
   return svg`<g class="iso-underlay" data-hp="iso-underlay" aria-hidden="true" pointer-events="none">
@@ -256,11 +254,6 @@ export function renderIsoUnderlay(
       ? svg`<path class="iso-ambient-shadow" d=${floor.footprintPath}
           transform=${isoFixedLightTransform(cellCm)}></path>`
       : nothing}
-    <g class="iso-floor-edge">${floor.sides.map((face) =>
-      svg`<path class="iso-floor-side" d=${face.d} data-component=${face.component}
-        data-edge=${face.edge}></path>${layers.materialNuance && !smoothMaterials
-        ? svg`<path class="iso-material-texture iso-floor-texture" d=${face.d}></path>`
-        : nothing}`)}</g>
   </g>` as unknown as TemplateResult;
 }
 
@@ -495,6 +488,8 @@ function renderIsoTranslucentMasonry(
   const architecture = architecturalPainter(queue,camera,wallColor);
   const paintWallLight = isoWallLightPainter(wallLights,camera,cellCm,scene.geometry);
   const fragments = composeIsoTranslucentStructure(queue,camera,gridVisualScale(cellCm),masonry,furniture);
+  const partitions=new Map<number,number>();
+  for(const {index} of fragments)partitions.set(index,(partitions.get(index)??0)+1);
   const foreground = svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key} data-hp-translucent-masonry
     ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
     ${renderIsoDefs(layers,'walls',cellCm)}
@@ -515,23 +510,26 @@ function renderIsoTranslucentMasonry(
         if (!kind && opening) return renderIsoOpeningSurface(opening,d,false);
         if (!kind) return nothing;
         const roundColumn = entry.layer === 'wall-side' ? entry.face.roundColumn : undefined;
+        // Only computational cuts need exclusive pixel ownership. The actual
+        // silhouette of an unsplit surface retains normal antialiasing.
+        const paintEdges=(partitions.get(index)??0)>1 ? 'crispEdges' : nothing;
         const face = roundColumn !== undefined
-          ? svg`<path data-hp-round-column=${roundColumn} d=${d} fill-rule="evenodd"
+          ? svg`<path data-hp-round-column=${roundColumn} d=${d} fill-rule="evenodd" shape-rendering=${paintEdges} fill-opacity=${masonry[kind]}
             fill=${'url(#hp-iso-column-'+roundColumn+')'}></path>`
-          : svg`<path class=${kind === 'side' ? 'iso-wall-side' : 'iso-wall-top'} d=${d}
+          : svg`<path class=${kind === 'side' ? 'iso-wall-side' : 'iso-wall-top'} d=${d} shape-rendering=${paintEdges} fill-opacity=${masonry[kind]}
             style=${kind === 'side' ? architecture.fill(index) : nothing} fill-rule="evenodd"
             data-id=${opening?.id ?? nothing} data-kind=${opening?.type ?? nothing}
             data-surface=${opening?.kind ?? nothing}></path>`;
         const paintsContinuousCut = wallCut && (entry.layer === 'wall-top' || opening?.kind === 'opening-lintel-top');
         const lightFace = opening ? { ...entry, layer:'opening' as const, surface:{...opening,d} }
           : entry.layer === 'wall-side' ? { ...entry, face:{...entry.face,d} } : null;
-        return svg`<g class="iso-translucent-masonry-face" data-material=${kind} opacity=${masonry[kind]}>
+        return svg`<g class="iso-translucent-masonry-face" data-material=${kind}>
           ${paintsContinuousCut ? nothing : face}
-          ${kind === 'side' ? svg`<g class="iso-architectural-edges">${architecture.edge(index,d,fragment)}</g>`
+          ${kind === 'side' ? svg`<g class="iso-architectural-edges" opacity=${masonry[kind]}>${architecture.edge(index,d,fragment)}</g>`
             : paintsContinuousCut ? svg`<defs><clipPath id=${clip}><path d=${d} clip-rule="evenodd"></path></clipPath></defs>
-                <use href="#hp-iso-translucent-cut-paint" clip-path=${'url(#'+clip+')'}></use>
-                <use href="#hp-iso-translucent-cut-contour" clip-path=${'url(#'+clip+')'}></use>` : nothing}
-          ${lightFace ? paintWallLight(lightFace,fragment) : nothing}
+                <use href="#hp-iso-translucent-cut-paint" fill-opacity=${masonry[kind]} clip-path=${'url(#'+clip+')'}></use>
+                <use href="#hp-iso-translucent-cut-contour" opacity=${masonry[kind]} clip-path=${'url(#'+clip+')'}></use>` : nothing}
+          ${lightFace ? svg`<g opacity=${masonry[kind]}>${paintWallLight(lightFace,fragment)}</g>` : nothing}
         </g>`;
       })}
     </g>

@@ -2796,6 +2796,10 @@ export class HouseplanCard extends LitElement {
     if (value === null) this._wallUnionPool.clear();
   }
   private _isoGeometryCache = new Map<string, IsoSceneCacheEntry>();
+  private _isoWallBaseCache: {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  } | null = null;
   private _renderIsoScene: IsoRenderScene | null = null;
   private _isoProjectionSnapshot: 'flat' | 'iso' | null = null;
   /** Observable Stage 4 performance seam: increments only for a real
@@ -11649,6 +11653,28 @@ export class HouseplanCard extends LitElement {
     return this._wallUnionCache.value;
   }
 
+  /** Ground-level masonry keeps the full window sill footprint. Doorways and
+   * passages still cut the base; use the same union and paint as the 2D plan. */
+  private _isoWallBaseGeometry(): ReturnType<typeof wallBodiesUnionPath> {
+    const space = this._spaceModel();
+    if (!space) return null;
+    const key = wallUnionKey(this._floorKey(space.id), space.rooms.length);
+    if (this._isoWallBaseCache?.key === key) return this._isoWallBaseCache.value;
+    const groundOpening = (opening: OpeningCfg) => opening.type !== 'window';
+    const extras = physicalBodyParts(
+      space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+      this._partitionOpeningCuts(space, groundOpening),
+    ).all;
+    const walls = this._spaceWalls;
+    const value = !walls.length && !extras.length ? null : wallBodiesUnionPath(
+      space.rooms, walls, this._openCuts(),
+      this._roomWallOpeningInputs(this._openingsR.filter(groundOpening), space),
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
+    );
+    this._isoWallBaseCache = { key, value };
+    return value;
+  }
+
   /** Thick-wall spans in render units — suppress centreline stroke under bodies. */
   private _thickWallCutsMemo: { key: string; value: number[][] } | null = null;
   private _thickWallCuts(): number[][] {
@@ -11880,10 +11906,10 @@ export class HouseplanCard extends LitElement {
   private _renderWallBodies(disp: SpaceDisplay, canonical = false): TemplateResult {
     if (!canonical && this._opDrag?.preview && this._editorRuntime)
       return this._editorRuntime._renderOpeningDragBodies(disp, true);
-    if (this._renderProjection === 'iso') return svg`` as unknown as TemplateResult;
     if (disp && !disp.showBorders && (this._mode === 'view' || this._mode === 'devices'))
       return svg`` as unknown as TemplateResult;
-    const united = this._wallUnionGeometry();
+    const united = this._renderProjection === 'iso'
+      ? this._isoWallBaseGeometry() : this._wallUnionGeometry();
     if (!united) return svg`` as unknown as TemplateResult;
     const v = this._viewOr(this._baseVb());
     const px = this._renderPixelsPerUnit(v);
@@ -11898,6 +11924,9 @@ export class HouseplanCard extends LitElement {
     // collapses into noise — keep the solid fill alone.
     return svg`<g class="wallbodies" style="--room-stroke:${stroke};--wall-fill:${wf.c};--wall-fill-op:${wf.a}">
       ${united.paths.map((component) => svg`
+        ${this._renderProjection === 'iso' ? svg`
+          <path class="iso-wall-base-paper" data-component=${component.id} d=${component.d}
+            fill="#ffffff" fill-rule=${component.fillRule} stroke="none" pointer-events="none"></path>` : nothing}
         <path class="wallbody-fill" data-component=${component.id} d="${component.d}"
           fill="${wf.c}" fill-opacity="${wf.a}" fill-rule=${component.fillRule}
           stroke="none" pointer-events="none"></path>

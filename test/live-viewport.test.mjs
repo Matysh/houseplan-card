@@ -10,7 +10,25 @@ import {
   paintLiveViewport, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, disposeHouseplanViewport,
 } from '../test-build/live-viewport.js';
 import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor } from '../test-build/viewport-exposure.js';
-import { ISO_FRAME_PIXELS, ISO_UNDERLAY_PIXELS, planIsoRaster, rasterCovers, rasterDensity, rasterImproves, rasterSize, rasterUnderlayClip } from '../test-build/iso-raster-geometry.js';
+import { ISO_FRAME_PIXELS, ISO_UNDERLAY_PIXELS, planIsoRaster, rasterCovers, rasterDensity, rasterImproves, rasterSize, rasterUnderlayClip, snapRasterCoverage } from '../test-build/iso-raster-geometry.js';
+
+test('camera handoff boundaries use whole physical pixels without shifting the plan image', () => {
+  const view={x:100.123,y:200.456,w:190.122,h:215.138};
+  const coverage={x:114.879,y:217.033,w:160.421,h:185.111};
+  for(const dpr of [1,1.25,2,3]) {
+    const limits={stageSize:[684,774],dpr};
+    const snapped=snapRasterCoverage(view,coverage,limits);
+    for(const [key,span,dimension] of [['x','w',684],['y','h',774]]) {
+      for(const edge of [snapped[key],snapped[key]+snapped[span]]) {
+        const pixel=(edge-view[key])/view[span]*dimension*dpr;
+        assert.ok(Math.abs(pixel-Math.round(pixel))<1e-8);
+      }
+      assert.ok(snapped[key]>=coverage[key]-1e-9);
+      assert.ok(snapped[key]+snapped[span]<=coverage[key]+coverage[span]+1e-9);
+      assert.ok((coverage[span]-snapped[span])/view[span]*dimension*dpr<2);
+    }
+  }
+});
 
 test('#1485 the underlay and camera raster have independent pixel ceilings at 4K/DPR 2', () => {
   assert.deepEqual(rasterSize({ stageSize: [1280, 720], dpr: 1 }), [1280, 720]);
