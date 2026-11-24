@@ -1,0 +1,45 @@
+{
+  "recordedOn": "2026-11-24",
+  "source": "Commands and observations during prototype development in this chat; not rerun during documentation freeze",
+  "commands": [
+    {
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.test.json",
+      "result": "passed"
+    },
+    {
+      "command": "node scripts/fix-test-build.mjs",
+      "result": "passed"
+    },
+    {
+      "command": "node --test --test-reporter=dot test/iso-wall-transparency.test.mjs test/iso-architectural-tone.test.mjs test/live-viewport.test.mjs test/iso-scene-render.test.mjs",
+      "result": "passed",
+      "tests": 82
+    },
+    {
+      "command": "node node_modules/rollup/dist/bin/rollup -c",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "browser": {
+    "kind": "actual built-in browser on owner computer",
+    "devicePixelRatio": 2,
+    "viewportCss": {
+      "width": 684,
+      "height": 893
+    },
+    "capturePixels": "CSS viewport dimensions",
+    "consoleErrors": [],
+    "visualResult": "No reported seams reproduced in inspected final sections and active zoom raster frame"
+  },
+  "notRun": [
+    "Full product S6/CI",
+    "HA E2E",
+    "Comparable performance benchmark",
+    "Cross-browser/GPU matrix"
+  ],
+  "goldensAccepted": false
+}

@@ -1,0 +1,16550 @@
+import { architecturalFloorTone } from './iso-architectural-tone';
+import { HaPlanHost } from './ha-plan-host';
+import { FloorCacheRuntime } from './floor-cache-runtime';
+import { floorCacheKeys, cacheSha256 } from './floor-cache-key';
+import { captureFloorPreview, renderFloorPreview } from './floor-cache-preview';
+import { StartupFloor, type StartupSelection } from './startup-floor';
+import { serializeStartupFloor } from './startup-floor-svg';
+import { decodeStartupGeometry, encodeStartupGeometry, isStartupSourceStamp, startupGeometryImage,
+  startupWireAvailable, type StartupGeometry, type StartupVector } from './startup-floor-wire';
+import { isoDeviceFitInputs, nominalDeviceCore } from './iso-overlay-fit-inputs';
+import { restoreFloorGeometrySemantics, type FloorGeometryFrame } from './floor-geometry-frame';
+import { cleanFloorFromData } from './clean-floor';
+import { geometryWorkSnapshot } from './geometry-work';
+import { haValueFormatters } from './ha-value-formatters';
+import { haIntegrationMetadataSource, type IntegrationMetadataSource } from './integration-provider';
+import { acquireButtonTabFocus } from './ui-button-tab-focus';
+import type { PlanHost, HostEnvironment, HostPresentationContext } from './plan-host';
+import { live } from 'lit/directives/live.js';
+import { styleMap } from 'lit/directives/style-map.js';
+import { renderModeSceneLayers, type ModeSceneLayer } from './mode-scene-layers';
+import { guard } from 'lit/directives/guard.js';
+import { ModePresentation } from './mode-presentation';
+import { liveRuntimeCode } from './view-runtime-code';
+import { callout, field, rangeLine, ensureFormKitStyles } from './editors/form-kit';
+import { sendHouseplanWrite } from './large-write-transport';
+import { resolvedOpeningAmount, resolveOpeningVisual, openingWindowHandleSides, openingTransmissionIntervals } from './opening-features';
+import type { OpeningDialogDraft } from './opening-dialog-model';
+import { annotateSpaceGraphOpeningRuns } from './graph-opening-run';
+import { ensureCompactDialogStyles } from './compact-dialog-styles';
+import { subscribeExternalScreenConfig, ExternalConfigStreamRecovery } from './external-screens-events';
+import { renderDeviceIssues } from './device-issues-view';
+import { DeviceSignalController, directSignalReadings } from './device-signal-runtime';
+import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
+import { decorTextElementId } from './decor-text-element';
+import { headerContentWidth, renderHeaderSpaceNavigation } from './header-space-select';
+import { capabilityHost, hasMarkers } from './plan-capabilities';
+import { PanelHeaderMemo, measurePanelHeader, applyPanelHeaderChoice, panelHeaderWidth,
+  type PanelHeaderMeasurement, type PanelHeaderSpaces } from './panel-header-flow';
+import { panelMenuKey, panelMenuState, renderPanelMenu } from './panel-header-menu';
+import type { HeaderActionsMenu } from './header-actions-menu';
+import { DeviceRosterStateKey } from './device-roster-state-key';
+import { DemandSpaceModels } from './demand-space-models';
+import { snapshotConsumerDemand, type SnapshotConsumerDemand } from './render-snapshot-consumers';
+/**
+ * House Plan Card — an interactive house plan as a native Lovelace card.
+ * Configuration sources:
+ *  1) SERVER (the houseplan integration, WS houseplan/config/get) — spaces, plans,
+ *     rooms, device overrides, virtual devices. Coordinates are NORMALIZED (0..1).
+ *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
+ * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
+ */
+import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
+import { previewVacuumTrailStyle, vacuumTrailCss } from './vacuum-trail-style';
+import { visibleIconMarkers } from './device-icon-roster';
+import { roomCo2Text } from './room-co2';
+import { sceneGestureFromPath } from './canvas-surface-gestures';
+import { DeviceDragRetirement } from './device-drag-retirement';
+import { BackupImportIntent, backupImportAllowed } from './backup-import-intent';
+import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
+import { effectiveShowLqi, signalVisibilityOverrideOf } from './signal-visibility';
+import { ZoomScaleActivity } from './zoom-scale-activity';
+import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWallsNote } from './led-strip-card';
+import { LitElement, html, svg, render as renderDetached, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
+import { keyed } from 'lit/directives/keyed.js';
+import { repeat } from 'lit/directives/repeat.js';
+import './hp-dialog';
+import { dialogPresence } from './dialog-presence';
+import type { HpDialog } from './hp-dialog';
+import {ToastPresentation, type ToastContext, type ToastCallback} from './toast-presentation';
+import type { OptimizePlansDialogState } from './optimize-plans-dialog';
+import './hp-confirm';
+import {
+  HpConfirmController,
+  type HpConfirmDecision,
+  type HpConfirmRequest,
+  type HpConfirmState,
+} from './danger-confirm';
+import type { SupportDialogState } from './support-feedback';
+import type { ColorPickerLabels } from './hp-color-opacity';
+import { compileIconRules, iconFor, type IconRule, type CompiledIconRule } from './rules';
+import {
+  snapToGrid, samePoint, pointInPolygon, segmentCm, formatLength, roomEdges, roomPoly,
+  paperRoomShapes, islandsOf, distToSegment, outlineWithout, segmentAngle, is45, isExact45Vector,
+  beginSpaceSwipePointer, classifySpaceDrag, spaceSwipeTargetForOwner, clampScale,
+  roomFillModeOf, roomGlowOf,
+  fitView, declump, safeUrl, floorsOf, type FloorInfo, stateIcon, diffNewDevices,
+  isControllable, spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, customFillOf,
+  roomCustomFillOf, DEFAULT_CUSTOM_FILL, type FillColors, type FillColorEntry,
+  type ResolvedRoomFill, runServiceFor, stageBgOf, showRoomTooltipOf, volumetricViewOf, type SpaceDisplay,
+  referencedContentUrls, normalizeDeviceDisplay, isAlarmCapable, displayIsNeutral,
+  type DeviceDisplayMode, type SpaceSwipePointerStart, liveText, hassValue,
+  decorTextScale, decorTextLines,
+  DECOR_TEXT_BASE,
+} from './logic';
+import { type SafeResizePlan, type SafeResizeResolution } from './resize';
+import { formatArea } from './area-format';
+import { type ResizeAreaPlacement } from './resize-labels';
+import {
+  computeSunRays, solarWindowOpenings, dayPhase, northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf,
+  sunStateOf, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
+  rayStops, resolveDayCycle, type DayCycleState,
+  rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
+} from './sun';
+import { resolveSunAccess, sunBarrierLines } from './sun-access';
+import { renderDayCycleEnvironment } from './day-cycle-render';
+import { dayCycleClock, moonLayer, moonSkyState } from './moon-gate';
+import { renderPaperShapes, type PaperShape } from './render/paper-scene';
+import {
+  furnitureGraphic, furnitureArtIsLazy,
+  furniturePlanScreenScale, furnitureStrokePx,
+  furnitureRenderTransform,
+} from './furniture';
+import {
+  degradeWalls, cmToField, wallCmToUnits, wallEdgeBodies, wallBodiesGeometry, wallBodiesUnionPath,
+  innerContourForRoom, roomWallProfile, outsetContour, openingInnerFaceOffsetFromIndex,
+  openingTunnelGeometriesFromIndex, openingWallIndex as buildOpeningWallIndex, drawWallPreviewD,
+  DRAW_WALL_DEFAULT_CM, normalizeWallIntervals, intervalCmAt, wallBodyNeedsSolid,
+  wallHatchNeedsSolid, wallHatchStepUnits, HATCH_BASE_STEP_UNITS, type OpeningTunnelGeometry,
+  type OpeningWallIndex, type WallEntry, type WallInterval,
+} from './wall-thickness';
+import type { JunctionLimitViolation, JunctionSharedGeometry } from './junction-limits';
+import { ContentSigner } from './signing';
+import {
+  resolveInitialSpace, settleBestEffort,
+  type FixedFloorSelection, type InitialSpaceSelection,
+} from './initial-load';
+import { TouchGestureClickGuard } from './touch-gesture-click-guard';
+import { KioskHoldGesture } from './kiosk-hold';
+import {
+  NO_ROUTE_KIOSK, normalizeRouteKiosk, sameRouteKiosk, resolvePresentationFloor,
+  presentationRouteOwner, type RouteKiosk,
+} from './route-kiosk';
+import { KioskCarousel } from './kiosk-carousel';
+import { KioskSpaceNavigation, renderKioskSpaceNavigation } from './kiosk-space-navigation';
+import { PlanHassProjection } from './plan-hass-projection';
+import { acceptTapConfirmation, currentMarkerActionDevice, currentMarkerSettingsDevice, markerSettingsTargetKey, infoCardRowContextKey, openingActionTargetCurrent } from './view-action-context';
+import { ViewHoldGesture } from './view-hold';
+import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
+import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
+import { spaceHasContent } from './space-content';
+import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
+import { adoptEcovacsSources, projectEcovacsSources, ecovacsSourceAllowed } from './vacuum-ecovacs-client';
+import {
+  Affine, applyAffine, readVacTelemetry, isVacMoving, vacTrailMode,
+  vacMapIdFromAttrs, vacMapIdWithFallback, parseVacSourceCandidate, resolveVacSource,
+  normalizeVacPath,
+  VAC_TELEPORT_GAP_MS, VAC_STALE_MS, FitParams, Pt as VacPt, type VacPath, type VacSourceCandidate,
+  type VacSourceResolution, type VacSourceStatus,
+} from './vacuum';
+import {
+  planVacuumOverlay, routeWarningKey, type VacuumRouteResolution,
+} from './vacuum-routes';
+import { resolveVacuumRuntimeSource, type VacuumRuntimeSource } from './vacuum-runtime-source';
+import { syncVacuumTips } from './vacuum-view';
+import { VacuumPathGeometryCache, VAC_RENDER_POINT_BUDGET } from './vacuum-path-geometry';
+import { recordLocalVacuumPosition, type LocalVacuumPath } from './vacuum-local-trail';
+import { recordVacuumLivePosition, type VacuumLivePending } from './vacuum-live-tail';
+import { currentVacuumTrailFrame, vacuumTrailMaterial, type VacuumServerBook } from './vacuum-trail-material';
+import { vacuumTrailSvg, type VacuumSvgFrame } from './vacuum-trail-render';
+import { VacuumHistory, type VacuumHistoryHost } from './vacuum-history';
+import { renderVacuumHistoryBanner } from './vacuum-history-banner';
+import { diagnoseVacuumTrail, type VacuumTrailDiagnostic } from './vacuum-trail-diagnostics';
+import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
+import {
+  buildDevices, seedHiddenBindings, areaLqi, tempFor, climateTempFor, effectiveExcludedIntegrations,
+  sourceValue, roomClimateKey, roomClimateMap, resolvedLightSources, resolvedLightState,
+  resolvedLightStats, removedPlanBindings, isRemovedPlanEntity, autoIconForBinding, type AreaClimate,
+} from './devices';
+import type { DeviceInboxCategory, DeviceInboxRow } from './device-inbox';
+import type { CreatedAreaRoom } from './room-device-discovery';
+import {
+  formatToggleConfirmation, infoCardTapConfirmationRequired, projectedTapAction,
+  resolveInfoRowToggleIntent, resolveToggleIntent, sameToggleOperationTargets,
+  toggleIntentName, toggleOperation, unavailableToggleTargetNames, type ResolvedToggleIntent,
+  type ResolvedToggleTarget, type ToggleNextEffect,
+} from './device-toggle';
+import { resolveDeviceMoreInfoTarget } from './device-more-info';
+import {
+  applyVirtualLightEvent, reconcileVirtualLightSnapshot, virtualLightFingerprint,
+  virtualLightSnapshot, virtualLightWire, type VirtualLightSnapshot,
+} from './virtual-light-state';
+import type { SpaceGeometryState } from './geometry-history-state';
+import type {
+  OpeningCfg, RoomCfg, SpaceModel, PdfRef,
+  Marker, ServerConfig, DevItem, CardConfig, MarkerValueBadge, ValueBadgePosition,
+  ValueBadgeSource,
+} from './types';
+import type { RadarEditorDraft } from './radar-editor';
+import {
+  adoptAuthoritativeGated, createConfigAdoption, preservesSpaceGeometry, isGeometryCleanupRefusal,
+  type ConfigAdoption, type ConfigAdoptionHostPort, type GatedAdoptionInput, type GatedAdoptionResult,
+} from './config-adoption';
+import { recoverConfigWriteConflict } from './config-write-conflict';
+import { ConfigWriteContext, configWriteErrorKey } from './config-write-context';
+import { vacuumTrailRefresh } from './vacuum-trail-refresh';
+import type { UndoHass } from './plan-optimize-undo';
+import { acknowledgeNewDevice } from './new-device-ack';
+import {
+  beginConfigReload, configReloadClaimCurrent,
+  configReloadContext,
+  ConfigReloadAuthority,
+  reloadConfigOnly,
+  type ConfigReloadHostPort,
+} from './config-reload-authority';
+import { CardReadLifecycle } from './card-read-lifecycle';
+import { LayoutWriteReload } from './layout-write-reload';
+import type { OptimisticAttempt } from './serialized-write-queue';
+import {
+  COLUMN_MAX_CM, directionalOccluders, floorMinusBodies, geometryOuterRings,
+  polyclipPathD, physicalBodyParts, type PartitionOpeningCut,
+} from './physical-geometry';
+import { partitionOpeningFace, resolvePartitionOpeningCompat } from './partition-openings';
+import { openingSwingDepth, swingDoorPositionInBasis } from './opening-symbol-placement';
+import {
+  type HiddenWallDiagnosticGeometry, type PlanSnapCandidate, type PlanSnapEndpoint,
+  type PlanSnapGeometry,
+} from './plan-snap-overlay';
+import {
+  type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
+} from './wall-face-graph';
+import { type WallFaceRepairProposal } from './wall-face-repair';
+import { LightSegment } from './light-visibility';
+import { cardStyles } from './styles';
+import { type EditorSecondaryCopy, type EditorToolbarGroup } from './editor-secondary';
+import {
+  spaceModels, contentFrame, contentItems, spaceFrame, spaceCenter,
+  iconUnit, iconCqw, itemOf, snapPt, MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, GRID_PITCH, GRID_STEP_N,
+  clampCanvasR, clampCanvasN, type ContentItem, type Rect,
+} from './space-geometry';
+import { resolveZeroWalls, zeroWallStyleOf } from './zero-walls';
+import {
+  geometryOpenings, geometryPartitionOpeningCuts, geometryRoomOpeningInputs,
+  type GeometryOpeningProjection, type OptimizeGeometryPreflightResult,
+} from './plan-geometry-preflight';
+import {
+  canonicalizeConfigWrite, canonicalizeLayoutGeometry, canonicalizePosition,
+} from './coordinate-canonicalization';
+import { enqueueSerializedWrite } from './serialized-write-queue';
+import type { CalibrationProposal, VacuumFit } from './vacuum-calibration-write';
+import { langOf, t, type I18nKey } from './i18n';
+import { LANGUAGE_RUNTIME, subscribeLanguageLoadFailures } from './i18n/registry';
+import {
+  languageLoadingTemplate, languageRenderGate, type LanguageRenderGate,
+} from './i18n/language-runtime';
+import { CommandStack } from './command-stack';
+import {
+  applyDevicePlacement,
+  devicePlacement,
+  sameDevicePlacement,
+  type DeviceLayout,
+  type DevicePlacement,
+  type DevicePositionState,
+  type DeviceEditorHistoryState,
+  retireDeviceBaseline,
+  devicePositionHistoryMatches,
+} from './device-position-history';
+import {
+  applyAreaRelocationResolution,
+  markerAreaSnapshotOf,
+  resolveAreaSnapshotCleanup,
+  resolveDeviceAreaRelocations, writeAreaProvenance,
+  type AreaRelocationResolution, type MarkerAreaBinding,
+} from './device-area-relocation';
+import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
+import {
+  buildGlowClipGeometry, buildLightBarrierScene, createGlowRuntimeState,
+  disposeGlowRuntime, forgetGlowSource, forgetGlowSpace, glowSourceInOpaqueBody,
+  pruneGlowSources, readGlowClip, renderGlowPools, settledGlowSource, resolveGlowCandidates, resolveGlowFeather,
+  LightBarrierPass, resolveLightBarrierRevision, transitionGlowSource,
+  warnGlowGeometryFallback, writeGlowClip,
+  type GlowRuntimeHost, type GlowRuntimeState, type GlowSpot,
+} from './glow-scene';
+import {
+  CONTINUITY_LONG_HIDDEN_MS,
+  VisualContinuityController,
+  contentFingerprint,
+  subscribePageVisibility,
+  visualFrameFingerprint,
+  type PageVisibilitySignal,
+} from './visual-continuity';
+import { cardInteractionIdleSnapshot, cardVersionReloadSafetySnapshot, createCardVersionRecovery, renderVersionBanner,
+  adoptCardConfigCapabilities, getAuthoritativeCardConfig, readAuthoritativeCardConfig, runningBuild,
+  type AuthoritativeConfigResponse, type BackendBuildIdentity, type ConfigCapabilitiesCardPort,
+  type VersionRecoveryCardPort } from './version-recovery-card';
+import { PointerModalityController } from './pointer-modality';
+import { type DeviceVisualState, type EntityVisualSample } from './device-visual';
+import {
+  activitySourceSignature, deviceAccessibleLabel, deviceA11yState, presentationClasses,
+  resolvePresentationSources, type ResolvedDevicePresentation,
+} from './device-presentation';
+import {
+  ACTIVITY_WINDOW_MS, advanceFiniteActivity, createFiniteActivityRuntime,
+  resetFiniteActivityRuntime, stampFiniteActivity, type FiniteActivityRuntime,
+} from './activity-runtime';
+import { valueBadgeTitle } from './device-value-badge';
+import {
+  presentationSnapshotKey, selectRenderDeviceSnapshot, type RenderDeviceSnapshot,
+} from './render-device-snapshot';
+import { captureRenderDeviceSnapshot, presentDevice } from './render-snapshot-capture';
+import { RenderLifecycle, intakeHass } from './houseplan-render-lifecycle';
+import { RadarLiveController } from './radar-live';
+import { renderRadarLive } from './radar-render';
+import { isMarkerRadarV1, radarHealthI18nKey, radarMarkerLiveInSpace } from './radar-model';
+import type { HassRenderSnapshot } from './render-invalidation';
+import {
+  deviceFaceStyle, deviceThemeClass, renderDeviceFace, renderDeviceShadowFace,
+} from './device-face';
+import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
+import {
+  ModeTransitionController, modeStageHeight, modeRasterExposureClip, modeRasterOriginBias,
+  type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
+} from './mode-transition';
+import {
+  CameraTransitionController, sameCameraState,
+  type CameraState, type CameraTransitionReason, type CameraTransitionState,
+} from './viewport-transition'; import { measuredCardHeaderHeight, rawCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
+import type { IsoRasterInput } from './iso-camera-raster';
+import {
+  PlanTapGestureController, roomFitPlanTarget, roomFitClampFrame,
+  roomFitPlanBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
+  type RoomFitGestureCandidate,
+} from './room-fit';
+import type { FurniturePlacementPress } from './furniture-placement-press';
+import { authoredHouseplanSceneViewport, authoredHouseplanViewport, refreshHouseplanViewportNodes, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
+import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
+import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
+import type { BackdropGuardState } from './backdrop-pick';
+import {
+  expiredWarmViewport, lruRead, lruWrite, normalizeMarkupTool, strictNumber,
+  warmBootKey, warmMatch, warmCameraUnchanged,
+  type DecorTool, type MarkupTool, type WarmDialog, type WarmDialogKind,
+  type WarmEntry, type WarmViewport,
+} from './card-runtime';
+import { animateDialogExit, restoreWarmDialogBaseline, warmDialogBaseline } from './editors/dialog-baseline';
+import { deviceEditorAllowed, roomAreaAffordance } from './device-editor-access';
+
+// Chromium records a FAILED module in the page module map permanently — a
+// retry of the same URL resolves from that map without touching the network.
+// Each retry therefore needs a fresh query nonce to become a new module (#353).
+let hpLazyRetrySeq = 0;
+import {
+  currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
+} from './labs';
+import {
+  isoDisplayWallHeight, isoCameraFor, directIsoRotation, isoViewTurn, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, isoReadingYaw, projectPlanPoint, unprojectFloorPoint,
+} from './iso-projection';
+import {renderIsoPerspectiveFloor, renderIsoPerspectiveSnapshot} from './iso-perspective-floor';
+import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
+import type { IsoWallLightSource } from './iso-wall-light';
+import { IsoLightTransition } from './iso-light-transition';
+import {acceptedViewFrame, canonicalPhysicalCamera, hasMeasuredViewSize, physicalViewCamera, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
+import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume, tvCabinetSurfaceCm } from './iso-lab-furniture';
+import { tvCabinet, tvOnCabinet } from './tv-mount';
+import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
+import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
+import { renderIsoLabFurniture, furnitureShadow } from './iso-lab-furniture-render';
+import { isoLockGlass } from './iso-marker-outline';
+import { renderIsoMarkerGlass } from './iso-marker-glass';
+import {
+  PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation, planRotationForProjection, flatPlanRotation, validFlatPlanRotation, validPlanRotation,
+  turnPoint, turnSceneVector, turnRect, turnMatrix, inversePlanRotation, framePercent,
+  presentationViewport, physicalPlanCamera, planZoomTarget, type FrameRect, type PlanRotation, type PlanProjection,
+} from './view-frame';
+import { renderHomeArrow, renderPlanRotationControls } from './view-frame-view';
+import { PlanRotationMotion } from './plan-rotation-motion';
+import { HeaderMotion } from './header-motion';
+import { controlMotion } from './ui-motion';
+import type { IsoDecorationLayers } from './iso-openings';
+import type { IsoOverlayPlacement } from './iso-overlays';
+import type {
+  IsoFramePresentation, IsoFurniturePaint, IsoOverlayRenderScene, IsoRenderScene, IsoSceneCacheEntry,
+  IsoStructuralSource,
+} from './iso-scene-render';
+import {
+  acquireHaRegistries, cacheHaBindingStatuses,
+  fullRegistryHass, haRegistryBuildSignature, haRegistryDiagnostics, haRegistrySnapshot,
+  openingEntityAvailable, renderOpeningEntityAvailable,
+  resolveHaBindingStatus,
+  type HaBindingStatus, type HaRegistrySnapshot,
+} from './ha-binding-status';
+import type { DecorShape, DecorStyle } from './editors/decor/types';
+import { StairViewRuntime, type StairViewHostPort } from './stairs-view';
+import { cleanFloorForRoom, type CleanFloorResult } from './clean-floor';
+import {
+  cleanFloorFingerprint, floorGeometryKeyReader, floorPoolEntry, openingWallIndexKey, physicalBodiesKey, sunGeometryKey, sunRoomSettingsKey, wallUnionKey,
+  wallUnionPoolEntry, writeWallUnionPool, type FloorKeySource, type SunWindow,
+} from './floor-geometry-key';
+import {
+  DECOR_ASSETS_API_VERSION, decorAssetIds, projectDecorImage,
+  resolveDecorAssets, type DecorAsset,
+} from './decor-assets';
+import {
+  DEFAULT_DECOR_STYLE, boxCorners, decorCmToUnits, decorStrokeUnits, decorStyleFromSettings,
+  decorStyleOf, decorUnitsToCm, normalizeAngle, nudgeDecorShape, type DecorBox, type SnapGeometry,
+} from './editors/decor/geometry';
+import { buildRoomFloorPaint, roomFloorGeometry, type RoomFloorPaint } from './room-floor-paint';
+import {
+  openingVisibleBounds, openingVisibleMetrics, renderOpeningVisibleGeometry,
+  type OpeningFaceOffset, type OpeningVisibleSpec,
+} from './render/opening-symbol';
+import { openingLockFloorPlacement } from './opening-symbol-placement';
+import {
+  sameOpeningPlacementInput, type OpeningPlacementPreset, type OpeningPlacementType,
+} from './opening-placement';
+import { type OpeningDimensionContext } from './opening-dimensions';
+import { currentOpeningContext, openingInfoEligible, openingBindingsEqual, openingInfoNames } from './opening-context';
+import { WarmMarkerRestore } from './warm-marker-restore';
+import { kioskPlacementKey, nonCarouselKiosk, saveKioskViewport, takeKioskViewport, type KioskViewport } from './kiosk-viewport-recovery';
+import type {
+  DeviceDragState, OpeningPlacementCandidate, OpMeasure, RenderOpening,
+} from './interaction-types';
+import { gridVisualScale, gridVisualUnits, wallThickHoverHalfUnits } from './grid-scale';
+import {backdropPaintBox} from './backdrop-paint';
+import {
+  applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
+  reorderSpaceIds,
+} from './space-order';
+import { ViewRuntimes, type ViewRuntimeHost } from './view-runtimes';
+import { renderHeaderActions, renderHiddenDevicesToggle } from './header-menu';
+import { LazyChromeTooltips } from './chrome-tooltip-lazy';
+import { HiddenDevicePreference, HiddenDeviceRoster, hiddenDevicePreferenceKey, hiddenDeviceStorage } from './hidden-device-visibility';
+import { isoWallMaterialVars, isoOpeningMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
+import {
+  isoFloorShadowGradient, renderIsoLabelFloorShadow, renderIsoMarkerFloorShadow, type IsoFloorShadow,
+} from './iso-floor-shadows';
+import { displayVersion } from './card-version';
+import { ConfigFingerprintPass } from './config-fingerprint-pass';
+const CARD_VERSION = '1.86.1-beta.8';
+const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
+const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
+const PDF_RETRY_ASSET = '__HOUSEPLAN_PDF_RETRY_ASSET__';
+type ResizeLiveLabel = {
+  kind: 'length';
+  x: number;
+  y: number;
+  text: string;
+  edge: { a: [number, number]; b: [number, number] };
+} | {
+  kind: 'area';
+  roomId: string;
+  x: number;
+  y: number;
+  text: string;
+  placement: ResizeAreaPlacement;
+};
+type ResizePreview = { space: string; sp: any; roomIds: readonly string[] };
+type ResizeWallUnion = ReturnType<typeof wallBodiesUnionPath>;
+type ResizeWallArtifact = ReturnType<typeof wallBodiesGeometry>;
+/** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
+const DECOR_TEXT_CM_MAX = 2000;
+/** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
+ *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
+ *  trailing-quiescence requirement (chrome still settling near the cap
+ *  extends the wait); BOOT_MAX_MS lifts the veil unconditionally.
+ *  BOOT_MIN_MS exceeds the old 600 ms window by a frame-latency margin: a
+ *  panel applied right at the window's edge (~590 ms) only materializes in
+ *  the stage height a couple of rAF/render frames later. */
+const BOOT_MIN_MS = 700;
+const BOOT_QUIET_MS = 250;
+const BOOT_MAX_MS = 1200;
+// A missing optional asset must not lock a measured and prepared live plan.
+const STARTUP_ASSET_WAIT_MS = 1200;
+// Backup if a replaced or detached zoom layer misses its 160ms animationend.
+const STARTUP_FADE_FALLBACK_MS = 260;
+/** AUD-1552-02: post-reveal grace during which late chrome shifts glide
+ *  (CSS height transition on the stage) instead of snapping. */
+const BOOT_SOFT_MS = 1500;
+const CAMERA_BUTTON_MS = 180;
+const CAMERA_WHEEL_MS = 160;
+const CAMERA_ISO_WHEEL_SETTLE_MS = 230;
+const CAMERA_FIT_MS = 220;
+/** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
+ *  PAGE, not with any card instance. Lovelace re-creates card elements when
+ *  the websocket reconnects after a long-backgrounded tab; the fresh instance
+ *  used to run the whole first-open boot (veil + BOOT_MIN_MS + quiescence),
+ *  which reads as «план перезагрузился», even though the page (and HA's
+ *  chrome) never went anywhere. Within one loaded page the chrome IS already
+ *  settled, so the geometry the previous instance settled at is still valid:
+ *  remember it per (viewport size × card config) and let the next instance
+ *  open instantly in the final geometry, no veil at all. A window resize
+ *  between instances changes the key → miss → the full protective boot (the
+ *  only case where the chrome may genuinely re-settle). The config part of
+ *  the key keeps two DIFFERENT cards on one page from adopting each other's
+ *  header height (same config twice on one view is indistinguishable — and
+ *  then the heights match anyway). */
+const warmBoot = new Map<string, WarmEntry[]>(); let warmGen = 0;
+/** A dialog is revived only if the instance that owned it died THIS long ago.
+ *  A Lovelace rebuild detaches and re-attaches within one task; a user who
+ *  walked off to another dashboard view and came back later must not be met
+ *  by a dialog they have long forgotten opening. */
+let WARM_REVIVE_MS = 10000;
+/** The memo gains a key on every window RESIZE and never loses one; the
+ *  values used to be two numbers, and now they can hold a dialog draft (a
+ *  plan pdf among it). Keep the last few viewports — a stale entry only
+ *  costs the next card at that size a cold boot. */
+const WARM_MAX_KEYS = 8;
+/** How many placements of ONE key are remembered. More identical cards than
+ *  this on one view and the oldest dead slot is dropped — it only costs that
+ *  placement a cold boot. */
+const WARM_MAX_SLOTS = 4;
+
+/** Line spacing of a multi-line label, in font sizes. */
+const DT_LINE = 1.2;
+const LS_KEY = 'houseplan_card_layout_v1';
+const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
+const LS_ZOOM = 'houseplan_card_zoom_v1';
+const LS_NAV = 'houseplan_card_nav_v1'; // last space only; editor sessions never survive page navigation
+import { ExternalScreenResolver, externalScreenEventCandidate, validPlanView, type ResolvedScreen } from './external-screens';
+import { cardRotationPlacementSlot } from './summary-panel-identity';
+import { CardRotationPreference } from './card-rotation-preference';
+import { screenCameraTarget, screenFreeArea, onScreenReference, screenZoomBadge, type ScreenCameraTarget } from './screen-camera';
+
+const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
+const POINTER_HOVER_TARGET_SELECTOR = 'hp-dialog, hp-help, hp-color-opacity, hp-device-preview, hp-settings-select, hp-zigbee-topology-settings';
+const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
+/** Short semantic-event / direct-terminal-transition window. Event uses
+    three sequential 1.1 s waves; motion cool-down itself never animates. */
+
+/** Smallest rectangle holding both (docs/CANVAS.md §4). */
+const unionRect = (a: Rect, b: Rect): Rect => {
+  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+  return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
+};
+
+/** #313: one Thickness-tool hit — a room interval or independent masonry. */
+type WallThickSource = { kind: 'room' }
+  | { kind: 'partition'; id: string };
+type WallThickHit = {
+  a: number[]; b: number[]; roomId: string; segs: number[][];
+  open: boolean; cm: number; source: WallThickSource;
+};
+
+type RoomFillFrame = {
+  byRoom: Map<RoomCfg, ResolvedRoomFill | null>;
+  byId: Map<string, ResolvedRoomFill | null>;
+};
+type WallFaceCandidate = WallGraphFace & {
+  split?: { roomId: string; mainPoly: number[][]; newPoly: number[][] };
+  consumeAllActive?: boolean;
+  /** Face existed before this click; rejecting it must be a true no-op. */
+  existing?: boolean;
+  repair?: WallFaceRepairProposal;
+};
+type WallFaceDecision = {
+  candidate: WallFaceCandidate;
+  create: boolean;
+  name?: string;
+  area?: string | null;
+  settings?: RoomCfg['settings'];
+};
+type WallFaceBatch = {
+  spaceId: string;
+  geometryFingerprint: string;
+  candidates: WallFaceCandidate[];
+  index: number;
+  decisions: WallFaceDecision[];
+  activePath: number[][];
+  activeCms: number[];
+  activePartitionIds: string[];
+};
+const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
+  const ev = new Event(type, { bubbles: true, composed: true }) as any;
+  ev.detail = detail ?? {};
+  node.dispatchEvent(ev);
+};
+
+const navigate = (path: string) => {
+  history.pushState(null, '', path);
+  fireEvent(window, 'location-changed', { replace: false });
+};
+
+/**
+ * Debounce with `flush()` and `pending`. Both are load-bearing: a pending
+ * config write MUST be flushed before the card adopts a server revision,
+ * otherwise the edit is silently dropped (audit L2, 2026-07-27).
+ */
+interface Debounced<T extends (...a: any[]) => void> {
+  (...a: Parameters<T>): void;
+  flush(): void;
+  cancel(): void;
+  pending(): boolean;
+}
+
+const debounce = <T extends (...a: any[]) => void>(fn: T, ms: number): Debounced<T> => {
+  let t: number | undefined;
+  let last: Parameters<T> | null = null;
+  const wrapped = ((...a: Parameters<T>) => {
+    clearTimeout(t);
+    last = a;
+    t = window.setTimeout(() => {
+      t = undefined;
+      const args = last;
+      last = null;
+      if (args) fn(...args);
+    }, ms);
+  }) as Debounced<T>;
+  wrapped.flush = () => {
+    if (t === undefined) return;
+    clearTimeout(t);
+    t = undefined;
+    const args = last;
+    last = null;
+    if (args) fn(...args);
+  };
+  wrapped.cancel = () => {
+    clearTimeout(t);
+    t = undefined;
+    last = null;
+  };
+  wrapped.pending = () => t !== undefined;
+  return wrapped;
+};
+
+/**
+ * Capture the pointer for a drag, tolerating an inactive pointerId.
+ *
+ * `setPointerCapture` throws for synthetic events and for pointers some
+ * browsers consider gone; that killed a drag outright. The opening pipeline
+ * was hardened for this, the device/label/resize ones were not (audit
+ * follow-up L4 sub-item) — now they all go through here.
+ */
+const capturePointer = (ev: PointerEvent): void => {
+  try {
+    (ev.target as Element | null)?.setPointerCapture?.(ev.pointerId);
+  } catch {
+    /* an inactive pointerId must never kill the drag */
+  }
+};
+
+interface DeviceInboxDialogState {
+  tab: DeviceInboxCategory;
+  search: string;
+  showEntities: boolean;
+  onlyNew: boolean;
+  limit: number;
+  spaceFilter?: string;
+  /** Logical row restored after a nested marker dialog closes. */
+  anchor?: string;
+  busy?: string;
+}
+
+type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
+
+/**
+ * #400: the paint order of the selection handles IS the hit priority, so it is
+ * a named decision rather than a consequence of where the blocks happen to sit
+ * in the template.
+ *
+ * Corner and edge handles carry the same hit radius (1.8 % of the view). On
+ * furniture narrower than 4·hr — a 40 cm cabinet — their circles overlap, and
+ * whichever is painted last takes the tap. The corner must be last: an edge
+ * handle scales one axis, a corner scales both, and the object is small
+ * exactly when proportional resize matters most.
+ */
+const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;
+
+export class HouseplanCard extends LitElement {
+  constructor() {
+    super();
+    new DeviceSignalController(this, () => this.hass, () => this._publishHaSignalEnvironment());
+    new LazyChromeTooltips(this, () => this._mode === 'view' ? `view:${this._space}`
+      : `${this._editorSecondaryContextId}:${JSON.stringify(this._editorRuntime?.properties.identity)}`);
+  }
+  private _hiddenRenderDeferred = false;
+  private _hiddenRenderChanges = new Map<PropertyKey, unknown>();
+
+  protected shouldUpdate(changed: PropertyValues): boolean {
+    if (this.ownerDocument.visibilityState !== 'hidden' && !this._routeDepartureHandled) return true;
+    this._hiddenRenderDeferred = true;
+    for (const [name, previous] of changed) if (!this._hiddenRenderChanges.has(name))
+      this._hiddenRenderChanges.set(name, previous);
+    // Authority and transport intake are never contingent on a painted frame.
+    this._consumePlanEnvironment(); this._alerts?.reconcile();
+    return false;
+  }
+
+  public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
+    if (name === 'hass') {
+      // The HA bridge publishes the same signal as an injected host. No
+      // second changed.has('hass') intake runs during the later Lit pass.
+      this._haPlanHost ??= new HaPlanHost(undefined);
+      this._haPlanHost.update(this.hass);
+      if (!this._injectedPlanHost) { this._connectPlanHost(); this._intakePlanEnvironment(); }
+      if (this.panelHost) {
+        const key = panelMenuKey(this.hass, !!this.narrow, this._t('panel.sidebar_menu'));
+        if (key !== this._panelMenuHassKey) {
+          this._panelMenuHassKey = key;
+          super.requestUpdate('panelMenu', oldValue);
+        }
+      }
+      return;
+    }
+    if (name === undefined && !this._modeScenePhaseRequest
+        && (this._modeTransitionPreparing || this._modeSceneFinishPending || this._modeTransition?.active))
+      this._modeSceneRefreshRequested = true;
+    if ((this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) && this._hiddenRenderChanges) {
+      this._hiddenRenderDeferred = true;
+      if (name !== undefined && !this._hiddenRenderChanges.has(name)) this._hiddenRenderChanges.set(name, oldValue);
+      return;
+    }
+    if (name !== undefined) this._terminalFrame = 0;
+    if (!(this.panelHost && (name === 'narrow' || name === 'panelSidebarOpen'))
+        && this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
+    this._liveRt?.clear();
+    super.requestUpdate(name, oldValue, options);
+  }
+
+  public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;
+  private _liveRt: import('./live-interaction-runtime').LiveRuntime | null = null;
+  private _alerts?: import('./marker-alert-view-runtime').MarkerAlertViewRuntime;
+  public _onboardingRuntime: import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime | null = null;
+  private _editorRuntimeLoadingVisible = false;
+  /** #39: pending large-backdrop decision; set only by the lazy pick flow. */
+  public _backdropGuard: BackdropGuardState | null = null;
+  private _editorRuntimeLoadingTimer?: number;
+  private _editorModeRequest = 0;
+  private _warmModeRequest = 0;
+  private _markerDialogRequest = 0;
+  private _viewDeviceMenuRequest = 0;
+  private _settingsDialogRequest = 0;
+  private readonly _warmMarker = new WarmMarkerRestore<WarmDialog & { context: object }>({
+    allowed: (d) => this.isConnected && d.space === this._space && d.mode === this._mode
+      && this._loadOk && this._configWriteContext.owns(d.context)
+      && deviceEditorAllowed(this._canEdit, this._kiosk) && !this._otherDialogsBlocked
+      && (!d.data.devId || this._devices.some((device) => device.id === d.data.devId)),
+    ensure: () => this._ensureEditorRuntime(),
+    restore: (d) => {
+      this._markerDialog = { ...d.data, busy: false };
+      restoreWarmDialogBaseline(this, 'marker', d.baseline);
+    },
+    changed: () => this.requestUpdate(),
+  });
+  private readonly _editorRuntimeLoader = new EditorRuntimeLoader<
+    import('./houseplan-editor-runtime').HouseplanEditorRuntime
+  >({
+    expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
+    load: async (attempt, fresh) => {
+      const module = attempt === 0 && !fresh
+        ? await import('./houseplan-editor-runtime')
+        : await import(/* @vite-ignore */ (() => {
+            const url = new URL(EDITOR_RETRY_ASSET, import.meta.url);
+            url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
+            return url.href;
+          })()) as typeof import('./houseplan-editor-runtime');
+      return {
+        fingerprint: module.EDITOR_RUNTIME_FINGERPRINT,
+        prepare: (quiet = false) => Promise.all([
+          quiet ? module.EDITOR_LANGUAGE_RUNTIME.preload?.(langOf(this._presentation, this._config?.language))
+            : module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this._presentation, this._config?.language)),
+          liveRuntimeCode.ensure(),
+          module.HouseplanEditorRuntime.prepareSceneCode(attempt === 1 || !!fresh,
+            () => String(++hpLazyRetrySeq)),
+        ]),
+        create: () => new module.HouseplanEditorRuntime(
+          this as unknown as import('./houseplan-editor-runtime').HouseplanEditorHostPort,
+        ),
+      };
+    },
+    install: (runtime) => {
+      this._editorRuntime = runtime;
+    },
+    stateChanged: (state) => this._editorRuntimeStateChanged(state),
+    failed: (error, info) => {
+      console.error('[houseplan] unable to load editor runtime', error);
+      // A terminal fingerprint failure asks for the same page reload as the
+      // eager version notice. Keep network/non-terminal retry advice intact.
+      if (!(info.terminal && this._versionRecovery.hasCurrentMismatchNotice)) {
+        this._showToast(lazyLoadFailureMessage((key) => this._t(key), info), 'message', { owner: null });
+      }
+    },
+  });
+
+  private readonly _onboardingRuntimeLoader = new EditorRuntimeLoader<
+    import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime
+  >({
+    expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
+    load: async (attempt) => {
+      const module = attempt === 0
+        ? await import('./houseplan-onboarding-runtime')
+        : await import(/* @vite-ignore */ (() => {
+            const url = new URL('__HOUSEPLAN_ONBOARDING_RETRY_ASSET__', import.meta.url);
+            url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
+            return url.href;
+          })()) as typeof import('./houseplan-onboarding-runtime');
+      if (module.ONBOARDING_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) await module.ONBOARDING_LANGUAGE_RUNTIME.ensure(langOf(this._presentation, this._config?.language)); // #627
+      return {
+        fingerprint: module.ONBOARDING_RUNTIME_FINGERPRINT,
+        create: () => new module.HouseplanOnboardingRuntime(
+          this as unknown as import('./houseplan-editor-runtime').HouseplanEditorHostPort,
+        ),
+      };
+    },
+    install: (runtime) => {
+      this._onboardingRuntime = runtime;
+    },
+    failed: (error, info) => {
+      console.error('[houseplan] unable to load onboarding runtime', error);
+      if (!(info.terminal && this._versionRecovery.hasCurrentMismatchNotice)) {
+        this._showToast(lazyLoadFailureMessage((key) => this._t(key), info), 'message', { owner: null });
+      }
+    },
+  });
+
+  /**
+   * 2.5D is opt-in (General settings, #649). Keep its renderer and geometry outside
+   * the ordinary View graph, but use the same exact-build, atomic installation
+   * contract as the editor runtimes so a stale chunk can never half-install.
+   */
+  private _isoSceneRuntime: typeof import('./iso-scene-render') | null = null;
+  private readonly _isoSceneRuntimeLoader = new EditorRuntimeLoader<
+    typeof import('./iso-scene-render')
+  >({
+    expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
+    load: async (attempt) => {
+      const module = attempt === 0
+        ? await import('./iso-scene-render')
+        : await import(/* @vite-ignore */ (() => {
+            const url = new URL(ISO_RETRY_ASSET, import.meta.url);
+            url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
+            return url.href;
+          })()) as typeof import('./iso-scene-render');
+      return {
+        fingerprint: module.ISO_SCENE_RUNTIME_FINGERPRINT,
+        create: () => module,
+      };
+    },
+    install: (runtime) => {
+      const from = this._effectiveProjection(); this._isoFirstFrame.runtimeReady();
+      this._isoSceneRuntime = runtime;
+      this._floorPreparation?.rehydrate();
+      this._isoProjectionSnapshot = null;
+      const to = this._effectiveProjection();
+      this._convertProjectionView(from, to);
+      if (this.isConnected) this.requestUpdate();
+    },
+    failed: (_ignored, info) => {
+      this._isoFirstFrame.runtimeFailure(); console.warn('[houseplan] hidden isometric runtime diagnostic', safeRuntimeDiagnostic('runtime-load', 'unverified', info.terminal));
+      if (this.isConnected) this.requestUpdate();
+    },
+  });
+
+  /** #53: the PDF writer, font and print geometry never enter ordinary View. */
+  private _pdfRuntime: import('./pdf/pdf-export').PdfExportRuntime | null = null;
+  private readonly _pdfRuntimeLoader = new EditorRuntimeLoader<
+    import('./pdf/pdf-export').PdfExportRuntime
+  >({
+    expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
+    load: async (attempt) => {
+      const module = attempt === 0
+        ? await import('./pdf/pdf-export')
+        : await import(/* @vite-ignore */ (() => {
+            const url = new URL(PDF_RETRY_ASSET, import.meta.url);
+            url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
+            return url.href;
+          })()) as typeof import('./pdf/pdf-export');
+      return {
+        fingerprint: module.PDF_EXPORT_FINGERPRINT,
+        create: () => new module.PdfExportRuntime(),
+      };
+    },
+    install: (runtime) => {
+      this._pdfRuntime = runtime;
+      if (this.isConnected) this.requestUpdate();
+    },
+    failed: (error, info) => {
+      console.error('[houseplan] unable to load PDF export runtime', error);
+      if (!(info.terminal && this._versionRecovery.hasCurrentMismatchNotice)) {
+        const common = lazyLoadFailureMessage((key) => this._t(key), info);
+        const generic = this._t('editor.load_failed');
+        const advice = common.startsWith(generic) ? common.slice(generic.length).trim() : common;
+        this._showToast(`${this._t('pdf.failed')} ${advice}`.trim(), 'message', { owner: null });
+      }
+    },
+  });
+
+  public _editorRuntimeOrThrow(): import('./houseplan-editor-runtime').HouseplanEditorRuntime {
+    if (!this._editorRuntime) throw new Error('Houseplan editor runtime is not loaded');
+    return this._editorRuntime;
+  }
+
+  public async _ensureEditorRuntime(): Promise<boolean> {
+    const [ready] = await Promise.all([this._editorRuntimeLoader.ensure(), this._viewRuntimes.live.ensure()]);
+    if (ready) { await this.updateComplete; await this._editorRuntime?.prepareModeLayouts(); }
+    return ready;
+  }
+
+  public async _ensureOnboardingRuntime(): Promise<boolean> {
+    return this._onboardingRuntimeLoader.ensure();
+  }
+
+  /** Test/performance hook; product callers trigger it only while alpha is active. */
+  public async _ensureIsoSceneRuntime(): Promise<boolean> { if (this._isoSceneRuntimeLoader.state === 'idle') { this._isoFirstFrame.runtimeLoading(); this.requestUpdate(); } return this._isoSceneRuntimeLoader.ensure(); }
+
+  private readonly _preloadEditorIntent = (event: Event): void => {
+    if (!this.isConnected || !this._canEdit || this._kiosk) return;
+    const target = event.target instanceof Element ? event.target.closest(
+      '[data-editor-navigation], [data-hp="empty-plan-edit"]',
+    ) : null;
+    if (!target || target.getAttribute('data-editor-navigation') === 'view') return;
+    void this._editorRuntimeLoader.preload();
+  };
+
+  private _editorRuntimeStateChanged(state: EditorRuntimeLoaderState): void {
+    clearTimeout(this._editorRuntimeLoadingTimer);
+    this._editorRuntimeLoadingTimer = undefined;
+    if (state === 'loading') {
+      this._editorRuntimeLoadingTimer = window.setTimeout(() => {
+        this._editorRuntimeLoadingVisible = true;
+        this.requestUpdate();
+      }, 150);
+      return;
+    }
+    this._editorRuntimeLoadingVisible = false;
+    this.requestUpdate();
+  }
+
+  /** `adopt`: `true` — a warm remount that may edit at once; `'resume'` — a
+   * pending warm editor once write access is known (#756, src/warm-mode-adoption.ts). */
+  public async _requestMode(
+    mode: 'view' | 'plan' | 'devices' | 'decor',
+    animate = true,
+    adopt: boolean | 'resume' = false,
+  ): Promise<void> {
+    if (!adopt) this._cancelPendingWarmMode();
+    const request = ++this._editorModeRequest;
+    const owner = this.planHost.authorityKey;
+    // Even changed geometry must wait for the restored editor's layout. The
+    // camera equality decides what to preserve, not who owns the final refit.
+    if (adopt) this._holdWarmRefit(request);
+    const ready = mode === 'view' || await this._ensureEditorRuntime();
+    const current = ready && owner === this.planHost.authorityKey && request === this._editorModeRequest && this.isConnected
+      && (mode === 'view' || this._canEdit && !this._kiosk);
+    if (!current) {
+      this._releaseWarmRefit(request);
+      if (adopt && request === this._editorModeRequest && this.isConnected) this._warmReviveDialog(true, true);
+      return;
+    }
+    const commit = () => {
+      if (owner !== this.planHost.authorityKey || request !== this._editorModeRequest || !this.isConnected
+        || mode !== 'view' && (!this._canEdit || this._kiosk)) {
+        this._releaseWarmRefit(request); return;
+      }
+      if (adopt === 'resume') {
+        this._editorRuntime!.resumeWarmMode(mode, animate);
+      } else if (adopt) {
+        this._adoptMode(mode);
+        this._editorRuntime!.finishWarmModeAdoption(request);
+      } else this._setMode(mode, animate);
+    };
+    // Warm adoption restores tools/drafts synchronously around the actual
+    // mode commit. Defer that entire transaction, not only its mode string.
+    if (mode !== 'view' && (!this._ensureFloorPreparation() || !this._loadOk)) {
+      this._floorPendingMode = { mode, animate, warm: !!adopt, resume: commit };
+      if (!adopt) this._retryFloorPreparation();
+      return;
+    }
+    commit();
+  }
+  /** Explicit navigation supersedes permission/runtime-delayed restoration. */
+  private _cancelPendingWarmMode(): void {
+    this._warmMarker.cancel();
+    this._pendingNavMode = null;
+    this._releaseWarmRefit(this._warmModeRequest);
+    ++this._editorModeRequest;
+    if (this._warmRevivePending) this._warmReviveDialog(true, true);
+    this.requestUpdate(); // Remove pending editor chrome even without a loaded runtime.
+  }
+  /** A warm request owns the stage refit until its restored mode has settled (#756). */
+  public _holdWarmRefit(request: number): void {
+    this._warmModeRequest = request; this._pendingRefitSize = null;
+    if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
+  }
+  /** Then the settled stage becomes the refit baseline; the camera stays. */
+  public _releaseWarmRefit(request: number): void {
+    if (!request || this._warmModeRequest !== request || request !== this._editorModeRequest) return;
+    const stage = this._stageEl; this._pendingRefitSize = null; this._warmModeRequest = 0;
+    this._lastValidStageSize = stage && stage.clientWidth > 0 && stage.clientHeight > 0
+      ? [stage.clientWidth, stage.clientHeight] : null;
+    const size = this._lastValidStageSize, view = this._view;
+    // The placement may resize without changing the window-keyed warm slot.
+    // Do not bless its new size with the old camera's aspect: SVG would
+    // letterbox while stage input still maps linearly to that camera.
+    if (size && view && view.w > 0 && view.h > 0
+        && Math.abs(view.h - view.w * size[1] / size[0]) * size[0] / view.w >= 0.5) {
+      this._applyView(this._zoom, view.x + view.w / 2, view.y + view.h / 2);
+    }
+    this.requestUpdate();
+  }
+  public hass?: any;
+  private _haPlanHost?: HaPlanHost;
+  private _injectedPlanHost?: PlanHost;
+  private _planHostRelease?: () => void;
+  private _driverHost?: PlanHost;
+  private _driverRevision = -1;
+  private _driverAuthority?: object;
+  private _previousEnvironment?: HostEnvironment;
+  private _pendingPlanEnvironment?: HostEnvironment;
+  private _consumedPlanEnvironment?: HostEnvironment;
+  /** Optional runtime injection. The normal HA/Lovelace setConfig API is unchanged. */
+  public get planHost(): PlanHost {
+    return this._injectedPlanHost ?? (this._haPlanHost ??= new HaPlanHost(this.hass));
+  }
+  public set planHost(value: PlanHost | undefined) {
+    if (value) value = capabilityHost(value);
+    if (this._injectedPlanHost === value) return;
+    // There is no user-facing profile switch. Embedders retry after closing
+    // other modal forms; never carry a General/PDF/child draft into a new host.
+    if (this._driverHost && this._otherDialogsBlocked && !this._markerDialog && !this._roomDialog) return;
+    if (this._driverHost && this._editorRuntime
+        && !this._editorRuntime._guardDraftNavigation(() => { this.planHost = value; })) return;
+    if (this.isConnected) this._viewRuntimes.disconnect();
+    this._editorRuntime?._radarSetup.reset();
+    this._editorRuntime?.externalScreens.close();
+    this._editorRuntime?.markerAlerts.close();
+    this._injectedPlanHost = value;
+    this._connectPlanHost();
+    this._intakePlanEnvironment();
+    if (this.isConnected) this._viewRuntimes.connect();
+    if (this._mode === 'devices' && !hasMarkers(this.planHost.capabilities)) this._setMode('plan');
+  }
+  public get _presentation(): HostPresentationContext { return this.planHost.environment.presentation; }
+  /** HA-only provenance reader, separate from both portable presentation and _planHass. */
+  public get _haIntegrationMetadata(): IntegrationMetadataSource | undefined {
+    return !this._injectedPlanHost && this.planHost.capabilities.devices
+      ? haIntegrationMetadataSource(this.hass) : undefined;
+  }
+  private get planEnvironmentRevision(): number { return this.planHost.environmentRevision; }
+
+  private _environmentRenderSnapshot(value: HostEnvironment): HassRenderSnapshot {
+    // inputKey owns operational intake, not painted content. Passing it to
+    // the fail-open render classifier makes every HA tick structural.
+    return { states: value.states, entities: value.registry.entities, devices: value.registry.devices,
+      areas: value.registry.areas, themes: value.presentation.themes, config: value.units,
+      language: value.presentation.language, locale: value.presentation.locale ? { ...value.presentation.locale } : undefined };
+  }
+
+  /** Visible model work follows same-turn config/layout mutations, as in Lit's
+   * original ordering. Authority/read intent was already consumed synchronously. */
+  private _consumePlanEnvironment(): void {
+    const current = this._pendingPlanEnvironment;
+    if (!current) return;
+    this._pendingPlanEnvironment = undefined;
+    const before = this._consumedPlanEnvironment;
+    this._consumedPlanEnvironment = current;
+    const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+    if (before?.inputKey && before.inputKey === current.inputKey
+        && (before.registry.revision !== current.registry.revision
+          || before.registry.devices !== current.registry.devices || before.registry.entities !== current.registry.entities
+          || before.registry.areas !== current.registry.areas)) {
+      this._ensureHaRegistryAuthority();
+      this._hassSequence++;
+      if (this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled)
+        this._planHassProjection?.invalidate();
+      else this._maybeRebuildDevices();
+    }
+    this._renderLife.observe(before && this._environmentRenderSnapshot(before),
+      { ...this._environmentRenderSnapshot(current), inputKey: current.inputKey ?? current },
+      snapshot ? { entityIds: snapshot.entityIds } : null, () => intakeHass(this));
+  }
+
+  private _connectPlanHost(): void {
+    const host = this.planHost;
+    if (this._driverHost === host && this._planHostRelease) return;
+    this._planHostRelease?.(); this._planHostRelease = undefined;
+    this._driverHost = host; this._driverRevision = -1;
+    if (this.isConnected) this._planHostRelease = host.subscribeEnvironment(this._intakePlanEnvironment);
+  }
+
+  /** One operational driver, independent of Lit rendering/visibility. */
+  private _intakePlanEnvironment = (): void => {
+    if (!this._configWriteContext) return; // Lit may request an update during construction.
+    const host = this.planHost, environment = host.environment;
+    if (this._driverHost === host && this._driverRevision === host.environmentRevision) return;
+    const previousRevision = this._driverRevision;
+    this._driverRevision = host.environmentRevision;
+    const before = this._previousEnvironment;
+    this._previousEnvironment = environment;
+    this._pendingPlanEnvironment = environment;
+    const revoked = this._configWriteContext.observe(host);
+    const authorityChanged = !!this._driverAuthority && this._driverAuthority !== host.authorityKey;
+    this._driverAuthority = host.authorityKey;
+    if (revoked) {
+      // Every revoked write generation owns fresh pending accounting, even
+      // when the user/connection is unchanged and only permissions changed.
+      // Old finally callbacks are fenced; an authoritative read reconciles
+      // a possibly accepted send and drops any unsent optimistic successor.
+      const reconcile = this._loadOk || this._cfgWriting || this._saveConfigDebounced.pending();
+      this._saveConfigDebounced.cancel();
+      this._writeChain = Promise.resolve(); this._writesPending = 0;
+      this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
+      this._layoutIO.retire(); this._devicePositionBusy = false;
+      this._pendingPhysicalWrites.clear();
+      if (reconcile) {
+        // A queued edit can differ from the fingerprint of the held send.
+        // Re-pair with live bodies so an equal-to-send server response still
+        // replaces that revoked, never-dispatched optimistic successor.
+        this._adoption.refreshConfigFingerprint(); this._adoption.refreshLayoutFingerprint();
+        this._read.defer();
+      }
+      this._retireLiveSyncSubscriptions();
+      this._backupImportIntent.cancel(false);
+      this._editorRuntime?.backupTransfer.dispose();
+      this._backupImportDialog = null; this._backupExportDialog = null;
+    }
+    if (authorityChanged) {
+      this._floorPreparation?.invalidate();
+      this._retireStartupFloor();
+      this._floorPendingMode = null;
+      this._decorAssetSyncToken++;
+      this._renderLife.retireHass();
+      this._haWallNodeAttachApi = null;
+      this._haVacuumDockRestartApi = null; this._haVacuumHistoryApi = null; this._haDeviceHistoryApi = null;
+      this._editorRuntime?.deviceStructure.retire();
+      this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
+      this._spaceModels.clear(); this._modelCache = null;
+      this._retireLiveSyncSubscriptions();
+      this._adoption.resetContext();
+      this._editorRuntime?.roomDeviceDiscovery.clear(); this._editorRuntime?.optimizationUndo.retire();
+      this._geometryHistory.clear(); this._devicePositionHistory.clear();
+      this._newSyncKey = ''; this._regSignature = '';
+    }
+    const context = configReloadContext(this);
+    this._configReloadAuthority.observeContext(context);
+    const waiting = this._read.busy || this._read.pending;
+    if (this._read.observe(context)) { this._loading = false; if (waiting) this._read.defer(); }
+    if (authorityChanged) this._read.defer();
+    if (before && before.permissions.read !== environment.permissions.read) {
+      this._retireStartupFloor();
+      this._floorPreparation?.invalidate(); this._floorPendingMode = null;
+      this._loadOk = false;
+      if (environment.permissions.read) this._read.defer();
+    }
+    this._restoreScopedFloorHint();
+    if (before && before.permissions.admin !== environment.permissions.admin) this._read.defer();
+    if (!this.isConnected) return;
+    if (before?.connected && !environment.connected) {
+      this._retireStartupFloor();
+      // A transport gap retires reads, not the same owner's accepted writes.
+      // A→missing→A in one turn must not revive an old read's claim.
+      const pendingRead = this._read.busy || this._read.pending;
+      this._floorPreparation?.invalidate(); this._floorPendingMode = null;
+      this._configReloadAuthority.invalidateLifecycle();
+      this._read.invalidate(); this._loading = false;
+      if (pendingRead) this._read.defer();
+      this._retireLiveSyncSubscriptions();
+      this._onConnLost();
+    }
+    else if (before && environment.connected && (!before.connected
+        || before.connectionRevision !== environment.connectionRevision)) this._onConnReady();
+    if (this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) this._consumePlanEnvironment();
+    if (revoked && this._loadOk && environment.connected) this._ensureLiveSyncSubscriptions();
+    if (this._read.pending && environment.connected) void this._loadFromServer();
+    if (!revoked && before && this._liveRt && before.timeZone === environment.timeZone
+        && before.connected === environment.connected && before.smartHomeRevision === environment.smartHomeRevision) {
+      const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+      if (!this._liveRt.environment(this._environmentRenderSnapshot(before), this._environmentRenderSnapshot(environment),
+        snapshot ? { entityIds: snapshot.entityIds } : null, () => this._consumePlanEnvironment())
+          && !this._summary?.observeHassComposition()) return;
+    }
+    super.requestUpdate('planEnvironmentRevision', previousRevision);
+  };
+  public panelSidebarOpen = false;
+  public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
+  public preview = false; public editMode = false;
+  /** Stable owner supplied by the HA shell, even while another route is active. */
+  public panelRoutePrefix: string | null = null;
+  private readonly _panelHeaderMemo = new PanelHeaderMemo();
+  private _panelHeaderChoice: PanelHeaderMeasurement = { phase: 0, phone: false, height: 0 };
+  private _panelHeaderObservedContent = '';
+  private _panelMenuHassKey = '';
+  private _headerLeaseCleanup?: () => void;
+  private _headerFocusFrame?: number;
+
+  private readonly _externalScreenResolver = new ExternalScreenResolver();
+  private get _externalScreen(): ResolvedScreen {
+    return this._externalScreenResolver.read(this._settings.external_screens, this.panelHost ? this._routeKiosk : null, this._space);
+  }
+  private get _effectiveKioskScale() {
+    const screen = this._externalScreen;
+    return { icon: screen.icon_scale ?? this._kioskScale.icon, font: screen.font_scale ?? this._kioskScale.font };
+  }
+  private _routeKiosk: RouteKiosk = NO_ROUTE_KIOSK;
+  private _routeKioskPending: RouteKiosk | null = null; private _routeKioskGeneration = 0;
+  public get routeKiosk(): RouteKiosk { return this._routeKiosk; }
+  public set routeKiosk(value: RouteKiosk) {
+    const next = normalizeRouteKiosk(this.panelHost ? value : null);
+    if (sameRouteKiosk(next, this._routeKioskPending ?? this._routeKiosk)) return;
+    const generation = ++this._routeKioskGeneration;
+    if (this._routeKioskPending) this._cancelDangerConfirm();
+    this._routeKioskPending = next;
+    const authority = this.planHost.authorityKey, revision = this.planHost.writeAuthorityRevision;
+    const apply = () => {
+      if (generation !== this._routeKioskGeneration
+          || this.planHost.authorityKey !== authority || this.planHost.writeAuthorityRevision !== revision) return;
+      const before = this._routeKiosk;
+      this._routeKiosk = next;
+      this._routeKioskPending = null;
+      this._cancelPendingWarmMode();
+      if (this._mode !== 'view') this._setMode('view', false);
+      this._retireRouteDialogs();
+      this._hashApplied = false; this._navApplied = false; this._warmVpArmed = false;
+      const previousSpace = this._space;
+      this._adoptInitialSpace(this._model, this._loadOk);
+      if (previousSpace !== this._space || this._hasScreenProfile && (next.profile !== before.profile || !before.enabled)) this._restoreZoom();
+      this.requestUpdate('routeKiosk', before);
+      this.dispatchEvent(new CustomEvent('hp-route-kiosk-applied'));
+    };
+    const attempt = () => {
+      if (generation !== this._routeKioskGeneration) return;
+      if (this._editorRuntime) {
+        if (!this._editorRuntime.properties.beforeIntent(attempt)) return;
+        if (!this._editorRuntime._guardDraftNavigation(attempt, () => {
+          if (generation === this._routeKioskGeneration) this._routeKioskPending = null;
+        })) return;
+        if (this._mode === 'plan' && this._tool === 'draw'
+            && !this._editorRuntime._finishWallChainForNavigation(attempt)) return;
+      }
+      apply();
+    };
+    attempt();
+  }
+  private _config?: CardConfig;
+
+  /** HA owns the vertical slot in sidebar panel and Sections grid layouts. */
+
+  private get _headerNavigationSpaces(): readonly SpaceModel[] {
+    const model = this._model, fixed = this._fixedFloorState(model), space = this._spaceModel();
+    return fixed.kind === 'valid' && space ? [space] : model;
+  }
+  private _headerActionsMenu: HeaderActionsMenu | null = null;
+  private _headerActionsLoad: Promise<typeof import('./header-actions-menu')> | null = null;
+  private _headerActionsRequest = 0;
+  private async _openHeaderActions(event: Event): Promise<void> {
+    if (this._headerActionsMenu?.open) { this._headerActionsMenu.close(); return; }
+    const trigger = event.currentTarget as HTMLButtonElement, head = trigger.parentElement;
+    if (!head) return;
+    const request = ++this._headerActionsRequest, config = this._config, space = this._space, mode = this._mode;
+    const key = this._panelHeaderContentKey(head);
+    const current = () => request === this._headerActionsRequest && this.isConnected && !this._kiosk
+      && this._config === config && this._space === space && this._mode === mode
+      && head.parentElement?.getAttribute('data-panel-flow') === '5'
+      && trigger.isConnected && this._panelHeaderContentKey(head) === key;
+    try {
+      const module = await (this._headerActionsLoad ??= import('./header-actions-menu').catch(error => {
+        this._headerActionsLoad = null; throw error;
+      }));
+      if (!current()) return;
+      this._headerActionsMenu ??= new module.HeaderActionsMenu({
+        renderRoot: this.renderRoot,
+        getBoundingClientRect: () => this.getBoundingClientRect(),
+        requestUpdate: () => this.requestUpdate('_headerActionsMenu', null),
+      });
+      this._headerActionsMenu.show(head, trigger, this._t('panel.actions'), current);
+    } catch (error) { console.warn('[houseplan] header actions menu unavailable', error); }
+  }
+  private get _panelHeaderSpaces(): PanelHeaderSpaces {
+    return { spaces: this._headerNavigationSpaces, current: this._space,
+      configure: this._norm && this._canEdit,
+      create: this._canEdit && !this._kiosk && !this._hasFixedFloor };
+  }
+  private _modeChromeEpoch = 0;
+  private _modeHeaderTypography: { head: HTMLElement; revision: number; key: string[] } | null = null;
+  private _panelHeaderContentKey(head: HTMLElement, mode: HouseplanMode = this._mode): string {
+    let typography = this._modeHeaderTypography;
+    if (!typography || typography.head !== head || typography.revision !== this._modeSceneRevision
+        || (!this._modeTransitionBusy && !this._modeSceneFinishPending)) {
+      const style = getComputedStyle(head);
+      typography = this._modeHeaderTypography = { head, revision: this._modeSceneRevision,
+        key: [style.fontFamily, style.fontSize, style.fontWeight, style.letterSpacing] };
+    }
+    return JSON.stringify([mode, this._space, this._canEdit, this._norm, this._hasFixedFloor, this.panelHost,
+      langOf(this._presentation, this._config?.language), this.narrow, this._panelMenuHassKey,
+      ...typography.key,
+      this._panelHeaderSpaces.spaces.map(space => [space.id, space.title]),
+      Array.from(head.querySelector('.header-actions')?.children || [])
+        .map(node => [node.getAttribute('class'), node.childElementCount])]);
+  }
+  public _modeChromeKey(width:number):string {
+    const head=this.renderRoot.querySelector<HTMLElement>('.hdr > .head');
+    return JSON.stringify([width,this._modeChromeEpoch,this._cfgRev,this._cfgEpoch,this._adoption.currentConfigFingerprint(),
+      head?this._panelHeaderContentKey(head,'view'):null,this._haDecorAssetsApi]);
+  }
+  public _modeChromeHeaderWidth():number {
+    const head=this.renderRoot.querySelector<HTMLElement>('.hdr > .head');
+    return head?panelHeaderWidth(head)+(head.hasAttribute('data-hp-properties-wide')?360:0):0;
+  }
+  public _measureModeHeader(mode:HouseplanMode,width:number):PanelHeaderMeasurement|null {
+    const header=this.renderRoot.querySelector<HTMLElement>('.hdr'),head=header?.querySelector<HTMLElement>(':scope > .head');
+    return header&&head&&width>0?this._panelHeaderMemo.resolve(this._roHdr??head,this._panelHeaderContentKey(head,mode),width,
+      ()=>measurePanelHeader(header,head,width,this._panelHeaderSpaces,mode,(this._editorRuntime?.properties.reservedWidthForMode(mode)??0)>0)):null;
+  }
+  public async _prepareModeHeaderSelect(needed:boolean):Promise<void> {
+    if(!needed||customElements.get('hp-settings-select'))return;
+    this._spaceSelectLoad ||= import('./hp-settings-select').then(()=>{this.requestUpdate();});
+    await this._spaceSelectLoad;
+  }
+
+  private _renderPanelMenu(): TemplateResult | typeof nothing {
+    if (!this.panelHost) return nothing;
+    return renderPanelMenu({ ...panelMenuState(this.hass, !!this.narrow, this._kiosk, this._t('panel.sidebar_menu')), open: this.panelSidebarOpen });
+  }
+  private _renderEmptyPanelHeader(): TemplateResult | typeof nothing {
+    if (!this.panelHost || this._kiosk) return nothing;
+    const menu = panelMenuState(this.hass, !!this.narrow, false, this._t('panel.sidebar_menu'));
+    if (!menu.visible) return nothing;
+    return html`<div class="hdr" data-panel-flow="0" data-panel-mode=${this._mode}>
+      <div class="head hpf-chrome-group">${renderPanelMenu({ ...menu, open: this.panelSidebarOpen })}</div></div>`;
+  }
+  /** The loaded mode owner may measure View before Lit replaces the editor DOM. */
+  public _panelHeaderNaturalHeight(mode: HouseplanMode): number | null {
+    if (this._kiosk) return null;
+    const header = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
+    const head = header?.querySelector(':scope > .head') as HTMLElement | null;
+    if (!header || !head) return null;
+    const width = this._modeChromeHeaderWidth() - (this._editorRuntime?.properties.reservedWidthForMode(mode)??0);
+    return width > 0 ? this._panelHeaderMemo.resolve(this._roHdr ?? head,
+      this._panelHeaderContentKey(head, mode), width,
+      () => measurePanelHeader(header, head, width, this._panelHeaderSpaces, mode,(this._editorRuntime?.properties.reservedWidthForMode(mode)??0)>0)).height : null;
+  }
+  private async _settlePanelHeader(modePreparation = false): Promise<void> {
+    if (this._kiosk) return;
+    for (let pass = 0; pass < 3; pass++) {
+      const before = JSON.stringify([this._panelHeaderChoice.phase, this._panelHeaderChoice.phone, this._compactSpaces]);
+      if (modePreparation && this._measureHeaderNow) this._cfgPass.run(() => this._measureHeaderNow?.());
+      else {
+        this._onWinResize?.();
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      }
+      if (this._spaceSelectLoad) await this._spaceSelectLoad;
+      await this.updateComplete;
+      if (before === JSON.stringify([this._panelHeaderChoice.phase, this._panelHeaderChoice.phone, this._compactSpaces])) return;
+    }
+  }
+  private _retainPanelHeaderFocus(head: HTMLElement, active: Element | null, owns: () => boolean): void {
+    if (!(active instanceof HTMLElement) || !head.contains(active)) return;
+    const marker = active.closest('[data-hp]') as HTMLElement | null;
+    const kind = marker?.dataset.hp;
+    const mode = marker?.dataset.mode;
+    const spaceFocus = kind === 'space-tab' || !!active.closest('hp-settings-select');
+    void this.updateComplete.then(() => {
+      if (!owns()) return;
+      if (this._headerFocusFrame !== undefined) cancelAnimationFrame(this._headerFocusFrame);
+      this._headerFocusFrame = requestAnimationFrame(() => {
+        this._headerFocusFrame = undefined;
+        if (!owns() || active.isConnected && active.getClientRects().length > 0) return;
+        const outer = this.ownerDocument.activeElement;
+        if (outer && outer !== this && outer !== this.ownerDocument.body) return;
+        const visible = (selector: string): HTMLElement | null => {
+          const nodes = head.querySelectorAll<HTMLElement>(selector);
+          return Array.from(nodes).find(node => node.getClientRects().length > 0) || null;
+        };
+        let target: HTMLElement | null = null;
+        if (spaceFocus) {
+          const select = visible('[data-hp="space-select"]');
+          target = select?.shadowRoot?.querySelector<HTMLElement>('[part="control"]')
+            || visible('[data-hp="space-tab"][aria-current="page"]');
+        } else if (kind === 'mode-tab' && mode) {
+          target = visible('[data-hp="mode-tab"][data-mode="' + mode + '"]');
+        } else if (kind?.startsWith('zoom-')) target = visible('[data-hp="rotate-right"]');
+        (target || visible('[data-hp="header-actions-trigger"]') || visible('button'))?.focus();
+      });
+    });
+  }
+
+  private get _containerOwnedHeight(): boolean { return this.panelHost || this.layout === 'grid'; }
+
+  private _space = 'f1';
+  /**
+   * #500: structural identity (config/layout with revision and fingerprint)
+   * has one owner. The accessors below are read delegates; bodies may be
+   * staged locally before a write (allowlisted in
+   * test/config-adoption-ownership.test.mjs), revisions and fingerprints
+   * change only through `_adoption`.
+   */
+  public readonly _adoption: ConfigAdoption = createConfigAdoption(
+    // A replaced body is the reactive event `willUpdate` keys the geometry
+    // epoch on (`changed.has('_serverCfg')`), exactly as the Lit accessor did.
+    (field, previous) => this.requestUpdate(field, previous),
+  );
+  private get _layout(): DeviceLayout { return this._adoption.layout; }
+  private set _layout(layout: DeviceLayout) { this._adoption.stageLocalLayout(layout); }
+  // Setters below exist for the browser harness only (smokes seed revisions).
+  private get _layoutRev(): number { return this._adoption.layoutRev; }
+  private set _layoutRev(layoutRev: number) { this._adoption.seedIdentity({ layoutRev }); }
+  private get _layoutContentFingerprint(): string { return this._adoption.layoutFingerprint; }
+  private set _layoutContentFingerprint(layoutFingerprint: string) { this._adoption.seedIdentity({ layoutFingerprint }); }
+  private _serverStorage = false;
+  private _loadOk = false;
+  /** null until config/get answers; then mirrors auth.may_write for this user. */
+  private _serverCanWrite: boolean | null = null;
+  private _loading = false;
+  private _loadTries = 0;
+  private get _serverCfg(): ServerConfig | null { return this._adoption.config; }
+  private set _serverCfg(config: ServerConfig | null) { this._adoption.stageLocalConfig(config); }
+  private get _cfgRev(): number { return this._adoption.configRev; }
+  private set _cfgRev(configRev: number) { this._adoption.seedIdentity({ configRev }); }
+  private get _cfgContentFingerprint(): string { return this._adoption.configFingerprint; }
+  private set _cfgContentFingerprint(configFingerprint: string) { this._adoption.seedIdentity({ configFingerprint }); }
+  private _unsubCfg: (() => void) | null = null;
+  private _unsubLayout: (() => void) | null = null;
+  private _unsubVirtual: (() => void) | null = null;
+  private _liveSyncAttempt: Promise<void> | null = null;
+  private _liveSyncGeneration = 0;
+  private _liveSyncConnection: any = null;
+  private readonly _liveSyncReceivers = new Map<string, (event: unknown) => void | Promise<void>>();
+  private _liveSyncSubscriptionOwner = {};
+  private _detachSubscriptionsTimer?: number;
+  /** #543: only the newest live-context config read may cross adoption. */
+  private readonly _configReloadAuthority = new ConfigReloadAuthority();
+  private readonly _read = new CardReadLifecycle();
+  private readonly _layoutIO = new LayoutWriteReload(pending => this._configWriteGuard(pending));
+  private readonly _configWriteContext = new ConfigWriteContext();
+  private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
+  /** One-deep server snapshot; invalidated by the first later plan edit. */
+  private _canOptimizeUndo = false;
+  private _undoKind: 'optimize' | 'import' | 'space_delete' | null = null;
+  private _devices: DevItem[] = [];
+  private _regSignature = '';
+  private _deviceBuildKey = '';
+  private readonly _deviceRosterState = new DeviceRosterStateKey();
+  private _deviceBuildOwner: unknown;
+  private _defPos: Record<string, { x: number; y: number }> = {};
+  private _newSyncKey = '';
+  /** Saved positions temporarily superseded by authoritative HA Area truth. */
+  private _areaRelocationIds = new Set<string>();
+  /** First authoritative absence is runtime evidence to re-check, never to delete. */
+  private _areaSnapshotCleanupCandidates = new Map<MarkerAreaBinding, number>();
+  private _areaRelocationSyncKey = '';
+  private _areaRelocationWrite: Promise<void> = Promise.resolve();
+  private _tip: {
+    x: number;
+    y: number;
+    title: string;
+    meta: string;
+    lqi?: number | null;
+    temp?: number | null;
+    hum?: number | null;
+    co2?: number | null;
+    room?: boolean;
+    source?: 'pointer' | 'focus'; deviceId?: string;
+  } | null = null;
+  /** Room whose physical perimeter is highlighted in View. The explicit
+   *  overlay is needed because thick wall bodies paint above room shapes. */
+  private _hoverRoom: { space: string; room: RoomCfg } | null = null;
+  private readonly _pointerModality = new PointerModalityController(
+    this,
+    () => this._syncPointerHoverTargets(),
+  );
+  private _pointerHoverObserver?: MutationObserver;
+  private _devicePressAnimations = new Map<string, Animation>();
+  private _selId: string | null = null;
+  private _toast = '';
+  private readonly _toastPresentation = new ToastPresentation();
+  private _toastTimer?: number;
+
+  // --- room markup editor ---
+  /** Interaction mode (docs/UX-MODES.md): view = display only, plan = geometry
+   * editing, devices = marker placement/config. Never persisted — every load
+   * starts in view. */
+  private _mode: 'view' | 'plan' | 'devices' | 'decor' = 'view';
+  /** Editor mode from a same-route warm remount while can_write is unknown. */
+  private _pendingNavMode: 'plan' | 'devices' | 'decor' | null = null;
+  // ---- decor (background) editor ----
+  private _decorTool: DecorTool = 'select';
+  private _decorStyle: DecorStyle = { ...DEFAULT_DECOR_STYLE };
+
+  /** #377: the persisted default style seeds _decorStyle once, from the first
+   * config that arrives (cache or server); later refreshes never overwrite a
+   * live editing session. */
+  private _decorStyleSeeded = false;
+
+  private _seedDecorStyle(cfg: ServerConfig | null): void {
+    ensureFurnitureArtFor(FURNITURE_ART_RUNTIME, cfg, furnitureArtIsLazy, this); // #474: plan intake starts the lazy artwork before the first frame
+    if (this._decorStyleSeeded || !cfg) return;
+    this._decorStyleSeeded = true;
+    const raw = (cfg.settings as { decor_default_style?: unknown } | undefined)
+      ?.decor_default_style;
+    if (raw) this._decorStyle = decorStyleFromSettings(raw, DEFAULT_DECOR_STYLE);
+  }
+  private _decorDraft: { kind: 'line' | 'rect' | 'ellipse'; a: number[]; b: number[]; pid: number } | null = null;
+  private _decorMove: {
+    id: string; start: number[]; orig: DecorShape; pid: number; moved: boolean;
+    before: SpaceGeometryState | null;
+    selection?: import('./editors/decor/group-press').DecorSelectionPress;
+  } | null = null;
+  private _decorSel: string | null = null;
+  /** Pending eraser-tool confirmation. Delete/Backspace remains the direct
+   *  command for an explicitly selected object. */
+  private _decorEraseConfirm: { id: string; kind: DecorShape['kind'] } | null = null;
+  /** The text dialog. Live references are part of `text`; `pickerEntity` is
+   *  only transient UI state and is never persisted (docs/DECOR-EDITOR.md §5). */
+  private _decorTextDialog: {
+    id?: string; x: number; y: number; text: string; color: string;
+    opacity: number; angle: string; sizeCm: number;
+    pickerEntity?: string;
+    /** Keep an old link when inline syntax cannot represent its attr/unit losslessly. */
+    preserveLegacy?: boolean;
+  } | null = null;
+  /** Style editor opened by double-clicking a non-text decor object. */
+  private _decorShapeDialog: {
+    id: string; kind: 'line' | 'rect' | 'ellipse' | 'furniture' | 'image';
+    color: string; opacity: number; widthCm: number;
+    lineStyle?: 'solid' | 'dashed';
+    fill?: boolean; fillColor?: string; fillOpacity?: number;
+    lengthCm?: number; sizeWCm?: number; sizeHCm?: number; angle: string;
+    symbol?: string;
+    assetId?: string;
+    sizeWField?: string; sizeHField?: string; flipH?: boolean; flipV?: boolean;
+  } | null = null;
+  private _backdropDialog: { widthCm: number; heightCm: number; angle: string } | null = null;
+  /** Last textarea selection survives moving focus to the HA pickers. */
+  private _decorTextSelection: { start: number; end: number } = { start: 0, end: 0 };
+  /**
+   * The furniture palette (docs/FURNITURE.md §3): which symbol is armed and at
+   * what REAL size it will be placed. `w`/`h` are centimetres — the fields show
+   * them in metres or feet, but the config's one true scale is `cell_cm`, and
+   * a unit system is a display setting, never a stored one.
+   */
+  private _furnPalette: { symbol: string; w: number; h: number } | null = null;
+  private _decorImagePalette: DecorAsset | null = null;
+  private _decorAssetCatalog: DecorAsset[] = [];
+  private _decorAssets = new Map<string, DecorAsset>();
+  private _decorAssetBusy = false;
+  /** Category currently open in the two-level furniture palette. */
+  private _furnCategory: string | null = null;
+  /** Last fine-pointer location while one furniture stamp is armed. The final
+   * geometry is deliberately resolved on render from the live palette so a
+   * Width/Depth edit updates the ghost without another mouse move (#359). */
+  private _furnPreviewInput: { raw: [number, number]; free: boolean } | null = null;
+  /** Touch/pen has no hover. Delay its one-shot stamp until a clean pointerup
+   * so pointercancel or a second contact cannot save accidental geometry. */
+  private _furnTouchPending: FurniturePlacementPress | null = null;
+  /** The selected shape's own unrotated frame (text is measured from SVG). */
+  private _dtBox: { id: string; x: number; y: number; w: number; h: number } | null = null;
+  /**
+   * One live transform gesture for every selected decor kind. Lines use two
+   * endpoint handles; text uses one physical font size; box kinds use the
+   * same oriented resize/rotate controller.
+   */
+  private _dtDrag: {
+    id: string; kind: 'scale' | 'rotate'; pid: number;
+    /** the pivot the block is scaled and rotated about (render units) */
+    ax: number; ay: number;
+    /** distance / bearing of the pointer at the start, and the stored values */
+    r0: number; a0: number; textSizeCm0: number; angle0: number;
+    /** box shapes: the dragged local edge signs and the oriented box at drag start */
+    sgx?: number; sgy?: number;
+    orig?: DecorBox;
+    origShape: DecorShape;
+    before: SpaceGeometryState | null;
+    lineEnd?: 0 | 1;
+    moved: boolean;
+  } | null = null;
+
+  /** Edit tabs are offered to admins only (hass.user missing → assume admin). */
+  /**
+   * Editor chrome (Plan/Devices/Background tabs, space +/gear).
+   * Driven by the server `can_write` flag from `houseplan/config/get` so the
+   * UI matches `auth.may_write` / the `admin_only` option (audit P0-4).
+   * Until the server answers, fail CLOSED: missing `hass.user` must never
+   * open the editors (`=== true`, not `!== false`).
+   */
+  private get _canManageConfiguration(): boolean {
+    // HA without a current can_write reply keeps its original admin-only
+    // fallback. An injected host owns its explicit writer permission itself.
+    if (this._serverCanWrite === null && !this._injectedPlanHost)
+      return this.planHost.environment.permissions.admin;
+    return this.planHost.environment.permissions.write && this._serverCanWrite !== false;
+  }
+  private get _canEdit(): boolean { return this._norm && this._canManageConfiguration; }
+
+  public get _canImportBackup(): boolean {
+    if (!this.planHost.capabilities.installationBackup && !this.planHost.capabilities.planTransfer) return false;
+    return backupImportAllowed({ connected: this.isConnected, loaded: this._loadOk,
+      server: this._serverStorage, writer: this._canManageConfiguration, kiosk: this._kiosk });
+  }
+
+  private get _canImportEmptyBackup(): boolean {
+    return this._canImportBackup && !this._hasFixedFloor
+      && this._serverCfg?.spaces?.length === 0 && this._model.length === 0;
+  }
+
+  /** Legacy alias: markup machinery is active exactly in plan mode. */
+  private get _kiosk(): boolean {
+    return !!this._config?.kiosk || this.panelHost && this._routeKiosk.enabled;
+  }
+
+  private get _kioskNavigationEnabled(): boolean {
+    return this._kiosk && this._mode === 'view' && !this._hasFixedFloor
+      && !this._externalScreen.space && this._model.length > 1;
+  }
+
+  private _renderKioskNavigation(): TemplateResult | typeof nothing {
+    if (!this._kioskNavigationEnabled) return nothing;
+    return renderKioskSpaceNavigation({ spaces: this._model, current: this._space,
+      visible: this._kioskNavigation.visible, label: this._t('kiosk.spaces'),
+      select: id => { this._tabClick(id); this._kioskNavigation.interact({ type: 'click' }); },
+    });
+  }
+
+  /** Kiosk auto-carousel: advance to the next space every `cycle` seconds. */
+  /** Which way the incoming plan moves when the active space changes. */
+  private _slide: '' | 'left' | 'right' = '';
+  private _slideTimer?: number;
+
+  private _reducedMotion = false;
+  private _motionMedia?: MediaQueryList;
+  private _onMotionChange = (event: MediaQueryListEvent): void => {
+    this._reducedMotion = event.matches;
+    this._cancelDevicePressFeedback();
+    if (event.matches) this._cancelCameraTransition(true);
+    // A preference change to reduced motion is authoritative immediately: do
+    // not leave a 220 ms camera/chrome tween running until its old deadline.
+    if (event.matches && this._modeTransitionPreparing) {
+      this._modeTransitionForceAtomic = true;
+    } else if (event.matches && this._modeTransition.active) {
+      this._cancelModeTransition(true);
+    }
+    this._syncVersionRecovery();
+    this.requestUpdate();
+  };
+  /** Last editor kept in the collapsing chrome so leaving it can animate out. */
+  private _editorChromeMode: 'plan' | 'devices' | 'decor' = 'plan';
+  private _modeTransitionVisual: ModeVisualState | null = null;
+  /** Fixed raster viewport, centred and clipped by the moving stage. Changing
+   * its clipping edges must not resize/repaint every SVG on every frame. */
+  private _modeSceneSize: [number, number] | null = null;
+  private _modeSceneOrigin: [number, number] | null = null;
+  private _modeProjectionSource: 'flat' | 'iso' | null = null;
+  private _modeProjectionCrossing = false;
+  private _modeProjectionOpacity = 1;
+  /** Retain the actual live Lit children until the projection commit. This
+   * never duplicates DOM or builds an outgoing scene in the incoming mode. */
+  private _modeProjectionScene: TemplateResult | null = null;
+  private readonly _modeEditorInk = new Map<string, TemplateResult>();
+  private _editorInk(key: string, active: boolean, render: () => TemplateResult): TemplateResult | typeof nothing {
+    if (active) { const ink = render(); this._modeEditorInk.set(key, ink); return ink; }
+    return this._modeTransitionBusy ? this._modeEditorInk.get(key) ?? nothing : nothing;
+  }
+  private readonly _headerMotion = new HeaderMotion();
+  private _modeHeaderPositions = new Map<string, { x: number; y: number }>();
+  private _modeTransitionPreparing = false;
+  /** A visibility/reduced-motion interruption during the measurement frame
+   * must still publish the measured target atomically, without waiting for a
+   * RAF that a hidden document may throttle. */
+  private _modeTransitionForceAtomic = false;
+  private _modeTransitionRequest = 0;
+  private _modeTransitionTargetZoom = 1;
+  private readonly _modeTransition = new ModeTransitionController({
+    frame: (state) => this._applyModeTransitionFrame(state),
+    settled: (state) => this._settleModeTransition(state),
+  });
+  /** #82: one camera-only transition inside a settled mode. It never owns
+   * chrome/background coordinates — those remain exclusive to #101. */
+  private _cameraTransitionFit: ModeViewBox | null = null;
+  private readonly _zoomScaleActivity = new ZoomScaleActivity((active) => {
+    if (active && this._renderProjection !== 'iso') this.setAttribute('data-led-zoom-quality', 'coarse');
+    else this.removeAttribute('data-led-zoom-quality');
+  });
+  private readonly _cameraTransition = new CameraTransitionController({
+    frame: (state) => this._applyCameraTransitionFrame(state),
+    settled: (state) => this._settleCameraTransition(state),
+  });
+  /** Explicit second-level toolbar group. No current tools are grouped yet;
+   *  the shared host/API prevents future editors from inventing dropdowns. */
+  private declare _editorSecondary: import('./editor-secondary').EditorSecondaryController;
+  private readonly _editorSecondaryCopy: EditorSecondaryCopy = {
+    groupActive: (group, item) => this._t('editor.group_active', { group, item }),
+    openGroup: (group) => this._t('editor.open_group', { group }),
+    disabledAction: (action, reason) => this._t('editor.disabled_action', { action, reason }),
+  };
+
+  private get _modeTransitionBusy(): boolean {
+    return this._modeTransitionPreparing || this._modeTransition.active;
+  }
+
+  private get _doubleFitEnabled(): boolean { return this._mode === 'view' && !this._vacFit && !this._modeTransitionBusy && !this._touchSequenceMultitouch && this._continuity.state === 'steady' && !this._continuity.overlayBlocksInteraction; }
+
+  private _cameraState(): CameraState {
+    const view = this._cameraView(this._baseVb());
+    return { zoom: this._zoom, viewBox: { ...view } };
+  }
+
+  private _normalizeCameraState(state: CameraState): CameraState {
+    if (this._screenCameraTransition) return state;
+    const fit = this._cameraTransitionFit || fitView(this._baseVb(), this._stageAspect());
+    const zoom = this._boundedZoom(state.zoom);
+    return { zoom, viewBox: this._clampView({ ...state.viewBox }, fit) };
+  }
+
+  private _applyCameraTransitionFrame(state: CameraTransitionState): void {
+    const presented = this._normalizeCameraState(state.presented);
+    this._zoomScaleActivity.change(this._cameraState().viewBox, presented.viewBox);
+    // Retargeting must start from the camera that was actually painted, not
+    // from an unclamped interpolation hidden inside the controller.
+    state.presented = presented;
+    this._zoom = presented.zoom;
+    this._view = { ...presented.viewBox };
+    // The exact Lit commit owns the last wheel pose. Keep the held 2.5D
+    // frame until that commit can replace the scene and markers together.
+    if (state.phase !== 'settling' || state.reason !== 'wheel' || this._renderProjection !== 'iso') this._liveVp(true);
+  }
+
+  private _settleCameraTransition(state: CameraTransitionState): void {
+    const saveZoom = !this._screenCameraAutomatic;
+    const target = this._normalizeCameraState(state.to);
+    this._gestureStage = null;
+    this._zoom = target.zoom;
+    this._view = { ...target.viewBox };
+    this._cameraTransitionFit = null;
+    this._screenCameraTransition = false;
+    this._screenCameraAutomatic = false;
+    if (saveZoom && state.reason !== 'room') this._saveZoom();
+    this.requestUpdate();
+    this._resumeCameraHover();
+  }
+
+  /** Cancel a running camera transition.
+   *
+   *  #396: two cancellations look alike and mean opposite things. A STRUCTURAL
+   *  one (space/mode change, adopt, resize, restore, disconnect) replaces the
+   *  view wholesale — its stale target must not be written anywhere. A USER
+   *  one (touching the plan on top of one's own zoom) freezes the presented
+   *  frame and leaves it on screen: that frame IS the current intent, and
+   *  before #82 the zoom commands persisted it synchronously. Keeping both on
+   *  one branch is what lost the interrupted zoom. */
+  private _cancelCameraTransition(commitTarget = false, keepPresented = false): void {
+    const saveZoom = !this._screenCameraAutomatic;
+    const reason = this._cameraTransition.state?.reason;
+    const presentedZoom = keepPresented && this._cameraTransition.active
+      ? this._cameraTransition.presented?.zoom
+      : undefined;
+    this._cameraTransition.cancel(commitTarget);
+    if (!keepPresented) {
+      this._gestureStage = null;
+      this._gestureHover = null;
+      this._zoomScaleActivity.reset();
+    }
+    this._cameraTransitionFit = null;
+    this._screenCameraTransition = false;
+    this._screenCameraAutomatic = false;
+    if (saveZoom && presentedZoom !== undefined && reason !== 'room') this._saveZoom();
+  }
+
+  /** A discrete camera command may follow a rapid mode click. Finish that
+   *  short structural transition first so two controllers never write `_view`
+   *  in the same frame. */
+  private _prepareCameraCommand(): void {
+    this._rotationMotion.cancel();
+    ++this._viewDeviceMenuRequest;
+    this._bootSoftCancel(); if (this._modeTransitionBusy) this._cancelModeTransition(true);
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    }
+  }
+
+  private _startCameraTransition(
+    target: CameraState,
+    fit: ModeViewBox,
+    reason: CameraTransitionReason,
+    duration: number,
+  ): boolean {
+    const current = this._cameraState();
+    const runningTarget = this._cameraTransition.target;
+    if (runningTarget && sameCameraState(runningTarget, target)) return false;
+    if (sameCameraState(current, target)) {
+      // A clamped/no-op command neither starts nor shortens the zoom lease.
+      this._cameraTransition.cancel(false);
+      this._cameraTransitionFit = null;
+      return false;
+    }
+    this._activateSafeDayCycleOutline();
+    if (!this._cameraTransition.active && this._mode === 'view') this._clearPointerHover();
+    this._cameraTransitionFit = { ...fit };
+    const minimumSettleMs = reason !== 'wheel' ? 0 : this._renderProjection === 'iso'
+      ? CAMERA_ISO_WHEEL_SETTLE_MS : CAMERA_WHEEL_MS;
+    this._cameraTransition.start(current, target, reason,
+      this._reducedMotion ? 0 : duration, minimumSettleMs);
+    return true;
+  }
+  private _cssColor(value: string | null | undefined, fallback: string): string {
+    const text = String(value || '').trim();
+    if (!text) return fallback;
+    const probe = document.createElement('span');
+    probe.style.cssText = `position:absolute;visibility:hidden;color:${text}`;
+    this.renderRoot.append(probe);
+    const resolved = getComputedStyle(probe).color || fallback;
+    probe.remove();
+    return resolved;
+  }
+
+  private _currentModeVisual(mode = this._mode as HouseplanMode): ModeVisualState | null {
+    return this._cfgPass.run(() => { this._modeColors(); return this._readModeVisual(mode); });
+  }
+  private _readModeVisual(mode: HouseplanMode): ModeVisualState | null {
+    this._modeHeaderPositions = this._headerMotion.capture(this.renderRoot.querySelector('.head'));
+    if (mode === 'view' && !this._modeTransitionBusy) this._modeEditorInk.clear();
+    // During the one-frame target measurement the controller has not started
+    // yet, but `_modeTransitionVisual` is already the exact painted endpoint.
+    // A rapid second click must retarget from that frame instead of rebuilding
+    // an approximation from the newly committed logical mode.
+    const presented = this._modeTransition.presented || this._modeTransitionVisual;
+    if (presented) return { ...presented, viewport: {
+      ...presented.viewport, viewBox: this._physicalCamera(presented.viewport, presented.stageWidth, presented.stageHeight).viewBox,
+    } };
+    const stage = this._stageEl;
+    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return null;
+    const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
+    const view = this._cameraView(this._baseVb());
+    const paper = this.renderRoot.querySelector('.hp-paper') as SVGElement | null;
+    const backdrop = this.renderRoot.querySelector('.hp-backdrop') as SVGElement | null;
+    const zoomwrap = this.renderRoot.querySelector('.zoomwrap') as HTMLElement | null;
+    const filter = zoomwrap ? getComputedStyle(zoomwrap).filter : '';
+    const brightness = Number(/brightness\(([^)]+)\)/.exec(filter)?.[1]);
+    const headerHeight = this.renderRoot.querySelector('.hdr > .head')?.getBoundingClientRect().height || 0;
+    const chromeHeight = mode === 'view' ? 0 : chrome?.getBoundingClientRect().height || 0;
+    const rawBudget = rawCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight) ?? this._hdrH;
+    return {
+      presentedMode: mode,
+      headerHeight,
+      headerBudget: this._hdrH,
+      headerFixedBudget: rawBudget - headerHeight - chromeHeight,
+      editorChromeHeight: chromeHeight,
+      stageWidth: stage.clientWidth,
+      stageHeight: stage.clientHeight,
+      viewport: { ...physicalViewCamera(view, this._zoom,
+        {...(this._viewFrame ?? this._projectionViewFrame()),
+          size: [stage.clientWidth, stage.clientHeight]}), viewBox: {...view} },
+      stageColor: getComputedStyle(stage).backgroundColor || 'rgb(255, 255, 255)',
+      paperColor: paper ? getComputedStyle(paper).fill : 'rgb(255, 255, 255)',
+      sceneBrightness: Number.isFinite(brightness) ? brightness : 1,
+      architectureOpacity: mode === 'decor' ? 0.35 : 1,
+      backdropOpacity: backdrop && (this._spaceModel()?.bg?.opacity ?? 1) > 0
+        ? Number(getComputedStyle(backdrop).opacity) / (this._spaceModel()?.bg?.opacity ?? 1)
+        : mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
+      viewWeight: mode === 'view' ? 1 : 0,
+      glowWeight: mode === 'view' || mode === 'devices' ? 1 : 0,
+      editorWeight: mode === 'view' ? 0 : 1,
+      planWeight: mode === 'plan' ? 1 : 0,
+      toolbarContentOpacity: mode === 'view' ? 0 : 1,
+    };
+  }
+
+  private _modeThemeColors: { revision: number; stage: string; paper: string } | null = null;
+  private _modeColors(): { revision: number; stage: string; paper: string } {
+    if (this._modeThemeColors?.revision === this._modeSceneRevision) return this._modeThemeColors;
+    const paper = this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)');
+    return this._modeThemeColors = { revision: this._modeSceneRevision,
+      stage: this._cssColor(this._stageBg(this._spaceDisplayForRender()), paper), paper };
+  }
+  /** Capture before target DOM/style changes, in the same source read batch. */
+  public _captureModePresentationSource(_targetMode?: HouseplanMode): void {
+    this._modeColors();
+  }
+  private _targetStageColor(mode: HouseplanMode): string {
+    return mode === 'view' ? this._modeColors().stage : 'rgb(255, 255, 255)';
+  }
+
+  private _physicalCamera(camera: ModeVisualState['viewport'], width: number, height: number): CameraState {
+    return canonicalPhysicalCamera(camera, {...this._projectionViewFrame(),
+      size: [width, height]});
+  }
+
+  /** Only presentation properties and the existing live camera are painted
+   * per frame. Lit constructs the target scene/overflow once before motion. */
+  /** Physical scale is already accepted by the camera owner during mode motion. */
+  private _renderPixelsPerUnit(view: { w: number }): number {
+    const visual = this._modeTransitionVisual;
+    const scale = visual && this._modeTransitionBusy
+      ? visual.viewport.pixelsPerUnit
+      : this._modeSceneFinishPending && this._lastValidStageSize && view.w
+        ? this._lastValidStageSize[0] / view.w
+        : this._stageEl && view.w ? this._stageEl.clientWidth / view.w : 1;
+    return Math.round(scale * 1e6) / 1e6;
+  }
+
+  private _modeSceneClip: string | null = null;
+  private _modeSceneRevision = 0;
+  private _modeSceneRefreshRequested = false;
+  private _modeScenePhaseRequest = false;
+  private _requestModeSceneUpdate(): void {
+    this._modeScenePhaseRequest = true;
+    try { this.requestUpdate(); } finally { this._modeScenePhaseRequest = false; }
+  }
+  private readonly _modeSceneBuilds: Record<string, number> = {};
+  private readonly _isoLight = new IsoLightTransition<{
+    glow: TemplateResult; led: TemplateResult | undefined; lights: IsoWallLightSource[];
+  }>(() => this.requestUpdate(), () => refreshHouseplanViewportNodes(this));
+
+  private _isoAuthoredScene(): SVGSVGElement | HTMLDivElement | null {
+    return this.renderRoot.querySelector(
+      '.iso-scene-surface > :is(.plan-svg, .iso-perspective-light-frame):not([data-hp-retained-light])',
+    );
+  }
+
+  private _modeGlowInputs: readonly unknown[] | null = null;
+  private _modeSceneFinishPending = false;
+  private _modePreparingStageClass: string | null = null;
+  private _modePreparedStageClass = '';
+
+  private readonly _modePresentation = new ModePresentation();
+  private _flatMarkerGeometryPending: { devices: readonly DevItem[]; view: ModeViewBox } | null = null;
+  private readonly _flatMarkerPositions = new WeakMap<HTMLElement, {
+    left: string; top: string; actualLeft: string; actualTop: string;
+  }>();
+  private _syncFlatMarkerGeometry(): void {
+    const pending = this._flatMarkerGeometryPending;
+    this._flatMarkerGeometryPending = null;
+    if (!pending || this._renderProjection !== 'flat') return;
+    const layer = this.renderRoot.querySelector('.devlayer');
+    if (!layer) return;
+    const nodes = new Map([...layer.querySelectorAll<HTMLElement>(':scope > [data-hp="device"]')]
+      .map(node => [node.dataset.id, node]));
+    const view = pending.view;
+    for (const device of pending.devices) {
+      const node = nodes.get(device.id);
+      if (!node) continue;
+      const point = this._pos(device), [x, y] = this._framePercent([point.x, point.y], view);
+      const left = x + '%', top = y + '%', prior = this._flatMarkerPositions.get(node);
+      if (prior?.left !== left || prior.actualLeft !== node.style.left) node.style.left = left;
+      if (prior?.top !== top || prior.actualTop !== node.style.top) node.style.top = top;
+      this._flatMarkerPositions.set(node, { left, top, actualLeft: node.style.left, actualTop: node.style.top });
+    }
+  }
+  private _modeMarkerInputState: readonly unknown[] | null = null;
+  private _syncModeMarkerInput(): void {
+    if (this._modeTransitionBusy) return; // The stage owns effective inertness until the final commit.
+    const inputs = [this._mode === 'view' || this._mode === 'devices', this._modeSceneRevision,
+      this.renderRoot.querySelector('.devlayer')];
+    if (this._modeMarkerInputState?.every((value,index)=>value===inputs[index])) return;
+    this._modeMarkerInputState = inputs;
+    // Interactivity belongs to the mode, independently of memoized marker ink.
+    // The stage remains inert throughout the visual transition.
+    const markerInteractive = this._mode === 'view' || this._mode === 'devices';
+    for (const marker of this._modeNodes('.devlayer .dev:not(.iso-tile-shadow):not(.led-badge)')) {
+      if ((marker as HTMLElement).inert !== !markerInteractive) (marker as HTMLElement).inert = !markerInteractive;
+      if (markerInteractive) {
+        if (marker.getAttribute('role') !== 'button') marker.setAttribute('role', 'button');
+        if (marker.getAttribute('tabindex') !== '0') marker.setAttribute('tabindex', '0');
+      } else {
+        marker.removeAttribute('role'); marker.removeAttribute('tabindex');
+      }
+    }
+  }
+  private _modeRoomHookState: readonly unknown[] | null = null;
+  private _syncModeRoomHooks(): void {
+    const inputs = [this._mode, this._modeSceneRevision,
+      this.renderRoot.querySelector('[data-hp-mode-layer="rooms"]'),
+      this.renderRoot.querySelector('[data-hp-mode-layer="room-ink"]')];
+    if (this._modeRoomHookState?.every((value, index) => value === inputs[index])) return;
+    this._modeRoomHookState = inputs;
+    for (const id of ['rooms', 'room-ink']) {
+      const layer = this.renderRoot.querySelector('[data-hp-mode-layer="' + id + '"]');
+      if (!layer) continue;
+      const active = (this._mode === 'plan') === (id === 'room-ink');
+      const transfer = (node: Element, canonical: string, passive: string): void => {
+        node.classList.toggle(canonical, active);
+        node.classList.toggle(passive, !active);
+        const roomId = node.getAttribute('data-mode-room-id');
+        if (active && roomId) node.setAttribute('data-id', roomId);
+        else node.removeAttribute('data-id');
+      };
+      for (const node of layer.querySelectorAll<SVGElement>('.room,.hp-mode-room')) {
+        transfer(node, 'room', 'hp-mode-room');
+        if (active) {
+          node.setAttribute('data-hp', 'room');
+          const area = node.getAttribute('data-mode-room-area');
+          if (area) node.setAttribute('data-area', area); else node.removeAttribute('data-area');
+          if (node.hasAttribute('data-mode-room-paint')) node.style.setProperty('pointer-events', 'none');
+          else node.style.removeProperty('pointer-events');
+        } else {
+          node.removeAttribute('data-hp'); node.removeAttribute('data-area');
+          node.style.setProperty('pointer-events', 'none', 'important');
+        }
+      }
+      for (const node of layer.querySelectorAll('.room-hit,.hp-mode-room-hit')) {
+        transfer(node, 'room-hit', 'hp-mode-room-hit');
+        node.toggleAttribute('data-hp-room-hit', active);
+        node.setAttribute('pointer-events', active ? 'fill' : 'none');
+      }
+      for (const node of layer.querySelectorAll('.room-outline,.hp-mode-room-outline')) {
+        node.classList.toggle('room-outline', active);
+        node.classList.toggle('hp-mode-room-outline', !active);
+      }
+    }
+  }
+  private readonly _modePresentationNodes = new Map<string, (HTMLElement | SVGElement)[]>();
+  private _modeNodes(selector: string): (HTMLElement | SVGElement)[] {
+    let nodes = this._modePresentationNodes.get(selector);
+    if (!nodes) {
+      nodes = [...this.renderRoot.querySelectorAll<HTMLElement | SVGElement>(selector)];
+      this._modePresentationNodes.set(selector, nodes);
+    }
+    return nodes;
+  }
+  private _paintModePresentation(visual: ModeVisualState): void {
+    const root = this.renderRoot;
+    const owner = this._modePresentation;
+    const planFade = this._mode === 'plan' || !!visual.planWeight || !!this._modeTransition.state?.from.planWeight;
+    const devices = planFade ? this._modeNodes('.devlayer .dev') : [];
+    const motion = this._modeTransition.state;
+    const moving = motion?.phase === 'running';
+    const varies = (weight: (value: ModeVisualState) => number): boolean => !!motion && weight(motion.from) !== weight(motion.to);
+    const set = (selector: string, name: string, value: string, important = false, animate = moving): void => {
+      for (const node of this._modeNodes(selector)) {
+        if (name === 'opacity') owner.opacity(node, value, animate, important ? 'important' : '');
+        else owner.set(node, name, value, important ? 'important' : '');
+      }
+    };
+    set('.hdr > .head', 'height', visual.headerHeight + 'px');
+    set('.editorchrome', 'height', visual.editorChromeHeight + 'px');
+    set('.editorchrome', 'opacity', String(visual.editorWeight));
+    set('.editorchrome-inner', 'opacity', String(visual.toolbarContentOpacity));
+    const stage = this._stageEl;
+    owner.set(stage, 'height', visual.stageHeight + 'px');
+    owner.set(stage, 'width', visual.stageWidth + 'px');
+    owner.set(stage, 'background', visual.stageColor);
+    owner.setInert(stage, true);
+    const plan = visual.planWeight ?? 0;
+    const surfaces = root.querySelector('.hp-mode-scene-svg');
+    if (surfaces) {
+      const layer = (id: string, weight: (value: ModeVisualState) => number): void => {
+        const animated = moving && varies(weight);
+        set('[data-hp-mode-layer="' + id + '"]', 'opacity', String(weight(visual)), false, animated);
+        if (animated) set('[data-hp-mode-layer="' + id + '"]', 'will-change', 'opacity');
+      };
+      // Opacity is on independent SVG surfaces, never on their internal ink.
+      set('.hp-mode-scene-svg :is(.room,.hp-mode-room), .hp-mode-scene-svg :is(.room-outline,.hp-mode-room-outline), .hp-mode-scene-svg .wallbodies, .hp-mode-scene-svg .opening, .hp-mode-scene-svg .zero-walls, .hp-mode-scene-svg .hp-stairs-layer', 'opacity', '1', false, false);
+      set('.hp-mode-scene-svg .hp-view-only-layer, .hp-mode-scene-svg .hp-editor-only-layer, .hp-mode-scene-svg .hp-plan-only-layer, .hp-mode-scene-svg .glow-pools-frame, .hp-mode-scene-svg .led-fields', 'opacity', '1', true, false);
+      layer('rooms', v => v.architectureOpacity * (1 - (v.planWeight ?? 0)));
+      layer('room-ink', v => v.architectureOpacity * (v.planWeight ?? 0));
+      if (!this._spaceDisplayForRender().showBorders)
+        set('[data-hp-mode-layer="rooms"] :is(.room,.hp-mode-room):not([data-area])', 'opacity', String(visual.viewWeight));
+      for (const id of ['walls', 'openings', 'stairs', 'room-hover'])
+        layer(id, v => v.architectureOpacity);
+      layer('zero-view', v => v.architectureOpacity * v.viewWeight);
+      layer('zero-editor', v => v.architectureOpacity * v.editorWeight);
+      layer('editor-guides', v => v.editorWeight);
+      layer('plan-base', v => v.planWeight ?? 0);
+      layer('plan-ink', v => v.planWeight ?? 0);
+      layer('glow', v => v.glowWeight ?? v.viewWeight);
+      layer('led', () => 1);
+      // Add premultiplied room endpoint coverage inside one temporary isolation.
+      const roomCrossfade = varies(v => v.planWeight ?? 0);
+      set('[data-hp-mode-pair="rooms"]', 'isolation', roomCrossfade ? 'isolate' : 'auto');
+      set('[data-hp-mode-pair="rooms"] > svg', 'mix-blend-mode', roomCrossfade ? 'plus-lighter' : 'normal');
+      const paperColor = this._targetPaperColor('view');
+      const sharedPaper = paperColor === 'rgb(255, 255, 255)';
+      // Identical opaque paper has one antialiased silhouette. Blending two
+      // identical full-viewport rasters adds GPU work without changing ink.
+      // Keep the paired path for genuinely different endpoint materials.
+      set('[data-hp-mode-pair="paper"]', 'isolation', sharedPaper ? 'auto' : 'isolate');
+      set('[data-hp-mode-pair="paper"] > svg', 'mix-blend-mode', sharedPaper ? 'normal' : 'plus-lighter');
+      layer('paper', v => sharedPaper ? 1 : v.viewWeight);
+      set('[data-hp-mode-layer="paper"] .hp-paper', 'fill', paperColor, true);
+      set('[data-hp-mode-layer="paper-ink"] .hp-paper', 'fill', 'rgb(255, 255, 255)', true);
+      layer('paper-ink', v => sharedPaper ? 0 : v.editorWeight);
+      set('.hp-backdrop', 'opacity', '1', false, false);
+      layer('backdrop', v => v.backdropOpacity);
+    } else {
+      // Projection crossing retains its existing one-scene fade/atomic path.
+      set('.room, .opening, .room-outline, .wallbodies, .zero-walls, .hp-stairs-layer',
+        'opacity', String(visual.architectureOpacity));
+      set('.hp-view-only-layer, .glow-pools-frame, .led-fields', 'opacity', String(visual.viewWeight), true);
+      set('.hp-plan-only-layer', 'opacity', String(plan), true);
+      set('.hp-editor-only-layer', 'opacity', String(visual.editorWeight), true);
+      set('.hp-paper', 'fill', visual.paperColor, true);
+      set('.hp-backdrop', 'opacity', String((this._spaceModel()?.bg?.opacity ?? 1) * visual.backdropOpacity));
+    }
+    set('.devlayer', 'opacity', String(visual.architectureOpacity), false, moving && varies(v => v.architectureOpacity));
+    set('.hp-day-cycle-env, .hp-moon-sky', 'opacity', String(visual.viewWeight), true);
+    for (const device of devices)
+      owner.filterOpacity(device, Math.max(0, 1 - .65 * plan / visual.architectureOpacity),
+        moving || this._modeTransitionPreparing);
+    const properties = root.querySelector<HTMLElement>('.hp-properties');
+    owner.setInert(properties, true);
+    owner.set(properties, 'transform', 'translateX(' + (1 - visual.editorWeight) * 100 + '%)');
+    owner.opacity(properties, String(visual.editorWeight), moving);
+    const terminal = this._modeTransition.state?.phase === 'settling';
+    const raster = this._modeSceneSize;
+    if (raster) {
+      const scene = root.querySelector<HTMLElement>('.zoomwrap');
+      owner.set(scene, 'translate', 'none');
+      const dx = (visual.stageWidth - raster[0]) / 2, dy = (visual.stageHeight - raster[1]) / 2;
+      const left = this._modeSceneOrigin ? dx - this._modeSceneOrigin[0] : Math.round(dx);
+      const top = this._modeSceneOrigin ? dy - this._modeSceneOrigin[1] : Math.round(dy);
+      // The target-snapped raster translates without changing its camera.
+      // Both endpoint coordinates are integers on the ordinary to path.
+      owner.set(scene, 'left', moving ? '0px' : Math.round(left) + 'px');
+      owner.set(scene, 'top', moving ? '0px' : Math.round(top) + 'px');
+      owner.set(scene, 'transform', moving ? `translate(${left}px,${top}px)` : 'none');
+      owner.set(scene, 'will-change', moving ? 'transform' : 'auto');
+    }
+    if (terminal) {
+      // Present the endpoint with the ordinary raster path, while the same
+      // controller still owns inert until its next RAF.
+      const from = paintedHouseplanViewBox(this);
+      const endpoint = this._viewOr(this._baseVb());
+      commitHouseplanViewport(this);
+      // The plan and the HTML layers both use display coordinates. The mode
+      // controller's canonical box is unrotated, including at settlement.
+      this._rebaseModeHtml(from ?? endpoint, endpoint, raster);
+      set('.hp-mode-scene-svg', 'clip-path', this._modeSceneClip || 'inset(-25%)');
+      set('.hp-mode-scene-svg', 'will-change', 'auto');
+      set('.hp-mode-crossfade', 'isolation', 'auto');
+      set('.hp-mode-crossfade > svg', 'mix-blend-mode', 'normal');
+    } else scheduleHouseplanViewport(this, true);
+  }
+
+  private _rebaseModeHtml(from: ModeViewBox, current: ModeViewBox, raster: readonly [number, number] | null): void {
+    const owner = this._modePresentation, projection = liveLayerProjection(from, current);
+    const reposition = !isIdentityLiveLayerProjection(projection);
+    for (const layer of this.renderRoot.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
+      if (layer.style.transform && layer.style.transform !== 'none') owner.set(layer, 'transform', 'none');
+      if (raster) { owner.set(layer, 'width', raster[0] + 'px'); owner.set(layer, 'height', raster[1] + 'px'); }
+      if (reposition) for (const node of layer.querySelectorAll<HTMLElement>(
+        ':scope > [style], :scope > .iso-room-label-plane > .roomlabel',
+      )) {
+        const left = node.style.left, top = node.style.top;
+        if (!left?.endsWith('%') || !top?.endsWith('%')) continue;
+        owner.set(node, 'left', (parseFloat(left) * projection.scaleX + projection.translateXPercent) + '%');
+        owner.set(node, 'top', (parseFloat(top) * projection.scaleY + projection.translateYPercent) + '%');
+      }
+      const text = `${current.x} ${current.y} ${current.w} ${current.h}`;
+      for (const svg of layer.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]')) {
+        if (svg.getAttribute('viewBox') !== text) svg.setAttribute('viewBox', text);
+      }
+      owner.set(layer, 'left', '0px'); owner.set(layer, 'top', '0px');
+    }
+  }
+
+  private _clearModePresentation(): void {
+    this._modeSceneOrigin = null;
+    this._modePreparingStageClass = null;
+    this._modePresentationNodes.clear();
+    this._modePresentation.clear();
+    // Projection crossing and the raster camera use these outside paint().
+    for (const [selector, names] of [
+      ['.zoomwrap', ['width', 'height', 'opacity']],
+      ['.stage', ['width']],
+    ] as const) for (const element of this.renderRoot.querySelectorAll<HTMLElement>(selector)) {
+      for (const name of names) element.style.removeProperty(name);
+    }
+  }
+
+  private _targetPaperColor(mode: HouseplanMode): string {
+    if (mode !== 'view' || !this._spaceModel()?.bg) return 'rgb(255, 255, 255)';
+    return this._modeColors().paper;
+  }
+
+  private _targetBrightness(_mode: HouseplanMode): number {
+    return 1;
+  }
+
+  private _applyModeTransitionFrame(state: ModeTransitionState): void {
+    this._cfgPass.run(() => this._paintTransitionFrame(state));
+  }
+  private _paintTransitionFrame(state: ModeTransitionState): void {
+    if (state.targetMode !== this._mode) return;
+    if (this._modeProjectionCrossing) {
+      const progress = state.duration > 0 ? Math.min(1, Math.max(0, (performance.now() - state.startedAt) / state.duration)) : 1;
+      if (progress >= .5 && this._modeProjectionSource) {
+        // One projection commit while the real scene is transparent. No
+        // overlaid scenes or copied DOM, and no per-frame scene construction.
+        this._modeProjectionSource = null; this._isoProjectionSnapshot = null;
+        this.requestUpdate();
+      }
+      this._modeProjectionOpacity = Math.abs(progress * 2 - 1);
+      const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
+      if (scene) scene.style.opacity = String(this._modeProjectionOpacity);
+    }
+    const size = this._modeSceneSize ?? [state.presented.stageWidth, state.presented.stageHeight];
+    const dx = (state.presented.stageWidth - size[0]) / 2;
+    const dy = (state.presented.stageHeight - size[1]) / 2;
+    const origin = this._modeSceneOrigin ?? [dx - Math.round(dx), dy - Math.round(dy)];
+    const viewport = { ...state.presented.viewport,
+      centerX: state.presented.viewport.centerX - origin[0] / state.presented.viewport.pixelsPerUnit,
+      centerY: state.presented.viewport.centerY - origin[1] / state.presented.viewport.pixelsPerUnit };
+    const camera = this._physicalCamera(viewport, size[0], size[1]);
+    state.presented.viewport.viewBox = { ...camera.viewBox };
+    this._modeTransitionVisual = state.presented;
+    this._view = { ...camera.viewBox };
+    this._zoom = camera.zoom;
+    this._paintModePresentation(state.presented);
+  }
+
+  private _settleModeTransition(state: ModeTransitionState): void {
+    this._cfgPass.run(() => this._finishModeTransition(state));
+  }
+  private _finishModeTransition(state: ModeTransitionState): void {
+    if (state.targetMode !== this._mode) return;
+    const settledRequest = this._modeTransitionRequest;
+    this._modeSceneFinishPending = true;
+    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._modeProjectionOpacity = 1; this._isoProjectionSnapshot = null;
+    // The controller has released busy, but the endpoint dimensions are still
+    // presented. Store summary's final box before the one terminal Lit update.
+    this._summary?.settleModeLayout();
+    this._liveRt?.prepareContacts();
+    this._clearModePresentation();
+    const targetCamera = this._physicalCamera(state.to.viewport, state.to.stageWidth, state.to.stageHeight);
+    this._view = targetCamera.viewBox;
+    this._zoom = targetCamera.zoom;
+    this._modeSceneSize = null;
+    this._modeSceneClip = null;
+    this._hdrH = Math.round(state.to.headerBudget);
+    this._modeTransitionVisual = null;
+    this._modeTransitionPreparing = false;
+    this._lastValidStageSize = [state.to.stageWidth, state.to.stageHeight];
+    if (this._mode === 'view') {
+      this._saveZoom();
+    }
+    this._requestModeSceneUpdate();
+    void this.updateComplete.then(() => {
+      if (!this.isConnected || settledRequest !== this._modeTransitionRequest
+          || this._modeTransitionBusy || state.targetMode !== this._mode) return;
+      // Natural responsive layout remains the final authority. A breakpoint,
+      // font load or outer resize may land while ResizeObserver is suppressed
+      // by the transition; reconcile it before the next visible interaction.
+      const stage = this._stageEl;
+      if (stage && stage.clientWidth > 0 && stage.clientHeight > 0
+          && (Math.abs(stage.clientWidth - state.to.stageWidth) > 0.5
+            || Math.abs(stage.clientHeight - state.to.stageHeight) > 0.5)) {
+        const camera = this._physicalCamera(state.to.viewport, stage.clientWidth, stage.clientHeight);
+        this._lastValidStageSize = [stage.clientWidth, stage.clientHeight];
+        this._view = camera.viewBox; this._zoom = camera.zoom;
+        this._saveZoom();
+        this.requestUpdate();
+      }
+      // ResizeObserver may have consumed the last size change while the
+      // controller was holding to. Publish the accepted pair here as well.
+      if (this._lastValidStageSize?.[0] === state.to.stageWidth
+          && this._lastValidStageSize[1] === state.to.stageHeight)
+        this._warmPatch({ hdrH: this._hdrH, stageH: state.to.stageHeight,
+          ownHdrH: state.to.headerHeight + state.to.editorChromeHeight });
+      const focused = (this.renderRoot as ShadowRoot).activeElement as HTMLElement | null;
+      const lostWithOutgoingUi = !focused || !focused.isConnected
+        || !!focused.closest?.('.editorchrome, .stage');
+      if (lostWithOutgoingUi) {
+        (this.renderRoot.querySelector('.modetab.active') as HTMLElement | null)
+          ?.focus?.({ preventScroll: true });
+      }
+    });
+  }
+
+  private _cancelModeTransition(commitTarget = true): void {
+    this._cancelCameraTransition(false);
+    const presented = this._modeTransition.presented || this._modeTransitionVisual;
+    const retained = presented ? this._physicalCamera(presented.viewport, presented.stageWidth, presented.stageHeight) : null;
+    const hadControllerState = !!this._modeTransition.state;
+    this._modeTransitionRequest++;
+    this._modeTransitionPreparing = false;
+    this._modeTransitionForceAtomic = false;
+    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._modeProjectionOpacity = 1; this._isoProjectionSnapshot = null;
+    this._modeTransition.cancel(commitTarget);
+    this._modeSceneSize = null;
+    this._modeSceneClip = null;
+    this._headerMotion.cancel();
+    this._clearModePresentation();
+    if (!commitTarget && retained && presented) {
+      this._view = retained.viewBox; this._zoom = retained.zoom;
+      // A rapid retarget can render the same Lit style string again. Keep
+      // these real dimensions until that render: clearing them under the
+      // transition's inset:auto rule would expose a zero-width scene frame.
+      const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
+      if (scene) { scene.style.width = `${presented.stageWidth}px`; scene.style.height = `${presented.stageHeight}px`; }
+      if (this._stageEl) this._stageEl.style.width = `${presented.stageWidth}px`;
+    }
+    if (commitTarget && !hadControllerState && presented && this._mode === 'view')
+      this._commitViewModeAtomic(presented, this._zoom);
+    // A preparing transition has no controller state to settle. Its measured
+    // callback is invalidated above, so always discard the retained frame;
+    // otherwise a space switch/recovery during measurement can leave inline
+    // height/background/camera coordinates attached indefinitely.
+    if (!commitTarget || !hadControllerState) this._modeTransitionVisual = null;
+  }
+
+  /** Adopt a mode from configuration/recovery without leaving a measured
+   * transition alive. User navigation continues to go through `_setMode()`. */
+  private _adoptMode(mode: HouseplanMode): void {
+    if (mode !== this._mode) {
+      this._stairsView.clearArrival();
+      this._clearRoomFocus(true);
+      this._resetDeviceHitState();
+    }
+    this._cancelModeTransition(false);
+    this._mode = mode; this._isoProjectionSnapshot = null;
+    if (mode !== 'view') this._editorChromeMode = mode;
+  }
+
+  /** Route departure cannot wait for a decorative frame that will never be
+   * shown. Publish the pending View camera directly before warm persistence. */
+  private _commitViewModeAtomic(
+    from: ModeVisualState | null,
+    targetZoom: number,
+  ): void {
+    this._modeTransitionPreparing = false;
+    this._modeTransitionVisual = null;
+    this._modeTransitionForceAtomic = false;
+    this._zoom = targetZoom;
+    if (from) {
+      const card = this.renderRoot.querySelector<HTMLElement>('ha-card');
+      const properties = this.renderRoot.querySelector<HTMLElement>('.hp-properties');
+      const targetStageWidth = card?.clientWidth
+        ? card.clientWidth - (this._editorRuntime?.properties.wide ? properties?.offsetWidth || 0 : 0)
+        : this._stageEl?.clientWidth || from.stageWidth;
+      const headerHeight = this._editorRuntime?._modeHeaderHeight('view') ?? from.headerHeight;
+      const targetStageHeight = modeStageHeight(from, headerHeight);
+      this._hdrH = Math.round(from.headerBudget + from.stageHeight - targetStageHeight);
+      const camera = this._physicalCamera(from.viewport, targetStageWidth, targetStageHeight);
+      this._view = camera.viewBox; this._zoom = camera.zoom;
+      this._lastValidStageSize = [targetStageWidth, targetStageHeight];
+    } else {
+      this._view = null;
+    }
+    this._saveZoom();
+    this.requestUpdate();
+  }
+
+  private _prepareModeTransition(
+    request: number,
+    from: ModeVisualState,
+    targetMode: HouseplanMode,
+  ): void {
+    const layout=this._editorRuntime?.modeLayoutFor(targetMode);
+    if(layout){this._panelHeaderChoice=layout.header;this._compactSpaces=layout.header.phase>=3;}
+    this._modePreparingStageClass = this._modeProjectionCrossing ? null : this._stageEl?.className.replace(/\s+mode-transition\b/g, '') ?? null;
+    void this.updateComplete.then(async () => {
+      if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
+        // Only clean the generation that still owns the preparing flag. A
+        // stale callback must not cancel a newer transition, but a config or
+        // recovery mode adoption in the measurement window must never strand
+        // the scene in its inert/busy state.
+        if (request === this._modeTransitionRequest) {
+          this._cancelModeTransition(false);
+          this.requestUpdate();
+        }
+        return;
+      }
+      // The prepared Lit frame already owns source dimensions. Measure target
+      // chrome before presentation writes invalidate the scene layout.
+      if(!layout) {
+      const headerReady = this._settlePanelHeader(true);
+      if (this._spaceSelectLoad && !customElements.get('hp-settings-select')) {
+        if (this._stageEl) this._stageEl.inert = true;
+        this._paintModePresentation(from);
+      }
+      await headerReady;
+      }
+      if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
+        if (request === this._modeTransitionRequest) {
+          this._cancelModeTransition(false); this.requestUpdate();
+        }
+        return;
+      }
+      this._cfgPass.run(() => {
+      const inner = this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null;
+      const targetChromeHeight = targetMode === 'view' ? 0 : layout?.chromeHeight ?? inner?.scrollHeight ?? 0;
+      const headerHeight = layout?.header.height ?? (this._panelHeaderChoice?.height > 0 ? this._panelHeaderChoice.height
+        : this._editorRuntime?._modeHeaderHeight(targetMode) ?? from.headerHeight);
+      // The hidden frame preserves source sizes; keep the header + stage + chrome budget
+      // constant so every RAF moves both edges without a final layout jump.
+      const targetStageHeight = modeStageHeight(from, headerHeight, targetChromeHeight);
+      const card = this.renderRoot.querySelector<HTMLElement>('ha-card');
+      const properties = this.renderRoot.querySelector<HTMLElement>('.hp-properties');
+      const targetStageWidth = layout?.width ?? (card?.clientWidth
+        ? card.clientWidth - (this._editorRuntime?.properties.wide ? properties?.offsetWidth || 0 : 0)
+        : this._stageEl?.clientWidth || from.stageWidth);
+      const targetCamera = this._physicalCamera(from.viewport, targetStageWidth, targetStageHeight);
+      const targetView = targetCamera.viewBox;
+      this._modeTransitionTargetZoom = targetCamera.zoom;
+      const to: ModeVisualState = {
+        presentedMode: targetMode,
+        headerHeight,
+        headerBudget: from.headerBudget + from.stageHeight - targetStageHeight,
+        headerFixedBudget: from.headerFixedBudget,
+        editorChromeHeight: targetChromeHeight,
+        stageWidth: targetStageWidth,
+        stageHeight: targetStageHeight,
+        viewport: { ...from.viewport, viewBox: targetView },
+        stageColor: this._targetStageColor(targetMode),
+        paperColor: this._targetPaperColor(targetMode),
+        sceneBrightness: this._targetBrightness(targetMode),
+        architectureOpacity: targetMode === 'decor' ? 0.35 : 1,
+        backdropOpacity: targetMode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
+        viewWeight: targetMode === 'view' ? 1 : 0,
+        glowWeight: targetMode === 'view' || targetMode === 'devices' ? 1 : 0,
+        editorWeight: targetMode === 'view' ? 0 : 1,
+        planWeight: targetMode === 'plan' ? 1 : 0,
+        toolbarContentOpacity: targetMode === 'view' ? 0 : 1,
+      };
+      this._modeTransitionPreparing = false;
+      const forceAtomic = this._modeTransitionForceAtomic;
+      this._modeTransitionForceAtomic = false;
+      this._headerMotion.start(this.renderRoot.querySelector('.head'), this._modeHeaderPositions, this._reducedMotion || forceAtomic, layout?.header.positions);
+      // Source dimensions are already accepted. Publishing this basis must
+      // not query freshly invalidated scene client metrics.
+      // Take the marker basis before the viewport adopts measured editor
+      // chrome. The existing HTML percentages can still be in the View box.
+      const htmlFrom = paintedHouseplanViewBox(this);
+      this._modeSceneSize = [from.stageWidth, from.stageHeight];
+      if (!this._modeProjectionSource) commitHouseplanViewport(this);
+      // Publish the stage's phase-owned inert baseline after the read batch,
+      // before any motion or rendering opportunity. Presentation retains it
+      // until the final Lit commit, exactly like a prepared inert binding.
+      if (this._stageEl) this._stageEl.inert = true;
+      if (this._stageEl) this._stageEl.className = this._modePreparedStageClass + ' mode-transition';
+      this._modePreparingStageClass = null;
+      // Keep the already-rendered HTML and SVG raster coordinates fixed.
+      // Enlarging only their parent here would stretch marker faces on Y.
+      this._modeSceneOrigin = !this._reducedMotion && !forceAtomic && !this._modeProjectionCrossing
+        && this._renderProjection === 'flat' && this._rotation === 0 ? modeRasterOriginBias(from, to) : null;
+      this._modeSceneClip = modeRasterExposureClip(from, to);
+      const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
+      if (scene) {
+        scene.style.width = `${this._modeSceneSize[0]}px`; scene.style.height = `${this._modeSceneSize[1]}px`;
+      }
+      const origin = this._modeSceneOrigin ?? [0, 0];
+      const rasterCamera = this._physicalCamera({ ...from.viewport,
+        centerX: from.viewport.centerX - origin[0] / from.viewport.pixelsPerUnit,
+        centerY: from.viewport.centerY - origin[1] / from.viewport.pixelsPerUnit }, ...this._modeSceneSize);
+      this._view = rasterCamera.viewBox; this._zoom = rasterCamera.zoom;
+      if (this._modeSceneOrigin && htmlFrom) {
+        this._rebaseModeHtml(htmlFrom, this._viewOr(this._baseVb()), this._modeSceneSize);
+        commitHouseplanViewport(this, true);
+      } else scheduleHouseplanViewport(this, true, true);
+      this._modeTransition.start(from, to, targetMode,
+        this._reducedMotion || forceAtomic ? 0 : controlMotion.mode.duration);
+      });
+    });
+  }
+
+  /** An own `floor` property is deliberate, including invalid/null YAML. */
+  private get _hasFixedFloor(): boolean {
+    return this._fixedFloorState().kind !== 'absent';
+  }
+
+  /**
+   * Resolve fixed-floor authority against one model snapshot. Cache may safely
+   * prove an exact stable id, but it may not reject a missing id or resolve a
+   * positional index until the integration has answered authoritatively.
+   */
+  private _fixedFloorState(models = this._model, authoritative = this._loadOk): FixedFloorState {
+    if (this.panelHost && this._routeKiosk.enabled && this._routeKiosk.position === null) {
+      const screen = this._externalScreen;
+      if (this._routeKiosk.profile && !authoritative) return { kind: 'pending', value: this._routeKiosk.profile };
+      if (screen.space && models.some(model => model.id === screen.space)) return { kind: 'valid', id: screen.space, source: 'id' };
+    }
+    return resolvePresentationFloor(this.panelHost ? this._routeKiosk : null,
+      models.map((space) => space.id), authoritative,
+      !!this._config && Object.prototype.hasOwnProperty.call(this._config, 'floor'), this._config?.floor);
+  }
+
+  /** One boundary for every mutation of the active space. */
+  private _canCommitSpace(id: string, authority = false): boolean {
+    if (authority || !this._hasFixedFloor) return true;
+    const fixed = this._fixedFloorState();
+    return fixed.kind === 'valid' && fixed.id === id;
+  }
+
+  private _commitSpace(id: string, authority = false): boolean {
+    if (!this._canCommitSpace(id, authority)) return false;
+    if (id !== this._space) {
+      // Do not let a late read/write survive a same-turn A → B → A even
+      // when Lit coalesces the intermediate space out of the paint.
+      this._retireStartupFloor();
+      this._floorPendingMode = null;
+      if (!authority) { this._warmViewportPending = null; this._warmCameraAdopted = false; this._warmVp = null; }
+      this._stairsView.clearArrival();
+      this._modeEditorInk.clear();
+      this._modeProjectionScene = null;
+      ++this._viewDeviceMenuRequest;
+      if (!authority) { this._read.invalidate(); this._loading = false;
+        if (this._continuity.state !== 'steady') this._beginContinuityCandidate('space', true); }
+      this._cancelPendingWarmMode();
+      this._viewHold.cancel();
+      this._cancelDeviceDrag();
+      this._clearRoomFocus(true);
+      this._resetDeviceHitState();
+      this._cancelDangerConfirm();
+      this._closeInfoCard(); this._openingInfo = null; this._openingInfoSpace = null;
+      this._tapConfirm = null;
+      this._cancelCameraTransition(false);
+      this._clearTransientHover(true);
+      this._cancelDevicePressFeedback();
+      this._editorRuntime?._clearFurniturePreview();
+    }
+    this._space = id; this._isoProjectionSnapshot = null;
+    return true;
+  }
+
+  /** Change the space with the usual sideways transition. */
+  private _slideTo(id: string, dir: 'left' | 'right', carousel = false): boolean {
+    this._editorRuntime?.invalidateEditorNavigation();
+    if (id === this._space) return true;
+    if (!this._canCommitSpace(id)) return false;
+    const resume = () => { if (this._slideTo(id, dir, carousel)) this._saveNav(); };
+    if (this._editorRuntime && !this._editorRuntime._guardDraftNavigation(resume)) return false;
+    if (this._wallFaceBatch) this._roomDialogCancel();
+    if (this._mode === 'plan' && this._tool === 'draw'
+      && !this._editorRuntimeOrThrow()._finishWallChainForNavigation(resume)) return false;
+    this._cancelModeTransition(true);
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    this._commitSpace(id);
+    this._navApplied = true;
+    this._path = [];
+    this._clearPlanSnapHover();
+    this._clearOpeningPlacement(true);
+    this._tool = 'draw';
+    this._activeWallChainId = null;
+    this._activeWallChainPartitionIds = [];
+    this._wallChainSegmentCms = [];
+    this._closingWallCm = null;
+    this._selId = null;
+    this._physicalSel = null;
+    this._editorSecondary?.closeForNavigation();
+    this._physicalDialog = null;
+    this._editorRuntime?.physicalGesture.resetMove();
+    this._restoreZoom(carousel);
+    if (reduce) return true;
+    this._slide = dir;
+    clearTimeout(this._slideTimer);
+    this._slideTimer = window.setTimeout(() => {
+      this._slideTimer = undefined;
+      this._slide = '';
+      this.requestUpdate();
+    }, 190);
+    this.requestUpdate();
+    return true;
+  }
+
+  /** Direct space tabs use the same motion as swipe/carousel navigation. */
+  // ---- reordering the space tabs (issue #220) ------------------------------
+  //
+  // Mouse only, editors only: the same tabs switch spaces in View, where touch
+  // is a first-class citizen, so a gesture here would compete with that tap.
+  // docs/specs/220-space-tab-reorder.md §4.1, "Touch editor: not exposed".
+
+  private get _canReorderTabs(): boolean {
+    return canStartTabDrag({
+      canEdit: this._canEdit,
+      kiosk: this._kiosk,
+      mode: this._mode,
+      pointerType: 'mouse',
+      spaceCount: this._model.length,
+      fixedFloor: this._hasFixedFloor,
+    });
+  }
+
+  private _tabPointerDown(event: PointerEvent, id: string): void {
+    if (!canStartTabDrag({
+      canEdit: this._canEdit,
+      kiosk: this._kiosk,
+      mode: this._mode,
+      pointerType: event.pointerType,
+      spaceCount: this._model.length,
+      fixedFloor: this._hasFixedFloor,
+    })) return;
+    // A mouse released past the edge of the panel fires neither pointerup nor
+    // pointercancel on any tab, and the gesture would stay stuck mid-drag —
+    // taking the next click with it, since _tabClick swallows clicks that
+    // follow a drag (review CODE-REVIEW-220-r1, M1).
+    //
+    // Capture is the usual answer and this file uses it everywhere, but it is
+    // not a guarantee: the browser grants it only for a live pointer, so a
+    // gesture that starts any other way keeps no capture at all. The window
+    // listener below is what actually closes the gesture; capture merely keeps
+    // the moves flowing to the tab while the button is held.
+    capturePointer(event);
+    this._tabDragRelease = (release: PointerEvent) => this._tabPointerUp(release);
+    window.addEventListener('pointerup', this._tabDragRelease);
+    window.addEventListener('pointercancel', this._tabDragRelease);
+    this._tabDrag = {
+      id, pointerId: event.pointerId, x: event.clientX, y: event.clientY,
+      moved: false, targetId: null, placement: null,
+    };
+  }
+
+  /** Resolve a drop from screen coordinates, independent of captured event.target. */
+  private _tabDropTargetAt(clientX: number, clientY: number, sourceId: string): {
+    targetId: string; placement: 'before' | 'after';
+  } | null {
+    const ids = this._model.map((space) => space.id);
+    const sourceIndex = ids.indexOf(sourceId);
+    if (sourceIndex < 0) return null;
+    const tabs = this.renderRoot.querySelectorAll<HTMLElement>('[data-hp="space-tab"]');
+    for (const tab of tabs) {
+      const targetId = tab.dataset.id || '';
+      if (!targetId || targetId === sourceId) continue;
+      const rect = tab.getBoundingClientRect();
+      if (clientX < rect.left || clientX > rect.right
+          || clientY < rect.top || clientY > rect.bottom) continue;
+      const targetIndex = ids.indexOf(targetId);
+      if (targetIndex < 0) return null;
+      return { targetId, placement: targetIndex < sourceIndex ? 'before' : 'after' };
+    }
+    return null;
+  }
+
+  private _tabPointerMove(event: PointerEvent): void {
+    const drag = this._tabDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (!drag.moved
+        && !passedDragThreshold(event.clientX - drag.x, event.clientY - drag.y)) return;
+    // Past the threshold the gesture is a drag: the click that would otherwise
+    // follow is suppressed in _tabClick, and the panel shows where it lands.
+    const target = this._tabDropTargetAt(event.clientX, event.clientY, drag.id);
+    if (drag.moved && drag.targetId === target?.targetId
+        && drag.placement === target?.placement) return;
+    this._tabDrag = {
+      ...drag,
+      moved: true,
+      targetId: target?.targetId || null,
+      placement: target?.placement || null,
+    };
+  }
+
+  private _tabPointerUp(event: PointerEvent): void {
+    const drag = this._tabDrag;
+    if (drag && drag.pointerId !== event.pointerId) return;
+    const target = event.type === 'pointerup' && drag?.moved
+      ? this._tabDropTargetAt(event.clientX, event.clientY, drag.id)
+      : null;
+    if (event.type === 'pointerup' && drag?.moved) this._suppressNextTabClick();
+    this._endTabDrag();
+    if (!drag?.moved || !target) return;
+    this._commitTabOrder(drag.id, target.targetId);
+  }
+
+  /** Drop the gesture and its window listeners, wherever the release happened. */
+  private _endTabDrag(): void {
+    this._tabDrag = null;
+    if (!this._tabDragRelease) return;
+    window.removeEventListener('pointerup', this._tabDragRelease);
+    window.removeEventListener('pointercancel', this._tabDragRelease);
+    this._tabDragRelease = null;
+  }
+
+  /** A click that followed a real drag must not also switch the space. */
+  private _tabClick(id: string): void {
+    if (this._tabSuppressClick) {
+      this._tabSuppressClick = false;
+      clearTimeout(this._tabSuppressClickTimer);
+      this._tabSuppressClickTimer = undefined;
+      return;
+    }
+    this._pickSpace(id);
+  }
+
+  /** Browser click follows pointerup in the same task; clear if none arrived. */
+  private _suppressNextTabClick(): void {
+    this._tabSuppressClick = true;
+    clearTimeout(this._tabSuppressClickTimer);
+    this._tabSuppressClickTimer = window.setTimeout(() => {
+      this._tabSuppressClick = false;
+      this._tabSuppressClickTimer = undefined;
+    }, 0);
+  }
+
+  /**
+   * Write the new order — and, in the same write, the placement that used to
+   * depend on it.
+   *
+   * A marker with neither an explicit space nor an area that names one renders
+   * in whatever space sits first. Reordering would silently hand it to another
+   * space, so the answer it has right now is written down first. This is the
+   * whole reason the two changes may not be split into two saves.
+   */
+  private _commitTabOrder(movedId: string, targetId: string): void {
+    const cfg = this._serverCfg;
+    if (!cfg || !this._canReorderTabs) return;
+    const ids = this._model.map((space) => space.id);
+    const order = reorderSpaceIds(ids, movedId, targetId);
+    if (order === ids) return;
+    // The area in force, not merely the one stored on the marker: a marker that
+    // binds an HA device inherits its area from the registry, and such a marker
+    // never depended on the order (review CODE-REVIEW-220-r1, H1).
+    const areaById = new Map(
+      this._devices.map((device) => [String(device.id), String(device.area || '')]),
+    );
+    const pinned = markersNeedingPlacement(
+      cfg.markers || [],
+      Object.fromEntries(
+        Object.entries(this._areaToSpace).map(([area, value]) => [area, value.space]),
+      ),
+      ids[0] || '',
+      (markerId) => areaById.get(markerId) || '',
+    );
+    if (pinned.length) {
+      const byId = new Map(pinned.map((entry) => [entry.id, entry.space]));
+      for (const marker of cfg.markers || []) {
+        const space = byId.get(String((marker as any).id));
+        if (space) (marker as any).space = space;
+      }
+    }
+    cfg.spaces = applySpaceOrder(cfg.spaces || [], order);
+    this._saveConfig();
+    if (!this._tabOrderWarned) {
+      this._tabOrderWarned = true;
+      this._showToast(this._t('toast.space_order_changed'), 'toast.space_order_changed');
+    }
+  }
+
+  private _pickSpace(id: string): void {
+    if (id !== this._space && this._editorRuntime && !this._editorRuntime.properties.beforeIntent(() => this._pickSpace(id))) return;
+    this._endTabDrag();
+    if (id === this._space) return;
+    const ids = this._model.map((sp) => sp.id);
+    const from = ids.indexOf(this._space);
+    const to = ids.indexOf(id);
+    this._navApplied = true;
+    this._showFar = false; // the hint is per space (docs/CANVAS.md §4.1)
+    this._frame = null;
+    if (this._slideTo(id, from >= 0 && to < from ? 'right' : 'left')) this._saveNav();
+  }
+
+  private _cycleTick(): void {
+    if (!this._kioskCarousel.canAdvance()) return;
+    const ids = this._model.map((m) => m.id);
+    const i = ids.indexOf(this._space);
+    this._slideTo(ids[(i + 1) % ids.length], 'left', true);
+  }
+
+  private _syncCycleTimer(): void {
+    this._kioskCarousel.sync();
+  }
+
+  /** Any edit mode is active (plan / devices / decor). */
+  private get _editing(): boolean {
+    return this._mode === 'plan' || this._mode === 'devices' || this._mode === 'decor';
+  }
+
+  private get _markup(): boolean {
+    return this._mode === 'plan';
+  }
+  private _tool: MarkupTool = 'draw';
+  private _stairsView = new StairViewRuntime(this as unknown as StairViewHostPort);
+  /** UX-04: one named, 50-step command history for every plan-geometry tool. */
+  private _geometryHistory = new CommandStack<SpaceGeometryState>(50);
+  /** #74: independent session-local history for manual device placements. */
+  private _devicePositionHistory = new CommandStack<DeviceEditorHistoryState>(50, () => this._editorRuntime?.deviceStructure.prune(), true);
+  private _devicePositionBusy = false;
+  /** Wall-thickness tool dialog (docs/WALL-THICKNESS.md). */
+  private _wallDialog: {
+    a: number[]; b: number[];
+    value: string; roomId: string | null;
+    // The Thickness tool serves independent masonry too. `room` keeps
+    // the historical shape (walls records + «apply to room»); the other two
+    // write partition.cm / draft.segments[i].cm. The switch in
+    // `_wallThickApply` applies the same `0..100` contract to every source.
+    source: WallThickSource;
+    sx: number; sy: number;
+  } | null = null;
+  /**
+   * Draw-toolbar thickness field (session). `null` until Plan is entered —
+   * then primed to DRAW_WALL_DEFAULT_CM. Empty string = no thickness on commit.
+   */
+  private _drawWallField: string | null = null;
+  /** Session-only identity and persisted partition IDs of the active wall chain. */
+  private _activeWallChainId: string | null = null;
+  private _activeWallChainPartitionIds: string[] = [];
+  private _wallChainRedo: Array<{ id: string; point: number[]; cm: number }> = [];
+  /** One-click/two-click physical-object selection in the Plan editor. */
+  private _physicalSel: {
+    kind: 'partition' | 'column'; id: string;
+  } | null = null;
+  private _physicalDialog: {
+    kind: 'partition' | 'column'; id: string; cm: string;
+    shape?: 'square' | 'circle'; angle?: string; length?: string;
+  } | null = null;
+  private _partitionDeleteDialog: { id: string; openings: OpeningCfg[] } | null = null;
+  private _roomDeleteDialog: { roomId: string; name: string } | null = null;
+  private _wallUnionCacheValue: {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  } | null = null;
+  /** A floor switch is presentation-only: retain the bounded structural union
+   * for recently shown floors instead of rebuilding it on every tab click. */
+  private _wallUnionPool = new Map<string, {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  }>();
+  /** Keep the historical cache property observable by performance/smoke
+   * contracts. Explicit test/product invalidation also clears the pool. */
+  private get _wallUnionCache(): {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  } | null {
+    return this._wallUnionCacheValue;
+  }
+  private set _wallUnionCache(value: {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  } | null) {
+    this._wallUnionCacheValue = value;
+    if (value === null) this._wallUnionPool.clear();
+  }
+  private _isoGeometryCache = new Map<string, IsoSceneCacheEntry>();
+  private _isoWallBaseCache: {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  } | null = null;
+  private _renderIsoScene: IsoRenderScene | null = null;
+  private _isoProjectionSnapshot: 'flat' | 'iso' | null = null;
+  /** Observable Stage 4 performance seam: increments only for a real
+   * structural LRU miss, never for HA/theme/hover/opening-state paint. */
+  private _isoStructuralBuildCount = 0;
+  /** #769: real builds of each floor-geometry cache, counted in the miss branch
+   * only — never on a hit, a recency refresh, a resize re-key or alias, or a
+   * clear. The #735 switch-cycle guard (demo/performance/switch-cycle-guard.mjs)
+   * and the floor-cache smoke judge them; nothing in the product reads them.
+   * #814: the sun wedges (Flat, 2.5D) count theirs for the floor-cache-reuse smoke. */
+  private _floorCacheBuilds = {
+    wallUnion: 0, innerContour: 0, cleanFloor: 0, openingWallIndex: 0, lightBarrier: 0,
+    glowClip: 0, physicalBodies: 0, openingTunnel: 0, roomFloorPaint: 0, lightPhysicalBodies: 0, sunRays: 0, isoSun: 0,
+  };
+  private _isoFallback = new Set<string>();
+  private _openingTunnelCache: {
+    key: string;
+    value: Array<OpeningTunnelGeometry | null>;
+  } | null = null;
+  /** #814: recently shown floors' tunnels and bodies stay warm (≤ 8, floor-geometry-key.ts). */
+  private _roomFloorPaintCache: { key: string; value: Map<string, RoomFloorPaint> } | null = null;
+  private _roomFloorPaintPool = new Map<string, NonNullable<HouseplanCard['_roomFloorPaintCache']>>();
+  private _openingTunnelPool = new Map<string, NonNullable<HouseplanCard['_openingTunnelCache']>>();
+  /** A few consumers use intentionally different open-cut projections in one
+   * frame. Keep a tiny keyed pool so hit-testing cannot evict placement data
+   * (and vice versa) on every pointer move. */
+  private _openingWallIndexCache = new Map<string, OpeningWallIndex>();
+  private _openingPlacementIntervalsCache: { key: string; value: WallInterval[] } | null = null;
+  private _openingDimensionContextCache: {
+    key: string;
+    value: OpeningDimensionContext;
+  } | null = null;
+  private _planSnapGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
+  private _planStructuralGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
+  private _hiddenWallDiagnosticCache: {
+    key: string; value: HiddenWallDiagnosticGeometry;
+  } | null = null;
+  private _physicalBodiesEntry: {
+    key: string; partitions: number[][][];
+    columns: number[][][]; patches: number[][][]; all: number[][][]; readonly rawPatches?: number[][][];
+  } | null = null;
+  private _physicalBodiesPool = new Map<string, NonNullable<HouseplanCard['_physicalBodiesEntry']>>();
+  /** The editor's current bodies (re-keyed by Resize); clearing it clears the pool. */
+  private get _physicalBodiesCache() { return this._physicalBodiesEntry; }
+  private set _physicalBodiesCache(value) {
+    this._physicalBodiesEntry = value;
+    if (!value) this._physicalBodiesPool.clear();
+  }
+  /** Light cuts are type/floor-specific and differ from drawn masonry, but HA
+   * state ticks must not rebuild independent-wall topology. */
+  private _lightPhysicalBodiesCache: { key: string; all: number[][][] } | null = null;
+  private _cleanFloorCache = new Map<string, CleanFloorResult>();
+  private _innerContourCache = new Map<string, number[][] | null>();
+  private readonly _cleanFloorKey = floorGeometryKeyReader(this as unknown as FloorKeySource, cleanFloorFingerprint);
+  private _floorPreparation: FloorCacheRuntime | null = null;
+  private _floorPrepareMemo: { raw: unknown; model: unknown; epoch: number; keys: ReturnType<typeof floorCacheKeys> } | null = null;
+  private _floorFitMemo: { signature: unknown[]; key: string } | null = null;
+  private _floorLightMemo: { signature: unknown[]; value: ReturnType<typeof resolveLightBarrierRevision> } | null = null;
+  private _floorPendingMode: { mode: 'plan' | 'devices' | 'decor'; animate: boolean; warm: boolean; resume?: () => void } | null = null;
+  private _floorPublishing = false;
+  private _floorPaintObserving = false;
+  private _floorRestoreZoom: boolean | null = null;
+  private _floorCompleteSpace = '';
+  private _floorCompleteAuthority?: object;
+  private _floorHolding = false;
+  private _floorPassive = false;
+  private _startupFloor?: StartupFloor;
+  private _startupStyle?: { value: ReturnType<StartupFloor['observe']>; finishing: boolean };
+  private _startupFadeTimer?: number;
+  private _startupAssetWait?: number | null; // null means the wait expired
+  private _startupSource?: (view: FrameRect) => TemplateResult[];
+  private _startupPresentation?: { inputs: unknown[]; selection: StartupSelection | null };
+  private _startupReadProbe?: ReturnType<typeof setTimeout>;
+  private _startupSourceProof?: { authority: object; revision: string; source: readonly [string, string] };
+  private _startupBackend?: object;
+  private _startupProofRefresh?: { authority: object; revision: string };
+  private _startupStreamRevision?: { authority: object; configRev: number };
+
+  private _startupRevision(): string | null {
+    const accepted = this._adoption.snapshot(null);
+    if (!accepted || accepted.rev !== this._cfgRev || accepted.layout_rev !== this._layoutRev
+      || this._adoption.currentConfigFingerprint() !== accepted.config_fingerprint
+      || this._adoption.currentLayoutFingerprint() !== accepted.layout_fingerprint) return null;
+    return cacheSha256([this._cfgRev, this._layoutRev, accepted.config_fingerprint, accepted.layout_fingerprint]);
+  }
+
+  private _rememberStartupSource(host: PlanHost, cfg: AuthoritativeConfigResponse,
+    layout: import('./config-adoption').LayoutResponse): void {
+    if (host.authorityKey !== this.planHost.authorityKey) return;
+    const configStamp = cfg.startup_floor_source, layoutStamp = layout.startup_floor_source;
+    if (!isStartupSourceStamp(configStamp) || !isStartupSourceStamp(layoutStamp)) return;
+    this._startupBackend = host.authorityKey;
+    const revision = this._startupRevision(), accepted = this._adoption.snapshot(null);
+    if (revision && accepted && accepted.rev === cfg.rev && accepted.layout_rev === layout.rev
+      && accepted.config_fingerprint === contentFingerprint(cfg.config)
+      && accepted.layout_fingerprint === contentFingerprint(layout.layout)) {
+      this._startupSourceProof = { authority: host.authorityKey, revision, source: [configStamp, layoutStamp] };
+    }
+  }
+
+  /** Automatic marker enrichment and real edits can accept a different pair
+   * from initial hydration. Renew optional proof only after a complete View. */
+  private _refreshStartupSource(selection: StartupSelection): void {
+    const host = this.planHost;
+    if (this._startupBackend !== selection.authority || !startupWireAvailable()
+      || (this._startupStreamRevision?.authority === selection.authority && this._startupStreamRevision.configRev === this._cfgRev)
+      || this._startupSourceProof?.revision === selection.revision
+      || this._startupProofRefresh?.authority === selection.authority && this._startupProofRefresh.revision === selection.revision)
+      return;
+    const owner = this._startupProofRefresh = { authority: selection.authority, revision: selection.revision };
+    setTimeout(() => {
+      const current = () => this._startupProofRefresh === owner && this.planHost.authorityKey === selection.authority
+        && this._startupRevision() === selection.revision && this._floorSourceAccepted() && this.isConnected;
+      if (!current()) { if (this._startupProofRefresh === owner) this._startupProofRefresh = undefined; return; }
+      void Promise.all([
+        readAuthoritativeCardConfig(host),
+        host.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' }),
+      ]).then(([cfg, layout]) => {
+        if (current()) { this._rememberStartupSource(host, cfg, layout); this.requestUpdate(); }
+      }, () => { /* Optional proof transport never gates the live plan. */ });
+    }, 250);
+  }
+
+  /** Only the same static layers and fit inputs can share portable paint.
+   * Use exactly the numeric text/pulse observations consumed by 2.5D fit.
+   * The stamp is opaque to the transport; no states or device roster travel. */
+  private _startupRemoteVariant(floor: string, projection: 'flat' | 'iso', rotation: number): string | null {
+    const raw = this._curSpaceCfg, disp = this._spaceDisplayForRender(), space = this._spaceModelById(floor);
+    if (!raw || !space || this._desiredProjection !== projection || raw.bg
+      || this._decorList.some(item => item.kind === 'image') || this._startupCameraBusy()) return null;
+    // The contact solver adjusts geometry from its own scene. Until its
+    // accepted basis is available, be conservative instead of projecting an
+    // unproven adjusted pose. Radars/vacuum state are never part of this paint.
+    if (Object.values(this._layout).some(p => p.s === floor && p.contact_basis)) return null;
+    const devices = this._displayDevices.filter(d => d.space === floor && !d.hidden);
+    const renderDevices = this._renderDevices.filter(d => d.space === floor && !d.hidden);
+    if (devices.length !== renderDevices.length || devices.some((d, i) => d.id !== renderDevices[i].id)) return null;
+    const lqi = effectiveShowLqi(this._settings, disp.showLqi, this._config?.show_signal);
+    const cfgSize = this._config?.icon_size ?? 2.5, iconPct = cfgSize > 8 ? 2.5 : cfgSize;
+    const roster = devices.map(d => {
+      const raw = this._livePos(d), actual = this._pos(d);
+      if (raw.x !== actual.x || raw.y !== actual.y) return null;
+      const presentation = this._devicePresentation(d, lqi);
+      const diameter = this._deviceContacts?.diameter(d.id, raw);
+      const nominal = nominalDeviceCore(effectiveDeviceBaseSize(iconPct), iconUnit(space),
+        presentation.scale, this._effectiveKioskScale.icon);
+      if (diameter !== undefined && diameter !== nominal) return null;
+      return [d.id, actual.x, actual.y, d.area, d.marker?.room_id, presentation.scale,
+        nominal, isoDeviceFitInputs(presentation)];
+    });
+    if (roster.some(item => item === null)) return null;
+    const locks = projection === 'iso' && disp.showBorders && Array.isArray(raw.openings)
+      ? raw.openings.map((opening: {lock?: string}) => !opening.lock
+        || (this._renderOpeningEntityAvailable(opening.lock) === this._openingEntityAvailable(opening.lock)
+          ? this._renderOpeningEntityAvailable(opening.lock) : null)) : [];
+    if (locks.includes(null)) return null;
+    return cacheSha256([1, ENTRY_BUILD_FINGERPRINT, projection, rotation, this._config, disp,
+      this._showFar, this._showHidden, this._effectiveKioskScale, this._presentation.themes,
+      this._presentation.language, roster, locks]);
+  }
+
+  private _startupSelection(): StartupSelection | null {
+    const env = this.planHost.environment, scope = this.planHost.cacheScope, stage = this._stageEl;
+    const size = stage?.clientWidth && stage.clientHeight
+      ? [stage.clientWidth, stage.clientHeight] as const : this._lastValidStageSize;
+    if (!this._loadOk || !scope || !env.connected || !env.permissions.read
+      || !this.isConnected || this._mode !== 'view' || this._modeTransitionBusy || this._rotationMotion.running
+      || this._settingsDialog || this._spaceDialog || this._recoveryViewport) return null;
+    const floor = this._space, projection = this._desiredProjection, rotation = this._rotationForProjection(projection);
+    if (!floor) return null;
+    const envStyle = this._presentation.themes;
+    const savedZoom = Number(this._zoomBySpace[floor]);
+    const zoomHint = this._hasScreenProfile ? null : Number.isFinite(savedZoom) && savedZoom > 0 ? savedZoom
+      : this._usesScreenCamera ? null : 1;
+    const configFingerprint = this._adoption.currentConfigFingerprint();
+    const accepted = this._adoption.snapshot(null);
+    const looks = [projection, rotation, this.panelHost, this.panelSidebarOpen, this.narrow, this.layout, this._kiosk,
+      this.panelHost ? null : cardRotationPlacementSlot(this), this._config, this._externalScreen, this._showFar,
+      envStyle, this._presentation.language, window.innerWidth, window.innerHeight, window.devicePixelRatio,
+      this._effectiveKioskScale.icon, this._effectiveKioskScale.font];
+    const proof = this._startupSourceProof;
+    const portable = proof && proof.authority === this.planHost.authorityKey && startupWireAvailable()
+      && this._startupFloor?.wantsPortable(scope, floor, projection, rotation, proof.source) !== false;
+    const dynamic = portable ? [proof, this._displayDevices, this._renderDeviceSnapshot, env.states,
+      this._renderPlanHass.states, this._haRegistry, this._deviceContacts?.scene, this._showHidden, this._startupCameraBusy()] : [];
+    const inputs = [this.planHost.authorityKey, env.connectionRevision, scope, floor, this._cfgRev,
+      this._layoutRev, this._layout, this._cfgEpoch, configFingerprint, accepted?.config, accepted?.layout, size?.[0], size?.[1], zoomHint,
+      this._cfgWriting, this._writesPending, this._dirtyPos.size, this._saveConfigDebounced.pending(),
+      this._persistLayout.pending(), ...looks, ...dynamic];
+    if (this._startupPresentation && inputs.length === this._startupPresentation.inputs.length
+      && inputs.every((input, index) => input === this._startupPresentation!.inputs[index]))
+      return this._startupPresentation.selection;
+    // An unrelated acknowledgement can be pending during admin startup.
+    // Read the saved SVG if the actual bodies still equal the accepted pair;
+    // only publication needs the stronger no-writes-in-flight barrier.
+    if (!accepted || accepted.rev !== this._cfgRev || accepted.layout_rev !== this._layoutRev
+      || contentFingerprint(this._serverCfg) !== accepted.config_fingerprint
+      || contentFingerprint(this._layout) !== accepted.layout_fingerprint) {
+      this._startupPresentation = { inputs, selection: null }; return null;
+    }
+    const revision = cacheSha256([this._cfgRev, this._layoutRev, accepted.config_fingerprint, accepted.layout_fingerprint]);
+    // Placement and viewport are known before the painted stage settles.
+    // Read then; a byte hit remains private until its measured size also matches.
+    const variant = cacheSha256([ENTRY_BUILD_FINGERPRINT, ...looks]);
+    const selection: StartupSelection = { authority: this.planHost.authorityKey, connection: env.connectionRevision || 0,
+      scope, floor, variant, revision, zoomHint, size: size?.[0] && size[1] ? [size[0], size[1]] : null };
+    if (portable && proof.revision === revision) {
+      const seal = this._startupRemoteVariant(floor, projection, rotation);
+      if (seal) selection.remote = { source: proof.source, variant: seal, projection, rotation };
+    }
+    if (!selection.remote && this._centerSummary && (!this._screenReference || this._screenReferencePending))
+      return null;
+    this._startupPresentation = { inputs, selection };
+    return selection;
+  }
+
+  private get _startupPending(): boolean {
+    return this._loadOk && this._mode === 'view' && this._startupFloor?.awaitsLive === true;
+  }
+
+  private _observeStartupFloor(): void {
+    const env = this.planHost.environment;
+    if (!this._startupFloor && env.permissions.read && (this.planHost.cacheScope || this._loadOk)) {
+      this._startupFloor = new StartupFloor(() => this._startupSelection(), () => this.requestUpdate(), {
+        read: (selection, signal) => this._readStartupGeometry(selection, signal),
+        publish: async (selection, geometry, signal) => {
+          const host = this.planHost, packet = await encodeStartupGeometry(geometry, signal);
+          if (signal.aborted || host.authorityKey !== selection.authority) return false;
+          const result = await host.request<{ stored?: boolean }>({
+            type: 'houseplan/startup_floor/put', floor: selection.floor, ...selection.remote, packet,
+          });
+          return result?.stored === true;
+        },
+      });
+      // The warm View already has a published frame and camera.
+      if (!this._booting && this._continuity.hasCompleteFrame) this._startupFloor.skipImage();
+    }
+    const store = this._startupFloor;
+    if (!store) return;
+    // A scoped cached live frame can already be visible while HA confirms
+    // its sources. Confirmation must never put that visible scene behind loading.
+    if (store.awaitsLive && this._floorPreparation?.metrics.firstCachedFullFrame) store.skipImage();
+    if (this._loadOk && env.connected && env.permissions.read && this.planHost.cacheScope) store.prepare();
+    const selection = this._startupSelection();
+    let value = store.observe(selection);
+    const previous = this._startupStyle?.value;
+    if (this._bootFading) {
+      if (previous && (previous !== value || !this._startupAtPreviewCamera(previous))) this._finishStartupFade();
+      return;
+    }
+    if (value && selection) {
+      const camera = this._startupColdCamera(selection, value.fit.base, this._usesScreenCamera ? value.fit : undefined);
+      if (!camera || !sameCameraState(camera, { zoom: value.zoom, viewBox: value.view })) value = undefined;
+    }
+    if (previous !== value) this._startupStyle = value ? { value, finishing: false } : undefined;
+  }
+
+  private _startupAtPreviewCamera(preview: NonNullable<ReturnType<StartupFloor['observe']>>): boolean {
+    return !!this._view && sameCameraState(this._cameraState(), { zoom: preview.zoom, viewBox: preview.view });
+  }
+
+  private _finishStartupFade(): void {
+    if (!this._bootFading) return;
+    clearTimeout(this._startupFadeTimer);
+    this._startupFadeTimer = undefined;
+    this._startupFloor?.releasePreview();
+    this._startupStyle = undefined;
+    this.requestUpdate();
+  }
+
+  private _clearStartupAssetWait(): void {
+    if (this._startupAssetWait != null) clearTimeout(this._startupAssetWait);
+    this._startupAssetWait = undefined;
+  }
+
+  private _retireStartupFloor(): void {
+    this._clearStartupAssetWait();
+    this._startupFloor?.retire();
+    this._finishStartupFade();
+  }
+
+  private _primeStartupFloorRead(): void {
+    const owner = this._startupFloor;
+    if (!owner?.awaitsLive || this._startupReadProbe) return;
+    const end = performance.now() + 2_000;
+    const check = () => {
+      this._startupReadProbe = undefined;
+      if (owner !== this._startupFloor || !owner.awaitsLive || !this.isConnected
+        || !this.planHost.cacheScope || !this.planHost.environment.connected) return;
+      const selection = this._startupSelection();
+      if (selection) { owner.observe(selection); return; }
+      // A startup write can settle without a Lit update while the old boot
+      // veil is waiting for 2.5D. Probe eligibility only; do not render or
+      // call storage until the current pair actually matches its ACK.
+      if (performance.now() < end) this._startupReadProbe = setTimeout(check, 50);
+    };
+    check();
+  }
+
+  private _renderStartupFloor(waiting: boolean) {
+    return html`${this._startupStyle?.value?.element ?? nothing}
+      ${waiting || this._bootFading ? this._startupStatus() : nothing}`;
+  }
+
+  public houseplanStartupFloorDiagnostics() { return this._startupFloor ? { ...this._startupFloor.facts } : null; }
+
+  private _startupStatus() {
+    return html`<div class="editorloading hpf-loading-pill hpf-motion floor-preparation-status" role="status" aria-live="polite">
+      <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span></div>`;
+  }
+
+  private _startupColdCamera(selection: StartupSelection, base: number[],
+    portable?: StartupGeometry['fit']): CameraState | null {
+    const size = selection.size;
+    if (!size) return null;
+    if (this._usesScreenCamera) {
+      if (portable) {
+        const geometry = this._centerSummary ? this._summary?.screenGeometry(false) : { panel: null };
+        if (!geometry || this._screenFitRequest || this._screenRecoveredCamera) return null;
+        const plane = presentedViewPlane(portable, this._spaceDisplayForRender().showBorders, null);
+        const turn = plane ? isoViewTurn(plane) : portable.rotation;
+        const free = screenFreeArea(...size, this._centerSummary ? geometry.panel : null);
+        const reference = screenCameraTarget(base, portable.display, turn, size, free,
+          this._hasScreenProfile ? this._externalScreen.zoom ?? 1 : 1, plane?.floorScaleY ?? 1);
+        if (!reference || selection.zoomHint === null) return reference?.camera ?? null;
+        return screenCameraTarget(base, portable.display, turn, size, free,
+          selection.zoomHint / reference.camera.zoom, plane?.floorScaleY ?? 1)?.camera ?? null;
+      }
+      const reference = this._screenReference;
+      if (!reference || this._screenReferencePending) return null;
+      if (selection.zoomHint === null) return reference.camera;
+      const panel = this._summary?.screenGeometry(false)?.panel ?? null;
+      return screenCameraTarget(base, this._displayBase(base), this._sceneRotation, size,
+        screenFreeArea(...size, panel), selection.zoomHint / reference.camera.zoom, this._sceneDepthScale)?.camera ?? null;
+    }
+    const fit = fitView(base, size[0] / size[1]), zoom = this._boundedZoom(selection.zoomHint ?? 1);
+    return { zoom, viewBox: { x: fit.x + fit.w / 2 - fit.w / (2 * zoom),
+      y: fit.y + fit.h / 2 - fit.h / (2 * zoom), w: fit.w / zoom, h: fit.h / zoom } };
+  }
+
+  private async _readStartupGeometry(selection: StartupSelection, signal: AbortSignal) {
+    const address = selection.remote;
+    if (!address) return null;
+    const result = await this.planHost.request<{ packet?: string }>({
+      type: 'houseplan/startup_floor/get', floor: selection.floor, ...address,
+    });
+    signal.throwIfAborted();
+    const packet = await decodeStartupGeometry(result?.packet, address, signal);
+    if (!packet) return null;
+    const fit = packet.fit, until = performance.now() + 2_000;
+    let current = this._startupSelection(), size = current?.size;
+    let camera: CameraState | null = null;
+    // Fetch/decode overlaps header and summary measurement. It is still
+    // impossible to publish a frame without the measured current camera.
+    while (!signal.aborted && current?.remote?.variant === address.variant && performance.now() < until) {
+      size = current.size;
+      camera = size && this._startupColdCamera(current, fit.base, fit);
+      if (camera) break;
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      current = this._startupSelection();
+    }
+    if (!size || !camera || signal.aborted) return null;
+    const plane = presentedViewPlane(fit, this._spaceDisplayForRender().showBorders, null);
+    const presented = presentationViewport(camera.viewBox, fit.base, fit.display,
+      plane ? isoViewTurn(plane) : fit.rotation, camera.zoom, size, null, plane?.floorScaleY ?? 1);
+    return { image: startupGeometryImage(packet, size, presented), size,
+      view: camera.viewBox, zoom: camera.zoom, zoomHint: selection.zoomHint, fit };
+  }
+
+  private _startupCameraBusy(): boolean {
+    return this._roomFocus !== null || this._cameraTransition.active || this._modeTransitionBusy
+      || this._pointers.size > 0 || !!this._panStart || !!this._pinchStart || this._viewportGestureDirty;
+  }
+
+  private _updateStartupFloor(): void {
+    const store = this._startupFloor, stage = this._stageEl;
+    if (!store || !stage) return;
+    const value = this._startupStyle?.value, shown = value?.element.parentElement === stage;
+    if (shown) store.shown();
+    if (!this._loadOk || this._floorPassive || this._floorHolding || this._floorPreparation?.pending
+      || this._booting || this._bootFading || this._continuity.state !== 'steady'
+      || this._usesScreenCamera && (!this._screenReference || this._screenReferencePending)
+      || this._mode !== 'view' || this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) return;
+    const complete = this._continuity.hasCompleteFrame && this._continuityAssetsReady();
+    if (store.awaitsLive) {
+      if (!this._continuityStageValid()) return;
+      if (!complete && this._startupAssetWait !== null) {
+        this._startupAssetWait ??= window.setTimeout(() => {
+          this._startupAssetWait = null;
+          this.requestUpdate();
+        }, STARTUP_ASSET_WAIT_MS);
+        return;
+      }
+      this._clearStartupAssetWait();
+      // Retain a displayed, aligned image while the ready scene fades in.
+      // End optional reads as soon as the live view can accept input.
+      const fade = !this._reducedMotion && (!shown || this._startupAtPreviewCamera(value));
+      store.publishedLive(fade && shown);
+      this._startupStyle = fade ? { value: shown ? value : undefined, finishing: true } : undefined;
+      if (fade) this._startupFadeTimer = window.setTimeout(() => this._finishStartupFade(), STARTUP_FADE_FALLBACK_MS);
+      this.requestUpdate();
+    } else if (complete) store.publishedLive();
+    // An incomplete backdrop can appear later, but must not seed a static image.
+    if (!complete) return;
+    const selection = this._startupSelection(), source = this._startupSource;
+    const size = selection?.size;
+    if (this._bootFading || !selection || !size || !source || this._renderProjection !== this._desiredProjection) return;
+    this._refreshStartupSource(selection);
+    const proof = this._startupSourceProof;
+    if (!selection.remote && proof?.authority === selection.authority && proof.revision === selection.revision
+      && !this._startupCameraBusy()) {
+      const projection = this._desiredProjection;
+      store.finishPortable(selection.scope, selection.floor, projection, this._rotationForProjection(projection), proof.source);
+    }
+    if (!store.canCapture(selection) || this._startupCameraBusy()) return;
+    const base = [...this._baseVb()], cold = this._startupColdCamera(selection, base);
+    const camera = { zoom: this._zoom, viewBox: { ...this._cameraView(base) } };
+    // Pan, room focus and off-centre zoom are transient View intents, not
+    // alternate snapshots. Only the normal fresh-opening pose may be stored.
+    if (!cold || !sameCameraState(cold, camera)) return;
+    const { zoom, viewBox: view } = camera, frame = this._frameOf(), hadCamera = !!this._view;
+    const presented = this._presentationView(view, zoom, base);
+    const fit = { base, frame: { rect: { ...frame.rect }, all: { ...frame.all }, outliers: frame.outliers,
+      hasContent: frame.hasContent }, display: { ...this._displayBase(base) },
+      projection: this._renderProjection, rotation: this._rotation };
+    store.capture(selection, async (signal, portable) => {
+      let geometry: StartupGeometry | undefined;
+      const image = await this._captureStartupSvg(stage, () => source(presented), presented, signal,
+        portable ? nodes => { geometry = { version: 1, fit, nodes }; } : undefined);
+      return { image, size, view, zoom, zoomHint: selection.zoomHint, fit, geometry };
+    }, () => this._stageEl === stage && !!this._view === hadCamera && !this._startupCameraBusy()
+      && sameCameraState(camera, { zoom: this._zoom, viewBox: this._view ?? view })
+      && this._continuity.state === 'steady' && this._floorSourceAccepted());
+  }
+
+  /** Separate optional idle capture from the live frame's failure boundary. */
+  private _startupIsoFrame(display: SpaceDisplay, scene: IsoRenderScene | null,
+    furniture?: () => IsoFurniturePaint[]): IsoFramePresentation | null {
+    return this._isoSceneRuntime?.resolveIsoFramePresentation({
+      projection: 'iso', display, scene, openings: this._openingsR.filter(o => !o.orphanReason),
+      cellCm: this._cellCm, amountOf: opening => resolvedOpeningAmount(opening, () => null),
+      visualOf: opening => resolveOpeningVisual(opening, () => null, resolvedOpeningAmount(opening, () => null)),
+      overlays: () => null, furniture: furniture?.(), wallLights: [],
+    }) ?? null;
+  }
+
+  private async _captureStartupSvg(stage: HTMLElement, source: () => TemplateResult[], view: FrameRect, signal: AbortSignal,
+    portable?: (nodes: StartupVector[]) => void): Promise<Blob | null> {
+    const container = this.ownerDocument.createElement('div'), shell = this.ownerDocument.createElement('div');
+    // Resolve the same styles on a connected tree without publishing a second
+    // .stage to card observers, native selectors, or the accessibility tree.
+    const isolated = container.attachShadow({ mode: 'closed' });
+    if (this.renderRoot instanceof ShadowRoot && 'adoptedStyleSheets' in isolated)
+      isolated.adoptedStyleSheets = this.renderRoot.adoptedStyleSheets;
+    for (const child of this.renderRoot.children)
+      if (child.localName === 'style') isolated.appendChild(child.cloneNode(true));
+    for (const attr of ['panel-host', 'layout'])
+      if (this.hasAttribute(attr)) container.setAttribute(attr, this.getAttribute(attr)!);
+    const wrap = this.ownerDocument.createElement('div'); wrap.className = 'zoomwrap';
+    const scene = this.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    shell.className = stage.className;
+    shell.classList.remove('hpboot', 'hpsettle', 'hpiso-pending', 'mode-transition');
+    shell.style.cssText = stage.style.cssText;
+    const rect = stage.getBoundingClientRect();
+    Object.assign(shell.style, { width: rect.width + 'px', height: rect.height + 'px' });
+    Object.assign(container.style, { position: 'absolute', left: '-100000px', top: '0', width: '0', height: '0',
+      overflow: 'hidden', visibility: 'hidden', pointerEvents: 'none' });
+    container.setAttribute('inert', ''); container.setAttribute('aria-hidden','true');
+    const original = stage.querySelector<SVGSVGElement>('svg.plan-svg');
+    if (!original) throw Error('unsupported-vector');
+    scene.classList.add('plan-svg');
+    scene.setAttribute('width', String(rect.width)); scene.setAttribute('height', String(rect.height));
+    scene.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+    scene.setAttribute('preserveAspectRatio', original.getAttribute('preserveAspectRatio') || 'xMidYMid meet');
+    if (stage.hasAttribute('data-hp-iso-floor-markers')) shell.setAttribute('data-hp-iso-floor-markers','true');
+    wrap.append(scene); shell.append(wrap); isolated.append(shell); this.renderRoot.appendChild(container);
+    try {
+      for (const fragment of source()) {
+        signal.throwIfAborted();
+        const layer = this.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'g');
+        scene.append(layer);
+        renderDetached(fragment, layer as unknown as HTMLElement);
+        await new Promise<void>(resolve => setTimeout(resolve, 0));
+      }
+      return await serializeStartupFloor(scene, async (url, abort) => {
+        const target = new URL(url, this.ownerDocument.baseURI);
+        const owned = target.origin === location.origin && target.pathname.startsWith('/api/houseplan/content/');
+        if (!owned && target.protocol !== 'blob:' && target.protocol !== 'data:') return null;
+        const resource = await fetch(target, owned ? { signal: abort, mode: 'same-origin', cache: 'only-if-cached' } : { signal: abort });
+        return resource.ok ? resource.blob() : null;
+      }, signal, portable);
+    } finally { container.remove(); }
+  }
+  private _floorPreparedRooms: { frame: FloorGeometryFrame; clean: Map<string, CleanFloorResult> } | null = null;
+  private _floorPreviewDiagnostic: { shapes: number; invalid: string[] } | null = null;
+  public houseplanFloorCacheDiagnostics() { return { cache: this._floorPreparation?.diagnostic, main: geometryWorkSnapshot(), preview: this._floorPreviewDiagnostic }; }
+  public floorPreparationSupportFacts() { return this._floorPreparation?.supportFacts; }
+  private _floorCacheSelection() {
+    const env = this.planHost.environment;
+    if (!this.isConnected || !env.ready || !env.connected || !env.permissions.read || this._mode !== 'view'
+      || !this._serverCfg || this._fixedFloorState().kind === 'pending'
+      || this._fixedFloorState().kind === 'invalid') return null;
+    const raw = this._curSpaceCfg, space = this._spaceModel();
+    const model = this._renderCfg?.spaces.find(record => record.id === space?.id);
+    if (!raw || !space || !model) return null;
+    let memo = this._floorPrepareMemo;
+    if (!memo || memo.raw !== raw || memo.model !== model || memo.epoch !== this._cfgEpoch)
+      memo = this._floorPrepareMemo = { raw, model, epoch: this._cfgEpoch,
+        keys: floorCacheKeys(model, raw, this._cellCm, this._gridPitch) };
+    const projection = this._desiredProjection;
+    const rotation = this._rotationForProjection(projection);
+    const summaryFit = this._summary?.cacheFitInputs() ?? null;
+    const signature = [raw, this._layout, this._devices, this.planHost.capabilities, this._config, this._settings,
+      rotation, this._showFar, this._effectiveKioskScale.icon, this._effectiveKioskScale.font, this._decorAssets.size,
+      this._presentation.themes, this._presentation.language, summaryFit, this.ownerDocument.fonts?.status,
+      window.innerWidth, window.innerHeight, window.devicePixelRatio];
+    let fit = this._floorFitMemo;
+    if (!fit || signature.some((value, index) => value !== fit!.signature[index])) {
+      fit = this._floorFitMemo = { signature, key: cacheSha256([memo.keys.geometry,
+        // Fit depends on positions and metric profiles, never saved HA values.
+        this._layout, this._displayDevices.filter(d => d.space === space.id).map(d => [d.id, d.hidden, this._pos(d), d.name]),
+        raw, this._markers, this._config, this._settings, rotation, this._showFar,
+        this._effectiveKioskScale, [...this._decorAssets.keys()].sort(), this._externalScreen,
+        this._presentation.themes, this._presentation.language, summaryFit, this.ownerDocument.fonts?.status,
+        window.innerWidth, window.innerHeight, window.devicePixelRatio,
+        ...(projection === 'iso' && directIsoRotation(rotation) ? ['direct-perspective'] : [])]) };
+    }
+    const lightSignature = [raw, space, this._cfgEpoch, this._renderPlanHass.states, this._renderDeviceSnapshot,
+      projection, this._spaceDisplayForRender().showBorders];
+    let lightMemo = this._floorLightMemo;
+    if (!lightMemo || lightSignature.some((value, index) => value !== lightMemo!.signature[index])) {
+      lightMemo = this._floorLightMemo = { signature: lightSignature, value: resolveLightBarrierRevision({ rawSpaceConfig: raw, space, openings: this._openingsR,
+      cellCm: this._cellCm, gridPitch: this._gridPitch,
+      closedDoorPlacement: projection === 'iso' && this._spaceDisplayForRender().showBorders ? 'iso-volume' : 'flat',
+      openingAmount: opening => this._openingAmtForProjection(opening, projection),
+      openingIntervals: opening => openingTransmissionIntervals(opening,
+        eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null),
+      geometryFingerprint: this._liveRt?.geometry(raw),
+      }) };
+    }
+    return { authority: this.planHost.authorityKey, connection: env.connectionRevision || 0,
+      scope: this.planHost.cacheScope,
+      input: { raw: model, floorKey: this._floorKey(space.id), cleanKey: this._cleanFloorKey(space.id), projection },
+      persistentKey: `${memo.keys.geometry}|${projection}${projection === 'iso' ? '|' + memo.keys.iso : ''}`, fitKey: fit.key, light: lightMemo.value };
+  }
+  private _ensureFloorPreparation(): boolean {
+    if (!this._floorPreparation) this._floorPreparation = new FloorCacheRuntime({
+      selection: () => this._floorCacheSelection(),
+      hydrate: (frame, light) => this._hydrateFloorGeometry(frame, light),
+      contains: (frame, light) => this._floorGeometryPresent(frame)
+        && (!light || this._lightBarrierCache?.value === light),
+      preview: (fitKey, scope, key) => {
+        const warm = this._warmSlot?.floorPreview;
+        return warm && scope && warm.scope === scope && warm.floor === this._space
+          && warm.key === key && warm.preview.fitKey === fitKey ? warm.preview : null;
+      },
+      changed: (kind) => {
+        this._isoProjectionSnapshot = null;
+        // A ready floor's live light tables are not a new spatial frame. Keep
+        // the camera and input surface intact while repainting current HA UI.
+        if (kind === 'light' || this._floorPreparation?.failed) {
+          this.requestUpdate(); return;
+        }
+        if (!this._floorPreparation?.pending && this._warmViewportPending === 'projection') {
+          this._floorRestoreZoom = null; // updated() owns the complete projection, not a passive/provisional base
+        } else if (!this._floorPreparation?.pending && this._recoveryViewport) {
+          this._floorRestoreZoom = null; // the measured stage will consume its exact camera
+        } else if (!this._floorPreparation?.pending && this._floorRestoreZoom !== null) {
+          const carousel = this._floorRestoreZoom; this._floorRestoreZoom = null; this._restoreZoom(carousel);
+        } else if (!this._floorPreparation?.pending && !this._startupStyle?.value) this._refitView();
+        this.requestUpdate();
+      },
+    });
+    return this._floorPreparation.ensure();
+  }
+  private _retryFloorPreparation = (): void => {
+    if (this._floorPreparation?.retry()) this.requestUpdate();
+  };
+  private _floorGeometryPresent(frame: FloorGeometryFrame): boolean {
+    return this._floorPreparedRooms?.frame === frame
+      && this._physicalBodiesPool.get(frame.bodies.key) === frame.bodies
+      && this._wallUnionPool.get(frame.union.key) === frame.union
+      && this._openingWallIndexCache.get(frame.openingIndex.key) === frame.openingIndex.value
+      && this._openingTunnelPool.get(frame.tunnels.key) === frame.tunnels
+      && this._roomFloorPaintPool.get(frame.floorPaint.key) === frame.floorPaint
+      && (!frame.iso || !this._isoSceneRuntime || this._isoGeometryCache.has(frame.iso.key));
+  }
+  private _hydrateFloorGeometry(frame: FloorGeometryFrame, light: unknown): void {
+    const raw = this._curSpaceCfg, space = this._spaceModel();
+    if (!raw || !space || space.id !== frame.id) return;
+    // A light-only refresh must preserve the objects already used by scene
+    // consumers (including lazy clean-floor and isometric projection maps).
+    if (!this._floorGeometryPresent(frame)) {
+      restoreFloorGeometrySemantics(frame, raw);
+      lruWrite(this._physicalBodiesPool, frame.bodies.key, frame.bodies, 8); this._physicalBodiesCache = frame.bodies;
+      writeWallUnionPool(this._wallUnionPool, frame.union); this._wallUnionCache = frame.union;
+      for (const [key, value] of frame.inner) lruWrite(this._innerContourCache, key, value, 600);
+      const clean = new Map(frame.clean.map(([key, value]) => [key, cleanFloorFromData(value, space.stairs)]));
+      this._floorPreparedRooms = { frame, clean };
+      for (const [key, value] of clean) lruWrite(this._cleanFloorCache, key, value, 600);
+      lruWrite(this._openingWallIndexCache, frame.openingIndex.key, frame.openingIndex.value, 4);
+      lruWrite(this._openingTunnelPool, frame.tunnels.key, frame.tunnels, 8); this._openingTunnelCache = frame.tunnels;
+      lruWrite(this._roomFloorPaintPool, frame.floorPaint.key, frame.floorPaint, 8); this._roomFloorPaintCache = frame.floorPaint;
+      if (frame.iso && this._isoSceneRuntime && !this._isoGeometryCache.has(frame.iso.key)) {
+        const entry = this._isoSceneRuntime.restoreIsoCache(frame.iso.value);
+        lruWrite(this._isoGeometryCache, frame.iso.key, entry, 8);
+      }
+    }
+    if (light && typeof light === 'object' && 'fingerprint' in light) {
+      const entry = { key: `${space.id}|${light.fingerprint}`, value: light as NonNullable<typeof this._lightBarrierCache>['value'] };
+      lruWrite(this._lightBarrierPool, entry.key, entry, 8); this._lightBarrierCache = entry;
+    }
+  }
+  public _prepareSummaryFloorArea(raw: ServerConfig['spaces'][number], accepted: () => boolean) {
+    const key = floorCacheKeys(raw, raw, raw.cell_cm || 5, GRID_PITCH).clean;
+    return this._floorPreparation?.area(raw, key, accepted) ?? Promise.resolve(undefined);
+  }
+  public _publishSummaryFloorAreas(values: Array<{ raw: ServerConfig['spaces'][number]; value: number | null }>, epoch: number): void {
+    const owner = this.planHost.authorityKey, runtime = this._floorPreparation;
+    if (!runtime) return;
+    this.requestUpdate();
+    void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+      .then(() => {
+        const accepted = () => this.isConnected && this.planHost.authorityKey === owner
+          && this._cfgEpoch === epoch && this._floorSourceAccepted() && runtime === this._floorPreparation;
+        if (!accepted()) return;
+        for (const { raw, value } of values) if (this._serverCfg?.spaces.includes(raw)) {
+          const key = floorCacheKeys(raw, raw, raw.cell_cm || 5, GRID_PITCH).clean;
+          runtime.persistArea(raw, key, value, accepted);
+        }
+      });
+  }
+  private readonly _floorKey = floorGeometryKeyReader(this as unknown as FloorKeySource); // #744: key of the four caches above
+  private readonly _glowRuntimeState: GlowRuntimeState = createGlowRuntimeState();
+  private readonly _lightBarrierPass = new LightBarrierPass();
+  private readonly _glowRuntimeHost: GlowRuntimeHost = {
+    window: () => this.ownerDocument.defaultView || window,
+    isConnected: () => this.isConnected,
+    requestUpdate: () => this.requestUpdate(),
+    reducedMotion: () => this._reducedMotion,
+  };
+  /** Compatibility aliases keep the performance/smoke diagnostic contract. */
+  private get _glowClipCache() { return this._glowRuntimeState.clipCache; }
+  private get _glowGeometryWarnings() { return this._glowRuntimeState.geometryWarnings; }
+  private _lightBarrierCache: {
+    key: string;
+    value: {
+      occluders: LightSegment[]; floor: number[][][]; fingerprint: string;
+      masonryGeometry: any; opaqueBodies: number[][][];
+    };
+  } | null = null;
+  /** Space switching is presentation-only. Keep recently resolved light
+   * topology just like wall topology, rather than rebuilding both per tab. */
+  private _lightBarrierPool = new Map<string, NonNullable<typeof this._lightBarrierCache>>();
+  /** Active pools survive an off transition until their 500 ms fade completes. */
+  private get _glowRenderedSources() { return this._glowRuntimeState.renderedSources; }
+  private get _glowLastAppearance() { return this._glowRuntimeState.lastAppearance; }
+  private get _glowFeatherSuspendUntil() { return this._glowRuntimeState.featherSuspendUntil; }
+  private set _glowFeatherSuspendUntil(value: number) { this._glowRuntimeState.featherSuspendUntil = value; }
+  /** Pending/false uses the exact historical normal-layer fallback. */
+  private _glowScreenBlend = false;
+  private _duplicateColumnId: string | null = null;
+  private _duplicateColumnTimer = 0;
+  // Room Resize orchestration is isolated from this Lit/config composition shell (#264).
+  private declare _resize: import('./resize-controller').ResizeController<
+    ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
+  >;
+  /** #329 AC7a: the limit the LAST projection broke, or null if it broke none. */
+  private _rszLimitViolation: JunctionLimitViolation | null = null;
+  private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
+  private _cursorPt: number[] | null = null;
+  private _planSnapHover: {
+    contextKey: string; candidate: PlanSnapCandidate | null; conflicts: PlanSnapEndpoint[];
+  } | null = null;
+  private _mergeSel: string | null = null;
+  /** Session-only explicit type/width chosen in the Opening sub-panel. */
+  private _openingPreset: OpeningPlacementPreset | null = null;
+  /** Existing orphan whose next valid placement replaces only its host. */
+  private _openingRebindId: string | null = null;
+  private _openingPresetRevision = 0;
+  /** Last painted hover candidate. Click may reuse it only for the same input epoch. */
+  private _openingHoverCandidate: OpeningPlacementCandidate | null = null;
+  /** Last pointer target rejected only because its independent-wall jamb was too small. */
+  private _openingJambBlockCm: number | null = null;
+  private _openingDialog: OpeningDialogDraft | null = null;
+  private _openingInfo: OpeningCfg | null = null;
+  private _openingInfoSpace: string | null = null;
+  private _opDrag: import('./interaction-types').OpeningDragState | null = null;
+  // live ruler badges + the "centered on the wall" tick while an opening is dragged
+  private _opMeasure: OpMeasure | null = null;
+  private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
+  private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
+  // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
+  private _pendingSplit: { roomId: string; mainPoly: number[][]; newPoly: number[][] } | null = null;
+  /** Pending #173 face decisions. Config remains untouched until the last one. */
+  private _wallFaceBatch: WallFaceBatch | null = null;
+  private _wallRepairDiagnostic: WallFaceRepairProposal | null = null;
+  /** Four exact structural entries; never keyed by HA state, hover or theme. */
+  private _wallFaceGraphCache: Array<{ key: string; value: WallFaceGraph }> = [];
+  private _areaSel = '';
+  private _nameSel = '';
+  private _roomDialog = false;
+  private _roomEditId: string | null = null; // gear on a room card (edit mode)
+  private _roomFill: '' | 'none' | 'lqi' | 'light' | 'temp' | 'custom' = ''; // '' = inherit
+  /** null = inherit the space custom color; value = explicit room override. */
+  private _roomCustomFill: FillColorEntry | null = null;
+  private _roomNameColor: FillColorEntry | null = null;
+  private _roomTempMin = ''; private _roomTempMax = ''; private _roomTempSrc = ''; // blank inherits; zero is explicit
+  private _roomHumSrc = '';
+  private _roomCo2Src = '';
+  private _roomSunTransparent = false;
+  private _roomSrcOpen: 'temp' | 'hum' | 'co2' | null = null;
+  private _roomSrcFilter = '';
+  private _roomNameScale = 1;
+  private _roomLabelScale = 1;
+  // plan zoom/pan (zoom is saved per space, locally)
+  private _zoom = 1;
+  private _view: { x: number; y: number; w: number; h: number } | null = null; // current SVG viewBox (vb coordinates)
+  private _zoomBySpace: Record<string, number> = {};
+  /** Session-only View intent. It is deliberately absent from warm/LS/config state. */
+  private _roomFocus: { spaceId: string; roomId: string } | null = null;
+  /** Pointer owner captured from the actually painted event path. */
+  private _roomPointer: RoomFitGestureCandidate | null = null;
+  private readonly _planTaps = new PlanTapGestureController({
+    current: () => ({ spaceId: this._space, enabled: this._doubleFitEnabled }),
+    fitAll: () => this._fitAll('double-tap'),
+    fitRoom: (roomId) => this._fitRoom(roomId),
+  });
+  private readonly _deviceHits = new DeviceHitController(); private _deviceHitScrollUnsub?: () => void;
+  private _pointers = new Map<number, { x: number; y: number }>();
+  private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
+  /**
+   * What the current one-finger drag turned out to be, decided ONCE on the
+   * first real movement and held until the finger lifts (see
+   * `_stagePointerMove`). Only the kiosk has two candidates — an inward,
+   * sufficiently horizontal drag that starts inside the active 48 px edge
+   * strip is a floor swipe; every other drag pans.
+   */
+  private _panLock: 'pan' | 'swipe' | null = null;
+  private _pinchStart: { dist: number; zoom: number } | null = null;
+  private _safeDayCycleOutline = false;
+  private _suppressClick = false;
+  private _viewportGestureDirty = false; private _pinchZoomDirty = false;
+  private _activateSafeDayCycleOutline(): void {
+    if (this._renderProjection === 'iso' || this._safeDayCycleOutline) return;
+    this._safeDayCycleOutline = true;
+    this._stageEl?.classList.add('hp-safe-daycycle-outline');
+  }
+  /**
+   * Pointer events from an interactive child may stop before the stage sees
+   * them. Track touch contacts on the card in capture phase, so the second
+   * finger always turns the whole sequence into navigation and can never leave
+   * a synthetic tap on a device, room link, opening badge or editor control.
+   */
+  private _touchContacts = new Map<number, { x: number; y: number; inStage: boolean }>();
+  private readonly _touchClickGuard = new TouchGestureClickGuard(); private _roomGearTouchNavigation = false;
+  private get _touchSequenceMultitouch(): boolean {
+    return this._touchClickGuard.sequenceMultitouch;
+  }
+  /** Route occupied by this live card. Persistent navigation remembers only
+   *  the space; leaving this HA route ends the transient editor session. */
+  private _connectedPath = '';
+  private _routeDepartureHandled = false;
+  private readonly _onLocationChanged = (): void => {
+    if (this._connectedPath && !this._ownsCurrentRoute()) {
+      this._leaveCardRoute();
+    } else if (this._ownsCurrentRoute()) {
+      // Some HA routers keep the old view connected but hidden. Returning to
+      // it re-arms the guard so a later departure ends the next edit session.
+      const returning = this._routeDepartureHandled;
+      this._routeDepartureHandled = false;
+      if (returning) {
+        this._viewRuntimes.connect();
+        if (this.ownerDocument.visibilityState !== 'hidden') this._pageVisibility({kind:'visible',token:0,at:Date.now(),hiddenFor:0,long:false});
+        this.requestUpdate();
+      }
+    }
+  };
+  private _ownsCurrentRoute(): boolean {
+    return presentationRouteOwner(location.pathname, this.panelHost)
+      === presentationRouteOwner(this._connectedPath, this.panelHost);
+  }
+  private readonly _touchGestureGuard = {
+    capture: true,
+    handleEvent: (ev: Event): void => this._guardTouchGesture(ev),
+  };
+  private _roViewport?: ResizeObserver;
+  private _roHdr?: ResizeObserver;
+  private _resizeTargets?: { stage: HTMLElement | null; header: HTMLElement | null };
+  private _compactSpaces = false;
+  private _spaceSelectLoad: Promise<unknown> | null = null;
+  private _onWinResize?: () => void;
+  private _measureHeaderNow?: () => void;
+  private _hdrH = 118; // measured px above the stage (see the observer in updated())
+  /** HP-1552: first-open boot veil. In normal (non-kiosk) mode the stage is
+   *  calc(100dvh - _hdrH), and _hdrH is measured from HA's chrome — which
+   *  finishes loading AFTER the card's first paint, so every late panel
+   *  nudged the height and the plan visibly jumped. The plan hides behind a
+   *  pulsing-house veil for a full protective window (AUD-1552-02: the old
+   *  early reveal on "two equal reads" let a panel landing at 400-600 ms
+   *  jump on a VISIBLE plan); the whole lifecycle restarts from
+   *  connectedCallback (AUD-1552-01: timers die on disconnect — a Lovelace
+   *  DOM rebuild mid-boot used to leave the plan hidden forever).
+   *  First open only; kiosk is 100dvh and never jumps. */
+  private _booting = true;
+  private get _bootFading(): boolean { return this._startupStyle?.finishing === true; }
+  private _bootSettling = false;
+  private _bootSettleRaf = 0;
+  private _bootTimer?: number;
+  private _bootLastH = -1;
+  private _bootStart = 0;
+  private _bootLastChange = 0; // when the stage height last moved (quiescence clock)
+  private _bootSoft = false; // post-reveal grace: late chrome shifts glide, not jump
+  private _bootSoftTimer?: number;
+  /** The accidental-tap guard: pending confirmation for a toggle/run tap. */
+  private _tapConfirm: {
+    kind: 'toggle'; text: string; lines: string[];
+    initialIntent: ResolvedToggleIntent; deviceId: string; exec: () => void;
+  } | { kind: 'run'; text: string; exec: () => void } | null = null;
+  /** One eager confirmation owner shared by View, onboarding and lazy editors. */
+  private _dangerConfirm: HpConfirmState | null = null;
+  private _dangerConfirmAnimateExit = true;
+  /** Synchronize host/runtime language state and return the current branch. */
+  private _syncDangerConfirmLocaleGate(): LanguageRenderGate {
+    if (!this._config || !this.planHost.environment.ready) return 'ready';
+    return languageRenderGate( // #627: + dictionaries of the surfaces loaded on THIS host
+      this, this._editorRuntime?.languageRuntime ?? this._onboardingRuntime?.languageRuntime ?? LANGUAGE_RUNTIME,
+      langOf(this._presentation, this._config.language),
+    );
+  }
+  private readonly _dangerConfirmController = new HpConfirmController((state) => {
+    this._dangerConfirm = state;
+  });
+  /**
+   * The only post-initialisation branch whose body is literally `nothing`.
+   * Onboarding and fixed-floor errors paint a card and can host hp-confirm;
+   * a lost active space cannot.
+   */
+  private _dangerConfirmMissingSpace(): boolean {
+    const model = this._model;
+    if (!model.length) return false;
+    const fixed = this._fixedFloorState(model);
+    if (fixed.kind === 'pending' || fixed.kind === 'invalid') return false;
+    return !this._spaceModel();
+  }
+  private _confirmDanger = (request: HpConfirmRequest): Promise<boolean> => {
+    // #402/#417: a card that draws nothing cannot ask. Refusing outright is
+    // the honest answer — the alternative is a promise nobody will ever
+    // resolve. Keep the guards aligned with `_renderBody`'s two unrenderable
+    // branches instead of registering a controller request with no DOM owner.
+    if (!this._config || !this.planHost.environment.ready) return Promise.resolve(false);
+    if (this._syncDangerConfirmLocaleGate() === 'warm') return Promise.resolve(false);
+    if (this._dangerConfirmMissingSpace()) return Promise.resolve(false);
+    this._dangerConfirmAnimateExit = true;
+    return this._dangerConfirmController.confirm(request);
+  };
+  private _cancelDangerConfirm = (): void => {
+    // Losing context/permission is not an accepted user dismissal. Retire
+    // both authority and presentation immediately, including a prior exit.
+    this._dangerConfirmAnimateExit = false;
+    this._dangerConfirmController.cancel();
+  };
+  private _onDangerConfirmDecision = (event: CustomEvent<HpConfirmDecision>): void => {
+    if (event.detail.token !== this._dangerConfirm?.token) return;
+    // Release modal authority before the accepted decision resumes its owner
+    // (which may focus a validation warning or open the next dialog).
+    void (event.currentTarget as HTMLElement).querySelector<HpDialog>('hp-dialog')?.beginExit();
+    this._dangerConfirmController.resolve(event.detail.token, event.detail.accepted);
+  };
+  private _onboardingShown = false; // the auto space dialog is shown once per session
+
+  private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
+  /** #295: integration version from houseplan/config/get; null on old backends. */
+  private _haIntegrationVersion: string | null = null;
+  /** #836: backend fingerprint and dev label from houseplan/config/get. */
+  private _haBackendBuild: BackendBuildIdentity | null = null;
+  /** #462: eager full-card recovery; the static space card never owns one. */
+  private readonly _versionRecovery = createCardVersionRecovery(this as unknown as VersionRecoveryCardPort);
+  private _syncVersionRecovery(): void {
+    this._versionRecovery.update({
+      frontendVersion: displayVersion(CARD_VERSION),
+      backendVersion: this._haIntegrationVersion,
+      frontendBuild: runningBuild(),
+      backendBuild: this._haBackendBuild,
+      kiosk: this._kiosk === true,
+      reducedMotion: this._reducedMotion,
+    });
+  }
+  /** #423: support protocol capability from config/get; never persisted. */
+  private _haSupportApi: number | null = null;
+  private _haSupportPackageVersions: readonly number[] = [];
+  /** #51: custom-image protocol capability from config/get; fail closed. */
+  private _haDecorAssetsApi: number | null = null;
+  private _haSummaryPanelApi: number | null = null;
+  private _haExternalScreensApi: number | null = null;
+  private _haExternalScreensEventsApi: number | null = null;
+  private readonly _externalConfigStreamRecovery = new ExternalConfigStreamRecovery();
+  private _haRadarStage1Api: number | null = null;
+  private _haWallNodeMoveApi: number | null = null;
+  private _haWallNodeDeleteApi: number | null = null;
+  private _haWallNodeMergeApi: number | null = null;
+  private _haWallNodeAttachApi: number | null = null;
+  private _haPlanGraphApi: number | null = null;
+  private _haRoomLabelLayoutApi: number | null = null;
+  private _haGraphChangeApi: number | null = null;
+  private _haOpeningFeaturesApi: number | null = null;
+  private _haHouseTransferApi: number | null = null;
+  private _haFurnitureWorkstationApi: number | null = null;
+  private _haVacuumDockRestartApi: number | null = null;
+  private _haVacuumHistoryApi: number | null = null;
+  private _haDeviceHistoryApi: number | null = null;
+  private readonly _radarLive = new RadarLiveController(this);
+  private _decorAssetSyncToken = 0;
+  private _alignDialog: OptimizePlansDialogState | null = null;
+
+  private _settingsDialog: {
+    colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null;
+    /** sun on the plan (docs/SUN.md) */
+    northDeg: number | null; northDegInput: string; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
+    showRoomTooltip: boolean; showLqi: import('./signal-visibility').SignalVisibility; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; centerSummary: boolean; moon: boolean; externalScreens?: unknown; busy: boolean;
+  } | null = null;
+  private _pdfDialog = false;
+  private _supportDialog: SupportDialogState | null = null;
+  private _backupExportDialog: import('./backup-archive-client').BackupExportState | null = null;
+  public readonly _backupImportIntent = new BackupImportIntent();
+  private _backupImportDialog: {
+    filename: string; size: number; token: string; preview: any;
+    expectedConfigRev: number; expectedLayoutRev: number;
+    duplicatePolicy: 'skip' | 'virtual'; confirmMissing: boolean;
+    busy: boolean; error: string;
+  } | null = null;
+  /** Wedge memo: recomputed only when (azimuth, elevation, north, cfg rev) change (docs/SUN.md). */
+  private _sunRaysCache: { key: string; rays: SunRay[]; rims: number[][][][] } | null = null;
+  private _isoSunCache: { key: string; wallHeight: number; beams: import('./iso-sun').IsoSunBeam[] } | null = null;
+  /** Browser-local fallback lifecycle; real sun updates arrive through hass. */
+  private _dayCycleTimer = 0;
+  private _dayCycleClockKey = '';
+  private _compassDrag = false;
+  private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
+  private _importQueue: string[] = []; // floor titles still to create
+  private _importTotal = 0;
+  private _rulesCompiledSrc = '';
+  private _rulesCompiled: CompiledIconRule[] | undefined;
+
+  private _infoCard: DevItem | null = null;
+  /** Native HA more-info last opened by this card, for disabled mid-dialog cleanup. */
+  private _nativeMoreInfoEntity: string | null = null;
+  private _deviceInbox: DeviceInboxDialogState | null = null;
+  private _deviceInboxReturn: DeviceInboxDialogState | null = null;
+  private _deviceInboxMemo: { key: string; rows: DeviceInboxRow[] } | null = null;
+  private _markerDialog: {
+    alertSources?: Marker['alert_sources'];
+    vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle;
+    devId?: string;      // the icon being edited (if any)
+    /**
+     * Folder attachments are uploaded into while this dialog is open. For a NEW
+     * icon there is no marker id yet; every one of them used to upload into a
+     * shared `files/new/`, so two markers attaching `manual.pdf` ended up
+     * pointing at the same bytes (HP-1454-02). A per-dialog id keeps them
+     * apart, and the files are moved to the real marker id once the config
+     * write is accepted — the same copy→save→cleanup order as a rebind.
+     */
+    uploadId?: string;
+    name: string;
+    binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual' | '' (not chosen yet)
+    bindingMode: 'virtual' | 'ha';
+    bindingOpen: boolean;   // the HA-list dropdown is expanded
+    showEntities: boolean;  // list entities of devices too
+    bindingFilter: string;
+    icon: string;        // '' = auto
+    autoIcon: string;    // the icon the rules would give — picker placeholder
+    display: DeviceDisplayMode;
+    stateSource?: Marker['state_source'];
+    stateSourceTouched?: boolean;
+    stateSourceOpen?: boolean;
+    stateSourceFilter?: string;
+    moreInfoEntity?: Marker['more_info_entity'];
+    moreInfoTouched?: boolean;
+    moreInfoOpen?: boolean;
+    moreInfoFilter?: string;
+    rippleColor: string; // '' = live/semantic automatic activity colour
+    rippleSize: number;  // in icon diameters; package default 1.5
+    size: number;        // icon size multiplier
+    angle: number;       // icon rotation, degrees
+    /** UI projection. A legacy persisted `cover` is shown as `toggle`. */
+    tapAction: string;
+    tapActionTouched: boolean;
+    originalHasTapAction: boolean;
+    originalTapAction: string | null | undefined;
+    /** Snapshot announced only after a user edit; live HA ticks do not rewrite it. */
+    tapHintAnnouncement: string;
+    toggleEntity: string;
+    toggleEntityTouched: boolean;
+    originalHasToggleEntity: boolean;
+    originalToggleEntity: string | null | undefined;
+    tapTarget: string;    // 'run': automation./script./scene. entity id
+    tapConfirm: boolean;  // ask before toggle/run
+    runFilter: string;
+    controls: string[];  // entities this icon toggles as a group
+    controlsFilter: string;
+    glowRadius: string;  // per-device glow radius in display units; '' = global default
+    glowRadiusBadInput?: boolean;
+    lightRole: 'auto' | 'always' | 'never';
+    lightRoleTouched: boolean;
+    originalHasIsLight: boolean;
+    originalIsLight: boolean | null | undefined;
+    lightEntity: string;
+    lightEntityTouched: boolean;
+    originalHasLightEntity: boolean;
+    originalLightEntity: string | null | undefined;
+    glowMode: 'auto' | 'color' | 'fixed';
+    glowColor: string;
+    glowBrightness: number; // 1..100 for the fixed mode
+    glowColorDrafted: boolean;
+    glowBrightnessDrafted: boolean;
+    glowTouched: boolean;
+    originalHasGlowColor: boolean;
+    originalGlowColor: { c: string; bri?: number | null } | null | undefined;
+    valueBadgeEnabled: boolean;
+    valueBadgeSource: ValueBadgeSource | null;
+    valueBadgePosition: ValueBadgePosition;
+    valueBadgeTouched: boolean;
+    originalHasValueBadge: boolean;
+    originalValueBadge: MarkerValueBadge | null | undefined;
+    valueSource: ValueBadgeSource | null;
+    valueSourceTouched: boolean;
+    originalHasValueSource: boolean;
+    originalValueSource: ValueBadgeSource | null | undefined;
+    useClimateTemp: boolean; // badge + room-average vote from climate current_temperature
+    hideBattery: boolean; // per-marker override; global setting remains authoritative
+    hideSignal: boolean; // hides only this marker's system plan line
+    model: string;
+    link: string;
+    description: string;
+    pdfs: PdfRef[];
+    room: string;
+    roomTouched: boolean;
+    radar: RadarEditorDraft | null;
+    radarEligible: boolean;
+    radarTouched: boolean;
+    radarRemove: boolean;
+    hideFromPlan: boolean;        // 'space#area' for a virtual one
+    busy: boolean;
+  } | null = null;
+  private _spaceDialog: SpaceDialogState | null = null;
+  private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
+  private _editorModifierHandler = (e: KeyboardEvent) => {
+    this._editorRuntime?._deviceContactKey(e);
+    this._editorRuntime?._decorRotationKey(e);
+  };
+  /** DEV-B703-03 warm re-mount: the dead instance's viewport, and the two
+   *  flags that keep the restore from being undone (the server load's centred
+   *  _restoreZoom) or applied twice (the dialog revival). */
+  private _warmVp: WarmViewport | null = null;
+  private _warmVpArmed = false;
+  private _warmViewportPending: 'adopt' | 'projection' | null = null;
+  private _warmCameraAdopted = false;
+  private _recoveryViewport: (KioskViewport & { key: string }) | null = null;
+  private _recoveryViewportTaken = false;
+  private _warmLongReturn = false;
+  private _warmRevivePending = false;
+  private _warmReviveTimer?: number;
+  /** AUD-159B1-01: this instance's identity in the memo — its generation, the
+   *  key it settled under and the slot (card placement) it owns. */
+  private _warmGen = ++warmGen;
+  private _warmKey: string | null = null;
+  private _warmSlot: WarmEntry | null = null;
+  private _hashApplied = false;
+  private _navApplied = false; // the saved space was restored (or the user navigated)
+  private _labs: LabsSnapshot = { alpha: false, active: Object.freeze([]), space: '' };
+  private _labsUnsub?: () => void;
+  private _isoEnabledSeen = false; private _projectionShown: 'flat' | 'iso' | null = null; private _isoLightFloors: ReadonlySet<string> | null = null; private readonly _isoFirstFrame = new IsoFirstFrameState(); // #649/#654
+  private _renderProjection: 'flat' | 'iso' = 'flat';
+  // ---- kiosk (wall device) mode ----
+  private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
+  private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime;
+  private _screenReference: ScreenCameraTarget | null = null;
+  private _screenReferenceKey = '';
+  private _screenSummaryVisible = false;
+  private _screenReferencePending = false;
+  private _screenFitRequest: 'fit' | 'home' | 'double-tap' | null = null;
+  private _screenCameraTransition = false;
+  /** Reference/layout changes are presentation, not a new saved user zoom. */
+  private _screenCameraAutomatic = false;
+  private _screenRecoveredCamera = false;
+  private _screenRestoreZoom: number | null = null;
+  private get _hasScreenProfile(): boolean { return this._kiosk && this._externalScreen.profile !== undefined; }
+  /** Profiles own their explicit false as well as true. A bare kiosk keeps its
+   * existing camera; the installation switch is only for ordinary View. */
+  private get _centerSummary(): boolean {
+    if (!this.planHost.capabilities.summary) return false;
+    return this._hasScreenProfile ? this._externalScreen.center_summary === true
+      : !this._kiosk && this._settings.center_summary === true;
+  }
+  private get _usesScreenCamera(): boolean {
+    return this._mode === 'view' && (this._hasScreenProfile || this._centerSummary);
+  }
+  private get _screenAtReference(): boolean | undefined {
+    if (!this._hasScreenProfile) return undefined;
+    return !!this._view && !!this._screenReference && !this._screenReferencePending
+      && onScreenReference({ zoom: this._zoom, viewBox: this._view }, this._screenReference,
+        this._cameraTransition.active || this._pointers.size > 0 || !!this._pinchStart || !!this._panStart);
+  }
+  private get _zoomBadge(): { percent: number; hidden: boolean } {
+    // The fixed raster box is an implementation detail; show the physical
+    // camera of the presented stage, including the retained frame(to).
+    const visual = this._modeTransitionVisual;
+    const camera = visual ? this._physicalCamera(visual.viewport, visual.stageWidth, visual.stageHeight) : this._cameraState();
+    if (this._usesScreenCamera && this._screenReference) {
+      return screenZoomBadge(camera, this._screenReference);
+    }
+    const percent = Math.round(camera.zoom * 100);
+    return { percent, hidden: percent <= 100 };
+  }
+  private get _effectiveCycle(): number {
+    return this._kiosk && !this._hasFixedFloor && this._model.length > 1
+      ? Math.max(0, this._externalScreen.cycle ?? (Number(this._config?.cycle) || 0)) : 0;
+  }
+
+  /** One reference owner. State values never enter the geometry key. */
+  private _syncScreenCamera(): void {
+    if (this._warmVp && (this._warmViewportPending || this._floorPassive || this._floorPreparation?.pending)) return;
+    if (!this._usesScreenCamera) {
+      // Editor handoff owns its world camera. Retain the View reference so
+      // returning from an editor does not look like a fresh opening fit.
+      if (this._mode !== 'view' && this._centerSummary) return;
+      this._screenReference = null; this._screenReferenceKey = ''; this._screenReferencePending = false;
+      this._screenSummaryVisible = false;
+      this._screenFitRequest = null; this._screenRecoveredCamera = false; this._screenRestoreZoom = null; return;
+    }
+    const stage = this._stageEl;
+    if (!stage?.clientWidth || !stage.clientHeight || this._modeTransitionBusy) return;
+    if (!this._summary && !this._viewRuntimes.summary.unavailable) return;
+    const explicit = this._screenFitRequest;
+    const geometry = this._summary?.screenGeometry(this._screenReferencePending || !!explicit)
+      ?? (this._viewRuntimes.summary.unavailable ? { key: 'unavailable', panel: null } : null);
+    if (!geometry) return;
+    const size: [number, number] = [stage.clientWidth, stage.clientHeight];
+    const vb = this._baseVb(), display = this._displayBase(vb), screen = this._externalScreen;
+    const key = JSON.stringify([screen, this._centerSummary, this._space, this._rotation, vb, display, size, geometry.key]);
+    if (!explicit && !this._screenReferencePending && key === this._screenReferenceKey) return;
+    const previous = this._screenReference, current = this._cameraState();
+    if (!previous && !this._view && !this._hasScreenProfile && this._screenRestoreZoom === null) {
+      // Cached geometry may paint before config/get returns. Preserve HP-1551's
+      // saved scalar on that first camera as well as on authoritative restore.
+      const saved = Number(this._zoomBySpace[this._space]);
+      if (Number.isFinite(saved) && saved > 0) this._screenRestoreZoom = saved;
+    }
+    const fullReference = !previous && !this._hasScreenProfile
+      ? screenCameraTarget(vb, display, this._sceneRotation, size, screenFreeArea(...size, null), 1, this._sceneDepthScale) : null;
+    // A rapid panel reversal still owns automatic centring. The visible
+    // intermediate frame is not a manual pan away from the reference.
+    const followingSummary = this._screenCameraTransition && this._screenCameraAutomatic
+      && this._cameraTransition.active && this._pointers.size === 0 && !this._panStart && !this._pinchStart;
+    const animateSummary = !!previous && this._centerSummary
+      && this._screenSummaryVisible !== !!geometry.panel && !this._screenReferencePending
+      && this._screenRestoreZoom === null;
+    const follow = !this._screenRecoveredCamera && (followingSummary || this._screenReferencePending
+      || (!previous && (this._hasScreenProfile || !this._view || !!fullReference && onScreenReference(current, fullReference)))
+      || !!previous && onScreenReference(current, previous,
+      this._cameraTransition.active || this._pointers.size > 0));
+    const free = screenFreeArea(...size, this._centerSummary ? geometry.panel : null);
+    const reference = screenCameraTarget(vb, display, this._sceneRotation, size, free, this._hasScreenProfile ? screen.zoom ?? 1 : 1, this._sceneDepthScale);
+    if (!reference) return;
+    this._screenReference = reference; this._screenReferenceKey = key;
+    this._screenSummaryVisible = !!geometry.panel;
+    this._screenRecoveredCamera = false;
+    this._screenReferencePending = false; this._screenFitRequest = null;
+    this._lastValidStageSize = size;
+    if (follow || explicit) {
+      const multiplier = this._screenRestoreZoom === null ? 1 : this._screenRestoreZoom / reference.camera.zoom;
+      const target = explicit || this._screenRestoreZoom !== null
+        ? screenCameraTarget(vb, display, this._sceneRotation, size, free, explicit ? 1 : multiplier, this._sceneDepthScale)! : reference;
+      this._cancelCameraTransition(false);
+      this._screenCameraTransition = true;
+      this._screenCameraAutomatic = !explicit;
+      const duration = explicit ? CAMERA_FIT_MS : animateSummary
+        ? geometry.panel ? controlMotion.appear.duration : controlMotion.leave.duration : 0;
+      if (!this._startCameraTransition(target.camera, target.fit, explicit ?? 'fit', duration)) {
+        this._screenCameraTransition = false; this._screenCameraAutomatic = false;
+      }
+    } else if (previous) {
+      // The reference can belong to the previous projection. Decode the
+      // camera already adopted for this frame, never its old fit-width ratio.
+      const frame = this._projectionViewFrame();
+      const physical = physicalViewCamera(current.viewBox, current.zoom, this._viewFrame ?? frame);
+      const camera = canonicalPhysicalCamera(physical, {...frame, size});
+      this._cancelCameraTransition(false); this._zoom = camera.zoom; this._view = camera.viewBox;
+    }
+    this._screenRestoreZoom = null;
+    this.requestUpdate();
+  }
+
+  private _restoreScreenReference(): void {
+    this._clearRoomFocus(true); this._cancelCameraTransition(false);
+    this._showFar = true; this._frame = null; this._screenReferencePending = true;
+    this._screenRecoveredCamera = false;
+    this._screenRestoreZoom = null;
+    this._screenFitRequest = null;
+    // The first camera is part of startup; continuity protects an already
+    // complete scene during later profile changes and explicit fits.
+    if (this._continuity.hasCompleteFrame) this._beginContinuityCandidate('screen-reference', true);
+    this.requestUpdate();
+  }
+  private readonly _viewRuntimes = new ViewRuntimes(this as unknown as ViewRuntimeHost);
+  /**
+   * Previous entity states + the short event/terminal-transition window for
+   * every marker. The map lives outside Lit state: hass ticks update it, one
+   * timer repaints when the 3.3 s window closes, and the generation bit forces
+   * a CSS event animation to restart on a rapid retrigger.
+   */
+  private _activityRt = new Map<string, FiniteActivityRuntime>();
+  /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
+  private _vacRt = new Map<string, LocalVacuumPath & {
+    lastKey: string; lastTs: number; moving: boolean; unavailable?: boolean; jump: boolean; gap: boolean;
+    mapKey: string; endedTs: number; lastPos: VacPt | null; livePending?: VacuumLivePending }>();
+  /** view signature of the previous vacuum render: a changed view (zoom, pan,
+      space switch) or a tab return must TELEPORT the puck — animating left/top
+      through a viewport change reads as «едет через весь план» (owner). */
+  private _vacViewKey = '';
+  private _vacRaf = 0;
+  /** server-recorded runs per marker: {current, previous} in raw robot coords */
+  private _vacSrvTrails: VacuumServerBook = {};
+  private _vacTrailFormat = 1;
+  private _vacGeometryCache = new VacuumPathGeometryCache();
+  private readonly _vacHistory = new VacuumHistory(this as unknown as VacuumHistoryHost);
+  private _unsubTrail?: () => void;
+  private _vacJumpOnce = false;
+  private _continuity = this._newContinuityController();
+  private _continuityHistory: import('./visual-continuity').ContinuityTraceEvent[] = [];
+  private _continuityUnsub?: () => void;
+  private _languageFailureUnsub?: () => void;
+  private _continuityEpoch = 0;
+  private _continuityDataReady = true;
+  private _continuityDisposed = false;
+  private _renderSnapshotAt = Date.now();
+  private _hassSequence = 0;
+  private _visibleDeviceSnapshot: RenderDeviceSnapshot | null = null;
+  private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
+  /** Memo keys must follow the layout actually painted by a held snapshot,
+   * rather than the newer adopted layout whose capture is still pending. */
+  private readonly _snapshotLayouts = new WeakMap<RenderDeviceSnapshot, DeviceLayout>();
+  private _stagedToken = -1;
+  private _capturedSeq = -1;
+  private _capturedSnapshotDemand = '';
+  private _capturedSnapshotDevices: readonly DevItem[] | null = null;
+  private _capturedSnapshotLayout: Record<string, { x: number; y: number; s?: string; k?: number }> | null = null;
+  private _capturedSnapshotActivity = '';
+  private _capturedSnapshotConfigEpoch = -1;
+  private _capturedSnapshotVirtual = '';
+  private _capturedSnapshotTrails: VacuumServerBook | null = null;
+  private _capturedSnapshotTrailFormat = 0;
+  private _lastValidStageSize: [number, number] | null = null;
+  private _gestureStage: { rect: DOMRect; width: number; height: number } | null = null;
+  private _gestureHover: PointerEvent | WheelEvent | null = null;
+
+  private get _cameraGestureActive(): boolean {
+    return this._cameraTransition.active || this._panLock === 'pan' || !!this._pinchStart;
+  }
+
+  private _deferCameraHover(event: PointerEvent): boolean {
+    if (!this._cameraGestureActive) return false;
+    if (event.pointerType === 'mouse') this._gestureHover = event;
+    return true;
+  }
+
+  private _resumeCameraHover(): void {
+    const pointer = this._gestureHover;
+    this._gestureHover = null;
+    this._invalidateDeviceHitGeometry();
+    if (!pointer || this._mode !== 'view') return;
+    void this.updateComplete.then(() => {
+      if (!this.isConnected || this._cameraGestureActive || this._mode !== 'view') return;
+      const device = this._deviceHitOwnerAt(pointer.clientX, pointer.clientY);
+      if (device) this._showDeviceTip(pointer, device);
+    });
+  }
+  private _pendingRefitSize: [number, number] | null = null;
+  private _refitRaf = 0;
+
+  private _newContinuityController(): VisualContinuityController {
+    return new VisualContinuityController(() => {
+      this._resumeSettling = this._continuity.state !== 'steady';
+      this._continuityEpoch++;
+      if (this.isConnected) this.requestUpdate();
+    });
+  }
+
+  private _pageVisibility = (signal: PageVisibilitySignal): void => {
+    if (this._routeDepartureHandled && signal.kind !== 'hidden') return;
+    this._continuity.visibility(signal);
+    this._viewRuntimes.visibility(signal.kind === 'hidden');
+    this._dayCycleVisibility(signal); this._summary?.visibility(signal.kind);
+    if (signal.kind === 'hidden') {
+      for (const runtime of this._activityRt.values()) clearTimeout(runtime.timer);
+      this._activityRt.clear();
+      this._vacHistory.suspend();
+      this._abandonViewInput();
+      this._cancelDeviceDrag();
+      if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
+      this._radarLive.stop();
+      this._editorRuntime?._cancelRadarSetup();
+      this._clearRoomFocus(true);
+      this._clearTransientHover(true);
+      this._cancelDevicePressFeedback();
+      this._cancelCameraTransition(true);
+      if (this._modeTransitionPreparing) {
+        // There is no measured controller endpoint to commit yet. Keep the
+        // already queued measurement but force its synchronous atomic path;
+        // cancelling here would expose target chrome with the old camera.
+        this._modeTransitionForceAtomic = true;
+      } else {
+        this._cancelModeTransition(true);
+      }
+      return;
+    }
+    this._vacJumpOnce = true;
+    if (this._hiddenRenderDeferred) {
+      this._hiddenRenderDeferred = false;
+      this._renderLife.retireHass();
+      for (const [name, previous] of this._hiddenRenderChanges) super.requestUpdate(name, previous);
+      this._hiddenRenderChanges.clear();
+      this._driverRevision = -1; this._intakePlanEnvironment();
+      super.requestUpdate('planEnvironmentRevision', undefined, { hasChanged: () => true });
+    }
+    if (!this._vacRaf && this.renderRoot.querySelector('.vactrail line.tip')) this._vacRafLoop();
+    this._syncRadarLive();
+    if (!signal.long) {
+      const now = Date.now();
+      let expired = false;
+      for (const runtime of this._activityRt.values()) {
+        if (!runtime.flashKind || (runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS) > now) continue;
+        runtime.flashTs = 0;
+        runtime.flashKind = null;
+        runtime.expiresAt = 0;
+        expired = true;
+      }
+      if (expired) this.requestUpdate();
+      return; // preserve hover and the completed visual frame
+    }
+    // A long sleep may have frozen activity clocks. Recompute them as
+    // one candidate without clearing the currently visible hover or frame,
+    // and revalidate config+layout as one structural pair.
+    if (Date.now() - this._renderSnapshotAt > 1000) this._continuity.note('device-snapshot-stale');
+    this._continuityDataReady = false;
+    this._resumeSettling = true;
+    if (!this._loading) void this._loadFromServer();
+    else this.requestUpdate();
+  };
+  private _resumeSettling = false;
+  private _viewportInvalidAt = 0;
+  private _vacFit: VacuumFit | null = null;
+  /** Marker whose lazy «All cameras» candidate section is expanded. */
+  private _vacAllCamerasFor: string | null = null;
+  /** One snapshot per currently open global-camera section; rebuilt on reopen. */
+  private _vacAllCameraCache: { devId: string; candidates: VacSourceCandidate[] } | null = null;
+  /** Proposed high-residual auto-calibration. Config remains untouched until Apply. */
+  private _vacCalConfirm: CalibrationProposal | null = null;
+  private readonly _kioskNavigation = new KioskSpaceNavigation(() => this.requestUpdate());
+  /** #813 F11: the empty-stage hold; firing ends the stage gesture, then opens the dialog. */
+  private readonly _kioskHold = new KioskHoldGesture((pointerId) => {
+    this._touchClickGuard.interruptForModal(pointerId);
+    this._suppressClick = false; // transfer the old tail to the event-owned modal barrier (#831)
+    this._interruptViewGesture(pointerId, this._stageEl);
+    this._kioskDialog = true;
+  });
+  /** #813: a window that loses focus mid-press may never deliver its release. */
+  private readonly _onWindowBlur = (): void => {
+    this._kioskNavigation.reset();
+    ++this._viewDeviceMenuRequest;
+    if (this._furnTouchPending) this._editorRuntime?._clearFurniturePreview();
+    if (this._mode === 'view') {
+      this._touchClickGuard.interrupt();
+      this._interruptViewGesture();
+      this._holdFired = false;
+      return;
+    }
+    if (this._cancelDeviceDrag()) return;
+    if (this._pointers.size || this._kioskHold.pointerId !== null) this._interruptViewGesture();
+  };
+  private readonly _onViewPointerTerminal = (event: PointerEvent): void => {
+    this._kioskNavigation.release(event.pointerId);
+    this._viewHold.cancel(event.pointerId);
+    // A mouse may release outside the marker, stage or this card. Inside-card
+    // terminals keep their existing capture route and must be consumed once.
+    if (!event.composedPath().includes(this) && this._touchClickGuard.hasPointer(event.pointerId)) {
+      this._guardTouchGesture(event);
+    }
+  };
+  private _cyclePausedUntil = 0;
+  private readonly _kioskCarousel = new KioskCarousel({
+    state: () => ({ connected: this.isConnected,
+      intervalMs: this._effectiveCycle * 1000,
+      idleMs: this._kiosk ? (this._externalScreen.idle ?? 0) * 1000 : 0,
+      pausedUntil: this._cyclePausedUntil,
+      ...cardInteractionIdleSnapshot(this as unknown as VersionRecoveryCardPort),
+    }),
+    pause: (until) => { this._cyclePausedUntil = until; },
+    fitAll: () => this._hasScreenProfile ? this._restoreScreenReference() : this._fitAll(),
+    advance: () => this._cycleTick(),
+  });
+  private _kioskInteraction = (event: Event): void => {
+    // Hover is frequent and must not fingerprint the config or reveal controls.
+    if (event.type === 'pointermove' && !this._kioskNavigation.ownsPointer((event as PointerEvent).pointerId)) return;
+    if (this._kiosk && event.composedPath().some((node) => node instanceof Element
+      && node.matches('.stage, hp-dialog, hp-confirm')) && event.type !== 'pointermove') this._kioskCarousel.interact();
+    this._kioskNavigation.sync(this._kioskNavigationEnabled);
+    if (event.composedPath().some(node => node instanceof Element && node.matches('.stage')))
+      this._kioskNavigation.interact(event as PointerEvent);
+  };
+  private _swipeStart: SpaceSwipePointerStart | null = null;
+
+  /** Live tab reorder: which tab is held, where it started, where it would land. */
+  private _tabDrag: {
+    id: string; pointerId: number; x: number; y: number; moved: boolean;
+    targetId: string | null; placement: 'before' | 'after' | null;
+  } | null = null;
+
+  /** Window-level release handler while a tab is held; see _tabPointerDown. */
+  private _tabDragRelease: ((event: PointerEvent) => void) | null = null;
+  private _tabSuppressClick = false;
+  private _tabSuppressClickTimer?: number;
+
+  /** The positional-`floor` warning is worth saying once, not on every drop. */
+  private _tabOrderWarned = false;
+  private get _isoEnabled(): boolean {
+    const view = this.panelHost ? this._externalScreen.view : this._config?.view;
+    return validPlanView(view) ? view === 'iso' : volumetricViewOf(this._settings);
+  }
+
+  private readonly _furnitureVolumeObserver = ((owner: HouseplanCard) => ({
+    get isConnected() { return owner.isConnected; },
+    requestUpdate() {
+      owner._isoProjectionSnapshot = null;
+      if (owner.isConnected) owner.requestUpdate();
+    },
+  }))(this);
+  private get _needsFurnitureVolume(): boolean {
+    if (this._mode !== 'view' || !this._isoEnabled) return false;
+    const display = this._spaceDisplayForRender();
+    return display.showBorders && !display.hideDecor && this._decorList.some(item => item.kind === 'furniture');
+  }
+  private _furnitureVolumePending(): boolean {
+    if (!this._needsFurnitureVolume) return false;
+    void FURNITURE_VOLUME_RUNTIME.ensure(this._furnitureVolumeObserver);
+    return FURNITURE_VOLUME_RUNTIME.state() === 'pending';
+  }
+
+  private get _desiredProjection(): 'flat' | 'iso' {
+    return this._mode === 'view' && this._isoEnabled ? 'iso' : 'flat';
+  }
+
+  private _viewPlane: ViewPlane = null;
+  private _viewPlaneKnown = false;
+  private _viewFrame: ProjectionViewFrame | null = null;
+  private _viewFrameSpace = '';
+
+  private get _presentedPreviewFit() {
+    const startup = this._startupStyle?.value;
+    return this._floorPassive ? (!startup?.remote ? startup?.fit : undefined) ?? this._floorPreparation?.preview?.fit ?? null : null;
+  }
+
+  private _presentedViewPlane(projection: 'flat'|'iso' = this._renderProjection): ViewPlane {
+    return presentedViewPlane(this._presentedPreviewFit,this._spaceDisplayForRender().showBorders,
+      projection === 'iso' ? this._renderIsoScene?.camera ?? null : null);
+  }
+
+  private _projectionViewFrame(plane?: ViewPlane): ProjectionViewFrame {
+    const preview = this._presentedPreviewFit;
+    const projection = preview?.projection ?? this._effectiveProjection();
+    const base = preview ? [...preview.base] : this._baseVb();
+    const activePlane = plane === undefined ? this._presentedViewPlane(projection) : plane;
+    const rotation = preview ? planRotationForProjection(preview.rotation, preview.projection) : this._rotationForProjection(projection);
+    const size = this._modeSceneSize ?? this._lastValidStageSize
+      ?? [this._view?.w || 1, this._view?.h || 1] as const;
+    return {base: [...base], display: {...(preview?.display ?? this._displayBase(base))}, rotation,
+      plane: activePlane?.rotDeg === isoCameraFor(rotation).rotDeg ? activePlane : activePlane ? isoCameraFor(rotation) : null, size: [...size]};
+  }
+
+  /** The zero-quarter viewport and plan XY no longer share their centre. */
+  private _logicalViewCenter(): { x: number; y: number } | null {
+    if (!this._view) return null;
+    const camera = physicalViewCamera(this._view, this._zoom,
+      this._viewFrame ?? this._projectionViewFrame(this._viewPlane));
+    return {x: camera.centerX, y: camera.centerY};
+  }
+
+  private _adoptViewPlane(plane: ViewPlane): void {
+    const pixels = this._modeSceneSize ?? this._lastValidStageSize
+      ?? (this._viewPlaneKnown ? this._viewFrame?.size : null);
+    const target = acceptedViewFrame(this._view,this._projectionViewFrame(plane),pixels);
+    if (target && this._viewPlaneKnown && this._view && this._viewFrame
+      && this._viewFrameSpace === this._space && shouldRebaseViewFrame(this._viewFrame, target)) {
+      // A mode handoff already owns the physical camera. Do not reinterpret
+      // its newly encoded destination as the outgoing projection a second time.
+      const camera = this._modeTransitionVisual?.viewport
+        ?? physicalViewCamera(this._view, this._zoom, this._viewFrame);
+      const next = canonicalPhysicalCamera(camera, target);
+      this._view = next.viewBox;
+      // A passive cache preview can have a different fit reference for the
+      // same painted rectangle. Keep the adopted warm zoom through that
+      // handoff while the saved viewport still matches the displayed one.
+      const warm = this._warmCameraAdopted ? this._warmVp : null;
+      this._zoom = warm && warmCameraUnchanged(next.viewBox, warm) ? warm.zoom : next.zoom;
+    }
+    this._viewPlane = plane; this._viewPlaneKnown = !!target;
+    this._viewFrame = target; this._viewFrameSpace = this._space;
+  }
+
+  /** Re-read the normalized zoom after retaining screen width on a new plane. */
+  private _rezoom(): void {
+    const v = this._view;
+    const z = v ? fitView(this._baseVb(), v.w / v.h).w / v.w : 0;
+    if (Number.isFinite(z) && z > 0) this._zoom = z;
+  }
+
+  private _convertProjectionView(from: 'flat' | 'iso', to: 'flat' | 'iso'): void {
+    if (this._recoveryViewport && this._restoreKioskViewport()) {
+      // The one-shot memo is already encoded for the destination presentation,
+      // not the temporary Flat shell used while its runtime was loading. Adopt
+      // that trusted camera once; neither rebase it from Flat nor cold-fit it.
+      this._viewPlaneKnown = false; this._viewFrame = null;
+      this._adoptViewPlane(this._presentedViewPlane(to));
+      this.requestUpdate();
+      return;
+    }
+    this._adoptViewPlane(this._presentedViewPlane(to));
+    if (from === to) return;
+    // Intake can discover the requested projection after a warm camera has
+    // already been restored in that destination. It is not a second cold fit.
+    if (this._warmCameraAdopted && this._view && this._projectionShown === to) return;
+    this._clearRoomFocus(true);
+    // A structural change: a running camera tween stops on its presented frame.
+    this._cancelCameraTransition(false);
+    // Only a camera that was on screen is kept; a cold 2.5D start opens home.
+    if (this._projectionShown === from) this._rezoom();
+    else {
+      // A missing stage or a measured-but-veiled Flat shell is not a user's
+      // physical camera. Let the existing restore/refit owner take the first
+      // real size and the saved per-space zoom, not square fallback bounds or
+      // the interim plane's re-encoded scale (#1469).
+      this._view = null;
+      this._restoreZoom();
+    }
+    this._warmPatch({ vp: this._warmViewportState() });
+    this.requestUpdate();
+  }
+
+  /** #649: saving General settings (or a server push) flips the whole View without a reload. */
+  private _syncVolumetricSetting(): void {
+    const enabled = this._isoEnabled;
+    if (enabled === this._isoEnabledSeen) return;
+    this._isoEnabledSeen = enabled;
+    const from = this._renderProjection;
+    if (enabled) {
+      void this._ensureIsoSceneRuntime();
+      const retry = this._isoSceneKey();
+      if (retry) this._isoFallback.delete(retry);
+      this._isoFallback.delete(`${this._space}|no-borders`); this._clearIsoInvalidFallback();
+    }
+    this._isoProjectionSnapshot = null;
+    this._convertProjectionView(from, this._effectiveProjection());
+  }
+
+  private _onLabsSnapshot = (next: LabsSnapshot): void => { this._labs = next; this.requestUpdate(); };
+
+  /** Deep-link: read `#space=<id>` from the URL (used by embedded houseplan-space-card). */
+  private _hashSpace(): string {
+    return hashSpace(window.location.hash || '');
+  }
+  private _onHashChange = (): void => {
+    this._editorRuntime?.invalidateEditorNavigation();
+    if (this._hasFixedFloor) return;
+    const id = this._hashSpace();
+    if (id && this._model.find((sp) => sp.id === id) && id !== this._space) {
+      const requestedHash = location.hash;
+      const restoreHash = `#space=${encodeURIComponent(this._space)}`;
+      const resume = () => {
+        if (location.hash !== restoreHash) return;
+        history.replaceState(history.state, '', `${location.pathname}${location.search}${requestedHash}`);
+        this._onHashChange();
+      };
+      // The hash changed before the confirmation. Keep URL and actual floor
+      // coherent while waiting, and on Keep editing.
+      history.replaceState(history.state, '', `${location.pathname}${location.search}${restoreHash}`);
+      if (this._editorRuntime && !this._editorRuntime._guardDraftNavigation(resume)) return;
+      if (this._wallFaceBatch) this._roomDialogCancel();
+      if (this._mode === 'plan' && this._tool === 'draw'
+        && !this._editorRuntimeOrThrow()._finishWallChainForNavigation(resume)) return;
+      history.replaceState(history.state, '', `${location.pathname}${location.search}${requestedHash}`);
+      this._commitSpace(id);
+      this._selId = null;
+      this._path = [];
+      this._clearPlanSnapHover();
+      this._clearOpeningPlacement(true);
+      this._tool = 'draw';
+      this._activeWallChainId = null;
+      this._activeWallChainPartitionIds = [];
+      this._wallChainSegmentCms = [];
+      this._closingWallCm = null;
+      this._restoreZoom();
+      this.requestUpdate();
+    }
+  };
+
+  private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
+  private _deviceDrag: DeviceDragState | null = null;
+  private get _deviceContacts() { return this._liveRt?.contacts; }
+  private _deviceMagnets = true;
+  private readonly _deviceDragRetirement = new DeviceDragRetirement();
+  private _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number } | null = null;
+  private readonly _viewHold = new ViewHoldGesture();
+  private _holdFired = false;
+
+  /**
+   * #520: `_serverCfg` и `_layout` здесь НЕ объявляются, хотя они реактивны.
+   *
+   * С #500 их тела принадлежат `_adoption`, а карточка видит их через
+   * собственные аксессоры прототипа. Объявление сделало бы вторым владельцем
+   * реактивности сам Lit: он ставит такому свойству флаг `wrapped`
+   * (`createProperty`) и на ПЕРВОМ обновлении принудительно кладёт его в
+   * `changedProperties` со старым значением `undefined` — даже если никто
+   * ничего не присваивал. Сегодня этот лишний вход в ветку `willUpdate`
+   * безвреден ровно по совпадению: на первом обновлении и тело, и
+   * `_cfgEpochPreservedConfig` равны `null`, поэтому `preserveGeometry`
+   * истинно и эпоха не растёт. Совпадение — не контракт: любой ранний
+   * приход конфига (тёплый кеш) превращает его в лишний бамп эпохи.
+   *
+   * Реактивность даёт `_adoption` через `onBodyReplaced` → `requestUpdate`:
+   * `requestUpdate` не требует объявления, `getPropertyOptions` возвращает
+   * умолчание, и `changed.has('_serverCfg')` работает как прежде.
+   * `noAccessor: true` не помогает — `wrapped` ставится до его проверки.
+   *
+   * Регрессию первого кадра из #520 чинило не это, а атомарность усыновления
+   * (`afterAdopt` в `_loadFromServer`); см. комментарий там.
+   */
+  static properties = {
+    _tabDrag: { state: true },
+    _hdrH: { state: true },
+    _booting: { state: true },
+    _bootSoft: { state: true },
+    _continuityEpoch: { state: true },
+    _editorRuntimeLoadingVisible: { state: true },
+    _backdropGuard: { state: true },
+    _tapConfirm: { state: true },
+    _dangerConfirm: { state: true },
+    hass: { attribute: false },
+    panelHost: { type: Boolean, attribute: 'panel-host', reflect: true },
+    preview: { attribute: false }, editMode: { attribute: false },
+    panelSidebarOpen: { type: Boolean, attribute: false },
+    layout: { type: String, reflect: true },
+    narrow: { attribute: false },
+    _config: { state: true },
+    _space: { state: true },
+    _devices: { state: true },
+    _selId: { state: true },
+    _mode: { state: true },
+    _tool: { state: true },
+    _wallDialog: { state: true },
+    _drawWallField: { state: true },
+    _activeWallChainId: { state: true },
+    _physicalSel: { state: true },
+    _physicalDialog: { state: true },
+    _partitionDeleteDialog: { state: true },
+    _roomDeleteDialog: { state: true },
+    _duplicateColumnId: { state: true },
+    _opMeasure: { state: true },
+    _path: { state: true },
+    _cursorPt: { state: true },
+    _mergeSel: { state: true },
+    _openingPreset: { state: true },
+    _openingDialog: { state: true },
+    _openingInfo: { state: true },
+    _mergeDialog: { state: true },
+    _splitSel: { state: true },
+    _decorTool: { state: true },
+    _decorStyle: { state: true },
+    _decorDraft: { state: true },
+    _decorSel: { state: true },
+    _decorEraseConfirm: { state: true },
+    _decorTextDialog: { state: true },
+    _decorShapeDialog: { state: true },
+    _backdropDialog: { state: true },
+    _furnPalette: { state: true },
+    _decorImagePalette: { state: true },
+    _decorAssetCatalog: { state: true },
+    _decorAssetBusy: { state: true },
+    _furnCategory: { state: true },
+    _furnPreviewInput: { state: true },
+    _dtBox: { state: true },
+    _dtDrag: { state: true },
+    _kioskDialog: { state: true },
+    _vacFit: { state: true },
+    _vacAllCamerasFor: { state: true },
+    _vacCalConfirm: { state: true },
+    _areaSel: { state: true },
+    _nameSel: { state: true },
+    _roomDialog: { state: true },
+    _roomEditId: { state: true },
+    _roomFill: { state: true },
+    _roomCustomFill: { state: true },
+    _roomNameColor: { state: true },
+    _roomTempMin: { state: true }, _roomTempMax: { state: true },
+    _roomTempSrc: { state: true },
+    _roomHumSrc: { state: true },
+    _roomCo2Src: { state: true },
+    _roomSunTransparent: { state: true },
+    _roomSrcOpen: { state: true },
+    _roomSrcFilter: { state: true },
+    _roomNameScale: { state: true },
+    _roomLabelScale: { state: true },
+    _spaceDialog: { state: true },
+    _infoCard: { state: true },
+    _deviceInbox: { state: true },
+    _rulesDialog: { state: true },
+    _settingsDialog: { state: true },
+    _pdfDialog: { state: true },
+    _supportDialog: { state: true },
+    _alignDialog: { state: true },
+    _backupExportDialog: { state: true },
+    _backupImportDialog: { state: true },
+    _importDialog: { state: true },
+    _markerDialog: { state: true },
+  };
+
+  public connectedCallback(): void {
+    this._floorPreparation = null;
+    const shortReturn = this._detachSubscriptionsTimer !== undefined;
+    clearTimeout(this._detachSubscriptionsTimer); this._detachSubscriptionsTimer = undefined;
+    if (shortReturn && this._loadOk && (!this._unsubCfg || !this._unsubLayout)) this._read.defer();
+    this._planHassProjection?.invalidate(); this._planHassMemo = null;
+    window.addEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
+    window.addEventListener('storage', this._rotationChanged);
+    this._connectedPath = location.pathname;
+    this._routeDepartureHandled = false;
+    this._configReloadAuthority.observeContext(configReloadContext(this));
+    window.addEventListener('location-changed', this._onLocationChanged);
+    window.addEventListener('popstate', this._onLocationChanged);
+    if (this._continuityDisposed) {
+      this._continuity = this._newContinuityController();
+      this._continuityDisposed = false;
+    }
+    const resolvedBlend = resolvedSvgScreenBlend(this.ownerDocument);
+    if (resolvedBlend !== undefined) this._glowScreenBlend = resolvedBlend;
+    this._continuityUnsub?.();
+    this._continuityUnsub = subscribePageVisibility(this.ownerDocument, this._pageVisibility);
+    // #354: only the View card owns toast infrastructure, so it alone turns a
+    // locale-load failure into a visible message; other runtime surfaces keep
+    // the console warning from the shared LanguageRuntime.
+    this._languageFailureUnsub?.();
+    this._languageFailureUnsub = composeUnsub(subscribeLanguageLoadFailures(() => {
+      this._showToast(this._t('toast.locale_load_failed'), 'toast.locale_load_failed', { owner: null });
+    }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed'), 'toast.furniture_art_load_failed', { owner: null }))); // #474
+    super.connectedCallback();
+    this._buttonTabFocusRelease?.();
+    this._buttonTabFocusRelease = acquireButtonTabFocus(this);
+    for (const type of ['pointerenter', 'focus', 'pointerdown'])
+      this.renderRoot.addEventListener(type, this._preloadEditorIntent, true);
+    this._toastPresentation.connect(this.renderRoot as ShadowRoot);
+    for (const type of ['pointerdown', 'pointermove', 'click', 'wheel', 'keydown']) this.addEventListener(
+      type, this._kioskInteraction, { capture: true, passive: true },
+    );
+    this._viewRuntimes.connect();
+    this._pointerModality.connect(this.ownerDocument.defaultView);
+    this._deviceHitScrollUnsub?.();
+    this._deviceHitScrollUnsub = observeDeviceHitGeometryScroll(this, () => {
+      this._gestureStage = null;
+      this._invalidateDeviceHitGeometry();
+    });
+    const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
+    if (PointerHoverObserver) {
+      this._pointerHoverObserver = new PointerHoverObserver((records) => {
+        const nodes = this._cameraGestureActive ? records.filter(record => {
+          if (record.attributeName !== 'style') return true;
+          const target = record.target as Element;
+          return !target.hasAttribute('data-hp-live-layer') && !target.hasAttribute('data-hp-live-viewbox')
+            && !target.hasAttribute('data-hp-live-scene') && !target.hasAttribute('data-hp-live-marker-surface')
+            && !target.hasAttribute('data-hp-live-marker-clip');
+        }) : records;
+        if (deviceLayerMutated(nodes, (node) => this._syncPointerHoverSubtree(node))) {
+          this._invalidateDeviceHitGeometry();
+        }
+      });
+      this._pointerHoverObserver.observe(this.renderRoot, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-id'],
+      });
+    }
+    this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    this._reducedMotion = !!this._motionMedia?.matches;
+    this._motionMedia?.addEventListener?.('change', this._onMotionChange);
+    this._syncVersionRecovery();
+    this._versionRecovery.connect();
+    svgScreenBlendSupported(this.ownerDocument).then((supported) => {
+      if (supported === this._glowScreenBlend) return;
+      this._glowScreenBlend = supported;
+      if (this.isConnected) this.requestUpdate();
+    });
+    this._connectPlanHost();
+    this._intakePlanEnvironment();
+    window.addEventListener('keydown', this._keyHandler);
+    window.addEventListener('keydown', this._editorModifierHandler);
+    window.addEventListener('keyup', this._editorModifierHandler);
+    window.addEventListener('blur', this._onWindowBlur);
+    window.addEventListener('pagehide', this._onWindowBlur);
+    window.addEventListener('pointerup', this._onViewPointerTerminal, true);
+    window.addEventListener('pointercancel', this._onViewPointerTerminal, true);
+    window.addEventListener('lostpointercapture', this._onViewPointerTerminal, true);
+    // signatures expire (24 h); refresh well before that on long-lived screens
+    this._signer.start(() => this.planHost, () => this._referencedContentUrls());
+    this._syncCycleTimer();
+    window.addEventListener('hashchange', this._onHashChange);
+    this._labsUnsub?.();
+    this._labsUnsub = subscribeLabs(this._onLabsSnapshot);
+    if (this._isoEnabled) void this._ensureIsoSceneRuntime();
+    // Lovelace may detach the card during initial height measurement.
+    if (this._booting) this._bootWatch();
+    if (this._bootSoft) {
+      clearTimeout(this._bootSoftTimer);
+      this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
+    }
+    // DEV-B703-02: a reattach mid-outage must keep revalidating — the retry
+    // timer died in disconnectedCallback
+    if (!this._loadOk && this._serverCfg && this.planHost.environment.connected) this._scheduleLoadRetry();
+    // AUD-159B1-01: the placement is only knowable once we are IN the DOM.
+    if (!this._warmSlot && this._config) this._warmAdopt();
+    if (this._loadOk) this._ensureLiveSyncSubscriptions();
+    // DEV-B703-03: one task later the element Lovelace replaced has detached
+    // — only then is its open dialog ours to take over.
+    if (this._warmVp && !this._warmRevivePending && this._warmReviveTimer === undefined) {
+      this._warmRevivePending = true;
+      this._warmReviveTimer = window.setTimeout(() => this._warmReviveDialog(), 0);
+    }
+    // If no card survived the document event, the placement tombstone still
+    // carries its detach age and enters the same shared controller here.
+    if (this._warmLongReturn) this._beginResumeSettle();
+    this._warmLongReturn = false;
+    // Transient navigation/resume fields are intentionally not reactive. A
+    // same-element reconnect keeps Lit's previous DOM, so explicitly repaint
+    // after clearing those fields in disconnectedCallback.
+    if (this._read.pending) void this._loadFromServer();
+    this.requestUpdate();
+  }
+
+  private _buttonTabFocusRelease: (() => void) | null = null;
+
+  public disconnectedCallback(): void {
+    this._floorPreparation?.dispose(); this._floorPreparation = null; this._floorPendingMode = null;
+    this._startupFloor?.dispose(); this._startupFloor = undefined; this._startupStyle = undefined;
+    clearTimeout(this._startupReadProbe); this._startupReadProbe = undefined;
+    clearTimeout(this._startupFadeTimer); this._startupFadeTimer = undefined;
+    this._clearStartupAssetWait();
+    this._startupPresentation = this._startupSource = undefined;
+    this._buttonTabFocusRelease?.();
+    this._buttonTabFocusRelease = null;
+    ++this._headerActionsRequest; this._headerActionsMenu?.dispose();
+    for (const type of ['pointerenter', 'focus', 'pointerdown'])
+      this.renderRoot.removeEventListener(type, this._preloadEditorIntent, true);
+    this._stairsView.disconnect();
+    this._kioskNavigation.reset(false);
+    this._rotationMotion.cancel();
+    this._planHassProjection?.invalidate(); this._planHassMemo = null;
+    this._deviceRosterState.clear();
+    window.removeEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
+    window.removeEventListener('storage', this._rotationChanged);
+    ++this._routeKioskGeneration; this._routeKioskPending = null;
+    for (const runtime of this._vacRt.values()) {
+      if (runtime.livePending) { runtime.gap = true; runtime.livePending.gap = true; }
+    }
+    this._kioskCarousel.dispose();
+    for (const type of ['pointerdown', 'pointermove', 'click', 'wheel', 'keydown']) this.removeEventListener(
+      type, this._kioskInteraction, true,
+    );
+    this._warmMarker.cancel();
+    this._backupImportIntent.cancel(false);
+    this._editorRuntime?.backupTransfer.dispose();
+    this._editorRuntime?.deviceStructure.retire(true);
+    this._backupImportDialog = null;
+    // Stop the independent kiosk timer before any teardown flush can mutate
+    // config/layout state or this detached instance can reload the document.
+    this._versionRecovery.disconnect();
+    // A same-element reconnect is a new lifecycle even when HA reuses the
+    // Connection object and the route/user strings happen to match (#543).
+    this._configReloadAuthority.invalidateLifecycle();
+    // Retire transport claims, but retain an interrupted load's demand (#1054).
+    const interruptedRead = this._read.pending || this._read.busy;
+    this._read.invalidate();
+    if (interruptedRead) this._read.defer();
+    this._loading = false;
+    this._layoutIO.retire(); this._devicePositionBusy = false;
+    this._liveRt?.dispose();
+    this._radarLive.stop();
+    this._editorRuntime?._disposeLiveEditor();
+    this._clearRoomFocus(true);
+    this._cancelDangerConfirm();
+    // HA normally changes the route before removing the old Lovelace tree.
+    // The explicit event covers routers that keep that tree connected for a
+    // beat; this fallback covers a direct remove after history navigation.
+    if (this._connectedPath && !this._ownsCurrentRoute()) {
+      this._leaveCardRoute();
+    }
+    window.removeEventListener('location-changed', this._onLocationChanged);
+    window.removeEventListener('popstate', this._onLocationChanged);
+    this._continuityUnsub?.();
+    this._continuityUnsub = undefined;
+    this._languageFailureUnsub?.();
+    this._languageFailureUnsub = undefined;
+    this._motionMedia?.removeEventListener?.('change', this._onMotionChange);
+    this._motionMedia = undefined;
+    this._deviceHitScrollUnsub?.(); this._deviceHitScrollUnsub = undefined; this._pinchZoomDirty = false;
+    if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
+    if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
+    this._warmModeRequest = 0; ++this._editorModeRequest; ++this._markerDialogRequest; ++this._settingsDialogRequest; ++this._viewDeviceMenuRequest;
+    if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._viewRuntimes.disconnect();
+    this._dayCycleClockKey = '';
+    if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
+    this._bootSettling = false;
+    for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
+    window.removeEventListener('keydown', this._keyHandler);
+    window.removeEventListener('keydown', this._editorModifierHandler);
+    window.removeEventListener('keyup', this._editorModifierHandler);
+    this._deviceContacts?.clear();
+    window.removeEventListener('blur', this._onWindowBlur);
+    window.removeEventListener('pagehide', this._onWindowBlur);
+    window.removeEventListener('pointerup', this._onViewPointerTerminal, true);
+    window.removeEventListener('pointercancel', this._onViewPointerTerminal, true);
+    window.removeEventListener('lostpointercapture', this._onViewPointerTerminal, true);
+    // A tab drag holds window listeners for the length of the gesture. Losing
+    // the card mid-drag — Lovelace rebuilding its tree, the user leaving the
+    // view with the button still down — would leave them alive: the closure
+    // keeps this instance (and its config) from being collected, and the next
+    // pointerup anywhere on the page would make an invisible card write its
+    // order (review CODE-REVIEW-220-r2/r3, F1).
+    this._endTabDrag();
+    clearTimeout(this._tabSuppressClickTimer);
+    this._tabSuppressClickTimer = undefined;
+    this._tabSuppressClick = false;
+    // #813: a release that lands while detached never reaches the stage; a
+    // pointer kept here would turn the next press after a reattach into a pinch.
+    this._abandonViewInput();
+    this._sunFadeReset();
+    this._isoLight.clear();
+    clearTimeout(this._reloadRetry);
+    clearTimeout(this._loadRetryTimer);
+    this._loadRetryTimer = undefined; // a cleared id must not block a reschedule
+    this._planHostRelease?.(); this._planHostRelease = undefined;
+    this._driverRevision = -1;
+    this._signer.dispose();
+    clearTimeout(this._toastTimer);
+    this._toast = '';
+    this._toastPresentation.disconnect();
+    clearTimeout(this._slideTimer);
+    clearTimeout(this._editorRuntimeLoadingTimer);
+    this._editorRuntimeLoadingTimer = undefined;
+    this._editorRuntimeLoadingVisible = false;
+    this._modeTransition.dispose();
+    this._clearModePresentation(); this._modePresentation.dispose(); this._modeSceneSize = null;
+    this._modeGlowInputs = null;
+    this._modeProjectionSource = null; this._modeProjectionCrossing = false;
+    this._modeEditorInk.clear();
+    this._modeProjectionScene = null;
+    this._headerMotion.cancel();
+    this._cameraTransition.dispose();
+    this._zoomScaleActivity.dispose();
+    this._cameraTransitionFit = null;
+    this._modeTransitionVisual = null;
+    this._modeTransitionPreparing = false;
+    this._modeTransitionForceAtomic = false;
+    this._modeTransitionRequest++;
+    this._slideTimer = undefined;
+    // Navigation transitions are session-only and never survive a remount.
+    this._slide = '';
+    clearTimeout(this._bootTimer);
+    this._bootTimer = undefined; // AUD-1552-01: a cleared id must not block the reconnect watcher
+    clearTimeout(this._bootSoftTimer);
+    this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
+    this._cancelDeviceDrag();
+    window.removeEventListener('hashchange', this._onHashChange);
+    this._labsUnsub?.();
+    this._labsUnsub = undefined;
+    this._viewHold.cancel();
+    this._roViewport?.disconnect();
+    this._roViewport = undefined;
+    this._roHdr?.disconnect();
+    this._roHdr = undefined;
+    this._headerLeaseCleanup?.(); this._headerLeaseCleanup = undefined;
+    this._resizeTargets = undefined;
+    if (this._onWinResize) {
+      window.removeEventListener('resize', this._onWinResize);
+      this._onWinResize = undefined;
+    }
+    // Retire callbacks immediately; keep only event coverage for a masonry move.
+    // Events in the gap request a current paired read, never adopt detached data.
+    this._liveSyncReceivers.clear();
+    this._liveSyncGeneration++;
+    this._liveSyncAttempt = null;
+    clearTimeout(this._detachSubscriptionsTimer);
+    this._detachSubscriptionsTimer = window.setTimeout(() => {
+      this._detachSubscriptionsTimer = undefined;
+      this._retireLiveSyncSubscriptions();
+      if (this._loadOk) this._read.defer();
+    }, 2000);
+    clearTimeout(this._layoutSyncTimer);
+    clearTimeout(this._duplicateColumnTimer);
+    disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
+    // DEV-B703-03: the last thing this instance was showing, then the
+    // tombstone that lets exactly one successor adopt the open dialog.
+    // AUD-159B1-02: the snapshot runs while `_warmRevivePending` is still
+    // TRUE. An instance that never got to consume its predecessor's dialog
+    // has nothing of its own to record there, and the old order (clear the
+    // flag, then snapshot) had it write `dlg: null` over somebody else's
+    // unsaved draft — a second Lovelace rebuild inside one task destroyed
+    // the draft before the first successor could restore it. Now the draft
+    // simply travels down the chain until one of them lives long enough.
+    this._warmSnapshot();
+    this._warmRevivePending = false;
+    clearTimeout(this._warmReviveTimer);
+    this._warmReviveTimer = undefined;
+    this._warmRelease();
+    this._clearPlanSnapHover();
+    this._clearOpeningPlacement(true);
+    this._editorRuntime?._clearFurniturePreview();
+    // #369(д) r2-H1: the Shift listeners hold the runtime (and the card) in
+    // their closure — a disconnected card must not stay pinned to window.
+    this._editorRuntime?._furnShiftDetach();
+    this._touchContacts.clear(); this._roomGearTouchNavigation = false;
+    this._touchClickGuard.abandon();
+    this._resetDeviceHitState();
+    this._clearTransientHover(true);
+    this._cancelDevicePressFeedback();
+    this._pointerHoverObserver?.disconnect();
+    this._pointerHoverObserver = undefined;
+    this._pointerModality.disconnect();
+    this._editorSecondary?.reset();
+    // R1: the rAF is the only normal owner that clears this flag. Reset only
+    // after the disconnect snapshot (which must still skip unstable geometry),
+    // so a same-element reattach can start fresh instead of keeping the veil.
+    this._resumeSettling = false;
+    this._continuityHistory = [...this._continuityHistory, ...this._continuity.trace].slice(-80);
+    this._continuity.dispose();
+    this._continuityDisposed = true;
+    ledRelease(this); // #780 r1 M5: no retained LED cache after disconnect
+    super.disconnectedCallback();
+    this._editorRuntime?.cancelModeLayouts();
+  }
+
+  private _onKey(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this._vacFit) {
+      if (this._vacFit.busy) return;
+      this._vacFit = null;
+      this._showToast(this._t('vac.cal_cancelled'), 'vac.cal_cancelled');
+      e.stopPropagation();
+      return;
+    }
+    if (e.key === 'Escape') {
+      if (this._warmMarker.active) { this._warmMarker.cancel(); return; }
+      if (this._tapConfirm) { this._tapConfirm = null; return; }
+      if (this._vacCalConfirm) {
+        if (!this._vacCalConfirm.busy) this._vacCalConfirm = null;
+        return;
+      }
+      if (this._decorEraseConfirm) { this._decorEraseConfirm = null; return; }
+      if (this._openingInfo) { this._openingInfo = null; return; }
+      if (this._infoCard) { this._closeInfoCard(); return; }
+      if (this._rulesDialog) { this._rulesDialog = null; return; }
+      if (this._alignDialog) { this._alignDialog = null; return; }
+      if (this._backupImportDialog) { this._editorRuntime?._closeBackupImport(); return; }
+      if (this._backupExportDialog) { this._editorRuntime?._closeBackupExport(); return; }
+      if (this._pdfDialog) { this._pdfDialog = false; return; }
+      if (this._supportDialog) { void this._editorRuntime?._closeSupportDialog(); return; }
+      if (this._settingsDialog) { this._settingsDialog = null; return; }
+      if (this._summary?.closeDialogIfIdle()) return;
+      if (this._markerDialog) { void this._editorRuntimeOrThrow()._requestMarkerDialogClose(); return; }
+      if (this._deviceInbox) { this._deviceInbox = null; return; }
+      if (this._openingDialog) { this._editorRuntime?._closeOpeningDialog(); return; }
+      if (this._physicalDialog) { this._physicalDialog = null; return; }
+      if (this._backdropDialog) { this._backdropDialog = null; return; }
+      if (this._decorShapeDialog) { this._decorShapeDialog = null; return; }
+      if (this._decorTextDialog) { this._decorTextDialog = null; return; }
+      if (this._spaceDialog && !this._roomDialog) {
+        // same semantics as the dialog's Cancel: an import queue is abandoned
+        this._spaceDialog = null;
+        this._importQueue = [];
+        this._importTotal = 0;
+        return;
+      }
+      // A stair placement/transform owns Escape before its open tool tray or
+      // Properties selection; otherwise the later pointerup would still save.
+      if (this._editorRuntime?.stairs.dragging || this._editorRuntime?.stairs.live) {
+        if (this._editorRuntime.stairs.escape()) { e.preventDefault(); return; }
+      }
+      if (this._editorSecondary?.hasOpenGroup) {
+        e.preventDefault();
+        this._editorSecondary?.closeGroup(true);
+        return;
+      }
+    }
+    // At the window listener `target` may be retargeted to the card host by
+    // Shadow DOM. The composed path still contains the actual focused field.
+    const eventPath = e.composedPath?.() || [e.target];
+    const inField = eventPath.some((node: any) =>
+      node?.matches?.('input, textarea, select, [contenteditable="true"]'),
+    );
+    // The secondary toolbar is a focusable control surface, not the canvas.
+    // Delete/Backspace there must never fall through to the selected object.
+    const inEditorSecondary = eventPath.some((node: any) =>
+      node?.classList?.contains?.('editor-secondary') || node?.classList?.contains?.('hp-properties'));
+    if (!inField && e.key === 'Escape' && this._editorRuntime?.decorLine.active) {
+      e.preventDefault(); this._editorRuntime.decorLine.reset(); return;
+    }
+    if (!inField && this._editorRuntime?.properties.escape(e)) return;
+    const mod = e.ctrlKey || e.metaKey;
+    const key = e.key.toLowerCase();
+    // A Latin `key` names the shortcut the user actually pressed (including
+    // QWERTZ/AZERTY). For a non-Latin layout use the physical code fallback,
+    // so Russian «я» at KeyZ still works without making QWERTZ Ctrl+Z both
+    // Undo (`key=z`) and Redo (`code=KeyY`) at the same time.
+    const latinLetter = /^[a-z]$/.test(key);
+    const isZ = key === 'z' || (!latinLetter && e.code === 'KeyZ');
+    const isY = key === 'y' || (!latinLetter && e.code === 'KeyY');
+    const selectAll = key === 'a' || (!latinLetter && e.code === 'KeyA');
+    const selectFurniture = key === 'm' || (!latinLetter && e.code === 'KeyM');
+    const redo = mod && ((isZ && e.shiftKey) || isY);
+    const undo = mod && isZ && !e.shiftKey;
+    const screenArrow = e.key === 'ArrowLeft' ? [-this._gridPitch, 0]
+      : e.key === 'ArrowRight' ? [this._gridPitch, 0]
+        : e.key === 'ArrowUp' ? [0, -this._gridPitch]
+          : e.key === 'ArrowDown' ? [0, this._gridPitch] : null;
+    const arrow = screenArrow ? this._planScreenDelta(screenArrow[0], screenArrow[1]) : null;
+    if (arrow && this._mode !== 'decor' && this._editorRuntime?.keyboardNudge.handle(e, arrow[0], arrow[1])) {
+      e.preventDefault(); return;
+    }
+    if (this._mode === 'decor') {
+      if (mod && !e.altKey && !e.shiftKey && (selectAll || selectFurniture) && !inField
+        && !inEditorSecondary && !this._editorSecondaryDialogBlocked && !this._editorRuntime?.properties.colorPickerOpen && this._canEdit && !this._kiosk) {
+        e.preventDefault(); this._editorRuntime?._selectDecorShortcut(selectFurniture); return;
+      }
+      if ((undo || redo) && inField) return;
+      if (redo) { e.preventDefault(); this._redoGeometry(); return; }
+      if (undo) {
+        e.preventDefault();
+        if (this._decorDraft && !this._editorRuntime?.decorLine.active) { this._decorDraft = null; return; }
+        if (this._decorMove || this._dtDrag || this._editorRuntime?.backdropGesture.active) {
+          this._cancelDecorGesture();
+          return;
+        }
+        this._undoGeometry();
+        return;
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && this._decorSel && (this._editorRuntime?.properties.decorSelectionCount ?? 0) <= 1 &&
+          !inField && !inEditorSecondary) {
+        e.preventDefault();
+        this._decorDeleteSel();
+        return;
+      }
+      if (arrow && !e.defaultPrevented && !mod && !e.altKey && this._decorTool === 'select' && this._decorSel
+          && (this._editorRuntime?.properties.decorSelectionCount ?? 0) <= 1
+          && this._decorList.some((shape) => shape.id === this._decorSel)
+          && !this._decorDraft && !this._decorMove && !this._dtDrag && !this._editorRuntime?.backdropGesture.active
+          && !inField && !inEditorSecondary && !this._editorSecondaryDialogBlocked) {
+        e.preventDefault();
+        this._decorNudge(arrow[0], arrow[1]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (this._decorDraft) this._decorDraft = null;
+        else if (this._decorMove || this._dtDrag || this._editorRuntime?.backdropGesture.active) this._cancelDecorGesture();
+        else if (this._decorTool === 'furniture') {
+          this._editorRuntime?._clearFurniturePreview();
+          this._editorRuntime?._furnShiftDetach(); // #369(д) r2-H1
+          this._furnPalette = null;
+          this._furnCategory = null;
+          this._decorTool = 'select';
+        }
+        else if (this._decorSel) this._decorSel = null;
+        else if (this._decorTool !== 'select') this._decorTool = 'select';
+        else this._setMode('view');
+      }
+      return;
+    }
+    if (this._mode === 'devices') {
+      if ((undo || redo) && inField) return;
+      if (this._ledEditor?.key(e, undo)) { e.preventDefault(); return; }
+      if (redo) {
+        e.preventDefault();
+        this._redoDevicePosition();
+        return;
+      }
+      if (undo) {
+        e.preventDefault();
+        this._undoDevicePosition();
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (this._deviceDrag) this._cancelDeviceDrag();
+        else this._setMode('view');
+      }
+      return;
+    }
+    if (!this._markup) return;
+    if ((undo || redo) && inField) return; // keep native text-field history
+    if ((e.key === 'Delete' || e.key === 'Backspace')
+        && !inField && !inEditorSecondary && this._editorRuntime?.stairs.deleteSelected()) {
+      e.preventDefault(); return;
+    }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && this._physicalSel
+        && !inField && !inEditorSecondary) {
+      e.preventDefault();
+      this._deletePhysicalSelection();
+      return;
+    }
+    if (redo) {
+      e.preventDefault();
+      this._redoGeometry();
+      return;
+    }
+    if (undo) {
+      e.preventDefault();
+      if (this._editorRuntime?.stairs.undoActiveDrag()) return;
+      if (this._resize?.dragging) {
+        this._rszCancelDrag();
+        return;
+      }
+      if (this._wallFaceBatch) {
+        // The queue has not committed anything. Restore its terminal draft,
+        // then make Ctrl/Cmd+Z visibly remove that last accepted point.
+        this._roomDialogCancel();
+        if (this._activeWallChainId && this._path.length > 1) this._undoActiveWallPoint();
+        else this._undoPoint();
+        return;
+      }
+      // A crash-safe segment is a real geometry command, but Undo keeps the
+      // surviving draft active so the visible contract remains “one point back”.
+      if (this._tool === 'draw' && this._path.length) {
+        if (this._activeWallChainId && this._path.length > 1) this._undoActiveWallPoint();
+        else this._undoPoint();
+        return;
+      }
+      if (this._tool === 'split' && this._splitSel?.pts?.length) {
+        this._splitSel = { ...this._splitSel, pts: this._splitSel.pts.slice(0, -1) };
+        if (!this._splitSel.pts.length) this._cursorPt = null;
+        return;
+      }
+      this._undoGeometry();
+      return;
+    }
+    if (e.key !== 'Escape') return;
+    if (this._editorRuntime?._cancelOpeningDrag()) { e.preventDefault(); return; }
+    if (this._editorRuntime?.nodeMove?.cancel()) { e.preventDefault(); return; }
+    if (this._editorRuntime?.stairs.escape()) { e.preventDefault(); return; }
+    if (this._editorRuntime?.physicalGesture.drag || this._editorRuntime?.physicalGesture.rotation) {
+      e.preventDefault();
+      this._editorRuntime?.physicalGesture.cancel();
+      return;
+    }
+    if (this._roomDialog) {
+      e.preventDefault();
+      void this._editorRuntimeOrThrow()._requestRoomDialogClose();
+      return;
+    }
+    if (this._tool === 'draw' && this._path.length) {
+      e.preventDefault();
+      // Escape releases the active wall chain without making it destructive:
+      // Ctrl/Cmd+Z remains the one-point undo path (#294).  Reuse the exact
+      // finish transaction used by a tool change, but keep `draw` selected.
+      this._editorRuntimeOrThrow()._finishWallChainForNavigation(() => this._editorRuntimeOrThrow()._activateMarkupTool('select'));
+      return;
+    }
+    if (this._physicalSel) {
+      e.preventDefault();
+      this._physicalSel = null;
+      return;
+    }
+    if (this._tool === 'resize') {
+      e.preventDefault();
+      if (this._resize?.dragging) {
+        // Esc mid-drag: the immutable preview is simply discarded
+        this._rszCancelDrag();
+        return;
+      }
+      if (this._resize?.escapeIdle() === 'exit-tool') this._tool = 'draw';
+      this.requestUpdate();
+      return;
+    }
+    // Esc walks back out of merge/split: point by point, then the room pick,
+    // then the tool itself (back to the neutral draw tool)
+    if (this._tool === 'split') {
+      e.preventDefault();
+      if (this._splitSel?.pts?.length) {
+        this._splitSel = { ...this._splitSel, pts: this._splitSel.pts.slice(0, -1) };
+        if (!this._splitSel.pts.length) this._cursorPt = null;
+      } else if (this._splitSel) {
+        this._splitSel = null;
+      } else {
+        this._tool = 'draw';
+      }
+      return;
+    }
+    if (this._tool === 'merge') {
+      e.preventDefault();
+      if (this._mergeSel) this._mergeSel = null;
+      else this._tool = 'draw';
+      return;
+    }
+    if (this._wallDialog) {
+      e.preventDefault();
+      this._wallDialog = null;
+      return;
+    }
+    if (this._tool === 'opening' || this._tool === 'wallthick' || this._tool === 'delroom'
+        || this._tool === 'column') {
+      e.preventDefault();
+      if (this._tool === 'opening') this._clearOpeningPlacement(true);
+      this._tool = 'draw';
+      return;
+    }
+    e.preventDefault();
+    this._setMode('view');
+  }
+  /** Remove the last transient point or undo the terminal persisted wall. */
+  private _undoPoint(): void {
+    if (!this._path.length) return;
+    if (this._contourClosed) {
+      this._path = this._path.slice(0, -1);
+      this._closingWallCm = null;
+      return;
+    }
+    if (this._activeWallChainPartitionIds.length && this._path.length > 1) {
+      this._undoActiveWallPoint();
+      return;
+    }
+    this._path = this._path.slice(0, -1);
+  }
+
+  /** Undo one persisted wall while keeping the session-only chain coherent. */
+  private _undoActiveWallPoint(): void {
+    const chainId = this._activeWallChainId;
+    const ids = [...this._activeWallChainPartitionIds];
+    const terminalId = ids[ids.length - 1];
+    const terminal = this._spaceModel()?.partitions.find((item) => item.id === terminalId);
+    const terminalPoint = this._path[this._path.length - 1]?.slice();
+    const terminalCm = this._wallChainSegmentCms[ids.length - 1];
+    const start = this._path[0] ? [...this._path[0]] : null;
+    const nextPath = this._path.slice(0, -1).map((point) => [...point]);
+    const nextCms = this._wallChainSegmentCms.slice(0, -1);
+    const outcome = this._editorRuntimeOrThrow()._stepGeometryHistory('undo');
+    if (outcome === null) {
+      this._activeWallChainPartitionIds = [];
+      this._wallChainSegmentCms = [];
+      this._wallChainRedo = [];
+      this._path = start ? [start] : [];
+      return;
+    }
+    // #883: a temporary refusal keeps this ledger; an unfit step has already ended the chain.
+    if (outcome !== true) return;
+    this._activeWallChainId = chainId || `chain-${Date.now().toString(36)}`;
+    this._activeWallChainPartitionIds = ids.slice(0, -1);
+    this._path = nextPath.length ? nextPath : start ? [start] : [];
+    this._wallChainSegmentCms = nextCms;
+    if (terminal && terminalPoint) this._wallChainRedo.push({
+      id: terminal.id, point: terminalPoint, cm: terminalCm ?? terminal.cm,
+    });
+    this._clearPlanSnapHover();
+  }
+
+  public static async getConfigElement() {
+    await import('./editor');
+    return document.createElement('houseplan-card-editor');
+  }
+
+  public static getStubConfig(): Partial<CardConfig> {
+    return { type: 'custom:houseplan-card' };
+  }
+
+  /** Test hook (smokes): forget the warm re-mount memo — a cold page again.
+   *  `ttl` retunes WARM_REVIVE_MS so a smoke can watch the TTL expire without
+   *  standing still for ten seconds (AUD-159B1-03); omitted = back to 10 s. */
+  public static _warmBootReset(ttl?: number): void {
+    for (const list of warmBoot.values()) for (const s of list) clearTimeout(s.evict);
+    warmBoot.clear();
+    WARM_REVIVE_MS = ttl && ttl > 0 ? ttl : 10000;
+  }
+
+  /** Test hook (smokes): what the memo is holding — slots per key, and how
+   *  many of them still keep a dialog payload alive. */
+  public static _warmBootStats(): { keys: number; slots: number; dlgs: number; drafts: string[] } {
+    let slots = 0, dlgs = 0;
+    const drafts: string[] = [];
+    for (const list of warmBoot.values()) {
+      for (const s of list) {
+        slots++;
+        if (s.dlg) { dlgs++; drafts.push(s.dlg.kind); }
+      }
+    }
+    return { keys: warmBoot.size, slots, dlgs, drafts };
+  }
+
+  public setConfig(config: CardConfig): void {
+    const pendingConfigRead = this._read.pending || this._read.busy;
+    this._read.invalidate(); this._loading = false;
+    if (pendingConfigRead) this._read.defer();
+    this._configReloadAuthority.invalidateLifecycle();
+    const previousConfig = this._config;
+    const previousFixed = !!previousConfig
+      && Object.prototype.hasOwnProperty.call(previousConfig, 'floor');
+    this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
+    this._configureCardRotation();
+    const fixedChanged = previousFixed !== this._hasFixedFloor
+      || previousConfig?.floor !== this._config.floor;
+    if (fixedChanged) {
+      this._hashApplied = false;
+      this._navApplied = false;
+      this._warmVpArmed = false;
+    }
+    if (this._kiosk) this._booting = false; // kiosk: 100dvh, nothing to settle
+    if (!this._hasFixedFloor && config.default_floor) this._commitSpace(config.default_floor, true);
+    try {
+      this._zoomBySpace = JSON.parse(localStorage.getItem(LS_ZOOM) || '{}') || {};
+    } catch {
+      this._zoomBySpace = {};
+    }
+    this._labs = currentLabs();
+    if (!this._summary?.applyLocalScaleForCurrentIdentity()) try {
+      const ks = JSON.parse(localStorage.getItem(LS_KIOSK) || 'null');
+      this._kioskScale = { icon: clampScale(ks?.icon), font: clampScale(ks?.font) };
+    } catch { /* defaults */ }
+    // The global LS_CFG stays wire-compatible for the static card and rollback,
+    // but only a proven user/installation-scoped hint may paint before fresh IO.
+    this._restoreScopedFloorHint();
+    this._adoptInitialSpace(this._model, this._loadOk);
+    // HP-1551: the saved per-space zoom used to be applied only by
+    // _restoreZoom()'s rAF after the server round-trip, so the cached config
+    // painted its first frames at the default fit and the plan visibly
+    // jumped to the saved zoom. The zoom store is already in hand here —
+    // arm it BEFORE the first view computation, so the very first paint is
+    // already at the user's zoom.
+    if (this._mode === 'view' && !this._view) this._zoom = this._zoomBySpace[this._space] || 1;
+    // AUD-159B1-01: the memo is claimed by DOM slot, and Lovelace calls
+    // setConfig BEFORE it inserts the element — so the claim waits for
+    // connectedCallback (still before the first render, so nothing flashes).
+    // A setConfig on a card that is already attached (the editor's live
+    // preview) re-claims right here, because the config is part of the key.
+    if (this.isConnected) {
+      this._syncCycleTimer();
+      this._warmAdopt();
+      if (this._warmLongReturn) this._beginResumeSettle();
+      this._warmLongReturn = false;
+    }
+    this._syncVersionRecovery();
+    if (pendingConfigRead) queueMicrotask(() => {
+      if (this.isConnected && this._read.pending) void this._loadFromServer();
+    });
+  }
+
+  /**
+   * DEV-B703-01/03 + AUD-159B1-01: find the memo of the card that used to sit
+   * in THIS placement and step into it — the settled header height (no veil,
+   * synchronous reveal in the final geometry) and, when the slot is provably
+   * ours, the whole viewport. `_bootSoft` covers residual chrome drift with a
+   * glide instead of a snap.
+   */
+  private _warmAdopt(): void {
+    if (this._kiosk) return;
+    const key = warmBootKey(this._config);
+    if (this._warmKey === key && this._warmSlot) return; // already sitting in it
+    if (this._warmSlot) this._warmRelease(); // the config (or the window) changed under us
+    const place = this.parentNode;
+    const idx = this._warmIdx(place);
+    const list = warmBoot.get(key);
+    if (!list || !list.length) return; // cold page — the full protective boot
+    // the same element re-attached (Lovelace moves cards around): our own slot
+    // is waiting for us, and our live state is newer than anything in it
+    const mine = list.find((s) => s.owner === this._warmGen);
+    if (mine) {
+      this._warmLongReturn = !!mine.freed && Date.now() - mine.freed >= CONTINUITY_LONG_HIDDEN_MS;
+      clearTimeout(mine.evict); mine.evict = 0; mine.freed = 0; mine.live = true;
+      this._warmSlot = mine;
+      this._warmKey = key;
+      if (mine.frameFingerprint) this._continuity.adoptCompleteFrame(mine.frameFingerprint);
+      if (!this._devices.length && mine.devices?.length) this._devices = [...mine.devices];
+      return;
+    }
+    const { slot, sure } = warmMatch(list, this._warmGen, place, idx);
+    if (!slot) return;
+    this._warmLongReturn = !!slot.freed && Date.now() - slot.freed >= CONTINUITY_LONG_HIDDEN_MS;
+    this._booting = false;
+    this._hdrH = slot.hdrH;
+    this._bootSoft = true; // timer armed in connectedCallback...
+    if (this.isConnected) { // ...unless we are claiming while already attached
+      clearTimeout(this._bootSoftTimer);
+      this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
+    }
+    this._warmKey = key;
+    if (sure) {
+      clearTimeout(slot.evict); // the dialog is ours now, not the TTL's
+      slot.evict = 0;
+      slot.owner = this._warmGen;
+      slot.place = place ? new WeakRef(place) : null;
+      slot.idx = idx;
+      slot.live = true;
+      this._warmSlot = slot;
+      this._warmVp = slot.vp; // adopted below, once the model is in hand
+      if (slot.frameFingerprint) this._continuity.adoptCompleteFrame(slot.frameFingerprint);
+      if (!this._devices.length && slot.devices?.length) this._devices = [...slot.devices];
+      this._warmAdoptViewport(this._config!);
+    } else {
+      // Two identical cards on one view and no way to tell which slot is ours:
+      // the height is interchangeable (they settle at the same chrome), the
+      // viewport and the dialog belong to somebody and must not be guessed.
+      this._warmSlot = {
+        owner: this._warmGen, path: location.pathname,
+        place: place ? new WeakRef(place) : null, idx, live: true,
+        hdrH: slot.hdrH, stageH: slot.stageH, vp: null,
+        frameFingerprint: '', devices: null, dlg: null, freed: 0, evict: 0,
+      };
+      list.push(this._warmSlot);
+      this._warmTrim(list);
+    }
+  }
+
+  /** This element's position among its parent's children (-1 if unmounted). */
+  private _warmIdx(place: Node | null): number {
+    const kids = (place as Element | null)?.children;
+    if (!kids) return -1;
+    for (let i = 0; i < kids.length; i++) if (kids[i] === this) return i;
+    return -1;
+  }
+
+  /** Let go of the slot: the placement is still there, this instance is not. */
+  private _warmRelease(): void {
+    const s = this._warmSlot;
+    const key = this._warmKey;
+    this._warmSlot = null;
+    this._warmKey = null;
+    if (!s || !key) return;
+    s.freed = Date.now();
+    if (s.owner === this._warmGen) s.live = false;
+    this._warmScheduleEvict(s, key);
+  }
+
+  /** Drop the oldest slot that nobody is sitting in. */
+  private _warmTrim(list: WarmEntry[]): void {
+    while (list.length > WARM_MAX_SLOTS) {
+      const i = list.findIndex((s) => !s.live);
+      if (i < 0) break;
+      clearTimeout(list[i].evict);
+      list.splice(i, 1);
+    }
+  }
+
+  /**
+   * AUD-159B1-03: the TTL used to be a rule checked at revive time only, so a
+   * draft nobody came back for stayed reachable from module scope until the
+   * page reloaded — with the space dialog that means a whole plan file held as
+   * base64 (8 MiB allowed by the backend). Free the payload the moment it
+   * stops being revivable; the height and the viewport are bytes, they stay.
+   */
+  private _warmScheduleEvict(s: WarmEntry, key: string): void {
+    clearTimeout(s.evict);
+    if (!s.dlg && (!s.vp || s.vp.mode === 'view')) return;
+    const freed = s.freed;
+    const gen = s.owner;
+    s.evict = window.setTimeout(() => {
+      s.evict = 0;
+      if (s.freed !== freed || s.owner !== gen) return; // a successor took over
+      // the dialog is unrevivable now, whoever is sitting in the slot
+      s.dlg = null;
+      // Route events can arrive after Lovelace has detached the old tree. The
+      // TTL is the order-independent backstop: a stale editor viewport is
+      // never revived after the short technical-remount window.
+      s.vp = expiredWarmViewport(s.vp);
+      s.frameFingerprint = '';
+      // a slot nobody re-claimed is also what makes the NEXT claim ambiguous
+      const list = warmBoot.get(key);
+      if (!s.live && list && list.length > 1) {
+        const i = list.indexOf(s);
+        if (i >= 0) list.splice(i, 1);
+      }
+    }, WARM_REVIVE_MS + 250);
+  }
+
+  /**
+   * DEV-B703-03: put back the EXACT viewport of the instance Lovelace threw
+   * away — same space, same editor, same zoom and the same pan rect, so the
+   * re-mount is bit-for-bit the view that was on screen. Runs after the LS
+   * snapshot has restored the model (the space must exist) and after the
+   * LS_NAV/default_floor guesses, which it supersedes: the memo is the newer,
+   * finer-grained record of the very same intent. A `#space=` deep link is an
+   * EXPLICIT navigation and still wins.
+   */
+  private _warmAdoptViewport(config: CardConfig): void {
+    const vp = this._warmVp;
+    if (!vp || this._warmSlot?.path !== location.pathname) {
+      this._warmVp = null; this._warmViewportPending = null; this._warmCameraAdopted = false;
+      return;
+    }
+    const fixed = this._fixedFloorState();
+    // connectedCallback can claim the slot before HA supplies its scoped
+    // read authority. Absence of that model is not proof the floor was deleted.
+    if ((!this._model.length || fixed.kind === 'pending') && !this._loadOk) {
+      this._zoom = vp.zoom; this._view = vp.view ? { ...vp.view } : null;
+      this._warmViewportPending = 'adopt'; return;
+    }
+    if (this._hashApplied || !this._model.find((sp) => sp.id === vp.space)
+        || fixed.kind === 'valid' && fixed.id !== vp.space
+        || this._hasFixedFloor && fixed.kind !== 'valid') {
+      this._warmVp = null; this._warmViewportPending = null; this._warmCameraAdopted = false; // another space is on screen
+      return;
+    }
+    this._commitSpace(vp.space, true);
+    this._navApplied = true;
+    // A remounted card owns a fresh lazy-runtime instance. Keep View committed
+    // until that runtime has installed, then adopt the remembered editor
+    // atomically without rebuilding its camera through a View -> editor
+    // transition. A newer user command invalidates this request through the
+    // shared request counter.
+    const restoredMode = vp.mode !== 'view' && this._canEdit && !this._kiosk ? vp.mode : 'view';
+    this._adoptMode('view');
+    // AUD-159B6-04: the memo is the NEWER and MORE SPECIFIC record than the
+    // global LS nav — a neighbour card writing `mode=devices` into localStorage
+    // must not be replayed over this owner's viewport once can_write answers
+    // (it also broke the draft revival, whose guard compares the mode). So the
+    // pending intent is REPLACED here, never merely added to.
+    this._pendingNavMode = vp.mode !== 'view' && !this._canEdit && !this._kiosk ? vp.mode : null;
+    this._zoom = vp.zoom;
+    const projection = this._effectiveProjection();
+    const sameProjection = projection === vp.projection && this._isoEnabled === vp.activeLabsIso;
+    // Retain the memo's coordinate plane until the destination runtime is ready.
+    this._view = vp.view ? { ...vp.view } : null;
+    this._viewPlane = (vp.volumePlane ?? (vp.projection === 'iso' && vp.activeLabsIso
+      && this._spaceDisplayForRender().showBorders)) ? isoCameraFor(0) : null;
+    this._viewPlaneKnown = true;
+    this._viewFrame = vp.frame ?? null; this._viewFrameSpace = vp.space;
+    // Keep the trusted source plane until a real preview/full render adopts
+    // its destination. Missing lazy geometry is not a Flat presentation.
+    this._screenRecoveredCamera = !!this._view && this._usesScreenCamera;
+    this._floorRestoreZoom = null;
+    this._warmCameraAdopted = true;
+    this._warmViewportPending = !sameProjection ? 'projection' : null;
+    this._projectionShown = projection;
+    this._tool = normalizeMarkupTool(vp.tool);
+    this._decorTool = vp.decorTool;
+    // Local display preference owns hidden visibility, not a stale warm viewport.
+    if (this._showFar !== vp.showFar) { this._showFar = vp.showFar; this._frame = null; }
+    this._selId = vp.selId;
+    this._resize?.restoreSelection(vp.rszSel);
+    this._decorSel = vp.decorSel;
+    this._warmVpArmed = true; // _loadFromServer must not re-centre this
+    if (restoredMode !== 'view') void this._requestMode(restoredMode, false, true);
+  }
+
+  /** Merge a patch into this card's warm entry. `create` is false everywhere
+   *  but the boot settle: a memo may only be BORN from a settled geometry. */
+  private _warmPatch(patch: Partial<WarmEntry>, create = false): void {
+    if (this._kiosk) return;
+    // Temporary View chrome while an editor is being revived must not replace
+    // the very viewport/stage/header tuple that revival is still consuming.
+    if (this._warmViewportPending || this._warmModeRequest || this._floorPendingMode?.warm) return;
+    const k = warmBootKey(this._config);
+    // The key carries the window size and the view path: once either changes
+    // under a LIVE card, its slot describes a geometry that is no longer on
+    // screen, and the next mount at the new size must boot cold (documented
+    // in docs/WARM-REMOUNT.md §1) — so write nothing rather than lie.
+    if (this._warmSlot && this._warmKey !== k) return;
+    if (!this._warmSlot) {
+      if (!create) return;
+      const place = this.parentNode;
+      this._warmKey = k;
+      this._warmSlot = {
+        owner: this._warmGen, path: location.pathname,
+        place: place ? new WeakRef(place) : null, idx: this._warmIdx(place), live: true,
+        hdrH: this._hdrH, stageH: 0, vp: null,
+        frameFingerprint: '', devices: null, dlg: null, freed: 0, evict: 0,
+      };
+      const list = warmBoot.get(k) || [];
+      list.push(this._warmSlot);
+      warmBoot.set(k, list);
+      this._warmTrim(list);
+      while (warmBoot.size > WARM_MAX_KEYS) {
+        const oldest = warmBoot.keys().next().value; // Map keeps insertion order
+        if (oldest === undefined || oldest === k) break;
+        for (const s of warmBoot.get(oldest) || []) clearTimeout(s.evict);
+        warmBoot.delete(oldest);
+      }
+    }
+    Object.assign(this._warmSlot, patch);
+  }
+
+  private _warmViewportState(): WarmViewport {
+    const projection = this._effectiveProjection();
+    return {
+      space: this._space,
+      mode: this._mode,
+      projection,
+      volumePlane: !!this._viewPlane,
+      frame: this._viewFrame ? {...this._viewFrame, base: [...this._viewFrame.base],
+        display: {...this._viewFrame.display}, size: [...this._viewFrame.size]} : undefined,
+      activeLabsIso: this._isoEnabled,
+      logicalCenter: this._logicalViewCenter(),
+      zoom: this._zoom,
+      view: this._view ? { ...this._view } : null,
+      snap: null,
+      tool: this._tool,
+      decorTool: this._decorTool,
+      showHidden: this._showHidden,
+      showFar: this._showFar,
+      selId: this._selId,
+      rszSel: this._resize?.selectedRoomId,
+      decorSel: this._decorSel,
+    };
+  }
+
+  /**
+   * The open dialog, or null. Deliberately null (docs/WARM-REMOUNT.md §4) for:
+   *  • «Выровнять всё по сетке» and the room MERGE confirmation — a modal whose
+   *    only content is "press OK to rewrite your plan". Resurrecting a
+   *    confirmation next to a user who has just come back to the tab is how a
+   *    destructive write gets a blind click; both are one click to reopen.
+   *  • a tap confirmation — it carries a closure over the DEAD instance.
+   *  • the floor-import wizard — `updated()` reopens it by itself while the
+   *    config is still empty; reviving it too would double the queue.
+   *  • ANY dialog with a save/upload in flight (`busy`) — the new instance
+   *    cannot know whether the write landed, and offering Save again invites a
+   *    second one. The config reload shows the truth instead.
+   * Precedence follows the Esc stack: the topmost dialog is the one that is
+   * "open" as far as the user is concerned.
+   */
+  private _warmDialogState(): WarmDialog | null {
+    const at = (kind: WarmDialogKind, data: WarmDialog['data']): WarmDialog => ({
+      kind, space: this._space, mode: this._mode, data, baseline: warmDialogBaseline(this, kind),
+    });
+    if (this._tapConfirm || this._alignDialog || this._mergeDialog || this._importDialog
+        || this._backupExportDialog || this._backupImportDialog) return null;
+    if (this._openingInfo) return at('openingInfo', (this._openingInfo as any).id);
+    if (this._infoCard) return at('info', this._infoCard.id);
+    for (const kind of ['rules', 'settings', 'marker'] as const) {
+      const data = this[`_${kind}Dialog`];
+      if (data) return data.busy ? null : at(kind, data);
+    }
+    for (const kind of ['opening', 'backdrop', 'decorShape', 'decorText'] as const) {
+      const data = this[`_${kind}Dialog`];
+      if (data) return at(kind, data);
+    }
+    if (this._roomDialog) return at('room', this._editorRuntimeOrThrow().warmRoomDraft());
+    if (this._spaceDialog) return this._spaceDialog.busy ? null : at('space', this._spaceDialog);
+    return null;
+  }
+
+  /** Mirror the live viewport (and the open dialog) into the memo. Called from
+   *  every `updated()`: whatever the previous instance last PAINTED is what the
+   *  next one must open at — and a dialog closed with Esc/Cancel/Save writes
+   *  `dlg: null` here on the very next render, so it can never come back. */
+  private _warmSnapshot(): void {
+    // A candidate may already exist in fields while the DOM still presents the
+    // previous complete frame. Never pair those fields with the old frame
+    // fingerprint in the placement memo; the successful paint barrier writes
+    // the coherent snapshot from its completion callback.
+    if (this._booting || this._kiosk || this._continuity.state !== 'steady') return;
+    const patch: Partial<WarmEntry> = {
+      vp: this._warmViewportState(),
+      frameFingerprint: this._continuity.frameFingerprint,
+      devices: this._devices,
+    };
+    // do not overwrite the snapshot we are about to revive FROM
+    if (!this._warmRevivePending) patch.dlg = this._warmDialogState();
+    // AUD-159B1-01: the placement is re-measured from the live DOM, so a card
+    // that was moved (a sibling added above it) still names its own slot.
+    if (this.isConnected && this._warmSlot?.owner === this._warmGen) {
+      const place = this.parentNode;
+      patch.place = place ? new WeakRef(place) : null;
+      patch.idx = this._warmIdx(place);
+    }
+    this._warmPatch(patch);
+  }
+
+  /**
+   * Re-open the dialog the dead instance had open. Not done in setConfig:
+   * Lovelace may still be holding the old element there, and a live owner's
+   * dialog must not be stolen. One task later the previous instance has
+   * detached (`freed`) and the snapshot is ours to consume — exactly once.
+   */
+  private _warmReviveDialog(settle = false, discard = false): void { // settle (#756): the editor is not coming — no more waiting
+    const e = this._warmSlot; // AUD-159B1-01: OUR slot, never a neighbour's
+    clearTimeout(this._warmReviveTimer); this._warmReviveTimer = undefined;
+    if (!e || !e.dlg) {
+      this._warmRevivePending = false;
+      return;
+    }
+    const d = e.dlg;
+    const freed = e.freed;
+    if (!settle && !discard && d.kind === 'marker' && d.mode === 'view' && !this._loadOk) {
+      this._warmRevivePending = true;
+      return; // Validate identity and server write rights before loading its renderer.
+    }
+    if (!settle && d.mode !== this._mode && d.mode !== 'view' && this._warmVp?.mode === d.mode
+        && !this._editorRuntime) {
+      // The dialog belongs to the editor viewport that is waiting for its lazy
+      // runtime or for write access. Do not consume it against the temporary
+      // View; the warm tail (src/warm-mode-adoption.ts) revives it right after
+      // the mode is committed — at once or from `_resumePendingNavMode`.
+      this._warmRevivePending = true;
+      return;
+    }
+    this._warmRevivePending = false;
+    e.dlg = null; e.freed = 0; // consume-once: no zombie on the third mount
+    clearTimeout(e.evict); e.evict = 0;
+    if (discard || !freed || Date.now() - freed > WARM_REVIVE_MS) return; // owner alive, gone long ago, or newer user intent
+    if (d.space !== this._space || d.mode !== this._mode) return;  // never in another space/editor
+    switch (d.kind) {
+      case 'space': this._spaceDialog = { ...d.data, busy: false, savedBusy: false }; break;
+      case 'marker':
+        if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
+        if (d.data.devId && !this._devices.some((device) => device.id === d.data.devId)) return;
+        if (!this._editorRuntime) { this._warmMarker.begin({ ...d, context: this._configWriteContext.claim() }); return; }
+        this._markerDialog = { ...d.data, busy: false }; break;
+      case 'settings': this._settingsDialog = { ...d.data, busy: false }; this._reviveMoonStatus(); break;
+      case 'rules': this._rulesDialog = { ...d.data, busy: false }; break;
+      case 'opening': this._openingDialog = { ...d.data }; break;
+      case 'backdrop': this._backdropDialog = { ...d.data }; break;
+      case 'decorShape': this._decorShapeDialog = { ...d.data }; break;
+      case 'decorText': {
+        this._decorTextDialog = { ...d.data };
+        const end = String(this._decorTextDialog?.text ?? '').length;
+        this._decorTextSelection = { start: end, end };
+        break;
+      }
+      case 'room': {
+        const r = d.data;
+        this._roomEditId = r.editId; this._roomFill = r.fill;
+        this._roomCustomFill = r.customFill || null; this._roomNameColor = r.nameColor || null;
+        this._roomTempMin = r.tempMin || '';
+        this._roomTempMax = r.tempMax || ''; this._roomTempSrc = r.tempSrc;
+        this._roomHumSrc = r.humSrc; this._roomCo2Src = r.co2Src || '';
+        this._roomSunTransparent = r.sunTransparent === true;
+        this._roomSrcOpen = r.srcOpen; this._roomSrcFilter = r.srcFilter;
+        this._roomNameScale = r.nameScale; this._roomLabelScale = r.labelScale;
+        this._areaSel = r.areaSel; this._nameSel = r.nameSel;
+        this._pendingSplit = r.pendingSplit; this._wallFaceBatch = r.wallFaceBatch || null;
+        this._path = r.path;
+        if (this._wallFaceBatch) {
+          this._activeWallChainId = `chain-${Date.now().toString(36)}`;
+          this._activeWallChainPartitionIds = [...this._wallFaceBatch.activePartitionIds];
+          this._wallChainSegmentCms = [...this._wallFaceBatch.activeCms];
+        }
+        this._roomDialog = true;
+        break;
+      }
+      // info popups are re-resolved by id: the config may have been reloaded
+      // under us, and a card rendered from a stale object is a lie
+      case 'info': {
+        const dev = this._devices.find((x) => x.id === d.data);
+        if (dev) this._infoCard = dev;
+        break;
+      }
+      case 'openingInfo': {
+        const op = (this._curSpaceCfg?.openings || []).find((x: any) => x.id === d.data);
+        if (op) { this._openingInfoSpace = d.space; this._openingInfo = op; }
+        break;
+      }
+    }
+    restoreWarmDialogBaseline(this, d.kind, d.baseline);
+    this.requestUpdate();
+  }
+
+  /** Save a snapshot of the config+layout to localStorage for an instant start. */
+  private _cacheSnapshot(): void {
+    if (!this._serverCfg) return;
+    try {
+      this._virtualLights = reconcileVirtualLightSnapshot(
+        this._virtualLights, this._serverCfg, this._cfgRev,
+      );
+      // Only server-confirmed bodies enter the cold display hint (#890).
+      const snapshot = this._adoption.snapshot(virtualLightWire(this._virtualLights));
+      if (snapshot) {
+        localStorage.setItem(LS_CFG, JSON.stringify(snapshot));
+        const scope = this.planHost.cacheScope;
+        if (scope) localStorage.setItem(`houseplan_scoped_hint_v1:${cacheSha256(scope)}`,
+          JSON.stringify({ version: 1, scope, snapshot }));
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private _restoreScopedFloorHint(): void {
+    const scope = this.planHost.cacheScope, environment = this.planHost.environment;
+    if (!scope || !environment.ready || !environment.permissions.read || this._serverCfg) return;
+    // A cold instance may show its own scoped hint before the first read.
+    // A live instance changing owners must not re-seed the just-quarantined
+    // model from disk before that new owner's config/layout pair arrives.
+    if (this._floorCompleteAuthority && this._floorCompleteAuthority !== this.planHost.authorityKey) return;
+    try {
+      const text = localStorage.getItem(`houseplan_scoped_hint_v1:${cacheSha256(scope)}`);
+      if (!text || text.length > 16 * 1024 ** 2) return;
+      const hint = JSON.parse(text);
+      if (hint?.version !== 1 || hint.scope !== scope || !this._adoption.restoreCached(hint.snapshot)) return;
+      this._seedDecorStyle(this._serverCfg); this._cfgEpoch++;
+      this._virtualLights = virtualLightSnapshot(hint.snapshot.virtual_lights, this._cfgRev);
+      this._serverStorage = true;
+      this._adoptInitialSpace(this._model, false);
+    } catch { /* missing/private/legacy unscoped data is a one-time miss */ }
+  }
+
+  /** In-place editor mutations can precede the deferred write by 500ms. The
+   * adoption's remembered fingerprint alone does not prove the current body.
+   * Only the publication barrier pays these hashes, never a render/pull read. */
+  private _floorSourceAccepted(): boolean {
+    const snapshot = this._adoption.snapshot(null);
+    return this._loadOk && this._mode === 'view' && !this._cfgWriting && !this._writesPending
+      && !this._saveConfigDebounced.pending() && !this._persistLayout.pending() && !!snapshot
+      && contentFingerprint(this._serverCfg) === snapshot.config_fingerprint
+      && contentFingerprint(this._layout) === snapshot.layout_fingerprint;
+  }
+
+  private _publishFloorCacheAfterPaint(): void {
+    const runtime = this._floorPreparation;
+    if (!runtime || runtime.pending || runtime.failed || this._floorPublishing || !this._loadOk || this._mode !== 'view'
+      || !runtime.publicationNeeded && !this._floorPendingMode
+      || this._booting || this._bootFading || this._modeTransitionBusy || this._continuity.state !== 'steady'
+      || this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)
+      || !this._continuity.hasCompleteFrame || !this._continuityAssetsReady()) return;
+    const raw = this._curSpaceCfg, space = this._space, owner = this.planHost.authorityKey;
+    const selection = this._floorCacheSelection(); if (!selection) return;
+    const paintToken = runtime.paintToken;
+    const current = () => {
+      return this.isConnected && this.planHost.authorityKey === owner && this._space === space && this._mode === 'view'
+        && runtime === this._floorPreparation && runtime.paintToken === paintToken
+        && this._loadOk && !this._modeTransitionBusy
+        && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)
+        && !this._rotationMotion.running
+        && !this._settingsDialog && !this._spaceDialog && !this._markerDialog && !this._roomDialog
+        && this._curSpaceCfg === raw;
+    };
+    const accepted = () => current() && this._floorSourceAccepted();
+    this._floorPublishing = true;
+    void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+      .then(() => {
+        if (!current() || runtime !== this._floorPreparation || runtime.pending || runtime.failed) return;
+        if (runtime.publicationNeeded && accepted()) {
+          const base = this._baseVb();
+          const fit = { frame: this._frameOf(), base, display: this._displayBase(base), projection: this._renderProjection, rotation: this._rotation };
+          const projectedFloor = this._isoFloorCamera?.perspective ? this._renderIsoScene?.floor.footprintPath : undefined;
+          const preview = captureFloorPreview(this.renderRoot, fit, selection.fitKey,
+            diagnostic => { this._floorPreviewDiagnostic = diagnostic; }, projectedFloor);
+          if (preview) {
+            runtime.publish(preview, accepted);
+            if (selection.scope) this._warmPatch({ floorPreview: {
+              scope: selection.scope, floor: space, key: selection.persistentKey, preview,
+            } });
+          }
+        }
+        if (this._floorPendingMode) {
+          const intent = this._floorPendingMode; this._floorPendingMode = null;
+          if (intent.resume) intent.resume();
+          else if (this._canEdit && !this._kiosk) this._setMode(intent.mode, intent.animate, intent.warm);
+        }
+      }).finally(() => { this._floorPublishing = false;
+        if (this.isConnected && runtime === this._floorPreparation
+          && (paintToken !== runtime.paintToken || raw !== this._curSpaceCfg)) this.requestUpdate(); });
+  }
+
+  private _beginContinuityCandidate(
+    reason: string,
+    dataReady: boolean,
+    recoveryReason: 'plan' | 'connection' | 'stage-size' | 'asset' = 'plan',
+  ): number {
+    // Cold boot remains under the existing boot veil; #73 governs a frame
+    // that has already been complete at least once.
+    if (this._booting && !this._continuity.hasCompleteFrame) return this._continuity.token;
+    this._continuityDataReady = dataReady;
+    this._stagedToken = -1;
+    this._resumeSettling = true;
+    return this._continuity.beginCandidate(reason, recoveryReason);
+  }
+
+  private _continuityStageValid(): boolean {
+    const stage = this._stageEl;
+    return !!stage && stage.clientWidth > 0 && stage.clientHeight > 0;
+  }
+
+  private _versionReloadSafetySnapshot() {
+    return cardVersionReloadSafetySnapshot(this as unknown as VersionRecoveryCardPort);
+  }
+
+  private _continuityAssetsReady(): boolean {
+    // An empty/transient model is not a complete plan frame. Returning true
+    // here used to let the previous DOM be blessed while the replacement
+    // config was still being projected.
+    if (!this._model.length) return false;
+    if (this._furnitureVolumePending()) return false;
+    const space = this._model.length ? this._spaceModel() : null;
+    return !space?.bg?.href || this._signer.isReady(this.planHost, space.bg.href);
+  }
+
+  private _initialSpaceSelection(
+    models: SpaceModel[], authoritative = this._loadOk,
+  ): InitialSpaceSelection {
+    const fixed = this._fixedFloorState(models, authoritative);
+    if (authoritative && !this._recoveryViewportTaken && this.isConnected && this.hass && this._kiosk) {
+      this._recoveryViewportTaken = true;
+      try {
+        const key = this._kioskRecoveryKey();
+        const memo = takeKioskViewport(this.ownerDocument.defaultView?.sessionStorage ?? null, key);
+        this._recoveryViewport = key && memo ? { ...memo, key } : null;
+      } catch { /* storage unavailable */ }
+    }
+    if (fixed.kind === 'valid') return { id: fixed.id, source: 'fixed' };
+    if (fixed.kind !== 'absent') return { id: null, source: 'none' };
+    const recoverySpace = this._recoveryViewport?.space;
+    const restoreRecovery = this._kiosk && this._recoveryViewport?.key === this._kioskRecoveryKey()
+      && nonCarouselKiosk(this._externalScreen.cycle ?? this._config?.cycle, false, models.length)
+      && !!recoverySpace && models.some((space) => space.id === recoverySpace);
+    return resolveInitialSpace({
+      spaceIds: models.map((space) => space.id),
+      hashSpace: this._hashSpace(),
+      acceptHash: !this._hashApplied,
+      currentSpace: restoreRecovery ? recoverySpace : this._space,
+      preserveCurrent: restoreRecovery || this._hashApplied || this._navApplied || this._warmVpArmed,
+      savedSpace: this._savedNav()?.space,
+      defaultSpace: this._config?.default_floor,
+    });
+  }
+
+  /** Install one exact raw-space authority before any spatial candidate paints. */
+  private _adoptInitialSpace(
+    models: SpaceModel[], authoritative = this._loadOk,
+  ): InitialSpaceSelection {
+    const selection = this._initialSpaceSelection(models, authoritative);
+    if (!selection.id) return selection;
+    this._commitSpace(selection.id, true);
+    if (selection.source === 'hash') this._hashApplied = true;
+    if (selection.source === 'saved') this._navApplied = true;
+    return selection;
+  }
+
+  private _candidateBackdrop(config: ServerConfig | null, spaceId = this._space): string {
+    const models = spaceModels(config);
+    const fixed = this._fixedFloorState(models, true);
+    if (fixed.kind !== 'absent' && fixed.kind !== 'valid') return '';
+    const preferred = this._initialSpaceSelection(models, true).id
+      || (models.some((space) => space.id === spaceId) ? spaceId : models[0]?.id);
+    return models.find((space) => space.id === preferred)?.bg?.href || '';
+  }
+
+  private _visualFrameFingerprint(): string {
+    const stage = this._stageEl;
+    const visual = this._modeTransitionVisual;
+    const size = this._modeTransitionBusy || this._modeSceneFinishPending
+      ? visual ? [visual.stageWidth, visual.stageHeight] : this._lastValidStageSize ?? [0, 0]
+      : stage ? [stage.clientWidth, stage.clientHeight] : [0, 0];
+    return visualFrameFingerprint([
+      this._cfgRev,
+      this._adoption.currentConfigFingerprint(),
+      this._layoutRev,
+      this._adoption.currentLayoutFingerprint(),
+      this._space,
+      this._mode,
+      this._view,
+      size,
+      this._glowScreenBlend ? 'screen' : 'normal',
+      this._presentation.themes?.darkMode ?? this._presentation.themes?.default_theme ?? '',
+    ]);
+  }
+
+  /** Called from updated(): one token owns at most one paint barrier. */
+  private _settleContinuityFrame(externalUpdate: boolean): void {
+    if (this._usesScreenCamera && (this._screenReferencePending || !this._screenReference)) return;
+    if (this._booting) return;
+    // A complete steady frame has no candidate to settle. Reading its size
+    // after Lit writes would force layout only to return below anyway.
+    if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') return;
+    if (!this._continuityStageValid()) return;
+    if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
+      // Until its protected assets arrive the scene cannot be cached or
+      // serve as the complete-frame fallback for a later recovery.
+      if (this._continuityAssetsReady()) {
+        this._renderSnapshotAt = Date.now();
+        this._continuity.markCompleteFrame(this._visualFrameFingerprint());
+      }
+      return;
+    }
+    if (!this._continuityDataReady) return;
+    if (!['holding', 'offline-stale', 'overlay-pending', 'overlay-visible', 'candidate-ready']
+      .includes(this._continuity.state)) return;
+    const token = this._continuity.token;
+    if (this._candidateDeviceSnapshot
+        && this._candidateDeviceSnapshot !== this._visibleDeviceSnapshot
+        && this._stagedToken !== token) {
+      this._stagedToken = token;
+      this.requestUpdate();
+      return;
+    }
+    if (!this._continuity.canAttemptPaint(externalUpdate, this._continuityAssetsReady())) return;
+    if (!this._continuity.candidateReady(token)) return;
+    void this._continuity.commitAfterPaint(token, {
+      updateComplete: () => this.updateComplete,
+      stageValid: () => this.isConnected && this._continuityStageValid(),
+      assetsReady: () => this._continuityAssetsReady(),
+      frameFingerprint: () => this._visualFrameFingerprint(),
+    }).then((committed) => {
+      if (!committed || token !== this._continuity.token) {
+        // Matching staged data belongs to the adopted geometry, even when
+        // paint times out. No automatic retry or old-snapshot fallback (#824).
+        return;
+      }
+      this._resumeSettling = false;
+      this._renderSnapshotAt = Date.now();
+      if (this._candidateDeviceSnapshot) this._visibleDeviceSnapshot = this._candidateDeviceSnapshot;
+      this._candidateDeviceSnapshot = null;
+      this._stagedToken = -1;
+      this._warmSnapshot();
+    });
+  }
+
+  private _onBackdropLoaded(raw: string, paintedUrl?: string): void {
+    this._signer.markLoaded(this.planHost, raw, paintedUrl);
+    this._continuity.note('asset-ready');
+    this._continuity.resetPaint();
+    if (this._continuity.state !== 'steady') this.requestUpdate();
+  }
+
+  private _retryContinuity = (): void => {
+    this._continuityDataReady = false;
+    this._continuity.retry(this._continuity.recoveryReason || 'plan');
+    if (!this._loading) void this._loadFromServer();
+  };
+
+  /** Only authoritative, loaded content may offer the empty-plan entry. */
+  private get _emptyViewSpaceId(): string | null {
+    if (this._mode !== 'view' || !this._loadOk || this._loading
+        || this._booting || this._bootFading || this._modeTransitionBusy
+        || this._continuity.state !== 'steady') return null;
+    const space = this._serverCfg?.spaces.find((item) => item.id === this._space);
+    if (!space || !selectSpaceModelById(this._model, this._space)
+        || spaceHasContent(space, this._devices, this._markers)) return null;
+    return space.id;
+  }
+
+  private _renderEmptyViewSpace(): TemplateResult | typeof nothing {
+    const spaceId = this._emptyViewSpaceId;
+    if (!spaceId) return nothing;
+    return html`<div class="empty-plan hpf-empty-state hpf-empty-state-overlay" data-hp="empty-plan" role="status">
+      <span>${this._t('empty.plan_prompt')}</span>
+      ${this._canEdit && !this._kiosk ? html`<button class="btn on" data-hp="empty-plan-edit"
+        @pointerdown=${(event: Event) => event.stopPropagation()}
+        @pointerup=${(event: Event) => event.stopPropagation()}
+        @click=${(event: Event) => {
+          event.stopPropagation();
+          if (this._emptyViewSpaceId === spaceId && this._canEdit && !this._kiosk) this._setMode('plan');
+        }}>${this._t('empty.plan_editor')}</button>` : nothing}
+    </div>`;
+  }
+
+  private _renderRecoveryOverlay(): TemplateResult | typeof nothing {
+    if (!this._continuity.overlayVisible && this._continuity.state !== 'recovery-error') return nothing;
+    const connection = this._continuity.recoveryReason === 'connection';
+    return html`<div class="recoveryoverlay hpf-empty-state hpf-empty-state-overlay phase-${this._continuity.overlayPhase}"
+      role="status" aria-live="polite" aria-atomic="true"
+      @pointerdown=${(event: Event) => event.stopPropagation()}
+      @click=${(event: Event) => event.stopPropagation()}
+      @wheel=${(event: Event) => event.stopPropagation()}>
+        <ha-icon icon="mdi:home-sync-outline"></ha-icon>
+        <span>${this._t(connection ? 'continuity.restore_connection' : 'continuity.restore_plan')}</span>
+        ${this._continuity.state === 'recovery-error'
+          ? html`<button class="btn on" @click=${this._retryContinuity}>${this._t('continuity.retry')}</button>`
+          : nothing}
+      </div>`;
+  }
+
+  private _kioskRecoveryKey(): string | null {
+    return kioskPlacementKey(this, location.pathname + location.search, contentFingerprint(this._config), this.hass?.user?.id || '');
+  }
+  private _restoreKioskViewport(): boolean {
+    const memo = this._recoveryViewport;
+    if (!memo || memo.key !== this._kioskRecoveryKey() || !this._kiosk || this._mode !== 'view' || memo.space !== this._space
+        || !this._model.some((space) => space.id === memo.space)
+        || !nonCarouselKiosk(this._externalScreen.cycle ?? this._config?.cycle, this._hasFixedFloor, this._model.length)) {
+      this._recoveryViewport = null;
+      return false;
+    }
+    this._floorRestoreZoom = null;
+    this._zoom = memo.zoom; this._view = { ...memo.view };
+    this._screenRecoveredCamera = this._hasScreenProfile;
+    // Keep the exact camera until both the real stage and its destination
+    // projection exist. Consuming the memo on a temporary Flat shell lets a
+    // late ISO handoff mistake it for a cold fit and replace the promised view.
+    const stage = this._stageEl;
+    if (!this._loadOk || !this._floorCacheSelection() || !this._ensureFloorPreparation() || this._floorPassive
+      || this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)
+      || !stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return true;
+    this._recoveryViewport = null;
+    this._applyView(memo.zoom, memo.view.x + memo.view.w / 2, memo.view.y + memo.view.h / 2);
+    return true;
+  }
+  /** One patchable seam shared by trusted manual and guarded automatic reload. */
+  private _reloadDocument(automatic = false): void {
+    if (this._kiosk && this._mode === 'view' && this._view
+        && nonCarouselKiosk(this._externalScreen.cycle ?? this._config?.cycle, this._hasFixedFloor, this._model.length)) {
+      let saved = false;
+      try { saved = saveKioskViewport(this.ownerDocument.defaultView?.sessionStorage ?? null,
+        this._kioskRecoveryKey(), { space: this._space, zoom: this._zoom, view: this._view }); } catch { /* storage unavailable */ }
+      // Auto recovery must not silently throw away a camera it promised to keep.
+      if (automatic && !saved) throw new Error('Kiosk camera recovery storage unavailable');
+    }
+    this.ownerDocument.defaultView?.location.reload();
+  }
+
+  private _renderVersionBanner() {
+    return renderVersionBanner(this as unknown as VersionRecoveryCardPort, this._versionRecovery);
+  }
+
+  private _renderEditorRuntimeLoading(): TemplateResult | typeof nothing {
+    if (!this._editorRuntimeLoadingVisible) return nothing;
+    return html`<div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite"
+      aria-label=${this._t('editor.loading_aria')}>
+        <ha-icon icon="mdi:loading"></ha-icon>
+        <span>${this._t('editor.loading')}</span>
+      </div>`;
+  }
+
+  /** Redacted lifecycle diagnostics used by the deterministic sampler. */
+  public houseplanContinuityTrace(): readonly import('./visual-continuity').ContinuityTraceEvent[] {
+    return [...this._continuityHistory, ...this._continuity.trace].slice(-80)
+      .map((event) => ({ ...event, ...(event.stage ? { stage: [...event.stage] as [number, number] } : {}) }));
+  }
+
+  public getCardSize(): number {
+    return 12;
+  }
+
+  public getGridOptions(): { columns: 'full'; rows: number; min_rows: number } { return { columns: 'full', rows: 10, min_rows: 6 }; }
+
+  // ================= MODEL RESOLUTION (server configuration) =================
+
+  /** Whether a server configuration with spaces exists (otherwise — onboarding). */
+  private get _norm(): boolean {
+    return !!(this._serverCfg && this._serverCfg.spaces.length);
+  }
+
+  /** Spaces in render units (NORM_W × NORM_W — the canvas is square). */
+  /** Bumped by every structural config mutation — the model/geometry cache key (audit L1). */
+  private _cfgEpoch = 0;
+  /** Exact settings-only Area lifecycle replacement which may reuse geometry. */
+  private _cfgEpochPreservedConfig: ServerConfig | null = null;
+  private _terminalFrame: 0 | 1 | 2 = 0; // 1=restored cancel, 2=deferred HA
+  private _modelCache: { key: string; model: SpaceModel[] } | null = null;
+  private readonly _spaceModels = new DemandSpaceModels();
+  private readonly _cfgPass = new ConfigFingerprintPass(); // #725: one fingerprint per willUpdate→render pass
+  private _emptySpaceStateActive = false;
+  private _decorSnapCache: {
+    epoch: number; space: string; height: number; exclude: string; geometry: SnapGeometry;
+  } | null = null;
+  /** Last unsaved marker projection; invalidated by the complete dialog draft. */
+  private _markerPreviewMemo: { key: string; device: DevItem | null } | null = null;
+  private _markerPreviewDevicesMemo: {
+    base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[];
+  } | null = null;
+
+  /** Cheap structural fingerprint of the config (audit L1 cache key). */
+  private _cfgFingerprint(): string {
+    const sp = this._serverCfg?.spaces || [];
+    let s = sp.length + ':';
+    for (const x of sp as any[]) {
+      s += (x.id || '') + ',' + (x.plan_aspect || '') + ',' + (x.plan_url || '').length + ','
+        // the backdrop transform is geometry: without it in the key a drag of
+        // the picture would leave the memoized model (and the content frame
+        // built from it) showing the old rectangle (docs/DECOR-EDITOR.md §3.2)
+        + (x.plan_x ?? '') + ',' + (x.plan_y ?? '') + ',' + (x.plan_scale ?? '') + ','
+        + (x.plan_scale_x ?? '') + ',' + (x.plan_scale_y ?? '') + ',' + (x.plan_angle ?? '') + ',' + (x.plan_opacity ?? '') + ','
+        + (x.rooms?.length || 0) + ',' + (x.openings?.length || 0) + ',' + (x.decor?.length || 0) + ';';
+      for (const r of x.rooms || []) {
+        // O(1) geometry roll-up per room: the count alone said nothing about
+        // where the room actually is, so a moved rectangle or a dragged first/
+        // last vertex looked identical (HP-1454-04). The epoch remains the
+        // primary signal — this is the belt for a mutation that forgot to bump it.
+        const p0 = r.poly?.[0], pn = r.poly?.[r.poly.length - 1];
+        s += (r.poly?.length || 0) + '.' + (r.id || '') + '.' + (r.open_to || []).join('+') + '.'
+          + (r.area || '') + '.' + JSON.stringify(r.settings || 0) + '.'
+          + (r.x ?? '') + ',' + (r.y ?? '') + ',' + (r.w ?? '') + ',' + (r.h ?? '') + ','
+          + (p0 ? p0[0] + '/' + p0[1] : '') + ',' + (pn ? pn[0] + '/' + pn[1] : '') + ';';
+      }
+    }
+    return s;
+  }
+
+  private get _model(): SpaceModel[] {
+    if (!this._serverCfg) return [];
+    // In-place mutations mean the epoch can lag, so the key also carries the
+    // config's structural fingerprint. #725: a pass remembers the whole key; a kept
+    // fingerprint glued anew on every read measured slower in 2.5D than no memo.
+    const key = this._cfgPass.read(this._cfgEpoch, this._serverCfg, () => this._cfgEpoch + '|' + this._cfgFingerprint());
+    if (this._modelCache && this._modelCache.key === key) return this._modelCache.model;
+    const built = this._buildModel();
+    this._modelCache = { key, model: built };
+    return built;
+  }
+
+  private _buildModel(): SpaceModel[] {
+    if (!this._serverCfg) return [];
+    // HP-1550-01: the model renders the preview overlay, not the raw config
+    // ONE model builder for both cards. This used to be a hand-copied twin of
+    // spaceModels(), and the twin missed the legacy-store fallbacks the shared
+    // one gained (safeViewBox, normRect) — the same broken store rendered fine
+    // in the static card and as viewBox="0 0 0 0" here (HP-1503-01). The only
+    // difference this card needs is the url: raw on purpose, because the model
+    // is memoized on the config fingerprint, so a signed url baked in here
+    // would freeze BEFORE the signature arrives and the plan would never load
+    // (bug found 2026-07-27). _display() is called at render time instead.
+    const cfg = this._renderCfg!;
+    return this._spaceModels.read(cfg);
+  }
+
+  private _spaceModel(): SpaceModel | undefined {
+    return this._hasFixedFloor
+      ? selectSpaceModelById(this._model, this._space)
+      : selectActiveSpaceModel(this._model, this._space);
+  }
+
+  private _spaceModelById(id: string | null | undefined): SpaceModel | undefined {
+    return selectSpaceModelById(this._model, id);
+  }
+
+  /** Abort every space-bound transaction once the authoritative plan is empty. */
+  private _syncEmptySpaceState(): void {
+    const empty = !!this._serverCfg && this._serverCfg.spaces.length === 0;
+    if (!empty) {
+      this._emptySpaceStateActive = false;
+      return;
+    }
+    if (this._emptySpaceStateActive) return;
+    this._emptySpaceStateActive = true;
+    this._clearRoomFocus(true);
+
+    for (const pointerId of this._pointers.keys()) {
+      for (const node of this.renderRoot.querySelectorAll<HTMLElement>('*')) {
+        try {
+          if (node.hasPointerCapture?.(pointerId)) node.releasePointerCapture(pointerId);
+        } catch {
+          // A pointer may already have ended between the registry tick and cleanup.
+        }
+      }
+    }
+    this._pointers.clear();
+    this._panStart = null;
+    this._panLock = null;
+    this._pinchStart = null;
+    this._swipeStart = null;
+    this._drag = null;
+    this._deviceDrag = null;
+    this._resetDeviceHitState();
+    this._rlResize = null;
+    this._vacFit = null;
+    this._compassDrag = false;
+    this._cancelModeTransition(false);
+    this._mode = 'view';
+    this._clearGeometryGesture();
+    this._geometryHistory.clear();
+    this._devicePositionHistory.clear();
+    this._tip = null;
+    this._hoverRoom = null;
+    this._openingInfo = null;
+    this._closeInfoCard();
+    this._deviceInbox = null;
+    this._deviceInboxReturn = null;
+    this._markerDialog = null;
+    this._physicalDialog = null;
+    this._backdropDialog = null;
+    this._decorShapeDialog = null;
+    this._decorTextDialog = null;
+    this._roomDialog = false;
+    if (this._spaceDialog?.mode === 'edit') this._spaceDialog = null;
+    this._editorSecondary?.closeForNavigation();
+    this._saveConfigDebounced.cancel();
+    this._frame = null;
+    this._planSnapGeometryCache = null;
+    this._hiddenWallDiagnosticCache = null;
+    this._decorSnapCache = null;
+    this._commitSpace('', true);
+  }
+
+  private get _areaToSpace(): Record<string, { space: string; room: RoomCfg }> {
+    const map: Record<string, { space: string; room: RoomCfg }> = {};
+    for (const s of this._model) for (const r of s.rooms) if (r.area) map[r.area] = { space: s.id, room: r };
+    return map;
+  }
+
+  private get _settings(): ServerConfig['settings'] {
+    return this._serverCfg?.settings || {};
+  }
+
+  /** Local display intent, independent of saved visibility and HA lifecycle. */
+  private _showHidden = false;
+  private readonly _hiddenDevicePreference = new HiddenDevicePreference();
+  private readonly _hiddenDeviceRoster = new HiddenDeviceRoster<DevItem>();
+  private get _displayDevices(): readonly DevItem[] {
+    const devices = this._hiddenDeviceRoster.read(this._devices, this._showHidden, this._cfgEpoch);
+    const c = this.planHost.capabilities;
+    return c.devices && c.virtualDevices ? devices : devices.filter(device =>
+      device.bindingKind === 'virtual' || device.marker?.binding === 'virtual' ? c.virtualDevices : c.devices);
+  }
+
+  private get _showAll(): boolean {
+    return this._showHidden;
+  }
+
+  private _setShowHidden(shown: boolean, remember = true): void {
+    if (remember && !cardInteractionIdleSnapshot(this as unknown as VersionRecoveryCardPort).gesturesIdle) return;
+    if (remember) this._hiddenDevicePreference.set(shown, hiddenDeviceStorage());
+    if (shown === this._showHidden) return;
+    const view = (remember || this._continuity.hasCompleteFrame) && this._spaceModel()
+      ? { ...this._cameraView(this._baseVb()) } : null;
+    this._showHidden = shown;
+    // Roster identity invalidates the frame while preserving editor-only growth.
+    this._capturedSeq = -1; this._deviceInboxMemo = null;
+    this._clearPointerHover(); this._tapConfirm = null; this._cancelDevicePressFeedback();
+    if (this._infoCard && !this._displayDevices.some(d => d.id === this._infoCard!.id && !d.hidden)) this._closeInfoCard();
+    if (view) {
+      this._view = view;
+      this._zoom = fitView(this._baseVb(), this._stageAspect()).w / view.w;
+    }
+    this._syncActivityRuntime(); this.requestUpdate();
+  }
+
+  /**
+   * The seeder (docs/FILTERING.md): materialise the filter into explicit
+   * hidden flags. Runs after every device rebuild on a client that may write;
+   * idempotent — a device with ANY marker is never revisited, so an unticked
+   * checkbox (a marker with hidden: false) is re-seed protection. Also
+   * removes freshly hidden ids from the red-dot list: a dot on an invisible
+   * device would wait forever.
+   */
+  private _seedHiddenDevices(): void {
+    if (!this.planHost.capabilities.devices) return;
+    // Cached config is paint-only until the authoritative config+layout pair
+    // arrives. Seeding against that stale snapshot could overwrite newer
+    // server filtering state during a slow cold start.
+    if (!this._loadOk || !this._serverCfg || !this._norm || !this._canEdit) return;
+    const cfg = this._serverCfg;
+    const bindings = seedHiddenBindings({
+      hass: this.hass,
+      registry: this._haRegistry,
+      areaToSpace: Object.fromEntries(
+        Object.entries(this._areaToSpace).map(([a, v]) => [a, v.space]),
+      ),
+      markers: this._markers,
+      settings: this._settings,
+      excluded: this._excluded,
+      firstSpaceId: this._model[0]?.id || '',
+      iconRules: this._iconRules,
+    });
+    if (!bindings.length && cfg.settings?.filter_seeded) return;
+    cfg.markers = cfg.markers || [];
+    const hiddenIds: string[] = [];
+    for (const b of bindings) {
+      const id = 'h' + b.slice(b.indexOf(':') + 1);
+      cfg.markers.push({ id, binding: b, hidden: true });
+      hiddenIds.push(b.slice(b.indexOf(':') + 1));
+    }
+    const st = { ...(cfg.settings || {}), filter_seeded: true } as any;
+    delete st.show_all; // the shared toggle retires with the runtime filter
+    if (hiddenIds.length && Array.isArray(st.new_device_ids)) {
+      st.new_device_ids = st.new_device_ids.filter((x: string) => !hiddenIds.includes(x));
+    }
+    cfg.settings = st;
+    this._regSignature = '';
+    this._maybeRebuildDevices();
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  /** Compiled icon rules: instance settings override the built-in defaults. */
+  private get _iconRules(): CompiledIconRule[] | undefined {
+    const custom = this._settings.icon_rules;
+    if (!custom || !Array.isArray(custom) || !custom.length) return undefined;
+    const src = JSON.stringify(custom);
+    if (src !== this._rulesCompiledSrc) {
+      this._rulesCompiledSrc = src;
+      this._rulesCompiled = compileIconRules(custom);
+    }
+    return this._rulesCompiled;
+  }
+
+  /** Global fill palette (config.settings.fill_colors over the defaults). */
+  private get _fillColors(): FillColors {
+    return fillColorsOf(this._settings);
+  }
+
+  private get _excluded(): ReadonlySet<string> {
+    return effectiveExcludedIntegrations(this._settings); // #44: single resolver
+  }
+
+  /** Replace only Area lifecycle settings without invalidating room geometry. */
+  private _setAreaLifecycleConfig(next: ServerConfig): void {
+    this._cfgEpochPreservedConfig = next;
+    this._serverCfg = next;
+  }
+
+  protected willUpdate(changed: PropertyValues): void {
+    // A phase-only commit keeps common scene parts. Every ordinary update,
+    // accepted HA/config/layout change, or floor change invalidates this reuse.
+    if (this._modeSceneRefreshRequested || (!this._modeTransitionBusy && !this._modeSceneFinishPending)
+      || ['planEnvironmentRevision', '_config', '_serverCfg', '_cfgRev', '_cfgEpoch', '_layoutRev', '_layout', '_space']
+          .some(key => changed.has(key)))
+      this._modeSceneRevision++;
+    this._modeSceneRefreshRequested = false;
+    this._configureCardRotation();
+    this._warmMarker.reconcile();
+    if (changed.has('_serverCfg') || changed.has('_space') || changed.has('_openingInfo')) this._syncOpeningInfo();
+    this._viewRuntimes.reconcile();
+    this._cfgPass.begin(); this._isoProjectionSnapshot = null; this._isoFirstFrame.prepare(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this._presentation.themes)); this._syncVolumetricSetting(); this._summary?.willUpdate();
+    // `_serverCfg` is the root of every geometry cache. Keep the epoch
+    // invariant local to that reactive assignment so imports, reconnects and
+    // demo harnesses cannot accidentally reuse an older config object's data.
+    // #126's provenance/new-device write is one exact exception. A second safe
+    // case is an immutable top-level settings/markers replacement that keeps
+    // the SAME spaces array: no room, wall, opening or decor input can have
+    // changed, so rebuilding every room and structural cache only to toggle
+    // the installation-wide 2.5D setting is pure waste (#649 release gate).
+    // A deserialised server response owns a new spaces array and stays conservative.
+    if (changed.has('_serverCfg')) {
+      const before = changed.get('_serverCfg') as ServerConfig | null | undefined;
+      const preserveGeometry = this._cfgEpochPreservedConfig === this._serverCfg
+        || preservesSpaceGeometry(before, this._serverCfg);
+      this._cfgEpochPreservedConfig = null;
+      if (!preserveGeometry) this._cfgEpoch++;
+      this._renderLife.invalidate();
+    }
+    if (this.panelHost && this._routeKiosk.enabled) this._adoptInitialSpace(this._model, this._loadOk);
+    this._consumePlanEnvironment();
+    this._syncEmptySpaceState();
+    // #417: losing the only renderable space while a decision is pending must
+    // settle it before render() clears hp-confirm with `nothing`.
+    if (this._dangerConfirm && (
+      this._dangerConfirmMissingSpace() || this._syncDangerConfirmLocaleGate() === 'warm'
+    )) {
+      this._cancelDangerConfirm();
+    }
+    if (changed.has('_space')) this._syncActivityRuntime();
+    if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
+      this._continuity.refreshCompleteFrame(this._visualFrameFingerprint());
+    }
+    const hiddenKey = hiddenDevicePreferenceKey(this);
+    if (hiddenKey !== this._hiddenDevicePreference.address) {
+      this._setShowHidden(this._hiddenDevicePreference.sync(hiddenKey, hiddenDeviceStorage()), false);
+    }
+    this._captureRenderDeviceSnapshot();
+  }
+  protected updated(changed: PropertyValues): void {
+    this._cfgPass.run(() => this._updatedModeReadScope(changed));
+  }
+  private _updatedModeReadScope(changed: PropertyValues): void {
+    if (this._floorPreparation?.failed) {
+      this._syncPlanViewportObservers();
+      this._stageEl?.removeAttribute('inert');
+      if (this._tip || this._hoverRoom) this._clearTransientHover(true);
+      return;
+    }
+    this._updateStartupFloor();
+    if (this._floorPreparation?.pending || this._floorPassive) {
+      this._syncPlanViewportObservers();
+      this._summary?.updated();
+      if (this._floorPreparation?.preview) {
+        // The first observer delivery can precede L1. Reuse the ordinary
+        // measured camera once the fit packet arrives; do not paint a square
+        // provisional aspect on a narrow/quarter-turned stage.
+        const size = this._lastValidStageSize;
+        const stage = this._stageEl;
+        if (!this._startupStyle?.value && !this._usesScreenCamera && stage && (!size
+          || Math.abs(size[0] - stage.clientWidth) > .5 || Math.abs(size[1] - stage.clientHeight) > .5)) this._refitView();
+        this._syncScreenCamera();
+        const next = this._lastValidStageSize;
+        if (next && (!size || next[0] !== size[0] || next[1] !== size[1])) this.requestUpdate();
+      }
+      this._syncFloorPreviewCamera();
+      this._stageEl?.setAttribute('inert', '');
+      if (this._tip || this._hoverRoom) this._clearTransientHover(true);
+      const runtime = this._floorPreparation, token = runtime?.paintToken;
+      if (this._floorPassive && runtime && token) void this.updateComplete.then(() =>
+        new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+        .then(() => { if (this._floorPassive && runtime === this._floorPreparation
+          && this.renderRoot.querySelector('[data-hp-cache-preview]')) runtime.markPreviewPaint(token); });
+      return;
+    }
+    if (this._warmViewportPending === 'projection' && this._renderProjection === this._desiredProjection
+      && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) {
+      this._warmViewportPending = null; this._floorRestoreZoom = null; this._rezoom();
+    }
+    if (this._renderProjection === this._desiredProjection
+      && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) this._warmCameraAdopted = false;
+    if (!this._floorPaintObserving && this._mode === 'view') {
+      const runtime = this._floorPreparation, token = runtime?.paintToken, space = this._space, owner = this.planHost.authorityKey;
+      this._floorPaintObserving = true;
+      void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+        .then(() => { if (this.isConnected && runtime === this._floorPreparation && token === runtime?.paintToken && space === this._space
+          && owner === this.planHost.authorityKey && !this._booting && !this._bootFading
+          && this._continuity.state === 'steady' && this._continuity.hasCompleteFrame && this._continuityAssetsReady()) runtime?.markPaint(this._loadOk); })
+        .finally(() => { this._floorPaintObserving = false;
+          if (this.isConnected && runtime === this._floorPreparation && token !== runtime?.paintToken) this.requestUpdate(); });
+    }
+    this._publishFloorCacheAfterPaint();
+    this._isoLight.present(this._isoAuthoredScene());
+    this._modePresentationNodes.clear();
+    this._modePresentation.adoptRenderedStyles();
+    this._syncModeRoomHooks();
+    this._syncModeMarkerInput();
+    this._syncFlatMarkerGeometry();
+    this._stairsView.updated();
+    this._toastPresentation.refresh();
+    if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
+    this._syncCycleTimer();
+    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this._presentation.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); if (!this._modeProjectionSource && !this._modeTransitionPreparing) { if (this._liveRt) this._liveRt.commit(); else commitHouseplanViewport(this); }
+    if (!this._modeTransitionBusy) this._editorRuntime?._commitLiveEditor();
+    if (!this._modeTransitionBusy) {
+      this._editorRuntime?.prepareModeScene();
+      this._liveRt?.syncContacts();
+    }
+    this._pruneDevicePressFeedback();
+    this._syncDayCycleClock();
+    this._syncRadarLive();
+    // A bare kiosk has no boot veil. Its empty shell without a model is not a
+    // presented camera that a later ISO runtime should physically re-encode.
+    if (this._spaceModel() && !this._booting && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime))
+      this._projectionShown = this._renderProjection;
+    this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
+    // Decor selection cannot exist before the lazy editor runtime is ready.
+    if (this._editorRuntime) this._dtMeasure();
+    const stage = this._syncPlanViewportObservers();
+    this._syncScreenCamera();
+    if (!this._usesScreenCamera && stage && !this._view) this._refitView();
+    this._editorSecondary?.afterRender();
+    this._settleContinuityFrame(!changed.has('_continuityEpoch') || changed.size > 1);
+    this._rememberPresentedFlatRotation();
+    // onboarding: on an empty server config, open the space dialog right away
+    if (
+      this._serverStorage &&
+      this._loadOk &&
+      this._canManageConfiguration && !this._kiosk &&
+      this._model.length === 0 &&
+      !this._spaceDialog &&
+      !this._importDialog &&
+      !this._backupImportDialog &&
+      !this._backupImportIntent.loading &&
+      !this._onboardingShown
+    ) {
+      this._onboardingShown = true;
+      const floors = floorsOf(this.hass);
+      if (floors.length) {
+        this._importDialog = { floors: floors.map((f) => ({ ...f, checked: true })) };
+      } else {
+        this._openSpaceDialog('create');
+      }
+    }
+    if (this._modeTransition.state && this._modeTransitionVisual)
+      this._paintModePresentation(this._modeTransitionVisual);
+    this._modeSceneFinishPending = false;
+    this._editorRuntime?.scheduleModeLayouts();
+  }
+
+  private _syncPlanViewportObservers(): HTMLElement | null {
+    const stage = this._stageEl;
+    const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
+    if (!this._floorPreparation?.pending && !this._floorPassive && this._recoveryViewport) this._restoreKioskViewport();
+    // A mounted authority reload can replace the stage without disconnecting
+    // the card. Retire the old element lease before binding the new surface.
+    if (this._resizeTargets?.stage !== stage || this._resizeTargets?.header !== hdr) {
+      this._roViewport?.disconnect(); this._roViewport = undefined;
+      this._roHdr?.disconnect(); this._roHdr = undefined;
+      this._headerLeaseCleanup?.(); this._headerLeaseCleanup = undefined;
+      if (this._onWinResize) window.removeEventListener('resize', this._onWinResize);
+      this._onWinResize = undefined;
+      this._gestureStage = null;
+      this._resizeTargets = { stage, header: hdr };
+    }
+    if (this._kiosk && this._roHdr) {
+      this._roHdr.disconnect(); this._roHdr = undefined;
+      this._headerLeaseCleanup?.(); this._headerLeaseCleanup = undefined;
+      if (this._onWinResize) window.removeEventListener('resize', this._onWinResize);
+      this._onWinResize = undefined;
+    }
+    if (stage && !this._roViewport) {
+      const ownsViewport = () => this.isConnected && this._roViewport === observer && stage === this._stageEl;
+      const observer = this._roViewport = new ResizeObserver(() => {
+        if (!ownsViewport()) return;
+        this._gestureStage = null;
+        this._invalidateDeviceHitGeometry();
+        this._refitView();
+        if (this._startupStyle?.value) this.requestUpdate();
+        requestAnimationFrame(() => { if (ownsViewport()) this._summary?.resized(); });
+      });
+      this._roViewport.observe(stage);
+    }
+    if (stage && this._booting && !this._bootTimer) this._bootWatch();
+    // The stage fills the rest of the viewport. What sits above it inside the
+    // CARD depends on the mode — the editor bars used to be billed against a
+    // hard-coded 118px, so entering an editor pushed the plan down by the
+    // difference. Measure our own chrome (stage top relative to the card) and
+    // allow a BOUNDED amount for what the dashboard puts above us (HA's
+    // toolbar). The first version used the absolute document coordinate here:
+    // put anything tall before the card and the "header budget" swallowed the
+    // whole viewport, leaving a 0px stage (HP-1500-02). Content above the card
+    // is the dashboard's business — it scrolls; it is not header.
+    if (hdr && stage && !this._roHdr && !this._kiosk) {
+      let headerWidth = headerContentWidth(getComputedStyle(hdr));
+      let frame = 0;
+      const ownsHeader = () => this.isConnected && this._roHdr === observer && stage === this._stageEl;
+      const measure = () => {
+        if (!ownsHeader() || this._modeTransition.active) return;
+        const head = hdr.querySelector(':scope > .head') as HTMLElement | null;
+        let compact = this._compactSpaces;
+        const wasCollapsed = this._panelHeaderChoice.phase === 5;
+        if (head && headerWidth > 0) {
+          const previous = this._panelHeaderChoice;
+          const active = (this.renderRoot as ShadowRoot).activeElement;
+          const available = panelHeaderWidth(head);
+          const choice = this._panelHeaderMemo.resolve(observer, this._panelHeaderContentKey(head), available,
+            () => measurePanelHeader(hdr, head, available, this._panelHeaderSpaces, this._mode));
+          this._panelHeaderChoice = choice;
+          applyPanelHeaderChoice(hdr, choice);
+          compact = choice.phase >= 3;
+          if (previous.phase !== choice.phase || previous.phone !== choice.phone || compact !== this._compactSpaces)
+            this._retainPanelHeaderFocus(head, active, ownsHeader);
+        }
+        if (compact && !this._spaceSelectLoad && !customElements.get('hp-settings-select')) {
+          this._spaceSelectLoad = import('./hp-settings-select').then(() => {
+            if (ownsHeader()) { this.requestUpdate(); schedule(); }
+          }).catch(() => { this._spaceSelectLoad = null; });
+        }
+        if (compact !== this._compactSpaces || wasCollapsed !== (this._panelHeaderChoice.phase === 5)) {
+          this._compactSpaces = compact; this.requestUpdate();
+          void this.updateComplete.then(() => {
+            if (ownsHeader()) schedule();
+          });
+          return;
+        }
+        if (compact && !customElements.get('hp-settings-select')) return;
+        const t = measuredCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight); if (t === null) return;
+        if (t >= 0 && t !== this._hdrH) this._hdrH = t;
+        void this.updateComplete.then(() => requestAnimationFrame(() => {
+          if (!ownsHeader() || this._booting || this._kiosk
+              || this._modeTransitionBusy || this._modeTransitionPreparing
+              || t !== this._hdrH || stage.clientWidth <= 0 || stage.clientHeight <= 0) return;
+          const measured = measuredCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight);
+          if (measured === t) this._warmPatch({ hdrH: t, stageH: stage.clientHeight,
+            ownHdrH: hdr.getBoundingClientRect().height });
+        }));
+      };
+      const schedule = () => {
+        if (!ownsHeader() || frame) return;
+        frame = requestAnimationFrame(() => { frame = 0; measure(); });
+      };
+      const observer = this._roHdr = new ResizeObserver((entries) => {
+        const entry = entries.find(value => value.target === hdr);
+        if (entry) headerWidth = entry.contentRect.width;
+        if (this._containerOwnedHeight || entry) schedule();
+      });
+      observer.observe(hdr); observer.observe(stage);
+      this._measureHeaderNow = measure;
+      this._onWinResize = schedule; window.addEventListener('resize', schedule);
+      const fonts = hdr.ownerDocument.fonts;
+      const fontsChanged = () => { if (ownsHeader()) { this._modeHeaderTypography = null; this._modeChromeEpoch++; this._panelHeaderMemo.invalidate(); schedule(); } };
+      if (fonts) {
+        fonts.addEventListener('loadingdone', fontsChanged);
+        void fonts.ready.then(fontsChanged);
+      }
+      this._headerLeaseCleanup = () => {
+        this._measureHeaderNow = undefined;
+        this._modeHeaderTypography = null;
+        if (frame) cancelAnimationFrame(frame);
+        if (this._headerFocusFrame !== undefined) cancelAnimationFrame(this._headerFocusFrame);
+        this._headerFocusFrame = undefined;
+        fonts?.removeEventListener('loadingdone', fontsChanged);
+        this._panelHeaderMemo.clear(); this._panelHeaderObservedContent = '';
+      };
+      measure();
+    }
+    if (!this._kiosk && hdr) {
+      const head = hdr.querySelector(':scope > .head') as HTMLElement | null;
+      if (head) {
+        const content = this._panelHeaderContentKey(head);
+        if (content !== this._panelHeaderObservedContent) {
+          this._panelHeaderObservedContent = content; this._onWinResize?.();
+        }
+      }
+    }
+    return stage;
+  }
+
+  // ================= server: config + layout =================
+
+  private _adoptConfigCapabilities(response: unknown): void {
+    adoptCardConfigCapabilities(this as unknown as ConfigCapabilitiesCardPort, response);
+    if (!this._injectedPlanHost && response && typeof response === 'object' && 'can_write' in response
+        && typeof response.can_write === 'boolean') this._haPlanHost?.setServerWrite(response.can_write);
+  }
+  /** Live presence exists only in ordinary View and only when both display
+   * switches and the freshly advertised backend protocol allow it. */
+  private _syncRadarLive(): void {
+    const settings = this._serverCfg?.settings?.radar;
+    const configured = (this._serverCfg?.markers || [])
+      .some((marker) => radarMarkerLiveInSpace(marker, this._space));
+    this._radarLive.sync(this._space, this.planHost.capabilities.radar && this._haRadarStage1Api === 1
+      && this._mode === 'view' && settings?.show_live !== false && configured
+      && this.ownerDocument.visibilityState !== 'hidden');
+  }
+
+  private async _syncDecorAssets(cfg: ServerConfig | null): Promise<void> {
+    const token = ++this._decorAssetSyncToken;
+    if ((this.planHost.capabilities.decorAssets && this._haDecorAssetsApi !== DECOR_ASSETS_API_VERSION) || !this.planHost.environment.connected) {
+      this._decorAssets = new Map();
+      return;
+    }
+    const resolved = await resolveDecorAssets(this.planHost, decorAssetIds(cfg), this._cfgRev);
+    if (token !== this._decorAssetSyncToken) return;
+    this._decorAssets = resolved;
+    this._resign();
+    this.requestUpdate();
+  }
+
+  /**
+   * #500: the one adoption entry. Compare → backdrop readiness gate →
+   * continuity candidate → adopt → profile tail; see `adoptAuthoritativeGated`.
+   */
+  public _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult> {
+    return adoptAuthoritativeGated(this as unknown as ConfigAdoptionHostPort, input);
+  }
+
+  /** #314 via #500: undo only the exact failed candidate, then repaint. */
+  public _rollbackOptimistic(attempt: OptimisticAttempt<ServerConfig>): boolean {
+    const rolledBack = this._adoption.rollbackOptimistic(attempt);
+    if (rolledBack) this.requestUpdate();
+    return rolledBack;
+  }
+
+  /** Resume only a same-route warm editor intent after permissions arrive.
+   * Always enter through _setMode: it owns transition state, contextual tray
+   * cleanup and navigation persistence. Direct assignment leaves those
+   * surfaces in mutually inconsistent modes. The waiting draft follows (#756). */
+  private _resumePendingNavMode(): boolean {
+    if (this._pendingNavMode && (this._serverCanWrite === false || this._kiosk)) {
+      this._cancelPendingWarmMode(); return false;
+    }
+    if (!this._pendingNavMode || !this._canEdit || this._kiosk) return false;
+    const pendingMode = this._pendingNavMode;
+    this._pendingNavMode = null;
+    // Loaded and delayed runtimes share the same request/permission checks.
+    void this._requestMode(pendingMode, false, 'resume');
+    return true;
+  }
+
+  private _getAuthoritativeConfig(input: UndoHass | PlanHost = this.planHost, isCurrent?: () => boolean): Promise<AuthoritativeConfigResponse> {
+    return getAuthoritativeCardConfig(this as unknown as ConfigCapabilitiesCardPort, input, isCurrent);
+  }
+
+  private async _loadFromServer(): Promise<void> {
+    if (!this.isConnected) return;
+    if (!this.planHost.environment.connected) { this._read.defer(); return; }
+    const loadClaim = this._read.begin(configReloadContext(this));
+    if (!loadClaim) return;
+    const portHost = this.planHost;
+    const port = this as unknown as ConfigReloadHostPort;
+    const claim = beginConfigReload(port);
+    const isCurrent = () => this._read.isCurrent(loadClaim) && configReloadClaimCurrent(port, claim);
+    this._loading = true;
+    this._loadTries++;
+    const visibleSpace = this._space;
+    const hadViewport = !!this._view;
+    // #520: whoever rebuilds the devices for this attempt does it exactly
+    // once. On the adopted path that is `afterAdopt`, inside the adoption
+    // task; the tail below only covers the attempts that never adopted.
+    let devicesRebuilt = false;
+    let repeatLayoutRead = false;
+    const rebuildDevices = (): void => {
+      devicesRebuilt = true;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+    };
+    try {
+      // Dispatch listeners ahead of reads, without waiting for optional ACKs.
+      // A cold panel first discovers its scoped stream API; its resync then
+      // closes the gap without subscribing to HA's unscoped config bus.
+      const prepareSubscriptions = this._loadOk || !this.panelHost;
+      const ownConfigStream = this.panelHost && this._haExternalScreensEventsApi === 1;
+      if (prepareSubscriptions) this._ensureLiveSyncSubscriptions();
+      await Promise.resolve();
+      if (!isCurrent()) return;
+      const subscriptionGeneration = this._liveSyncGeneration;
+      const adopted = await this._layoutIO.reconcile(() => Promise.all([
+        this._getAuthoritativeConfig(portHost, isCurrent),
+        portHost.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' }),
+      ]), ([cfgResp, layResp], pairCurrent) => this._adoptAuthoritative({
+        cfgResp, layResp, reason: 'structural-response', profile: 'reload', isCurrent: pairCurrent,
+        beforeAdopt: () => {
+          this._connectionWasLost = false;
+          this._serverStorage = true;
+        },
+        // #520: everything that touches the viewport, the readiness flag or
+        // the devices belongs in the same task as the adoption. Seeding
+        // devices writes the config back (new devices, hidden filter), and
+        // after the `await` Lit has already painted the adopted body — the
+        // writes then cost a second config epoch, a second model build and a
+        // second paint of a 60-room house, ~550 ms of the first stable frame.
+        afterAdopt: () => {
+          // DEV-B703-03: a warm re-mount already holds the exact viewport of
+          // the instance that was thrown away; the centred restore here IS
+          // the reported jerk. Only a genuine navigation (the hash/nav landed
+          // us on another space) still needs it.
+          if (this._warmViewportPending === 'adopt') this._warmAdoptViewport(this._config!);
+          if (this._restoreKioskViewport()) { /* one-shot document recovery owns this camera */ }
+          else if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
+          else if (!hadViewport || this._space !== visibleSpace) this._restoreZoom();
+          // `_syncNewDevices` and `_syncAreaRelocations` refuse to write
+          // before the authoritative snapshot is usable, and it is usable
+          // exactly here — the bodies are adopted.
+          this._loadOk = true;
+          rebuildDevices();
+          // The optional browser presentation cache cannot fail the accepted
+          // pair, device seed, or the enrichment that follows this adoption.
+          try {
+            if (typeof cfgResp?.startup_floor_source === 'string' && typeof layResp?.startup_floor_source === 'string')
+              this._rememberStartupSource(portHost, cfgResp, layResp);
+            this._observeStartupFloor();
+            this._primeStartupFloorRead();
+          } catch { this._startupFloor?.disablePreview(); }
+          if (this._warmRevivePending && this._mode === 'view') this._warmReviveDialog();
+        },
+      }), isCurrent);
+      repeatLayoutRead = adopted.status === 'layout-raced';
+      if (adopted.status !== 'adopted') return;
+      // Trails and event subscriptions enrich an already complete snapshot.
+      // A read-only HA session may reject these; that must never roll the
+      // accepted config back into the mandatory load catch.
+      this._refreshHaVacuumTrails(() => this.isConnected && this._read.isCurrent(loadClaim));
+      const streamChanged = ownConfigStream !== (this.panelHost && this._haExternalScreensEventsApi === 1);
+      if (streamChanged) {
+        // Retire a pending old-mode subscribe too, not just an adopted handle.
+        this._retireLiveSyncSubscriptions();
+      }
+      if (!prepareSubscriptions || streamChanged || subscriptionGeneration !== this._liveSyncGeneration)
+        this._ensureLiveSyncSubscriptions();
+    } catch (e) {
+      if (!isCurrent()) return;
+      if (this._serverCfg) {
+        // DEV-B703-02: this instance already RENDERS a valid config (the LS
+        // snapshot, or an earlier successful load). A failing socket is a
+        // transient condition — nulling _serverCfg here blanked the plan on
+        // every reconnect that took more than 8 hass ticks. Stale-while-
+        // revalidate: the last valid config stays on screen until a
+        // successful reload replaces it, and revalidation keeps running on
+        // our own clock (willUpdate stops driving loads after 8 tries).
+        this._scheduleLoadRetry(true);
+      } else if (this._loadTries >= 8) {
+        // nothing was ever shown — genuine no-backend: local-only fallback
+        this._serverStorage = false;
+        try {
+          this._layout = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
+        } catch {
+          this._layout = {};
+        }
+      }
+      // fewer than 8 tries with nothing shown yet: silently wait for the
+      // next hass update (WS warm-up)
+    } finally {
+      const ownsTail = devicesRebuilt || isCurrent();
+      if (!this._read.finish(loadClaim)) return;
+      this._loading = false;
+      if (!ownsTail) {
+        // A config-only refresh may supersede the paired bootstrap read. Its
+        // success is not a completed config+layout handshake; retry that demand
+        // without waiting for another HA state tick (#1392).
+        if (!this._loadOk && this.isConnected && this.planHost.environment.connected) {
+          this._read.defer(); this._scheduleLoadRetry(true);
+        }
+        return;
+      }
+      // Readiness belongs to the candidate attempt, including a bounded asset
+      // failure. Leaving it false on an early return stranded the controller
+      // before its own two-second barrier could ever start.
+      this._continuityDataReady = true;
+      if (!devicesRebuilt) rebuildDevices();
+      this.requestUpdate();
+      // A second *real* overlapping write re-arms one read after settlement.
+      // The finished transport claim still fences authority/route/detach here.
+      if (repeatLayoutRead || this._read.pending) queueMicrotask(() => {
+        if (this.isConnected && this._read.isCurrent(loadClaim)) void this._loadFromServer();
+      });
+    }
+  }
+
+  private _retireLiveSyncSubscriptions(): void {
+    this._unsubCfg?.(); this._unsubCfg = null;
+    this._unsubLayout?.(); this._unsubLayout = null;
+    this._unsubTrail?.(); this._unsubTrail = undefined;
+    this._unsubVirtual?.(); this._unsubVirtual = null;
+    this._liveSyncReceivers.clear(); this._liveSyncSubscriptionOwner = {};
+    this._liveSyncGeneration++; this._liveSyncAttempt = null;
+    this._liveSyncConnection = null;
+  }
+
+  /** Best-effort live sync starts only after the initial snapshot is usable. */
+  private _ensureLiveSyncSubscriptions(): void {
+    const host = this.planHost, connection = host.authorityKey;
+    if (!host.environment.connected) return;
+    if (this._externalConfigStreamRecovery.blocked && connection === this._liveSyncConnection) return;
+    if (connection !== this._liveSyncConnection) {
+      this._externalConfigStreamRecovery.reset();
+      for (const runtime of this._vacRt.values()) {
+        if (runtime.livePending) { delete runtime.livePending; runtime.gap = true; }
+      }
+      this._retireLiveSyncSubscriptions();
+      this._liveSyncConnection = connection;
+    }
+    if (this._liveSyncAttempt) return;
+    const generation = this._liveSyncGeneration;
+    const context = this._configWriteContext.claim();
+    const subscriptionOwner = this._liveSyncSubscriptionOwner;
+    const ownsContext = () => generation === this._liveSyncGeneration && this.isConnected
+      && this.planHost.authorityKey === connection && this._configWriteContext.current(context, this.planHost);
+    const attempts: Array<() => Promise<void>> = [];
+    const subscribe = (
+      current: () => (() => void) | null | undefined,
+      adopt: (unsubscribe: () => void) => void,
+      event: string,
+      callback: (event: any) => void | Promise<void>,
+    ): void => {
+      this._liveSyncReceivers.set(event, ev => { if (ownsContext()) return callback(ev); });
+      if (current()) return;
+      attempts.push(async () => {
+        const receive = (ev: unknown) => {
+          if (subscriptionOwner !== this._liveSyncSubscriptionOwner
+              || !this._configWriteContext.current(context, this.planHost)) return;
+          if (!this.isConnected) {
+            const data = ev && typeof ev === 'object' && 'data' in ev ? ev.data : null;
+            if (data && typeof data === 'object' && 'kind' in data && data.kind === 'closed')
+              this._retireLiveSyncSubscriptions();
+            else if (data && typeof data === 'object' && 'rev' in data
+                && ((event === 'houseplan_config_updated' && Number(data.rev) === this._cfgRev)
+                  || (event === 'houseplan_layout_updated' && Number(data.rev) === this._layoutRev))) return;
+            this._read.defer(); return;
+          }
+          return this._liveSyncReceivers.get(event)?.(ev);
+        };
+        const unsubscribe = event === 'houseplan_config_updated' || event === 'houseplan_layout_updated'
+          ? await host.subscribe(event, receive, {
+            externalScreens: { enabled: this.panelHost && this._haExternalScreensEventsApi === 1, baseRevision: this._cfgRev },
+          })
+          : await this._subscribeHaSmartHomeEvent(event, receive);
+        const valid = ownsContext() && !current();
+        if (valid) adopt(unsubscribe);
+        else unsubscribe?.();
+      });
+    };
+
+    subscribe(
+      () => this._unsubCfg,
+      (unsubscribe) => { this._unsubCfg = unsubscribe; },
+      'houseplan_config_updated',
+      (ev: any) => {
+        // Flush a pending local edit BEFORE adopting a remote revision:
+        // otherwise the debounced write reads a config that this reload has
+        // already replaced, and the user's edit vanishes (audit L2).
+        if (ev?.data?.kind === 'closed') {
+          this._externalConfigStreamRecovery.closed(ev.data.reason, {
+            retire: () => { this._liveSyncGeneration++; this._unsubCfg?.(); this._unsubCfg = null; },
+            refresh: afterApplied => { void this._reloadConfigOnly(false, undefined, afterApplied); },
+            canResume: () => this.isConnected && this.planHost.authorityKey === connection && this._haExternalScreensEventsApi === 1,
+            resume: () => { this._liveSyncConnection = null; this._ensureLiveSyncSubscriptions(); },
+          });
+          return;
+        }
+        const observedRev = Number(ev?.data?.rev ?? -1);
+        const previous = this._serverCfg;
+        const candidate = this.panelHost && this._routeKiosk.enabled && this._loadOk
+          && !this._cfgWriting && !this._saveConfigDebounced.pending()
+          ? externalScreenEventCandidate(previous, this._cfgRev, ev?.data) : null;
+        if (candidate) {
+          const base = this._cfgRev;
+          const current = () => ownsContext() && this._serverCfg === previous && this._cfgRev === base
+            && !this._cfgWriting && !this._saveConfigDebounced.pending();
+          const fallback = () => { if (ownsContext() && observedRev > this._cfgRev) void this._reloadConfigOnly(false, observedRev); };
+          void this._adoptAuthoritative({
+            cfgResp: candidate, reason: 'external-screens-event', profile: 'screen-event', isCurrent: current,
+            afterAdopt: () => {
+              // A proven profile delta must not cause another config/layout
+              // read just to seed an optional startup preview.
+              this._startupProofRefresh = undefined;
+              this._startupStreamRevision = { authority: connection, configRev: candidate.rev };
+            },
+          })
+            .then(result => { if (result.status !== 'adopted') fallback(); }, fallback);
+          return;
+        }
+        if (observedRev !== this._cfgRev) void this._reloadConfigOnly(false, observedRev);
+      },
+    );
+    subscribe(
+      () => this._unsubLayout,
+      (unsubscribe) => { this._unsubLayout = unsubscribe; },
+      'houseplan_layout_updated',
+      (ev: any) => this._onLayoutEvent(Number(ev?.data?.rev ?? -1)),
+    );
+    this._registerHaSmartHomeEvents(subscribe, ownsContext);
+
+    if (!attempts.length) return;
+    const task = settleBestEffort(attempts).then(() => undefined);
+    this._liveSyncAttempt = task;
+    void task.finally(() => {
+      if (this._liveSyncAttempt === task) this._liveSyncAttempt = null;
+    });
+  }
+
+  /**
+   * Adopt the server config. Any pending local write is flushed first and, if a
+   * write is still in flight, the reload is deferred — adopting a revision on
+   * top of an unsent edit is exactly how edits disappeared (audit L2).
+   * `force` skips the deferral (conflict path: the local edit already lost).
+   */
+  private async _reloadConfigOnly(force = false, observedRev?: number, afterApplied?: () => void, showToast?: ToastCallback): Promise<void> {
+    return reloadConfigOnly(this as unknown as ConfigReloadHostPort, force, observedRev, afterApplied, showToast);
+  }
+
+  private _reloadRetry?: number;
+  /** DEV-B703-02: self-driven revalidation once willUpdate's 8-try budget is
+   *  spent — without it a card whose socket died at mount would show the
+   *  cached plan forever and never revalidate (hass ticks stop driving loads
+   *  after 8 tries). Exponential backoff capped at 8 s; single timer;
+   *  cleared on disconnect and on a connection 'ready'. */
+  private _loadRetryTimer?: number;
+  private _scheduleLoadRetry(force = false): void {
+    if (this._loadRetryTimer !== undefined) return;
+    const delay = Math.min(8000, 500 * 2 ** Math.min(4, Math.max(1, this._loadTries - 7)));
+    this._loadRetryTimer = window.setTimeout(() => {
+      this._loadRetryTimer = undefined;
+      if ((force || !this._loadOk) && !this._loading && this.planHost.environment.connected) this._loadFromServer();
+    }, delay);
+  }
+
+  /** Revalidate after transport recovery. The host driver retires scoped
+   * subscriptions on loss; paired load restores them before sampling, then
+   * adopts current revisions without relying on replay of an old lease. */
+  private _connectionWasLost = false;
+  /** Shared, page-level full HA registry authority (one fetch/subscription per connection). */
+  private _haRegistryConnection: any = null;
+  private _haRegistryRev = -1;
+  private _haBindingCacheKey = '';
+  private _planHassMemo: { environment: unknown; sig: string; active: unknown; full: unknown } | null = null;
+  private _planHassProjection?: PlanHassProjection;
+  private _renderLife = new RenderLifecycle();
+  private _liveEditorPaintCount = 0;
+
+  private _liveVp(now = false, force = false): void {
+    const preview = this._startupStyle?.value;
+    if (preview && this._bootFading && !this._startupAtPreviewCamera(preview)) this._finishStartupFade();
+    this._liveRt ? this._liveRt.viewport(now, force) : this.requestUpdate();
+  }
+  private _syncLiveHover(): void { this._liveRt ? this._liveRt.hover() : this.requestUpdate(); }
+  /** Bypass live routing so a gesture terminal publishes the last HA frame. */
+  private _flushHa(): void { if (this._liveRt?.take()) { this._terminalFrame = 2; super.requestUpdate(); } }
+  private _ensureHaRegistryAuthority(): void {
+    const snapshot = this._haRegistry, key = this.planHost.authorityKey;
+    if (key === this._haRegistryConnection && snapshot.revision === this._haRegistryRev) return;
+    // A second authoritative roster revision confirms absence. Retiring its
+    // candidates on every refresh prevents any orphan from ever confirming.
+    if (key !== this._haRegistryConnection) this._areaSnapshotCleanupCandidates.clear();
+    this._haRegistryConnection = key; this._haRegistryRev = snapshot.revision;
+    this._haBindingCacheKey = ''; this._renderLife.invalidate();
+    this._planHassMemo = null; this._regSignature = '';
+  }
+
+  private get _haRegistry(): HaRegistrySnapshot {
+    return this.planHost.environment.registry;
+  }
+
+  /** Domain projection: states/metadata, never transport, auth or connection. */
+  private get _planHass(): any {
+    const environment = this.planHost.environment, snapshot = environment.registry;
+    const sig = haRegistryBuildSignature(null, snapshot);
+    const memo = this._planHassMemo;
+    if (memo && memo.environment === environment && memo.sig === sig) return memo.active;
+    const c = this.planHost.capabilities;
+    const source = { ...environment.presentation, states: c.devices ? environment.states : {},
+      devices: c.devices ? snapshot.devices : {}, entities: c.devices ? snapshot.entities : {}, areas: c.haAreas ? snapshot.areas : {},
+      config: { time_zone: environment.timeZone, unit_system: environment.units } };
+    const projected = (this._planHassProjection ??= new PlanHassProjection())
+      .project(source, snapshot, this.planHost.authorityKey);
+    const active = this._projectHaSmartHomeSources(projected);
+    const full = fullRegistryHass(source, snapshot);
+    this._planHassMemo = { environment, sig, active, full };
+    return active;
+  }
+
+  /** HA-only enrichment, outside the portable plan boundary. */
+  private _projectHaSmartHomeSources(projected: Parameters<typeof projectEcovacsSources>[1]): unknown {
+    if (!this.hass) return projected;
+    // Smart-home intent resolution still needs HA's service catalog and direct
+    // radio readings and read-only value formatters. Lend no transport/auth to
+    // the shared domain frame; the portable presentation bridge stays unchanged.
+    return projectEcovacsSources(this, { ...projected, ...haValueFormatters(this.hass), services: this.hass.services,
+      zigbeeLqi: directSignalReadings(this.hass), config: this.hass.config }, this.hass);
+  }
+  private _haSignalEnvironmentPending = false;
+  private _publishHaSignalEnvironment(): void {
+    // A radio cache can notify while retiring its old HA identity, before
+    // publishing the replacement cache. Re-entering projection synchronously
+    // would retire it again. Coalesce that notification after the cache settles.
+    if (this._haSignalEnvironmentPending) return;
+    this._haSignalEnvironmentPending = true;
+    queueMicrotask(() => {
+      this._haSignalEnvironmentPending = false;
+      if (!this.isConnected) return;
+      this._hassSequence++;
+      if (!this._injectedPlanHost && this._haPlanHost) this._haPlanHost.invalidateData();
+      this.requestUpdate();
+    });
+  }
+
+  private _captureRenderDeviceSnapshot(): void {
+    if (!this.planHost.environment.ready) return;
+    const now = Date.now();
+    const activity = [...this._activityRt.entries()]
+      .map(([id, runtime]) => `${id}:${runtime.gen}:${runtime.flashTs}:`
+        + `${runtime.flashKind
+          && (runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS) > now ? 1 : 0}`)
+      .join('|');
+    const virtualFingerprint = virtualLightFingerprint(this._virtualLights);
+    const demand = JSON.stringify([this._space, this._mode === 'devices' && this._showAll, [...this._summary?.entityIds() || []], this._snapshotConsumerDemand()]);
+    if (this._capturedSeq === this._hassSequence
+        && this._capturedSnapshotDemand === demand
+        && this._capturedSnapshotDevices === this._displayDevices
+        && this._capturedSnapshotLayout === this._layout
+        && this._capturedSnapshotConfigEpoch === this._cfgEpoch
+        && this._capturedSnapshotVirtual === virtualFingerprint
+        && this._capturedSnapshotTrails === this._vacSrvTrails
+        && this._capturedSnapshotTrailFormat === this._vacTrailFormat
+        && this._capturedSnapshotActivity === activity) return;
+    // #850: the live runtime lends its reuse window (render-snapshot-reuse.ts).
+    const snapshot = captureRenderDeviceSnapshot(this as never, this._liveRt?.capture);
+    this._capturedSeq = this._hassSequence;
+    this._capturedSnapshotDemand = demand;
+    this._capturedSnapshotDevices = this._displayDevices;
+    this._capturedSnapshotLayout = this._layout;
+    this._snapshotLayouts.set(snapshot, this._layout);
+    this._capturedSnapshotActivity = activity;
+    this._capturedSnapshotConfigEpoch = this._cfgEpoch;
+    this._capturedSnapshotVirtual = virtualFingerprint;
+    this._capturedSnapshotTrails = this._vacSrvTrails;
+    this._capturedSnapshotTrailFormat = this._vacTrailFormat;
+    if (!this._visibleDeviceSnapshot || this._continuity.state === 'steady') {
+      this._visibleDeviceSnapshot = snapshot;
+      this._candidateDeviceSnapshot = null;
+    } else {
+      this._candidateDeviceSnapshot = snapshot;
+    }
+  }
+
+  private get _renderDeviceSnapshot(): RenderDeviceSnapshot | null {
+    // #813: the held projection is painted only with the geometry it was captured for.
+    return selectRenderDeviceSnapshot(
+      this._visibleDeviceSnapshot, this._candidateDeviceSnapshot,
+      this._stagedToken === this._continuity.token, this._cfgEpoch,
+    );
+  }
+
+  private get _renderPlanHass(): any {
+    return this._renderDeviceSnapshot?.hass || this._planHass;
+  }
+
+  private get _renderDevices(): readonly DevItem[] {
+    return this._renderDeviceSnapshot?.devices || this._displayDevices;
+  }
+
+  /** Normal frames reuse the vacuum-only subset captured with their facts. */
+  private get _renderVacuumDevices(): readonly DevItem[] {
+    return this._renderDeviceSnapshot?.vacuumDevices || this._displayDevices;
+  }
+
+  /**
+   * Full registry metadata for diagnostics and action safety checks. Entity
+   * states/services for actions always come from the active `_planHass`;
+   * disabled rows are exposed here only so the resolver can reject/explain.
+   */
+  private get _fullRegistryHass(): any {
+    void this._planHass;
+    return this._planHassMemo?.full || this._planHass;
+  }
+
+  private _bindingStatus(binding: string): HaBindingStatus {
+    return resolveHaBindingStatus(this._planHass, binding, this._haRegistry);
+  }
+
+  /** Redacted client-side support data; no states, names or marker metadata. */
+  public houseplanDiagnostics(): {
+    registry: ReturnType<typeof haRegistryDiagnostics> & { lastSuccessAgeMs: number | null };
+    bindings: Record<HaBindingStatus['kind'], number>;
+  } {
+    const { registry, bindings } = this._renderLife.diagnostics(
+      this._planHass, this._markers, (binding) => this._bindingStatus(binding), this._haRegistry,
+    );
+    return {
+      registry: {
+        ...registry,
+        lastSuccessAgeMs: registry.lastSuccess
+          ? Math.max(0, Date.now() - registry.lastSuccess) : null,
+      },
+      bindings,
+    };
+  }
+
+  private _openBindingInHa(binding: string): void {
+    const [kind, ref] = binding.split(':');
+    if (!ref) return;
+    if (kind === 'device') {
+      navigate('/config/devices/device/' + encodeURIComponent(ref));
+      return;
+    }
+    if (kind === 'entity') {
+      const reg = this._fullRegistryHass.entities?.[ref];
+      if (reg?.device_id) {
+        navigate('/config/devices/device/' + encodeURIComponent(reg.device_id));
+      }
+    }
+  }
+
+  /** Only device-backed bindings have a stable HA configuration route. */
+  private _bindingHasHaPage(binding: string): boolean {
+    const [kind, ref] = binding.split(':');
+    if (!ref) return false;
+    return kind === 'device'
+      || (kind === 'entity' && !!this._fullRegistryHass.entities?.[ref]?.device_id);
+  }
+
+  private _toggleMarkerDialogVisibility(): void {
+    const d = this._markerDialog;
+    if (!d) return;
+    const status = d.bindingMode === 'ha' ? this._bindingStatus(d.binding) : null;
+    const effectivelyHidden = d.hideFromPlan || status?.kind === 'ha_disabled';
+    if (effectivelyHidden && status?.kind === 'ha_disabled') {
+      this._showToast(this._t(status.reason === 'entity'
+        ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device'), status.reason === 'entity'
+        ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device');
+      return;
+    }
+    if (effectivelyHidden && status?.kind === 'unverified') {
+      this._showToast(this._t('toast.ha_binding_unverified'), 'toast.ha_binding_unverified');
+      return;
+    }
+    this._markerDialog = { ...d, hideFromPlan: !effectivelyHidden };
+  }
+  private _onConnReady = (): void => {
+    if (!this.isConnected) {
+      this._connectionWasLost = true; this._read.defer(); return;
+    }
+    if (this._externalConfigStreamRecovery.blocked) {
+      this._externalConfigStreamRecovery.reset(); this._liveSyncConnection = null; this._liveSyncGeneration++;
+    }
+    this._loadTries = 0;
+    clearTimeout(this._loadRetryTimer);
+    this._loadRetryTimer = undefined;
+    if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
+    if (this._cfgWriting) {
+      clearTimeout(this._reloadRetry);
+      this._reloadRetry = window.setTimeout(this._onConnReady, 400);
+      return;
+    }
+    if (!this._connectionWasLost && this._continuity.hasCompleteFrame) {
+      this._beginContinuityCandidate('connection-ready', false, 'plan');
+    } else {
+      // A confirmed loss already owns the connection candidate/token.
+      this._continuityDataReady = false;
+    }
+    if (this._loading) return;
+    // Re-read config and layout as one mandatory candidate. Optional live-sync
+    // subscriptions are then retried independently for whichever channels are
+    // still missing; their rejection cannot invalidate this snapshot.
+    // `_loadFromServer` adopts each side by revision+fingerprint and preserves
+    // equal references.
+    this._loadFromServer();
+  };
+  private _onConnLost = (): void => {
+    if (!this.isConnected) { this._connectionWasLost = true; this._read.defer(); return; }
+    if (this._booting && !this._continuity.hasCompleteFrame) return;
+    this._connectionWasLost = true;
+    this._continuityDataReady = false;
+    this._continuity.connectionLost();
+  };
+  private _hookConnection(): void { this._connectPlanHost(); }
+
+  /** Optional HA vacuum enrichment does not participate in plan readiness. */
+  private _refreshHaVacuumTrails(current: () => boolean): void {
+    if (!this.hass || !this.planHost.capabilities.vacuum) return;
+    const source = this.hass, key = this.planHost.authorityKey;
+    void source.callWS({ type: 'houseplan/trail/get' })
+      .then((result: unknown) => { if (current() && this.planHost.authorityKey === key) this._adoptVacuumTrails(result, source); })
+      .catch(() => undefined);
+  }
+
+  /** Optional smart-home channels deliberately remain outside PlanHost's plan events. */
+  private _subscribeHaSmartHomeEvent(event: string, receive: (event: unknown) => void): Promise<() => void> {
+    const connection = this.hass?.connection;
+    return connection?.subscribeEvents ? connection.subscribeEvents(receive, event) : Promise.resolve(() => undefined);
+  }
+  /** Existing HA Zigbee presentation; not a portable plan transport. */
+  private _renderHaZigbeeTopology(spaceId: string, view: Parameters<typeof renderZigbeeTopologyOverlay>[0]['viewKey']): TemplateResult | typeof nothing {
+    if (!this.hass || !this.planHost.capabilities.zigbee) return nothing;
+    return renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices,
+      registry: this._haRegistry, currentSpace: spaceId, spaces: this._serverCfg?.spaces, viewKey: view,
+      zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk,
+      ready: this._viewRuntimes.zigbee.state === 'ready', onLayout: () => this._liveRt?.hover() });
+  }
+  private _registerHaSmartHomeEvents(subscribe: (
+    current: () => (() => void) | null | undefined, adopt: (release: () => void) => void,
+    event: string, receive: (event: any) => void | Promise<void>,
+  ) => void, ownsContext: () => boolean): void {
+    const source = this.hass;
+    if (!source) return;
+    const capabilities = this.planHost.capabilities;
+    const permitted = subscribe;
+    subscribe = (current, adopt, event, receive) => {
+      if (event === 'houseplan_trail_updated' && !capabilities.vacuum) return;
+      if (event === 'houseplan_virtual_light_updated' && !capabilities.virtualDevices) return;
+      if (event.includes('radar') && !capabilities.radar) return;
+      permitted(current, adopt, event, receive);
+    };
+    subscribe(() => this._unsubTrail, release => { this._unsubTrail = release; }, 'houseplan_trail_updated',
+      vacuumTrailRefresh(() => source.callWS({ type: 'houseplan/trail/get' }), ownsContext,
+        result => this._adoptVacuumTrails(result, source)));
+    subscribe(() => this._unsubVirtual, release => { this._unsubVirtual = release; }, 'houseplan_virtual_light_updated', ev => {
+      const next = applyVirtualLightEvent(this._virtualLights, ev?.data);
+      if (next === this._virtualLights) return;
+      this._virtualLights = next; this._capturedSnapshotVirtual = '';
+      this._cacheSnapshot(); this.requestUpdate();
+    });
+  }
+  /**
+   * Signed urls for the content endpoint (audit follow-up B1 regression).
+   * A browser cannot authenticate an <image href> or an <a href>: HA takes a
+   * Bearer header or an `authSig` signed path, and an element sends neither.
+   * So the card asks the backend to sign what it is about to display.
+   */
+  private _signer = new ContentSigner(() => this.requestUpdate());
+
+  /** Display url: a signature we hold and still trust, else nothing. */
+  private _display(url: string | null | undefined): string {
+    return this._signer.display(this.planHost, url);
+  }
+
+  private _referencedContentUrls(): Set<string> {
+    const urls = referencedContentUrls(this._serverCfg);
+    for (const asset of this._decorAssets.values()) urls.add(asset.url);
+    return urls;
+  }
+
+  /** Re-sign what the live config still references (wall tablets outlive one). */
+  private _resign(): void {
+    this._signer.resign(this.planHost, this._referencedContentUrls());
+  }
+
+  private _layoutSyncTimer?: number;
+
+  /**
+   * A layout revision appeared. It may well be ours: the event travels over the
+   * same socket as the reply to our own write and can arrive first, so
+   * reacting immediately means re-reading what we just sent — and, worse,
+   * racing a drag that has not been flushed yet. Wait a beat; if our own reply
+   * lands in the meantime, `_layoutRev` catches up and there is nothing to do.
+   */
+  private _onLayoutEvent(rev: number): void {
+    if (rev <= this._layoutRev) return;
+    clearTimeout(this._layoutSyncTimer);
+    this._layoutSyncTimer = window.setTimeout(() => {
+      if (rev <= this._layoutRev) return; // it was ours after all
+      this._reloadLayoutOnly();
+    }, 200);
+  }
+
+  /**
+   * Remember a revision this card produced, so its own `layout_updated` event
+   * is not mistaken for someone else's and does not trigger a pointless
+   * re-read of what we just wrote.
+   */
+  private _noteLayoutRev(r: any): void {
+    this._adoption.noteLayoutRevision(r?.rev);
+  }
+
+  /**
+   * Adopt positions written elsewhere, without dropping our own (HP-1460-03).
+   *
+   * Only the layout is re-read — the config is untouched, so this cannot
+   * disturb an edit in progress. Positions this card has moved but not yet
+   * sent are flushed first and then kept on top of the server's answer: a fix
+   * for a stale UI must not turn into a lost drag.
+   */
+  private async _reloadLayoutOnly(): Promise<void> {
+    if (!this._serverStorage || !this.planHost.environment.connected) return;
+    this._beginContinuityCandidate('layout-reload', false);
+    // Snapshot BEFORE flushing. `flush()` runs the debounced writer
+    // synchronously, and the first thing that does is empty `_dirtyPos` — so
+    // reading the dirty set afterwards found nothing to protect and the server's
+    // older position was painted over the drag the user had just made
+    // (HP-1461-02). Positions are captured by value for the same reason.
+    const mine = new Map<string, any>();
+    for (const id of this._dirtyPos) if (this._layout[id]) mine.set(id, this._layout[id]);
+    if (this._persistLayout.pending()) this._persistLayout.flush();
+    // …and again after the flush: what was dirty is now in flight, and a write
+    // sent before this reload was even scheduled is in there too. Until the
+    // server acknowledges a position, this card is the authority on it.
+    for (const [id, pos] of this._sentPos) mine.set(id, pos);
+    try {
+      const resp = await this.planHost.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' });
+      const remote = resp?.layout || {};
+      const merged: Record<string, any> = { ...remote };
+      for (const [id, pos] of mine) {
+        if (pos === null) delete merged[id];
+        else merged[id] = pos;
+      }
+      this._adoption.adoptMergedLayout(merged, resp, () => {
+        this._cancelDeviceDrag();
+        retireDeviceBaseline(this._devicePositionHistory);
+      });
+      this._canOptimizeUndo = !!resp?.can_optimize_undo;
+      this._undoKind = (resp?.undo_kind || null) as any;
+      this._cacheSnapshot();
+      this.requestUpdate();
+    } catch {
+      /* a failed refresh just leaves the positions we already had */
+    } finally {
+      this._continuityDataReady = true;
+      this.requestUpdate();
+    }
+  }
+
+  private _dirtyPos = new Set<string>();
+  /** Positions sent to the server and not acknowledged yet (HP-1461-02). */
+  private _sentPos = new Map<string, DeviceLayout[string] | null>();
+
+  private _persistLocalLayout(): void {
+    this._layout = canonicalizeLayoutGeometry(this._layout);
+    localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
+  }
+
+  private _persistLayout = this._debounceToast((showToast) => {
+    if (this._serverStorage) {
+      const isCurrent = this._layoutIO.guard();
+      if (!isCurrent() || !this._loadOk) return;
+      // point-wise updates: do not overwrite positions changed in other windows
+      const ids = [...this._dirtyPos];
+      this._dirtyPos.clear();
+      for (const id of ids) {
+        const pos = canonicalizePosition(this._layout[id]);
+        if (!pos) continue;
+        this._layout = { ...this._layout, [id]: pos };
+        // Labels and markers share the exact point-write ACK/retirement owner.
+        void this._persistDevicePlacement(id, pos)
+          .catch((e: unknown) => { if (isCurrent()) showToast(this._t('toast.pos_save_failed', { err: this._errText(e) }), 'toast.pos_save_failed'); });
+      }
+      this._cacheSnapshot();
+    } else {
+      this._persistLocalLayout();
+    }
+  }, 600);
+
+  // ================= devices from the registries =================
+
+  private _maybeRebuildDevices(createdRooms?: readonly CreatedAreaRoom[]): void {
+    if ((this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) && !createdRooms?.length) {
+      this._regSignature = '';
+      return;
+    }
+    const h = this._planHass;
+    const registry = this._haRegistry;
+    const sig =
+      haRegistryBuildSignature(h, registry) + ':' + Object.keys(h.areas).length + ':' +
+      (this._norm ? 'n' : 'l') + ':' + langOf(h, this._config?.language);
+    const sameStateMetadata = this._deviceRosterState.matches(h);
+    if (sig === this._regSignature && this._devices.length && sameStateMetadata) return;
+    this._regSignature = sig;
+    // Writers may request a rebuild after any config ACK. Only roster inputs
+    // can make it necessary; ordinary HA ticks still take the O(1) path above.
+    const areaToSpace = this._norm && this._serverCfg
+      ? Object.fromEntries(this._serverCfg.spaces.flatMap(space =>
+        (space.rooms || []).filter((room: RoomCfg) => room.area).map((room: RoomCfg) => [room.area, space.id])))
+      : Object.fromEntries(Object.entries(this._areaToSpace).map(([area, value]) => [area, value.space]));
+    const settings = this._settings;
+    const buildKey = JSON.stringify([sig, this._markers, areaToSpace, this._serverCfg?.spaces[0]?.id,
+      settings.group_lights, settings.filter_seeded, settings.show_all, settings.exclude_integrations, settings.icon_rules]);
+    const reuseRoster = sameStateMetadata && this._deviceBuildKey === buildKey && this._deviceBuildOwner === this.planHost.authorityKey && this._devices.length;
+    this._deviceBuildKey = buildKey;
+    this._deviceBuildOwner = this.planHost.authorityKey;
+    const previousDevices = this._devices;
+    const before = new Map(this._devices.map((d) => [d.id, d.bindingStatus?.kind || 'active']));
+    if (!reuseRoster) this._devices = this._deviceRosterState.capture(h, observed => buildDevices({
+      hass: observed,
+      registry,
+      areaToSpace,
+      markers: this._markers,
+      settings: this._settings,
+      excluded: this._excluded,
+      showAll: !this._settings.filter_seeded && !!this._settings.show_all,
+      firstSpaceId: this._model[0]?.id || '',
+      loc: (k) => this._t(k),
+      iconRules: this._iconRules,
+    }));
+    const savedBindings = this._markers
+      .filter((marker) => !marker.removed && marker.binding !== 'virtual')
+      .map((marker) => marker.binding).sort();
+    const bindingCacheKey = registry.revision + ':' + savedBindings.map(binding =>
+      binding + (binding.startsWith('entity:') ? ':' + !!h.states?.[binding.slice(7)] : '')).join('|');
+    if (registry.authoritative && bindingCacheKey !== this._haBindingCacheKey) {
+      const statuses = new Map<string, HaBindingStatus>();
+      for (const binding of savedBindings) {
+        statuses.set(binding, resolveHaBindingStatus(h, binding, registry));
+      }
+      cacheHaBindingStatuses(statuses);
+      this._haBindingCacheKey = bindingCacheKey;
+    }
+    let areaRelocations: AreaRelocationResolution | null = null;
+    if (registry.authoritative) {
+      areaRelocations = this._resolveAreaRelocations(registry);
+      this._areaRelocationIds = new Set(areaRelocations.relocateIds);
+      if (this._areaRelocationIds.size) {
+        this._cancelDeviceDrag();
+        const relocating = this._areaRelocationIds;
+        this._devicePositionHistory.removeWhere(({ before, after }) =>
+          relocating.has(before.deviceId) || relocating.has(after.deviceId));
+        const dialog = this._markerDialog;
+        // A rebind can rediscover the old HA device while its save is pending.
+        // Do not replace that transaction's draft: completion owns its identity.
+        if (dialog?.devId && !dialog.busy && !dialog.roomTouched && this._areaRelocationIds.has(dialog.devId)) {
+          const current = this._devices.find((device) => device.id === dialog.devId);
+          if (current) this._markerDialog = {
+            ...dialog,
+            room: current.marker?.room_id
+              ? `${current.space}#@${current.marker.room_id}`
+              : current.space && current.area ? `${current.space}#${current.area}` : '',
+          };
+        }
+      }
+    }
+    this._defPos = this._defaultPositions();
+    if (createdRooms && this._serverCfg && this._canEdit)
+      this._editorRuntime?.roomDeviceDiscovery.capture(createdRooms, previousDevices, this._devices, this._serverCfg);
+    this._syncNewDevices();
+    this._seedHiddenDevices();
+    if (areaRelocations) this._syncAreaRelocations(areaRelocations);
+    // Rebuilds also happen without a hass update (marker save/rebind). Establish
+    // new baselines and clear old flashes synchronously, before the next paint.
+    this._syncActivityRuntime();
+    const liveVac = new Set(this._displayDevices.filter((d) => !d.hidden).map((d) => d.id));
+    for (const id of this._vacRt.keys()) if (!liveVac.has(id)) this._vacRt.delete(id);
+    if (this._infoCard) {
+      const current = this._devices.find((d) => d.id === this._infoCard!.id);
+      this._infoCard = current && current.bindingStatus?.kind !== 'ha_disabled'
+        ? current : null;
+    }
+    const disabledNow = this._devices.some(
+      (d) => d.bindingStatus?.kind === 'ha_disabled' && before.get(d.id) !== 'ha_disabled',
+    );
+    if (disabledNow) {
+      if (this._infoCard?.bindingStatus?.kind === 'ha_disabled'
+          || this._devices.find((d) => d.id === this._infoCard?.id)?.bindingStatus?.kind === 'ha_disabled') {
+        this._closeInfoCard();
+      }
+      if (this._deviceDrag
+          && this._devices.find((d) => d.id === this._deviceDrag!.id)?.bindingStatus?.kind === 'ha_disabled') {
+        this._cancelDeviceDrag();
+        this._devicePositionHistory.clear();
+      }
+      this._viewHold.cancel();
+      this._holdFired = false;
+      this._tip = null;
+      this._tapConfirm = null;
+    }
+    if (this._nativeMoreInfoEntity && !this._planEntityAvailable(this._nativeMoreInfoEntity)) {
+      fireEvent(this, 'hass-more-info', { entityId: null });
+      this._nativeMoreInfoEntity = null;
+    }
+  }
+
+  /**
+   * Join filtered placement decisions with fail-safe registry lifecycle
+   * evidence. The two inputs deliberately stay separate: a device that cannot
+   * be painted is not thereby absent from Home Assistant.
+   */
+  private _resolveAreaRelocations(registry = this._haRegistry): AreaRelocationResolution {
+    const cleanup = resolveAreaSnapshotCleanup({
+      snapshot: this._settings.marker_area_snapshot,
+      authoritative: registry.authoritative,
+      revision: registry.revision,
+      registryDevices: registry.devices,
+      registryEntities: registry.entities,
+      liveStates: this.hass?.states,
+      markers: this._markers,
+      previousCandidates: this._areaSnapshotCleanupCandidates,
+    });
+    this._areaSnapshotCleanupCandidates = cleanup.candidates;
+    if (cleanup.needsConfirmationRefresh && this._canEdit)
+      void this.planHost.refreshRegistry?.(3000).catch(() => false);
+    return resolveDeviceAreaRelocations({
+      devices: this._devices,
+      model: this._model,
+      layout: this._layout,
+      snapshot: this._settings.marker_area_snapshot,
+      authoritative: registry.authoritative,
+      cleanupSnapshotIds: cleanup.removeIds,
+      coordinateScale: NORM_W,
+    });
+  }
+
+  /**
+   * "New device" flag (server-side, shared by every client): an auto device
+   * that appears after the known baseline was recorded gets a red dot until
+   * someone opens its editor. The baseline is seeded silently on first run,
+   * so an upgrade never floods the plan with dots.
+   */
+  private _syncNewDevices(): void {
+    if (!this.planHost.capabilities.devices) return;
+    if (!this._norm || !this._loadOk || !this._serverCfg || !this._canEdit) return;
+    // only auto-appearing icons: area devices and light groups; markers are user-made
+    const autoIds = this._devices.filter((d) => !d.marker && !d.virtual).map((d) => d.id).sort();
+    const key = autoIds.join(',');
+    if (key === this._newSyncKey) return; // same registry picture — nothing to do
+    this._newSyncKey = key;
+    const st: any = this._settings;
+    const expected = this._editorRuntime?.roomDeviceDiscovery.pendingIds(this._serverCfg);
+    const { fresh, known } = diffNewDevices(autoIds.filter(id => !expected?.has(id)), st.known_devices);
+    if (!Array.isArray(st.known_devices) || fresh.length) {
+      const newIds = [...new Set([...(st.new_device_ids || []), ...fresh])];
+      this._serverCfg = {
+        ...this._serverCfg,
+        settings: { ...st, known_devices: known, new_device_ids: newIds },
+      };
+      this._saveConfig();
+    }
+  }
+
+  /**
+   * Persist authoritative registry-Area transitions without ever letting a
+   * stale saved point win between registry paint and server acknowledgement.
+   * Layout deletion is deliberately completed before provenance advances.
+   */
+  private _syncAreaRelocations(resolution: AreaRelocationResolution): void {
+    if (!this.planHost.capabilities.devices || !this.planHost.capabilities.haAreas) return;
+    const showToast = this._captureToast();
+    // A continuity-cache frame is renderable before the authoritative config
+    // and layout pair has finished loading. Never let that stale frame drive a
+    // destructive lifecycle write: the cached Area snapshot can disagree with
+    // the server layout and delete a valid saved point during cold start.
+    if (!this._loadOk || !this._serverCfg || !this._norm
+        || !this._canEdit || !this._haRegistry.authoritative) return;
+    const actionable = resolution.decisions.filter(
+      (decision) => decision.updateSnapshot || decision.removeSnapshot,
+    );
+    if (!actionable.length) return;
+    const key = contentFingerprint({
+      snapshot: markerAreaSnapshotOf(this._settings.marker_area_snapshot),
+      decisions: actionable,
+    });
+    if (key === this._areaRelocationSyncKey) return;
+    this._areaRelocationSyncKey = key;
+
+    this._areaRelocationWrite = this._areaRelocationWrite.catch(() => undefined).then(async () => {
+      if (!this._serverCfg || !this._haRegistry.authoritative) return;
+      // The queue may have waited behind another registry/config mutation.
+      // Re-resolve at execution time so an explicit room choice or rebind wins.
+      const current = this._resolveAreaRelocations();
+      this._areaRelocationIds = new Set(current.relocateIds);
+      const committed = new Set<string>();
+      const deletedPlacements = new Map<string, DevicePlacement>();
+      let deleteFailed = false;
+      for (const decision of current.decisions) {
+        if (!decision.relocate) continue;
+        const before = devicePlacement(this._layout, decision.id);
+        try {
+          await this._persistDevicePlacement(decision.id, null);
+          committed.add(decision.id);
+          if (before) deletedPlacements.set(decision.id, before);
+          this._areaRelocationIds.delete(decision.id);
+        } catch (error: unknown) {
+          deleteFailed = true;
+          this._layout = applyDevicePlacement(this._layout, decision.id, before);
+          showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
+        }
+      }
+
+      const st = this._settings;
+      const nextSnapshot = applyAreaRelocationResolution(
+        st.marker_area_snapshot, current, committed,
+      );
+      const nextAttention = [...new Set([
+        ...(Array.isArray(st.new_device_ids) ? st.new_device_ids : []),
+        ...committed,
+      ])];
+      const snapshotChanged = contentFingerprint(nextSnapshot)
+        !== contentFingerprint(markerAreaSnapshotOf(st.marker_area_snapshot));
+      const attentionChanged = contentFingerprint(nextAttention)
+        !== contentFingerprint(Array.isArray(st.new_device_ids) ? st.new_device_ids : []);
+      if (snapshotChanged || attentionChanged) {
+        const failure = await writeAreaProvenance({
+          settings: () => this._settings,
+          stage: (settings) => this._setAreaLifecycleConfig({ ...this._serverCfg!, settings }),
+          refreshFingerprint: () => this._adoption.refreshConfigFingerprint(),
+          write: () => this._writeConfig(null, showToast),
+          deferred: this._saveConfigDebounced,
+        }, st, nextSnapshot, attentionChanged ? nextAttention : undefined);
+        if (failure) {
+          const { error } = failure;
+          // Config and layout are separate stores, but this lifecycle change is
+          // one user transaction. A rejected provenance write must put every
+          // successfully deleted manual point back before the relocation may
+          // retry. Keep the ids pending while restoring so the stale point
+          // cannot win the render against the authoritative registry Area.
+          for (const id of committed) this._areaRelocationIds.add(id);
+          const restoreFailed = new Set<string>();
+          for (const [id, placement] of deletedPlacements) {
+            try {
+              await this._persistDevicePlacement(id, placement);
+            } catch (restoreError: unknown) {
+              restoreFailed.add(id);
+              showToast(this._t('toast.pos_save_failed', {
+                err: this._errText(restoreError),
+              }), 'toast.pos_save_failed');
+            }
+          }
+          this._areaRelocationSyncKey = '';
+          this._regSignature = '';
+          const code = error && typeof error === 'object' && 'code' in error
+            ? (error as { code?: unknown }).code : undefined;
+          if (code === 'conflict') {
+            showToast(this._t('toast.conflict'), 'toast.conflict');
+            await this._reloadConfigOnly(true);
+          } else if (!isGeometryCleanupRefusal(error)) {
+            showToast(this._t('toast.cfg_save_failed', { err: this._errText(error) }), 'toast.cfg_save_failed');
+          }
+          if (restoreFailed.size && this._serverCfg) {
+            const attentionSettings = this._settings;
+            const attention = [...new Set([
+              ...(Array.isArray(attentionSettings.new_device_ids)
+                ? attentionSettings.new_device_ids : []),
+              ...restoreFailed,
+            ])];
+            const attentionConfig: ServerConfig = {
+              ...this._serverCfg,
+              settings: { ...attentionSettings, new_device_ids: attention },
+            };
+            this._setAreaLifecycleConfig(attentionConfig);
+            try {
+              await this._writeConfig(null, showToast);
+            } catch (attentionError: unknown) {
+              showToast(this._t('toast.cfg_save_failed', {
+                err: this._errText(attentionError),
+              }), 'toast.cfg_save_failed');
+            }
+          }
+        }
+      }
+      if (deleteFailed) this._areaRelocationSyncKey = '';
+      this.requestUpdate();
+    });
+  }
+
+  /** Ids currently flagged as new (drawn with the red dot). */
+  private get _newIds(): Set<string> {
+    const list = this._settings.new_device_ids;
+    return new Set([...(Array.isArray(list) ? list : []), ...this._areaRelocationIds]);
+  }
+
+  /** First visit to the device's editor acknowledges its "new" flag. */
+  private _ackNewDevice(id: string): void {
+    if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
+    if (!this._newIds.has(id) || !this._serverCfg) return;
+    void acknowledgeNewDevice(this as unknown as Parameters<typeof acknowledgeNewDevice>[0], id);
+  }
+
+  /** Filtering + light groups + overrides + virtual devices. */
+  private get _markers(): Marker[] {
+    return this._serverCfg?.markers || [];
+  }
+
+  private _roomLqi(area: string | null): number | null {
+    if (!area) return null;
+    return areaLqi(this._renderPlanHass, this._renderDevices, area);
+  }
+
+  // ================= positions =================
+
+  /** Bounding rectangle of a room (rect or polygon) in render units. */
+  private _roomBounds(r: RoomCfg): { x: number; y: number; w: number; h: number } {
+    if (r.poly && r.poly.length) {
+      const xs = r.poly.map((p) => p[0]);
+      const ys = r.poly.map((p) => p[1]);
+      const x = Math.min(...xs);
+      const y = Math.min(...ys);
+      return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
+    }
+    return { x: r.x ?? 0, y: r.y ?? 0, w: r.w ?? 0, h: r.h ?? 0 };
+  }
+
+  private _defaultPositions(spaceId = this._space): Record<string, { x: number; y: number }> {
+    const map: Record<string, { x: number; y: number }> = {};
+    const iconPct = this._config?.icon_size ?? 2.5;
+    for (const s of this._model) {
+      if (s.id !== spaceId) continue;
+      // docs/CANVAS.md §6: the icon's RENDER-unit footprint follows the plan's
+      // own size — NORM_W for anything inside the old square (identical to
+      // before), proportionally more for a plan several canvases wide.
+      const minDist = (iconPct / 100) * iconUnit(s) * 1.3;
+      for (const r of s.rooms) {
+        if (!r.area) continue;
+        // HA-disabled saved markers stay in the roster: they render nowhere
+        // outside the service ghost, but reserve their old auto-grid slot so
+        // temporary deactivation cannot shuffle visible neighbours.
+        // #780: read the stored strips (the model may lag one adoption behind).
+        const leds = ledStripsByMarker(this._serverCfg?.spaces.find((x) => x.id === s.id) ?? s);
+        const ds = this._devices.filter((d) => d.area === r.area && d.space === s.id && !leds.has(d.id));
+        if (!ds.length) continue;
+        const b = this._roomBounds(r);
+        const pad = Math.min(b.w, b.h) * 0.1;
+        const iw = b.w - pad * 2;
+        const ih = b.h - pad * 2;
+        const cols = Math.max(1, Math.round(Math.sqrt((ds.length * iw) / Math.max(ih, 1))));
+        const rows = Math.ceil(ds.length / cols);
+        const cw = iw / cols;
+        const ch = ih / Math.max(rows, 1);
+        const pts = ds.map((_, i) => ({
+          x: b.x + pad + cw * ((i % cols) + 0.5),
+          y: b.y + pad + ch * (Math.floor(i / cols) + 0.5),
+        }));
+        declump(pts, b, minDist, pad * 0.5);
+        // an auto-placed icon lands on a node too (docs/CANVAS.md §9) — the
+        // owner's "everything on the grid" covers what the card places itself
+        ds.forEach((d, i) => (map[d.id] = snapPt(pts[i])));
+      }
+    }
+    return map;
+  }
+
+  /** Device position in render units of the current space. */
+  private _pos(d: DevItem, contacts = true): { x: number; y: number } {
+    const captured = this._renderDeviceSnapshot?.positions.get(d.id);
+    const point=captured ? { x: captured.x, y: captured.y } : this._livePos(d);
+    return !contacts || this._renderProjection==='iso' && !ISO_LAB_FLOOR_MARKERS ? point : this._deviceContacts?.position(d.id,point) ?? point;
+  }
+
+  private get _isoFloorMarkerPlane(): readonly number[] | undefined {
+    const camera = this._isoFloorCamera;
+    return camera && ISO_LAB_FLOOR_MARKERS ? isoFloorMatrix(camera) : undefined;
+  }
+
+  private _livePos(d: DevItem): { x: number; y: number } {
+    const s = this._spaceModelById(d.space);
+    // #780: a marker shown as an LED strip is placed at the strip's anchor.
+    const led = ledStripsByMarker(s).get(d.id);
+    if (led) return ledAnchor(led.points, NORM_W);
+    const saved = this._areaRelocationIds.has(d.id) ? undefined : this._layout[d.id];
+    if (saved) {
+      if (this._norm) {
+        if (saved.s === d.space) {
+          return { x: saved.x * NORM_W, y: saved.y * NORM_W };
+        }
+      } else if (saved.s === undefined) {
+        return { x: saved.x, y: saved.y };
+      }
+    }
+    if (!this._defPos[d.id]) Object.assign(this._defPos, this._defaultPositions(d.space));
+    if (this._defPos[d.id]) return this._defPos[d.id];
+    if (!s) return { x: NORM_W / 2, y: NORM_W / 2 };
+    // the middle of what IS drawn, not of a canvas that has no edges any more
+    return snapPt(spaceCenter(s));
+  }
+
+  private _devicePlacementForCanvas(d: DevItem, x: number, y: number, exact = false): DevicePlacement {
+    if (!this._norm) return { x: Math.round(x), y: Math.round(y) };
+    // A proven contact or exact keyboard translation bypasses the lattice,
+    // never canonicalization or the existing guarded writer.
+    if (exact) return canonicalizePosition({ s: d.space, x: clampCanvasN(x / NORM_W), y: clampCanvasN(y / NORM_W) });
+    const g = this._gridPitch;
+    const gx = Math.round(x / g) * g;
+    const gy = Math.round(y / g) * g;
+    return {
+      s: d.space,
+      x: clampCanvasN(gx / NORM_W),
+      y: clampCanvasN(gy / NORM_W),
+    };
+  }
+
+  private _previewDevicePlacement(deviceId: string, placement: DevicePlacement | null): void {
+    this._layout = applyDevicePlacement(this._layout, deviceId, placement);
+    this.requestUpdate();
+  }
+
+  /** Abort an uncommitted device preview. Returns true when a drag existed. */
+  private _cancelDeviceDrag(): boolean {
+    this._editorRuntime?.keyboardNudge.retire();
+    const drag = this._deviceDrag;
+    if (!drag) return false;
+    this._editorRuntime?._cancelPointerMove('device');
+    this._deviceDrag = null;
+    this._deviceDragRetirement.retire(drag.pointerId);
+    this._deviceHits.cancel(drag.pointerId);
+    try {
+      if (drag.source?.hasPointerCapture?.(drag.pointerId)) {
+        drag.source.releasePointerCapture(drag.pointerId);
+      }
+    } catch {
+      // Pointer capture may already have ended before the cancellation signal.
+    }
+    this._previewDevicePlacement(drag.id, drag.before);
+    this._editorRuntime?._commitLiveEditor(drag.id);
+    return true;
+  }
+
+  /** One serial, point-wise position write used by drag commit and history. */
+  private async _persistDevicePlacement(
+    deviceId: string,
+    placement: DevicePlacement | null,
+    related?:DevicePositionState['related'],
+    commandGuard?:import('./device-contact-write').PlacementCommandGuard,
+  ): Promise<void> {
+    const isCurrent = this._layoutIO.guard();
+    if (this._serverStorage && (!isCurrent() || !this._loadOk)) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
+    this._layout = applyDevicePlacement(this._layout, deviceId, placement);
+    if(related?.length || commandGuard) {
+      const {persistContactPlacements}=await import('./device-contact-write');
+      if(!isCurrent())throw new Error('contact write context changed');
+      return persistContactPlacements(this,{deviceId,spaceId:placement?.s??this._space,placement,related},commandGuard);
+    }
+    if (this._serverStorage) {
+      const settled = this._layoutIO.begin();
+      const ownsPending = this._layoutIO.guard(true);
+      let pending: DeviceLayout[string] | null = null;
+      let registered = false;
+      try {
+        let response: unknown;
+        if (placement === null) {
+          pending = null;
+          this._sentPos.set(deviceId, pending);
+          registered = true;
+          response = await this.planHost.request({
+            type: 'houseplan/layout/delete', device_id: deviceId,
+          });
+        } else {
+          // #397: keep locally exactly what goes on the wire, or the card's
+          // own echo reads as a remote edit and wipes the undo stack.
+          const pos = canonicalizePosition(this._layout[deviceId]);
+          if (contentFingerprint(pos) !== contentFingerprint(this._layout[deviceId])) {
+            this._layout = { ...this._layout, [deviceId]: pos };
+          }
+          pending = pos;
+          this._sentPos.set(deviceId, pending);
+          registered = true;
+          const writeHass = this.planHost;
+          response = await sendHouseplanWrite(writeHass, {
+            type: 'houseplan/layout/update', device_id: deviceId, pos,
+          }, { isCurrent });
+        }
+        if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
+        this._adoption.acceptLayoutPosition(deviceId, pending, (response as { rev?: unknown } | null)?.rev);
+        this._adoption.refreshLayoutFingerprint();
+        this._cacheSnapshot();
+      } finally {
+        if (ownsPending() && registered && this._sentPos.get(deviceId) === pending) this._sentPos.delete(deviceId);
+        settled();
+      }
+      return;
+    }
+    this._persistLocalLayout();
+  }
+
+  private _devicePositionStateValid(state: DevicePositionState): boolean {
+    const device = this._devices.find((candidate) => candidate.id === state.deviceId);
+    return !!device
+      && device.space === state.spaceId
+      && device.bindingStatus?.kind !== 'ha_disabled'
+      && !!this._spaceModelById(state.spaceId);
+  }
+
+  private async _runDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
+    const properties = this._editorRuntime?.properties;
+    if (properties && !properties.beforeIntent(() => { void this._runDevicePositionHistory(direction); })) return;
+    return properties ? properties.command(() => this._applyDevicePositionHistory(direction)) : this._applyDevicePositionHistory(direction);
+  }
+
+  private async _applyDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
+    const showToast = this._captureToast();
+    if (this._cancelDeviceDrag() || this._devicePositionBusy) return;
+    const isCurrent = this._layoutIO.guard();
+    const ownsPending = this._layoutIO.guard(true);
+    const next = direction === 'undo' ? this._devicePositionHistory.peekUndo() : this._devicePositionHistory.peekRedo();
+    if (next && 'kind' in next.before && next.before.kind === 'structure')
+      return this._editorRuntime?.deviceStructure.restore(direction, next);
+    const position = next ? this._devicePositionHistory.positionOf(next) : null;
+    const command = direction === 'undo'
+      ? this._devicePositionHistory.undo()
+      : this._devicePositionHistory.redo();
+    if (!command) return;
+    const target = direction === 'undo' ? command.before : command.after;
+    if ('kind' in target) {
+      if (target.kind === 'visual' && 'kind' in command.before && 'kind' in command.after
+        && command.before.kind === 'visual' && command.after.kind === 'visual')
+        return this._editorRuntime?.properties.restoreVisual(direction, command, position);
+      return ledHistory(this as never, direction, command); // #780
+    }
+    if (!this._devicePositionStateValid(target) || target.related?.some(s=>!this._devicePositionStateValid(s))) {
+      this._devicePositionHistory.clear();
+      showToast(this._t('history.device_stale'), 'history.device_stale');
+      this.requestUpdate();
+      return;
+    }
+
+    const from = direction === 'undo' ? command.after : command.before;
+    if ('kind' in from || !devicePositionHistoryMatches(this._layout, from)) {
+      this._devicePositionHistory.removeWhere(item => item === command);
+      showToast(this._t('history.device_stale'), 'history.device_stale');
+      this.requestUpdate();
+      return;
+    }
+
+    const rollback = devicePlacement(this._layout, target.deviceId);
+    const relatedRollback=target.related?.map(s=>({...s,placement:devicePlacement(this._layout,s.deviceId)}));
+    if (target.spaceId !== this._space) {
+      this._commitSpace(target.spaceId);
+      this._restoreZoom();
+    }
+    this._devicePositionBusy = true;
+    this._previewDevicePlacement(target.deviceId, target.placement);
+    for(const s of target.related??[])this._previewDevicePlacement(s.deviceId,s.placement);
+    try {
+      await this._persistDevicePlacement(target.deviceId, target.placement,target.related);
+      if (!isCurrent()) return;
+      showToast(this._t(direction === 'undo' ? 'history.undone' : 'history.redone', {
+        name: command.name,
+      }), direction === 'undo' ? 'history.undone' : 'history.redone');
+    } catch (error: unknown) {
+      if (!isCurrent()) return;
+      this._previewDevicePlacement(target.deviceId, rollback);
+      for(const s of relatedRollback??[])this._previewDevicePlacement(s.deviceId,s.placement);
+      if (direction === 'undo') this._devicePositionHistory.redo();
+      else this._devicePositionHistory.undo();
+      showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
+    } finally {
+      if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
+    }
+  }
+
+  private _undoDevicePosition(): void {
+    void this._runDevicePositionHistory('undo');
+  }
+
+  private _redoDevicePosition(): void {
+    void this._runDevicePositionHistory('redo');
+  }
+
+  private _savePos(d: DevItem, x: number, y: number): void {
+    if (!this._spaceModelById(d.space)) return;
+    this._layout = applyDevicePlacement(
+      this._layout, d.id, this._devicePlacementForCanvas(d, x, y),
+    );
+    this._dirtyPos.add(d.id);
+    this._persistLayout();
+  }
+
+  // ================= live states =================
+
+  /** One semantic projection consumed by the plan, preview and static card. */
+  private _devicePresentation(
+    d: DevItem, showLqi = effectiveShowLqi(this._settings, this._spaceDisplayForRender().showLqi, this._config?.show_signal),
+  ): ResolvedDevicePresentation {
+    // #850: the design preview resolves its own draft (marker-dialog.ts); no caller passed it here.
+    return this._renderDeviceSnapshot?.presentations.get(presentationSnapshotKey(d.id, showLqi))
+      ?? presentDevice(this as never, this._renderPlanHass, d, showLqi, {
+        showBattery: showDeviceBatteryOf(this._settings, this._serverCfg?.spaces.find(space => space.id === d.space)?.settings)
+          && !this._model.some((space) => ledStripsByMarker(space).has(d.id)),
+        batteryLowOnly: deviceBatteryModeOf(this._settings, this._serverCfg?.spaces.find(space => space.id === d.space)?.settings) === 'low',
+        lightDevices: this._renderDevices,
+        registryHass: this._fullRegistryHass,
+      });
+  }
+
+  /** One semantic result feeds the plate and every non-critical activity effect. */
+  private _deviceVisual(d: DevItem): DeviceVisualState {
+    return this._devicePresentation(d).visual;
+  }
+
+  /** CSS classes retained behind the old helper name for smoke/debug callers. */
+  private _stateClass(d: DevItem, visual = this._deviceVisual(d)): string {
+    const presentation = this._devicePresentation(d);
+    if (presentation.effectiveHidden) return '';
+    const activity = presentation.display === 'icon_ripple'
+      && this._config?.live_states !== false && visual.status !== 'alarm'
+      ? visual.activity : 'none';
+    return presentationClasses({ ...presentation, visual, activity }).join(' ');
+  }
+
+  private _liveTemp(d: DevItem): number | null {
+    if (!this._config?.show_temperature) return null;
+    // Opt-in climate source (marker.use_climate_temp): the AC/thermostat's
+    // current_temperature gets the same badge a thermometer has. No valid
+    // reading (missing attribute, unavailable) -> no badge at all.
+    if (d.marker?.use_climate_temp === true) {
+      const t = climateTempFor(this._renderPlanHass, d.entities);
+      if (t != null) return t;
+    }
+    if (d.icon !== 'mdi:thermometer' && d.icon !== 'mdi:air-filter') return null;
+    return tempFor(this._renderPlanHass, d.entities);
+  }
+
+  /** Every HA entity owned by a dialog binding. */
+  private _bindingEntities(binding: string): string[] {
+    if (binding === 'virtual' || !binding) return [];
+    const status = this._bindingStatus(binding);
+    return status.kind === 'active' ? status.enabledEntityIds : status.allEntityIds;
+  }
+
+  /** Does the dialog's binding carry a climate entity? Gates the opt-in checkbox. */
+  private _bindingHasClimate(binding: string): boolean {
+    return this._bindingEntities(binding).some((eid) => eid.startsWith('climate.'));
+  }
+
+  /** Static display can deliberately hide this binding's alarm indication. */
+  private _bindingHasAlarm(binding: string): boolean {
+    return this._bindingEntities(binding).some((eid) => {
+      const state = this._planHass?.states?.[eid] || this.hass?.states?.[eid];
+      const registry = this._fullRegistryHass.entities[eid] || this.hass?.entities?.[eid];
+      return isAlarmCapable(
+        eid.split('.')[0],
+        state?.attributes?.device_class
+          || registry?.device_class
+          || registry?.original_device_class,
+      );
+    });
+  }
+
+  // ================= interaction =================
+
+  private _deviceBindingActive(d: DevItem, notify = true): boolean {
+    if (d.virtual || d.bindingKind === 'virtual') return true;
+    if (!d.bindingKind || !d.bindingRef) return false;
+    const status = this._bindingStatus(`${d.bindingKind}:${d.bindingRef}`);
+    if (status.kind === 'active') return true;
+    if (notify) {
+      this._showToast(this._t(status.kind === 'ha_disabled'
+        ? 'toast.ha_disabled_action' : 'toast.ha_binding_unverified'), status.kind === 'ha_disabled'
+        ? 'toast.ha_disabled_action' : 'toast.ha_binding_unverified');
+    }
+    return false;
+  }
+
+  private _openDeviceMoreInfo(device: DevItem): void {
+    const current = this._devices.find(item => item.id === device.id);
+    if (!current || current.bindingKind !== device.bindingKind || current.bindingRef !== device.bindingRef) {
+      this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
+    }
+    if (!this._deviceBindingActive(current)) return;
+    const target = resolveDeviceMoreInfoTarget(this.hass, this._fullRegistryHass, current);
+    if (target.entityId) this._openMoreInfo(target.entityId);
+    else if (target.explicit) this._showToast(this._t('toast.more_info_target_unavailable'), 'toast.more_info_target_unavailable');
+    else this._infoCard = current;
+  }
+
+  private _openMoreInfo(entityId?: string): void {
+    if (!entityId) {
+      this._showToast(this._t('toast.no_entity'), 'toast.no_entity');
+      return;
+    }
+    if (!this._planEntityAvailable(entityId)) {
+      this._showToast(this._t('toast.ha_disabled_action'), 'toast.ha_disabled_action');
+      return;
+    }
+    // The native HA dialog has no reliable close event for this card.  Its
+    // stale entity field cannot be a reload guard, so every successful open —
+    // including keyboard activation — extends the shared kiosk interaction
+    // pause used by the carousel and #462 recovery controller.
+    if (this._kiosk) {
+      this._kioskCarousel.interact();
+    }
+    this._nativeMoreInfoEntity = entityId;
+    fireEvent(this, 'hass-more-info', { entityId });
+  }
+
+  /**
+   * A modal opened while a view pointer is still down interrupts the stage's
+   * normal pointerup lifecycle. Drop every navigation anchor immediately and
+   * release capture defensively, even though the current view path does not
+   * normally request it. This is intentionally separate from editor geometry.
+   */
+  private _interruptViewGesture(pointerId?: number, source?: Element | null): void {
+    this._viewHold.cancel();
+    this._kioskHold.cancel();
+    if (pointerId !== undefined) {
+      for (const element of [source, this._stageEl]) {
+        try {
+          if (element?.hasPointerCapture?.(pointerId)) element.releasePointerCapture(pointerId);
+        } catch {
+          /* Pointer ownership may already have moved to the modal. */
+        }
+      }
+    }
+    this._pointers.clear();
+    this._panStart = null;
+    this._panLock = null;
+    this._pinchStart = null;
+    this._swipeStart = null;
+    this._roomPointer = null;
+    this._clearPlanTapSequence();
+    this._deviceHits.clearPointers();
+  }
+
+  /** Close the device card and make stale long-press state non-observable. */
+  private _closeInfoCard(): void {
+    this._interruptViewGesture();
+    this._holdFired = false;
+    this._infoCard = null;
+  }
+
+  private _abandonViewInput(): void {
+    ++this._viewDeviceMenuRequest;
+    this._touchClickGuard.abandon();
+    this._touchContacts.clear();
+    this._roomGearTouchNavigation = false;
+    this._interruptViewGesture();
+    this._holdFired = false;
+  }
+
+  private _invalidateDeviceHitGeometry(): void {
+    this._deviceHits.invalidate();
+  }
+
+  private _resetDeviceHitState(): void {
+    this._deviceHits.reset(this.renderRoot);
+  }
+
+  /** Exposed only as a runtime diagnostic for the real-browser #564 witness. */
+  private _deviceHitOwnerAt(clientX: number, clientY: number): DevItem | null {
+    if (this._mode !== 'view' && this._mode !== 'devices') return null;
+    return this._deviceHits.at(
+      this.renderRoot, this._renderDevices, this._space, clientX, clientY,
+    );
+  }
+
+  private _deviceForPointerEvent(ev: PointerEvent, fallback: DevItem): DevItem {
+    if (this._cameraGestureActive && ev.type === 'pointerdown') this._invalidateDeviceHitGeometry();
+    return this._deviceHits.pointer(
+      this.renderRoot, this._renderDevices, this._space, ev, fallback,
+    );
+  }
+
+  private _deviceForClickEvent(ev: Event, fallback: DevItem): DevItem {
+    if (this._cameraGestureActive) this._invalidateDeviceHitGeometry();
+    return this._deviceHits.click(
+      this.renderRoot, this._renderDevices, this._space, ev, fallback,
+    );
+  }
+
+  private _showDeviceTip(ev: PointerEvent | WheelEvent, d: DevItem): void {
+    if (this._liveRt) this._liveRt.devicePointerTip(ev, d);
+    else this._viewRuntimes.withLive(runtime => runtime.devicePointerTip(ev, d));
+  }
+
+  private _showDeviceFocusTip(ev: FocusEvent, d: DevItem): void {
+    const target = ev.currentTarget as HTMLElement | null;
+    if (this._liveRt) this._liveRt.deviceFocusTip(target, d);
+    else this._viewRuntimes.withLive(runtime => runtime.deviceFocusTip(target, d));
+  }
+  private _hideDeviceFocusTip(deviceId: string): void { this._liveRt?.deviceBlur(deviceId); }
+  private _clearPointerHover(): void { this._liveRt ? this._liveRt.pointerLeave() : this._clearTransientHover(); }
+
+  /** View and Devices context menus keep the same screen-space hit owner. */
+  private _ctxDevice(ev: MouseEvent, d: DevItem): void {
+    d = this._deviceForPointerEvent(ev as PointerEvent, d);
+    if (this._mode === 'devices') { this._editorRuntime?.deviceCopy.open(ev, d); return; }
+    if (this._mode !== 'view') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (this._kiosk) { this._openMarkerDialog(d, true); return; }
+    this._interruptViewGesture();
+    const request = ++this._viewDeviceMenuRequest, cardConfig = this._config;
+    const epoch = this._adoption.adoptionEpoch, cr = this._cfgRev, lr = this._layoutRev;
+    const modeRequest = this._editorModeRequest, writer = this._canEdit, authority = this._configWriteGuard();
+    const context = { spaceId: this._space, id: d.id }, binding = markerSettingsTargetKey(d);
+    const current = () => request === this._viewDeviceMenuRequest && this.isConnected && this._mode === 'view'
+      && !this._kiosk && this._canEdit === writer && this._loadOk && !this._connectionWasLost && authority()
+      && cardConfig === this._config && modeRequest === this._editorModeRequest
+      && epoch === this._adoption.adoptionEpoch && cr === this._cfgRev && lr === this._layoutRev
+      ? currentMarkerSettingsDevice(this._displayDevices, this._space, context, binding) : null;
+    this._viewRuntimes.openDeviceMenu({ current, target: ev.currentTarget as Element | null, x: ev.clientX, y: ev.clientY });
+  }
+
+  private _clickDevice(ev: Event, d: DevItem): void {
+    const showToast = this._captureToast();
+    // Devices are passive landmarks in Plan/Background. Guard before stopping
+    // propagation so a Background tool still owns the same canvas point even
+    // if a future CSS change accidentally makes a marker a hit target again.
+    if (this._mode !== 'view' && this._mode !== 'devices') return;
+    if (this._deviceDragRetirement.blocksClick(ev as PointerEvent)) return;
+    ev.stopPropagation();
+    d = this._deviceForClickEvent(ev, d);
+    if (this._deviceDrag?.moved || this._suppressClick || this._holdFired) return;
+    if (this._mode === 'devices') {
+      const properties = this._editorRuntime?.properties;
+      if (properties?.wide) {
+        if (properties.selectDevice(d) && (ev as MouseEvent).detail >= 2) this._openMarkerDialog(d);
+      } else this._openMarkerDialog(d);
+      return;
+    }
+    // The renderer may deliberately keep an older, complete visual snapshot
+    // on screen while a new HA/config frame is being committed (#73). Actions
+    // must never inherit that visual staleness: resolve the current DevItem by
+    // stable marker id before reading tap_action, controls or the binding.
+    const actionDevice = this._displayDevices.find((item) => item.id === d.id && !item.hidden);
+    if (!actionDevice || actionDevice.space !== this._space || d.space !== this._space) return;
+    const actionAuthority = this.planHost.authorityKey, actionRevision = this.planHost.writeAuthorityRevision;
+    const actionSpace = this._space;
+    const currentActionDevice = (): DevItem | null => {
+      if (this.planHost.authorityKey !== actionAuthority || this.planHost.writeAuthorityRevision !== actionRevision) return null;
+      const current = currentMarkerActionDevice(this._displayDevices, this._space,
+        { spaceId: actionSpace, id: actionDevice.id });
+      if (current && !current.hidden) return current;
+      this._tapConfirm = null; this._closeInfoCard();
+      showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
+      return null;
+    };
+    const action = projectedTapAction(
+      actionDevice.tapAction, actionDevice.primary?.split('.')[0],
+    );
+    // An explicit no-op still owns the click: propagation was stopped and the
+    // current marker was resolved, but no capability, feedback or UI path runs.
+    if (action === 'none') return;
+    if (action === 'settings') { this._openMarkerDialog(actionDevice, true); return; }
+    // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
+    // action — toggle or run — may ask first. The dialog is ours, not the
+    // native browser prompts, so it works and looks right on a wall tablet.
+    const guarded = (text: string, exec: () => void): void => {
+      if (actionDevice.marker?.tap_confirm) this._tapConfirm = { kind: 'run', text, exec };
+      else exec();
+    };
+    if (action === 'toggle') {
+      const initial = this._toggleIntent(actionDevice);
+      if (!initial) return;
+      if (!toggleOperation(initial)) {
+        this._showUnavailableToggleTargets(initial);
+        return; // other configured no-target outcomes remain intentional quiet no-ops
+      }
+      const execute = (intent: ResolvedToggleIntent): void => {
+        if (!this.planHost.capabilities.deviceServices) return;
+        const operation = toggleOperation(intent);
+        if (!operation) return;
+        if (operation.kind === 'virtual-light') {
+          this._startDevicePressFeedback(actionDevice.id);
+          this.planHost.request({
+            type: 'houseplan/virtual_light/toggle',
+            marker_id: operation.markerId,
+          }).then((result: any) => {
+            const next = applyVirtualLightEvent(this._virtualLights, result);
+            if (next === this._virtualLights) return;
+            this._virtualLights = next;
+            this._capturedSnapshotVirtual = '';
+            this._cacheSnapshot();
+            this.requestUpdate();
+          }).catch((e: any) => showToast(this._t(
+            'toast.virtual_light_toggle_failed', { err: this._errText(e) },
+          ), 'toast.virtual_light_toggle_failed'));
+          return;
+        }
+        const { command } = operation;
+        this._startDevicePressFeedback(actionDevice.id);
+        this.planHost.deviceServices?.call(command.domain, command.service, command.data)
+          .catch((e: unknown) => showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
+      };
+      const name = toggleIntentName(initial) || actionDevice.name;
+      if (actionDevice.marker?.tap_confirm) {
+        const lines = this._toggleConfirmationLines(initial);
+        if (!lines.length) return;
+        this._tapConfirm = {
+          kind: 'toggle',
+          text: this._t('confirm.tap_toggle', { name }),
+          lines,
+          initialIntent: initial,
+          deviceId: actionDevice.id,
+          exec: () => {
+            const currentDevice = currentActionDevice();
+            if (!currentDevice) return;
+            const current = currentDevice ? this._toggleIntent(currentDevice) : null;
+            if (current && !toggleOperation(current)
+                && this._showUnavailableToggleTargets(current)) return;
+            if (!current || !sameToggleOperationTargets(initial, current)) {
+              showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
+              return;
+            }
+            execute(current); // current state decides the current direction
+          },
+        };
+      } else execute(initial);
+      return;
+    }
+    // The House Plan device card is a local informational surface built from
+    // the DevItem that is already on screen. It does not call an HA service
+    // and must not disappear behind a second, momentary registry-status check
+    // (notably on compound cover/curtain devices). HA-backed actions below
+    // keep the active-binding gate. Closing the stage gesture first also
+    // prevents a pending pan/long-press lifecycle from swallowing the modal.
+    if (action === 'info') {
+      this._interruptViewGesture();
+      this._infoCard = actionDevice;
+      return;
+    }
+    if (!this._deviceBindingActive(actionDevice)) return;
+    if (action === 'run') {
+      if (!this.planHost.capabilities.deviceServices) return;
+      const target = actionDevice.marker?.tap_target || '';
+      const svc = runServiceFor(target);
+      const st = this.hass.states[target];
+      if (!svc || !st) {
+        showToast(this._t('toast.run_target_missing'), 'toast.run_target_missing');
+        return;
+      }
+      const name = st.attributes?.friendly_name || target;
+      guarded(this._t('confirm.tap_run', { name }), () => {
+        if (!this.planHost.capabilities.deviceServices) return;
+        const current = currentActionDevice();
+        if (!current) return;
+        if (current.marker?.tap_target !== target) {
+          this._tapConfirm = null; this._closeInfoCard();
+          showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
+        }
+        if (!this._deviceBindingActive(current) || !this._planEntityAvailable(target)) return;
+        this._startDevicePressFeedback(actionDevice.id);
+        this.planHost.deviceServices
+          ?.call(svc.domain, svc.service, { entity_id: target })
+          .then(() => {
+            this._stampActivity(
+              actionDevice.id, 'event', this._activitySourceKey(actionDevice),
+            );
+            this.requestUpdate();
+            showToast(this._t('toast.run_started', { name }), 'toast.run_started');
+          })
+          .catch((e: unknown) => showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
+      });
+      return;
+    }
+    if (action === 'more-info') {
+      this._openDeviceMoreInfo(actionDevice);
+      return;
+    }
+    this._infoCard = actionDevice;
+  }
+
+  /** Explain a safe controls no-op through the card's standard local toast. */
+  private _showUnavailableToggleTargets(intent: ResolvedToggleIntent): boolean {
+    const names = unavailableToggleTargetNames(intent);
+    if (!names.length) return false;
+    this._showToast(names.length === 1
+      ? this._t('toast.toggle_target_unavailable', { name: names[0] })
+      : this._t('toast.toggle_targets_unavailable', { names: names.join(', ') }), (names.length === 1) ? ('toast.toggle_target_unavailable') : ('toast.toggle_targets_unavailable'));
+    return true;
+  }
+
+  /** A cancelled/replaced DOM confirmation never accepts a newer intent. */
+  private _acceptTapConfirm(confirmation: { exec(): void } | null): void {
+    acceptTapConfirmation(confirmation, this._tapConfirm, () => { this._tapConfirm = null; });
+  }
+
+  private _keyDevice(ev: KeyboardEvent, d: DevItem): void {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    if (this._mode !== 'view' && this._mode !== 'devices') return;
+    ev.preventDefault();
+    this._clickDevice(ev, d);
+  }
+
+  /** One retargetable visual acknowledgement owned by actual action dispatch. */
+  private _startDevicePressFeedback(markerId: string): void {
+    const marker = [...this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-id]')]
+      .find((candidate) => candidate.dataset.id === markerId);
+    const body = marker?.querySelector<HTMLElement>('.device-shell');
+    if (!body || typeof body.animate !== 'function') return;
+    const paintedScale = Number.parseFloat(
+      this.ownerDocument.defaultView?.getComputedStyle(body).scale || '',
+    );
+    const restartScale = Number.isFinite(paintedScale)
+      ? Math.max(0.95, Math.min(1, paintedScale))
+      : 1;
+    this._devicePressAnimations.get(markerId)?.cancel();
+    const frames: Keyframe[] = this._reducedMotion
+      ? [
+          { outlineColor: 'transparent', outlineStyle: 'solid', outlineWidth: '0px' },
+          {
+            outlineColor: 'var(--hp-accent, #3ea6ff)', outlineStyle: 'solid',
+            outlineWidth: '2px', outlineOffset: '2px', offset: 0.5,
+          },
+          { outlineColor: 'transparent', outlineStyle: 'solid', outlineWidth: '0px' },
+        ]
+      : [
+          { scale: String(restartScale) },
+          { scale: '0.95', offset: 0.5 },
+          { scale: '1' },
+        ];
+    const animation = body.animate(frames, {
+      duration: 200,
+      easing: 'cubic-bezier(.22,.61,.36,1)',
+    });
+    this._devicePressAnimations.set(markerId, animation);
+    const clear = (): void => {
+      if (this._devicePressAnimations.get(markerId) === animation) {
+        this._devicePressAnimations.delete(markerId);
+      }
+    };
+    animation.addEventListener('finish', clear, { once: true });
+    animation.addEventListener('cancel', clear, { once: true });
+  }
+
+  private _cancelDevicePressFeedback(): void {
+    for (const animation of this._devicePressAnimations.values()) animation.cancel();
+    this._devicePressAnimations.clear();
+  }
+
+  private _pruneDevicePressFeedback(): void {
+    if (!this._devicePressAnimations.size) return;
+    const visible = new Set(
+      [...this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-id]')]
+        .map((marker) => marker.dataset.id || ''),
+    );
+    for (const [markerId, animation] of this._devicePressAnimations) {
+      if (visible.has(markerId)) continue;
+      animation.cancel();
+      this._devicePressAnimations.delete(markerId);
+    }
+  }
+
+  /** Translate a key in the card's current language. */
+  private _t(key: I18nKey, vars?: Record<string, string | number>): string {
+    return t(langOf(this._presentation, this._config?.language), key, vars);
+  }
+
+  /** Per-card copy keeps presentation-only pickers independent across languages. */
+  private get _colorPickerLabels(): ColorPickerLabels {
+    return {
+      title: this._t('color_picker.title'),
+      hue: this._t('color_picker.hue'),
+      saturation: this._t('color_picker.saturation'),
+      value: this._t('color_picker.value'),
+      hex: this._t('color_picker.hex'),
+      invalidHex: this._t('color_picker.invalid_hex'), confirm: this._t('color_picker.confirm'),
+    };
+  }
+
+  private get _stageEl(): HTMLElement | null {
+    return this.renderRoot.querySelector('.stage') as HTMLElement | null;
+  }
+
+  /**
+   * Everything of the current space that counts as CONTENT, one item per
+   * object (docs/CANVAS.md §4): rooms and the backdrop image come from the
+   * model, openings/decor/devices are added here because the model does not
+   * carry them. Devices use their RESOLVED position, so a marker parked in
+   * the far corner of the yard frames with the rest.
+   *
+   * HIDDEN devices are NOT content (DEV-2C947-01): the frame is presentation,
+   * and a device the plan does not draw must not decide what the plan opens
+   * on — hiding a marker that once wandered into the yard used to leave the
+   * house a dot in the corner of an empty frame. They keep counting for room
+   * LQI/climate and they keep their auto-grid cell (docs/FILTERING.md); only
+   * the frame stops seeing them, including the ghosts of the device editor,
+   * whose reach is the pan slack's job, not the opening view's.
+   */
+  private _contentItems(m: SpaceModel): ContentItem[] {
+    const extra: ContentItem[] = [];
+    for (const d of this._displayDevices) {
+      if (d.space !== m.id || d.hidden) continue;
+      const p = this._pos(d);
+      extra.push({ minX: p.x, minY: p.y, maxX: p.x, maxY: p.y });
+    }
+    if (m.id === this._space) {
+      const index = this._openingWallIndexFor(m, this._openCuts()).value;
+      for (const o of this._openingsR) {
+        if (!o.orphanReason && o.type !== 'passage') {
+          const face = this._openingFace(o, index, o.type === 'gate' ? !o.flip_v : !!o.flip_v);
+          const bounds = openingVisibleBounds({ type:o.type, length:o.rlen, angle:o.angle,
+            amount:0, flipH:!!o.flip_h, flipV:!!o.flip_v, base:'', tone:'', face,
+            swingDepth: openingSwingDepth(o, index),
+            cellCm:this._cellCm, gridPitch:this._gridPitch,
+            visual:resolveOpeningVisual(o, () => null, 0) }, [o.rx,o.ry]);
+          if (bounds) { extra.push(bounds); continue; }
+        }
+        const rad = (Number(o.angle) * Math.PI) / 180;
+        const dx = (Math.cos(rad) * o.rlen) / 2, dy = (Math.sin(rad) * o.rlen) / 2;
+        const it = itemOf([[o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy]]);
+        if (it) extra.push(it);
+      }
+      const H = this._decorH;
+      for (const x of this._decorList) {
+        // Missing image assets are intentionally invisible in View. Their
+        // geometry still participates while Background is open, where the
+        // bounded repair placeholder is actually painted and selectable.
+        if (x.kind === 'image' && !this._decorAssets.has(x.asset_id)
+            && this._mode !== 'decor') continue;
+        const pts = x.kind === 'line'
+          ? [[x.x1 * NORM_W, x.y1 * H], [x.x2 * NORM_W, x.y2 * H]]
+          : x.kind === 'text'
+            ? [[x.x * NORM_W, x.y * H]]
+            : boxCorners({ x: x.x * NORM_W, y: x.y * H, w: x.w * NORM_W,
+                h: x.h * H, angle: x.angle });
+        const it = itemOf(pts);
+        if (it) extra.push(it);
+      }
+      // Independent physical geometry participates in content bounds even
+      // outside room paper. Each body is one bounded object, never a vote made
+      // only by its centre point.
+      for (const body of this._physicalBodiesR(m)) {
+        const it = itemOf(body);
+        if (it) extra.push(it);
+      }
+    }
+    return contentItems(m, extra);
+  }
+
+  /**
+   * The content frame of the current space, memoised (docs/CANVAS.md §4).
+   *
+   * In VIEW mode it follows the config: adding a device out in the yard
+   * widens what "fit" means. Inside an EDITOR it only ever GROWS — the frame
+   * bounds pan and the meaning of zoom 1, and a frame that shrank the moment
+   * you deleted a room would move the ground under a drag. It never bounds
+   * where you may DRAW: §5 pan slack plus 3x zoom-out is far more room than
+   * the old square ever gave (that is what HP-1490-03 needed).
+   */
+  private _frame:
+    | { id: string; model: SpaceModel; layout: unknown; devs: unknown; far: boolean;
+        grow: boolean; rect: Rect; all: Rect; outliers: number; hasContent: boolean }
+    | null = null;
+  /** The outlier hint's «Показать» is on: the frame takes in the far strays
+   *  too, so zoom, pan and the fit button all agree about what "everything"
+   *  is. Reset when the space changes (docs/CANVAS.md §4.1). */
+  private _showFar = false;
+
+  private _contentFrameMemo: { model: SpaceModel; layout: unknown; devs: unknown; missingDecor: boolean;
+    value: ReturnType<typeof contentFrame> } | null = null;
+  private _frameOf(): { rect: Rect; all: Rect; outliers: number; hasContent: boolean } {
+    if (this._presentedPreviewFit) return this._presentedPreviewFit.frame;
+    if (!this._ensureFloorPreparation()) {
+      const fallback = { x: 0, y: 0, w: NORM_W, h: NORM_W };
+      return this._floorPreparation?.fit?.frame || { rect: fallback, all: fallback, outliers: 0, hasContent: false };
+    }
+    const m = this._spaceModel();
+    if (!m) {
+      this._frame = null;
+      const fallback = { x: 0, y: 0, w: NORM_W, h: NORM_W };
+      return { rect: fallback, all: fallback, outliers: 0, hasContent: false };
+    }
+    // Memo by IDENTITY, not by an epoch counter: `_model`, `_layout` and
+    // `_devices` are all replaced (never mutated in place) whenever their
+    // content changes, so this catches a marker drag and a server push alike —
+    // an epoch would have to be bumped at every one of those call sites.
+    const f = this._frame;
+    const snapshot = this._renderDeviceSnapshot;
+    const layout = snapshot ? this._snapshotLayouts.get(snapshot) ?? this._layout : this._layout;
+    // `grow` is part of the KEY, not just of the computation (DEV-2C947-02):
+    // the union an editor accumulated is an editor's frame, and leaving for
+    // View has to recompute rather than inherit it — otherwise a room moved
+    // far away in the Plan editor kept View framing the empty ground it left
+    // behind, until some unrelated model change happened to invalidate memo.
+    const grow = this._mode !== 'view';
+    // A LIVE BACKDROP GESTURE FREEZES THE FRAME (docs/DECOR-EDITOR.md §3.2). The
+    // picture is a content item, so dragging it grows the frame — which
+    // rescales the view, which changes how many plan units a screen pixel is
+    // worth, mid-gesture: the picture then runs away from the finger and no
+    // drag lands where it was aimed. The frame catches up on release.
+    if (f && f.id === m.id && this._editorRuntime?.backdropGesture.active) return f;
+    if (f && f.id === m.id && f.model === m && f.layout === layout
+        && f.devs === this._displayDevices && f.far === this._showFar && f.grow === grow) return f;
+    const missingDecor = this._mode === 'decor' && this._decorList.some(item => item.kind === 'image' && !this._decorAssets.has(item.asset_id));
+    let source = this._contentFrameMemo;
+    if (!f || !source || source.model !== m || source.layout !== layout || source.devs !== this._displayDevices
+        || source.missingDecor !== missingDecor) {
+      source = this._contentFrameMemo = { model: m, layout, devs: this._displayDevices, missingDecor,
+        value: contentFrame(this._contentItems(m)) };
+    }
+    const cf = source.value;
+    let all = cf.all || spaceFrame(m);
+    let rect = this._showFar ? all : (cf.core || spaceFrame(m));
+    if (f && f.id === m.id && grow && f.grow) {
+      // Inside an editor the frame only GROWS: it bounds pan and defines what
+      // zoom 1 means, and a frame that shrank the instant a room was deleted
+      // would move the ground under the pointer mid-gesture. Only ever unions
+      // with a frame the SAME editor session produced (f.grow).
+      rect = unionRect(f.rect, rect);
+      all = unionRect(f.all, all);
+    }
+    this._frame = {
+      id: m.id, model: m, layout, devs: this._displayDevices,
+      far: this._showFar, grow, rect, all, outliers: cf.outliers, hasContent: cf.all !== null,
+    };
+    if (f?.id === m.id && this._view && this._lastValidStageSize && !this._modeTransitionBusy && !this._viewPlane
+        && (this._mode !== 'view' || !this._isoEnabled)
+        && (f.rect.x !== rect.x || f.rect.y !== rect.y || f.rect.w !== rect.w || f.rect.h !== rect.h)) {
+      const [width, height] = this._lastValidStageSize;
+      const old = f.rect, previousBase = [old.x, old.y, old.w, old.h];
+      const previous = presentationViewport(this._view, previousBase, turnRect(old, this._rotation),
+        this._rotation, this._zoom, [width, height], null);
+      const camera = physicalPlanCamera({ centerX: this._view.x + this._view.w / 2,
+        centerY: this._view.y + this._view.h / 2, pixelsPerUnit: width / previous.w },
+      [rect.x, rect.y, rect.w, rect.h], turnRect(rect, this._rotation), this._rotation, width, height);
+      this._view = camera.viewBox; this._zoom = camera.zoom;
+      // This Flat geometry owner has already rebased its camera. Publish the
+      // matching basis so render adoption cannot reapply the same change.
+      this._viewFrame = {base:[rect.x,rect.y,rect.w,rect.h],display:turnRect(rect,this._rotation),
+        rotation:this._rotation,plane:null,size:[width,height]};
+      this._viewFrameSpace = m.id;
+      if (this._loadOk) this._saveZoom();
+    }
+    return this._frame;
+  }
+
+  /** Presentation-only structural source; its expensive build runs on LRU miss. */
+  private _isoSource(): IsoStructuralSource | null {
+    const runtime = this._isoSceneRuntime;
+    if (!runtime) return null;
+    const space = this._spaceModel();
+    if (!space) return null;
+    const walls = this._spaceWalls;
+    const openCuts = this._openCuts();
+    const openings = this._openingsR;
+    return runtime.createIsoStructuralSource({
+      space, walls, openCuts, openings,
+      partitionCuts: () => this._partitionOpeningCuts(space),
+      roomOpenings: () => this._roomWallOpeningInputs(openings, space),
+      cellCm: this._cellCm, gridPitch: this._gridPitch,
+      wallKeyPitch: this._wallKeyPitch, coordinateScale: NORM_W,
+      onBuild: () => { this._isoStructuralBuildCount += 1; },
+    });
+  }
+
+  private _isoSceneKey(): string | null {
+    if (!this._isoEnabled || this._mode !== 'view') return null;
+    try { return this._isoSource()?.key ?? null; } catch { return this._isoInvalidKey(); }
+  }
+
+  /** A malformed source is stable only for the current structural config revision. */
+  private _isoInvalidKey(): string { return `${this._space}|invalid|${this._cfgEpoch}`; }
+
+  private _clearIsoInvalidFallback(active?: string): void {
+    const prefix = `${this._space}|invalid|`;
+    for (const key of this._isoFallback)
+      if (key.startsWith(prefix) && key !== active) this._isoFallback.delete(key);
+  }
+
+  private _isoScene(source: IsoStructuralSource | null = this._isoSource()): IsoRenderScene | null {
+    const runtime = this._isoSceneRuntime;
+    if (!runtime || !source) return null;
+    const content = this._frameOf();
+    let liveFrame = content.rect;
+    const disp = this._spaceDisplayForRender();
+    const space = this._spaceModel();
+    if (space && disp.showNames) {
+      for (const room of space.rooms) if (room.name) {
+        const point = this._labelPos(room, space.id);
+        liveFrame = unionRect(liveFrame, { x: point.x, y: point.y, w: 0, h: 0 }); }
+    }
+    const cfgSize = this._config?.icon_size ?? 2.5, iconPct = cfgSize > 8 ? 2.5 : cfgSize;
+    return runtime.resolveIsoFitScene({
+      source, cache: this._isoGeometryCache, cellCm: this._cellCm, liveFrame, contentFrame: content.all,
+      rotation: this._rotationForProjection('iso'),
+      overlays: space && disp.showBorders ? (scene) => this._isoOverlayScene(
+        space, this._renderDevices.filter((device) => device.space === space.id && !device.hidden),
+        disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
+        effectiveShowLqi(this._settings, disp.showLqi, this._config?.show_signal)) : undefined,
+    });
+  }
+  private _latchIsoFallback(key: string, _ignored: unknown): void {
+    if (this._isoFallback.has(key)) return;
+    this._isoFallback.add(key);
+    const fingerprint = key.includes('|invalid|') ? 'invalid' : key.split('|').pop() || 'invalid';
+    console.warn('HOUSEPLAN ISO FALLBACK: #89/#160', safeRuntimeDiagnostic('structural', fingerprint, true));
+  }
+  private _effectiveProjection(): 'flat' | 'iso' {
+    if (this._presentedPreviewFit) return this._presentedPreviewFit.projection;
+    if (!this._ensureFloorPreparation()) return this._desiredProjection;
+    if (this._isoProjectionSnapshot) return this._isoProjectionSnapshot;
+    const finish = (value: 'flat' | 'iso') => this._isoProjectionSnapshot = value;
+    const fallback = () => { if (this._renderProjection === 'iso') { this._cancelCameraTransition(false); this._view = null;  } return finish('flat'); };
+    this._renderIsoScene = null;
+    if ((this._modeProjectionSource ?? this._desiredProjection) !== 'iso' || !this._model.length || !this._isoSceneRuntime)
+      return finish('flat');
+    if (this._needsFurnitureVolume) {
+      void FURNITURE_VOLUME_RUNTIME.ensure(this._furnitureVolumeObserver);
+      if (FURNITURE_VOLUME_RUNTIME.state() === 'fallback') return fallback();
+    }
+    if (!this._spaceDisplayForRender().showBorders)
+      return this._isoFallback.has(`${this._space}|no-borders`) ? fallback() : finish('iso');
+    let key = this._isoInvalidKey();
+    this._clearIsoInvalidFallback(key);
+    if (this._isoFallback.has(key)) return fallback();
+    try {
+      const source = this._isoSource();
+      if (!source) return finish('flat');
+      key = source.key;
+      if (this._isoFallback.has(key)) return fallback();
+      const scene = this._isoScene(source);
+      if (!scene) return finish('flat');
+      if (this._isoFallback.has(scene.key)) return fallback();
+      this._renderIsoScene = scene;
+      return finish('iso');
+    } catch (error) {
+      this._latchIsoFallback(key, error);
+      return fallback();
+    }
+  }
+
+  /** #713: the 2.5D floor is the Flat plane; the live viewport still asks. */
+  private _floorView(view: { x: number; y: number; w: number; h: number }): { x: number; y: number; w: number; h: number } {
+    return view;
+  }
+  /** Stage 4 keeps one immutable floor point and one runtime visual point per
+   * raised item. This snapshot is presentation-only and never enters config. */
+  private _isoOverlayScene(
+    space: SpaceModel,
+    devs: readonly DevItem[],
+    disp: SpaceDisplay,
+    layers: IsoDecorationLayers | null,
+    structural: IsoRenderScene | null,
+    iconPct: number,
+    deviceBasePct: number,
+    showLqi: import('./signal-visibility').SignalVisibility,
+  ): IsoOverlayRenderScene | null {
+    const runtime = this._isoSceneRuntime;
+    if (!runtime || !layers?.structural || !structural) return null;
+    return runtime.buildIsoOverlayRenderScene({
+      space, devices: devs, openings: this._openingsR, display: disp,
+      structure: structural.geometry, camera: structural.camera,
+      openingBases: structural.openings,
+      floorAlignedMarkers: ISO_LAB_FLOOR_MARKERS,
+      contactMasonry: ISO_LAB_FLOOR_MARKERS ? this._wallUnionGeometry()?.components.flatMap(c=>c.geom) : undefined,
+      iconPct, deviceBasePct, showLqi, cellCm: this._cellCm,
+      kioskIconScale: this._mode === 'view' ? this._effectiveKioskScale.icon : 1,
+      kioskFontScale: this._mode === 'view' ? this._effectiveKioskScale.font : 1,
+      positionOf: (device) => this._pos(device),
+      effectiveDiameterOf: (device) => this._deviceContacts?.diameter(device.id, this._pos(device, false)),
+      presentationOf: (device, withLqi) => this._devicePresentation(device, withLqi),
+      labelPositionOf: (room, spaceId) => this._labelPos(room, spaceId),
+      labelScaleOf: (room) => this._labelScale(room),
+      openingEntityAvailable: (entityId) => this._renderOpeningEntityAvailable(entityId),
+      openingWallIndex: () => this._openingWallIndexFor(space, this._openCuts()).value,
+    });
+  }
+  private _baseVb(
+    projection: 'flat' | 'iso' = this._effectiveProjection(),
+    scene: IsoRenderScene | null = this._renderIsoScene,
+  ): number[] {
+    if (this._presentedPreviewFit) return this._presentedPreviewFit.base;
+    if (!this._ensureFloorPreparation()) return this._floorPreparation?.fit?.base || [0, 0, NORM_W, NORM_W];
+    if (projection === 'iso' && scene) {
+      const frame = scene.canonicalFrame ?? scene.frame;
+      return [frame.x, frame.y, frame.w, frame.h];
+    }
+    const r = this._frameOf().rect;
+    return [r.x, r.y, r.w, r.h];
+  }
+
+  /** How many objects the opening view deliberately leaves out (§4.1). */
+  private get _outliers(): number {
+    return this._showFar ? 0 : this._frameOf().outliers;
+  }
+
+  /** The outlier hint's action: take the far objects into the frame, then fit. */
+  private _fitFar(): void {
+    this._clearRoomFocus();
+    this._showFar = true;
+    this._frame = null;
+    // The camera command may be a no-op at the fitted target. The hint still
+    // changed state and must disappear without waiting for another render.
+    this.requestUpdate();
+    this._resetZoom();
+  }
+
+  private _clearPlanTapSequence(): void {
+    this._planTaps.clear();
+  }
+
+  private _clearRoomFocus(pointer = false): void {
+    this._clearPlanTapSequence();
+    this._roomFocus = null;
+    if (pointer) this._roomPointer = null;
+  }
+
+  /** Exact finite room geometry in the current camera coordinate system. */
+  private _roomFitBounds(room: RoomCfg, space: SpaceModel, rotation: PlanRotation = 0) {
+    if (!room.id || !roomPoly(room)) return null;
+    return roomFitPlanBounds({
+      room, space, walls: this._spaceWalls, openCuts: this._openCuts(),
+      innerFloor: () => this._innerRoomContour(space, room.id!),
+      wallNodes: this._wallUnionGeometry()?.multiWallNodes, borders: this._spaceDisplayForRender().showBorders,
+      wallKeyPitch: this._wallKeyPitch, cellCm: this._cellCm, gridPitch: this._gridPitch,
+      coordinateScale: NORM_W, projection: this._effectiveProjection(), rotation,
+      camera: rotation === this._rotation ? this._isoFloorCamera : undefined,
+    });
+  }
+
+  /** Apply or retarget one room command without introducing a second RAF owner. */
+  private _fitRoom(roomId: string, animate = true): boolean {
+    if (this._mode !== 'view') return false;
+    this._clearPlanTapSequence();
+    const space = this._spaceModel();
+    const room = space?.rooms.find((item) => item.id === roomId);
+    if (!space || !room) {
+      this._clearRoomFocus();
+      return false;
+    }
+    const canonicalBounds = this._roomFitBounds(room, space);
+    let bounds = this._rotation ? this._roomFitBounds(room, space, this._rotation) : canonicalBounds;
+    if (!bounds) {
+      this._clearRoomFocus();
+      return false;
+    }
+    this._roomFocus = { spaceId: space.id, roomId };
+    const stage = this._stageEl;
+    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return true;
+    const base = this._baseVb();
+    const baseFit = fitView(base, stage.clientWidth / stage.clientHeight);
+    const displayBase = this._displayBase(base);
+    const displayFit = this._rotation ? fitView([displayBase.x, displayBase.y, displayBase.w, displayBase.h], stage.clientWidth / stage.clientHeight) : baseFit;
+    const targetOf = (fitBounds: NonNullable<typeof bounds>) => roomFitPlanTarget({
+      bounds: fitBounds,
+      baseFit: displayFit,
+      stageWidth: stage.clientWidth,
+      stageHeight: stage.clientHeight,
+      minZoom: HouseplanCard.ZOOM_MIN,
+      maxZoom: HouseplanCard.ZOOM_MAX,
+      canonicalBase: { x: base[0], y: base[1], w: base[2], h: base[3] },
+      displayBase, rotation: this._rotation, canonicalFit: baseFit, floorScaleY: this._sceneDepthScale, plane: this._isoFloorCamera,
+    });
+    let target = targetOf(bounds);
+    const runtime = this._isoSceneRuntime, entries = this._renderIsoScene?.overlayFitEntries;
+    if (target && this._effectiveProjection() === 'iso' && runtime && entries?.length) {
+      const envelope = runtime.resolveIsoOverlayFitEnvelope({
+        baseBounds: bounds, entries, ownerId: room.id,
+        targetView: (fitBounds) => targetOf(fitBounds)?.viewBox ?? null });
+      if (envelope) { bounds = envelope.bounds; target = targetOf(bounds); }
+    }
+    if (!target) {
+      this._clearRoomFocus();
+      return false;
+    }
+    const current = this._cameraState();
+    const clamp = roomFitClampFrame(baseFit, current.viewBox, target.viewBox, canonicalBounds || bounds);
+    target.viewBox = this._clampView(target.viewBox, clamp);
+    if (animate) {
+      this._prepareCameraCommand();
+      this._startCameraTransition(target, clamp, 'room', CAMERA_FIT_MS);
+      return true;
+    }
+    this._cancelCameraTransition(false);
+    if (!sameCameraState(current, target)) {
+      this._zoom = target.zoom;
+      this._view = { ...target.viewBox };
+      this.requestUpdate();
+    }
+    return true;
+  }
+
+  /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar button and the "home is
+   *  that way" arrow share it. It fits whatever the frame currently means:
+   *  the main mass, or everything once the far-objects hint has been used. */
+  private _fitAll(reason: 'fit' | 'home' | 'double-tap' = 'fit'): void {
+    this._clearRoomFocus();
+    this._showFar = true;
+    this._frame = null;
+    this.requestUpdate();
+    this._resetZoom(reason);
+  }
+
+  /** Unobtrusive inline hint: some objects stand an order of magnitude away
+   *  from the plan and are deliberately outside the opening view. No modal —
+   *  a chip with one action (docs/CANVAS.md §4.1). */
+  private _renderFarHint(): TemplateResult | typeof nothing {
+    if (this._kiosk || this._mode !== 'view' || this._booting || !this._outliers) return nothing;
+    return html`<div class="farhint hpf-floating-badge">
+      <ha-icon icon="mdi:map-marker-alert-outline"></ha-icon>
+      <span>${this._t('canvas.far_objects', { n: this._outliers })}</span>
+      <button class="btn ghost" @click=${() => this._fitFar()}>${this._t('canvas.show_far')}</button>
+    </div>`;
+  }
+
+  private _renderHomeArrow(base = this._baseVb()): TemplateResult | typeof nothing {
+    const frame = this._frameOf();
+    return renderHomeArrow(base, this._booting ? null : this._view, this._sceneRotation,
+      this._t('canvas.home_tip'), () => this._fitAll('home'),
+      frame.hasContent && this._frame?.id === this._space, this._sceneDepthScale);
+  }
+
+  private _measureGestureStage() {
+    if (this._gestureStage) return this._gestureStage;
+    const stage = this._stageEl;
+    if (!stage) return null;
+    const width = stage.clientWidth, height = stage.clientHeight;
+    if (width <= 0 || height <= 0) return null;
+    return this._gestureStage = { width, height, rect: stage.getBoundingClientRect() };
+  }
+
+  /** Aspect ratio of the scene (width/height, px). */
+  private _stageAspect(vb = this._baseVb()): number {
+    const gesture = this._gestureStage;
+    if (gesture) return gesture.width / gesture.height;
+    const s = this._stageEl;
+    return s && s.clientHeight ? s.clientWidth / s.clientHeight : vb[2] / vb[3];
+  }
+
+  /** Saved camera numbers always use the unrotated frame. */
+  private _cameraView(vb: number[]): FrameRect {
+    return this._view && this._view.w ? this._view : fitView(vb, this._stageAspect(vb));
+  }
+
+  private readonly _cardRotation = new CardRotationPreference(() => this.ownerDocument.defaultView?.localStorage);
+  private _configureCardRotation(): void {
+    if (this.panelHost || !this._config) return;
+    const scope = this.planHost.cacheScope;
+    const slot = scope && this.isConnected ? cardRotationPlacementSlot(this) : null;
+    const pathname = this.ownerDocument.location?.pathname;
+    const address = scope && pathname && slot ? [scope, pathname, slot] : null;
+    this._cardRotation.configure(this.planHost.authorityKey, address,
+      [this._config.view, this._config.plan_rotation, this._config.rotation]);
+  }
+  private get _requestedPlanRotation(): PlanRotation {
+    const legacyAngle = this._config?.rotation;
+    if (this.panelHost) return this._externalScreen.rotation ?? devicePlanRotation.get(this._space, legacyAngle);
+    const authored = this._config?.plan_rotation;
+    return this._cardRotation.get(this._space)
+      ?? (validPlanRotation(authored) ? authored : devicePlanRotation.get(this._space, legacyAngle, this._kiosk));
+  }
+  private _rotationForProjection(projection: PlanProjection): PlanRotation {
+    const rotation = this._requestedPlanRotation;
+    if (validFlatPlanRotation(rotation)) return rotation;
+    return projection === 'iso' && this._spaceDisplayForRender().showBorders ? rotation : flatPlanRotation(rotation);
+  }
+  private get _rotation(): PlanRotation {
+    const preview = this._presentedPreviewFit;
+    return preview ? planRotationForProjection(preview.rotation, preview.projection) : this._rotationForProjection(this._renderProjection);
+  }
+  private get _sceneRotation(): number {
+    const camera = this._isoFloorCamera;
+    return camera ? isoViewTurn(camera) : this._rotation;
+  }
+  private _rememberPlanRotation(rotation: PlanRotation): void {
+    if (this.panelHost) {
+      devicePlanRotation.set(this._space, rotation);
+      window.dispatchEvent(new Event(PLAN_ROTATION_EVENT));
+    } else {
+      this._configureCardRotation();
+      this._cardRotation.set(this._space, rotation);
+      this._isoProjectionSnapshot = null;
+      this.requestUpdate();
+    }
+  }
+  private _rememberPresentedFlatRotation(): void {
+    // A Flat editor or interim Flat shell during a 2.5D startup must not
+    // consume a preference until this space really presents ordinary 2D View.
+    if (!this.panelHost || this._mode !== 'view' || this._kiosk || this._isoEnabled || this._renderProjection !== 'flat'
+        || !this._loadOk || this._booting || this._bootFading || this._modeTransitionBusy || !this._view
+        || !this._spaceModel() || this._continuity.state !== 'steady' || !this._continuity.hasCompleteFrame) return;
+    const rotation = this._requestedPlanRotation, flat = flatPlanRotation(rotation);
+    if (flat !== rotation) this._rememberPlanRotation(flat);
+  }
+  private readonly _rotationMotion = new PlanRotationMotion({
+    current: () => {
+      const owner = this._configWriteContext.claim(), space = this._space, mode = this._mode;
+      const iso = !!this._isoFloorCamera;
+      return () => this.isConnected && !this._kiosk && space === this._space && mode === this._mode
+        && iso === !!this._isoFloorCamera && this._configWriteContext.current(owner, this.planHost);
+    },
+    stage: () => this.renderRoot.querySelector<HTMLElement>('.stage'),
+    changed: direction => {
+      this._cancelCameraTransition(false); this._clearRoomFocus(true);
+      const iso = !!this._isoFloorCamera, before = this._rotation;
+      const next = stepPlanRotation(before, direction, iso ? 'iso' : 'flat');
+      this._rememberPlanRotation(next);
+      if (!iso) return direction * 90;
+      return (isoCameraFor(next).rotDeg - isoCameraFor(before).rotDeg + 540) % 360 - 180;
+    },
+    updated: () => this.updateComplete,
+    reduced: () => this.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches === true,
+    blocked: () => this._modeTransitionBusy,
+    settled: () => this.requestUpdate(),
+    requestFrame: callback => requestAnimationFrame(callback), cancelFrame: id => cancelAnimationFrame(id), now: () => performance.now(),
+  });
+  private readonly _rotationChanged = (event: Event): void => {
+    if (event instanceof StorageEvent) {
+      if (event.key !== PLAN_ROTATION_STORAGE && event.key !== null) return;
+      this._rotationMotion.cancel();
+      devicePlanRotation.reload();
+    }
+    this._isoProjectionSnapshot = null;
+    this.requestUpdate();
+  };
+  private _rotatePlan(direction: -1 | 1): void {
+    ++this._viewDeviceMenuRequest;
+    if (this._kiosk || !this._space) return;
+    this._rotationMotion.rotate(direction);
+  }
+  private _displayBase(vb = this._baseVb()): FrameRect {
+    if (this._presentedPreviewFit) return this._presentedPreviewFit.display;
+    if (this._effectiveProjection() === 'iso' && this._renderIsoScene) return this._renderIsoScene.frame;
+    return turnRect({ x: vb[0], y: vb[1], w: vb[2], h: vb[3] }, this._rotationForProjection('flat'));
+  }
+  private _presentationView(view: FrameRect, zoom = this._zoom, vb = this._baseVb()): FrameRect {
+    const turn = this._sceneRotation;
+    if (this._modeSceneSize) return presentationViewport(view, vb, this._displayBase(vb), turn, zoom,
+      this._modeSceneSize, null, this._sceneDepthScale);
+    return !turn ? view : presentationViewport(view, vb, this._displayBase(vb), turn, zoom,
+      this._lastValidStageSize, this._modeTransitionVisual, this._sceneDepthScale);
+  }
+  // With hidden borders, 2.5D uses Flat's quarter turn for both paint and input.
+  private get _isoFloorCamera() {
+    return this._presentedViewPlane() ?? undefined;
+  }
+  private get _floorTransform() {
+    const camera = this._isoFloorCamera;
+    return camera ? isoFloorMatrixCss(camera) : this._rotation ? turnMatrix(this._rotation) : nothing;
+  }
+  private get _sceneDepthScale(): number {
+    return this._isoFloorCamera?.floorScaleY ?? 1;
+  }
+  private _viewOr(vb: number[]): FrameRect { return this._presentationView(this._cameraView(vb), this._zoom, vb); }
+  private _liveViewportTarget(): FrameRect | undefined {
+    const motion = this._cameraTransition.state;
+    if (motion?.reason === 'wheel') return this._presentationView(motion.to.viewBox, motion.to.zoom);
+    return undefined;
+  }
+  private _liveIsoRasterInput(): IsoRasterInput | undefined {
+    if (this._mode !== 'view' || this._modeTransitionBusy || this._isoFloorCamera?.perspective) return undefined;
+    if (this._cameraTransition.active && this._cameraTransition.state?.reason === 'wheel') return 'wheel';
+    if (this._pinchStart) return 'pinch';
+    if (this._panLock === 'pan') return 'pan';
+  }
+  private _liveViewportLimits() {
+    const size = this._lastValidStageSize;
+    const pixelArea = size ? size[0] * size[1] * (this.ownerDocument.defaultView?.devicePixelRatio || 1) ** 2 : undefined;
+    if (this._mode !== 'view') return { pixelArea };
+    const frame = this._displayBase();
+    // Structural fit includes the floor and raised edges. Allow room labels,
+    // marker shells and shadows to extend beyond the building outline.
+    const pad = Math.max(frame.w, frame.h) * .12;
+    return { pixelArea, content: { x: frame.x - pad, y: frame.y - pad, w: frame.w + pad * 2, h: frame.h + pad * 2 } };
+  }
+  private _authoredView(view: FrameRect, projection: string): FrameRect {
+    const size = this._lastValidStageSize;
+    const key = [this.planHost.authorityKey, this._space, this._mode, this._rotation, projection, size?.[0], size?.[1]].join('|');
+    const active = !this._modeTransitionBusy && (this._cameraTransition.active || this._panLock === 'pan' || !!this._pinchStart);
+    return authoredHouseplanViewport(this, view, key, active);
+  }
+  private _framePercent(point: readonly number[], view: FrameRect, projected = false): [number, number] {
+    const camera = this._isoFloorCamera;
+    if (!projected && camera) {
+      return framePercent(projectPlanPoint([point[0], point[1]], 0, camera), view);
+    }
+    return framePercent([point[0], point[1]], view, projected ? 0 : this._rotation);
+  }
+  private _frameStyle(point: readonly number[], view: FrameRect): string {
+    const [left, top] = this._framePercent(point, view);
+    return `left:${left.toFixed(2)}%;top:${top.toFixed(2)}%`;
+  }
+  private _planScreenDelta(dx: number, dy: number): [number, number] {
+    return turnSceneVector([dx, dy], -this._sceneRotation, this._sceneDepthScale);
+  }
+  private _planVisibleRect(view: FrameRect): FrameRect {
+    const camera = this._isoFloorCamera;
+    if (!camera) return turnRect(view, inversePlanRotation(this._rotation));
+    const points = [[view.x, view.y], [view.x + view.w, view.y],
+      [view.x + view.w, view.y + view.h], [view.x, view.y + view.h]]
+      .map(point => unprojectFloorPoint([point[0], point[1]], camera));
+    const xs = points.map(point => point[0]), ys = points.map(point => point[1]);
+    return { x: Math.min(...xs), y: Math.min(...ys),
+      w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+  }
+
+  /** Screen (sx,sy relative to the scene, px) → vb coordinates per the current view. */
+  private _screenToVb(sx: number, sy: number): number[] {
+    const s = this._stageEl;
+    const v = this._viewOr(this._baseVb());
+    const w = s?.clientWidth || 1, h = s?.clientHeight || 1;
+    const camera = this._isoFloorCamera;
+    if (camera) {
+      return [...unprojectFloorPoint([v.x + (sx / w) * v.w, v.y + (sy / h) * v.h], camera)];
+    }
+    return turnPoint([v.x + (sx / w) * v.w, v.y + (sy / h) * v.h], inversePlanRotation(this._rotation));
+  }
+
+  /** Zoom limits (docs/CANVAS.md §5): 8x in as before, 3x out — beyond that
+   *  the screen is empty plane, which is not information. */
+  private static readonly ZOOM_MAX = 8;
+  private static readonly ZOOM_MIN = MIN_ZOOM;
+
+  /** Automatic rebasing may carry a camera outside the ordinary fit bounds.
+   * Each explicit step can move back continuously; no command snaps it home. */
+  private _boundedZoom(zoom: number): number {
+    const current = Number.isFinite(this._zoom) && this._zoom > 0 ? this._zoom : 1;
+    const requested = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+    return Math.min(Math.max(HouseplanCard.ZOOM_MAX, current),
+      Math.max(Math.min(HouseplanCard.ZOOM_MIN, current), requested));
+  }
+
+  /**
+   * Keep the view within reach of the content (docs/CANVAS.md §5).
+   *
+   * There is no edge any more, so this is NOT "the content must cover the
+   * scene" — that was the rule that made it impossible to draw or place
+   * anything past the plan. Panning may walk a whole screen off the content
+   * in every direction (PAN_SLACK), which is what an editor needs to extend a
+   * plan outwards; further than that you would only be lost, and the "home is
+   * that way" arrow already covers the walk back.
+   */
+  private _clampView(
+    v: { x: number; y: number; w: number; h: number },
+    fit: { x: number; y: number; w: number; h: number },
+  ): { x: number; y: number; w: number; h: number } {
+    const axis = (vp: number, vs: number, fp: number, fs: number, current?: number): number => {
+      const slack = Math.max(vs, fs) * PAN_SLACK;
+      const a = fp - slack, b = fp + fs - vs + slack;
+      const retained = current == null ? a : current - vs / 2;
+      return Math.max(Math.min(a, b, retained), Math.min(Math.max(a, b, retained), vp));
+    };
+    const current = this._view;
+    return { w: v.w, h: v.h,
+      x: axis(v.x, v.w, fit.x, fit.w, current ? current.x + current.w / 2 : undefined),
+      y: axis(v.y, v.h, fit.y, fit.h, current ? current.y + current.h / 2 : undefined) };
+  }
+
+  /** Set the zoom (centered on vb point cx,cy, or on the center of the current view). */
+  private _applyView(zoom: number, cx?: number, cy?: number): boolean {
+    this._cancelCameraTransition(false);
+    const previousZoom = this._zoom;
+    const vb = this._baseVb();
+    const fit = fitView(vb, this._stageAspect());
+    const z = this._boundedZoom(zoom === previousZoom ? this._zoom : zoom);
+    const w = fit.w / z, h = fit.h / z;
+    const cur = this._cameraView(vb);
+    const ccx = cx ?? cur.x + cur.w / 2;
+    const ccy = cy ?? cur.y + cur.h / 2;
+    const next = this._clampView({ x: ccx - w / 2, y: ccy - h / 2, w, h }, fit);
+    const same = this._view
+      && Math.abs(this._zoom - z) < 1e-9
+      && Math.abs(this._view.x - next.x) < 1e-6
+      && Math.abs(this._view.y - next.y) < 1e-6
+      && Math.abs(this._view.w - next.w) < 1e-6
+      && Math.abs(this._view.h - next.h) < 1e-6;
+    if (same) return false;
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    }
+    this._zoom = z;
+    this._view = next;
+    this._liveVp();
+    return true;
+  }
+
+  /**
+   * HP-1552: hold the boot veil until the stage height settles. AUD-1552-02:
+   * the old "two equal reads at a 200 ms cadence" revealed the plan at
+   * ~400 ms, so an HA panel landing right after (450+ ms is realistic on a
+   * slow device) still jumped on a VISIBLE plan. The veil now holds for the
+   * full protective window (BOOT_MIN_MS); the height is sampled every 100 ms
+   * and any change restarts a trailing-quiescence requirement
+   * (BOOT_QUIET_MS), so chrome still settling near the cap extends the wait.
+   * BOOT_MAX_MS lifts the veil unconditionally — it can never get stuck.
+   */
+  private _bootWatch(): void {
+    clearTimeout(this._bootTimer); // never two concurrent watchers (connect + updated)
+    this._bootStart = Date.now();
+    this._bootLastH = -1; // the first read only arms the comparison
+    this._bootLastChange = this._bootStart;
+    const tick = () => {
+      if (!this._booting) return;
+      const now = Date.now();
+      const h = this._stageEl ? this._stageEl.clientHeight : 0;
+      if (h !== this._bootLastH) { this._bootLastH = h; this._bootLastChange = now; }
+      const elapsed = now - this._bootStart;
+      if (elapsed >= BOOT_MAX_MS || (elapsed >= BOOT_MIN_MS && h > 0 && now - this._bootLastChange >= BOOT_QUIET_MS && !furnitureArtBootPending(FURNITURE_ART_RUNTIME, this._serverCfg, furnitureArtIsLazy) && !this._furnitureVolumePending())) {
+        this._bootSettled();
+        return;
+      }
+      this._bootTimer = window.setTimeout(tick, 100);
+    };
+    this._bootTimer = window.setTimeout(tick, 100);
+  }
+
+  private _bootSettled(): void {
+    if (!this._booting || this._bootSettling) return;
+    this._bootSettling = true;
+    this._refitView(); // calculate the final geometry while still covered
+    this._bootSettleRaf = requestAnimationFrame(() => {
+      this._bootSettleRaf = 0;
+      this._finishBootSettled();
+    });
+  }
+
+  private _finishBootSettled(): void {
+    if (!this._booting) return;
+    // Refit once more before removing the veil. This prevents a default-view reveal.
+    this._refitView();
+    this._booting = false;
+    this._bootSettling = false;
+    // DEV-B703-01: the page has settled once — the next instance with the
+    // same config at the same viewport opens warm (no veil, no wait).
+    const settledH = this._stageEl?.clientHeight ?? 0;
+    if (!this._kiosk && settledH > 0) {
+      this._warmPatch({ hdrH: this._hdrH, stageH: settledH, vp: this._warmViewportState(),
+        ownHdrH: this.renderRoot.querySelector('.hdr')?.getBoundingClientRect().height }, true);
+    }
+    clearTimeout(this._bootTimer);
+    this._bootTimer = undefined;
+    // AUD-1552-02: chrome that lands after the cap (device slower than
+    // BOOT_MAX_MS) must not snap — for a short grace the stage height
+    // transitions and the viewport ResizeObserver refits the plan each frame.
+    this._bootSoft = true;
+    clearTimeout(this._bootSoftTimer);
+    this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
+  }
+
+  /** The soft grace only covers PASSIVE late chrome. A user action must
+   *  consume the final layout instantly — the plan may neither drift under
+   *  the pointer nor derive a camera target from an intermediate height. */
+  private _bootSoftCancel(): void {
+    if (!this._bootSoft) return;
+    clearTimeout(this._bootSoftTimer);
+    this._bootSoft = false;
+    const settled = settleSoftStageLayout(this.renderRoot, this._stageEl, this._containerOwnedHeight, this._kiosk);
+    if (!settled) return; if (settled.headerHeight !== null) this._hdrH = settled.headerHeight;
+    if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
+    this._pendingRefitSize = null; this._lastValidStageSize = settled.size; const current = this._view;
+    if (current) this._applyView(this._zoom, current.x + current.w / 2, current.y + current.h / 2);
+  }
+
+  /** Hold the last complete frame after a long sleep; never hide the scene. */
+  private _beginResumeSettle(): void {
+    if (this._booting || this._resumeSettling) return;
+    if (this._modeTransitionPreparing) this._modeTransitionForceAtomic = true;
+    else this._cancelModeTransition(true);
+    this._viewportInvalidAt = 0;
+    this._beginContinuityCandidate('warm-resume', false);
+    // A card can be detached for the whole visibility event and reattached as
+    // the same already-loaded instance. In that case `willUpdate()` has no
+    // reason to reload, so the warm tombstone must start its own revalidation
+    // instead of immediately blessing the stale frame as current.
+    if (!this._loading) void this._loadFromServer();
+    else this.requestUpdate();
+  }
+
+  /** Recompute the view for a new scene size, preserving zoom and center. */
+  private _refitView(): void {
+    if (this._recoveryViewport || this._warmViewportPending) return;
+    if (this._floorPreparation?.pending && !this._floorPreparation.fit) return;
+    if (this._modeTransitionBusy || this._warmModeRequest) return;
+    if (this._usesScreenCamera) { this._summary?.resized(); this.requestUpdate(); return; }
+    const stage = this._stageEl;
+    // ResizeObserver may deliver a zero/transitional box while a browser tab
+    // is frozen or while Lovelace replaces the card. Mutating `_view` from
+    // that box is the scale jump observed on return.
+    if (!stage || document.visibilityState !== 'visible' || stage.clientWidth <= 0 || stage.clientHeight <= 0) {
+      this._cancelCameraTransition(false);
+      if (!this._viewportInvalidAt) this._viewportInvalidAt = Date.now();
+      return;
+    }
+    const size: [number, number] = [stage.clientWidth, stage.clientHeight]; if (this._bootSoft && this._warmVp) { this._lastValidStageSize = size; this._pendingRefitSize = null; return; }
+    const previous = this._lastValidStageSize;
+    const sameSize = !!previous
+      && Math.abs(previous[0] - size[0]) <= 0.5
+      && Math.abs(previous[1] - size[1]) <= 0.5;
+    const invalidFor = this._viewportInvalidAt ? Date.now() - this._viewportInvalidAt : 0;
+    this._viewportInvalidAt = 0;
+    // A no-op delivery must not cancel a camera command just started by input.
+    if (sameSize) {
+      this._pendingRefitSize = null;
+      // A hidden-stage restore can deliberately leave no camera. The size is
+      // familiar, but its first valid delivery still has to finish that restore.
+      if (!this._view) this._applyView(this._zoom);
+      return;
+    }
+    // A real resize is structural and owns the new stage geometry.
+    this._cancelCameraTransition(false);
+    if (!previous) {
+      this._lastValidStageSize = size;
+      if (this._roomFocus?.spaceId === this._space) {
+        this._fitRoom(this._roomFocus.roomId, false);
+      } else if (!this._view) this._applyView(this._zoom);
+      return;
+    }
+    this._pendingRefitSize = size;
+    if (this._refitRaf) return;
+    this._refitRaf = requestAnimationFrame(() => {
+      this._refitRaf = 0;
+      const target = this._pendingRefitSize;
+      this._pendingRefitSize = null;
+      const live = this._stageEl;
+      if (!target || !live || live.clientWidth <= 0 || live.clientHeight <= 0) return;
+      if (Math.abs(live.clientWidth - target[0]) > 0.5
+          || Math.abs(live.clientHeight - target[1]) > 0.5) {
+        this._refitView();
+        return;
+      }
+      const old = this._lastValidStageSize;
+      if (old && Math.abs(old[0] - target[0]) <= 0.5 && Math.abs(old[1] - target[1]) <= 0.5) return;
+      this._lastValidStageSize = target;
+      const cur = this._view;
+      if (invalidFor >= CONTINUITY_LONG_HIDDEN_MS) {
+        this._beginContinuityCandidate('stage-size-restored', true, 'stage-size');
+      } else if (this._continuity.hasCompleteFrame) {
+        this._beginContinuityCandidate('stage-resize', true, 'stage-size');
+      }
+      if (this._roomFocus?.spaceId === this._space) {
+        this._fitRoom(this._roomFocus.roomId, false);
+        return;
+      }
+      this._applyView(
+        this._zoom,
+        cur ? cur.x + cur.w / 2 : undefined,
+        cur ? cur.y + cur.h / 2 : undefined,
+      );
+    });
+  }
+
+  private _cameraTargetAt(
+    sx: number,
+    sy: number,
+    newZoom: number,
+    animated = false,
+  ): { target: CameraState; fit: ModeViewBox } | null {
+    const stage = this._measureGestureStage();
+    if (!stage) return null;
+    const vb = this._baseVb();
+    const z = this._boundedZoom(newZoom);
+    // #396 AC3: the world point under the pointer is read from the SAME state
+    // the zoom is accumulated from — the running target. Reading it from the
+    // lagging presented frame made a fast trackpad series walk the anchor
+    // 14-16 CSS px away, while spec #82 §10 promises it stays put.
+    const anchorFrom = (animated && this._cameraTransition.target)
+      || this._cameraState();
+    return planZoomTarget(anchorFrom, z, vb, this._displayBase(vb), this._sceneRotation,
+      stage.width, stage.height, sx, sy, (view, fit) => this._clampView(view, fit), this._sceneDepthScale);
+  }
+
+  /** Immediate path for direct pinch: keep the point under the fingers. */
+  private _zoomAt(sx: number, sy: number, newZoom: number): void {
+    ++this._viewDeviceMenuRequest;
+    this._clearRoomFocus();
+    if (this._cameraTransition.active) this._cancelCameraTransition(false);
+    const result = this._cameraTargetAt(sx, sy, newZoom);
+    if (!result) return;
+    this._zoomScaleActivity.change(this._cameraState().viewBox, result.target.viewBox);
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    }
+    this._zoom = result.target.zoom;
+    this._view = { ...result.target.viewBox };
+    this._liveVp();
+  }
+
+  private _onWheel(ev: WheelEvent): void {
+    if (!sceneGestureFromPath(ev.composedPath())) return;
+    this._clearRoomFocus();
+    this._prepareCameraCommand();
+    if (this._cameraTransition.state?.reason !== 'wheel') this._gestureStage = null;
+    const stage = this._measureGestureStage();
+    if (!stage) return;
+    ev.preventDefault();
+    const r = stage.rect;
+    const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15;
+    const baseZoom = this._cameraTransition.target?.zoom ?? this._zoom;
+    const result = this._cameraTargetAt(
+      ev.clientX - r.left, ev.clientY - r.top, baseZoom * factor, true,
+    );
+    if (result && this._startCameraTransition(result.target, result.fit, 'wheel', CAMERA_WHEEL_MS)
+        && this._pointerModality.hoverEnabled) this._gestureHover = ev;
+  }
+
+  private _stepZoom(delta: number): void {
+    this._clearRoomFocus();
+    this._prepareCameraCommand();
+    this._gestureStage = null;
+    const stage = this._measureGestureStage();
+    if (!stage) return;
+    const baseZoom = this._cameraTransition.target?.zoom ?? this._zoom;
+    const result = this._cameraTargetAt(
+      stage.width / 2,
+      stage.height / 2,
+      baseZoom * (delta > 0 ? 1.4 : 1 / 1.4),
+      true,
+    );
+    if (result) this._startCameraTransition(
+      result.target, result.fit, 'button', CAMERA_BUTTON_MS,
+    );
+  }
+
+  /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar's middle button and the
+   *  old "reset zoom" in one: frame the content at zoom 1, centred. With
+   *  `all` it also takes in the far strays the opening view leaves out. */
+  private _resetZoom(reason: 'fit' | 'home' | 'double-tap' = 'fit'): void {
+    this._clearRoomFocus();
+    this._prepareCameraCommand();
+    if (this._usesScreenCamera) { this._screenFitRequest = reason; this._screenRestoreZoom = null; this.requestUpdate(); return; }
+    const vb = this._baseVb();
+    const fit = fitView(vb, this._stageAspect());
+    this._startCameraTransition(
+      { zoom: 1, viewBox: { ...fit } },
+      fit,
+      reason,
+      CAMERA_FIT_MS,
+    );
+  }
+
+  /** Save the current space zoom to localStorage (view mode only). */
+  private _saveZoom(): void {
+    // Intermediate editor gestures are session-only. Exiting commits the
+    // current floor's working camera as the new View preference (#1207).
+    if (this._mode !== 'view' || this._hasScreenProfile) return;
+    this._zoomBySpace = { ...this._zoomBySpace, [this._space]: this._zoom };
+    try {
+      localStorage.setItem(LS_ZOOM, JSON.stringify(this._zoomBySpace));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private _markPinchZoomDirty(): void { this._pinchZoomDirty = true; }
+
+  /** Both capture and stage see terminal events; clearing first makes this idempotent. */
+  private _finishViewportGesture(): void {
+    this._gestureStage = null;
+    const saveZoom = this._pinchZoomDirty; this._pinchZoomDirty = false;
+    if (saveZoom) this._saveZoom();
+    if (!this._viewportGestureDirty) return;
+    this._viewportGestureDirty = false;
+    this.requestUpdate();
+    this._resumeCameraHover();
+  }
+
+  /** Restore the saved space zoom and center the plan. */
+  private _restoreZoom(carousel = false): void {
+    if (!this._ensureFloorPreparation()) {
+      this._floorRestoreZoom = carousel;
+      this._zoom = this._zoomBySpace[this._space] || 1; this._view = null; this.requestUpdate(); return;
+    }
+    if (this._hasScreenProfile) { this._restoreScreenReference(); return; }
+    this._clearRoomFocus(true);
+    this._cancelCameraTransition(false);
+    if (carousel) { this._showFar = true; this._frame = null; }
+    const saved = Number(this._zoomBySpace[this._space]);
+    const z = carousel || !Number.isFinite(saved) || saved <= 0 ? 1 : saved;
+    this._zoom = z;
+    if (this._usesScreenCamera) {
+      this._screenReferencePending = true; this._screenRecoveredCamera = false;
+      this._screenFitRequest = null;
+      // Ordinary preferences store canonical zoom, not a profile multiplier.
+      this._screenRestoreZoom = carousel || !Number.isFinite(saved) || saved <= 0 ? null : saved;
+      this.requestUpdate(); return;
+    }
+    if (carousel) this._saveZoom();
+    const stage = this._stageEl;
+    if (stage && hasMeasuredViewSize([stage.clientWidth, stage.clientHeight])) {
+      // HP-1551: the stage is already measured — apply the view NOW, before
+      // the next paint. The unconditional rAF here used to let one frame
+      // (or a whole server round-trip worth of frames, via the updated()
+      // refit running with the stale zoom before this method was called at
+      // all) paint at the default fit — the visible "flash" on opening.
+      const vb = this._baseVb();
+      this._applyView(z, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2);
+      this.requestUpdate();
+      return;
+    }
+    // stage not measurable yet: let updated() fit it with the (already
+    // correct) _zoom on the first layout, then center on the plan
+    this._view = null;
+    requestAnimationFrame(() => {
+      const stage = this._stageEl;
+      if (!stage || !hasMeasuredViewSize([stage.clientWidth, stage.clientHeight])) return;
+      const vb = this._baseVb();
+      this._applyView(z, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2);
+      this.requestUpdate();
+    });
+  }
+
+  private _stagePointerDown(ev: PointerEvent): void {
+    if (!sceneGestureFromPath(ev.composedPath())) return;
+    this._editorRuntime?._clearRoomFaceHover();
+    if ((this._mode === 'decor' || this._mode === 'plan') && ev.button === 2) return;
+    this._bootSoftCancel();
+    const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view'
+      ? roomFitOwnerFromPath(ev.composedPath()) : null;
+    this._roomPointer = roomId
+      ? { pointerId: ev.pointerId, spaceId: this._space, roomId }
+      : null;
+    this._planTaps.pointerDown(ev, this._space, this._doubleFitEnabled);
+    // The gesture that starts here freezes the animated frame and keeps it on
+    // screen — so the shown zoom becomes the saved one (#396 AC1).
+    this._cancelCameraTransition(false, true);
+    if (!this._pointers.size) this._gestureStage = null;
+    if (this._vacFit) return; // no pan/swipe while fitting the robot map
+    // The shared secondary controller owns palette dismissal in window
+    // capture, including the matching synthetic click. Do not duplicate that
+    // lifecycle here: the former fallback left `_suppressClick` stuck when a
+    // pointerup was lost or a pointercancel followed the dismiss press.
+    if (this._kiosk) {
+      if (this._pointers.size === 0) {
+        const rect = this._stageEl?.getBoundingClientRect();
+        this._swipeStart = rect ? beginSpaceSwipePointer(
+          this._swipeZone, ev.clientX, ev.clientY, ev.pointerId, rect.left, rect.width,
+          this._model.map((space) => space.id), this._space,
+        ) : null;
+        // long-press on EMPTY stage opens the per-screen size popover
+        if (!(ev.target as HTMLElement).closest?.('.dev, .roomlabel, .oplock')) {
+          this._kioskHold.arm(ev.pointerId);
+        }
+      } else {
+        this._swipeStart = null; // second finger = pinch, not a swipe
+        this._kioskHold.cancel();
+      }
+    }
+    // do not interfere with icon and label dragging
+    if (this._drag || this._deviceDrag) return;
+    if (this._markup) {
+      // Drawing is CLICK-based, so gestures coexist with it: a finger that
+      // MOVES pans, two fingers pinch, and _suppressClick keeps the release
+      // from feeding the active tool. The editor used to opt out of gestures
+      // entirely, which left a phone with no way to zoom or pan the plan
+      // (owner's report). Pointers that begin on interactive children still
+      // stay out — labels and handles run their own drags.
+      if ((ev.target as HTMLElement).closest?.('.roomlabel, .rlhandle, .rszhandle, .dev, .oplock, .op-hit, button')) return;
+      if (this._editorRuntime?.stairs.stagePointerDown(ev)) return; // #676: drag-to-draw owns the press
+    }
+    if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
+    if (this._mode === 'decor' && this._decorPointerDown(ev)) return;
+    this._measureGestureStage();
+    this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    const v = this._cameraView(this._baseVb());
+    if (this._pointers.size === 1) {
+      ++this._viewDeviceMenuRequest;
+      this._panStart = { sx: ev.clientX, sy: ev.clientY, vx: v.x, vy: v.y };
+      this._panLock = null; // undecided until the finger moves
+      this._suppressClick = false;
+    } else if (this._pointers.size === 2) {
+      this._clearRoomFocus(true);
+      // A second pointer turns the gesture into navigation. An Opening hover
+      // must never survive underneath that pinch. Keep the selected preset: lifting the
+      // fingers returns to the same placement session, just without a stale
+      // preview at the pre-gesture coordinate.
+      if (this._tool === 'opening') {
+        this._cursorPt = null;
+        this._clearOpeningPlacement(false);
+      } else if (this._tool === 'draw') {
+        this._clearPlanSnapHover();
+      }
+      const pts = [...this._pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      this._pinchStart = { dist, zoom: this._zoom };
+      this._panStart = null;
+      this._panLock = null;
+    }
+  }
+
+  /**
+   * Is a horizontal drag reserved for the floor swipe right now? Only on a
+   * kiosk screen, only at the zoom `swipeTarget` accepts, and only when there
+   * is more than one space to swipe between — everywhere else nothing
+   * competes with panning.
+   */
+  private get _swipeZone(): boolean {
+    return !this._hasFixedFloor && this._kiosk && (this._screenAtReference ?? this._zoom <= 1.001) && this._model.length > 1;
+  }
+
+  private _stagePointerMove(ev: PointerEvent): void {
+    if (!this._pointers.has(ev.pointerId) && !sceneGestureFromPath(ev.composedPath())) {
+      this._editorRuntime?.stairs.clearPlacementPreview(); return;
+    }
+    this._editorRuntime?.decorLine.pointerMove(ev);
+    if (this._editorRuntime?.stairs.pointerMove(ev)) return;
+    if (this._editorRuntime?.physicalGesture.rotation?.pid === ev.pointerId) {
+      this._editorRuntime?.physicalGesture.rotateMove(ev);
+      return;
+    }
+    if (this._editorRuntime?.physicalGesture.drag?.pid === ev.pointerId) {
+      this._editorRuntime?.physicalGesture.move(ev);
+      return;
+    }
+    if (this._dtDrag?.pid === ev.pointerId) {
+      this._dtMove(ev);
+      return;
+    }
+    if (this._editorRuntime?.backdropGesture.owns(ev.pointerId)) {
+      this._editorRuntime?.backdropGesture.move(ev);
+      return;
+    }
+    if (this._decorDraft?.pid === ev.pointerId) {
+      const draft = this._decorDraft;
+      let b = this._decorSnap(this._svgPoint(ev), ev.pointerType);
+      if (ev.shiftKey && (draft.kind === 'rect' || draft.kind === 'ellipse')) {
+        const dx = b[0] - draft.a[0], dy = b[1] - draft.a[1];
+        const side = Math.max(Math.abs(dx), Math.abs(dy));
+        b = this._snap([
+          draft.a[0] + (dx < 0 ? -side : side),
+          draft.a[1] + (dy < 0 ? -side : side),
+        ]);
+      }
+      this._decorDraft = { ...draft, b };
+      return;
+    }
+    if (this._decorMove?.pid === ev.pointerId) {
+      this._decorMoveUpdate(ev);
+      return;
+    }
+    if (this._mode === 'decor'
+        && (this._decorTool === 'furniture' || this._decorTool === 'image')
+        && this._editorRuntime) {
+      this._notePointer(ev);
+      if (this._editorRuntime._furnPointerMove(ev, this._pointerModality.hoverEnabled)) return;
+    }
+    if (!this._pointers.has(ev.pointerId)) {
+      this._markupMove(ev);
+      return;
+    }
+    this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    // the tool preview (snap dot, measure label) keeps following the finger
+    if (this._markup && this._pointers.size === 1) this._markupMove(ev);
+    if (this._pinchStart && this._pointers.size >= 2) {
+      this._activateSafeDayCycleOutline(); this._clearRoomFocus(true);
+      if (this._tool === 'opening') {
+        this._cursorPt = null;
+        this._clearOpeningPlacement(false);
+      } else if (this._tool === 'draw') {
+        this._clearPlanSnapHover();
+      }
+      const pts = [...this._pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const scale = dist / (this._pinchStart.dist || 1);
+      const r = this._measureGestureStage()?.rect;
+      if (!r) return;
+      const cx = (pts[0].x + pts[1].x) / 2 - r.left;
+      const cy = (pts[0].y + pts[1].y) / 2 - r.top;
+      this._zoomAt(cx, cy, this._pinchStart.zoom * scale);
+      this._viewportGestureDirty = true;
+      this._markPinchZoomDirty();
+      this._suppressClick = true;
+    } else if (this._panStart) {
+      const ddx = ev.clientX - this._panStart.sx;
+      const ddy = ev.clientY - this._panStart.sy;
+      if (Math.abs(ddx) + Math.abs(ddy) > 4) {
+        this._roomPointer = null;
+        this._clearPlanTapSequence();
+        this._suppressClick = true;
+        this._viewHold.cancel();
+        if (ev.pointerType === 'touch') this._touchClickGuard.interrupt(ev.pointerId);
+        if (this._tool === 'opening') {
+          this._cursorPt = null;
+          this._clearOpeningPlacement(false);
+        } else if (this._tool === 'draw') {
+          this._clearPlanSnapHover();
+        }
+      }
+      // Which gesture is this? Decided once, on the first movement worth the
+      // name, and kept for the rest of the drag so the plan cannot flip-flop
+      // under the finger. Panning is NOT gated on the zoom any more (owner,
+      // 2026-08-04: «таскать план при любом масштабе»): on an infinite canvas
+      // there is no "the content already covers the scene" state that would
+      // make a drag meaningless — `_clampView` alone decides how far you may
+      // walk, at 400% and at 33% alike.
+      if (this._panLock === null && Math.abs(ddx) + Math.abs(ddy) > STAGE_TAP_DISTANCE_PX) {
+        const edge = this._swipeStart?.id === ev.pointerId ? this._swipeStart.edge : null;
+        const owner = classifySpaceDrag(edge, ddx, ddy, STAGE_TAP_DISTANCE_PX);
+        this._panLock = owner === 'swipe' ? 'swipe' : 'pan';
+        if (this._kioskHold.pointerId === ev.pointerId) this._kioskHold.cancel();
+        if (this._panLock === 'pan') {
+          this._activateSafeDayCycleOutline();
+          this._clearRoomFocus();
+          if (this._mode === 'view') this._clearPointerHover();
+        }
+      }
+      const stage = this._panLock === 'pan' ? this._measureGestureStage() : null;
+      if (stage) {
+        this._deferCameraHover(ev);
+        const vb = this._baseVb();
+        const v = this._cameraView(vb), displayed = this._presentationView(v);
+        const [dx, dy] = this._planScreenDelta(
+          ddx / stage.width * displayed.w, ddy / stage.height * displayed.h);
+        const fit = fitView(vb, this._stageAspect());
+        this._view = this._clampView(
+          {
+            x: this._panStart.vx - dx,
+            y: this._panStart.vy - dy,
+            w: v.w,
+            h: v.h,
+          },
+          fit,
+        );
+        this._viewportGestureDirty = true;
+        this._liveVp();
+        if (this._furnTouchPending?.mouse) this._editorRuntime?._furnPointerMove(ev, this._pointerModality.hoverEnabled);
+      }
+    }
+  }
+
+  private _stagePointerLeave(ev: PointerEvent): void {
+    this._gestureHover = null;
+    this._editorRuntime?.stairs.clearPlacementPreview();
+    this._editorRuntime?._cancelPointerMove('markup-hover');
+    this._editorRuntime?._clearRoomFaceHover();
+    if (this._mode === 'decor') this._editorRuntime?._furnPointerLeave(ev);
+    if (!this._markup) return;
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    } else if (this._tool === 'draw') {
+      this._clearPlanSnapHover();
+    }
+  }
+
+  private _stagePointerUp(ev: PointerEvent): void {
+    this._viewHold.cancel(ev.pointerId);
+    this._editorRuntime?.decorLine.pointerUp(ev);
+    this._deviceHits.release(ev.pointerId);
+    this._flushHa();
+    this._editorRuntime?._cancelPointerMove('markup-hover');
+    const blockedRoomTap = this._suppressClick || !!this._pinchStart || this._panLock !== null
+      || this._holdFired || this._touchSequenceMultitouch;
+    const acceptedRoom = this._planTaps.pointerUp(
+      ev, this._roomPointer, this._space, this._doubleFitEnabled, blockedRoomTap,
+    );
+    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
+    if (this._kiosk) {
+      this._kioskHold.cancel();
+      const ss = this._swipeStart;
+      this._swipeStart = null;
+      if (!acceptedRoom && ss && ss.id === ev.pointerId) {
+        const dx = ev.clientX - ss.x;
+        const dy = ev.clientY - ss.y;
+        // Release obeys the first-movement owner: a curved pan never becomes a
+        // floor change merely because its final vector looks horizontal.
+        const target = spaceSwipeTargetForOwner(
+          this._panLock, dx, dy, this._zoom, this._model.map((m) => m.id), this._space,
+          this._hasScreenProfile ? this._panLock === 'swipe' : undefined,
+        );
+        if (target) {
+          // the plan follows the finger: swiping left brings the next one in
+          // from the right, so the current one leaves to the left
+          if (this._slideTo(target, dx < 0 ? 'left' : 'right')) {
+            this._saveNav();
+            this._suppressClick = true;
+            setTimeout(() => (this._suppressClick = false), 0);
+          }
+        }
+      }
+    }
+    this._stairsView.pointerUp(ev);
+    if (this._editorRuntime?.stairs.pointerUp(ev)) return;
+    if (this._editorRuntime?.physicalGesture.drag?.pid === ev.pointerId) {
+      this._editorRuntime?.physicalGesture.end(ev);
+      return;
+    }
+    if (this._editorRuntime?.physicalGesture.rotation?.pid === ev.pointerId) {
+      this._editorRuntime?.physicalGesture.rotateEnd(ev);
+      return;
+    }
+    if (this._dtDrag?.pid === ev.pointerId) {
+      this._dtUp();
+      return;
+    }
+    if (this._editorRuntime?.backdropGesture.owns(ev.pointerId)) {
+      this._editorRuntime?.backdropGesture.end();
+      return;
+    }
+    if (this._decorDraft?.pid === ev.pointerId) {
+      this._decorCommitDraft();
+      return;
+    }
+    if (this._decorMove?.pid === ev.pointerId) {
+      this._editorRuntimeOrThrow()._dmUp();
+      return;
+    }
+    if (this._editorRuntime?._furnPointerUp(ev)) return;
+    this._pointers.delete(ev.pointerId);
+    if (this._pointers.size < 2) this._pinchStart = null;
+    if (this._pointers.size === 0) {
+      this._panStart = null;
+      this._panLock = null;
+      // reset click suppression on the next tick (so that a click right after a pan does not fire)
+      if (this._suppressClick) setTimeout(() => (this._suppressClick = false), 0);
+    }
+    if (this._pointers.size === 0 && !acceptedRoom) this._finishViewportGesture();
+  }
+
+  private _clickRoom(r: RoomCfg): void {
+    if (this._suppressClick || !r.area || !roomAreaAffordance({
+      admin: this.hass?.user?.is_admin === true, writer: this._canEdit,
+      kiosk: this._kiosk, plan: this._markup, view: this._mode === 'view',
+    }).interactive) return;
+    navigate('/config/areas/area/' + r.area);
+  }
+
+  private _roomLabelKey(ev: KeyboardEvent, roomId: string): void {
+    if (this._mode !== 'view' || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    this._fitRoom(roomId);
+  }
+
+  private _pointerDown(ev: PointerEvent, d: DevItem): void {
+    // Only View and the Devices editor own device input. In Background the
+    // event must keep bubbling to the active decor tool; do not prevent it,
+    // capture it or create a layout drag.
+    if (this._mode !== 'view' && this._mode !== 'devices') return;
+    if (ev.button !== 0) return; // context-menu input must not arm a drag or hold
+    if (this._mode === 'devices' && this._editorRuntime?.properties.wide && !this._editorRuntime.properties.selectDevice(d)) {
+      ev.preventDefault(); ev.stopPropagation(); return;
+    }
+    this._deviceDragRetirement.begin(ev.pointerId);
+    if (this._mode === 'view' && ev.pointerType === 'touch' && this._touchSequenceMultitouch) return;
+    d = this._deviceHits.begin(
+      this.renderRoot, this._renderDevices, this._space, ev, d,
+    );
+    if (this._mode === 'view') {
+      // view: no drag, no capture — panning may start on an icon; only the
+      // long-press timer runs (cancelled by stage movement)
+      this._holdFired = false;
+      const pointerId = ev.pointerId;
+      const source = ev.currentTarget as Element | null;
+      this._viewHold.arm(pointerId, () => {
+        this._touchClickGuard.interrupt(pointerId);
+        this._holdFired = true;
+        this._interruptViewGesture(pointerId, source);
+        this._infoCard = d;
+      });
+      return;
+    }
+    // A disabled ghost is a service entry point, not a movable plan object.
+    // Leave the click intact so the settings dialog still opens.
+    if (d.bindingStatus?.kind === 'ha_disabled' || this._devicePositionBusy) return;
+    if (this._deviceDrag) {
+      if (this._deviceDrag.pointerId !== ev.pointerId) this._cancelDeviceDrag();
+      return;
+    }
+    ev.preventDefault();
+    // Preventing the drag default also suppresses the browser's focus transfer.
+    // The selected canvas marker must own subsequent keys, not an old toolbar control.
+    (ev.currentTarget as HTMLElement | null)?.focus({ preventScroll: true });
+    const p = this._pos(d);
+    this._deviceDrag = {
+      id: d.id,
+      spaceId: d.space,
+      displayName: d.name,
+      pointerId: ev.pointerId,
+      source: ev.currentTarget as Element | null,
+      sx: ev.clientX,
+      sy: ev.clientY,
+      ox: p.x,
+      oy: p.y,
+      moved: false,
+      before: devicePlacement(this._layout, d.id),
+      contactMembers:this._deviceContacts?.scene?.component(d.id),
+      start: this._devicePlacementForCanvas(d, p.x, p.y, true),
+      spacing: this._editorRuntime?._deviceSpacing(d, (x, y) => this._devicePlacementForCanvas(d, x, y)) ?? null, // #873
+      contact: this._editorRuntime?._deviceContact(d, (x, y) => {
+        const saved = this._devicePlacementForCanvas(d, x, y, true), k = this._norm ? NORM_W : 1;
+        return { x: saved.x * k, y: saved.y * k };
+      }) ?? null,
+    };
+    capturePointer(ev);
+    this._tip = null;
+    this._syncLiveHover();
+  }
+
+  private _pointerMove(ev: PointerEvent, d: DevItem): DevItem | null {
+    if (this._mode !== 'view' && this._mode !== 'devices') return null;
+    d = this._deviceForPointerEvent(ev, d);
+    if (this._mode !== 'devices') return d;
+    const drag = this._deviceDrag;
+    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return d;
+    this._editorRuntimeOrThrow()._queuePointerMove('device', () => this._pointerMoveNow(ev, d));
+    return d;
+  }
+
+  private _pointerMoveNow(ev: PointerEvent, d: DevItem): void {
+    if (this._mode !== 'devices') return;
+    const drag = this._deviceDrag;
+    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
+    drag.lastPointer = { clientX: ev.clientX, clientY: ev.clientY, altKey: ev.altKey };
+    const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
+    if (!stage) return;
+    const vb = this._baseVb();
+    const rect = stage.getBoundingClientRect();
+    const v = this._viewOr(vb);
+    const [dx, dy] = this._planScreenDelta(
+      ((ev.clientX - drag.sx) / rect.width) * v.w, ((ev.clientY - drag.sy) / rect.height) * v.h);
+    if (Math.abs(ev.clientX - drag.sx) + Math.abs(ev.clientY - drag.sy) > 3) {
+      drag.moved = true;
+      this._viewHold.cancel();
+    }
+    if (!drag.moved) return;
+    // DEV-B58-01. This used to be clamped into `vb` — the CONTENT FRAME — with
+    // a 0.8 % margin, which is exactly the "old canvas border" the owner ran
+    // into: a marker could never be dragged past the outline of whatever was
+    // already drawn, so a plan could not be extended by moving a device out to
+    // where the new room was going to be. The plan has no edges any more
+    // (docs/CANVAS.md §9); the only bound is the garbage limit the backend
+    // enforces, and it is the SAME ±5000 on both sides of the wire.
+    const nx = clampCanvasR(drag.ox + dx);
+    const ny = clampCanvasR(drag.oy + dy);
+    const px = rect.width / v.w, py = rect.height / v.h;
+    const fallback = drag.spacing?.resolve(nx, ny, px, py) ?? this._devicePlacementForCanvas(d, nx, ny);
+    const contact = drag.contact?.resolve(nx, ny, px, py, this._deviceMagnets && !ev.altKey);
+    if (contact && drag.spacing) drag.spacing.hint = drag.spacing.hint.filter((t) => Math.hypot(t.x - contact.x, t.y - contact.y) <= 2e-6);
+    this._previewDevicePlacement(d.id, contact ? this._devicePlacementForCanvas(d, contact.x, contact.y, true) : fallback);
+  }
+  private _pointerUp(ev: PointerEvent, d: DevItem): void {
+    const showToast = this._captureToast();
+    d = this._deviceForPointerEvent(ev, d);
+    this._deviceHits.release(ev.pointerId);
+    this._viewHold.cancel(ev.pointerId);
+    if (this._mode !== 'devices') return;
+    const drag = this._deviceDrag;
+    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
+    this._editorRuntimeOrThrow()._flushPointerMove('device');
+    // Revalidate at the released pointer's actual coordinates and modifiers.
+    if(drag.moved&&Number.isFinite(ev.clientX)&&Number.isFinite(ev.clientY))this._pointerMoveNow(ev,d);
+    this._deviceDrag = null;
+    const after = devicePlacement(this._layout, d.id);
+    if (!drag.moved || after === null || sameDevicePlacement(after, drag.start)) {
+      this._previewDevicePlacement(d.id, drag.before);
+      return;
+    }
+
+    this._selId = d.id;
+    this._suppressClick = true;
+    window.setTimeout(() => { this._suppressClick = false; }, 0);
+    this._devicePositionBusy = true;
+    this.requestUpdate();
+    const isCurrent = this._layoutIO.guard();
+    const ownsPending = this._layoutIO.guard(true);
+    void this._editorRuntimeOrThrow()._visualCommand(async () => {
+      if (!isCurrent() || !ownsPending()) return;
+      let movement:{before:DevicePositionState;after:DevicePositionState}={
+        before:{deviceId:drag.id,spaceId:drag.spaceId,placement:drag.before},
+        after:{deviceId:drag.id,spaceId:drag.spaceId,placement:after},
+      };
+      try {
+        if(this._deviceContacts?.scene?.shapes.has(d.id)) {
+          const {prepareContactMove}=await import('./device-contact-write');
+          if(!isCurrent()||!ownsPending())return;
+          movement=prepareContactMove(this,drag,after);
+        }
+        for(const s of [movement.after,...movement.after.related??[]])this._previewDevicePlacement(s.deviceId,s.placement);
+        await this._persistDevicePlacement(d.id, movement.after.placement,movement.after.related);
+        if (!isCurrent()) return;
+        const name = this._t('history.device_move', { name: drag.displayName });
+        this._devicePositionHistory.push({
+          name,
+          before:movement.before,after:movement.after,
+        });
+      } catch (error: unknown) {
+        if (!isCurrent()) return;
+        for(const s of [movement.before,...movement.before.related??[]])this._previewDevicePlacement(s.deviceId,s.placement);
+        showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
+      } finally {
+        if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
+      }
+    });
+  }
+  private _pointerCancel(ev: PointerEvent, d: DevItem): void {
+    this._viewHold.cancel(ev.pointerId);
+    d = this._deviceForPointerEvent(ev, d);
+    this._deviceHits.cancel(ev.pointerId);
+    if (this._deviceDrag?.id !== d.id || this._deviceDrag.pointerId !== ev.pointerId) return;
+    this._cancelDeviceDrag();
+  }
+
+  public _captureToast(): ToastCallback {
+    const context = this._toastPresentation.captureContext();
+    return (message, id) => this._showToast(message, id, context);
+  }
+
+  /** A deferred write belongs to its scheduling action, not the later flush. */
+  private _debounceToast(work: (showToast: ToastCallback) => void, ms: number): Debounced<() => void> {
+    const pending = debounce(work, ms);
+    return Object.assign(() => pending(this._captureToast()), {
+      flush: () => pending.flush(), cancel: () => pending.cancel(), pending: () => pending.pending(),
+    });
+  }
+
+  private _showToast(msg: string, id = 'message', context?: ToastContext): void {
+    if (!this.isConnected) return;
+    context ??= this._toastPresentation.captureContext();
+    // A toast supersedes transient explanatory surfaces in this card only.
+    // Dialogs own their portal/overlay registry, so another card stays intact.
+    (this._toastPresentation.resolveOwner(context)?.host as HpDialog | undefined)?.closeTransientOverlays('toast');
+    this._toast = msg;
+    this._toastPresentation.show(this._toast, id, 'message', context);
+    clearTimeout(this._toastTimer);
+    this._toastTimer = window.setTimeout(() => {
+      this._toast = '';
+      this._toastPresentation.clearMessage();
+    }, 3500);
+  }
+
+  /** Publish the instance-local input authority to nested shared controls. */
+  private _syncPointerHoverTargets(): void {
+    const enabled = this._pointerModality.hoverEnabled;
+    for (const target of this.renderRoot.querySelectorAll<HTMLElement>(
+      POINTER_HOVER_TARGET_SELECTOR,
+    )) {
+      target.toggleAttribute('data-pointer-hover', enabled);
+    }
+  }
+
+  private _syncPointerHoverSubtree(node: Node): void {
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const element = node as HTMLElement;
+    const enabled = this._pointerModality.hoverEnabled;
+    if (element.matches(POINTER_HOVER_TARGET_SELECTOR)) {
+      element.toggleAttribute('data-pointer-hover', enabled);
+    }
+    for (const target of element.querySelectorAll<HTMLElement>(
+      POINTER_HOVER_TARGET_SELECTOR,
+    )) {
+      target.toggleAttribute('data-pointer-hover', enabled);
+    }
+  }
+
+  /** Remove visual state that can only be owned by a live mouse hover. */
+  private _clearTransientHover(suspend = false): void {
+    if (suspend) this._pointerModality.suspend();
+    this._editorRuntime?._clearRoomFaceHover();
+    this._liveRt?.clearDeviceFocus();
+    this._deviceHits.hover(this.renderRoot, null);
+    if (this._tip) this._tip = null;
+    if (this._hoverRoom) this._hoverRoom = null;
+    this._syncLiveHover();
+  }
+
+  /** The latest real pointer event, not a page-global first-touch latch, owns hover. */
+  private _notePointer(ev: PointerEvent): void {
+    const previous = this._pointerModality.modality;
+    const modality = this._pointerModality.note(ev);
+    if ((modality === 'touch' || modality === 'pen')
+        && (previous !== modality || !!this._tip || !!this._hoverRoom)) {
+      this._clearTransientHover();
+    }
+  }
+
+  /**
+   * Capture-phase guard for browser activations synthesized after touch gestures.
+   *
+   * `_suppressClick` covers a pan/pinch that the stage itself observed. The
+   * contact set closes the other path: an interactive child is allowed to stop
+   * pointer propagation, but it is not allowed to hide/navigate/toggle from one
+   * finger of a two-finger gesture. The event-owned post-gesture barrier also
+   * covers a delayed `click` or touch `contextmenu` after the final pointerup;
+   * only a new pointerdown/keyboard event proves a new deliberate sequence.
+   */
+  private _guardTouchGesture(ev: Event): void {
+    if (this._viewRuntimes.deviceMenu.state === 'loading' && (ev.type === 'pointerdown' || ev.type === 'keydown')) ++this._viewDeviceMenuRequest;
+    if (ev.type === 'keydown') this._deviceDragRetirement.key((ev as KeyboardEvent).key);
+    if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
+    const rightMouseDown = ev.type === 'pointerdown' && (ev as PointerEvent).pointerType === 'mouse'
+      && (ev as PointerEvent).button === 2;
+    // A node consumes this down before pan, but it is still fresh physical
+    // evidence that retires the previous touch compatibility tail.
+    if (rightMouseDown) this._touchClickGuard.pointerDown((ev as PointerEvent).pointerId, 'mouse');
+    // Touch owns pinch compatibility before any node-menu activation.
+    if (ev.type === 'contextmenu') {
+      this._touchClickGuard.handleActivation(ev, this._suppressClick);
+      if (ev.defaultPrevented) return;
+    }
+    if (this._editorRuntime?.nodeMove?.guardEvent(ev)) return;
+    if (ev.type === 'contextmenu' || this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
+    const pointer = ev as PointerEvent;
+    this._notePointer(pointer);
+    if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') {
+      // Implicit capture loss AFTER an accepted up is not a cancelled tap.
+      if (this._touchClickGuard.hasPointer(pointer.pointerId)) {
+        this._clearPlanTapSequence();
+        this._touchClickGuard.interrupt(pointer.pointerId);
+      }
+      this._viewHold.cancel(pointer.pointerId);
+      // #813: a hold whose pointer lost its capture is no longer a hold.
+      if (this._kioskHold.pointerId === pointer.pointerId) this._kioskHold.cancel();
+    } else if (ev.type === 'pointerdown') this._planTaps.clearNonPlan(pointer);
+    if (ev.type === 'pointerdown' && !rightMouseDown) this._touchClickGuard.pointerDown(
+      pointer.pointerId, pointer.pointerType,
+    );
+    const wasMultitouch = ev.type === 'pointerup' || ev.type === 'pointercancel'
+      || ev.type === 'lostpointercapture'
+      ? this._touchClickGuard.pointerTerminal(pointer.pointerId, pointer.pointerType, ev.type) : false;
+    if (pointer.pointerType !== 'touch') return;
+    if (ev.type === 'pointerdown') {
+      this._touchContacts.set(pointer.pointerId, {
+        x: pointer.clientX,
+        y: pointer.clientY,
+        inStage: sceneGestureFromPath(pointer.composedPath())
+          && !!(pointer.target as Element | null)?.closest?.('.stage'),
+      });
+      if (this._touchContacts.size >= 2) { if (this._editorRuntime?._cancelRoomGearForMultitouch()) this._roomGearTouchNavigation = true;
+        if (this._decorMove?.selection) this._cancelDecorGesture();
+        this._deviceHits.clearPointers();
+        this._clearRoomFocus(true);
+        this._clearTransientHover();
+        this._viewHold.cancel();
+        this._kioskHold.cancel();
+        this._swipeStart = null;
+        // Viewing is the guaranteed touch surface. Seed its existing stage
+        // pinch pipeline even when a child swallowed the first pointerdown.
+        const contacts = [...this._touchContacts.values()];
+        if ((this._mode === 'view' || this._roomGearTouchNavigation) && !this._vacFit
+            && contacts.every((contact) => contact.inStage)) {
+          this._pointers = new Map([...this._touchContacts].map(([id, contact]) => [
+            id, { x: contact.x, y: contact.y },
+          ]));
+          const [a, b] = contacts;
+          this._pinchStart = { dist: Math.hypot(a.x - b.x, a.y - b.y), zoom: this._zoom };
+          this._panStart = null;
+          this._panLock = null;
+        } else if (this._vacFit) {
+          this._pointers.clear();
+          this._pinchStart = null;
+          this._panStart = null;
+          this._panLock = null;
+        }
+      }
+      return;
+    }
+    if (ev.type === 'pointermove') {
+      const contact = this._touchContacts.get(pointer.pointerId);
+      if (!contact) return;
+      const next = { ...contact, x: pointer.clientX, y: pointer.clientY };
+      this._touchContacts.set(pointer.pointerId, next);
+      if (this._touchSequenceMultitouch && (this._mode === 'view' || this._roomGearTouchNavigation) && !this._vacFit && this._pinchStart
+          && [...this._touchContacts.values()].every((item) => item.inStage)) {
+        this._activateSafeDayCycleOutline(); this._pointers.set(pointer.pointerId, { x: pointer.clientX, y: pointer.clientY });
+        const contacts = [...this._touchContacts.values()];
+        const rect = contacts.length >= 2 ? this._measureGestureStage()?.rect : null;
+        if (rect) {
+          const [a, b] = contacts;
+          const scale = Math.hypot(a.x - b.x, a.y - b.y) / (this._pinchStart.dist || 1);
+          this._zoomAt((a.x + b.x) / 2 - rect.left, (a.y + b.y) / 2 - rect.top,
+            this._pinchStart.zoom * scale);
+          this._viewportGestureDirty = true;
+          this._markPinchZoomDirty();
+        }
+      }
+      return;
+    }
+    if (ev.type !== 'pointerup' && ev.type !== 'pointercancel'
+        && ev.type !== 'lostpointercapture') return;
+    this._clearTransientHover();
+    // Capture is routing, not a physical release (F84). Keep this contact so a
+    // second finger cannot become a clean marker tap while the first is down.
+    if (ev.type !== 'lostpointercapture') this._touchContacts.delete(pointer.pointerId);
+    if (!this._touchContacts.size) this._roomGearTouchNavigation = false;
+    if (wasMultitouch) {
+      this._pointers.delete(pointer.pointerId);
+      if (!this._vacFit && this._pointers.size >= 2) {
+        const [a, b] = [...this._pointers.values()];
+        this._pinchStart = { dist: Math.hypot(a.x - b.x, a.y - b.y), zoom: this._zoom };
+      } else {
+        this._pinchStart = null;
+      }
+      if (this._pointers.size === 0) {
+        this._panStart = null;
+        this._panLock = null;
+        this._finishViewportGesture();
+      }
+    }
+  }
+
+  private _showTip(
+    ev: PointerEvent,
+    title: string,
+    meta: string,
+    lqi?: number | null,
+    temp?: number | null,
+    hum?: number | null,
+    room = false,
+    co2?: number | null,
+  ): void {
+    if (this._deferCameraHover(ev)) return;
+    this._notePointer(ev);
+    if (!this._pointerModality.hoverEnabled) return;
+    if (this._drag || this._deviceDrag) return;
+    if (room && this._liveRt?.deviceFocusActive()) return;
+    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, co2, room, source: 'pointer' };
+    this._syncLiveHover();
+  }
+
+  /** Room pointer preflight stays authoritative even when its tooltip is off. */
+  private _roomTipEnabledForPointer(ev: PointerEvent): boolean {
+    if (this._mode !== 'view') return false;
+    this._notePointer(ev);
+    if (showRoomTooltipOf(this._settings)) return true;
+    if (this._tip?.room) { this._tip = null; this._syncLiveHover(); }
+    return false;
+  }
+
+  // ================= ROOM MARKUP EDITOR =================
+
+  private get _gridPitch(): number {
+    // NORM_W / GRID_N and nothing else. The infinite canvas did NOT touch this
+    // (docs/CANVAS.md §9): the step is the same for every plan, at every zoom,
+    // whatever the content frame happens to be — so no existing plan's nodes
+    // ever moved out from under it.
+    return GRID_PITCH;
+  }
+
+  /** cm represented by one grid cell for the current space (default 5). */
+  private get _cellCm(): number {
+    const v = Number(this._curSpaceCfg?.cell_cm);
+    return Number.isFinite(v) && v > 0 ? v : 5;
+  }
+
+  /** Human-readable length of a segment (render units) using the HA unit system. */
+  private _fmtLen(a: number[], b: number[]): string {
+    const cm = segmentCm(a, b, this._gridPitch, this._cellCm);
+    return formatLength(cm, this.planHost.environment.units.length === 'mi');
+  }
+
+  private get _curSpaceCfg(): any {
+    // HP-1550-01: while a resize drag is live, every render-path reader sees
+    // the preview overlay; _writeConfig deliberately reads _serverCfg instead,
+    // so a queued write can never pick the preview up.
+    const pv = this._resize?.preview;
+    const space = pv && pv.space === this._space ? pv.sp
+      : this._serverCfg?.spaces.find((s: any) => s.id === this._space);
+    return space ? annotateSpaceGraphOpeningRuns(space) : space;
+  }
+
+  /** The config AS RENDERED: _serverCfg with the live resize preview substituted in. */
+  private get _renderCfg(): ServerConfig | null {
+    const pv = this._resize?.preview;
+    if (!pv || !this._serverCfg) return this._serverCfg;
+    return {
+      ...this._serverCfg,
+      spaces: this._serverCfg.spaces.map((s: any) => (s.id === pv.space ? pv.sp : s)),
+    };
+  }
+
+  private get _spaceH(): number {
+    return NORM_W; // square canvas
+  }
+
+  /**
+   * Walls of the current space in render units — DERIVED from the room outlines.
+   * There is no standalone "line" entity: every wall belongs to a closed room, and a
+   * wall shared with a neighbour survives deleting either room (the other still yields it).
+   */
+  private get _segments(): number[][] {
+    const sp = this._curSpaceCfg;
+    const H = this._spaceH;
+    return roomEdges(sp?.rooms || []).map((s) => [s[0] * NORM_W, s[1] * H, s[2] * NORM_W, s[3] * H]);
+  }
+
+  private _savedNav(): { space?: string } | null {
+    if (this._hasFixedFloor) return null;
+    try {
+      return JSON.parse(localStorage.getItem(LS_NAV) || 'null');
+    } catch {
+      return null;
+    }
+  }
+
+  private _saveNav(): void {
+    if (this._hasFixedFloor) return;
+    try {
+      // Writing on every mode/space change also migrates legacy
+      // `{ space, mode }` records by dropping their obsolete editor field.
+      localStorage.setItem(LS_NAV, JSON.stringify({ space: this._space }));
+    } catch {
+      /* private mode etc. */
+    }
+  }
+
+  /** Retire presentation-owned UI without invalidating authoritative data. */
+  private _retireRouteDialogs(): void {
+    this._cancelDangerConfirm();
+    this._tapConfirm = null; this._openingInfo = null; this._openingInfoSpace = null;
+    this._closeInfoCard(); this._kioskDialog = false; this._pdfDialog = false;
+    this._spaceDialog = null; this._importDialog = null;
+    this._editorRuntime?._retireRouteDialogs();
+  }
+
+  /**
+   * A route change is a real departure from the card, unlike a same-route
+   * Lovelace remount. End the editing session before its old warm slot can be
+   * adopted on return. Space remains persisted; editor mode, selections,
+   * dialogs and editor viewport do not.
+   */
+  private _leaveCardRoute(): void {
+    if (this._routeDepartureHandled) return;
+    this._routeDepartureHandled = true;
+    this._viewRuntimes.disconnect();
+    this._pageVisibility({kind:'hidden',token:0,at:Date.now(),hiddenFor:0,long:false});
+    this._cancelPendingWarmMode();
+    this._configReloadAuthority.invalidateLifecycle();
+    this._read.invalidate(); this._loading = false;
+    this._summary?.leaveRoute();
+    this._clearRoomFocus(true); this._cancelDangerConfirm();
+    // The destination page cannot display this decorative transition and may
+    // disconnect us before its first measured frame. Commit View atomically so
+    // the warm tombstone never records an editor camera under `mode: view`.
+    if (this._mode !== 'view') this._setMode('view', false);
+    this._pendingNavMode = null; this._warmRevivePending = false; // the slot is sealed below
+    this._geometryHistory.clear();
+    this._activeWallChainId = null;
+    this._wallChainSegmentCms = [];
+    this._closingWallCm = null;
+    this._drawWallField = null;
+    // Route departure does not reset the browser-local display preference.
+
+    this._retireRouteDialogs();
+
+    // `_warmPatch()` intentionally refuses to write under a different path,
+    // because warmBootKey already belongs to the route we just left. Seal the
+    // owned slot directly with the safe return state and discard its painted
+    // editor fingerprint; a later instance may still reuse settled dimensions
+    // and device metadata, but never the editor or its draft.
+    const slot = this._warmSlot;
+    if (slot?.owner === this._warmGen) {
+      slot.vp = this._warmViewportState();
+      slot.dlg = null;
+      slot.frameFingerprint = '';
+      clearTimeout(slot.evict);
+      slot.evict = 0;
+    }
+    this._saveNav();
+  }
+
+  private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true, warm = false): void {
+    if (!warm) this._cancelPendingWarmMode();
+    if (mode !== 'view' && (!this._ensureFloorPreparation() || !this._loadOk)) {
+      this._floorPendingMode = { mode, animate, warm };
+      if (!warm) this._retryFloorPreparation();
+      return;
+    }
+    this._floorPendingMode = null;
+    if (mode === 'devices' && !hasMarkers(this.planHost.capabilities)) return;
+    if (mode !== this._mode) {
+      this._rotationMotion.cancel();
+      this._stairsView.clearArrival();
+      ++this._viewDeviceMenuRequest;
+      this._clearRoomFocus(true);
+      this._cancelDangerConfirm();
+      this._resetDeviceHitState();
+      this._clearTransientHover(true);
+    }
+    if (!this._editorRuntime) {
+      // Cancellation above is enough for an unchanged View without a runtime.
+      if (mode !== 'view') void this._requestMode(mode, animate);
+      return;
+    }
+    this._editorRuntime.stairs.beforeModeChange(mode); this._editorRuntime._setMode(mode, animate);
+    this._editorRuntime.stairs.afterModeChange(); this._stairsView.clearGesture();
+  }
+
+  /** Prime the Draw thickness field to 15 cm once per Plan session. */
+  private _primeDrawWallField(): void {
+    return this._editorRuntimeOrThrow()._primeDrawWallField();
+  }
+
+  private get _drawWallFieldValue(): string {
+    if (this._drawWallField === null) {
+      return cmToField(DRAW_WALL_DEFAULT_CM, this._imperial);
+    }
+    return this._drawWallField;
+  }
+
+  private get _drawWallCm(): number | null {
+    const raw = strictNumber(this._drawWallFieldValue);
+    if (raw == null || raw < 0) return null;
+    const cm = this._imperial ? raw * 2.54 : raw;
+    const max = this._tool === 'column' ? COLUMN_MAX_CM : 100;
+    const min = this._tool === 'column' ? 1 : 0;
+    return cm >= min && cm <= max ? cm : null;
+  }
+
+  private get _drawWallMaxCm(): number {
+    return this._tool === 'column' ? COLUMN_MAX_CM : 100;
+  }
+
+  /**
+   * Finish the active Walls chain because the user changed tool/mode/space.
+   * Every finished segment is already an ordinary selectable partition;
+   * finishing only clears the session-only chain state.
+   */
+
+  private _finishWallChain(): boolean {
+    return this._editorRuntimeOrThrow()._finishWallChain();
+  }
+
+  /** One transition gate for Plan toolbar tools. */
+  private _activateMarkupTool(tool: MarkupTool): void {
+    return this._editorRuntimeOrThrow()._activateMarkupTool(tool);
+  }
+
+  private _svgPoint(ev: MouseEvent): number[] {
+    return this._editorRuntimeOrThrow()._svgPoint(ev);
+  }
+
+  /**
+   * THE snap (docs/CANVAS.md §9). Every editor gesture that produces a plan
+   * coordinate goes through here, so "strictly on the grid" is one function
+   * and not a habit. No modifier bypasses it. The canvas clamp rides along: there are no edges
+   * to bump into any more, only the ±5000 the backend refuses to store.
+   */
+  private _snap(p: number[]): number[] {
+    return this._editorRuntimeOrThrow()._snap(p);
+  }
+
+  /** Static presentation axes shared by the overlay and its hit resolver. */
+  private _planSnapGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
+    return this._editorRuntimeOrThrow()._planSnapGeometrySnapshot();
+  }
+
+  /**
+   * Room-face topology deliberately ignores door/window/gate/passage slots:
+   * an opening cuts masonry but does not remove the owning wall from a room
+   * contour (#185). A zero-thickness wall also remains topology (#306).
+   * Keeping this snapshot separate preserves the established face contract.
+   */
+  private _planStructuralGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
+    return this._editorRuntimeOrThrow()._planStructuralGeometrySnapshot();
+  }
+
+  private _planSnapContextKey(geometryKey: string): string {
+    return this._editorRuntimeOrThrow()._planSnapContextKey(geometryKey);
+  }
+
+  private _resolvePlanDrawPoint(
+    raw: number[], lock45: boolean,
+  ): {
+    point: number[]; candidate: PlanSnapCandidate | null;
+    conflicts: PlanSnapEndpoint[]; ambiguous: boolean; contextKey: string;
+  } {
+    return this._editorRuntimeOrThrow()._resolvePlanDrawPoint(raw, lock45);
+  }
+
+  private get _activePlanSnapCandidate(): PlanSnapCandidate | null {
+    if (!this._markup || this._tool !== 'draw') return null;
+    const hover = this._planSnapHover;
+    if (!hover) return null;
+    const snapshot = this._planSnapGeometrySnapshot();
+    return hover.contextKey === this._planSnapContextKey(snapshot.key) ? hover.candidate : null;
+  }
+
+  private get _activePlanSnapConflicts(): PlanSnapEndpoint[] {
+    if (!this._markup || this._tool !== 'draw') return [];
+    const hover = this._planSnapHover;
+    if (!hover) return [];
+    const snapshot = this._planSnapGeometrySnapshot();
+    return hover.contextKey === this._planSnapContextKey(snapshot.key) ? hover.conflicts : [];
+  }
+
+  private _clearPlanSnapHover(clearCursor = true): void {
+    if (!this._editorRuntime) {
+      this._planSnapHover = null;
+      if (clearCursor) this._cursorPt = null;
+      return;
+    }
+    return this._editorRuntimeOrThrow()._clearPlanSnapHover(clearCursor);
+  }
+
+  private _samePt(a: readonly number[], b: readonly number[]): boolean {
+    return samePoint(a, b);
+  }
+
+  /**
+   * Room-boundary walls are derived from rooms, so the legacy per-space
+   * `segments` array is dead weight. Independent walls live in the typed
+   * `partitions` collection and must never be confused with that legacy field.
+   */
+  private _dropLegacySegments(): void {
+    return this._editorRuntimeOrThrow()._dropLegacySegments();
+  }
+
+  /**
+   * Config writes are serialized (HP-1454-03).
+   *
+   * The debounce only spaced out the *starts*. If a write took longer than
+   * 500 ms — a busy instance, a slow link — the next edit went out with the
+   * same `expected_rev`, the server accepted the first and rejected the second
+   * as a conflict, and the conflict handler reloaded the server copy over the
+   * local one. The user's second edit was gone, with a toast that blamed
+   * another window when there was none.
+   *
+   * One chain, one write in flight. A write always reads `_serverCfg` at the
+   * moment it runs, so edits made while another write was out are carried by
+   * the next one, with the revision that write returned.
+   */
+  private _writesPending = 0;
+  private _writeChain: Promise<void> = Promise.resolve();
+  private _pendingPhysicalWrites = new Map<string, {
+    fingerprint: string; before: SpaceGeometryState;
+  }>();
+
+  /** Revalidate the synchronous rollback after every write already queued. */
+  private async _reloadRejectedPhysicalWrite(showToast = this._captureToast()): Promise<void> {
+    return this._editorRuntimeOrThrow()._reloadRejectedPhysicalWrite(showToast);
+  }
+
+  /** A config write is in flight — the card must not adopt a server revision. */
+  private get _cfgWriting(): boolean {
+    return this._writesPending > 0;
+  }
+
+  /**
+   * The sole frontend config transport.  Keeping the final canonicalization at
+   * this boundary makes View-owned metadata writes and strict editor writes
+   * converge on the same payload contract without making View load the editor.
+   */
+  private async _sendConfigCandidate(candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean,
+    roomLabels?: Record<string, DeviceLayout[string] | null>): Promise<void> {
+    if (Number(candidate.model_version || 0) >= 11 && this._haPlanGraphApi !== 1)
+      throw Object.assign(new Error('wall_model_client_outdated'), { code: 'wall_model_client_outdated' });
+    if (roomLabels && this._haRoomLabelLayoutApi !== 1)
+      throw Object.assign(new Error('wall_model_client_outdated'), { code: 'wall_model_client_outdated' });
+    const isCurrent = this._configWriteGuard();
+    if (!isCurrent() || !this._loadOk) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
+    const canonicalCandidate = canonicalizeConfigWrite(candidate);
+    const expectedRev = this._cfgRev;
+    const accepted = this._adoption.snapshot(null)?.config;
+    const graph_change = Number(canonicalCandidate.model_version) === 11 && Number(accepted?.model_version || 0) < 11
+      ? (await import('./graph-write-change')).legacyGraphWriteChange(accepted, canonicalCandidate, this._haGraphChangeApi===2?2:1) : undefined;
+    if (!isCurrent()) throw Object.assign(new Error('config authority changed'), {code:'context-changed'});
+    const finish=contactLayout || roomLabels ? this._layoutIO.begin():()=>undefined;
+    const layoutBeforeSend = structuredClone(this._layout);
+    try {
+      const writeHass = this.planHost;
+      const response = await sendHouseplanWrite<any>(writeHass, {
+        type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: expectedRev,
+        ...(this._haOpeningFeaturesApi === 1 ? { opening_features_api: 1 } : {}),
+        ...(this._haFurnitureWorkstationApi ? { furniture_workstation_api: this._haFurnitureWorkstationApi } : {}),
+        ...(graph_change ? {graph_change} : {}),
+        ...(contactLayout?{contact_layout:contactLayout}:{}),
+        ...(roomLabels?{room_label_layout:roomLabels}:{}),
+        ...(contactLayout || roomLabels ? {expected_layout_rev:this._layoutRev}:{}),
+      }, { isCurrent: () => isCurrent()
+        && (!acknowledgementCurrent || acknowledgementCurrent()) });
+      if (!isCurrent() || acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
+      this._adoption.acceptConfigWrite(canonicalCandidate, response);
+      for (const [id, position] of Object.entries((response as {layout_changes?:Record<string,DeviceLayout[string]|null>})?.layout_changes || {})) {
+        // A later local edit owns its fresh draft, while the accepted cache still
+        // records the exact position/deletion confirmed by this older response.
+        if (contentFingerprint(this._layout[id] ?? null) === contentFingerprint(layoutBeforeSend[id] ?? null)) {
+          const next = { ...this._layout };
+          if (position === null) delete next[id]; else next[id] = structuredClone(position);
+          this._layout = next;
+        }
+        this._adoption.acceptLayoutPosition(id, position, response?.layout_rev);
+      }
+      if(contactLayout)for(const [id,pos] of Object.entries((response as {contact_layout?:DeviceLayout})?.contact_layout??{})) {
+        this._previewDevicePlacement(id,pos);
+        this._adoption.acceptLayoutPosition(id,pos,(response as {layout_rev?:number}).layout_rev);
+      }
+      if(contactLayout || response?.layout_changes)this._adoption.refreshLayoutFingerprint();
+      this._cacheSnapshot();
+    } finally {finish();}
+  }
+
+  public _configWriteGuard(pendingOnly = false): () => boolean {
+    const claim = this._configWriteContext.claim();
+    return () => pendingOnly ? this._configWriteContext.owns(claim) : this._configWriteContext.current(claim, this.planHost);
+  }
+
+  private _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, showToast = this._captureToast()): Promise<void> {
+    if (this._editorRuntime) return this._editorRuntime._writeConfig(attempt, undefined, undefined, showToast);
+    // Registry discovery may update shared metadata while the card is still
+    // display-only. Persist that small View-owned mutation without pulling in
+    // the editor runtime; strict physical-write validation is impossible here
+    // because such writes can only be created by an installed editor.
+    this._writesPending++;
+    const isCurrent = this._configWriteGuard();
+    const ownsPending = this._configWriteGuard(true);
+    this._writeChain = enqueueSerializedWrite(this._writeChain, async () => {
+      if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
+      if (!this._serverCfg) return;
+      const candidate = canonicalizeConfigWrite(this._serverCfg);
+      if (attempt && contentFingerprint(this._serverCfg) === attempt.attemptedFingerprint)
+        Object.assign(attempt, { revision: this._cfgRev, attempted: candidate, attemptedFingerprint: contentFingerprint(candidate) });
+      this._adoption.stageConfigCandidate(candidate);
+      await this._sendConfigCandidate(candidate);
+    });
+    const mine = this._writeChain.finally(() => { if (ownsPending()) this._writesPending--; });
+    return mine;
+  }
+
+  /**
+   * Every mutation path ends here, so this is the one place that can invalidate
+   * the geometry caches synchronously. The WRITE stays debounced; the epoch bump
+   * must not be (audit L1: a bump inside the debounce arrives 500 ms after the
+   * render that needed it, and the plan renders stale geometry).
+   */
+  private _saveConfig(): void {
+    this._cfgEpoch++;
+    this._saveConfigDebounced();
+  }
+
+  /** Deep, immutable geometry state from the real config (never Resize preview). */
+  private _geometrySnapshotFromConfig(config: any, spaceId: string): SpaceGeometryState | null {
+    return this._editorRuntimeOrThrow()._geometrySnapshotFromConfig(config, spaceId);
+  }
+
+  private _geometrySnapshot(spaceId = this._space): SpaceGeometryState | null {
+    return this._editorRuntimeOrThrow()._geometrySnapshot(spaceId);
+  }
+
+  /** Finish one geometry transaction and invalidate the redo branch. */
+  private _recordGeometry(name: string, before: SpaceGeometryState | null): void {
+    return this._editorRuntimeOrThrow()._recordGeometry(name, before);
+  }
+
+  /** #329 П1-П5 over one space. Pure input, no side effects. */
+  private _junctionLimitViolations(config: unknown, spaceId: string,
+    sharedGeometry?: JunctionSharedGeometry | null,
+    roomIds?: ReadonlySet<string>): JunctionLimitViolation[] {
+    return this._editorRuntimeOrThrow()._junctionLimitViolations(config, spaceId, sharedGeometry, roomIds);
+  }
+
+  /** #329: violations this write would ADD; inherited ones stay untouched. */
+  private _junctionLimitsIntroduced(
+    candidate: ServerConfig, previousConfig: ServerConfig, spaceId: string,
+  ): JunctionLimitViolation[] {
+    return this._editorRuntimeOrThrow()._junctionLimitsIntroduced(candidate, previousConfig, spaceId);
+  }
+
+  private _commitPhysicalGeometry(
+    name: string,
+    before: SpaceGeometryState | null,
+    additionalAuthoredPoints: readonly (readonly number[])[] = [],
+  ): boolean {
+    return this._editorRuntimeOrThrow()._commitPhysicalGeometry(name, before, additionalAuthoredPoints);
+  }
+
+  /** Drop every transient gesture before replacing committed geometry. */
+  private _clearGeometryGesture(): void {
+    if (!this._editorRuntime) {
+      // Empty-install onboarding is intentionally independent from the editor
+      // chunk.  Before that chunk exists there can be no live editor gesture,
+      // but warm state may still carry inert draft fields: clear them eagerly
+      // so the empty-state reset never pulls editor code into View.
+      this._path = [];
+      this._planSnapHover = null;
+      this._cursorPt = null;
+      this._openingHoverCandidate = null;
+      this._openingJambBlockCm = null;
+      this._openingPreset = null;
+      this._openingRebindId = null;
+      this._mergeSel = null;
+      this._mergeDialog = null;
+      this._splitSel = null;
+      this._pendingSplit = null;
+      this._wallFaceBatch = null;
+      this._wallRepairDiagnostic = null;
+      this._roomDeleteDialog = null;
+      this._wallDialog = null;
+      this._physicalDialog = null;
+      this._physicalSel = null;
+      this._activeWallChainId = null;
+      this._wallChainSegmentCms = [];
+      this._closingWallCm = null;
+      this._openingDialog = null;
+      this._resize?.reset();
+      this._decorDraft = null;
+      this._decorMove = null;
+      this._dtDrag = null;
+      this._stairsView.clearGesture();
+      return;
+    }
+    this._editorRuntime.stairs.clearGesture();
+    return this._editorRuntimeOrThrow()._clearGeometryGesture();
+  }
+
+  /** Browser/OS cancellation is an aborted transaction, never a commit. */
+  private _stagePointerCancel(ev: PointerEvent): void {
+    this._kioskHold.cancel(); // #813: the cold kiosk has no editor runtime to clear it
+    this._deviceHits.cancel(ev.pointerId);
+    this._flushHa();
+    this._editorRuntime?._cancelPointerMove('markup-hover');
+    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
+    this._clearPlanTapSequence();
+    this._stairsView.pointerCancel(ev);
+    if (this._editorRuntime?.stairs.pointerCancel(ev)) return;
+    if (this._editorRuntime) return this._editorRuntime._stagePointerCancel(ev);
+    this._pointers.delete(ev.pointerId);
+    if (this._pointers.size < 2) this._pinchStart = null;
+    if (this._pointers.size === 0) {
+      this._panStart = null;
+      this._panLock = null;
+      this._swipeStart = null;
+      // Keep the compatibility click from this cancelled pointer blocked, but
+      // do not poison the next deliberate gesture indefinitely.
+      if (this._suppressClick) setTimeout(() => (this._suppressClick = false), 0);
+    }
+    if (this._pointers.size === 0) this._finishViewportGesture();
+  }
+
+  private _undoGeometry = (): void => {
+    return this._editorRuntimeOrThrow()._undoGeometry();
+  }
+
+  private _redoGeometry = (): void => {
+    return this._editorRuntimeOrThrow()._redoGeometry();
+  }
+
+  private _saveConfigDebounced = this._debounceToast((showToast) => {
+    if (!this._serverCfg) return;
+    this._writeConfig(null, showToast).catch((e: any) => {
+      const physicalRollback = e?.physicalGeometryRolledBack === true;
+      if (e?.code === 'geometry-unsafe' || isGeometryCleanupRefusal(e)) {
+        return; // already answered: the unsafe-geometry toast, or the #842 K3 question
+      } else if (e?.code === 'wall_model_client_outdated') {
+        showToast(this._t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
+      } else if (e?.code === 'conflict') {
+        // a real one now: another window wrote between our read and our write
+        showToast(this._t('toast.conflict'), 'toast.conflict');
+        if (!physicalRollback) {
+          recoverConfigWriteConflict(this._editorRuntime, () => this._reloadConfigOnly(true));
+        }
+      } else {
+        showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }), 'toast.cfg_save_failed');
+      }
+      if (physicalRollback) void this._reloadRejectedPhysicalWrite(showToast);
+    });
+  }, 500);
+
+  /**
+   * The room that strictly contains p. Being ON a wall does not count: neighbouring
+   * rooms share walls, so new vertices legitimately land on existing outlines.
+   */
+  private _roomAt(p: number[]): RoomCfg | undefined {
+    return this._editorRuntimeOrThrow()._roomAt(p);
+  }
+
+  /** The first existing room the outline would overlap (rooms must not overlap). */
+  private _overlapRoom(verts: number[][]): RoomCfg | undefined {
+    return this._editorRuntimeOrThrow()._overlapRoom(verts);
+  }
+
+  private _pointInRoom(p: number[], r: RoomCfg): boolean {
+    if (r.poly) return pointInPolygon(p, r.poly);
+    return r.x != null && p[0] >= r.x && p[0] <= r.x + r.w!
+      && p[1] >= r.y! && p[1] <= r.y! + r.h!;
+  }
+
+  private _markupClick(ev: MouseEvent): void {
+    if (!sceneGestureFromPath(ev.composedPath())) return;
+    if (!this._editorRuntime) return;
+    return this._editorRuntime._markupClick(ev);
+  }
+
+  private _wallChainSegmentCms: number[] = [];
+  private _closingWallCm: number | null = null;
+
+  /** Detect click-induced faces and open a mutation-free decision queue. */
+  private _offerWallFaces(
+    beforePath: number[][],
+    addedSegmentIndex = this._path.length - 2,
+    beforeGraphSources?: WallGraphSourceSegment[],
+  ): void {
+    return this._editorRuntimeOrThrow()._offerWallFaces(beforePath, addedSegmentIndex, beforeGraphSources);
+  }
+
+  /** Offer the smallest unoccupied exact face under an idle Walls click. */
+  private _offerExistingWallFace(raw: number[]): boolean {
+    return this._editorRuntimeOrThrow()._offerExistingWallFace(raw);
+  }
+
+  private _columnClick(raw: number[]): void {
+    return this._editorRuntimeOrThrow()._columnClick(raw);
+  }
+
+  private _openPhysicalDialog(
+    kind: 'partition' | 'column', id: string,
+  ): void {
+    return this._editorRuntimeOrThrow()._openPhysicalDialog(kind, id);
+  }
+
+  private _deletePhysicalSelection = (): Promise<void> => {
+    return this._editorRuntimeOrThrow()._deletePhysicalSelection();
+  }
+
+  private _confirmPartitionDelete = (): void => {
+    return this._editorRuntimeOrThrow()._confirmPartitionDelete();
+  }
+
+  // ================= room resize tool (docs/RESIZE.md) =================
+
+  /** Rooms of the current space as render-unit polygons (legacy rects converted). */
+  private _rszRooms(): { id: string; poly: number[][]; wall_ids?: string[] }[] {
+    return this._editorRuntimeOrThrow()._rszRooms();
+  }
+
+  private _rszResolution(
+    roomId: string, edge: number, renderSnapshot?: string,
+  ): SafeResizeResolution {
+    return this._editorRuntimeOrThrow()._rszResolution(roomId, edge, renderSnapshot);
+  }
+
+  private _rszSnapshot(): string {
+    return this._editorRuntimeOrThrow()._rszSnapshot();
+  }
+
+  /** Publish one controller-accepted preview and retain its validated masonry pass. */
+  private _rszAcceptPreview(
+    preview: ResizePreview | null, wallGeometry: ResizeWallArtifact | null,
+  ): void {
+    return this._editorRuntimeOrThrow()._rszAcceptPreview(preview, wallGeometry);
+  }
+
+  private _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
+    return this._editorRuntimeOrThrow()._rszEdgeDown(ev, roomId, edge);
+  }
+
+  private _rszMove(ev: PointerEvent): void {
+    return this._editorRuntimeOrThrow()._rszMove(ev);
+  }
+
+  private _rszUp(ev: PointerEvent): void {
+    return this._editorRuntimeOrThrow()._rszUp(ev);
+  }
+
+  private _rszCancelDrag(pointerId?: number): void {
+    return this._editorRuntimeOrThrow()._rszCancelDrag(pointerId);
+  }
+
+  private _rszEdgeLabels(
+    res: { polys: Record<string, number[][]> }, plan: SafeResizePlan,
+    sourceRooms: readonly { id: string; poly: number[][] }[] | null = this._resize?.rooms,
+  ): ResizeLiveLabel[] {
+    return this._editorRuntimeOrThrow()._rszEdgeLabels(res, plan, sourceRooms);
+  }
+
+  /** Pointer-inert measurement ink above masonry and below openings/handles. */
+  private _renderResizeMeasurements(): TemplateResult | typeof nothing {
+    return this._editorRuntimeOrThrow()._renderResizeMeasurements();
+  }
+
+  /** Fixed-topology wall handles. Disabled geometry remains visible and
+   * explains why it cannot start a gesture; the old corner scale is gone. */
+  private _renderResizeLayer(view: { x: number; y: number; w: number; h: number },
+    roomIds?: readonly string[]): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderResizeLayer(view, roomIds);
+  }
+
+  /** Openings of the current space in render units. */
+  private get _openingsR(): RenderOpening[] {
+    const sp = this._curSpaceCfg;
+    const H = this._spaceH;
+    const space = this._spaceModel();
+    if (!space) return [];
+    return (sp?.openings || []).flatMap((saved: OpeningCfg) => {
+      const openingDrag = this._opDrag;
+      const o = openingDrag?.preview && openingDrag.spaceId === space.id && openingDrag.epoch === this._cfgEpoch && openingDrag.source === saved
+        ? openingDrag.preview : saved;
+      const fallback: RenderOpening = {
+        ...o, rx: o.x * NORM_W, ry: o.y * H, rlen: o.length * NORM_W,
+      };
+      // Contour-wall hosts are identity metadata; their materialised x/y/angle
+      // stay the legacy render input until the Stage 4 graph renderer.
+      if (!o.host || o.host.kind === 'wall') return [fallback];
+      const resolution = resolvePartitionOpeningCompat(
+        o, space.partitions, NORM_W, this._cellCm, this._gridPitch,
+      );
+      if (!resolution.resolved) {
+        return this._mode === 'plan'
+          ? [{ ...fallback, orphanReason: resolution.reason || 'invalid-host' }]
+          : [];
+      }
+      let [rx, ry] = resolution.resolved.center;
+      const drag = this._editorRuntime?.physicalGesture.drag;
+      if (drag?.moved && drag.kind === 'partition' && drag.id === o.host.id) {
+        rx += drag.delta[0];
+        ry += drag.delta[1];
+      }
+      return [{
+        ...o,
+        rx, ry,
+        rlen: resolution.resolved.length,
+        angle: resolution.resolved.angle,
+        ...(o.swing_position !== undefined ? { swing_position: swingDoorPositionInBasis(
+          o.swing_position, o.angle, resolution.resolved.angle) } : {}),
+        partitionHost: resolution.resolved,
+      }];
+    });
+  }
+
+  private _partitionOpeningCuts(
+    space: SpaceModel | undefined = this._spaceModel(),
+    accept: (opening: OpeningCfg) => boolean = () => true,
+  ): PartitionOpeningCut[] {
+    if (!space) return [];
+    const config = this._curSpaceCfg?.id === space.id ? this._curSpaceCfg : null;
+    return geometryPartitionOpeningCuts(
+      geometryOpenings(config, space, this._cellCm, this._gridPitch, NORM_W),
+      accept,
+    );
+  }
+
+  /**
+   * Room masonry may be cut by a hosted opening only for an exact collinear
+   * composite. Nearby/crossing walls never inherit the partition's cut.
+   */
+  private _roomWallOpeningInputs(
+    openings: readonly RenderOpening[] = this._openingsR,
+    space: SpaceModel | undefined = this._spaceModel(),
+  ): Array<{ x: number; y: number; angle: number; length: number }> {
+    if (!space) return [];
+    const openCuts = this._openCuts();
+    return geometryRoomOpeningInputs(
+      openings as readonly GeometryOpeningProjection[],
+      space, this._spaceWalls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+  }
+
+  private _openingFace(
+    opening: RenderOpening, index: OpeningWallIndex, flipV: boolean,
+  ): OpeningFaceOffset {
+    return opening.partitionHost
+      ? partitionOpeningFace(opening.partitionHost, flipV)
+      : openingInnerFaceOffsetFromIndex(index, {
+          x: opening.rx, y: opening.ry,
+          angle: opening.angle, length: opening.rlen, flip_v: flipV,
+        });
+  }
+
+  /** cm → render units via the space scale (cm per grid cell). */
+  private _cmToUnits(cm: number): number {
+    return (cm / this._cellCm) * this._gridPitch;
+  }
+
+  // ================= decor (background) layer =================
+
+  private get _decorList(): DecorShape[] {
+    const sp = this._curSpaceCfg;
+    return (Array.isArray(sp?.decor) ? sp.decor : []) as DecorShape[];
+  }
+
+  private get _decorH(): number {
+    return NORM_W;
+  }
+
+  private _decorResolvedStyle(shape?: DecorShape | null): DecorStyle {
+    const style = decorStyleOf(shape, this._cellCm, this._gridPitch, DEFAULT_DECOR_STYLE);
+    return this._editorRuntime?.properties.previewDecorStyle(shape, style) ?? style;
+  }
+
+  private _decorWidthUnits(shape?: DecorShape | null): number {
+    return decorStrokeUnits(shape, this._cellCm, this._gridPitch, DEFAULT_DECOR_STYLE.widthCm);
+  }
+
+  /** Canonical text size is physical; old size/scale values stay pixel-exact. */
+  private _decorTextSizeCm(shape?: DecorShape | null): number {
+    if (shape?.kind === 'text') {
+      const canonical = Number(shape.size_cm);
+      if (Number.isFinite(canonical) && canonical > 0) return canonical;
+      return decorUnitsToCm(
+        DECOR_TEXT_BASE * decorTextScale(shape), this._cellCm, this._gridPitch,
+      );
+    }
+    return decorUnitsToCm(DECOR_TEXT_BASE, this._cellCm, this._gridPitch);
+  }
+
+  private _decorTextUnits(shape: DecorShape): number {
+    if (shape.kind !== 'text') return DECOR_TEXT_BASE;
+    const canonical = Number(shape.size_cm);
+    return Number.isFinite(canonical) && canonical > 0
+      ? decorCmToUnits(canonical, this._cellCm, this._gridPitch)
+      : DECOR_TEXT_BASE * decorTextScale(shape);
+  }
+
+  /** Small physical fields are centimetres in metric plans and inches in imperial plans. */
+  private _decorSmallField(cm: number): number {
+    return Math.round((this._imperial ? cm / 2.54 : cm) * 100) / 100;
+  }
+
+  private _decorSmallCm(value: number): number {
+    const cm = this._imperial ? value * 2.54 : value;
+    return Number.isFinite(cm) ? Math.max(0.1, Math.min(100, cm)) : 0.1;
+  }
+
+  private _decorTextCm(value: number): number {
+    const cm = this._imperial ? value * 2.54 : value;
+    return Number.isFinite(cm) ? Math.max(0.1, Math.min(DECOR_TEXT_CM_MAX, cm)) : 0.1;
+  }
+
+  private _decorLargeField(cm: number): number {
+    return Math.round((this._imperial ? cm / 30.48 : cm / 100) * 100) / 100;
+  }
+
+  private _decorLargeCm(value: number): number {
+    const cm = this._imperial ? value * 30.48 : value * 100;
+    return Number.isFinite(cm) ? Math.max(0.1, Math.min(CANVAS_LIMIT * this._cellCm, cm)) : 0.1;
+  }
+
+  /** Keep full geometry precision while presenting human-sized angle fields. */
+  private _angleField(value: unknown): string {
+    const angle = Number(value);
+    return Number.isFinite(angle) ? String(Number(angle.toFixed(3))) : '0';
+  }
+
+  private _decorBoxOf(shape: DecorShape): DecorBox | null {
+    if (shape.kind !== 'rect' && shape.kind !== 'ellipse'
+        && shape.kind !== 'furniture' && shape.kind !== 'image') return null;
+    return {
+      x: shape.x * NORM_W, y: shape.y * this._decorH,
+      w: shape.w * NORM_W, h: shape.h * this._decorH,
+      angle: normalizeAngle(shape.angle) || undefined,
+    };
+  }
+
+  private _decorSnap(raw: number[], pointerType = 'mouse', excludeId?: string): number[] {
+    return this._editorRuntimeOrThrow()._decorSnap(raw, pointerType, excludeId);
+  }
+
+  private _replaceDecor(id: string, patch: Partial<DecorShape>): void {
+    return this._editorRuntimeOrThrow()._replaceDecor(id, patch);
+  }
+
+  /** Esc/Ctrl+Z during a live gesture restores its transaction start without creating history. */
+  private _cancelDecorGesture(): void {
+    return this._editorRuntimeOrThrow()._cancelDecorGesture();
+  }
+
+  /** Begin a decor gesture. Returns true when the event is consumed (no pan). */
+  private _decorPointerDown(ev: PointerEvent): boolean {
+    return this._editorRuntimeOrThrow()._decorPointerDown(ev);
+  }
+
+  /** Commit the dragged shape (ignore degenerate ones) and persist. */
+  private _decorCommitDraft(): void {
+    return this._editorRuntimeOrThrow()._decorCommitDraft();
+  }
+
+  /** Select tool: pointerdown on a shape starts moving it. */
+  private _decorShapeDown(ev: PointerEvent, shape: DecorShape): void {
+    // #358: decor shapes render in View too; CSS pointer-events alone must
+    // not be what keeps a cold tab from throwing (its twin _decorShapeDbl
+    // got this guard in #337 already).
+    if (!this._editorRuntime) return;
+    return this._editorRuntime._decorShapeDown(ev, shape);
+  }
+
+  private _decorMoveUpdate(ev: PointerEvent): void {
+    this._editorRuntimeOrThrow()._queuePointerMove('decor-move', () =>
+      this._editorRuntimeOrThrow()._decorMoveUpdate(ev));
+  }
+
+  private _decorNudge(renderDx: number, renderDy: number): boolean {
+    if (this._mode !== 'decor' || this._decorTool !== 'select'
+        || !this._decorSel || this._decorDraft || this._decorMove || this._dtDrag || this._editorRuntime?.backdropGesture.active)
+      return false;
+    const selected = this._decorList.find((shape) => shape.id === this._decorSel);
+    const sp = this._curSpaceCfg;
+    if (!selected || !sp) return false;
+    const moved = nudgeDecorShape(
+      selected, renderDx, renderDy, NORM_W, this._decorH, CANVAS_LIMIT,
+    );
+    if (!moved) return false;
+    const before = this._geometrySnapshot();
+    sp.decor = this._decorList.map((shape) => shape.id === selected.id ? moved : shape);
+    this._recordGeometry(this._t('history.decor_move'), before);
+    this._saveConfig();
+    this.requestUpdate();
+    return true;
+  }
+
+  /** Select tool: every decor object has a double-click properties dialog. */
+  private _decorShapeDbl(ev: MouseEvent, shape: DecorShape): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntime._decorShapeDbl(ev, shape);
+  }
+
+  /** One properties entry point shared by double click and the context tray. */
+  private _openDecorProperties(shape: DecorShape): void {
+    return this._editorRuntimeOrThrow()._openDecorProperties(shape);
+  }
+
+  /** Open the editor of an existing label (double click, or the text tool). */
+  private _decorOpenText(shape: DecorShape): void {
+    return this._editorRuntimeOrThrow()._decorOpenText(shape);
+  }
+
+  /** Insert a complete reference without ever truncating it into broken text. */
+  private _decorInsertLiveVariable(attr: string | null): void {
+    return this._editorRuntimeOrThrow()._decorInsertLiveVariable(attr);
+  }
+
+  private _decorSaveText(): void {
+    return this._editorRuntimeOrThrow()._decorSaveText();
+  }
+
+  private _decorSaveShape(): void {
+    return this._editorRuntimeOrThrow()._decorSaveShape();
+  }
+
+  // ---- common decor transform controller ----
+  // The mechanics are the backdrop frame's (docs/DECOR-EDITOR.md §3), reused
+  // rather than reinvented: chrome that never takes a pointer, finger-sized
+  // handles that always do, the gesture written live into the config and
+  // PERSISTED only if something actually moved. What differs is the pivot —
+  // a label has an anchor (its x/y), not a box, so both gestures are about
+  // that anchor and the text never walks away from the point it was placed at.
+
+  /** The selected shape under Select. Every decor kind uses this controller. */
+  private get _dtSel(): DecorShape | null {
+    if (this._mode !== 'decor' || this._decorTool !== 'select' || !this._decorSel) return null;
+    return this._decorList.find((x) => x.id === this._decorSel) || null;
+  }
+
+  /**
+   * What the object turns about. A label has an ANCHOR (its x/y is the point it
+   * was placed at, and it must never walk away from it); boxes and lines use
+   * their geometric centres.
+   */
+  private _dtPivot(sh: DecorShape): number[] {
+    return this._editorRuntimeOrThrow()._dtPivot(sh);
+  }
+
+  private _dtStart(
+    ev: PointerEvent, kind: 'scale' | 'rotate', corner?: number[], lineEnd?: 0 | 1,
+  ): void {
+    return this._editorRuntimeOrThrow()._dtStart(ev, kind, corner, lineEnd);
+  }
+
+  private _dtMove(ev: PointerEvent): void {
+    this._editorRuntimeOrThrow()._queuePointerMove('decor-transform', () =>
+      this._editorRuntimeOrThrow()._dtMove(ev));
+  }
+
+  private _dtUp(): void {
+    this._editorRuntimeOrThrow()._flushPointerMove('decor-transform');
+    return this._editorRuntimeOrThrow()._dtUp();
+  }
+
+  /**
+   * Measure the selected label's own box. SVG can only tell us how big a text
+   * actually came out once it is in the DOM, so the frame is one render
+   * behind — and it is re-measured whenever the text, its scale or the
+   * selection changes. Guarded against the render→measure→render loop by
+   * comparing the numbers before asking for another update.
+   */
+  private _dtMeasure(): void {
+    return this._editorRuntimeOrThrow()._dtMeasure();
+  }
+
+  private _decorDeleteSel(): void {
+    return this._editorRuntimeOrThrow()._decorDeleteSel();
+  }
+
+  private _confirmDecorErase(): void {
+    return this._editorRuntimeOrThrow()._confirmDecorErase();
+  }
+
+  private _openBackdropDialog(ev?: Event): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntime._openBackdropDialog(ev);
+  }
+
+  /**
+   * The common selected-object frame: line endpoints, or a dashed outline,
+   * four corner handles and one rotation handle. Same
+   * mechanics and same handle size as the backdrop frame (docs/DECOR-EDITOR.md §3
+   * §2) — finger-sized in SCREEN terms, so it stays grabbable at any zoom —
+   * and it rides the block's own rotation, so the corners stay at the corners.
+   */
+  private _renderTextFrame(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
+    const sh = this._dtSel;
+    if (!sh) return nothing;
+    if (sh.kind === 'text' && this._dtBox?.id !== sh.id) return nothing;
+    const b = sh.kind === 'text' ? this._dtBox : this._decorBoxOf(sh);
+    if (sh.kind !== 'line' && !b) return nothing;
+    // Two radii, one gesture (owner 2026-08-05: «уменьшить в 4 раза»). `hr`
+    // is the HIT radius — unchanged, still 1.8 % of the visible view, still
+    // finger-sized at any zoom — carried by an invisible circle. `kr` is what
+    // you SEE: a quarter of it, a bead instead of a button, so the frame stops
+    // covering the very words it is framing. Same split the wall-resize
+    // handles use (.rszhandle + .rszicon, docs/RESIZE.md).
+    const hr = Math.max(view.w, view.h) * 0.018;
+    const kr = hr / 4;
+    if (sh.kind === 'line') {
+      const a = [sh.x1 * NORM_W, sh.y1 * this._decorH];
+      const c = [sh.x2 * NORM_W, sh.y2 * this._decorH];
+      return svg`<g class="dtframe dtlineframe">
+        <line class="dtbox" x1="${a[0]}" y1="${a[1]}" x2="${c[0]}" y2="${c[1]}"></line>
+        ${[a, c].map((p, i) => svg`<circle class="dthandle dtendpoint" cx="${p[0]}" cy="${p[1]}"
+          r="${hr.toFixed(1)}" @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'scale', undefined, i as 0 | 1)}></circle>
+          <circle class="dtknob" cx="${p[0]}" cy="${p[1]}" r="${kr.toFixed(2)}"></circle>`)}
+      </g>` as unknown as TemplateResult;
+    }
+    if (!b) return nothing;
+    const [ax, ay] = this._dtPivot(sh);
+    const ang = Number(sh.angle) || 0;
+    const corners: [number, number, string][] = [
+      [-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw'],
+    ];
+    const arm = this._editorRuntime?.properties.wide
+      ? 24 * view.w / (this._stageEl?.clientWidth || 1) : hr * 2.2;
+    const furniture = sh.kind === 'furniture' || sh.kind === 'image';
+    const sides: [number, number, string][] = furniture ? [
+      [0, -1, 'ns'], [1, 0, 'ew'], [0, 1, 'ns'], [-1, 0, 'ew'],
+    ] : [];
+    return svg`<g class="dtframe${furniture ? ' dtfurnitureframe' : ''}" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}>
+      <rect class="dtbox" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}"></rect>
+      <line class="dtstem" x1="${b.x + b.w / 2}" y1="${b.y}" x2="${b.x + b.w / 2}" y2="${b.y - arm}"></line>
+      <circle class="dthandle dtrot" data-hp-tooltip=${this._t('markup.shift_45')} cx="${b.x + b.w / 2}" cy="${b.y - arm}" r="${hr.toFixed(1)}"
+        @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'rotate')}></circle>
+      <circle class="dtknob" cx="${b.x + b.w / 2}" cy="${b.y - arm}" r="${kr.toFixed(2)}"></circle>
+      ${HANDLE_PAINT_ORDER.map((role) => (role === 'edges'
+        ? sides.map(([sx, sy, cur]) => {
+          const x = sx < 0 ? b.x : sx > 0 ? b.x + b.w : b.x + b.w / 2;
+          const y = sy < 0 ? b.y : sy > 0 ? b.y + b.h : b.y + b.h / 2;
+          return svg`<circle class="dthandle dtedge dt-${cur}" cx="${x}" cy="${y}"
+            r="${hr.toFixed(1)}" @pointerdown=${(e: PointerEvent) =>
+              this._dtStart(e, 'scale', [sx, sy])}></circle>
+            <circle class="dtknob dtedgeknob" cx="${x}" cy="${y}" r="${kr.toFixed(2)}"></circle>`;
+        })
+        : corners.map(([sx, sy, cur]) => svg`<circle class="dthandle dt-${cur}"
+          cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${hr.toFixed(1)}"
+          @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'scale', [sx, sy])}></circle><circle class="dtknob"
+          cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${kr.toFixed(2)}"></circle>`)))}
+    </g>` as unknown as TemplateResult;
+  }
+
+  private _renderDecorLayer(
+    onlyId?: string | readonly string[] | null,
+    planView = this._viewOr(this._baseVb()),
+    paint: 'all' | 'floor' | 'volume' = 'all',
+    staticOnly = false,
+  ): TemplateResult {
+    const W = NORM_W, H = this._decorH;
+    const editing = this._mode === 'decor';
+    const erasing = editing && this._decorTool === 'erase';
+    const preparedSelect = !!this._editorRuntime && this._canEdit && !this._kiosk;
+    // One measured outer viewBox scale for the whole layer. Furniture paths
+    // keep `non-scaling-stroke` only to reject their own independent width /
+    // depth transform; multiplying by this factor restores the same physical
+    // camera zoom ordinary decor gets from the plan SVG (#361).
+    const stage = this._stageEl;
+    const modeScale = this._modeTransitionBusy || this._modeSceneFinishPending
+      ? this._renderPixelsPerUnit(planView) : null;
+    // #361/#649: one camera rule in both views — stroke px = width × screen
+    // scale of the plan. The 2.5D floor matrix only foreshortens y by cos 20°,
+    // as it does for every other decor stroke; the former iso constant 1 made
+    // furniture several times thicker there (#649 3a).
+    const furnitureScreenScale = furniturePlanScreenScale(
+      modeScale === null ? stage?.clientWidth : modeScale * planView.w,
+      modeScale === null ? stage?.clientHeight : modeScale * planView.h, planView.w, planView.h,
+    );
+    const onlyIds = Array.isArray(onlyId) ? new Set(onlyId) : null;
+    let decorShapes = this._decorList.flatMap(record => {
+      const cabinet = record.kind === 'furniture' && record.tv_cabinet_id
+        ? tvCabinet(this._decorList, record) : undefined;
+      const owner = cabinet ?? record;
+      if (!(onlyIds ? onlyIds.has(owner.id) : onlyId === undefined || owner.id === onlyId)) return [];
+      const shape = cabinet && record.kind === 'furniture' ? tvOnCabinet(record, cabinet) : record;
+      return [{ record, shape, owner, cabinet }];
+    });
+    if (paint !== 'all' && decorShapes.some(({shape})=>shape.kind==='furniture')) void FURNITURE_VOLUME_RUNTIME.ensure(this);
+    // Tilted Lab furniture sits above floor light. Keep flat/unsupported decor
+    // in its original slot; each object is painted exactly once.
+    if (paint !== 'all') decorShapes = decorShapes.filter(({shape: sh}) => {
+      const volume = sh.kind === 'furniture' && !!furnitureParts(sh.symbol);
+      return paint === 'volume' ? volume : !volume;
+    });
+    if (paint === 'volume') {
+      const camera=isoCameraFor(this._rotation);
+      const depth = (entry: typeof decorShapes[number]) =>
+        furnitureViewDepth(entry.shape as Extract<DecorShape,{kind:'furniture'}>,W,H,camera);
+      const furniture=decorShapes.filter(({shape})=>shape.kind==='furniture' && furnitureParts(shape.symbol))
+        .sort((a,b) => {
+          const delta = depth(a)-depth(b);
+          return Math.abs(delta) > 1e-9 ? delta : Number(!!a.cabinet)-Number(!!b.cabinet);
+        });
+      let next=0;
+      // Retain other decor's paint slots; only order supported volume subjects.
+      decorShapes=decorShapes.map(entry=>entry.shape.kind==='furniture' && furnitureParts(entry.shape.symbol) ? furniture[next++] : entry);
+    }
+    const shapes = decorShapes.map(({record, shape: sh, owner, cabinet}) => guard([this._modeSceneRevision, FURNITURE_VOLUME_RUNTIME.state(), record, cabinet, furnitureScreenScale, onlyId, paint, this._rotation, this._renderProjection, this._cellCm,
+      editing && this._decorSel === owner.id, erasing, preparedSelect,
+      sh.kind === 'image' && !this._decorAssets.has(sh.asset_id) && editing], () => {
+      const cls = 'dshape' + (editing && this._decorSel === owner.id ? ' dsel' : '');
+      const style = this._decorResolvedStyle(sh);
+      const strokeWidth = this._decorWidthUnits(sh);
+      const down = (e: PointerEvent) => this._decorShapeDown(e, erasing ? record : owner);
+      const dbl = (e: MouseEvent) => this._decorShapeDbl(e, owner);
+      // docs/STYLING-HOOKS.md §3: every shape carries its kind and its id
+      if (sh.kind === 'line')
+        // round caps: line ends read as circles of the stroke width, so two
+        // lines meeting at an angle join without the notch (owner's screenshot)
+        return svg`<line class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+          x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
+          stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}"
+          stroke-dasharray=${sh.line_style === 'dashed' ? `${strokeWidth * 4} ${strokeWidth * 3}` : nothing}
+          stroke-linecap="round" stroke-linejoin="round"
+          @pointerdown=${down} @dblclick=${dbl}></line>
+          ${preparedSelect ? svg`<line class="dshape dselecthit"
+            data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+            x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
+            @pointerdown=${down} @dblclick=${dbl}></line>` : nothing}
+          ${erasing ? svg`<line class="dshape derasehit" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+            x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
+            @pointerdown=${down}></line>` : nothing}`;
+      if (sh.kind === 'rect') {
+        const cx = (sh.x + sh.w / 2) * W, cy = (sh.y + sh.h / 2) * H;
+        const ang = normalizeAngle(sh.angle);
+        return svg`<rect class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+          x="${sh.x * W}" y="${sh.y * H}" width="${sh.w * W}" height="${sh.h * H}"
+          stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}"
+          fill="${style.fill ? style.fillColor : 'none'}" fill-opacity="${style.fill ? style.fillOpacity : 0}"
+          transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing}
+          @pointerdown=${down} @dblclick=${dbl}></rect>
+          ${erasing ? svg`<rect class="dshape derasehit" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+            x="${sh.x * W}" y="${sh.y * H}" width="${sh.w * W}" height="${sh.h * H}"
+            transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing} @pointerdown=${down}></rect>` : nothing}`;
+      }
+      if (sh.kind === 'ellipse') {
+        const cx = (sh.x + sh.w / 2) * W, cy = (sh.y + sh.h / 2) * H;
+        const ang = normalizeAngle(sh.angle);
+        return svg`<ellipse class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+          cx="${cx}" cy="${cy}"
+          rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}" stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}"
+          fill="${style.fill ? style.fillColor : 'none'}" fill-opacity="${style.fill ? style.fillOpacity : 0}"
+          transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing}
+          @pointerdown=${down} @dblclick=${dbl}></ellipse>
+          ${erasing ? svg`<ellipse class="dshape derasehit" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+            cx="${cx}" cy="${cy}" rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}"
+            transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing} @pointerdown=${down}></ellipse>` : nothing}`;
+      }
+      if (sh.kind === 'image') {
+        const projection = projectDecorImage({ ...sh, opacity: style.opacity }, W, H);
+        if (!projection) return nothing;
+        const [x, y, w, h, opacity, transform] = projection;
+        const asset = this._decorAssets.get(sh.asset_id);
+        if (!asset) return editing && this._editorRuntime
+          ? this._editorRuntime._renderMissingDecorImage(sh, cls, transform, x, y, w, h, down, dbl)
+          : nothing;
+        const href = this._display(asset.url);
+        if (!href) return nothing;
+        return svg`<image class="${cls} dimage" data-hp="decor" data-id=${sh.id}
+          data-kind="image" href=${href} x=${x} y=${y} width=${w} height=${h}
+          opacity=${opacity} preserveAspectRatio="none" transform=${transform}
+          @load=${() => this._signer.markLoaded(this.planHost, asset.url, href)}
+          @pointerdown=${down} @dblclick=${dbl}></image>
+          ${erasing ? svg`<rect class="dshape derasehit" data-hp="decor" data-id=${sh.id}
+            data-kind="image" x=${x} y=${y} width=${w} height=${h} transform=${transform}
+            @pointerdown=${down}></rect>` : nothing}`;
+      }
+      if (sh.kind === 'furniture') {
+        if (paint === 'volume') {
+          const scale=gridVisualScale(this._cellCm);
+          const mesh=furnitureMesh(sh,W,H,isoCameraFor(this._rotation),scale,cabinet ? tvCabinetSurfaceCm() : 0);
+          if(mesh) return renderIsoLabFurniture(mesh,sh.id,sh.symbol,style.color,scale,!cabinet);
+        }
+        // One path per piece. Designer art keeps its native viewBox and is
+        // scaled to the user's stored box; vector-effect rejects that local
+        // non-uniform transform while furnitureScreenScale restores the outer
+        // physical plan zoom.
+        // An unknown symbol renders as nothing: a plan from a newer card must
+        // open in an older one, not break it.
+        const art = furnitureGraphic(sh.symbol, this);
+        if (!art) return nothing;
+        const tower = sh.symbol === 'computer' && sh.workstation === 'tower';
+        const tr = furnitureRenderTransform(sh, W, H, tower ? TOWER_BOX.width : art.viewW,
+          tower ? TOWER_BOX.height : art.viewH);
+        const visibleStrokePx = furnitureStrokePx(strokeWidth, furnitureScreenScale);
+        const selectStrokePx = furnitureStrokePx(
+          strokeWidth + decorCmToUnits(20, this._cellCm, this._gridPitch),
+          furnitureScreenScale,
+        );
+        const draw = (d: string, transform: string | typeof nothing) => svg`<path class="${cls} dfurn" data-hp="decor" data-id="${sh.id}"
+          data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${transform}
+          data-hp-startup-stroke=${staticOnly ? strokeWidth : nothing}
+          stroke="${style.color}" stroke-opacity="${style.opacity}"
+          stroke-width="${visibleStrokePx}" fill="none"
+          stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"
+          @pointerdown=${down} @dblclick=${dbl}></path>
+          ${preparedSelect ? svg`<path
+            class="dshape dfurniturehit" data-hp="decor" data-id="${owner.id}"
+            data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${transform}
+            stroke-width="${selectStrokePx}" fill="none" stroke-linecap="round"
+            stroke-linejoin="round" vector-effect="non-scaling-stroke"
+            @pointerdown=${down} @dblclick=${dbl}></path>` : nothing}
+          ${erasing ? svg`<path class="dshape derasehit" data-hp="decor" data-id="${record.id}"
+            data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${transform}
+            vector-effect="non-scaling-stroke"
+            @pointerdown=${down}></path>` : nothing}`;
+        // Use the same crop of the original computer drawing as the volume model.
+        if (tower) return svg`<g transform=${tr}><svg width=${TOWER_BOX.width} height=${TOWER_BOX.height}
+          viewBox=${`${TOWER_BOX.x} 0 ${TOWER_BOX.width} ${TOWER_BOX.height}`} overflow="hidden">${draw(art.d,nothing)}</svg></g>`;
+        const surface = desktopSurface(sh.symbol);
+        const pc = surface && sh.workstation === 'mounted' && furnitureGraphic('computer',this);
+        if (pc && surface) return svg`<g transform=${tr}>${draw(art.d,nothing)}<svg x=${surface.x} y=${surface.y}
+          width=${80*surface.scale} height=${60*surface.scale} viewBox="0 0 80 60"
+          overflow="hidden">${draw(pc.d,nothing)}</svg></g>`;
+        return draw(art.d,tr);
+      }
+      if (sh.kind === 'text') {
+        // The label is painted from the LIVE value on every render — the same
+        // `hass` the rest of the card reads, no polling of its own. Without an
+        // entity `liveText` gives the stored text back byte-for-byte, so a
+        // plain label is the plain label it always was (docs/DECOR-EDITOR.md §5).
+        const fs = this._decorTextUnits(sh);
+        const frozenText = staticOnly ? undefined : this._renderDeviceSnapshot?.facts.get(`decor:${this._space}:${sh.id}`);
+        const lines = decorTextLines(typeof frozenText === 'string' ? frozenText : liveText(
+          sh.text, sh, staticOnly ? null : this._renderPlanHass, (eid) => !staticOnly && this._renderEntityAvailable(eid),
+        ));
+        const ax = sh.x * W, ay = sh.y * H;
+        const ang = Number(sh.angle) || 0;
+        // the block is centred on its anchor, horizontally (the layer's
+        // text-anchor) and vertically — so adding a second line grows the
+        // label in both directions instead of pushing the first one up
+        const y0 = ay - ((lines.length - 1) * fs * DT_LINE) / 2;
+        return svg`<text id=${onlyId === undefined ? decorTextElementId(sh.id) : nothing} class="${cls} dtext" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+          x="${ax}" y="${ay}" fill="${style.color}" fill-opacity="${style.opacity}"
+          font-size="${fs}" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}
+          @pointerdown=${down} @dblclick=${dbl}>${lines.map(
+            (ln, i) => svg`<tspan x="${ax}" y="${y0 + i * fs * DT_LINE}">${ln}</tspan>`,
+          )}</text>`;
+      }
+      return nothing;
+    }));
+    // живое превью рисуемой фигуры
+    let draft: unknown = nothing;
+    const d = staticOnly ? null : this._decorDraft;
+    if (d) {
+      const st = this._decorStyle;
+      const sw = decorCmToUnits(st.widthCm, this._cellCm, this._gridPitch);
+      if (d.kind === 'line')
+        draft = svg`<line class="ddraft" x1="${d.a[0]}" y1="${d.a[1]}" x2="${d.b[0]}" y2="${d.b[1]}"
+          stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"></line>`;
+      else {
+        const x = Math.min(d.a[0], d.b[0]), y = Math.min(d.a[1], d.b[1]);
+        const w = Math.abs(d.b[0] - d.a[0]), h = Math.abs(d.b[1] - d.a[1]);
+        draft = d.kind === 'rect'
+          ? svg`<rect class="ddraft" x="${x}" y="${y}" width="${w}" height="${h}" stroke="${st.color}"
+              stroke-opacity="${st.opacity}" stroke-width="${sw}" fill="${st.fill ? st.fillColor : 'none'}" fill-opacity="${st.fill ? st.fillOpacity : 0}"></rect>`
+          : svg`<ellipse class="ddraft" cx="${x + w / 2}" cy="${y + h / 2}" rx="${w / 2}" ry="${h / 2}"
+              stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${sw}" fill="${st.fill ? st.fillColor : 'none'}" fill-opacity="${st.fill ? st.fillOpacity : 0}"></ellipse>`;
+      }
+    }
+    return svg`<g class="decorlayer">${shapes}${draft}${staticOnly ? nothing : this._editorRuntime?._renderFurniturePlacementPreview(furnitureScreenScale) ?? nothing}${staticOnly ? nothing : this._editorRuntime?._renderDecorImagePlacementPreview() ?? nothing}</g>` as unknown as TemplateResult;
+  }
+
+  // ================= shared editor secondary surface =================
+
+  private get _editorToolbarGroups(): readonly EditorToolbarGroup[] { return this._editorToolbarGroupsFor(this._mode); }
+  public _editorToolbarGroupsFor(mode:HouseplanMode): readonly EditorToolbarGroup[] {
+    if (mode === 'decor') return [this._editorRuntimeOrThrow()._shapesToolbarGroup()];
+    if (mode !== 'plan') return [];
+    return [this._editorRuntimeOrThrow()._roomsToolbarGroup(), {
+      id: 'opening',
+      label: this._t('markup.opening'),
+      icon: 'mdi:door',
+      activeItemId: this._tool === 'opening' ? this._openingPreset?.type : undefined,
+      items: [
+        {
+          id: 'window', label: this._t('opening.window'), icon: 'mdi:window-closed-variant',
+          role: 'tool', invoke: () => this._activateOpeningPlacement('window'),
+        },
+        {
+          id: 'door', label: this._t('opening.door'), icon: 'mdi:door-open',
+          role: 'tool', invoke: () => this._activateOpeningPlacement('door'),
+        },
+        {
+          id: 'passage', label: this._t('opening.passage'), icon: 'mdi:arch',
+          role: 'tool', invoke: () => this._activateOpeningPlacement('passage'),
+        },
+        {
+          id: 'gate', label: this._t('opening.gate'), icon: 'mdi:gate',
+          role: 'tool', invoke: () => this._activateOpeningPlacement('gate'),
+        },
+      ],
+    }, this._editorRuntimeOrThrow().stairs.toolbarGroup()];
+  }
+
+  /** Stable target identity + current config epoch + operation revision. */
+  private get _editorSecondaryContextId(): string {
+    const base = `editor:${this._mode}:${this._space}:${this._cfgEpoch}`;
+    const group = this._editorSecondary?.activeGroup(this._editorToolbarGroups);
+    if (group) return `${base}:group:${group.id}:${this._editorSecondary?.groupGeneration}`;
+    if (this._mode === 'plan') {
+      const sel = this._physicalSel;
+      if (sel) return `${base}:selection:${sel.kind}:${sel.id}`;
+      const stairKey = this._editorRuntime?.stairs.selectionKey();
+      if (stairKey) return `${base}:${stairKey}`;
+      return `${base}:tool:${this._tool}:${this._path.length}`;
+    }
+    if (this._mode === 'decor') {
+      if (this._decorTool === 'furniture')
+        return `${base}:palette:furniture:${this._furnPalette?.symbol || 'none'}`;
+      if (this._decorTool === 'image')
+        return `${base}:palette:image:${this._decorImagePalette?.asset_id || 'none'}`;
+      if (this._decorTool === 'select' && this._decorSel)
+        return `${base}:selection:decor:${this._decorSel}`;
+      return `${base}:tool:${this._decorTool}:${this._editorRuntime?.backdropGesture.transformed ? 1 : 0}:${this._editorRuntime?.backdropGesture.active ? 1 : 0}`;
+    }
+    return `${base}:none`;
+  }
+
+  private _runEditorContext<T>(contextId: string, action: () => T): T | undefined {
+    return this._editorRuntimeOrThrow()._runEditorContext(contextId, action);
+  }
+
+  private get _editorSecondaryDialogBlocked(): boolean {
+    return this._warmMarker.active || this._otherDialogsBlocked;
+  }
+  private get _otherDialogsBlocked(): boolean {
+    return !!(this._dangerConfirm || this._tapConfirm || this._vacCalConfirm
+      || this._roomDialog || this._mergeDialog
+      || this._openingDialog || this._physicalDialog || this._openingInfo
+      || this._decorTextDialog || this._decorShapeDialog || this._backdropDialog
+      || this._decorEraseConfirm || this._spaceDialog || this._markerDialog || this._deviceInbox
+      || this._infoCard || this._rulesDialog || this._settingsDialog || this._supportDialog
+      || this._alignDialog || this._importDialog || this._kioskDialog || this._summary?.blocksOtherDialogs()
+      || this._backupExportDialog || this._backupImportDialog
+      || this._wallDialog || this._editorRuntime?.stairs.dialogOpen);
+  }
+
+  private _renderEditorSecondary(): TemplateResult | typeof nothing {
+    return this._editorRuntimeOrThrow()._renderEditorSecondary();
+  }
+
+  private _renderDecorBar(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderDecorBar();
+  }
+
+  private _renderDecorEraseConfirm(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderDecorEraseConfirm();
+  }
+
+  private _renderDecorTextDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderDecorTextDialog();
+  }
+
+  private _renderDecorShapeDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderDecorShapeDialog();
+  }
+
+  private _renderBackdropDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderBackdropDialog();
+  }
+
+  /** Zero-thickness walls. Their paint and light policy share one resolver. */
+  private _renderZeroWalls(disp?: SpaceDisplay): TemplateResult {
+    if (disp && !disp.showBorders && !this._editing) return svg`` as unknown as TemplateResult;
+    const zero = this._zeroWalls();
+    if (!zero.lines.length) return svg`` as unknown as TemplateResult;
+    const stroke = disp?.color || 'var(--hp-muted)';
+    return svg`<g class="zero-walls ${zero.style}"
+      data-zero-wall-style=${zero.style} style="--zero-wall-stroke:${stroke}">
+      ${zero.lines.map((sg) => svg`<line class="zero-wall"
+        x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`)}
+    </g>` as unknown as TemplateResult;
+  }
+
+  private _zeroWalls() {
+    const space = this._spaceModel();
+    return space
+      ? resolveZeroWalls(
+          this._curSpaceCfg, space, NORM_W, this._gridPitch * 0.02,
+        )
+      : { style: zeroWallStyleOf(this._curSpaceCfg), lines: [], contour: [], barriers: [], transmissive: [] };
+  }
+
+  /** Every contour atom without a body is a cut in physical wall geometry. */
+  private _openCuts(): number[][] {
+    return this._zeroWalls().contour;
+  }
+
+  /** Delete tool: defer all wall consequences to one explicit accessible choice. */
+  private _deleteRoomClick(raw: number[]): void {
+    return this._editorRuntimeOrThrow()._deleteRoomClick(raw);
+  }
+
+  private _confirmRoomDelete = (keepWalls: boolean): void => {
+    return this._editorRuntimeOrThrow()._confirmRoomDelete(keepWalls);
+  }
+
+  // ================= WALL THICKNESS (docs/WALL-THICKNESS.md) =================
+
+  /** Keys are always stored in normalised space (GRID_STEP_N). */
+  private get _wallKeyPitch(): number {
+    return GRID_STEP_N;
+  }
+
+  private get _spaceWalls(): WallEntry[] {
+    const w = this._curSpaceCfg?.walls;
+    return Array.isArray(w) ? (w as WallEntry[]) : [];
+  }
+
+  /** Thickness of the atomic stretch under a segment (docs/WALL-THICKNESS.md). */
+  private _intervalCm(seg: number[]): number {
+    const space = this._spaceModel();
+    if (!space) return 0;
+    return intervalCmAt(
+      space.rooms, this._spaceWalls, this._openCuts(), seg,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+  }
+
+  /** Rewrite thickness keys onto the current atomic intervals and drop dead ones. */
+  private _normalizeWalls(walls: WallEntry[] | null | undefined, cuts: number[][]): WallEntry[] {
+    const space = this._spaceModel();
+    if (!space) return [];
+    const next = normalizeWallIntervals(
+      space.rooms, walls, cuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+    return degradeWalls(next, this._curSpaceCfg?.rooms || [], GRID_STEP_N, 1,
+      cuts.map((c) => [c[0] / NORM_W, c[1] / NORM_W, c[2] / NORM_W, c[3] / NORM_W]));
+  }
+
+  /** Paper under rooms, grown by shared-wall half-thickness when set. */
+  private _paperShapes(rooms: RoomCfg[]): PaperShape[] {
+    const walls = this._spaceWalls;
+    if (!walls.length) return paperRoomShapes(rooms);
+    const united = this._wallUnionGeometry();
+    return united?.paperD ? [{ path: united.paperD }] : paperRoomShapes(rooms);
+  }
+
+  /** Canonical paper + masonry geometry, cached by the floor's content key (#744). */
+  private _wallUnionGeometry(): ReturnType<typeof wallBodiesUnionPath> {
+    const space = this._spaceModel();
+    if (!space) return null;
+    const walls = this._spaceWalls;
+    const extras = this._physicalBodiesR();
+    if (!walls.length && !extras.length) return null;
+    const unionKey = wallUnionKey(this._floorKey(space.id), space.rooms.length);
+    if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
+      const cached = lruRead(this._wallUnionPool, unionKey);
+      if (cached.hit) this._wallUnionCache = cached.value;
+      else {
+        // Opening association and physical-body extraction are structural
+        // work. Do them only for a real cache miss; this method is intentionally
+        // called by many room consumers in one render.
+        const openCuts = this._openCuts();
+        const openings = this._roomWallOpeningInputs();
+        this._floorCacheBuilds.wallUnion++;
+        const value = wallBodiesUnionPath(
+          space.rooms, walls, openCuts, openings,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
+        );
+        this._wallUnionCache = writeWallUnionPool(this._wallUnionPool, wallUnionPoolEntry(
+          unionKey, value, this._curSpaceCfg, this._cellCm, this._gridPitch,
+        ));
+      }
+    }
+    return this._wallUnionCache.value;
+  }
+
+  /** Ground-level masonry keeps the full window sill footprint. Doorways and
+   * passages still cut the base; use the same union and paint as the 2D plan. */
+  private _isoWallBaseGeometry(): ReturnType<typeof wallBodiesUnionPath> {
+    const space = this._spaceModel();
+    if (!space) return null;
+    const key = wallUnionKey(this._floorKey(space.id), space.rooms.length);
+    if (this._isoWallBaseCache?.key === key) return this._isoWallBaseCache.value;
+    const groundOpening = (opening: OpeningCfg) => opening.type !== 'window';
+    const extras = physicalBodyParts(
+      space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+      this._partitionOpeningCuts(space, groundOpening),
+    ).all;
+    const value = wallBodiesUnionPath(
+      space.rooms, this._spaceWalls, this._openCuts(),
+      this._roomWallOpeningInputs(this._openingsR.filter(groundOpening), space),
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
+    );
+    this._isoWallBaseCache = { key, value };
+    return value;
+  }
+
+  /** Thick-wall spans in render units — suppress centreline stroke under bodies. */
+  private _thickWallCutsMemo: { key: string; value: number[][] } | null = null;
+  private _thickWallCuts(): number[][] {
+    const space = this._spaceModel();
+    if (!space) return [];
+    const walls = this._spaceWalls;
+    if (!walls.length) return [];
+    const openCuts = this._openCuts();
+    const key = `${this._floorKey(space.id)}|${this._wallKeyPitch}|${this._cellCm}|${this._gridPitch}|${openCuts.map(cut => cut.join(',')).join(';')}`;
+    if (this._thickWallCutsMemo?.key === key) return this._thickWallCutsMemo.value;
+    const value = wallEdgeBodies(
+      space.rooms, walls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    ).map((b) => [b.a[0], b.a[1], b.b[0], b.b[1]]);
+    this._thickWallCutsMemo = { key, value };
+    return value;
+  }
+
+  /** Structural room face shared by every fill surface in the same frame. */
+  private _innerRoomContour(
+    space: SpaceModel,
+    roomId: string,
+    openCuts: number[][] = this._openCuts(),
+    roomWalls: ReturnType<typeof wallBodiesGeometry>['roomGeom'] = this._wallUnionGeometry()?.roomGeom,
+    multiWallNodes = this._wallUnionGeometry()?.multiWallNodes,
+  ): number[][] | null {
+    const cutsKey = openCuts.map((cut) => cut.join(',')).join(';');
+    const key = `${this._floorKey(space.id)}|${roomId}|${cutsKey}`;
+    if (this._mode === 'view' && this._floorPreparedRooms?.frame.floorKey === this._floorKey(space.id)) {
+      const prepared = this._floorPreparedRooms.frame.inner.find(([candidate]) => candidate === key);
+      if (prepared) return prepared[1];
+    }
+    // #744: one answer per floor content (a resize preview is its own record).
+    const cached = lruRead(this._innerContourCache, key);
+    if (cached.hit) return cached.value;
+    this._floorCacheBuilds.innerContour++;
+    const value = innerContourForRoom(
+      space.rooms, roomId, this._spaceWalls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+      roomWalls,
+      multiWallNodes,
+    );
+    lruWrite(this._innerContourCache, key, value, 600);
+    return value;
+  }
+
+  /**
+   * The ATOMIC wall stretch under the cursor for the wall-thickness tool.
+   *
+   * AUD-159B6-01: it used to return the whole polygon edge (only preferring a
+   * shared overlap), so a click on the outer remainder of a partially shared
+   * wall wrote a key that the renderer then spread over the shared part as
+   * well. The unit of the tool is now the same interval the renderer draws.
+   */
+  private _wallThickHit(raw: number[]): WallThickHit | null {
+    return this._editorRuntimeOrThrow()._wallThickHit(raw);
+  }
+
+  private get _wallThickHover(): { segs: number[][]; open: boolean; d: string } | null {
+    if (!this._markup || this._tool !== 'wallthick' || !this._cursorPt || this._wallDialog) return null;
+    const hit = this._wallThickHit(this._cursorPt);
+    if (!hit) return null;
+    // The visible strip follows the physical wall body. Only a zero-thickness
+    // centreline receives a scale-independent visual minimum; hit testing keeps
+    // its deliberately generous and separate radius in _wallThickHit().
+    const half = wallThickHoverHalfUnits(hit.cm, this._cellCm, this._gridPitch);
+    let d = '';
+    for (const sg of hit.segs) {
+      d += (d ? ' ' : '') + drawWallPreviewD(
+        [[sg[0], sg[1]], [sg[2], sg[3]]], half, false,
+      );
+    }
+    return { segs: hit.segs, open: hit.open, d };
+  }
+
+  private _wallThickClick(raw: number[]): void {
+    return this._editorRuntimeOrThrow()._wallThickClick(raw);
+  }
+
+  private _wallThickApply(allRoom: boolean): void {
+    return this._editorRuntimeOrThrow()._wallThickApply(allRoom);
+  }
+
+  /**
+   * One authoritative room-fill projection per render frame. Room polygons and
+   * thick-wall opening tunnels consume the same object, so a live HA tick can
+   * never update one without the other or drift in palette semantics.
+   */
+  private _resolvedRoomFills(space: SpaceModel, disp: SpaceDisplay, staticOnly = false): RoomFillFrame {
+    const byRoom = new Map<RoomCfg, ResolvedRoomFill | null>();
+    const byId = new Map<string, ResolvedRoomFill | null>();
+    for (const room of space.rooms) {
+      // The dimmed plan behind the room dialog is a real preview, not a second
+      // renderer. Feed its pending selection through this same frame resolver.
+      const mode = this._roomDialog && room.id === this._roomEditId
+        ? (this._roomFill || disp.fill)
+        : roomFillModeOf(disp.fill, room);
+      // #581: the draft obeys the stored-settings rule — only the room's own `custom` mode carries its colour
+      const customFill = roomCustomFillOf(disp.customFill, this._roomDialog && room.id === this._roomEditId
+        ? { settings: { fill_mode: this._roomFill, custom_fill: this._roomCustomFill } } : room);
+      const tempRange = roomTempRangeFromDraft(disp.tempMin, disp.tempMax, room,
+        this._roomTempMin, this._roomTempMax, this._roomDialog && room.id === this._roomEditId);
+      const resolved = resolveEffectiveRoomFill(
+        mode,
+        !staticOnly && mode === 'lqi' && room.area ? this._roomLqi(room.area) : null,
+        !staticOnly && mode === 'light'
+          ? resolvedLightState(resolvedLightSources(
+            this._renderPlanHass, this._renderDevices, room, this._virtualLights,
+          ))
+          : 'none',
+        !staticOnly && mode === 'temp' ? this._roomTemp(room) : null,
+        tempRange.min,
+        tempRange.max,
+        this._fillColors,
+        customFill,
+      );
+      byRoom.set(room, resolved);
+      if (room.id) byId.set(room.id, resolved);
+    }
+    return { byRoom, byId };
+  }
+
+  /** Use the painted draft and current mode to retain only demanded HA rows. */
+  private _snapshotConsumerDemand(): SnapshotConsumerDemand {
+    return snapshotConsumerDemand({
+      spaceId: this._space, rooms: this._curSpaceCfg?.rooms || this._spaceModel()?.rooms || [], markers: this._markers,
+      display: this._spaceDisplayForRender(), mode: this._mode, markup: this._markup,
+      tooltip: showRoomTooltipOf(this._settings),
+      roomPreview: this._roomDialog ? { id: this._roomEditId, fill: this._roomFill } : undefined,
+    });
+  }
+
+  /** Pending space-dialog values projected through the production resolver. */
+  private _spaceDisplayForRender(): SpaceDisplay {
+    const current = spaceDisplayOf(this._curSpaceCfg, this._settings);
+    const dialog = this._spaceDialog;
+    if (!dialog || dialog.mode !== 'edit' || dialog.spaceId !== this._space) return current;
+    return {
+      ...current,
+      showBorders: dialog.showBorders,
+      showNames: dialog.showNames,
+      hideDecor: dialog.hideDecor,
+      hideOpenings: !dialog.showBorders,
+      color: dialog.roomColor,
+      opacity: dialog.roomOpacity,
+      ...spaceDraftAppearanceOf(dialog,this._curSpaceCfg,this._settings),
+      openingAccent3d: dialog.openingAccent3d,
+      fill: dialog.fillMode,
+      customFill: dialog.customFill ? customFillOf(dialog.customFill) : DEFAULT_CUSTOM_FILL,
+      glow: dialog.glowEnabled,
+      tempMin: dialog.tempMin,
+      tempMax: dialog.tempMax,
+      showLqi: signalVisibilityOverrideOf(dialog.showLqiMode),
+      cardFontScale: dialog.cardFontScale,
+      cardNameScale: dialog.cardNameScale, cardLabelScale: dialog.cardLabelScale,
+      labelTemp: dialog.labelTemp,
+      labelHum: dialog.labelHum,
+      labelCo2: dialog.labelCo2,
+      labelLqi: dialog.labelLqi,
+      labelLight: dialog.labelLight,
+    };
+  }
+
+  /** Atomic wall association shared by symbols, wall cuts and tunnel geometry. */
+  private _openingWallIndexFor(space: SpaceModel, openCuts: number[][]): {
+    key: string; value: OpeningWallIndex;
+  } {
+    const key = openingWallIndexKey(space.id, space.rooms, this._spaceWalls, openCuts,
+      [this._wallKeyPitch, this._cellCm, this._gridPitch]);
+    let value = this._openingWallIndexCache.get(key);
+    if (value) {
+      // Refresh recency on hit; the pool is intentionally tiny because each
+      // entry retains derived wall/tunnel geometry.
+      lruWrite(this._openingWallIndexCache, key, value, 4);
+    } else {
+      this._floorCacheBuilds.openingWallIndex++;
+      value = buildOpeningWallIndex(
+        space.rooms, this._spaceWalls, openCuts,
+        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+      );
+      lruWrite(this._openingWallIndexCache, key, value, 4);
+    }
+    return { key, value };
+  }
+
+  /** Paint geometry extends the existing room floor, not a second colored layer. */
+  private _roomFloorPaintFor(space: SpaceModel, viewEndpoint = false, visibleUnderMasonry = false): Map<string, RoomFloorPaint> {
+    const hasTunnels = !!this._spaceWalls.length && !!this._openingsR.length;
+    if ((!viewEndpoint && this._markup && !this._modeTransitionBusy) || (!hasTunnels && !visibleUnderMasonry))
+      return new Map();
+    const openCuts = this._openCuts();
+    const geometryInputs = this._openingsR.map(opening => ({
+      x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+    }));
+    const geometryFingerprint = geometryInputs.map(o => `${o.x},${o.y},${o.angle},${o.length}`).join(';');
+    const wallIndex = hasTunnels ? this._openingWallIndexFor(space, openCuts) : null;
+    const cacheKey = wallIndex ? `${wallIndex.key}|${geometryFingerprint}` : '';
+    const tunnels = wallIndex ? (this._openingTunnelCache = floorPoolEntry(this._openingTunnelPool, this._openingTunnelCache,
+      cacheKey, () => {
+        this._floorCacheBuilds.openingTunnel++;
+        return { key: cacheKey, value: openingTunnelGeometriesFromIndex(wallIndex.value, geometryInputs) };
+      })).value : [];
+    const key = `${this._cleanFloorKey(space.id)}|${cacheKey}${visibleUnderMasonry ? '|translucent-masonry' : ''}`;
+    const frame = this._roomFloorPaintCache = floorPoolEntry(this._roomFloorPaintPool, this._roomFloorPaintCache, key, () => {
+      this._floorCacheBuilds.roomFloorPaint++;
+      const united = this._wallUnionGeometry();
+      if (!united) return { key, value: new Map<string, RoomFloorPaint>() };
+      const polys = space.rooms.map(roomPoly);
+      try {
+        const seeds = space.rooms.flatMap((room, index) => {
+          const poly = polys[index]; if (!poly) return [];
+          const floor = !visibleUnderMasonry && room.id
+            ? this._innerRoomContour(space, room.id, openCuts, united.roomGeom) || poly : poly;
+          const clean = visibleUnderMasonry ? null : this._cleanFloor(room, floor, space).geom;
+          const holes = islandsOf(floor, polys.filter((p, i) => i !== index && !!p) as number[][][]);
+          return [{ id: room.id || '#' + index, geom: roomFloorGeometry(floor, holes, clean) }];
+        });
+        return { key, value: buildRoomFloorPaint(seeds, this._openingsR, tunnels,
+          visibleUnderMasonry ? [] : united.components.map(component => component.geom).filter(geom => geom?.length)) };
+      } catch {
+        // An unprovable extension never paints through masonry or replaces the
+        // established clean floor; cache this fallback for the same geometry.
+        return { key, value: new Map<string, RoomFloorPaint>() };
+      }
+    });
+    return frame.value;
+  }
+
+  private _renderWallBodies(disp: SpaceDisplay, canonical = false): TemplateResult {
+    if (!canonical && this._opDrag?.preview && this._editorRuntime)
+      return this._editorRuntime._renderOpeningDragBodies(disp, true);
+    if (disp && !disp.showBorders && (this._mode === 'view' || this._mode === 'devices'))
+      return svg`` as unknown as TemplateResult;
+    const united = this._renderProjection === 'iso'
+      ? this._isoWallBaseGeometry() : this._wallUnionGeometry();
+    if (!united) return svg`` as unknown as TemplateResult;
+    const v = this._viewOr(this._baseVb());
+    const px = this._renderPixelsPerUnit(v);
+    const stroke = disp?.color || '#607d8b';
+    // Two independent ways for hatching to become noise: a body too thin to
+    // hold stripes, and stripes too close to tell apart (#230 §8.4).
+    const solid = wallBodyNeedsSolid(united.depthUnits, px)
+      || wallHatchNeedsSolid(wallHatchStepUnits(this._cellCm), px);
+    const wf = disp.wallFill;
+    // Fill colour UNDER the hatch (owner 2026-08-05): both, never one instead
+    // of the other. When the body is thinner than ~3px on screen the hatch
+    // collapses into noise — keep the solid fill alone.
+    return svg`<g class="wallbodies" style="--room-stroke:${stroke};--wall-fill:${wf.c};--wall-fill-op:${wf.a}">
+      ${united.paths.map((component) => svg`
+        ${this._renderProjection === 'iso' ? svg`
+          <path class="iso-wall-base-paper" data-component=${component.id} d=${component.d}
+            fill="#ffffff" fill-rule=${component.fillRule} stroke="none" pointer-events="none"></path>` : nothing}
+        <path class="wallbody-fill" data-component=${component.id} d="${component.d}"
+          fill="${wf.c}" fill-opacity="${wf.a}" fill-rule=${component.fillRule}
+          stroke="none" pointer-events="none"></path>
+        <path class="wallbody ${solid ? 'solid' : ''}"
+          data-hp="wall" data-id="union" data-kind="union" data-component=${component.id}
+          data-hp-startup-wall-depth=${canonical ? united.depthUnits : nothing}
+          data-hp-startup-hatch-step=${canonical ? wallHatchStepUnits(this._cellCm) : nothing}
+          d="${component.d}" fill="${solid ? 'none' : 'url(#hp-wall-hatch)'}"
+          fill-rule=${component.fillRule}
+          stroke="${stroke}" stroke-width="${gridVisualUnits(0.6, this._cellCm)}"
+          pointer-events="none"></path>`)}
+    </g>` as unknown as TemplateResult;
+  }
+
+  /**
+   * View-only clean-floor perimeter above real wall bodies.
+   *
+   * The hover follows the same inner face that defines the displayed room
+   * area. A nested room is a hole in the hovered room, so its boundary uses the
+   * opposite (outward) wall face. Open spans stay dashed in their own layer;
+   * doors, windows and gates remain gaps instead of being bridged by a solid accent.
+   */
+  private _roomHoverPaths(space: SpaceModel): { fillD: string; outlineD: string } | null {
+    if (this._mode === 'plan') return this._editorRuntime?.roomFaceHoverPaths || null;
+    const hover = this._hoverRoom;
+    if (this._mode !== 'view' || !hover || hover.space !== space.id) {
+      return null;
+    }
+    const room = space.rooms.find((r) => r === hover.room || (!!r.id && r.id === hover.room.id));
+    if (!room) return null;
+    const poly = roomPoly(room);
+    if (!poly) return null;
+
+    // A parent room also owns the floor-facing side of walls around rooms
+    // nested inside it. Keep the room together with its cached polygon so a
+    // hole can use the OUTER face of that nested room's wall.
+    const others = space.rooms
+      .filter((r) => r !== room)
+      .map((r) => ({ room: r, poly: roomPoly(r) }))
+      .filter((v): v is { room: RoomCfg; poly: number[][] } => !!v.poly);
+    const islandPolys = islandsOf(poly, others.map((v) => v.poly));
+    const allOpenCuts = this._openCuts();
+    const eps = this._gridPitch * 0.02;
+    const openCuts = allOpenCuts.filter((cut) => {
+      const midpoint = [(cut[0] + cut[2]) / 2, (cut[1] + cut[3]) / 2];
+      return poly.some((point, index) => distToSegment(
+        midpoint, [point[0], point[1], ...poly[(index + 1) % poly.length]],
+      ) <= eps * 4);
+    });
+    const walls = this._spaceWalls;
+    const roomWalls = this._wallUnionGeometry()?.roomGeom;
+    const floor = walls.length && room.id
+      ? (this._innerRoomContour(space, room.id, allOpenCuts, roomWalls) || poly)
+      : poly;
+    const contours: { axis: number[][]; face: number[][] }[] = [{ axis: poly, face: floor }];
+    for (const island of islandPolys) {
+      const owner = others.find((v) => v.poly === island)?.room;
+      let face = island;
+      if (walls.length && owner?.id) {
+        const profile = roomWallProfile(
+          space.rooms, owner.id, walls, allOpenCuts,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        );
+        if (profile) face = outsetContour(profile.poly, profile.offsets) || island;
+      }
+      contours.push({ axis: island, face });
+    }
+    // A hidden opening symbol is still a physical opening: never bridge a
+    // doorway/window with the hover stroke merely because its symbol is off.
+    const openingCuts = this._roomWallOpeningInputs(this._openingsR, space).map((o) => {
+      const rad = (o.angle * Math.PI) / 180;
+      const dx = (Math.cos(rad) * o.length) / 2;
+      const dy = (Math.sin(rad) * o.length) / 2;
+      return [o.x - dx, o.y - dy, o.x + dx, o.y + dy];
+    });
+    // Cuts are stored on wall centrelines. Project each relevant cut onto the
+    // clean-floor face before trimming; otherwise a door on a thick wall would
+    // no longer intersect the inset hover contour.
+    const cutOnFace = (cut: number[], axis: number[][], face: number[][]): number[] | null => {
+      const cx = cut[2] - cut[0], cy = cut[3] - cut[1];
+      const cLen = Math.hypot(cx, cy);
+      if (cLen < eps) return null;
+      const cux = cx / cLen, cuy = cy / cLen;
+      const mx = (cut[0] + cut[2]) / 2, my = (cut[1] + cut[3]) / 2;
+      let belongs = false;
+      for (let i = 0; i < axis.length; i++) {
+        const a = axis[i], b = axis[(i + 1) % axis.length];
+        const ex = b[0] - a[0], ey = b[1] - a[1];
+        const eLen = Math.hypot(ex, ey);
+        if (eLen < eps || Math.abs(cux * (ey / eLen) - cuy * (ex / eLen)) > 0.05) continue;
+        if (distToSegment([mx, my], [a[0], a[1], b[0], b[1]]) <= eps * 4) {
+          belongs = true;
+          break;
+        }
+      }
+      if (!belongs) return null;
+
+      let best: { a: number[]; b: number[]; d: number } | null = null;
+      for (let i = 0; i < face.length; i++) {
+        const a = face[i], b = face[(i + 1) % face.length];
+        const ex = b[0] - a[0], ey = b[1] - a[1];
+        const eLen = Math.hypot(ex, ey);
+        if (eLen < eps || Math.abs(cux * (ey / eLen) - cuy * (ex / eLen)) > 0.05) continue;
+        const d = distToSegment([mx, my], [a[0], a[1], b[0], b[1]]);
+        if (!best || d < best.d) best = { a, b, d };
+      }
+      if (!best) return null;
+      const fx = best.b[0] - best.a[0], fy = best.b[1] - best.a[1];
+      const fLen = Math.hypot(fx, fy) || 1;
+      const nx = -fy / fLen, ny = fx / fLen;
+      const shift = (best.a[0] - mx) * nx + (best.a[1] - my) * ny;
+      return [
+        cut[0] + nx * shift, cut[1] + ny * shift,
+        cut[2] + nx * shift, cut[3] + ny * shift,
+      ];
+    };
+
+    const rawCuts = openCuts.concat(openingCuts);
+    const d = contours.map(({ axis, face }) => {
+      const cuts = rawCuts
+        .map((cut) => cutOnFace(cut, axis, face))
+        .filter((cut): cut is number[] => !!cut);
+      if (!cuts.length) {
+        return `M ${face.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+      }
+      return outlineWithout(face, cuts, eps)
+        .map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`)
+        .join(' ');
+    }).filter(Boolean).join(' ');
+    if (!d) return null;
+    const pathOf = (points: number[][]) =>
+      `M ${points.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+    const cleanFloor = this._cleanFloor(room, floor, space).path || pathOf(floor);
+    const fillD = [cleanFloor, ...islandPolys.map(pathOf)].join(' ');
+    return { fillD, outlineD: d };
+  }
+
+  private _renderRoomHoverFill(
+    paths: { fillD: string; outlineD: string } | null,
+  ): TemplateResult {
+    return svg`<g class="room-hover room-hover-fill-layer" pointer-events="none">
+      <path class="room-hover-fill" data-hp-live-room-hover="fill"
+        d="${paths?.fillD || ''}" ?hidden=${!paths} fill-rule="evenodd"></path>
+    </g>` as unknown as TemplateResult;
+  }
+
+  private _renderRoomHoverOutline(
+    paths: { fillD: string; outlineD: string } | null,
+  ): TemplateResult {
+    return svg`<g class="room-hover room-hover-outline-layer" pointer-events="none">
+      <path class="room-hover-halo" data-hp-live-room-hover="halo"
+        d="${paths?.outlineD || ''}" ?hidden=${!paths}></path>
+      <path class="room-hover-outline" data-hp-live-room-hover="outline"
+        d="${paths?.outlineD || ''}" ?hidden=${!paths}></path>
+    </g>` as unknown as TemplateResult;
+  }
+
+  /** Hover highlight for the wall-thickness tool (SVG). */
+  private _renderWallThickUi(): TemplateResult {
+    if (!this._editorRuntime) return svg`` as unknown as TemplateResult;
+    return this._editorRuntimeOrThrow()._renderWallThickUi();
+  }
+
+  /** Thickness input popover, anchored in stage % like measure labels. */
+  private _renderWallThickDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderWallThickDialog();
+  }
+
+  private _openingAt(raw: readonly number[]): RenderOpening | null {
+    return this._editorRuntimeOrThrow()._openingAt(raw);
+  }
+
+  private _resolveOpeningPlacement(raw: readonly number[]): OpeningPlacementCandidate | null {
+    return this._editorRuntimeOrThrow()._resolveOpeningPlacement(raw);
+  }
+
+  private _activateOpeningPlacement(type: OpeningPlacementType): void {
+    return this._editorRuntimeOrThrow()._activateOpeningPlacement(type);
+  }
+
+  private _clearOpeningPlacement(clearPreset: boolean): void {
+    if (!this._editorRuntime) {
+      this._openingHoverCandidate = null;
+      this._openingJambBlockCm = null;
+      if (clearPreset) {
+        this._openingPreset = null;
+        this._openingRebindId = null;
+      }
+      return;
+    }
+    return this._editorRuntimeOrThrow()._clearOpeningPlacement(clearPreset);
+  }
+
+  /** Opening tool: click an existing opening to edit it, or a wall to place one. */
+  private _openingClick(raw: number[]): void {
+    return this._editorRuntimeOrThrow()._openingClick(raw);
+  }
+
+  /** Open the properties dialog for an existing opening. */
+  private _editOpening(o: RenderOpening): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._editOpening(o);
+  }
+
+  /** Drag an opening along the walls (view mode): it re-snaps continuously. */
+  private _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._opPointerDown(ev, o);
+  }
+
+  private _opPointerMove(ev: PointerEvent, o: OpeningCfg): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._opPointerMove(ev, o);
+  }
+
+  private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._opPointerUp(ev, o);
+  }
+
+  /** Click: the status card (delayed so a double click can cancel it). */
+  private _opClick(ev: MouseEvent, o: RenderOpening): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._opClick(ev, o);
+  }
+
+  private _saveOpening(): void {
+    return this._editorRuntimeOrThrow()._saveOpening();
+  }
+
+  private _rebindPartitionOpening = (): void => {
+    return this._editorRuntimeOrThrow()._rebindPartitionOpening();
+  }
+
+  /** Contact-sensor candidates: door/window/gate-like classes first, then the rest. */
+  private _contactCandidates(): { value: string; label: string }[] {
+    return this._editorRuntimeOrThrow()._contactCandidates();
+  }
+
+  private _lockCandidates(): { value: string; label: string }[] {
+    return this._editorRuntimeOrThrow()._lockCandidates();
+  }
+
+  /** Merge: first click picks a room, second picks the room to merge it with. */
+  private _mergeClick(raw: number[]): void {
+    return this._editorRuntimeOrThrow()._mergeClick(raw);
+  }
+
+  private _commitMerge(): void {
+    return this._editorRuntimeOrThrow()._commitMerge();
+  }
+
+  /** Split: click the room, then two points on its walls. */
+  private _splitClick(raw: number[]): void {
+    return this._editorRuntimeOrThrow()._splitClick(raw);
+  }
+
+  private get _contourClosed(): boolean {
+    // Legacy/split dialog closure appends a render-only edge and records its
+    // thickness separately. #173 graph closure persists the terminal segment
+    // in the draft, so it must stay editable after Cancel.
+    return this._path.length >= 4
+      && this._samePt(this._path[0], this._path[this._path.length - 1])
+      && (this._closingWallCm != null || !this._activeWallChainId);
+  }
+
+  private _markupMove(ev: MouseEvent): void {
+    if (!this._markup || !this._editorRuntime) return;
+    // DOM clears composedPath after dispatch; retain the object owner until rAF.
+    const path = ev.composedPath();
+    this._editorRuntimeOrThrow()._queuePointerMove('markup-hover', () => this._editorRuntime!._markupMove(ev, path));
+  }
+
+  /** One resolved architectural candidate shared by hover and click. */
+  private get _openingPreview(): OpeningPlacementCandidate | null {
+    const preset = this._openingPreset;
+    if (this._tool !== 'opening' || !preset || !this._cursorPt) return null;
+    const raw = this._cursorPt;
+    const cached = this._openingHoverCandidate;
+    if (cached && sameOpeningPlacementInput(
+      cached, [raw[0], raw[1]], preset.revision, this._cfgEpoch,
+    )) return cached;
+    // an existing opening under the cursor will be edited, not added — no preview
+    if (this._openingAt(raw)) {
+      this._openingHoverCandidate = null;
+      return null;
+    }
+    const resolved = this._resolveOpeningPlacement(raw);
+    this._openingHoverCandidate = resolved;
+    return resolved;
+  }
+
+  /** The rulers to draw right now: from the DRAG of an existing opening, or
+   *  from the PLACEMENT preview of a new one — identical badges either way. */
+  private get _opMeasureView(): OpMeasure | null {
+    return this._opMeasure || this._openingPreview?.measure || null;
+  }
+
+  /** Save a room with an optional HA-area binding.
+   *  An area supplies the fallback name; a room without one needs a name. */
+  private _saveRoom(): void {
+    return this._editorRuntimeOrThrow()._saveRoom();
+  }
+
+  /** Revalidate and apply every queued answer as one geometry transaction. */
+  private _applyWallFaceBatch(): void {
+    return this._editorRuntimeOrThrow()._applyWallFaceBatch();
+  }
+
+  private _commitRoom(): void {
+    return this._editorRuntimeOrThrow()._commitRoom();
+  }
+
+  private _cancelPath(): void {
+    return this._editorRuntimeOrThrow()._cancelPath();
+  }
+
+  /** Cancel a room flow without applying geometry; graph batches keep their terminal draft. */
+  private _roomDialogCancel(): void {
+    return this._editorRuntimeOrThrow()._roomDialogCancel();
+  }
+
+  /** HA areas not yet assigned to any room in the config. */
+  private get _freeAreas(): any[] {
+    const used = new Set<string>();
+    for (const sp of this._serverCfg?.spaces || [])
+      for (const r of sp.rooms || []) if (r.area) used.add(r.area);
+    for (const decision of this._wallFaceBatch?.decisions || [])
+      if (decision.create && decision.area) used.add(decision.area);
+    return Object.values<any>(this.planHost.environment.registry.areas)
+      .filter((a) => !used.has(a.area_id))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }
+
+  // ================= DEVICE EDITOR (markers) =================
+
+  private _openDeviceInbox(): void {
+    return this._editorRuntimeOrThrow()._openDeviceInbox();
+  }
+
+  private _closeMarkerDialog(): void {
+    return this._editorRuntimeOrThrow()._closeMarkerDialog();
+  }
+
+  private _deviceInboxRows(): DeviceInboxRow[] {
+    return this._editorRuntimeOrThrow()._deviceInboxRows();
+  }
+
+  private _openInboxMarker(row: DeviceInboxRow, add = false): void {
+    return this._editorRuntimeOrThrow()._openInboxMarker(row, add);
+  }
+
+  private _findInboxDevice(row: DeviceInboxRow): void {
+    return this._editorRuntimeOrThrow()._findInboxDevice(row);
+  }
+
+  private _openMarkerDialog(d?: DevItem, viewSettings = false, externalCurrent?: () => boolean): void {
+    this._warmMarker.cancel();
+    const request = ++this._markerDialogRequest;
+    if (!deviceEditorAllowed(this._canEdit, this._kiosk) || viewSettings && !this._loadOk) {
+      if (viewSettings) this._showToast(this._t('toast.device_settings_unavailable'), 'toast.device_settings_unavailable');
+      return;
+    }
+    if (viewSettings) { this._interruptViewGesture(); this._closeInfoCard(); }
+    const modeRequest = this._editorModeRequest, navigation = this._editorRuntime?.navigationIntent;
+    const cardConfig = this._config;
+    const epoch = this._adoption.adoptionEpoch, layoutRev = this._layoutRev, authorityCurrent = this._configWriteGuard();
+    const context = { spaceId: this._space, id: d?.id ?? '' }, bindingKey = d ? markerSettingsTargetKey(d) : '';
+    const current = (): DevItem | null => (!externalCurrent || externalCurrent()) && request === this._markerDialogRequest && this.isConnected
+      && this._mode === 'view' && modeRequest === this._editorModeRequest
+      && (navigation === undefined || navigation === this._editorRuntime?.navigationIntent)
+      && this._loadOk && authorityCurrent() && deviceEditorAllowed(this._canEdit, this._kiosk)
+      && cardConfig === this._config
+      && epoch === this._adoption.adoptionEpoch && layoutRev === this._layoutRev && !this._otherDialogsBlocked
+      ? currentMarkerSettingsDevice(this._displayDevices, this._space, context, bindingKey) : null;
+    const open = (): void => {
+      if (viewSettings) { const target = current(); if (target) this._editorRuntime?._openMarkerDialog(target, current); }
+      else this._editorRuntime?._openMarkerDialog(d);
+    };
+    if (viewSettings && !current()) return;
+    if (!this._editorRuntime) {
+      void this._ensureEditorRuntime().then((ready) => {
+        if (ready && request === this._markerDialogRequest && this.isConnected
+            && deviceEditorAllowed(this._canEdit, this._kiosk)) open();
+      });
+      return;
+    }
+    open();
+  }
+
+  /** Binding candidates: HA devices + group/helper entities, minus the ones already placed. */
+  private _bindingCandidates(): { value: string; label: string; sub: string }[] {
+    return this._editorRuntimeOrThrow()._bindingCandidates();
+  }
+
+  /** A closed outline may intentionally remain a set of independent walls. */
+  private _keepClosedAsPartitions = (): void => {
+    return this._editorRuntimeOrThrow()._keepClosedAsPartitions();
+  }
+
+  /** All independent physical bodies in render units. Physics intentionally
+   * does not depend on show_borders. */
+  private _physicalBodiesR(space: SpaceModel | undefined = this._spaceModel()): number[][][] {
+    if (!space) return [];
+    const key = physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch);
+    return (this._physicalBodiesCache = floorPoolEntry(this._physicalBodiesPool, this._physicalBodiesCache, key, () => {
+      this._floorCacheBuilds.physicalBodies++;
+      const parts = physicalBodyParts(
+        space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+        this._partitionOpeningCuts(space),
+      );
+      return { key, ...parts, rawPatches: parts.rawPatches };
+    })).all;
+  }
+
+  /** Per-record bodies remain the editor/furniture identity surface. */
+  private _rawPhysicalBodiesR(space: SpaceModel | undefined = this._spaceModel()): number[][][] {
+    if (!space) return [];
+    this._physicalBodiesR(space);
+    const frame = this._physicalBodiesCache;
+    return frame ? [...frame.partitions, ...frame.columns] : [];
+  }
+
+  /** Cached clean floor. A cheap bbox pass is the spatial index needed for
+   * rooms which touch only a small subset of independent bodies. */
+  private _cleanFloor(
+    room: RoomCfg, floor: number[][], space: SpaceModel | undefined = this._spaceModel(),
+  ): CleanFloorResult {
+    if (this._mode === 'view' && space && this._floorPreparedRooms?.frame.cleanKey === this._cleanFloorKey(space.id)) {
+      const key = `${this._floorPreparedRooms.frame.cleanKey}|${room.id || '#' + space.rooms.indexOf(room)}`;
+      const prepared = this._floorPreparedRooms.clean.get(key);
+      if (prepared) return prepared;
+    }
+    return cleanFloorForRoom({
+      room, floor, space, floorKey: this._cleanFloorKey,
+      resizePreview: !!this._resize?.preview,
+      cache: this._cleanFloorCache,
+      physicalBodies: (model) => this._physicalBodiesR(model),
+      onBuild: () => { this._floorCacheBuilds.cleanFloor++; },
+    });
+  }
+
+  /** Effective auto icon for a binding selected but not saved yet. */
+  private _autoIconForBinding(binding: string): string {
+    return autoIconForBinding(
+      this._fullRegistryHass, binding, () => this._bindingStatus(binding),
+      this._iconRules, this.planHost.environment.states,
+    );
+  }
+
+  /** List of rooms across all spaces for a virtual device. */
+  private _allRoomsFlat(): { value: string; label: string }[] {
+    const res: { value: string; label: string }[] = [];
+    for (const sp of this._serverCfg?.spaces || []) {
+      for (const r of sp.rooms || []) {
+        if (r.area) {
+          res.push({ value: sp.id + '#' + r.area, label: (sp.title || sp.id) + ' · ' + r.name });
+        } else if (r.id) {
+          // sub-area room (no HA area): manual placement by room id — issue #3
+          res.push({
+            value: sp.id + '#@' + r.id,
+            label: (sp.title || sp.id) + ' · ' + r.name + ' · ' + this._t('marker.subarea'),
+          });
+        }
+      }
+    }
+    return res;
+  }
+
+  /** Readable error text (never “[object Object]”). */
+  private _errText(e: any): string {
+    if (!e) return this._t('err.unknown');
+    if (typeof e === 'string') return e;
+    const configErrorKey = configWriteErrorKey(e);
+    if (configErrorKey) return this._t(configErrorKey);
+    if (e.code === 'invalid_passage_fields') {
+      // #42: structured JSON details first; the legacy "space=..;.." format
+      // stays accepted for one beta (deprecated 2026-08-30, remove with the
+      // next stable) while old backends are still around.
+      const raw = String(e.message || e.error || '');
+      let spaceId = '', fieldList: string[] = [];
+      try {
+        const details = JSON.parse(raw);
+        spaceId = String(details.space ?? '');
+        fieldList = Array.isArray(details.fields) ? details.fields.map(String) : [];
+      } catch {
+        const match = raw.match(/space=([^;]*);\s*opening=([^;]*);\s*fields=([^;]*)/);
+        if (match) { spaceId = match[1]; fieldList = match[3].split(',').filter(Boolean); }
+      }
+      if (spaceId || fieldList.length) {
+        const space = this._serverCfg?.spaces
+          ?.find((item: { id?: unknown }) => String(item.id) === spaceId);
+        const labels: Record<string, I18nKey> = {
+          contact: 'opening.contact_label', lock: 'opening.lock_label', invert: 'opening.invert',
+          flip_h: 'opening.flip_h', flip_v: 'opening.flip_v',
+        };
+        const fields = fieldList
+          .map((field) => labels[field] ? this._t(labels[field]) : field).join(', ');
+        return this._t('opening.invalid_passage_fields', {
+          room: space?.title || spaceId, fields,
+        });
+      }
+    }
+    if (e.code === 'invalid_partition_opening_jamb_margin') {
+      const raw = String(e.message || e.error || '');
+      let marginCm = NaN;
+      try {
+        marginCm = Number(JSON.parse(raw).margin_cm);
+      } catch {
+        const match = raw.match(/margin_cm=([^;}"]*)/); // legacy format, one beta
+        marginCm = match ? Number(match[1]) : NaN;
+      }
+      if (Number.isFinite(marginCm)) {
+        return this._t('opening.partition_jamb_margin', {
+          distance: formatLength(marginCm, this._imperial),
+        });
+      }
+    }
+    // #42 code-first: a backend code always renders a localized message —
+    // the raw English e.message goes to the console for debugging, never
+    // into the DOM. Errors WITHOUT a code (plain JS failures) keep showing
+    // their message: there is nothing better to show.
+    if (e.code != null) {
+      const key = `backup.error.${e.code}` as I18nKey;
+      const localized = this._t(key);
+      if (e.message) console.warn('[houseplan] backend error', e.code, e.message);
+      return localized !== key ? localized : this._t('err.code', { code: e.code });
+    }
+    if (e.message) return e.message;
+    if (e.error) return e.error;
+    try {
+      return JSON.stringify(e);
+    } catch {
+      return String(e);
+    }
+  }
+
+  /** Persist only deliberate role/appearance edits; untouched legacy absence stays absent. */
+  private _markerLightFields(d: NonNullable<HouseplanCard['_markerDialog']>): Partial<Marker> {
+    return this._editorRuntimeOrThrow()._markerLightFields(d);
+  }
+
+  /** Preserve absent/default and legacy cover until the user edits the select. */
+  private _markerTapActionFields(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+  ): Pick<Marker, 'tap_action'> | Record<string, never> {
+    return this._editorRuntimeOrThrow()._markerTapActionFields(d);
+  }
+
+  /** Preserve absence and stale/future literals until this exact selector is edited. */
+  private _markerToggleEntityFields(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+  ): Pick<Marker, 'toggle_entity'> | Record<string, never> {
+    return this._editorRuntimeOrThrow()._markerToggleEntityFields(d);
+  }
+
+  private async _saveMarker(): Promise<void> {
+    return this._editorRuntimeOrThrow()._saveMarker();
+  }
+
+  private async _deleteMarker(): Promise<void> {
+    return this._editorRuntimeOrThrow()._deleteMarker();
+  }
+
+  private _normPos(space: string, x: number, y: number): { s: string; x: number; y: number } {
+    return { s: space, x: x / NORM_W, y: y / NORM_W };
+  }
+
+  // ================= SPACE MANAGEMENT =================
+
+  private _spaceDialogUsesOnboardingRuntime(mode: 'edit' | 'create'): boolean {
+    return mode === 'create' && !this._editorRuntime && (
+      !!this._onboardingRuntime
+      ||
+      (this._serverCfg?.spaces.length || 0) === 0
+      || this._importTotal > 0
+      || this._importQueue.length > 0
+    );
+  }
+
+  private _spaceRuntimeOrThrow(): import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime {
+    if (!this._onboardingRuntime) throw new Error('Houseplan onboarding runtime is not loaded');
+    return this._onboardingRuntime;
+  }
+
+  private _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
+    if (this._kiosk || mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog)) return;
+    if (this._spaceDialogUsesOnboardingRuntime(mode)) {
+      if (this._onboardingRuntime) {
+        this._onboardingRuntime._openSpaceDialog(mode, spaceId);
+        return;
+      }
+      void this._ensureOnboardingRuntime().then((ready) => {
+        if (ready && !this._kiosk && !(mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog))) {
+          this._spaceRuntimeOrThrow()._openSpaceDialog(mode, spaceId);
+        }
+      });
+      return;
+    }
+    if (!this._editorRuntime) {
+      void this._ensureEditorRuntime().then((ready) => {
+        if (ready) this._openSpaceDialog(mode, spaceId);
+      });
+      return;
+    }
+    return this._editorRuntime._openSpaceDialog(mode, spaceId);
+  }
+
+  /** Background file selection: stage the file (limit, #39 guard) and read its aspect ratio. */
+  private async _pickPlanFile(ev: Event): Promise<void> {
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._pickPlanFile(ev);
+    }
+    return this._editorRuntimeOrThrow()._pickPlanFile(ev);
+  }
+
+  /**
+   * Plans that are on the server but not attached anywhere are not garbage —
+   * the component never deletes them (docs/SCOPE.md), which only makes sense if
+   * they can be found again. This is that: detach a plan, come back later, pick
+   * it out of the list. It is also the only way one is ever deleted.
+   */
+  private _toggleServerPlans = async (): Promise<void> => {
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._toggleServerPlans();
+    }
+    return this._editorRuntimeOrThrow()._toggleServerPlans();
+  }
+
+  /** The in-flight proportions read for the last picked saved plan. Save
+   *  awaits it rather than shipping whatever was there before (HP-1490-04). */
+  private _aspectJob: Promise<number> | null = null;
+
+  private _useServerPlan(url: string): void {
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._useServerPlan(url);
+    }
+    return this._editorRuntimeOrThrow()._useServerPlan(url);
+  }
+
+  private async _deleteServerPlan(name: string): Promise<void> {
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._deleteServerPlan(name);
+    }
+    return this._editorRuntimeOrThrow()._deleteServerPlan(name);
+  }
+
+  private async _saveSpaceDialog(): Promise<void> {
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._saveSpaceDialog();
+    }
+    return this._editorRuntimeOrThrow()._saveSpaceDialog();
+  }
+
+  private async _deleteSpace(): Promise<void> {
+    return this._editorRuntimeOrThrow()._deleteSpace();
+  }
+
+  /** Immediate config save with a revision bump (no debounce).
+
+  On a rev conflict the local copy is refreshed before rethrowing, so the
+  user's retry starts from the fresh config instead of hitting the same
+  conflict again. */
+  private async _saveConfigNow(): Promise<void> {
+    return this._editorRuntimeOrThrow()._saveConfigNow();
+  }
+
+  // ================= FLOORS IMPORT WIZARD =================
+
+  /** Open the space dialog for the next queued floor (title prefilled, plan required). */
+  private _openNextImport(): void {
+    if (this._onboardingRuntime) return this._onboardingRuntime._openNextImport();
+    return this._editorRuntimeOrThrow()._openNextImport();
+  }
+
+  /** Skip the current floor of the wizard without creating a space. */
+  private _skipImport(): void {
+    if (this._onboardingRuntime) return this._onboardingRuntime._skipImport();
+    return this._editorRuntimeOrThrow()._skipImport();
+  }
+
+  private _renderImportDialog(): TemplateResult {
+    if (this._onboardingRuntime) return this._onboardingRuntime._renderImportDialog();
+    return this._editorRuntimeOrThrow()._renderImportDialog();
+  }
+
+  // ================= SUN ON THE PLAN (docs/SUN.md) =================
+
+  /** Global settings with the general-settings dialog's pending values. */
+  private _sunGlobal(): any {
+    const gd = this._settingsDialog;
+    if (!gd) return this._settings;
+    return {
+      ...this._settings,
+      north_deg: gd.northDeg ?? undefined,
+      bg_mode: gd.bgMode,
+      sun_rays: gd.sunRays,
+      sun_ray_origin: gd.sunRayOrigin,
+      moon: gd.moon,
+    };
+  }
+
+  /** Current space settings with the space dialog's pending values. */
+  private _sunSpace(): any {
+    const sd = this._spaceDialog;
+    const saved = this._curSpaceCfg?.settings || {};
+    if (!sd || sd.mode !== 'edit' || sd.spaceId !== this._space) return saved;
+    return {
+      ...saved,
+      north_deg: sd.northDeg ?? undefined,
+      bg_mode: sd.bgMode ?? undefined,
+      sun_rays: sd.sunRays ?? undefined,
+    };
+  }
+
+  /** Effective compass; null = the whole sun feature is inert (docs/SUN.md). */
+  private _effNorth(): number | null {
+    return northDegOf(this._sunGlobal(), this._sunSpace());
+  }
+
+  private _effBgMode(): 'static' | 'daynight' {
+    return bgModeOf(this._sunGlobal(), this._sunSpace());
+  }
+
+  /** Current four-phase environment. Editors stay static; #101 supplies viewWeight. */
+  private _dayCycleState(now: Date | number = new Date()): DayCycleState | null {
+    const viewWeight = Math.max(this._modeTransitionVisual?.viewWeight ?? 0, this._mode === 'view' ? 1 : 0);
+    if (viewWeight <= 0 || this._effBgMode() !== 'daynight') return null;
+    return resolveDayCycle(this._renderPlanHass, now);
+  }
+
+  /** #718 K1/K5: the moon's phase without an environment (static background, moon on, View). */
+  private _moonSkyState(): DayCycleState | null {
+    return moonSkyState(this._sunGlobal(), this._effBgMode() === 'daynight',
+      Math.max(this._modeTransitionVisual?.viewWeight ?? 0, this._mode === 'view' ? 1 : 0), this._renderPlanHass);
+  }
+
+  private _dayCycleTick = (): void => {
+    if (!this.isConnected || this.ownerDocument.visibilityState === 'hidden') return;
+    const [state, key] = dayCycleClock(this._dayCycleState(), this._moonSkyState());
+    if (!state) {
+      if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
+      this._dayCycleClockKey = '';
+      return;
+    }
+    if (key === this._dayCycleClockKey) return;
+    this._dayCycleClockKey = key;
+    this.requestUpdate();
+  };
+
+  /** Arm a 30 s timer only for the browser-clock fallback while visible. */
+  private _syncDayCycleClock(): void {
+    const [state, key] = dayCycleClock(this._dayCycleState(), this._moonSkyState());
+    this._dayCycleClockKey = key;
+    const needsTimer = state?.source === 'clock'
+      && this.ownerDocument.visibilityState !== 'hidden' && this.isConnected;
+    if (needsTimer && !this._dayCycleTimer) {
+      this._dayCycleTimer = window.setInterval(this._dayCycleTick, 30_000);
+    } else if (!needsTimer && this._dayCycleTimer) {
+      clearInterval(this._dayCycleTimer);
+      this._dayCycleTimer = 0;
+    }
+  }
+
+  private _dayCycleVisibility(signal: PageVisibilitySignal): void {
+    if (signal.kind === 'hidden') {
+      if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
+      return;
+    }
+    this._dayCycleTick();
+    this._syncDayCycleClock();
+  }
+
+  private _effSunRays(): boolean {
+    return sunRaysOn(this._sunGlobal(), this._sunSpace());
+  }
+
+  private _effSunRayOrigin(): SunRayOrigin { return sunRayOriginOf(this._sunGlobal()); }
+
+  /**
+   * Window light wedges (docs/SUN.md): view/kiosk only. Geometry recomputes
+   * ONLY when the memo key changes — sun attributes tick every ~30-120 s and
+   * everything else in `hass` must not trigger the polygon clipping.
+   */
+  /** Window-light inputs shared by the Flat wedges and the 2.5D soft light (#649). */
+  private _sunInputs(space: SpaceModel, zeroWalls: ReturnType<HouseplanCard['_zeroWalls']>, windows: SunWindow[]) {
+    const rooms = space.rooms
+      .map((r) => ({ id: r.id || '', poly: roomPoly(r), sunTransparent: r.settings?.sun_transparent === true }))
+      .filter((r): r is { id: string; poly: number[][]; sunTransparent: boolean } => !!r.id && !!r.poly);
+    const access = resolveSunAccess(rooms);
+    const walls = this._spaceWalls;
+    const openCuts = zeroWalls.contour;
+    const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
+    const innerByRoom: Record<string, number[][]> = {};
+    const wallDepthByOpening: Record<string, number> = {};
+    const roomWalls = this._wallUnionGeometry()?.roomGeom;
+    if (walls.length) {
+      for (const r of rooms) {
+        const inn = this._innerRoomContour(space, r.id, openCuts, roomWalls);
+        if (inn) innerByRoom[r.id] = inn;
+      }
+      for (const o of windows) {
+        const face = openingInnerFaceOffsetFromIndex(
+          openingWallIndex, { x: o.x, y: o.y, angle: o.angle, length: o.length },
+        );
+        if (face.cm > 0) {
+          wallDepthByOpening[o.id] = wallCmToUnits(face.cm, this._cellCm, this._gridPitch);
+        }
+      }
+    }
+    // A two-point body has zero area at rest, but its extrusion along the
+    // sun direction is a real shadow polygon. This is the exact-line
+    // counterpart of Glow's visibility barrier and never affects floor area.
+    const occluders = [
+      ...this._physicalBodiesR(space),
+      ...sunBarrierLines(rooms, access, zeroWalls.barriers, zeroWalls.contour)
+        .map((line) => [[line[0], line[1]], [line[2], line[3]]]),
+    ];
+    return {
+      rooms, windows, occluders, access,
+      innerByRoom: walls.length ? innerByRoom : undefined,
+      wallDepthByOpening: walls.length ? wallDepthByOpening : undefined,
+    };
+  }
+
+  private _renderSunRays(space: SpaceModel): TemplateResult {
+    const empty = svg`` as unknown as TemplateResult;
+    // HARD gates — the feature is simply not on: leaving an editor, a space
+    // with rays off, or night. Those never fade, they just are not there.
+    // Logical mode changes at transition start. Keep the outgoing view-only
+    // layer alive until #101's `viewWeight` reaches zero instead of dropping
+    // the rays in frame zero.
+    const transitionViewWeight = this._modeTransitionVisual?.viewWeight ?? 0;
+    if ((this._editing && transitionViewWeight <= 0) || !this._effSunRays()) {
+      this._sunFadeReset();
+      return empty;
+    }
+    const north = this._effNorth();
+    const sun = north !== null ? sunStateOf(this._renderPlanHass) : null;
+    if (!sun || sun.elevation <= 0) { this._sunFadeReset(); return empty; }
+    const alpha = rayPeakAlpha();
+    // The ONE thing that fades (owner 2026-08-03): the 3° threshold. Above it
+    // the layer is there at full strength, below it gone — with a 2 s CSS
+    // fade either way. The keep-alive below is what lets the fade-OUT play at
+    // all: without it the layer would leave the DOM in the same frame.
+    if (raysVisible(sun.elevation)) {
+      if (this._sunOutTimer) { clearTimeout(this._sunOutTimer); this._sunOutTimer = 0; }
+      this._sunOut = false;
+      this._sunShown = true;
+    } else {
+      if (!this._sunShown) return empty; // never lit: nothing to dissolve
+      if (!this._sunOut) {
+        this._sunOut = true;
+        this._sunOutTimer = window.setTimeout(() => {
+          this._sunOutTimer = 0;
+          this._sunShown = false;
+          this._sunOut = false;
+          this.requestUpdate();
+        }, RAY_FADE_MS);
+      }
+    }
+    // DEV-B701-01: the key is the geometry itself, never _cfgRev (it moves only
+    // after the debounced WS ack). #814: nor the global _cfgEpoch — every input
+    // is read on each frame (floor-geometry-key.ts), so an own edit, in place
+    // too, moves it synchronously, and another floor's edit does not.
+    const zeroWalls = this._zeroWalls();
+    const origin = this._effSunRayOrigin();
+    // A contour-wall host is stable identity metadata, not a different physical
+    // carrier. Only an independent partition window is excluded from exterior
+    // sunlight (#132, ADR 282 Stage 1).
+    const windows = solarWindowOpenings(this._openingsR, opening => openingTransmissionIntervals(opening,
+      eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null));
+    const key = sunGeometryKey(this._openingWallIndexFor(space, zeroWalls.contour).key,
+      physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch), windows,
+      [sun.azimuth, sun.elevation, north, origin, sunRoomSettingsKey(space.rooms)], zeroWalls);
+    const isoSun = this._renderProjection === 'iso' ? this._isoSceneRuntime : null;
+    if (isoSun) { // #649 п.2: the 2.5D View paints soft light along the sun instead of the Flat wedges
+      const wallHeight = gridVisualUnits(isoDisplayWallHeight(), this._cellCm);
+      const isoKey = `${key}|${this._cellCm}|${wallHeight}|${[...(this._isoLightFloors ?? [])].join(',')}`;
+      if (this._isoSunCache?.key !== isoKey) {
+        this._floorCacheBuilds.isoSun++;
+        const inputs = this._sunInputs(space, zeroWalls, windows);
+        this._isoSunCache = { key: isoKey, wallHeight, beams: isoSun.computeIsoSunBeams({ ...inputs, azimuth: sun.azimuth, elevation: sun.elevation, northDeg: north!, wallHeight, lightFloorRooms: this._isoLightFloors ?? undefined }) };
+      }
+      return isoSun.renderIsoSunWash(this._isoSunCache.beams, this._isoSunCache.wallHeight, this._sunOut, this._modeTransitionVisual?.viewWeight ?? 1) as TemplateResult;
+    }
+    if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
+      this._floorCacheBuilds.sunRays++;
+      const { rooms, innerByRoom, wallDepthByOpening, occluders: sunOccluders, access } = this._sunInputs(space, zeroWalls, windows);
+      let rays = computeSunRays(
+        rooms, windows, sun.azimuth, sun.elevation, north!, innerByRoom, wallDepthByOpening, origin, access,
+      );
+      if (sunOccluders.length) {
+        rays = rays.map((ray) => {
+          const shadows = directionalOccluders(sunOccluders, ray.dir, ray.len);
+          const clipped = ray.polys.map((poly) => floorMinusBodies(poly, shadows));
+          return {
+            ...ray,
+            paths: clipped.map(polyclipPathD).filter(Boolean),
+            polys: clipped.flatMap(geometryOuterRings),
+          };
+        }).filter((ray) => ray.paths?.length || ray.polys.length);
+      }
+      // the rim is pure geometry off the same wedges — memoised on the same key
+      this._sunRaysCache = { key, rays, rims: rays.map((r) => rayRimEdges(r)) };
+    }
+    const rays = this._sunRaysCache.rays;
+    const rims = this._sunRaysCache.rims;
+    if (!rays.length) return empty;
+    const color = rayColor(dayPhase(sun.elevation).warmth);
+    const stops = rayStops();
+    const rimAlpha = rimPeakAlpha();
+    const rimStopList = rimStops();
+    // NO filter here, and none in <defs>. Owner 2026-08-04: «не надо размывать
+    // их боковые грани» — the shaft keeps the crisp sides real light has, and
+    // the only falloff is the gradient. The tip needs no blur either:
+    // `rayStops()` is already at zero from RAY_FADE_END on, and the wedge's far
+    // edge IS the gradient's last iso-alpha line, so it has nothing left to
+    // draw. The polygons come out of `computeSunRays()` already intersected
+    // with the room, so no clip-path is needed to keep the light off the far
+    // side of a wall.
+    //
+    // DEV-EB173-01: the axis runs along the wall's INWARD NORMAL, from the
+    // selected opening face inward, and is `r.depth` = `len·cos` long — NOT
+    // along the ray. For parallel rays, distance from the source span is an
+    // affine function of the point, so its iso-alpha lines are parallel to the
+    // wall; with this axis every point `source + dir·u` lands at offset
+    // `u/len`. Whole selected opening at peak alpha, identical fade distance along every
+    // ray, and the parallelogram's far edge exactly on the gradient's end.
+    //
+    // THE RIM (owner 2026-08-04, docs/SUN.md «The rim»): a 1 px black hairline
+    // along the two SIDE edges only, so the shaft stays legible on white paper
+    // where added luminance cannot read. It gets a gradient of its own —
+    // `hp-sunrim-i` — deliberately built on the SAME x1/y1/x2/y2 and the same
+    // `rayStops()` curve as `hp-sun-i`, only black and with its own peak: the
+    // line must die on the very stop the fill dies on, never outlive it.
+    // `non-scaling-stroke` keeps it one screen pixel at any zoom, and the
+    // segments come out of the ALREADY clipped polygons, so a wall still stops
+    // the light by geometry alone and no clip-path enters this layer.
+    return svg`<defs>
+        ${rays.map((r, i) => {
+          const mx = (r.a[0] + r.b[0]) / 2;
+          const my = (r.a[1] + r.b[1]) / 2;
+          const ax = mx + r.normal[0] * r.depth;
+          const ay = my + r.normal[1] * r.depth;
+          return svg`<linearGradient id="hp-sun-${i}" gradientUnits="userSpaceOnUse"
+            x1="${mx}" y1="${my}" x2="${ax}" y2="${ay}">
+            ${stops.map(([off, k]) => svg`<stop offset="${(off * 100).toFixed(1)}%"
+              stop-color="${color}" stop-opacity="${(alpha * k).toFixed(4)}"></stop>`)}
+          </linearGradient>
+          <linearGradient id="hp-sunrim-${i}" gradientUnits="userSpaceOnUse"
+            x1="${mx}" y1="${my}" x2="${ax}" y2="${ay}">
+            ${rimStopList.map(([off, k]) => svg`<stop offset="${(off * 100).toFixed(1)}%"
+              stop-color="${RIM_COLOR}" stop-opacity="${(rimAlpha * k).toFixed(4)}"></stop>`)}
+          </linearGradient>`;
+        })}
+      </defs>
+      <g class="sunlayer hp-view-only-layer ${this._sunOut ? 'out' : ''}"
+        opacity="${this._modeTransitionVisual?.viewWeight ?? 1}">
+        ${rays.map((r, i) => r.paths?.length
+          ? r.paths.map((d) => svg`<path d=${d} fill-rule="evenodd" fill="url(#hp-sun-${i})"></path>`)
+          : r.polys.map((p) => svg`<polygon
+              points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`))}
+        ${rays.map((r, i) => (rims[i] || []).map((e) => svg`<line class="sunrim"
+          x1="${e[0][0]}" y1="${e[0][1]}" x2="${e[1][0]}" y2="${e[1][1]}"
+          stroke="url(#hp-sunrim-${i})" stroke-width="1"
+          vector-effect="non-scaling-stroke"></line>`))}
+      </g>` as unknown as TemplateResult;
+  }
+
+  /** Sun-ray layer keep-alive: `shown` = in the DOM, `out` = playing the
+   *  2 s dissolve before it leaves (plain fields — the timer requests the
+   *  update, render just reads them). */
+  private _sunShown = false;
+  private _sunOut = false;
+  private _sunOutTimer = 0;
+
+  /** Drop the layer at once: used by every gate that is NOT the 3° threshold. */
+  private _sunFadeReset(): void {
+    if (this._sunOutTimer) { clearTimeout(this._sunOutTimer); this._sunOutTimer = 0; }
+    this._sunShown = false;
+    this._sunOut = false;
+  }
+
+  /** One drag/click sample on the compass dial → dialog north_deg. */
+  private _compassPoint(ev: PointerEvent): void {
+    const el = ev.currentTarget as SVGSVGElement;
+    const r = el.getBoundingClientRect();
+    const dx = ev.clientX - (r.left + r.width / 2);
+    const dy = ev.clientY - (r.top + r.height / 2);
+    if (Math.hypot(dx, dy) < 5) return; // the dead centre says nothing about angle
+    let a = Math.round((Math.atan2(dx, -dy) * 180) / Math.PI);
+    if (ev.shiftKey) a = Math.round(a / 15) * 15; // coarse 15° steps with Shift
+    a = ((a % 360) + 360) % 360;
+    this._settingsDialog = { ...this._settingsDialog!, northDeg: a, northDegInput: String(a) };
+  }
+
+  /**
+   * The compass dial: drag around the ring to set north (docs/SUN.md).
+   *
+   * #600 §3.1: the dial is the 44 px indicator of the reference — «N» sits on
+   * the label line outside it, the needle rotates to the effective angle and
+   * the degrees live in the number field next to it. The drag input stayed:
+   * it is an existing way to set north and `smoke_sun` drives it for real.
+   * Classes `.compass` / `.unset` are the stable hooks of that smoke.
+   */
+  private _renderCompass(): TemplateResult {
+    const d = this._settingsDialog!;
+    const deg = d.northDeg;
+    return html`<span class="hpf-compass compass ${deg === null ? 'hpf-unset unset' : ''}" role="img"
+      aria-label=${this._t('gs.north')}
+      @pointerdown=${(e: PointerEvent) => {
+        (e.currentTarget as Element).setPointerCapture(e.pointerId);
+        this._compassDrag = true;
+        this._compassPoint(e);
+      }}
+      @pointermove=${(e: PointerEvent) => { if (this._compassDrag) this._compassPoint(e); }}
+      @pointerup=${() => (this._compassDrag = false)}
+      @pointercancel=${() => (this._compassDrag = false)}>
+      <svg viewBox="0 0 24 24" style=${`transform: rotate(${deg ?? 0}deg)`} aria-hidden="true">
+        <path d="M12 3v18M12 3l-4 7h8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>`;
+  }
+
+  /**
+   * Effective stage background: per-space override → global setting → '' (the
+   * theme default from the stylesheet). An open dialog previews its pending
+   * value, so the color can be picked against the live plan. The four-phase
+   * environment is a separate layer behind the plan (#146).
+   */
+  private _stageBg(disp: SpaceDisplay): string {
+    const gd = this._settingsDialog;
+    const sd = this._spaceDialog;
+    const globalBg = gd ? gd.bgColor || '' : stageBgOf(this._settings, { bgColor: null });
+    const spaceBg = sd && sd.mode === 'edit' && sd.spaceId === this._space
+      ? sd.bgColor || ''
+      : disp.bgColor || '';
+    return spaceBg || globalBg;
+  }
+
+  /** Current computed stage background as #rrggbb — the color input's default. */
+  private _stageBgHex(): string {
+    const st = this._stageEl;
+    if (st) {
+      const m = getComputedStyle(st).backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (m) return '#' + m.slice(1, 4).map((n) => (+n).toString(16).padStart(2, '0')).join('');
+    }
+    return '#111111';
+  }
+
+  // ================= GENERAL SETTINGS =================
+
+  private _openSettingsDialog = (): void => {
+    const request = ++this._settingsDialogRequest;
+    if (!this.isConnected || !this._canEdit || this._kiosk) return;
+    if (!this._editorRuntime) {
+      const epoch = this._adoption.adoptionEpoch;
+      void this._ensureEditorRuntime().then((ready) => {
+        if (ready && request === this._settingsDialogRequest && this.isConnected
+            && epoch === this._adoption.adoptionEpoch && this._canEdit && !this._kiosk)
+          this._editorRuntime?._openSettingsDialog();
+      });
+      return;
+    }
+    return this._editorRuntime._openSettingsDialog();
+  }
+
+  /** #731: a warm revive is an opening too (#718 K7) — its own status, asked once the lazy runtime is here. */
+  private _reviveMoonStatus(dialog = this._settingsDialog): void {
+    if (!this._editorRuntime) {
+      void this._ensureEditorRuntime().then((ready) => { if (ready) this._reviveMoonStatus(dialog); });
+      return;
+    }
+    if (dialog && this._settingsDialog === dialog) this._editorRuntime._openMoonStatus();
+  }
+
+  private _openSupportDialog = (): void => {
+    if (!this._editorRuntime) {
+      void this._ensureEditorRuntime().then((ready) => {
+        if (ready) this._openSupportDialog();
+      });
+      return;
+    }
+    this._editorRuntime._openSupportDialog();
+  };
+
+  private _openPdfDialog = (): void => {
+    if (!this.planHost.capabilities.printing) return;
+    const owner = this.planHost;
+    void this._pdfRuntimeLoader.ensure().then((ready) => {
+      if (ready && this.planHost === owner) {
+        this._pdfDialog = true;
+        this.requestUpdate();
+      }
+    });
+  };
+
+  private _renderPdfDialog(): TemplateResult | typeof nothing {
+    const runtime = this._pdfRuntime;
+    const space = this._spaceModel();
+    const rawSpace = this._curSpaceCfg;
+    if (!runtime || !space || !rawSpace || !this._serverCfg) return nothing;
+    const decorAssets = new Map<string, { url: string; mime: string }>();
+    for (const [id, asset] of this._decorAssets) {
+      decorAssets.set(id, { url: this._display(asset.url), mime: asset.mime });
+    }
+    const sharedWallGeometry = this._wallUnionGeometry();
+    const openCuts = this._openCuts();
+    const roomsById = new Map(space.rooms.flatMap((room) => room.id ? [[room.id, room]] : []));
+    return runtime.render({
+      showDevices: hasMarkers(this.planHost.capabilities),
+      rotation: this._rotation,
+      config: this._serverCfg,
+      rawSpace,
+      space,
+      layout: this._layout,
+      imperial: this._imperial,
+      cardTitle: this._config?.title || this._t('card.title'),
+      version: displayVersion(CARD_VERSION),
+      hass: this._presentation,
+      backdropUrl: space.bg ? this._display(space.bg.href) : '',
+      decorAssets,
+      svgSource: () => {
+        const stage = this._stageEl;
+        if (!stage || this._mode !== 'view') throw new Error('svg.view_required');
+        if (this._booting || this._bootFading || this._modeTransitionBusy
+          || this._continuity.overlayBlocksInteraction || stage.classList.contains('hpiso-pending')) throw new Error('svg.not_ready');
+        const config = this._serverCfg;
+        return { stage, isCurrent: () => this.isConnected && this._canEdit && this._norm
+          && this._mode === 'view' && this._space === space.id && this._serverCfg === config && stage.isConnected };
+      },
+      sharedWallGeometry,
+      resolveInnerContour: (roomId) => this._innerRoomContour(
+        space, roomId, openCuts, sharedWallGeometry?.roomGeom, sharedWallGeometry?.multiWallNodes,
+      ),
+      resolveRoomArea: (roomId, contour) => {
+        const room = roomsById.get(roomId);
+        return room ? this._cleanFloor(room, contour, space).area : undefined;
+      },
+      t: (key, vars) => this._t(key as I18nKey, vars),
+      toast: (message, id) => this._showToast(message, id),
+      captureToast: () => this._captureToast(),
+      close: () => { this._pdfDialog = false; this.requestUpdate(); },
+    });
+  }
+
+  private _checkOptimizeGeometry(config: ServerConfig): OptimizeGeometryPreflightResult {
+    return this._editorRuntimeOrThrow()._checkOptimizeGeometryImpl(config);
+  }
+
+  /** One strict production source shared by editor commits and stale rechecks. */
+  private _checkSpacePhysicalGeometry(
+    config: ServerConfig,
+    spaceId: string,
+    captureWallGeometry?: (
+      geometry: ReturnType<typeof wallBodiesGeometry>,
+    ) => void,
+  ) {
+    return this._editorRuntimeOrThrow()._checkSpacePhysicalGeometryImpl(config, spaceId, captureWallGeometry);
+  }
+
+  /** Prevent a double click from sending two restores of the same snapshot. */
+  private _optimizeUndoBusy = false;
+
+  /** Restore the one-deep snapshot, provided no later plan edit exists. */
+  private async _undoPlanOptimization(): Promise<void> {
+    return this._editorRuntimeOrThrow()._undoPlanOptimization();
+  }
+
+  private _openBackupExport = (): void => {
+    return this._editorRuntimeOrThrow()._openBackupExport();
+  }
+
+  private async _pickEmptyBackupImport(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || !this._canImportEmptyBackup) return;
+    const intent = this._backupImportIntent.begin(() => {
+      void this.updateComplete.then(() => {
+        if (this._canImportEmptyBackup && !this._backupImportIntent.loading && !this._backupImportDialog) {
+          this.renderRoot.querySelector<HTMLButtonElement>('[data-hp="import-backup"]')?.focus();
+        }
+      });
+    });
+    this._onboardingShown = true;
+    this._spaceDialog = null;
+    this._importDialog = null;
+    this.requestUpdate();
+    const ready = await this._ensureEditorRuntime();
+    if (!this._backupImportIntent.owns(intent)) return;
+    if (!ready || !this._canImportEmptyBackup) {
+      this._backupImportIntent.cancel();
+      this.requestUpdate();
+      return;
+    }
+    await this._editorRuntimeOrThrow()._importBackupFile(file, intent);
+  }
+
+  private async _runBackupExport(): Promise<void> {
+    return this._editorRuntimeOrThrow()._runBackupExport();
+  }
+
+  private async _applyBackupImport(): Promise<void> {
+    return this._editorRuntimeOrThrow()._applyBackupImport();
+  }
+
+  private _renderBackupExportDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderBackupExportDialog();
+  }
+
+  private _renderBackupImportDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderBackupImportDialog();
+  }
+
+  private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
+    return this._editorRuntimeOrThrow()._setFillColor(key, patch);
+  }
+
+  private async _saveSettingsDialog(): Promise<boolean> {
+    return this._editorRuntimeOrThrow()._saveSettingsDialog();
+  }
+
+  /** Glow radius: stored in cm (config.settings.glow_radius_cm), default 3 m. */
+  private get _glowRadiusCm(): number {
+    const v = Number((this._settings as any).glow_radius_cm);
+    return Number.isFinite(v) && v > 0 ? v : 300;
+  }
+
+  private get _imperial(): boolean {
+    return this.planHost.environment.units.length === 'mi';
+  }
+
+  private get _glowRadiusPlaceholder(): string {
+    const cm = this._glowRadiusCm;
+    return this._imperial ? String(Math.round((cm / 30.48) * 10) / 10) : String(cm / 100);
+  }
+
+  /**
+   * Keep a source node alive while CSS fades it out. A new `on` state cancels
+   * the pending removal, so rapid toggles reverse the same transition instead
+   * of destroying and recreating the SVG/filter stack.
+   */
+  private _glowTransition(
+    key: string,
+    active: boolean,
+  ): { domId: number; entering: boolean; leaving: boolean } | null {
+    return transitionGlowSource(
+      this._glowRuntimeState, this._glowRuntimeHost, key, active,
+    );
+  }
+
+  private _forgetGlowSource(key: string): void {
+    forgetGlowSource(this._glowRuntimeState, this._glowRuntimeHost, key);
+  }
+
+  private _forgetGlowSpace(spaceId: string): void {
+    forgetGlowSpace(this._glowRuntimeState, this._glowRuntimeHost, spaceId);
+  }
+
+  private _warnGlowGeometryFallback(
+    spaceId: string, fingerprint: string, roomId: string, phase: string,
+  ): void {
+    warnGlowGeometryFallback(
+      this._glowRuntimeState, spaceId, fingerprint, roomId, phase,
+    );
+  }
+
+  /**
+   * Everything in a space that stops light, and the floor light may land on.
+   *
+   * Opaque: the wall bodies exactly as the plan draws them — with their real
+   * thickness — plus every independent body (partition, column, room draft),
+   * plus the bare outline of any edge that carries no thickness at all.
+   * Transparent: doorways and gates, cut out of the masonry so the
+   * opening is a real gap between two jamb faces; and virtual (open)
+   * boundaries, which are not walls to begin with. A window stays solid: an
+   * indoor lamp must not wash the street, so the light's masonry is cut by
+   * passages only and differs on purpose from the drawn one.
+   *
+   * The result depends on the plan plus the small signature of bound interior
+   * door/gate states, so it is shared by every lamp and unrelated HA updates.
+   */
+  private _lightBarriers(
+    space: SpaceModel, polys: { r: RoomCfg; poly: number[][] }[],
+  ): {
+    occluders: LightSegment[]; floor: number[][][]; fingerprint: string;
+    masonryGeometry: any; opaqueBodies: number[][][];
+  } {
+    return this._lightBarrierPass.read(space, () => this._resolveLightBarriers(space));
+  }
+
+  private _resolveLightBarriers(space: SpaceModel) {
+    const raw = this._curSpaceCfg;
+    const revision = resolveLightBarrierRevision({
+      closedDoorPlacement: this._renderProjection === 'iso' && !!this._renderIsoScene
+        && this._spaceDisplayForRender().showBorders ? 'iso-volume' : 'flat',
+      rawSpaceConfig: raw,
+      space,
+      openings: this._openingsR,
+      cellCm: this._cellCm,
+      gridPitch: this._gridPitch,
+      openingAmount: opening => this._openingAmtForProjection(opening, this._renderProjection),
+      openingIntervals: opening => openingTransmissionIntervals(opening,
+        eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null),
+      geometryFingerprint: this._liveRt?.geometry(raw), // #850: once per record, epoch and scale
+    });
+    const cacheKey = `${space.id}|${revision.fingerprint}`;
+    const pooled = lruRead(this._lightBarrierPool, cacheKey);
+    if (pooled.hit) {
+      this._lightBarrierCache = pooled.value;
+      return pooled.value.value;
+    }
+    // The accepted structural frame remains interactive during a coalesced
+    // worker recut. Use its last light result briefly instead of rebuilding
+    // synchronously or freezing the current door/device presentation.
+    const retained = this._mode === 'view' ? this._floorPreparation?.retainedLight : undefined;
+    if (retained && typeof retained === 'object' && 'fingerprint' in retained)
+      return retained as NonNullable<typeof this._lightBarrierCache>['value'];
+    this._floorCacheBuilds.lightBarrier++;
+    const value = buildLightBarrierScene({
+      space,
+      revision,
+      walls: this._spaceWalls,
+      zeroWalls: this._zeroWalls(),
+      wallKeyPitch: this._wallKeyPitch,
+      cellCm: this._cellCm,
+      gridPitch: this._gridPitch,
+      coordScale: NORM_W,
+      sharedWallGeometry: this._wallUnionGeometry(),
+      physicalBodies: (partitionCuts, lightPhysicalKey) => {
+        if (this._lightPhysicalBodiesCache?.key !== lightPhysicalKey) {
+          this._floorCacheBuilds.lightPhysicalBodies++;
+          this._lightPhysicalBodiesCache = {
+            key: lightPhysicalKey,
+            all: physicalBodyParts(
+              space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+              partitionCuts,
+            ).all,
+          };
+        }
+        return this._lightPhysicalBodiesCache.all;
+      },
+    });
+    const entry = { key: cacheKey, value };
+    lruWrite(this._lightBarrierPool, cacheKey, entry, 8);
+    this._lightBarrierCache = entry;
+    return value;
+  }
+
+  /** Light pools of the current space: dark house, glowing sources. */
+  private _renderGlowLayer(
+    space: SpaceModel, disp: SpaceDisplay,
+    view = this._viewOr(this._baseVb()),
+    capture?: (sources: readonly IsoWallLightSource[]) => void,
+  ): TemplateResult {
+    const colors = this._fillColors;
+    const defaultR = (this._glowRadiusCm / this._cellCm) * this._gridPitch;
+    const polys = space.rooms
+      .map((r) => ({ r, poly: roomPoly(r) }))
+      .filter((x): x is { r: RoomCfg; poly: number[][] } => !!x.poly);
+    const enabled = polys.filter(({ r }) => roomGlowOf(disp.glow, r));
+    if (!enabled.length) {
+      this._forgetGlowSpace(space.id);
+      return svg`` as unknown as TemplateResult;
+    }
+    const scene = this._lightBarriers(space, polys);
+    const candidates = resolveGlowCandidates({
+      hass: this._renderPlanHass,
+      devices: this._renderDevices,
+      virtualLights: this._virtualLights,
+      spaceId: space.id,
+      defaultColor: colors.glow_light.c,
+      paletteAlpha: colors.glow_light.a,
+      defaultRadiusUnits: defaultR,
+      cellCm: this._cellCm,
+      gridPitch: this._gridPitch,
+      position: (device) => this._pos(device),
+    });
+    const spots: GlowSpot[] = [];
+    const seenSourceKeys = new Set<string>();
+    // #780: a marker shown as an LED strip has a linear field, not a pool.
+    const leds = ledStripsByMarker(space);
+    for (const candidate of candidates) {
+      const { key, pos } = candidate;
+      if (leds.has(key.slice(space.id.length + 1))) continue;
+      seenSourceKeys.add(key);
+      // Invalid placement inside any opaque body must remain dark. The
+      // masonry geometry already contains the exact passage cuts, so a valid
+      // interior doorway remains transparent while a source embedded in the
+      // surrounding wall cannot light one side of its tunnel. The visibility
+      // sweep separately rejects a source that lies exactly on an opaque edge.
+      // Exterior opening tunnels deliberately remain in `masonryGeometry`,
+      // so placing the source there suppresses the entire pool rather than
+      // lighting only the indoor half of the tunnel.
+      if (glowSourceInOpaqueBody(pos, scene)) {
+        // This placement cannot produce a valid previous-frame fade: the old
+        // clip belongs to a different position. Remove its transition state as
+        // well, rather than leaving a timer for a DOM node no longer rendered.
+        this._forgetGlowSource(key);
+        continue;
+      }
+      const transition = capture
+        ? settledGlowSource(this._glowRuntimeState, this._glowRuntimeHost, key, !!candidate.appearance)
+        : this._glowTransition(key, !!candidate.appearance);
+      if (!transition) continue;
+      if (candidate.appearance) this._glowLastAppearance.set(key, candidate.appearance);
+      const appearance = this._glowLastAppearance.get(key);
+      if (!appearance) continue;
+      let geometry: GlowSpot['geometry'] = null;
+      const clipKey =
+        `${space.id}|${scene.fingerprint}|${pos.x.toFixed(4)},${pos.y.toFixed(4)}|${candidate.radius.toFixed(4)}`;
+      const cachedClip = readGlowClip(this._glowRuntimeState, clipKey);
+      if (cachedClip.hit) {
+        geometry = cachedClip.value;
+      } else {
+        this._floorCacheBuilds.glowClip++;
+        // The entire light model, in two lines: what can this lamp see, and
+        // where is there floor to light. Doorways, gates and dashed zero walls are
+        // simply missing from `occluders`, so light crosses them without any
+        // notion of a "spill", a "sector", a "tunnel" or an "open zone" — and
+        // a wall corner two rooms away casts its shadow for exactly the same
+        // reason a column does.
+        geometry = buildGlowClipGeometry({
+          spaceId: space.id,
+          source: pos,
+          radius: candidate.radius,
+          scene,
+          polygons: polys.map(({ r, poly }) => ({ room: r, poly })),
+          onBoundsFailure: (roomId, phase) => this._warnGlowGeometryFallback(
+            space.id, scene.fingerprint, roomId, phase,
+          ),
+        });
+        writeGlowClip(this._glowRuntimeState, clipKey, geometry);
+      }
+      spots.push({
+        key,
+        sourceEid: candidate.sourceEid,
+        domId: transition.domId,
+        entering: transition.entering,
+        leaving: transition.leaving,
+        pos,
+        c: appearance.c,
+        alpha: appearance.alpha,
+        geometry,
+        r: candidate.radius,
+      });
+    }
+    pruneGlowSources(
+      this._glowRuntimeState, this._glowRuntimeHost, space.id, seenSourceKeys,
+    );
+    if (!spots.length) return svg`` as unknown as TemplateResult;
+    // Per-room Glow overrides are visual clips only. The transport calculation
+    // above still crosses a disabled room, but no base/pool pixels are painted
+    // there. For the common all-enabled case this extra clip is omitted.
+    const walls = this._spaceWalls;
+    const openCuts = enabled.length === polys.length ? [] : this._openCuts();
+    const roomWalls = this._wallUnionGeometry()?.roomGeom;
+    const enabledClip = enabled.length === polys.length ? null : enabled.map(({ r, poly }) => {
+      const floorPoly = walls.length && r.id
+        ? (this._innerRoomContour(space, r.id, openCuts, roomWalls) || poly)
+        : poly;
+      const clean = this._cleanFloor(r, floorPoly, space).path;
+      const holes = islandsOf(
+        floorPoly,
+        polys.filter((other) => other.r !== r).map((other) => other.poly),
+      );
+      const path = (points: number[][]) =>
+        'M ' + points.map((point) => point[0] + ' ' + point[1]).join(' L ') + ' Z';
+      return [clean || path(floorPoly), ...holes.map(path)].join(' ');
+    });
+    capture?.(spots.map(spot => ({ key: spot.key, color: spot.c, alpha: spot.alpha,
+      radius: spot.r, points: [[spot.pos.x, spot.pos.y]], visible: spot.geometry?.lit ?? [],
+      floorClip: enabledClip, entering: spot.entering, leaving: spot.leaving })));
+    // A hair on SCREEN, so an edge stays a hairline at any zoom instead of
+    // turning into a smear when the plan is enlarged.
+    const perUnit = this._renderPixelsPerUnit(view);
+    // #396: the freeze must key on "the camera is moving", not on the two
+    // gesture flags. An animated transition sets neither, so every tween frame
+    // rebuilt the blur region — the very cost this gate was added to avoid.
+    const cameraStill = !this._pinchStart && !this._panStart
+      && !this._cameraTransition.active;
+    const feather = resolveGlowFeather(
+      this._glowRuntimeState, perUnit, cameraStill,
+    );
+    return renderGlowPools({
+      spots,
+      enabledClip,
+      feather: feather.feather,
+      featherEnabled: feather.enabled,
+      screenBlend: this._glowScreenBlend,
+    });
+  }
+
+  /** #780: the lazy LED chunk when the space shows a strip (ТЗ §13.1). */
+  private _ledRt(space: SpaceModel) {
+    // A disconnected card never applies the chunk (a late import, r1 M5).
+    if (!this.isConnected || !ledVisible(space, this._renderDevices, this._mode === 'devices' && this._showAll, this._serverCfg?.markers)) {
+      // The next space may have no strips, so no field render can prune the
+      // previous owner's entry frames, fade timers or cached geometry.
+      ledRelease(this);
+      return null;
+    }
+    return ledRuntime(space.id, () => this.isConnected && this.requestUpdate());
+  }
+
+  /** #780: the Devices-editor LED tool, its own lazy chunk (src/led-strip-card.ts). */
+  public _ledEditor: import('./led-strip-editor').LedStripEditor | null = null;
+  private _ledEd(entry: string) { return ledEditorFor(this as never, entry); }
+  public _ledButton() { return ledButton(this as never); }
+  public _ledSection(devId?: string) { return devId ? ledSection(this as never, devId) : nothing; }
+  public _ledNote(preview?: { unbound_led_strips?: number }) { return preview ? ledImportNote(this as never, preview.unbound_led_strips) : ledWallsNote(this as never); }
+
+  private _renderSettingsDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderSettingsDialog();
+  }
+
+  private _renderSupportDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderSupportDialog();
+  }
+
+  // ================= ICON RULES EDITOR =================
+
+  private _openRulesDialog = (): void => {
+    return this._editorRuntimeOrThrow()._openRulesDialog();
+  }
+
+  private async _saveRules(): Promise<void> {
+    return this._editorRuntimeOrThrow()._saveRules();
+  }
+
+  private _renderRulesDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderRulesDialog();
+  }
+
+  private _saveKioskScale(patch: Partial<{ icon: number; font: number }>): void {
+    this._summary?.saveScale({ ...(this._externalScreen.icon_scale === undefined && patch.icon !== undefined ? { icon: patch.icon } : {}),
+      ...(this._externalScreen.font_scale === undefined && patch.font !== undefined ? { font: patch.font } : {}) });
+  }
+
+  /** Per-SCREEN size settings (wall tablets differ) — stored locally. */
+  private _renderKioskDialog(): TemplateResult {
+    ensureFormKitStyles(this);
+    const k = this._effectiveKioskScale;
+    const locked = { icon: this._externalScreen.icon_scale !== undefined, font: this._externalScreen.font_scale !== undefined };
+    const row = (key: 'icon' | 'font', label: string) => {
+      const value = Math.round(k[key] * 100);
+      const input = (event: Event) => {
+        const next = Number((event.target as HTMLInputElement).value);
+        if (Number.isFinite(next)) this._saveKioskScale({ [key]: next / 100 });
+      };
+      return field({ label, htmlFor:`kiosk-scale-${key}`,
+        hint:locked[key] ? this._t('kiosk.profile_locked') : nothing,
+        control:rangeLine({ min:50, max:300, step:5, value, unit:'%', ariaLabel:label,
+          disabled:locked[key], readOnlyValue:true, onInput:next => this._saveKioskScale({ [key]:next / 100 }),
+          slider:html`<input id=${`kiosk-scale-${key}`} type="range" min="50" max="300" step="5"
+            .value=${String(value)} @input=${input} aria-label=${label} ?disabled=${locked[key]} />` }) });
+    };
+    return html`<hp-dialog .hass=${this._presentation} data-kind="kiosk" class="ui-dialog" compact settings-layout .title=${this._t('kiosk.title')} icon="mdi:tablet"
+      dismiss-on-scrim @hp-close=${() => (this._kioskDialog = false)}>
+        <div class="body hpf-form">
+          ${callout({ text:this._t('kiosk.hint') })}
+          ${row('icon', this._t('kiosk.icon_scale'))}
+          ${row('font', this._t('kiosk.font_scale'))}
+        </div>
+        <div class="row" slot="footer">
+          <button class="btn ghost" ?disabled=${locked.icon && locked.font} @click=${() => this._saveKioskScale({ icon: 1, font: 1 })}>${this._t('gs.reset')}</button>
+          <span class="spacer"></span>
+          <button class="btn on" data-hp="dialog-cancel" @click=${() => (this._kioskDialog = false)}>${this._t('btn.close')}</button>
+        </div>
+    </hp-dialog>`;
+  }
+
+  // ================= render =================
+
+  private _fixedFloorValue(value: unknown): string {
+    if (typeof value === 'string') return value || "''";
+    try {
+      const encoded = JSON.stringify(value);
+      return (encoded === undefined ? String(value) : encoded).slice(0, 160);
+    } catch {
+      return String(value).slice(0, 160);
+    }
+  }
+
+  /** The dangerous-action confirmation, rendered outside the body's branches.
+   *
+   *  #402: it used to sit at the end of `_renderBody`, i.e. inside the last
+   *  branch of a chain of early returns — so in onboarding («no spaces yet»),
+   *  in the fixed-floor states and without a space it did not exist at all.
+   *  The controller was fine; the decision simply had no source, because the
+   *  element that dispatches it was not in the DOM: the promise hung forever
+   *  and the trash button next to a saved plan was dead. An open dialog also
+   *  vanished when the card slipped into any of those branches.
+   *
+   *  Placing it beside the body rather than inside it fixes the class, not the
+   *  instance: a branch added later cannot lose the confirmation again. */
+  private _renderDangerConfirm(): TemplateResult | typeof nothing {
+    if (!this._dangerConfirm) return nothing;
+    ensureFormKitStyles(this); // Shared footer composition also owns a cold View confirmation.
+    return html`<hp-confirm .hass=${this._presentation}
+        .request=${this._dangerConfirm.request}
+        .token=${this._dangerConfirm.token}
+        @hp-confirm-decision=${this._onDangerConfirmDecision}>
+      </hp-confirm>`;
+  }
+
+  /** One stable Lit template site lets a nested `noChange` retain the body
+   * while the independent confirmation child is removed during a warm gate. */
+  private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
+    if (this._tapConfirm || this._kioskDialog || this._backdropGuard) ensureCompactDialogStyles(this);
+    return html`${body}${this._floorHolding ? html`<div class="floor-status-over-retained" style=${styleMap({top: this._kiosk ? '0px' : `${this._hdrH}px`})}>
+      ${this._startupStatus()}</div>` : nothing}
+      ${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;
+  }
+
+  protected render(): TemplateResult | typeof nothing | typeof noChange {
+    this._flatMarkerGeometryPending = null;
+    this._kioskNavigation.sync(this._kioskNavigationEnabled);
+    return this._renderLightPass();
+  }
+
+  protected update(changed: PropertyValues): void {
+    // guard() evaluates its deferred SVG callbacks inside Lit commit, after
+    // render() returns. Glow and LED must share this complete synchronous pass.
+    try { this._lightBarrierPass.run(() => super.update(changed)); }
+    finally { this._cfgPass.end(); }
+  }
+
+  private _renderLightPass(): TemplateResult | typeof nothing | typeof noChange {
+    {
+      const body = this._renderBody();
+      // `nothing` is the only root that has no decision surface. `noChange` is
+      // deliberately nested: it preserves the committed body while allowing the
+      // sibling hp-confirm to settle/cancel on a ready -> warm transition.
+      if (body === nothing) return body;
+      return this._renderRoot(body);
+    } // The fingerprint pass includes lazy Lit directives, and ends before updated().
+  }
+
+  /** One chrome template for passive preparation and the complete scene. */
+  private _renderPlanHeader(): TemplateResult {
+    const navigationSpaces = this._headerNavigationSpaces;
+    const compactSpaces = this._compactSpaces && !this._kiosk && !!customElements.get('hp-settings-select');
+    const modeVisual = this._modeTransitionVisual;
+    const editorChromeMode = this._mode === 'view' ? this._editorChromeMode : this._mode;
+    const warmHeaderHeight = (this._pendingNavMode || this._warmModeRequest)
+      && warmCameraUnchanged(this._view, this._warmVp) && this._warmSlot?.ownHdrH;
+    const editorClose = html`<span class="editor-close-slot" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>${this._mode !== 'view' ? html`<button
+          class="closex" data-hp-tooltip=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')} data-hp="editor-close" data-editor-navigation="view"
+          @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
+      : nothing}</span>`;
+    return html`
+        <div class="hdr ${this._kiosk ? 'kioskhide' : ''}"
+          data-panel-flow=${this._panelHeaderChoice.phase}
+          ?data-panel-phone=${this._panelHeaderChoice.phone}
+          data-panel-mode=${this._mode} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
+        <div class="head hpf-chrome-group" ?data-hp-properties-wide=${this._editorRuntime?.properties.wide} style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
+          ${this._renderPanelMenu()}
+          <button type="button" class="btn hpf-icon-action header-actions-trigger" data-hp="header-actions-trigger"
+            aria-haspopup="menu" aria-expanded=${this._headerActionsMenu?.open ? 'true' : 'false'}
+            @click=${this._openHeaderActions} aria-label=${this._t('panel.actions')} data-hp-tooltip=${this._t('panel.actions')}>
+            <ha-icon icon="mdi:dots-vertical"></ha-icon>
+          </button>
+          ${renderHeaderSpaceNavigation({
+            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces, collapsed: this._panelHeaderChoice.phase === 5,
+            labels: { spaces: this._t('nav.spaces'), configure: this._t('title.configure_space'), add: this._t('title.add_space') },
+            reorderable: this._canReorderTabs && navigationSpaces.length > 1 && this._mode !== 'view', drag: this._tabDrag,
+            pick: id => this._pickSpace(id), tabClick: id => this._tabClick(id),
+            pointerMove: event => this._tabPointerMove(event), pointerDown: (event, id) => this._tabPointerDown(event, id),
+            pointerUp: event => this._tabPointerUp(event), cancelDrag: () => this._endTabDrag(),
+            configure: this._norm && this._canEdit ? id => this._openSpaceDialog('edit', id) : null,
+            // Add-space remains navigation in every mode; kiosk and fixed-floor omit it.
+            create: this._canEdit && !this._kiosk && !this._hasFixedFloor ? () => this._openSpaceDialog('create') : null,
+          })}
+          ${this._canEdit
+            ? html`<div class="modes hpf-navigation hpf-nav-modes">
+                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:chip'], ['decor', 'mdi:palette']] as const).filter(([mode]) => mode !== 'devices' || hasMarkers(this.planHost.capabilities)).map(
+                  ([m, ic]) => html`<button class="modetab hpf-nav-item ${this._mode === m ? 'active' : ''}"
+                    data-hp="mode-tab" data-mode=${m} data-editor-navigation=${m}
+                    data-hp-tooltip=${this._t(('mode.' + m + '_tip') as any)}
+                    aria-label=${this._t(`mode.${m}` as const)}
+                    @click=${() => this._setMode(m)}>
+                    <ha-icon class="panel-mode-compact" icon=${ic}></ha-icon>
+                    <ha-icon class="panel-mode-full" icon=${ic} aria-hidden="true"></ha-icon>
+                    <span class="panel-mode-full">${this._t(('mode.' + m + '_short') as I18nKey)}</span>
+                  </button>${this._mode === m ? editorClose : nothing}`,
+                )}
+                ${this._mode === 'view' ? editorClose : nothing}
+              </div>`
+            : nothing}
+          <span class="spacer"></span>
+          <div class="header-actions" ?inert=${!!(this._floorPreparation?.pending || this._floorPreparation?.failed || this._startupPending)}>
+          <div class="zoomctl hpf-icon-group hpf-camera-group">
+            ${this._kiosk ? nothing : renderPlanRotationControls(key => this._t(key), direction => this._rotatePlan(direction))}
+            <button class="btn zb hpf-icon-action" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} data-hp-tooltip=${this._t('title.zoom_out')} aria-label=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
+            ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
+                   zoom" renamed rather than duplicated. No longer disabled at
+                   zoom 1: at zoom 1 panned off to the side it still has work. */}
+            <button class="btn zb hpf-icon-action" data-hp="zoom-fit" @click=${() => this._fitAll()}
+              data-hp-tooltip=${this._t('title.zoom_fit')} aria-label=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
+            <button class="btn zb hpf-icon-action" data-hp="zoom-in" @click=${() => this._stepZoom(1)} data-hp-tooltip=${this._t('title.zoom_in')} aria-label=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
+          </div>
+          ${this._kiosk || !hasMarkers(this.planHost.capabilities) ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
+          ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this.planHost.capabilities.printing ? this._openPdfDialog : undefined, support: this._openSupportDialog }) : nothing}
+          ${!this._kiosk && this.planHost.capabilities.summary ? this._summary?.renderControls() : nothing}
+          </div>
+        </div>
+        ${this._canEdit && !this._kiosk
+          ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"
+              style=${modeVisual ? `height:${modeVisual.editorChromeHeight}px;opacity:${modeVisual.editorWeight}` : nothing}
+              aria-hidden=${this._editing ? 'false' : 'true'}
+              ?inert=${!this._editing}>
+              <div class="editorchrome-inner"
+                style=${modeVisual ? `opacity:${modeVisual.toolbarContentOpacity}` : nothing}>
+                ${this._editorRuntime
+                  ? editorChromeMode === 'plan'
+                    ? this._renderMarkupBar()
+                    : editorChromeMode === 'devices'
+                      ? this._renderDevicesBar()
+                      : this._renderDecorBar()
+                  : nothing}
+              </div>
+            </div>`
+          : nothing}
+        </div>`;
+  }
+
+  private _syncFloorPreviewCamera(): void {
+    const svg = this.renderRoot.querySelector<SVGSVGElement>('[data-hp-cache-preview]');
+    if (!svg) return;
+    // Warm viewport adoption can follow Lit's template evaluation. Pending
+    // frames deliberately skip the live-layer writer, so update only this
+    // anonymous passive viewport without another render/fit or live targets.
+    this._adoptViewPlane(this._presentedViewPlane());
+    const view = this._viewOr(this._baseVb());
+    const value = `${view.x} ${view.y} ${view.w} ${view.h}`;
+    if (svg.getAttribute('viewBox') !== value) svg.setAttribute('viewBox', value);
+  }
+  /** No ordinary scene/pull producer runs behind this passive preparation
+   * surface. Navigation remains live; old marker DOM is not retained below it. */
+  private _renderStageEnvironment(dayCycle: DayCycleState | null, weight = 1): TemplateResult {
+    return html`${renderDayCycleEnvironment(dayCycle, weight, moonLayer(this, this._sunGlobal(), dayCycle))}
+      ${moonLayer(this, this._sunGlobal(), this._moonSkyState(), weight)}`;
+  }
+  private _floorStageHeight(): string {
+    if (this._containerOwnedHeight) return 'auto';
+    if (this._kiosk) return '100dvh';
+    if (this._bootSoft && this._warmVp && this._warmSlot?.stageH) return `${this._warmSlot.stageH}px`;
+    return `calc(100dvh - ${this._hdrH}px)`;
+  }
+
+  private _renderPendingFloor(): TemplateResult {
+    const failed = !!this._floorPreparation?.failed;
+    this._floorPassive = !failed;
+    const preview = this._floorPreparation?.preview || null;
+    const base = preview?.fit.base || [0, 0, NORM_W, NORM_W];
+    if (preview) this._adoptViewPlane(this._presentedViewPlane(preview.fit.projection));
+    const view = this._viewOr(base);
+    const disp = this._spaceDisplayForRender();
+    const dayCycle = this._dayCycleState();
+    // L1 remains a fit/camera hint in 2.5D, not a material-complete scene.
+    // Do not flash its anonymous silhouette before the current floor is ready.
+    const visiblePreview = !failed && !this._startupFloor?.awaitsLive && this._desiredProjection === 'flat'
+      && preview?.fit.projection === 'flat' ? preview : null;
+    return this._renderPreparedFloorFrame(html`
+      <div class="stage mode-view${this._spaceModel()?.bg ? '' : ' noplan'}${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
+        data-hp-floor-cache=${failed ? 'error' : visiblePreview ? 'preview' : 'preparing'}
+        style=${styleMap({ height: this._floorStageHeight(), background: this._stageBg(disp) || undefined, '--wall-fill': disp.wallFill.c })}>
+        ${this._renderStageEnvironment(dayCycle)}
+        ${failed ? nothing : this._renderStartupFloor(true)}
+        ${visiblePreview ? html`<div class="zoomwrap" inert style="pointer-events:none">
+          <svg class="plan-svg" data-hp-cache-preview data-hp-live-viewbox="camera" aria-hidden="true" viewBox="${view.x} ${view.y} ${view.w} ${view.h}">
+            ${renderFloorPreview(visiblePreview)}
+          </svg>
+        </div>` : nothing}
+        ${failed ? html`<div class="recoveryoverlay hpf-empty-state hpf-empty-state-overlay floor-preparation-error">
+          <ha-icon icon="mdi:alert-circle-outline" aria-hidden="true"></ha-icon>
+          <span role="status">${this._t('plan.prepare_failed')}</span>
+          <button type="button" class="btn on" @click=${this._retryFloorPreparation}>${this._t('continuity.retry')}</button>
+          ${this._norm && this._canEdit && !this._kiosk ? html`<button type="button" class="btn"
+            data-hp="floor-error-support" @click=${this._openSupportDialog}>${this._t('support.title')}</button>` : nothing}
+        </div>` : nothing}
+        ${this.planHost.capabilities.summary ? this._summary?.renderMeasure() : nothing}
+        ${!failed && this.planHost.capabilities.summary ? this._summary?.renderPanel() : nothing}
+      </div>
+    `);
+  }
+  private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
+    this._floorHolding = false; this._floorPassive = false;
+    this._startupSource = undefined;
+    this._observeStartupFloor();
+    if (!this._config || !this.planHost.environment.ready) {
+      this._floorPreparation?.invalidate(); this._floorPendingMode = null; return nothing;
+    }
+    if (!this.planHost.environment.permissions.read) this._floorPreparation?.invalidate();
+    this._floorPreparation?.ensure();
+    const terminalFrame = this._terminalFrame;
+    this._terminalFrame = 0;
+    if (terminalFrame === 1) return noChange;
+    const localeGate = this._syncDangerConfirmLocaleGate();
+    if (localeGate === 'cold') return languageLoadingTemplate();
+    if (localeGate === 'warm') return noChange;
+    const onboardingRuntimeRequested = !!this._importDialog
+      || !!(this._spaceDialog && this._spaceDialogUsesOnboardingRuntime(this._spaceDialog.mode));
+    const editorRuntimeRequested = this._mode !== 'view'
+      || !!(this._roomDialog || this._mergeDialog || this._openingDialog
+        || this._physicalDialog || this._partitionDeleteDialog || this._roomDeleteDialog
+        || this._decorTextDialog || this._decorShapeDialog || this._backdropDialog
+        || this._decorEraseConfirm
+        || (this._spaceDialog && !this._spaceDialogUsesOnboardingRuntime(this._spaceDialog.mode))
+        || this._deviceInbox
+        || this._markerDialog || this._rulesDialog || this._settingsDialog || this._supportDialog
+        || this._alignDialog || this._backupExportDialog || this._backupImportDialog
+        // #763: no `_kioskDialog` — the core draws the kiosk scale dialog and the summary runtime saves it
+        || this._vacFit || this._vacCalConfirm);
+    if (onboardingRuntimeRequested && !this._onboardingRuntime) { // a render reconciles; it is not an intent (#757)
+      void this._onboardingRuntimeLoader.ensure('reconcile');
+    }
+    if (editorRuntimeRequested && !this._editorRuntime) void this._editorRuntimeLoader.ensure('reconcile');
+    const model = this._model;
+    const diagnostics = this._renderLife.diagnostics(
+      this._planHass, this._markers, (binding) => this._bindingStatus(binding), this._haRegistry,
+    );
+    const fixed = this._fixedFloorState(model);
+    if (fixed.kind === 'pending') {
+      return html`<ha-card data-fixed-floor-state="pending" data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}>
+        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head hpf-chrome-group">
+          <div class="title hpf-heading hpf-heading-inline"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
+        </div>`}
+        <div class="empty hpf-empty-state" data-hp="empty" role="status" aria-live="polite">
+          <ha-icon icon="mdi:loading" class="big fixedfloor-loading hpf-spinner"></ha-icon>
+          <p>${this._t('fixed_floor.loading')}</p>
+        </div>
+      </ha-card>`;
+    }
+    if (fixed.kind === 'invalid') {
+      return html`<ha-card
+        data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
+        data-fixed-floor-state="invalid"
+        data-fixed-floor-reason=${fixed.reason}>
+        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head hpf-chrome-group">
+          <div class="title hpf-heading hpf-heading-inline"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
+        </div>`}
+        <div class="empty hpf-empty-state fixedfloor-error" data-hp="empty" role="alert" aria-live="assertive">
+          <ha-icon icon="mdi:alert-circle-outline" class="big"></ha-icon>
+          <p><b>${this._t('fixed_floor.invalid_title')}</b></p>
+          <p>${this._t('fixed_floor.invalid_body', { value: this._fixedFloorValue(fixed.value) })}</p>
+        </div>
+      </ha-card>`;
+    }
+    if (!model.length) {
+      return html`<ha-card
+        data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
+        data-continuity-state=${this._continuity.state}
+        data-continuity-token=${this._continuity.token}
+        data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
+        data-recovery-reason=${(this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
+          ? this._continuity.recoveryReason || nothing : nothing}
+        data-ha-registry-access=${diagnostics.registry.access}
+        data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
+        data-ha-unverified-bindings=${diagnostics.bindings.unverified}>
+        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head hpf-chrome-group">
+          <div class="title hpf-heading hpf-heading-inline"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
+        </div>`}
+        <div class="empty hpf-empty-state" data-hp="empty">
+          <ha-icon icon="mdi:floor-plan" class="big"></ha-icon>
+          <p>${this._t('empty.no_spaces')}</p>
+          ${this._serverStorage && this._canManageConfiguration && !this._kiosk
+            ? html`<p class="muted">${this._t('empty.add_first')}</p>
+                <div class="empty-actions">
+                <button class="btn on" data-hp="create-space" ?disabled=${this._backupImportIntent.loading}
+                  @click=${() => this._openSpaceDialog('create')}>
+                  <ha-icon icon="mdi:plus"></ha-icon>${this._t('btn.add_space')}
+                </button>
+                ${this._canImportEmptyBackup ? html`<span class="empty-backup-upload">
+                  <button class="btn" type="button" data-hp="import-backup" @click=${(e: Event) =>
+                    ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement)?.click()}>
+                    <ha-icon icon="mdi:upload"></ha-icon>${this._t('empty.import_backup')}
+                  </button>
+                  <input type="file" accept="application/json,.json,application/zip,.zip" tabindex="-1"
+                    @change=${(e: Event) => this._pickEmptyBackupImport(e)} />
+                </span>` : nothing}
+                </div>`
+            : html`<p class="muted">${this._t(this._serverStorage ? 'empty.read_only' : 'empty.install')}</p>`}
+          <hp-plan-converter-info placement="empty" .language=${langOf(this._presentation, this._config?.language)}></hp-plan-converter-info>
+        </div>
+        ${dialogPresence(this._spaceDialog
+          ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
+          : nothing, animateDialogExit(this, 'space'))}
+        ${dialogPresence(this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing)}
+        ${dialogPresence(this._backupImportDialog && this._editorRuntime ? this._renderBackupImportDialog() : nothing)}
+        ${dialogPresence(this._backdropGuard
+          ? (this._editorRuntime
+            ? this._editorRuntime._renderBackdropGuard()
+            : this._onboardingRuntime?._renderBackdropGuard() ?? nothing)
+          : nothing)}
+        <div data-hp="toast-portal"></div>
+      </ha-card>`;
+    }
+    if (!this.planHost.environment.permissions.read) return nothing;
+    const space = this._spaceModel();
+    if (!space) return nothing;
+    if (!this._ensureFloorPreparation()) {
+      if (this._floorPreparation?.failed) {
+        this._startupFloor?.disablePreview();
+        this._clearStartupAssetWait();
+        this._finishStartupFade();
+        this._startupStyle = undefined;
+        return this._renderPendingFloor();
+      }
+      if (this._floorCompleteSpace === space.id && this._floorCompleteAuthority === this.planHost.authorityKey
+        && this._loadOk && this._mode === 'view' && this.renderRoot.querySelector('.stage:not([data-hp-floor-cache])')) {
+        this._floorHolding = true; return this._renderPreparedFloorFrame(noChange, diagnostics);
+      }
+      return this._renderPendingFloor();
+    }
+    // L1 stays visible until the existing boot window can reveal the complete
+    // frame; swapping it for hpboot-hidden live DOM would introduce a blank gap.
+    if (this._booting && this._floorPreparation?.preview) return this._renderPendingFloor();
+    this._floorCompleteSpace = space.id; this._floorCompleteAuthority = this.planHost.authorityKey;
+    this._editorRuntime?._beginResizeBaseFrame();
+    const vb = space.vb;
+    let projection = this._effectiveProjection();
+    if (this._startupPending && this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) === 'fallback') {
+      this._startupFloor?.disablePreview();
+      this._startupStyle = undefined;
+    }
+    this._renderProjection = projection;
+    if (this._labs.active.length) noteLabsRender();
+    let iso = projection === 'iso';
+    const isoRuntime = iso ? this._isoSceneRuntime : null;
+    // Active user-hidden devices are ordinary projected rows. Only disabled
+    // service ghosts remain exclusive to the Devices editor.
+    const showGhosts = this._mode === 'devices' && this._showAll;
+    const leds = ledStripsByMarker(space);
+    const devs = visibleIconMarkers(this._renderDevices, space.id, leds, showGhosts);
+    // #780 r1 M1: a strip keeps its value badge at the anchor; no icon, pulse or slot.
+    const ledDevs = leds.size ? this._renderDevices.filter((d) => d.space === space.id && !d.hidden && leds.has(d.id)) : [];
+    const disp = this._spaceDisplayForRender();
+    const roomFills = this._resolvedRoomFills(space, disp);
+    this._isoLightFloors = iso ? this._isoFirstFrame.lightFloors(roomFills.byId) : null;
+    const showLqi = effectiveShowLqi(this._settings, disp.showLqi, this._config.show_signal);
+    const cfgSize = this._config.icon_size ?? 2.5;
+    const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
+    const deviceBasePct = effectiveDeviceBaseSize(iconPct);
+    const contactBaseDiameter = deviceBasePct * iconUnit(space) / 100
+      * (this._mode === 'view' ? this._effectiveKioskScale.icon : 1);
+    let isoScene = iso ? this._renderIsoScene : null;
+    this._adoptViewPlane(isoScene?.camera ?? null);
+    let view = this._authoredView(this._viewOr(this._baseVb(projection, isoScene)), projection);
+    let isoFrame: IsoFramePresentation | null = null;
+    let isoGlowLayer: TemplateResult | undefined;
+    let isoLedField: TemplateResult | undefined;
+    let isoWallLights: IsoWallLightSource[] = [];
+    const scale = gridVisualScale(this._cellCm);
+    let useFurnitureVolume = iso && disp.showBorders && ISO_LAB_FURNITURE && this._mode === 'view';
+    let furnitureShadows: TemplateResult | TemplateResult[] | typeof nothing = nothing;
+    let stairVolumes: ReturnType<StairViewRuntime['volumeItems']> | undefined;
+    let startupFurniture: (() => IsoFurniturePaint[]) | undefined;
+    try {
+      if (iso) {
+        const glow = this._renderGlowLayer(space, disp, view, sources => isoWallLights.push(...sources));
+        const led = this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow,
+          source => isoWallLights.push(source));
+        const openingPose = this._openingsR.map(opening => this._openingAmtForProjection(opening, projection)).join(',');
+        const scope = [this.planHost.authorityKey, isoScene?.key, this._cfgEpoch, this._layoutRev,
+          this._rotation, this._presentation.themes?.darkMode, openingPose].join('|');
+        const signature = JSON.stringify(isoWallLights.map(source => [
+          source.key, source.color, source.alpha, source.radius, source.points,
+        ]));
+        const field = this._isoLight.choose(scope, signature, { glow, led, lights: isoWallLights },
+          this._isoAuthoredScene(), !this._reducedMotion && !this._modeTransitionBusy && !this._floorPassive);
+        isoGlowLayer = field.glow;
+        isoLedField = field.led;
+        isoWallLights = field.lights;
+      } else this._isoLight.clear();
+      const sampleFurnitureLight = isoRuntime?.isoFurnitureLightSampler(isoWallLights, isoScene?.geometry);
+      const camera = isoScene?.camera;
+      const neutralFurniture: Array<() => IsoFurniturePaint> = [];
+      startupFurniture = () => neutralFurniture.map(paint => paint());
+      const furniture: (IsoFurniturePaint & {lift:number;shadow:TemplateResult|typeof nothing})[] = useFurnitureVolume && camera && !disp.hideDecor
+        ? this._decorList.filter((item): item is Extract<DecorShape,{kind:'furniture'}> => item.kind === 'furniture')
+          .flatMap(item=>{
+            const cabinet = item.tv_cabinet_id ? tvCabinet(this._decorList, item) : undefined;
+            const lift = cabinet ? tvCabinetSurfaceCm() : 0;
+            const shape = cabinet ? tvOnCabinet(item, cabinet) : item;
+            const volume = furnitureVolume(shape,NORM_W,this._decorH,camera,scale,lift);
+            if (!volume) return [];
+            const {mesh,footprint,height} = volume;
+            const style = this._decorResolvedStyle(item);
+            neutralFurniture.push(() => ({footprint,height,mesh,lift,opacity:1,
+              body:svg`<g transform=${isoFloorMatrixCss(camera)}>
+                ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,scale,false)}</g>`}));
+            return [{footprint,height,mesh,lift,opacity:1,
+              shadow:lift ? nothing : furnitureShadow(mesh,scale,false),
+              body:svg`<g transform=${isoFloorMatrixCss(camera)}>
+                ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,scale,false,sampleFurnitureLight)}</g>`}];
+          }) : [];
+      if(iso && camera){
+        stairVolumes=this._stairsView.volumeItems(camera);
+        for(const [id,volume] of stairVolumes){
+          const item = new Map([[id,volume]]);
+          const transform = isoFloorMatrixCss(camera);
+          const depthPaint = disp.transparentWalls3d;
+          furniture.push({...volume,lift:0,
+            shadow:furnitureShadow(volume.mesh,scale,false),
+            body:svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume',depthPaint ? 'paint' : 'all')}</g>`,
+            hit:depthPaint ? svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume','hit')}</g>` : undefined});
+          neutralFurniture.push(() => ({...volume,lift:0,hit:undefined,
+            body:svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume','paint')}</g>`}));
+        }
+        const [,b,,d]=isoFloorMatrix(camera);
+        const depth=(item:typeof furniture[number])=>item.footprint.reduce((sum,p)=>sum+b*p[0]+d*p[1],0)/item.footprint.length;
+        furniture.sort((x,y)=>{
+          const delta = depth(x)-depth(y);
+          // A mounted TV shares its cabinet's center and must paint above it.
+          return Math.abs(delta)>1e-9 ? delta : x.lift-y.lift;
+        });
+      }
+      isoFrame = isoRuntime?.resolveIsoFramePresentation({
+        projection, display: disp, scene: isoScene, openings: this._openingsR, furniture,
+        wallLights: isoWallLights,
+        amountOf: opening => this._openingAmtForProjection(opening, projection), cellCm: this._cellCm,
+        visualOf: opening => resolveOpeningVisual(opening,
+          eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null,
+          this._openingAmt(opening)),
+        overlays: (layers) => this._isoOverlayScene(
+          space, devs, disp, layers, isoScene, iconPct, deviceBasePct, showLqi),
+      }) ?? null;
+      if (useFurnitureVolume) {
+        furnitureShadows = isoFrame?.layers.structural && furniture.length
+          ? svg`<defs><filter id="hp-iso-furniture-penumbra" color-interpolation-filters="sRGB">
+              <feGaussianBlur stdDeviation=${3.5 * scale}></feGaussianBlur>
+            </filter></defs><g filter="url(#hp-iso-furniture-penumbra)">${furniture.map(item => item.shadow)}</g>`
+          : !disp.hideDecor ? this._renderDecorLayer(undefined, view, 'volume') : nothing;
+      }
+    } catch (error) {
+      this._latchIsoFallback(disp.showBorders
+        ? isoScene?.key || this._isoInvalidKey() : `${space.id}|no-borders`, error);
+      this._cancelCameraTransition(false); projection = 'flat'; iso = false; isoScene = null; isoFrame = null;
+      this._renderProjection = 'flat'; this._renderIsoScene = null;
+      this._isoProjectionSnapshot = 'flat'; this._view = null;
+      this._viewPlane = null; this._viewPlaneKnown = true;
+      this._isoLight.clear();
+      // The same Lit pass rendered the raised leaf's light barriers before
+      // Iso failed. The Flat fallback must resolve its own optical plane.
+      this._lightBarrierPass.invalidate(space);
+      useFurnitureVolume = false; furnitureShadows = nothing;
+      stairVolumes = undefined; isoGlowLayer = undefined; isoLedField = undefined;
+      view = this._authoredView(this._viewOr(this._baseVb('flat', null)), 'flat');
+    }
+    const sceneView = iso ? authoredHouseplanSceneViewport(this, view) : view;
+    const floorCamera = this._isoFloorCamera;
+    const isoLightFrame = (content: TemplateResult) => floorCamera?.perspective
+      ? html`<div class="iso-perspective-light-frame">${content}</div>`
+      : content;
+    const markerCamera = ISO_LAB_FLOOR_MARKERS && floorCamera;
+    // Opposite views share the same lettering. In a direct view the
+    // horizontal plan axis determines the reading direction.
+    const roomLabelCamera = markerCamera ? { ...markerCamera,
+      rotDeg: isoReadingYaw(markerCamera.rotDeg) } : null;
+    const roomLabelDepth = roomLabelCamera ? isoTileDepthStyles(roomLabelCamera) : null;
+    const isoLayers = isoFrame?.layers ?? null;
+    const isoOverlays = isoFrame?.overlays ?? null;
+    const maskFloorShadows = ISO_LAB_FLOOR_MARKERS && isoLayers?.structural && !!isoScene;
+    const raiseRoomLabels = maskFloorShadows && disp.showNames;
+    const floorShadowUnit = iso ? iconPct * iconUnit(space) * this._effectiveKioskScale.icon / 100 : 0;
+    const floorView = this._planVisibleRect(view);
+    // Background around the plan (view/kiosk; editors keep their own canvas).
+    // Both settings dialogs preview their pending value live.
+    const stageBg = this._editing ? '' : this._stageBg(disp);
+    // opening rulers: the drag of an existing one OR the placement preview
+    const opMeasure = this._opMeasureView;
+    const roomHover = this._roomHoverPaths(space);
+    const backdropHref = space.bg ? this._display(space.bg.href) : '';
+    const backdropPaint = space.bg ? backdropPaintBox(space.bg,this._cellCm) : null;
+
+    const modeVisual = this._modeTransitionVisual;
+    const dayCycle = this._dayCycleState();
+    const dayCycleWeight = modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
+    const paperShapes = this._paperShapes(space.rooms); const isoFirstFramePending = !this._modeProjectionCrossing && this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime);
+    const transitionFromMode = this._modeTransition.state?.from.presentedMode
+      ?? (this._modeTransitionPreparing ? modeVisual?.presentedMode : undefined);
+    const glowLayerVisible = !this._markup || !!modeVisual && (
+      modeVisual.presentedMode === 'view' || modeVisual.presentedMode === 'devices'
+      || transitionFromMode === 'view' || transitionFromMode === 'devices'
+    );
+    const transitionStageBg = modeVisual?.stageColor || stageBg;
+    const transitionBrightness = modeVisual?.sceneBrightness ?? 1;
+    // View owns the eager hatch: one pattern at every zoom (#689 reverted #685's gradient).
+    const hatchStep = wallHatchStepUnits(this._cellCm);
+    const stripe = 2 * (hatchStep / HATCH_BASE_STEP_UNITS);
+    const wallHatch = svg`<defs><pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
+        width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)"><path d="M0 0 L0 ${hatchStep}" stroke="${disp.color || '#607d8b'}" stroke-width="${stripe}"></path></pattern></defs>`;
+    const sceneSpace = space;
+    const renderRooms = (roomMode: HouseplanMode, canonical = true, fills = roomFills): TemplateResult => {
+      const planRoom = roomMode === 'plan';
+
+              // audit L1: hoisted out of the per-room map — these depend on the
+              // config, not on entity state, and were recomputed per room.
+              const allZeroCuts = this._openCuts();
+              const allThickCuts = this._thickWallCuts();
+              const roomWallGeometry = this._wallUnionGeometry()?.roomGeom;
+              const floorPaint = planRoom ? new Map<string, RoomFloorPaint>() : this._roomFloorPaintFor(sceneSpace, true);
+              // Continue the existing room colour below translucent structure.
+              // Hit testing and light still use the physical clean floor.
+              const visibleFloor = !planRoom && iso && isoLayers?.structural && disp.transparentWalls3d
+                ? this._roomFloorPaintFor(sceneSpace, true, true) : null;
+              const polyCache = new Map<any, number[][] | null>();
+              const polyOf = (rr: any) => {
+                if (!polyCache.has(rr)) polyCache.set(rr, roomPoly(rr));
+                return polyCache.get(rr)!;
+              };
+              const otherPolys = (rr: any) =>
+                sceneSpace.rooms.filter((o) => o !== rr).map(polyOf).filter(Boolean) as number[][][];
+              const shownRooms = sceneSpace.rooms.filter((r) => r.area || roomMode === 'view' || planRoom || disp.showBorders);
+              // #742: keyed like openings and markers (plan.styles.ts, #525/#534/#742): a bare map() handed the
+              // previous floor's room node to the new floor, and `.room`'s transition drew its fill in from white.
+              return svg`<g class=${floorPaint.size ? 'room-floor-paint-layer' : nothing}>${keyed(sceneSpace.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {
+              let cls = (canonical ? 'room ' : 'hp-mode-room ') + (sceneSpace.bg ? 'overlay' : 'yard') + (planRoom ? ' outlined' : '');
+              if (planRoom && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
+                cls += ' picked';
+              let style = '';
+              const effFill = roomFillModeOf(disp.fill, r);
+              if (!planRoom && (disp.showBorders || effFill !== 'none')) {
+                cls += ' styled';
+                const st: string[] = [];
+                // keep the stroke colour even when borders are hidden, so hover can reveal it
+                st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
+                // One frame-local resolver drives both this room and every
+                // thick-wall opening tunnel that continues its floor colour.
+                const fillC = fills.byRoom.get(r) || null;
+                if (fillC) {
+                  cls += ' filled';
+                  st.push(`--room-fill:${iso ? architecturalFloorTone(fillC.color, disp.wallFill.c, effFill === 'custom') : fillC.color}`, `--room-fill-op:${fillC.opacity}`);
+                } else st.push('--room-fill:transparent', '--room-fill-op:0');
+                style = st.join(';');
+              }
+              if (!canonical) style += ';pointer-events:none!important';
+              let areaText: string | null | undefined;
+              const tip = (e: PointerEvent) => {
+                if (this._deferCameraHover(e)) return;
+                enterRoom(e);
+                if (!this._roomTipEnabledForPointer(e)) return;
+                if (areaText === undefined) areaText = this._roomArea(r);
+                this._showTip(
+                  e,
+                  r.name || this._t('room.unnamed'),
+                  areaText ? this._t('tip.area', { value: areaText }) : '',
+                  showLqi ? this._roomLqi(r.area) : null,
+                  this._roomTemp(r),
+                  this._roomHum(r),
+                  true,
+                  this._roomCo2(r),
+                );
+              };
+              const enterRoom = (event: PointerEvent) => {
+                if (this._deferCameraHover(event)) return;
+                this._notePointer(event);
+                if (this._pointerModality.hoverEnabled
+                    && (this._hoverRoom?.room !== r || this._hoverRoom.space !== sceneSpace.id)) {
+                  this._hoverRoom = { space: sceneSpace.id, room: r };
+                  this._syncLiveHover();
+                }
+              };
+              const myPoly = polyOf(r);
+              // A room's ordinary solid stroke must not run beneath its zero
+              // wall overlay — suppress it and draw a trimmed outline. This
+              // includes exterior zero atoms, not only shared room boundaries.
+              // Applies in the Plan editor too (picked rooms keep their full
+              // amber highlight — the merge/split selection must stay visible).
+              const isPicked = planRoom && (r.id === this._mergeSel || r.id === this._splitSel?.roomId);
+              const zeroCuts = myPoly && !isPicked
+                ? allZeroCuts.filter((cut) => {
+                    const midpoint = [(cut[0] + cut[2]) / 2, (cut[1] + cut[3]) / 2];
+                    return myPoly.some((point, index) => distToSegment(
+                      midpoint,
+                      [point[0], point[1], ...myPoly[(index + 1) % myPoly.length]],
+                    ) <= this._gridPitch * 0.08);
+                  })
+                : [];
+              const thickCuts = !isPicked ? allThickCuts : [];
+              const edgeCuts = zeroCuts.concat(thickCuts);
+              if (edgeCuts.length) cls += ' noedge';
+              // island rooms punch holes in their parent's fill (evenodd)
+              const walls = this._spaceWalls;
+              const fillPoly = (walls.length && r.id && myPoly)
+                ? (this._innerRoomContour(sceneSpace, r.id, allZeroCuts, roomWallGeometry) || myPoly)
+                : myPoly;
+              const holes = fillPoly ? islandsOf(fillPoly, otherPolys(r)) : [];
+              const pathD = (pts: number[][]) =>
+                'M ' + pts.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
+              const obstaclePath = fillPoly ? this._cleanFloor(r, fillPoly, sceneSpace).path : '';
+              const roomId = r.id || '#' + sceneSpace.rooms.indexOf(r);
+              const paint = floorPaint.get(roomId);
+              const visiblePaint = fills.byRoom.has(r) ? visibleFloor?.get(roomId)?.path : undefined;
+              const paintedPath = visiblePaint || paint?.path;
+              // docs/STYLING-HOOKS.md §3 — the same three hooks whichever SVG
+              // element this room happens to be drawn as today
+              const hpId = r.id || nothing;
+              const hpArea = r.area || nothing;
+              const shape = paintedPath !== undefined
+                ? svg`<path data-mode-room-paint class="${cls}" style="${style};pointer-events:none" fill-rule="evenodd"
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing} d=${paintedPath}></path>`
+                : obstaclePath && fillPoly
+                ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
+                    d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></path>`
+                : holes.length && fillPoly
+                ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
+                    d="${[fillPoly, ...holes].map(pathD).join(' ')}"
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></path>`
+                 : fillPoly && fillPoly !== myPoly
+                 ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
+                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></polygon>`
+                 : r.poly
+                 ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
+                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></polygon>`
+                 : svg`<rect class="${cls}" style="${style}"
+                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
+                     x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></rect>`;
+              const trimmed = edgeCuts.length && myPoly
+                ? outlineWithout(myPoly, edgeCuts, this._gridPitch * 0.02)
+                : null;
+              const outline = trimmed
+                ? svg`<path class="${canonical ? 'room-outline' : 'hp-mode-room-outline'} ${planRoom ? 'outlined' : ''}"
+                    d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
+                    style=${planRoom ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
+                : nothing;
+              const hitPath = paint?.basePath ?? (visiblePaint && fillPoly
+                ? [obstaclePath || pathD(fillPoly),...holes.map(pathD)].join(' ') : undefined);
+              const hit = hitPath !== undefined ? svg`<path class=${canonical ? 'room-hit' : 'hp-mode-room-hit'} ?data-hp-room-hit=${canonical} data-id=${hpId} data-mode-room-id=${r.id || nothing} d=${hitPath} fill="transparent"
+                fill-rule="evenodd" stroke="none" pointer-events=${canonical ? 'fill' : 'none'}
+                @pointerenter=${enterRoom} @pointermove=${tip}
+                @pointerleave=${() => this._clearPointerHover()}></path>` : nothing;
+              return svg`${shape}${hit}${outline}`;
+              }))}</g>`;
+                };
+    if (!iso && !this._modeProjectionSource)
+      this._flatMarkerGeometryPending = { devices: this._renderDevices, view: { ...view } };
+    const sceneInputs = [this._modeSceneRevision, this._space, this._cfgRev, this._layoutRev, this._cfgEpoch, contentFingerprint(disp), this._renderProjection, this._rotation, this._cellCm];
+    const activeGlow = this._mode === 'view' || this._mode === 'devices' || (modeVisual?.glowWeight ?? modeVisual?.viewWeight ?? 0) > 0;
+    const glowInputs = activeGlow ? sceneInputs : this._modeGlowInputs;
+    if (!iso && activeGlow) this._modeGlowInputs = sceneInputs;
+    const modeLayers: ModeSceneLayer[] = [
+      { id: "paper", inputs: [...sceneInputs, ...[]], render: () => svg`${''/* THE PAPER IS THE ROOMS (docs/DECOR-EDITOR.md §3.3, owner
+                   2026-08-04). Opaque shapes stop the scene background —
+                   bg_color or the day-cycle environment — from bleeding through the
+                   plan. They follow the ROOM CONTOURS and nothing else: one
+                   shape per room in exactly the room's own geometry, so an
+                   L-shaped house or a pair of detached buildings never grows a
+                   white bounding rectangle, and an empty space has no paper at
+                   all. A backdrop image no longer makes paper of its own — it
+                   is drawn ON this sheet, one layer below the geometry, so a
+                   picture with transparency and no rooms under it shows the
+                   scene through, which is the deliberate consequence.
+                   `space` comes from _renderCfg, so a live resize preview
+                   controller preview moves the paper together with the rooms.
+                   One <g> keeps the visible sheet and filtered silhouette free of room seams. */}
+            ${wallHatch}${renderPaperShapes(paperShapes)}` },
+      { id:'paper-ink', inputs:sceneInputs, render:()=>renderPaperShapes(paperShapes, 'hp-paper-editor-ink') },
+      { id: "grid", inputs: [...sceneInputs, ...[this._editing, this._modeTransitionBusy, this._gridPitch]], render: () => svg`${this._editing ? this._renderMarkupDefs(vb) : nothing}
+            ${''/* the grid is a property of the plane, not of a box: it follows
+                   the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
+            ${this._editing && !this._markup && this._gridLevels()
+              ? svg`<rect data-hp-live-grid x="${liveGridBounds(floorView).x}" y="${liveGridBounds(floorView).y}" width="${liveGridBounds(floorView).w}" height="${liveGridBounds(floorView).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
+              : nothing}` },
+      { id: "backdrop", inputs: [...sceneInputs, ...[backdropHref]], render: () => svg`${space.bg && backdropHref
+              ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${backdropPaint!.x}" y="${backdropPaint!.y}" width="${backdropPaint!.w}" height="${backdropPaint!.h}"
+                  opacity="${space.bg.opacity ?? 1}"
+                  @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
+                  transform=${backdropPaint!.transform ?? nothing}
+                  @dblclick=${(e: Event) => this._openBackdropDialog(e)}
+                  preserveAspectRatio="none" />`
+              : nothing}` },
+      { id: "rooms", inputs: [...sceneInputs, disp.showBorders ? 'normal' : this._modeTransitionBusy || this._mode === 'view' || this._mode === 'plan' ? 'view' : 'editor'], render: () => svg`${renderRooms(this._mode === 'plan' || this._modeTransitionBusy ? 'view' : this._mode, this._mode !== 'plan')}` },
+      { id:'room-ink', inputs:[...sceneInputs, this._mergeSel, this._splitSel], render:()=>renderRooms('plan', this._mode === 'plan') },
+      { id: "decor", inputs: [...sceneInputs, ...[this._mode === 'decor' && (disp.hideDecor || !!this._decorSel || this._decorTool === 'erase' || this._decorList.some(item => item.kind === 'image' && !this._decorAssets.has(item.asset_id))), this._decorSel, this._decorTool, this._renderPixelsPerUnit(view)]], render: () => svg`${this._renderRoomHoverFill(roomHover)}
+            ${''/* Decor is one composition layer above every floor treatment
+                   (room fill/hover and opening tunnels) and below
+                   live lighting, physical plan geometry and devices. Keep
+                   hide_decor visual-only: the decor editor must always paint
+                   stored shapes so they remain editable. */}
+            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view)}` },
+      { id: "stairs", inputs: [...sceneInputs, ...[this._mode === 'plan', this._mode === 'view']], render: () => svg`${this._mode === 'plan' && this._editorRuntime
+              ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer(stairVolumes)}
+            ${this._mode === 'plan' ? svg`<g data-hp-live-stairs></g>` : nothing}` },
+      { id: "glow", inputs: [...(glowInputs ?? []), this._effSunRays() && activeGlow], render: () => svg`${guard([...(glowInputs ?? [])], () => glowInputs ? svg`${this._renderGlowLayer(space, disp, view)}
+            ${this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) ?? nothing}` : nothing)}
+            ${this._renderSunRays(space)}` },
+      { id: "editor-guides", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('guides', this._editing, () => svg`<g class="hp-editor-only-layer">${this._renderAlignGuides()}</g>`)}` },
+      { id: "plan-base", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('markup', !!this._editorRuntime && this._canEdit && !this._kiosk, () => svg`<g class="hp-plan-only-layer">${this._renderMarkupLayer(vb)}</g>`)}
+            ${''/* «Скрыть проёмы» (space.hide_openings) — same deal: the plan
+                   editor keeps drawing doors, windows and gates so they stay
+                   editable, and only the symbols are hidden elsewhere. What
+                   an opening MEANS is untouched: light still spills through
+                   it, the sun still comes in at its window, and the contact
+                   sensor still opens it. */}
+            ${''/* View: zero-thickness geometry still meets thick walls on their
+                   centreline, but paints BELOW the physical wall body. The
+                   hatch therefore masks the visually awkward half-dashes
+                   inside thick jambs without changing the stored span. */}` },
+      { id: "zero-view", inputs: [...sceneInputs, ...[this._editing, this._modeTransitionBusy]], render: () => svg`${!this._editing || this._modeTransitionBusy ? this._renderZeroWalls(disp) : nothing}` },
+      { id: "walls", inputs: [...sceneInputs, ...[disp.showBorders || this._mode === 'plan' || this._mode === 'decor', this._renderPixelsPerUnit(view), this._opDrag?.preview]], render: () => svg`${this._renderWallBodies(disp)}` },
+      { id: "room-hover", inputs: [...sceneInputs, ...[roomHover, this._markup, this._tool]], render: () => svg`${this._markup && this._tool === 'resize' ? this._renderResizeMeasurements() : nothing}
+            ${this._renderRoomHoverOutline(roomHover)}
+            ${''/* Editors: saved zero-thickness walls deliberately paint AFTER
+                   thick wall bodies. Their
+                   full centreline geometry remains visible for editing. */}` },
+      { id: "zero-editor", inputs: [...sceneInputs, ...[this._editing, this._modeTransitionBusy]], render: () => svg`${this._editing || this._modeTransitionBusy ? this._renderZeroWalls(disp) : nothing}` },
+      { id: "plan-ink", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('hidden-walls', !!this._editorRuntime && this._canEdit && !this._kiosk, () => svg`<g class="hp-plan-only-layer">${this._renderHiddenWallDiagnosticOverlay(true)}</g>`)}
+            ${this._editorInk('opening-preview', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderOpeningPlacementPreview()}</g>`)}
+            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
+            ${''/* Static architectural axes and endpoints are a Plan-editor
+                   invariant. Tool-specific hover/snap state is resolved inside
+                   the overlay and remains exclusive to Walls. */}
+            ${''/* Active chain ink paints above the wall bodies: persisted
+                   draft segments already own opaque masonry, which would
+                   otherwise cover the chain axis and nodes (#307). It stays
+                   below the snap overlay so snap highlights keep priority. */}
+            ${this._editorInk('chain', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderActiveChainInk()}</g>`)}
+            ${this._editorInk('nodes', !!this._editorRuntime && this._canEdit && !this._kiosk, () => svg`<g class="hp-plan-only-layer hp-plan-snap-layer">${this._renderPlanSnapOverlay(true)}</g>`)}` },
+      { id: "openings", inputs: [...sceneInputs, ...[disp.hideOpenings && this._markup, disp.hideOpenings, this._markup && this._openingsR.some(opening => !!opening.orphanReason)]], render: () => svg`${disp.hideOpenings && !this._markup
+              ? nothing
+              : isoLayers && !isoLayers.floorSymbols
+                ? nothing
+                : this._renderOpenings(disp)}` },
+      { id: "led", inputs: [...sceneInputs, this._mode], render: () => svg`${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing}
+            ${this._mode === 'devices' && (this._ledEditor || space.led_strips?.some((s) => s.active !== false))
+              ? this._ledEd(space.id)?.layer(space) : nothing}` },
+      { id: "editor-top", inputs: [...sceneInputs, ...[this._mode, this._tool, view.x, view.y, view.w, view.h]], render: () => svg`${this._renderWallThickUi()}
+            ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
+            ${''/* editor chrome, not plan content: the backdrop frame sits on
+                   top of everything the plan draws so its handles stay
+                   grabbable (docs/DECOR-EDITOR.md §3.2). It exists only in the
+                   backdrop editor, where rooms and devices are pointer-inert. */}
+            ${this._editorRuntime?.backdropGesture.renderFrame(view)}
+            ${this._renderTextFrame(view)}
+            ${this._editorRuntime?.properties.selection()}
+            ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
+            <g data-hp-live-editor></g>` }
+    ];
+    // During the outgoing fade, the retained 2.5D scene keeps View styling
+    // until the projection swap. The header already represents the edit mode.
+    const stageMode = iso ? 'view' : this._mode;
+    if (this._mode === 'view' && projection === this._desiredProjection && !isoFirstFramePending && !this._modeTransitionBusy) {
+      const transform = this._floorTransform;
+      const floorLayer = (content: unknown) => svg`<g class=${iso ? 'iso-floor-scene' : nothing} transform=${transform}>${content}</g>`;
+      this._startupSource = previewView => {
+        const neutral = iso ? this._startupIsoFrame(disp, isoScene, startupFurniture) : null;
+        const fragments: TemplateResult[] = [];
+        const floorFragments: TemplateResult[] = [];
+        if (neutral?.layers.structural) fragments.push(svg`<g class="iso-underlay-svg">${neutral.underlay}</g>`);
+        floorFragments.push(floorLayer(svg`${wallHatch}${renderPaperShapes(paperShapes)}`));
+        if (space.bg) {
+          if (!backdropHref || !backdropPaint) throw Error('asset-unavailable');
+          floorFragments.push(floorLayer(svg`<image class="hp-backdrop" href=${backdropHref}
+            x=${backdropPaint.x} y=${backdropPaint.y} width=${backdropPaint.w} height=${backdropPaint.h}
+            opacity=${space.bg.opacity ?? 1} transform=${backdropPaint.transform ?? nothing} preserveAspectRatio="none"></image>`));
+        }
+        floorFragments.push(floorLayer(renderRooms('view', true, this._resolvedRoomFills(space, disp, true))));
+        if (!disp.hideDecor) {
+          if (this._decorList.some(item => item.kind === 'image' && !this._display(this._decorAssets.get(item.asset_id)?.url)))
+            throw Error('asset-unavailable');
+          floorFragments.push(floorLayer(this._renderDecorLayer(undefined, previewView, useFurnitureVolume ? 'floor' : 'all', true)));
+        }
+        floorFragments.push(floorLayer(this._stairsView.renderLayer(stairVolumes)));
+        if (useFurnitureVolume && neutral?.layers.structural && furnitureShadows !== nothing)
+          floorFragments.push(floorLayer(furnitureShadows));
+        floorFragments.push(floorLayer(svg`${this._renderZeroWalls(disp)}${this._renderWallBodies(disp, true)}`));
+        if (!disp.hideOpenings && (!neutral || neutral.layers.floorSymbols))
+          floorFragments.push(floorLayer(this._renderOpenings(disp, undefined, false, true)));
+        if (floorCamera?.perspective) fragments.push(renderIsoPerspectiveSnapshot(floorCamera,this._frameOf().all,floorFragments));
+        else fragments.push(...floorFragments);
+        if (neutral?.layers.structural) fragments.push(svg`
+          <g class="iso-shadows-svg">${neutral.shadows}</g><g class="iso-walls-svg">${neutral.walls}</g>`);
+        if (neutral && neutral.foreground !== nothing) fragments.push(svg`<g class="iso-furniture-foreground">${neutral.foreground}</g>`);
+        return fragments;
+      };
+    }
+    const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${stageMode === 'plan' ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${stageMode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${stageMode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
+    this._modePreparedStageClass = stageClass;
+    const isoUnderlay = isoLayers?.structural ? svg`<g class="iso-underlay-svg" aria-hidden="true" pointer-events="none">${isoFrame?.underlay ?? nothing}</g>` : nothing;
+    const ledShadow = () => svg`<g class="iso-led-shadow-plane" transform=${this._floorTransform}>
+      ${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'shadow') ?? nothing}</g>`;
+    const ledBody = () => svg`<g class="iso-led-plane" transform=${this._floorTransform} pointer-events="none">
+      ${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'body') ?? nothing}</g>`;
+    const isoFloorInk = () => svg`<g class="iso-floor-scene" transform=${this._floorTransform}>
+
+            ${''/* THE PAPER IS THE ROOMS (docs/DECOR-EDITOR.md §3.3, owner
+                   2026-08-04). Opaque shapes stop the scene background —
+                   bg_color or the day-cycle environment — from bleeding through the
+                   plan. They follow the ROOM CONTOURS and nothing else: one
+                   shape per room in exactly the room's own geometry, so an
+                   L-shaped house or a pair of detached buildings never grows a
+                   white bounding rectangle, and an empty space has no paper at
+                   all. A backdrop image no longer makes paper of its own — it
+                   is drawn ON this sheet, one layer below the geometry, so a
+                   picture with transparency and no rooms under it shows the
+                   scene through, which is the deliberate consequence.
+                   `space` comes from _renderCfg, so a live resize preview
+                   controller preview moves the paper together with the rooms.
+                   One <g> keeps the visible sheet and filtered silhouette free of room seams. */}
+            ${wallHatch}${renderPaperShapes(paperShapes)}
+            ${this._editing ? this._renderMarkupDefs(vb) : nothing}
+            ${''/* the grid is a property of the plane, not of a box: it follows
+                   the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
+            ${this._editing && !this._markup && this._gridLevels()
+              ? svg`<rect data-hp-live-grid x="${liveGridBounds(floorView).x}" y="${liveGridBounds(floorView).y}" width="${liveGridBounds(floorView).w}" height="${liveGridBounds(floorView).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
+              : nothing}
+            ${space.bg && backdropHref
+              ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${backdropPaint!.x}" y="${backdropPaint!.y}" width="${backdropPaint!.w}" height="${backdropPaint!.h}"
+                  opacity="${(space.bg.opacity ?? 1) * (modeVisual?.backdropOpacity ?? (this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1))}"
+                  @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
+                  transform=${backdropPaint!.transform ?? nothing}
+                  @dblclick=${(e: Event) => this._openBackdropDialog(e)}
+                  preserveAspectRatio="none" />`
+              : nothing}
+            ${renderRooms(this._mode)}
+            ${this._renderRoomHoverFill(roomHover)}
+            ${''/* Decor is one composition layer above every floor treatment
+                   (room fill/hover and opening tunnels) and below
+                   live lighting, physical plan geometry and devices. Keep
+                   hide_decor visual-only: the decor editor must always paint
+                   stored shapes so they remain editable. */}
+            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view, useFurnitureVolume ? 'floor' : 'all')}
+            ${this._mode === 'plan' && this._editorRuntime
+              ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer(stairVolumes)}
+            ${this._mode === 'plan' ? svg`<g data-hp-live-stairs></g>` : nothing}
+            ${glowLayerVisible ? isoGlowLayer ?? this._renderGlowLayer(space, disp, view) : nothing}
+            ${glowLayerVisible ? isoLedField ?? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
+            ${this._renderSunRays(space)}
+            ${''/* #1451: the wash stays on the floor, visible through translucent
+                   furniture instead of painting a yellow stripe over its body. */}
+            ${furnitureShadows}
+            ${this._editorInk('guides', this._editing, () => svg`<g class="hp-editor-only-layer">${this._renderAlignGuides()}</g>`)}
+            ${this._editorInk('markup', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderMarkupLayer(vb)}</g>`)}
+            ${''/* «Скрыть проёмы» (space.hide_openings) — same deal: the plan
+                   editor keeps drawing doors, windows and gates so they stay
+                   editable, and only the symbols are hidden elsewhere. What
+                   an opening MEANS is untouched: light still spills through
+                   it, the sun still comes in at its window, and the contact
+                   sensor still opens it. */}
+            ${''/* View: zero-thickness geometry still meets thick walls on their
+                   centreline, but paints BELOW the physical wall body. The
+                   hatch therefore masks the visually awkward half-dashes
+                   inside thick jambs without changing the stored span. */}
+            ${!this._editing ? this._renderZeroWalls(disp) : nothing}
+            ${this._renderWallBodies(disp)}
+            ${this._markup && this._tool === 'resize' ? this._renderResizeMeasurements() : nothing}
+            ${this._renderRoomHoverOutline(roomHover)}
+            ${''/* Editors: saved zero-thickness walls deliberately paint AFTER
+                   thick wall bodies. Their
+                   full centreline geometry remains visible for editing. */}
+            ${this._editing ? this._renderZeroWalls(disp) : nothing}
+            ${this._editorInk('hidden-walls', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderHiddenWallDiagnosticOverlay()}</g>`)}
+            ${this._editorInk('opening-preview', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderOpeningPlacementPreview()}</g>`)}
+            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
+            ${''/* Static architectural axes and endpoints are a Plan-editor
+                   invariant. Tool-specific hover/snap state is resolved inside
+                   the overlay and remains exclusive to Walls. */}
+            ${''/* Active chain ink paints above the wall bodies: persisted
+                   draft segments already own opaque masonry, which would
+                   otherwise cover the chain axis and nodes (#307). It stays
+                   below the snap overlay so snap highlights keep priority. */}
+            ${this._editorInk('chain', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderActiveChainInk()}</g>`)}
+            ${this._editorInk('nodes', this._markup, () => svg`<g class="hp-plan-only-layer hp-plan-snap-layer">${this._renderPlanSnapOverlay()}</g>`)}
+            ${disp.hideOpenings && !this._markup
+              ? nothing
+              : isoLayers && !isoLayers.floorSymbols
+                ? nothing
+                : this._renderOpenings(disp)}
+            ${!iso ? this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing : nothing}
+            ${this._mode === 'devices' && (this._ledEditor || space.led_strips?.some((s) => s.active !== false))
+              ? this._ledEd(space.id)?.layer(space) : nothing}
+            ${this._renderWallThickUi()}
+            ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
+            ${''/* editor chrome, not plan content: the backdrop frame sits on
+                   top of everything the plan draws so its handles stay
+                   grabbable (docs/DECOR-EDITOR.md §3.2). It exists only in the
+                   backdrop editor, where rooms and devices are pointer-inert. */}
+            ${this._editorRuntime?.backdropGesture.renderFrame(view)}
+            ${this._renderTextFrame(view)}
+            ${this._editorRuntime?.properties.selection()}
+            ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
+            <g data-hp-live-editor></g>
+
+      ${floorCamera?.perspective && leds.size ? ledShadow() : nothing}</g>`;
+    const perspectiveSize = this._modeSceneSize ?? this._lastValidStageSize ?? [sceneView.w,sceneView.h] as const;
+    const stage = html`
+
+        <div class=${this._modeTransitionPreparing && this._modePreparingStageClass ? this._modePreparingStageClass : stageClass}
+          data-hp-plan-rotation=${this._rotation}
+          data-hp-iso-floor-markers=${markerCamera ? 'true' : nothing}
+          data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
+          data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
+          ?inert=${live(this._rotationMotion.blocksInput || this._modeTransition.active || this._startupPending)}
+          ?data-hp-startup-pending=${this._startupPending}
+          ?data-hp-startup-finish=${this._bootFading}
+          style=${styleMap({
+            height: modeVisual && !this._modeTransitionPreparing ? `${modeVisual.stageHeight}px` : this._floorStageHeight(),
+            width: modeVisual && !this._modeTransitionPreparing ? `${modeVisual.stageWidth}px` : undefined,
+            background: transitionStageBg || undefined,
+            '--hp-cell-visual-scale': String(gridVisualScale(this._cellCm)),
+            '--hp-iso-marker-plane': markerCamera ? isoFloorLinearCss(markerCamera) : undefined,
+            '--hp-iso-marker-hit-plane': markerCamera ? isoFloorLinearCss(markerCamera, true) : undefined,
+            '--hp-iso-room-plane': roomLabelCamera ? isoFloorLinearCss(roomLabelCamera) : undefined,
+            '--hp-iso-content-turn': roomLabelCamera && markerCamera
+              ? `${((roomLabelCamera.rotDeg - markerCamera.rotDeg) % 360 + 360) % 360}deg` : undefined,
+            '--hp-iso-room-hit-plane': roomLabelCamera ? isoFloorLinearCss(roomLabelCamera, true) : undefined,
+            '--hp-iso-room-edge-x': roomLabelDepth?.['--hp-iso-edge-unit-x'],
+            '--hp-iso-room-edge-y': roomLabelDepth?.['--hp-iso-edge-unit-y'],
+            ...(markerCamera ? isoTileDepthStyles(markerCamera) : {}),
+            '--wall-fill': disp.wallFill.c, '--wall-fill-op': String(disp.wallFill.a),
+            '--iso-wall-side-op': iso ? String(disp.wallFill.a) : undefined,
+            ...(iso ? isoOpeningMaterialVars(disp.openingAccent3d?.c, disp.openingAccent3d?.a) : {}),
+            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.color, disp.wallFill.c, disp.transparentWalls3d ? 1 : disp.opacity).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
+          })}
+          @click=${(e: MouseEvent) => this._markupClick(e)}
+          @wheel=${(e: WheelEvent) => this._onWheel(e)}
+          @contextmenu=${this._mode === 'decor' ? (e: MouseEvent) => this._editorRuntime?.decorOrder.open(e)
+            : this._mode === 'plan' ? (e: MouseEvent) => this._editorRuntime?.roomMenu.open(e) : nothing}
+          @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
+          @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
+          @pointerleave=${(e: PointerEvent) => { this._editorRuntime?.properties.clearPlanHover(); this._stagePointerLeave(e); }}
+          @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
+          @lostpointercapture=${(e: PointerEvent) => {
+            if (this._decorDraft?.pid === e.pointerId) this._stagePointerCancel(e);
+            if (this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);
+            if (this._editorRuntime?.decorLine.owns(e.pointerId)) this._stagePointerCancel(e);
+            if (this._furnTouchPending?.mouse && this._furnTouchPending.pid === e.pointerId) this._stagePointerCancel(e);
+          }}
+          @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
+          ${this._renderStageEnvironment(dayCycle, dayCycleWeight)}
+          ${this._renderStartupFloor(this._startupPending)}
+          ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
+          ${this._ledEditor?.chrome() ?? nothing}
+          <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
+            ?inert=${this._continuity.overlayBlocksInteraction}
+            @animationend=${(event: AnimationEvent) => {
+              if (event.target === event.currentTarget && event.animationName === 'hp-startup-live-in') this._finishStartupFade();
+            }}
+            style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}${this._modeProjectionCrossing ? `;opacity:${this._modeProjectionOpacity}` : ''}${modeVisual && !this._modeTransitionPreparing ? `;width:${this._modeSceneSize?.[0] ?? modeVisual.stageWidth}px;height:${this._modeSceneSize?.[1] ?? modeVisual.stageHeight}px` : ''}">
+          ${this._modeProjectionSource && this._modeProjectionScene ? this._modeProjectionScene : this._modeProjectionScene = html`
+          ${iso ? html`<div class="iso-scene-surface" data-hp-live-scene="camera">
+          ${isoLightFrame(html`
+          ${floorCamera?.perspective ? html`
+            ${svg`<svg data-hp-live-viewbox="camera" aria-hidden="true" style="pointer-events:none" preserveAspectRatio="none"
+              viewBox="${sceneView.x} ${sceneView.y} ${sceneView.w} ${sceneView.h}">${isoUnderlay}</svg>`}
+            ${renderIsoPerspectiveFloor(floorCamera,isoFloorInk(),sceneView,perspectiveSize)}` : nothing}
+          <svg class="plan-svg" data-hp="stage" data-grid-step=${this._gridPitch} data-hp-layer="plan"
+            data-projection=${isoScene ? 'iso' : 'flat'} data-yaw=${isoScene?.camera.rotDeg ?? this._rotation}
+            data-rotation=${this._rotation} data-floor-scale-y=${isoScene?.camera.floorScaleY ?? 1}
+            data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
+            viewBox="${sceneView.x} ${sceneView.y} ${sceneView.w} ${sceneView.h}"
+            preserveAspectRatio=${floorCamera?.perspective ? 'none' : 'xMidYMid meet'}
+            style=${floorCamera?.perspective ? 'pointer-events:none' : nothing}>
+            ${floorCamera?.perspective ? nothing : isoUnderlay}
+            ${floorCamera?.perspective ? nothing : isoFloorInk()}
+            ${isoLayers?.structural ? svg`
+              <g class="iso-shadows-svg" aria-hidden="true" pointer-events="none">${isoFrame?.shadows ?? nothing}</g>
+              <g class="iso-walls-svg" aria-hidden="true" pointer-events="none">${isoFrame?.walls ?? nothing}</g>
+            ` : nothing}
+            ${iso && (!maskFloorShadows || isoFrame?.shadowClip != null) ? svg`<g class="iso-floor-shadow-plane" aria-hidden="true" pointer-events="none">
+              <defs>
+                ${isoFloorShadowGradient}
+                ${disp.showNames ? svg`<filter id="hp-iso-label-penumbra" color-interpolation-filters="sRGB"
+                  x="-50%" y="-100%" width="200%" height="300%">
+                  <feGaussianBlur stdDeviation=${floorShadowUnit * .08}></feGaussianBlur>
+                </filter>` : nothing}
+                ${maskFloorShadows && isoScene ? svg`
+                  <clipPath id="hp-iso-shadow-footprint"><path d=${isoScene.floor.footprintPath} clip-rule="evenodd"></path></clipPath>
+                  <clipPath id="hp-iso-shadow-visible"><path d=${isoFrame?.shadowClip ?? ''} clip-rule="evenodd"></path></clipPath>
+                ` : nothing}
+              </defs>
+              <g clip-path=${maskFloorShadows ? 'url(#hp-iso-shadow-footprint)' : nothing}>
+                <g clip-path=${maskFloorShadows ? 'url(#hp-iso-shadow-visible)' : nothing}>
+                  <g class="iso-tile-shadows">
+                    ${repeat(devs, (d) => d.id, (d) => {
+                      const placement = isoOverlays?.devices.get(d.id);
+                      if (placement?.occluded) return nothing;
+                      const presentation = this._devicePresentation(d, showLqi), pos = this._pos(d);
+                      const anchor = placement || { floorScene: turnPoint([pos.x, pos.y], this._rotation) };
+                      const diameter = placement?.deviceSize
+                        ?? deviceBasePct * iconUnit(space) * this._effectiveKioskScale.icon * presentation.scale / 100;
+                      return renderIsoMarkerFloorShadow(d.id, 'device', anchor, { camera: floorCamera, diameter }, presentation);
+                    })}
+                    ${this._renderOpeningLocks(view, isoOverlays?.locks, {
+                      camera: floorCamera, diameter: floorShadowUnit * .62,
+                    })}
+                  </g>
+                  ${disp.showNames ? svg`<g>
+                    ${space.rooms.map(r => this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r), {
+                      camera: floorCamera, diameter: floorShadowUnit * .5,
+                    }))}
+                  </g>` : nothing}
+                  ${floorCamera?.perspective ? nothing : ledShadow()}
+                </g>
+              </g>
+            </g>` : nothing}
+            ${isoFrame && isoFrame.foreground !== nothing ? svg`<g class="iso-furniture-foreground"
+              aria-hidden=${stairVolumes?.size ? nothing : 'true'} pointer-events="none">${isoFrame.foreground}</g>` : nothing}
+            ${floorCamera?.perspective ? nothing : ledBody()}
+          </svg>
+          ${floorCamera?.perspective && leds.size ? renderIsoPerspectiveFloor(floorCamera,ledBody(),sceneView,perspectiveSize,
+            gridVisualUnits(isoDisplayWallHeight(),this._cellCm),'led') : nothing}`)}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
+          ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
+                 scales with it when you zoom — the behaviour the card always
+                 had, restored by the owner. `iconCqw` is `iconPct * iconUnit
+                 / view.w`: the old expression with the stored `vb.w` replaced
+                 by the plan's own base unit, which is the same NORM_W for an
+                 ordinary plan (pixel-identical) but grows with a plan drawn
+                 past the old square, where a fixed 1000 would have shrunk
+                 every marker to a dot. Same expression as the static
+                 space-card, so the two renderers agree. The compatibility
+                 base is resolved before `iconCqw`; only the per-device and
+                 kiosk multipliers still feed --dev-size. */}
+          <div data-hp-live-marker-clip><div data-hp-live-marker-surface><div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
+            ${renderRadarLive(
+              [...this._radarLive.frames.values()].filter((frame) => {
+                const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);
+                return !!marker && radarMarkerLiveInSpace(marker, this._space);
+              }),
+              view,
+              (point) => floorCamera ? projectPlanPoint(point, 0, floorCamera) : turnPoint(point, this._rotation),
+            )}
+            ${keyed(space.id, repeat(isoOverlays ? [...devs].sort((a,b) =>
+              (isoOverlays.devices.get(a.id)?.floorScene[1] ?? 0) - (isoOverlays.devices.get(b.id)?.floorScene[1] ?? 0)
+                || a.id.localeCompare(b.id)) : devs, (d) => d.id, (d) => this._renderDevice(
+              d, view, contactBaseDiameter, showLqi, isoOverlays?.devices.get(d.id),
+            )))}
+            ${ledDevs.map((d) => this._ledBadge(d, view, isoOverlays?.devices.get(d.id)))}
+            ${this._renderVacuums(this._renderVacuumDevices, view, space.id, perspectiveSize)}
+            ${this._renderVacFit(view)}
+            ${this._renderOpeningLocks(view, isoOverlays?.locks)}
+            ${raiseRoomLabels
+              ? html`<div class="iso-room-label-plane">${space.rooms.map(r =>
+                  this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r)))}</div>`
+              : disp.showNames || this._markup
+                ? space.rooms.map(r => this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r)))
+                : nothing}
+            ${this._editorRuntime && this._canEdit && !this._kiosk ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
+            ${this._renderHaZigbeeTopology(space.id, view)}
+          </div></div></div>
+          <div data-hp-live-editor-html></div>
+          `}
+          </div>
+          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}
+          ${this._mode === 'view' && this._deviceContacts?.resizeStatus
+            ? html`<div class="device-resize-status" data-hp="device-resize-status" role="status">
+                ${this._t(this._deviceContacts.resizeStatus === 'baseline-lost'
+                  ? 'device.resize_baseline_lost' : 'device.resize_limited')}
+              </div>` : nothing}
+          ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}
+          <div class="zoombadge hpf-floating-badge hpf-floating-badge-scale" data-hp-live-zoom ?hidden=${this._zoomBadge.hidden}><span data-hp-live-zoom-value .textContent=${`${this._zoomBadge.percent}%`}></span></div>
+          ${this._renderFarHint()}
+          ${this._renderHomeArrow(this._baseVb(projection, isoScene))}
+          ${this._renderEditorRuntimeLoading()}
+          ${this._renderRecoveryOverlay()}
+          ${this._renderEmptyViewSpace()}
+          ${this.planHost.capabilities.summary ? this._summary?.renderMeasure() : nothing}
+          ${this.planHost.capabilities.summary ? this._summary?.renderPanel() : nothing}
+          ${this._renderKioskNavigation()}
+        </div>`;
+    return this._renderPreparedFloorFrame(stage, diagnostics);
+  }
+
+  private _renderPreparedFloorFrame(stage: TemplateResult | typeof noChange,
+    diagnostics = this._renderLife.diagnostics(
+      this._planHass, this._markers, (binding) => this._bindingStatus(binding), this._haRegistry,
+    )): TemplateResult {
+    const pending = !!this._floorPreparation?.pending || this._floorPassive || this._startupPending;
+    const failed = !!this._floorPreparation?.failed;
+    const deviceSnapshot = this._renderDeviceSnapshot;
+    const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
+      ? this._continuity.recoveryReason : null;
+    return html`
+      <ha-card
+        ?data-hp-properties-wide=${this._editorRuntime?.properties.wide}
+        data-hp-state=${failed ? 'error' : this._booting || pending ? 'booting' : 'ready'}
+        data-hp-floor-cache=${failed ? 'error' : pending ? 'pending' : nothing} data-hp-mode=${this._mode}
+        data-continuity-state=${this._continuity.state}
+        data-continuity-token=${this._continuity.token}
+        data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
+        data-device-snapshot-sequence=${pending || failed ? nothing : deviceSnapshot?.sourceSequence ?? nothing}
+        data-recovery-reason=${recoveryReason || nothing}
+        data-ha-registry-access=${diagnostics.registry.access}
+        data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
+        data-ha-unverified-bindings=${diagnostics.bindings.unverified}
+        @pointerover=${(event: PointerEvent) => this._notePointer(event)}
+        @pointerdown=${this._touchGestureGuard}
+        @pointermove=${this._touchGestureGuard}
+        @pointerup=${this._touchGestureGuard}
+        @pointercancel=${this._touchGestureGuard}
+        @lostpointercapture=${this._touchGestureGuard}
+        @keydown=${this._touchGestureGuard}
+        @contextmenu=${this._touchGestureGuard}
+        @click=${this._touchGestureGuard}>
+        ${this._renderPlanHeader()}
+        ${stage}
+
+        ${this._headerActionsMenu?.render() ?? nothing}
+        ${this._editorRuntime?.properties.render()}
+        ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
+        ${this._editorRuntime?.decorOrder.render()}
+        ${this._editorRuntime?.roomMenu.render()}
+        ${this._editorRuntime?.nodeMove?.renderMenu()}
+        ${dialogPresence(this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing, animateDialogExit(this, 'room'))}
+        ${dialogPresence(this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing)}
+        ${dialogPresence(this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing)}
+        ${dialogPresence(this._physicalDialog ? this._editorRuntime ? this._renderPhysicalDialog() : nothing : nothing)}
+        ${dialogPresence(this._partitionDeleteDialog ? this._editorRuntime ? this._renderPartitionDeleteDialog() : nothing : nothing)}
+        ${dialogPresence(this._roomDeleteDialog ? this._editorRuntime ? this._renderRoomDeleteDialog() : nothing : nothing)}
+        ${dialogPresence(this._openingInfo ? this._renderOpeningInfoCard() : nothing)}
+        ${dialogPresence(this._decorTextDialog ? this._editorRuntime ? this._renderDecorTextDialog() : nothing : nothing)}
+        ${dialogPresence(this._decorShapeDialog ? this._editorRuntime ? this._renderDecorShapeDialog() : nothing : nothing)}
+        ${dialogPresence(this._backdropDialog ? this._editorRuntime ? this._renderBackdropDialog() : nothing : nothing)}
+        ${dialogPresence(this._decorEraseConfirm ? this._editorRuntime ? this._renderDecorEraseConfirm() : nothing : nothing)}
+        ${dialogPresence(this._editorRuntime?.stairs.dialogOpen ? this._editorRuntime.stairs.renderDialog() : nothing)}
+        ${dialogPresence(this._spaceDialog
+          ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
+          : nothing, animateDialogExit(this, 'space'))}
+        ${dialogPresence(this._deviceInbox ? this._editorRuntime ? this._renderDeviceInbox() : nothing : nothing)}
+        ${dialogPresence(this._warmMarker.render((key) => this._t(key)))}
+        ${dialogPresence(this._markerDialog && (this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))
+          ? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing,
+          this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))}
+        ${dialogPresence(this._backdropGuard
+          ? (this._editorRuntime
+            ? this._editorRuntime._renderBackdropGuard()
+            : this._onboardingRuntime?._renderBackdropGuard() ?? nothing)
+          : nothing)}
+        ${dialogPresence(this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this._presentation} data-kind="vacuum"
+          .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
+          dismiss-on-scrim aria-busy=${String(!!this._vacCalConfirm.busy)}
+          @hp-close=${() => { if (!this._vacCalConfirm?.busy) this._vacCalConfirm = null; }}>
+            <div class="body">
+              <p>${this._t('vac.residual_message', { error: this._vacCalConfirm.error })}</p>
+            </div>
+            <div class="row" slot="footer">
+              <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${this._vacCalConfirm.busy}
+                @click=${() => (this._vacCalConfirm = null)}>${this._t('btn.cancel')}</button>
+              <span class="spacer"></span>
+              <button class="btn ghost" data-hp="dialog-confirm" ?disabled=${this._vacCalConfirm.busy}
+                @click=${() => this._vacApplyCalibrationProposal(true)}>${this._t('vac.fit')}</button>
+              <button class="btn on" data-hp="dialog-confirm" ?disabled=${this._vacCalConfirm.busy}
+                @click=${() => this._vacApplyCalibrationProposal(false)}>
+                <ha-icon icon="mdi:check"></ha-icon>${this._t('vac.apply_proposal')}
+              </button>
+            </div>
+        </hp-dialog>` : nothing : nothing)}
+        ${dialogPresence(this._infoCard ? this._renderInfoCard() : nothing)}
+        ${dialogPresence(this._rulesDialog ? this._editorRuntime ? this._renderRulesDialog() : nothing : nothing)}
+        ${dialogPresence(this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing, animateDialogExit(this, 'settings'))}
+        ${dialogPresence(this._supportDialog ? this._editorRuntime ? this._renderSupportDialog() : nothing : nothing)}
+        ${dialogPresence(this._pdfDialog ? this._renderPdfDialog() : nothing)}
+        ${dialogPresence(this._alignDialog && this._editorRuntime ? this._editorRuntime.optimizePlans.render() : nothing)}
+        ${dialogPresence(this._backupExportDialog ? this._editorRuntime ? this._renderBackupExportDialog() : nothing : nothing)}
+        ${dialogPresence(this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing)}
+        ${dialogPresence(this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing)}
+        <div class="tip" data-hp="live-tooltip" data-hp-live-tip hidden></div>
+        ${dialogPresence(this._kioskDialog ? this._renderKioskDialog() : nothing)}
+        ${dialogPresence(this.planHost.capabilities.summary && this._summary?.dialogOpen ? this._summary.renderDialog() : nothing)}
+        ${this._vacFit ? html`<div class="vaccalbar" data-hp="vacuum-calibration" aria-busy=${String(!!this._vacFit.busy)}>
+          <span>${this._t('vac.fit_hint')}</span>
+          <button class="btn ghost" data-hp="vacuum-calibration-action" data-action="rotate" ?disabled=${this._vacFit.busy}
+            @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as FitParams['rot'] })}>${this._t('vac.fit_rotate')}</button>
+          <button class="btn ghost" data-hp="vacuum-calibration-action" data-action="mirror" ?disabled=${this._vacFit.busy}
+            @click=${() => this._vacFitTurn({ mir: !this._vacFit!.p.mir })}>${this._t('vac.fit_mirror')}</button>
+          <button class="btn" data-hp="vacuum-calibration-action" data-action="save" ?disabled=${this._vacFit.busy}
+            @click=${() => this._vacFitSave()}>${this._t('btn.save')}</button>
+          <button class="btn ghost" data-hp="vacuum-calibration-action" data-action="cancel" ?disabled=${this._vacFit.busy}
+            @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
+        </div>` : nothing}
+        ${dialogPresence(this._tapConfirm
+          ? html`<hp-dialog .hass=${this._presentation} data-kind="confirm" class="ui-dialog" compact settings-layout
+              .title=${this._tapConfirm.kind === 'toggle' ? this._tapConfirm.text : this._t('btn.run')}
+              icon="mdi:alert-outline"
+              dismiss-on-scrim @hp-close=${() => (this._tapConfirm = null)}>
+                <div class="body hpf-reading-copy ${this._tapConfirm.kind === 'toggle' ? 'tapconfirm-body' : ''}">
+                  ${this._tapConfirm.kind === 'run'
+                    ? html`<p>${this._tapConfirm.text}</p>`
+                    : this._tapConfirm.lines.map((line, index) => html`
+                        <p class="tapconfirm-line hpf-reading-label" data-line=${index}>${line}</p>`)}
+                </div>
+                <div class="row" slot="footer">
+                  <span class="spacer"></span>
+                  <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this._tapConfirm = null)}>${this._t('btn.cancel')}</button>
+                  <button class="btn on" data-hp="dialog-confirm" @click=${this._acceptTapConfirm.bind(this, this._tapConfirm)}>
+                    <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.run')}
+                  </button>
+                </div>
+            </hp-dialog>`
+          : nothing)}
+        <div data-hp="toast-portal"></div>
+      </ha-card>
+    `;
+  }
+
+
+  // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
+
+  private _adoptVacuumTrails(packet: unknown, context: Parameters<typeof adoptEcovacsSources>[2]): void {
+    const response = packet as { trails?: unknown; trail_format?: number } | null;
+    this._vacSrvTrails = vacuumTrailMaterial(response?.trails);
+    this._vacTrailFormat = response?.trail_format === 2 ? 2 : 1;
+    this._vacHistory.adoptEpochs(packet);
+    adoptEcovacsSources(this, packet, context);
+    this._planHassMemo = null;
+    this._vacTick();
+    this.requestUpdate();
+  }
+
+  private _vacCandidateStatus(
+    entityId: string, candidate: VacSourceCandidate | null, planHass = this._planHass,
+  ): VacSourceStatus {
+    const binding = this._bindingStatus('entity:' + entityId);
+    if (binding.kind === 'ha_disabled') return 'disabled';
+    if (binding.kind === 'orphaned') return 'missing';
+    if (binding.kind === 'unverified') return 'unverified';
+    const state = planHass?.states?.[entityId];
+    if (state?.state === 'unavailable') return 'unavailable';
+    return candidate?.hasPosition ? 'ok' : 'unsupported';
+  }
+
+  /** Snapshot the expensive global camera classification once per opening. */
+  private _vacOpenAllCameras(d: DevItem): void {
+    const registry = this._haRegistry.entities || {};
+    const candidates: VacSourceCandidate[] = [];
+    for (const [entityId, state] of Object.entries<{ attributes?: Record<string, unknown> }>(this._planHass?.states || {})) {
+      if (!entityId.startsWith('camera.')
+        && !(entityId.startsWith('image.') && registry[entityId]?.platform === 'ecovacs')) continue;
+      const candidate = parseVacSourceCandidate(entityId, state, registry[entityId]);
+      if (candidate) candidates.push(candidate);
+    }
+    this._vacAllCameraCache = { devId: d.id, candidates };
+    this._vacAllCamerasFor = d.id;
+  }
+
+  /** One sticky, order-independent source resolver for render/dialog/fit. */
+  private _vacSourceResolution(
+    d: DevItem, includeAllCameras = false, planHass = this._planHass,
+  ): VacSourceResolution {
+    const vacuum = d.marker?.vacuum;
+    const pinned = typeof vacuum?.source === 'string' && !!vacuum.source;
+    const sameDevice = new Set(d.entities || []);
+    const ids = new Set<string>(sameDevice);
+    if (pinned) ids.add(vacuum!.source!);
+    const registry = planHass?.entities || {};
+    const candidates: VacSourceCandidate[] = [];
+    for (const entityId of ids) {
+      const state = planHass?.states?.[entityId];
+      const candidate = parseVacSourceCandidate(entityId, state, registry[entityId]);
+      if (candidate) candidates.push(candidate);
+      else if (pinned && entityId === vacuum!.source) {
+        candidates.push({
+          entityId,
+          name: String(state?.attributes?.friendly_name || entityId),
+          platform: registry[entityId]?.platform ? String(registry[entityId].platform) : null,
+          category: entityId.startsWith('camera.') ? 'camera' : 'partial',
+          hasPosition: false, hasRooms: false, hasPath: false, hasMapId: false, score: 0,
+        });
+      }
+    }
+    if (includeAllCameras && this._vacAllCameraCache?.devId === d.id) {
+      const existing = new Set(candidates.map((candidate) => candidate.entityId));
+      for (const candidate of this._vacAllCameraCache.candidates) {
+        if (!existing.has(candidate.entityId)) candidates.push(candidate);
+      }
+    }
+    const statuses: Record<string, VacSourceStatus> = {};
+    for (const candidate of candidates) {
+      statuses[candidate.entityId] = this._vacCandidateStatus(candidate.entityId, candidate, planHass);
+    }
+    return resolveVacSource(vacuum?.source, sameDevice, candidates, statuses);
+  }
+
+  /** The sticky/automatic live-position source entity, or null. */
+  private _vacSource(d: DevItem, planHass = this._planHass): string | null {
+    if (d.marker?.vacuum?.live === false) return null;
+    const resolution = this._vacSourceResolution(d, false, planHass);
+    if (resolution.entityId && !ecovacsSourceAllowed(planHass, resolution.entityId, this._vacEntity(d))) return null;
+    // A disabled/unavailable/unverified source must never leak stale HA
+    // attributes into plan overlays. `unsupported` remains usable because it
+    // may still provide rooms/path for calibration and trail rendering.
+    return resolution.status === 'ok' || resolution.status === 'unsupported'
+      ? resolution.entityId : null;
+  }
+
+  /** One exact route source for tick, immutable frame, View and diagnostics. */
+  public _vacRuntimeSource(d: DevItem, planHass = this._planHass): VacuumRuntimeSource {
+    return resolveVacuumRuntimeSource({ markerId: d.id, marker: d.marker?.vacuum, dockSpace: d.space,
+      rootSource: this._vacSource(d, planHass), spaceIds: new Set(this._model.map((space) => space.id)),
+      read: (source) => {
+        const mapId = d.marker?.vacuum?.live === false ? undefined : this._vacObservedMapId(d, source, planHass);
+        return mapId === undefined ? undefined
+          : { mapId, telemetry: readVacTelemetry(planHass?.states?.[source]?.attributes) };
+      } });
+  }
+
+  private _vacEntity(d: DevItem): string | null {
+    if (d.primary?.startsWith('vacuum.')) return d.primary;
+    return (d.entities || []).find((e) => e.startsWith('vacuum.')) || null;
+  }
+
+  private _isVacDev(d: DevItem): boolean {
+    return !!this._vacEntity(d);
+  }
+
+  /** Start/restart a short semantic event or direct-terminal transition. */
+  private _activitySourceKey(d: DevItem): string {
+    return this._activitySnapshot(d).sourceKey;
+  }
+
+  private _activitySnapshot(
+    d: DevItem,
+    planLightSources = resolvedLightSources(
+      this._planHass, this._displayDevices, null, this._virtualLights,
+    ),
+  ): { samples: EntityVisualSample[]; sourceKey: string } {
+    const sources = resolvePresentationSources(
+      this._planHass, d, this._displayDevices, planLightSources, this._fullRegistryHass,
+    );
+    return {
+      samples: sources.samples,
+      sourceKey: activitySourceSignature(this._planHass, d, sources),
+    };
+  }
+
+  private _stampActivity(id: string, kind: 'event' | 'transition', sources?: string): void {
+    if (this.ownerDocument.visibilityState === 'hidden') return;
+    let rt = this._activityRt.get(id);
+    if (!rt) {
+      rt = createFiniteActivityRuntime(sources || '', []);
+      this._activityRt.set(id, rt);
+    }
+    if (sources != null) rt.sources = sources;
+    stampFiniteActivity(
+      rt, kind, Date.now(), window.clearTimeout.bind(window),
+      (delay) => window.setTimeout(() => this.requestUpdate(), delay),
+    );
+  }
+
+  /**
+   * Bring activity runtime in sync with the marker/source graph without
+   * classifying an edge. Called after every device rebuild as well as before a
+   * hass tick: new sources get a baseline, rebound sources lose the old flash,
+   * and removed markers cannot leave timers behind.
+   */
+  private _syncActivityRuntime(): Map<string, { samples: EntityVisualSample[]; sourceKey: string }> {
+    const snapshots = new Map<string, { samples: EntityVisualSample[]; sourceKey: string }>();
+    if (!this.hass || this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) return snapshots;
+    if (this._config?.live_states === false) {
+      for (const runtime of this._activityRt.values()) clearTimeout(runtime.timer);
+      this._activityRt.clear();
+      return snapshots;
+    }
+    const live = new Set<string>();
+    const hasDemand = this._displayDevices.some((d) => !d.hidden && d.space === this._space
+      && normalizeDeviceDisplay(d.marker?.display) === 'icon_ripple');
+    const planLightSources = hasDemand ? resolvedLightSources(
+      this._planHass, this._displayDevices, null, this._virtualLights,
+    ) : undefined;
+    for (const d of this._displayDevices) {
+      if (d.hidden || d.space !== this._space) continue;
+      // Alarm/continuous semantics are resolved from the current samples and
+      // need no finite history. Keep that history only while its display mode
+      // can actually show it, so a later mode change cannot replay old edges.
+      if (normalizeDeviceDisplay(d.marker?.display) !== 'icon_ripple') continue;
+      live.add(d.id);
+      const snapshot = this._activitySnapshot(d, planLightSources);
+      snapshots.set(d.id, snapshot);
+      const { samples, sourceKey } = snapshot;
+      let rt = this._activityRt.get(d.id);
+      if (!rt) {
+        rt = createFiniteActivityRuntime(sourceKey, samples);
+        this._activityRt.set(d.id, rt);
+        continue;
+      }
+      if (rt.sources === sourceKey) continue;
+      // A brief unknown/unavailable state can change the effective role graph.
+      // Resetting here prevents recovery from becoming a false fresh event.
+      resetFiniteActivityRuntime(rt, sourceKey, samples, window.clearTimeout.bind(window));
+    }
+    for (const [id, rt] of this._activityRt) {
+      if (live.has(id)) continue;
+      clearTimeout(rt.timer);
+      this._activityRt.delete(id);
+    }
+    return snapshots;
+  }
+
+  /**
+   * One pass per hass tick records every effective source. Only a witnessed,
+   * meaningful edge starts a short effect: first load and recovery from
+   * unknown/unavailable establish a baseline and never fake a detection.
+   */
+  private _activityTick(): void {
+    if (!this.hass || this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) return;
+    const snapshots = this._syncActivityRuntime();
+    for (const d of this._displayDevices) {
+      if (d.hidden || d.space !== this._space) continue;
+      if (normalizeDeviceDisplay(d.marker?.display) !== 'icon_ripple') continue;
+      const snapshot = snapshots.get(d.id) || this._activitySnapshot(d);
+      const { samples, sourceKey } = snapshot;
+      const rt = this._activityRt.get(d.id);
+      if (!rt || rt.sources !== sourceKey) continue;
+      const edge = advanceFiniteActivity(rt, samples, window.clearTimeout.bind(window));
+      // A direct closed↔open fallback is only a substitute for integrations
+      // that omit opening/closing. Once a real travelling state is observed,
+      // it owns the ring and the old 3.3 s fallback is discarded.
+      if (edge) this._stampActivity(d.id, edge, sourceKey);
+    }
+  }
+
+  /**
+   * Trail buffers live OUTSIDE render: every hass tick appends the raw robot
+   * position, so the trail survives view switches and zoom without ever being
+   * part of reactive state (600 points re-rendering the world would hurt).
+   */
+  private _vacTick(robots?: ReadonlySet<string>): void {
+    if (!this.hass) return;
+    for (const d of this._displayDevices) {
+      if (d.hidden || !this._isVacDev(d)) {
+        const pending = this._vacRt.get(d.id)?.livePending;
+        if (pending) pending.gap = true;
+        continue;
+      }
+      if (robots && !robots.has(this._vacEntity(d) || '')) continue;
+      if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) {
+        this._vacRt.delete(d.id);
+        continue;
+      }
+      const selected = this._vacRuntimeSource(d), src = selected.source;
+      const vacEnt = this._vacEntity(d);
+      const vacuumState = this.hass.states[vacEnt || '']?.state;
+      const moving = isVacMoving(vacuumState);
+      const tele = selected.telemetry;
+      let rt = this._vacRt.get(d.id);
+      if (!rt) {
+        rt = { trail: [], paths: [], material: [], version: 0, lastKey: '', lastTs: 0,
+          moving: false, jump: false, gap: false, mapKey: '', endedTs: 0, lastPos: null };
+        this._vacRt.set(d.id, rt);
+      }
+      // Availability retires the active puck, not the last known cleanup or its history.
+      rt.unavailable = !vacuumState || vacuumState === 'unknown' || vacuumState === 'unavailable';
+      if (rt.unavailable) {
+        rt.gap = true;
+        if (rt.livePending) rt.livePending.gap = true;
+        continue;
+      }
+      if (!src) {
+        rt.gap = true;
+        if (rt.livePending) rt.livePending.gap = true;
+        if (!moving && rt.moving) rt.endedTs = Date.now();
+        rt.moving = moving;
+        continue;
+      }
+      const mapKey = src + '|' + selected.mapId;
+      if (mapKey !== rt.mapKey || (moving && !rt.moving
+        && (Date.now() - rt.endedTs < 0 || Date.now() - rt.endedTs > 30 * 60_000))) {
+        rt.trail = []; rt.paths = []; rt.material = []; rt.lastPos = null; rt.lastKey = '';
+        rt.version = -1; rt.sampleCm = undefined; rt.sampleAt = undefined;
+        rt.lastTs = 0; rt.jump = true;
+      }
+      rt.mapKey = mapKey;
+      const wantTrail = this._vacTrailFormat < 2 && vacTrailMode(d.marker?.vacuum) !== 'never';
+      if (moving && !rt.moving) rt.gap = true;
+      if (!moving && rt.moving) {
+        rt.endedTs = Date.now();
+        // the run is over: the puck has arrived everywhere it was going
+        if (wantTrail) recordLocalVacuumPosition(rt, null, Date.now());
+        rt.lastPos = null;
+      }
+      rt.moving = moving;
+      const pos = tele?.pos;
+      const liveGap = rt.gap;
+      if (moving && pos) {
+        const key = pos.x + ':' + pos.y;
+        if (key !== rt.lastKey) {
+          const now = Date.now();
+          // a long silence then a far point = sparse cloud data: teleport, no glide
+          rt.jump = rt.lastTs === 0 || now - rt.lastTs > VAC_TELEPORT_GAP_MS;
+          rt.lastKey = key;
+          rt.lastTs = now;
+          // the trail lags ONE point behind: when a new target arrives the puck
+          // has just (visually) reached the previous one — a segment must never
+          // outrun the icon (owner report 2026-07-31)
+          rt.gap ||= rt.jump;
+          const route = selected.resolution.kind === 'ready' ? selected.resolution.route.calibration : null;
+          const physical = route?.every(Number.isFinite) && Math.abs(route[0] * route[4] - route[1] * route[3]) > 1e-12
+            && Number.isFinite(this._cellCm) && this._cellCm > 0
+            ? applyAffine(route, pos.x, pos.y).map((v) => v * this._cellCm / this._gridPitch) as VacPt : undefined;
+          if (wantTrail) recordLocalVacuumPosition(rt, [pos.x, pos.y], now, physical);
+          rt.gap = false;
+          rt.lastPos = [pos.x, pos.y];
+        }
+      }
+      const live = this._vacSrvTrails[d.id]?.current?.live_tail;
+      const route = selected.resolution.kind === 'ready' ? selected.resolution.route : null;
+      const matrix = route?.calibration;
+      const physical = pos && matrix && matrix.every(Number.isFinite)
+        ? applyAffine(matrix, pos.x, pos.y).map(v => v * this._cellCm / this._gridPitch) as VacPt : undefined;
+      const owner = JSON.stringify([src, vacEnt, selected.mapId, route?.id, matrix, this._cellCm,
+        this._liveSyncGeneration, this.hass.user?.id]);
+      rt.livePending = recordVacuumLivePosition(rt.livePending, live, owner,
+        moving && pos ? [pos.x, pos.y] : null, Date.parse(this.hass.states[src]?.last_updated ?? ''),
+        // Animation snaps after sparse telemetry are not evidence of a route gap.
+        // The live recorder separately checks physical jumps, context and availability.
+        liveGap, physical);
+    }
+  }
+
+  /**
+   * HP-1540-01: an auto-discovered vacuum has NO config marker until the first
+   * general Save of its dialog, yet the «Живая позиция» section is already
+   * interactive. Every vacuum handler used to `cfg.markers.find(...)` and
+   * silently no-op without one — auto-calibration even toasted success while
+   * saving nothing. Materialise a minimal marker (same id/binding the dialog
+   * Save would produce — see _saveMarker/markerIdForBinding) before any
+   * vacuum write, so the write has somewhere real to land.
+   */
+  private _vacEnsureMarker(d: DevItem): Marker | null {
+    const cfg = this._serverCfg;
+    if (!cfg) return null;
+    cfg.markers = cfg.markers || [];
+    const existing = cfg.markers.find((x: Marker) => x.id === d.id);
+    if (existing) return existing;
+    if ((d.bindingKind !== 'device' && d.bindingKind !== 'entity') || !d.bindingRef) return null;
+    const m: Marker = {
+      id: d.id,
+      binding: d.bindingKind + ':' + d.bindingRef,
+      space: d.space || null,
+      area: d.area || null,
+      // explicit like _saveMarker: a marker of any kind tells the seeder
+      // "the user decided" (docs/FILTERING.md)
+      hidden: d.hidden ? true : false,
+    };
+    cfg.markers.push(m);
+    return m;
+  }
+
+  /**
+   * The active-map id. The camera rarely names its map; Dreame keeps the
+   * human-readable one on the vacuum entity (selected_map, verified against a
+   * live X50 Master) — without this both floors would share one matrix.
+   */
+  /**
+   * #358: map-id resolution belongs to the eager View card — it runs inside
+   * willUpdate for every vacuum with telemetry, and the #337 stub killed the
+   * whole Lit update cycle on a cold tab. Same move as #357: the card owns
+   * the implementation, the editor runtime delegates back.
+   */
+  public _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this._planHass): string {
+    // HP-1541-01: nullish, not truthy — selected_map: 0 is a real map id and
+    // must equal what trails.py resolve_map_id stores server-side.
+    const ve = this._vacEntity(d);
+    const sel = ve ? planHass?.states?.[ve]?.attributes?.selected_map : null;
+    return vacMapIdWithFallback(tele.mapId, sel);
+  }
+
+  /** The map id an exact source reports right now, or undefined if silent. */
+  public _vacObservedMapId(d: DevItem, source: string, planHass = this._planHass): string | undefined {
+    if (!ecovacsSourceAllowed(planHass, source, this._vacEntity(d))) return undefined;
+    const state = planHass?.states?.[source], status = this._vacCandidateStatus(source, null, planHass);
+    if (!state || state.state === 'unknown' || state.state === 'unavailable'
+      || (status !== 'ok' && status !== 'unsupported')) return undefined;
+    return this._vacMapId(d, { mapId: vacMapIdFromAttrs(state.attributes || {}) }, planHass);
+  }
+
+  /** «Настроить автоматически»: robot rooms ↔ plan rooms by name. */
+  private _vacAutoCalibrate(d: DevItem): Promise<void> {
+    return this._editorRuntimeOrThrow()._vacAutoCalibrate(d);
+  }
+
+  private _vacApplyCalibrationProposal(manual: boolean): Promise<void> {
+    return this._editorRuntimeOrThrow()._vacApplyCalibrationProposal(manual);
+  }
+
+  /** «Подогнать вручную»: open the fit overlay and leave the dialog. */
+  private _vacStartFit(d: DevItem): Promise<void> {
+    return this._editorRuntimeOrThrow()._vacStartFit(d);
+  }
+
+  private _vacFitSave(): Promise<void> {
+    return this._editorRuntimeOrThrow()._vacFitSave();
+  }
+
+  /** Rotate/mirror around the ghost centre so the map does not fly away. */
+  private _vacFitTurn(patch: Partial<FitParams>): void {
+    return this._editorRuntimeOrThrow()._vacFitTurn(patch);
+  }
+
+  /** The translucent robot map over the plan while fitting. */
+  private _renderVacFit(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
+    if (!this._editorRuntime) return nothing;
+    return this._editorRuntimeOrThrow()._renderVacFit(view);
+  }
+
+  /** Every frame: glue the growing tip segment to the animated puck centre. */
+  private _vacRafLoop(): void {
+    this._vacRaf = requestAnimationFrame(() => {
+      this._vacRaf = 0;
+      if (!this.isConnected || this.ownerDocument.visibilityState === 'hidden'
+        || !syncVacuumTips(this.renderRoot)) return;
+      this._vacRafLoop();
+    });
+  }
+
+  /** One bounded current/previous trail serializer for flat and Iso surfaces. */
+  private _vacTrailDiagnostics(device: DevItem): VacuumTrailDiagnostic {
+    return diagnoseVacuumTrail(this as unknown as HouseplanEditorHostPort, device);
+  }
+
+  private _vacTrailPathD(path: VacPath, matrix: Affine, budget: number): VacuumSvgFrame {
+    return vacuumTrailSvg(this._vacGeometryCache, path, matrix, this._cellCm / this._gridPitch, budget);
+  }
+
+  /** Puck + trail for every live vacuum of the space. */
+  /**
+   * Live overlays for every robot whose ACTIVE map routes into this space.
+   *
+   * The device list is deliberately not the space-filtered one: the dock keeps
+   * living in `marker.space`, but the puck and the trails belong to the space
+   * of the active route, which is the whole point of #162.
+   */
+  private _renderVacuums(devs: readonly DevItem[], view: FrameRect, spaceId: string,
+    perspectiveSize: readonly [number, number]): TemplateResult | typeof nothing {
+    if (this._markup || this._mode === 'decor') return nothing;
+    const viewKey = this._space + '|' + view.x + '|' + view.y + '|' + view.w + '|' + view.h;
+    const jumpAll = this._vacJumpOnce || viewKey !== this._vacViewKey;
+    this._vacViewKey = viewKey;
+    this._vacJumpOnce = false;
+    const pucks: TemplateResult[] = [];
+    const trails: TemplateResult[] = [];
+    const previousRuns: Array<{ path: VacPath; matrix: Affine; id: string; entity: string | null; style: string }> = [];
+    let trailBudget = VAC_RENDER_POINT_BUDGET;
+    let hasTips = false;
+    for (const d of devs) {
+      if (d.hidden || !this._isVacDev(d)) continue;
+      const trailStyle = vacuumTrailCss(previewVacuumTrailStyle(d.id, d.marker?.vacuum, this._markerDialog));
+      if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) continue;
+      const fact = this._renderDeviceSnapshot?.facts.get(`vacuum:${d.id}`) as any;
+      const selected = fact ?? this._vacRuntimeSource(d, this._renderPlanHass);
+      const { telemetry: tele, routes, resolution } = selected;
+      if (d.marker?.vacuum?.live === false) continue;
+      const srv0 = fact?.server ?? this._vacSrvTrails[d.id];
+      const plan = planVacuumOverlay({
+        resolution, routes, renderSpace: spaceId,
+        rootSource: d.marker?.vacuum?.source ?? null,
+        serverCurrent: srv0?.current ?? null,
+        serverPrevious: srv0?.previous ?? null,
+        explicitRoutes: Array.isArray(d.marker?.vacuum?.map_routes),
+      });
+      const history = this._vacHistory.markerId === d.id && this._vacHistory.applicable ? this._vacHistory.shown : null;
+      if (history?.route.calibration) {
+        const frame = this._vacTrailPathD(history.paths, history.route.calibration, trailBudget);
+        trailBudget -= frame.count;
+        this._vacHistory.paint(history, !!frame.d, frame.limited);
+        if (frame.d) trails.push(svg`<path data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="history" data-vacuum-owner=${d.id} style=${trailStyle} class="core" d=${frame.d}></path>`);
+      }
+      if (!plan.live && !plan.previous) continue;
+      const matrix = plan.live;
+      const rt = fact?.runtime ?? this._vacRt.get(d.id);
+      const moving = rt?.moving ?? false;
+      const active = moving && !rt?.unavailable;
+      const tmode = vacTrailMode(d.marker?.vacuum);
+      // owner 2026-07-31: hide when the cleanup is over (default), unless the
+      // mode says always; the previous run only ever shows in 'always'
+      const showCur = tmode === 'always' || (tmode === 'cleaning' && moving);
+      const srv = srv0;
+      const srvCur = plan.currentRunMatches ? srv?.current ?? null : null;
+      const srvPrev = plan.previous ? srv?.previous ?? null : null;
+      // the PREVIOUS run stays visible even at rest: users compare where the
+      // robot has been against where it has not (owner call 2026-07-31)
+      if (!history && tmode === 'always' && srvPrev && plan.previous) {
+        previousRuns.push({ path: normalizeVacPath(srvPrev.path_format === 2 ? srvPrev.paths : srvPrev.points), matrix: plan.previous, id: d.id, entity: this._vacEntity(d), style: trailStyle });
+      }
+      // One arbitration authority: integration multi-subpath → server run →
+      // local runtime. Only drawable segments participate.
+      if (!history && showCur && matrix) {
+        const { current, path: raw, frame } = currentVacuumTrailFrame({ telemetry: tele, server: srvCur,
+          local: rt?.material ?? rt?.trail ?? [], serverFormat: this._vacTrailFormat, moving: active, matrix,
+          livePending: rt?.livePending,
+          cache: this._vacGeometryCache, cmPerUnit: this._cellCm / this._gridPitch, budget: trailBudget });
+        if (raw.length) {
+          trailBudget -= frame.count;
+          const pathD = frame.d;
+          // A single SVG path with several M commands keeps gaps literal.
+          const pieces: unknown[] = [];
+          if (pathD) pieces.push(svg`<path data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="current" data-vacuum-owner=${d.id} style=${trailStyle} class="core" d="${pathD}"></path>`);
+          const last = raw[raw.length - 1];
+          if (active && current.allowTip && (!current.native || current.hybrid) && (!frame.limited || current.hybrid) && last?.length >= (current.hybrid ? 1 : 2)) {
+            hasTips = true;
+            const anchor = last[last.length - 1];
+            const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
+            const point = [ax, ay];
+            const a1 = point[0].toFixed(1), a2 = point[1].toFixed(1);
+            pieces.push(svg`<line data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="tip" data-vacuum-owner=${d.id} style=${trailStyle} class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
+          }
+          trails.push(current.hybrid ? svg`<g class="hybrid" style=${trailStyle}>${pieces}</g>` : svg`${pieces}`);
+        }
+      }
+      if (!active || !tele?.pos || !matrix) continue;
+      const [cx, cy] = applyAffine(matrix, tele.pos.x, tele.pos.y);
+      const point = [cx, cy];
+      const [left, top] = this._framePercent(point, view);
+      const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
+      const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
+      pucks.push(html`<div
+        data-hp="vacuum-puck" data-entity=${this._vacEntity(d)} data-mid="${d.id}"
+        class="vacpuck ${deviceThemeClass(this._renderPlanHass)} ${rt?.jump || jumpAll ? 'jump' : ''} ${stale ? 'stale' : ''}"
+        style="left:${left}%;top:${top}%"
+        title=${d.name}
+        @click=${(e: Event) => { e.stopPropagation(); const ve = this._vacEntity(d); if (ve) this._openMoreInfo(ve); }}>
+        <ha-icon .icon=${icon}></ha-icon>
+      </div>`);
+    }
+    for (const previous of previousRuns) {
+      const frame = this._vacTrailPathD(previous.path, previous.matrix, trailBudget);
+      trailBudget -= frame.count;
+      if (frame.d) trails.unshift(svg`<g class="prev" data-hp="vacuum-trail-segment" data-entity=${previous.entity} data-kind="previous" data-vacuum-owner=${previous.id} style=${previous.style}><path class="core" d="${frame.d}"></path></g>`);
+    }
+    if (pucks.length && hasTips && this.isConnected && this.ownerDocument.visibilityState !== 'hidden') {
+      if (!this._vacRaf) this._vacRafLoop();
+    } else if (this._vacRaf) {
+      cancelAnimationFrame(this._vacRaf); this._vacRaf = 0;
+    }
+    if (!pucks.length && !trails.length) return nothing;
+    const floor = this._isoFloorCamera;
+    const trailInk = svg`<g data-hp-plan-rotation-frame transform=${this._floorTransform}>${trails}</g>`;
+    return html`
+      ${trails.length ? floor?.perspective ? renderIsoPerspectiveFloor(floor,trailInk,view,
+        perspectiveSize,0,'vacuum') : svg`<svg class="vactrail" data-hp="vacuum-trail"
+        data-hp-live-inherited-scene="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trailInk}</svg>` : nothing}
+      ${pucks}`;
+  }
+
+  private _renderDevice(
+    d: DevItem,
+    view: { x: number; y: number; w: number; h: number },
+    contactBaseDiameter: number,
+    showLqi: import('./signal-visibility').SignalVisibility = true,
+    isoPlacement?: IsoOverlayPlacement,
+  ): TemplateResult {
+    const resolved = this._devicePresentation(d, showLqi);
+    const effectiveDiameter = this._deviceContacts?.diameter(d.id, this._pos(d, false));
+    const requestedDiameter = contactBaseDiameter * resolved.scale;
+    const limitedSize = effectiveDiameter !== undefined && Math.abs(effectiveDiameter - requestedDiameter) > 1e-6
+      ? (effectiveDiameter / view.w * 100).toFixed(3) : null;
+    return html`${guard([this._modeSceneRevision, resolved, limitedSize,
+      d.id, d.name, d.primary, d.area, d.virtual, d.hidden, d.userHidden, d.bindingStatus?.kind,
+      ...(isoPlacement ? [view.x, view.y, view.w, view.h] : []),
+      showLqi, isoPlacement, isoPlacement?.wallMask, this._rotation, this._selId,
+      this._mode === 'devices' && this._selId === d.id], () => {
+    this._modeSceneBuilds['device-shells'] = (this._modeSceneBuilds['device-shells'] || 0) + 1;
+    const pos = this._pos(d);
+    const point = isoPlacement
+      ? isoPlacement.visualScene
+      : [pos.x, pos.y];
+    const [left, top] = this._framePercent(point, view, !!isoPlacement);
+    const presentation = this._rotation && !(this._isoFloorCamera && ISO_LAB_FLOOR_MARKERS) && typeof d.marker?.angle === 'number'
+      ? { ...resolved, angle: resolved.angle + this._rotation } : resolved;
+    const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
+    if (limitedSize !== null) st.push(`--dev-size:${limitedSize}cqw`);
+    const wallMask = isoPlacement?.wallMask;
+    // A warm remount can paint the same ids at a different size. Reference
+    // this renderer's definitions so Chromium cannot reuse detached SVG masks.
+    const wallMaskId = this._deviceContacts?.wallMaskId(d.id);
+    if (wallMask && wallMaskId) st.push(`--hp-device-wall-mask:url(#${wallMaskId})`);
+    const floorLight = this._isoLightFloors?.has(isoPlacement?.owner?.id ?? (this._isoLightFloors.size ? this._spaceModel()?.rooms.find((r) => this._pointInRoom([pos.x, pos.y], r))?.id : '') ?? '') ? 'iso-floor-light' : '';
+    const disabledReason = presentation.disabledReason;
+    const ghostLabel = presentation.haDisabled
+      ? this._t((`marker.ha_disabled_${disabledReason}`) as any)
+      : d.hidden && d.userHidden ? this._t('marker.hidden_ghost') : d.name;
+    const a11yState = deviceA11yState(presentation);
+    const deviceAriaLabel = deviceAccessibleLabel([
+      ghostLabel,
+      !presentation.haDisabled
+        ? this._t((`marker.state_a11y_${a11yState}`) as I18nKey) : '',
+      presentation.pulse.kind !== 'none'
+        ? this._t((`marker.pulse_a11y_${presentation.pulse.reason}`) as I18nKey) : '',
+      presentation.maintenance ? this._t('device.issues.maintenance_a11y') : '',
+      presentation.attention || '',
+      presentation.valueFullText || presentation.valueText || '',
+      valueBadgeTitle(presentation.valueBadge),
+      presentation.lqiText != null && presentation.lqiBand
+        ? this._t((`marker.lqi_a11y_${presentation.lqiBand}`) as I18nKey, {
+            value: presentation.lqiText,
+          }) : '',
+    ]);
+    /* css-uses {"owner":"HouseplanCard._renderDevice","kind":"class","values":["static-icon","alarm","unavail","power-off","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2"],"reason":"presentationClasses emits this finite semantic state vocabulary"} */
+    return html`<div
+      ${''/* docs/STYLING-HOOKS.md §3: the styling contract. `nothing` on an
+             attribute binding REMOVES the attribute, so a virtual marker has
+             no data-entity at all rather than "undefined". */}
+      data-hp="device"
+      .hpIsoWallMask=${wallMask}
+      data-selected=${String(this._mode === 'devices' && this._selId === d.id)}
+      data-id="${d.id}"
+      data-entity=${d.primary || nothing}
+      data-area=${d.area || nothing}
+      data-binding-status=${presentation.haDisabled ? 'ha-disabled' : d.bindingStatus?.kind || 'active'}
+      data-disabled-reason=${disabledReason ? disabledReason.replace('_', '-') : nothing}
+      data-state=${a11yState}
+      data-lqi-band=${presentation.lqiText != null ? presentation.lqiBand || nothing : nothing}
+      data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'device' : nothing}
+      data-hp-iso-raised=${isoPlacement?.plane === 'raised' ? 'true' : nothing}
+      data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
+      data-hp-iso-occluded=${isoPlacement?.occluded ? 'true' : nothing}
+      data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
+      data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
+      aria-label=${deviceAriaLabel}
+      class="dev ${deviceThemeClass(this._renderPlanHass)} ${presentation.classes.join(' ')} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${presentation.haDisabled ? 'ha-disabled' : ''} ${presentation.valueText != null ? 'valonly' : ''} ${floorLight}"
+      style="${st.join(';')}"
+      @click=${(e: MouseEvent) => this._clickDevice(e, d)}
+      @keydown=${(e: KeyboardEvent) => this._keyDevice(e, d)}
+      @focus=${(e: FocusEvent) => this._showDeviceFocusTip(e, d)}
+      @focusout=${() => this._hideDeviceFocusTip(d.id)}
+      @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
+      @pointerover=${(e: PointerEvent) => {
+        if (this._mode !== 'view' && this._mode !== 'devices') return;
+        if (!this._deferCameraHover(e)) this._showDeviceTip(e, this._deviceForPointerEvent(e, d));
+      }}
+      @pointerleave=${() => { if (!this._cameraGestureActive) this._clearPointerHover(); }}
+      @pointerdown=${(e: PointerEvent) => this._pointerDown(e, d)}
+      @pointermove=${(e: PointerEvent) => {
+        if (this._mode !== 'view' && this._mode !== 'devices') return;
+        if (this._mode === 'view' && this._deferCameraHover(e)) return;
+        const owner = this._pointerMove(e, d);
+        if (owner) this._showDeviceTip(e, owner);
+      }}
+      @pointerup=${(e: PointerEvent) => this._pointerUp(e, d)}
+      @pointercancel=${(e: PointerEvent) => this._pointerCancel(e, d)}
+      @lostpointercapture=${(e: PointerEvent) => this._pointerCancel(e, d)}
+    >
+      ${wallMask ? svg`<svg data-hp-wall-mask-slot width="0" height="0" aria-hidden="true"
+        style="position:absolute;pointer-events:none"></svg>` : nothing}
+      <span class="device-contact-ink" aria-hidden="true"></span>
+      ${guard([presentation, !!isoPlacement, this._newIds.has(d.id), d.userHidden, d.marker?.hidden, ghostLabel, this._config?.language], () => { this._modeSceneBuilds['device-faces'] = (this._modeSceneBuilds['device-faces'] || 0) + 1; return renderDeviceFace(presentation, {
+        surface: 'interactive-plan',
+        occlusionBody: !!isoPlacement,
+        contactInk: false,
+        newDevice: this._newIds.has(d.id),
+        hiddenDevice: d.userHidden ?? d.marker?.hidden === true,
+        newDeviceTitle: this._t('device.new'),
+        disabledTitle: presentation.haDisabled ? ghostLabel : '',
+      }); })}
+      ${this._vacRouteBadge(d)}
+    </div>`;
+    })}`;
+  }
+  /** #780 r1 M1: the value badge of a strip, passive, at its anchor (`_pos`). */
+  private _ledBadge(d: DevItem, view: { x: number; y: number; w: number; h: number }, iso?: IsoOverlayPlacement) {
+    const presentation = this._devicePresentation(d, false);
+    const face = presentation.haDisabled ? nothing : renderDeviceShadowFace(presentation);
+    if (face === nothing) return nothing;
+    const pos = this._pos(d), point = iso?.visualScene ?? [pos.x, pos.y];
+    const [left, top] = this._framePercent(point, view, !!iso);
+    return html`<div class="dev led-badge ${presentation.offline ? 'unavail' : ''} ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
+      style="left:${left}%;top:${top}%">${face}</div>`;
+  }
+
+  /**
+   * The dock says out loud that the moving robot is drawn nowhere (#162).
+   *
+   * Silence would be the worse failure: a plan with no robot on it reads as
+   * "the robot is not cleaning", and the user has no way to learn that a map
+   * simply has no floor assigned.
+   */
+  private _vacRouteBadge(d: DevItem): TemplateResult | typeof nothing {
+    if (!this._isVacDev(d) || d.hidden) return nothing;
+    if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) return nothing;
+    const fact = this._renderDeviceSnapshot?.facts.get(`vacuum:${d.id}`) as
+      { resolution?: VacuumRouteResolution } | undefined;
+    const reason = routeWarningKey(fact?.resolution, this._vacRt.get(d.id)?.moving ?? false);
+    if (!reason) return nothing;
+    const text = this._t(`vac.route_warn_${reason}` as I18nKey);
+    return html`<span class="vacwarn" role="img" aria-label=${text} title=${text}>
+      <ha-icon icon="mdi:alert-outline"></ha-icon></span>`;
+  }
+
+  /** Clean-floor area shown in the room tooltip (same rule as resize labels). */
+  private _roomArea(r: RoomCfg): string | null {
+    const poly = roomPoly(r);
+    if (!poly) return null;
+    const space = this._spaceModel();
+    if (!space) return null;
+    const walls = this._spaceWalls;
+    const floor = walls.length && r.id
+      ? (this._innerRoomContour(space, r.id) || poly)
+      : poly;
+    const clean = this._cleanFloor(r, floor);
+    const cmPerUnit = this._cellCm / this._gridPitch;
+    return formatArea(
+      (clean.area * cmPerUnit * cmPerUnit) / 1e4,
+      this._renderPlanHass?.config?.unit_system?.length === 'mi',
+    );
+  }
+
+  /** Room climate value honouring the tier-3 source override. */
+  private _roomTemp(r: RoomCfg): number | null {
+    const src = r.settings?.temp_source, key = roomClimateKey(this._spaceModel()?.id, r);
+    return src ? sourceValue(this._renderPlanHass, src, 'temp', this._markers)
+      : key ? this._climate().get(key)?.temp ?? null : null;
+  }
+  private _roomHum(r: RoomCfg): number | null {
+    const src = r.settings?.hum_source, key = roomClimateKey(this._spaceModel()?.id, r);
+    return src ? sourceValue(this._renderPlanHass, src, 'hum', this._markers)
+      : key ? this._climate().get(key)?.hum ?? null : null;
+  }
+  private _roomCo2(r: RoomCfg, draft = false): number | null {
+    const source = r.settings?.co2_source, key = roomClimateKey(this._spaceModel()?.id, r);
+    // An unsaved picker choice is not a dependency of the painted plan yet.
+    // Preview against the same active registry without changing the held frame.
+    return source ? sourceValue(draft ? this._planHass : this._renderPlanHass, source, 'co2', this._markers)
+      : key ? this._climate().get(key)?.co2 ?? null : null;
+  }
+
+  // Ключи сравниваются только по ссылке (`===`), значение не читается ни разу.
+  // Поэтому `unknown` для hass точнее любого структурного типа: он и запрещает
+  // случайно воспользоваться содержимым, и не врёт про форму объекта, которую
+  // HA нам не обещает. Правила и маркеры при этом типизированы по-настоящему.
+  private _climateCache: {
+    h: unknown;
+    r: CompiledIconRule[] | undefined;
+    mk: Marker[] | undefined;
+    ex: string[] | undefined;
+    m: Map<string, AreaClimate>;
+  } | null = null;
+
+  /**
+   * Climate for every HA Area and explicitly placed local room, computed ONCE
+   * per hass snapshot (review R2-3, issue #317).
+   * Home Assistant hands out a new `hass` object on every state change, so
+   * identity is exactly the right cache key: fresh states always recompute,
+   * and the 60 rooms of one render share a single registry pass instead of
+   * triggering one each (two, with humidity on).
+   */
+  private _climate(): Map<string, AreaClimate> {
+    // markers are part of the key: ticking "use the device's temperature
+    // sensor" replaces the markers array, so the average recomputes at once
+    const mk = this._serverCfg?.markers;
+    const planHass = this._renderPlanHass;
+    const c = this._climateCache;
+    // #44 r1-M1: the exclusion list is part of the key — saving new Discovery
+    // filters replaces the settings object, and room climate must follow the
+    // new exclusions immediately, not on the next unrelated hass tick. The
+    // STORED array reference is the key (stable across renders); _excluded
+    // itself builds a fresh Set per call when a list is present.
+    const ex = this._settings.exclude_integrations;
+    if (c && c.h === planHass && c.r === this._iconRules && c.mk === mk && c.ex === ex) return c.m;
+    const m = roomClimateMap(planHass, this._iconRules, mk, this._excluded);
+    this._climateCache = { h: planHass, r: this._iconRules, mk, ex, m };
+    return m;
+  }
+
+  private _resetRoomDialogFields(): void {
+    return this._editorRuntimeOrThrow()._resetRoomDialogFields();
+  }
+
+  /** Open the room dialog for an EXISTING room (the gear on its card). */
+  private _openRoomEdit(r: RoomCfg): void {
+    return this._editorRuntimeOrThrow()._openRoomEdit(r);
+  }
+
+  /** Collect the room settings object from the dialog state (null = all inherited). */
+  private _roomSettingsFromDialog(): RoomCfg['settings'] {
+    return this._editorRuntimeOrThrow()._roomSettingsFromDialog();
+  }
+
+  /** Save the room edited via the gear (name, area, tier-3 settings). */
+  private _saveRoomEdit(): Promise<void> {
+    return this._editorRuntimeOrThrow()._saveRoomEdit();
+  }
+
+  /** Saved label position (layout key rl_<roomId>) or the room center. */
+  private _labelPos(r: RoomCfg, spaceId: string): { x: number; y: number } {
+    const saved = this._layout['rl_' + (r.id || '')];
+    if (saved && saved.s === spaceId) return { x: saved.x * NORM_W, y: saved.y * NORM_W };
+    const center = this._roomCenter(r);
+    const grid = this._gridPitch;
+    return {
+      x: clampCanvasR(snapToGrid(center[0], grid)),
+      y: clampCanvasR(snapToGrid(center[1], grid)),
+    };
+  }
+
+  /** Room-name labels are dragged exactly like device icons (same layout store). */
+  private _labelDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._labelDown(ev, r, spaceId);
+  }
+
+  private _labelMove(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._labelMove(ev, r, spaceId);
+  }
+
+  private _labelUp(r: RoomCfg): void {
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._labelUp(r);
+  }
+
+  /** Saved room-card scale (layout key rl_<roomId>, field k), clamped 0.5..3. */
+  private _labelScale(r: RoomCfg): number {
+    const scale = (this._layout['rl_' + (r.id || '')] as any)?.k;
+    return typeof scale === 'number' && Number.isFinite(scale)
+      ? Math.min(3, Math.max(0.5, scale)) : 1;
+  }
+
+  private _rlResizeDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
+    return this._editorRuntimeOrThrow()._rlResizeDown(ev, r, spaceId);
+  }
+
+  private _rlResizeMove(ev: PointerEvent): void {
+    return this._editorRuntimeOrThrow()._rlResizeMove(ev);
+  }
+
+  private _rlResizeUp(): void {
+    return this._editorRuntimeOrThrow()._rlResizeUp();
+  }
+
+  /** The room-settings button: detached from the (movable) label, always at
+   *  the geometric CENTRE of the room, sized at 70% of a device icon and
+   *  therefore zooming with the plan (owner's spec, 2026-07-29). */
+  private _gearPtCache = new WeakMap<number[][], number[]>();
+
+  private _renderRoomGear(
+    r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number },
+  ): TemplateResult | typeof nothing {
+    return this._editorRuntimeOrThrow()._renderRoomGear(r, space, view, this._resize.dragging);
+  }
+
+  private _renderRoomLabel(
+    r: RoomCfg,
+    space: SpaceModel,
+    view: { x: number; y: number; w: number; h: number },
+    disp: SpaceDisplay,
+    isoPlacement?: IsoOverlayPlacement,
+    shadow?: IsoFloorShadow,
+  ): TemplateResult | typeof nothing {
+    // audit/feedback: rooms without a name still need their gear in the Plan
+    // editor — that is where you name them (field report, 2026-07-27)
+    if (!r.name && !this._markup) return nothing;
+    const p = this._labelPos(r, space.id);
+    const point = isoPlacement ? isoPlacement.visualScene : [p.x, p.y];
+    const [left, top] = this._framePercent(point, view, !!isoPlacement);
+    const nameColor = this._roomDialog && this._roomEditId === r.id
+      ? roomNameColorOf(disp.nameColor, { settings: { name_color: this._roomNameColor } })
+      : roomNameColorOf(disp.nameColor, r);
+    const op = nameColor.a;
+    const k = this._labelScale(r);
+    // Optional metrics row. Temperature/humidity and light sources may use an
+    // explicit room_id even when this room has no HA Area. LQI remains area-only.
+    const rows: TemplateResult[] = [];
+    const shadowMetrics: string[] = [];
+    const addMetric = (value: string, paint: TemplateResult) => {
+      if (shadow) shadowMetrics.push(value);
+      else rows.push(paint);
+    };
+    if (disp.labelTemp || disp.labelHum || disp.labelCo2 || (disp.labelLqi && r.area) || disp.labelLight) {
+      if (disp.labelTemp) {
+        const t = this._roomTemp(r);
+        if (t != null) addMetric(`${t}°`, html`<span class="rlm"><ha-icon icon="mdi:thermometer"></ha-icon>${t}°</span>`);
+      }
+      if (disp.labelHum) {
+        const hm = this._roomHum(r);
+        if (hm != null) addMetric(`${hm}%`, html`<span class="rlm"><ha-icon icon="mdi:water-percent"></ha-icon>${hm}%</span>`);
+      }
+      if (disp.labelCo2) {
+        const co2 = this._roomCo2(r);
+        if (co2 !== null) addMetric(roomCo2Text(co2), html`<span class="rlm"
+          aria-label=${this._t('roomcard.co2_label', { value: co2 })}
+          ><ha-icon icon="mdi:molecule-co2"></ha-icon>${roomCo2Text(co2)}</span>`);
+      }
+      if (disp.labelLqi && r.area) {
+        const l = this._roomLqi(r.area);
+        if (l != null) addMetric(String(l), html`<span class="rlm"><ha-icon icon="mdi:zigbee"></ha-icon>${l}</span>`);
+      }
+      if (disp.labelLight) {
+        const ls = resolvedLightStats(resolvedLightSources(
+          this._renderPlanHass, this._renderDevices, r, this._virtualLights,
+        ));
+        if (ls) {
+          const txt = ls.on === 0
+            ? this._t('roomcard.light_off')
+            : ls.on === ls.total
+              ? this._t('roomcard.light_on')
+              : this._t('roomcard.light_partial', { on: ls.on, total: ls.total });
+          addMetric(txt, html`<span class="rlm ${ls.on ? 'lit' : ''}"><ha-icon icon=${ls.on ? 'mdi:lightbulb-on' : 'mdi:lightbulb-outline'}></ha-icon>${txt}</span>`);
+        }
+      }
+    }
+    // Plan keeps the same name-row geometry as the other modes, but the Area
+    // icon remains part of the draggable label instead of becoming a link.
+    const areaAffordance = roomAreaAffordance({ admin: this.hass?.user?.is_admin === true,
+      writer: this._canEdit, kiosk: this._kiosk, plan: this._markup, view: this._mode === 'view' });
+    const showAreaLink = this.planHost.capabilities.haAreas && !!r.area && areaAffordance.visible;
+    const areaLinkInteractive = areaAffordance.interactive;
+    const separateAreaAction = showAreaLink && areaLinkInteractive;
+    const areaName = r.area && this.hass?.areas?.[r.area]?.name || r.name || r.area || '';
+    const labelGeometry = `left:${left}%;top:${top}%;--rl-scale:${k};--rl-space:${disp.cardNameScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale) * disp.cardLabelScale / disp.cardNameScale}`;
+    if (shadow) {
+      if (!r.name) return nothing;
+      const font = shadow.diameter * k * this._effectiveKioskScale.font;
+      const anchor = isoPlacement || { floorScene: turnPoint([p.x, p.y], this._rotation) };
+      return renderIsoLabelFloorShadow(r.id || r.name, anchor, shadow.camera, r.name, shadowMetrics,
+        font * disp.cardNameScale * clampScale(r.settings?.name_scale),
+        font * .75 * disp.cardLabelScale * clampScale(r.settings?.label_scale), op);
+    }
+    return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
+      data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
+      data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'room-label' : nothing}
+      data-hp-iso-raised=${isoPlacement?.plane === 'raised' ? 'true' : nothing}
+      data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
+      data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
+      data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
+      role=${this._mode === 'view' && !separateAreaAction ? 'button' : nothing}
+      tabindex=${this._mode === 'view' && !separateAreaAction ? '0' : nothing}
+      aria-label=${this._mode === 'view' && !separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
+      style="${labelGeometry};color:${nameColor.c};opacity:${op}"
+      @keydown=${this._mode === 'view' && !separateAreaAction && r.id
+        ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
+      @pointerdown=${this._markup
+        ? (e: PointerEvent) => this._labelDown(e, r, space.id) : nothing}
+      @pointermove=${this._markup
+        ? (e: PointerEvent) => this._labelMove(e, r, space.id) : nothing}
+      @pointerup=${this._markup ? () => this._labelUp(r) : nothing}
+      @pointercancel=${this._markup ? () => this._labelUp(r) : nothing}
+    ><span class="rlname"><span class="rlfit"
+        data-id=${separateAreaAction && r.id ? r.id : nothing}
+        role=${separateAreaAction ? 'button' : nothing}
+        tabindex=${separateAreaAction ? '0' : nothing}
+        aria-label=${separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
+        @keydown=${separateAreaAction && r.id ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
+      >${r.name || (this._markup ? this._t('room.unnamed') : '')}</span>${showAreaLink
+        ? separateAreaAction
+          ? html`<button type="button" class="rlgo rlarea" data-hp="room-area-link"
+              aria-label=${this._t('room.open_area_named', { name: areaName })}
+              title=${this._t('room.open_area')}
+              @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}
+              @keydown=${(e: KeyboardEvent) => e.stopPropagation()}
+              @keyup=${(e: KeyboardEvent) => e.stopPropagation()}
+              @dblclick=${(e: Event) => e.stopPropagation()}
+              @pointerdown=${(e: Event) => e.stopPropagation()}
+            ><ha-icon icon="mdi:open-in-new"></ha-icon></button>`
+          : html`<ha-icon class="rlgo" icon="mdi:open-in-new"></ha-icon>`
+        : nothing}</span>
+      ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
+      ${this._editorRuntime && this._canEdit && !this._kiosk
+        ? ['tl', 'tr', 'bl', 'br'].map(
+            (c) => html`<span class="rlhandle ${c}"
+              @pointerdown=${(e: PointerEvent) => this._rlResizeDown(e, r, space.id)}
+              @pointermove=${(e: PointerEvent) => this._rlResizeMove(e)}
+              @pointerup=${() => this._rlResizeUp()}
+              @pointercancel=${() => this._rlResizeUp()}></span>`,
+          )
+        : nothing}
+    </div>`;
+  }
+  /** Pointer-owned HTML painted by the live child renderer, outside the host Lit tree. */
+  public _renderLiveEditorMeasurements(value: unknown): TemplateResult | typeof nothing {
+    const view = value as { x: number; y: number; w: number; h: number };
+    const decorMeasure = this._decorMeasure, bdLive = this._editorRuntime?.backdropGesture.live,
+      furnLive = this._editorRuntime?._furnLive() ?? null;
+    return html`
+      ${this._editorRuntime?.wallDimensions.render(view)??nothing}
+      ${this._measureAnchor
+        ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderMeasureLabel(view)}</div>`
+        : nothing}
+      ${this._resize?.liveLabels
+        ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._resize.liveLabels.map((l) => html`<div
+            class="measurelabel ${l.kind === 'area' ? 'rszarea' : 'rszlength'}"
+            data-hp=${l.kind === 'area' ? 'resize-area-label' : 'resize-length-label'} data-room=${l.kind === 'area' ? l.roomId : nothing} data-side=${l.kind === 'area' ? l.placement.side : nothing}
+            style="${this._frameStyle([l.x, l.y], view)};${l.kind === 'area'
+              ? `--rsz-label-x:${l.placement.offsetXPx.toFixed(2)}px;--rsz-label-y:${l.placement.offsetYPx.toFixed(2)}px;--rsz-label-tangent:${l.placement.tangentOffsetPx.toFixed(2)}px`
+              : ''}">${l.text}</div>`)}</div>`
+        : nothing}
+      ${decorMeasure
+        ? html`<div class="measurelayer" data-hp-live-layer="camera"><div class="measurelabel dmeasure ${decorMeasure.on45 ? 'on45' : ''}"
+            style="${this._frameStyle([decorMeasure.x, decorMeasure.y], view)}">${decorMeasure.text}</div></div>`
+        : nothing}
+      ${furnLive
+        ? html`<div class="measurelayer" data-hp-live-layer="camera">${furnLive.map((l) => html`<div class="measurelabel furnmeasure"
+            style="${this._frameStyle([l.x, l.y], view)}">${l.text}</div>`)}</div>`
+        : nothing}
+      ${bdLive
+        ? html`<div class="measurelayer" data-hp-live-layer="camera"><div class="measurelabel bdmeasure"
+            style="${this._frameStyle([bdLive.x, bdLive.y], view)}">${bdLive.text}</div></div>`
+        : nothing}
+    `;
+  }
+
+  /** Where the live measurement starts: the last outline point, or the first split point. */
+  private get _measureAnchor(): number[] | null {
+    if (!this._markup || !this._cursorPt) return null;
+    if (this._tool === 'draw' && this._path.length && !this._contourClosed)
+      return this._path[this._path.length - 1];
+    if (this._tool === 'split' && this._splitSel?.pts?.length)
+      return this._splitSel.pts[this._splitSel.pts.length - 1];
+    return null;
+  }
+
+  /** Length badge that follows the cursor while drawing a segment or a cut. */
+  private _renderMeasureLabel(view: { x: number; y: number; w: number; h: number }): TemplateResult {
+    const a = this._measureAnchor!;
+    const b = this._cursorPt!;
+    const [left, top] = this._framePercent(b, view);
+    // angle badge: length · angle, both green when the angle is a 45° multiple
+    const deg = segmentAngle(a, b);
+    const shown = Math.round(deg * 10) / 10;
+    const on45 = isExact45Vector(a, b, this._gridPitch * 0.0002);
+    return html`<div class="measurelabel ${on45 ? 'on45' : ''}" style="left:${left}%;top:${top}%">
+      ${this._tool==='draw'?'':`${this._fmtLen(a,b)} · `}${shown}°</div>`;
+  }
+
+  /**
+   * Live size badge for the shape being drawn in the BACKGROUND (decor)
+   * editor — owner 2026-08-04: «в редакторе подложки у линий писать длину,
+   * как при рисовании комнат в редакторе плана».
+   *
+   * Lines retain only the native angle/45° badge here; their physical length
+   * is painted by the shared screen-space dimension layer (#1398). The
+   * only difference is WHERE it sits: a wall badge follows the cursor
+   * because the cursor is the wall's free end, while a decor line is pulled
+   * out by both ends at once, so its angle badge rides the MIDDLE of the segment
+   * (owner: «плашка на середине линии»).
+   *
+   * Rectangles report «W × H» plus area; ellipses report one radius for a
+   * circle or both radii otherwise. A draft that has not moved yet (the
+   * pointerdown before the drag) shows nothing — a «0» badge under the cursor
+   * is noise, not a measurement.
+   */
+  private get _decorMeasure(): { x: number; y: number; text: string; on45: boolean } | null {
+    const d = this._decorDraft;
+    if (!d || this._mode !== 'decor') return null;
+    const [ax, ay] = d.a;
+    const [bx, by] = d.b;
+    if (Math.abs(ax - bx) < 1e-6 && Math.abs(ay - by) < 1e-6) return null;
+    const x = (ax + bx) / 2;
+    const y = (ay + by) / 2;
+    if (d.kind === 'line') {
+      const deg = segmentAngle(d.a, d.b);
+      return { x, y, on45: is45(deg),
+        text: `${Math.round(deg * 10) / 10}°` };
+    }
+    const wText = this._fmtLen([ax, ay], [bx, ay]);
+    const hText = this._fmtLen([bx, ay], [bx, by]);
+    if (d.kind === 'ellipse') {
+      const rx = this._fmtLen([0, 0], [Math.abs(bx - ax) / 2, 0]);
+      const ry = this._fmtLen([0, 0], [0, Math.abs(by - ay) / 2]);
+      const circle = Math.abs(Math.abs(bx - ax) - Math.abs(by - ay)) < 1e-6;
+      return { x, y, on45: false, text: circle ? `R ${rx}` : `Rx ${rx} × Ry ${ry}` };
+    }
+    const area = (decorUnitsToCm(Math.abs(bx - ax), this._cellCm, this._gridPitch)
+      * decorUnitsToCm(Math.abs(by - ay), this._cellCm, this._gridPitch)) / 10000;
+    return { x, y, on45: false,
+      text: `${wText} × ${hText} · ${formatArea(area, this._imperial)}` };
+  }
+
+  // ================= alignment guides (smart guides) =================
+
+  /** The point being drawn/dragged right now, or null (per editor context). */
+  private get _alignPoint(): number[] | null {
+    if (this._markup) {
+      if (this._tool === 'draw' && this._path.length && !this._contourClosed && this._cursorPt)
+        return this._cursorPt;
+      if (this._tool === 'split' && this._splitSel?.pts?.length && this._cursorPt)
+        return this._cursorPt;
+      if (this._drag?.id.startsWith('rl_') && this._drag.moved) {
+        const roomId = this._drag.id.slice(3);
+        const room = this._spaceModel()?.rooms.find((r) => r.id === roomId);
+        return room ? (() => { const p = this._labelPos(room, this._space); return [p.x, p.y]; })() : null;
+      }
+      return null;
+    }
+    if (this._mode === 'devices' && this._deviceDrag?.moved) {
+      const d = this._devices.find((x) => x.id === this._deviceDrag!.id);
+      // #521: live, not `_pos` — during a gesture `_pos` answers from the last
+      // settled snapshot, i.e. where the marker stood before the drag began.
+      return d ? (() => { const p = this._livePos(d); return [p.x, p.y]; })() : null;
+    }
+    if (this._mode === 'decor') {
+      if (this._decorDraft) return this._decorDraft.b;
+      if (this._decorMove) {
+        const sh = this._decorList.find((x) => x.id === this._decorMove!.id);
+        if (!sh) return null;
+        const W = NORM_W, H = this._decorH;
+        if (sh.kind === 'line') return [sh.x1 * W, sh.y1 * H];
+        return [sh.x * W, sh.y * H];
+      }
+      return null;
+    }
+    return null;
+  }
+
+  /** Alignment candidates for the current context (owner's matrix). */
+  private _alignCandidates(): number[][] {
+    return this._editorRuntimeOrThrow()._alignCandidates();
+  }
+
+  // #521: soft, because the live gesture painter calls this too — an exception
+  // inside a `requestAnimationFrame` paint would take the gesture with it.
+  private _renderAlignGuides(): TemplateResult | typeof nothing {
+    return this._editorRuntime?._renderAlignGuides() ?? nothing;
+  }
+
+  /** Perpendicular dashed tick through the wall's center while a dragged opening
+   * sits exactly in the middle — same look as the alignment guides. Length is
+   * about the wall stroke (2.5) × 6 to each side. */
+  private _renderOpeningCenterTick(gd: { x: number; y: number; angle: number }): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderOpeningCenterTick(gd);
+  }
+
+  private _roomCenter(r: RoomCfg): number[] {
+    if (r.poly) {
+      const n = r.poly.length;
+      return [r.poly.reduce((a, p) => a + p[0], 0) / n, r.poly.reduce((a, p) => a + p[1], 0) / n];
+    }
+    return [r.x! + r.w! / 2, r.y! + Math.min(r.w!, r.h!) * 0.1];
+  }
+
+  /** Live state of an opening's contact, 0..1 drawn amount. */
+  private _openingAmt(o: OpeningCfg): number {
+    return resolvedOpeningAmount(o, eid => this._renderOpeningEntityAvailable(eid)
+      ? this._renderPlanHass.states[eid] : null);
+  }
+
+  /** Drawn leaves and optical barriers consume the same authoritative state. */
+  private _openingAmtForProjection(opening: OpeningCfg, _projection: 'iso' | 'flat'): number {
+    return this._openingAmt(opening);
+  }
+
+  /** Deleted bindings are unavailable to every plan-level consumer. */
+  private _planEntityAvailable(eid: string | null | undefined): boolean {
+    if (!eid) return false;
+    if (isRemovedPlanEntity(this._fullRegistryHass, eid, removedPlanBindings(this._markers))) return false;
+    return this._bindingStatus('entity:' + eid).kind === 'active';
+  }
+
+  /** Availability from the same immutable projection as the painted frame. */
+  private _renderEntityAvailable(eid: string | null | undefined): boolean {
+    if (!eid) return false;
+    if (isRemovedPlanEntity(this._renderPlanHass, eid, removedPlanBindings(this._markers))) return false;
+    return !!this._renderPlanHass.entities?.[eid] && !!this._renderPlanHass.states?.[eid];
+  }
+
+  /** Exact opening references ignore marker tombstones but keep HA status. */
+  private _openingEntityAvailable(eid: string | null | undefined): boolean {
+    return openingEntityAvailable(this._planHass, eid, this._haRegistry);
+  }
+
+  /** Opening availability from the same immutable projection as the frame. */
+  private _renderOpeningEntityAvailable(eid: string | null | undefined): boolean {
+    return renderOpeningEntityAvailable(this._renderPlanHass, eid);
+  }
+
+  /**
+   * Architectural openings, drawn in plan (SVG) coordinates so they scale and
+   * pan with the plan. A passage deliberately contributes no visible symbol;
+   * its editor hitbox is still supplied by the shared metrics below.
+   */
+  private _renderOpeningPlacementPreview(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderOpeningPlacementPreview();
+  }
+
+  private _renderOpenings(disp: SpaceDisplay, onlyIds?: readonly string[], interactive = true, staticOnly = false): TemplateResult {
+    const items = this._openingsR.filter(item => (!onlyIds || onlyIds.includes(item.id)) && (!staticOnly || !item.orphanReason));
+    if (!items.length) return svg``;
+    const space = this._spaceModel();
+    if (!space) return svg``;
+    const base = disp.color;
+    const walls = this._spaceWalls;
+    const openCuts = this._openCuts();
+    const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
+    return svg`<g class="openinglayer">${keyed(space.id, repeat(items, (o) => o.id, (o) => {
+      if (o.orphanReason) return svg`<g class="opening orphan" data-hp="opening-orphan"
+        data-id=${o.id} role="button" tabindex="0"
+        aria-label=${this._t('opening.partition_orphan')}
+        transform="translate(${o.rx} ${o.ry})"
+        @click=${(event: MouseEvent) => { event.stopPropagation();
+          const properties = this._editorRuntime?.properties;
+          if (this._mode === 'plan' && this._tool === 'select' && properties?.wide) {
+            if (properties.select('opening', o.id) && event.detail >= 2) this._editOpening(o);
+          } else this._editOpening(o);
+        }}>
+        <circle r=${gridVisualUnits(this._gridPitch * 0.55, this._cellCm)}></circle>
+        <text text-anchor="middle" dominant-baseline="central">!</text>
+      </g>`;
+      const amt = staticOnly ? resolvedOpeningAmount(o, () => null) : this._openingAmt(o);
+      const active = !staticOnly && amt > 0 && !!o.contact && this._renderOpeningEntityAvailable(o.contact);
+      const tone = active ? 'var(--hp-open)' : base;
+      // A normal door/window uses the selected room-side face. A gate's
+      // architectural symbol sits and opens on the opposite (exterior) face;
+      // flip_v still lets the user reverse that side where a shared wall makes
+      // "outside" inherently ambiguous.
+      const faceFlipV = o.type === 'gate' ? !o.flip_v : o.flip_v;
+      // Resolve the side even with zero-thickness walls for gates, while
+      // preserving the cheap classic path for ordinary line-plan openings.
+      const face = o.partitionHost || walls.length || o.type === 'gate'
+        ? this._openingFace(o, openingWallIndex, !!faceFlipV)
+        : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
+      const visibleSpec: OpeningVisibleSpec = {
+        type: o.type,
+        visual: resolveOpeningVisual(o, eid => !staticOnly && this._renderOpeningEntityAvailable(eid)
+          ? this._renderPlanHass.states[eid] : null, amt),
+        handleSides: openingWindowHandleSides(o, space.rooms, face.cm, this._cellCm, this._gridPitch),
+        length: o.rlen,
+        angle: o.angle,
+        amount: amt,
+        flipH: !!o.flip_h,
+        flipV: !!o.flip_v,
+        base,
+        tone,
+        sensorActive: active,
+        sensorDriven: !staticOnly && !!o.contact,
+        swingDepth: openingSwingDepth(o, openingWallIndex),
+        cellCm: this._cellCm,
+        gridPitch: this._gridPitch,
+        face,
+      };
+      const { half, outlineHalf, hitHalf } = openingVisibleMetrics(visibleSpec);
+      const outlinePad = gridVisualUnits(10, this._cellCm);
+      const hitPad = gridVisualUnits(12, this._cellCm);
+      return svg`<g class="opening" data-hp="opening" data-id="${o.id}" data-kind="${o.type}"
+        transform="translate(${o.rx} ${o.ry}) rotate(${o.angle})">
+        ${renderOpeningVisibleGeometry(visibleSpec)}
+        <rect class="op-outline" x="${-half - outlinePad}" y="${-outlineHalf}"
+          width="${o.rlen + outlinePad * 2}" height="${outlineHalf * 2}"
+          rx="${gridVisualUnits(6, this._cellCm)}"></rect>
+        ${interactive ? svg`<rect class="op-hit" x="${-half - hitPad}" y="${-hitHalf}"
+          width="${o.rlen + hitPad * 2}" height="${hitHalf * 2}"
+          @click=${(e: MouseEvent) => this._opClick(e, o)}
+          @pointerdown=${(e: PointerEvent) => this._opPointerDown(e, o)}
+          @pointermove=${(e: PointerEvent) => this._opPointerMove(e, o)}
+          @pointerup=${(e: PointerEvent) => this._opPointerUp(e, o)}
+          @pointercancel=${(e: PointerEvent) => this._opPointerUp(e, o)}></rect>` : nothing}
+      </g>`;
+    }))}</g>`;
+  }
+
+  /** Padlock badges for door-like openings with a lock entity. */
+  private _renderOpeningLocks(
+    view: { x: number; y: number; w: number; h: number },
+    isoPlacements?: ReadonlyMap<string, IsoOverlayPlacement>,
+    shadow?: IsoFloorShadow,
+  ): TemplateResult {
+    const items = this._openingsR.filter(
+      (o) => !o.orphanReason && (o.type === 'door' || o.type === 'gate')
+        && o.lock && this._renderOpeningEntityAvailable(o.lock),
+    );
+    if (!items.length) return html``;
+    const space = this._spaceModel();
+    if (!space) return html``;
+    const openCuts = this._openCuts();
+    const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
+    return html`${items.map((o) => {
+      const st = this._renderPlanHass.states[o.lock!]?.state;
+      const locked = st === 'locked';
+      const known = locked || ['unlocked', 'open', 'opening', 'unlocking', 'locking'].includes(String(st));
+      const gateFace = o.type === 'gate'
+        ? this._openingFace(o, openingWallIndex, !o.flip_v)
+        : null;
+      const floorAnchor = openingLockFloorPlacement({
+        x: o.rx,
+        y: o.ry,
+        angle: o.angle,
+        flipV: !!o.flip_v,
+        gateFace,
+      }, this._cellCm)[0];
+      const isoPlacement = isoPlacements?.get(String(o.id));
+      const point = isoPlacement
+        ? isoPlacement.visualScene
+        : floorAnchor;
+      const [left, top] = this._framePercent(point, view, !!isoPlacement);
+      const lockState = `${locked ? 'locked' : known ? 'unlocked' : 'unknown'} ${this._isoLightFloors?.has(isoPlacement?.owner?.id ?? '') ? 'iso-floor-light' : ''}`;
+      if (shadow) return isoPlacement?.occluded ? nothing : renderIsoMarkerFloorShadow(
+        String(o.id), 'opening-lock', isoPlacement || { floorScene: turnPoint(floorAnchor, this._rotation) }, shadow,
+      );
+      return html`<div class="oplock ${deviceThemeClass(this._renderPlanHass)} ${lockState}"
+        data-opening-id=${o.id}
+        role=${this._mode === 'view' ? 'button' : nothing}
+        tabindex=${this._mode === 'view' ? '0' : nothing}
+        aria-label=${this._mode === 'view' ? this._t('opening.lock_info_label') : nothing}
+        data-hp-iso-occluded=${isoPlacement?.occluded ? 'true' : nothing}
+        data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'opening-lock' : nothing}
+        data-hp-iso-raised=${isoPlacement?.plane === 'raised' ? 'true' : nothing}
+        data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
+        data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
+        data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
+        style="left:${left}%;top:${top}%"
+        @click=${(e: MouseEvent) => {
+          if (this._mode !== 'view') return;
+          e.stopPropagation();
+          this._openingInfoSpace = this._space;
+          this._openingInfo = o;
+        }}
+        @keydown=${(e: KeyboardEvent) => {
+          if (this._mode !== 'view' || (e.key !== 'Enter' && e.key !== ' ')) return;
+          e.preventDefault(); e.stopPropagation();
+          this._openingInfoSpace = this._space;
+          this._openingInfo = o;
+        }}>
+        ${ISO_LAB_FLOOR_MARKERS && isoPlacement ? renderIsoMarkerGlass(
+          isoLockGlass(isoFloorMatrix(isoCameraFor(this._rotation))),'-50.75 -50.75 101.5 101.5') : nothing}
+        <span class="oplock-shell" aria-hidden="true">
+          <span class="oplock-core">
+            <ha-icon icon="${locked ? 'mdi:lock' : known ? 'mdi:lock-open-variant' : 'mdi:lock-question'}"></ha-icon>
+          </span>
+        </span>
+      </div>`;
+    })}`;
+  }
+
+  /**
+   * Explicit lock/unlock from the opening info card. This does NOT violate the
+   * "locks never toggle from the plan" rule: that rule guards against ACCIDENTAL
+   * taps on plan icons; here the user has opened the info card and pressed a
+   * clearly labeled action button — same interaction contract as HA's more-info.
+   */
+  private _syncOpeningInfo(): void {
+    const before = this._openingInfo;
+    const current = before && this._openingInfoSpace ? currentOpeningContext(this._curSpaceCfg, {
+      spaceId: this._openingInfoSpace, openingId: before.id,
+    }) : null;
+    const eligible = current && openingInfoEligible(current) ? current : null;
+    if ((!before || !eligible || !openingBindingsEqual(before, eligible)) && this._dangerConfirm?.request.key === 'unlock') this._cancelDangerConfirm();
+    this._openingInfo = eligible;
+    if (!eligible) this._openingInfoSpace = null;
+  }
+
+  private async _lockAction(entityId: string, action: 'lock' | 'unlock'): Promise<void> {
+    if (!this.planHost.capabilities.deviceServices) return;
+    const authority = this.planHost.authorityKey, revision = this.planHost.writeAuthorityRevision;
+    // THE ONLY sanctioned lock actuation surface (review CR-1, 2026-07-27).
+    // The invariant is "no lock or alarm panel is ever actuated by a TAP on the
+    // plan" — icons, badges, controls[] and the device card all refuse. This
+    // button is a deliberate, labeled control inside an opened card, the same
+    // contract as Home Assistant's own more-info dialog. Unlocking additionally
+    // asks for confirmation; locking does not (locking is never destructive).
+    const context = this._openingInfo && this._openingInfoSpace
+      ? { spaceId: this._openingInfoSpace, id: this._openingInfo.id } : null;
+    const currentTarget = (): boolean => {
+      if (this.planHost.authorityKey !== authority || this.planHost.writeAuthorityRevision !== revision) return false;
+      if (openingActionTargetCurrent(this._curSpaceCfg, this._space, context,
+        this._openingInfo?.id, entityId)) return true;
+      this._openingInfo = null; this._openingInfoSpace = null;
+      this._cancelDangerConfirm(); this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
+      return false;
+    };
+    if (!currentTarget() || !this._openingEntityAvailable(entityId)) return;
+    if (action === 'unlock') {
+      const name = this.hass?.states?.[entityId]?.attributes?.friendly_name || entityId;
+      const accepted = await this._confirmDanger({
+        key: 'unlock',
+        kind: 'warning',
+        title: this._t('confirm.unlock_title'),
+        message: this._t('confirm.unlock_body'),
+        objectName: name,
+        confirmLabel: this._t('opening.unlock_action'),
+        cancelLabel: this._t('btn.cancel'),
+      });
+      if (!accepted || !this.planHost.capabilities.deviceServices || !currentTarget() || !this._openingEntityAvailable(entityId)
+        || this.hass?.states?.[entityId]?.state !== 'locked') return;
+    }
+    try { await this.planHost.deviceServices?.call('lock', action, { entity_id: entityId }); }
+    catch (error) {
+      if (this.planHost.authorityKey === authority && this.planHost.writeAuthorityRevision === revision)
+        this._showToast(this._t('toast.error', { err: this._errText(error) }), 'toast.error');
+    }
+  }
+
+  private _renderOpeningInfoCard(): TemplateResult {
+    ensureFormKitStyles(this);
+    ensureCompactDialogStyles(this);
+    const o = this._openingInfo!;
+    // A legacy/future writer may have left door bindings on a passage. They
+    // remain readable for lossless round-trip, but are inert on every surface.
+    const contact = o.type !== 'passage' && o.contact
+      && this._openingEntityAvailable(o.contact) ? o.contact : null;
+    const lock = (o.type === 'door' || o.type === 'gate') && o.lock
+      && this._openingEntityAvailable(o.lock) ? o.lock : null;
+    const cSt = contact ? this.planHost.environment.states[contact]?.state : null;
+    const amt = this._openingAmt(o);
+    const lSt = lock ? this.planHost.environment.states[lock]?.state : null;
+    const titleKey = o.type === 'door' ? 'opening.door'
+      : o.type === 'gate' ? 'opening.gate'
+        : o.type === 'passage' ? 'opening.passage' : 'opening.window';
+    const names = openingInfoNames(o, this.hass?.states, this._curSpaceCfg?.title);
+    const distinctNames = names.contactName && names.lockName && names.contactName !== names.lockName;
+    const title = names.name ? this._t('opening.info_named', { kind: this._t(titleKey), name: names.name }) : this._t(titleKey);
+    const openingIcon = o.type === 'door' ? 'mdi:door'
+      : o.type === 'gate' ? 'mdi:gate'
+        : o.type === 'passage' ? 'mdi:arch' : 'mdi:window-closed-variant';
+    const contactIcon = o.type === 'gate'
+      ? (amt > 0 ? 'mdi:gate-open' : 'mdi:gate')
+      : (amt > 0 ? 'mdi:door-open' : 'mdi:door-closed');
+    const row = (icon: string, label: string, value: string, cls = '') =>
+      html`<div class="oprow hpf-reading-row"><ha-icon icon=${icon}></ha-icon><span class="hpf-reading-label">${label}</span><b class="hpf-reading-value hpf-state-${cls}">${value}</b></div>`;
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this._presentation} data-kind="opening"
+      .title=${title} icon=${openingIcon} dismiss-on-scrim
+      @hp-close=${() => (this._openingInfo = null)}>
+        <div class="body">
+          ${contact
+            ? row(contactIcon,
+                distinctNames ? this._t('opening.contact_named', { name: names.contactName! }) : this._t('opening.contact_label'),
+                cSt === 'unavailable' || cSt == null
+                  ? this._t('opening.state_unknown')
+                  : this._t(amt > 0 ? 'opening.open' : 'opening.closed'),
+                amt > 0 ? 'warn' : 'ok')
+            : nothing}
+          ${lock
+            ? row(lSt === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant',
+                distinctNames ? this._t('opening.lock_named', { name: names.lockName! }) : this._t('opening.lock_label'),
+                lSt === 'locked' ? this._t('opening.locked')
+                  : ['unlocked', 'open'].includes(String(lSt)) ? this._t('opening.unlocked')
+                  : this._t('opening.state_unknown'),
+                lSt === 'locked' ? 'ok' : 'warn')
+            : nothing}
+          ${this.planHost.capabilities.deviceServices && lock && (lSt === 'locked' || ['unlocked', 'open'].includes(String(lSt)))
+            ? html`<button
+                class="btn hpf-action-fill lockact ${lSt === 'locked' ? 'danger' : ''}"
+                @click=${() => this._lockAction(lock, lSt === 'locked' ? 'unlock' : 'lock')}>
+                <ha-icon icon=${lSt === 'locked' ? 'mdi:lock-open-variant' : 'mdi:lock'}></ha-icon>
+                ${this._t(lSt === 'locked' ? 'opening.unlock_action' : 'opening.lock_action')}
+              </button>`
+            : this.planHost.capabilities.deviceServices && lock && ['locking', 'unlocking'].includes(String(lSt))
+              ? html`<button class="btn hpf-action-fill lockact" disabled>
+                  <ha-icon icon="mdi:timer-sand"></ha-icon>${this._t('opening.lock_pending')}
+                </button>`
+              : nothing}
+          ${!contact && !lock ? html`<p class="muted">${this._t('opening.no_entities')}</p>` : nothing}
+          ${names.diagnostic ? html`<p class="muted">${names.diagnostic}</p>` : nothing}
+        </div>
+        <div class="row" slot="footer">
+          <span class="spacer"></span>
+          <button class="btn ghost" data-hp="dialog-cancel"
+            @click=${() => (this._openingInfo = null)}>${this._t('btn.close')}</button>
+        </div>
+    </hp-dialog>`;
+  }
+
+  private _renderOpeningDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderOpeningDialog();
+  }
+
+  /** Adaptive grid density for the current view (docs/CANVAS.md §7):
+   *  which multiple of the drawing pitch is still legible on screen, and
+   *  which coarser one carries the accent dots. */
+  private _gridLevels(): { fine: number; coarse: number } | null {
+    return this._editorRuntimeOrThrow()._gridLevels();
+  }
+
+  private _renderMarkupDefs(_vb: number[]): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderMarkupDefs(_vb);
+  }
+
+  private _renderHiddenWallDiagnosticOverlay(warm = false): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderHiddenWallDiagnosticOverlay(warm);
+  }
+
+  private _renderPlanSnapOverlay(warm = false): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderPlanSnapOverlay(warm);
+  }
+
+  private _renderMarkupLayer(vb: number[]): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderMarkupLayer(vb);
+  }
+
+  /**
+   * Axis and node ink of the active wall/room chain. Every click persists the
+   * segment into `partitions`, whose opaque masonry paints ABOVE the markup
+   * layer, so drawing this ink inside `_renderMarkupLayer` left already-placed
+   * segments looking like bare walls (#307). The chain ink therefore paints in
+   * its own layer after the wall bodies and before the snap overlay: yellow
+   * "work in progress" styling stays distinct from finished walls, and the
+   * snap geometry keeps excluding the active draft (no self-snapping).
+   */
+  private _renderActiveChainInk(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderActiveChainInk();
+  }
+
+  private _renderPartitionDeleteDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderPartitionDeleteDialog();
+  }
+
+  private _renderRoomDeleteDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderRoomDeleteDialog();
+  }
+
+  private _renderPhysicalDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderPhysicalDialog();
+  }
+
+  private _renderMarkupBar(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderMarkupBar();
+  }
+
+  private _renderDevicesBar(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderDevicesBar();
+  }
+
+  private _renderDeviceInbox(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderDeviceInbox();
+  }
+
+  /** Entities of a device worth CONTROLLING or reading, in a sensible order. */
+  private _cardEntities(d: DevItem): { eid: string; kind: 'toggle' | 'value' | 'open' }[] {
+    const h = this._planHass;
+    const out: { eid: string; kind: 'toggle' | 'value' | 'open' }[] = [];
+    const seen = new Set<string>();
+    const push = (eid: string) => {
+      if (!eid || seen.has(eid) || !h.states[eid]) return;
+      const reg = h.entities[eid];
+      if (reg?.entity_category === 'config' || reg?.entity_category === 'diagnostic') return;
+      seen.add(eid);
+      const dom = eid.split('.')[0];
+      if (['light', 'switch', 'fan', 'humidifier', 'siren', 'input_boolean'].includes(dom))
+        out.push({ eid, kind: 'toggle' });
+      else if (['cover', 'valve', 'lock', 'climate', 'media_player', 'vacuum', 'water_heater'].includes(dom))
+        out.push({ eid, kind: 'open' }); // needs the full more-info UI
+      else if (['sensor', 'binary_sensor', 'number', 'select'].includes(dom))
+        out.push({ eid, kind: 'value' });
+    };
+    for (const source of resolvedLightSources(h, this._displayDevices, null, this._virtualLights)) {
+      if (source.device.id !== d.id) continue;
+      for (const eid of [...source.serviceEids, ...source.stateEids]) push(eid);
+    }
+    if (d.primary) push(d.primary);
+    for (const e of d.entities) push(e);
+    return out.slice(0, 12);
+  }
+
+  /** The same safe action authority as a marker, with only the selected row as target. */
+  private _cardToggle(eid: string): void {
+    if (!this.planHost.capabilities.deviceServices) return;
+    const showToast = this._captureToast();
+    if (this._mode !== 'view' || !this._infoCard) return;
+    const context = { spaceId: this._space, id: this._infoCard.id };
+    const device = currentMarkerActionDevice(this._devices, this._space, context);
+    if (!device || !this._cardEntities(device).some((row) => row.eid === eid && row.kind === 'toggle')) return;
+    const authority = this._configWriteContext.claim();
+    const key = infoCardRowContextKey(device, this._cardEntities(device));
+    const initial = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);
+    if (!initial.command) return;
+    const execute = (): void => {
+      const current = currentMarkerActionDevice(this._devices, this._space, context);
+      if (this._mode !== 'view' || !this.isConnected || !this._configWriteContext.current(authority, this.planHost)
+          || !current || this._infoCard?.id !== context.id
+          || infoCardRowContextKey(current, this._cardEntities(current)) !== key) {
+        showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
+      }
+      const intent = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);
+      if (!intent.command || !sameToggleOperationTargets(initial, intent)) return;
+      this._startDevicePressFeedback(current.id);
+      if (!this.planHost.capabilities.deviceServices) return;
+      this.planHost.deviceServices?.call(intent.command.domain, intent.command.service, intent.command.data)
+        .catch((error: unknown) => showToast(this._t('toast.error', { err: this._errText(error) }), 'toast.error'));
+    };
+    if (infoCardTapConfirmationRequired(device)) {
+      this._tapConfirm = {
+        kind: 'toggle', text: this._t('confirm.tap_toggle', { name: toggleIntentName(initial) }),
+        lines: this._toggleConfirmationLines(initial), initialIntent: initial,
+        deviceId: device.id, exec: execute,
+      };
+    } else execute();
+  }
+
+  private _renderInfoCard(): TemplateResult {
+    const d = this._infoCard!;
+    const acceptedDevice = this._renderDevices.find(device => device.id === d.id) || d;
+    const face = this._devicePresentation(acceptedDevice);
+    // A static marker keeps its cheap neutral face; its open card resolves
+    // details lazily against the same accepted state and registry snapshot.
+    const presentation = face.display === 'static_icon'
+      ? presentDevice(this as never, this._renderPlanHass, acceptedDevice, false, {
+          sourceDetails: true, registryHass: this._renderPlanHass,
+        }) : face;
+    const st = d.primary ? this.hass.states[d.primary] : undefined;
+    const stateTxt = st ? hassValue(this.hass, d.primary)?.text ?? st.state : null;
+    const radar = isMarkerRadarV1(d.marker?.radar) ? d.marker.radar : null;
+    const radarFrame = radar ? this._radarLive.frames.get(d.marker?.id || d.id) : null;
+    const radarHealthKey = radar ? radarHealthI18nKey(radar, radarFrame?.health) : null;
+    const controls = (d.controls ?? d.marker?.controls ?? [])
+      .filter(isControllable).filter((eid) => this._planEntityAvailable(eid));
+    return html`<hp-dialog .hass=${this._presentation} data-kind="info" class="ui-dialog" form-shell settings-layout compact
+      .title=${d.name} .subtitle=${this._t('device.card_subtitle')} .icon=${d.icon} wide
+      dismiss-on-scrim @hp-close=${this._closeInfoCard}>
+        <div class="body hpf-form">
+          ${renderDeviceIssues(presentation, key => this._t(key), eid => this._openMoreInfo(eid))}
+          ${(() => {
+            // Field feedback: on a wall tablet this card is for CONTROLLING the
+            // home; model/links/manuals are reference material and belong below.
+            const ents = this._cardEntities(d);
+            if (!ents.length) return nothing;
+            return html`<div class="entlist">
+              ${ents.map(({ eid, kind }) => {
+                const est = this.hass.states[eid];
+                const name = this.hass.entities[eid]?.name
+                  || est?.attributes?.friendly_name || eid;
+                const val = est ? hassValue(this.hass, eid)?.text ?? est.state : '';
+                const on = est?.state === 'on' || ['open', 'unlocked', 'playing', 'cleaning'].includes(est?.state);
+                return html`<div class="entrow hpf-reading-entry hpf-reading-row ${on ? 'on' : ''}">
+                  <ha-icon icon=${stateIcon(
+                    iconFor(name, '', this._iconRules), eid.split('.')[0],
+                    est?.attributes?.device_class, est?.state, false,
+                  )}></ha-icon>
+                  <span class="en hpf-reading-label">${name}</span>
+                  ${kind === 'toggle' && this.planHost.capabilities.deviceServices
+                    ? html`<button class="btn hpf-action-wide entbtn ${on ? 'on' : 'ghost'}"
+                        @click=${() => this._cardToggle(eid)}>${val}</button>`
+                    : kind === 'open'
+                      ? html`<button class="btn hpf-action-wide entbtn ghost"
+                          @click=${() => { this._closeInfoCard(); this._openMoreInfo(eid); }}>${val}</button>`
+                      : html`<span class="ev hpf-reading-value">${val}</span>`}
+                </div>`;
+              })}
+            </div>`;
+          })()}
+          ${d.model ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.model')}</span><span>${d.model}</span></div>` : nothing}
+          ${stateTxt && !this._cardEntities(d).length
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.state')}</span><span>${stateTxt}</span></div>` : nothing}
+          ${radarHealthKey
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('radar.health')}</span>
+                <span>${this._t(radarHealthKey)}</span></div>`
+            : nothing}
+          ${safeUrl(d.link)
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.link')}</span>
+                <a class="hpf-link" href="${safeUrl(d.link)}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
+            : nothing}
+          ${d.description ? html`<div class="infodesc hpf-note">${d.description}</div>` : nothing}
+          ${d.pdfs && d.pdfs.length
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.manuals')}</span><span class="pdflist">
+                ${d.pdfs.map(
+                  (p) => html`<a class="pdf hpf-link" href="${safeUrl(this._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">
+                    <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
+                )}</span></div>`
+            : nothing}
+          ${controls.length
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.controls')}</span>
+                <span class="ctrlstates">
+                  ${controls.map((eid) => {
+                    const cs = this.hass.states[eid];
+                    const on = cs?.state === 'on';
+                    return html`<span class="ctrlstate hpf-state-chip ${on ? 'on' : ''}">
+                      <ha-icon icon=${on ? 'mdi:lightbulb-on' : 'mdi:lightbulb-outline'}></ha-icon>
+                      ${cs?.attributes?.friendly_name || eid}</span>`;
+                  })}
+                </span></div>`
+            : nothing}
+          ${!d.model && !stateTxt && !radarHealthKey && !d.link && !d.description && !(d.pdfs && d.pdfs.length) && !controls.length
+            ? html`<div class="infodesc hpf-note muted">${this._t('info.none')}</div>`
+            : nothing}
+        </div>
+        <div class="row infofooter hpf-footer" slot="footer">
+          ${deviceEditorAllowed(this._canEdit, this._kiosk) ? html`<button class="btn" @click=${() => { const dd = d; this._closeInfoCard(); this._openMarkerDialog(dd); }}>
+            <ha-icon icon="mdi:pencil"></ha-icon>${this._t('btn.edit')}
+          </button>` : nothing}
+          ${d.primary || d.marker?.more_info_entity
+            ? html`<button class="btn" @click=${() => { this._closeInfoCard(); this._openDeviceMoreInfo(d); }}>
+                <ha-icon icon="mdi:open-in-new"></ha-icon>${this._t('btn.open_in_ha')}
+              </button>`
+            : nothing}
+          <button class="btn ghost infofooter-close" data-hp="dialog-cancel"
+            @click=${this._closeInfoCard}>${this._t('btn.close')}</button>
+        </div>
+    </hp-dialog>`;
+  }
+
+  /** Runtime device for the unsaved marker, built by the production pipeline. */
+  private _markerPreviewDevice(d: NonNullable<HouseplanCard['_markerDialog']>): DevItem | null {
+    return this._editorRuntimeOrThrow()._markerPreviewDevice(d);
+  }
+
+  /**
+   * #357: toggle resolution belongs to the eager View card. The lazy split
+   * #337 left these four methods delegating into the editor runtime, so a
+   * plain tap on a cold tab (kiosk, fresh page) threw synchronously inside
+   * the click handler until someone opened any editor surface. The resolver
+   * chain is a pure eager module (device-toggle.ts) over card-owned state —
+   * the editor runtime now delegates back here, not the other way round.
+   */
+  public _toggleIntent(
+    device: DevItem,
+    devices: readonly DevItem[] = this._displayDevices,
+  ): ResolvedToggleIntent | null {
+    return resolveToggleIntent({
+      hass: this._planHass,
+      registryHass: this._fullRegistryHass,
+      devices,
+      device,
+      virtualLights: this._virtualLights,
+    });
+  }
+
+  public _toggleStateText(entityId: string, fallback: string): string {
+    const state = this._planHass?.states?.[entityId] || this.hass?.states?.[entityId];
+    try {
+      return state && typeof this.hass?.formatEntityState === 'function'
+        ? this.hass.formatEntityState(state) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  /** Current-state copy is localized without teaching the dialog command semantics. */
+  public _toggleConfirmationStateText(target: ResolvedToggleTarget): string {
+    const raw = String(target.state || 'unknown');
+    const formatted = target.entityId ? this._toggleStateText(target.entityId, raw) : raw;
+    if (formatted.trim().toLocaleLowerCase() !== raw.trim().toLocaleLowerCase()) return formatted;
+    const known: Partial<Record<string, I18nKey>> = {
+      on: 'confirm.state_on',
+      off: 'confirm.state_off',
+      open: 'confirm.state_open',
+      closed: 'confirm.state_closed',
+      opening: 'confirm.state_opening',
+      closing: 'confirm.state_closing',
+      unknown: 'confirm.state_unknown',
+    };
+    const key = known[raw];
+    if (key) return this._t(key);
+    // A future integration-specific token stays honest and readable even in a
+    // harness without HA's formatter; underscores are never exposed as UI.
+    return raw.replaceAll('_', ' ').replaceAll('-', ' ');
+  }
+
+  /** Snapshot lines shown by Toggle confirmation; execution still re-resolves later. */
+  public _toggleConfirmationLines(intent: ResolvedToggleIntent): string[] {
+    const effectKeys: Record<Exclude<ToggleNextEffect, 'toggle'>, I18nKey> = {
+      'turn-on': 'confirm.state_on',
+      'turn-off': 'confirm.state_off',
+      open: 'confirm.state_open',
+      close: 'confirm.state_closed',
+      stop: 'confirm.state_stopped',
+    };
+    return formatToggleConfirmation(intent, {
+      state: (target) => this._toggleConfirmationStateText(target),
+      current: (state) => this._t('confirm.current_state', { state }),
+      expected: (state) => this._t('confirm.expected_state', { state }),
+      groupCurrent: (on, total) => this._t('confirm.group_current', { on, total }),
+      groupAllOn: () => this._t('confirm.group_all_on'),
+      groupAllOff: () => this._t('confirm.group_all_off'),
+      unavailable: (count) => this._t('confirm.unavailable_targets', { count }),
+      effect: (effect) => this._t(effectKeys[effect]),
+      expectedByHa: () => this._t('confirm.expected_by_ha'),
+    });
+  }
+
+  private _effectiveMarkerTapAction(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+    preview = this._markerPreviewDevice(d),
+  ): string {
+    return this._editorRuntimeOrThrow()._effectiveMarkerTapAction(d, preview);
+  }
+
+  private _markerSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>) {
+    return this._editorRuntimeOrThrow()._markerSpatialSource(d);
+  }
+
+  private _setMarkerLightRole(role: 'auto' | 'always' | 'never'): void {
+    return this._editorRuntimeOrThrow()._setMarkerLightRole(role);
+  }
+
+  private _controlCandidates(d: NonNullable<HouseplanCard['_markerDialog']>): {
+    value: string; label: string; sub: string; icon: string;
+  }[] {
+    return this._editorRuntimeOrThrow()._controlCandidates(d);
+  }
+
+  private _addControlRef(d: NonNullable<HouseplanCard['_markerDialog']>, ref: string): void {
+    return this._editorRuntimeOrThrow()._addControlRef(d, ref);
+  }
+
+  /** Switch modes without losing manual drafts; entering a manual mode snapshots live values once. */
+  private _setMarkerGlowMode(mode: 'auto' | 'color' | 'fixed'): void {
+    return this._editorRuntimeOrThrow()._setMarkerGlowMode(mode);
+  }
+
+  private _renderMarkerDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderMarkerDialog();
+  }
+
+  private _renderSpaceDialog(): TemplateResult {
+    if (this._onboardingRuntime && this._spaceDialog
+        && this._spaceDialogUsesOnboardingRuntime(this._spaceDialog.mode)) {
+      return this._onboardingRuntime._renderSpaceDialog();
+    }
+    return this._editorRuntimeOrThrow()._renderSpaceDialog();
+  }
+
+  private _renderMergeDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderMergeDialog();
+  }
+
+  private _renderRoomDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderRoomDialog();
+  }
+
+  static styles = [cardStyles]; // #805: editor-only sheets come with the editor runtime (src/editor-style-adoption.ts)
+}
+
+// The implementation has no entry registration/picker/banner side effects.
+// HA and the isolated standalone composition root own their explicit entries.
+export { CARD_VERSION };

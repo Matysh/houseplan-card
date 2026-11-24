@@ -1,0 +1,542 @@
+diff --git a/src/houseplan-card.ts b/src/houseplan-card.ts
+index a09035de63..409193759c 100644
+--- a/src/houseplan-card.ts
++++ b/src/houseplan-card.ts
+@@ -2796,6 +2796,10 @@ export class HouseplanCard extends LitElement {
+     if (value === null) this._wallUnionPool.clear();
+   }
+   private _isoGeometryCache = new Map<string, IsoSceneCacheEntry>();
++  private _isoWallBaseCache: {
++    key: string;
++    value: ReturnType<typeof wallBodiesUnionPath>;
++  } | null = null;
+   private _renderIsoScene: IsoRenderScene | null = null;
+   private _isoProjectionSnapshot: 'flat' | 'iso' | null = null;
+   /** Observable Stage 4 performance seam: increments only for a real
+@@ -11649,6 +11653,27 @@ export class HouseplanCard extends LitElement {
+     return this._wallUnionCache.value;
+   }
+ 
++  /** Ground-level masonry keeps the full window sill footprint. Doorways and
++   * passages still cut the base; use the same union and paint as the 2D plan. */
++  private _isoWallBaseGeometry(): ReturnType<typeof wallBodiesUnionPath> {
++    const space = this._spaceModel();
++    if (!space) return null;
++    const key = wallUnionKey(this._floorKey(space.id), space.rooms.length);
++    if (this._isoWallBaseCache?.key === key) return this._isoWallBaseCache.value;
++    const groundOpening = (opening: OpeningCfg) => opening.type !== 'window';
++    const extras = physicalBodyParts(
++      space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
++      this._partitionOpeningCuts(space, groundOpening),
++    ).all;
++    const value = wallBodiesUnionPath(
++      space.rooms, this._spaceWalls, this._openCuts(),
++      this._roomWallOpeningInputs(this._openingsR.filter(groundOpening), space),
++      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
++    );
++    this._isoWallBaseCache = { key, value };
++    return value;
++  }
++
+   /** Thick-wall spans in render units — suppress centreline stroke under bodies. */
+   private _thickWallCutsMemo: { key: string; value: number[][] } | null = null;
+   private _thickWallCuts(): number[][] {
+@@ -11880,10 +11905,10 @@ export class HouseplanCard extends LitElement {
+   private _renderWallBodies(disp: SpaceDisplay, canonical = false): TemplateResult {
+     if (!canonical && this._opDrag?.preview && this._editorRuntime)
+       return this._editorRuntime._renderOpeningDragBodies(disp, true);
+-    if (this._renderProjection === 'iso') return svg`` as unknown as TemplateResult;
+     if (disp && !disp.showBorders && (this._mode === 'view' || this._mode === 'devices'))
+       return svg`` as unknown as TemplateResult;
+-    const united = this._wallUnionGeometry();
++    const united = this._renderProjection === 'iso'
++      ? this._isoWallBaseGeometry() : this._wallUnionGeometry();
+     if (!united) return svg`` as unknown as TemplateResult;
+     const v = this._viewOr(this._baseVb());
+     const px = this._renderPixelsPerUnit(v);
+@@ -11898,6 +11923,9 @@ export class HouseplanCard extends LitElement {
+     // collapses into noise — keep the solid fill alone.
+     return svg`<g class="wallbodies" style="--room-stroke:${stroke};--wall-fill:${wf.c};--wall-fill-op:${wf.a}">
+       ${united.paths.map((component) => svg`
++        ${this._renderProjection === 'iso' ? svg`
++          <path class="iso-wall-base-paper" data-component=${component.id} d=${component.d}
++            fill="#ffffff" fill-rule=${component.fillRule} stroke="none" pointer-events="none"></path>` : nothing}
+         <path class="wallbody-fill" data-component=${component.id} d="${component.d}"
+           fill="${wf.c}" fill-opacity="${wf.a}" fill-rule=${component.fillRule}
+           stroke="none" pointer-events="none"></path>
+diff --git a/src/iso-architectural-edges.ts b/src/iso-architectural-edges.ts
+index 9c2a58d348..1a0813f90a 100644
+--- a/src/iso-architectural-edges.ts
++++ b/src/iso-architectural-edges.ts
+@@ -1,5 +1,6 @@
+ /** UI-062: shade trimmed masonry and ink only its physical floor/vertical edges. */
+ import { nothing, svg, type TemplateResult } from 'lit';
++import { GRID_PITCH } from './canvas-constants';
+ import { colorLuma, parseCssColor, type Rgb } from './iso-materials';
+ import { architecturalWallTone } from './iso-architectural-tone';
+ import { isoRotationBasis, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
+@@ -10,6 +11,9 @@ type Paint = { fill:(index:number)=>string; edges:TemplateResult|typeof nothing;
+   edge:(index:number,d:string,fragment:number)=>TemplateResult|typeof nothing };
+ const memo=new WeakMap<object,{key:string;paint:Paint}>();
+ const epsilon=1e-4;
++// Opening masonry overlaps its padded host cut by a small Boolean tolerance.
++// Those near-coincident ends are construction joints, not visible corners.
++const seamTolerance=GRID_PITCH*.001;
+ const same=(a:PlanPoint,b:PlanPoint)=>Math.hypot(a[0]-b[0],a[1]-b[1])<epsilon;
+ function faceOf(entry:IsoWallDepthQueueEntry,index:number,camera:IsoCamera,color:Rgb):Face|null {
+   let edge:readonly [PlanPoint,PlanPoint]|undefined, low=0, high=0, d='';
+@@ -44,17 +48,26 @@ export function architecturalPainter(queue:readonly IsoWallDepthQueueEntry[],cam
+   const faces=queue.flatMap((entry,i)=>{const f=faceOf(entry,i,camera,rgb);return f?[f]:[];});
+   const colors=new Map(faces.map(f=>[f.index,`--iso-face-fill:${f.color}`]));
+   const byEnd=new Map<string,Face[]>();
+-  const key=(p:PlanPoint)=>p.map(v=>v.toFixed(3)).join(',');
++  const cell=(p:PlanPoint)=>p.map(v=>Math.floor(v/seamTolerance));
++  const key=(p:PlanPoint)=>cell(p).join(',');
+   for(const face of faces)for(const point of [face.a,face.b]){
+     const k=key(point), peers=byEnd.get(k);
+     if(peers)peers.push(face);else byEnd.set(k,[face]);
+   }
++  const peersAt=(point:PlanPoint):Face[]=>{
++    const [x,y]=cell(point), peers=new Set<Face>();
++    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)
++      for(const other of byEnd.get(`${x+dx},${y+dy}`)??[])
++        if([other.a,other.b].some(end=>Math.hypot(end[0]-point[0],end[1]-point[1])<=seamTolerance))
++          peers.add(other);
++    return [...peers];
++  };
+   const renderEdge = (face:Face,d:string,fragment:number) => {
+     const segments:{a:PlanPoint;b:PlanPoint;z1:number;z2:number}[]=[];
+     if(face.low<epsilon)segments.push({a:face.a,b:face.b,z1:0,z2:0});
+     for(const point of [face.a,face.b]) {
+       let intervals=[[face.low,face.high]];
+-      for(const other of byEnd.get(key(point))??[]) {
++      for(const other of peersAt(point)) {
+         if(other===face || Math.abs(face.nx*other.ny-face.ny*other.nx)>epsilon)continue;
+         // Remove shared coplanar construction seams, including apron/lintel joins.
+         intervals=intervals.flatMap(([a,b])=>other.high<=a+epsilon||other.low>=b-epsilon?[[a,b]]:
+diff --git a/src/iso-camera-raster.ts b/src/iso-camera-raster.ts
+index 10df38b3ee..24ac31efcb 100644
+--- a/src/iso-camera-raster.ts
++++ b/src/iso-camera-raster.ts
+@@ -1,12 +1,14 @@
+ import type { LiveViewBox } from './live-viewport';
+ import { captureIsoRasterSource, decodeIsoRaster, isoRasterHoverSelector } from './iso-raster-source';
+ import { planIsoRaster, planIsoUnderlay, rasterCovers, rasterDensity, rasterImproves, rasterSmoothing, rasterUnderlayClip,
++  snapRasterCoverage,
+   type IsoRasterFrame, type RasterViewport } from './iso-raster-geometry';
+ import { forecastExposure } from './viewport-exposure';
+ 
+ export type IsoRasterInput = 'wheel' | 'pan' | 'pinch';
+ 
+ interface Surface {
++  layer: HTMLDivElement;
+   canvas: HTMLCanvasElement;
+   context: ImageBitmapRenderingContext;
+   frame?: IsoRasterFrame;
+@@ -65,11 +67,16 @@ function makeSurface(doc: Document, type: string): Surface | undefined {
+   canvas.className = 'hp-iso-raster ' + type;
+   canvas.setAttribute('aria-hidden', 'true');
+   canvas.inert = true;
+-  return { canvas, context };
++  const layer = doc.createElement('div');
++  layer.className = 'hp-iso-raster-layer ' + type + '-layer';
++  layer.inert = true;
++  layer.setAttribute('aria-hidden','true');
++  layer.append(canvas);
++  return { layer, canvas, context };
+ }
+ 
+ function clearSurface(surface: Surface): void {
+-  surface.canvas.remove();
++  surface.layer.remove();
+   surface.context.transferFromImageBitmap(null);
+   surface.frame = undefined;
+   surface.revision = undefined;
+@@ -183,7 +190,7 @@ export class IsoCameraRaster {
+   public supports(scene: SVGSVGElement, view: LiveViewBox, coverage: LiveViewBox): boolean {
+     const session = this.session;
+     return !!session && session.scene === scene && !session.failed && !session.sunFading &&
+-      (!!session.underlay.frame || rasterCovers(coverage, view, session.limits.content));
++      (!!session.underlay.frame && !!session.sceneImage.frame || rasterCovers(coverage, view, session.limits.content));
+   }
+ 
+   public get hasActiveImage(): boolean {
+@@ -360,7 +367,8 @@ export class IsoCameraRaster {
+     // A drag or pinch starts with the already sharp vector reserve. Only
+     // replace it when the prepared bitmap improves the visible result.
+     const showRaster = !!frame && (!!cover || underlayReady) &&
+-      (session.input === 'wheel' || rasterImproves(session.vector, frame, view, limits));
++      (session.input === 'wheel' || rasterImproves(session.vector, frame, view, limits)
++        || !rasterCovers(session.vector.bounds,view,limits.content));
+     if (surface.hasAttribute('data-hp-raster-display') !== showRaster)
+       surface.toggleAttribute('data-hp-raster-display', showRaster);
+     const vectorBlur = showRaster || keepsVectorReserve(session) ? 0 :
+@@ -372,23 +380,41 @@ export class IsoCameraRaster {
+     } else if (surface.style.getPropertyValue(blurVariable)) {
+       surface.style.removeProperty(blurVariable);
+     }
+-    const coverage = showRaster ? frame!.bounds : session.vector.bounds;
++    // Keep the handoff edge inside decoded pixels. Blur and resampling must
++    // never sample the transparent outside of the bitmap at that boundary.
++    const density = showRaster ? rasterDensity(frame!,view,limits) : 1;
++    const guard = showRaster && underlayReady && !cover
++      ? Math.min(Math.ceil(3 * rasterSmoothing(density) + 2 * density) + 1,
++        (Math.min(frame!.width,frame!.height)-1)/2) : 0;
++    const rawCoverage = showRaster ? {
++      x:frame!.bounds.x + guard * frame!.bounds.w / frame!.width,
++      y:frame!.bounds.y + guard * frame!.bounds.h / frame!.height,
++      w:frame!.bounds.w * (1 - 2 * guard / frame!.width),
++      h:frame!.bounds.h * (1 - 2 * guard / frame!.height),
++    } : session.vector.bounds;
++    // Clip ownership on the physical pixel grid. Two separately filtered
++    // fractional edges cannot guarantee complementary coverage at high DPI.
++    const coverage = guard ? snapRasterCoverage(view,rawCoverage,limits) : rawCoverage;
+     const showUnderlay = underlayReady && !rasterCovers(coverage, view, limits.content);
+     if (showUnderlay) {
+       place(underlay, view, limits, true);
+-      const clip = rasterUnderlayClip(underlay.frame!.bounds, coverage);
+-      if (underlay.canvas.style.clipPath !== clip) underlay.canvas.style.clipPath = clip;
+-      if (!underlay.canvas.isConnected) surface.before(underlay.canvas);
+-    } else underlay.canvas.remove();
++      // Both masks live in the untransformed stage, not in two bitmaps with
++      // different texel grids. Their antialiased coverage is complementary.
++      const clip = rasterUnderlayClip(view, coverage);
++      if (underlay.layer.style.clipPath !== clip) underlay.layer.style.clipPath = clip;
++      if (!underlay.canvas.isConnected) surface.before(underlay.layer);
++    } else underlay.layer.remove();
+     if (showRaster) {
+       place(sceneImage, view, limits);
+-      const clip = showUnderlay && sceneImage.canvas.style.filter ? 'inset(0px)' : '';
+-      if (sceneImage.canvas.style.clipPath !== clip) sceneImage.canvas.style.clipPath = clip;
++      const left=(coverage.x-view.x)*100/view.w, top=(coverage.y-view.y)*100/view.h;
++      const right=left+coverage.w*100/view.w, bottom=top+coverage.h*100/view.h;
++      const clip = showUnderlay ? `polygon(${left}% ${top}%, ${right}% ${top}%, ${right}% ${bottom}%, ${left}% ${bottom}%)` : '';
++      if (sceneImage.layer.style.clipPath !== clip) sceneImage.layer.style.clipPath = clip;
+       if (!sceneImage.canvas.isConnected) {
+-        surface.after(sceneImage.canvas);
++        surface.after(sceneImage.layer);
+         sceneImage.canvas.dataset.hpIsoRaster = 'active';
+       }
+-    } else sceneImage.canvas.remove();
++    } else sceneImage.layer.remove();
+   }
+ 
+   private beginHandoff(session: RasterSession): boolean {
+@@ -406,8 +432,8 @@ export class IsoCameraRaster {
+     layer.className = 'hp-iso-raster-handoff';
+     layer.inert = true;
+     layer.setAttribute('aria-hidden', 'true');
+-    if (underlay.canvas.isConnected) layer.append(underlay.canvas);
+-    layer.append(sceneImage.canvas);
++    if (underlay.canvas.isConnected) layer.append(underlay.layer);
++    layer.append(sceneImage.layer);
+     surface.append(layer);
+     surface.setAttribute('data-hp-raster-handoff', '');
+     surface.removeAttribute('data-hp-raster-display');
+@@ -470,8 +496,8 @@ export class IsoCameraRaster {
+       // its own raster arrives, so the old light cannot flash on again.
+       clearSurface(session.sceneImage);
+       session.requested = undefined;
+-    } else session.sceneImage.canvas.remove();
+-    session.underlay.canvas.remove();
++    } else session.sceneImage.layer.remove();
++    session.underlay.layer.remove();
+   }
+ 
+   public clear(): void {
+diff --git a/src/iso-lab-visibility.ts b/src/iso-lab-visibility.ts
+index 9e22339783..51b0c6451b 100644
+--- a/src/iso-lab-visibility.ts
++++ b/src/iso-lab-visibility.ts
+@@ -107,7 +107,7 @@ function convexParts(poly:Polygon):Multi {
+ const path=(geom:Multi, restore?: (p: Point) => Point)=>geom.flatMap(poly=>poly.map(ring=>
+   `M ${ring.map(p=>(restore ? restore(p) : p).map(v=>Number(v.toFixed(4))).join(' ')).join(' ')} Z`)).join(' ');
+ 
+-function openingPaintContours(geom: Multi): Multi {
++function depthPaintContours(geom: Multi): Multi {
+   if (geom.length < 2) return geom;
+   // These are working partitions of one physical face. Merge them before
+   // SVG paints their shared edges. Snap only in normalized paint coordinates.
+@@ -479,7 +479,7 @@ export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry
+     }
+     if(!visible.length)return [];
+     const d=path(entry.layer === 'opening' && !masonrySurface(entry)
+-      ? openingPaintContours(visible) : visible,restore);
++      ? depthPaintContours(visible) : visible,restore);
+     return [entry.layer==='opening'?{...entry,surface:{...entry.surface,d}}:{...entry,face:{...entry.face,d}}] as IsoWallDepthQueueEntry[];
+   });
+   // Transparent faces have already been clipped by every nearer opaque
+@@ -511,6 +511,69 @@ export interface IsoDepthFragment {
+   d: string;
+ }
+ 
++type RankedFragment = {index:number; rank:number; geom:Multi};
++
++/** Paint a surface only once whenever the actual overlapping pixels admit a
++ * whole-surface order. A rank change caused by an unrelated furniture envelope
++ * is not a material edge. Only genuine order cycles retain partitioned paint. */
++function coalesceDepthPaint(fragments: RankedFragment[], faces:(DepthSurface|null)[]): RankedFragment[] {
++  const groups = new Map<number,RankedFragment[]>();
++  for(const fragment of fragments) {
++    const group=groups.get(fragment.index);
++    if(group)group.push(fragment); else groups.set(fragment.index,[fragment]);
++  }
++  const ids=[...groups.keys()], edges=new Map(ids.map(id=>[id,new Set<number>()]));
++  const geometry=new Map(ids.map(id=>[id,groups.get(id)!.flatMap(part=>part.geom)]));
++  const intersection=(subject:Point[],clip:Point[]):Point[]=>{
++    const sign=Math.sign(area(clip)); let inside=subject;
++    for(let i=0;i<clip.length&&inside.length;i++) {
++      const a=clip[i],b=clip[(i+1)%clip.length];
++      if(Math.hypot(b[0]-a[0],b[1]-a[1])<1e-7)continue;
++      inside=halfPlane(inside,[(a[1]-b[1])*sign,(b[0]-a[0])*sign,(a[0]*b[1]-b[0]*a[1])*sign]);
++    }
++    return inside;
++  };
++  for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++) {
++    const left=ids[i],right=ids[j],a=faces[left]!,b=faces[right]!;
++    if(Math.min(a.bounds[2],b.bounds[2])-Math.max(a.bounds[0],b.bounds[0])<1e-6 ||
++       Math.min(a.bounds[3],b.bounds[3])-Math.max(a.bounds[1],b.bounds[1])<1e-6)continue;
++    const delta=b.plane.map((n,k)=>n-a.plane[k]) as Plane;
++    let nearer=false,farther=false,overlaps=false;
++    for(const [subject] of geometry.get(left)!)for(const [clip] of geometry.get(right)!) {
++      const overlap=intersection(subject,clip);
++      if(!overlap.length)continue;
++      overlaps=true;
++      const depths=overlap.map(point=>at(delta,point));
++      if(Math.max(...depths)>DEPTH_EPS)nearer=true;
++      if(Math.min(...depths)<-DEPTH_EPS)farther=true;
++    }
++    if(overlaps&&!nearer&&!farther)nearer=true; // stable order on coincident planes
++    if(nearer)edges.get(left)!.add(right);
++    if(farther)edges.get(right)!.add(left);
++  }
++  // Collapse strongly connected components; their internal rank order remains
++  // authoritative, while unrelated walls/furniture need no artificial cuts.
++  let serial=0;
++  const numbers=new Map<number,number>(),low=new Map<number,number>(),stack:number[]=[],active=new Set<number>();
++  const components:number[][]=[];
++  const visit=(id:number)=>{
++    numbers.set(id,serial);low.set(id,serial++);stack.push(id);active.add(id);
++    for(const next of edges.get(id)!) {
++      if(!numbers.has(next)){visit(next);low.set(id,Math.min(low.get(id)!,low.get(next)!));}
++      else if(active.has(next))low.set(id,Math.min(low.get(id)!,numbers.get(next)!));
++    }
++    if(low.get(id)!==numbers.get(id))return;
++    const component:number[]=[];let next:number;
++    do {next=stack.pop()!;active.delete(next);component.push(next);} while(next!==id);
++    components.push(component);
++  };
++  for(const id of ids)if(!numbers.has(id))visit(id);
++  // Tarjan emits sink components first; the painter needs far to near.
++  return components.reverse().flatMap(component=>component.length===1
++    ? [{index:component[0],rank:0,geom:geometry.get(component[0])!}]
++    : component.flatMap(id=>groups.get(id)!).sort((a,b)=>b.rank-a.rank||a.index-b.index));
++}
++
+ function furnitureDepthSurface(item: IsoDepthFurniture, camera: IsoCamera, coordinates: ClipCoordinates): DepthSurface | null {
+   const points = item.footprint.map(p => projectPlanPoint(p, 0, camera)).sort((a,b) => a[0]-b[0]);
+   const left = points[0], right = points[points.length-1];
+@@ -564,7 +627,7 @@ export function composeIsoTranslucentStructure(
+     if (face && kind) face.opaque = masonry[kind] === 1;
+     return face;
+   }), ...furniture.map(item => furnitureDepthSurface(item,camera,coordinates))];
+-  const result: {index:number;d:string;rank:number}[] = [];
++  const result: RankedFragment[] = [];
+   for (const [index,face] of faces.entries()) {
+     if (!face) continue;
+     let visible = new Map<number, Multi>([[0,face.geom]]);
+@@ -619,17 +682,13 @@ export function composeIsoTranslucentStructure(
+         visible = next;
+       }
+     }
+-    const entry = queue[index];
+-    const opening = entry?.layer === 'opening' && !masonryKinds[index];
+     for (const [rank,geom] of visible) {
+       // A depth rank remains independent, but its working partitions must
+       // paint as one sheet so transparency is applied once at shared edges.
+-      const paint = opening ? openingPaintContours(geom) : geom;
+-      result.push({index,rank,d:path(paint,restore)});
++      result.push({index,rank,geom});
+     }
+   }
+-  result.sort((a,b) => b.rank-a.rank || a.index-b.index);
+   transparentKey = key;
+-  transparentResult = result;
+-  return result;
++  transparentResult = coalesceDepthPaint(result,faces).map(({index,geom})=>({index,d:path(depthPaintContours(geom),restore)}));
++  return transparentResult;
+ }
+diff --git a/src/iso-raster-geometry.ts b/src/iso-raster-geometry.ts
+index c9c13a55b1..1e66a3a3f3 100644
+--- a/src/iso-raster-geometry.ts
++++ b/src/iso-raster-geometry.ts
+@@ -84,6 +84,15 @@ export function planIsoUnderlay(view: LiveViewBox, limits: RasterViewport): IsoR
+ }
+ 
+ /** The underlay never contributes alpha inside the current scene frame. */
++export function snapRasterCoverage(view:LiveViewBox, coverage:LiveViewBox, limits:RasterViewport):LiveViewBox {
++  const [width,height]=limits.stageSize, dx=view.w/(width*limits.dpr), dy=view.h/(height*limits.dpr);
++  const x=view.x+Math.ceil((coverage.x-view.x)/dx-epsilon)*dx;
++  const y=view.y+Math.ceil((coverage.y-view.y)/dy-epsilon)*dy;
++  const right=view.x+Math.floor((coverage.x+coverage.w-view.x)/dx+epsilon)*dx;
++  const bottom=view.y+Math.floor((coverage.y+coverage.h-view.y)/dy+epsilon)*dy;
++  return {x,y,w:Math.max(0,right-x),h:Math.max(0,bottom-y)};
++}
++
+ export function rasterUnderlayClip(bounds: LiveViewBox, coverage: LiveViewBox): string {
+   const cut = rasterIntersection(bounds, coverage);
+   if (!cut) return 'none';
+diff --git a/src/iso-scene-render.ts b/src/iso-scene-render.ts
+index 0a92abfdd4..1f55f7e4e4 100644
+--- a/src/iso-scene-render.ts
++++ b/src/iso-scene-render.ts
+@@ -247,7 +247,7 @@ export function renderIsoUnderlay(
+   layers: IsoDecorationLayers,
+   floor: IsoFloorGeometry | undefined,
+   cellCm: number,
+-  smoothMaterials = false,
++  _smoothMaterials = false,
+ ): TemplateResult {
+   if (!layers.structural || !floor) return emptySvg();
+   return svg`<g class="iso-underlay" data-hp="iso-underlay" aria-hidden="true" pointer-events="none">
+@@ -256,11 +256,6 @@ export function renderIsoUnderlay(
+       ? svg`<path class="iso-ambient-shadow" d=${floor.footprintPath}
+           transform=${isoFixedLightTransform(cellCm)}></path>`
+       : nothing}
+-    <g class="iso-floor-edge">${floor.sides.map((face) =>
+-      svg`<path class="iso-floor-side" d=${face.d} data-component=${face.component}
+-        data-edge=${face.edge}></path>${layers.materialNuance && !smoothMaterials
+-        ? svg`<path class="iso-material-texture iso-floor-texture" d=${face.d}></path>`
+-        : nothing}`)}</g>
+   </g>` as unknown as TemplateResult;
+ }
+ 
+@@ -495,6 +490,8 @@ function renderIsoTranslucentMasonry(
+   const architecture = architecturalPainter(queue,camera,wallColor);
+   const paintWallLight = isoWallLightPainter(wallLights,camera,cellCm,scene.geometry);
+   const fragments = composeIsoTranslucentStructure(queue,camera,gridVisualScale(cellCm),masonry,furniture);
++  const partitions=new Map<number,number>();
++  for(const {index} of fragments)partitions.set(index,(partitions.get(index)??0)+1);
+   const foreground = svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key} data-hp-translucent-masonry
+     ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
+     ${renderIsoDefs(layers,'walls',cellCm)}
+@@ -515,23 +512,26 @@ function renderIsoTranslucentMasonry(
+         if (!kind && opening) return renderIsoOpeningSurface(opening,d,false);
+         if (!kind) return nothing;
+         const roundColumn = entry.layer === 'wall-side' ? entry.face.roundColumn : undefined;
++        // Only computational cuts need exclusive pixel ownership. The actual
++        // silhouette of an unsplit surface retains normal antialiasing.
++        const paintEdges=(partitions.get(index)??0)>1 ? 'crispEdges' : nothing;
+         const face = roundColumn !== undefined
+-          ? svg`<path data-hp-round-column=${roundColumn} d=${d} fill-rule="evenodd"
++          ? svg`<path data-hp-round-column=${roundColumn} d=${d} fill-rule="evenodd" shape-rendering=${paintEdges} fill-opacity=${masonry[kind]}
+             fill=${'url(#hp-iso-column-'+roundColumn+')'}></path>`
+-          : svg`<path class=${kind === 'side' ? 'iso-wall-side' : 'iso-wall-top'} d=${d}
++          : svg`<path class=${kind === 'side' ? 'iso-wall-side' : 'iso-wall-top'} d=${d} shape-rendering=${paintEdges} fill-opacity=${masonry[kind]}
+             style=${kind === 'side' ? architecture.fill(index) : nothing} fill-rule="evenodd"
+             data-id=${opening?.id ?? nothing} data-kind=${opening?.type ?? nothing}
+             data-surface=${opening?.kind ?? nothing}></path>`;
+         const paintsContinuousCut = wallCut && (entry.layer === 'wall-top' || opening?.kind === 'opening-lintel-top');
+         const lightFace = opening ? { ...entry, layer:'opening' as const, surface:{...opening,d} }
+           : entry.layer === 'wall-side' ? { ...entry, face:{...entry.face,d} } : null;
+-        return svg`<g class="iso-translucent-masonry-face" data-material=${kind} opacity=${masonry[kind]}>
++        return svg`<g class="iso-translucent-masonry-face" data-material=${kind}>
+           ${paintsContinuousCut ? nothing : face}
+-          ${kind === 'side' ? svg`<g class="iso-architectural-edges">${architecture.edge(index,d,fragment)}</g>`
++          ${kind === 'side' ? svg`<g class="iso-architectural-edges" opacity=${masonry[kind]}>${architecture.edge(index,d,fragment)}</g>`
+             : paintsContinuousCut ? svg`<defs><clipPath id=${clip}><path d=${d} clip-rule="evenodd"></path></clipPath></defs>
+-                <use href="#hp-iso-translucent-cut-paint" clip-path=${'url(#'+clip+')'}></use>
+-                <use href="#hp-iso-translucent-cut-contour" clip-path=${'url(#'+clip+')'}></use>` : nothing}
+-          ${lightFace ? paintWallLight(lightFace,fragment) : nothing}
++                <use href="#hp-iso-translucent-cut-paint" fill-opacity=${masonry[kind]} clip-path=${'url(#'+clip+')'}></use>
++                <use href="#hp-iso-translucent-cut-contour" opacity=${masonry[kind]} clip-path=${'url(#'+clip+')'}></use>` : nothing}
++          ${lightFace ? svg`<g opacity=${masonry[kind]}>${paintWallLight(lightFace,fragment)}</g>` : nothing}
+         </g>`;
+       })}
+     </g>
+diff --git a/src/styles/plan.styles.ts b/src/styles/plan.styles.ts
+index 90c237936f..ffab67d340 100644
+--- a/src/styles/plan.styles.ts
++++ b/src/styles/plan.styles.ts
+@@ -241,9 +241,18 @@ export const planStyles = css`
+     .iso-scene-surface > [data-hp-retained-light] { pointer-events:none; }
+     .iso-scene-surface[data-hp-raster-display] { opacity:0; }
+     .iso-scene-surface[data-hp-raster-handoff] { isolation:isolate; }
++    /* Complementary camera regions must add coverage at a fractional device
++       pixel. Source-over leaves a pale seam (half + half becomes 3/4 alpha).
++       Isolate only the plan stack so the stage colour is not added twice. */
++    .zoomwrap:has(> .hp-iso-gesture-underlay-layer) { isolation:isolate; }
++    .zoomwrap:has(> .hp-iso-gesture-underlay-layer) > :is(.iso-scene-surface, .hp-iso-gesture-image-layer) {
++      mix-blend-mode:plus-lighter;
++    }
+     .hp-iso-raster-handoff {
+-      position:absolute; inset:0; z-index:1; pointer-events:none; mix-blend-mode:plus-lighter;
++      position:absolute; inset:0; z-index:1; pointer-events:none; mix-blend-mode:plus-lighter; isolation:isolate;
+     }
++    .hp-iso-raster-handoff > .hp-iso-gesture-image-layer { mix-blend-mode:plus-lighter; }
++    .hp-iso-raster-layer { position:absolute; inset:0; z-index:1; pointer-events:none; }
+     .hp-iso-raster {
+       position:absolute; top:0; left:0; z-index:1; pointer-events:none;
+       transform-origin:0 0; will-change:transform; image-rendering:auto;
+diff --git a/test/iso-wall-transparency.test.mjs b/test/iso-wall-transparency.test.mjs
+index 9878ded4c5..022eb78c52 100644
+--- a/test/iso-wall-transparency.test.mjs
++++ b/test/iso-wall-transparency.test.mjs
+@@ -30,6 +30,17 @@ function contains(path, x, y) {
+ }
+ const orderAt = (result,x,y) => result.filter(fragment => contains(fragment.d,x,y)).map(fragment=>fragment.index);
+ 
++test('a furniture envelope does not cut a continuous wall into separate paint sheets', () => {
++  const camera={...ISO_CAMERA,origin:[0,0],rotDeg:0};
++  const face=wall([[0,0],[20,0],[20,10],[0,10]].map(([x,z])=>projectPlanPoint([x,0],z,camera)));
++  const furniture=[{footprint:[[5,3],[15,3],[15,5],[5,5]],height:5}];
++  const fragments=composeIsoTranslucentStructure([face],camera,1,{side:.63,top:.5},furniture);
++  assert.equal(fragments.filter(f=>f.index===0).length,1);
++  // The wall remains behind the table where their projected pixels overlap.
++  const point=projectPlanPoint([10,0],2,camera);
++  assert.deepEqual(orderAt(fragments,...point),[0,1]);
++});
++
+ test('#1530 an opaque cut fully hides the device side and glass behind it', () => {
+   for (const lens of [undefined,{center:[100,100],rate:.002}]) {
+     const camera = {...ISO_CAMERA,origin:[0,0],rotDeg:0,perspective:lens};
+@@ -243,7 +254,7 @@ test('#1518 hidden opening panels keep the window apron at its own top opacity',
+   assert.equal(opaque.layers.panels,false);
+   const markup = templateMarkup(opaque.foreground);
+   assert.match(markup,/id="hp-iso-translucent-cut-paint"[^>]+d=M /);
+-  assert.match(markup,/data-material=top opacity=1[^>]*>\s*<path class=iso-wall-top[^>]+data-surface=window-apron-top/);
++  assert.match(markup,/data-material=top[^>]*>\s*<path class=iso-wall-top[^>]+fill-opacity=1[^>]+data-surface=window-apron-top/);
+   assert.doesNotMatch(markup,/class="iso-opening-panel/);
+   assert.doesNotMatch(templateMarkup(render(0).foreground),/data-surface=window-apron-top/);
+   assert.equal(placement.wallMask,undefined,'turning the cut transparent invalidates the previous mask');
+diff --git a/test/live-viewport.test.mjs b/test/live-viewport.test.mjs
+index 1d552f3b41..2a65a8f9ad 100644
+--- a/test/live-viewport.test.mjs
++++ b/test/live-viewport.test.mjs
+@@ -10,7 +10,25 @@ import {
+   paintLiveViewport, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, disposeHouseplanViewport,
+ } from '../test-build/live-viewport.js';
+ import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor } from '../test-build/viewport-exposure.js';
+-import { ISO_FRAME_PIXELS, ISO_UNDERLAY_PIXELS, planIsoRaster, rasterCovers, rasterDensity, rasterImproves, rasterSize, rasterUnderlayClip } from '../test-build/iso-raster-geometry.js';
++import { ISO_FRAME_PIXELS, ISO_UNDERLAY_PIXELS, planIsoRaster, rasterCovers, rasterDensity, rasterImproves, rasterSize, rasterUnderlayClip, snapRasterCoverage } from '../test-build/iso-raster-geometry.js';
++
++test('camera handoff boundaries use whole physical pixels without shifting the plan image', () => {
++  const view={x:100.123,y:200.456,w:190.122,h:215.138};
++  const coverage={x:114.879,y:217.033,w:160.421,h:185.111};
++  for(const dpr of [1,1.25,2,3]) {
++    const limits={stageSize:[684,774],dpr};
++    const snapped=snapRasterCoverage(view,coverage,limits);
++    for(const [key,span,dimension] of [['x','w',684],['y','h',774]]) {
++      for(const edge of [snapped[key],snapped[key]+snapped[span]]) {
++        const pixel=(edge-view[key])/view[span]*dimension*dpr;
++        assert.ok(Math.abs(pixel-Math.round(pixel))<1e-8);
++      }
++      assert.ok(snapped[key]>=coverage[key]-1e-9);
++      assert.ok(snapped[key]+snapped[span]<=coverage[key]+coverage[span]+1e-9);
++      assert.ok((coverage[span]-snapped[span])/view[span]*dimension*dpr<2);
++    }
++  }
++});
+ 
+ test('#1485 the underlay and camera raster have independent pixel ceilings at 4K/DPR 2', () => {
+   assert.deepEqual(rasterSize({ stageSize: [1280, 720], dpr: 1 }), [1280, 720]);

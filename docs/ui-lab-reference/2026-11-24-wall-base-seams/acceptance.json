@@ -1,0 +1,15 @@
+{
+  "id": "UI-063",
+  "status": "owner-approved",
+  "approvedOn": "2026-11-24",
+  "issue": 1555,
+  "base": {
+    "ref": "v1.86.1-beta.8",
+    "commit": "d4004f33edee67b2953b769431dc887c8ff7f32a"
+  },
+  "harnessCommit": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
+  "fingerprint": "7d182da496ef06214df9e4558375176025bb6eaf5a2571bfbe38ba0219d8d1b0",
+  "datasetId": "synthetic-c05d68772ec20bf5acaab021",
+  "productImplemented": false,
+  "referenceBranch": "codex/ui-lab-wall-base-seams-20261124"
+}

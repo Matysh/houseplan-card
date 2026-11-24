@@ -1,0 +1,63 @@
+{
+  "base": "d4004f33edee67b2953b769431dc887c8ff7f32a",
+  "harnessCommit": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
+  "fingerprint": "7d182da496ef06214df9e4558375176025bb6eaf5a2571bfbe38ba0219d8d1b0",
+  "files": [
+    {
+      "path": "src/houseplan-card.ts",
+      "sha256": "d8c193e74945056909db773bf2c085f1e199969e1a079dc9c5767917371006c3",
+      "bytes": 867544
+    },
+    {
+      "path": "src/iso-architectural-edges.ts",
+      "sha256": "f0e9011dbc0b54f92157852af35ef0dff1055c90d82e51d6e8372a7ece12f4b7",
+      "bytes": 5598
+    },
+    {
+      "path": "src/iso-camera-raster.ts",
+      "sha256": "f862a0e6d97ef5daa7704c59205e4f908826378b10dc91bd6fb48c6d94afabfd",
+      "bytes": 24005
+    },
+    {
+      "path": "src/iso-lab-visibility.ts",
+      "sha256": "21ae48a2063c32a84dad621a27105603bef0453b297801353bbe23d44123a902",
+      "bytes": 35737
+    },
+    {
+      "path": "src/iso-raster-geometry.ts",
+      "sha256": "4065d0d36d3cf74f74e784342e591cc90c59f4108af72f534454bcf70841aade",
+      "bytes": 6844
+    },
+    {
+      "path": "src/iso-scene-render.ts",
+      "sha256": "635666292e78fc11d60398f6c78d210fe728072ce793c0f68177fa7a9de0f7d3",
+      "bytes": 31877
+    },
+    {
+      "path": "src/styles/plan.styles.ts",
+      "sha256": "3df85f64cc39372e0a707267d31878db3773493fd0e68ad49b8625b882034b50",
+      "bytes": 69493
+    },
+    {
+      "path": "test/iso-wall-transparency.test.mjs",
+      "sha256": "add3e2c412cfddc4b116e2ee27630054913820fa4294aebe6f068999781a2436",
+      "bytes": 15935
+    },
+    {
+      "path": "test/live-viewport.test.mjs",
+      "sha256": "83c1166ea2db8d0c6262b6eb4feffd48409364b26e2c5a2e5225c27abda5a645",
+      "bytes": 32259
+    }
+  ],
+  "screenshots": {
+    "before": 14,
+    "after": 15
+  },
+  "excluded": [
+    "Original private backup",
+    "Desktop screenshot with chat UI",
+    "Truncated DOM/SVG dumps",
+    "Failed intermediate visual experiments",
+    "node_modules and HA frontend cache"
+  ]
+}

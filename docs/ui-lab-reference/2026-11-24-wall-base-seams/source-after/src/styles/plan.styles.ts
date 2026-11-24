@@ -1,0 +1,1767 @@
+/** The plan scene: stage, walls, axes, snap, decor, iso and resize ink (#266, split from styles.ts). */
+import { css } from 'lit';
+
+export const planStyles = css`
+    .device-resize-status {
+      position: absolute; z-index: 2; left: .75rem; bottom: .75rem;
+      max-width: min(28rem, calc(100% - 1.5rem)); padding: .35rem .6rem;
+      border-radius: .4rem; background: var(--card-background-color);
+      color: var(--primary-text-color); font-size: .85rem; pointer-events: none;
+    }
+    :host {
+      --hp-room-outline-color: rgb(62,166,255);
+      --hp-room-outline-fill-alpha: .06;
+      --hp-room-outline-stroke-alpha: .55;
+      --hp-room-yard-color: rgb(75,140,90);
+      --hp-room-yard-fill-alpha: .14;
+    }
+    .fixedfloor-error p {
+      max-width: 42rem;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .radar-target { transition: none; }
+    }
+    /* Browser text selection must not turn the next scene pan into native drag. */
+    .stage > .zoomwrap { user-select:none; -webkit-user-select:none; }
+    /* The image precedes the live layer in the same stacking level. */
+    .hp-startup-view { position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
+    .stage[data-hp-startup-pending] > :is(.zoomwrap,.zoombadge,.homearrow) { visibility:hidden; }
+    .floor-status-over-retained { position:absolute; inset-inline:0; bottom:0; pointer-events:none; z-index:74; }
+    .editorloading.floor-preparation-status {
+      position:absolute; z-index:74; left:max(12px, env(safe-area-inset-left));
+      top:max(12px, env(safe-area-inset-top)); transform:none; pointer-events:none;
+    }
+    .stage[data-hp-startup-finish] > :is(.zoomwrap,.zoombadge,.homearrow) {
+      animation:hp-startup-live-in 160ms ease-out both;
+    }
+    @keyframes hp-startup-live-in { from { opacity:0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .stage[data-hp-startup-finish] > :is(.zoomwrap,.zoombadge,.homearrow) { animation:none; }
+    }
+    .stage > .zoomwrap :is(input,textarea,[contenteditable]:not([contenteditable='false'])) {
+      user-select:text; -webkit-user-select:text;
+    }
+    .stage.noplan {
+      background: #ffffff;
+    }
+    /* Editors always keep the white drawing sheet — even when a backdrop
+       image is loaded. Without this, a picture plan painted the theme card
+       colour under the grid (owner 2026-08-05). View keeps the historical
+       theme / .noplan split. */
+    .stage.mode-plan,
+    .stage.mode-devices,
+    .stage.mode-decor {
+      background: #ffffff;
+    }
+    .stage.mode-plan.markup.tool-select { cursor: default; }
+    .stage.mode-plan.markup.tool-select[data-plan-select-hit] { cursor: pointer; }
+    .stage {
+      position: relative;
+      width: 100%;
+      container-type: inline-size;
+      overflow: hidden;
+      touch-action: none; /* custom pinch/pan gestures */
+      background: var(--ha-card-background, var(--card-background-color, #111));
+    }
+    .hp-kiosk-spaces {
+      position:absolute; left:0; top:50%; transform:translateY(-50%);
+      z-index:30; max-height:calc(100% - 32px);
+    }
+    .zoomwrap {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      /* Scene cqw belongs to the raster viewport, not its moving outer clip. */
+      container-type: inline-size;
+    }
+    .stage.mode-transition,
+    .stage.mode-transition .zoomwrap {
+      transition: none !important;
+    }
+    .stage.mode-transition .zoomwrap {
+      inset: auto;
+      left: 50%; top: 50%; translate: -50% -50%;
+    }
+    .stage.mode-transition :is(.room,.hp-mode-room),
+    .stage.mode-transition .dev { transition:none; }
+    .stage.mode-transition .hp-mode-scene-svg { overflow:visible;clip-path:inset(-25%); }
+    /* Adjacent room regions partition one floor. Add their antialiased
+       coverage in an isolated layer instead of source-over darkening the
+       fractional shared pixel. Actual regions never overlap; each room owns
+       its color and alpha once, including its opening continuation. */
+    .room-floor-paint-layer { isolation:isolate; }
+    .room-floor-paint-layer > :is(.room,.hp-mode-room) { mix-blend-mode:plus-lighter; }
+    /* Four-phase environment (#146): constant layers cross-fade because CSS
+       gradients themselves are not reliably interpolated. Everything stays
+       behind the plan; the plan tree is never dimmed, tinted or faded. */
+    .hp-day-cycle-env {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      isolation: isolate;
+    }
+    .hp-day-cycle-bg {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: opacity 1100ms cubic-bezier(.22, .61, .36, 1);
+    }
+    .hp-day-cycle-bg.active { opacity: 1; }
+    .hp-day-cycle-sun {
+      position: absolute;
+      left: var(--hp-day-cycle-sun-x);
+      top: var(--hp-day-cycle-sun-y);
+      width: clamp(140px, 25cqw, 250px);
+      height: clamp(140px, 25cqw, 250px);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      filter: blur(10px);
+      opacity: var(--hp-day-cycle-sun-opacity);
+      transition:
+        left 1100ms cubic-bezier(.22, .61, .36, 1),
+        top 1100ms cubic-bezier(.22, .61, .36, 1),
+        opacity 1100ms cubic-bezier(.22, .61, .36, 1);
+    }
+    .stage.mode-transition .hp-day-cycle-env { transition: none; }
+    /* #689: keep the main scene explicit after camera movement through an
+       opacity hint; a transform hint freezes the raster scale. #1092 removes
+       the decorative outline, while this independent camera rule remains. */
+    .stage.daycycle.hp-safe-daycycle-outline .plan-svg {
+      will-change: opacity;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hp-day-cycle-bg,
+      .hp-day-cycle-sun {
+        transition: none;
+      }
+    }
+    .sunlayer {
+      pointer-events: none;
+    }
+    /* #600: компас — индикатор 44 px набора (класс hpf-compass), геометрия и
+       цвета живут в листе набора; здесь только поведение перетаскивания. */
+    .compass {
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+    }
+    .compass:active {
+      cursor: grabbing;
+    }
+    /* Keep the plan hidden until the measured viewport and projection are ready. */
+    .stage.hpboot .zoomwrap,
+    .stage.hpboot .zoombadge,
+    .stage.hpiso-pending .zoomwrap,
+    .stage.hpiso-pending .zoombadge {
+      visibility: hidden;
+    }
+    /* AUD-1552-02: post-startup grace — HA chrome landing after the cap moves
+       the stage height smoothly; the viewport ResizeObserver refits the plan
+       along the transition, so a late panel glides instead of jumping. */
+    .stage.hpsettle {
+      transition: height 0.25s ease;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .stage.hpsettle {
+        transition: none;
+      }
+    }
+    .zoomctl .zb[disabled] {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .header-action {
+      min-width: 44px;
+      min-height: 44px;
+      justify-content: center;
+      padding: var(--sp-3);
+    }
+    /* docs/CANVAS.md §5: the plane has no edges, so you can pan until nothing
+       is on screen. One pointer home, one click back. */
+    .homearrow {
+      position: absolute;
+      z-index: 12;
+      transform: translate(-50%, -50%);
+    }
+    .zoombadge {
+      position: absolute;
+      z-index: 12;
+      left: var(--sp-4);
+      bottom: var(--sp-4);
+      pointer-events:none;
+    }
+    /* Only the plan canvas owns the whole zoom wrapper. Context trays now live
+       inside .stage as well, and may contain small SVG previews (furniture in
+       particular); the old descendant-wide stage-SVG selector stretched every
+       preview over the tray and stacked them into one blocking artefact. The
+       vacuum trail/fit overlays have their own explicit geometry below. */
+    .hp-mode-scene-camera { position:absolute; inset:0; z-index:1; pointer-events:none; }
+    .hp-mode-scene-camera > svg,
+    .zoomwrap > svg,
+    .iso-scene-surface > svg,
+    .iso-perspective-light-frame > svg,
+    .hp-mode-crossfade > svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    [data-hp-mode-layer="room-ink"], [data-hp-mode-layer="paper-ink"] { opacity:0; }
+    .stage:not(.mode-view) [data-hp-mode-layer="zero-view"],
+    .stage.mode-view [data-hp-mode-layer="zero-editor"],
+    .stage.mode-view [data-hp-mode-layer="editor-guides"],
+    .stage:not(.mode-plan) [data-hp-mode-layer="plan-base"],
+    .stage:not(.mode-plan) [data-hp-mode-layer="plan-ink"],
+    .stage.mode-plan [data-hp-mode-layer="glow"],
+    .stage.mode-decor [data-hp-mode-layer="glow"] { opacity:0; }
+    .stage.mode-decor:not(.dtool-backdrop) [data-hp-mode-layer="backdrop"] { opacity:.5; }
+    .stage.mode-plan [data-hp-mode-layer="rooms"] { opacity:0; }
+    .stage.mode-plan [data-hp-mode-layer="room-ink"] { opacity:1; }
+    .stage:not(.mode-view) [data-hp-mode-layer="paper"] { opacity:0; }
+    .stage:not(.mode-view) [data-hp-mode-layer="paper-ink"] { opacity:1; }
+    .hp-paper-editor-ink .hp-paper { fill:#fff; }
+    [data-hp-live-scene-exposed] .hp-mode-scene-svg { overflow:visible; }
+    .hp-mode-crossfade { position:absolute; inset:0; z-index:1; pointer-events:none; }
+    .plan-svg { z-index: 1; }
+    .iso-scene-surface { position:absolute; inset:0; z-index:1; }
+    /* Keep the idle SVG composited without freezing its raster density at
+       the previous zoom. Camera motion supplies its own transform hint. */
+    .iso-scene-surface { filter:var(--hp-iso-gesture-blur, none); will-change:opacity; }
+    .iso-perspective-light-frame { position:absolute; inset:0; }
+    .iso-scene-surface > svg,
+    .iso-perspective-light-frame > svg { overflow:visible; }
+    .iso-scene-surface[data-hp-light-mixing] { isolation:isolate; }
+    .iso-scene-surface[data-hp-light-mixing] > :is(svg, .iso-perspective-light-frame) { mix-blend-mode:plus-lighter; }
+    .iso-scene-surface > [data-hp-retained-light] { pointer-events:none; }
+    .iso-scene-surface[data-hp-raster-display] { opacity:0; }
+    .iso-scene-surface[data-hp-raster-handoff] { isolation:isolate; }
+    /* Complementary camera regions must add coverage at a fractional device
+       pixel. Source-over leaves a pale seam (half + half becomes 3/4 alpha).
+       Isolate only the plan stack so the stage colour is not added twice. */
+    .zoomwrap:has(> .hp-iso-gesture-underlay-layer) { isolation:isolate; }
+    .zoomwrap:has(> .hp-iso-gesture-underlay-layer) > :is(.iso-scene-surface, .hp-iso-gesture-image-layer) {
+      mix-blend-mode:plus-lighter;
+    }
+    .hp-iso-raster-handoff {
+      position:absolute; inset:0; z-index:1; pointer-events:none; mix-blend-mode:plus-lighter; isolation:isolate;
+    }
+    .hp-iso-raster-handoff > .hp-iso-gesture-image-layer { mix-blend-mode:plus-lighter; }
+    .hp-iso-raster-layer { position:absolute; inset:0; z-index:1; pointer-events:none; }
+    .hp-iso-raster {
+      position:absolute; top:0; left:0; z-index:1; pointer-events:none;
+      transform-origin:0 0; will-change:transform; image-rendering:auto;
+    }
+    .iso-underlay-svg,
+    .iso-shadows-svg,
+    .iso-walls-svg,
+    .iso-underlay,
+    .iso-walls,
+    .iso-openings {
+      pointer-events: none;
+    }
+    /* #649 3b: the user's wall colour (fill_colors.wall_fill), stage vars from
+       src/iso-materials.ts; the fallbacks are the default white. */
+    .iso-side-hi { stop-color: var(--iso-side-hi, #c4c4c4); }
+    .iso-side-mid { stop-color: var(--iso-side-mid, #adadad); }
+    .iso-side-lo { stop-color: var(--iso-side-lo, #999999); }
+    .iso-top-hi { stop-color: var(--iso-top-hi, #ffffff); }
+    .iso-top-lo { stop-color: var(--iso-top-lo, #ededed); }
+    .iso-wall-side {
+      fill: url(#hp-iso-wall-side) var(--iso-side-mid, #adadad);
+      stroke: #92989b;
+      stroke-width: calc(0.7 * var(--hp-raster-outline-scale, 1));
+      vector-effect: non-scaling-stroke;
+    }
+    .iso-wall-top {
+      fill: url(#hp-iso-wall-top) var(--iso-top-hi, #ffffff);
+      stroke: #d7d9d8;
+      stroke-width: calc(0.8 * var(--hp-raster-outline-scale, 1));
+      vector-effect: non-scaling-stroke;
+    }
+    .iso-wall-side-fill { opacity: var(--iso-wall-side-op, .55); }
+    :is(.iso-wall-fill, .iso-wall-side-fill) :is(.iso-wall-side, .iso-wall-top) { stroke: none; }
+    .iso-wall-contour { fill: none; stroke-linejoin: round; }
+    .iso-translucent-masonry-face > :is(.iso-wall-side, .iso-wall-top) { stroke: none; }
+    .iso-material-texture {
+      fill: url(#hp-iso-wall-texture);
+      stroke: none;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    .iso-floor-texture { fill: url(#hp-iso-floor-texture); opacity: 0.1; }
+    /* Local #1451: smooth materials, including glass; no dot/hatch overlay. */
+    .stage.projection-iso[data-hp-iso-floor-markers] .iso-material-texture { display: none; }
+    .iso-texture-mark { fill: rgba(36, 43, 47, 0.34); }
+    .iso-texture-line {
+      fill: none;
+      stroke: rgba(36, 43, 47, 0.24);
+      stroke-width: 0.55;
+    }
+    .iso-floor-side {
+      fill: #858b8d;
+      stroke: #71787b;
+      stroke-width: calc(0.7 * var(--hp-raster-outline-scale, 1));
+      vector-effect: non-scaling-stroke;
+    }
+    .iso-opening-panel {
+      fill: #d7d9d7;
+      fill-opacity: 0.96;
+      stroke: #7f878b;
+      stroke-width: calc(0.9 * var(--hp-raster-outline-scale, 1));
+      vector-effect: non-scaling-stroke;
+    }
+    .iso-opening-panel.iso-window {
+      fill: #dfeff4;
+      fill-opacity: 0.72;
+      stroke: #8aa7b1;
+    }
+    .iso-opening-panel.iso-material-reveal {
+      fill: #c7cbca;
+      stroke: #8b9294;
+    }
+    .iso-opening-panel.iso-material-matte-leaf {
+      fill: #a6abad;
+      stroke: none;
+    }
+    .iso-opening-panel.iso-opening-leaf-edge,
+    .iso-opening-panel.iso-opening-leaf-top { fill: #8d9497; }
+    .iso-opening-panel.iso-material-light-frame,
+    .iso-opening-panel.iso-material-light-sill {
+      fill: #fffef8;
+      fill-opacity: 0.94;
+      stroke: #b3b5ae;
+    }
+    .iso-opening-panel.iso-material-light-window,
+    .iso-opening-panel.iso-material-glass-side {
+      fill: #c9e4f3;
+      fill-opacity: 0.88;
+      stroke: #8fb4c7;
+    }
+    .iso-opening-panel.iso-material-glass-top {
+      fill: #e3f2fa;
+      fill-opacity: 0.96;
+      stroke: #9fc4d5;
+    }
+    /* Local #1451: materials decorate the derived surfaces only. */
+    [data-hp-opening-masonry] .iso-door.iso-material-matte-leaf {
+      fill: var(--iso-opening-leaf, #f1f2ef); fill-opacity: 1;
+    }
+    [data-hp-opening-masonry] .iso-door.iso-material-light-frame {
+      fill: var(--iso-opening-frame, #c2cfd2); fill-opacity: 1; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-door.iso-opening-door-glass {
+      fill: #78b5c8; fill-opacity: .43; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-door.iso-opening-leaf-edge,
+    [data-hp-opening-masonry] .iso-door.iso-opening-leaf-top {
+      fill: var(--iso-opening-edge, #bec5c5);
+    }
+    [data-hp-opening-masonry] .iso-window.iso-material-light-frame {
+      fill: var(--iso-opening-window-frame, #f3f4f0); fill-opacity: 1; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-window.iso-material-glass-side {
+      fill: #cde4ee; fill-opacity: .74; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-window.iso-material-blind-fabric { fill: #c8bdb0; fill-opacity: 1; stroke: none; }
+    [data-hp-opening-masonry] .iso-window.iso-material-glass-over-fabric { fill: #cde4ee; fill-opacity: .16; stroke: none; }
+    [data-hp-opening-masonry] .iso-window.iso-material-blind-hem { fill: #958b7e; fill-opacity: 1; stroke: none; }
+    [data-hp-opening-masonry] .iso-opening-door-frame {
+      fill: var(--iso-opening-door-frame, #e9ece8); fill-opacity: 1; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-wall-side { fill: var(--iso-face-fill, var(--iso-side-mid, #adadad)); stroke: none; }
+    [data-hp-opening-masonry] .iso-opening-panel { stroke: none; }
+    [data-hp-opening-masonry] .iso-material-reveal { fill: #8b8d8c; fill-opacity: 1; }
+    [data-hp-opening-masonry] :is(.iso-door, .iso-window).iso-material-reveal {
+      fill: var(--iso-opening-reveal, #8b8d8c);
+    }
+    [data-hp-opening-masonry] .iso-material-light-sill { fill: #e6e8e3; fill-opacity: 1; }
+    [data-hp-opening-masonry] .iso-window.iso-material-light-sill { fill: var(--iso-opening-sill-side, #e6e8e3); }
+    [data-hp-opening-masonry] .iso-window.iso-opening-window-sill { fill: var(--iso-opening-sill-top, #fffefa); }
+    [data-hp-opening-masonry] .iso-material-hardware { fill: #657078; fill-opacity: 1; }
+    [data-hp-opening-masonry] + .iso-opening-indicators :is(path, text) {
+      paint-order: stroke fill;
+      stroke: rgba(255,255,255,.8);
+      stroke-linejoin: round;
+      stroke-width: .14em;
+    }
+    [data-hp-opening-masonry] .iso-material-gate-panel { fill: #aab6b9; fill-opacity: 1; }
+    [data-hp-opening-masonry] .iso-material-gate-metal { fill: #7e8d92; fill-opacity: 1; }
+    .iso-ambient-shadow {
+      fill: rgba(15, 21, 25, 0.22);
+      filter: url(#hp-iso-ambient-shadow);
+    }
+    /* #649 3b: walls, openings, floor edge, wall texture and room labels do
+       not follow the HA theme in 2.5D — only the building's ambient shadow on
+       the card background may. */
+    .stage.theme-dark .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
+    @media (prefers-color-scheme: dark) {
+      .stage:not(.theme-light) .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
+    }
+    @media (forced-colors: active) {
+      .iso-wall-side, .iso-wall-top, .iso-floor-side, .iso-opening-panel {
+        fill: Canvas;
+        stroke: CanvasText;
+        forced-color-adjust: auto;
+      }
+      .iso-ambient-shadow,
+      .iso-material-texture { display: none; }
+      [data-hp-opening-masonry] .iso-wall-side,
+      .iso-wall-side-backing { fill: Canvas; }
+      .iso-architectural-edges path[vector-effect] { stroke: CanvasText; }
+    }
+    @supports not (filter: blur(1px)) {
+      .iso-ambient-shadow,
+      .iso-material-texture { display: none; }
+    }
+    /* Opaque plan paper (owner 2026-08-03): the scene bg_color / daynight sky
+       shows ONLY around the plan, never through it. The colour is the
+       pre-bg_color canvas — the theme card background under an image plan,
+       plain white for a hand-drawn one (.stage.noplan). On drawn plans the
+       paper is per-room shapes following the room contours — fill only,
+       never a stroke, so the paper cannot poke past a wall. Night dimming
+       comes from the .zoomwrap brightness filter, never from alpha
+       (docs/SUN.md). */
+    .hp-paper {
+      fill: var(--ha-card-background, var(--card-background-color, #111));
+      stroke: none;
+    }
+    .stage.noplan .hp-paper,
+    .stage.mode-plan .hp-paper,
+    .stage.mode-devices .hp-paper,
+    .stage.mode-decor .hp-paper {
+      fill: #ffffff;
+    }
+    /* Owner 2026-08-04: «углы границ комнат всё ещё с зубцами». A miter join
+       on a 30-45° corner shoots a spike far past the wall (and flips to an
+       ugly bevel once past the miter limit) — the same defect the decor lines
+       had before they got round caps. Every room border, in EVERY renderer
+       that reuses these styles (plan view, plan editor, static space-card),
+       joins its walls with a ROUND join instead: the corner reads as the
+       stroke's own radius, never as a tooth. The linecap matters only for the
+       open outlines below, but it costs nothing to state it here. */
+    :is(.room,.hp-mode-room) {
+      transition: fill .12s, fill-opacity .12s, stroke .12s, stroke-opacity .12s;
+      cursor: default;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .stage.mode-view :is(.room,.hp-mode-room) { cursor: pointer; }
+    /* #746: every state of a room writes its transparency the way .styled
+       does — an opaque colour plus fill-opacity / stroke-opacity, and
+       transparent only together with a zero *-opacity. The transition above
+       interpolates the colour and the opacity independently, and what you
+       see is their product: when one state kept its alpha in the colour
+       (rgba(…, 0.06), opacity 1) and the other in the opacity (an opaque
+       colour, 0.18), one half rose while the other fell, and mid-way the
+       room was darker than at either end — opening the space settings on a
+       floor with no fill flashed every room grey, entering or leaving the
+       plan editor darkened a filled floor. The resting paint is the same.
+       Witness: demo/smoke_room_fill_transitions.mjs. */
+    :is(.room,.hp-mode-room).overlay {
+      fill: transparent;
+      fill-opacity: 0;
+      stroke: transparent;
+      stroke-opacity: 0;
+      stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
+    }
+    :host([data-pointer-hover]) .stage.mode-view :is(.room,.hp-mode-room).overlay:not(.styled):hover {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+    }
+    :is(.room,.hp-mode-room).yard {
+      fill: var(--hp-room-yard-color);
+      fill-opacity: var(--hp-room-yard-fill-alpha);
+      stroke: var(--hp-room-yard-color);
+      stroke-opacity: 1;
+      stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
+    }
+    :host([data-pointer-hover]) .stage.mode-view :is(.room,.hp-mode-room).yard:not(.styled):hover {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+    }
+    :is(.room,.hp-mode-room).styled {
+      stroke: var(--room-stroke, transparent);
+      stroke-opacity: var(--room-stroke-op, 0);
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
+      fill: var(--room-fill, transparent);
+      fill-opacity: var(--room-fill-op, 0);
+    }
+    /* Explicit descendant classes avoid the existing pseudo-combinator minifier bug (#1121). */
+    .stage.mode-plan:not(.mode-transition) .glow-pools-frame,
+    .stage.mode-plan:not(.mode-transition) .led-fields,
+    .stage.mode-decor:not(.mode-transition) .glow-pools-frame,
+    .stage.mode-decor:not(.mode-transition) .led-fields { display:none; }
+    .glow-pools-frame,
+    .glow-pools,
+    .glow-spot {
+      pointer-events: none;
+    }
+    /* The parent isolates all source spots from the room data fill,
+       paper and backdrop. A spot is one circle clipped to the floor its lamp
+       can see, so the whole spot screen-blends as a single primitive — there is
+       no mask left to be dropped on a promoted layer. Per-stop alpha already
+       contains the shared 0.7 ceiling; the spot opacity below only animates
+       between 0 and 1 and is never another persistent alpha ceiling. */
+    .glow-pools-frame,
+    .glow-pools,
+    .glow-spot {
+      isolation: isolate;
+    }
+    .glow-pools.blend-screen .glow-spot {
+      mix-blend-mode: screen;
+    }
+    .glow-spot {
+      opacity: 1;
+      transition: opacity 500ms ease;
+    }
+    .glow-spot.is-entering,
+    .glow-spot.is-leaving {
+      opacity: 0;
+    }
+    /* Zoom only changes band paint, never the field/clip DOM or source fade. */
+    :host([data-led-zoom-quality="coarse"]) .led-field-bands > path:nth-child(even) {
+      display: none;
+    }
+    :host([data-led-zoom-quality="coarse"]) .led-field-bands > path:nth-child(odd) {
+      stroke: var(--hp-led-coarse-stroke);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .glow-spot {
+        transition: none;
+      }
+    }
+    /* The explicit late room-hover layer owns the wash and halo. Keeping CSS
+       filters off room paths prevents Chromium from recompositing the sibling
+       screen-blended Glow layer for one bright frame on every hover. */
+    :host([data-pointer-hover]) .stage.mode-view :is(.room,.hp-mode-room).styled:hover {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+    }
+    /* doors, windows & gates
+
+       #525: these two transitions are the reason the opening list is rendered
+       with repeat(items, (o) => o.id, ...) and not a bare map(). Lit reuses
+       list nodes by POSITION, so on a space switch the leaf that held a slot
+       kept its DOM node and only changed values — and the browser dutifully
+       animated a door that never moved: the new floor's leaf drove in from the
+       previous floor's opening angle, 0.6 s of an event that did not happen.
+       Anything animated that is rendered from a list needs a key. The Glow
+       spots learned it first (glow-scene.ts, opacity), the openings and the
+       device markers (.device-shell-frame, box-shadow) with this issue.
+
+       #534: the shape is now keyed(space.id, repeat(items, (o) => o.id, ...)),
+       and BOTH halves are load-bearing. The outer key does the space switch:
+       there the key sets are disjoint, so repeat would build two key maps and
+       walk both lists only to throw everything away — 80 ms of it on a plan
+       with two hundred markers. The inner key does everything inside one
+       space, where the list composition still changes underneath: an opening
+       with an unresolved host is listed ONLY in plan mode (_openingsR), so
+       entering and leaving the editor shifts the positions of the rest.
+       Removing either half brings the phantom animation back through a
+       different door.
+
+       #742: the room shapes share the rule. :is(.room,.hp-mode-room) above transitions every
+       property for 0.12 s, and the flat room list was a bare map(): on a floor
+       switch the previous floor's room node became the new floor's room, and
+       its fill drew in from the stranger's value — one paper-white frame, then
+       darker than the fill. The list is now keyed(space.id, repeat(rooms,
+       (r, i) => r.id || i, ...)) for the same two reasons: room ids are unique
+       only inside a space, and inside a space insert, merge, split and the
+       editor's filter shift positions. An id-less room (the backend accepts
+       an empty id) keys by its index: a number never equals a string id in
+       repeat's key map. The transition itself stays — it is hover and a real
+       fill change on the same floor.
+
+       #745: so does the space card (space-render.ts). It takes these styles
+       too and draws its rooms the same way: there the room set changes in
+       the same DOM on a new "space" in setConfig of the same element (the
+       outer key) and on a config event that inserts, removes or re-zones a
+       room (the inner key).
+
+       #764: and its device markers and opening symbols, in the same
+       keyed(space.id, repeat(...)) shape.
+       Witnesses: demo/smoke_space_switch_transitions.mjs,
+       demo/smoke_space_card.mjs, demo/smoke_space_card_identity.mjs. */
+    .op-leaf {
+      transition: transform 0.6s ease;
+    }
+    .op-arc {
+      stroke-width: calc(1.5px * var(--hp-cell-visual-scale, 1));
+      transition: stroke-dashoffset 0.6s ease;
+    }
+    /* hover affordance: a rounded outline hugging the wall strip + a grab cursor */
+    .op-outline {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: calc(1.5px * var(--hp-cell-visual-scale, 1));
+      opacity: 0;
+      transition: opacity 0.15s;
+      pointer-events: none;
+    }
+    :host([data-pointer-hover]) .stage.markup g.opening:hover .op-outline {
+      opacity: 0.9;
+    }
+    /* openings are pure status graphics outside Plan mode: no cursor, no hover,
+       no hit target — View must not interact with them at all */
+    .op-hit {
+      fill: transparent;
+      pointer-events: none;
+      cursor: default;
+    }
+    .stage.markup .op-hit {
+      pointer-events: auto;
+      cursor: grab;
+      touch-action: none; /* drags, not scrolls, on touch */
+    }
+    .stage.markup .op-hit:active {
+      cursor: grabbing;
+    }
+    .stage.markup .opening.orphan {
+      pointer-events: auto;
+      cursor: pointer;
+      color: var(--error-color, #db4437);
+    }
+    .stage.markup .opening.orphan circle {
+      fill: var(--hp-bg);
+      stroke: currentColor;
+      stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
+    }
+    .stage.markup .opening.orphan text {
+      fill: currentColor;
+      font-weight: 800;
+      font-size: calc(12px * var(--hp-cell-visual-scale, 1));
+      pointer-events: none;
+    }
+    /* HP-1550-04: in the resize tool the wall handles own the hit test — the
+       transparent .op-hit of a door at the midpoint of a wall used to sit ON
+       TOP of the handle and made that wall ungrabbable for both rooms.
+       Openings are not editable in this tool (they ride along with the wall),
+       so their hit area goes fully inert; every other Plan tool is untouched. */
+    .stage.markup.tool-resize .op-hit {
+      pointer-events: none;
+      cursor: default;
+    }
+    .stage.mode-view .oplock {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .stage.mode-view .oplock:focus-visible {
+      outline: 2px solid var(--hp-accent, #3ea6ff);
+      outline-offset: 3px;
+      border-radius: 50%;
+    }
+    .stage.projection-iso.mode-view .oplock::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: max(44px, 100%);
+      height: max(44px, 100%);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: auto;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .op-leaf, .op-arc { transition: none; }
+    }
+    .roomlabel {
+      pointer-events: none; /* draggable only in plan mode (rule below) */
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-size: calc(var(--rl-icon-size, var(--icon-size, 2.5cqw)) * 0.5 * var(--rl-scale, 1) * var(--rl-font, 1) * var(--rl-space, 1));
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      cursor: grab;
+      user-select: none;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15em;
+      text-align: center;
+    }
+    .rlname {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25em;
+      font-size: calc(1em * var(--rl-name, 1));
+    }
+    .zoomwrap.slide-left  { animation: hp-slide-left 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .zoomwrap.slide-right { animation: hp-slide-right 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    @media (prefers-reduced-motion: reduce) {
+      .zoomwrap.slide-left,
+      .zoomwrap.slide-right { animation: none; }
+      .rlgearbtn { transition: none !important; }
+    }
+    /* The name is the anchor: the label box is centred on the room point, so
+       anything that takes part in its layout SHIFTS THE NAME. The gear button
+       and the metrics hang below as absolutes — the name renders in exactly
+       the same place in view mode and in the plan editor (owner's request),
+       and the button sits at the very bottom of the card. */
+    /* Standalone, centred on the room, sized from the device icon: icon-size
+       already rescales with the view, so the button zooms WITH the plan
+       instead of keeping a constant screen size (owner's spec). */
+    .rlgearbtn {
+      --gear-h: calc(var(--icon-size, 2.5cqw) * 0.77); /* owner: half the previous size */
+      position: absolute;
+      /* dead-centred on the room, both axes (owner's spec) */
+      transform: translate(-50%, -50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35em;
+      height: var(--gear-h);
+      padding: 0 calc(var(--gear-h) * 0.38);
+      border: 0;
+      border-radius: 999px;
+      background: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+      font: inherit;
+      font-size: calc(var(--gear-h) * 0.42);
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: grab;
+      pointer-events: auto;
+      touch-action: none;
+      opacity: 0.92;
+      box-shadow: var(--shadow-1);
+      z-index: 2;
+    }
+    /* Prepared editor hit ink never participates in View or other tools. */
+    .stage:not(.mode-decor) :is(.dselecthit,.dfurniturehit),
+    .stage.mode-decor:not(.dtool-select) :is(.dselecthit,.dfurniturehit) { display:none; }
+    .rlgearbtn { transition: opacity 0.15s, filter 0.15s, box-shadow 0.15s; }
+    .rlgearbtn.dragging {
+      cursor: grabbing;
+      opacity: 1;
+      filter: brightness(1.1);
+      box-shadow: var(--shadow-3, 0 8px 20px rgb(0 0 0 / 0.28));
+    }
+    :host([data-pointer-hover]) .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
+    .rlgearbtn ha-icon { --mdc-icon-size: calc(var(--gear-h) * 0.55); display: inline-flex; }
+    .rlgo {
+      --mdc-icon-size: 0.85em;
+      display: inline-flex;
+      opacity: 0.55;
+    }
+    .stage.mode-view .rlarea {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .rlarea {
+      align-items: center;
+      justify-content: flex-start;
+      box-sizing: border-box;
+      width: 44px;
+      height: 44px;
+      margin-block: calc((1em - 44px) / 2);
+      /* Keep the same name anchor as Plan's passive .85em icon. The native
+         touch floor extends right, away from the independent fit text. */
+      margin-inline-end: calc(0.85em - 44px);
+      padding: 0;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      outline: none;
+    }
+    .rlarea > ha-icon { display: inline-flex; }
+    /* #1128: the admin shortcut must not put an invisible 44px navigation
+       target over stairs on touch-only screens. Keep the native button in the
+       keyboard order; deliberate keyboard focus restores its full target. */
+    @media (hover: none) {
+      .stage.mode-view .rlarea:not(:focus-visible) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        pointer-events: none;
+      }
+    }
+    .rlarea:focus-visible, .rlfit:focus-visible {
+      outline: 2px solid var(--hp-accent);
+      outline-offset: 2px;
+    }
+    :host([data-pointer-hover]) .stage.mode-view .rlarea:hover { opacity: 1; }
+    .roomlabel .rlmetrics {
+      position: absolute; /* below the name, outside the centring math */
+      top: calc(100% + 0.15em);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.55em;
+      font-size: calc(0.75em * var(--rl-meta, 1)); /* feedback: 0.62 was unreadable on a tablet */
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      opacity: 0.9;
+    }
+    .roomlabel .rlm {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.12em;
+    }
+    .roomlabel .rlm ha-icon {
+      --mdc-icon-size: 1.05em;
+      display: inline-flex;
+    }
+    .roomlabel .rlm.lit { opacity: 1; }
+    .rlhandle {
+      display: none;
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      background: var(--hp-accent);
+      border: 1px solid var(--card-background-color, #fff);
+      z-index: 2;
+    }
+    .rlhandle.tl { left: -6px; top: -6px; cursor: nwse-resize; }
+    .rlhandle.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
+    .rlhandle.tr { right: -6px; top: -6px; cursor: nesw-resize; }
+    .rlhandle.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
+    :host([data-pointer-hover]) .stage.markup .roomlabel:hover .rlhandle { display: block; }
+    .stage.markup .roomlabel { pointer-events: auto; }
+    .stage.mode-view .roomlabel {
+      pointer-events: auto;
+      cursor: pointer;
+      border-radius: 0.2em;
+    }
+    .stage.projection-iso.mode-view .roomlabel {
+      box-sizing: border-box;
+      text-shadow: none;
+      filter: none;
+      -webkit-text-stroke: 0 transparent;
+      /* #649 3b: the configured room label colour (inline, as in Flat) is
+         kept in both themes; 2.5D only drops stroke, shadow and halo. */
+    }
+    /* #665: the 44 x 44 px touch floor of a raised room label is an invisible
+       pseudo-element, as on door locks: sizing the label box itself centred the
+       name in 44 px and pushed the absolutely placed metrics row away from it
+       by (44 - name height) / 2, so the metrics drifted as the zoom changed the
+       font. z-index -1 paints the floor below the label content, inside the
+       label's own stacking context (z-index 1). */
+    .stage.projection-iso.mode-view .roomlabel::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: max(44px, 100%);
+      height: max(44px, 100%);
+      transform: translate(-50%, -50%);
+      z-index: -1;
+      pointer-events: auto;
+    }
+    /* Interactive raised overlays stay above passive room names. Collision
+       placement never needs to move or promote a label to make a device usable. */
+    .stage.projection-iso.mode-view .dev,
+    .stage.projection-iso.mode-view .oplock { z-index: 2; }
+    .stage.mode-view .roomlabel:focus-visible {
+      outline: 2px solid var(--hp-accent);
+      outline-offset: 4px;
+    }
+    .roomlabel:active { cursor: grabbing; }
+    .measurelayer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .alignline {
+      stroke: var(--hp-accent);
+      stroke-width: calc(1.2px * var(--hp-cell-visual-scale, 1));
+      stroke-dasharray:
+        calc(4px * var(--hp-cell-visual-scale, 1))
+        calc(4px * var(--hp-cell-visual-scale, 1));
+      pointer-events: none;
+      opacity: 0.9;
+    }
+    .aligndot {
+      fill: var(--hp-accent);
+      pointer-events: none;
+    }
+    .measurelabel.on45 {
+      color: #4bd28f;
+      border-color: #4bd28f;
+    }
+    .measurelabel {
+      position: absolute;
+      transform: translate(12px, -150%);
+      font-size: var(--fs-s);
+      font-weight: 600;
+      padding: 1px var(--sp-3);
+      border-radius: var(--rad-s);
+      background: rgba(0, 0, 0, 0.72);
+      color: #fff;
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+      z-index: 3;
+    }
+    /* decor (background) layer */
+    .decorlayer .dshape { pointer-events: none; }
+    .stage.mode-decor .decorlayer .dshape {
+      pointer-events: visiblePainted;
+      cursor: pointer;
+    }
+    .stage.mode-decor.dtool-select .decorlayer .dshape { cursor: move; }
+    /* …but a DRAWING tool owns the canvas: existing shapes stop being targets
+       entirely, so a new line can start exactly on the end of an old one
+       instead of grabbing it (owner, 2026-08-04). Same for the picture tool —
+       a shape lying over the plan must not block the picture's own drag.
+       Only select (move) and erase (delete) keep the shapes clickable. */
+    .stage.mode-decor.dtool-line .decorlayer .dshape,
+    .stage.mode-decor.dtool-rect .decorlayer .dshape,
+    .stage.mode-decor.dtool-ellipse .decorlayer .dshape,
+    .stage.mode-decor.dtool-text .decorlayer .dshape,
+    .stage.mode-decor.dtool-furniture .decorlayer .dshape,
+    .stage.mode-decor.dtool-image .decorlayer .dshape,
+    .stage.mode-decor.dtool-backdrop .decorlayer .dshape { pointer-events: none; }
+    /* the furniture tool is a stamp: the press must reach the stage even when
+       it lands on a sofa that is already there (docs/FURNITURE.md §4) */
+    .stage.mode-decor.dtool-furniture,
+    .stage.mode-decor.dtool-image { cursor: copy; }
+    .stage.mode-decor.dtool-select .decorlayer .dimage,
+    .stage.mode-decor.dtool-erase .decorlayer .dimage,
+    .stage.mode-decor.dtool-select .decorlayer .dimage-missing,
+    .stage.mode-decor.dtool-erase .decorlayer .dimage-missing {
+      pointer-events: bounding-box;
+    }
+    .decorlayer .dimage-missing rect {
+      fill: rgba(127, 127, 127, 0.12);
+      stroke: var(--hp-accent);
+      stroke-dasharray: 8 5;
+      vector-effect: non-scaling-stroke;
+    }
+    .decorlayer .dimage-missing path {
+      fill: none;
+      stroke: var(--hp-accent);
+      vector-effect: non-scaling-stroke;
+    }
+    .decorlayer .decor-image-placement-preview { opacity: 0.65; }
+    /* ONE exception (owner, 2026-08-04): under the TEXT tool an existing LABEL
+       is a target again — pressing it opens its editor instead of starting a
+       new label on top of the old one. Only labels: a line or a rectangle
+       under the text tool stays inert, so the press reaches the stage and a
+       new label is created there. */
+    .stage.mode-decor.dtool-text .decorlayer .dshape.dtext,
+    .stage.mode-decor.dtool-select .decorlayer .dshape.dtext,
+    .stage.mode-decor.dtool-erase .decorlayer .dshape.dtext {
+      /* A label is one logical decor object. SVG's visiblePainted would hit
+         only the ink of individual glyphs, so spaces, counters and the area
+         inside its selection glow behaved like empty canvas. */
+      pointer-events: visiblePainted;
+      pointer-events: bounding-box;
+    }
+    .stage.mode-decor.dtool-text .decorlayer .dshape.dtext {
+      cursor: text;
+    }
+    /* Erasing a hairline must not require pixel-perfect aim. The duplicate
+       geometry is invisible and exists only while Erase is active. A
+       non-scaling stroke keeps the target comfortably wide at every zoom. */
+    .decorlayer .derasehit {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 16px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .stage.mode-decor.dtool-erase .decorlayer .derasehit {
+      pointer-events: stroke;
+    }
+    /* A dashed line must remain selectable across its gaps. This proxy also
+       makes the only entry to line-style properties — double click in Select —
+       practical for hairlines at every zoom. */
+    .decorlayer .dselecthit {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 16px;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .stage.mode-decor.dtool-select .decorlayer .dselecthit {
+      pointer-events: stroke;
+      cursor: move;
+    }
+    /* #383: furniture keeps a path-shaped target. Its per-object physical
+       width is supplied by the renderer; no empty bounding-box area is hit. */
+    .stage.mode-decor .decorlayer .dshape.dfurniturehit {
+      fill: none;
+      stroke: transparent;
+      pointer-events: none;
+    }
+    .stage.mode-decor.dtool-select .decorlayer .dshape.dfurniturehit {
+      pointer-events: stroke;
+      cursor: move;
+    }
+    .decorlayer .ddraft {
+      stroke-dasharray:
+        calc(6px * var(--hp-cell-visual-scale, 1))
+        calc(5px * var(--hp-cell-visual-scale, 1));
+      pointer-events: none;
+    }
+    .decorlayer .furniture-placement-preview {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .decorlayer text {
+      font-weight: 600;
+      user-select: none;
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+    .stage.mode-decor {
+      outline: 2px solid #26a69a;
+      outline-offset: -2px;
+    }
+    /* backdrop transform frame (docs/DECOR-EDITOR.md §3.2). Editor chrome: the
+       outline never takes a pointer, the four corner handles do — and they are
+       finger-sized (r = 2 % of the visible view), because this is dragged on a
+       tablet as often as with a mouse. */
+    .bdframe .bdbox {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: 2;
+      stroke-dasharray: 10 7;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+    /* the HIT circle: invisible, finger-sized, the only thing that takes a
+       pointer. The visible bead is .bdknob, a quarter of its radius — the same
+       visual/hit split .dthandle + .dtknob and .rszhandle + .rszicon use. */
+    .bdframe .bdhandle {
+      fill: transparent;
+      stroke: none;
+      pointer-events: all;
+      touch-action: none;
+    }
+    .bdframe .bdknob {
+      fill: var(--hp-accent);
+      stroke: #fff;
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    :host([data-pointer-hover]) .bdframe .bdhandle:hover + .bdknob {
+      fill: #fff;
+      stroke: var(--hp-accent);
+    }
+    .bdframe .bd-nwse { cursor: nwse-resize; }
+    .bdframe .bd-nesw { cursor: nesw-resize; }
+    /* the picture itself is the drag target for a move (grab, then grabbing) */
+    .stage.mode-decor.bdgrab { cursor: grab; }
+    .stage.mode-decor.furniture-panning, .stage.mode-decor.furniture-panning * { cursor: grabbing !important; }
+    .stage.mode-decor.bdgrabbing,
+    .stage.mode-decor.bdgrabbing .bdframe .bdhandle { cursor: grabbing; }
+    .measurelabel.bdmeasure {
+      transform: translate(-50%, -50%);
+      border: 1px solid var(--hp-accent);
+    }
+    /* the selected decor object's frame — same chrome rules as the backdrop's:
+       the outline never takes a pointer, the handles always do, and they are
+       finger-sized because this is dragged on a tablet too */
+    .dtframe .dtbox {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: 1.5;
+      stroke-dasharray: 7 5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .dtframe .dtstem,
+    .bdframe .dtstem {
+      stroke: var(--hp-accent);
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    /* the HIT circle: invisible, finger-sized, the only thing that takes a
+       pointer. The visible bead is .dtknob, a quarter of its radius — the
+       same visual/hit split .rszhandle + .rszicon use. */
+    .dtframe .dthandle {
+      fill: transparent;
+      stroke: none;
+      pointer-events: all;
+      touch-action: none;
+    }
+    .dtframe .dtknob {
+      fill: var(--hp-accent);
+      stroke: #fff;
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    :host([data-pointer-hover]) .dtframe .dthandle:hover + .dtknob {
+      fill: #fff;
+      stroke: var(--hp-accent);
+    }
+    .dtframe .dt-nwse { cursor: nwse-resize; }
+    .dtframe .dt-nesw { cursor: nesw-resize; }
+    .dtframe .dtrot { cursor: grab; }
+    .dtframe .dt-ew { cursor: ew-resize; }
+    .dtframe .dt-ns { cursor: ns-resize; }
+    .dtfurnitureframe .dtrot,
+    .hp-stair-frame .dtrot,
+    .hp-column-frame .dtrot {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M18.4 7.2A8 8 0 1 0 20 12' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='m15.5 3.8 3.2 3.5-4.6.8' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, grab;
+    }
+    .dtfurnitureframe .dtrot:active,
+    .hp-stair-frame .dtrot:active,
+    .hp-column-frame .dtrot:active { cursor: grabbing; }
+    .hp-column-frame { --hp-accent: #078a9e; }
+    .dtframe .dtendpoint { cursor: crosshair; }
+    .bdframe .dtrot { cursor: grab; }
+    .dtarea {
+      resize: vertical;
+      min-height: 3.4em;
+      font: inherit;
+      line-height: 1.35;
+    }
+    .stage.mode-decor.dtool-line, .stage.mode-decor.dtool-rect,
+    .stage.mode-decor.dtool-ellipse, .stage.mode-decor.dtool-text {
+      cursor: crosshair;
+    }
+    .stage.mode-decor.dtool-erase,
+    .stage.mode-decor.dtool-erase .decorlayer * {
+      cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20d%3D%22M2%202v23l6-6%204%209%204-2-4-9h9Z%22%20fill%3D%22%23111%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22m23%2020%206%206m0-6-6%206%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22m23%2020%206%206m0-6-6%206%22%20fill%3D%22none%22%20stroke%3D%22%23d83c3c%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E") 2 2, default;
+    }
+    /* Devices are landmarks in Background, never editing targets. The marker
+       package deliberately re-enables pointer events on the core, its 44 px
+       pseudo hit area and the visible capsule for View/Devices. A none on
+       devlayer alone therefore does not make its HTML descendants inert.
+       Scope the boundary to the whole subtree (including the pseudo element)
+       so a Background tool receives the exact point below every visible part. */
+    .stage.mode-decor .devlayer,
+    .stage.mode-decor .devlayer *,
+    .stage.mode-decor .dev::before {
+      pointer-events: none;
+    }
+    /* Backdrop-editor de-emphasis is a shared mode-transition coordinate.
+       It multiplies whole presentation groups and never changes Glow source
+       alpha, additive blending, or the underlying resolved state. */
+    .stage :is(.room,.hp-mode-room),
+    .stage .devlayer,
+    .stage .opening,
+    .stage :is(.room-outline,.hp-mode-room-outline),
+    .stage .wallbodies,
+    .stage .glow-pools-frame,
+    .stage .zero-walls,
+    .stage .hp-stairs-layer {
+      opacity: 1;
+    }
+    .stage.mode-decor :is(.room,.hp-mode-room),
+    .stage.mode-decor .devlayer,
+    .stage.mode-decor .opening,
+    .stage.mode-decor :is(.room-outline,.hp-mode-room-outline),
+    .stage.mode-decor .wallbodies,
+    .stage.mode-decor .glow-pools-frame,
+    .stage.mode-decor .zero-walls,
+    .stage.mode-decor .hp-stairs-layer {
+      opacity: .35;
+    }
+    .opening-preview {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .opening-preview[data-kind="passage"] {
+      opacity: 1;
+    }
+    .passage-preview-cut {
+      fill: var(--wall-fill, #ffffff);
+      fill-opacity: 0.35;
+      stroke: none;
+      pointer-events: none;
+    }
+    .passage-preview-boundary {
+      stroke: var(--hp-open, #ff9800);
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
+      pointer-events: none;
+    }
+    .opening-preview .op-leaf,
+    .opening-preview .op-arc {
+      transition: none;
+    }
+    .opening-preview-dot {
+      fill: var(--hp-open, #ff9800);
+      pointer-events: none;
+    }
+    .stage.markup {
+      cursor: crosshair;
+    }
+    /* room-picking stages: merge (both clicks) and split before a room is chosen */
+    .stage.markup.tool-merge,
+    .stage.markup.tool-split.pickstage,
+    .stage.markup.tool-delroom {
+      cursor: pointer;
+    }
+    .stage.markup.tool-wallthick { cursor: default; }
+    .stage.markup.tool-wallthick.wallhot { cursor: pointer; }
+    /* Solid wall colour sits under the hatch (owner: both, not either/or). */
+    .wallbody-fill {
+      fill: var(--wall-fill, #ffffff);
+      fill-opacity: var(--wall-fill-op, 1);
+      fill-rule: evenodd;
+      stroke: none;
+      pointer-events: none;
+    }
+    .wallbody {
+      fill: url(#hp-wall-hatch);
+      fill-rule: evenodd;
+      stroke: var(--room-stroke, var(--hp-muted));
+      stroke-width: calc(0.6px * var(--hp-cell-visual-scale, 1));
+      pointer-events: none;
+    }
+    /* Thin-on-screen: hatch collapses into noise — fill alone, stroke from fill path's sibling. */
+    .wallbody.solid {
+      fill: none;
+    }
+    .wallthick-hover {
+      fill: var(--accent-color, #03a9f4);
+      fill-opacity: 0.38;
+      stroke: var(--accent-color, #03a9f4);
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+    .wallthick-hover.isopen {
+      fill: var(--error-color, #f44336);
+      stroke: var(--error-color, #f44336);
+    }
+    .zero-wall {
+      stroke: var(--zero-wall-stroke, var(--hp-muted));
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
+      stroke-dasharray:
+        calc(7px * var(--hp-cell-visual-scale, 1))
+        calc(7px * var(--hp-cell-visual-scale, 1));
+      stroke-linecap: butt;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+    .zero-walls.solid .zero-wall {
+      stroke-dasharray: none;
+    }
+    /* Rooms with zero/thick stretches: the polygon's own stroke is fully off.
+       The trimmed :is(.room-outline,.hp-mode-room-outline) draws normal walls; View hover gets its own
+       top overlay after the wall bodies. */
+    :is(.room,.hp-mode-room).noedge {
+      stroke-opacity: 0 !important;
+    }
+    /* rooms with open boundaries draw their walls as separate M..L subpaths,
+       so a corner between two of them is two stroke ENDS meeting: round caps
+       fill it in the same way a round join fills a closed contour's corner
+       (owner 2026-08-04 — no teeth anywhere on a room border). */
+    :is(.room-outline,.hp-mode-room-outline) {
+      fill: none;
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+    /* Plan editor: trimmed outlines use the markup blue */
+    :is(.room-outline,.hp-mode-room-outline).outlined {
+      stroke: rgba(62, 166, 255, 0.55);
+      stroke-opacity: 1;
+    }
+    /* The wash is rendered directly above the resolved room fill but below
+       tunnels, Glow, sun and walls. Black at 22% reproduces the old
+       brightness(.78) contract without filtering/promoting an SVG ancestor or
+       changing the room's hue. The halo/outline are rendered again late, above
+       the wall bodies. */
+    .room-hover-fill {
+      fill: #000;
+      fill-opacity: 0.22;
+      pointer-events: none;
+    }
+    .room-hover-halo {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-opacity: 0.28;
+      stroke-width: calc(8px * var(--hp-cell-visual-scale, 1));
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+    .room-hover-outline {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+    .stage.markup :is(.room,.hp-mode-room) {
+      pointer-events: none;
+    }
+    /* #687: devices are landmarks in the Plan editor too, exactly as in
+       Background (#362): the same markers as View, at the same 35% and fully
+       pointer-inert, so every Plan tool receives the point below them. The
+       fade sits on each marker, not on .devlayer: room labels share that
+       layer and stay opaque and interactive here. filter: opacity()
+       multiplies the marker's own opacity (.unavail), as the Background
+       layer opacity does. */
+    .stage.markup .devlayer .dev {
+      filter: opacity(0.35);
+    }
+    /* Native inert on each marker owns Plan input without restyling every face descendant. */
+    /* mode frames: the edit modes are visible at a glance */
+    .stage.mode-plan {
+      outline: 2px solid #ffc14d;
+      outline-offset: -2px;
+    }
+    .stage.mode-devices {
+      outline: 2px solid var(--hp-accent);
+      outline-offset: -2px;
+    }
+    /* #746: opaque colour plus *-opacity, like every :is(.room,.hp-mode-room) state (see :is(.room,.hp-mode-room).overlay) */
+    :is(.room,.hp-mode-room).outlined {
+      stroke: var(--hp-room-outline-color);
+      stroke-opacity: var(--hp-room-outline-stroke-alpha);
+      fill: var(--hp-room-outline-color);
+      fill-opacity: var(--hp-room-outline-fill-alpha);
+    }
+    /* AFTER .outlined: same specificity — source order decides (gotcha x4) */
+    :is(.room,.hp-mode-room).picked {
+      stroke: #ffc14d;
+      stroke-opacity: 1;
+      stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
+      fill: rgb(255, 193, 77);
+      fill-opacity: 0.25;
+    }
+    /* Owner 2026-08-04: the grid is a HINT, not content — at full strength the
+       dots argued with the plan on white paper. Both levels are muted, the
+       hierarchy is kept (major still denser than fine). */
+    .griddot {
+      fill: var(--hp-accent);
+      opacity: 0.35;
+      stroke: rgba(0, 0, 0, 0.35);
+      stroke-width: 0.4;
+    }
+    /* docs/CANVAS.md §7: every coarse node (5x/10x the live step) keeps a
+       bigger, more opaque dot, so zoomed far out the grid still reads as a
+       grid instead of a grey wash. */
+    .griddot.major {
+      opacity: 0.5;
+      stroke-width: 0;
+    }
+    /* the contour being drawn in the Plan editor: each wall is its own <line>,
+       so the round cap IS the corner (matches the finished :is(.room,.hp-mode-room) border) */
+    .seg {
+      stroke: var(--hp-accent);
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .pathline {
+      stroke: #ffc14d;
+      stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .preview {
+      stroke: #ffc14d;
+      stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
+      stroke-dasharray:
+        calc(6px * var(--hp-cell-visual-scale, 1))
+        calc(5px * var(--hp-cell-visual-scale, 1));
+      opacity: 0.7;
+    }
+    .active-axis {
+      stroke: #ffc14d;
+      stroke-width: 2;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .active-vertex {
+      fill: #ffc14d;
+      stroke: #171006;
+      pointer-events: none;
+    }
+    .wall-repair-preview {
+      stroke: #d93025;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 5 4;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .drawwall-preview-fill {
+      fill: var(--wall-fill, #ffffff);
+      fill-opacity: calc(var(--wall-fill-op, 1) * 0.55);
+      fill-rule: evenodd;
+      stroke: none;
+      pointer-events: none;
+    }
+    .drawwall-preview {
+      fill: url(#hp-wall-hatch);
+      fill-opacity: 0.55;
+      fill-rule: evenodd;
+      stroke: var(--accent-color, #03a9f4);
+      stroke-width: calc(0.5px * var(--hp-cell-visual-scale, 1));
+      stroke-opacity: 0.7;
+      pointer-events: none;
+    }
+    .drawwall-zero-preview {
+      fill: none;
+      stroke: var(--accent-color, #03a9f4);
+      stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
+      stroke-linecap: butt;
+      stroke-linejoin: round;
+      opacity: 0.72;
+      pointer-events: none;
+    }
+    .drawwall-zero-preview.dashed {
+      stroke-dasharray:
+        calc(7px * var(--hp-cell-visual-scale, 1))
+        calc(7px * var(--hp-cell-visual-scale, 1));
+    }
+    .vertex {
+      fill: #ffc14d;
+      stroke: #4a2800;
+      stroke-width: calc(1px * var(--hp-cell-visual-scale, 1));
+    }
+    .vertex.first {
+      fill: #4bd28f;
+      stroke: #04121f;
+    }
+    .plan-snap-overlay,
+    .plan-snap-overlay *,
+    .hidden-wall-diagnostic,
+    .hidden-wall-diagnostic * {
+      pointer-events: none;
+    }
+    .plan-snap-line,
+    .hidden-wall-line {
+      fill: none;
+      stroke: color-mix(in srgb, var(--hp-accent) 82%, white 18%);
+      /* Explicit non-scaling-stroke in the SVG keeps this one screen pixel. */
+      stroke-width: 1;
+      stroke-linecap: round;
+      opacity: 0.92;
+    }
+    .plan-snap-node,
+    .hidden-wall-node {
+      fill: var(--ha-card-background, var(--card-background-color, #fff));
+      stroke: color-mix(in srgb, var(--hp-accent) 88%, #07131c 12%);
+    }
+    .plan-snap-node,
+    .hidden-wall-node,
+    .active-vertex {
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+    .plan-snap-node.active {
+      fill: #ffc14d;
+      stroke: #171006;
+    }
+    .plan-snap-node.active.dynamic {
+      fill: #4bd28f;
+      stroke: #04121f;
+    }
+    .plan-snap-node.conflict {
+      fill: #fff;
+      stroke: #d93025;
+      stroke-width: 3;
+    }
+    @media (prefers-color-scheme: dark) {
+      .plan-snap-line {
+        stroke: color-mix(in srgb, var(--hp-accent) 72%, white 28%);
+      }
+      .hidden-wall-line {
+        stroke: color-mix(in srgb, var(--hp-accent) 72%, white 28%);
+      }
+      .plan-snap-node,
+      .hidden-wall-node {
+        fill: #17242c;
+        stroke: #9bdcf5;
+      }
+      .plan-snap-node.active {
+        fill: #ffc14d;
+        stroke: #fff4d6;
+      }
+      .plan-snap-node.active.dynamic {
+        fill: #4bd28f;
+        stroke: #eafff4;
+      }
+    }
+    @media (forced-colors: active) {
+      .plan-snap-line,
+      .hidden-wall-line {
+        stroke: CanvasText;
+        opacity: 1;
+        forced-color-adjust: auto;
+      }
+      .plan-snap-node,
+      .hidden-wall-node {
+        fill: Canvas;
+        stroke: CanvasText;
+        forced-color-adjust: auto;
+      }
+      .plan-snap-node.active,
+      .plan-snap-node.active.dynamic {
+        fill: Highlight;
+        stroke: HighlightText;
+        forced-color-adjust: auto;
+      }
+    }
+    /* RGB lights: the bulb takes the light's actual color */
+    /* v1.52.0: the RGB tint of the icon/border is gone — a lamp's colour
+       lives ONLY in its glow spot (owner's rule). The ripple-color fallback
+       keeps using the light colour; that is set inline via --ripple-color. */
+    /* Sun wedges (docs/SUN.md). The layer is present ONLY above the 3°
+       threshold; crossing it fades the whole layer in or out over EXACTLY
+       2 s (owner 2026-08-03 — RAY_FADE_MS in src/sun.ts must match). The
+       geometry is untouched: this is a plain opacity animation on the group,
+       so overlapping wedges keep their own blending while it plays. */
+    .sunlayer {
+      animation: hp-sunfade-in 2s linear both;
+    }
+    .sunlayer.out {
+      animation: hp-sunfade-out 2s linear both;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      /* no fade at all: the rays are simply there or simply gone */
+      .sunlayer, .sunlayer.out { animation: none; }
+      .sunlayer.out { opacity: 0; }
+    }
+    .devlayer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+    }
+    [data-hp-live-marker-clip] { display:contents; }
+    .projection-iso [data-hp-live-marker-clip] {
+      display:block; position:absolute; inset:0; z-index:6;
+      contain:paint; overflow:clip; pointer-events:none;
+    }
+    [data-hp-live-marker-surface]:not([data-hp-marker-surface-active]) { display:contents; }
+    /* Group intersecting markers into a single paint surface. Its padding
+       contains the camera reserve while the children still use stage units. */
+    [data-hp-marker-surface-active] {
+      display:block; position:absolute; inset:-50%; z-index:6;
+      contain:paint; overflow:clip; pointer-events:none;
+    }
+    [data-hp-marker-surface-active] > .devlayer { inset:25%; }
+    .radar-target {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      box-sizing: border-box;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: var(--success-color, #43a047);
+      border: 2px solid var(--primary-text-color, #1f1f1f);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-background-color, #fff) 80%, transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .radar-target.smooth { transition: left 200ms linear, top 200ms linear; }
+    .radar-ranges {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .radar-ranges path,
+    .radar-ranges polyline {
+      fill: none;
+      stroke: var(--success-color, #43a047);
+      stroke-width: 2px;
+      stroke-dasharray: 5 4;
+      vector-effect: non-scaling-stroke;
+      opacity: 0.72;
+    }
+    .radar-ranges .radar-zone {
+      fill: color-mix(in srgb, var(--success-color, #43a047) 8%, transparent);
+      stroke: var(--success-color, #43a047);
+      stroke-width: 2px;
+      vector-effect: non-scaling-stroke;
+      opacity: 0.8;
+    }
+    .stage.mode-devices .dev { cursor: grab; }
+    .stage.mode-devices .dev:active { cursor: grabbing; }
+    .physical-hit {
+      fill: transparent;
+      stroke: transparent;
+      pointer-events: none;
+      cursor: grab;
+    }
+    .stage.tool-select .physical-hit { pointer-events: all; }
+    .physical-hit:active { cursor: grabbing; }
+    line.physical-hit { cursor: pointer; }
+    .physical-hit.selected {
+      fill: rgba(255, 193, 77, 0.24);
+      stroke: transparent;
+    }
+    line.physical-hit.selected {
+      stroke: transparent;
+    }
+    .physical-drag {
+      fill: rgba(255, 193, 77, 0.38);
+      stroke: #ffc14d;
+      stroke-width: 2.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .physical-chrome { pointer-events: none; }
+    .physical-chrome .frame {
+      fill: none;
+      stroke: #ffc14d;
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+    }
+    .physical-chrome .frame { fill: rgba(255, 193, 77, 0.22); }
+    .physical-chrome polyline.frame { fill: none; }
+    .physical-chrome .move-dot {
+      fill: #ffc14d;
+      stroke: #24262d;
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+    }
+    .drawwall.invalid input { border-color: var(--error-color, #db4437); }
+    .drawwall .rangehint { margin-inline-start: 4px; font-size: 0.78em; opacity: 0.72; }
+    .drawwall.invalid .rangehint { color: var(--error-color, #db4437); opacity: 1; }
+    .stage.markup.tool-column { cursor: crosshair; }
+    /* room resize tool (docs/RESIZE.md) */
+    /* wall handle: invisible finger-sized hit circle (HP-1550-04 hit priority
+       kept), the visible glyph lives in the sibling .rszicon */
+    .rszhandle {
+      fill: transparent;
+      stroke: none;
+      pointer-events: all;
+      cursor: grab;
+      touch-action: none;
+    }
+    .rszhandle:active { cursor: grabbing; }
+    .rszhandle.disabled,
+    .rszhandle.disabled:active {
+      cursor: not-allowed;
+    }
+    /* wall-with-arrows glyph: accent ink over a bg halo, readable on any plan */
+    .rszicon { pointer-events: none; }
+    .rszicon path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+    .rszhalo { stroke: var(--hp-bg); stroke-width: 6; }
+    .rszink { stroke: var(--hp-accent); stroke-width: 2; }
+    :host([data-pointer-hover]) .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
+    .rszicon.disabled { opacity: 0.38; }
+    :host([data-pointer-hover]) .rszhandle.disabled:hover + .rszicon .rszink { stroke-width: 2; }
+    .rszmeasurelayer,
+    .rszmeasurelayer * { pointer-events: none; }
+    .rszmeasurehalo,
+    .rszmeasureink,
+    .rszleader {
+      fill: none;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+    .rszmeasurehalo {
+      stroke: var(--hp-bg);
+      stroke-width: 7px;
+      opacity: 0.9;
+    }
+    .rszmeasureink {
+      stroke: var(--hp-accent);
+      stroke-width: 3px;
+    }
+    .rszleader {
+      stroke: var(--hp-accent);
+      stroke-width: 2px;
+      opacity: 0.95;
+    }
+    /* the decor draft badge rides the MIDDLE of the shape, so it is centred
+       horizontally and lifted clear of the line instead of trailing the
+       cursor the way a wall badge does (owner 2026-08-04) */
+    .measurelabel.dmeasure {
+      transform: translate(-50%, -160%);
+    }
+    .measurelabel.rszarea {
+      transform: translate(
+        calc(-50% + var(--rsz-label-x, 0px)),
+        calc(-50% + var(--rsz-label-y, 0px))
+      );
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--hp-accent);
+    }
+    /* width and depth of a piece of furniture while its corner is dragged —
+       centred on the edge they measure (docs/FURNITURE.md §6) */
+    .measurelabel.furnmeasure {
+      transform: translate(-50%, -50%);
+      border: 1px solid var(--hp-accent);
+    }
+    .stage.markup.tool-stairs { cursor: crosshair; }
+    .hp-stair-outline {
+      fill: var(--hp-stair-fill, #607d8b);
+      fill-opacity: var(--hp-stair-fill-opacity, 0);
+      stroke: var(--hp-stair-line, #607d8b);
+      stroke-opacity: var(--hp-stair-line-opacity, 1);
+      stroke-width: var(--hp-stair-stroke, 3);
+    }
+    .hp-stair-trapezoid,
+    .hp-stair-tread,
+    .hp-stair-arrow {
+      fill: none;
+      stroke: var(--hp-stair-line, #607d8b);
+      stroke-opacity: var(--hp-stair-line-opacity, 1);
+      stroke-width: var(--hp-stair-stroke, 3);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+    .hp-stair-hit { fill: transparent; stroke: transparent; stroke-width: 14px; pointer-events: none; }
+    .hp-stair.input-enabled .hp-stair-hit { pointer-events: all; }
+    .hp-stair.navigable { cursor: pointer; }
+    /* #686 (owner, 2026-09-28): a stair link shows no focus indicator at all —
+       neither the browser's ring nor a replacement. It stays focusable, and
+       Enter/Space still follow it (#676). */
+    .hp-stair:focus,
+    .hp-stair:focus-visible { outline: none; }
+    :host([data-pointer-hover]) .hp-stair.navigable:hover .hp-stair-outline {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+      stroke-width: 2.5px;
+      vector-effect: non-scaling-stroke;
+    }
+    .hp-stair.selected .hp-stair-outline {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+      stroke-width: 3px;
+      vector-effect: non-scaling-stroke;
+    }
+    /* #676: the frame and its handles are the decor frame's chrome (.dtframe,
+       .dthandle, .dtknob, dt-* cursors) painted in the top overlay; the draft
+       being drawn is inert until it is placed */
+    .hp-stair.draft .hp-stair-hit { pointer-events: none; }
+    /* #693: the move cursor belongs to the plan editor. The View layer sets
+       input-enabled only to receive clicks; its hit area keeps the group's
+       cursor: pointer on a link, the stage's otherwise. */
+    .hp-stair.input-enabled:not(.hp-stair-view) .hp-stair-hit { cursor: move; }
+    .alignmsg { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
+`;
