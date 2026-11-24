@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23508,
+  "revision": 23509,
   "nextTicket": 670,
   "nextFence": 670,
   "tasks": {
@@ -2488,43 +2488,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "56f51be8175594bb994bc9c5af159ab071dd0999"
-      }
-    },
-    "1450": {
-      "issue": 1450,
-      "branch": "codex/1450-25d-note",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "1646ed541c391476520c01a37ac3ac4c91bc9443",
-      "mergedSha": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
-      "mergedAt": 1794728208851,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 15,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "f05541086a4cb3bf0fd7",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 15
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "98806c06ec8eb601c8e8774ceeb748e1a4511982"
       }
     },
     "1451": {
@@ -5983,10 +5946,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "releaseTag": "v1.86.1-beta.8",
       "devBuild": {
