@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23291,
+  "revision": 23292,
   "nextTicket": 666,
   "nextFence": 666,
   "tasks": {
@@ -5917,7 +5917,10 @@
         "demo/smoke_hide_room_names.mjs",
         "src/optimize-plans-dialog.ts",
         "test/optimize-plans-dialog.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1795521928136,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     }
   },
   "ownerDecisions": {},
@@ -6533,6 +6536,10 @@
     },
     "finish:fcafa4dc-9352-4a4a-ada7-19cee3c0a9ee:finish:2:synchronized": {
       "digest": "af77713936d80acb962b25184ed455d0b32b2becd9472efe85d6968a8db9c436",
+      "issue": 1549
+    },
+    "finish:fcafa4dc-9352-4a4a-ada7-19cee3c0a9ee:finish:3:automation-pending": {
+      "digest": "835710025a58838dde5d4b85ef9aa5d05afbb2f7164931db2fafc039cc8a2fef",
       "issue": 1549
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
