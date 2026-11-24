@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23599,
-  "nextTicket": 673,
+  "revision": 23600,
+  "nextTicket": 674,
   "nextFence": 673,
   "tasks": {
     "1024": {
@@ -5996,14 +5996,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1554-ui-lab-default-plan",
-      "materialSha": "7bfaa3f776ab3b0a4e3200ee2d8ee4fc1a2d6dbe",
+      "materialSha": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 672,
-      "queued": false,
+      "ticket": 673,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795541699088,
-      "reviewEntry": 2,
+      "readyAt": 1795541868475,
+      "reviewEntry": 3,
       "patchId": "cc119a51c7a9ddbc4f7ad8e4a9f5c9da38c11662",
       "changedFiles": [
         "demo/ui-lab/README.md",
@@ -6032,8 +6032,7 @@
         "at": 1795541840076,
         "entry": 2,
         "eventId": "1554-add-infra-release-classification:return:1554"
-      },
-      "reason": "Complete infrastructure release classification because package-lock changes cause product classification in the coordinator."
+      }
     }
   },
   "ownerDecisions": {},
@@ -6627,7 +6626,9 @@
       "runId": 45433838295
     }
   },
-  "waiting": [],
+  "waiting": [
+    1554
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6827,6 +6828,19 @@
           "entry": 2,
           "eventId": "1554-add-infra-release-classification:return:1554"
         }
+      }
+    },
+    "finish:f30462e7-50e9-4d1f-a0f0-ae8b3c0a05ca": {
+      "digest": "f5e3c01d25a1af236b5fae02c84a1f4b40573745e6bc63610d58608944e7ef4a",
+      "issue": 1554,
+      "message": {
+        "kind": "queued",
+        "issue": 1554,
+        "at": 1795541868475,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "5d66d02c75b2e4f453d2d351157ba0b3025136c7"
       }
     }
   },
