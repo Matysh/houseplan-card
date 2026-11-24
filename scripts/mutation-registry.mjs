@@ -16438,11 +16438,11 @@ const MUTANT_DEFINITIONS = [
       + 'revision without its body leaves a stale candidate with a newer rev (#500 I2, #490 F1)',
     patches: [{
       file: 'src/config-adoption.ts',
-      find: '    if (!assetReady) {\n'
-        + "      host._continuity.note('asset-failed');",
-      replace: '    if (!assetReady) {\n'
-        + '      adoption.acceptConfigWrite(candidateConfig ?? adoption.config!, { rev: cfgResp?.rev });\n'
-        + "      host._continuity.note('asset-failed');",
+      find: '      if (!assetReady) {\n'
+        + "        host._continuity.note('asset-failed');",
+      replace: '      if (!assetReady) {\n'
+        + '        adoption.acceptConfigWrite(candidateConfig ?? adoption.config!, { rev: cfgResp?.rev });\n'
+        + "        host._continuity.note('asset-failed');",
     }],
   },
   {
@@ -16480,9 +16480,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/config-adoption.ts',
       find: '  if (structuralChanged) {\n'
-        + '    const assetReady = await host._signer.prepareImage(planHostOf(host), host._candidateBackdrop(candidateConfig));',
+        + "    const firstView = input.profile === 'reload' && !adoption.config",
       replace: "  if (structuralChanged && input.profile === 'reload') {\n"
-        + '    const assetReady = await host._signer.prepareImage(planHostOf(host), host._candidateBackdrop(candidateConfig));',
+        + "    const firstView = input.profile === 'reload' && !adoption.config",
     }],
   },
   {
