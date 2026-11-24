@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 22791,
+  "revision": 22792,
   "nextTicket": 656,
   "nextFence": 656,
   "tasks": {
@@ -5935,7 +5935,7 @@
       "ownerDecision": null,
       "ticket": 655,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795499139990,
       "reviewEntry": 1,
       "patchId": "8d20bc249c080b63a83a8938371874b0615ae92d",
@@ -5946,7 +5946,16 @@
         "docs/release-ledger/v1.86.0/1543.json",
         "src/iso-lab-visibility.ts",
         "test/iso-opening-refinement.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261124T054556168-158f2637",
+        "name": "Тесты для задачи #1543 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T054556168-158f2637/report.json",
+        "materialSha": "95f59387cf53be7b5e7f242e641ec9b4e85bc526",
+        "status": "passed",
+        "finishedAt": "2026-11-24T05:52:06.410Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6534,9 +6543,9 @@
     "fence": 655,
     "materialSha": "95f59387cf53be7b5e7f242e641ec9b4e85bc526",
     "expectedBase": "279fe4b4b88d5d19ac0348e841100da9783fa4b3",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795499144259,
-    "expiresAt": 1795499803016,
+    "expiresAt": 1795503127652,
     "patchId": "8d20bc249c080b63a83a8938371874b0615ae92d"
   },
   "events": {
@@ -6654,6 +6663,34 @@
         "layer": "product",
         "materialSha": "95f59387cf53be7b5e7f242e641ec9b4e85bc526",
         "phase": "sync"
+      }
+    },
+    "finish:09aecaa5-f31c-4384-990c-71c4034e6521:finish:3:s6-complete": {
+      "digest": "a1fd24ded3c12fe36a81582d0c3bb8160b76c75d90487fdfc8975ff318a7eb8c",
+      "issue": 1543,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1543,
+        "at": 1795499527652,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "95f59387cf53be7b5e7f242e641ec9b4e85bc526",
+        "phase": "review",
+        "evidence": {
+          "id": "20261124T054556168-158f2637",
+          "name": "Тесты для задачи #1543 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261124T054556168-158f2637/report.json",
+          "materialSha": "95f59387cf53be7b5e7f242e641ec9b4e85bc526",
+          "status": "passed",
+          "finishedAt": "2026-11-24T05:52:06.410Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "- В закрытых наружных дверях видимые части полотна сходятся Т-стыками после отсечения ручкой. Если длинная сторона и её короткий сосед округляются независимо, промежуточная точка сходит с общей прямой. Это оставляло щели даже после объединения в исходном исправлении #1541.\n- Перед существующим округлением в длинную сторону вставляются лежащие на ней вершины соседних фрагментов. Допуск принадлежности применяется в нормализованных координатах. Теперь обе стороны общего ребра получают одинаковые точки. Объединение по-прежнему работает на одной физической поверхности и в одном ранге глубины.\n- На приложенном бэкапе воспроизведены три размера кадров 271×305, 227×251 и 164×197 при угле камеры 305°. Повтор на обеих дверях в каждой крупности сделан с идентичной SVG-камерой до и после. В крупном кадре после исправления полотно сплошное вокруг ручки, сохраняются рама и проём. Локальная HA-обвязка восполняла отсутствующие живые данные. Пользовательский архив и кадры остаются вне репозитория.\n- Новая синтетическая регрессия с двумя частями ручки под разными углами показывала шесть контуров до исправления. После остались внешний контур и реальный вырез. Проверяются непрозрачный и прозрачный режимы. Прошли 93 Node-теста и 49 проверок существующих эталонов 2,5D с прежними допусками. [Решение по HA E2E](https://github.com/Matysh/houseplan-e2e/issues/110).",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
