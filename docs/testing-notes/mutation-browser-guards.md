@@ -789,8 +789,10 @@ and route/draft lifetime; a parser-only unit cannot prove the host applies inten
 
 #1020 observes native keyboard navigation to a separate tab without losing
 checked floors, and the real card/lazy component lifecycle without writer/storage
-capability. Browser-only witnesses registered for background; no mutant execution
-in task development.
+capability. #1552 holds the real retry response across a change of HA authority:
+the recovery notice stays active and only the existing retry completes.
+An upgraded custom element alone cannot prove that the boundary retained it.
+These browser witnesses are registered for background execution.
 
 - `decor-preview-keeps-lost-capture-draft-1080`
 
@@ -1129,6 +1131,10 @@ Controller-only timeout state/retry policy has separate cheap Node witnesses.
 - `full-reattach-pending-authority-not-started-1054`
 - `full-interrupted-reattach-loses-read-intent-1054`
 - `space-read-ignores-lifecycle-owner`
+
+For #1552, the mounted smoke also changes locale on the same HA object and
+checks the rendered Fit All label with no further HA tick or config/layout
+read. Authority-switch reads can otherwise repaint and hide a dropped update.
 
 `zigbee-hover-incomplete-uses-global-partial` (#816) checks the mounted lazy
 overlay consuming the per-device warning under live provider state. Pure

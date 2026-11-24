@@ -85,9 +85,19 @@ for (const scenario of ['connection', 'user', 'new-object', 'ABA', 'held-old', '
           card.hass = { ...reused, states: { ...reused.states,
             'sensor.mounted_unrepresented': { entity_id: 'sensor.mounted_unrepresented', state: '1', attributes: {} } } };
           await settle();
+          out.onlyNewStateSnapshotIntakes = intakeCount() === intakeBefore + 1;
+          // An authority switch also schedules fresh config/layout work, whose
+          // render can accidentally consume a dropped environment update.
+          // A reused object changing only presentation has no such second render.
+          const fitLabel = () => card.renderRoot.querySelector('[data-hp="zoom-fit"]')?.getAttribute('aria-label');
+          out.originalLocaleRendered = fitLabel() === 'Fit all';
+          const current = card.hass;
+          current.language = 'ru'; current.locale = { ...current.locale, language: 'ru' };
+          card.hass = current;
+          await card.updateComplete;
+          out.reusedObjectRendersLocaleWithoutAnotherTick = fitLabel() === 'Вписать всё';
           out.sameContextKeepsPlan = ready('A');
           out.sameContextNoRead = counts(a).config === 0 && counts(a).layout === 0;
-          out.onlyNewStateSnapshotIntakes = intakeCount() === intakeBefore + 1;
         } else if (scenario === 'ABA') {
           Object.assign(reused, b.hass); card.hass = reused;
           Object.assign(reused, savedA); card.hass = reused;

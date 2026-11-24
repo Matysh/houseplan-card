@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1552,
+  "baseStable": "v1.86.0",
+  "category": "infra",
+  "rationale": "Strengthens two native browser mutation witnesses without changing shipped behavior.",
+  "summary": {
+    "ru": "Усилены браузерные проверки повтора загрузки подсказки конвертера и обновления объекта Home Assistant.",
+    "en": "Strengthen browser witnesses for converter retry and reused Home Assistant snapshots."
+  }
+}

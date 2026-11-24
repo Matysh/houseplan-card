@@ -310,7 +310,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'first-space-converter-writer-only',
     guard: 'node demo/smoke_first_space_converter.mjs',
-    because: '#1020/#1088: without HA write transport the informational boundary must honestly show a failed import and recover through its native Retry button. Custom-element presence alone cannot prove ownership because module evaluation can upgrade it even when the boundary drops completion.',
+    because: '#1020/#1088/#1552: without HA write transport, an in-flight native Retry must retain its recovery notice across a change of HA authority. The lazy element can still upgrade if an incorrectly scoped boundary forgets its retry.',
     patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true, () => this.wantsConverter())', replace: 'port(() => {}, false, () => this.wantsConverter())' }],
   },
   {
@@ -3646,7 +3646,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'mounted-authority-same-object-lit-dedup-1056',
     guard: 'node demo/smoke_mounted_authority.mjs',
-    because: '#1056 AC1: a mounted reused HA object needs its existing Lit hass property update after known authority retirement, without an extra tick.',
+    because: '#1056/#1552: a reused mounted HA object must repaint a locale-only environment revision without another tick. A mandatory config/layout response after authority retirement can mask the lost Lit update.',
     patches: [{ file: 'src/houseplan-card.ts',
       find: "    super.requestUpdate('planEnvironmentRevision', previousRevision);",
       replace: "    super.requestUpdate('planEnvironmentRevision', host.environmentRevision);" }],

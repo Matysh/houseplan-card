@@ -50,18 +50,40 @@ try {
   }
   out.rightsStorageAndKiosk = true;
   {
-    // A registered custom element can upgrade even when its boundary never
-    // becomes ready. Exercise the observable recovery path, not merely its
-    // presence: informational retry must work without a writable HA context.
+    // A stable (even non-writable) HA context at both completions can hide
+    // accidental coupling to its write lease. Hold the actual Retry request
+    // across a context change while the passive empty-plan hint stays relevant.
     const s = await launchPanelCold(); sessions.push(s);
+    await s.page.emulateMedia({ reducedMotion: 'reduce' });
     const attempts = [];
-    await s.page.route('**/hp-plan-converter-info-*.js*', route => {
+    let releaseRetry;
+    const held = new Promise(resolve => { releaseRetry = resolve; });
+    await s.page.route('**/hp-plan-converter-info-*.js*', async route => {
       const query = new URL(route.request().url()).search; attempts.push(query);
-      return query ? route.fallback() : route.fulfill({ status: 404, body: 'ordinary unavailable information module' });
+      if (!query) return route.fulfill({ status: 404, body: 'ordinary unavailable information module' });
+      await held;
+      return route.fallback();
     });
-    await mountFirstSpace(s.page, { transport: false, waitHint: false });
+    await mountFirstSpace(s.page, { transport: false, admin: false, waitHint: false });
     const notice = s.page.locator('[data-hp="view-runtime-notice"]');
-    await notice.locator('[data-hp="view-runtime-retry"]').click();
+    const retry = notice.locator('[data-hp="view-runtime-retry"]');
+    try {
+      await Promise.all([
+        s.page.waitForRequest(r => /\/hp-plan-converter-info-[^/?]+\.js\?/.test(r.url())),
+        retry.click(),
+      ]);
+      const changed = await s.page.evaluate(async () => {
+        const card = window.__card, before = card.planHost.authorityKey;
+        card.hass = { ...card.hass, user: { ...card.hass.user, id: 'first-space-other-reader' } };
+        await card.updateComplete;
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        return card.planHost.authorityKey !== before && !card.planHost.environment.connected;
+      });
+      assert.ok(changed, 'fixture must replace HA authority without gaining write transport');
+      assert.ok(await notice.getByText('Plan converter information', { exact: true }).isVisible()
+        && await notice.getAttribute('aria-hidden') !== 'true' && await retry.count() === 0,
+      'in-flight informational Retry must keep the same recovery notice across an HA authority change');
+    } finally { releaseRetry(); }
     await empty(s.page).locator('a').waitFor();
     await notice.waitFor({ state: 'detached' });
     assert.equal(attempts.length, 2);

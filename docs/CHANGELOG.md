@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Tests: catch lost converter retries and dropped updates on reused Home Assistant snapshots (#1552).
+
 ## v1.86.1-beta.8 — 2026-11-24
 
 - Fix the first Optimize Plans preview after saving a new plan (#1549).
