@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23691,
+  "revision": 23692,
   "nextTicket": 675,
   "nextFence": 675,
   "tasks": {
@@ -5979,7 +5979,27 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795551970995,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "cfb2cb10e2573dd32e8f2641d656ccb3a36e82ed",
+      "changedFiles": [
+        "demo/smoke_iso_raster_session.mjs",
+        "demo/smoke_isometric_contract.mjs",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/ISOMETRIC.md",
+        "docs/release-ledger/v1.86.0/1555.json",
+        "src/houseplan-card.ts",
+        "src/iso-architectural-edges.ts",
+        "src/iso-camera-raster.ts",
+        "src/iso-lab-visibility.ts",
+        "src/iso-raster-geometry.ts",
+        "src/iso-scene-render.ts",
+        "src/styles/plan.styles.ts",
+        "test/iso-architectural-tone.test.mjs",
+        "test/iso-wall-transparency.test.mjs",
+        "test/live-viewport.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -6566,10 +6586,11 @@
     "token": "674:finish:416c7bfa-8806-4db3-9dc3-aee576ae0747:finish:1:admit",
     "fence": 674,
     "materialSha": "838de987bd6ef79845142a9eba44a56fa96af4d1",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
+    "phase": "testing",
     "admittedAt": 1795551975194,
-    "expiresAt": 1795552275194
+    "expiresAt": 1795552282027,
+    "patchId": "cfb2cb10e2573dd32e8f2641d656ccb3a36e82ed"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6591,6 +6612,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "finish:416c7bfa-8806-4db3-9dc3-aee576ae0747:finish:2:synchronized": {
+      "digest": "4e7a3ad0ddbf748acd22dce5a111c18cb808234ba3fd66427901081584121a1f",
+      "issue": 1555
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
