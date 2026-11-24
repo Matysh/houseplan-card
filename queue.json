@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23543,
+  "revision": 23544,
   "nextTicket": 671,
   "nextFence": 671,
   "tasks": {
@@ -5935,146 +5935,26 @@
     },
     "1552": {
       "issue": 1552,
+      "branch": "codex/1552-mutation-witnesses",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1552-mutation-witnesses",
-      "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 670,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795535929908,
-      "reviewEntry": 1,
-      "patchId": "1e25991cf3902c49e7f71b6989e33f71fdaae4de",
-      "changedFiles": [
-        "demo/smoke_first_space_converter.mjs",
-        "demo/smoke_mounted_authority.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.86.0/1552.json",
-        "docs/testing-notes/mutation-browser-guards.md",
-        "scripts/mutation-registry.mjs"
-      ],
-      "s6": {
-        "id": "20261124T155907405-98ef0814",
-        "name": "Тесты для задачи #1552 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261124T155907405-98ef0814/report.json",
-        "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-        "status": "passed",
-        "finishedAt": "2026-11-24T16:09:09.477Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "eac079439108305ffa252e0693738fc2f20294a5",
+      "mergedSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
+      "mergedAt": 1795536804474,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1552:1:1e25991cf3902c49e7f71b6989e33f71fdaae4de:eac079439108305ffa252e0693738fc2f20294a5",
-      "reviewMaterial": {
-        "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-        "expectedBase": "eac079439108305ffa252e0693738fc2f20294a5",
-        "patchId": "1e25991cf3902c49e7f71b6989e33f71fdaae4de"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1552:1:1e25991cf3902c49e7f71b6989e33f71fdaae4de:eac079439108305ffa252e0693738fc2f20294a5",
-        "eventId": "github:45433784158:1:tick:0:review-retry",
-        "at": 1795536580928,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1552,
-        "requestId": "review:1552:1:1e25991cf3902c49e7f71b6989e33f71fdaae4de:eac079439108305ffa252e0693738fc2f20294a5",
-        "kind": "code",
-        "base": "eac079439108305ffa252e0693738fc2f20294a5",
-        "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-        "patchId": "1e25991cf3902c49e7f71b6989e33f71fdaae4de",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1552,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1552",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\n\nДва браузерных свидетеля из фоновой части 6/7 должны проходить на чистой сборке и падать на содержательной проверке при применении уже зарегистрированного дефекта. Код продукта, патчи мутаций, порядок и состав шардов не изменены.\n\n### Причина и исправление\n\n- `first-space-converter-writer-only`: стабильная попытка без `callWS` не меняла поколение контекста, поэтому лишняя привязка информационного модуля к правам могла остаться незаметной. Нативный Retry удерживается сетевым барьером; смена пользователя HA без транспорта не должна сбрасывать текущую плашку восстановления и возвращать кнопку Retry. После освобождения запроса остаётся проверка появления ссылки, исчезновения ошибки, ровно двух запросов чанка и отсутствия записей.\n- `mounted-authority-same-object-lit-dedup-1056`: новый ответ config/layout мог вызвать свой Lit-кадр и скрыть потерянное уведомление об окружении. При неизменной authority тот же объект HA получает только новый язык. Смок проверяет переведённую кнопку «Вписать всё» после этого одного присваивания, прежний план и отсутствие нового чтения config/layout.\n\n### Проверки\n\nНа `dev@eac079439` оба исходных свидетеля прошли и оба мутанта выжили. На исправлении проверены два чистых браузерных прогона и те же две мутации по одному, с явной проверкой точного упавшего утверждения. Полный ночной шард не запускался. Реальный HA E2E не требуется: меняется только чувствительность синтетических браузерных проверок; API, данные и сборка продукта не меняются."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Изменение подходит для задачи и принимается. Оба свидетеля теперь проверяют то поведение, которое ломает зарегистрированный мутант. Раньше сценарий обходил его стороной. Код продукта, патчи мутаций и шарды не тронуты. По исходникам механизм отказа каждого мутанта прослеживается однозначно. На чистом коде утверждения выполняются, на мутанте не выполняются. Блокеров нет. Остаётся ограничение: что мутанты теперь «краснеют», подтверждает только автор. Квитанция S6 покрывает чистые прогоны на `c9e6bb77`, но не прогон мутаций.",
-          "understanding": "Проблема: в фоновой части 6/7 выжили два мутанта.\n1) `first-space-converter-writer-only` меняет у порта конвертера `informational=true` на `false`. Тогда владельцем загрузки становится `host._configWriteContext.claim()`, а не сам `host`. Старый смок проходил весь путь «404 → Retry → ссылка» при неизменном контексте HA. `claim()` возвращал тот же владелец, и мутант оставался незаметен.\n2) `mounted-authority-same-object-lit-dedup-1056` передаёт в `super.requestUpdate('planEnvironmentRevision', …)` текущую ревизию вместо предыдущей. Lit видит равенство значений и не планирует кадр. В старом сценарии `same-context` перерисовку давали другие источники, и пропуск не был виден.\n\nПосле изменения:\n1) Запрос Retry к `hp-plan-converter-info-*.js?…` удерживается в `page.route`. Пока он висит, у того же `hass` меняется `user.id`, а транспорта нет: `authorityKey` меняется, `connected=false`. Затем смок проверяет, что плашка `view.runtime_converter` видима, не `aria-hidden` и без кнопки Retry. После освобождения запроса остаются прежние проверки: ссылка, исчезновение плашки, две попытки, ноль записей.\n2) В сценарии `same-context` тот же объект `hass` получает `language='ru'` и присваивается повторно. После одного `await card.updateComplete` метка `zoom-fit` должна стать «Вписать всё», при этом не должно быть чтений config/layout. Проверку `onlyNewStateSnapshotIntakes` перенесли до смены языка, чтобы она мерила прежний интервал.\n\nРазобранные пути:\n- `ViewRuntimes` port/`failures`/`render` (`src/view-runtimes.ts:82-104,174-221`) и `ViewRuntimeBoundary.ensure/retry/load` (`src/view-runtime-boundary.ts:84-134`);\n- `HouseplanCard.requestUpdate('hass')` (`src/houseplan-card.ts:677-706`) и `_intakePlanEnvironment` (1070-1161);\n- `HaPlanHost.update/publish` (`src/ha-plan-host.ts:147-210`), фикстура `demo/helpers/first-space.mjs`, строки i18n.",
-          "analysis": [
-            {
-              "topic": "Чувствительность свидетеля конвертера к мутанту",
-              "assessment": "Сценарий бьёт точно в механизм мутанта. На чистом коде `owner()` возвращает `host`, и `current(owner)` проверяет `owner === host` независимо от authority. Поэтому `ensure()` после смены пользователя видит тот же владелец и возвращает висящий `pending`. Состояние остаётся `loading && retried`, `unavailable === true`, `canRetry === false`. Плашка держится, кнопки Retry нет: это ровно то, что проверяет утверждение. На мутанте `claim()` после смены authority выдаёт нового владельца. Возможны два исхода. Если `ensure()` вызывается, сбрасываются `retried` и `generation`, `unavailable` становится false и плашка уходит: падает проверка на строке 83. Если `ensure()` не вызывается, старая загрузка при освобождении попадает в `abandoned()` и состояние становится `idle`. Ссылка не появится, и упадёт ожидание на строке 87. Мутант ловится в обоих ветках, а автор указывает, что падает именно строка 83. `try/finally` с `releaseRetry()` не даёт тесту зависнуть на удерживаемом маршруте при раннем падении.",
-              "evidence": "`src/view-runtimes.ts:82-85` (owner/current для informational); `src/view-runtime-boundary.ts:75-76,87-92,106-108`; `demo/smoke_first_space_converter.mjs:59-91`; при `transport:false` фикстура удаляет `callWS` (`demo/helpers/first-space.mjs:23`), а `identity()` берётся из `connection ?? callWS` и `user.id` (`src/ha-plan-host.ts:126-128`), поэтому смена `user.id` меняет ключ."
-            },
-            {
-              "topic": "Чувствительность свидетеля same-object к мутанту Lit-дедупликации",
-              "assessment": "Сценарий корректен. Повторное присваивание того же объекта проходит через `requestUpdate('hass')`, затем `HaPlanHost.update`, `publish`, `revision++` и `_intakePlanEnvironment`. Authority, права, `connected`, `timeZone` и `smartHomeRevision` не меняются. Поэтому новое чтение не планируется, и Lit-кадр может прийти только из `super.requestUpdate('planEnvironmentRevision', previousRevision)` на строке 1160. Мутант передаёт текущую ревизию, геттер `planEnvironmentRevision` возвращает то же значение, и Lit кадр не ставит. Метка «Fit all» остаётся, проверка `reusedObjectRendersLocaleWithoutAnotherTick` падает. Кнопка `zoom-fit` рисуется самой карточкой (13601-13602), так что `card.updateComplete` достаточно и не нужно ждать вложенных компонентов. Строки совпадают с `en.json`/`ru.json:170`. Перенос `onlyNewStateSnapshotIntakes` выше нужен, чтобы смена языка не исказила подсчёт intake. Прежние проверки сценария сохранены, поэтому соседние мутанты #1056 на том же смоке не теряют покрытие.",
-              "evidence": "`src/houseplan-card.ts:677-692,1027,1070-1075,1153-1160`; `src/ha-plan-host.ts:191-208` (presentation.language входит в снимок); `demo/smoke_mounted_authority.mjs:84-100`; `src/i18n/en.json:170`, `src/i18n/ru.json:170`."
-            },
-            {
-              "topic": "Сопровождение и документация",
-              "assessment": "Комментарии в смоках объясняют неочевидную причину: стабильный контекст скрывает привязку к lease, а authority-switch рендер маскирует потерянное обновление. Это полезно. Тексты `because` в реестре и заметка в `mutation-browser-guards.md` описывают новый механизм проверки. Записи в CHANGELOG и ledger категории `infra` следуют прежней практике для тестовых изменений (#1549–#1551).",
-              "evidence": "`scripts/mutation-registry.mjs:313,3648`; `docs/testing-notes/mutation-browser-guards.md:788-796,1135-1137`; `docs/release-ledger/v1.86.0/1552.json`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "В `demo/smoke_first_space_converter.mjs:75-82` два условия сведены в одно булево `changed`: смена `authorityKey` и `!environment.connected`. То же в 83-85, где три условия: видимость, `aria-hidden` и отсутствие Retry. Если смок упадёт в ночном прогоне, сообщение не покажет, какое условие нарушено. Возврат объекта и `assert.deepEqual` либо отдельные `assert` упростят разбор будущих отказов почти бесплатно.",
-            "Опция `admin: false` в `mountFirstSpace` добавлена без пояснения. Если она нужна, чтобы чистый путь не получал write lease через HA-подсказку администратора, стоит сказать об этом короткой фразой в соседнем комментарии. Иначе её можно случайно убрать при будущей правке."
-          ],
-          "boundaries": "Ревью выполнено только по исходникам `c9e6bb7775ff`. Сборку, смоки и мутации я не запускал. Использована квитанция S6 `20261124T155907405-98ef0814` («Тесты для задачи #1552 (перед ревью)», passed, тот же SHA). По ней принято, что чистые браузерные прогоны зелёные. Падение обоих мутантов на новых утверждениях подтверждается только словами автора. Квитанции прогона `scripts/mutation-gate.mjs --id=…` нет. Мой анализ механизма отказа по коду согласуется с этим утверждением, но запуск он не заменяет. Полный ночной шард 6/7 не запускался, и подтверждение придёт из следующего фонового прогона. Устойчивость к таймингам (удерживаемый маршрут, ожидание двух rAF после смены `hass`) оценена только по чтению кода. На стабильность в CI я её не проверял."
-        },
-        "usage": {
-          "input_tokens": 52,
-          "cache_creation_input_tokens": 71056,
-          "cache_read_input_tokens": 1160916,
-          "output_tokens": 10380,
-          "output_tokens_details": {
-            "thinking_tokens": 3294
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 71056,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 823,
-              "cache_read_input_tokens": 60654,
-              "cache_creation_input_tokens": 10402,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 10402
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИзменение подходит для задачи и принимается. Оба свидетеля теперь проверяют то поведение, которое ломает зарегистрированный мутант. Раньше сценарий обходил его стороной. Код продукта, патчи мутаций и шарды не тронуты. По исходникам механизм отказа каждого мутанта прослеживается однозначно. На чистом коде утверждения выполняются, на мутанте не выполняются. Блокеров нет. Остаётся ограничение: что мутанты теперь «краснеют», подтверждает только автор. Квитанция S6 покрывает чистые прогоны на `c9e6bb77`, но не прогон мутаций.\n\n## Понимание решения\n\nПроблема: в фоновой части 6/7 выжили два мутанта.\n1) `first-space-converter-writer-only` меняет у порта конвертера `informational=true` на `false`. Тогда владельцем загрузки становится `host._configWriteContext.claim()`, а не сам `host`. Старый смок проходил весь путь «404 → Retry → ссылка» при неизменном контексте HA. `claim()` возвращал тот же владелец, и мутант оставался незаметен.\n2) `mounted-authority-same-object-lit-dedup-1056` передаёт в `super.requestUpdate('planEnvironmentRevision', …)` текущую ревизию вместо предыдущей. Lit видит равенство значений и не планирует кадр. В старом сценарии `same-context` перерисовку давали другие источники, и пропуск не был виден.\n\nПосле изменения:\n1) Запрос Retry к `hp-plan-converter-info-*.js?…` удерживается в `page.route`. Пока он висит, у того же `hass` меняется `user.id`, а транспорта нет: `authorityKey` меняется, `connected=false`. Затем смок проверяет, что плашка `view.runtime_converter` видима, не `aria-hidden` и без кнопки Retry. После освобождения запроса остаются прежние проверки: ссылка, исчезновение плашки, две попытки, ноль записей.\n2) В сценарии `same-context` тот же объект `hass` получает `language='ru'` и присваивается повторно. После одного `await card.updateComplete` метка `zoom-fit` должна стать «Вписать всё», при этом не должно быть чтений config/layout. Проверку `onlyNewStateSnapshotIntakes` перенесли до смены языка, чтобы она мерила прежний интервал.\n\nРазобранные пути:\n- `ViewRuntimes` port/`failures`/`render` (`src/view-runtimes.ts:82-104,174-221`) и `ViewRuntimeBoundary.ensure/retry/load` (`src/view-runtime-boundary.ts:84-134`);\n- `HouseplanCard.requestUpdate('hass')` (`src/houseplan-card.ts:677-706`) и `_intakePlanEnvironment` (1070-1161);\n- `HaPlanHost.update/publish` (`src/ha-plan-host.ts:147-210`), фикстура `demo/helpers/first-space.mjs`, строки i18n.\n\n## Разбор решения\n\n### Чувствительность свидетеля конвертера к мутанту\n\nСценарий бьёт точно в механизм мутанта. На чистом коде `owner()` возвращает `host`, и `current(owner)` проверяет `owner === host` независимо от authority. Поэтому `ensure()` после смены пользователя видит тот же владелец и возвращает висящий `pending`. Состояние остаётся `loading && retried`, `unavailable === true`, `canRetry === false`. Плашка держится, кнопки Retry нет: это ровно то, что проверяет утверждение. На мутанте `claim()` после смены authority выдаёт нового владельца. Возможны два исхода. Если `ensure()` вызывается, сбрасываются `retried` и `generation`, `unavailable` становится false и плашка уходит: падает проверка на строке 83. Если `ensure()` не вызывается, старая загрузка при освобождении попадает в `abandoned()` и состояние становится `idle`. Ссылка не появится, и упадёт ожидание на строке 87. Мутант ловится в обоих ветках, а автор указывает, что падает именно строка 83. `try/finally` с `releaseRetry()` не даёт тесту зависнуть на удерживаемом маршруте при раннем падении.\n\nОснование: `src/view-runtimes.ts:82-85` (owner/current для informational); `src/view-runtime-boundary.ts:75-76,87-92,106-108`; `demo/smoke_first_space_converter.mjs:59-91`; при `transport:false` фикстура удаляет `callWS` (`demo/helpers/first-space.mjs:23`), а `identity()` берётся из `connection ?? callWS` и `user.id` (`src/ha-plan-host.ts:126-128`), поэтому смена `user.id` меняет ключ.\n\n### Чувствительность свидетеля same-object к мутанту Lit-дедупликации\n\nСценарий корректен. Повторное присваивание того же объекта проходит через `requestUpdate('hass')`, затем `HaPlanHost.update`, `publish`, `revision++` и `_intakePlanEnvironment`. Authority, права, `connected`, `timeZone` и `smartHomeRevision` не меняются. Поэтому новое чтение не планируется, и Lit-кадр может прийти только из `super.requestUpdate('planEnvironmentRevision', previousRevision)` на строке 1160. Мутант передаёт текущую ревизию, геттер `planEnvironmentRevision` возвращает то же значение, и Lit кадр не ставит. Метка «Fit all» остаётся, проверка `reusedObjectRendersLocaleWithoutAnotherTick` падает. Кнопка `zoom-fit` рисуется самой карточкой (13601-13602), так что `card.updateComplete` достаточно и не нужно ждать вложенных компонентов. Строки совпадают с `en.json`/`ru.json:170`. Перенос `onlyNewStateSnapshotIntakes` выше нужен, чтобы смена языка не исказила подсчёт intake. Прежние проверки сценария сохранены, поэтому соседние мутанты #1056 на том же смоке не теряют покрытие.\n\nОснование: `src/houseplan-card.ts:677-692,1027,1070-1075,1153-1160`; `src/ha-plan-host.ts:191-208` (presentation.language входит в снимок); `demo/smoke_mounted_authority.mjs:84-100`; `src/i18n/en.json:170`, `src/i18n/ru.json:170`.\n\n### Сопровождение и документация\n\nКомментарии в смоках объясняют неочевидную причину: стабильный контекст скрывает привязку к lease, а authority-switch рендер маскирует потерянное обновление. Это полезно. Тексты `because` в реестре и заметка в `mutation-browser-guards.md` описывают новый механизм проверки. Записи в CHANGELOG и ledger категории `infra` следуют прежней практике для тестовых изменений (#1549–#1551).\n\nОснование: `scripts/mutation-registry.mjs:313,3648`; `docs/testing-notes/mutation-browser-guards.md:788-796,1135-1137`; `docs/release-ledger/v1.86.0/1552.json`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В `demo/smoke_first_space_converter.mjs:75-82` два условия сведены в одно булево `changed`: смена `authorityKey` и `!environment.connected`. То же в 83-85, где три условия: видимость, `aria-hidden` и отсутствие Retry. Если смок упадёт в ночном прогоне, сообщение не покажет, какое условие нарушено. Возврат объекта и `assert.deepEqual` либо отдельные `assert` упростят разбор будущих отказов почти бесплатно.\n- Опция `admin: false` в `mountFirstSpace` добавлена без пояснения. Если она нужна, чтобы чистый путь не получал write lease через HA-подсказку администратора, стоит сказать об этом короткой фразой в соседнем комментарии. Иначе её можно случайно убрать при будущей правке.\n\n## Границы анализа\n\nРевью выполнено только по исходникам `c9e6bb7775ff`. Сборку, смоки и мутации я не запускал. Использована квитанция S6 `20261124T155907405-98ef0814` («Тесты для задачи #1552 (перед ревью)», passed, тот же SHA). По ней принято, что чистые браузерные прогоны зелёные. Падение обоих мутантов на новых утверждениях подтверждается только словами автора. Квитанции прогона `scripts/mutation-gate.mjs --id=…` нет. Мой анализ механизма отказа по коду согласуется с этим утверждением, но запуск он не заменяет. Полный ночной шард 6/7 не запускался, и подтверждение придёт из следующего фонового прогона. Устойчивость к таймингам (удерживаемый маршрут, ожидание двух rAF после смены `hass`) оценена только по чтению кода. На стабильность в CI я её не проверял.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: eac079439108305ffa252e0693738fc2f20294a5 → c9e6bb7775ff7ff08d996309184a3f1ec1116940\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1552, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и результат\n\nДва браузерных свидетеля из фоновой части 6/7 должны проходить на чистой сборке и падать на содержательной проверке при применении уже зарегистрированного дефекта. Код продукта, патчи мутаций, порядок и состав шардов не изменены.\n\n### Причина и исправление\n\n- `first-space-converter-writer-only`: стабильная попытка без `callWS` не меняла поколение контекста, поэтому лишняя привязка информационного модуля к правам могла остаться незаметной. Нативный Retry удерживается сетевым барьером; смена пользователя HA без транспорта не должна сбрасывать текущую плашку восстановления и возвращать кнопку Retry. После освобождения запроса остаётся проверка появления ссылки, исчезновения ошибки, ровно двух запросов чанка и отсутствия записей.\n- `mounted-authority-same-object-lit-dedup-1056`: новый ответ config/layout мог вызвать свой Lit-кадр и скрыть потерянное уведомление об окружении. При неизменной authority тот же объект HA получает только новый язык. Смок проверяет переведённую кнопку «Вписать всё» после этого одного присваивания, прежний план и отсутствие нового чтения config/layout.\n\n### Проверки\n\nНа `dev@eac079439` оба исходных свидетеля прошли и оба мутанта выжили. На исправлении проверены два чистых браузерных прогона и те же две мутации по одному, с явной проверкой точного упавшего утверждения. Полный ночной шард не запускался. Реальный HA E2E не требуется: меняется только чувствительность синтетических браузерных проверок; API, данные и сборка продукта не меняются.\n```\n\n</details>\n",
-        "createdAt": "2026-11-24T16:12:42.648Z",
-        "artifactId": 14940282218,
-        "runId": 45433838295,
-        "runAttempt": 1,
-        "completedAt": "2026-11-24T16:12:50Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45433838295",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "eac079439108305ffa252e0693738fc2f20294a5"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795536801525,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1553": {
       "issue": 1553,
@@ -6703,19 +6583,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1552,
-    "worker": "finish",
-    "token": "670:finish:506b2474-de53-470f-b9d3-7e3156e712e7:finish:1:admit",
-    "fence": 670,
-    "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-    "expectedBase": "eac079439108305ffa252e0693738fc2f20294a5",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795535934141,
-    "expiresAt": 1795540397961,
-    "patchId": "1e25991cf3902c49e7f71b6989e33f71fdaae4de",
-    "reviewRequest": "review:1552:1:1e25991cf3902c49e7f71b6989e33f71fdaae4de:eac079439108305ffa252e0693738fc2f20294a5"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6736,86 +6604,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "finish:506b2474-de53-470f-b9d3-7e3156e712e7:finish:2:synchronized": {
-      "digest": "dcc082ad6568b9d1ed6decbc4461cd32036408f1afa0cf5b31b3da7ec0df45b4",
-      "issue": 1552
-    },
-    "github:45431742426:1:completions:message:d5a5aa705dad1454081818b390c0a640699e97b774359cb8f64c8d1b9c813b66": {
-      "digest": "c51529af0780a7fbb2f1bdb5639537275759fab8f6396fa22c477dd237d3fb3b",
-      "issue": 1552
-    },
-    "github:45431742426:1:completions:message:cdcbc6c8a6b489eb6a406103b70cc9169367ea0d310533cf7b0f6b3b5a6c5d41": {
-      "digest": "e1c3e4b19fa8371837bdc2402ca6552e7c519ebfd9f9891b16d248f61adc63bc",
-      "issue": 1552
-    },
-    "finish:0518f699-653d-48b4-8eaa-040bd1505b3f": {
-      "digest": "413e4902aaeceb7867b8084c60874a67a3ba74c9849b607866a39f29dbd38eef",
-      "issue": 1552
-    },
-    "finish:3a25ae43-a730-408c-972b-0a71d0fdf710": {
-      "digest": "c99530998a793a39945e231c99f46e5be542367fca5d12e15ff6ac128135af57",
-      "issue": 1552
-    },
-    "finish:756658dd-07ef-4dfa-adb9-c29e7d9a7e80": {
-      "digest": "c306888e6a9827aec8f28ed6fe22b2a284c41c742e047269b106addfad367fa8",
-      "issue": 1552
-    },
-    "finish:d200a77a-37ed-49aa-a333-34c91e51f074": {
-      "digest": "d7ed2fba82f6da8adba71bcc5b2cbe525af3dd6a0f4147514765ff380efe0ea8",
-      "issue": 1552
-    },
-    "finish:09a2e041-81b7-48db-a04f-da0259db044d": {
-      "digest": "b7cf161a9250211384e4052afb0708aab86f215205701e867e01829b51f91d66",
-      "issue": 1552
-    },
-    "finish:91af8185-9145-4873-902c-7814d06103db": {
-      "digest": "559066a1ed56bd6de3ebc646a88f37bbfd03047163ee0be4ccd9b6cc1e961172",
-      "issue": 1552
-    },
-    "finish:6203a3aa-c6ea-4b26-8379-dbf8b23aa9c7": {
-      "digest": "da36e0760aff4dd861cec31136f387f6b15f2289ed7f36e260a785390768dcab",
-      "issue": 1552
-    },
-    "finish:90e4bfac-e456-4c0d-9499-0e45360677db": {
-      "digest": "f8d80740fc78594a7ba78e1e5754fd2907978515aa46b5922fb8a8b2d8fe2cc4",
-      "issue": 1552
-    },
-    "finish:886a459c-41b2-409b-892f-044ba08e53c9": {
-      "digest": "5d30d492dfafdabc8decead27a01d3fe9f31507e142c3a5249191dbe5ad5e14a",
-      "issue": 1552
-    },
-    "finish:29c5bf5b-2f95-48c2-bd88-12f537e2f7c5": {
-      "digest": "b29b605123f3b9baeb26554f8a25b313c634979601a04adc24eeea8b3800e61e",
-      "issue": 1552
-    },
-    "finish:506b2474-de53-470f-b9d3-7e3156e712e7:finish:3:s6-label": {
-      "digest": "3199bf8d4d8b1445bd6fdb14baac7ce2a4124494db58caf1f33feed38e4ef4b7",
-      "issue": 1552
-    },
-    "finish:506b2474-de53-470f-b9d3-7e3156e712e7:finish:4:review-requested": {
-      "digest": "4eb2d67379c073c29a43d2c481afced6880ce179756b89e438155f72b47294b8",
-      "issue": 1552
-    },
-    "github:45433784158:1:tick:0:review-retry": {
-      "digest": "e825416049817c22497b7b909b93e797cd6bc77990b79201fce7c630240d2d68",
-      "issue": 1552
-    },
-    "github:45433784158:1:completions:message:fca70cdf3d80734ca2d52a8f61f35a44797990bf7afa688e8e23298305016ecc": {
-      "digest": "f36dc8c4f24c31e7f4e096382a59df76f5cdbee694f765942894c6cd581f63f0",
-      "issue": 1552
-    },
-    "finish:506b2474-de53-470f-b9d3-7e3156e712e7:finish:7:review-presentation": {
-      "digest": "e0434da5f113ddf9426b411cf43b0e0ebb7958635e1afb9f0bfc1db37d2f44c2",
-      "issue": 1552
-    },
-    "finish:506b2474-de53-470f-b9d3-7e3156e712e7:finish:7:review-complete": {
-      "digest": "cba1f9023ab5a92728e998d89d69030ec9b47e3da10edcbb823c123ac2dd0406",
-      "issue": 1552
-    },
-    "github:45434488518:1:tick:0:automation-pending": {
-      "digest": "4a9f252462d25e6dd0774a00be8bd63b9095d9595fcfea2fb0f341c560f71cf2",
-      "issue": 1552
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -6843,65 +6631,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:506b2474-de53-470f-b9d3-7e3156e712e7": {
-      "digest": "04068b7a53c11854be7ebb4678a26db260152b200e0768da02a7cb2b35bc5f13",
-      "issue": 1552,
-      "message": {
-        "kind": "queued",
-        "issue": 1552,
-        "at": 1795535929908,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-        "delivered": true
-      }
-    },
-    "finish:506b2474-de53-470f-b9d3-7e3156e712e7:finish:1:admit": {
-      "digest": "54b9c3d5a1825b5c2a85a01a9b70d475c463d7e8c4a751ba9d645601098419e0",
-      "issue": 1552,
-      "message": {
-        "kind": "admitted",
-        "issue": 1552,
-        "at": 1795535934141,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:506b2474-de53-470f-b9d3-7e3156e712e7:finish:3:s6-complete": {
-      "digest": "da1878eb56e3b7cc6ccf820807c786229121e71705eec1bde764133f462712ee",
-      "issue": 1552,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1552,
-        "at": 1795536550921,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-        "phase": "review",
-        "evidence": {
-          "id": "20261124T155907405-98ef0814",
-          "name": "Тесты для задачи #1552 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261124T155907405-98ef0814/report.json",
-          "materialSha": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-          "status": "passed",
-          "finishedAt": "2026-11-24T16:09:09.477Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Цель и результат\n\nДва браузерных свидетеля из фоновой части 6/7 должны проходить на чистой сборке и падать на содержательной проверке при применении уже зарегистрированного дефекта. Код продукта, патчи мутаций, порядок и состав шардов не изменены.\n\n### Причина и исправление\n\n- `first-space-converter-writer-only`: стабильная попытка без `callWS` не меняла поколение контекста, поэтому лишняя привязка информационного модуля к правам могла остаться незаметной. Нативный Retry удерживается сетевым барьером; смена пользователя HA без транспорта не должна сбрасывать текущую плашку восстановления и возвращать кнопку Retry. После освобождения запроса остаётся проверка появления ссылки, исчезновения ошибки, ровно двух запросов чанка и отсутствия записей.\n- `mounted-authority-same-object-lit-dedup-1056`: новый ответ config/layout мог вызвать свой Lit-кадр и скрыть потерянное уведомление об окружении. При неизменной authority тот же объект HA получает только новый язык. Смок проверяет переведённую кнопку «Вписать всё» после этого одного присваивания, прежний план и отсутствие нового чтения config/layout.\n\n### Проверки\n\nНа `dev@eac079439` оба исходных свидетеля прошли и оба мутанта выжили. На исправлении проверены два чистых браузерных прогона и те же две мутации по одному, с явной проверкой точного упавшего утверждения. Полный ночной шард не запускался. Реальный HA E2E не требуется: меняется только чувствительность синтетических браузерных проверок; API, данные и сборка продукта не меняются.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
