@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23772,
-  "nextTicket": 677,
+  "revision": 23773,
+  "nextTicket": 678,
   "nextFence": 677,
   "tasks": {
     "1024": {
@@ -5975,11 +5975,11 @@
       "materialSha": "978d5cade9349fb9d4b286de5a2a6ccf8b3dca6c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 676,
-      "queued": false,
+      "ticket": 677,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795554864609,
-      "reviewEntry": 3,
+      "readyAt": 1795555719601,
+      "reviewEntry": 4,
       "patchId": "75a022dd3f765d2ce265b9ae4e192d86a004bbf1",
       "changedFiles": [
         "demo/benchmark_large_house.mjs",
@@ -6033,8 +6033,7 @@
       "reviewCorrection": {
         "requestId": "review:1555:2:bce9e96b57be33b947ce86a801646c5bd628e496:5d66d02c75b2e4f453d2d351157ba0b3025136c7",
         "at": 1795554158804
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6614,7 +6613,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1555
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7073,6 +7074,28 @@
           "entry": 3,
           "detail": "Браузер: iso floor switch: failed",
           "eventId": "finish:5431e0e2-b2ab-4470-b3ca-f142f3e6ea4f:finish:3:return:return:1555"
+        }
+      }
+    },
+    "finish:1b4ee87c-f873-4a8c-9069-97766e6ef5ad": {
+      "digest": "ba77f34af97703cf58414240cdf98a65a5fb80739c22482c0ef74ea6a371258c",
+      "issue": 1555,
+      "message": {
+        "kind": "queued",
+        "issue": 1555,
+        "at": 1795555719601,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "978d5cade9349fb9d4b286de5a2a6ccf8b3dca6c",
+        "evidence": {
+          "id": "20261124T204144580-c39d1b49",
+          "name": "Тесты для задачи #1555 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261124T204144580-c39d1b49/report.json",
+          "materialSha": "77bb90bb97fe08b5b8a2401682597cad457d6bd3",
+          "status": "passed",
+          "finishedAt": "2026-11-24T20:54:54.750Z",
+          "failures": []
         }
       }
     }
