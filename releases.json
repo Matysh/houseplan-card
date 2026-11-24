@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1380,
+  "revision": 1381,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -258521,6 +258521,17 @@
           "status": "accepted",
           "inventoryComplete": true
         }
+      },
+      "delivery": {
+        "status": "verified",
+        "attempts": 1,
+        "discoveryAvailable": true,
+        "source": "github-release-feed",
+        "tag": "v1.86.1-beta.7",
+        "artifactDigest": "e3b937dffa1b76661e42c8e4355ad405fd9c1cee8aa0f0aa4137a94399b5ace6",
+        "assetName": "houseplan.zip",
+        "bytes": 5498946,
+        "observedAt": "2026-11-24T11:22:10.046Z"
       }
     }
   },
@@ -264741,7 +264752,8 @@
     "ship-review:prepare:f1718635-3606-4329-8476-ba020db65b81": "8db4881dafa902a73a52711700a57c9f06954868185d4410313004fdb14e368d",
     "ship-review:result:0de94231-62c6-4db7-970e-3c6772355342": "47f16ca28b699e7f05e5838c151d43da866c080907fb535e27a2b7a50ffb6831",
     "beta7-publish:3d959edbc2135c23a033b6ab826273ebfb53aed5:started:1378": "c1f9a26e051ff506506c601c6a8d65e6fa0b36408e1554c09bbf4958d684e2bb",
-    "beta7-publish:3d959edbc2135c23a033b6ab826273ebfb53aed5:published": "5eacca0fc308a1aadf872ca619f57261155647f8afc41407de65396787538f3d"
+    "beta7-publish:3d959edbc2135c23a033b6ab826273ebfb53aed5:published": "5eacca0fc308a1aadf872ca619f57261155647f8afc41407de65396787538f3d",
+    "beta7-publish:3d959edbc2135c23a033b6ab826273ebfb53aed5:completion:9c123e2f-f55b-41b2-bd67-958850b6e0f9": "ff8bf2e6263d20e43c89c6c33b2e283eaaebdc8e7f3c877c5aaf5d7b90e57fa8"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
