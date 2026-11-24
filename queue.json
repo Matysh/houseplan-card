@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23858,
+  "revision": 23859,
   "nextTicket": 679,
   "nextFence": 679,
   "tasks": {
@@ -5983,7 +5983,37 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795558001304,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "16c86c32a9d52128495545943b72a00ec89085f6",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "f20873dc6bae5ac98a852c7c41558307c185b890",
+        "tag": "v1.86.1-beta.9",
+        "verdict": "accepted",
+        "patchId": "16c86c32a9d52128495545943b72a00ec89085f6",
+        "materialSha": "410744c2628055756a3dfd1cb83d069539aa8353"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/device-alert-maintenance-iso.png",
+        "demo/golden/baselines/panel-isometric-geometry-view-light.png",
+        "demo/golden/baselines/panel-isometric-large-warm-remount-dark.png",
+        "demo/golden/baselines/panel-isometric-opening-symbol-parity-dark.png",
+        "demo/golden/baselines/panel-isometric-stage3-forced-colors-dark.png",
+        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
+        "demo/golden/baselines/panel-isometric-stage6-hover-light.png",
+        "demo/golden/baselines/panel-narrow-kiosk-fixed.png",
+        "demo/golden/baselines/panel-stairs-isometric-dark.png",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -6570,10 +6600,11 @@
     "token": "678:release-return-finish:df465280-954a-44b5-94ca-6a11dfbc45ed:finish:1:admit",
     "fence": 678,
     "materialSha": "410744c2628055756a3dfd1cb83d069539aa8353",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "978d5cade9349fb9d4b286de5a2a6ccf8b3dca6c",
+    "phase": "testing",
     "admittedAt": 1795558007749,
-    "expiresAt": 1795558307749
+    "expiresAt": 1795558315083,
+    "patchId": "16c86c32a9d52128495545943b72a00ec89085f6"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6595,6 +6626,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "release-return-finish:df465280-954a-44b5-94ca-6a11dfbc45ed:finish:2:synchronized": {
+      "digest": "dd2dc386659ddb383f25f594034adae818fde91343dcb02b4e5ced7152fee683",
+      "issue": 1556
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
