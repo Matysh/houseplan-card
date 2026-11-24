@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23758,
+  "revision": 23759,
   "nextTicket": 677,
   "nextFence": 677,
   "tasks": {
@@ -5980,8 +5980,12 @@
       "status": "S6-in-progress",
       "readyAt": 1795554864609,
       "reviewEntry": 3,
-      "patchId": "bce9e96b57be33b947ce86a801646c5bd628e496",
+      "patchId": "75a022dd3f765d2ce265b9ae4e192d86a004bbf1",
       "changedFiles": [
+        "demo/benchmark_large_house.mjs",
+        "demo/performance/switch-cycle-guard.mjs",
+        "demo/smoke_floor_persistent_cache.mjs",
+        "demo/smoke_iso_floor_switch.mjs",
         "demo/smoke_iso_raster_session.mjs",
         "demo/smoke_iso_wall_transparency.mjs",
         "demo/smoke_isometric_contract.mjs",
@@ -5989,7 +5993,9 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/ISOMETRIC.md",
+        "docs/TESTING.md",
         "docs/release-ledger/v1.86.0/1555.json",
+        "src/floor-geometry-frame.ts",
         "src/houseplan-card.ts",
         "src/iso-architectural-edges.ts",
         "src/iso-camera-raster.ts",
@@ -5997,9 +6003,12 @@
         "src/iso-raster-geometry.ts",
         "src/iso-scene-render.ts",
         "src/styles/plan.styles.ts",
+        "test/floor-cache-codec.test.mjs",
         "test/iso-architectural-tone.test.mjs",
         "test/iso-wall-transparency.test.mjs",
-        "test/live-viewport.test.mjs"
+        "test/iso-worker-cache-profile.test.mjs",
+        "test/live-viewport.test.mjs",
+        "test/switch-cycle-guard.test.mjs"
       ],
       "notice": {
         "key": "2:review-findings",
@@ -6611,10 +6620,11 @@
     "token": "676:finish:5431e0e2-b2ab-4470-b3ca-f142f3e6ea4f:finish:1:admit",
     "fence": 676,
     "materialSha": "978d5cade9349fb9d4b286de5a2a6ccf8b3dca6c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
+    "phase": "testing",
     "admittedAt": 1795554868988,
-    "expiresAt": 1795555168988
+    "expiresAt": 1795555175614,
+    "patchId": "75a022dd3f765d2ce265b9ae4e192d86a004bbf1"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6815,6 +6825,10 @@
     },
     "github:45487028824:1:completions:metadata:bb695f25-aed2-4c62-afcb-97761b046af4:task-notice:1555::": {
       "digest": "8c7fe1716c4294e815c258f122e53df3c90042ccc8678835d5bcbfdb17c39735",
+      "issue": 1555
+    },
+    "finish:5431e0e2-b2ab-4470-b3ca-f142f3e6ea4f:finish:2:synchronized": {
+      "digest": "91e7a40939a0f7c9b594b98546c70d7f861407c279217c8369174ab2a4fcd72a",
       "issue": 1555
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
