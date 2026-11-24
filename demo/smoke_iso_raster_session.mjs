@@ -61,6 +61,8 @@ async function splitPixelError(sample) {
   try {
     for(const alpha of [1,.55]) {
       const whole=await pixels(alpha,false), split=await pixels(alpha,true);
+      if(alpha===1) check('the pixel probe paints its known opaque swatch',
+        whole[0]===68 && whole[1]===94 && whole[2]===115 && whole[3]===255);
       for(let i=0;i<whole.length;i++) error=Math.max(error,Math.abs(whole[i]-split[i]));
     }
     return error;
