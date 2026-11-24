@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23879,
+  "revision": 23880,
   "nextTicket": 679,
   "nextFence": 679,
   "tasks": {
@@ -5971,57 +5971,24 @@
     "1556": {
       "issue": 1556,
       "branch": "issue/1556-release-return-f20873dc6bae",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "f20873dc6bae5ac98a852c7c41558307c185b890",
-      "releaseTag": "v1.86.1-beta.9",
-      "materialSha": "410744c2628055756a3dfd1cb83d069539aa8353",
-      "ownerDecision": null,
-      "ticket": 678,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795558001304,
-      "reviewEntry": 1,
-      "patchId": "16c86c32a9d52128495545943b72a00ec89085f6",
-      "review": {
-        "source": "published-release",
-        "sourceSha": "f20873dc6bae5ac98a852c7c41558307c185b890",
-        "tag": "v1.86.1-beta.9",
-        "verdict": "accepted",
-        "patchId": "16c86c32a9d52128495545943b72a00ec89085f6",
-        "materialSha": "410744c2628055756a3dfd1cb83d069539aa8353"
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "978d5cade9349fb9d4b286de5a2a6ccf8b3dca6c",
+      "mergedSha": "410744c2628055756a3dfd1cb83d069539aa8353",
+      "mergedAt": 1795559172340,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/device-alert-maintenance-iso.png",
-        "demo/golden/baselines/panel-isometric-geometry-view-light.png",
-        "demo/golden/baselines/panel-isometric-large-warm-remount-dark.png",
-        "demo/golden/baselines/panel-isometric-opening-symbol-parity-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-forced-colors-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
-        "demo/golden/baselines/panel-isometric-stage6-hover-light.png",
-        "demo/golden/baselines/panel-narrow-kiosk-fixed.png",
-        "demo/golden/baselines/panel-stairs-isometric-dark.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "package-lock.json",
-        "package.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "s6": {
-        "id": "20261124T220706686-e60ae2d9",
-        "name": "Тесты для задачи #1556 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261124T220706686-e60ae2d9/report.json",
-        "materialSha": "410744c2628055756a3dfd1cb83d069539aa8353",
-        "status": "passed",
-        "finishedAt": "2026-11-24T22:26:02.222Z",
-        "failures": []
+      "releaseTag": "v1.86.1-beta.9",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6603,18 +6570,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1556,
-    "worker": "finish",
-    "token": "678:release-return-finish:df465280-954a-44b5-94ca-6a11dfbc45ed:finish:1:admit",
-    "fence": 678,
-    "materialSha": "410744c2628055756a3dfd1cb83d069539aa8353",
-    "expectedBase": "978d5cade9349fb9d4b286de5a2a6ccf8b3dca6c",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795558007749,
-    "expiresAt": 1795562766426,
-    "patchId": "16c86c32a9d52128495545943b72a00ec89085f6"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6635,90 +6591,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "release-return-finish:df465280-954a-44b5-94ca-6a11dfbc45ed:finish:2:synchronized": {
-      "digest": "dd2dc386659ddb383f25f594034adae818fde91343dcb02b4e5ced7152fee683",
-      "issue": 1556
-    },
-    "finish:75f07ed3-7eaf-4f1c-8830-966bb7ec0dff": {
-      "digest": "55ff029002ed3e9e9e0b59fbb236a47cd32e16b1afeaf6e750d850fd655f8e96",
-      "issue": 1556
-    },
-    "finish:3ddc93e3-3156-4bea-9188-c7807b3091b6": {
-      "digest": "a1d52451cf4496a61cb1a55a867dc20af2990db58523ba02bfc0df4b1c0142a3",
-      "issue": 1556
-    },
-    "finish:a0e8d4e2-ad6b-4685-8805-583efca072b0": {
-      "digest": "8dac478ef2b39faaa2e4abab634a2743685d577a1fdfcf5c103bb6ff64f55d74",
-      "issue": 1556
-    },
-    "finish:37a8d240-742f-4573-bb41-b8c65f8df349": {
-      "digest": "330775be181e3c7636d92047e6540639163563cd9ad663680d73ce630374ef1a",
-      "issue": 1556
-    },
-    "finish:70439a2f-9f1b-46a5-835f-2ab32b874d3c": {
-      "digest": "93d5a6d2f7dafa79f92cca057aed6f0480274ced04f6c3ff12dd1e77a7b417d8",
-      "issue": 1556
-    },
-    "finish:70168819-c92b-4abc-87c2-7a7b73e2b7bc": {
-      "digest": "f77fa5811499b597a1ef766bd75f1be406e04ba9a90eadfc82e1931fced9c9ba",
-      "issue": 1556
-    },
-    "finish:176c2ad0-af95-46ad-ba56-7d0699db4ed1": {
-      "digest": "38d68c875c143abbbe52930e9109e7605db4673fc331515cbebb5743b77f31b4",
-      "issue": 1556
-    },
-    "finish:1ca06516-fe53-4a77-bcdc-2a454f90268b": {
-      "digest": "da810b35ce3d5066b0a8baa7fc54ebd1d252d4db92cf84e368caee728de0d8cb",
-      "issue": 1556
-    },
-    "finish:3a3b7754-6132-4278-83fa-c84e16a82e60": {
-      "digest": "685063778ca0eec2083a8b68b433ae2101244cf7313b29327cbc41a2c58a614f",
-      "issue": 1556
-    },
-    "finish:b0962b5c-c9b5-4eef-9b1c-1e6be6c7ff0a": {
-      "digest": "711682e4ff5411b70c32ee81698e04ba1e9ec03a199b9b4104b4f355e610afb7",
-      "issue": 1556
-    },
-    "finish:a8eb6e31-03f8-40e3-b5c9-648b7d7ab6a1": {
-      "digest": "0e46f07a0de8e674b28241f6f97369a3fd8a9d2bc8111a026b7f3c9d212db762",
-      "issue": 1556
-    },
-    "finish:f094f770-a336-4827-9811-2efae4a867ba": {
-      "digest": "07bee8f9920c55b6d29386fd1c57d59ed8c072c929835f3930da5a98f680ca17",
-      "issue": 1556
-    },
-    "finish:56045d1e-4d08-47df-a58f-59379ab8a9ec": {
-      "digest": "6f834dd1e2801753cb7ac56427e8c349cfa963a14fc09952f8e7549202d88a92",
-      "issue": 1556
-    },
-    "finish:329a498a-9b6d-4a4d-9da4-38b56c7cf24f": {
-      "digest": "110f3119ee92d073a56b206602719ac0e76e2ca80b923ca2e99e86b5e5bb6a8a",
-      "issue": 1556
-    },
-    "finish:7afc1732-d184-4e4b-90bf-a161d0be471f": {
-      "digest": "00c72cdd88b1fedd52f05b56fb6325edaa8ff8ce75967dec0b23e13d7ddee978",
-      "issue": 1556
-    },
-    "finish:80e4cf69-8af4-4838-9114-7665f89c2f22": {
-      "digest": "9e366b966c2482258c27177c34a27b352880d26787726077860e4ae389e19ac9",
-      "issue": 1556
-    },
-    "finish:65731ff7-adf1-4aea-bdbd-a62c0759722e": {
-      "digest": "343562a6313e7c85a45655cd4dbb4b9a23f7bc571f0e3ca9141b4dc01fad9309",
-      "issue": 1556
-    },
-    "finish:9a8ad8e5-d104-4c31-8f60-5101020199b2": {
-      "digest": "c118e82824fb0b397857852ac35c693a63d8bc7d57272801e0495bf8da59ecf0",
-      "issue": 1556
-    },
-    "finish:475a7886-cefd-48bf-9c7a-3baf4bde771f": {
-      "digest": "c8b0f76ac3ead2e1238c5e41ef5bd7329d75db607f592c7e5f3cef24b909fcf2",
-      "issue": 1556
-    },
-    "release-return-finish:df465280-954a-44b5-94ca-6a11dfbc45ed:finish:3:s6-complete": {
-      "digest": "59a4fb077586f99f72cf666ccde42f7f8b5201e5233b261bff1cf01d1be9db14",
-      "issue": 1556
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
