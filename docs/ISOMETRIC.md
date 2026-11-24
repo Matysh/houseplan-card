@@ -93,8 +93,10 @@ time to request improved density or coverage before the current image runs
 out. A full-plan image of at most 1.2 million pixels fills newly exposed
 areas. Its clip excludes the current scene rectangle on the same stage as
 the detail bitmap. The retained edge is guarded against filtering outside
-decoded pixels and snapped inward to physical pixels. The two complementary
-clips add coverage within an isolated plan stack, without adding the backdrop
+decoded pixels and snapped inward to physical pixels. The overview uses the
+exact inverse of the detail's two shared hard-stop masks; two independent
+polygon clips can otherwise each include a shared pixel. The complementary
+masks add coverage within an isolated plan stack, without adding the backdrop
 twice (#1555). Without the needed composition support, a fully covering
 bitmap can still paint; an uncovered view goes back to exact SVG. Dragging keeps the
 sharp vector reserve while it covers the camera. A pinch also keeps that

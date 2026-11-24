@@ -93,15 +93,20 @@ export function snapRasterCoverage(view:LiveViewBox, coverage:LiveViewBox, limit
   return {x,y,w:Math.max(0,right-x),h:Math.max(0,bottom-y)};
 }
 
-/** The underlay never contributes alpha inside the current scene frame. */
-export function rasterUnderlayClip(bounds: LiveViewBox, coverage: LiveViewBox): string {
-  const cut = rasterIntersection(bounds, coverage);
-  if (!cut) return 'none';
-  const x1 = (cut.x - bounds.x) * 100 / bounds.w, y1 = (cut.y - bounds.y) * 100 / bounds.h;
-  const x2 = (cut.x + cut.w - bounds.x) * 100 / bounds.w, y2 = (cut.y + cut.h - bounds.y) * 100 / bounds.h;
-  const gap = (x: number, y: number) => x + '% ' + y + '%';
-  const cutPoints = [gap(x1, y1), gap(x2, y1), gap(x2, y2), gap(x1, y2), gap(x1, y1)];
-  return 'polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ' + cutPoints.join(', ') + ', 0 0)';
+/** The same hard-stop fields produce detail = X ∩ Y and overview = 1 − detail.
+ * Independent polygon clips can both include the pixel on a shared edge. */
+export function rasterCoverageMasks(view: LiveViewBox, coverage: LiveViewBox,
+  stageSize: RasterViewport['stageSize']): { detail: string; overview: string } {
+  const cut = rasterIntersection(view, coverage);
+  if (!cut) return { detail: 'linear-gradient(transparent, transparent)', overview: 'none' };
+  const [width, height] = stageSize;
+  const axis = (direction: string, start: number, span: number) => {
+    const a = Number(start.toFixed(6)) + 'px', b = Number((start + span).toFixed(6)) + 'px';
+    return `linear-gradient(to ${direction}, transparent ${a}, #000 ${a}, #000 ${b}, transparent ${b})`;
+  };
+  const detail = axis('right', (cut.x - view.x) * width / view.w, cut.w * width / view.w)
+    + ', ' + axis('bottom', (cut.y - view.y) * height / view.h, cut.h * height / view.h);
+  return { detail, overview: 'linear-gradient(#000, #000), ' + detail };
 }
 
 const area = (view: LiveViewBox | undefined) => view ? view.w * view.h : 0;

@@ -10,7 +10,7 @@ import {
   paintLiveViewport, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, disposeHouseplanViewport,
 } from '../test-build/live-viewport.js';
 import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor } from '../test-build/viewport-exposure.js';
-import { ISO_FRAME_PIXELS, ISO_UNDERLAY_PIXELS, planIsoRaster, rasterCovers, rasterDensity, rasterImproves, rasterSize, rasterUnderlayClip, snapRasterCoverage } from '../test-build/iso-raster-geometry.js';
+import { ISO_FRAME_PIXELS, ISO_UNDERLAY_PIXELS, planIsoRaster, rasterCovers, rasterCoverageMasks, rasterDensity, rasterImproves, rasterSize, snapRasterCoverage } from '../test-build/iso-raster-geometry.js';
 
 test('camera handoff boundaries use whole physical pixels without shifting the plan image', () => {
   const view={x:100.123,y:200.456,w:190.122,h:215.138};
@@ -45,9 +45,12 @@ test('#1485 coverage can use the underlay outside the bitmap rectangle only', ()
   assert.equal(rasterCovers(bounds, { x: 20, y: 20, w: 60, h: 60 }, content), true);
   assert.equal(rasterCovers(bounds, { x: 4, y: 4, w: 60, h: 60 }, content), false);
   assert.equal(rasterCovers(bounds, { x: 60, y: 60, w: 60, h: 60 }, content), true);
-  assert.equal(rasterUnderlayClip({ x: 0, y: 0, w: 100, h: 100 }, bounds),
-    'polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, 5% 5%, 55% 5%, 55% 55%, 5% 55%, 5% 5%, 0 0)');
-  assert.equal(rasterUnderlayClip({ x: 0, y: 0, w: 4, h: 4 }, bounds), 'none');
+  const masks = rasterCoverageMasks({ x: 0, y: 0, w: 100, h: 100 }, bounds, [100, 200]);
+  assert.equal(masks.detail,
+    'linear-gradient(to right, transparent 5px, #000 5px, #000 55px, transparent 55px), '
+    + 'linear-gradient(to bottom, transparent 10px, #000 10px, #000 110px, transparent 110px)');
+  assert.equal(masks.overview, 'linear-gradient(#000, #000), ' + masks.detail);
+  assert.equal(rasterCoverageMasks({ x: 0, y: 0, w: 4, h: 4 }, bounds, [100, 200]).overview, 'none');
 });
 
 test('#1485 reference-size camera optimizes for visible density within the raster budget', () => {

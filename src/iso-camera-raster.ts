@@ -1,6 +1,6 @@
 import type { LiveViewBox } from './live-viewport';
 import { captureIsoRasterSource, decodeIsoRaster, isoRasterHoverSelector } from './iso-raster-source';
-import { planIsoRaster, planIsoUnderlay, rasterCovers, rasterDensity, rasterImproves, rasterSmoothing, rasterUnderlayClip,
+import { planIsoRaster, planIsoUnderlay, rasterCovers, rasterCoverageMasks, rasterDensity, rasterImproves, rasterSmoothing,
   snapRasterCoverage,
   type IsoRasterFrame, type RasterViewport } from './iso-raster-geometry';
 import { forecastExposure } from './viewport-exposure';
@@ -166,8 +166,8 @@ export class IsoCameraRaster {
     });
     const session: RasterSession = {
       scene, surface, stage, win, limits, authority, styleKey, observer, sceneImage, underlay,
-      composeCoverage: CSS.supports('mix-blend-mode', 'plus-lighter') &&
-        CSS.supports('clip-path', 'polygon(evenodd, 0 0, 100% 0, 100% 100%)'),
+      composeCoverage: CSS.supports('mix-blend-mode', 'plus-lighter')
+        && CSS.supports('mask-composite', 'intersect') && CSS.supports('mask-composite', 'subtract'),
       view, vector: vectorFrame(view, coverage, limits), failed: false, revision: 0, prepareMs: 280,
     };
     this.session = session;
@@ -284,7 +284,7 @@ export class IsoCameraRaster {
     try {
       session.source ??= await captureIsoRasterSource(session.scene, session.stage, this.readStyle(session.scene), job.signal);
       if (!stillRelevant()) { session.source = undefined; return; }
-      const needUnderlay = session.underlay.revision !== revision;
+      const needUnderlay = session.composeCoverage && session.underlay.revision !== revision;
       if (needUnderlay) {
         const underlay = planIsoUnderlay(session.view, session.limits);
         const bitmap = await decodeIsoRaster(session.source, underlay, job.signal, Math.min(1, session.limits.dpr), true);
@@ -403,21 +403,16 @@ export class IsoCameraRaster {
     // Clip ownership on the physical pixel grid. Two separately filtered
     // fractional edges cannot guarantee complementary coverage at high DPI.
     const coverage = guard ? snapRasterCoverage(view,rawCoverage,limits) : rawCoverage;
-    const showUnderlay = underlayReady && !rasterCovers(coverage, view, limits.content);
+    const showUnderlay = showRaster && underlayReady && !rasterCovers(coverage, view, limits.content);
+    const masks = showUnderlay ? rasterCoverageMasks(view, coverage, limits.stageSize) : undefined;
     if (showUnderlay) {
       place(underlay, view, limits, true);
-      // Both masks live in the untransformed stage, not in two bitmaps with
-      // different texel grids. Their antialiased coverage is complementary.
-      const clip = rasterUnderlayClip(view, coverage);
-      if (underlay.layer.style.clipPath !== clip) underlay.layer.style.clipPath = clip;
+      underlay.layer.style.maskImage = masks!.overview;
       if (!underlay.canvas.isConnected) surface.before(underlay.layer);
     } else underlay.layer.remove();
     if (showRaster) {
       place(sceneImage, view, limits);
-      const left=(coverage.x-view.x)*100/view.w, top=(coverage.y-view.y)*100/view.h;
-      const right=left+coverage.w*100/view.w, bottom=top+coverage.h*100/view.h;
-      const clip = showUnderlay ? `polygon(${left}% ${top}%, ${right}% ${top}%, ${right}% ${bottom}%, ${left}% ${bottom}%)` : '';
-      if (sceneImage.layer.style.clipPath !== clip) sceneImage.layer.style.clipPath = clip;
+      sceneImage.layer.style.maskImage = masks?.detail ?? '';
       if (!sceneImage.canvas.isConnected) {
         surface.after(sceneImage.layer);
         sceneImage.canvas.dataset.hpIsoRaster = 'active';

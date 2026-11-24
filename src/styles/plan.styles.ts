@@ -253,6 +253,8 @@ export const planStyles = css`
     }
     .hp-iso-raster-handoff > .hp-iso-gesture-image-layer { mix-blend-mode:plus-lighter; }
     .hp-iso-raster-layer { position:absolute; inset:0; z-index:1; pointer-events:none; }
+    .hp-iso-gesture-image-layer { mask-composite:intersect; }
+    .hp-iso-gesture-underlay-layer { mask-composite:subtract,intersect; }
     .hp-iso-raster {
       position:absolute; top:0; left:0; z-index:1; pointer-events:none;
       transform-origin:0 0; will-change:transform; image-rendering:auto;

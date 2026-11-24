@@ -360,8 +360,8 @@ produce a zero-sized SVG `viewBox`.
 
 ## §5 Zoom and pan
 
-* **2.5D raster joins (#1555).** Detail and overview own complementary
-  clips on one untransformed stage. The shared edge stays inside decodable
+* **2.5D raster joins (#1555).** Detail and overview use one mask and its
+  inverse on the same untransformed stage. The shared edge stays inside decodable
   pixels and is aligned to the device pixel grid; neither bitmap changes the
   camera transform or the SVG hit surface. If split composition is unavailable,
   covered frames can still use one bitmap, with exact SVG for uncovered

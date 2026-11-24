@@ -1,7 +1,9 @@
 // #1485 exercises the slow/degraded paths with ordinary card wheel input.
+import { createRequire } from 'node:module';
 import { check, finish } from './serve.mjs';
 import { settleIsoPaint, startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
 
+const { PNG } = createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 const mode = process.argv[2] ?? 'underlay';
 if (!['underlay', 'backdrop', 'fallback', 'composition-fallback', 'light'].includes(mode))
   throw Error('Choose underlay, backdrop, fallback, composition-fallback or light');
@@ -18,6 +20,54 @@ const { browser, page } = await startIsoPaintScene({
       CSS.supports = (...args) => args[0] === 'mix-blend-mode' && args[1] === 'plus-lighter' ? false : supports(...args);
     } : undefined,
 });
+
+/** Exercise the browser's actual compositing pixels at a corner of the masks
+ * collected from a live split. Matching CSS stops do not prove that neither
+ * raster paints the shared pixel twice, or that translucent ink stays true. */
+async function splitPixelError(sample) {
+  const { left, top } = sample;
+  const clip = { x:Math.floor(left)-3, y:Math.floor(top)-3, width:8, height:8 };
+  const pixels = async (alpha, split) => {
+    await page.evaluate(({ sample, alpha, split }) => {
+      const root = window.__isoPaint.renderRoot;
+      const stage = root.querySelector('.stage').getBoundingClientRect();
+      let probe = root.querySelector('[data-raster-pixel-probe]');
+      if (!probe) {
+        probe = document.createElement('div');
+        probe.dataset.rasterPixelProbe = '';
+        probe.style.cssText = `position:fixed;inset:0 auto auto 0;width:${stage.width}px;height:${stage.height}px;
+          background:#d6c5bd;z-index:1000;pointer-events:none`;
+        const stack=document.createElement('div'); stack.className='zoomwrap';
+        probe.append(stack);
+        root.append(probe);
+      }
+      const layer = (kind, mask) => {
+        const div = document.createElement('div'), canvas = document.createElement('canvas');
+        div.className = 'hp-iso-raster-layer hp-iso-gesture-' + kind + '-layer';
+        div.style.maskImage = mask;
+        canvas.className = 'hp-iso-raster';
+        canvas.width = Math.round(stage.width); canvas.height = Math.round(stage.height);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = `rgba(68,94,115,${alpha})`;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        div.append(canvas); return div;
+      };
+      probe.firstElementChild.replaceChildren(...(split ? [layer('underlay',sample.overview),layer('image',sample.detail)]
+        : [layer('image','')]));
+    }, { sample, alpha, split });
+    return PNG.sync.read(await page.screenshot({clip})).data;
+  };
+  let error=0;
+  try {
+    for(const alpha of [1,.55]) {
+      const whole=await pixels(alpha,false), split=await pixels(alpha,true);
+      for(let i=0;i<whole.length;i++) error=Math.max(error,Math.abs(whole[i]-split[i]));
+    }
+    return error;
+  } finally {
+    await page.evaluate(() => window.__isoPaint.renderRoot.querySelector('[data-raster-pixel-probe]')?.remove());
+  }
+}
 
 try {
   const before = await page.evaluate(mark => performance.getEntriesByName(mark).length, readyMark);
@@ -51,7 +101,7 @@ try {
     const lightId = Object.keys(card.hass.states).find(id => id.startsWith('light.'));
     const light = lightId && card.hass.states[lightId];
     let sawUnderlay = false, sawRaster = false, sawVectorWrite = false, samples = 0;
-    let splitSamples = 0, alignedSplit = true;
+    let splitSamples = 0, alignedSplit = true, maskSample = null;
     let lightChanged = false, lightMix = false, rasterAfterLight = false;
     let previousView = firstView;
     const tick = () => new Promise(resolve => requestAnimationFrame(resolve));
@@ -79,28 +129,34 @@ try {
           const raster = !!image && scene.hasAttribute('data-hp-raster-display');
           sawRaster ||= raster;
           rasterAfterLight ||= lightMix && !mixing && raster;
-          sawUnderlay ||= !!underlay && underlay.style.clipPath.includes('evenodd');
+          sawUnderlay ||= !!underlay && underlay.style.maskImage.includes('linear-gradient');
           if (raster && underlay) {
             splitSamples++;
             const detail = image.parentElement;
-            const percent = node => [...node.style.clipPath.matchAll(/(-?[\d.]+)%/g)].map(m => Number(m[1]));
-            const bounds = detail.getBoundingClientRect(), edges = percent(detail);
-            const cut = percent(underlay).slice(-10);
-            const quantized = edges.every((v,i) => {
-              const px = v / 100 * (i % 2 ? bounds.height : bounds.width) * devicePixelRatio;
+            const edgeValues = [...detail.style.maskImage.matchAll(/(-?[\d.]+)px/g)].map(m => Number(m[1]));
+            const quantized = edgeValues.every(v => {
+              const px = v * devicePixelRatio;
               return Math.abs(px - Math.round(px)) < .002;
             });
-            alignedSplit &&= edges.length === 8 && cut.length === 10 && quantized
+            alignedSplit &&= edgeValues.length === 8 && quantized
               && detail.parentElement === underlay.parentElement
               && getComputedStyle(detail).mixBlendMode === 'plus-lighter'
-              && edges.every((value,i) => Math.abs(Math.min(100,Math.max(0,value))-cut[i])<.001);
+              && getComputedStyle(detail).maskComposite.includes('intersect')
+              && getComputedStyle(underlay).maskComposite.startsWith('subtract')
+              && underlay.style.maskImage.endsWith(detail.style.maskImage);
+            if (!maskSample && edgeValues.length === 8) {
+              const left = edgeValues[0], top = edgeValues[4];
+              if (left > 4 && top > 4) maskSample = {
+                detail:detail.style.maskImage, overview:underlay.style.maskImage, left, top,
+              };
+            }
           }
         }
         time = await tick();
         if (time - start > 6000) throw Error('The synthetic wheel series did not settle');
       }
       const finalLight = lightId && Boolean(scene.querySelector('.glow-spot[data-glow-source="' + lightId + '"]'));
-      return { samples, sawRaster, sawUnderlay, sawVectorWrite, lightMix, rasterAfterLight, splitSamples, alignedSplit,
+      return { samples, sawRaster, sawUnderlay, sawVectorWrite, lightMix, rasterAfterLight, splitSamples, alignedSplit, maskSample,
         finalLightMatches: finalLight === (light?.state !== 'on'),
         cameraMoved: svg.getAttribute('viewBox') !== firstView };
     } finally {
@@ -116,6 +172,14 @@ try {
   if (mode === 'underlay') check('slow preparation uses a cut-out underlay', result.sawUnderlay);
   if (mode === 'underlay') check('live split shares a stage and complementary physical-pixel clips',
     result.splitSamples > 0 && result.alignedSplit);
+  if (mode === 'underlay') {
+    check('captured a real split corner for pixel verification', !!result.maskSample);
+    if (result.maskSample) {
+      result.maxSplitPixelError = await splitPixelError(result.maskSample);
+      check('the split is indistinguishable from one canvas for opaque and translucent pixels',
+        result.maxSplitPixelError <= 2);
+    }
+  }
   if (mode === 'composition-fallback') check('no split paint without additive composition', result.sawUnderlay, false);
   if (mode === 'light') {
     check('the old and new light states share the short SVG fade', result.lightMix);
