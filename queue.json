@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24013,
+  "revision": 24014,
   "nextTicket": 683,
   "nextFence": 683,
   "tasks": {
@@ -6012,29 +6012,24 @@
     },
     "1559": {
       "issue": 1559,
+      "branch": "codex/1559-warm-floor-smoke",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1559-warm-floor-smoke",
-      "materialSha": "49d5ef5143c6cab030b1ff596a085746f3a18bd6",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 682,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795561013063,
-      "reviewEntry": 1,
-      "patchId": "50ca7db69570cac2f65ff6b1389c47442e8e305b",
-      "changedFiles": [
-        "demo/smoke_iso_floor_switch.mjs"
-      ],
-      "s6": {
-        "id": "20261124T225819596-cce0e6ec",
-        "name": "Тесты для задачи #1559 (перед слиянием)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261124T225819596-cce0e6ec/report.json",
-        "materialSha": "49d5ef5143c6cab030b1ff596a085746f3a18bd6",
-        "status": "passed",
-        "finishedAt": "2026-11-24T23:00:24.816Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "226632dad25303d8067e1bb4bb5b2d967a6d1891",
+      "mergedSha": "49d5ef5143c6cab030b1ff596a085746f3a18bd6",
+      "mergedAt": 1795561232009,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6616,18 +6611,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1559,
-    "worker": "finish",
-    "token": "682:finish:c9e4eb0f-e039-4de9-ab0a-62edfeafcc03:finish:1:admit",
-    "fence": 682,
-    "materialSha": "49d5ef5143c6cab030b1ff596a085746f3a18bd6",
-    "expectedBase": "226632dad25303d8067e1bb4bb5b2d967a6d1891",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795561017569,
-    "expiresAt": 1795564826173,
-    "patchId": "50ca7db69570cac2f65ff6b1389c47442e8e305b"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6648,26 +6632,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "finish:c9e4eb0f-e039-4de9-ab0a-62edfeafcc03:finish:2:automation-pending": {
-      "digest": "1f160c884aef528dfdf24583886b1c7de4fcc76c728d2a35c6150e484c0cdc43",
-      "issue": 1559
-    },
-    "finish:103dc114-f2af-466d-97bc-ce985cd813a9": {
-      "digest": "720d6df16089909daf02b5d36c92007be5e770fb0969b5eb1ae5092c1bbd30ae",
-      "issue": 1559
-    },
-    "finish:c9e4eb0f-e039-4de9-ab0a-62edfeafcc03:finish:3:synchronized": {
-      "digest": "9566d95b3b9ad5adacfd01f045145818f1cbc1a824b027b06f129b7c869a69fc",
-      "issue": 1559
-    },
-    "finish:8aab8958-4a12-497d-8412-e4a9e3e1d79e": {
-      "digest": "ddbc72e906bb3006141b734fc1545364fe0e6bed3aa117121763ab36452d74fa",
-      "issue": 1559
-    },
-    "finish:c9e4eb0f-e039-4de9-ab0a-62edfeafcc03:finish:4:s6-complete": {
-      "digest": "8a7a4f4fa27950b21bec406ed22fb17bc6b0e87edb7f7b98f2cee40bab2baf55",
-      "issue": 1559
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
