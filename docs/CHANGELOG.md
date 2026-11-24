@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.86.1-beta.6 — 2026-11-24
+
 - Remove the remaining diagonal seams around door hardware in oblique 2.5D views (#1543).
 - Keep the outline snug around wide standalone value tiles when rotating the 2.5D plan (#1542).
 
