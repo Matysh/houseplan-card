@@ -169,6 +169,13 @@ test('default two-floor scene is portable, self-contained and uses demonstration
   assert.ok(Object.keys(scene.devices).every(id => id.startsWith('lab_')));
   assert.ok(Object.keys(scene.entities).every(id => /^[a-z_]+\.lab_/.test(id)));
   assert.ok(scene.config.markers.every(m => m.binding === 'virtual' || /^(device:lab_|entity:[a-z_]+\.lab_)/.test(m.binding)));
+  const markerIds = new Set(scene.config.markers.map(m => m.id));
+  for (const marker of scene.config.markers) {
+    for (const target of marker.controls || []) {
+      if (target.startsWith('marker:')) assert.ok(markerIds.has(target.slice(7)), `unresolved controller target ${target}`);
+      else assert.ok(scene.states[target] || scene.entities[target], `unresolved controlled entity ${target}`);
+    }
+  }
   assert.doesNotMatch(data, /https?:\/\/|0x[0-9a-f]{16}|192\.168\.|access_token|api_key/i);
   for (const [id, entity] of Object.entries(scene.entities)) {
     assert.equal(entity.entity_id, id);
