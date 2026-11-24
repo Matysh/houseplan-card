@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23598,
+  "revision": 23599,
   "nextTicket": 673,
   "nextFence": 673,
   "tasks": {
@@ -6025,14 +6025,15 @@
         "test/ui-lab-session.test.mjs"
       ],
       "notice": {
-        "key": "1:Author found unresolved virtual-marker controller references in the default fixture; correcting before review.",
-        "reason": "Author found unresolved virtual-marker controller references in the default fixture; correcting before review.",
+        "key": "2:Complete infrastructure release classification because package-lock changes cause product classification in the coordinator.",
+        "reason": "Complete infrastructure release classification because package-lock changes cause product classification in the coordinator.",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795541472202,
-        "entry": 1,
-        "eventId": "1554-fix-demo-control-links:return:1554"
-      }
+        "at": 1795541840076,
+        "entry": 2,
+        "eventId": "1554-add-infra-release-classification:return:1554"
+      },
+      "reason": "Complete infrastructure release classification because package-lock changes cause product classification in the coordinator."
     }
   },
   "ownerDecisions": {},
@@ -6627,18 +6628,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1554,
-    "worker": "finish",
-    "token": "672:finish:33baf981-4e6c-4146-aed0-2d8b7418998e:finish:1:admit",
-    "fence": 672,
-    "materialSha": "7bfaa3f776ab3b0a4e3200ee2d8ee4fc1a2d6dbe",
-    "expectedBase": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-    "phase": "testing",
-    "admittedAt": 1795541703779,
-    "expiresAt": 1795542122123,
-    "patchId": "cc119a51c7a9ddbc4f7ad8e4a9f5c9da38c11662"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6710,6 +6700,10 @@
     },
     "finish:fb831723-8a4f-4e1e-86af-bf2716a2046c": {
       "digest": "4393575ef6fcd628346b19f4f124d20794113b1f5a4c903f80fbceb6a86c33b5",
+      "issue": 1554
+    },
+    "1554-add-infra-release-classification": {
+      "digest": "844d2a37fbb65d2dc7cc4360267eb0e0dca3d33ce3cf859e4d9ad0da336aa77b",
       "issue": 1554
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -6814,6 +6808,25 @@
         "layer": "product",
         "materialSha": "7bfaa3f776ab3b0a4e3200ee2d8ee4fc1a2d6dbe",
         "phase": "sync"
+      }
+    },
+    "1554-add-infra-release-classification:return:1554": {
+      "digest": "844d2a37fbb65d2dc7cc4360267eb0e0dca3d33ce3cf859e4d9ad0da336aa77b",
+      "issue": 1554,
+      "message": {
+        "kind": "return",
+        "issue": 1554,
+        "at": 1795541840076,
+        "entry": 2,
+        "notice": {
+          "key": "2:Complete infrastructure release classification because package-lock changes cause product classification in the coordinator.",
+          "reason": "Complete infrastructure release classification because package-lock changes cause product classification in the coordinator.",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795541840076,
+          "entry": 2,
+          "eventId": "1554-add-infra-release-classification:return:1554"
+        }
       }
     }
   },
