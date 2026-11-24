@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23588,
+  "revision": 23589,
   "nextTicket": 672,
   "nextFence": 672,
   "tasks": {
@@ -6004,9 +6004,26 @@
       "status": "S6-in-progress",
       "readyAt": 1795541148787,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1795541188538,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      "patchId": "91b5e425c80214379e7316789221c3e454595da2",
+      "changedFiles": [
+        "demo/ui-lab/README.md",
+        "demo/ui-lab/app.mjs",
+        "demo/ui-lab/config.mjs",
+        "demo/ui-lab/default-plan/README.md",
+        "demo/ui-lab/default-plan/assets/6839210cb9935e01f1fad8d8c382a2b4211b6ddb7782f18d5446fb5762c34fa8.png",
+        "demo/ui-lab/default-plan/fixture.json",
+        "demo/ui-lab/default-plan/theme.css",
+        "demo/ui-lab/mock-ha.mjs",
+        "demo/ui-lab/session.mjs",
+        "demo/ui-lab/smoke.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "package-lock.json",
+        "package.json",
+        "process-next/lib/task-selection.mjs",
+        "test/ui-lab-server.test.mjs",
+        "test/ui-lab-session.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -6607,10 +6624,11 @@
     "token": "671:finish:22ddb8ce-fc79-4af0-816f-c871a1a5506d:finish:1:admit",
     "fence": 671,
     "materialSha": "25a611f061eeb5d3a4fa4a513268060f89ecd8d9",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
+    "phase": "testing",
     "admittedAt": 1795541153218,
-    "expiresAt": 1795541511658
+    "expiresAt": 1795541559160,
+    "patchId": "91b5e425c80214379e7316789221c3e454595da2"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6651,6 +6669,10 @@
     },
     "finish:910e0033-9a96-4e90-a8f7-6e7865a8767c": {
       "digest": "b542dba71db891b04fd09f5b38ea6e325c83b9d80a1bb6e65f2ec3a3c131dd2d",
+      "issue": 1554
+    },
+    "finish:22ddb8ce-fc79-4af0-816f-c871a1a5506d:finish:3:synchronized": {
+      "digest": "480fdc45948a623986ca15e04e571421143d6fb476e91a432f5663ccc396721e",
       "issue": 1554
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
