@@ -155,8 +155,21 @@ test('issue 266 the media wrappers survived the move', () => {
   const reduced = parseRules(cardStyles.flat(Infinity).map(sheet => sheet.cssText).join('\n'))
     .filter(rule => rule.kind === 'rule' && rule.scope.some(scope => scope.includes('prefers-reduced-motion: reduce')))
     .flatMap(rule => rule.selectors);
-  for (const selector of ['.hpf-boot > svg', '.hpf-loading-pill', 'button.hpf-icon-action', '.hpf-navigation > .hpf-nav-item'])
+  for (const selector of [
+    '.hpf-loading-pill',
+    '.hpf-loading-pill > ha-icon',
+    'button.hpf-icon-action',
+    '.hpf-navigation > .hpf-nav-item',
+  ]) {
     assert.ok(reduced.includes(selector), `${selector}: missing common reduced-motion rule`);
+  }
+
+  const startupMotion = parseRules(planStyles.cssText).find(rule =>
+    rule.kind === 'rule'
+    && rule.scope.some(scope => scope.includes('prefers-reduced-motion: reduce'))
+    && rule.selectors.includes('.stage[data-hp-startup-finish] > :is(.zoomwrap,.zoombadge,.homearrow)'));
+  assert.ok(startupMotion?.declarations.some(declaration => /^animation:\s*none$/.test(declaration)),
+    'the ready plan must appear immediately with reduced motion');
 });
 
 test('#1184 the appended header sheet owns shared intrinsic-flow roots and its native metrics', () => {
