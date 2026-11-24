@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23616,
+  "revision": 23617,
   "nextTicket": 674,
   "nextFence": 674,
   "tasks": {
@@ -6001,7 +6001,7 @@
       "ownerDecision": null,
       "ticket": 673,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795541868475,
       "reviewEntry": 3,
       "patchId": "fa05c8558cd83b689010f3fbd8d5e4e8ffecb8a3",
@@ -6033,6 +6033,16 @@
         "at": 1795541840076,
         "entry": 2,
         "eventId": "1554-add-infra-release-classification:return:1554"
+      },
+      "s6": {
+        "id": "20261124T174022961-14e64261",
+        "requestId": "s6:1554:f9e36f7f33dee6859a7377fe485c1784",
+        "runId": 45450745224,
+        "materialSha": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
+        "status": "passed",
+        "finishedAt": "2026-11-24T17:51:39.924Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45450745224",
+        "execution": "github"
       }
     }
   },
@@ -6635,9 +6645,9 @@
     "fence": 673,
     "materialSha": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
     "expectedBase": "c9e6bb7775ff7ff08d996309184a3f1ec1116940",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795541872645,
-    "expiresAt": 1795543011800,
+    "expiresAt": 1795546340550,
     "patchId": "fa05c8558cd83b689010f3fbd8d5e4e8ffecb8a3"
   },
   "events": {
@@ -6925,6 +6935,35 @@
         "layer": "product",
         "materialSha": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
         "phase": "sync"
+      }
+    },
+    "finish:f30462e7-50e9-4d1f-a0f0-ae8b3c0a05ca:finish:3:s6-complete": {
+      "digest": "9e376edf1a804c24ccedd6d7aa728a4a65db56d9e2726b9e3891de70af152b66",
+      "issue": 1554,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1554,
+        "at": 1795542740550,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
+        "phase": "review",
+        "evidence": {
+          "id": "20261124T174022961-14e64261",
+          "requestId": "s6:1554:f9e36f7f33dee6859a7377fe485c1784",
+          "runId": 45450745224,
+          "materialSha": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
+          "status": "passed",
+          "finishedAt": "2026-11-24T17:51:39.924Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45450745224",
+          "execution": "github"
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
