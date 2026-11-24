@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23593,
-  "nextTicket": 672,
+  "revision": 23594,
+  "nextTicket": 673,
   "nextFence": 672,
   "tasks": {
     "1024": {
@@ -5996,14 +5996,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1554-ui-lab-default-plan",
-      "materialSha": "25a611f061eeb5d3a4fa4a513268060f89ecd8d9",
+      "materialSha": "7bfaa3f776ab3b0a4e3200ee2d8ee4fc1a2d6dbe",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 671,
-      "queued": false,
+      "ticket": 672,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795541148787,
-      "reviewEntry": 1,
+      "readyAt": 1795541699088,
+      "reviewEntry": 2,
       "patchId": "91b5e425c80214379e7316789221c3e454595da2",
       "changedFiles": [
         "demo/ui-lab/README.md",
@@ -6024,7 +6024,6 @@
         "test/ui-lab-server.test.mjs",
         "test/ui-lab-session.test.mjs"
       ],
-      "reason": "Author found unresolved virtual-marker controller references in the default fixture; correcting before review.",
       "notice": {
         "key": "1:Author found unresolved virtual-marker controller references in the default fixture; correcting before review.",
         "reason": "Author found unresolved virtual-marker controller references in the default fixture; correcting before review.",
@@ -6627,7 +6626,9 @@
       "runId": 45433838295
     }
   },
-  "waiting": [],
+  "waiting": [
+    1554
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6765,6 +6766,19 @@
           "entry": 1,
           "eventId": "1554-fix-demo-control-links:return:1554"
         }
+      }
+    },
+    "finish:33baf981-4e6c-4146-aed0-2d8b7418998e": {
+      "digest": "c757698c08cd549c020dc2035b54ce069147f7012b7cc9aef0fa3bb06fa726ac",
+      "issue": 1554,
+      "message": {
+        "kind": "queued",
+        "issue": 1554,
+        "at": 1795541699088,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "7bfaa3f776ab3b0a4e3200ee2d8ee4fc1a2d6dbe"
       }
     }
   },
