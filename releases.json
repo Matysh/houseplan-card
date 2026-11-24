@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1403,
+  "revision": 1404,
   "active": "v1.86.1-beta.8",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -258920,7 +258920,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.1-beta.8",
@@ -266848,7 +266848,8 @@
           "en": "## v1.86.1-beta.8 — 2026-11-24\n\n- Fix the first Optimize Plans preview after saving a new plan (#1549).\n- Wait for rendered browser test fixtures and isolate the summary timing check (#1549, #1550, #1551)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.1-beta.8"
     }
   },
   "published": {
@@ -273091,7 +273092,8 @@
     "ship-review:result:0484ead4-cd1c-403b-8861-7bf74e96b617": "8652df278c03e06af3b53a0c79b5ff8f9cc66e9a2ca7936ec872f72b11d08e60",
     "beta8-publish:d4004f33edee67b2953b769431dc887c8ff7f32a:runner-report": "c881b38fc5e4e6a5b6b9fe6375e00e60bc10efc6bcec5373725972c9bafd7d1f",
     "beta8-publish:d4004f33edee67b2953b769431dc887c8ff7f32a:metrics": "539b8d79d24d7fb5cb4c237e08da47fe4dc3b6b2568c18b42fada08ee53efc82",
-    "beta8-publish:d4004f33edee67b2953b769431dc887c8ff7f32a:prepared:44849283-2bf2-4718-9eaa-41702e7e0187": "2830bf4c79431b03024b1118755e8948319119b96456fa0fed1abc802c30dcb8"
+    "beta8-publish:d4004f33edee67b2953b769431dc887c8ff7f32a:prepared:44849283-2bf2-4718-9eaa-41702e7e0187": "2830bf4c79431b03024b1118755e8948319119b96456fa0fed1abc802c30dcb8",
+    "beta8-publish:d4004f33edee67b2953b769431dc887c8ff7f32a:started:1403": "e7c1e7e2eee45bb8bd81c7564615338e2ae1639f51ba380f13cedcd38037958a"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
