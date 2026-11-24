@@ -333,6 +333,37 @@ test('#1541 a clipped opening keeps a clean outer contour and a real hole', () =
   }
 });
 
+test('#1543 oblique T-junctions around hardware do not open seams in a leaf', () => {
+  const camera = cam(0);
+  const lift = Math.sin(camera.tiltDeg * Math.PI / 180);
+  const offset = 43.2486;
+  const angle = .17;
+  const turn = ([x,y], radians = angle) => [
+    x*Math.cos(radians)-y*Math.sin(radians)+offset,
+    x*Math.sin(radians)+y*Math.cos(radians)+offset*.57,
+  ];
+  const face = (id, kind, corners, z, radians) => ({ layer: 'opening', depth: z, surface: {
+    id, type: 'door', kind, material: 'matte-leaf', sourceIndex: 0, d: id,
+    points: corners.map(corner => {
+      const [x,y] = turn(corner, radians);
+      return { point: [x, (y+z*lift)/camera.floorScaleY], z };
+    }),
+  } });
+  const queue = [
+    face('leaf', 'leaf-front', [[-45,-50],[45,-50],[45,50],[-45,50]], 0),
+    face('handle-base', 'door-handle', [[11,-7],[19,-7],[19,4],[11,4]], 20),
+    face('handle-lever', 'door-handle', [[4,-2],[14,-2],[14,2],[4,2]], 21, angle+.14),
+  ];
+  const opaque = clipIsoOpeningDepthQueue(queue, camera, 200).find(entry => entry.surface.id === 'leaf').surface.d;
+  const translucent = composeIsoTranslucentStructure(queue, camera, 200, {side:.4,top:.5}, [])
+    .find(fragment => fragment.index === 0).d;
+  for (const d of [opaque,translucent]) {
+    assert.equal(d.match(/M/g).length, 2, 'the outer contour and the hardware cutout');
+    assert.ok(contains(d,...turn([-30,20])) && contains(d,...turn([25,-20])));
+    assert.ok(!contains(d,...turn([16,0])) && !contains(d,...turn([6,0],angle+.14)));
+  }
+});
+
 test('#1478 a disjoint foreground face with overlapping bounds leaves one uncut wall polygon', () => {
   const camera = cam(0);
   const face = (id, corners, z) => ({ layer: 'opening', depth: z, surface: {

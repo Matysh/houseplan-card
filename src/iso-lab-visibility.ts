@@ -110,8 +110,26 @@ function openingPaintContours(geom: Multi): Multi {
   if (geom.length < 2) return geom;
   // These are working partitions of one physical face. Merge them before
   // SVG paints their shared edges. Snap only in normalized paint coordinates.
-  const snapped = geom.map(poly => poly.map(ring =>
-    ring.map(([x,y]):Point => [Number(x.toFixed(6)), Number(y.toFixed(6))])));
+  const vertices = geom.flat(2);
+  const snap = ([x,y]:Point):Point => [Number(x.toFixed(6)), Number(y.toFixed(6))];
+  const edgeEpsilon = 1e-9;
+  const snapped = geom.map(poly => poly.map(ring => ring.flatMap((start, index) => {
+    const end = ring[(index+1)%ring.length];
+    const dx = end[0]-start[0], dy = end[1]-start[1];
+    const length = Math.hypot(dx,dy);
+    if (length <= edgeEpsilon) return [snap(start)];
+    // Split the long side of each T-junction before snapping. Rounding a
+    // short edge and its unsplit neighbour independently opens a thin gap.
+    const splits: {distance: number; point: Point}[] = [];
+    for (const point of vertices) {
+      const x = point[0]-start[0], y = point[1]-start[1];
+      const distance = (x*dx+y*dy)/length;
+      if (distance <= edgeEpsilon || distance >= length-edgeEpsilon) continue;
+      if (Math.abs(x*dy-y*dx) > length*edgeEpsilon) continue;
+      splits.push({distance, point});
+    }
+    return [snap(start), ...splits.sort((a,b) => a.distance-b.distance).map(({point}) => snap(point))];
+  })));
   try {
     const contours = union(snapped);
     if (!contours.length) return geom;

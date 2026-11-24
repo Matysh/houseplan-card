@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1543,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Aligns clipped 2.5D opening edges at T-junctions and repairs remaining seams on the current release line.",
+  "summary": {
+    "ru": "Устранены оставшиеся диагональные швы вокруг дверной фурнитуры в косых ракурсах 2,5D.",
+    "en": "Remove remaining diagonal seams around door hardware in oblique 2.5D views."
+  }
+}

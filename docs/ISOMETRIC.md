@@ -214,6 +214,8 @@ materials. Geometry and sun/light barriers still follow the physical plan.
 In both wall modes, each visible opening face is painted as a continuous
 contour at its existing depth rank. Physical holes, separate visible regions
 and edges between opening materials remain in the silhouette (#1541).
+Shared edges align at T-junctions before rounding the paint coordinates, so
+hardware cutouts do not leave diagonal seams across door leaves (#1543).
 Windows and doors use their own material. The
 optional opening accent tints frames, leaves, reveals and all sill faces.
 Its alpha controls tint strength. White and zero strength reproduce the

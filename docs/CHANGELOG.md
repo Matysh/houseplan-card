@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Remove the remaining diagonal seams around door hardware in oblique 2.5D views (#1543).
 - Keep the outline snug around wide standalone value tiles when rotating the 2.5D plan (#1542).
 
 - Remove internal seams from clipped window panes, frames, sills and door leaves in 2.5D (#1541).
