@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1369,
+  "revision": 1370,
   "active": "v1.86.1-beta.7",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -249824,14 +249824,14 @@
       "kind": "beta",
       "branch": "release/1.86.1-beta.7",
       "sourceSha": "f01f24eebfac9e6964d9865530368b9cddcf1f6e",
-      "sha": "f01f24eebfac9e6964d9865530368b9cddcf1f6e",
+      "sha": "5dd70ff4076698882af9eb5cc1b46d8848b75d3a",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v1.86.1-beta.7",
-        "candidate": "f01f24eebfac9e6964d9865530368b9cddcf1f6e",
+        "tag": null,
+        "candidate": "5dd70ff4076698882af9eb5cc1b46d8848b75d3a",
         "base": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
         "issues": [
           {
@@ -250145,7 +250145,14 @@
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "f01f24eebfac9e6964d9865530368b9cddcf1f6e",
+          "to": "5dd70ff4076698882af9eb5cc1b46d8848b75d3a",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": []
     }
   },
@@ -256328,7 +256335,8 @@
     "beta6-publish:305ad2a133e3e3b5f613026b10c723104981ba35:completion:46d5de74-dcfd-4874-8b4e-3bf27aee2325": "72f06040da5496d63fe03578d6583205ca2922ec2ba643575b4bbb3ae7107c95",
     "beta6-publish:305ad2a133e3e3b5f613026b10c723104981ba35:completion:c234f08a-ad83-4e6b-8739-ff68439c6f45": "7cca537a1b0856ae711cd9dbceb2875ccecf2fb5b396ec62cb639a0a7711e352",
     "beta6-publish:305ad2a133e3e3b5f613026b10c723104981ba35:completion:2affc93f-efcf-4f5f-ae85-93d7c6b4fa4e": "625131fcb7c8e89c667e36142e4ea8efdbaff616c740ac8bf47870aa479ca2af",
-    "beta7-create": "835b2d7d2e20389798f2c489b99e220efe632fe515f6c7d9f37a232a88b2f80e"
+    "beta7-create": "835b2d7d2e20389798f2c489b99e220efe632fe515f6c7d9f37a232a88b2f80e",
+    "beta7-candidate:5dd70ff4076698882af9eb5cc1b46d8848b75d3a": "0a39cab87e593a315827d295544cdabed96386c02f8ba12fedf31fa051939c73"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
