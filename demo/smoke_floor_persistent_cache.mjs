@@ -285,14 +285,20 @@ try {
     const early=performance.now(),visible=!card._loadOk&&!card._booting&&!card._bootFading
       &&!!card.renderRoot.querySelector('.dev')&&getComputedStyle(card.renderRoot.querySelector('.zoomwrap')).visibility==='visible';
     const phases=structuredClone(card._floorPreparation.diagnostic);
-    await until(()=>card._loadOk&&card._floorPreparation.diagnostic.readyCurrentFrame>0);
-    const answer={visible,beforeFresh:early<freshPair,mountToCached:early-start,mountToFresh:freshPair-start,phases,noWrites:writes===0};
+    let startupReappeared = false;
+    await until(()=>{
+      startupReappeared ||= !!card.renderRoot.querySelector('[data-hp-startup-pending],[data-hp-startup-finish]');
+      return card._loadOk&&card._floorPreparation.diagnostic.readyCurrentFrame>0;
+    });
+    const answer={visible,startupReappeared,beforeFresh:early<freshPair,
+      mountToCached:early-start,mountToFresh:freshPair-start,phases,noWrites:writes===0};
     card.remove();return answer;
   },fixture);
   console.log(JSON.stringify(result, null, 2));
   check('native worker used, not degraded', result.cold.scheduler.workerJobs > 0 && result.cold.scheduler.fallbackJobs === 0);
   check('disk hit before fresh pair includes devices', result.cachedBeforeFresh);
   check('a new document visibly paints cached full before the fresh pair without write authority', result.coldDocument.visible&&result.coldDocument.beforeFresh&&result.coldDocument.noWrites);
+  check('confirming the cached floor does not re-enter startup presentation', !result.coldDocument.startupReappeared);
   check('disk hit bypasses real structural consumers', ['wallUnion','physicalBodies','innerContour','cleanFloor','roomFloorPaint','lightBarrier']
     .every(key => result.diskBuilds[key] === 0));
   check('saved fit equals full frame', result.sameFit);

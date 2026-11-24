@@ -559,12 +559,21 @@ export async function adoptAuthoritativeGated(
       && contentFingerprint(candidateConfig) !== adoption.currentConfigFingerprint())
     || (layResp != null && contentFingerprint(layResp.layout ?? {}) !== adoption.currentLayoutFingerprint());
   if (structuralChanged) {
-    const assetReady = await host._signer.prepareImage(planHostOf(host), host._candidateBackdrop(candidateConfig));
-    if (!isCurrent()) return { status: 'superseded' };
-    if (!assetReady) {
-      host._continuity.note('asset-failed');
-      host._scheduleLoadRetry(true);
-      return { status: 'asset-wait' };
+    const firstView = input.profile === 'reload' && !adoption.config
+      && !host._continuity.hasCompleteFrame && host._continuity.state === 'steady';
+    const backdrop = host._signer.prepareImage(planHostOf(host), host._candidateBackdrop(candidateConfig));
+    if (firstView) {
+      // Cold startup can prepare its geometry while the optional backdrop
+      // signs and decodes. The startup presentation owns the visual wait.
+      void backdrop.catch(() => undefined);
+    } else {
+      const assetReady = await backdrop;
+      if (!isCurrent()) return { status: 'superseded' };
+      if (!assetReady) {
+        host._continuity.note('asset-failed');
+        host._scheduleLoadRetry(true);
+        return { status: 'asset-wait' };
+      }
     }
   }
   // No await follows this check before `adoptStructuralResponses`; JavaScript's

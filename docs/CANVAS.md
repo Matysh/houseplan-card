@@ -130,7 +130,9 @@ operational Store is the one explicit exception (#291).
 ## First opening
 
 The preparation and live render paths use one canvas background and loading
-status. A compatible, non-interactive image from browser storage or the server
+status. The first authorised plan can open after a bounded wait for an
+unavailable backdrop. A complete backdrop is still required to save the
+static preview. A compatible, non-interactive image from browser storage or the server
 can appear while geometry and the viewport settle. The live scene can accept
 input once ready. It fades in on the measured camera while the already painted
 image stays underneath. If the image becomes incompatible during that fade,

@@ -18,10 +18,10 @@ const serverFixture = makeLargeHouseFixture({ floors:2, roomsPerFloor:4, devices
 try {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const mount = async ({ projection, surface, user = 'startup-fixture', rev = 1, hold = false, silent = false,
-    server = false, browserMiss = false, serverDelay = false, trace = false }) => {
+    server = false, browserMiss = false, serverDelay = false, trace = false, brokenBackdrop = null }) => {
     await page.goto('http://demo.local/demo.html?panel-cold=1', { waitUntil:'domcontentloaded' });
     await page.waitForFunction(() => typeof window.__mkHass === 'function');
-    await page.evaluate(async ({ fixture, projection, surface, user, rev, hold, silent, server, browserMiss, serverDelay, trace }) => {
+    await page.evaluate(async ({ fixture, projection, surface, user, rev, hold, silent, server, browserMiss, serverDelay, trace, brokenBackdrop }) => {
       if (browserMiss) await new Promise((resolve,reject) => {
         const request = indexedDB.deleteDatabase('houseplan-static-view-v1');
         request.onsuccess = resolve;
@@ -41,7 +41,10 @@ try {
       // Locally available synthetic raster: no application-owner plan is used.
       const canvas = document.createElement('canvas'); canvas.width = 8; canvas.height = 8;
       const paint = canvas.getContext('2d'); paint.fillStyle = '#d0dddf'; paint.fillRect(0,0,8,8);
-      if (!server) floor.plan_url = canvas.toDataURL('image/png');
+      const missingBackdrop = '/api/houseplan/content/plans/_/startup-missing-'+user+'.png';
+      if (!server) floor.plan_url = brokenBackdrop ? missingBackdrop : canvas.toDataURL('image/png');
+      if (brokenBackdrop) floor.plan_aspect = 1;
+      window.__startupSignAttempts = 0;
       const asset = 'a'.repeat(64);
       const svgAsset = 'data:image/svg+xml,' + encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#9aa4b9"/></svg>');
@@ -83,6 +86,10 @@ try {
             await held;
             return {layout:structuredClone(fixture.layout),rev,
               ...(server ? {startup_floor_source:'b'.repeat(64)} : {})};
+          }
+          if (brokenBackdrop && message.type === 'houseplan/content/sign' && message.paths.includes(missingBackdrop)) {
+            window.__startupSignAttempts++;
+            return { urls:brokenBackdrop === 'unsigned' ? {} : {[missingBackdrop]: missingBackdrop+'?authSig=fixture'} };
           }
           if (server && message.type.startsWith('houseplan/startup_floor/')) {
             if (message.type.endsWith('/get')) {
@@ -149,7 +156,7 @@ try {
         requestAnimationFrame(sample);
       }
     }, {fixture:server ? serverFixture : fixture, projection, surface, user, rev, hold, silent,
-      server, browserMiss, serverDelay, trace});
+      server, browserMiss, serverDelay, trace, brokenBackdrop});
   };
   const ready = (projection, surface) => page.waitForFunction(({projection,surface}) => {
     const c = window.__startupFixture(), root = c?.renderRoot;
@@ -463,6 +470,31 @@ try {
     assert.ok(late.facts.live > 0 && late.facts.shown === 0 && late.frames.every(f=>!f.source),
       projection+': late reply cannot replace or delay a published scene');
     await page.emulateMedia({reducedMotion:'reduce'});
+  }
+  if (!process.env.HP_STARTUP_CASE || process.env.HP_STARTUP_CASE === 'unavailable-backdrop') {
+    await page.route('**/api/houseplan/content/plans/_/startup-missing-*.png*', route => route.fulfill({status:404}));
+    for (const [brokenBackdrop,surface,projection] of [['unsigned','card','flat'],['404','external','iso']]) {
+      await mount({brokenBackdrop,surface,projection,user:'unavailable-'+brokenBackdrop});
+      await ready(projection,surface).catch(async cause => {
+        const state=await page.evaluate(() => {
+          const c=window.__startupFixture(), stage=c?.renderRoot.querySelector('.stage');
+          return { ready:c?._loadOk, booting:c?._booting, projection:c?._renderProjection,kiosk:c?._kiosk,
+            pending:c?._floorPreparation?.supportFacts, startup:c?.houseplanStartupFloorDiagnostics(),
+            sameStage:!!stage, inert:stage?.inert, device:!!stage?.querySelector('.dev'), phase:c?._continuity.state,
+            screen:!!c?._screenReference, startupWait:c?._startupAssetWait, signAttempts:window.__startupSignAttempts, tries:c?._loadTries, model:c?._model?.length };
+        });
+        throw new Error(brokenBackdrop+' backdrop: '+JSON.stringify(state),{cause});
+      });
+      await done();
+      const observed = await page.evaluate(() => {
+        const c=window.__startupFixture(), stage=c.renderRoot.querySelector('.stage');
+        return {signed:window.__startupSignAttempts > 0, complete:c._continuity.hasCompleteFrame,
+          interactive:!stage.inert && stage.querySelector('.dev') !== null,
+          capture:c.houseplanStartupFloorDiagnostics().capture};
+      });
+      assert.deepEqual(observed,{signed:true,complete:false,interactive:true,capture:'idle'});
+      check(brokenBackdrop+' backdrop cannot hold the live plan or seed a preview',true);
+    }
   }
   if (!process.env.HP_STARTUP_CASE) {
     // The passive image can lead a cold opening, but must neither cover an

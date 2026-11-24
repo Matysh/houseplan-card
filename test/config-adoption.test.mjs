@@ -275,6 +275,24 @@ test('#520: a post-write adoption keeps its own tail but still closes with after
   assert.ok(host.calls.indexOf('afterAdopt') < host.calls.indexOf('microtask'));
 });
 
+test('#1545 a completely cold reload accepts authenticated geometry while its backdrop is unavailable', async () => {
+  const adoption = createConfigAdoption(), body = cfg('First floor');
+  let settleBackdrop;
+  const backdrop = new Promise(resolve => { settleBackdrop = resolve; });
+  const host = hostStub(adoption, { prepareImage: () => backdrop });
+  host._continuity.hasCompleteFrame = false;
+  const result = await adoptAuthoritativeGated(host, {
+    cfgResp: { config: body, rev: 1 }, layResp: { layout: {}, rev: 1 },
+    reason: 'structural-response', profile: 'reload',
+  });
+  assert.equal(result.status,'adopted');
+  assert.equal(adoption.config,body);
+  assert.ok(host.calls.some(call => call.startsWith('prepareImage')));
+  settleBackdrop(false);
+  await backdrop;
+  assert.ok(!host.calls.includes('scheduleLoadRetry'));
+});
+
 test('#520: a refused asset gate adopts nothing, so afterAdopt never runs', async () => {
   const adoption = adoptedWith(cfg('Ground floor'), 3);
   const host = hostStub(adoption, { assetReady: false });

@@ -458,6 +458,10 @@ const DECOR_TEXT_CM_MAX = 2000;
 const BOOT_MIN_MS = 700;
 const BOOT_QUIET_MS = 250;
 const BOOT_MAX_MS = 1200;
+// A missing optional asset must not lock a measured and prepared live plan.
+const STARTUP_ASSET_WAIT_MS = 1200;
+// Backup if a replaced or detached zoom layer misses its 160ms animationend.
+const STARTUP_FADE_FALLBACK_MS = 260;
 /** AUD-1552-02: post-reveal grace during which late chrome shifts glide
  *  (CSS height transition on the stage) instead of snapping. */
 const BOOT_SOFT_MS = 1500;
@@ -2861,6 +2865,7 @@ export class HouseplanCard extends LitElement {
   private _startupFloor?: StartupFloor;
   private _startupStyle?: { value: ReturnType<StartupFloor['observe']>; finishing: boolean };
   private _startupFadeTimer?: number;
+  private _startupAssetWait?: number | null; // null means the wait expired
   private _startupSource?: (view: FrameRect) => TemplateResult[];
   private _startupPresentation?: { inputs: unknown[]; selection: StartupSelection | null };
   private _startupReadProbe?: ReturnType<typeof setTimeout>;
@@ -3008,7 +3013,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private get _startupPending(): boolean {
-    return this._mode === 'view' && this._startupFloor?.awaitsLive === true;
+    return this._loadOk && this._mode === 'view' && this._startupFloor?.awaitsLive === true;
   }
 
   private _observeStartupFloor(): void {
@@ -3030,6 +3035,9 @@ export class HouseplanCard extends LitElement {
     }
     const store = this._startupFloor;
     if (!store) return;
+    // A scoped cached live frame can already be visible while HA confirms
+    // its sources. Confirmation must never put that visible scene behind loading.
+    if (store.awaitsLive && this._floorPreparation?.metrics.firstCachedFullFrame) store.skipImage();
     if (this._loadOk && env.connected && env.permissions.read && this.planHost.cacheScope) store.prepare();
     const selection = this._startupSelection();
     let value = store.observe(selection);
@@ -3038,7 +3046,7 @@ export class HouseplanCard extends LitElement {
       if (previous && (previous !== value || !this._startupAtPreviewCamera(previous))) this._finishStartupFade();
       return;
     }
-    if (value && selection && !value.remote) {
+    if (value && selection) {
       const camera = this._startupColdCamera(selection, value.fit.base, this._usesScreenCamera ? value.fit : undefined);
       if (!camera || !sameCameraState(camera, { zoom: value.zoom, viewBox: value.view })) value = undefined;
     }
@@ -3058,7 +3066,13 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
+  private _clearStartupAssetWait(): void {
+    if (this._startupAssetWait != null) clearTimeout(this._startupAssetWait);
+    this._startupAssetWait = undefined;
+  }
+
   private _retireStartupFloor(): void {
+    this._clearStartupAssetWait();
     this._startupFloor?.retire();
     this._finishStartupFade();
   }
@@ -3163,18 +3177,29 @@ export class HouseplanCard extends LitElement {
     if (shown) store.shown();
     if (!this._loadOk || this._floorPassive || this._floorHolding || this._floorPreparation?.pending
       || this._booting || this._bootFading || this._continuity.state !== 'steady'
-      || !this._continuity.hasCompleteFrame || !this._continuityAssetsReady()
       || this._usesScreenCamera && (!this._screenReference || this._screenReferencePending)
       || this._mode !== 'view' || this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) return;
+    const complete = this._continuity.hasCompleteFrame && this._continuityAssetsReady();
     if (store.awaitsLive) {
+      if (!this._continuityStageValid()) return;
+      if (!complete && this._startupAssetWait !== null) {
+        this._startupAssetWait ??= window.setTimeout(() => {
+          this._startupAssetWait = null;
+          this.requestUpdate();
+        }, STARTUP_ASSET_WAIT_MS);
+        return;
+      }
+      this._clearStartupAssetWait();
       // Retain a displayed, aligned image while the ready scene fades in.
       // End optional reads as soon as the live view can accept input.
       const fade = !this._reducedMotion && (!shown || this._startupAtPreviewCamera(value));
       store.publishedLive(fade && shown);
       this._startupStyle = fade ? { value: shown ? value : undefined, finishing: true } : undefined;
-      if (fade) this._startupFadeTimer = window.setTimeout(() => this._finishStartupFade(), 260);
+      if (fade) this._startupFadeTimer = window.setTimeout(() => this._finishStartupFade(), STARTUP_FADE_FALLBACK_MS);
       this.requestUpdate();
-    } else store.publishedLive();
+    } else if (complete) store.publishedLive();
+    // An incomplete backdrop can appear later, but must not seed a static image.
+    if (!complete) return;
     const selection = this._startupSelection(), source = this._startupSource;
     const size = selection?.size;
     if (this._bootFading || !selection || !size || !source || this._renderProjection !== this._desiredProjection) return;
@@ -3970,7 +3995,9 @@ export class HouseplanCard extends LitElement {
     this._screenRecoveredCamera = false;
     this._screenRestoreZoom = null;
     this._screenFitRequest = null;
-    this._beginContinuityCandidate('screen-reference', true);
+    // The first camera is part of startup; continuity protects an already
+    // complete scene during later profile changes and explicit fits.
+    if (this._continuity.hasCompleteFrame) this._beginContinuityCandidate('screen-reference', true);
     this.requestUpdate();
   }
   private readonly _viewRuntimes = new ViewRuntimes(this as unknown as ViewRuntimeHost);
@@ -4622,6 +4649,7 @@ export class HouseplanCard extends LitElement {
     this._startupFloor?.dispose(); this._startupFloor = undefined; this._startupStyle = undefined;
     clearTimeout(this._startupReadProbe); this._startupReadProbe = undefined;
     clearTimeout(this._startupFadeTimer); this._startupFadeTimer = undefined;
+    this._clearStartupAssetWait();
     this._startupPresentation = this._startupSource = undefined;
     this._buttonTabFocusRelease?.();
     this._buttonTabFocusRelease = null;
@@ -5845,8 +5873,8 @@ export class HouseplanCard extends LitElement {
     if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') return;
     if (!this._continuityStageValid()) return;
     if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
-      // Cold start belongs to the boot veil. Do not replace it with a recovery
-      // error just because a protected backdrop is still signing/decoding.
+      // Until its protected assets arrive the scene cannot be cached or
+      // serve as the complete-frame fallback for a later recovery.
       if (this._continuityAssetsReady()) {
         this._renderSnapshotAt = Date.now();
         this._continuity.markCompleteFrame(this._visualFrameFingerprint());
@@ -13777,6 +13805,7 @@ export class HouseplanCard extends LitElement {
     if (!this._ensureFloorPreparation()) {
       if (this._floorPreparation?.failed) {
         this._startupFloor?.disablePreview();
+        this._clearStartupAssetWait();
         this._finishStartupFade();
         this._startupStyle = undefined;
         return this._renderPendingFloor();
