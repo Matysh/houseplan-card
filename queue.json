@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23713,
+  "revision": 23714,
   "nextTicket": 675,
   "nextFence": 675,
   "tasks": {
@@ -6001,7 +6001,18 @@
         "test/live-viewport.test.mjs"
       ],
       "automationError": "checks-unavailable",
-      "automationSince": 1795552715087
+      "automationSince": 1795552715087,
+      "reason": "checks-unavailable",
+      "notice": {
+        "key": "1:checks-unavailable",
+        "reason": "checks-unavailable",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795552817159,
+        "entry": 1,
+        "detail": "Первый S6 выявил старое локальное дерево зависимостей и регрессию полностью прозрачной кладки. Последние шаги стали недействительны после исправления исходников; требуется новая проверка нового коммита.",
+        "eventId": "finish:1555:invalidated:9560dab4-9fd0-4dad-9b4d-301a90a67366:return:1555"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6582,18 +6593,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1555,
-    "worker": "finish",
-    "token": "674:finish:416c7bfa-8806-4db3-9dc3-aee576ae0747:finish:1:admit",
-    "fence": 674,
-    "materialSha": "838de987bd6ef79845142a9eba44a56fa96af4d1",
-    "expectedBase": "5d66d02c75b2e4f453d2d351157ba0b3025136c7",
-    "phase": "testing",
-    "admittedAt": 1795551975194,
-    "expiresAt": 1795553071892,
-    "patchId": "cfb2cb10e2573dd32e8f2641d656ccb3a36e82ed"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6683,6 +6683,10 @@
       "digest": "fa71b683b1adf574be87326394501c63ddcad7d7e2d4d19314dfcfcccd82edb0",
       "issue": 1555
     },
+    "finish:1555:invalidated:9560dab4-9fd0-4dad-9b4d-301a90a67366": {
+      "digest": "b5868d401328f8aa3855b82bc1343dd275c761085e939e962a29ba43bc7138fa",
+      "issue": 1555
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6739,6 +6743,26 @@
         "materialSha": "838de987bd6ef79845142a9eba44a56fa96af4d1",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:1555:invalidated:9560dab4-9fd0-4dad-9b4d-301a90a67366:return:1555": {
+      "digest": "b5868d401328f8aa3855b82bc1343dd275c761085e939e962a29ba43bc7138fa",
+      "issue": 1555,
+      "message": {
+        "kind": "return",
+        "issue": 1555,
+        "at": 1795552817159,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-unavailable",
+          "reason": "checks-unavailable",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795552817159,
+          "entry": 1,
+          "detail": "Первый S6 выявил старое локальное дерево зависимостей и регрессию полностью прозрачной кладки. Последние шаги стали недействительны после исправления исходников; требуется новая проверка нового коммита.",
+          "eventId": "finish:1555:invalidated:9560dab4-9fd0-4dad-9b4d-301a90a67366:return:1555"
+        }
       }
     }
   },
