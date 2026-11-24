@@ -229,8 +229,8 @@ Shared edges align at T-junctions before rounding the paint coordinates, so
 hardware cutouts do not leave diagonal seams across door leaves (#1543).
 Visible fragments of a continuous translucent surface are combined when
 their actual overlaps admit a single depth order. A real order cycle keeps
-local ranks; the fill alpha applies to the paint, not a separately composited
-bounding group. Padded coplanar opening joints do not draw vertical ink;
+local ranks and normal edge smoothing. The fill alpha applies to the paint,
+not a separately composited bounding group. Padded coplanar opening joints do not draw vertical ink;
 physical corners and real gaps still do (#1555).
 Windows and doors use their own material. The
 optional opening accent tints frames, leaves, reveals and all sill faces.

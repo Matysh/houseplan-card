@@ -537,14 +537,17 @@ function coplanarNearer(queue:readonly IsoWallDepthQueueEntry[], index:number, o
  * whole-surface order. A rank change caused by an unrelated furniture envelope
  * is not a material edge. Only genuine order cycles retain partitioned paint. */
 function coalesceDepthPaint(fragments: RankedFragment[], faces:(DepthSurface|null)[],
-  queue:readonly IsoWallDepthQueueEntry[]): RankedFragment[] {
+  queue:readonly IsoWallDepthQueueEntry[], unclipped:ReadonlyMap<number,Multi>): RankedFragment[] {
   const groups = new Map<number,RankedFragment[]>();
   for(const fragment of fragments) {
     const group=groups.get(fragment.index);
     if(group)group.push(fragment); else groups.set(fragment.index,[fragment]);
   }
   const ids=[...groups.keys()], edges=new Map(ids.map(id=>[id,new Set<number>()]));
-  const geometry=new Map(ids.map(id=>[id,groups.get(id)!.flatMap(part=>part.geom)]));
+  // A translucent/furniture rank split did not remove any pixels. Use the
+  // original convex parts there instead of intersecting and reuniting all
+  // temporary fragments at startup. Real opaque cuts keep their visible parts.
+  const geometry=new Map(ids.map(id=>[id,unclipped.get(id)??groups.get(id)!.flatMap(part=>part.geom)]));
   for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++) {
     const left=ids[i],right=ids[j],a=faces[left]!,b=faces[right]!;
     if(Math.min(a.bounds[2],b.bounds[2])-Math.max(a.bounds[0],b.bounds[0])<1e-6 ||
@@ -645,9 +648,11 @@ export function composeIsoTranslucentStructure(
     return face;
   }), ...furniture.map(item => furnitureDepthSurface(item,camera,coordinates))];
   const result: RankedFragment[] = [];
+  const unclipped = new Map<number, Multi>();
   for (const [index,face] of faces.entries()) {
     if (!face) continue;
     let visible = new Map<number, Multi>([[0,face.geom]]);
+    let cutByOpaque = false;
     for (const [otherIndex,other] of faces.entries()) {
       if (index === otherIndex || !other || !visible.size) continue;
       const a = face.bounds, b = other.bounds;
@@ -679,7 +684,7 @@ export function composeIsoTranslucentStructure(
             const outside = subtractConvex(subject,cover);
             add(rank,outside);
             if (outside.length === 1 && outside[0][0] === subject) continue;
-            if (other.opaque || duplicateMasonry) continue;
+            if (other.opaque || duplicateMasonry) { cutByOpaque = true; continue; }
             // Clip the current subject to the same convex cover for the
             // portion visible through this pane or wall.
             const inside = intersectConvex(subject,cover);
@@ -689,13 +694,14 @@ export function composeIsoTranslucentStructure(
         visible = next;
       }
     }
+    if (!cutByOpaque) unclipped.set(index,face.geom);
     for (const [rank,geom] of visible) {
       // A depth rank remains independent, but its working partitions must
       // paint as one sheet so transparency is applied once at shared edges.
       result.push({index,rank,geom});
     }
   }
-  transparentResult = coalesceDepthPaint(result,faces,queue).map(({index,geom})=>({index,d:path(depthPaintContours(geom),restore)}));
+  transparentResult = coalesceDepthPaint(result,faces,queue,unclipped).map(({index,geom})=>({index,d:path(depthPaintContours(geom),restore)}));
   transparentKey = key;
   return transparentResult;
 }

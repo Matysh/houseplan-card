@@ -488,8 +488,6 @@ function renderIsoTranslucentMasonry(
   const architecture = architecturalPainter(queue,camera,wallColor);
   const paintWallLight = isoWallLightPainter(wallLights,camera,cellCm,scene.geometry);
   const fragments = composeIsoTranslucentStructure(queue,camera,gridVisualScale(cellCm),masonry,furniture);
-  const partitions=new Map<number,number>();
-  for(const {index} of fragments)partitions.set(index,(partitions.get(index)??0)+1);
   const foreground = svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key} data-hp-translucent-masonry
     ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
     ${renderIsoDefs(layers,'walls',cellCm)}
@@ -510,13 +508,13 @@ function renderIsoTranslucentMasonry(
         if (!kind && opening) return renderIsoOpeningSurface(opening,d,false);
         if (!kind) return nothing;
         const roundColumn = entry.layer === 'wall-side' ? entry.face.roundColumn : undefined;
-        // Only computational cuts need exclusive pixel ownership. The actual
-        // silhouette of an unsplit surface retains normal antialiasing.
-        const paintEdges=(partitions.get(index)??0)>1 ? 'crispEdges' : nothing;
+        // The depth solver removes artificial cuts. Genuine crossings can
+        // still require separate fragments; retain antialiasing on their
+        // physical outlines rather than snapping every fragment to pixels.
         const face = roundColumn !== undefined
-          ? svg`<path data-hp-round-column=${roundColumn} d=${d} fill-rule="evenodd" shape-rendering=${paintEdges} fill-opacity=${masonry[kind]}
+          ? svg`<path data-hp-round-column=${roundColumn} d=${d} fill-rule="evenodd" fill-opacity=${masonry[kind]}
             fill=${'url(#hp-iso-column-'+roundColumn+')'}></path>`
-          : svg`<path class=${kind === 'side' ? 'iso-wall-side' : 'iso-wall-top'} d=${d} shape-rendering=${paintEdges} fill-opacity=${masonry[kind]}
+          : svg`<path class=${kind === 'side' ? 'iso-wall-side' : 'iso-wall-top'} d=${d} fill-opacity=${masonry[kind]}
             style=${kind === 'side' ? architecture.fill(index) : nothing} fill-rule="evenodd"
             data-id=${opening?.id ?? nothing} data-kind=${opening?.type ?? nothing}
             data-surface=${opening?.kind ?? nothing}></path>`;
