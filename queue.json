@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23053,
+  "revision": 23054,
   "nextTicket": 660,
   "nextFence": 660,
   "tasks": {
@@ -6439,18 +6439,12 @@
       }
     },
     "1545": {
-      "requestId": "spec:1545:86542e8c5b7eaf5251b298d0ac285169373de7cb4e002f298e8ade41586daffd",
-      "contextDigest": "86542e8c5b7eaf5251b298d0ac285169373de7cb4e002f298e8ade41586daffd",
-      "base": "e6a072121bc6f57efb6ab85a8e9fd3044a407c30",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795513237951,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45366501019",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "requestId": "spec:1545:fe40497e3c42d70d7fc648d827a4f952293de915d4528dce52c76b2babfc78b4",
+      "contextDigest": "fe40497e3c42d70d7fc648d827a4f952293de915d4528dce52c76b2babfc78b4",
+      "base": "9d03f86ffc3894b7131a03490b6eef7f548506fd",
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795513332948
     }
   },
   "reviewPublications": {
@@ -6478,6 +6472,19 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
+      }
+    },
+    "spec:1545:spec:1545:fe40497e3c42d70d7fc648d827a4f952293de915d4528dce52c76b2babfc78b4": {
+      "issue": 1545,
+      "kind": "spec",
+      "requestId": "spec:1545:fe40497e3c42d70d7fc648d827a4f952293de915d4528dce52c76b2babfc78b4",
+      "materialSha": "9d03f86ffc3894b7131a03490b6eef7f548506fd",
+      "expectedBase": "9d03f86ffc3894b7131a03490b6eef7f548506fd",
+      "patchId": "fe40497e3c42d70d7fc648d827a4f952293de915d4528dce52c76b2babfc78b4",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-24T09:42:12.948Z"
       }
     }
   },
@@ -6524,6 +6531,10 @@
       "digest": "e89f686d57fd6ada90c6cd85906dc1bb78ee8521796fb7426ad70bfab5ded9bc",
       "issue": 1545
     },
+    "github:45367500636:1:label:spec-request": {
+      "digest": "c389428dd72db85d7d03c2078829e06381891009baebdca1fc7087ae49047a94",
+      "issue": 1545
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6551,6 +6562,22 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "github:45367500636:1:label:spec-request:spec-resubmitted:1545": {
+      "digest": "c389428dd72db85d7d03c2078829e06381891009baebdca1fc7087ae49047a94",
+      "issue": 1545,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1545,
+        "at": 1795513332948,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1545:fe40497e3c42d70d7fc648d827a4f952293de915d4528dce52c76b2babfc78b4",
+        "reviewChanges": "Решение использует StartupFloor, floorPreparation, VisualContinuity, стабилизацию высоты и камеру внешнего экрана. Просьба проверить разделение публикации первого живого кадра и удаления совместимого превью. Сейчас независимые условия скрывают одну сцену двумя способами, а серверный кадр может исчезнуть при смене ветки.\n\n\n### Исправления по предыдущему ревью\n\nПервый раунд — https://github.com/Matysh/houseplan-card/actions/runs/45366501019. Контракт 4 и AC4 уточняют атомарное снятие превью и завершение перехода в том же кадре. Добавлены продолжение загрузки после ошибки, удержание декодированного элемента и отдельный диагностический признак перехода. AC2 уточняет требования к тестовому пространству серверного источника. Проверена форма новой редакции.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
