@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23977,
-  "nextTicket": 681,
+  "revision": 23978,
+  "nextTicket": 682,
   "nextFence": 681,
   "tasks": {
     "1024": {
@@ -5986,6 +5986,20 @@
         "status": "published",
         "sourceSha": "facb8a447b6a137bbb6d2e05f5f87b9311ad80c8"
       }
+    },
+    "1558": {
+      "issue": 1558,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1558-linked-glow-smoke",
+      "materialSha": "226632dad25303d8067e1bb4bb5b2d967a6d1891",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 681,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795560801687,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6565,7 +6579,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1558
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6615,6 +6631,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:465570b7-ada5-48cd-b1c0-1771f096afc0": {
+      "digest": "cc43e7bc6758cde2fbfb4b6ee89ab62444abfa94631040a11eb38fe52e559c57",
+      "issue": 1558,
+      "message": {
+        "kind": "queued",
+        "issue": 1558,
+        "at": 1795560801687,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "226632dad25303d8067e1bb4bb5b2d967a6d1891"
       }
     }
   },
