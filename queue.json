@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 23689,
-  "nextTicket": 674,
+  "revision": 23690,
+  "nextTicket": 675,
   "nextFence": 674,
   "tasks": {
     "1024": {
@@ -5966,6 +5966,20 @@
         "status": "published",
         "sourceSha": "5d66d02c75b2e4f453d2d351157ba0b3025136c7"
       }
+    },
+    "1555": {
+      "issue": 1555,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1555-iso-wall-base-seams",
+      "materialSha": "838de987bd6ef79845142a9eba44a56fa96af4d1",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 674,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795551970995,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6545,7 +6559,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1555
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6595,6 +6611,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:416c7bfa-8806-4db3-9dc3-aee576ae0747": {
+      "digest": "7bfda6b892321155fe3e7da44d3c61e21acbf6c63f6a305f35120be423286f06",
+      "issue": 1555,
+      "message": {
+        "kind": "queued",
+        "issue": 1555,
+        "at": 1795551970995,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "838de987bd6ef79845142a9eba44a56fa96af4d1"
       }
     }
   },
