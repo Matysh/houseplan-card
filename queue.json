@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23389,
+  "revision": 23390,
   "nextTicket": 669,
   "nextFence": 668,
   "tasks": {
@@ -5950,6 +5950,108 @@
         "at": 1795523550600,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1549,
+        "requestId": "review:1549:2:6e1d1429fef7037a78149463bc2fadb189727d41:74a1f34a97cb4e307401db06ad9a96d1ef88966a",
+        "kind": "code",
+        "base": "74a1f34a97cb4e307401db06ad9a96d1ef88966a",
+        "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
+        "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1549,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1549",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исправление точечное и подходит для задачи. Предпросмотр без согласия на удаление позиций («Оптимизировать планы» при открытии, после «Проверить снова» или после сброса согласия) больше не падает с `optimize_preview_changed`, если за кадр «Проверяем планы» сменилась пара конфигурации и расположения или отпечаток реестра. Расчёт берёт актуальную пару, и опубликованный предпросмотр привязан к её `source`, поэтому проверки Apply (`sourceMatches` в `run()` и guard в `commit`) работают как раньше. Если пользователь выбрал удаление позиций (live или invalid), смена источника за кадр по-прежнему приводит к отказу, то есть согласие не переносится на новые данные. Проверки полномочий, соединения и владельца операции остались прежними. Исправление в smoke-сценарии меняет только ожидание на общий `window.__hpTest.settled()`, который этот же файл уже использует ниже. Блокеров нет.",
+          "understanding": "Проблема. `preview()` при старте сохраняет `config` и `source`, показывает состояние `checking` и ждёт `present()`, то есть `updateComplete` плюс два rAF. До исправления `calculate()` требовал, чтобы сохранённый `source` полностью совпадал с текущим `port.source()`. В `ownersFingerprint` входят ревизия и ключи HA-реестра, `stateIds` и зоны устройств. После сохранения первого пространства реестр и состояния часто обновляются, поэтому при первом открытии за этот кадр менялся отпечаток, и пользователь видел ложный отказ «контекст изменился».\n\nПосле исправления `calculate()` синхронно читает `currentConfig`, `currentSource` и `canWrite`. Отказ теперь возникает, если нет права на запись, нет конфигурации, план не готов (`planReady`) или выбрано удаление позиций при несовпадении источника. В остальных случаях `calculatePreview` получает `currentConfig` и `currentSource`. `layout()` и `referenceContext()` внутри него тоже читаются синхронно в той же задаче, поэтому конфигурация, расположение, реестр и `source` образуют согласованный снимок. У старого кода здесь был иной риск: `config` брался старым, а layout текущим, но сравнение источников делало это безопасным.\n\nРазобранные пути:\n- `open()` → `preview(false)`;\n- `toggleLivePositions` и `toggleInvalidPositions` → `refreshChanged` → `preview(false,false)`;\n- `retryRegistry` → `preview(false,false,replacesUndo)`;\n- `run()`: сравнение `d.source` с текущим источником и guard, передаваемый в `commitPlanOptimization`;\n- `owns` и `publish`: владение операцией проверяется по старому `pending.source`, то есть по соединению и claim `ConfigWriteContext`, а не по ревизиям;\n- ленивый загрузчик `optimize-plans-loader.ts`: он сравнивает только соединение и полномочия, поэтому отдельного ложного отказа при холодной загрузке чанка не даёт;\n- реальный порт `optimizeSource` в `houseplan-editor-runtime.ts:1190-1203`.",
+          "analysis": [
+            {
+              "topic": "Согласованность пары, по которой строится предпросмотр",
+              "assessment": "Надёжно. Опубликованное состояние содержит `config`, `layout`, `report` и `source` из одного синхронного чтения. Значит, Apply запишет ровно ту пару, которая показана, и сравнит её с тем `source`, по которому она посчитана. Это сохраняет главный инвариант модуля: «commit не может отличаться от предпросмотра».",
+              "evidence": "`src/optimize-plans-dialog.ts:309-323`: `currentConfig` и `currentSource` читаются до `calculatePreview`, а `layout()` и `referenceContext()` читаются внутри него без await (332-339). В `run()` (422) сравниваются `d.source` и `port.source()`. Guard `commit` (443-445) получает `source: d.source`."
+            },
+            {
+              "topic": "Согласие на удаление позиций не переносится на новые данные",
+              "assessment": "Требование ТЗ выполнено. При `removeLive || removeInvalid` и смене источника остаётся прежний отказ `optimize_preview_changed`, а `referenceContext` с согласием не вызывается. Это согласуется с `retryRegistry`, который сам сбрасывает согласие (403). Переход из состояния с согласием в состояние без согласия (`toggle` → false,false) идёт по ветке нового чтения, и это правильно: согласие там не используется.",
+              "evidence": "`src/optimize-plans-dialog.ts:312,315-316`. Тест `Optimize preview refuses to carry removal consent across source changes during checking` проверяет фазу `failure`, код и пустые `referenceContext` и `commit`."
+            },
+            {
+              "topic": "Проверки полномочий и владения",
+              "assessment": "Не ослаблены. Перед любым расчётом проверяется `owns(source)` (claim `_configWriteGuard` и соединение) и что показан именно этот `pending`. `canWrite` теперь читается один раз, поэтому код отказа (`unauthorized` или `changed`) согласован с самим условием. Новая защита от `!currentConfig` и `!planReady()` закрывает случай, когда конфигурация пропала за кадр: раньше `calculatePreview` упал бы на сохранённой старой паре или посчитал бы её.",
+              "evidence": "`src/optimize-plans-dialog.ts:179-181, 307-308, 311, 315-318`. `src/houseplan-card.ts:10560-10563`: claim не зависит от ревизий конфигурации, поэтому смена пары не делает `owns` ложным."
+            },
+            {
+              "topic": "Регрессионные тесты",
+              "assessment": "Тесты адресные и воспроизводят исходный сценарий: смена конфигурации, ревизий и `ownersFingerprint` между `checking` и концом кадра. Первый тест проверяет, что предпросмотр построен по новой паре (`spaces` = ['b']) и привязан к текущему `source`, а записи не было. Фейковый порт строит `source` из того же `state`, поэтому проверка содержательная.",
+              "evidence": "`test/optimize-plans-dialog.test.mjs:1148-1179`, `fakePort` в 84-134 (`source()` читает `state.configRev`, `layoutRev`, `ownersFingerprint` и `config`)."
+            },
+            {
+              "topic": "Smoke `smoke_hide_room_names`",
+              "assessment": "Замена локального `settle()` на общий `window.__hpTest.settled()` на первом кадре соответствует ТЗ: дождаться готовности сцены и проверить те же подписи, масштаб и значок зоны. Утверждения сценария не изменились. Этот хелпер уже используется в том же файле (строка 122), поэтому новых зависимостей нет.",
+              "evidence": "`demo/smoke_hide_room_names.mjs:36, 38-45, 122`."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Можно смягчить отказ, когда во время кадра проверки меняется источник, а пользователь уже выбрал удаление. Сейчас он видит терминальный `failure` без отчёта и должен закрыть и заново открыть диалог. Вместо этого можно сделать так же, как `refreshChanged`: построить свежий предпросмотр без согласия (`preview(false,false,replacesUndo)`) и показать тост `gs.optimize_preview_changed`. Требование «нужно новое согласие» по-прежнему выполняется, а пользователь сразу видит актуальный отчёт. Цена — ещё одна ветка в `calculate()` и тест. Поведение не регрессирует, оно совпадает с прежним, поэтому это только пожелание."
+          ],
+          "boundaries": "Сборку, тесты и браузерные сценарии сам не запускал. Использован результат S6 «Тесты для задачи #1549 (перед ревью)» (run `20261124T122557488-ac092820`, статус passed, материал `8eba09fb`). Заявления из issue о 117 Node-кейсах и HA first-run на `03e62954ba` не перепроверял. По исходникам изучены:\n- `src/optimize-plans-dialog.ts`: `preview`, `calculatePreview`, `toggle*`, `refreshChanged`, `retryRegistry`, `run`, `owns`, `publish`;\n- `src/optimize-source.ts`;\n- `src/optimize-plans-loader.ts`: `open` и холодная загрузка;\n- порт `optimizeSource` и `present()` в `src/houseplan-editor-runtime.ts`;\n- `_configWriteGuard` в `src/houseplan-card.ts`;\n- `fakePort` и новые тесты;\n- smoke-файл целиком.\n\nРеальную последовательность обновлений реестра в HA 2026.11.0 после сохранения первого пространства по коду не воспроизводил. Причину отказа (смена `ownersFingerprint` или ревизий за кадр) принимаю по описанию issue и по составу `optimizeSource`."
+        },
+        "usage": {
+          "input_tokens": 26,
+          "cache_creation_input_tokens": 46854,
+          "cache_read_input_tokens": 302226,
+          "output_tokens": 7895,
+          "output_tokens_details": {
+            "thinking_tokens": 2327
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 46854,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 935,
+              "cache_read_input_tokens": 36449,
+              "cache_creation_input_tokens": 10405,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 10405
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление точечное и подходит для задачи. Предпросмотр без согласия на удаление позиций («Оптимизировать планы» при открытии, после «Проверить снова» или после сброса согласия) больше не падает с `optimize_preview_changed`, если за кадр «Проверяем планы» сменилась пара конфигурации и расположения или отпечаток реестра. Расчёт берёт актуальную пару, и опубликованный предпросмотр привязан к её `source`, поэтому проверки Apply (`sourceMatches` в `run()` и guard в `commit`) работают как раньше. Если пользователь выбрал удаление позиций (live или invalid), смена источника за кадр по-прежнему приводит к отказу, то есть согласие не переносится на новые данные. Проверки полномочий, соединения и владельца операции остались прежними. Исправление в smoke-сценарии меняет только ожидание на общий `window.__hpTest.settled()`, который этот же файл уже использует ниже. Блокеров нет.\n\n## Понимание решения\n\nПроблема. `preview()` при старте сохраняет `config` и `source`, показывает состояние `checking` и ждёт `present()`, то есть `updateComplete` плюс два rAF. До исправления `calculate()` требовал, чтобы сохранённый `source` полностью совпадал с текущим `port.source()`. В `ownersFingerprint` входят ревизия и ключи HA-реестра, `stateIds` и зоны устройств. После сохранения первого пространства реестр и состояния часто обновляются, поэтому при первом открытии за этот кадр менялся отпечаток, и пользователь видел ложный отказ «контекст изменился».\n\nПосле исправления `calculate()` синхронно читает `currentConfig`, `currentSource` и `canWrite`. Отказ теперь возникает, если нет права на запись, нет конфигурации, план не готов (`planReady`) или выбрано удаление позиций при несовпадении источника. В остальных случаях `calculatePreview` получает `currentConfig` и `currentSource`. `layout()` и `referenceContext()` внутри него тоже читаются синхронно в той же задаче, поэтому конфигурация, расположение, реестр и `source` образуют согласованный снимок. У старого кода здесь был иной риск: `config` брался старым, а layout текущим, но сравнение источников делало это безопасным.\n\nРазобранные пути:\n- `open()` → `preview(false)`;\n- `toggleLivePositions` и `toggleInvalidPositions` → `refreshChanged` → `preview(false,false)`;\n- `retryRegistry` → `preview(false,false,replacesUndo)`;\n- `run()`: сравнение `d.source` с текущим источником и guard, передаваемый в `commitPlanOptimization`;\n- `owns` и `publish`: владение операцией проверяется по старому `pending.source`, то есть по соединению и claim `ConfigWriteContext`, а не по ревизиям;\n- ленивый загрузчик `optimize-plans-loader.ts`: он сравнивает только соединение и полномочия, поэтому отдельного ложного отказа при холодной загрузке чанка не даёт;\n- реальный порт `optimizeSource` в `houseplan-editor-runtime.ts:1190-1203`.\n\n## Разбор решения\n\n### Согласованность пары, по которой строится предпросмотр\n\nНадёжно. Опубликованное состояние содержит `config`, `layout`, `report` и `source` из одного синхронного чтения. Значит, Apply запишет ровно ту пару, которая показана, и сравнит её с тем `source`, по которому она посчитана. Это сохраняет главный инвариант модуля: «commit не может отличаться от предпросмотра».\n\nОснование: `src/optimize-plans-dialog.ts:309-323`: `currentConfig` и `currentSource` читаются до `calculatePreview`, а `layout()` и `referenceContext()` читаются внутри него без await (332-339). В `run()` (422) сравниваются `d.source` и `port.source()`. Guard `commit` (443-445) получает `source: d.source`.\n\n### Согласие на удаление позиций не переносится на новые данные\n\nТребование ТЗ выполнено. При `removeLive || removeInvalid` и смене источника остаётся прежний отказ `optimize_preview_changed`, а `referenceContext` с согласием не вызывается. Это согласуется с `retryRegistry`, который сам сбрасывает согласие (403). Переход из состояния с согласием в состояние без согласия (`toggle` → false,false) идёт по ветке нового чтения, и это правильно: согласие там не используется.\n\nОснование: `src/optimize-plans-dialog.ts:312,315-316`. Тест `Optimize preview refuses to carry removal consent across source changes during checking` проверяет фазу `failure`, код и пустые `referenceContext` и `commit`.\n\n### Проверки полномочий и владения\n\nНе ослаблены. Перед любым расчётом проверяется `owns(source)` (claim `_configWriteGuard` и соединение) и что показан именно этот `pending`. `canWrite` теперь читается один раз, поэтому код отказа (`unauthorized` или `changed`) согласован с самим условием. Новая защита от `!currentConfig` и `!planReady()` закрывает случай, когда конфигурация пропала за кадр: раньше `calculatePreview` упал бы на сохранённой старой паре или посчитал бы её.\n\nОснование: `src/optimize-plans-dialog.ts:179-181, 307-308, 311, 315-318`. `src/houseplan-card.ts:10560-10563`: claim не зависит от ревизий конфигурации, поэтому смена пары не делает `owns` ложным.\n\n### Регрессионные тесты\n\nТесты адресные и воспроизводят исходный сценарий: смена конфигурации, ревизий и `ownersFingerprint` между `checking` и концом кадра. Первый тест проверяет, что предпросмотр построен по новой паре (`spaces` = ['b']) и привязан к текущему `source`, а записи не было. Фейковый порт строит `source` из того же `state`, поэтому проверка содержательная.\n\nОснование: `test/optimize-plans-dialog.test.mjs:1148-1179`, `fakePort` в 84-134 (`source()` читает `state.configRev`, `layoutRev`, `ownersFingerprint` и `config`).\n\n### Smoke `smoke_hide_room_names`\n\nЗамена локального `settle()` на общий `window.__hpTest.settled()` на первом кадре соответствует ТЗ: дождаться готовности сцены и проверить те же подписи, масштаб и значок зоны. Утверждения сценария не изменились. Этот хелпер уже используется в том же файле (строка 122), поэтому новых зависимостей нет.\n\nОснование: `demo/smoke_hide_room_names.mjs:36, 38-45, 122`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Можно смягчить отказ, когда во время кадра проверки меняется источник, а пользователь уже выбрал удаление. Сейчас он видит терминальный `failure` без отчёта и должен закрыть и заново открыть диалог. Вместо этого можно сделать так же, как `refreshChanged`: построить свежий предпросмотр без согласия (`preview(false,false,replacesUndo)`) и показать тост `gs.optimize_preview_changed`. Требование «нужно новое согласие» по-прежнему выполняется, а пользователь сразу видит актуальный отчёт. Цена — ещё одна ветка в `calculate()` и тест. Поведение не регрессирует, оно совпадает с прежним, поэтому это только пожелание.\n\n## Границы анализа\n\nСборку, тесты и браузерные сценарии сам не запускал. Использован результат S6 «Тесты для задачи #1549 (перед ревью)» (run `20261124T122557488-ac092820`, статус passed, материал `8eba09fb`). Заявления из issue о 117 Node-кейсах и HA first-run на `03e62954ba` не перепроверял. По исходникам изучены:\n- `src/optimize-plans-dialog.ts`: `preview`, `calculatePreview`, `toggle*`, `refreshChanged`, `retryRegistry`, `run`, `owns`, `publish`;\n- `src/optimize-source.ts`;\n- `src/optimize-plans-loader.ts`: `open` и холодная загрузка;\n- порт `optimizeSource` и `present()` в `src/houseplan-editor-runtime.ts`;\n- `_configWriteGuard` в `src/houseplan-card.ts`;\n- `fakePort` и новые тесты;\n- smoke-файл целиком.\n\nРеальную последовательность обновлений реестра в HA 2026.11.0 после сохранения первого пространства по коду не воспроизводил. Причину отказа (смена `ownersFingerprint` или ревизий за кадр) принимаю по описанию issue и по составу `optimizeSource`.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 74a1f34a97cb4e307401db06ad9a96d1ef88966a → 8eba09fb2b2326e9a0d8bdca80292f8341612acb\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-24T12:34:52.290Z",
+        "artifactId": 14919514176,
+        "runId": 45394483268,
+        "runAttempt": 1,
+        "completedAt": "2026-11-24T12:34:58Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45394483268",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "74a1f34a97cb4e307401db06ad9a96d1ef88966a"
       }
     },
     "1550": {
@@ -6591,9 +6693,9 @@
     "fence": 667,
     "materialSha": "8eba09fb2b2326e9a0d8bdca80292f8341612acb",
     "expectedBase": "74a1f34a97cb4e307401db06ad9a96d1ef88966a",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1795523141764,
-    "expiresAt": 1795527124590,
+    "expiresAt": 1795527336438,
     "patchId": "6e1d1429fef7037a78149463bc2fadb189727d41",
     "reviewRequest": "review:1549:2:6e1d1429fef7037a78149463bc2fadb189727d41:74a1f34a97cb4e307401db06ad9a96d1ef88966a"
   },
@@ -6804,6 +6906,10 @@
     },
     "github:45394909694:1:tick:0:review-presentation": {
       "digest": "f4223f170dd66e2e93de8e8e0b822779d2d6a4624a478796919a5a63a2fd6cfd",
+      "issue": 1549
+    },
+    "github:45394909694:1:tick:0:review-complete": {
+      "digest": "f48a7813e573038c48dcf3b459833901017161d9d9fb0ef59a6f558fa6ba3da9",
       "issue": 1549
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
