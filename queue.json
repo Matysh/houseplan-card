@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 23914,
+  "revision": 23915,
   "nextTicket": 679,
   "nextFence": 679,
   "tasks": {
@@ -2638,44 +2638,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "6d28743ea061ad639f508675d0c48fe22865cb5c"
-      }
-    },
-    "1460": {
-      "issue": 1460,
-      "branch": "codex/1460-plan-commands",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "6d28743ea061ad639f508675d0c48fe22865cb5c",
-      "mergedSha": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
-      "mergedAt": 1794960029784,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1460:4:bcaea7b288c05513b0e3292ef20779215d8f8ee0:6d28743ea061ad639f508675d0c48fe22865cb5c",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1"
       }
     },
     "1464": {
@@ -5998,7 +5960,8 @@
       },
       "releaseTag": "v1.86.1-beta.9",
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "410744c2628055756a3dfd1cb83d069539aa8353"
       }
     }
   },
@@ -6629,6 +6592,18 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:45500950084:1:1556": {
+      "digest": "66c257cfdc14cebf8301927ffbab5ad6368c9ea905dbc5935a9c9c0307be188b",
+      "issue": 1556,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1556,
+        "at": 1795559370857,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "410744c2628055756a3dfd1cb83d069539aa8353"
       }
     }
   },
