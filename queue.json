@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24869,
+  "revision": 24870,
   "nextTicket": 700,
   "nextFence": 700,
   "tasks": {
@@ -6215,7 +6215,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795623731993,
       "reviewEntry": 3,
-      "patchId": "5adff714a153d206df70ad8a9cce72ef58595cbc",
+      "patchId": "2d2edf32399eff10817a9865935b3278f9678827",
       "changedFiles": [
         "demo/helpers/iso-paint-scene.mjs",
         "demo/smoke_iso_direct_input.mjs",
@@ -6233,6 +6233,7 @@
         "src/live-viewport.ts",
         "src/plan-3d-host.ts",
         "src/plan-3d-light-field.ts",
+        "src/plan-3d-markers.ts",
         "src/plan-3d-viewport.ts",
         "src/plan-3d-wall-shell.ts",
         "src/plan-3d-world.ts",
@@ -6903,10 +6904,11 @@
     "token": "699:finish:8b4f0d0e-3cba-4cd3-89ea-35497486da8a:finish:1:admit",
     "fence": 699,
     "materialSha": "b9e82e034013cf7ad8cfae72ad36600169ec0649",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "863b706d1a60db865e8ac55538b247576dcf586e",
+    "phase": "testing",
     "admittedAt": 1795623736394,
-    "expiresAt": 1795624036394
+    "expiresAt": 1795624044392,
+    "patchId": "2d2edf32399eff10817a9865935b3278f9678827"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7171,6 +7173,10 @@
     },
     "finish:b01fe608-0432-434b-9ca9-3387c33c649b": {
       "digest": "19e31e185c09d8f31810220643d40df34be8db5cb97245afc7b5caf41168e5f8",
+      "issue": 1566
+    },
+    "finish:8b4f0d0e-3cba-4cd3-89ea-35497486da8a:finish:2:synchronized": {
+      "digest": "7465b2e99b670c2c7b3ebf6b3f27a8505f8f6570b3e3a800a0b8fde084ef6930",
       "issue": 1566
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
