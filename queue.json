@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25216,
-  "nextTicket": 706,
+  "revision": 25217,
+  "nextTicket": 707,
   "nextFence": 706,
   "tasks": {
     "1024": {
@@ -6297,11 +6297,11 @@
       "materialSha": "b3b73024918c2ef9daa99bc98b0265c78836ff74",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 705,
-      "queued": false,
+      "ticket": 706,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795645072209,
-      "reviewEntry": 1,
+      "readyAt": 1795645499032,
+      "reviewEntry": 2,
       "patchId": "9af412766e91f7e0b10d989da009bb57a4cdda6c",
       "changedFiles": [
         "demo/smoke_plan_3d_gpu.mjs",
@@ -6312,7 +6312,6 @@
         "src/plan-3d-transparency.ts",
         "src/plan-3d-world.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7023,7 +7022,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1568
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7202,6 +7203,19 @@
           "detail": "Поведение: test/ui-lab-session.test.mjs: failed",
           "eventId": "finish:f6a47191-a837-44a6-9215-49b7f08927a1:finish:3:return:return:1568"
         }
+      }
+    },
+    "finish:1007f051-61da-4ac0-b31b-4e6dddf64fa7": {
+      "digest": "38610e1ffe63c448f4b2556ed54b94623ef1f3210266299ca0537ae75231b659",
+      "issue": 1568,
+      "message": {
+        "kind": "queued",
+        "issue": 1568,
+        "at": 1795645499032,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "b3b73024918c2ef9daa99bc98b0265c78836ff74"
       }
     }
   },
