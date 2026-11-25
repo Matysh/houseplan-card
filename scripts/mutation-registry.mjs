@@ -11485,8 +11485,8 @@ const MUTANT_DEFINITIONS = [
       + 'the actual LED computed-ancestor oracle rejects applying the ordinary whole-marker fade to it',
     patches: [{
       file: 'src/styles/devices.styles.ts',
-      find: '    .dev.unavail:not(.led-badge) { opacity:0.35; }',
-      replace: '    .dev.unavail { opacity:0.35; }',
+      find: '    .dev.unavail:not(.led-badge) { --hp-device-offline-opacity: 0.35; opacity:var(--hp-device-offline-opacity); }',
+      replace: '    .dev.unavail { --hp-device-offline-opacity: 0.35; opacity:var(--hp-device-offline-opacity); }',
     }],
   },
   {
@@ -19578,7 +19578,7 @@ const approvedUi1119Cases = [
     patches:[{file:'src/iso-floor-shadows.ts',find:'transform=${shadowPlane(placement, shadow.camera)}>',replace:'transform=${shadowPlane(placement, shadow.camera)} opacity=${presentation?.offline ? .35 : 1}>'}]},
   {id:'ordinary-offline-content-only-1119',guard:'node demo/smoke_device_offline.mjs',
     because:'#1119 AC7: ordinary own-unavailable fades the whole marker once while LED and foreign-quality gates remain distinct.',
-    patches:[{file:'src/styles/devices.styles.ts',find:'.dev.unavail:not(.led-badge) { opacity:0.35; }',replace:'.dev.unavail:not(.led-badge) { opacity:1; }'}]},
+    patches:[{file:'src/styles/devices.styles.ts',find:'.dev.unavail:not(.led-badge) { --hp-device-offline-opacity: 0.35; opacity:var(--hp-device-offline-opacity); }',replace:'.dev.unavail:not(.led-badge) { --hp-device-offline-opacity: 1; opacity:var(--hp-device-offline-opacity); }'}]},
 ];
 
 // #1120 declarations only. No mutant has been executed in the task.
