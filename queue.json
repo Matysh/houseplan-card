@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25469,
+  "revision": 25470,
   "nextTicket": 711,
   "nextFence": 711,
   "tasks": {
@@ -6400,12 +6400,13 @@
       "status": "S6-in-progress",
       "readyAt": 1795651067659,
       "reviewEntry": 2,
-      "patchId": "5e4b6cf774e3cbdec54698ff1077a45c58a50373",
+      "patchId": "6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0",
       "changedFiles": [
         "demo/smoke_device_offline.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v2.0.0/1572.json",
+        "scripts/mutation-registry.mjs",
         "src/houseplan-card.ts",
         "src/plan-3d-markers.ts",
         "src/plan-3d-world.ts",
@@ -7105,10 +7106,11 @@
     "token": "710:finish:e9e067ac-c296-425f-a5df-dbb17591b4c9:finish:1:admit",
     "fence": 710,
     "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
+    "phase": "testing",
     "admittedAt": 1795651071592,
-    "expiresAt": 1795651371592
+    "expiresAt": 1795651377810,
+    "patchId": "6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7197,6 +7199,10 @@
     },
     "github:45725045343:1:completions:notice:4e8d3ee91acf904d2645f308d5262a031488c925afc62e6d7dc4f322a7a9a515": {
       "digest": "e4217ec32ccee549171419f5cce64ce106c99537b583c20b246cd679222ecae3",
+      "issue": 1572
+    },
+    "finish:e9e067ac-c296-425f-a5df-dbb17591b4c9:finish:2:synchronized": {
+      "digest": "1d41e272051c4da076a992a05905990cb31adabe96de164c50b94641ecbebf2e",
       "issue": 1572
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
