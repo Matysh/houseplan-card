@@ -4,10 +4,15 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from build_site_release import make_archive, verify_source
+from build_site_release import compatibility, make_archive, verify_source
 
 
 class SiteReleaseInputs(unittest.TestCase):
+    def test_manifest_advertises_the_supported_api_not_one_archives_requirement(self):
+        facts = compatibility(Path(__file__).resolve().parents[1], ">=3.14")
+        self.assertEqual(facts["houseRequiredApi"], {"house_transfer_api": 1})
+        self.assertEqual(facts["houseOptionalApi"], {"furniture_workstation_api": 2})
+
     def test_backend_coverage_is_not_source_but_untracked_core_is(self):
         with TemporaryDirectory(prefix="hp-site-input-test-") as folder:
             root = Path(folder)

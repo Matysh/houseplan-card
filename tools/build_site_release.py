@@ -58,17 +58,16 @@ def literal(path, name):
 def compatibility(root, python_requirement):
     constants = root / CORE_PATH / "constants.py"
     document = root / CORE_PATH / "house_document.py"
-    tree = ast.parse(document.read_text(encoding="utf-8"))
-    optional = [ast.literal_eval(node) for node in ast.walk(tree) if isinstance(node, ast.Dict)
-                and len(node.keys) == 1 and isinstance(node.keys[0], ast.Constant)
-                and node.keys[0].value == "furniture_workstation_api"]
-    require(len(optional) == 1, "Missing or ambiguous conditional house API in the exporter")
+    # Advertise the highest supported API. Individual archives declare only
+    # the level required by the furniture links they actually contain.
+    furniture_api = literal(root / CORE_PATH / "furniture_workstation.py", "API_VERSION")
+    require(type(furniture_api) is int and furniture_api > 0, "Invalid optional furniture API version")
     return {
         "modelVersion": literal(constants, "PLAN_MODEL_VERSION"),
         "spaceExportVersion": literal(constants, "EXPORT_VERSION"),
         "houseExportVersion": literal(document, "EXPORT_VERSION"),
         "houseRequiredApi": literal(document, "REQUIRED_API"),
-        "houseOptionalApi": optional[0],
+        "houseOptionalApi": {"furniture_workstation_api": furniture_api},
         "firstStableWithHouseImport": "1.86.0",
         "python": python_requirement,
     }
