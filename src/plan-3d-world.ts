@@ -179,6 +179,34 @@ function dashedRim(points: readonly PlanPoint[], diameter: number): PlanPoint[][
   return pieces;
 }
 
+/** Extrude the rim from the boundary itself. Adjacent quads share the same
+ * joins, so thin, rounded contours do not need a polygon union per device. */
+function rimFaces(source: readonly PlanPoint[], width: number, top: number, low: number): Face[] {
+  const points = source.filter((point, i) => !i || Math.hypot(point[0] - source[i - 1][0], point[1] - source[i - 1][1]) > 1e-7);
+  const first = points[0], last = points[points.length - 1];
+  if (!first || !last || points.length < 2) return [];
+  const closed = points.length > 2 && Math.hypot(first[0] - last[0], first[1] - last[1]) <= 1e-7;
+  if (closed) points.pop();
+  const count = points.length, edges = count - (closed ? 0 : 1);
+  const normals = Array.from({ length: edges }, (_, i): PlanPoint => {
+    const [ax, ay] = points[i], [bx, by] = points[(i + 1) % count];
+    const length = Math.hypot(bx - ax, by - ay);
+    return [(by - ay) / length, (ax - bx) / length];
+  });
+  const offsets = points.map(([x, y], i): readonly [PlanPoint, PlanPoint] => {
+    const before = normals[i - 1] ?? (closed ? normals[edges - 1] : normals[0]);
+    const after = normals[i] ?? normals[edges - 1];
+    const scale = width / (2 * Math.max(.5, 1 + before[0] * after[0] + before[1] * after[1]));
+    const dx = (before[0] + after[0]) * scale, dy = (before[1] + after[1]) * scale;
+    return [[x + dx, y + dy], [x - dx, y - dy]];
+  });
+  return normals.flatMap((_normal, i) => {
+    const [a, b] = offsets[i], [c, d] = offsets[(i + 1) % count];
+    const polygon = [[a, c, d, b]];
+    return [horizontal(polygon, top), horizontal(polygon, low)];
+  });
+}
+
 /** Owns resident physical meshes and material state for one plan. Only the
  * changed group is replaced on a topology, opening or furniture update. */
 export class Plan3dWorld {
@@ -244,10 +272,7 @@ export class Plan3dWorld {
           faces.push([[[...a, low], [...a, top], [...b, top], [...b, low]]]);
         }
         const strokes = virtual ? dashedRim(chain, diameter) : [chain];
-        for (const points of strokes) {
-          const floor = ribbonFloor({ points, closed: false }, diameter * (virtual ? .021 : .016));
-          for (const polygon of floor) rims.push(horizontal(polygon, top), horizontal(polygon, low));
-        }
+        for (const points of strokes) rims.push(...rimFaces(points, diameter * (virtual ? .021 : .016), top, low));
       }
       const meshes = [this.mesh(planFaceMesh(faces), [{ color: '#f5fbff', opacity: .14 }]),
         this.mesh(planFaceMesh(rims), [{ color: virtual ? '#92a9b7' : '#e6edf1', opacity: virtual ? .72 : .52 }])];
