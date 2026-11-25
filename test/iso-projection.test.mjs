@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { Mesh, MeshBasicMaterial, Plane, Raycaster, Vector2, Vector3 } from 'three';
+import { plan3dCamera, planWorldPoint } from '../test-build/plan-3d-camera.js';
+import { planPrismMesh } from '../test-build/plan-3d-mesh.js';
 import { ISO_VIEW_PROFILE, ISO_LAB_CAMERA, isoLabYaw, isoLabCamera, isoLabOpeningAmount, isoLabOpeningPreview } from '../test-build/iso-lab-camera.js';
 import {
   ISO_CAMERA, ISO_OVERLAY_VISUAL_OFFSET, ISO_RAISED_OVERLAY_HEIGHT,
@@ -11,6 +14,81 @@ import {
 
 const close = (actual, expected, epsilon = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
+
+test('#1514 the 3D presets match reference framing and floor hits at all eight turns', () => {
+  const lens = { x: 840, y: -520, w: 650, h: 960 };
+  const content = { x: -1000, y: -700, w: 3050, h: 1400 };
+  const inPlan = [[840, -520], [1490, -520], [1490, 440], [840, 440], [950, -300], [-950, 600]];
+  const floor = new Plane(new Vector3(0, 1, 0), 0);
+  const views = [{ x: 150, y: 320, w: 1240, h: 730 }, { x: 550, y: -170, w: 499, h: 264 }];
+  for (const rotation of [0, 45, 90, 135, 180, 225, 270, 315]) {
+    const preset = isoCameraFor(rotation);
+    const reference = isoPerspectiveCamera(preset, lens, content, 140);
+    let position;
+    for (const view of views) {
+      const camera = plan3dCamera(preset, lens, content, 140, view);
+      if (position) assert.deepEqual(camera.position.toArray(), position);
+      position = camera.position.toArray();
+      const raycaster = new Raycaster();
+      for (const [x, y] of inPlan) {
+        for (const height of [-10, 0, 52, 140]) {
+          const ndc = planWorldPoint(x, y, height).project(camera);
+          const actual = [view.x + (ndc.x + 1) * view.w / 2, view.y + (1 - ndc.y) * view.h / 2];
+          const expected = projectPlanPoint([x, y], height, reference);
+          close(actual[0], expected[0], 1e-8);
+          close(actual[1], expected[1], 1e-8);
+          assert.ok(ndc.z >= -1 && ndc.z <= 1, 'point is between GPU clip planes');
+          if (height === 0) {
+            raycaster.setFromCamera(new Vector2(ndc.x, ndc.y), camera);
+            const hit = raycaster.ray.intersectPlane(floor, new Vector3());
+            assert.ok(hit);
+            close(hit.x, x, 1e-6);
+            close(hit.z, y, 1e-6);
+          }
+        }
+      }
+    }
+  }
+});
+
+test('#1514 cutouts remain open in physical meshes and share the camera depth', () => {
+  const walls = [[
+    [[200, 200], [800, 200], [800, 800], [200, 800], [200, 200]],
+    [[390, 390], [610, 390], [610, 610], [390, 610], [390, 390]],
+  ]];
+  const wallMesh = planPrismMesh(walls, 0, 140);
+  const materials = [new MeshBasicMaterial(), new MeshBasicMaterial(), new MeshBasicMaterial()];
+  const model = new Mesh(wallMesh, materials);
+  const hitFrom = (origin, direction) => new Raycaster(origin, direction).intersectObject(model)[0];
+  try {
+    assert.equal(hitFrom(planWorldPoint(500, 500, 180), new Vector3(0, -1, 0)), undefined);
+    const top = hitFrom(planWorldPoint(300, 500, 180), new Vector3(0, -1, 0));
+    assert.equal(top.point.y, 140);
+    assert.equal(top.face.materialIndex, 0);
+    close(top.face.normal.y, 1);
+
+    const reveal = hitFrom(planWorldPoint(500, 500, 70), new Vector3(1, 0, 0));
+    assert.equal(reveal.point.x, 610);
+    assert.equal(reveal.face.materialIndex, 1);
+    close(reveal.face.normal.x, -1);
+
+    const bounds = { x: 200, y: 200, w: 600, h: 600 };
+    const camera = plan3dCamera(isoCameraFor(45), bounds, bounds, 140, bounds);
+    camera.position.set(620, 420, 995);
+    camera.lookAt(planWorldPoint(500, 720, 140));
+    camera.updateProjectionMatrix(); // Free camera uses its ordinary, centred lens.
+    camera.updateMatrixWorld(true);
+    const ray = new Raycaster();
+    ray.setFromCamera(new Vector2(0, 0), camera);
+    const freeHit = ray.intersectObject(model)[0];
+    close(freeHit.point.x, 500, 1e-6);
+    close(freeHit.point.y, 140, 1e-6);
+    close(freeHit.point.z, 720, 1e-6);
+  } finally {
+    wallMesh.dispose();
+    materials.forEach(material => material.dispose());
+  }
+});
 
 test('#1526 direct cameras widen a square by 16% and preserve upright edges', () => {
   const rect = {x:1800,y:-270,w:560,h:560};
