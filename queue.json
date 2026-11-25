@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25153,
+  "revision": 25154,
   "nextTicket": 704,
   "nextFence": 704,
   "tasks": {
@@ -6311,7 +6311,17 @@
         "src/plan-3d-wall-shell.ts",
         "src/plan-3d-world.ts",
         "test/iso-opening-masonry.test.mjs"
-      ]
+      ],
+      "reason": "executor-admission-expired",
+      "notice": {
+        "key": "1:executor-admission-expired",
+        "reason": "executor-admission-expired",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795644036101,
+        "entry": 1,
+        "eventId": "github:45709422677:1:tick:0:expire:return:1569"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6976,18 +6986,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1569,
-    "worker": "finish",
-    "token": "703:finish:b993bc0a-6657-4c6a-bad6-8d4456f25fef:finish:1:admit",
-    "fence": 703,
-    "materialSha": "4e517619beacabcbbc912d92c7c821a135991031",
-    "expectedBase": "ec0582978408f0af1bab5eff9bfca4084373d3ba",
-    "phase": "testing",
-    "admittedAt": 1795642510497,
-    "expiresAt": 1795642834292,
-    "patchId": "845a52b5bcbf843572ecf53514fe6e29c6afee29"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7144,6 +7143,25 @@
         "layer": "product",
         "materialSha": "4e517619beacabcbbc912d92c7c821a135991031",
         "phase": "sync"
+      }
+    },
+    "github:45709422677:1:tick:0:expire:return:1569": {
+      "digest": "5d1cef23ec4b4bf9b55b713a55f5a574bcc709a3aee0e2877cd1e2594a1778c4",
+      "issue": 1569,
+      "message": {
+        "kind": "return",
+        "issue": 1569,
+        "at": 1795644036101,
+        "entry": 1,
+        "notice": {
+          "key": "1:executor-admission-expired",
+          "reason": "executor-admission-expired",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795644036101,
+          "entry": 1,
+          "eventId": "github:45709422677:1:tick:0:expire:return:1569"
+        }
       }
     }
   },
