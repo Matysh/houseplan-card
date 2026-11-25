@@ -20,14 +20,31 @@ export interface Plan3dLight {
 const TILE = 128;
 const PAD = 2;
 const STRIDE = 1024;
-const sourceBounds = (source: Plan3dLight) => {
+type MaskBounds = readonly [number, number, number, number];
+const sourceBounds = (source: Plan3dLight): MaskBounds => {
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (const [x, y] of source.points) {
     minX = Math.min(minX, x); maxX = Math.max(maxX, x);
     minY = Math.min(minY, y); maxY = Math.max(maxY, y);
   }
   const r = source.radius;
-  return [minX - r, minY - r, maxX - minX + 2 * r, maxY - minY + 2 * r] as const;
+  const radial: MaskBounds = [minX - r, minY - r, maxX - minX + 2 * r, maxY - minY + 2 * r];
+  // The visibility solver emits closed polygons. Bound the mask by the
+  // illuminated geometry so a user radius larger than the house does not
+  // turn a door's shadow edge into a room-wide texture texel.
+  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  for (const path of source.visible) {
+    if (/[A-DF-KN-Y]|[a-df-z]/.test(path)) return radial;
+    const xy = path.match(/[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/gi)?.map(Number) ?? [];
+    if (xy.length < 6 || xy.length % 2 !== 0 || !xy.every(Number.isFinite)) return radial;
+    for (let i = 0; i < xy.length; i += 2) {
+      left = Math.min(left, xy[i]); top = Math.min(top, xy[i+1]);
+      right = Math.max(right, xy[i]); bottom = Math.max(bottom, xy[i+1]);
+    }
+  }
+  left = Math.max(left, radial[0]); top = Math.max(top, radial[1]);
+  right = Math.min(right, radial[0] + radial[2]); bottom = Math.min(bottom, radial[1] + radial[3]);
+  return right > left && bottom > top ? [left, top, right - left, bottom - top] : radial;
 };
 
 function dataTexture(values: number[], previous?: DataTexture): DataTexture {
@@ -128,6 +145,7 @@ export class Plan3dLightField {
   private masks: CanvasTexture;
   private texture: DataTexture | undefined;
   private maskKey: string | undefined;
+  private bounds: MaskBounds[] = [];
   private opticalKey: string | undefined;
   private readonly uniforms;
 
@@ -161,7 +179,8 @@ export class Plan3dLightField {
     const sameMask = maskKey === this.maskKey;
     if (sameMask && opticalKey === this.opticalKey) return;
 
-    const bounds = usable.map(sourceBounds);
+    if (!sameMask) this.bounds = usable.map(sourceBounds);
+    const bounds = this.bounds;
     const dim = Math.max(1, Math.ceil(Math.sqrt(usable.length)));
     if (!sameMask) {
       const edge = dim * TILE;

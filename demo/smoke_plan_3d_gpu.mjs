@@ -96,6 +96,8 @@ try {
     const lamp = { points: [[8, 0]], height: 250, radius: 25, color: '#ff0000', intensity: 1, visible };
     const led = { points: [[15, 20], [15, 50]], height: 2, radius: 10, color: '#00ff00', intensity: 1, visible };
     const frames = [await lightFrame([]), await lightFrame([lamp, led]), await lightFrame([{ ...lamp, color: '#0000ff' }, led])];
+    const largeRadius = await lightFrame([{ ...lamp, radius: 2_000,
+      visible: ['M 0 -100 L 100 -100 L 100 100 L 0 100 Z'] }]);
     const motion = new Plan3dLightMotion();
     const solar = { ...lamp, id: 'window', intensity: .4, sun: { inward: [1, 0], depth: 10, tilt: .5 } };
     motion.set([{ ...lamp, id: 'lamp' }, solar], 'scene-a', 10, true);
@@ -169,7 +171,7 @@ try {
     const deadline = performance.now() + 2000;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
-    return { contexts, pixels, picking, frames, staticSize, backdropReady, backdropPixel,
+    return { contexts, pixels, picking, frames, largeRadius, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairHit, markerIcon, markerBody, markerHit, markerChanged,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
@@ -207,6 +209,8 @@ try {
   assert.equal(evidence.risingSun.radius, 40, 'the new footprint appears with a smooth intensity change');
   assert.equal(evidence.disabledSun, undefined, 'night and disabled gates clear solar light immediately');
   const [unlit, red, blue] = evidence.frames;
+  assert.ok(evidence.largeRadius[0][0] > 100, 'the near side of a closed opening remains lit at a large radius');
+  assert.deepEqual(evidence.largeRadius[1], unlit[1], 'a large radius must not smear the optical mask across the opening');
   assert.deepEqual(red[1], unlit[1], 'the optical mask keeps the adjacent room dark');
   assert.ok(red[2][0] > 100, 'a short radius still reaches the floor below a high lamp');
   assert.deepEqual(red[3], unlit[3], 'the saved radius bounds the floor footprint');

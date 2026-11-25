@@ -476,6 +476,9 @@ const frameOf = (host: LiveViewportHost, view = host._viewOr(host._baseVb())): L
 function rasterScene(host: LiveViewportHost, state: LiveViewportState): SVGSVGElement | undefined {
   const svg = state.nodes?.camera[0] as SVGSVGElement | undefined;
   const surface = svg?.parentElement;
+  // In 3D the SVG is the interactive camera and hit plane. The GPU renders
+  // its own frames, including during gestures and before its ready event.
+  if (surface?.parentElement?.querySelector('canvas[data-hp-plan-3d]')) return undefined;
   if (host._renderProjection === 'iso' && !host._modeSceneClip && svg &&
       svg.matches('.iso-scene-surface > svg[data-projection="iso"]:not([data-hp-retained-light])') &&
       surface && surface.childElementCount === (surface.hasAttribute('data-hp-raster-handoff') ? 2 : 1) &&

@@ -2,6 +2,7 @@
 // Synthetic HA transport only; this is not a real-HA backend acceptance.
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { launchPanelCold, finish, requirePinnedBrowser } from './serve.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
@@ -56,11 +57,35 @@ try {
     await settle();
   };
   const pixelProof = async (fixture, name) => {
+    // Isolate the receiver during the GPU optical test. Otherwise the pixel
+    // over a covered floor point can be a lit wall or the door face itself.
+    // The closed leaf's own mesh is checked separately below.
+    const floorOnly = isolated => page.evaluate(async isolated => {
+      const host = window.__card._plan3dHost;
+      if (!host) return;
+      for (const mesh of host.world.structure.children.slice(1)) mesh.visible = !isolated;
+      host.world.openings.visible = !isolated;
+      host.draw();
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }, isolated);
     await state('light.ceiling', 'off');
-    const off = await page.screenshot({ path: new URL(`${name}-off.png`, dir).pathname });
+    await floorOnly(true);
+    const off = await page.screenshot({ path: fileURLToPath(new URL(`${name}-off.png`, dir)) });
     await state('light.ceiling', 'on');
-    const result = await prepareClosedDoorLight(page, fixture);
-    const on = await page.screenshot({ path: new URL(`${name}-closed.png`, dir).pathname });
+    const result = await prepareClosedDoorLight(page, fixture).catch(async error => {
+      const diagnostic = await page.evaluate(() => {
+        const card = window.__goldenCard || window.__card;
+        return { space: card._space, selected: card._desiredProjection, shown: card._renderProjection,
+          failure: card._plan3dFailure, settings: card._spaceDisplayForRender(),
+          ready: !!card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]'),
+          lamp: card._renderPlanHass.states['light.ceiling']?.state,
+          sources: card._plan3dPresentation?.world.lights.map(({ id, intensity, visible }) => ({ id, intensity, paths: visible.length })) };
+      });
+      throw Error(`${name} light did not settle: ${JSON.stringify(diagnostic)}`, { cause: error });
+    });
+    await floorOnly(true);
+    const on = await page.screenshot({ path: fileURLToPath(new URL(`${name}-closed.png`, dir)) });
+    await floorOnly(false);
     const deltas = await page.evaluate(async ({ off, on, points }) => {
       const decode = async value => {
         const image = new Image(); image.src = 'data:image/png;base64,' + value; await image.decode();
@@ -69,15 +94,19 @@ try {
         return ctx.getImageData(0, 0, canvas.width, canvas.height);
       };
       const [a, b] = await Promise.all([decode(off), decode(on)]);
+      // Keep the sampling windows on their respective sides of a thin leaf,
+      // even when perspective compresses the opening to a few screen pixels.
+      const radius = Math.max(0, Math.min(3, Math.floor(Math.hypot(points[0].x - points[1].x,
+        points[0].y - points[1].y) / 4)));
       return points.map(p => {
         let delta = 0;
-        for (let y = Math.round(p.y) - 3; y <= Math.round(p.y) + 3; y++)
-          for (let x = Math.round(p.x) - 3; x <= Math.round(p.x) + 3; x++) {
+        for (let y = Math.round(p.y) - radius; y <= Math.round(p.y) + radius; y++)
+          for (let x = Math.round(p.x) - radius; x <= Math.round(p.x) + radius; x++) {
             const i = (y * a.width + x) * 4;
             delta += Math.abs(a.data[i] - b.data[i]) + Math.abs(a.data[i + 1] - b.data[i + 1])
               + Math.abs(a.data[i + 2] - b.data[i + 2]);
           }
-        return delta / 147;
+        return delta / (3 * (radius * 2 + 1) ** 2);
       });
     }, { off: off.toString('base64'), on: on.toString('base64'),
       points: [result.targetScreen, result.shadowScreen] });
@@ -110,7 +139,7 @@ try {
   const flat = await pixelProof(fixture, 'flat');
   await state('binary_sensor.window', 'on');
   assert.ok((await inspectClosedDoorLight(page, fixture.doorLightProbes)).shadow, 'opening the door lights its other side');
-  await page.screenshot({ path: new URL('flat-open.png', dir).pathname });
+  await page.screenshot({ path: fileURLToPath(new URL('flat-open.png', dir)) });
   await state('binary_sensor.window', 'off');
   assert.deepEqual((await prepareClosedDoorLight(page, fixture)).clip, flat.clip, 'closing restores the exact closed mask');
   assert.equal(await stored(), before, 'contact and light updates never write the plan');
@@ -125,9 +154,16 @@ try {
       const leaf = await page.evaluate(() => {
         const card = window.__card;
         const basis = card._isoSource().build().openings.find(item => item.id === 'closed-door');
-        const face = card.shadowRoot.querySelector(
-          '[data-id="closed-door"][data-surface="leaf-front"], [data-id="closed-door"][data-surface="leaf-back"]');
-        return { plane: basis?.leaves[0]?.hinge[0], painted: !!face?.getAttribute('d') };
+        const host = card._plan3dHost;
+        const face = card._plan3dPresentation.world.panels.find(item => item.id === 'closed-door')?.surfaces
+          .find(item => item.kind === 'leaf-front');
+        const painted = face?.points.every(({ point: [x, y], z }) => host.world.openings.children.some(mesh => {
+          const positions = mesh.geometry.getAttribute('position');
+          for (let i = 0; i < positions.count; i++) if (Math.hypot(positions.getX(i) - x,
+            positions.getY(i) - z, positions.getZ(i) - y) < .001) return true;
+          return false;
+        }));
+        return { plane: basis?.leaves[0]?.hinge[0], painted };
       });
       assert.ok(leaf.painted, 'the camera facing the selected wall face must paint the closed leaf');
       assert.ok(Math.abs(leaf.plane - f.doorLightIsoPanelX * 1000) < .001,

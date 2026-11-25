@@ -728,14 +728,25 @@ const out = await page.evaluate(async () => {
   await hp.setServerConfig((config) => {
     const source = config.spaces.find((space) => space.id === 'f1');
     source.stairs.find((stair) => stair.id === linked.id).target_space_id = 'garden';
+    source.settings = { ...source.settings, show_borders: true };
     return config;
   });
   await hp.switchSpace('f1');
-  await hp.setVolumetricView(true);
+  try { await hp.setVolumetricView(true); }
+  catch (error) {
+    const diagnostic = { space: card._space, desired: card._desiredProjection, failed: card._plan3dFailure,
+      floor: card._floorPreparation?.supportFacts };
+    throw Error(`3D stair fixture did not start: ${JSON.stringify(diagnostic)}`, { cause: error });
+  }
+  for (let frame = 0; frame < 120 && !root().querySelector('canvas[data-hp-plan-3d-ready]'); frame++)
+    await new Promise(resolve => requestAnimationFrame(resolve));
   const isoStair = stairNode(straight.id);
+  const world = card._plan3dHost?.world;
   result.flatIsoSymbolSharesFloorProjection = stage().classList.contains('projection-iso')
-    && !!isoStair?.closest('.iso-floor-scene')
-    && !!isoStair?.querySelector('.hp-stair-hit');
+    && !!isoStair?.closest('.iso-scene-surface')
+    && !!isoStair?.querySelector('.hp-stair-hit')
+    && !!world?.floorInkTexture
+    && world.stairs.children.some(mesh => mesh.userData.plan3dPick?.id === `stair:${spiral.id}`);
   isoStair?.querySelector('.hp-stair-hit')?.dispatchEvent(
     new MouseEvent('click', { bubbles: true, composed: true }),
   );

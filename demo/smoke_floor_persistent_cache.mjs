@@ -85,7 +85,8 @@ try {
     const sameFit = JSON.stringify(firstFrame.base) === JSON.stringify(card._baseVb());
     const diskBuilds = { ...card._floorCacheBuilds };
     const projection = card._renderProjection, isoBuilds = card._isoStructuralBuildCount;
-    const hasDiskWallBase = !!card.renderRoot.querySelector('.iso-wall-base-paper');
+    const hasDiskWallBase = !!card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]')
+      && card._plan3dHost.world.structure.children.length > 1;
     const quarterTurnBuilds = [];
     if (projection === 'iso') for (const rotation of [45, 90, 135, 180, 225, 270, 315, 0]) {
       card._rotatePlan(1);
@@ -199,13 +200,18 @@ try {
     // Hold a real old-user geometry job, then replace the HA authority while
     // its fresh pair is deliberately slow. Neither L1 nor a late worker reply
     // may reveal that previous user's scene.
-    const oldPort = card._floorPreparation.scheduler.worker, sendOld = oldPort.postMessage.bind(oldPort), oldJobs = [];
-    oldPort.postMessage = function(message, ...args) {
-      if(message.job.kind === 'geometry') oldJobs.push(()=>sendOld(message,...args)); else sendOld(message,...args);
+    const oldJobs = [], sendOld = NativeWorker.prototype.postMessage;
+    const targetSpace = source.config.spaces[2].id;
+    NativeWorker.prototype.postMessage = function(message, ...args) {
+      if(message.job?.kind === 'geometry' && message.job.input.raw.id === targetSpace)
+        oldJobs.push(()=>sendOld.call(this,message,...args));
+      else return sendOld.call(this,message,...args);
     };
-    source.config.spaces[2].walls[0].cm += 1;
-    card._read.defer(); await card._loadFromServer();
-    await until(()=>oldJobs.length>0,'old-user geometry job');
+    try {
+      source.config.spaces[2].walls[0].cm += 1;
+      card._read.defer(); await card._loadFromServer();
+      await until(()=>oldJobs.length>0,'old-user geometry job');
+    } finally { NativeWorker.prototype.postMessage = sendOld; }
     const stageBlocked = card.renderRoot.querySelector('.stage')?.hasAttribute('inert') === true;
     const diskHitsBefore = card._floorPreparation.diagnostic.diskHits;
     delay = 1800;
@@ -327,7 +333,7 @@ try {
   if(isometric) {
     check('restored iso quarter turns never rebuild the physical source',
       result.isoBuilds === 0 && result.quarterTurnBuilds.every(count=>count===0));
-    check('persistent ISO loads wall-base paint with no renderer rebuild',
+    check('persistent ISO loads physical wall meshes without rebuilding the cached wall base',
       result.hasDiskWallBase && result.diskBuilds.isoWallBase === 0);
   }
 } finally { await finish(browser); }
