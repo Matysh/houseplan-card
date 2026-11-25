@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24862,
+  "revision": 24863,
   "nextTicket": 699,
   "nextFence": 699,
   "tasks": {
@@ -6215,9 +6215,12 @@
       "status": "S6-in-progress",
       "readyAt": 1795621187705,
       "reviewEntry": 2,
-      "patchId": "962d7169653aae4893f7b261f23a70c846322204",
+      "patchId": "5adff714a153d206df70ad8a9cce72ef58595cbc",
       "changedFiles": [
         "demo/helpers/iso-paint-scene.mjs",
+        "demo/smoke_iso_direct_input.mjs",
+        "demo/smoke_iso_inner_corners.mjs",
+        "demo/smoke_iso_light_fade.mjs",
         "demo/smoke_plan_3d_gpu.mjs",
         "demo/smoke_plan_3d_live_camera.mjs",
         "docs/ARCHITECTURE.md",
@@ -6231,6 +6234,7 @@
         "src/plan-3d-host.ts",
         "src/plan-3d-light-field.ts",
         "src/plan-3d-viewport.ts",
+        "src/plan-3d-wall-shell.ts",
         "src/plan-3d-world.ts",
         "test/iso-opening-masonry.test.mjs"
       ],
@@ -6900,10 +6904,11 @@
     "token": "698:finish:b1c2b426-55a4-4d88-996d-73db5a21c07a:finish:1:admit",
     "fence": 698,
     "materialSha": "cee8e1e6695c8ee5db0ac2f2be3b23cde9822679",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "863b706d1a60db865e8ac55538b247576dcf586e",
+    "phase": "testing",
     "admittedAt": 1795621192093,
-    "expiresAt": 1795621492093
+    "expiresAt": 1795621498699,
+    "patchId": "5adff714a153d206df70ad8a9cce72ef58595cbc"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7152,6 +7157,10 @@
     },
     "github:45646199447:1:completions:metadata:d69f4f1e-0b51-4191-ad1b-1f04ee2f6462:task-notice:1566::": {
       "digest": "2120aa98bf6987012a7a3eef7bea9b3f27716c86daf486e15a530092069cebb5",
+      "issue": 1566
+    },
+    "finish:b1c2b426-55a4-4d88-996d-73db5a21c07a:finish:2:synchronized": {
+      "digest": "9bc0b6c72610e383ae934d7d535e2007c95616896426881fd55f286c2fde11a0",
       "issue": 1566
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
