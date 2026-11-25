@@ -102,6 +102,32 @@ try {
       visible: ['M 0 -100 L 100 -100 L 100 100 L 0 100 Z'],
       floorClip: ['M -100 -100 L 40 -100 L 40 100 L -100 100 Z', 'M -40 -100 L 100 -100 L 100 100 L -40 100 Z'],
     }]);
+    const wallLighting = await (async () => {
+      const w = new Plan3dWorld(document, .005);
+      const physical = { ...input.physical, walls: [[[[-8,-50],[0,-50],[0,50],[-8,50]]]] };
+      const p = new T.OrthographicCamera(-70,70,70,-70,1,500);
+      const wallLight = { ...lamp, points: [[30,0]], height: 190, radius: 90, color: '#ff8800',
+        visible: ['M 3 -70 H 85 V 70 H 3 Z'], wallVisible: ['M 0 -70 H 85 V 70 H 0 Z'] };
+      const wallRibbon = { ...wallLight, points: [[0,-30],[0,30]], height: 2, radius: 32, ribbon: true };
+      async function frame(lights, facing = true) {
+        p.position.set(facing ? 145 : -145, 130, 50);
+        p.lookAt(0, 33, 0); p.updateMatrixWorld(true);
+        w.present({ ...input, physical, lights });
+        await new Promise(resolve => { painted = resolve; lit.present({ scene: w.scene, camera: p }); });
+        const px = (x, y, z) => {
+          const v = new T.Vector3(x,y,z).project(p);
+          return pixel(canvas, Math.floor((v.x + 1) * 100), Math.floor((1 - v.y) * 100));
+        };
+        return [px(facing ? 0 : -8, 12, 0), px(facing ? 0 : -8, 47, 0), px(facing ? 22 : -22, 0, 0)];
+      }
+      try {
+        return {
+          baseline: await frame([]), lamp: await frame([wallLight]), ribbon: await frame([wallRibbon]),
+          disabled: await frame([{ ...wallLight, wallClip: [], floorClip: [] }]),
+          back: await frame([], false), blocked: await frame([wallLight, wallRibbon], false),
+        };
+      } finally { w.dispose(); }
+    })();
     const restoredLight = await (async () => {
       const canvas = document.createElement('canvas');
       canvas.style.cssText = 'position:fixed;top:220px;right:0';
@@ -239,6 +265,23 @@ try {
     const equality = (left, right) => left.pixels.every((value, i) => value === right.pixels[i]);
     const coincident = { upperOnly: equality(both, onlyUpper), lowerOnly: equality(reversed, onlyLower),
       upperHit: both.hit, lowerHit: reversed.hit };
+    const atlas = (() => {
+      const crop = camera.clone();
+      const layout = [
+        ...Array.from({length: 10}, (_, i) => ({ ...marker, id: 'noise-' + i, center: [42 + i, 45] })),
+        { ...marker, id: 'near-a', center: [0,0] },
+        { ...marker, id: 'near-b', center: [300,0] },
+      ];
+      const paint = () => world.presentMarkers(layout, 16, { camera: crop, width: 3200, height: 3200 });
+      const cell = id => world.markers.markers.get(id + ':0').cell.page.cell;
+      const bytes = () => world.markers.atlas.pages.filter(page => page.cell > 128)
+        .reduce((total,page) => total + page.bytes.length, 0);
+      paint();
+      const before = [cell('near-a'), cell('near-b'), bytes()];
+      crop.position.x = 300; crop.lookAt(300,0,0); crop.updateMatrixWorld(true);
+      paint();
+      return { before, after: [cell('near-a'), cell('near-b'), bytes()] };
+    })();
     world.presentMarkers([], 1);
     world.present({ ...input, lights: [], rooms: [{ id: 'room', color: '#a07832', opacity: 1,
       geometry: [[[[-95, -95], [-95, 95], [95, 95], [95, -95]]]] }],
@@ -268,9 +311,9 @@ try {
     const deadline = performance.now() + 2000;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
-    return { contexts, pixels, picking, frames, largeRadius, restoredLight, staticSize, backdropReady, backdropPixel,
+    return { contexts, pixels, picking, frames, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
-      fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident,
+      fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
   });
@@ -302,6 +345,8 @@ try {
   assert.equal(evidence.valueInk.hit, 'thermometer');
   assert.deepEqual(evidence.coincident, { upperOnly: true, lowerOnly: true, upperHit: 'upper', lowerHit: 'lower' },
     'coincident devices show and pick exactly one cap with its own glyph, never a blend of both');
+  assert.deepEqual(evidence.atlas.before, [1024,64,16 * 1024 * 1024], 'high density favors the centered cap under the atlas budget');
+  assert.deepEqual(evidence.atlas.after, [64,1024,4 * 1024 * 1024], 'panning at fixed zoom moves high density to the new crop');
   assert.deepEqual(evidence.roomColor, [160, 120, 50, 255]);
   assert.deepEqual(evidence.ribbonColor, [255, 255, 0, 255]);
   assert.equal(evidence.ribbonHit, 'switch-1');
@@ -322,6 +367,14 @@ try {
   assert.equal(evidence.risingSun.radius, 40, 'the new footprint appears with a smooth intensity change');
   assert.equal(evidence.disabledSun, undefined, 'night and disabled gates clear solar light immediately');
   const [unlit, red, blue] = evidence.frames;
+  const { baseline, lamp, ribbon, disabled, back, blocked } = evidence.wallLighting;
+  assert.ok(lamp[0][0] > baseline[0][0] + 20 && lamp[2][0] > baseline[2][0] + 20,
+    'a lamp reaches the wall and floor: ' + JSON.stringify(evidence.wallLighting));
+  assert.ok(ribbon[0][0] > baseline[0][0] + 20 && ribbon[2][0] > baseline[2][0] + 20,
+    'an LED touching the wall lights both receivers: ' + JSON.stringify(evidence.wallLighting));
+  assert.deepEqual(ribbon[1], baseline[1], 'the LED wall wash is localized near its level');
+  assert.deepEqual(disabled, baseline, 'disabled room receivers stay dark');
+  assert.deepEqual(blocked, back, 'opaque wall blocks both sources');
   assert.ok(evidence.largeRadius[0][0] > 100, 'the near side of a closed opening remains lit at a large radius');
   assert.deepEqual(evidence.largeRadius[1], unlit[1], 'a large radius must not smear the optical mask across the opening');
   assert.ok(evidence.restoredLight.initialPaints > 0, 'the initial dark floor is painted');

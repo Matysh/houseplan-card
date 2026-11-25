@@ -11,6 +11,8 @@ export interface PlanLightFieldSource {
   /** One point for a lamp; a continuous polyline for an LED strip. */
   points: readonly (readonly number[])[];
   visible: readonly string[];
+  /** Bare transport. LED fan paths already represent transport. */
+  wallVisible?: readonly string[];
   rule?: CanvasFillRule;
   floorClip?: readonly string[] | null;
   entering: boolean;
@@ -26,6 +28,9 @@ export interface Plan3dLight {
   color: string;
   intensity: number;
   visible: readonly string[];
+  wallVisible?: readonly string[];
+  wallClip?: readonly string[] | null;
+  ribbon?: boolean;
   rule?: CanvasFillRule;
   floorClip?: readonly string[] | null;
   sun?: { inward: PlanPoint; depth: number; tilt: number };
@@ -35,7 +40,7 @@ const TILE = 128;
 const PAD = 2;
 const STRIDE = 1024;
 type MaskBounds = readonly [number, number, number, number];
-const sourceBounds = (source: Plan3dLight): MaskBounds => {
+const sourceBounds = (source: Plan3dLight, visibility = source.visible): MaskBounds => {
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (const [x, y] of source.points) {
     minX = Math.min(minX, x); maxX = Math.max(maxX, x);
@@ -47,7 +52,7 @@ const sourceBounds = (source: Plan3dLight): MaskBounds => {
   // illuminated geometry so a user radius larger than the house does not
   // turn a door's shadow edge into a room-wide texture texel.
   let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
-  for (const path of source.visible) {
+  for (const path of visibility) {
     if (/[A-DF-KN-Y]|[a-df-z]/.test(path)) return radial;
     const xy = path.match(/[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/gi)?.map(Number) ?? [];
     if (xy.length < 6 || xy.length % 2 !== 0 || !xy.every(Number.isFinite)) return radial;
@@ -80,6 +85,7 @@ const LIGHT_GLSL = `
   varying vec3 vHpWorld;
   varying vec3 vHpNormal;
   uniform sampler2D uHpMasks;
+  uniform sampler2D uHpWallMasks;
   uniform sampler2D uHpLights;
   uniform int uHpLightCount;
   uniform float uHpTileCount;
@@ -99,16 +105,26 @@ const LIGHT_GLSL = `
     vec3 remaining = vec3(1.0);
     vec3 reflected = vec3(1.0);
     for (int i = 0; i < uHpLightCount; i++) {
-      vec4 bounds = hpData(i * 4);
-      vec2 uv = (probe - bounds.xy) / bounds.zw;
+      int index = i * 5;
+      vec4 sun = hpData(index + 3);
+      bool wall = sun.z <= 0.0 && abs(N.y) < .01;
+      vec4 bounds = hpData(index + (wall ? 4 : 0));
+      vec2 samplePoint = probe;
+      if (wall) {
+        // A wall lies on the solved boundary. Sample a fractional texel on
+        // its receiving side, bounded in plan units even for huge masks.
+        float texel = 1.0 / max(length(N.xz / bounds.zw) * ${TILE - PAD * 2}.0, .0001);
+        float inward = max(uHpNormalOffset, min(.84 * texel, max(.8, uHpNormalOffset * 48.0)));
+        samplePoint = position + N.xz * inward;
+      }
+      vec2 uv = (samplePoint - bounds.xy) / bounds.zw;
       if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) continue;
       vec2 tile = vec2(mod(float(i), uHpTileCount), floor(float(i) / uHpTileCount));
       vec2 maskUv = (tile + (${PAD}.0 + uv * ${TILE - PAD * 2}.0) / ${TILE}.0) / uHpTileCount;
-      float visible = texture2D(uHpMasks, maskUv).a;
+      float visible = wall ? texture2D(uHpWallMasks, maskUv).a : texture2D(uHpMasks, maskUv).a;
       if (visible < 0.001) continue;
-      vec4 optical = hpData(i * 4 + 1);
-      vec4 pigment = hpData(i * 4 + 2);
-      vec4 sun = hpData(i * 4 + 3);
+      vec4 optical = hpData(index + 1);
+      vec4 pigment = hpData(index + 2);
       int start = int(optical.z);
       int count = int(optical.w);
       vec2 next = hpData(start).xy;
@@ -135,9 +151,18 @@ const LIGHT_GLSL = `
         float dd = dot(point - position, point - position);
         if (dd < distance2) { distance2 = dd; closest = point; }
       }
-      float fall = hpFalloff(sqrt(distance2) / optical.x);
       vec3 delta = vec3(closest.x, optical.y, closest.y) - vHpWorld;
       float angle = max(dot(N, delta) / max(length(delta), 0.0001), 0.0);
+      bool ribbon = sun.w < 0.0;
+      float fall = hpFalloff((wall && ribbon ? length(delta) : sqrt(distance2)) / optical.x);
+      if (wall) {
+        float facing = dot(N.xz, delta.xz);
+        if (facing < (ribbon ? -uHpNormalOffset : .00001)) continue;
+        // The linear near-surface emitter can touch the wall exactly. The
+        // visibility fan resolves its receiving side; preserve a local wash
+        // at the base instead of applying a zero projected cosine.
+        angle = max(angle, ribbon ? .48 : .24);
+      }
       // Preserve the calibrated floor envelope. World normals and emitter
       // height distribute that light on the upright faces and raised objects.
       float incidence = vHpWorld.y == 0.0 && N.y > 0.999 ? 1.0 : angle;
@@ -158,26 +183,33 @@ const LIGHT_GLSL = `
 export class Plan3dLightField {
   private readonly atlas: HTMLCanvasElement;
   private readonly context: CanvasRenderingContext2D;
+  private readonly wallContext: CanvasRenderingContext2D;
   private readonly floorContext: CanvasRenderingContext2D;
   private masks: CanvasTexture;
+  private wallMasks: CanvasTexture;
   private texture: DataTexture | undefined;
   private maskKey: string | undefined;
   private bounds: MaskBounds[] = [];
+  private wallBounds: MaskBounds[] = [];
   private opticalKey: string | undefined;
   private readonly uniforms;
 
   constructor(document: Document, normalOffset: number) {
     this.atlas = document.createElement('canvas');
     const context = this.atlas.getContext('2d');
+    const wallContext = document.createElement('canvas').getContext('2d');
     const floorTile = document.createElement('canvas');
     floorTile.width = floorTile.height = TILE;
     const floorContext = floorTile.getContext('2d');
-    if (!context || !floorContext) throw new Error('Unable to prepare the plan light mask');
+    if (!context || !wallContext || !floorContext) throw new Error('Unable to prepare the plan light mask');
     this.context = context;
+    this.wallContext = wallContext;
     this.floorContext = floorContext;
-    this.masks = this.maskTexture();
+    this.masks = this.maskTexture(this.atlas);
+    this.wallMasks = this.maskTexture(wallContext.canvas);
     this.uniforms = {
       uHpMasks: { value: this.masks },
+      uHpWallMasks: { value: this.wallMasks },
       uHpLights: { value: null as DataTexture | null },
       uHpLightCount: { value: 0 },
       uHpTileCount: { value: 1 },
@@ -185,22 +217,47 @@ export class Plan3dLightField {
     };
   }
 
-  private maskTexture(): CanvasTexture {
-    const texture = new CanvasTexture(this.atlas);
+  private maskTexture(canvas: HTMLCanvasElement): CanvasTexture {
+    const texture = new CanvasTexture(canvas);
     texture.flipY = false;
     texture.generateMipmaps = false;
     return texture;
   }
 
+  private drawMask(ctx: CanvasRenderingContext2D, paths: readonly string[], rule: CanvasFillRule,
+    clip: readonly string[] | null | undefined, [x, y, w, h]: MaskBounds, column: number, row: number): void {
+    const left = column * TILE + PAD, top = row * TILE + PAD;
+    const span = TILE - 2 * PAD;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(left, top, span, span); ctx.clip();
+    ctx.translate(left, top); ctx.scale(span / w, span / h); ctx.translate(-x, -y);
+    ctx.fillStyle = '#fff';
+    for (const path of paths) ctx.fill(new Path2D(path), rule);
+    if (clip) {
+      // Entries union; holes within each room are respected.
+      const floor = this.floorContext;
+      floor.resetTransform(); floor.clearRect(0, 0, TILE, TILE);
+      floor.translate(PAD, PAD); floor.scale(span / w, span / h); floor.translate(-x, -y);
+      floor.fillStyle = '#fff';
+      for (const path of clip) floor.fill(new Path2D(path), 'evenodd');
+      ctx.resetTransform(); ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage(floor.canvas, left - PAD, top - PAD);
+    }
+    ctx.restore();
+  }
+
   set(sources: readonly Plan3dLight[]): void {
-    const usable = sources.filter(source => source.radius > 0 && source.points.length && source.visible.length);
-    const maskKey = JSON.stringify(usable.map(({ points, radius, visible, rule, floorClip }) =>
-      [points, radius, visible, rule, floorClip]));
-    const opticalKey = JSON.stringify(usable.map(({ color, height, intensity, sun }) => [color, height, intensity, sun]));
+    const usable = sources.filter(source => source.radius > 0 && source.points.length && (source.visible.length || source.wallVisible?.length));
+    const maskKey = JSON.stringify(usable.map(({ points, radius, visible, rule, floorClip, wallVisible, wallClip }) =>
+      [points, radius, visible, rule, floorClip, wallVisible, wallClip]));
+    const opticalKey = JSON.stringify(usable.map(({ color, height, intensity, sun, ribbon }) => [color, height, intensity, sun, ribbon]));
     const sameMask = maskKey === this.maskKey;
     if (sameMask && opticalKey === this.opticalKey) return;
 
-    if (!sameMask) this.bounds = usable.map(sourceBounds);
+    if (!sameMask) {
+      this.bounds = usable.map(source => sourceBounds(source));
+      this.wallBounds = usable.map(source => sourceBounds(source, source.wallVisible ?? source.visible));
+    }
     const bounds = this.bounds;
     const dim = Math.max(1, Math.ceil(Math.sqrt(usable.length)));
     if (!sameMask) {
@@ -209,43 +266,35 @@ export class Plan3dLightField {
         this.atlas.width = this.atlas.height = edge;
         // WebGL's immutable texture allocation must match the new canvas size.
         this.masks.dispose();
-        this.masks = this.maskTexture();
+        this.masks = this.maskTexture(this.atlas);
         this.uniforms.uHpMasks.value = this.masks;
-      } else this.context.clearRect(0, 0, edge, edge);
+        const wallCanvas = this.wallContext.canvas;
+        wallCanvas.width = wallCanvas.height = edge;
+        this.wallMasks.dispose();
+        this.wallMasks = this.maskTexture(wallCanvas);
+        this.uniforms.uHpWallMasks.value = this.wallMasks;
+      } else {
+        this.context.clearRect(0, 0, edge, edge);
+        this.wallContext.clearRect(0, 0, edge, edge);
+      }
       for (const [index, source] of usable.entries()) {
-        const [x, y, w, h] = bounds[index];
-        const ctx = this.context;
-        const left = index % dim * TILE + PAD, top = Math.floor(index / dim) * TILE + PAD;
-        const span = TILE - 2 * PAD;
-        ctx.save();
-        ctx.beginPath(); ctx.rect(left, top, span, span); ctx.clip();
-        ctx.translate(left, top); ctx.scale(span / w, span / h); ctx.translate(-x, -y);
-        ctx.fillStyle = '#fff';
-        for (const path of source.visible) ctx.fill(new Path2D(path), source.rule ?? 'evenodd');
-        if (source.floorClip) {
-          // Each entry may contain holes. Different entries are a union,
-          // as in the flat SVG clip. Combining them in one even-odd path
-          // would cancel the overlapping floor and the door's threshold.
-          const floor = this.floorContext;
-          floor.resetTransform(); floor.clearRect(0, 0, TILE, TILE);
-          floor.translate(PAD, PAD); floor.scale(span / w, span / h); floor.translate(-x, -y);
-          floor.fillStyle = '#fff';
-          for (const path of source.floorClip) floor.fill(new Path2D(path), 'evenodd');
-          ctx.resetTransform(); ctx.globalCompositeOperation = 'destination-in';
-          ctx.drawImage(floor.canvas, left - PAD, top - PAD);
-        }
-        ctx.restore();
+        const column = index % dim, row = Math.floor(index / dim), rule = source.rule ?? 'evenodd';
+        this.drawMask(this.context, source.visible, rule, source.floorClip, bounds[index], column, row);
+        if (!source.sun) this.drawMask(this.wallContext, source.wallVisible ?? source.visible, rule,
+          source.wallClip, this.wallBounds[index], column, row);
       }
       this.masks.needsUpdate = true;
+      this.wallMasks.needsUpdate = true;
     }
 
     const values: number[] = [], points: number[] = [];
     for (const [index, source] of usable.entries()) {
       const color = new Color(source.color);
       const sun = source.sun;
-      values.push(...bounds[index], source.radius, source.height, usable.length * 4 + points.length / 4,
+      values.push(...bounds[index], source.radius, source.height, usable.length * 5 + points.length / 4,
         source.points.length, color.r, color.g, color.b, source.intensity,
-        sun?.inward[0] ?? 0, sun?.inward[1] ?? 0, sun?.depth ?? 0, sun?.tilt ?? 0);
+        sun?.inward[0] ?? 0, sun?.inward[1] ?? 0, sun?.depth ?? 0, sun?.tilt ?? (source.ribbon ? -1 : 0),
+        ...this.wallBounds[index]);
       for (const [x, y] of source.points) points.push(x, y, 0, 0);
     }
     const texture = dataTexture(values.concat(points), this.texture);
@@ -278,7 +327,9 @@ export class Plan3dLightField {
 
   dispose(): void {
     this.masks.dispose();
+    this.wallMasks.dispose();
     this.texture?.dispose();
     this.atlas.width = this.atlas.height = 0;
+    this.wallContext.canvas.width = this.wallContext.canvas.height = 0;
   }
 }

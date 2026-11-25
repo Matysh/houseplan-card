@@ -1,6 +1,6 @@
 import {
   BufferAttribute, Color, DataTexture, Group, LinearFilter, Mesh,
-  MeshBasicMaterial, SRGBColorSpace, type BufferGeometry,
+  MeshBasicMaterial, SRGBColorSpace, Vector3, type BufferGeometry, type Camera,
 } from 'three';
 import type { IsoDeviceFace } from './iso-overlays';
 import type { PlanPoint } from './iso-projection';
@@ -76,6 +76,7 @@ interface AtlasPage {
   bytes: Uint8Array;
   side: number;
   cell: number;
+  row: number;
   free: number[];
 }
 interface AtlasCell { page: AtlasPage; index: number; }
@@ -88,15 +89,20 @@ class MarkerAtlas {
 
   constructor(document: Document) { this.canvas = document.createElement('canvas'); }
 
-  allocate(cell: number): AtlasCell {
+  allocate(cell: number): AtlasCell | undefined {
     let page = this.pages.find(item => item.cell === cell && item.free.length);
     if (!page) {
-      const side = cell * 8, bytes = new Uint8Array(side * side * 4);
+      const row = Math.min(8, 1024 / cell), side = cell * row;
+      const size = side * side * 4;
+      if (cell > 128 && this.pages.reduce((bytes, item) => bytes + (item.cell > 128 ? item.bytes.length : 0), 0)
+        + size > 16 * 1024 * 1024) return;
+      const bytes = new Uint8Array(size);
       const texture = new DataTexture(bytes, side, side);
       texture.colorSpace = SRGBColorSpace;
       texture.magFilter = texture.minFilter = LinearFilter;
       texture.needsUpdate = true;
-      page = { texture, bytes, side, cell, free: Array.from({ length: 64 }, (_, index) => 63 - index) };
+      page = { texture, bytes, side, cell, row,
+        free: Array.from({ length: row * row }, (_, index) => row * row - 1 - index) };
       this.pages.push(page);
     }
     return { page, index: page.free.pop()! };
@@ -131,7 +137,7 @@ class MarkerAtlas {
       for (const path of glyph.paths) context.fill(new Path2D(path.d), path.rule);
     }
     const pixels = context.getImageData(0, 0, size, size).data;
-    const x = cell.index % 8 * size, y = Math.floor(cell.index / 8) * size;
+    const x = cell.index % cell.page.row * size, y = Math.floor(cell.index / cell.page.row) * size;
     const stride = size * 4;
     for (let row = 0; row < size; row++) {
       const offset = ((y + row) * side + x) * 4;
@@ -143,7 +149,7 @@ class MarkerAtlas {
 
   apply(cell: AtlasCell, geometry: BufferGeometry, center: PlanPoint, w: number, h: number, angle: number): void {
     const size = cell.page.cell, side = cell.page.side;
-    const x = cell.index % 8 * size, y = Math.floor(cell.index / 8) * size;
+    const x = cell.index % cell.page.row * size, y = Math.floor(cell.index / cell.page.row) * size;
     const positions = geometry.getAttribute('position');
     const uv = new Float32Array(positions.count * 2);
     const cos = Math.cos(angle), sin = Math.sin(angle);
@@ -159,7 +165,7 @@ class MarkerAtlas {
 
   release({ page, index }: AtlasCell): void {
     page.free.push(index);
-    if (page.free.length !== 64) return;
+    if (page.free.length !== page.row * page.row) return;
     this.pages.splice(this.pages.indexOf(page), 1);
     page.texture.dispose();
   }
@@ -167,6 +173,39 @@ class MarkerAtlas {
 
 type MarkerPaint = { key: string; body: Mesh<BufferGeometry, MeshBasicMaterial[]>;
   cell?: AtlasCell; glyphKey?: string };
+
+export type MarkerRaster = Readonly<{ camera: Camera; width: number; height: number }>;
+
+/** The front cap and the glyph are one surface. Estimate the number of
+ * samples occupied by that surface, including perspective and screen crop. */
+function capPixels(marker: Plan3dMarker, face: Plan3dMarkerFace, raster: MarkerRaster): { pixels: number; priority: number } {
+  const { center: [x, z], height, diameter } = marker;
+  const { left, right, top, bottom, angle = 0 } = face;
+  const c = Math.cos(angle), s = Math.sin(angle), point = new Vector3();
+  const tx = (left + right) / 2, ty = (top + bottom) / 2;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const corners: PlanPoint[] = [];
+  for (const [a, b] of [[left,top],[right,top],[right,bottom],[left,bottom]]) {
+    const u = a - tx, v = b - ty;
+    point.set(x + (tx + c*u - s*v) * diameter, height, z + (ty + s*u + c*v) * diameter).project(raster.camera);
+    x0 = Math.min(x0,point.x); y0 = Math.min(y0,point.y);
+    x1 = Math.max(x1,point.x); y1 = Math.max(y1,point.y);
+    corners.push([point.x * raster.width / 2, point.y * raster.height / 2]);
+  }
+  if (x1 < -1 || x0 > 1 || y1 < -1 || y0 > 1) return { pixels: 0, priority: Infinity };
+  const distance = Math.hypot((x0 + x1) * raster.width, (y0 + y1) * raster.height);
+  const pixels = Math.max(...corners.map(([x, y], i) => {
+    const [u, v] = corners[(i + 1) % 4]; return Math.hypot(u - x, v - y);
+  }));
+  return { pixels, priority: distance };
+}
+
+function cellSize(pixels: number): number {
+  if (pixels > 450) return 1024;
+  if (pixels > 225) return 512;
+  if (pixels > 110) return 256;
+  return pixels > 56 ? 128 : 64;
+}
 
 function ring(face: Plan3dMarkerFace, diameter: number): PlanPoint[] {
   const width = face.right - face.left, height = face.bottom - face.top;
@@ -188,23 +227,46 @@ export class Plan3dMarkerLayer {
 
   constructor(document: Document) { this.atlas = new MarkerAtlas(document); }
 
-  present(markers: readonly Plan3dMarker[], devicePixelsPerUnit: number): void {
+  present(markers: readonly Plan3dMarker[], devicePixelsPerUnit: number, raster?: MarkerRaster): void {
     const live = new Set<string>();
-    let order = 0;
+    const work: { key: string; marker: Plan3dMarker; face: Plan3dMarkerFace; size: number; priority: number }[] = [];
     for (const marker of markers) marker.faces.forEach((face, index) => {
       const key = marker.id + ':' + index;
       if (!(face.left < face.right && face.top < face.bottom && marker.diameter > 0)) return;
       live.add(key);
-      this.update(key, marker, face, devicePixelsPerUnit, ++order);
+      const nominal = Math.max(face.right - face.left, face.bottom - face.top) * marker.diameter * devicePixelsPerUnit;
+      const measured = raster && nominal > 80 ? capPixels(marker, face, raster) : undefined;
+      const size = measured ? cellSize(measured.pixels) : Math.min(128, cellSize(nominal));
+      work.push({key, marker, face, size, priority: measured?.priority ?? Infinity});
     });
     for (const [key, paint] of this.markers) {
       if (live.has(key)) continue;
       this.retire(paint);
       this.markers.delete(key);
     }
+    // Reserve high-resolution pages for the place the user is looking at.
+    // Release from the former crop first. Otherwise earlier devices in floor
+    // order would keep the pages when the user pans without changing zoom.
+    const slots = new Map<number, number>();
+    let pages = 0;
+    const nearest = work.filter(row => row.face.glyph && row.size > 128)
+      .sort((a, b) => a.priority - b.priority);
+    for (const row of nearest) {
+      while (row.size > 128) {
+        const free = slots.get(row.size) ?? 0;
+        if (free) { slots.set(row.size, free - 1); break; }
+        if (pages < 4) { pages++; slots.set(row.size, (1024 / row.size) ** 2 - 1); break; }
+        row.size /= 2;
+      }
+    }
+    for (const {key, face, size} of work) {
+      const paint = this.markers.get(key);
+      if (paint?.cell && (!face.glyph || paint.cell.page.cell > size)) this.clearInk(paint);
+    }
+    work.forEach(({key, marker, face, size}, index) => this.update(key, marker, face, size, index + 1));
   }
 
-  private update(key: string, marker: Plan3dMarker, face: Plan3dMarkerFace, density: number, order: number): void {
+  private update(key: string, marker: Plan3dMarker, face: Plan3dMarkerFace, size: number, order: number): void {
     const { center: [x, y], diameter, height } = marker;
     const { left, right, top, bottom, rx, ry, angle = 0 } = face;
     const w = (right - left) * diameter, h = (bottom - top) * diameter;
@@ -225,19 +287,24 @@ export class Plan3dMarkerLayer {
     paint.body.material[1].color.set(face.edge);
     paint.body.material[2].color.set(face.edge);
     paint.body.position.set(x, height, y);
-    const pixels = Math.max(w, h) * density;
-    const size = pixels > 56 ? 128 : 64;
-    if (paint.cell && (!face.glyph || paint.cell.page.cell !== size)) this.clearInk(paint);
     if (!face.glyph) {
       cap.color.set(face.color);
       return;
     }
-    if (!paint.cell) {
-      paint.cell = this.atlas.allocate(size);
+    const previousSize = paint.cell?.page.cell ?? 0;
+    let next: AtlasCell | undefined;
+    for (let request = size; request > previousSize; request /= 2) {
+      next = this.atlas.allocate(request);
+      if (next) break;
+    }
+    if (next) {
+      this.clearInk(paint);
+      paint.cell = next;
       this.atlas.apply(paint.cell, paint.body.geometry, [(left + right) * diameter / 2, (top + bottom) * diameter / 2], w, h, angle);
       cap.map = paint.cell.page.texture;
       cap.needsUpdate = true;
     }
+    if (!paint.cell) throw new Error('Cannot allocate the marker cap');
     cap.color.set(0xffffff);
     const glyphKey = JSON.stringify([face.glyph, face.foreground, face.color]);
     if (paint.glyphKey !== glyphKey) {

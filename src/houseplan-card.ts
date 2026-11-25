@@ -13623,6 +13623,7 @@ export class HouseplanCard extends LitElement {
     });
     capture?.(spots.map(spot => ({ key: spot.key, color: spot.c, alpha: spot.alpha,
       radius: spot.r, points: [[spot.pos.x, spot.pos.y]], visible: spot.geometry?.lit ?? [],
+      wallVisible: spot.geometry?.transport ?? [],
       floorClip: enabledClip, entering: spot.entering, leaving: spot.leaving })));
     // A hair on SCREEN, so an edge stays a hairline at any zoom instead of
     // turning into a smear when the plan is enlarged.
@@ -14189,16 +14190,30 @@ export class HouseplanCard extends LitElement {
         } };
       };
       const cuts = this._openCuts(), union = this._wallUnionGeometry()?.roomGeom;
+      const roomFloorPaint = this._roomFloorPaintFor(space, true);
       const rooms3d = (fills: typeof roomFills) => space.rooms.flatMap((room, index) => {
         const color = fills.byRoom.get(room);
         if (!color) return [];
-        const polygon = (room.id ? this._innerRoomContour(space, room.id, cuts, union) : null) ?? roomPoly(room);
-        if (!polygon) return [];
-        const floor = this._cleanFloor(room, polygon, space);
-        return [{ id: room.id ?? String(index), geometry: floor.geom ?? [[floor.floor]],
+        const id = room.id || '#' + index;
+        let geometry: unknown = roomFloorPaint.get(id)?.geometry;
+        if (!geometry) {
+          const polygon = (room.id ? this._innerRoomContour(space, room.id, cuts, union) : null) ?? roomPoly(room);
+          if (!polygon) return [];
+          const floor = this._cleanFloor(room, polygon, space);
+          geometry = floor.geom ?? [[floor.floor]];
+        }
+        return [{ id, geometry,
           color: architecturalFloorTone(color.color, disp.wallFill.c, roomFillModeOf(disp.fill, room) === 'custom'),
           opacity: color.opacity }];
       });
+      const lightRooms = currentWallLights.length ? space.rooms.flatMap(room => {
+        const poly = roomPoly(room);
+        return poly ? [{ room, poly }] : [];
+      }) : [];
+      const wallClip = lightRooms.every(({ room }) => roomGlowOf(disp.glow, room)) ? null : lightRooms.flatMap(entry =>
+        roomGlowOf(disp.glow, entry.room) ? [ [entry.poly, ...islandsOf(entry.poly,
+          lightRooms.filter(other => other !== entry).map(other => other.poly))]
+          .map(points => 'M ' + points.map(point => point.join(' ')).join(' L ') + ' Z').join(' ') ] : []);
       this._plan3dPresentation = {
         preset: isoCameraFor(this._rotationForProjection('iso')),
         bounds: isoRuntime.isoWorldBounds(isoScene, content.rect), content: content.all,
@@ -14223,7 +14238,8 @@ export class HouseplanCard extends LitElement {
           ribbons: this._ledRt(space)?.plan3dLedRibbons(this as never, space, disp.glow),
           decorWidth: NORM_W, decorHeight: this._decorH,
           lights: [...currentWallLights.map(source => ({
-            ...source, id: source.key, points: source.points.map(([x, y]) => [x, y]),
+            ...source, id: source.key, points: source.points.map(([x, y]) => [x, y]), wallClip,
+            ribbon: source.key.startsWith('led:'),
             height: (source.key.startsWith('led:') ? 2 : 250) / this._cellCm * this._gridPitch,
             intensity: source.alpha,
           } as import('./plan-3d-light-field').Plan3dLight)),

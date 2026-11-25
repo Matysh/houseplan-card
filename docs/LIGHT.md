@@ -1,14 +1,16 @@
 # Light on the plan — the model (source of truth)
 
 
-In 3D, `plan-3d-light-field.ts` samples the same optical visibility map on
-the GPU. The plan distance and falloff define a lamp's or LED's horizontal
-reach. The emitter height and surface normal determine how light reaches
-vertical faces and furniture. The floor keeps the calibrated horizontal
-falloff, and the wall cut keeps its base material. Source colour and intensity
-can change while the visibility map is reused. Sunlight has its own source
-keys and transition, independent of lamp state. Pan and zoom change the
-camera crop while the sources stay in plan coordinates.
+In WebGL 3D, `plan-3d-light-field.ts` uses the same optical barriers for lamps
+and LED strips, with separate masks for the painted floor and upright
+receivers. A wall samples into its receiving side at the mask's resolution,
+and only receives light from the source's facing side. Room Glow settings
+still gate the receiving wall. The floor keeps its calibrated horizontal
+falloff; the LED wash also falls with distance up an upright surface.
+Source colour and intensity reuse the visibility masks. Sunlight retains
+its own footprint and transition. Pan and zoom crop the camera while the
+sources stay in plan coordinates. The prior SVG 2.5D implementation is
+unchanged.
 
 ## Per-leaf shade transmission and sliding apertures (#1024)
 

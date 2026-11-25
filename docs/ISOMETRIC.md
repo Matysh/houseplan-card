@@ -26,8 +26,12 @@ crop in the same frame. Thin edges follow the physical cuts and corners.
 When painting is slow, gestures can use a smaller raster of that same
 crop; the settled frame recovers the ordinary pixel density.
 Transparent masonry reveals the hatched wall footprint under windows, not
-through doorways. Pale furniture and stair faces have translucent materials
-and fine depth-tested contours. The soft device and label shadows are
+through doorways. The floor has no decorative side extrusion, and the
+same room-paint polygons as in Flat continue through each opening threshold.
+Translucent furniture renders its facing model surfaces, not a wireframe of
+the far and interior faces. Stairs retain thin depth-tested contours.
+High zoom can refine the glyph raster on each visible device cap without
+moving any scene objects. The soft device and label shadows are
 non-interactive floor paint and do not enter neutral previews.
 
 The document pauses canvas paints while hidden. On return, the host samples

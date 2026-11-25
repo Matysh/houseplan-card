@@ -70,8 +70,8 @@ export class Plan3dLightMotion {
 }
 
 const keyed = (sources: readonly Plan3dLight[]) => new Map(sources.map((source, i) => [source.id ?? String(i), source]));
-const geometry = ({ points, height, radius, visible, rule, floorClip, sun }: Plan3dLight) =>
-  JSON.stringify([points, height, radius, visible, rule, floorClip, sun]);
+const geometry = ({ points, height, radius, visible, rule, floorClip, wallVisible, wallClip, ribbon, sun }: Plan3dLight) =>
+  JSON.stringify([points, height, radius, visible, rule, floorClip, wallVisible, wallClip, ribbon, sun]);
 
 function sample({ from, to, start, duration }: Blend, time: number): Plan3dLight {
   const t = Math.min(1, Math.max(0, (time - start) / duration));

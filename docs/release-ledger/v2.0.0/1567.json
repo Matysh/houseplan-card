@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1567,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Refine the unreleased WebGL renderer introduced in #1514.",
+  "summary": {
+    "ru": "Стыки и пороги без полос, чёткие устройства и локальный свет на полу и стенах в WebGL 3D.",
+    "en": "Clean 3D wall junctions and thresholds, sharper devices, and local light on both floors and walls."
+  }
+}

@@ -29,7 +29,7 @@ export class Plan3dHost {
   private readonly light = new Plan3dLightMotion();
   private animate = 0;
   private frame?: Plan3dFrame;
-  private markerDensity = 0;
+  private markerFrame = '';
   private paintedMarkers?: readonly Plan3dMarker[];
   private disposed = false;
 
@@ -81,15 +81,18 @@ export class Plan3dHost {
       if (!(crop.w > 0 && crop.h > 0)) return;
       const { bounds, content, preset, sectionHeight } = presentation;
       const camera = plan3dCamera(preset, bounds, content, sectionHeight, crop);
-      const density = this.viewport.density(crop.w);
       // The gesture moves existing meshes. Reconcile glyph raster density on
       // the next authored frame instead of touching every marker each tick.
-      if (!cameraOnly && (density !== this.markerDensity || this.markers !== this.paintedMarkers)) {
-        this.markerDensity = density;
-        this.paintedMarkers = this.markers;
-        this.world.presentMarkers(this.markers, density);
+      if (!cameraOnly) {
+        const { width, height } = this.viewport.pixelSize();
+        const markerFrame = [width, height, crop.x, crop.y, crop.w, crop.h, preset.rotDeg, preset.tiltDeg].join('|');
+        if (markerFrame !== this.markerFrame || this.markers !== this.paintedMarkers) {
+          this.markerFrame = markerFrame;
+          this.paintedMarkers = this.markers;
+          this.world.presentMarkers(this.markers, width / crop.w, { camera, width, height });
+        }
+        this.updateLights();
       }
-      if (!cameraOnly) this.updateLights();
       this.frame = { scene: this.world.scene, camera, motion: cameraOnly };
       this.viewport.present(this.frame, immediate);
     } catch {

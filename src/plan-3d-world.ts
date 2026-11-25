@@ -5,7 +5,7 @@ import { gridVisualUnits } from './grid-scale';
 import { colorLuma, isoOpeningMaterialVars, isoWallMaterial, parseCssColor } from './iso-materials';
 import { FURNITURE_HEIGHT_SCALE, furnitureParts, furniturePlanPoint, furnitureVolumeFaces } from './iso-lab-furniture';
 import { workstationParts } from './iso-lab-workstation';
-import { ISO_FLOOR_EDGE_HEIGHT, isoDisplayWallHeight, type PlanPoint, type ViewRect } from './iso-projection';
+import { isoDisplayWallHeight, type PlanPoint, type ViewRect } from './iso-projection';
 import type { IsoOpeningPanel, IsoOpeningSurface } from './iso-openings';
 import type { IsoRenderScene } from './iso-scene-geometry';
 import type { DecorFurniture } from './editors/decor/types';
@@ -14,7 +14,7 @@ import type { PhysicalStairVolume } from './stairs-volume';
 import { Plan3dLightField, type Plan3dLight } from './plan-3d-light-field';
 import { planFaceMesh, planPrismMesh, type Plan3dVertex } from './plan-3d-mesh';
 import { plan3dWallInk, plan3dWallShell, plan3dWallSideFaces } from './plan-3d-wall-shell';
-import { Plan3dMarkerLayer, type Plan3dMarker } from './plan-3d-markers';
+import { Plan3dMarkerLayer, type MarkerRaster, type Plan3dMarker } from './plan-3d-markers';
 import { markerContactChains } from './iso-marker-outline';
 
 type Polygon = readonly (readonly PlanPoint[])[];
@@ -291,7 +291,9 @@ export class Plan3dWorld {
       this.floorInk, this.ribbons, this.markers.group, this.markerGlass);
   }
 
-  presentMarkers(markers: readonly Plan3dMarker[], density: number): void { this.markers.present(markers, density); }
+  presentMarkers(markers: readonly Plan3dMarker[], density: number, raster?: MarkerRaster): void {
+    this.markers.present(markers, density, raster);
+  }
 
   /** One bounded floor texture, not one transparent GPU object per badge.
    * It changes with world positions, not with the view or light intensity. */
@@ -456,8 +458,8 @@ export class Plan3dWorld {
     return meshes;
   }
 
-  private groundShadow(floor: readonly Polygon[], depth: number, scale: number): void {
-    const key = [floor, depth, scale];
+  private groundShadow(floor: readonly Polygon[], scale: number): void {
+    const key = [floor, scale];
     if (same(this.groundKey, key)) return;
     this.groundKey = key;
     this.replace(this.ground, []);
@@ -490,7 +492,7 @@ export class Plan3dWorld {
     texture.colorSpace = SRGBColorSpace;
     const geometry = new PlaneGeometry(w, h);
     geometry.rotateX(-Math.PI / 2);
-    geometry.translate(x + w / 2, -depth - scale * .3, y + h / 2);
+    geometry.translate(x + w / 2, -scale * .3, y + h / 2);
     const mesh = new Mesh(geometry, new MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, toneMapped: false }));
     mesh.userData.plan3dPick = { occludes: false };
     mesh.renderOrder = -4;
@@ -498,26 +500,29 @@ export class Plan3dWorld {
     this.replace(this.ground, [mesh]);
   }
 
-  private furnitureMeshes(item: Plan3dFurniture, width: number, depth: number, visualScale: number): DrawObject[] {
+  private furnitureMeshes(item: Plan3dFurniture, width: number, depth: number, visualScale: number): Mesh[] {
     const { shape, liftCm, color, opacity } = item;
     const base = furnitureParts(shape.symbol);
     if (!base) return [];
     const parts = shape.workstation ? workstationParts(shape, base, furnitureParts('computer') ?? []) : base;
     const heightScale = FURNITURE_HEIGHT_SCALE * visualScale;
+    const mirrored = Boolean(shape.flip_h) !== Boolean(shape.flip_v);
+    const pigment = new Color(color);
+    const top = colorString(new Color('#f7fbfc').lerp(pigment, .12));
+    const side = colorString(new Color('#e4edf0').lerp(pigment, .16));
     const map = ([x, y, z]: Plan3dVertex): Plan3dVertex => {
       const [tx, ty] = furniturePlanPoint(shape, [x, y], width, depth);
       return [tx, ty, (z + liftCm) * heightScale];
     };
     return parts.flatMap(part => {
       const faces = furnitureVolumeFaces(part, shape.w * width, shape.h * depth, heightScale);
-      const split = (cap: boolean) => faces.filter(face => face.cap === cap).map(face => face.loops.map(loop => loop.map(map)));
-      const pigment = new Color(color);
-      const top = colorString(new Color('#f7fbfc').lerp(pigment, .12));
-      const side = colorString(new Color('#e4edf0').lerp(pigment, .16));
-      const caps = split(true), sides = split(false);
-      return [this.mesh(planFaceMesh(caps), [{ color: top, opacity: opacity * .72, lit: true }]),
-        this.mesh(planFaceMesh(sides), [{ color: side, opacity: opacity * .52, lit: true }]),
-        faceInk([...caps, ...sides], color, opacity * .35)];
+      const split = (cap: boolean) => faces.filter(face => face.cap === cap).map(face =>
+        face.loops.map(loop => mirrored ? loop.map(map).reverse() : loop.map(map)));
+      // Treat the recipes as closed volumes, as the 2.5D visible-face pass
+      // does. Back-facing surfaces and a late wireframe would turn these
+      // intentionally light materials into x-rays (including through walls).
+      return [this.mesh(planFaceMesh(split(true)), [{ color: top, opacity: opacity * .72, lit: true, front: true }]),
+        this.mesh(planFaceMesh(split(false)), [{ color: side, opacity: opacity * .52, lit: true, front: true }])];
     });
   }
 
@@ -722,18 +727,17 @@ export class Plan3dWorld {
       display.openingAccent3d?.c, display.openingAccent3d?.a];
     const structureKey = [physical, paper, ...styleKey];
     if (!same(this.structureKey, structureKey)) {
-      const floorDepth = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, cellCm);
       const wallHeight = gridVisualUnits(isoDisplayWallHeight(), cellCm);
-      this.groundShadow(polygons(physical.floor), floorDepth, visualScale);
+      const base = polygons(physical.floor);
+      this.groundShadow(base, visualScale);
       const floor: Paint = { color: paper, opacity: 1, lit: true };
-      const edge: Paint = { color: colorString(new Color(paper).lerp(wallOnPaper, .38)), opacity: 1, lit: true, shadeSides: true };
       const walls = polygons(physical.walls);
       const authoredMasonry = new Set(physical.openingSurfaces.filter(surface =>
         surface.kind === 'window-apron-top' || surface.kind === 'opening-lintel-top').map(surface => surface.id));
       const shell = plan3dWallShell(walls, physical.openings.filter(opening => authoredMasonry.has(opening.id)), wallHeight);
       const useShellSides = shell.joined && (top.opacity < 1 || side.opacity < 1);
       const meshes = [
-        this.mesh(planPrismMesh(polygons(physical.floor), -floorDepth, 0), [floor, edge, edge]),
+        this.mesh(planFaceMesh(base.map(polygon => horizontal(polygon, 0))), [floor]),
         ...this.wallMeshes(walls, shell, wallHeight, top, { ...side, front: side.opacity < 1 }),
         ...this.openingMeshes(physical.openingSurfaces.filter(surface =>
           !(useShellSides && (surface.kind === 'window-apron-side' || surface.kind === 'opening-lintel-side'))

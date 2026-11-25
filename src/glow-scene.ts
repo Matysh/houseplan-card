@@ -51,7 +51,7 @@ export const GLOW_FALLOFF: readonly (readonly [number, number])[] = [
 ];
 export const GLOW_FADE_MS = 500;
 
-export type GlowClipGeometry = { lit: string[] };
+export type GlowClipGeometry = { lit: string[]; transport: string[] };
 
 export interface GlowCandidate {
   key: string;
@@ -473,6 +473,7 @@ export function buildGlowClipGeometry(input: {
     input.scene.occluders, GLOW_ARC_STEPS,
   );
   return {
+    transport: seen.length >= 3 ? ['M ' + seen.map(point => point.join(' ')).join(' L ') + ' Z'] : [],
     lit: seen.length >= 3
       ? intersectionPaths([seen], input.scene.floor, {
           onBoundsFailure: ({ boundIndex, phase }) => {

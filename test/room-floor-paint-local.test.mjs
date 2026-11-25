@@ -58,7 +58,9 @@ function compare(seeds,openings,tunnels,blockers){
   assert.deepEqual([...actual.keys()],[...expected.keys()]);
   for(const[id,value]of actual){const old=expected.get(id);
     assert.deepEqual(normalized(value.path),normalized(old.path),id+' exact painted rings');
-    assert.deepEqual({...value,path:null},{...old,path:null},id+' metadata/base path');
+    const {geometry,...paint}=value;
+    assert.deepEqual(normalized(polyclipPathD(geometry)),normalized(old.path),id+' native floor rings');
+    assert.deepEqual({...paint,path:null},{...old,path:null},id+' metadata/base path');
   }
   assert.deepEqual({seeds,openings,tunnels,blockers},before,'no mutation of shared canonical operands');
 }

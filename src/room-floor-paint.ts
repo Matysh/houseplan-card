@@ -5,7 +5,14 @@ import type { OpeningTunnelGeometry } from './wall-thickness';
 import { subtractLocalWallGeometry } from './wall-local-boolean';
 
 export interface RoomFloorSeed { id: string; geom: Geom }
-export interface RoomFloorPaint { path: string; basePath: string; bounds: [number, number, number, number]; extended: boolean }
+export interface RoomFloorPaint {
+  /** The same rings used by the SVG path, retained for native triangulation. */
+  geometry: ReturnType<typeof union>;
+  path: string;
+  basePath: string;
+  bounds: [number, number, number, number];
+  extended: boolean;
+}
 const polygon = (points: number[][]): Geom => [[[
   ...points.map(p => [p[0], p[1]] as [number, number]), [points[0][0], points[0][1]],
 ]]];
@@ -52,10 +59,11 @@ export function buildRoomFloorPaint(seeds: readonly RoomFloorSeed[],
       if (masonry.length) geom = subtractLocalWallGeometry(geom, masonry);
     }
     // Inputs and all operations above are MultiPolygons, not bare polygons.
-    const points = (geom as [number, number][][][]).flat(2);
+    const geometry = geom as ReturnType<typeof union>;
+    const points = geometry.flat(2);
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const [x, y] of points) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
-    out.set(seed.id, { path: polyclipPathD(geom), basePath: polyclipPathD(seed.geom), extended: !!faces.length,
+    out.set(seed.id, { geometry, path: polyclipPathD(geometry), basePath: polyclipPathD(seed.geom), extended: !!faces.length,
       bounds: points.length ? [x0 - 1, y0 - 1, x1 - x0 + 2, y1 - y0 + 2] : [0, 0, 1, 1] });
   }
   return out;

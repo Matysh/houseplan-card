@@ -228,6 +228,7 @@ export class Plan3dViewport {
       if (!entry) return;
       this.cssSize = { width: entry.contentRect.width, height: entry.contentRect.height };
       this.painted = undefined;
+      if (!this.frame?.motion) this.onResume?.();
       this.output.queue(this);
     });
     this.resize.observe(canvas);
@@ -253,9 +254,12 @@ export class Plan3dViewport {
     this.output.queue(this);
   }
 
-  density(worldWidth: number): number {
+  pixelSize(motionScale = 1): Size {
+    const width = this.cssSize.width || this.canvas.clientWidth;
+    const height = this.cssSize.height || this.canvas.clientHeight;
     const dpr = this.canvas.ownerDocument.defaultView?.devicePixelRatio || 1;
-    return (this.cssSize.width || this.canvas.clientWidth) * Math.min(dpr, 2) / worldWidth;
+    const density = motionScale * Math.min(dpr, 2, Math.sqrt(PIXEL_LIMIT / width / height));
+    return { width: Math.max(1, Math.floor(width * density)), height: Math.max(1, Math.floor(height * density)) };
   }
 
   paint(): void {
@@ -269,10 +273,9 @@ export class Plan3dViewport {
     // surface back and forth. A fast view keeps the ordinary raster.
     if (!frame.motion) this.motionScale = 1;
     else if (this.drawMs > 36) this.motionScale = .5;
-    const density = this.motionScale * Math.min(window?.devicePixelRatio || 1, 2, Math.sqrt(PIXEL_LIMIT / width / height));
     try {
       const start = window?.performance.now() ?? 0;
-      this.output.draw(frame, this.context, { width: Math.max(1, Math.floor(width * density)), height: Math.max(1, Math.floor(height * density)) });
+      this.output.draw(frame, this.context, this.pixelSize(this.motionScale));
       this.drawMs = (window?.performance.now() ?? 0) - start;
       this.painted = frame;
       this.onPaint();
