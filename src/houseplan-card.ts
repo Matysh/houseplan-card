@@ -7379,7 +7379,7 @@ export class HouseplanCard extends LitElement {
         this._dirtyPos.delete(id);
         return this._reloadStandaloneLayout();
       },
-      failed: error => this._captureToast()(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed'),
+      reportFailure: error => this._captureToast()(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed'),
     });
   }
 
@@ -7414,7 +7414,7 @@ export class HouseplanCard extends LitElement {
       });
       if (!this._standaloneLayoutWrite.stage(id, position)) return;
     }
-    this._layout = { ...this._layout, [id]: position };
+    this._adoption.stageLocalLayout({ ...this._layout, [id]: position });
     this._dirtyPos.add(id);
   }
 
@@ -8044,11 +8044,10 @@ export class HouseplanCard extends LitElement {
 
   private _savePos(d: DevItem, x: number, y: number): void {
     if (!this._spaceModelById(d.space)) return;
-    const next = applyDevicePlacement(
+    this._layout = applyDevicePlacement(
       this._layout, d.id, this._devicePlacementForCanvas(d, x, y),
     );
-    if (this._standaloneLayoutWrite && d.id.startsWith('rl_')) this._stageRoomLabelPosition(d.id, next[d.id]);
-    else { this._layout = next; this._dirtyPos.add(d.id); }
+    this._dirtyPos.add(d.id);
     this._persistLayout();
   }
 

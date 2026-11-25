@@ -26,7 +26,7 @@ export type StandaloneLayoutWritePorts = {
   send(command: HouseplanCommand): Promise<unknown>;
   accept(key: string, position: Position, rev: number): void;
   recover(key: string): Promise<boolean>;
-  failed(error: unknown): void;
+  reportFailure(error: unknown): void;
 };
 type Slot = {
   entry: StandaloneSaveEntry;
@@ -155,7 +155,7 @@ export class StandaloneLayoutWrite {
       slot.flush = false;
       this.end(slot, rejection ? 'rejected' : 'unknown', typeof code === 'string' ? code : 'transport');
       try {
-        if (attached() && slot.current()) this.ports.failed(error);
+        if (attached() && slot.current()) this.ports.reportFailure(error);
         slot.blocked = !attached() || !slot.current() || !await this.ports.recover(key);
       } catch {
         slot.blocked = true;

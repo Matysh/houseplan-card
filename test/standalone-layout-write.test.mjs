@@ -19,7 +19,7 @@ const fixture = ({recover} = {}) => {
     send: command => new Promise((resolve,reject) => calls.push({command,resolve,reject})),
     accept: (key, value) => { base[key] = value; },
     recover: recover ?? (async () => true),
-    failed: error => { failures.push(error); },
+    reportFailure: error => { failures.push(error); },
   });
   writer.subscribeSaveState(s => states.push(s));
   return {writer,calls,base,failures,states,get active(){return active;},

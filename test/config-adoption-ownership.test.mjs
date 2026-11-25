@@ -48,7 +48,7 @@ const BODY_WRITE = {
 // The older Area relocation rollback already existed at pin9 (ccd0e6a5).
 // This specific staging exception is reviewed; future increments still fail.
 const BODY_STAGING_ALLOWLIST = {
-  'src/houseplan-editor-runtime.ts': { _serverCfg: 5, _layout: 5 },
+  'src/houseplan-editor-runtime.ts': { _serverCfg: 5, _layout: 3 },
   'src/houseplan-card.ts': { _serverCfg: 2, _layout: 10 },
 };
 

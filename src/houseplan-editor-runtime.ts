@@ -10750,7 +10750,14 @@ public _labelMove(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
     // A room drawn at 2.5 had a name that could not be dragged to its own room.
     const nx = clampCanvasR(this.host._drag.ox + dx);
     const ny = clampCanvasR(this.host._drag.oy + dy);
-    this.host._savePos({ id, space: spaceId } as DevItem, nx, ny);
+    const label = { id, space: spaceId } as DevItem;
+    if (this.host._standaloneLayoutWrite) {
+      const pos = this.host._devicePlacementForCanvas(label, nx, ny);
+      this.host._stageRoomLabelPosition(id, { ...this.host._layout[id], ...pos, s: spaceId });
+      this.host._persistLayout();
+    } else {
+      this.host._savePos(label, nx, ny);
+    }
   }
 
 public _labelUp(r: RoomCfg): void {
