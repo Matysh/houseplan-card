@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24905,
+  "revision": 24906,
   "nextTicket": 700,
   "nextFence": 700,
   "tasks": {
@@ -679,7 +679,7 @@
         },
         "labelsFrom": "S7-code-review",
         "removedToRelease": false,
-        "classificationAt": "863b706d1a60db865e8ac55538b247576dcf586e",
+        "classificationAt": "b9e82e034013cf7ad8cfae72ad36600169ec0649",
         "commentCurrent": true,
         "commentDigest": "461782c36f016e0e633c",
         "commentFacts": {
