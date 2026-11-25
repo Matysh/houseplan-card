@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25415,
+  "revision": 25416,
   "nextTicket": 709,
   "nextFence": 709,
   "tasks": {
@@ -6365,151 +6365,25 @@
     },
     "1571": {
       "issue": 1571,
+      "branch": "codex/1571-native-room-hover",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1571-native-room-hover",
-      "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 708,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795649362520,
-      "reviewEntry": 1,
-      "patchId": "4a00805d241f3faad05bbac807c82000a54b68b3",
-      "changedFiles": [
-        "demo/smoke_plan_3d_gpu.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v2.0.0/1571.json",
-        "src/houseplan-card.ts",
-        "src/plan-3d-world.ts"
-      ],
-      "s6": {
-        "id": "20261125T232939331-04bf7beb",
-        "name": "Тесты для задачи #1571 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T232939331-04bf7beb/report.json",
-        "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "status": "passed",
-        "finishedAt": "2026-11-25T23:38:23.269Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "14468186a748bce76eed9390083fedc460df51d1",
+      "mergedSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
+      "mergedAt": 1795650216551,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1571:1:4a00805d241f3faad05bbac807c82000a54b68b3:14468186a748bce76eed9390083fedc460df51d1",
-      "reviewMaterial": {
-        "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "expectedBase": "14468186a748bce76eed9390083fedc460df51d1",
-        "patchId": "4a00805d241f3faad05bbac807c82000a54b68b3"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1571,
-        "requestId": "review:1571:1:4a00805d241f3faad05bbac807c82000a54b68b3:14468186a748bce76eed9390083fedc460df51d1",
-        "kind": "code",
-        "base": "14468186a748bce76eed9390083fedc460df51d1",
-        "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "patchId": "4a00805d241f3faad05bbac807c82000a54b68b3",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1571,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1571",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Подсветку наведённой комнаты в WebGL 3D вернули правильно. Отдельный слой нового рендерера получает те же `fillD`/`outlineD` из `_roomHoverPaths`, что и Flat: чистый пол с дырками-островами и контур с разрывами под проёмы. Блокеров не нашёл. Новый слой лежит на полу между заливкой комнат и floor ink. Непрозрачные стены и мебель закрывают его через depth test. Пикинг он не перехватывает. При уходе указателя слой полностью удаляется вместе с текстурой. В нейтральное превью и в экспорт он не попадает: в `_startup3dSource` поле `roomHover` явно сбрасывается в `undefined`, а `_flatExportScene` его не рисует. Пиксельная проба в smoke проверяет сам `Plan3dWorld`: затемнение пола, отсутствие заливки в дырке и в соседней комнате, разрыв контура и чистое состояние после ухода. Связку с карточкой (наведение → `present` → сброс) и перекрытие стенами я проверил только по исходникам, тестами они не покрыты. Есть мелкие визуальные расхождения с Flat: контур уходит под floor ink, при сильном приближении он размывается. Это необязательные улучшения, а итог по PNG за владельцем.",
-          "understanding": "Проблема. В комбинированной WebGL-сцене (`isoFrame.layers.structural`) холст `canvas[data-hp-plan-3d]` с `z-index:2` лежит поверх `.plan-svg` с `z-index:1`. SVG-слои `decor` (`_renderRoomHoverFill`) и `room-hover` (`_renderRoomHoverOutline`) продолжали рисоваться, но под холстом их не видно. Hit-области SVG работают (у холста `pointer-events:none`), поэтому `_hoverRoom` выставлялся, и появлялась только подсказка.\n\nПосле изменения. В `render()` вызов `_roomHoverPaths(space)` перенесён выше, но по-прежнему стоит после try/catch 3D-кадра. Значит, учитывается уже окончательная проекция. В `world` у `_plan3dPresentation` добавлено поле `roomHover: { fillD, outlineD, bounds: content.all, accent }`. Цвет `accent` вычисляется через `_cssColor('var(--hp-accent, …)')`; `--hp-accent` задан на `:host` в `base.styles.ts:19`. Новый метод `Plan3dWorld.updateRoomHover` работает так:\n- сравнивает ключ (пути, accent, visualScale, bounds) и выходит, если ничего не изменилось;\n- иначе удаляет старый меш и текстуру;\n- растрирует на 2D-canvas заливку `rgba(0,0,0,.22)` с правилом evenodd, ореол `8*scale` с alpha .28 и линию `3*scale`. Это те же значения, что в CSS `.room-hover-*` (`plan.styles.ts:1105-1126`);\n- кладёт текстуру на плоскость пола через `planarInk(..., order -1.5, lit=false)`, то есть через `MeshBasicMaterial` с `depthWrite:false`, `polygonOffset` -2.5 и `plan3dPick.occludes=false`.\n\nПорядок слоёв на полу: backdrop -3 → комнаты -2 → hover -1.5 → floorInk -1 → контактные тени -0.5. При `dispose` слой освобождается.\n\nЧто разобрал по путям:\n- `_hoverRoom` → Lit `render` → `_syncPlan3dHost` → `Plan3dHost.present` → `world.present` → `updateRoomHover`. Пропуска по ключу на уровне host нет, а `paintCamera` не трогает мировые текстуры;\n- pointerleave и начало перехода камеры вызывают `_clearPointerHover` → `roomHover` становится undefined → слой очищается;\n- `Plan3dHost.snapshot` вызывается только с `source3d()`, где `roomHover` равен undefined;\n- экспорт PDF/SVG из 3D идёт через `_flatExportScene` без hover-слоёв;\n- в режимах кроме view и plan `_roomHoverPaths` возвращает null; киоск работает в режиме view.",
-          "analysis": [
-            {
-              "topic": "Единый источник геометрии с Flat",
-              "assessment": "Удачное решение, его стоит сохранить. WebGL не вычисляет пол и контур заново, а использует те же строки `fillD`/`outlineD`, что и SVG. Поэтому совпадают дырки вложенных комнат (evenodd), смещение контура на внутреннюю грань и разрывы под двери, окна и открытые пролёты. Расхождения между Flat и 3D по форме исключены по построению.",
-              "evidence": "`src/houseplan-card.ts:12162-12275` (`_roomHoverPaths`), `14152`, `14238-14239`; `src/plan-3d-world.ts:723-734`: тот же evenodd и те же stroke-параметры, что в `src/styles/plan.styles.ts:1105-1126`."
-            },
-            {
-              "topic": "Глубина, порядок и пикинг",
-              "assessment": "Порядок корректен. Слой прозрачный и не пишет глубину, поэтому непрозрачные стены и мебель, отрисованные в opaque-проходе, его закрывают. Прозрачные стены и мебель с неотрицательным renderOrder смешиваются поверх него. Значения polygonOffset и renderOrder стоят строго между заливкой комнат (-2/-2) и floor ink (-1/-3), z-fighting с полом быть не должно. Флаг `occludes:false` сохраняет работу hit-областей. Перекрытие стенами в smoke не проверено, это вывод из устройства материалов.",
-              "evidence": "`src/plan-3d-world.ts:635-638` (комнаты), `691-703` (`planarInk`), `739`, `768` (floorInk -1), `369-371` (контакты -0.5)."
-            },
-            {
-              "topic": "Жизненный цикл и ресурсы",
-              "assessment": "Слой надёжен. Ключ из строк путей и чисел через `Object.is` не даёт пересоздавать текстуру при каждом `present`, например при обновлениях hass или анимации света. Смена или уход очищают группу через `replace`, который освобождает геометрию и материал, и отдельно освобождают `CanvasTexture`. `dispose()` при активном hover освобождает текстуру, при пустом ключе выход штатный. Некорректные bounds или scale оставляют слой пустым и не роняют рендер. Утечки при быстром перемещении между комнатами не видно.",
-              "evidence": "`src/plan-3d-world.ts:137` (`same`), `438-449` (`replace`), `705-716`, `872`."
-            },
-            {
-              "topic": "Исключение из нейтрального превью и экспорта",
-              "assessment": "Требование выполнено явно. Нейтральный источник старта и превью этажей обнуляет `roomHover`. Экспорт из 3D рисует собственный набор слоёв без hover. `snapshot` создаёт отдельный `Plan3dWorld` только из `source3d()`.",
-              "evidence": "`src/houseplan-card.ts:14265-14266`, `3325`, `14566-14583`; `src/plan-3d-host.ts:125-139`."
-            },
-            {
-              "topic": "Визуальные расхождения с Flat",
-              "assessment": "Это не дефект, но владельцу стоит знать о двух вещах при оценке golden. (1) Во Flat заливка лежит под декором, а контур рисуется отдельным поздним слоем поверх стен и декора. В WebGL заливка и контур запечены в одну текстуру под floor ink, поэтому ковры, штриховка основания прозрачных стен, нулевые стены и ступени могут закрыть контур. Комментарий в коде («below the floor decor») это признаёт. (2) Плотность текстуры ограничена: не больше 1024 px по большей стороне `content.all`. Линия в 3 единицы занимает примерно 3 текселя и при сильном приближении в 3D размывается сильнее, чем векторный SVG.",
-              "evidence": "`src/plan-3d-world.ts:717`, `737-739`; `src/houseplan-card.ts:14496`, `14523-14524` (позиции SVG-слоёв)."
-            },
-            {
-              "topic": "Доказательная база S6",
-              "assessment": "Smoke на живом WebGL проверяет главное поведение слоя: заметное затемнение чистого пола, нетронутые дырку и соседний пол, акцент на контуре, отсутствие мостика в разрыве и полное исчезновение после ухода. Проба работает на уровне `Plan3dWorld` с синтетической формой, а не через карточку. Поэтому передача из `render()` (режим view или киоск, сброс при pointerleave, отсутствие в превью) подтверждена только чтением кода. Совместный golden из ТЗ в этом diff не менялся, по ТЗ PNG остаётся на утверждение владельца.",
-              "evidence": "`demo/smoke_plan_3d_gpu.mjs:105-116`, `507-513`; квитанция `20261125T232939331-04bf7beb`, статус passed, failures пусты."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Можно разделить заливку и контур на два меша: заливку оставить на -1.5, а контур поднять выше floor ink, например на -0.75 до контактных теней или по аналогии с SVG-порядком. Тогда декор и нулевые стены не будут закрывать контур, как и во Flat. Цена — вторая canvas-текстура или меш и пара строк в `updateRoomHover`. Решать стоит после просмотра golden владельцем.",
-            "Если при приближении в 3D контур заметно размыт, можно растрировать текстуру не по всему `content.all`, а по bounds наведённой комнаты с небольшим запасом под ореол. При том же лимите 1024 px плотность заметно вырастет, а заодно уменьшится загрузка текстуры при каждом входе в комнату. Цена — bounds нужно получать из геометрии комнаты, а не брать готовый `content.all`.",
-            "Стоит добавить в карточный smoke или контрактный тест проверку связки: `roomHover` появляется в `_plan3dPresentation.world` при `_hoverRoom` в режиме view и отсутствует в `_startup3dSource()`. Сейчас это держится только на коде в `render()`, и регрессию легко пропустить при следующем переносе блока.",
-            "Можно добавить в smoke точку под непрозрачной стеной: на ней пиксели до и после наведения должны совпадать. Это закроет требование «стены перекрывают подсветку по глубине» прямой пробой, а не только устройством материалов."
-          ],
-          "boundaries": "Сборку, тесты и smoke я не запускал: на S7 это не положено. Использована квитанция S6 `20261125T232939331-04bf7beb` (статус passed, материал `cb77645a5a`); содержимое отчёта мне недоступно. По исходникам изучены:\n- `src/plan-3d-world.ts`: порядок сцены, `replace`, `updateRooms`, `planarInk`, `updateRoomHover`, `updateFloorInk`, `present`, `presentContacts`;\n- `src/plan-3d-host.ts` целиком;\n- в `src/houseplan-card.ts`: `_roomHoverPaths`, SVG-рендеры hover, построение `_plan3dPresentation` и `_startup3dSource`, `_syncPlan3dHost`, `_flatExportScene`, `_cssColor`, вызов snapshot;\n- CSS `.room-hover-*` и слои холста в `plan.styles.ts`.\n\nНе проверены:\n- реальный вид на GPU, перекрытие стенами и мебелью, размытие при приближении;\n- совместный golden PNG (по ТЗ за владельцем);\n- путь режима plan, где `_roomHoverPaths` берёт пути редактора. В ТЗ требуются только Просмотр и киоск, и ходит ли комбинированная WebGL-сцена в редакторе, я не выяснял."
-        },
-        "usage": {
-          "input_tokens": 58,
-          "cache_creation_input_tokens": 84246,
-          "cache_read_input_tokens": 1377012,
-          "output_tokens": 15048,
-          "output_tokens_details": {
-            "thinking_tokens": 6919
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 84246,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 813,
-              "cache_read_input_tokens": 72469,
-              "cache_creation_input_tokens": 15981,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 15981
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nПодсветку наведённой комнаты в WebGL 3D вернули правильно. Отдельный слой нового рендерера получает те же `fillD`/`outlineD` из `_roomHoverPaths`, что и Flat: чистый пол с дырками-островами и контур с разрывами под проёмы. Блокеров не нашёл. Новый слой лежит на полу между заливкой комнат и floor ink. Непрозрачные стены и мебель закрывают его через depth test. Пикинг он не перехватывает. При уходе указателя слой полностью удаляется вместе с текстурой. В нейтральное превью и в экспорт он не попадает: в `_startup3dSource` поле `roomHover` явно сбрасывается в `undefined`, а `_flatExportScene` его не рисует. Пиксельная проба в smoke проверяет сам `Plan3dWorld`: затемнение пола, отсутствие заливки в дырке и в соседней комнате, разрыв контура и чистое состояние после ухода. Связку с карточкой (наведение → `present` → сброс) и перекрытие стенами я проверил только по исходникам, тестами они не покрыты. Есть мелкие визуальные расхождения с Flat: контур уходит под floor ink, при сильном приближении он размывается. Это необязательные улучшения, а итог по PNG за владельцем.\n\n## Понимание решения\n\nПроблема. В комбинированной WebGL-сцене (`isoFrame.layers.structural`) холст `canvas[data-hp-plan-3d]` с `z-index:2` лежит поверх `.plan-svg` с `z-index:1`. SVG-слои `decor` (`_renderRoomHoverFill`) и `room-hover` (`_renderRoomHoverOutline`) продолжали рисоваться, но под холстом их не видно. Hit-области SVG работают (у холста `pointer-events:none`), поэтому `_hoverRoom` выставлялся, и появлялась только подсказка.\n\nПосле изменения. В `render()` вызов `_roomHoverPaths(space)` перенесён выше, но по-прежнему стоит после try/catch 3D-кадра. Значит, учитывается уже окончательная проекция. В `world` у `_plan3dPresentation` добавлено поле `roomHover: { fillD, outlineD, bounds: content.all, accent }`. Цвет `accent` вычисляется через `_cssColor('var(--hp-accent, …)')`; `--hp-accent` задан на `:host` в `base.styles.ts:19`. Новый метод `Plan3dWorld.updateRoomHover` работает так:\n- сравнивает ключ (пути, accent, visualScale, bounds) и выходит, если ничего не изменилось;\n- иначе удаляет старый меш и текстуру;\n- растрирует на 2D-canvas заливку `rgba(0,0,0,.22)` с правилом evenodd, ореол `8*scale` с alpha .28 и линию `3*scale`. Это те же значения, что в CSS `.room-hover-*` (`plan.styles.ts:1105-1126`);\n- кладёт текстуру на плоскость пола через `planarInk(..., order -1.5, lit=false)`, то есть через `MeshBasicMaterial` с `depthWrite:false`, `polygonOffset` -2.5 и `plan3dPick.occludes=false`.\n\nПорядок слоёв на полу: backdrop -3 → комнаты -2 → hover -1.5 → floorInk -1 → контактные тени -0.5. При `dispose` слой освобождается.\n\nЧто разобрал по путям:\n- `_hoverRoom` → Lit `render` → `_syncPlan3dHost` → `Plan3dHost.present` → `world.present` → `updateRoomHover`. Пропуска по ключу на уровне host нет, а `paintCamera` не трогает мировые текстуры;\n- pointerleave и начало перехода камеры вызывают `_clearPointerHover` → `roomHover` становится undefined → слой очищается;\n- `Plan3dHost.snapshot` вызывается только с `source3d()`, где `roomHover` равен undefined;\n- экспорт PDF/SVG из 3D идёт через `_flatExportScene` без hover-слоёв;\n- в режимах кроме view и plan `_roomHoverPaths` возвращает null; киоск работает в режиме view.\n\n## Разбор решения\n\n### Единый источник геометрии с Flat\n\nУдачное решение, его стоит сохранить. WebGL не вычисляет пол и контур заново, а использует те же строки `fillD`/`outlineD`, что и SVG. Поэтому совпадают дырки вложенных комнат (evenodd), смещение контура на внутреннюю грань и разрывы под двери, окна и открытые пролёты. Расхождения между Flat и 3D по форме исключены по построению.\n\nОснование: `src/houseplan-card.ts:12162-12275` (`_roomHoverPaths`), `14152`, `14238-14239`; `src/plan-3d-world.ts:723-734`: тот же evenodd и те же stroke-параметры, что в `src/styles/plan.styles.ts:1105-1126`.\n\n### Глубина, порядок и пикинг\n\nПорядок корректен. Слой прозрачный и не пишет глубину, поэтому непрозрачные стены и мебель, отрисованные в opaque-проходе, его закрывают. Прозрачные стены и мебель с неотрицательным renderOrder смешиваются поверх него. Значения polygonOffset и renderOrder стоят строго между заливкой комнат (-2/-2) и floor ink (-1/-3), z-fighting с полом быть не должно. Флаг `occludes:false` сохраняет работу hit-областей. Перекрытие стенами в smoke не проверено, это вывод из устройства материалов.\n\nОснование: `src/plan-3d-world.ts:635-638` (комнаты), `691-703` (`planarInk`), `739`, `768` (floorInk -1), `369-371` (контакты -0.5).\n\n### Жизненный цикл и ресурсы\n\nСлой надёжен. Ключ из строк путей и чисел через `Object.is` не даёт пересоздавать текстуру при каждом `present`, например при обновлениях hass или анимации света. Смена или уход очищают группу через `replace`, который освобождает геометрию и материал, и отдельно освобождают `CanvasTexture`. `dispose()` при активном hover освобождает текстуру, при пустом ключе выход штатный. Некорректные bounds или scale оставляют слой пустым и не роняют рендер. Утечки при быстром перемещении между комнатами не видно.\n\nОснование: `src/plan-3d-world.ts:137` (`same`), `438-449` (`replace`), `705-716`, `872`.\n\n### Исключение из нейтрального превью и экспорта\n\nТребование выполнено явно. Нейтральный источник старта и превью этажей обнуляет `roomHover`. Экспорт из 3D рисует собственный набор слоёв без hover. `snapshot` создаёт отдельный `Plan3dWorld` только из `source3d()`.\n\nОснование: `src/houseplan-card.ts:14265-14266`, `3325`, `14566-14583`; `src/plan-3d-host.ts:125-139`.\n\n### Визуальные расхождения с Flat\n\nЭто не дефект, но владельцу стоит знать о двух вещах при оценке golden. (1) Во Flat заливка лежит под декором, а контур рисуется отдельным поздним слоем поверх стен и декора. В WebGL заливка и контур запечены в одну текстуру под floor ink, поэтому ковры, штриховка основания прозрачных стен, нулевые стены и ступени могут закрыть контур. Комментарий в коде («below the floor decor») это признаёт. (2) Плотность текстуры ограничена: не больше 1024 px по большей стороне `content.all`. Линия в 3 единицы занимает примерно 3 текселя и при сильном приближении в 3D размывается сильнее, чем векторный SVG.\n\nОснование: `src/plan-3d-world.ts:717`, `737-739`; `src/houseplan-card.ts:14496`, `14523-14524` (позиции SVG-слоёв).\n\n### Доказательная база S6\n\nSmoke на живом WebGL проверяет главное поведение слоя: заметное затемнение чистого пола, нетронутые дырку и соседний пол, акцент на контуре, отсутствие мостика в разрыве и полное исчезновение после ухода. Проба работает на уровне `Plan3dWorld` с синтетической формой, а не через карточку. Поэтому передача из `render()` (режим view или киоск, сброс при pointerleave, отсутствие в превью) подтверждена только чтением кода. Совместный golden из ТЗ в этом diff не менялся, по ТЗ PNG остаётся на утверждение владельца.\n\nОснование: `demo/smoke_plan_3d_gpu.mjs:105-116`, `507-513`; квитанция `20261125T232939331-04bf7beb`, статус passed, failures пусты.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Можно разделить заливку и контур на два меша: заливку оставить на -1.5, а контур поднять выше floor ink, например на -0.75 до контактных теней или по аналогии с SVG-порядком. Тогда декор и нулевые стены не будут закрывать контур, как и во Flat. Цена — вторая canvas-текстура или меш и пара строк в `updateRoomHover`. Решать стоит после просмотра golden владельцем.\n- Если при приближении в 3D контур заметно размыт, можно растрировать текстуру не по всему `content.all`, а по bounds наведённой комнаты с небольшим запасом под ореол. При том же лимите 1024 px плотность заметно вырастет, а заодно уменьшится загрузка текстуры при каждом входе в комнату. Цена — bounds нужно получать из геометрии комнаты, а не брать готовый `content.all`.\n- Стоит добавить в карточный smoke или контрактный тест проверку связки: `roomHover` появляется в `_plan3dPresentation.world` при `_hoverRoom` в режиме view и отсутствует в `_startup3dSource()`. Сейчас это держится только на коде в `render()`, и регрессию легко пропустить при следующем переносе блока.\n- Можно добавить в smoke точку под непрозрачной стеной: на ней пиксели до и после наведения должны совпадать. Это закроет требование «стены перекрывают подсветку по глубине» прямой пробой, а не только устройством материалов.\n\n## Границы анализа\n\nСборку, тесты и smoke я не запускал: на S7 это не положено. Использована квитанция S6 `20261125T232939331-04bf7beb` (статус passed, материал `cb77645a5a`); содержимое отчёта мне недоступно. По исходникам изучены:\n- `src/plan-3d-world.ts`: порядок сцены, `replace`, `updateRooms`, `planarInk`, `updateRoomHover`, `updateFloorInk`, `present`, `presentContacts`;\n- `src/plan-3d-host.ts` целиком;\n- в `src/houseplan-card.ts`: `_roomHoverPaths`, SVG-рендеры hover, построение `_plan3dPresentation` и `_startup3dSource`, `_syncPlan3dHost`, `_flatExportScene`, `_cssColor`, вызов snapshot;\n- CSS `.room-hover-*` и слои холста в `plan.styles.ts`.\n\nНе проверены:\n- реальный вид на GPU, перекрытие стенами и мебелью, размытие при приближении;\n- совместный golden PNG (по ТЗ за владельцем);\n- путь режима plan, где `_roomHoverPaths` берёт пути редактора. В ТЗ требуются только Просмотр и киоск, и ходит ли комбинированная WebGL-сцена в редакторе, я не выяснял.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 14468186a748bce76eed9390083fedc460df51d1 → cb77645a5a916d1d38cfed2f35cbe67a382a1e7d\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-25T23:43:04.907Z",
-        "artifactId": 15073341295,
-        "runId": 45723000579,
-        "runAttempt": 1,
-        "completedAt": "2026-11-25T23:43:10Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45723000579",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "14468186a748bce76eed9390083fedc460df51d1"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -7189,19 +7063,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1571,
-    "worker": "finish",
-    "token": "708:finish:a5d685d8-f1f4-460c-8f3d-015202052bd6:finish:1:admit",
-    "fence": 708,
-    "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-    "expectedBase": "14468186a748bce76eed9390083fedc460df51d1",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795649366065,
-    "expiresAt": 1795653813949,
-    "patchId": "4a00805d241f3faad05bbac807c82000a54b68b3",
-    "reviewRequest": "review:1571:1:4a00805d241f3faad05bbac807c82000a54b68b3:14468186a748bce76eed9390083fedc460df51d1"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7222,66 +7084,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "finish:a5d685d8-f1f4-460c-8f3d-015202052bd6:finish:2:synchronized": {
-      "digest": "53ed0ca46665935db100d0eaafab8978cf9dd3fc8ec3494a6e8fc438c56e0aea",
-      "issue": 1571
-    },
-    "github:45721740040:1:completions:message:47d0ef512df2a0d21cbbbe5ceb109f35d28bddaf2de92a1e8e8651bf165989be": {
-      "digest": "cec65b3d245109d6bbab1569a3f4f31617e86315f934e00461c9f8db81af8002",
-      "issue": 1571
-    },
-    "github:45721740040:1:completions:message:8a670d4691cb37cd42bc7dd82a92c3314a7cdb5186b8a9011da89d2016187762": {
-      "digest": "87db641038c25b40b54cb8530275ce2616833af189082fbd46463459716509bc",
-      "issue": 1571
-    },
-    "finish:6e69287f-c66d-4e9c-82cb-7fc8c0b7e4f9": {
-      "digest": "8bb327ebfdb468ff6cd85029cfcbd2db8d0fc6c82c76d8e98ddc38c6285f5a02",
-      "issue": 1571
-    },
-    "finish:0ddb7840-f0f8-4061-8d26-26c5ab7d9b34": {
-      "digest": "5ce09686992cf4954f0470a8538997fe2147dd4c42984defc9905cbd7b6925b5",
-      "issue": 1571
-    },
-    "finish:b63e011f-5701-4c09-925d-81cceb2ec82c": {
-      "digest": "4ba759f93b97fa59835b48456d325b06f8d822f0161e4088349c7076bbd3651c",
-      "issue": 1571
-    },
-    "finish:77c8a647-58ba-4f88-9ec6-33de6315da3a": {
-      "digest": "19841fb683b17bb1cf3a7e71d0529338c17882e2c13a06c8f85be643a89d0ebc",
-      "issue": 1571
-    },
-    "finish:b0803d7c-32c9-4d08-ad63-28f94ea05a81": {
-      "digest": "9eeb00fc3baeeafe9d8239e82fd9c3bd2b63a3eccff0271bb9bbe881c639aa28",
-      "issue": 1571
-    },
-    "finish:cf84586f-6ef3-4dcc-b662-3900744ab611": {
-      "digest": "d16b01e22d6e340c17c18247fee819f9676aa811896b28f5fb9148ea76ff5984",
-      "issue": 1571
-    },
-    "finish:61288cce-cf66-4fbc-a966-04a92032b130": {
-      "digest": "011d080758888e086228db95925831e192a5d628530952ec962598649fea353f",
-      "issue": 1571
-    },
-    "finish:5ef379b5-a1aa-439d-bffa-1a43256fc322": {
-      "digest": "30517722d8b8adf11cafc119aec51f0da381de9533fb17c42313615f53bd9e91",
-      "issue": 1571
-    },
-    "finish:a5d685d8-f1f4-460c-8f3d-015202052bd6:finish:4:review-requested": {
-      "digest": "c084cc03cd81785a965eb4adefed026e55dbe9a4f4733a06bc955929195073af",
-      "issue": 1571
-    },
-    "github:45722939411:1:completions:message:98e7f65e7ce121e9a45eab21dec41c9cc42599ebddf64ea63bff5d3a83752ff3": {
-      "digest": "6741a4feadc3772cb7979266f36f3694e4abe974318202d79b2b268403f56ff1",
-      "issue": 1571
-    },
-    "github:45723498777:1:tick:0:review-presentation": {
-      "digest": "05b6e1c742f10f3646d93710c9e210d42e3457699034fbeeb23fc22b3c896049",
-      "issue": 1571
-    },
-    "github:45723498777:1:tick:0:review-complete": {
-      "digest": "cd97a027eeae17a627599b09590e4422ebab548c4109ce81747215048ad8a0da",
-      "issue": 1571
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7309,64 +7111,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:a5d685d8-f1f4-460c-8f3d-015202052bd6": {
-      "digest": "658a291602225e1326260a98110e31a95d5670657665e2cf3e972ee7db95fbf2",
-      "issue": 1571,
-      "message": {
-        "kind": "queued",
-        "issue": 1571,
-        "at": 1795649362520,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "delivered": true
-      }
-    },
-    "finish:a5d685d8-f1f4-460c-8f3d-015202052bd6:finish:1:admit": {
-      "digest": "a7d94049bae791436ac9ceecc1f47d9ba48177f10b9ff6213a06d13f26a25233",
-      "issue": 1571,
-      "message": {
-        "kind": "admitted",
-        "issue": 1571,
-        "at": 1795649366065,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:a5d685d8-f1f4-460c-8f3d-015202052bd6:finish:3:s6-complete": {
-      "digest": "ec473fc8fe1fca2902f5273fbc4aa3f0c0448bd1af9b7e1723e426789c36086d",
-      "issue": 1571,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1571,
-        "at": 1795649916803,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "phase": "review",
-        "evidence": {
-          "id": "20261125T232939331-04bf7beb",
-          "name": "Тесты для задачи #1571 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T232939331-04bf7beb/report.json",
-          "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-          "status": "passed",
-          "finishedAt": "2026-11-25T23:38:23.269Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "delivered": true
       }
     }
