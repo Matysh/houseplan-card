@@ -226,6 +226,19 @@ try {
     const hollowIcon = await glyphPixels({ ...marker.faces[0].glyph,
       paths: [{ d: 'M0 0H24V24H0Z M7.8 7.8V16.2H16.2V7.8Z', rule: 'evenodd' }] });
     const valueInk = await glyphPixels({ kind: 'text', value: '80%', font: 'sans-serif', fraction: .55 });
+    const upper = { ...marker, id: 'upper', faces: [{ ...marker.faces[0],
+      glyph: { kind: 'text', value: '80%', font: 'sans-serif', fraction: .55 } }] };
+    const lower = { ...marker, id: 'lower', faces: [{ ...marker.faces[0], foreground: '#ff4050' }] };
+    const stack = async markers => {
+      world.presentMarkers(markers, 1);
+      lit.present({ scene: world.scene, camera }, true);
+      return { pixels: canvas.getContext('2d').getImageData(130, 125, 40, 40).data, hit: lit.pick(.75, .725) };
+    };
+    const onlyUpper = await stack([upper]), onlyLower = await stack([lower]);
+    const both = await stack([lower, upper]), reversed = await stack([upper, lower]);
+    const equality = (left, right) => left.pixels.every((value, i) => value === right.pixels[i]);
+    const coincident = { upperOnly: equality(both, onlyUpper), lowerOnly: equality(reversed, onlyLower),
+      upperHit: both.hit, lowerHit: reversed.hit };
     world.presentMarkers([], 1);
     world.present({ ...input, lights: [], rooms: [{ id: 'room', color: '#a07832', opacity: 1,
       geometry: [[[[-95, -95], [-95, 95], [95, 95], [95, -95]]]] }],
@@ -257,7 +270,7 @@ try {
       await new Promise(resolve => requestAnimationFrame(resolve));
     return { contexts, pixels, picking, frames, largeRadius, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
-      fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk,
+      fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
   });
@@ -287,6 +300,8 @@ try {
     'value text has both solid ink and antialiasing: ' + JSON.stringify(evidence.valueInk));
   assert.equal(evidence.hollowIcon.hit, 'thermometer');
   assert.equal(evidence.valueInk.hit, 'thermometer');
+  assert.deepEqual(evidence.coincident, { upperOnly: true, lowerOnly: true, upperHit: 'upper', lowerHit: 'lower' },
+    'coincident devices show and pick exactly one cap with its own glyph, never a blend of both');
   assert.deepEqual(evidence.roomColor, [160, 120, 50, 255]);
   assert.deepEqual(evidence.ribbonColor, [255, 255, 0, 255]);
   assert.equal(evidence.ribbonHit, 'switch-1');

@@ -11,6 +11,8 @@ export interface Plan3dFrame {
 export interface Plan3dPickSurface {
   id?: string;
   occludes?: boolean;
+  /** The material map is opaque paint on an actual cap, not a cutout. */
+  geometryOnly?: boolean;
 }
 
 type Size = { width: number; height: number };
@@ -129,7 +131,7 @@ class Plan3dOutput {
     const pickMaterial = (number: number, source: Material, policy: Plan3dPickSurface | undefined) => {
       const visible = source.visible && source.opacity > 0 && (number !== 0
         || (policy?.occludes ?? (!source.transparent || source.opacity >= 1)));
-      const texture = source instanceof MeshBasicMaterial ? source.map : null;
+      const texture = !policy?.geometryOnly && source instanceof MeshBasicMaterial ? source.map : null;
       const alphaTest = texture ? Math.max(.05, source.alphaTest) : source.alphaTest;
       const key = [number, visible, source.side, texture?.id, alphaTest].join('/');
       let material = materials.get(key);
@@ -163,6 +165,7 @@ class Plan3dOutput {
         ? object.material.map(source => pickMaterial(number, source, policy))
         : pickMaterial(number, object.material, policy);
       const mesh = new Mesh(object.geometry, material);
+      mesh.renderOrder = object.renderOrder;
       mesh.matrixAutoUpdate = false;
       mesh.matrix.copy(object.matrixWorld);
       scene.add(mesh);

@@ -862,7 +862,11 @@ export class HouseplanCard extends LitElement {
         const diameter = placement?.deviceSize;
         if (!placement || !diameter || !geometry) return [];
         const turn = (isoReadingYaw(presentation.preset.rotDeg) - presentation.preset.rotDeg) * Math.PI / 180;
-        const iconAngle = Number(element.dataset.hp3dDevice) * Math.PI / 180;
+        // The hyphen before the digit stays in DOMStringMap's key. Read
+        // the attribute directly so an absent/NaN rotation cannot silently
+        // turn the icon with the floor in a straight camera.
+        const configuredAngle = Number(element.getAttribute('data-hp-3d-device'));
+        const iconAngle = (Number.isFinite(configuredAngle) ? configuredAngle : 0) * Math.PI / 180;
         const faces = runtime.readPlan3dMarkerFaces(element, geometry, turn + iconAngle);
         return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: presentation.sectionHeight, faces }] : [];
       });

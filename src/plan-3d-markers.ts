@@ -1,6 +1,6 @@
 import {
-  BufferAttribute, DataTexture, DoubleSide, Group, LinearFilter, Mesh,
-  MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, type BufferGeometry,
+  BufferAttribute, Color, DataTexture, Group, LinearFilter, Mesh,
+  MeshBasicMaterial, SRGBColorSpace, type BufferGeometry,
 } from 'three';
 import type { IsoDeviceFace } from './iso-overlays';
 import type { PlanPoint } from './iso-projection';
@@ -102,12 +102,17 @@ class MarkerAtlas {
     return { page, index: page.free.pop()! };
   }
 
-  paint(cell: AtlasCell, glyph: Plan3dMarkerGlyph, foreground: string, aspect: number): void {
+  paint(cell: AtlasCell, glyph: Plan3dMarkerGlyph, foreground: string, background: string, aspect: number): void {
     const { bytes, texture, side, cell: size } = cell.page;
     this.canvas.width = this.canvas.height = size;
     const context = this.canvas.getContext('2d', { willReadFrequently: true });
     if (!context) throw new Error('Cannot rasterize the plan marker');
     const padding = 2;
+    // Bake the ink onto its opaque cap using actual coverage. Detached ink
+    // planes can all pass the same depth test for coincident devices and
+    // show the icons of several different markers on one visible plate.
+    context.fillStyle = new Color(background).getStyle();
+    context.fillRect(0, 0, size, size);
     context.fillStyle = foreground;
     context.translate(size / 2, size / 2);
     if (glyph.kind === 'text') {
@@ -126,14 +131,6 @@ class MarkerAtlas {
       for (const path of glyph.paths) context.fill(new Path2D(path.d), path.rule);
     }
     const pixels = context.getImageData(0, 0, size, size).data;
-    // Keep the same ink colour on both sides of a coverage edge. Canvas
-    // returns transparent black outside the path; interpolating against that
-    // produces dark fringes around light glyphs on coloured device faces.
-    let strongest = 0;
-    for (let i = 4; i < pixels.length; i += 4) if (pixels[i + 3] > pixels[strongest + 3]) strongest = i;
-    for (let i = 0; i < pixels.length; i += 4) {
-      pixels[i] = pixels[strongest]; pixels[i + 1] = pixels[strongest + 1]; pixels[i + 2] = pixels[strongest + 2];
-    }
     const x = cell.index % 8 * size, y = Math.floor(cell.index / 8) * size;
     const stride = size * 4;
     for (let row = 0; row < size; row++) {
@@ -144,15 +141,20 @@ class MarkerAtlas {
     texture.needsUpdate = true;
   }
 
-  apply(cell: AtlasCell, geometry: BufferGeometry): void {
+  apply(cell: AtlasCell, geometry: BufferGeometry, center: PlanPoint, w: number, h: number, angle: number): void {
     const size = cell.page.cell, side = cell.page.side;
     const x = cell.index % 8 * size, y = Math.floor(cell.index / 8) * size;
-    const uv = geometry.getAttribute('uv') as BufferAttribute;
-    for (let i = 0; i < uv.count; i++) {
-      uv.setXY(i, (x + .5 + uv.getX(i) * (size - 1)) / side,
-        (y + .5 + (1 - uv.getY(i)) * (size - 1)) / side);
+    const positions = geometry.getAttribute('position');
+    const uv = new Float32Array(positions.count * 2);
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    const cap = geometry.groups[0];
+    for (let i = cap.start; i < cap.start + cap.count; i++) {
+      const dx = positions.getX(i) - center[0], dy = positions.getZ(i) - center[1];
+      const u = (dx * cos + dy * sin) / w + .5, v = (dy * cos - dx * sin) / h + .5;
+      uv[i * 2] = (x + .5 + Math.min(1, Math.max(0, u)) * (size - 1)) / side;
+      uv[i * 2 + 1] = (y + .5 + Math.min(1, Math.max(0, v)) * (size - 1)) / side;
     }
-    uv.needsUpdate = true;
+    geometry.setAttribute('uv', new BufferAttribute(uv, 2));
   }
 
   release({ page, index }: AtlasCell): void {
@@ -164,7 +166,7 @@ class MarkerAtlas {
 }
 
 type MarkerPaint = { key: string; body: Mesh<BufferGeometry, MeshBasicMaterial[]>;
-  ink?: Mesh<BufferGeometry, MeshBasicMaterial>; cell?: AtlasCell; glyphKey?: string };
+  cell?: AtlasCell; glyphKey?: string };
 
 function ring(face: Plan3dMarkerFace, diameter: number): PlanPoint[] {
   const width = face.right - face.left, height = face.bottom - face.top;
@@ -188,11 +190,12 @@ export class Plan3dMarkerLayer {
 
   present(markers: readonly Plan3dMarker[], devicePixelsPerUnit: number): void {
     const live = new Set<string>();
+    let order = 0;
     for (const marker of markers) marker.faces.forEach((face, index) => {
       const key = marker.id + ':' + index;
       if (!(face.left < face.right && face.top < face.bottom && marker.diameter > 0)) return;
       live.add(key);
-      this.update(key, marker, face, devicePixelsPerUnit);
+      this.update(key, marker, face, devicePixelsPerUnit, ++order);
     });
     for (const [key, paint] of this.markers) {
       if (live.has(key)) continue;
@@ -201,7 +204,7 @@ export class Plan3dMarkerLayer {
     }
   }
 
-  private update(key: string, marker: Plan3dMarker, face: Plan3dMarkerFace, density: number): void {
+  private update(key: string, marker: Plan3dMarker, face: Plan3dMarkerFace, density: number, order: number): void {
     const { center: [x, y], diameter, height } = marker;
     const { left, right, top, bottom, rx, ry, angle = 0 } = face;
     const w = (right - left) * diameter, h = (bottom - top) * diameter;
@@ -211,51 +214,45 @@ export class Plan3dMarkerLayer {
       if (paint) this.retire(paint);
       const prism = planPrismMesh([[ring(face, diameter)]], -diameter * .24, 0);
       const body = new Mesh(prism, [face.color, face.edge, face.edge].map(color => new MeshBasicMaterial({ color, toneMapped: false })));
-      body.userData.plan3dPick = { id: marker.id };
+      body.userData.plan3dPick = { id: marker.id, geometryOnly: true };
       this.group.add(body);
       this.markers.set(key, paint = { key: geometryKey, body });
     }
-    paint.body.material[0].color.set(face.color);
+    const cap = paint.body.material[0];
+    // In the equal-depth case resolve a tie in the same marker order as the
+    // interactive DOM and the colour-picking pass.
+    paint.body.renderOrder = order;
     paint.body.material[1].color.set(face.edge);
     paint.body.material[2].color.set(face.edge);
     paint.body.position.set(x, height, y);
     const pixels = Math.max(w, h) * density;
-    const size = pixels > 96 ? 128 : pixels > 48 ? 64 : 32;
-    if (paint.ink && (!face.glyph || paint.cell?.page.cell !== size)) this.clearInk(paint);
-    if (!face.glyph) return;
-    if (!paint.ink) {
-      const cell = this.atlas.allocate(size);
-      const geometry = new PlaneGeometry(w, h);
-      this.atlas.apply(cell, geometry);
-      geometry.rotateX(-Math.PI / 2);
-      geometry.rotateY(-angle);
-      geometry.translate((left + right) * diameter / 2, 0, (top + bottom) * diameter / 2);
-      // Alpha is coverage, not a cutout. A hard threshold fills the counters
-      // of tiny digits and closes the spacing between thin icon details.
-      // The plate still owns depth and picking; ink never erases either.
-      const ink = new Mesh(geometry, new MeshBasicMaterial({ map: cell.page.texture, side: DoubleSide,
-        transparent: true, depthWrite: false, forceSinglePass: true, toneMapped: false,
-        polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
-      ink.userData.plan3dPick = { occludes: false };
-      this.group.add(ink);
-      paint.cell = cell;
-      paint.ink = ink;
+    const size = pixels > 56 ? 128 : 64;
+    if (paint.cell && (!face.glyph || paint.cell.page.cell !== size)) this.clearInk(paint);
+    if (!face.glyph) {
+      cap.color.set(face.color);
+      return;
     }
-    paint.ink.position.set(x, height, y);
-    const glyphKey = JSON.stringify([face.glyph, face.foreground]);
+    if (!paint.cell) {
+      paint.cell = this.atlas.allocate(size);
+      this.atlas.apply(paint.cell, paint.body.geometry, [(left + right) * diameter / 2, (top + bottom) * diameter / 2], w, h, angle);
+      cap.map = paint.cell.page.texture;
+      cap.needsUpdate = true;
+    }
+    cap.color.set(0xffffff);
+    const glyphKey = JSON.stringify([face.glyph, face.foreground, face.color]);
     if (paint.glyphKey !== glyphKey) {
-      this.atlas.paint(paint.cell!, face.glyph, face.foreground, w / h);
+      this.atlas.paint(paint.cell, face.glyph, face.foreground, face.color, w / h);
       paint.glyphKey = glyphKey;
     }
   }
 
   private clearInk(paint: MarkerPaint): void {
-    if (!paint.ink || !paint.cell) return;
-    this.group.remove(paint.ink);
-    paint.ink.material.dispose();
-    paint.ink.geometry.dispose();
+    if (!paint.cell) return;
+    const cap = paint.body.material[0];
+    cap.map = null;
+    cap.needsUpdate = true;
     this.atlas.release(paint.cell);
-    paint.ink = paint.cell = paint.glyphKey = undefined;
+    paint.cell = paint.glyphKey = undefined;
   }
 
   private retire(paint: MarkerPaint): void {

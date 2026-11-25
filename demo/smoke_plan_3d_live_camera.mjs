@@ -137,6 +137,21 @@ try {
   await clickHeaderAction(card, 'rotate-right');
   await page.waitForFunction(() => window.__isoPaint._rotation === 45);
   await settleIsoPaint(page);
+  const iconReading = await card.evaluate(c => {
+    const root = c.renderRoot;
+    return c._plan3dHost.markers.flatMap(marker => {
+      const node = root.querySelector(`.dev[data-id="${CSS.escape(marker.id)}"] .device-core > ha-icon`);
+      const glyph = marker.faces[0]?.glyph;
+      if (!node || !glyph || glyph.kind !== 'icon') return [];
+      const style = getComputedStyle(node);
+      const local = style.transform === 'none' ? 0 : Math.atan2(new DOMMatrix(style.transform).b, new DOMMatrix(style.transform).a);
+      const expected = Number.parseFloat(style.rotate) * Math.PI / 180 + local;
+      return [{ id: marker.id, aligned: Number.isFinite(glyph.angle)
+        && Math.abs(Math.sin((glyph.angle - expected) / 2)) < 1e-5 }];
+    });
+  });
+  assert.ok(iconReading.length > 8 && iconReading.every(icon => icon.aligned),
+    'direct 3D inks use the same reading rotation as the interactive SVG/CSS markers');
   await wheel('perspective wheel near edge', 39, .82);
 
   await clickHeaderAction(card, 'zoom-fit');
