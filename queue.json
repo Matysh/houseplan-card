@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25155,
+  "revision": 25156,
   "nextTicket": 704,
   "nextFence": 704,
   "tasks": {
@@ -7143,7 +7143,8 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "4e517619beacabcbbc912d92c7c821a135991031",
-        "phase": "sync"
+        "phase": "sync",
+        "delivered": true
       }
     },
     "github:45709422677:1:tick:0:expire:return:1569": {
