@@ -30,6 +30,14 @@ through doorways. The floor has no decorative side extrusion, and the
 same room-paint polygons as in Flat continue through each opening threshold.
 Translucent furniture renders its facing model surfaces, not a wireframe of
 the far and interior faces. Stairs retain thin depth-tested contours.
+When a plan has translucent masonry and furniture, the WebGL world partitions
+the affected faces at architectural planes. A furniture surface can lie in
+front of a wall on one side of that partition and behind it on the other.
+In the resulting wall-free cells, furniture retains its previous local order.
+The partition is rebuilt only when the contributing meshes change. Camera
+updates only select and order existing fragments; they do not change the
+lights, antialiasing, or pick pass. A bounded build falls back to the complete
+original scene for unusually complex input rather than dropping geometry.
 High zoom can refine the glyph raster on each visible device cap without
 moving any scene objects. The soft device and label shadows are
 non-interactive floor paint and do not enter neutral previews.
