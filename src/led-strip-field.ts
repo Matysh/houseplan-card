@@ -24,7 +24,7 @@ import {
   compactPoints, emitterSamples, isClosedStrip, type FaceContext, type Pt,
 } from './led-strip-geometry';
 import type { LedStripView } from './led-strip-runtime';
-import type { IsoWallLightSource } from './iso-wall-light';
+import type { PlanLightFieldSource } from './plan-3d-light-field';
 
 /**
  * `guard` without its own shared chunk: an unchanged field (same cached
@@ -313,7 +313,7 @@ const grey = (value: number): string => {
 };
 
 export interface LedFieldInput {
-  capture?: (source: IsoWallLightSource) => void;
+  capture?: (source: PlanLightFieldSource) => void;
   views: readonly LedStripView[];
   scene: LightBarrierScene | null;
   polygons: readonly LightRoomPolygon[];

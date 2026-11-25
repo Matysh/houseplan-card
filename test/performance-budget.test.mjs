@@ -586,7 +586,7 @@ test('boundary collision search restores the ordinary isometric allowances (#585
 
 test('isometric long-task count allowance covers the lazy iso-chunk split, nothing else (#507)', () => {
   const isometric = readBudget('budgets-large-house-isometric.json');
-  assert.equal(isometric.longTasks.countNoiseAllowance, 5, 'owner-accepted +2 tasks of the lazy iso-scene-render split plus jitter');
+  assert.equal(isometric.longTasks.countNoiseAllowance, 5, 'owner-accepted +2 tasks of the lazy 3D runtime split plus jitter');
   assert.equal(isometric.longTasks.maxCountRegressionRatio, 0.2, 'the ratio is not the lever');
   // #770: the family ceiling, above the 21 the allowance yields for that base,
   // so the relative half still decides this comparison.

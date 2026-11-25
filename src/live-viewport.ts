@@ -1,7 +1,5 @@
-import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor, viewportNeedsCoverage,
+import { exposureClip, forecastExposure, viewportExposure, viewportNeedsAnchor,
   type ViewportExposureLimits } from './viewport-exposure';
-import { IsoCameraRaster, type IsoRasterInput } from './iso-camera-raster';
-import { rasterSmoothing } from './iso-raster-geometry';
 import { resizeIsoPerspectiveFloor } from './iso-perspective-floor';
 
 export interface LiveViewBox {
@@ -29,8 +27,6 @@ interface LiveViewportState {
   nodes?: ViewportNodes;
   limits?: ViewportExposureLimits;
   basis?: { key: string; view: LiveViewBox; retained: boolean };
-  raster?: IsoCameraRaster;
-  frozenScene?: boolean;
 }
 
 interface MarkerPaint {
@@ -48,8 +44,6 @@ export interface LiveViewportAnchor {
   markerView?: LiveViewBox;
   markerPaint?: MarkerPaint;
   markerClip?: string;
-  markerCoverage?: LiveViewBox;
-  markerTarget?: LiveViewBox;
   inheritedCoverage?: LiveViewBox;
 }
 
@@ -61,7 +55,6 @@ interface LiveViewportHost {
   _zoom: number;
   _liveViewportTarget?: () => LiveViewBox | undefined;
   _liveViewportLimits?: () => ViewportExposureLimits;
-  _liveIsoRasterInput?: () => IsoRasterInput | undefined;
   readonly _renderProjection?: 'iso' | 'flat';
   readonly _zoomBadge?: { percent: number; hidden: boolean };
   readonly _modeSceneClip?: string | null;
@@ -207,7 +200,6 @@ const findViewportNodes = (root: ParentNode) => {
   return {
     camera, cameraLayers, markerLayer, markerPositions,
     markerSurface: root.querySelector<HTMLElement>('[data-hp-live-marker-surface]'),
-    markerClip: root.querySelector<HTMLElement>('[data-hp-live-marker-clip]'),
     floor: [...root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')],
     grid: [...root.querySelectorAll<SVGElement>('[data-hp-live-grid]')],
     floorScene: [...root.querySelectorAll<HTMLElement>('[data-hp-live-scene="floor"]')],
@@ -299,8 +291,7 @@ export function paintLiveViewport(
   current: LiveViewportFrame,
   anchor?: LiveViewportAnchor | null,
   options: { force?: boolean; keepSceneLayer?: boolean; sceneExposureClip?: string; lockSceneAnchor?: boolean;
-    nodes?: ViewportNodes; limits?: ViewportExposureLimits; keepMarkerLayer?: boolean; authored?: boolean;
-    freezeScene?: IsoRasterInput; rasterDpr?: number } = {},
+    nodes?: ViewportNodes; limits?: ViewportExposureLimits; keepMarkerLayer?: boolean; authored?: boolean } = {},
 ): LiveViewportAnchor {
   const limits = options.limits ?? {};
   const nodes = options.nodes ?? findViewportNodes(root);
@@ -309,7 +300,7 @@ export function paintLiveViewport(
   const forecast = current.target && !sameViewport(current.target, base.target)
     ? forecastExposure(current.view, current.target) : current.view;
   const refresh = options.force === true || !anchor || !finiteView(base.frame.view) || !finiteView(base.frame.floor)
-    || (!options.lockSceneAnchor && !options.freezeScene && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));
+    || (!options.lockSceneAnchor && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));
   const next = refresh ? nextViewportAnchor(current, limits, !!options.keepMarkerLayer && !options.force) : base;
   if (refresh) next.markerPaint = base.markerPaint;
   const sceneClip = options.sceneExposureClip ?? (next.clip ??= exposureClip(next.frame.view, next.coverage));
@@ -363,29 +354,8 @@ export function paintLiveViewport(
   const rebaseMarkers = options.keepMarkerLayer && !options.lockSceneAnchor && !options.sceneExposureClip;
   const markerBasis = (!options.authored && base.markerView) || painted.view;
   if (rebaseMarkers) {
-    if (!options.freezeScene) {
-      if (refresh) rebaseMarkerPositions(nodes, markerBasis, next);
-      next.markerView = refresh ? next.frame.view : markerBasis;
-      next.markerCoverage = next.coverage;
-    } else {
-      const markerCoverage = base.markerCoverage ?? viewportExposure(markerBasis, limits);
-      const aiming = current.target || current.view;
-      const motionCanExposeMarkers = options.freezeScene === 'pan' || aiming.w > current.view.w + 1e-6 ||
-        aiming.w > (base.markerTarget?.w ?? Infinity) + 1e-6;
-      if (motionCanExposeMarkers && viewportNeedsCoverage(markerBasis, markerCoverage, current.view, limits, forecast)) {
-        const markerAnchor = nextViewportAnchor(current, limits, true);
-        markerAnchor.markerPaint = base.markerPaint;
-        rebaseMarkerPositions(nodes, markerBasis, markerAnchor);
-        next.markerView = markerAnchor.frame.view;
-        next.markerCoverage = markerAnchor.coverage;
-        next.markerPaint = markerAnchor.markerPaint;
-        next.markerClip = undefined;
-      } else {
-        next.markerView = markerBasis;
-        next.markerCoverage = markerCoverage;
-      }
-      next.markerTarget = aiming;
-    }
+    if (refresh) rebaseMarkerPositions(nodes, markerBasis, next);
+    next.markerView = refresh ? next.frame.view : markerBasis;
   }
   const markerView = rebaseMarkers ? next.markerView ?? painted.view : painted.view;
   const projection = liveLayerProjection(markerView, current.view);
@@ -417,24 +387,15 @@ export function paintLiveViewport(
       translateYPercent: projection.translateYPercent / 2,
     } : null, { origin: '25% 25%' });
   }
-  if (nodes.markerClip) {
-    // Filter the screen-sized presentation. Blurring the expanded reserve
-    // makes the compositor process several times the visible area.
-    const scale = projection.scaleX;
-    const smooth = options.freezeScene === 'wheel' || (options.freezeScene && (scale >= 2 || scale <= .5));
-    const blur = smooth ? rasterSmoothing(1 / scale) * scale / (options.rasterDpr ?? 1) : 0;
-    const filter = blur ? 'blur(' + blur.toFixed(1) + 'px)' : '';
-    if (nodes.markerClip.style.filter !== filter) nodes.markerClip.style.filter = filter;
-  }
   for (const layer of nodes.markerLayer) {
     if (rebaseMarkers && surface && layer.parentElement === surface) {
       if (layer.style.transform) setLayerProjection(layer, null);
-      setExposureClip(layer, next.markerClip ??= exposureClip(markerView, next.markerCoverage ?? next.coverage));
+      setExposureClip(layer, next.markerClip ??= exposureClip(markerView, next.coverage));
       continue;
     }
     const still = isIdentityLiveLayerProjection(projection) && !options.keepMarkerLayer;
     const markerExposure = options.keepMarkerLayer
-      ? { exposeSceneOverflow: true, exposureClip: next.markerClip ??= exposureClip(markerView, next.markerCoverage ?? next.coverage) } : undefined;
+      ? { exposeSceneOverflow: true, exposureClip: next.markerClip ??= exposureClip(markerView, next.coverage) } : undefined;
     setLayerProjection(layer, still ? null : projection, markerExposure);
   }
   const badge = nodes.badge;
@@ -460,12 +421,6 @@ export function authoredHouseplanViewport(host: object, current: LiveViewBox, ke
   return view;
 }
 
-/** Keep the scene basis when a device update lands after the markers have rebased. */
-export function authoredHouseplanSceneViewport(host: object, markers: LiveViewBox): LiveViewBox {
-  const state = states.get(host);
-  return state?.frozenScene && state.basis?.retained && state.anchor ? state.anchor.frame.view : markers;
-}
-
 const frameOf = (host: LiveViewportHost, view = host._viewOr(host._baseVb())): LiveViewportFrame => {
   return { view: { ...view }, floor: { ...host._floorView(view) }, zoom: host._zoom, badge: host._zoomBadge,
     stageHeight: (host._modeSceneSize ?? host._lastValidStageSize)?.[1],
@@ -473,63 +428,14 @@ const frameOf = (host: LiveViewportHost, view = host._viewOr(host._baseVb())): L
     ...(host._renderProjection !== 'iso' && host._planVisibleRect ? { grid: host._planVisibleRect(view) } : {}) };
 };
 
-function rasterScene(host: LiveViewportHost, state: LiveViewportState): SVGSVGElement | undefined {
-  const svg = state.nodes?.camera[0] as SVGSVGElement | undefined;
-  const surface = svg?.parentElement;
-  // In 3D the SVG is the interactive camera and hit plane. The GPU renders
-  // its own frames, including during gestures and before its ready event.
-  if (surface?.parentElement?.querySelector('canvas[data-hp-plan-3d]')) return undefined;
-  if (host._renderProjection === 'iso' && !host._modeSceneClip && svg &&
-      svg.matches('.iso-scene-surface > svg[data-projection="iso"]:not([data-hp-retained-light])') &&
-      surface && surface.childElementCount === (surface.hasAttribute('data-hp-raster-handoff') ? 2 : 1) &&
-      !surface.hasAttribute('data-hp-light-mixing') && svg.closest('.stage.mode-view:not(.mode-transition)')) {
-    return svg;
-  }
-}
-
-function configureCameraRaster(host: LiveViewportHost, state: LiveViewportState, svg: SVGSVGElement): void {
-  const stageSize = host._lastValidStageSize;
-  const anchor = state.anchor;
-  const stage = svg.closest('.stage');
-  if (!stageSize || !anchor || !stage) return;
-  const dpr = svg.ownerDocument.defaultView?.devicePixelRatio || 1;
-  const theme = stage.classList.contains('theme-dark') ? 'dark' : stage.classList.contains('theme-light') ? 'light' : '';
-  const authority = (state.basis?.key ?? '') + '|' + theme;
-  // The renderer invokes the style read from its deferred source capture.
-  // The geometry and SVG serialization modules do not measure live layout.
-  (state.raster ??= new IsoCameraRaster(scene => getComputedStyle(scene))).configure(svg, anchor.frame.view, anchor.coverage,
-    { ...state.limits, stageSize, dpr }, stage.getAttribute('style') ?? '', authority);
-}
-
-function isoLightMixing(state: LiveViewportState): boolean {
-  return !!state.nodes?.camera[0]?.closest('[data-hp-light-mixing]');
-}
-
-/** HA changes can be adopted during an ISO gesture while the scene pixels
- * come from a held image or the deliberately live light fade. */
-export function holdsHouseplanIsoScene(host: object): boolean {
-  const state = states.get(host);
-  return !!state && (state.raster?.hasActiveImage === true || isoLightMixing(state));
-}
-
 function paintMotion(host: LiveViewportHost, state: LiveViewportState, frame: LiveViewportFrame, force = false): void {
   const root = host.renderRoot;
   const limits = state.limits ??= host._liveViewportLimits?.() ?? {};
   const nodes = state.nodes ??= findViewportNodes(root);
-  const svg = rasterScene(host, state);
-  const input = svg && state.anchor && state.raster?.supports(svg, frame.view, state.anchor.coverage)
-    ? host._liveIsoRasterInput?.() : undefined;
-  state.frozenScene = !!input;
   state.anchor = paintLiveViewport(root, state.painted ??= frame, frame, state.anchor, {
     keepSceneLayer: true, keepMarkerLayer: host._renderProjection === 'iso', force, nodes, limits,
     sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip,
-    freezeScene: input, rasterDpr: svg?.ownerDocument.defaultView?.devicePixelRatio,
   });
-  if (input) {
-    state.raster!.paint(frame.view, frame.target ?? frame.view, input, state.anchor.frame.view, state.anchor.coverage);
-  } else {
-    state.raster?.pause(isoLightMixing(state));
-  }
 }
 
 /** Coalesce camera input into one lightweight paint per animation frame. */
@@ -574,8 +480,6 @@ export function commitHouseplanViewport(value: object, keepSceneLayer = false): 
   if (basis?.retained && state.painted && state.anchor && previous
     && nodes.camera.length === previous.camera.length && nodes.camera.every((node, i) => node === previous.camera[i])
     && nodes.floor.length === previous.floor.length && nodes.floor.every((node, i) => node === previous.floor[i])) {
-    const svg = rasterScene(host, state);
-    if (svg) configureCameraRaster(host, state, svg);
     paintMotion(host, state, current);
     return;
   }
@@ -592,30 +496,17 @@ export function commitHouseplanViewport(value: object, keepSceneLayer = false): 
     keepMarkerLayer: host._renderProjection === 'iso', authored: true,
     sceneExposureClip: host._modeSceneClip ?? undefined, nodes: state.nodes, limits: host._liveViewportLimits?.(),
   });
-  state.frozenScene = false;
-  const svg = rasterScene(host, state);
-  if (svg) {
-    configureCameraRaster(host, state, svg);
-    state.raster?.settle(current.view, state.anchor.coverage);
-  } else {
-    state.raster?.clear();
-  }
 }
 
 /** A compositor-owned surface can retire without a Lit update. */
 export function refreshHouseplanViewportNodes(host: object): void {
   const state = states.get(host);
   const root = (host as LiveViewportHost).renderRoot;
-  if (state && root) {
-    state.nodes = findViewportNodes(root);
-    const svg = rasterScene(host as LiveViewportHost, state);
-    if (svg) configureCameraRaster(host as LiveViewportHost, state, svg);
-  }
+  if (state && root) state.nodes = findViewportNodes(root);
 }
 
 export function disposeHouseplanViewport(host: object): void {
   const state = states.get(host);
   if (state?.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
-  state?.raster?.clear();
   states.delete(host);
 }

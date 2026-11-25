@@ -121,7 +121,7 @@ test('#1454 prepared frame is a bounded lossless runtime-cache payload, includin
   assert.equal(restored.union.value?.sourceFingerprint,frame.union.value?.sourceFingerprint);
   assert.deepEqual(restored.iso.wallBase,frame.iso.wallBase);
   assert.ok(restored.iso.wallBase.value?.paths.length,'persisted 2.5D masonry has paint');
-  const iso=await import('../test-build/iso-scene-render.js');
+  const iso=await import('../test-build/iso-scene-geometry.js');
   const cache=new Map([[restored.iso.key,iso.restoreIsoCache(restored.iso.value)]]);
   for(const rotation of [90,180,270]) {
     const scene=iso.resolveIsoScene({source:{key:restored.iso.key,build(){throw Error('cold iso rebuild')}},cache,cellCm:5,

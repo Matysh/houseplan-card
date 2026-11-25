@@ -81,13 +81,6 @@ export function isoWallMaterial(topColor: unknown, sideColor?: unknown, topOpaci
   };
 }
 
-/** CSS custom properties for the 2.5D stage style attribute. */
-export function isoWallMaterialVars(topColor: unknown, sideColor?: unknown, topOpacity = 1): string {
-  const m = isoWallMaterial(topColor, sideColor, topOpacity);
-  return `--iso-top-hi:${m.topHi};--iso-top-lo:${m.topLo};--iso-side-hi:${m.sideHi};`
-    + `--iso-side-mid:${m.sideMid};--iso-side-lo:${m.sideLo}`;
-}
-
 /** An adjustable tint over the original white materials. White is a no-op;
  * shading between frames, leaves and reveals remains visible. */
 export function isoOpeningMaterialVars(accent: unknown, opacity = 1): Record<string, string> {

@@ -59,7 +59,7 @@ class Plan3dOutput {
       this.request = 0;
       return;
     }
-    for (const view of this.views) this.queue(view);
+    for (const view of this.views) view.resume();
   };
 
   attach(view: Plan3dViewport): void { this.views.add(view); }
@@ -195,7 +195,7 @@ export class Plan3dViewport {
   private disposed = false;
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly failure: () => void,
-    private readonly onPaint: () => void) {
+    private readonly onPaint: () => void, private readonly onResume?: () => void) {
     const document = canvas.ownerDocument;
     const window = document.defaultView;
     const context = canvas.getContext('2d');
@@ -227,6 +227,12 @@ export class Plan3dViewport {
   present(frame: Plan3dFrame): void {
     if (this.disposed || this.frame === frame) return;
     this.frame = frame;
+    this.output.queue(this);
+  }
+
+  resume(): void {
+    if (this.disposed) return;
+    this.onResume?.();
     this.output.queue(this);
   }
 

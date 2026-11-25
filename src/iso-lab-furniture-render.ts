@@ -1,8 +1,7 @@
 import { nothing, svg } from 'lit';
 import type { FurnitureMesh } from './iso-lab-furniture';
-import type { isoFurnitureLightSampler } from './iso-wall-light';
 
-// Shared material for furniture and upstairs stairs: 35% less opaque.
+// Shared material for the furniture gallery: 35% less opaque.
 const materialOpacity = .65;
 
 export function furnitureShadow(mesh: FurnitureMesh, visualScale: number, blur = true) {
@@ -12,7 +11,7 @@ export function furnitureShadow(mesh: FurnitureMesh, visualScale: number, blur =
 
 /** Inert view paint: one translucent material, independent of Flat outline opacity. */
 export function renderIsoLabFurniture(mesh: FurnitureMesh, id: string, symbol: string,
-  color: string, visualScale: number, withShadow = true, sampleLight?: ReturnType<typeof isoFurnitureLightSampler>) {
+  color: string, visualScale: number, withShadow = true) {
   return svg`<g data-hp="decor" data-id=${id} data-kind="furniture" data-symbol=${symbol}
     data-hp-furniture-volume="glass" pointer-events="none" aria-hidden="true"
     color=${color} stroke-linejoin="round" stroke-linecap="round">
@@ -25,10 +24,6 @@ export function renderIsoLabFurniture(mesh: FurnitureMesh, id: string, symbol: s
         stroke-opacity=${.34*materialOpacity} stroke-width=${.7*visualScale}></path>
       <path d=${p.top} fill="none" stroke="#ffffff" stroke-opacity=${.4*materialOpacity}
         stroke-width=${.3*visualScale}></path>
-      ${sampleLight?.(p.lightPoint).map(({source,alpha}) => svg`<path
-        class="glow-spot ${source.entering ? 'is-entering' : ''} ${source.leaving ? 'is-leaving' : ''}"
-        d=${p.side + ' ' + p.top} fill=${source.color} fill-opacity=${alpha * .8 * materialOpacity}
-        stroke="none" style="mix-blend-mode:screen"></path>`)}
     </g>`)}
   </g>`;
 }

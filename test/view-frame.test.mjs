@@ -6,7 +6,7 @@ import {
   PLAN_ROTATION_STORAGE, presentationView, canonicalView, physicalPlanCamera, presentationViewport,
 } from '../test-build/view-frame.js';
 import { isoCameraFor, isoPlaneMatrix, projectPlanPoint, unprojectFloorPoint } from '../test-build/iso-projection.js';
-import { resolveIsoScene } from '../test-build/iso-scene-render.js';
+import { resolveIsoScene } from '../test-build/iso-scene-geometry.js';
 import { fitView } from '../test-build/logic.js';
 import { rotatePdfCommands, pdfCommandBounds } from '../test-build/pdf/pdf-layout.js';
 import { invalidCardRotation, rotationConfigValue } from '../test-build/card-editor-validation.js';

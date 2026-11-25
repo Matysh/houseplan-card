@@ -196,7 +196,7 @@ export function buildBundleManifest(bundle, fingerprint) {
     || /(?:^|\/)editor(?:-[^/]+)?\.js$/.test(path))
     && !localeRoots.includes(path) && !onboardingRoots.includes(path));
   const isometricRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'isometric'
-    || path.includes('plan-3d-runtime-') || path.includes('iso-scene-render-'));
+    || path.includes('plan-3d-runtime-'));
   const furnitureArtRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'furniture-art');
   const pdfRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'pdf'
     || path.includes('pdf-export-'));

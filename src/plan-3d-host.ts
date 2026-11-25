@@ -42,7 +42,7 @@ export class Plan3dHost {
       this.viewport = new Plan3dViewport(canvas, () => this.fail(), () => {
         if (canvas.hasAttribute('data-hp-plan-3d-ready') || !this.world.loading)
           onPaint(new Set(this.markers.map(marker => marker.id)), this.outlineMembers);
-      });
+      }, () => this.draw());
     } catch (error) {
       this.world.dispose();
       throw error;

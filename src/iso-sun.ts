@@ -1,14 +1,12 @@
 /**
  * #649 п.2 (docs/SUN.md «2.5D», docs/ISOMETRIC.md Stage 6): soft window light
- * along the real sun in the 2.5D View. Flat keeps `computeSunRays()` untouched;
- * this is the only light renderer of the 2.5D floor.
+ * along the real sun. The 3D light field uses the resulting world-space footprint.
  *
  * Numbers are the designer lab (sketch 07, `lightMode: 'sun'`, slider 72 %)
  * converted from its SVG units into H, the 2.5D wall height (lab H = 218.8).
  * The same exterior windows, wall faces, room contours and occluders as the
  * Flat rays feed it, so both views agree on WHERE light can fall.
  */
-import { svg, nothing, type TemplateResult } from 'lit';
 import { sunDirOnPlan, windowLit, windowWallInfo, type SunRoom, type SunWindow } from './sun';
 import { directionalOccluders, floorMinusBodies, geometryOuterRings } from './physical-geometry';
 import { intersection } from 'polyclip-ts';
@@ -16,21 +14,6 @@ import { resolveSunAccess, type SunAccess } from './sun-access';
 
 /** Lab `min(910, max(215, 408·(0.55 + 1.4·(1 − e/90)^1.6)))` in wall heights. */
 export const ISO_SUN_LENGTH = Object.freeze({ base: 408 / 218.8, min: 215 / 218.8, max: 910 / 218.8 });
-export const ISO_SUN_BLUR = 14 / 218.8;
-export const ISO_SUN_STREAK = Object.freeze({ inset: 4 / 218.8, width: 4 / 218.8, reach: 0.85 });
-export const ISO_SUN_SILL = Object.freeze({ width: 16 / 218.8, blur: 5 / 218.8, opacity: 0.6 });
-
-export type IsoSunStop = readonly [offset: number, color: string, opacity: number];
-export const ISO_SUN_STOPS_DARK_FLOOR: readonly IsoSunStop[] = Object.freeze([
-  [0, '#ffe9b4', 0.62], [0.3, '#fff0cb', 0.38], [0.65, '#fff6e0', 0.12], [1, '#fff8e8', 0],
-]);
-export const ISO_SUN_STOPS_LIGHT_FLOOR: readonly IsoSunStop[] = Object.freeze([
-  [0, '#e2b95e', 0.46], [0.3, '#e9c97e', 0.3], [0.65, '#f0dcaa', 0.1], [1, '#f4e6c4', 0],
-]);
-export const ISO_SUN_STREAK_STOPS: readonly IsoSunStop[] = Object.freeze([
-  [0, '#ecc46a', 0.8], [0.55, '#f1d48f', 0.35], [1, '#f7e6bf', 0],
-]);
-
 /** Depth of the light along the inward window normal, in plan units. */
 export function isoSunDepth(elevation: number, wallHeight: number): number {
   const e = Math.min(90, Math.max(0, elevation));
@@ -136,62 +119,4 @@ export function computeIsoSunBeams(input: IsoSunInput): IsoSunBeam[] {
 
   }
   return out;
-}
-
-const pts = (ring: readonly (readonly number[])[]): string => ring.map((p) => `${p[0]},${p[1]}`).join(' ');
-const stopsSvg = (stops: readonly IsoSunStop[]) => stops.map(([o, c, a]) => svg`<stop
-  offset="${o}" stop-color="${c}" stop-opacity="${a}"></stop>`);
-
-/**
- * The 2.5D light layer. It sits where the Flat `.sunlayer` sits (floor group,
- * above room fills and Glow) and keeps its fade classes.
- */
-export function renderIsoSunWash(
-  beams: readonly IsoSunBeam[], wallHeight: number, out: boolean, opacity: number,
-): TemplateResult | typeof nothing {
-  if (!beams.length) return nothing;
-  const blur = ISO_SUN_BLUR * wallHeight;
-  const sillBlur = ISO_SUN_SILL.blur * wallHeight;
-  const inset = ISO_SUN_STREAK.inset * wallHeight;
-  return svg`<defs>
-      <filter id="hp-iso-sun-blur" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
-        <feGaussianBlur stdDeviation="${blur}"></feGaussianBlur></filter>
-      <filter id="hp-iso-sill-blur" x="-50%" y="-200%" width="200%" height="500%" color-interpolation-filters="sRGB">
-        <feGaussianBlur stdDeviation="${sillBlur}"></feGaussianBlur></filter>
-      ${beams.map((beam, i) => {
-        const mx = (beam.a[0] + beam.b[0]) / 2;
-        const my = (beam.a[1] + beam.b[1]) / 2;
-        const ex = mx + beam.normal[0] * beam.depth;
-        const ey = my + beam.normal[1] * beam.depth;
-        return svg`<linearGradient id="hp-iso-sun-${i}" gradientUnits="userSpaceOnUse"
-            x1="${mx}" y1="${my}" x2="${ex}" y2="${ey}">
-            ${stopsSvg(beam.lightFloor ? ISO_SUN_STOPS_LIGHT_FLOOR : ISO_SUN_STOPS_DARK_FLOOR)}</linearGradient>
-          ${beam.lightFloor ? svg`<linearGradient id="hp-iso-sun-edge-${i}" gradientUnits="userSpaceOnUse"
-            x1="${mx}" y1="${my}" x2="${mx + (ex - mx) * ISO_SUN_STREAK.reach}" y2="${my + (ey - my) * ISO_SUN_STREAK.reach}">
-            ${stopsSvg(ISO_SUN_STREAK_STOPS)}</linearGradient>` : nothing}
-          <clipPath id="hp-iso-sun-clip-${i}">${(beam.clipPolys ?? [beam.clip]).map(poly => svg`<polygon points="${pts(poly)}"></polygon>`)}</clipPath>`;
-      })}
-    </defs>
-    <g class="sunlayer iso-sunwash hp-view-only-layer ${out ? 'out' : ''}" opacity="${opacity}">
-      ${beams.map((beam, i) => {
-        const length = Math.hypot(beam.b[0] - beam.a[0], beam.b[1] - beam.a[1]) || 1;
-        const streaks = beam.lightFloor ? [inset / length, 1 - inset / length] : [];
-        return svg`<g class="iso-sunbeam" data-opening=${beam.openingId} data-floor=${beam.lightFloor ? 'light' : 'dark'}
-            clip-path="url(#hp-iso-sun-clip-${i})">
-          ${beam.polys.map((poly) => svg`<polygon class="iso-sun-fill" points="${pts(poly)}"
-            fill="url(#hp-iso-sun-${i})" filter="url(#hp-iso-sun-blur)"></polygon>`)}
-          ${streaks.map((t) => {
-            const x = beam.a[0] + (beam.b[0] - beam.a[0]) * t;
-            const y = beam.a[1] + (beam.b[1] - beam.a[1]) * t;
-            return svg`<line class="iso-sun-streak" x1="${x}" y1="${y}"
-              x2="${x + beam.shift[0] * ISO_SUN_STREAK.reach}" y2="${y + beam.shift[1] * ISO_SUN_STREAK.reach}"
-              stroke="url(#hp-iso-sun-edge-${i})" stroke-width="${ISO_SUN_STREAK.width * wallHeight}"
-              stroke-linecap="round"></line>`;
-          })}
-          <line class="iso-sun-sill" x1="${beam.a[0]}" y1="${beam.a[1]}" x2="${beam.b[0]}" y2="${beam.b[1]}"
-            stroke="${beam.lightFloor ? '#efd493' : '#fff3cf'}" stroke-width="${ISO_SUN_SILL.width * wallHeight}"
-            opacity="${ISO_SUN_SILL.opacity}" filter="url(#hp-iso-sill-blur)"></line>
-        </g>`;
-      })}
-    </g>`;
 }

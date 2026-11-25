@@ -1,10 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { clipIsoOpeningDepthQueue, composeIsoTranslucentStructure } from '../test-build/iso-lab-visibility.js';
 import { buildIsoOpeningBasis, projectIsoOpening, projectIsoOpeningStructure, isoOpeningBounds } from '../test-build/iso-openings.js';
-import { buildIsoWallGeometry } from '../test-build/iso-walls.js';
-import { buildIsoWallDepthQueue } from '../test-build/iso-scene-geometry.js';
-import { projectPlanPoint } from '../test-build/iso-projection.js';
 import { resolvedOpeningAmount, resolveOpeningVisual } from '../test-build/opening-features.js';
 
 const cam=(yaw=35)=>({rotDeg:yaw,tiltDeg:50,xyScale:1,zScale:1,origin:[0,0],floorScaleY:Math.sin(40*Math.PI/180)});
@@ -148,18 +144,6 @@ test('#1451 a glazed door keeps the same opening, leaf motion and frame-mounted 
       projectIsoOpening(basis, .5, cam(), true));
   }
 });
-const area=d=>{const parts=d.match(/M[^Z]+Z/g)||[];return parts.reduce((sum,s)=>{const n=s.match(/-?\d+(?:\.\d+)?/g).map(Number);let a=0;for(let i=0;i<n.length;i+=2){const j=(i+2)%n.length;a+=n[i]*n[j+1]-n[j]*n[i+1];}return sum+a/2;},0);};
-
-const contains=(d,x,y)=>{
-  let inside=false;
-  for(const part of d.match(/M[^Z]+Z/g)||[]) {
-    const n=part.match(/-?\d+(?:\.\d+)?/g).map(Number);
-    for(let i=0,j=n.length-2;i<n.length;j=i,i+=2)
-      if((n[i+1]>y)!==(n[j+1]>y)&&x<(n[j]-n[i])*(y-n[i+1])/(n[j+1]-n[i+1])+n[i])inside=!inside;
-  }
-  return inside;
-};
-
 test('#1451 detailed swing gates open 90 degrees with fixed hinges; baseline and sliding motion are preserved',()=>{
   const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
   for(const angle of [0,90,27])for(const side of [-1,1])for(const flipH of [false,true]) {
@@ -222,178 +206,6 @@ test('#1451 detailed tilt sash rotates rigidly about its lower edge with frame, 
   }
 });
 
-test('#1451 degenerate slab corners do not cancel visible wall and door regions',()=>{
-  const c=cam(0);
-  const surface=(id,points)=>({layer:'opening',depth:0,surface:{id,type:'door',sourceIndex:0,
-    kind:'leaf-front',material:'matte-leaf',points,
-    d:'M '+points.map(p=>projectPlanPoint(p.point,p.z,c).join(' ')).join(' L ')+' Z'}});
-  const back=surface('back',[{point:[0,20],z:0},{point:[100,20],z:0},{point:[100,20],z:84},{point:[0,20],z:84}]);
-  for(const triangular of [false,true]) {
-    const points=[{point:[40,50],z:0},{point:[120,50],z:0},
-      {point:[120,50],z:84},...(!triangular?[{point:[40,50],z:84}]:[])];
-    const normal=clipIsoOpeningDepthQueue([back,surface('clean',points)],c).find(e=>e.surface.id==='back').surface.d;
-    const duplicate=clipIsoOpeningDepthQueue([back,surface('duplicate',[...points,points[0]])],c).find(e=>e.surface.id==='back').surface.d;
-    for(let x=1.23;x<100;x+=3)for(let y=-50.17;y<12;y+=3)
-      assert.equal(contains(duplicate,x,y),contains(normal,x,y),`coverage at ${x},${y}, triangle=${triangular}`);
-  }
-});
-
-test('#1451 visibility removes only nearer portions, independent of painter order',()=>{
-  const c=cam(0);
-  const face=(id,y,x0,x1)=>{
-    const points=[{point:[x0,y],z:0},{point:[x1,y],z:0},{point:[x1,y],z:84},{point:[x0,y],z:84}];
-    return {layer:'opening',depth:y,surface:{id,type:'door',sourceIndex:0,kind:'leaf-front',material:'matte-leaf',points,
-      cameraDepth:y,d:'M '+points.map(p=>projectPlanPoint(p.point,p.z,c).join(' ')).join(' L ')+' Z'}};
-  };
-  const back=face('back',20,0,80),front=face('front',50,40,120);
-  const forward=clipIsoOpeningDepthQueue([front,back],c);
-  assert.ok(Math.abs(Math.abs(area(forward.find(e=>e.surface.id==='front').surface.d))-Math.abs(area(front.surface.d)))<.02);
-  assert.ok(Math.abs(area(forward.find(e=>e.surface.id==='back').surface.d))<Math.abs(area(back.surface.d)));
-  const reverse=clipIsoOpeningDepthQueue([back,front],c);
-  assert.deepEqual(forward.map(e=>[e.surface.id,e.surface.d]).sort(),reverse.map(e=>[e.surface.id,e.surface.d]).sort());
-});
-
-test('#1528 crossing door and wall faces keep a single straight depth boundary in perspective', () => {
-  const camera = { ...cam(0), perspective: { center: [100,100], rate: .002 } };
-  const face = (id, from, to) => {
-    const points = [{point:from,z:0},{point:to,z:0},{point:to,z:120},{point:from,z:120}];
-    return {layer:'opening',depth:0,surface:{id,type:'door',sourceIndex:0,
-      kind:'leaf-front',material:'matte-leaf',points,
-      d:'M '+points.map(p=>projectPlanPoint(p.point,p.z,camera).join(' ')).join(' L ')+' Z'}};
-  };
-  const leaf = face('leaf',[0,48],[200,248]);
-  const wall = face('wall',[0,248],[200,48]);
-  const queue = [wall,leaf];
-  const clipped = clipIsoOpeningDepthQueue(queue,camera);
-  const fragments = composeIsoTranslucentStructure(queue,camera,1,{side:1,top:1},[]);
-  for (const [index,entry] of queue.entries()) {
-    const {id} = entry.surface;
-    const regular = clipped.find(e=>e.surface.id===id)?.surface.d ?? '';
-    const layered = fragments.filter(fragment=>fragment.index===index).map(fragment=>fragment.d).join(' ');
-    // Both vertical planes intersect at plan [100,148] and project to one
-    // vertical line. Select pixels well inside both projected faces.
-    for (const x of [94,98,102,106]) for (const y of [23,36,51,66,82]) {
-      assert.ok(queue.every(e=>contains(e.surface.d,x,y)));
-      const nearer = id === (x > 100 ? 'leaf' : 'wall');
-      assert.equal(contains(regular,x,y),nearer,`${id} at ${x},${y}`);
-      assert.equal(contains(layered,x,y),nearer,`layered ${id} at ${x},${y}`);
-    }
-  }
-});
-
-test('#1529 an opaque wall cut hides the overlapping upper corner of a window pane', () => {
-  const camera = { ...cam(0), perspective: { center: [100,100], rate: .002 } };
-  const height = 100;
-  const walls = buildIsoWallGeometry([[[[0,210],[90,210],[90,322],[0,322]]]],camera,height);
-  const points = [{point:[0,242],z:17},{point:[200,48],z:17},
-    {point:[200,48],z:93},{point:[0,242],z:93}];
-  const pane = {id:'pane',sourceIndex:0,type:'window',kind:'window-glass',material:'glass-side',
-    points,depth:0,d:'M '+points.map(p=>projectPlanPoint(p.point,p.z,camera).join(' ')).join(' L ')+' Z'};
-  const queue = buildIsoWallDepthQueue(walls,[pane],true);
-  const cut = walls.topFaces[0].d;
-  const opaque = clipIsoOpeningDepthQueue(queue,camera).find(e=>e.layer==='opening')?.surface.d ?? '';
-  const paneIndex = queue.findIndex(e=>e.layer==='opening');
-  const glass = top => composeIsoTranslucentStructure(queue,camera,1,{side:0,top},[])
-    .filter(fragment=>fragment.index===paneIndex).map(fragment=>fragment.d).join(' ');
-  const opaqueCut = glass(1), translucentCut = glass(.5);
-  const overlap = projectPlanPoint([15,227.45],91,camera);
-  const outside = projectPlanPoint([130,115.9],65,camera);
-  assert.ok(contains(pane.d,...overlap) && contains(cut,...overlap));
-  assert.ok(contains(pane.d,...outside) && !contains(cut,...outside));
-  assert.ok(!contains(opaque,...overlap) && !contains(opaqueCut,...overlap));
-  assert.ok(contains(translucentCut,...overlap));
-  assert.ok(contains(opaque,...outside) && contains(opaqueCut,...outside));
-});
-
-test('#1541 a clipped opening keeps a clean outer contour and a real hole', () => {
-  const camera = cam(0);
-  const lift = Math.sin(camera.tiltDeg * Math.PI / 180);
-  const face = (id, type, kind, material, corners, z) => ({ layer: 'opening', depth: z, surface: {
-    id, type, kind, material, sourceIndex: 0, d: id,
-    points: corners.map(([x, y]) => ({ point: [x, (y + z * lift) / camera.floorScaleY], z })),
-  } });
-  const cover = face('cover', 'door', 'leaf-front', 'matte-leaf', [[35,30],[65,30],[65,70],[35,70]], 20);
-  for (const [type, kind, material] of [
-    ['window', 'window-glass', 'glass-side'],
-    ['window', 'window-sill', 'light-sill'],
-    ['window', 'window-sash-top', 'light-frame'],
-    ['door', 'leaf-front', 'matte-leaf'],
-  ]) {
-    const sheet = face(kind, type, kind, material, [[0,0],[100,0],[100,100],[0,100]], 0);
-    const queue = [sheet, cover];
-    const opaque = clipIsoOpeningDepthQueue(queue, camera).find(entry => entry.surface.id === kind).surface.d;
-    const translucent = composeIsoTranslucentStructure(queue, camera, 1, { side:.5, top:.5 }, [])
-      .find(fragment => fragment.index === 0).d;
-    for (const d of [opaque, translucent]) {
-      assert.equal(d.match(/M/g).length, 2, kind + ' has only its boundary and the occluded hole');
-      assert.equal(Math.abs(area(d)), 8800, kind);
-      assert.ok(contains(d, 20, 50) && contains(d, 80, 50), kind);
-      assert.ok(!contains(d, 50, 50), kind);
-    }
-  }
-});
-
-test('#1543 oblique T-junctions around hardware do not open seams in a leaf', () => {
-  const camera = cam(0);
-  const lift = Math.sin(camera.tiltDeg * Math.PI / 180);
-  const offset = 43.2486;
-  const angle = .17;
-  const turn = ([x,y], radians = angle) => [
-    x*Math.cos(radians)-y*Math.sin(radians)+offset,
-    x*Math.sin(radians)+y*Math.cos(radians)+offset*.57,
-  ];
-  const face = (id, kind, corners, z, radians) => ({ layer: 'opening', depth: z, surface: {
-    id, type: 'door', kind, material: 'matte-leaf', sourceIndex: 0, d: id,
-    points: corners.map(corner => {
-      const [x,y] = turn(corner, radians);
-      return { point: [x, (y+z*lift)/camera.floorScaleY], z };
-    }),
-  } });
-  const queue = [
-    face('leaf', 'leaf-front', [[-45,-50],[45,-50],[45,50],[-45,50]], 0),
-    face('handle-base', 'door-handle', [[11,-7],[19,-7],[19,4],[11,4]], 20),
-    face('handle-lever', 'door-handle', [[4,-2],[14,-2],[14,2],[4,2]], 21, angle+.14),
-  ];
-  const opaque = clipIsoOpeningDepthQueue(queue, camera, 200).find(entry => entry.surface.id === 'leaf').surface.d;
-  const translucent = composeIsoTranslucentStructure(queue, camera, 200, {side:.4,top:.5}, [])
-    .find(fragment => fragment.index === 0).d;
-  for (const d of [opaque,translucent]) {
-    assert.equal(d.match(/M/g).length, 2, 'the outer contour and the hardware cutout');
-    assert.ok(contains(d,...turn([-30,20])) && contains(d,...turn([25,-20])));
-    assert.ok(!contains(d,...turn([16,0])) && !contains(d,...turn([6,0],angle+.14)));
-  }
-});
-
-test('#1478 a disjoint foreground face with overlapping bounds leaves one uncut wall polygon', () => {
-  const camera = cam(0);
-  const face = (id, corners, z) => ({ layer: 'opening', depth: z, surface: {
-    id, type: 'door', sourceIndex: 0, kind: 'leaf-front', material: 'matte-leaf', d: id,
-    points: corners.map(([x, y]) => ({ point: [x, (y + z * Math.sin(50 * Math.PI / 180)) / camera.floorScaleY], z })),
-  } });
-  const wall = face('wall', [[0, 0], [100, 0], [0, 100]], 0);
-  const foreground = face('foreground', [[90, 60], [130, 60], [90, 130]], 10);
-  const result = clipIsoOpeningDepthQueue([wall, foreground], camera).find(entry => entry.surface.id === 'wall');
-  assert.equal(result.surface.d.match(/M/g).length, 1);
-  assert.equal(area(result.surface.d), 5000);
-});
-
-test('#1451 doors, gate ribs and handles stay finite at all quarter views and motion states',()=>{
-  const started=performance.now();let rendered=0;
-  for(const type of ['door','gate']) for(const yaw of [35,125,215,305]) for(const amount of [0,.4,1]) {
-    const basis=buildIsoOpeningBasis(input({type})),before=JSON.stringify(basis),c=cam(yaw);
-    const panels=projectIsoOpening(basis,amount,c,true);
-    const surfaces=[...projectIsoOpeningStructure(basis,c,true),...panels.flatMap(p=>p.surfaces)].map(s=>({...s,id:type,type,sourceIndex:0}));
-    assert(surfaces.some(s=>s.kind==='door-handle'));
-    assert.equal(surfaces.some(s=>s.kind==='gate-rail'),type==='gate');
-    const walls=buildIsoWallGeometry([[[[470,220],[490,220],[490,310],[470,310]]]],c);
-    const entries=clipIsoOpeningDepthQueue(buildIsoWallDepthQueue(walls,surfaces,true),c);
-    assert(entries.every(e=>!/(NaN|Infinity)/.test(e.layer==='opening'?e.surface.d:e.face.d)));
-    assert.equal(JSON.stringify(basis),before);
-    rendered+=entries.length;
-  }
-  console.log(JSON.stringify({refinementCases:24,renderedPaths:rendered,milliseconds:Math.round(performance.now()-started)}));
-});
-
 test('#1451 simple window has one glass surface per sash, no duplicate fixed rails, reveal above sill',()=>{
   const basis=buildIsoOpeningBasis(input({type:'window'}));
   const structure=projectIsoOpeningStructure(basis,cam(),true);
@@ -435,38 +247,6 @@ test('#1451 only internal side hinges get a stationary post, independently of mo
   const small = buildIsoOpeningBasis(input({type:'window',length:20}));
   assert(projectIsoOpening(small,1,cam(),true).every(p=>
     p.surfaces.some(s=>s.kind==='window-glass') && !p.surfaces.some(s=>s.kind==='window-handle')));
-});
-
-test('#1451 coplanar reveal replaces only the upper cut face, never wall below sill',()=>{
-  const c=cam(),walls=buildIsoWallGeometry([[[[0,0],[10,0],[10,100],[0,100]]]],c);
-  const points=[{point:[10,30],z:32},{point:[10,70],z:32},{point:[10,70],z:84},{point:[10,30],z:84}];
-  const reveal={id:'window',type:'window',sourceIndex:0,kind:'jamb-reveal',material:'reveal',points,
-    d:'M '+points.map(p=>projectPlanPoint(p.point,p.z,c).join(' ')).join(' L ')+' Z',depth:100};
-  const output=clipIsoOpeningDepthQueue(buildIsoWallDepthQueue(walls,[reveal],true),c);
-  const wall=output.find(e=>e.layer==='wall-side'&&e.face.edge===1);
-  assert.ok(wall);
-  const low=projectPlanPoint([10,50],16,c),high=projectPlanPoint([10,50],60,c);
-  assert(contains(wall.face.d,...low),'wall below sill remains');
-  assert(!contains(wall.face.d,...high),'cut wall does not overpaint upper reveal');
-  assert(contains(output.find(e=>e.layer==='opening').surface.d,...high),'upper reveal remains visible');
-});
-
-test('#1451 neighbouring panes tint only the rear sill, independently of painter slots and camera turn',()=>{
-  for(const yaw of [35,125,215,305]) {
-    const c=cam(yaw),surface=(id,kind,material,points)=>({layer:'opening',depth:0,surface:{id,type:'window',sourceIndex:0,
-      kind,material,points,d:'M '+points.map(p=>projectPlanPoint(p.point,p.z,c).join(' ')).join(' L ')+' Z'}});
-    const sill=surface('sill','window-sill','light-sill',[[0,-5],[100,-5],[100,5],[0,5]].map(point=>({point,z:20})));
-    const panes=[0,50].map(x=>surface('glass'+x,'window-glass','glass-side',
-      [{point:[x,0],z:20},{point:[x+50,0],z:20},{point:[x+50,0],z:80},{point:[x,0],z:80}]));
-    for(const input of [[sill,...panes],[panes[0],sill,panes[1]],[...panes,sill]]) {
-      const output=clipIsoOpeningDepthQueue(input,c),side=Math.sign(Math.cos(yaw*Math.PI/180));
-      for(const x of [25,75])for(const near of [false,true]) {
-        const p=projectPlanPoint([x,(near?1:-1)*side*3],20,c);
-        const top=output.filter(e=>contains(e.surface.d,...p)).at(-1);
-        assert.equal(top?.surface.material,near?'light-sill':'glass-side',`yaw=${yaw}, x=${x}, near=${near}`);
-      }
-    }
-  }
 });
 
 test('#1451 entity-driven window, door and gate complete close-open-close cycles without changing saved geometry',()=>{

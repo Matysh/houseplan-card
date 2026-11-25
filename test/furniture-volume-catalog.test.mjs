@@ -5,31 +5,10 @@ import {parseVolumeSvg} from '../scripts/generate-furniture-volume.mjs';
 import {furnitureParts,furnitureMesh,furnitureVolume,furnitureVolumeFaces} from '../test-build/iso-lab-furniture.js';
 import {FURNITURE_VOLUME_RUNTIME} from '../test-build/furniture-volume-runtime.js';
 import {projectPlanPoint} from '../test-build/iso-projection.js';
-import {furnitureOcclusion} from '../test-build/iso-lab-visibility.js';
 await FURNITURE_VOLUME_RUNTIME.ensure();
 const pack=JSON.parse(fs.readFileSync(new URL('../assets/furniture/houseplan-0.4.1/pack.json',import.meta.url)));
 const camera={rotDeg:35,tiltDeg:50,xyScale:1,zScale:1,origin:[0,0],floorScaleY:Math.sin(40*Math.PI/180)};
 const area=points=>points.reduce((s,a,i)=>{const b=points[(i+1)%points.length];return s+a[0]*b[1]-b[0]*a[1];},0)/2;
-
-test('A wall directly behind every catalog footprint reveals the body; a wall in front masks it',()=>{
-  for (const rotDeg of [35,125,215,305]) {
-    const view={...camera,rotDeg};
-    const forward=Math.sign(Math.cos(rotDeg*Math.PI/180));
-    function wall(y) {
-      const height=105;
-      const points=[[-1500,0],[1500,0],[1500,height],[-1500,height]]
-        .map(([x,z])=>projectPlanPoint([x,y],z,view));
-      return [{layer:'wall-side',face:{points,height}}];
-    }
-    for (const symbol of pack.symbols) {
-      const shape={symbol:symbol.id,x:.25,y:.40,w:symbol.width_cm/1000,h:symbol.depth_cm/1000};
-      const mesh=furnitureVolume(shape,1000,1000,view);
-      const mid=(shape.y+shape.h/2)*1000, offset=forward*(shape.h*500+4);
-      assert.equal(furnitureOcclusion(wall(mid-offset),view,mesh.footprint,mesh.height).clip,null,symbol.id+' rear '+rotDeg);
-      assert.ok(furnitureOcclusion(wall(mid+offset),view,mesh.footprint,mesh.height).clip !== null,symbol.id+' front '+rotDeg);
-    }
-  }
-});
 
 test('All 60 models survive camera turns, both mirrors and nonuniform sizing without mutating decor',()=>{
  for(const s of pack.symbols)for(const yaw of [35,125,215,305])for(const flip_h of [false,true])for(const flip_v of [false,true])for(const aspect of [1,1.6]){

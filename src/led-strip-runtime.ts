@@ -679,7 +679,7 @@ export function renderLedLayerFor(
 }
 
 export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean,
-  capture?: (source: import('./iso-wall-light').IsoWallLightSource) => void): TemplateResult {
+  capture?: (source: import('./plan-3d-light-field').PlanLightFieldSource) => void): TemplateResult {
   if (host.isConnected === false) return svg`` as unknown as TemplateResult;
   const frame = ledFrameFor(host, space, spaceGlow);
   const module = frame.scene && (fieldWanted(frame.views) || field?.hasLedField(host))

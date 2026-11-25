@@ -247,7 +247,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       facadeModuleId: '/repo/src/houseplan-ha-card-entry.ts',
       imports: ['shared.js'], dynamicImports: [
         'houseplan-assets/editor.js', 'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
-        'houseplan-assets/de-HASH.js', 'houseplan-assets/iso-scene-render-HASH.js',
+        'houseplan-assets/de-HASH.js', 'houseplan-assets/plan-3d-runtime-HASH.js',
         'houseplan-assets/furniture-plan-art.generated-HASH.js',
         'houseplan-assets/pdf-export-HASH.js', 'houseplan-assets/moon-runtime-HASH.js',
         'houseplan-assets/led-strip-runtime-HASH.js', 'houseplan-assets/led-strip-editor-HASH.js',
@@ -281,10 +281,10 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       code: 'German locale', isEntry: false, imports: [], dynamicImports: [],
       modules: { '/repo/src/i18n/de.ts': {} },
     },
-    'houseplan-assets/iso-scene-render-HASH.js': {
-      type: 'chunk', fileName: 'houseplan-assets/iso-scene-render-HASH.js',
+    'houseplan-assets/plan-3d-runtime-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/plan-3d-runtime-HASH.js',
       code: 'isometric runtime', isEntry: false, imports: ['shared.js'], dynamicImports: [],
-      modules: { '/repo/src/iso-scene-render.ts': {} },
+      modules: { '/repo/src/plan-3d-runtime.ts': {} },
     },
     'houseplan-assets/pdf-export-HASH.js': {
       type: 'chunk', fileName: 'houseplan-assets/pdf-export-HASH.js',
@@ -332,7 +332,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
   ]);
   assert.deepEqual(manifest.lazyLocaleFiles, ['houseplan-assets/de-HASH.js']);
-  assert.deepEqual(manifest.lazyIsometricFiles, ['houseplan-assets/iso-scene-render-HASH.js']);
+  assert.deepEqual(manifest.lazyIsometricFiles, ['houseplan-assets/plan-3d-runtime-HASH.js']);
   assert.deepEqual(manifest.lazyFurnitureArtFiles, ['houseplan-assets/furniture-plan-art.generated-HASH.js']);
   assert.deepEqual(manifest.lazyPdfFiles, ['houseplan-assets/pdf-export-HASH.js']);
   // #661 AC8: the moon (math, art, template) is its own lazy graph, never initial.
@@ -348,11 +348,11 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
     'houseplan-assets/de-HASH.js', 'houseplan-assets/editor.js',
     'houseplan-assets/furniture-plan-art.generated-HASH.js',
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
-    'houseplan-assets/iso-scene-render-HASH.js',
     'houseplan-assets/led-strip-editor-HASH.js',
     'houseplan-assets/led-strip-runtime-HASH.js',
     'houseplan-assets/moon-runtime-HASH.js',
     'houseplan-assets/pdf-export-HASH.js',
+    'houseplan-assets/plan-3d-runtime-HASH.js',
   ]);
   // Этот тест про РАЗДЕЛЕНИЕ графов, а не про их размеры: потолки ленивых
   // графов (#593) задаются по самой фикстуре, чтобы она не проверяла лишнего.

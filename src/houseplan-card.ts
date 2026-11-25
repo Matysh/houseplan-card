@@ -315,14 +315,13 @@ import {
   CameraTransitionController, sameCameraState,
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
 } from './viewport-transition'; import { measuredCardHeaderHeight, rawCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
-import type { IsoRasterInput } from './iso-camera-raster';
 import {
   PlanTapGestureController, roomFitPlanTarget, roomFitClampFrame,
   roomFitPlanBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
   type RoomFitGestureCandidate,
 } from './room-fit';
 import type { FurniturePlacementPress } from './furniture-placement-press';
-import { authoredHouseplanSceneViewport, authoredHouseplanViewport, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
+import { authoredHouseplanViewport, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
 import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
@@ -347,7 +346,7 @@ import {
 } from './iso-projection';
 import { renderIsoPerspectiveFloor } from './iso-perspective-floor';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
-import type { IsoWallLightSource } from './iso-wall-light';
+import type { PlanLightFieldSource } from './plan-3d-light-field';
 import {acceptedViewFrame, canonicalPhysicalCamera, hasMeasuredViewSize, physicalViewCamera, presentedView, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
 import { furnitureParts, tvCabinetSurfaceCm } from './iso-lab-furniture';
 import { tvCabinet, tvOnCabinet } from './tv-mount';
@@ -418,7 +417,7 @@ import { ViewRuntimes, type ViewRuntimeHost } from './view-runtimes';
 import { renderHeaderActions, renderHiddenDevicesToggle } from './header-menu';
 import { LazyChromeTooltips } from './chrome-tooltip-lazy';
 import { HiddenDevicePreference, HiddenDeviceRoster, hiddenDevicePreferenceKey, hiddenDeviceStorage } from './hidden-device-visibility';
-import { isoWallMaterialVars, isoOpeningMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
+import { parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
 import {
   renderIsoLabelFloorShadow, renderIsoMarkerFloorShadow, type IsoFloorShadow,
 } from './iso-floor-shadows';
@@ -9212,12 +9211,6 @@ export class HouseplanCard extends LitElement {
     if (motion?.reason === 'wheel') return this._presentationView(motion.to.viewBox, motion.to.zoom);
     return undefined;
   }
-  private _liveIsoRasterInput(): IsoRasterInput | undefined {
-    if (this._mode !== 'view' || this._modeTransitionBusy || this._isoFloorCamera?.perspective) return undefined;
-    if (this._cameraTransition.active && this._cameraTransition.state?.reason === 'wheel') return 'wheel';
-    if (this._pinchStart) return 'pinch';
-    if (this._panLock === 'pan') return 'pan';
-  }
   private _liveViewportLimits() {
     const size = this._lastValidStageSize;
     const pixelArea = size ? size[0] * size[1] * (this.ownerDocument.defaultView?.devicePixelRatio || 1) ** 2 : undefined;
@@ -13497,7 +13490,7 @@ export class HouseplanCard extends LitElement {
   private _renderGlowLayer(
     space: SpaceModel, disp: SpaceDisplay,
     view = this._viewOr(this._baseVb()),
-    capture?: (sources: readonly IsoWallLightSource[]) => void,
+    capture?: (sources: readonly PlanLightFieldSource[]) => void,
   ): TemplateResult {
     const colors = this._fillColors;
     const defaultR = (this._glowRadiusCm / this._cellCm) * this._gridPitch;
@@ -14095,7 +14088,7 @@ export class HouseplanCard extends LitElement {
     this._adoptViewPlane(isoScene?.camera ?? null);
     let view = this._authoredView(this._viewOr(this._baseVb(projection, isoScene)), projection);
     let isoFrame: ReturnType<typeof import('./plan-3d-runtime').preparePlan3dFrame> | null = null;
-    const currentWallLights: IsoWallLightSource[] = [];
+    const currentWallLights: PlanLightFieldSource[] = [];
     this._plan3dPresentation = undefined;
     this._startup3dSource = undefined;
     this._flatExportScene = undefined;
@@ -14141,7 +14134,6 @@ export class HouseplanCard extends LitElement {
       view = this._authoredView(this._viewOr(this._baseVb('flat', null)), 'flat');
     }
     const spatial = isoFrame?.layers.structural === true;
-    const sceneView = iso ? authoredHouseplanSceneViewport(this, view) : view;
     let sun3d: readonly import('./iso-sun').IsoSunBeam[] = [];
     if (iso) this._renderSunRays(space, beams => { sun3d = beams; });
     if (isoScene && isoFrame?.layers.structural && isoRuntime) {
@@ -14520,7 +14512,7 @@ export class HouseplanCard extends LitElement {
       const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);
       return !!marker && radarMarkerLiveInSpace(marker, this._space);
     });
-    const perspectiveSize = this._modeSceneSize ?? this._lastValidStageSize ?? [sceneView.w, sceneView.h] as const;
+    const perspectiveSize = this._modeSceneSize ?? this._lastValidStageSize ?? [view.w, view.h] as const;
     if (this._plan3dPresentation) {
       this._flatExportScene = (flatView, rotation) => {
         const keep = (id: string, render: ModeSceneLayer['render']): ModeSceneLayer => ({ id, inputs: [], render });
@@ -14617,8 +14609,6 @@ export class HouseplanCard extends LitElement {
             ...(markerCamera ? isoTileDepthStyles(markerCamera) : {}),
             '--wall-fill': disp.wallFill.c, '--wall-fill-op': String(disp.wallFill.a),
             '--iso-wall-side-op': iso ? String(disp.wallFill.a) : undefined,
-            ...(iso ? isoOpeningMaterialVars(disp.openingAccent3d?.c, disp.openingAccent3d?.a) : {}),
-            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.color, disp.wallFill.c, disp.transparentWalls3d ? 1 : disp.opacity).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
           })}
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -14653,19 +14643,19 @@ export class HouseplanCard extends LitElement {
             style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}${this._modeProjectionCrossing ? `;opacity:${this._modeProjectionOpacity}` : ''}${modeVisual && !this._modeTransitionPreparing ? `;width:${this._modeSceneSize?.[0] ?? modeVisual.stageWidth}px;height:${this._modeSceneSize?.[1] ?? modeVisual.stageHeight}px` : ''}">
           ${this._modeProjectionSource && this._modeProjectionScene ? this._modeProjectionScene : this._modeProjectionScene = html`
           ${iso ? html`<div class="iso-scene-surface" data-hp-live-scene="camera">
-          ${floorCamera?.perspective ? renderIsoPerspectiveFloor(floorCamera, floorTargets(), sceneView, perspectiveSize) : nothing}
+          ${floorCamera?.perspective ? renderIsoPerspectiveFloor(floorCamera, floorTargets(), view, perspectiveSize) : nothing}
           <svg class="plan-svg" data-hp="stage" data-grid-step=${this._gridPitch} data-hp-layer="plan"
             data-projection="iso" data-yaw=${isoScene?.camera.rotDeg ?? this._rotation}
             data-rotation=${this._rotation} data-floor-scale-y=${isoScene?.camera.floorScaleY ?? 1} data-hp-live-viewbox="camera"
-            viewBox="${sceneView.x} ${sceneView.y} ${sceneView.w} ${sceneView.h}"
+            viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
             preserveAspectRatio=${floorCamera?.perspective ? 'none' : 'xMidYMid meet'}
             style=${floorCamera?.perspective ? 'pointer-events:none' : nothing}>
             ${floorCamera?.perspective ? nothing : floorTargets()}
             ${stairVolumes?.size && floorCamera ? svg`<g transform=${isoFloorMatrixCss(floorCamera)}>
-              ${this._stairsView.renderLayer(stairVolumes, 'volume', 'hit')}</g>` : nothing}
+              ${this._stairsView.renderLayer(stairVolumes, 'volume')}</g>` : nothing}
             ${floorCamera?.perspective ? nothing : ledTargets()}
           </svg>
-          ${floorCamera?.perspective && leds.size ? renderIsoPerspectiveFloor(floorCamera, ledTargets(), sceneView,
+          ${floorCamera?.perspective && leds.size ? renderIsoPerspectiveFloor(floorCamera, ledTargets(), view,
             perspectiveSize, gridVisualUnits(isoDisplayWallHeight(), this._cellCm), 'led') : nothing}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
           ${this._plan3dPresentation ? html`<canvas data-hp-plan-3d aria-hidden="true"></canvas>` : nothing}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and

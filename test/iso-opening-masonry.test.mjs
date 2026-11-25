@@ -3,8 +3,6 @@ import assert from 'node:assert/strict';
 import { buildIsoOpeningBasis, isoOpeningMasonry, projectIsoOpeningStructure, projectIsoOpening } from '../test-build/iso-openings.js';
 import { projectPlanPoint } from '../test-build/iso-projection.js';
 import { isoMarkerBehindWall } from '../test-build/iso-marker-context.js';
-import { buildIsoWallDepthQueue, renderIsoWalls } from '../test-build/iso-scene-render.js';
-import { buildIsoWallGeometry } from '../test-build/iso-walls.js';
 
 const opening = (patch={}) => ({id:'one',sourceIndex:0,type:'window',x:100,y:80,angle:0,length:120,
   flipH:false,flipV:false,face:{ox:0,oy:5,cm:20,side:1},...patch});
@@ -77,18 +75,6 @@ test('#1451 zero-depth hosts and external gates acquire no floating masonry',()=
     assert.equal(isoOpeningMasonry(buildIsoOpeningBasis(opening({type,face:{ox:0,oy:0,cm:0,side:1}}))),null);
   assert.equal(isoOpeningMasonry(buildIsoOpeningBasis(opening({type:'gate'}))),null);
   assert.deepEqual(projectIsoOpeningStructure(buildIsoOpeningBasis(opening({type:'passage'}))),[]);
-});
-
-test('#1451 masonry stays visible when symbols are hidden; no-borders still removes all volumes',()=>{
-  const basis=buildIsoOpeningBasis(opening({type:'door'}));
-  const surfaces=projectIsoOpeningStructure(basis,camera(35),true).map(s=>({...s,id:'one',sourceIndex:0,type:'door'}));
-  const scene={key:'test',geometry:buildIsoWallGeometry([]),openingSurfaces:surfaces,camera:camera(35)};
-  const flatten=v=>v?.strings?v.strings.reduce((s,part,i)=>s+part+flatten(v.values[i]),''):Array.isArray(v)?v.map(flatten).join(''):v==null||typeof v==='symbol'?'':String(v);
-  const markup=flatten(renderIsoWalls('iso',{structural:true,panels:false,materialNuance:false},scene,[],5));
-  assert.match(markup,/opening-lintel-side/); assert.doesNotMatch(markup,/door-frame|jamb-reveal/);
-  assert.equal(flatten(renderIsoWalls('iso',{structural:false},scene,[],5)),'');
-  const queue=buildIsoWallDepthQueue(scene.geometry,surfaces,true);
-  assert.equal(queue.at(-1).surface.kind,'opening-lintel-top');
 });
 
 test('#1451 a lintel occludes only its actual height interval, not the clear doorway',()=>{

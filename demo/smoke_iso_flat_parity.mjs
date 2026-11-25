@@ -70,7 +70,8 @@ const start = async () => {
     });
     await window.__hpTest.setVolumetricView(true);
   },[...walls.values()]);
-  await page.waitForFunction(()=>window.__card.renderRoot.querySelectorAll('[data-hp-furniture-volume] [data-furniture-part]').length>0);
+  await page.waitForFunction(()=>window.__card._plan3dHost?.world.furniture.children.length>0
+    && window.__card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]'));
   await settled(page);
   return env;
   } catch(error) { await env.browser.close(); throw error; }
@@ -137,8 +138,9 @@ const snapshot = page => page.evaluate(()=>{
     worldCenter:[point.x,point.y],view:{...card._view},zoom:card._zoom,
     stageSize:[stage.clientWidth,stage.clientHeight],pixelsPerSceneUnit:Math.hypot(sceneMatrix.a,sceneMatrix.b),
     matrix:[local.a,local.b,local.c,local.d,local.e,local.f],inverseHit,
-    volumeIds:ids('[data-hp-furniture-volume]'),flatIds:ids('.dfurn[data-id]'),
-    walls:stage.querySelectorAll('.iso-wall-top,.iso-wall-side').length,
+    volumeIds:card._plan3dHost?.world.furniture.children.length
+      ? card._plan3dPresentation.world.furniture.map(item=>item.record.id).sort() : [],
+    flatIds:ids('.dfurn[data-id]'), walls:card._plan3dHost?.world.structure.children.length ?? 0,
     devices:anchors('[data-hp="device"]:not(.iso-tile-shadow)'),labels:anchors('.roomlabel'),
     hasLabFlag:document.documentElement.hasAttribute('data-ui-lab-camera1451'),
     query:location.search,
@@ -271,15 +273,11 @@ for(const kind of roundtripOnly || hiddenOnly || screenOnly ? [] : ['structure',
       const card = window.__card;
       const read = ()=>({projection:card._renderProjection,
         flat:[...new Set([...card.renderRoot.querySelectorAll('.dfurn[data-id]')].map(node=>node.dataset.id))].sort(),
-        walls:card.renderRoot.querySelectorAll('.iso-wall-top,.iso-wall-side').length,
-        volumes:card.renderRoot.querySelectorAll('[data-hp-furniture-volume]').length});
+        canvas:!!card.renderRoot.querySelector('canvas[data-hp-plan-3d]')});
       let calls = 0;
       const fail = ()=>{calls++;throw Error('synthetic first-frame fault');};
       if(kind==='structure') {
-        const original = card._isoSceneRuntime.resolveIsoFramePresentation;
-        card._isoSceneRuntime={...card._isoSceneRuntime,resolveIsoFramePresentation(input){
-          if(input.projection==='iso')return fail();return original(input);
-        }};
+        card._isoSceneRuntime={...card._isoSceneRuntime,preparePlan3dFrame:fail};
       } else {
         const original = card._decorResolvedStyle.bind(card);
         card._decorResolvedStyle = item=>card._renderProjection==='iso' && item.kind==='furniture' ? fail() : original(item);
@@ -293,7 +291,7 @@ for(const kind of roundtripOnly || hiddenOnly || screenOnly ? [] : ['structure',
       card.requestUpdate();try {await card.updateComplete;}catch{escaped=true;}
       return {escaped,calls,first,next:read()};
     },kind);
-    const complete = frame=>frame?.projection==='flat' && frame.flat.length===5 && frame.walls===0 && frame.volumes===0;
+    const complete = frame=>frame?.projection==='flat' && frame.flat.length===5 && !frame.canvas;
     out[kind+'FaultFirstFrame'] = !result.escaped && result.calls===1 && complete(result.first);
     out[kind+'FaultNextUpdate'] = !result.escaped && complete(result.next);
     detail[kind+'Fault'] = result;

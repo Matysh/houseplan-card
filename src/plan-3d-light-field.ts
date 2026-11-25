@@ -3,6 +3,20 @@ import { CanvasTexture, Color, DataTexture, FloatType, MeshBasicMaterial, Neares
 import { GLOW_FALLOFF } from './glow-scene';
 import type { PlanPoint } from './iso-projection';
 
+export interface PlanLightFieldSource {
+  key: string;
+  color: string;
+  alpha: number;
+  radius: number;
+  /** One point for a lamp; a continuous polyline for an LED strip. */
+  points: readonly (readonly number[])[];
+  visible: readonly string[];
+  rule?: CanvasFillRule;
+  floorClip?: readonly string[] | null;
+  entering: boolean;
+  leaving: boolean;
+}
+
 export interface Plan3dLight {
   id?: string;
   /** Single positioned lamp or an LED polyline in plan coordinates. */

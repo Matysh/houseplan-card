@@ -3,11 +3,9 @@ import assert from 'node:assert/strict';
 
 import {
   ISO_RAISED_FOOTPRINT,
-  buildIsoWallDepthQueue,
   buildIsoOverlayRenderScene,
   createIsoStructuralSource,
   isoOpeningLockPlacement,
-  isoFixedLightTransform,
   isoOverlaySceneBounds,
   isoOverlayRooms,
   isoRaisedOverlayHalfSize,
@@ -15,11 +13,9 @@ import {
   isoStructuralOpeningHost,
   isoStructuralRoomGeometry,
   resolveIsoDecorationLayers,
-  resolveIsoFramePresentation,
-  renderIsoWalls,
   resolveIsoOverlayFitEnvelope,
   resolveIsoScene,
-} from '../test-build/iso-scene-render.js';
+} from '../test-build/iso-scene-geometry.js';
 import {
   ISO_OPENING_GEOMETRY_POLICY,
   buildIsoOpeningBasis,
@@ -79,9 +75,9 @@ test('#1451 door gaps and masonry holes stay clear; partial tile overlap is mark
  * goes the same way — every `resolveIsoOverlayFitEnvelope` fixture through
  * `overlayFit` (`OverlayFitFixture`); #741 removed its `stageSize`.
  *
- * @typedef {{ [K in keyof import('../src/iso-scene-render.js').IsoOverlaySceneInput]?: unknown }} OverlaySceneFixture
- * @typedef {{ [K in keyof import('../src/iso-scene-render.js').IsoOverlayRenderEntry]?: unknown }} OverlayEntryFixture
- * @typedef {{ [K in keyof import('../src/iso-scene-render.js').IsoOverlayFitEnvelopeInput]?: unknown }} OverlayFitFixture
+ * @typedef {{ [K in keyof import('../src/iso-scene-geometry.js').IsoOverlaySceneInput]?: unknown }} OverlaySceneFixture
+ * @typedef {{ [K in keyof import('../src/iso-scene-geometry.js').IsoOverlayRenderEntry]?: unknown }} OverlayEntryFixture
+ * @typedef {{ [K in keyof import('../src/iso-scene-geometry.js').IsoOverlayFitEnvelopeInput]?: unknown }} OverlayFitFixture
  */
 
 /** @param {OverlaySceneFixture} input */
@@ -137,11 +133,6 @@ test('#1474 raised geometry keeps the floor anchors through turns and fit', () =
   const marker = overlayScene({...input,structure:structureOf(masonry),contactMasonry:masonry,
     positionOf:()=>({x:50,y:0}),deviceBasePct:1,camera,floorAlignedMarkers:true}).devices.get('device');
   assert.equal(marker.occluded,undefined,'devices use the foreground face masks, not whole-device dimming');
-});
-
-test('every Stage 4 shadow plane uses the same scale-aware fixed-light vector', () => {
-  assert.equal(isoFixedLightTransform(5), 'translate(4 8)');
-  assert.equal(isoFixedLightTransform(1), 'translate(20 40)');
 });
 
 test('#1474 raised room labels retain their original floor anchor and stay unoccluded',()=>{
@@ -325,98 +316,6 @@ test('#725 AC3/#741: the overlay fit bounds depend only on scene.frame and the t
   assert.deepEqual(fit({ x: 50, y: 0, w: 100, h: 100 }, 2).bounds, { x: 34, y: 0, w: 116, h: 110 });
   const enclosing = { x: -50, y: -50, w: 300, h: 300 };
   for (const aspect of aspects) assert.deepEqual(fit(enclosing, aspect).bounds, enclosing);
-});
-
-test('one painter queue paints a nearer wall after an unrelated rear opening', () => {
-  const geometry = buildIsoWallGeometry([[[
-    [0, 100], [100, 100], [100, 200], [0, 200], [0, 100],
-  ]]]);
-  const nearWall = geometry.topFaces[0];
-  const rearOpening = {
-    id: 'rear-door', sourceIndex: 4, type: 'door', leaf: 0,
-    kind: 'leaf-front', material: 'matte-leaf', d: 'M 0 0 L 1 0 L 1 1 Z',
-    depth: nearWall.depth - 10, cameraDepth: nearWall.depth - 10,
-  };
-  const queue = buildIsoWallDepthQueue(geometry, [rearOpening]);
-  const rearIndex = queue.findIndex((entry) => entry.layer === 'opening');
-  const nearIndex = queue.findIndex((entry) => entry.layer === 'wall-top'
-    && entry.face === nearWall);
-  assert.ok(rearIndex >= 0 && nearIndex > rearIndex,
-    'later SVG paint order must let the near wall occlude the rear opening');
-  assert.deepEqual(buildIsoWallDepthQueue(geometry, [rearOpening]), queue,
-    'the combined wall/opening order is deterministic');
-});
-
-test('#1451 tilted T-junction caps stay above vertical walls on their common height plane',()=>{
-  const wall=[[[[0,0],[180,0],[180,10],[100,10],[100,100],[80,100],[80,10],[0,10],[0,0]]]];
-  for(const yaw of[35,125,215,305]){
-    const geometry=buildIsoWallGeometry(wall,{rotDeg:yaw,tiltDeg:55,xyScale:1,zScale:1,origin:[0,0],floorScaleY:Math.sin(35*Math.PI/180)});
-    const queue=buildIsoWallDepthQueue(geometry,[],true),cap=queue.findIndex(e=>e.layer==='wall-top');
-    assert.ok(cap>0);assert.ok(queue.slice(cap).every(e=>e.layer==='wall-top'));
-    assert.equal(queue.filter(e=>e.layer==='wall-top')[0].face.d,geometry.topPath,'physical cap geometry is preserved');
-    assert.equal(queue.filter(e=>e.layer==='wall-side').length,geometry.sides.length);
-  }
-});
-
-test('shared painter queue puts elevated window glass over its rear sill only in window slots', () => {
-  const geometry = buildIsoWallGeometry([[[
-    [0, 100], [100, 100], [100, 200], [0, 200], [0, 100],
-  ]]]);
-  const basis = buildIsoOpeningBasis({
-    id: 'window-overlap', sourceIndex: 2, type: 'window', x: 50, y: 100,
-    angle: 0, length: 60, flipH: false, flipV: false,
-    face: { ox: 0, oy: -5, cm: 20, side: -1 },
-  });
-  const surfaces = [
-    ...projectIsoOpeningStructure(basis),
-    ...projectIsoOpening(basis, 0).flatMap((panel) => panel.surfaces),
-  ].map((surface, index) => ({
-    ...surface, id: basis.id, sourceIndex: basis.sourceIndex,
-    type: 'window', leaf: index,
-  }));
-  const queue = buildIsoWallDepthQueue(geometry, surfaces);
-  const windowEntries = queue.filter((entry) => entry.layer === 'opening');
-  assert.deepEqual(windowEntries.map((entry) => entry.surface.cameraDepth),
-    windowEntries.map((entry) => entry.surface.cameraDepth).toSorted((a, b) => a - b),
-    'one window reuses its shared queue slots in physical camera-depth order');
-  const sillIndex = queue.findIndex((entry) => entry.layer === 'opening'
-    && entry.surface.kind === 'window-sill');
-  const glassIndices = queue.flatMap((entry, index) => entry.layer === 'opening'
-    && entry.surface.material.startsWith('glass') ? [index] : []);
-  assert.ok(sillIndex >= 0 && glassIndices.length === 6
-    && glassIndices.some((index) => index > sillIndex),
-  'elevated glass must paint after the rear sill projection');
-  const wallSlots = queue.flatMap((entry, index) => entry.layer === 'opening' ? [] : [index]);
-  const reversed = buildIsoWallDepthQueue(geometry, [...surfaces].reverse());
-  assert.deepEqual(reversed.flatMap((entry, index) => entry.layer === 'opening' ? [] : [index]),
-    wallSlots, 'window-local occlusion cannot move unrelated wall slots');
-});
-
-test('shared painter queue keeps rotating door prism faces in physical camera order', () => {
-  const geometry = buildIsoWallGeometry([[[
-    [0, 100], [100, 100], [100, 200], [0, 200], [0, 100],
-  ]]]);
-  const basis = buildIsoOpeningBasis({
-    id: 'door-depth', sourceIndex: 3, type: 'door', x: 50, y: 100,
-    angle: 0, length: 45, flipH: false, flipV: false,
-    face: { ox: 0, oy: -5, cm: 20, side: -1 },
-  });
-  const surfaces = [
-    ...projectIsoOpeningStructure(basis),
-    ...projectIsoOpening(basis, 0.5).flatMap((panel) => panel.surfaces),
-  ].map((surface, index) => ({
-    ...surface, id: basis.id, sourceIndex: basis.sourceIndex,
-    type: 'door', leaf: index,
-  }));
-  const queue = buildIsoWallDepthQueue(geometry, [...surfaces].reverse());
-  const doorEntries = queue.filter((entry) => entry.layer === 'opening');
-  assert.deepEqual(doorEntries.map((entry) => entry.surface.cameraDepth),
-    doorEntries.map((entry) => entry.surface.cameraDepth).toSorted((a, b) => a - b),
-    'all faces of one live door reuse its queue slots in physical camera-depth order');
-  const wallSlots = queue.flatMap((entry, index) => entry.layer === 'opening' ? [] : [index]);
-  const natural = buildIsoWallDepthQueue(geometry, surfaces);
-  assert.deepEqual(natural.flatMap((entry, index) => entry.layer === 'opening' ? [] : [index]),
-    wallSlots, 'door-local ordering cannot move unrelated wall slots');
 });
 
 test('production overlay rooms preserve direct island holes once per room snapshot', () => {
@@ -801,27 +700,6 @@ test('structural scene cache refreshes a hot hit before evicting the least-recen
   assert.equal(builds.get(initial[1].id), 2, 'the evicted cold entry must rebuild on its next use');
 });
 
-test('#1492 wall faces share one set of SVG material definitions', () => {
-  const geometry = structureOf([...wallRect(0, 0, 100, 10), ...wallRect(0, 30, 100, 40)]);
-  const scene = {
-    key: 'shared-materials', geometry, floor: { footprintPath: '', sides: [] },
-    openings: [], openingSurfaces: [], frame: { x: 0, y: 0, w: 100, h: 100 },
-    camera: ISO_CAMERA,
-  };
-  const layers = {
-    structural: true, panels: true, shadows: true, materialNuance: true, floorSymbols: false,
-  };
-  // Walk the emitted Lit fragments, including the nested output for each face.
-  const staticSvg = part => {
-    if (Array.isArray(part)) return part.map(staticSvg).join('');
-    return part?.strings ? part.strings.join('') + part.values.map(staticSvg).join('') : '';
-  };
-  const walls = staticSvg(renderIsoWalls('iso', layers, scene, [], 5));
-  assert.ok([...walls.matchAll(/class="iso-wall-side"/g)].length > 1, 'fixture renders several wall faces');
-  const ids = [...walls.matchAll(/id="([^"]+)" data-hp-iso-material-def/g)].map(match => match[1]);
-  assert.deepEqual(ids.sort(), ['hp-iso-wall-side', 'hp-iso-wall-texture', 'hp-iso-wall-top']);
-});
-
 test('throwing decoration capability probes keep Iso structural geometry on the solid path', () => {
   const previousCss = globalThis.CSS;
   const previousMatchMedia = globalThis.matchMedia;
@@ -833,46 +711,6 @@ test('throwing decoration capability probes keep Iso structural geometry on the 
       structural: true, panels: true, shadows: false, materialNuance: false,
       floorSymbols: false,
     });
-  } finally {
-    if (previousCss === undefined) delete globalThis.CSS;
-    else globalThis.CSS = previousCss;
-    if (previousMatchMedia === undefined) delete globalThis.matchMedia;
-    else globalThis.matchMedia = previousMatchMedia;
-  }
-});
-
-test('removed contact shadows are never read while ambient shadow capability remains enabled', () => {
-  const previousCss = globalThis.CSS;
-  const previousMatchMedia = globalThis.matchMedia;
-  try {
-    globalThis.CSS = { supports: () => true };
-    globalThis.matchMedia = () => ({ matches: false });
-    let contactReads = 0;
-    const geometry = {
-      topPath: '', topFaces: [], sides: [], edgeCount: 0,
-      get contactPath() {
-        contactReads += 1;
-        throw new Error('decorative shadow failure');
-      },
-    };
-    const frame = resolveIsoFramePresentation({
-      projection: 'iso',
-      display: { showBorders: true, hideOpenings: false },
-      scene: {
-        key: 'solid-retry', geometry,
-        floor: { footprintPath: '', sides: [] },
-        openings: [], openingSurfaces: [], frame: { x: 0, y: 0, w: 100, h: 100 },
-      },
-      openings: [], amountOf: () => 0, overlays: () => null, cellCm: 5,
-    });
-    assert.equal(contactReads, 0,
-      'the deprecated contact path must not be touched by presentation rendering');
-    assert.equal(frame.layers.structural, true);
-    assert.equal(frame.layers.panels, true);
-    assert.equal(frame.layers.shadows, true,
-      'the remaining building ambient shadow still follows filter capability');
-    assert.equal(frame.layers.materialNuance, true);
-    assert.equal(frame.overlays, null);
   } finally {
     if (previousCss === undefined) delete globalThis.CSS;
     else globalThis.CSS = previousCss;

@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "be2ba843e786d55f0e40309067e425547b72b19262a68635df38f204ec27892c",
+  "matchesSha256": "d53e11b65e956168ecd7afff46049bf66a5c061ae8c21de574d7c9e8bc4dd872",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -5727,16 +5727,6 @@
       "kind": "branch",
       "owner": "marker-value-presentation",
       "reason": "Persisted representation: implicit temperature/humidity source + secondary metric. A second old metric and implicit primary resolution are observable. Preserve until explicit user choice; lossless total replacement does not exist."
-    },
-    {
-      "id": "d0f87867627e1cfcc2ed0820",
-      "path": "src/iso-scene-render.ts",
-      "line": 248,
-      "text": "// The legacy painter can interleave an object between two facets. Only",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "current-feature",
-      "reason": "Comment about current depth-composition algorithms, not reading a superseded persisted plan format."
     },
     {
       "id": "8356e2c7968f349141c9eec5",

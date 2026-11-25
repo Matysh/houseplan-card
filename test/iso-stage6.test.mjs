@@ -5,15 +5,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   colorLuma, compositeFloor, isLightFloor, isoLightFloorRooms, memoIsoLightFloorRooms,
-  isoWallMaterial, isoWallMaterialVars,
+  isoWallMaterial,
   parseCssColor, parseHexColor,
 } from '../test-build/iso-materials.js';
 import { IsoFirstFrameState, isoPaperContext } from '../test-build/iso-first-frame.js';
-import { isoLightStops } from '../test-build/iso-wall-light.js';
 import {
   ISO_ICON_SCALE, ISO_STATE_BODIES, ISO_TILE, isoEdgeColor, isoTileShadow, isoTileStateCss,
 } from '../test-build/iso-tiles.js';
-import { computeIsoSunBeams, isoSunDepth, ISO_SUN_STOPS_DARK_FLOOR, ISO_SUN_STOPS_LIGHT_FLOOR } from '../test-build/iso-sun.js';
+import { computeIsoSunBeams, isoSunDepth } from '../test-build/iso-sun.js';
 import { volumetricViewOf } from '../test-build/logic.js';
 
 test('#649 п.4 volumetric_view: only an explicit true enables 2.5D', () => {
@@ -31,8 +30,6 @@ test('#649 3b walls: top = user colour, sides darker per channel; default white 
   assert.equal(user.topHi, '#d9c8b4');
   assert.equal(user.sideLo, '#82786c');
   assert.equal(isoWallMaterial('nonsense').topHi, '#ffffff', 'a malformed colour falls back to white');
-  assert.match(isoWallMaterialVars('#d9c8b4'), /^--iso-top-hi:#d9c8b4;--iso-top-lo:#[0-9a-f]{6};--iso-side-hi:/);
-  assert.doesNotMatch(isoWallMaterialVars('#d9c8b4'), /dark|theme/);
 });
 
 test('#1491 wall cuts blend the top gradient with white at any tint strength', () => {
@@ -234,8 +231,6 @@ test('#649 п.2 light depth: lab length curve in wall heights, low sun = long', 
   const e = 30;
   const lab = Math.min(910, Math.max(215, 408 * (0.55 + 1.4 * Math.pow(1 - e / 90, 1.6))));
   assert.ok(Math.abs(isoSunDepth(e, H) - lab / 218.8 * H) < 1e-9);
-  assert.equal(ISO_SUN_STOPS_DARK_FLOOR[0][1], '#ffe9b4');
-  assert.equal(ISO_SUN_STOPS_LIGHT_FLOOR[0][1], '#e2b95e');
 });
 
 test('#649 п.2 beams: same exterior windows as Flat, parallelogram along the sun, room clip, light floor', () => {
@@ -286,11 +281,11 @@ test('#1024 ISO sunlight masks shares without shortening the parent gradient or 
 /**
  * #732: an overlay fixture names only fields of the production input type;
  * test/iso-overlay-fixture-types.test.mjs typechecks this file.
- * @typedef {{ [K in keyof import('../src/iso-scene-render.js').IsoOverlaySceneInput]?: unknown }} OverlaySceneFixture
+ * @typedef {{ [K in keyof import('../src/iso-scene-geometry.js').IsoOverlaySceneInput]?: unknown }} OverlaySceneFixture
  */
 
 test('#649 AC3 layout and collisions see the 2.5D tile size (× ISO_ICON_SCALE)', async () => {
-  const { buildIsoOverlayRenderScene, isoRaisedOverlayHalfSize } = await import('../test-build/iso-scene-render.js');
+  const { buildIsoOverlayRenderScene, isoRaisedOverlayHalfSize } = await import('../test-build/iso-scene-geometry.js');
   const { iconUnit } = await import('../test-build/space-geometry.js');
   const {isoCameraFor,projectPlanPoint,unprojectFloorPoint}=await import('../test-build/iso-projection.js');
   const presentation = { scale: 1, pulse: { animated: false }, classes: [], supplemental: [] };
@@ -361,20 +356,4 @@ test('#649 AC7 the 2.5D beam is cut by the same physical bodies as Flat, on the 
   assert.ok(!lit(cut, [200, 250]), 'behind the body, away from the sun, the floor is in shadow');
   assert.ok(lit(cut, [170, 250]), 'beside the shadow the beam goes on');
   assert.ok(area(cut) < area(open) - 20 * 50, 'the shadow runs along the whole remaining beam');
-});
-
-test('#1478 wall light keeps cutoff edges and approximates the dense sample within one alpha level', () => {
-  const samples = Array.from({ length: 129 }, (_, i) => i < 18 || i > 105 ? 0 : .7 * (1 - (i - 18) / 88) ** 2);
-  const stops = isoLightStops(samples);
-  assert.ok(stops.length < samples.length / 3);
-  assert.deepEqual(stops[0], [0, 0]);
-  assert.deepEqual(stops.at(-1), [1, 0]);
-  let segment = 0;
-  for (let i = 0; i < samples.length; i++) {
-    const at = i / (samples.length - 1);
-    while (segment < stops.length - 2 && stops[segment + 1][0] < at) segment++;
-    const [[a, before], [b, after]] = stops.slice(segment, segment + 2);
-    const interpolated = before + (after - before) * (at - a) / (b - a);
-    assert.ok(Math.abs(samples[i] - interpolated) <= 1 / 255 + 1e-12);
-  }
 });

@@ -1,15 +1,11 @@
 /**
- * Stage 4 isometric scene orchestration and inert SVG rendering.
- *
- * The card remains the owner of live HA state and editor interaction. This
- * module owns the presentation-only structural cache, overlay projection and
- * SVG volume layers so the main Lit shell does not also become a renderer.
+ * Structural geometry and projected bounds shared by the 3D scene,
+ * the geometry worker and the interactive controls.
  */
 import { ISO_ICON_SCALE } from './iso-tiles';
 import { ISO_LAB_OPENINGS } from './iso-lab-camera';
 import { isoMarkerOccluded } from './iso-marker-context';
 import type { ContactMasonry } from './device-contact-walls';
-// #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
 import { openingWindowHandleSides, type ResolvedOpeningVisual } from './opening-features';
 import { clampScale, fitView, islandsOf, roomPoly, type SpaceDisplay } from './logic';
 import {
@@ -20,7 +16,7 @@ import {
 import { planRotation, type PlanRotation } from './view-frame';
 import {
   buildIsoFloorGeometry, buildIsoWallGeometry, isoGeometryFingerprint,
-  type IsoFloorGeometry, type IsoWallFace, type IsoWallGeometry, type IsoWallTopFace,
+  type IsoFloorGeometry, type IsoWallGeometry,
 } from './iso-walls';
 import {
   ISO_OPENING_GEOMETRY_POLICY, buildIsoOpeningBasis, isoOpeningBounds, projectIsoOpening,
@@ -50,94 +46,12 @@ import { conservativeTextAdvance, ISO_TEXT_ADVANCE, isoDeviceFitInputs, nominalD
 import type { RenderOpening } from './interaction-types';
 import type { DevItem, RoomCfg, SpaceModel, OpeningFeatures } from './types';
 
-/** Exact-build handshake for the hidden lazy alpha runtime. */
-
 export type IsoOpeningRenderSurface = IsoOpeningSurface & {
   id: string;
   sourceIndex: number;
   type: string;
   leaf?: number;
 };
-
-export type IsoWallDepthQueueEntry =
-  | { layer: 'wall-side'; depth: number; face: IsoWallFace }
-  | { layer: 'wall-top'; depth: number; face: IsoWallTopFace }
-  | { layer: 'opening'; depth: number; surface: IsoOpeningRenderSurface };
-
-const isoDepthLayerRank = (entry: IsoWallDepthQueueEntry): number =>
-  entry.layer === 'wall-side' ? 0 : entry.layer === 'wall-top' ? 1 : 2;
-
-const isoDepthStableKey = (entry: IsoWallDepthQueueEntry): string => {
-  if (entry.layer === 'wall-side') {
-    return `${entry.face.polygon}:${entry.face.ring}:${entry.face.edge}`;
-  }
-  if (entry.layer === 'wall-top') return String(entry.face.component);
-  const surface = entry.surface;
-  return `${surface.sourceIndex}:${surface.leaf ?? -1}:${surface.kind}:${surface.jamb ?? -1}`
-    + `:${surface.edge ?? ''}:${surface.id}:${surface.material}`;
-};
-
-/**
- * Far-to-near painter queue shared by every opaque Stage 4 structural surface.
- *
- * The established screen-depth order remains authoritative between unrelated
- * walls/openings. Inside one opening, however, physical camera depth is the
- * authoritative face order: elevated window glass must paint over its rear
- * sill, and a door/gate prism must not invert its front/back faces while it
- * rotates. Reorder only that opening's already allocated queue slots, so the
- * fix cannot move an unrelated wall or opening into a different layer.
- */
-export function buildIsoWallDepthQueue(
-  geometry: IsoWallGeometry,
-  openingSurfaces: readonly IsoOpeningRenderSurface[],
-  uniformTopPlane = false,
-): readonly IsoWallDepthQueueEntry[] {
-  const entries: IsoWallDepthQueueEntry[] = [
-    ...geometry.sides.map((face) => ({
-      layer: 'wall-side' as const, depth: face.depth, face,
-    })),
-    ...geometry.topFaces.map((face) => ({
-      layer: 'wall-top' as const, depth: face.depth, face,
-    })),
-    ...openingSurfaces.map((surface) => ({
-      layer: 'opening' as const, depth: surface.depth, surface,
-    })),
-  ];
-  entries.sort((a, b) => a.depth - b.depth
-    || isoDepthLayerRank(a) - isoDepthLayerRank(b)
-    || isoDepthStableKey(a).localeCompare(isoDepthStableKey(b)));
-  const openingSlots = new Map<string, IsoWallDepthQueueEntry[]>();
-  for (const entry of entries) {
-    if (entry.layer !== 'opening') continue;
-    const key = `${entry.surface.type}\u0000${entry.surface.id}`;
-    const slots = openingSlots.get(key) || [];
-    slots.push(entry);
-    openingSlots.set(key, slots);
-  }
-  for (const slots of openingSlots.values()) slots.sort((a, b) => {
-    const surfaceA = a.layer === 'opening' ? a.surface : null;
-    const surfaceB = b.layer === 'opening' ? b.surface : null;
-    return (surfaceA?.cameraDepth ?? surfaceA?.depth ?? 0)
-      - (surfaceB?.cameraDepth ?? surfaceB?.depth ?? 0)
-      || isoDepthStableKey(a).localeCompare(isoDepthStableKey(b));
-  });
-  const nextOpeningSlot = new Map<string, number>();
-  const ordered = entries.map((entry) => {
-    if (entry.layer !== 'opening') return entry;
-    const key = `${entry.surface.type}\u0000${entry.surface.id}`;
-    const index = nextOpeningSlot.get(key) || 0;
-    nextOpeningSlot.set(key, index + 1);
-    return openingSlots.get(key)?.[index] || entry;
-  });
-  // In the tilted lab camera all wall caps share the highest horizontal plane.
-  // A component-wide screen-depth key can put that plane behind a side at a T
-  // junction. Lower vertical surfaces must finish before this common top plane.
-  const isCap = (entry: IsoWallDepthQueueEntry) => entry.layer === 'wall-top'
-    || (entry.layer === 'opening' && entry.surface.kind === 'opening-lintel-top');
-  return Object.freeze(uniformTopPlane
-    ? [...ordered.filter(e=>!isCap(e)),...ordered.filter(isCap)]
-    : ordered);
-}
 
 export type IsoOverlayRenderEntry = {
   id: string;

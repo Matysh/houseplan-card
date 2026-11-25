@@ -8194,16 +8194,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'iso-sun-streaks-on-dark-floor',
-    guard: 'node demo/smoke_iso_sun.mjs',
-    because: '#649 AC7: the two streaks belong to light floors only',
-    patches: [{
-      file: 'src/iso-sun.ts',
-      find: '        const streaks = beam.lightFloor ? [inset / length, 1 - inset / length] : [];',
-      replace: '        const streaks = [inset / length, 1 - inset / length];',
-    }],
-  },
-  {
     id: 'iso-sun-flat-wedges-remain',
     guard: 'node demo/smoke_iso_sun.mjs',
     because: '#649 AC7: in 2.5D the soft wash replaces the projected Flat wedges',
@@ -8232,17 +8222,6 @@ const MUTANT_DEFINITIONS = [
     because: '#649 AC7 (CODE-REVIEW-649-r1 M1): the card hands the 2.5D beam the same physical bodies '
       + 'as the Flat wedges (`_sunInputs`); without them light passes through a partition',
     patches: [{ file: 'src/houseplan-card.ts', find: "beams: isoSun.computeIsoSunBeams({ ...inputs, azimuth:", replace: "beams: isoSun.computeIsoSunBeams({ ...inputs, occluders: [], azimuth:" }],
-  },
-  {
-    id: 'iso-theme-dark-wall-rule-returns',
-    guard: 'node demo/smoke_iso_theme_walls.mjs',
-    because: '#649 AC9: the theme never repaints walls — the colour is the user\'s',
-    patches: [{
-      file: 'src/styles/plan.styles.ts',
-      find: '    .iso-top-lo { stop-color: var(--iso-top-lo, #ededed); }',
-      replace: '    .iso-top-lo { stop-color: var(--iso-top-lo, #ededed); }\n'
-        + '    .stage.theme-dark .iso-top-hi, .stage.theme-dark .iso-side-hi { stop-color: #3a3f44; }',
-    }],
   },
   {
     id: 'iso-wall-top-constant',
@@ -14577,7 +14556,7 @@ const MUTANT_DEFINITIONS = [
       + 'is what guarantees the skipped tick is replayed afterwards (#451, #458)',
     patches: [{
       file: 'src/live-interaction-runtime.ts',
-      find: "    const defer = change === 'state' && this.active(false) && !holdsHouseplanIsoScene(this.host)\n      && !contactValueFrameChanged(this.host,this.contacts,before,after);",
+      find: "    const defer = change === 'state' && this.active(false)\n      && !contactValueFrameChanged(this.host,this.contacts,before,after);",
       replace: '    const defer = false;',
     }],
   },
@@ -14648,7 +14627,7 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/live-viewport.ts",
-    "find": "    || (!options.lockSceneAnchor && !options.freezeScene && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));",
+    "find": "    || (!options.lockSceneAnchor && viewportNeedsAnchor(base.frame.view, base.coverage, current.view, limits, forecast));",
     "replace": "    || !options.lockSceneAnchor;"
   }
 ],
@@ -14843,21 +14822,6 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-render-lifecycle.ts',
       find: '    if (!this.diagnosticsCache) return;\n',
       replace: '    if (!this.diagnosticsCache) return;\n    if (true) return;\n',
-    }],
-  },
-  {
-    id: 'iso-window-occlusion-ignores-height',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="shared painter queue puts elevated window glass" '
-      + 'test/iso-scene-render.test.mjs',
-    because: 'Stage 4 must sort one windows existing shared-queue slots by physical camera depth; '
-      + 'falling back to floor/screen depth paints the rear sill over elevated glass without any '
-      + 'runtime failure (#570)',
-    patches: [{
-      file: 'src/iso-scene-geometry.ts',
-      find: '    return (surfaceA?.cameraDepth ?? surfaceA?.depth ?? 0)\n'
-        + '      - (surfaceB?.cameraDepth ?? surfaceB?.depth ?? 0)',
-      replace: '    return (surfaceA?.depth ?? 0) - (surfaceB?.depth ?? 0)',
     }],
   },
   {
@@ -15217,17 +15181,6 @@ const MUTANT_DEFINITIONS = [
       find: '      onBuild: () => { this._isoStructuralBuildCount += 1; },',
       replace: "      liveFingerprint: JSON.stringify(this.hass?.states?.['sun.sun'] ?? null),\n"
         + '      onBuild: () => { this._isoStructuralBuildCount += 1; },',
-    }],
-  },
-  {
-    id: 'stage3-w8-material-defs-created-per-face',
-    guard: 'node demo/smoke_isometric_contract.mjs',
-    because: 'W8: Stage 4 material patterns and filters are shared O(1) definitions, never '
-      + 'replicated for every face or marker (#570)',
-    patches: [{
-      file: 'src/iso-scene-render.ts',
-      find: 'return svg`<path class="iso-wall-side" style=${architecture.fill(index)} d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures',
-      replace: 'return svg`${renderIsoDefs(layers, \'walls\', cellCm)}<path class="iso-wall-side" style=${architecture.fill(index)} d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures',
     }],
   },
   {
@@ -17279,8 +17232,8 @@ const MUTANT_DEFINITIONS = [
       + 'that regression independently of formatting or comments',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "import { isoWallMaterialVars, isoOpeningMaterialVars, parseCssColor } from './iso-materials';",
-      replace: "import { isoWallMaterialVars, isoOpeningMaterialVars, parseCssColor, memoIsoLightFloorRooms } from './iso-materials';",
+      find: "import { parseCssColor } from './iso-materials';",
+      replace: "import { parseCssColor, memoIsoLightFloorRooms } from './iso-materials';",
     }, {
       file: 'src/houseplan-card.ts',
       find: 'this._isoFirstFrame.lightFloors(roomFills.byId)',
@@ -18764,7 +18717,6 @@ const UNIT_GUARD_GROUPS = [
     'iso-frame-selected-beats-focus',
     'iso-shadow-in-forced-colors',
     'iso-sun-length-ignores-elevation',
-    'iso-sun-streaks-on-dark-floor',
     'iso-wall-top-constant',
   ]],
   [unitGuard('test/backdrop-probe.test.mjs'), [
@@ -18791,7 +18743,6 @@ const UNIT_GUARD_GROUPS = [
   ]],
   [unitGuard('test/iso-scene-render.test.mjs', 'test/iso-stage6.test.mjs'), [
     'grid-scale-iso-height-unscaled',
-    'stage3-w8-material-defs-created-per-face',
   ]],
   [unitGuard('test/support-feedback.test.mjs'), [
     'support-edited-retry-reuses-old-idempotency-key',

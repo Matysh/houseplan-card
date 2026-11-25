@@ -1,8 +1,18 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
 import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
 import { currentGraphFixture } from './helpers/graph-fixture.mjs';
 import { reportPageErrors } from './serve.mjs';
+
+const assets = new URL('./srv/assets/', import.meta.url);
+const manifest = JSON.parse(readFileSync(new URL('houseplan-assets.json', assets), 'utf8'));
+for (const { path } of manifest.files.filter(asset => asset.path.endsWith('.js'))) {
+  assert.doesNotMatch(path, /iso-scene-render-/);
+  const output = readFileSync(new URL(path, assets), 'utf8');
+  assert.doesNotMatch(output, /IsoCameraRaster|hp-iso-gesture-image|data-hp-raster-handoff|iso-perspective-light-frame/,
+    `${path} contains the retired SVG volume renderer`);
+}
 
 const { page, browser } = await startIsoPaintScene({ initScript: () => {
   const getContext = HTMLCanvasElement.prototype.getContext;

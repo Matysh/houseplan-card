@@ -9,8 +9,6 @@ import { stairTargetState } from './stairs-editor-model';
 import type { SpaceModel } from './types';
 import { physicalStairVolume, stairVolume, type StairVolume } from './stairs-volume';
 import type { IsoCamera } from './iso-projection';
-import { renderIsoLabFurniture } from './iso-lab-furniture-render';
-import { gridVisualScale } from './grid-scale';
 
 export interface StairViewHostPort {
   _mode: 'view' | 'plan' | 'devices' | 'decor';
@@ -118,8 +116,7 @@ export class StairViewRuntime {
     });
   }
 
-  public renderLayer(volumes?:ReadonlyMap<string,StairVolume>,part:'flat'|'volume'='flat',
-    volumePart:'all'|'paint'|'hit'='all'): TemplateResult {
+  public renderLayer(volumes?: ReadonlyMap<string, StairVolume>, part: 'flat' | 'volume' = 'flat'): TemplateResult {
     // #694: the card's `_model` getter fingerprints the whole config on every
     // read; read it once per layer, not once more per navigable stair.
     const model = this.owner._model;
@@ -159,14 +156,11 @@ export class StairViewRuntime {
         if (this.owner._mode === 'view' && this.owner._space === target && target !== renderedSpace) this.arrive(renderedSpace, target);
       };
       const highlight = arrival && stair.target_space_id === arrival.from;
-      const volume=volumes?.get(stair.id),style=stairVisualStyle(stair,this.owner._decorStyle);
-      const body = volume && volumePart !== 'hit'
-        ? renderIsoLabFurniture(volume.mesh,stair.id,'stairs',style.color,gridVisualScale(this.owner._cellCm),false) : nothing;
-      if (volumePart === 'paint') return body;
+      const volume = volumes?.get(stair.id);
       if (highlight) arrival.rendered = true;
       return renderStairSymbol({
         stair, geometry, markup,
-        volume: volume ? {height:volume.height,steps:volume.steps,hit:volume.hit,body} : undefined,
+        volume: volume ? {height:volume.height,steps:volume.steps,hit:volume.hit} : undefined,
         classes: 'hp-stair-view ' + (active ? 'navigable' : '') + ' ' + (interactive ? 'input-enabled' : ''),
         targetState, style: stairStyleVars(stair, this.owner._cellCm, this.owner._gridPitch, this.owner._decorStyle),
         role: active ? 'link' : 'img', focusable: active, label: this.owner._t('markup.stairs'),

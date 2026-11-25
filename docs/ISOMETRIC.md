@@ -21,6 +21,11 @@ pass at the current position. Keyboard focus, room labels and HA controls
 stay in the DOM. GPU or runtime failure switches the card to interactive 2D
 and offers recovery while preserving the saved 3D preference.
 
+The document pauses canvas paints while hidden. On return, the host samples
+the current light transitions before repainting. An unfinished transition
+continues from its current intensity, and an elapsed one shows the final
+intensity on the first frame.
+
 Warm startup can show a neutral WebP from the browser or server cache for
 the same camera and viewport. It contains the physical plan and decor with
 neutral opening poses. Live readings, devices, lights and device-driven art

@@ -20,7 +20,7 @@ interface StairSymbol {
   leave?: () => void;
   key?: (event: KeyboardEvent) => void;
   extra?: unknown;
-  volume?: { body: unknown; hit: string; height: number; steps: number };
+  volume?: { hit: string; height: number; steps: number };
 }
 
 /** One Lit template identity preserves the heavy symbol when its input owner changes. */
@@ -36,7 +36,7 @@ export function renderStairSymbol(input: StairSymbol): TemplateResult {
     @dblclick=${input.doubleClick ?? nothing} @pointerenter=${input.enter ?? nothing}
     @pointermove=${input.move ?? nothing} @pointerleave=${input.leave ?? nothing}
     @keydown=${input.key ?? nothing}>
-    ${input.volume ? svg`${input.volume.body}<path class="hp-stair-hit" d=${input.volume.hit}></path>` : guard([geometry, markup], () => svg`
+    ${input.volume ? svg`<path class="hp-stair-hit" d=${input.volume.hit}></path>` : guard([geometry, markup], () => svg`
       <polygon class="hp-stair-outline" points=${markup.outline}></polygon>
       <polygon class="hp-stair-hit" points=${markup.outline}></polygon>
       ${geometry.trapezoid.map(line => svg`<line class="hp-stair-trapezoid"

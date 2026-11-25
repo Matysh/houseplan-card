@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { readAllStylesSource } from './styles-source.mjs';
-import { createIsoStructuralSource, renderIsoWalls, resolveIsoFramePresentation, resolveIsoOpeningPanels,
-  resolveIsoScene } from '../test-build/iso-scene-render.js';
+import { createIsoStructuralSource, resolveIsoOpeningPanels,
+  resolveIsoScene } from '../test-build/iso-scene-geometry.js';
 import { ISO_OPENING_GEOMETRY_POLICY, buildIsoOpeningBasis } from '../test-build/iso-openings.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 
@@ -13,7 +13,6 @@ const styles = readAllStylesSource();
 const openings = readFileSync(new URL('../src/iso-openings.ts', import.meta.url), 'utf8');
 const overlays = readFileSync(new URL('../src/iso-overlays.ts', import.meta.url), 'utf8');
 const projection = readFileSync(new URL('../src/iso-projection.ts', import.meta.url), 'utf8');
-const sceneRender = readFileSync(new URL('../src/iso-scene-render.ts', import.meta.url), 'utf8');
 const sceneGeometry = readFileSync(new URL('../src/iso-scene-geometry.ts', import.meta.url), 'utf8');
 const spatialRuntime = readFileSync(new URL('../src/plan-3d-runtime.ts', import.meta.url), 'utf8');
 const editorRuntime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
@@ -56,7 +55,7 @@ test('3D uses the lazy runtime and the same geometry authority as the worker', (
   assert.match(spatialRuntime, /export \* from '\.\/iso-scene-geometry'/,
     'the lazy renderer must expose the same pure geometry implementation used by the worker');
   assert.equal([...card.matchAll(/await import\('\.\/plan-3d-runtime'\)/g)].length, 1);
-  for (const module of ['plan-3d-runtime', 'iso-scene-render', 'iso-scene-geometry', 'iso-walls', 'iso-openings', 'iso-overlays']) {
+  for (const module of ['plan-3d-runtime', 'iso-scene-geometry', 'iso-walls', 'iso-openings', 'iso-overlays']) {
     const valueImport = new RegExp(`import\\s+(?!type\\b)[^;]+from './${module}';`, 's');
     assert.doesNotMatch(card, valueImport, `${module} leaked into the eager card graph`);
     assert.doesNotMatch(editorRuntime, valueImport, `${module} leaked into the lazy editor graph`);
@@ -128,45 +127,9 @@ test('3D paints one canvas under the interactive and accessible controls', () =>
   assert.match(projection, /floorCamera\?\.perspective \? nothing : floorTargets\(\)/,
     'the affine camera preserves the transparent floor hit targets');
   assert.doesNotMatch(projection, /iso-underlay-svg|iso-shadows-svg|iso-walls-svg|iso-furniture-foreground/);
-  assert.match(sceneRender, /class="iso-wall-top"/);
-  assert.match(sceneRender, /class="iso-wall-side"/);
-  assert.match(sceneRender, /class="iso-opening-panel iso-\$\{surface\.type\} iso-opening-\$\{surface\.kind\} iso-material-\$\{surface\.material\}"/);
-  assert.doesNotMatch(sceneRender, /iso-overlay-plate|hp-iso-overlay-texture/,
-    'the invisible safety footprint must never become painted SVG geometry');
-  assert.doesNotMatch(sceneRender, /class="iso-overlay-tether"|class="iso-overlay-ground"/,
-    'the reviewed near-floor treatment has no debug tethers or ground dots');
-  const far = 'M0 0h2v2z', pane = 'M0 1h2v2z', near = 'M0 2h2v2z';
-  const scene = { key:'layers', geometry:{topFaces:[], sides:[
-    {d:near, depth:3, edge:0}, {d:far, depth:1, edge:1},
-  ]}, openingSurfaces:[{id:'window', type:'window', material:'glass', kind:'glass', d:pane, depth:2}] };
-  const walls = renderIsoWalls('iso', {structural:true, panels:true}, scene, [], 5);
-  // Walk Lit's emitted bindings in paint order. The input deliberately places the near face first.
-  function paintedPaths(value) {
-    if (Array.isArray(value)) return value.flatMap(paintedPaths);
-    if (value?.strings) {
-      let defs = 0;
-      return value.strings.flatMap((part,index)=>{
-        for(const tag of part.matchAll(/<\/?defs\b[^>]*>/g)) defs += tag[0].startsWith('</') ? -1 : 1;
-        return defs ? [] : paintedPaths(value.values[index]);
-      });
-    }
-    return [near, pane, far].includes(value) ? [value] : [];
-  }
-  assert.deepEqual(paintedPaths(walls), [far, near, pane], 'walls share a masonry opacity group before openings');
-  assert.match(sceneRender, /entry\.layer === 'wall-top'[\s\S]*?fill-rule="evenodd"/,
-    'each independently sorted wall component must retain evenodd hole semantics');
-  assert.match(sceneRender, /aria-hidden="true" pointer-events="none"/);
   assert.match(styles, /\.iso-scene-surface\s*\{[^}]*z-index:\s*1/);
   assert.match(styles, /\.devlayer\s*\{[\s\S]*?z-index:\s*6/);
   assert.doesNotMatch(card, /<foreignObject|data-hp-live-mask|iso-overlays-svg/);
-  const frameResolver = section(sceneRender, 'export function resolveIsoFramePresentation', 'const emptySvg');
-  assert.doesNotMatch(frameResolver, /grounds|raised/);
-  assert.doesNotMatch(sceneRender, /renderIsoOverlayGrounds|renderIsoRaisedOverlays|groundRadius/);
-  assert.doesNotMatch(styles, /perspective\s*:|preserve-3d|rotateX\(|rotateZ\(/);
-  // #649: the 2.5D window light is its own module re-exported through this lazy
-  // graph; the structural renderer itself still paints no light.
-  assert.doesNotMatch(sceneRender, /window-light|iso-window-light|iso-glow/);
-  assert.equal([...sceneRender.matchAll(/iso-sun/g)].length, 1, 'only the lazy re-export mentions iso-sun');
 });
 
 test('2.5D treats wall-cut overlays and their floor shadows as separate visual planes', () => {
@@ -317,14 +280,6 @@ test('one frame resolves one structural source and latches late topology/project
   assert.doesNotMatch(renderBody, /this\._isoScene\(/);
   assert.match(renderBody, /catch \(error\)[\s\S]*?_latchIsoFallback[\s\S]*?_cancelCameraTransition\(false\)[\s\S]*?projection = 'flat'; iso = false/);
   assert.match(renderBody, /this\._view = null;[\s\S]*?_baseVb\('flat', null\)/);
-  const resolver = section(sceneRender, 'export function resolveIsoFramePresentation', 'const emptySvg');
-  for (const step of ['resolveIsoDecorationLayers', 'resolveIsoOpeningPanels', 'renderIsoUnderlay',
-    'renderIsoShadows'])
-    assert.ok(resolver.includes(step), `late Stage 4 step escaped the frame boundary: ${step}`);
-  const fault = new Error('structural paint failed');
-  const brokenScene = {openings:[], openingSurfaces:[], get geometry() { throw fault; }};
-  assert.throws(() => resolveIsoFramePresentation({projection:'iso', display:{showBorders:true},
-    scene:brokenScene, openings:[], amountOf:()=>0, overlays:()=>null,cellCm:5}), error => error === fault);
 });
 
 test('raised footprints participate in global and room fit without entering the structural LRU', () => {
@@ -366,39 +321,7 @@ test('low-plane DOM roots expose one floor/visual identity and preserve existing
     assert.match(raisedHit, /(?:min-)?width:\s*(?:44px|max\(44px,)/, selector);
     assert.match(raisedHit, /(?:min-)?height:\s*(?:44px|max\(44px,)/, selector);
   }
-  assert.match(styles, /\.iso-walls-svg,[\s\S]*?pointer-events:\s*none/);
-});
-
-test('Stage 4 materials are bounded and capability-safe; #649 walls follow the user colour, not the theme', () => {
-  const materialIds = [...sceneRender.matchAll(/id="(hp-iso-[^"]+)" data-hp-iso-material-def/g)]
-    .map((match) => match[1]);
-  assert.ok(materialIds.length >= 5 && materialIds.length <= 12,
-    `expected a bounded shared definition set, got ${materialIds.length}`);
-  assert.equal(new Set(materialIds).size, materialIds.length, 'material ids must be unique');
-  // #649 3b: no theme rule for walls, openings, floor edge or wall texture.
-  assert.doesNotMatch(styles, /\.stage(?:\.theme-dark|:not\(\.theme-light\)) \.iso-(?:side|top|wall|floor-side|opening|texture)/);
-  assert.match(styles, /\.iso-top-hi\s*\{\s*stop-color:\s*var\(--iso-top-hi/);
-  assert.match(styles, /\.iso-side-mid\s*\{\s*stop-color:\s*var\(--iso-side-mid/);
-  assert.match(card, /\.\.\.\(iso \? Object\.fromEntries\(isoWallMaterialVars\(disp\.color, disp\.wallFill\.c, disp\.transparentWalls3d \? 1 : disp\.opacity\)\.split\(';'\)/);
-  assert.doesNotMatch(styles, /iso-overlay-plate|hp-iso-overlay-texture/,
-    'themes and forced colors must not recreate a painted footprint');
-  assert.doesNotMatch(styles, /iso-overlay-ground|iso-overlay-tether/,
-    'themes and capability fallbacks must not recreate removed debug cues');
-  assert.match(styles, /iso-material-glass-side[\s\S]*?fill:\s*#c9e4f3/);
-  assert.match(styles, /iso-material-glass-top[\s\S]*?fill:\s*#e3f2fa/);
-  const rendering = section(sceneRender, 'function renderIsoDefs(', 'export function resolveIsoDecorationLayers');
-  assert.match(sceneRender, /return `translate\(\$\{gridVisualUnits\(4, cellCm\)\} \$\{gridVisualUnits\(8, cellCm\)\}\)`/);
-  assert.equal([...sceneRender.matchAll(/transform=\$\{isoFixedLightTransform\(cellCm\)\}/g)].length, 1,
-    'only the approved building ambient shadow uses the fixed-light vector');
-  assert.doesNotMatch(sceneRender, /hp-iso-contact-shadow|hp-iso-leaf-shadow|iso-contact-shadow|iso-leaf-shadow/);
-  assert.doesNotMatch(styles, /\.iso-contact-shadow|\.iso-leaf-shadow/);
-  assert.match(styles, /\.iso-opening-panel\.iso-material-matte-leaf\s*\{[\s\S]*?stroke:\s*none/);
-  assert.match(styles, /iso-material-glass-side[\s\S]*?stroke:\s*#8fb4c7/,
-    'window glass keeps its thin border');
-  assert.match(styles,
-    /\.stage\.projection-iso\.mode-view \.dev,[\s\S]*?\.stage\.projection-iso\.mode-view \.oplock\s*\{\s*z-index:\s*2/,
-  'interactive overlays remain above room labels');
-  assert.doesNotMatch(rendering, /sunState|_renderSun|Date\.now|Math\.random/);
+  assert.match(styles, /canvas\[data-hp-plan-3d\]\s*\{[^}]*pointer-events:\s*none/);
 });
 
 test('#649 room labels keep the configured colour in both themes; 2.5D only drops stroke and shadow', () => {
@@ -411,7 +334,7 @@ test('#649 room labels keep the configured colour in both themes; 2.5D only drop
 });
 
 test('the projected model and the 3D render graph add no storage or HA action surface', () => {
-  for (const source of [openings, overlays, projection, sceneRender]) {
+  for (const source of [openings, overlays, projection, spatialRuntime]) {
     assert.doesNotMatch(source, /localStorage\s*\.|fetch\(|XMLHttpRequest|WebSocket|callService\(|Math\.random/);
   }
   const dependencies = JSON.parse(packageJson).dependencies;

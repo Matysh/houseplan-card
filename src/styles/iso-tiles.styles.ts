@@ -6,7 +6,7 @@ import { isoLabMarkersStyles } from './iso-lab-markers.styles';
 // The build's css minifier accepts no interpolation: the generated tables
 // (one numeric source, src/iso-tiles.ts) are separate CSSResults.
 const isoTilesStatic = css`
-  /* Marker 12 % larger than Flat; collision uses the same factor (iso-scene-render). */
+  /* Marker 12 % larger than Flat; collision uses the same factor (iso-scene-geometry). */
   .stage.projection-iso.mode-view .dev {
     --dev-size: calc(var(--device-base-size, 2.25cqw) * var(--dev-scale, 1) * 1.12);
     --iso-frame: transparent;

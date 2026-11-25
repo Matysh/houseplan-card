@@ -11,6 +11,7 @@ const bundle = await rollup({
     viewport: 'test-build/plan-3d-viewport.js',
     world: 'test-build/plan-3d-world.js',
     motion: 'test-build/plan-3d-light-motion.js',
+    host: 'test-build/plan-3d-host.js',
   },
   plugins: [nodeResolve()],
 });
@@ -41,6 +42,7 @@ try {
     const { Plan3dViewport } = await import('http://plan-3d.test/viewport.js');
     const { Plan3dWorld } = await import('http://plan-3d.test/world.js');
     const { Plan3dLightMotion } = await import('http://plan-3d.test/motion.js');
+    const { Plan3dHost } = await import('http://plan-3d.test/host.js');
     const getContext = HTMLCanvasElement.prototype.getContext;
     let contexts = 0;
     let gpu;
@@ -100,6 +102,55 @@ try {
       visible: ['M 0 -100 L 100 -100 L 100 100 L 0 100 Z'],
       floorClip: ['M -100 -100 L 40 -100 L 40 100 L -100 100 Z', 'M -40 -100 L 100 -100 L 100 100 L -40 100 Z'],
     }]);
+    const restoredLight = await (async () => {
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'position:fixed;top:220px;right:0';
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '-100 -100 200 200');
+      svg.style.display = 'none';
+      document.body.append(canvas, svg);
+      const bounds = { x: -100, y: -100, w: 200, h: 200 };
+      const preset = { rotDeg: 35, tiltDeg: 50, xyScale: 1, zScale: 1, origin: [0, 0], floorScaleY: Math.sin(40 * Math.PI / 180) };
+      let paints = 0;
+      const host = new Plan3dHost(canvas, svg, .005, () => { throw new Error('3D light resume failed'); }, () => paints++);
+      const ticks = async (count = 3) => {
+        for (let i = 0; i < count; i++) await new Promise(resolve => requestAnimationFrame(resolve));
+      };
+      const setHidden = hidden => {
+        Object.defineProperty(document, 'hidden', { configurable: true, value: hidden });
+        document.dispatchEvent(new Event('visibilitychange'));
+      };
+      const present = (intensity, animateLights = true) => host.present({ world: { ...input, lights: [{ ...lamp, id: 'lamp', intensity }] },
+        bounds, content: bounds, preset, sectionHeight: 50, lightScope: 'visibility-test', animateLights });
+      try {
+        present(1, false);
+        await ticks(6);
+        const expectedOn = canvas.toDataURL();
+        present(0, false);
+        await ticks(6);
+        const initialPaints = paints, off = canvas.toDataURL();
+        setHidden(true);
+        present(1);
+        await ticks();
+        const held = paints === initialPaints;
+        setHidden(false);
+        await new Promise(resolve => setTimeout(resolve, 600));
+        await ticks();
+        const on = canvas.toDataURL();
+        setHidden(true);
+        present(0);
+        await new Promise(resolve => setTimeout(resolve, 550));
+        setHidden(false);
+        await ticks();
+        return { initialPaints, held, litWitness: expectedOn !== off, turnedOn: on === expectedOn,
+          turnedOff: canvas.toDataURL() === off };
+      } finally {
+        delete document.hidden;
+        host.dispose();
+        canvas.remove();
+        svg.remove();
+      }
+    })();
     const motion = new Plan3dLightMotion();
     const solar = { ...lamp, id: 'window', intensity: .4, sun: { inward: [1, 0], depth: 10, tilt: .5 } };
     motion.set([{ ...lamp, id: 'lamp' }, solar], 'scene-a', 10, true);
@@ -173,7 +224,7 @@ try {
     const deadline = performance.now() + 2000;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
-    return { contexts, pixels, picking, frames, largeRadius, staticSize, backdropReady, backdropPixel,
+    return { contexts, pixels, picking, frames, largeRadius, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairHit, markerIcon, markerBody, markerHit, markerChanged,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
@@ -213,6 +264,11 @@ try {
   const [unlit, red, blue] = evidence.frames;
   assert.ok(evidence.largeRadius[0][0] > 100, 'the near side of a closed opening remains lit at a large radius');
   assert.deepEqual(evidence.largeRadius[1], unlit[1], 'a large radius must not smear the optical mask across the opening');
+  assert.ok(evidence.restoredLight.initialPaints > 0, 'the initial dark floor is painted');
+  assert.equal(evidence.restoredLight.litWitness, true, 'the reference lamp visibly lights the floor');
+  assert.equal(evidence.restoredLight.held, true, 'hidden light changes do not paint');
+  assert.equal(evidence.restoredLight.turnedOn, true, 'returning before the fade ends resumes it with no new state updates');
+  assert.equal(evidence.restoredLight.turnedOff, true, 'returning after the fade ends paints the final dark floor');
   assert.deepEqual(red[1], unlit[1], 'the optical mask keeps the adjacent room dark');
   assert.ok(red[2][0] > 100, 'a short radius still reaches the floor below a high lamp');
   assert.deepEqual(red[3], unlit[3], 'the saved radius bounds the floor footprint');

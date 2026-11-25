@@ -2574,21 +2574,19 @@ content outside that reserve, or when the scale crosses a factor of two.
 The outer `.stage` clips the surfaces. Their exposed paint fits a bounded
 `clip-path` to avoid the high-zoom memory growth seen in #689.
 
-In 2.5D, the SVG scene and the HTML device layer share the new anchor.
+In 3D, the SVG hit plane and the HTML device layer share the new anchor.
 Marker positions, sizes and inherited SVG overlays rebase with it. Flat
 keeps its floor projection. Mode transitions retain their own clip and
 publish their exact endpoint through the shared viewport. A retained Lit
 update during a camera gesture uses the published basis. The terminal
 wheel commit publishes the exact camera once after the quiet period.
 
-At large device pixel sizes, `iso-camera-raster.ts` can prepare a bitmap of
-the passive SVG. It publishes a complete replacement over the same world
-region and returns to the vector surface at the exact commit. The bitmap
-has no input targets. Devices, overlays and interactive SVG retain their
-ordinary elements throughout the gesture.
+`Plan3dHost` observes the camera viewBox and draws from the meshes already
+resident in the WebGL scene. During gestures the canvas and the input
+surfaces use the same viewport. The exact camera commit updates the crop.
 
 The vacuum SVG inside the HTML device layer inherits that layer's camera
-once (#871). The 2.5D rebase updates its `viewBox` alongside marker
+once (#871). The 3D rebase updates its `viewBox` alongside marker
 coordinates. Its clip uses the same bounded reserve. An independent camera
 transform on the trail would apply the camera a second time.
 
