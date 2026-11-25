@@ -13,7 +13,7 @@ import subprocess
 import uuid
 from pathlib import Path
 
-from pure_imports import pure_module
+from tests_backend.pure_imports import pure_module
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNNER = ROOT / "test/helpers/wall-node-parity-runner.mjs"
@@ -214,7 +214,7 @@ def _run(build_dir, module):
     print(f"wall-node parity: {len(cases)} scenarios + {len(corpus)} corpus documents; "
           f"{counts[0]} moves, {counts[1]} accepted, {counts[2]} exact browser-baseline Undo/Redo; "
           "TS/Python full candidates, cross-idempotence and refusals identical")
-    from wall_node_delete_parity import run as run_delete
+    from tests_backend.wall_node_delete_parity import run as run_delete
     run_delete(build_dir)
     return counts
 

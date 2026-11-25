@@ -4,8 +4,8 @@ import json
 import math
 from pathlib import Path
 
-from pure_imports import pure_module
-from wall_node_parity import ROOT, commit, frontend, same
+from tests_backend.pure_imports import pure_module
+from tests_backend.wall_node_parity import ROOT, commit, frontend, same
 
 
 def run(build_dir):

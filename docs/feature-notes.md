@@ -3612,15 +3612,16 @@ pixels, exact Undo/Redo/reload, capability/refusal and 100 accepted/cancelled
 cycles, plus terminal/context events, unsupported X+branch and legacy cancellation.
 Its committed synthetic exports live in ignored `artifacts/803-node/`
 for `model-invariants --config`; no user home is copied into fixtures.
-`python tests_backend/wall_node_parity.py` executes the common TS/Python
+`python -m tests_backend.wall_node_parity` executes the common TS/Python
 fixture matrix, including atomized unsupported junctions, opening intervals,
 and independently proven inverse operations (not an optional skipped test).
 
 #845 makes this matrix mandatory in the existing `geometry_parity` job:
 `npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs`,
-then both `junction_parity.py` and
-`wall_node_parity.py --build-dir=test-build/junction-parity`. Missing build,
-Node or loader material fails, never skips. The matrix adds pair/T/2×2-X/L,
+then `python -m tests_backend.junction_parity` and
+`python -m tests_backend.wall_node_parity --build-dir=test-build/junction-parity`
+from the repository root. Missing build, Node or loader material fails, never
+skips. The matrix adds pair/T/2×2-X/L,
 T-partition and shared-opening room plans on/off grid, complete candidate and
 cross-idempotence comparison, and exact Undo/Redo with browser `before_space`.
 `test/fixtures/845-wall-identity-parity.json` is the common D1–D6/number witness.
