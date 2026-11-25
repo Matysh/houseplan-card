@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25381,
-  "nextTicket": 708,
+  "revision": 25382,
+  "nextTicket": 709,
   "nextFence": 708,
   "tasks": {
     "1024": {
@@ -6362,6 +6362,20 @@
         "status": "published",
         "sourceSha": "5b45209452ed59329ca3d2054bf53f7336144172"
       }
+    },
+    "1571": {
+      "issue": 1571,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1571-native-room-hover",
+      "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 708,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795649362520,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7025,7 +7039,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1571
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7075,6 +7091,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:a5d685d8-f1f4-460c-8f3d-015202052bd6": {
+      "digest": "658a291602225e1326260a98110e31a95d5670657665e2cf3e972ee7db95fbf2",
+      "issue": 1571,
+      "message": {
+        "kind": "queued",
+        "issue": 1571,
+        "at": 1795649362520,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d"
       }
     }
   },
