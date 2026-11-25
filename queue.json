@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 24367,
-  "nextTicket": 687,
+  "revision": 24368,
+  "nextTicket": 688,
   "nextFence": 687,
   "tasks": {
     "1024": {
@@ -6074,14 +6074,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1563-standalone-room-labels",
-      "materialSha": "e45be50fb6c472591b17fba25dec4b75fb604d27",
+      "materialSha": "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 686,
-      "queued": false,
+      "ticket": 687,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795595205456,
-      "reviewEntry": 1,
+      "readyAt": 1795596305006,
+      "reviewEntry": 2,
       "patchId": "3f12b28134ec9b87b341cbb80f02eab2a13e62d8",
       "changedFiles": [
         "custom_components/houseplan/core/plan_commands.py",
@@ -6100,7 +6100,6 @@
         "tests_backend/test_ha_websocket.py",
         "tests_backend/test_plan_commands.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6718,7 +6717,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1563
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7044,6 +7045,19 @@
           "detail": "Поведение: test/browser-attestation.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:4:return:return:1563"
         }
+      }
+    },
+    "finish:d2f9ea2b-e8e3-47b8-bb6f-de0a5713b7a2": {
+      "digest": "d678ea2564809c963c1b11d7ecc401a32f95904fc1c89510b22d47e7458ee392",
+      "issue": 1563,
+      "message": {
+        "kind": "queued",
+        "issue": 1563,
+        "at": 1795596305006,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "7682d15ee497097b71c5b9ab07c36ddc015f5da1"
       }
     }
   },
