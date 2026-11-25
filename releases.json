@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1474,
+  "revision": 1475,
   "active": "v1.86.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -289776,7 +289776,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.1",
@@ -297946,7 +297946,8 @@
           "ru": "<!-- release: v1.86.1 -->\n<!-- base: v1.86.0 -->\n## Релиз Houseplan 1.86.1\n\n🏠 **Восемь ракурсов 2.5D и прозрачные стены.** Между диагональными видами появились четыре прямых ракурса с лёгкой перспективой. Для каждого пространства можно включить прозрачные стены и отдельно задать прозрачность боковых граней и среза. Внутренние углы остаются различимы сквозь стену, а двери и мебель не перекрываются линиями, расположенными позади них. [#1526](https://github.com/Matysh/houseplan-card/issues/1526), [#1518](https://github.com/Matysh/houseplan-card/issues/1518), [#1560](https://github.com/Matysh/houseplan-card/issues/1560)\n\n⚡ **План виден раньше.** Если этаж уже открывали с той же учётной записью Home Assistant, готовое превью с мебелью может появиться даже на первом открытии в новом браузере. Устройства и освещение появляются, когда живой план готов. [#1520](https://github.com/Matysh/houseplan-card/issues/1520), [#1522](https://github.com/Matysh/houseplan-card/issues/1522)\n\n🖥️ **Свой вид на каждом экране.** Для полноразмерных карточек дашборда и внешних экранов можно независимо задать ракурс плана. При изменении масштаба значков они сохраняют свои привязки к стенам и группам, если для них хватает места. [#1516](https://github.com/Matysh/houseplan-card/issues/1516), [#1517](https://github.com/Matysh/houseplan-card/issues/1517)\n\nТакже исправлены светлые швы у основания стен в 2.5D и ошибка предпросмотра оптимизации сразу после сохранения нового плана. [#1555](https://github.com/Matysh/houseplan-card/issues/1555), [#1549](https://github.com/Matysh/houseplan-card/issues/1549)\n\n[Полный список изменений](https://github.com/Matysh/houseplan-card/milestone/19?closed=1)\n",
           "en": "<!-- release: v1.86.1 -->\n<!-- base: v1.86.0 -->\n## Houseplan 1.86.1 release\n\n🏠 **Eight 2.5D angles and transparent walls.** Four straight-on views with subtle perspective join the diagonal views. Enable transparent walls per space and set the opacity of the sides and top cut separately. Interior corners remain readable through walls, and their lines stay behind any doors or furniture that hide them. [#1526](https://github.com/Matysh/houseplan-card/issues/1526), [#1518](https://github.com/Matysh/houseplan-card/issues/1518), [#1560](https://github.com/Matysh/houseplan-card/issues/1560)\n\n⚡ **See your plan sooner.** Once you’ve viewed a floor with the same Home Assistant account, a prepared preview with furniture can appear even on the first visit in a new browser. Devices and lighting appear when the live plan is ready. [#1520](https://github.com/Matysh/houseplan-card/issues/1520), [#1522](https://github.com/Matysh/houseplan-card/issues/1522)\n\n🖥️ **A different view for each screen.** Configure plan orientation independently for full-size dashboard cards and external displays. Resizing device icons preserves their wall and group attachments when there’s room. [#1516](https://github.com/Matysh/houseplan-card/issues/1516), [#1517](https://github.com/Matysh/houseplan-card/issues/1517)\n\nAlso fixed visible seams along 2.5D wall bases and an Optimize Plans preview error just after saving a new plan. [#1555](https://github.com/Matysh/houseplan-card/issues/1555), [#1549](https://github.com/Matysh/houseplan-card/issues/1549)\n\n[Full list of changes](https://github.com/Matysh/houseplan-card/milestone/19?closed=1)\n"
         }
-      }
+      },
+      "tag": "v1.86.1"
     }
   },
   "published": {
@@ -304236,7 +304237,8 @@
     "stable-1861-packaging-fix-f175b7e": "a0409c5190f43b52d20f1d2c9dafeed3d8d1c5735dd7d59d1f72ab3104c43671",
     "stable-1861-publish-f175b7e:runner-report": "4c8961329baa16efed074f87cf4433565af72d20cd29c90cba0fd0799b640154",
     "stable-1861-publish-f175b7e:metrics": "ee2cde89a33bd6e9898ccd1e118662d00884b2d835cf8fc2ac058b71aa2906d4",
-    "stable-1861-publish-f175b7e:prepared:221982cc-8e4c-4d60-a4a3-9542d4c26d78": "b67a2819ee37946f5492318cda75c75e1d96d3837309fc78f11f4246b078bdb5"
+    "stable-1861-publish-f175b7e:prepared:221982cc-8e4c-4d60-a4a3-9542d4c26d78": "b67a2819ee37946f5492318cda75c75e1d96d3837309fc78f11f4246b078bdb5",
+    "stable-1861-publish-f175b7e:started:1474": "b94d7c2d1039c260b888a386ebd16d583e965858a7e637565f5e3440320f4b7a"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
