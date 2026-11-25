@@ -11,11 +11,7 @@ export async function inspectClosedDoorLight(page, probes, { led = false, static
       const check = document.createElement('canvas').getContext('2d');
       const has = ([x, y]) => sources.some(source => {
         const inPath = (path, rule) => check.isPointInPath(path, x * 1000, y * 1000, rule);
-        if (source.floorClip) {
-          const floor = new Path2D();
-          for (const path of source.floorClip) floor.addPath(new Path2D(path));
-          if (!inPath(floor, 'evenodd')) return false;
-        }
+        if (source.floorClip && !source.floorClip.some(path => inPath(new Path2D(path), 'evenodd'))) return false;
         return source.visible.some(path => inPath(new Path2D(path), source.rule ?? 'evenodd'));
       });
       const { camera } = host.frame;

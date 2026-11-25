@@ -142,6 +142,7 @@ const LIGHT_GLSL = `
 export class Plan3dLightField {
   private readonly atlas: HTMLCanvasElement;
   private readonly context: CanvasRenderingContext2D;
+  private readonly floorContext: CanvasRenderingContext2D;
   private masks: CanvasTexture;
   private texture: DataTexture | undefined;
   private maskKey: string | undefined;
@@ -152,8 +153,12 @@ export class Plan3dLightField {
   constructor(document: Document, normalOffset: number) {
     this.atlas = document.createElement('canvas');
     const context = this.atlas.getContext('2d');
-    if (!context) throw new Error('Unable to prepare the plan light mask');
+    const floorTile = document.createElement('canvas');
+    floorTile.width = floorTile.height = TILE;
+    const floorContext = floorTile.getContext('2d');
+    if (!context || !floorContext) throw new Error('Unable to prepare the plan light mask');
     this.context = context;
+    this.floorContext = floorContext;
     this.masks = this.maskTexture();
     this.uniforms = {
       uHpMasks: { value: this.masks },
@@ -199,13 +204,20 @@ export class Plan3dLightField {
         ctx.save();
         ctx.beginPath(); ctx.rect(left, top, span, span); ctx.clip();
         ctx.translate(left, top); ctx.scale(span / w, span / h); ctx.translate(-x, -y);
-        if (source.floorClip) {
-          const floor = new Path2D();
-          for (const path of source.floorClip) floor.addPath(new Path2D(path));
-          ctx.clip(floor, 'evenodd');
-        }
         ctx.fillStyle = '#fff';
         for (const path of source.visible) ctx.fill(new Path2D(path), source.rule ?? 'evenodd');
+        if (source.floorClip) {
+          // Each entry may contain holes. Different entries are a union,
+          // as in the flat SVG clip. Combining them in one even-odd path
+          // would cancel the overlapping floor and the door's threshold.
+          const floor = this.floorContext;
+          floor.resetTransform(); floor.clearRect(0, 0, TILE, TILE);
+          floor.translate(PAD, PAD); floor.scale(span / w, span / h); floor.translate(-x, -y);
+          floor.fillStyle = '#fff';
+          for (const path of source.floorClip) floor.fill(new Path2D(path), 'evenodd');
+          ctx.resetTransform(); ctx.globalCompositeOperation = 'destination-in';
+          ctx.drawImage(floor.canvas, left - PAD, top - PAD);
+        }
         ctx.restore();
       }
       this.masks.needsUpdate = true;

@@ -97,7 +97,9 @@ try {
     const led = { points: [[15, 20], [15, 50]], height: 2, radius: 10, color: '#00ff00', intensity: 1, visible };
     const frames = [await lightFrame([]), await lightFrame([lamp, led]), await lightFrame([{ ...lamp, color: '#0000ff' }, led])];
     const largeRadius = await lightFrame([{ ...lamp, radius: 2_000,
-      visible: ['M 0 -100 L 100 -100 L 100 100 L 0 100 Z'] }]);
+      visible: ['M 0 -100 L 100 -100 L 100 100 L 0 100 Z'],
+      floorClip: ['M -100 -100 L 40 -100 L 40 100 L -100 100 Z', 'M -40 -100 L 100 -100 L 100 100 L -40 100 Z'],
+    }]);
     const motion = new Plan3dLightMotion();
     const solar = { ...lamp, id: 'window', intensity: .4, sun: { inward: [1, 0], depth: 10, tilt: .5 } };
     motion.set([{ ...lamp, id: 'lamp' }, solar], 'scene-a', 10, true);

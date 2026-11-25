@@ -169,7 +169,7 @@ export async function runLiveInvalidationWitnesses({ page, card }) {
     });
     await page.waitForFunction(() => window.__card._canEdit === false);await tick();
     assert.equal(await card.locator('[data-hp="mode-tab"]').count(), 0, 'new read-only authority removes actual editor entry points');
-    assert.ok(await face('load-1').count());
+    await face('load-1').waitFor({ state: 'visible' });
     results.aclReadOnly = true;
     return results;
   } catch (error) {

@@ -188,14 +188,40 @@ try {
     const scalarPublished = rows.length >= 3;
     const summaryProducers = structuredClone(card._floorPreparation.diagnostic.producers);
     const mainAfter = card.houseplanFloorCacheDiagnostics().main;
-    card = await mount(); await settle(card); await until(areaReady, 'restored scalar summary');
+    const restoredAreaJobs = [];
+    const restoredAreaReads = [];
+    const storePrototype = Object.getPrototypeOf(card._floorPreparation.store);
+    const readArea = storePrototype.area;
+    storePrototype.area = async function(address) {
+      const timeouts = this.metrics.timeouts;
+      const value = await readArea.call(this, address);
+      restoredAreaReads.push({ floor: address.floor, hit: value !== undefined,
+        timedOut: value === undefined && this.metrics.timeouts > timeouts });
+      return value;
+    };
+    const post = NativeWorker.prototype.postMessage;
+    NativeWorker.prototype.postMessage = function(message, ...args) {
+      if (message.job?.kind === 'area') restoredAreaJobs.push(message.job.raw.id);
+      return post.call(this, message, ...args);
+    };
+    try {
+      card = await mount(); await settle(card); await until(areaReady, 'restored scalar summary');
+    } finally {
+      NativeWorker.prototype.postMessage = post;
+      storePrototype.area = readArea;
+    }
+    // IndexedDB reads have a 100 ms deadline. A timed-out scalar may use the
+    // summary worker, while a timely persisted scalar must bypass it.
     const scalarHit = card._summary.areaMemo.value === area
-      && card._floorPreparation.diagnostic.producers.every(p => p.counts.wallBodiesGeometry === 0)
+      && restoredAreaReads.some(read => read.hit)
+      && restoredAreaJobs.every(floor => restoredAreaReads.some(read => read.floor === floor && read.timedOut))
       && card._floorPreparation.memory.size === 1;
+    const restoredStore = structuredClone(card._floorPreparation.diagnostic.store);
     source.config.spaces[1].stairs = [{ ...source.config.spaces[0].stairs[0], id: 'new-summary-stair' }];
     card._read.defer(); await card._loadFromServer(); await settle(card); await until(areaReady, 'changed foreign-floor stairs'); await frame();
     const summary = { area, expectedArea, changed: card._summary.areaMemo.value, expectedChanged,
-      scalarPublished, scalarHit, navigatedBeforeAreaRelease, summaryProducers,
+      scalarPublished, scalarHit, restoredAreaJobs, restoredAreaReads, restoredStore,
+      navigatedBeforeAreaRelease, summaryProducers,
       noMainUnion: mainAfter.wallBodiesGeometry === mainBefore.wallBodiesGeometry && mainAfter.floorFootprintGeometry === mainBefore.floorFootprintGeometry };
     // Hold a real old-user geometry job, then replace the HA authority while
     // its fresh pair is deliberately slow. Neither L1 nor a late worker reply
