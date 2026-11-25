@@ -206,11 +206,53 @@ for(const [name,width,height,dpr] of [['desktop',1400,1000,1],['tablet',900,1100
           released.markers[0].diameter<before.markers[0].diameter*3 && resizeStatus==='limited',
         'tight-keeps-contact':released.members.length===2,'tight-no-masonry-overlap':masonrySafe});
       await page.evaluate(()=>window.__hpTest.setMode('view'));await settle();
-      check('tight-visible-size-explanation',await page.locator('[data-hp="device-resize-status"]').isVisible(),true);
+      const notice = page.locator('[data-hp="device-resize-status"]');
+      await notice.waitFor({ state: 'visible' });
+      check('tight-visible-size-explanation', (await notice.textContent()).trim(), 'Icon sizes are limited to keep their contacts.');
+      const captureServer = () => page.evaluate(() => {
+        const { _serverCfg: config, _layout: layout, hass: { entities, states } } = window.__card;
+        return { config, layout, entities, states };
+      });
+      const restrictedServer = await captureServer();
+      await notice.waitFor({ state: 'hidden', timeout: 6500 });
+      await page.evaluate(async () => {
+        const card = window.__card;
+        card.requestUpdate();
+        await card.updateComplete;
+      });
+      check('resize-limit-remains-after-expiry', await page.evaluate(() => window.__card._deviceContacts.resizeStatus), 'limited');
+      check('resize-notice-stays-hidden-after-rerender', await notice.isVisible(), false);
       await page.evaluate(()=>window.__hpTest.setMode('devices'));await settle();
       await saveSize('1.2');const restored=await state();
       checkAll({'tight-shrink-restores-contact':restored.members.length===2,
         'tight-shrink-restores-points':JSON.stringify(restored.markers)===JSON.stringify(tightBefore.markers)});
+
+      const unrestrictedServer = await captureServer();
+      const demoHtml = readFileSync(new URL('./srv/demo.html', import.meta.url), 'utf8');
+      const reloadWithServer = async (fixture, expectedStatus) => {
+        // The stock synthetic WS store lives in the document. Seed its next
+        // instance with the saved server data so this is an actual reload.
+        const seed = JSON.stringify(fixture).replaceAll('<', '\u003c');
+        const html = demoHtml
+          .replace('const server=createFixtureStore(CFG,LAYOUT,', `const saved = ${seed};
+Object.assign(ENTITIES, saved.entities);
+const server=createFixtureStore(saved.config,saved.layout,`)
+          .replace('const SERVICES=', 'Object.assign(STATES, saved.states);\nconst SERVICES=');
+        await page.route('**/demo.html', route => route.fulfill({ contentType: 'text/html', body: html }), { times: 1 });
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.waitForFunction(status => {
+          const card = window.__card;
+          return card?._booting === false && card._deviceContacts?.scene?.shapes.has('lg_sensor.row_a')
+            && card._deviceContacts.resizeStatus === status;
+        }, expectedStatus, { timeout: 15000 });
+      };
+      await reloadWithServer(restrictedServer, 'limited');
+      await notice.waitFor({ state: 'visible' });
+      check('resize-notice-reappears-on-page-reload', (await notice.textContent()).trim(),
+        'Icon sizes are limited to keep their contacts.');
+      await notice.waitFor({ state: 'hidden', timeout: 6500 });
+      await reloadWithServer(unrestrictedServer, null);
+      check('resize-notice-stays-hidden-without-limit-on-page-reload', await notice.isVisible(), false);
     }
     if(name==='mobile'){
       const target=await page.evaluate(()=>{const n=window.__card.renderRoot.querySelector('[data-id="lg_sensor.row_b"]'),r=n.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});

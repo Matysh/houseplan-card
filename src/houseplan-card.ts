@@ -427,6 +427,7 @@ import {
 import { displayVersion } from './card-version';
 import { ConfigFingerprintPass } from './config-fingerprint-pass';
 const CARD_VERSION = '1.86.1';
+const TOAST_DURATION_MS = 3500;
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
 const PDF_RETRY_ASSET = '__HOUSEPLAN_PDF_RETRY_ASSET__';
@@ -1455,6 +1456,8 @@ export class HouseplanCard extends LitElement {
   private _toast = '';
   private readonly _toastPresentation = new ToastPresentation();
   private _toastTimer?: number;
+  private _deviceResizeNoticeTimer?: number;
+  private _deviceResizeNoticeSpace: string | null = null;
 
   // --- room markup editor ---
   /** Interaction mode (docs/UX-MODES.md): view = display only, plan = geometry
@@ -4730,6 +4733,7 @@ export class HouseplanCard extends LitElement {
     window.removeEventListener('keydown', this._editorModifierHandler);
     window.removeEventListener('keyup', this._editorModifierHandler);
     this._deviceContacts?.clear();
+    this._resetDeviceResizeNotice();
     window.removeEventListener('blur', this._onWindowBlur);
     window.removeEventListener('pagehide', this._onWindowBlur);
     window.removeEventListener('pointerup', this._onViewPointerTerminal, true);
@@ -6425,6 +6429,7 @@ export class HouseplanCard extends LitElement {
     if (!this._modeTransitionBusy) {
       this._editorRuntime?.prepareModeScene();
       this._liveRt?.syncContacts();
+      this._syncDeviceResizeNotice();
     }
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
@@ -10092,7 +10097,40 @@ export class HouseplanCard extends LitElement {
     this._toastTimer = window.setTimeout(() => {
       this._toast = '';
       this._toastPresentation.clearMessage();
-    }, 3500);
+    }, TOAST_DURATION_MS);
+  }
+
+  private _renderDeviceResizeNotice(): TemplateResult | typeof nothing {
+    if (this._mode !== 'view') return nothing;
+    const status = this._deviceContacts?.resizeStatus;
+    const label = status === 'baseline-lost' ? 'device.resize_baseline_lost'
+      : status === 'limited' && this._deviceResizeNoticeSpace === this._space
+        && this._deviceResizeNoticeTimer !== undefined ? 'device.resize_limited' : null;
+    return label ? html`<div class="device-resize-status" data-hp="device-resize-status" role="status">
+      ${this._t(label)}
+    </div>` : nothing;
+  }
+
+  private _resetDeviceResizeNotice(): void {
+    clearTimeout(this._deviceResizeNoticeTimer);
+    this._deviceResizeNoticeTimer = undefined;
+    this._deviceResizeNoticeSpace = null;
+  }
+
+  private _syncDeviceResizeNotice(): void {
+    const space = this._deviceContacts?.resizeStatus === 'limited' ? this._space : null;
+    if (space === this._deviceResizeNoticeSpace || (space !== null && this._mode !== 'view')) return;
+
+    this._resetDeviceResizeNotice();
+    if (space !== null) {
+      // Keep the last notified space after expiry so ordinary updates don't restart the timer.
+      this._deviceResizeNoticeSpace = space;
+      this._deviceResizeNoticeTimer = window.setTimeout(() => {
+        this._deviceResizeNoticeTimer = undefined;
+        this.requestUpdate();
+      }, TOAST_DURATION_MS);
+      this.requestUpdate();
+    }
   }
 
   /** Publish the instance-local input authority to nested shared controls. */
@@ -14691,11 +14729,7 @@ export class HouseplanCard extends LitElement {
           `}
           </div>
           ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}
-          ${this._mode === 'view' && this._deviceContacts?.resizeStatus
-            ? html`<div class="device-resize-status" data-hp="device-resize-status" role="status">
-                ${this._t(this._deviceContacts.resizeStatus === 'baseline-lost'
-                  ? 'device.resize_baseline_lost' : 'device.resize_limited')}
-              </div>` : nothing}
+          ${this._renderDeviceResizeNotice()}
           ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}
           <div class="zoombadge hpf-floating-badge hpf-floating-badge-scale" data-hp-live-zoom ?hidden=${this._zoomBadge.hidden}><span data-hp-live-zoom-value .textContent=${`${this._zoomBadge.percent}%`}></span></div>
           ${this._renderFarHint()}
