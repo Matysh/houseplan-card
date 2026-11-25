@@ -104,8 +104,8 @@ for (const angled of [false,true]) {
       }
     }
     const style=getComputedStyle(root.querySelector('.stage'));
-    const glassMasks=[...root.querySelectorAll('.iso-marker-glass mask > path')].map(n=>n.getAttribute('fill'));
-    return {shape,values,wallGapError,outlineGapError,correctStacks:stackIssues.length===0,stackIssues,glassMasks,turn:parseFloat(style.getPropertyValue('--hp-iso-content-turn')),
+    const glassMeshes=card._plan3dHost?.world.markerGlass.children.length ?? 0;
+    return {shape,values,wallGapError,outlineGapError,correctStacks:stackIssues.length===0,stackIssues,glassMeshes,turn:parseFloat(style.getPropertyValue('--hp-iso-content-turn')),
       layout:JSON.stringify(card._layout),config:JSON.stringify(card._serverCfg), writes:window.__isoPaintWrites.length};
   });
   try {
@@ -120,11 +120,11 @@ for (const angled of [false,true]) {
       &&cases.some(s=>s.member.length>=3) && (!angled||cases.some(s=>Math.abs(Math.sin(2*s.angle))>.5&&Object.keys(s.walls).length>0)));
     check('fixture contains separate main and auxiliary values',angled||initial.values.straight?.core.text==='320 lx'
       &&initial.values.straight?.badge?.text==='Выключено');
-    let maskCount=0, shifts=0, checkedHits=0;
+    let shifts=0, checkedHits=0;
     for (let step=0;step<=8;step++) {
       const frame=await read(), key=`${angled?'angled':'straight'}/${step*45}`;
       check(`${key}: the rear and front of each component paint once in depth order`,frame.correctStacks);
-      check(`${key}: outlines are masked with opaque wall cuts`,frame.glassMasks.every(fill=>fill==='black'));
+      check(`${key}: outlines are resident in the GPU scene`,frame.glassMeshes>0 && frame.glassMeshes%2===0);
       check(`${key}: authored layout, membership and centres persist`,frame.writes===0
         &&frame.layout===initial.layout&&frame.config===initial.config
         &&JSON.stringify(Object.entries(frame.shape).sort())===JSON.stringify(Object.entries(initial.shape).sort()));
@@ -139,24 +139,26 @@ for (const angled of [false,true]) {
         }
       }
       if (step===3) {
-        const masked=await page.screenshot();
-        const unmask=await page.evaluateHandle(()=>{
-          const root=window.__isoPaint.renderRoot, style=document.createElement('style');
-          style.textContent='.iso-marker-glass g[mask] { mask: none !important }';
-          root.append(style);
-          return style;
-        });
-        const uncovered=await page.screenshot();
-        await unmask.evaluate(style=>style.remove());
-        await unmask.dispose();
-        const result=await compareInPage(page,masked,uncovered);
-        check(`${key}: removing just the masonry masks exposes outline pixels`,result.differing>20);
+        const capture=async (walls, glass)=>{
+          await page.evaluate(async ({walls,glass})=>{
+            const host=window.__isoPaint._plan3dHost;
+            host.world.structure.visible=walls;
+            host.world.markerGlass.visible=glass;
+            host.draw();
+            await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+          },{walls,glass});
+          return page.locator('canvas[data-hp-plan-3d-ready]').screenshot();
+        };
+        try {
+          const physical=await compareInPage(page,await capture(true,true),await capture(true,false));
+          const exposed=await compareInPage(page,await capture(false,true),await capture(false,false));
+          check(`${key}: wall depth hides part of the real 3D outlines`,exposed.differing>physical.differing+20);
+        } finally { await capture(true,true); }
       }
       if (!angled) check(`${key}: actual rotated capsules keep the wall gap`,
         frame.wallGapError!==null&&frame.wallGapError<.25);
       if (!angled) check(`${key}: a standalone wide outline keeps its padding at every turn (${frame.outlineGapError?.toFixed(2)} px)`,
         frame.outlineGapError!==null&&frame.outlineGapError<.35);
-      maskCount+=frame.glassMasks.length;
       shifts+=Number(Math.hypot(...(frame.values.straight?.shift??[0,0]))>.001);
       if(step<8 && dir)await page.screenshot({path:`${dir}/${key.replace('/','-')}.png`});
       if(step===3){
@@ -209,12 +211,11 @@ for (const angled of [false,true]) {
       }
       if(step===8)check(`${key}: a full rotation restores the exact initial wall offset`,
         JSON.stringify(Object.values(frame.values).map(v=>v.shift))===JSON.stringify(Object.values(initial.values).map(v=>v.shift)));
-      measurements.push({key,maskCount:frame.glassMasks.length,values:frame.values,wallGapError:frame.wallGapError,correctStacks:frame.correctStacks,stackIssues:frame.stackIssues});
+      measurements.push({key,glassMeshes:frame.glassMeshes,values:frame.values,wallGapError:frame.wallGapError,correctStacks:frame.correctStacks,stackIssues:frame.stackIssues});
       if(step===8)break;
       await page.locator('[data-hp="rotate-right"]').first().click();
       await settleIsoPaint(page);
     }
-    check('both assembled layers encountered opaque walls',maskCount>0);
     check('visible pills had independent pointer ownership',checkedHits>=9);
     check('wide wall capsule uses a nonzero presentation offset',angled||shifts>0);
     await page.evaluate(async ()=>{

@@ -59,25 +59,24 @@ test('#659 common dialogs and keyboard markers keep their source-level wiring', 
   );
 });
 
-test('#659 2.5D CSS and generated material contracts stay unit-testable strings', () => {
+test('#659 the 3D canvas and projected interaction materials retain their rendering contracts', () => {
   contains('src/styles/iso-tiles.styles.ts',
     '.stage.projection-iso.mode-view .dev .device-shell-frame {\n    border-color: transparent;',
     '.dev.sel:not(:focus-visible) { --iso-frame: #F0A00C; }',
     '.stage.projection-iso.mode-view .iso-tile-shadows { display: none; }',
     '@media (forced-colors: active) {\n    .stage.projection-iso.mode-view .iso-tile-shadows { display: none; }',
   );
-  contains('src/styles/plan.styles.ts', '.iso-scene-surface { position:absolute; inset:0; z-index:1; }');
-  contains('src/houseplan-card.ts', '<g class="iso-floor-shadow-plane" aria-hidden="true" pointer-events="none">');
+  contains('src/styles/plan.styles.ts', '.zoomwrap > canvas[data-hp-plan-3d] {');
+  contains('src/houseplan-card.ts', '<canvas data-hp-plan-3d aria-hidden="true"></canvas>');
   contains('src/iso-tiles.ts', '${S} .dev .device-shell.with-values { gap:');
-  contains('src/iso-sun.ts',
-    'const streaks = beam.lightFloor ? [inset / length, 1 - inset / length] : [];');
+  contains('src/plan-3d-light-motion.ts', 'duration: to.sun ? RAY_FADE_MS : LAMP_FADE_MS');
   contains('src/iso-scene-geometry.ts',
     'const wallHeight = gridVisualUnits(isoDisplayWallHeight(), input.cellCm);\n'
       + '  const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);\n'
       + '  const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);\n'
       + '  const cached = lruRead(input.cache, input.source.key);');
-  contains('src/iso-scene-render.ts',
-    'return svg`<path class="iso-wall-top" d=${face.d} data-component=${face.component}');
+  contains('src/plan-3d-world.ts', 'this.groundShadow(polygons(physical.floor), floorDepth, visualScale);',
+    'return [this.mesh(planPrismMesh(walls, 0, height), [top, side, side])];');
   contains('src/hp-color-opacity.ts', 'return this.flatSwatch && !this.coverSwatch;');
 });
 

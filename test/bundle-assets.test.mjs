@@ -865,9 +865,9 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       type: 'chunk', fileName: 'houseplan-assets/houseplan-onboarding-runtime-HASH.js', code: '',
       modules: { '/repo/src/houseplan-onboarding-runtime.ts': {} },
     },
-    'houseplan-assets/iso-scene-render-HASH.js': {
-      type: 'chunk', fileName: 'houseplan-assets/iso-scene-render-HASH.js', code: '',
-      modules: { '/repo/src/iso-scene-render.ts': {} },
+    'houseplan-assets/plan-3d-runtime-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/plan-3d-runtime-HASH.js', code: '',
+      modules: { '/repo/src/plan-3d-runtime.ts': {} },
     },
     'houseplan-assets/de-HASH.js': {
       type: 'chunk', fileName: 'houseplan-assets/de-HASH.js', code: '',
@@ -936,7 +936,7 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
     bundle['houseplan-assets/houseplan-card.js'].code,
     'new URL("./houseplan-editor-runtime-HASH.js", import.meta.url);'
       + 'new URL("./houseplan-onboarding-runtime-HASH.js", import.meta.url);'
-      + 'new URL("./iso-scene-render-HASH.js", import.meta.url);'
+      + 'new URL("./plan-3d-runtime-HASH.js", import.meta.url);'
       + 'new URL("./de-HASH.js", import.meta.url);'
       + 'new URL("./fr-HASH.js", import.meta.url);'
       + 'new URL("./furniture-plan-art.generated-HASH.js", import.meta.url);'
@@ -963,7 +963,7 @@ test('#627 namespace retry tokens stay strict: exactly one each, every chunk emi
       ...Object.fromEntries([
         ['houseplan-editor-runtime', '/src/houseplan-editor-runtime.ts'],
         ['houseplan-onboarding-runtime', '/src/houseplan-onboarding-runtime.ts'],
-        ['iso-scene-render', '/src/iso-scene-render.ts'], ['de', '/src/i18n/de.ts'],
+        ['plan-3d-runtime', '/src/plan-3d-runtime.ts'], ['de', '/src/i18n/de.ts'],
         ['fr', '/src/i18n/fr.ts'], ['furniture-plan-art.generated', '/src/furniture-plan-art.generated.ts'],
         ['pdf-export', '/src/pdf/pdf-export.ts'], ['moon-runtime', '/src/moon-runtime.ts'],
         ['led-strip-runtime', '/src/led-strip-runtime.ts'], ['led-strip-field', '/src/led-strip-field.ts'],
@@ -1585,7 +1585,7 @@ test('#1018 AC3 real fallback rewrite preserves panel source after inserted catc
 
 test('#1018 AC3 actual raw retry URL plugin keeps sentinels before/after different-length URLs and map asset synchronized', () => {
   const names = ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF', 'MOON', 'LED', 'LED_FIELD', 'LED_EDITOR'];
-  const modules = ['houseplan-editor-runtime', 'houseplan-onboarding-runtime', 'iso-scene-render', 'i18n/de', 'i18n/fr',
+  const modules = ['houseplan-editor-runtime', 'houseplan-onboarding-runtime', 'plan-3d-runtime', 'i18n/de', 'i18n/fr',
     'furniture-plan-art.generated', 'pdf/pdf-export', 'moon-runtime', 'led-strip-runtime', 'led-strip-field', 'led-strip-editor'];
   const source = 'const before=114466;' + names.map(name => `import("__HOUSEPLAN_${name}_RETRY_ASSET__");`).join('')
     + NAMESPACE_LOCALE_CHUNKS.map(entry => `import("${entry.token}?retry");`).join('')

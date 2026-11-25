@@ -2176,8 +2176,8 @@ const MUTANT_DEFINITIONS = [
     "patches": [
       {
         "file": "src/houseplan-card.ts",
-        "find": "    this._abandonViewInput();\n    this._sunFadeReset();\n    this._isoLight.clear();",
-        "replace": "    this._abandonViewInput();\n    this._isoLight.clear();"
+        "find": "    this._abandonViewInput();\n    this._sunFadeReset();\n    clearTimeout(this._reloadRetry);",
+        "replace": "    this._abandonViewInput();\n    clearTimeout(this._reloadRetry);"
       }
     ]
   },
@@ -8260,8 +8260,8 @@ const MUTANT_DEFINITIONS = [
     because: '#649 AC10: the one installation setting rules the card, the sidebar page and the kiosk',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    return this._mode === 'view' && this._isoEnabled ? 'iso' : 'flat';",
-      replace: "    return this._mode === 'view' && this._isoEnabled && !this._kiosk ? 'iso' : 'flat';",
+      find: "    return this._mode === 'view' && this._isoEnabled && this._spaceDisplayForRender().showBorders ? 'iso' : 'flat';",
+      replace: "    return this._mode === 'view' && this._isoEnabled && !this._kiosk && this._spaceDisplayForRender().showBorders ? 'iso' : 'flat';",
     }],
   },
   {
@@ -11395,13 +11395,13 @@ const MUTANT_DEFINITIONS = [
       + 'the smoke must reject the legacy centred SVG substitute independently of compact and iso',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '            ${glowLayerVisible ? isoGlowLayer ?? this._renderGlowLayer(space, disp, view) : nothing}',
+      find: '            ${this._renderSunRays(space)}` },',
       replace: '            ${!space.bg && !disp.showNames && !this._markup ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '              const center = this._roomCenter(room);\n'
         + '              return svg`<text class="rlabel" data-hp="room-label" data-id=${room.id || nothing}\n'
         + '                data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'
         + '            })}</g>` : nothing}\n'
-        + '            ${glowLayerVisible ? isoGlowLayer ?? this._renderGlowLayer(space, disp, view) : nothing}',
+        + '            ${this._renderSunRays(space)}` },',
     }],
   },
   {
@@ -15244,7 +15244,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stage3-w12-separate-alpha-url-key-restored',
-    guard: 'node --test --test-name-pattern="full plan surfaces inherit 2.5D" '
+    guard: 'node --test --test-name-pattern="full plan surfaces share the saved 3D preference" '
       + 'test/isometric-contract.test.mjs',
     because: 'W12: Stage 4 shares the one permanent hp_alpha switch; a feature-specific URL '
       + 'key or expiry must not return (#570)',

@@ -3,6 +3,7 @@ import { chromium } from 'playwright';
 import { rollup } from 'rollup';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { enforcePinnedBrowser, requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
+import { reportPageErrors, watchPage } from './serve.mjs';
 
 const bundle = await rollup({
   input: {
@@ -20,9 +21,8 @@ try {
   const modules = new Map(output.filter(entry => entry.type === 'chunk').map(entry => ['/' + entry.fileName, entry.code]));
   browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader'] });
   if (requirePinnedBrowser()) await enforcePinnedBrowser(browser, chromium);
-  const page = await browser.newPage();
+  const page = watchPage(await browser.newPage());
   const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => {
     if (message.type() === 'error') errors.push(message.text());
   });
@@ -102,6 +102,16 @@ try {
     motion.set([solar], 'scene-a', 20, true);
     const fading = motion.frame(270);
     const settled = motion.frame(520);
+    const fallingSun = { ...solar, intensity: 0, radius: 100 };
+    motion.set([fallingSun], 'scene-a', 600, true);
+    const belowThreshold = motion.frame(1100).sources.find(light => light.sun);
+    motion.set([fallingSun, { ...lamp, id: 'lamp' }], 'scene-a', 1100, true);
+    const withLamp = motion.frame(1100).sources.find(light => light.sun);
+    const darkSun = motion.frame(2600).sources.find(light => light.sun);
+    motion.set([{ ...solar, radius: 40 }], 'scene-a', 2800, true);
+    const risingSun = motion.frame(3800).sources.find(light => light.sun);
+    motion.set([], 'scene-a', 3800, true);
+    const disabledSun = motion.frame(3800).sources.find(light => light.sun);
     const snapshot = await lit.snapshot({ scene: world.scene, camera }, { width: 200, height: 200 });
     if (!snapshot) throw new Error('Static WebP was not encoded');
     const bitmap = await createImageBitmap(snapshot);
@@ -153,7 +163,7 @@ try {
       await new Promise(resolve => requestAnimationFrame(resolve));
     return { contexts, pixels, picking, frames, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairHit, markerIcon, markerBody, markerHit, markerChanged,
-      roomColor, ribbonColor, ribbonHit, fading, settled,
+      roomColor, ribbonColor, ribbonHit, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
   });
   assert.deepEqual(errors, []);
@@ -178,12 +188,20 @@ try {
   assert.deepEqual(evidence.fading.sources.map(({ id, intensity }) => [id, intensity]), [['lamp', .5], ['window', .4]]);
   assert.equal(evidence.settled.active, false);
   assert.deepEqual(evidence.settled.sources.map(({ id, intensity }) => [id, intensity]), [['window', .4]]);
+  assert.ok(Math.abs(evidence.belowThreshold.intensity - .3) < 1e-9);
+  assert.equal(evidence.belowThreshold.radius, 25, 'the previous solar footprint fades when crossing the threshold');
+  assert.deepEqual(evidence.withLamp, evidence.belowThreshold, 'a lamp change never restarts the solar fade');
+  assert.equal(evidence.darkSun.intensity, 0);
+  assert.equal(evidence.risingSun.intensity, .2);
+  assert.equal(evidence.risingSun.radius, 40, 'the new footprint appears with a smooth intensity change');
+  assert.equal(evidence.disabledSun, undefined, 'night and disabled gates clear solar light immediately');
   const [unlit, red, blue] = evidence.frames;
   assert.deepEqual(red[1], unlit[1], 'the optical mask keeps the adjacent room dark');
   assert.ok(red[2][0] > 100, 'a short radius still reaches the floor below a high lamp');
   assert.deepEqual(red[3], unlit[3], 'the saved radius bounds the floor footprint');
   assert.ok(red[4][1] > 100, 'the LED lights the floor along its path');
   assert.ok(blue[0][2] > 160 && blue[0][0] === unlit[0][0], 'changing the state recolors the lit area');
+  if (await reportPageErrors()) throw new Error('Uncaught browser exception in the GPU scene');
   console.log('OK: shared WebGL2 output, covered picking, stairs, backdrop, context loss, and world-space lamp/LED light');
 } finally {
   await browser?.close();

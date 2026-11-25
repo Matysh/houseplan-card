@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { settleIsoPaint, startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
+import { reportPageErrors } from './serve.mjs';
 
 const { PNG } = createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 const opaqueCap = 'b6a1c9';
@@ -80,6 +81,7 @@ try {
   await settleIsoPaint(page);
   assert.ok(solidColour(await frame(), opaqueCap) > 30);
   assert.deepEqual(await snapshot(), light);
+  if (await reportPageErrors()) throw new Error('Uncaught browser exception in the 3D materials scene');
   console.log('OK: stable 3D wall, opening and furniture materials across themes and live zoom');
 } finally {
   await browser.close();

@@ -1,88 +1,84 @@
-// #1485 AC8 compares gesture and settled paint at the same camera.
-// #1526 direct cameras keep the projective vector scene during gestures.
+// #1485: the same camera and HA state must produce the same visible frame
+// during interaction and after settling, in every 3D preset. #1514 renders
+// both frames through the same GPU scene.
+import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { check, finish } from './serve.mjs';
 import { settleIsoPaint, startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
+import { reportPageErrors } from './serve.mjs';
 
 const { PNG } = createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
-const { browser, page } = await startIsoPaintScene({ width: 1408, height: 952, dpr: 2 });
-const card = page.locator('houseplan-card');
-const stage = card.locator('.stage');
-const ready = () => page.evaluate(() => performance.getEntriesByName('houseplan.iso.raster.ready').length);
-async function waitReady(count = 0) {
-  await page.waitForFunction(count => performance.getEntriesByName('houseplan.iso.raster.ready').length > count, count);
-}
-async function setLightAndTheme(light, darkMode) {
-  await page.evaluate(async ({light,darkMode}) => {
-    const card = window.__isoPaint;
-    card.hass = { ...card.hass, themes: { ...card.hass.themes, darkMode },
-      states: Object.fromEntries(Object.entries(card.hass.states).map(([id, state]) =>
-        [id, id.startsWith('light.') ? { ...state, state: light } : state])) };
-    await card.updateComplete;
-  }, { light, darkMode });
-}
-const screenshot = async stage => PNG.sync.read(await stage.screenshot());
-async function imageAtSameCamera(page, stage, needsRaster = true) {
-  await page.evaluate(() => {
-    const card = window.__isoPaint;
-    card._liveIsoRasterInput = () => 'wheel';
-    card._liveVp(true);
-  });
-  try {
-    const raster = stage.locator('.hp-iso-gesture-image');
-    if (needsRaster) await raster.waitFor({ state: 'attached' });
-    else {
-      await stage.locator('[data-hp-iso-perspective-floor]').first().waitFor({ state: 'visible' });
-      check('the direct gesture uses the live perspective plane', await raster.count(), 0);
-    }
-    return await screenshot(stage);
-  } finally {
-    await page.evaluate(() => {
-      const card = window.__isoPaint;
-      delete card._liveIsoRasterInput;
-      card._liveVp(true);
-    });
-  }
-}
+const { browser, page } = await startIsoPaintScene({
+  width: 1000, height: 760,
+  configureFixture({ config }) {
+    config.settings.glow_enabled = true;
+    config.spaces[0].settings.glow_enabled = true;
+  },
+});
 
 try {
-  await waitReady();
-  for (const dark of [true, false]) {
-    for (const light of ['off', 'on']) {
-      let before = await ready();
-      await setLightAndTheme(light, dark);
+  const card = page.locator('houseplan-card');
+  const canvas = card.locator('canvas[data-hp-plan-3d-ready]');
+  await canvas.waitFor({ state: 'attached' });
+  const frame = async () => PNG.sync.read(await canvas.screenshot());
+  const difference = (a, b) => {
+    assert.equal(a.width, b.width);
+    assert.equal(a.height, b.height);
+    let pixels = 0;
+    for (let i = 0; i < a.data.length; i += 4) {
+      if ([0, 1, 2].some(channel => Math.abs(a.data[i + channel] - b.data[i + channel]) > 8)) pixels++;
+    }
+    return pixels / (a.width * a.height);
+  };
+  for (const darkMode of [false, true]) {
+    const control = new Map();
+    for (const state of ['off', 'on']) {
+      await card.evaluate((node, { darkMode, state }) => {
+        const { hass } = node;
+        node.hass = {
+          ...hass, themes: { ...hass.themes, darkMode },
+          states: Object.fromEntries(Object.entries(hass.states).map(([id, value]) => [
+            id, id.startsWith('light.') ? { ...value, state } : value,
+          ])),
+        };
+      }, { darkMode, state });
       await settleIsoPaint(page);
-      await waitReady(before);
-      for (const rotation of [0, 45, 90, 135, 180, 225, 270, 315]) {
-        const baseline = await screenshot(stage);
-        const active = await imageAtSameCamera(page, stage, rotation % 90 === 0);
-        let different = 0;
-        for (let i = 0; i < baseline.data.length; i += 4) {
-          for (let c = 0; c < 4; c++) {
-            if (Math.abs(baseline.data[i+c] - active.data[i+c]) <= 8) continue;
-            different++;
-            break;
-          }
-        }
-        const ratio = different / (baseline.width * baseline.height);
-        check('native pixel parity ' + [dark ? 'dark' : 'light', light, rotation].join('/'), ratio <= .005);
-        console.log(JSON.stringify({ dark, light, rotation, different, ratio }));
-        before = await ready();
+      const stateDiff = [];
+      for (const angle of [0, 45, 90, 135, 180, 225, 270, 315]) {
+        assert.equal(await card.evaluate(node => node._rotation), angle);
+        const baseline = await frame();
+        if (state === 'off') control.set(angle, baseline);
+        else stateDiff.push(difference(baseline, control.get(angle)));
+        const prepare = await card.evaluate(async node => {
+          const world = node._plan3dHost.world;
+          const geometry = world.structure.children[0].geometry;
+          const lightCount = node._plan3dPresentation.world.lights.length;
+          node._liveVp(true);
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          return { sameGeometry: world.structure.children[0].geometry === geometry, lightCount };
+        });
+        assert.ok(prepare.sameGeometry, 'Repainting the camera must keep the resident wall and floor meshes');
+        if (state === 'on') assert.ok(prepare.lightCount > 0, 'Enabled fixtures reach the GPU light field');
+        const ratio = difference(baseline, await frame());
+        assert.ok(ratio <= .005, `Movement and settled state have the same paint at ${angle}° (${ratio})`);
         await card.locator('[data-hp="rotate-right"]').click();
         await settleIsoPaint(page);
-        if (rotation % 90 === 45) await waitReady(before);
       }
+      if (state === 'on') assert.ok(Math.max(...stateDiff) > .025, 'Light changes must be visible in the painted frame');
     }
   }
-
-  await checkWindowLight();
+  await zoomIsoPaint(page, 4);
+  assert.equal(await canvas.count(), 1);
+  if (await reportPageErrors()) throw new Error('Uncaught browser exception in the 3D motion scene');
+  console.log('OK: 32 live 3D comparisons between interaction and settled paint');
 } finally {
-  await finish(browser);
+  await browser.close();
 }
 
-async function captureWindowLight(enabled) {
-  const { browser, page } = await startIsoPaintScene({
-    width: 1408, height: 952, dpr: 2, reducedMotion: 'no-preference',
+// Exercise the installed integration to the light shader. The scene-level
+// GPU smoke separately checks individual sun and lamp fades and occlusion.
+async function solarFrame(enabled) {
+  const scene = await startIsoPaintScene({
+    width: 1000, height: 760,
     configureFixture({ config, states }) {
       Object.assign(config.settings, { sun_rays: enabled, north_deg: 0, bg_mode: 'solid', bg_color: '#17242e' });
       Object.assign(config.spaces[0].settings, { fill_mode: 'custom', custom_fill: { c: '#263e52', a: 1 } });
@@ -91,62 +87,28 @@ async function captureWindowLight(enabled) {
     },
   });
   try {
-    const stage = page.locator('houseplan-card .stage');
-    await page.waitForFunction(enabled => {
-      const sun = window.__isoPaint.renderRoot.querySelector('.iso-sunwash');
-      return (!enabled || sun && getComputedStyle(sun).opacity === '1')
-        && performance.getEntriesByName('houseplan.iso.raster.ready').length > 0;
-    }, enabled);
-    const frames = [await screenshot(stage), await imageAtSameCamera(page, stage)];
-    if (enabled) await checkLargeZoomSettles(page, stage);
-    return frames;
+    const card = scene.page.locator('houseplan-card');
+    const canvas = card.locator('canvas[data-hp-plan-3d-ready]');
+    await canvas.waitFor({ state: 'attached' });
+    await scene.page.waitForFunction(() => window.__isoPaint._plan3dHost.world.furniture.children.length > 0);
+    await settleIsoPaint(scene.page);
+    const solar = await card.evaluate(node => node._plan3dPresentation.world.lights.filter(light => light.sun));
+    if (enabled) assert.ok(solar.some(light => light.intensity > 0 && light.visible.length > 0));
+    else assert.equal(solar.length, 0);
+    const frame = PNG.sync.read(await canvas.screenshot());
+    if (await reportPageErrors()) throw new Error('Uncaught browser exception in the solar scene');
+    return frame;
   } finally {
-    await browser.close();
+    await scene.browser.close();
   }
 }
 
-async function checkWindowLight() {
-  // #1489. The control differs only in the sun wash. Comparing the
-  // whole frame can miss even a fully invisible patch of daylight.
-  const [daylight, daylightRaster] = await captureWindowLight(true);
-  const [dark, darkRaster] = await captureWindowLight(false);
-  let mask = 0, litPixels = 0, vectorLight = 0, rasterLight = 0;
-  const rgb = (image, i) => image.data[i] + image.data[i + 1] + image.data[i + 2];
-  for (let i = 0; i < daylight.data.length; i += 4) {
-    const light = rgb(daylight, i) - rgb(dark, i);
-    if (light < 18) continue;
-    mask++;
-    vectorLight += light;
-    const cached = rgb(daylightRaster, i) - rgb(darkRaster, i);
-    rasterLight += Math.max(0, cached);
-    if (cached >= light * .5) litPixels++;
-  }
-  check('fixture has visible window light', mask > 1000);
-  check('active bitmap preserves window light', rasterLight >= vectorLight * .85 && rasterLight <= vectorLight * 1.15);
-  check('bitmap lights the same area', litPixels >= mask * .85);
-  console.log(JSON.stringify({ mask, litPixels, vectorLight, rasterLight }));
+const daylight = await solarFrame(true);
+const control = await solarFrame(false);
+let litArea = 0;
+for (let offset = 0; offset < daylight.data.length; offset += 4) {
+  const difference = [0, 1, 2].reduce((sum, channel) => sum + daylight.data[offset + channel] - control.data[offset + channel], 0);
+  if (difference >= 18) litArea++;
 }
-
-async function checkLargeZoomSettles(page, stage) {
-  await zoomIsoPaint(page, 2);
-  const { x, y, width, height } = await stage.boundingBox();
-  await page.mouse.move(x + width * .63, y + height * .6);
-  for (const notches of [7, -5, 7]) {
-    for (let i = 0; i < Math.abs(notches); i++) {
-      await page.mouse.wheel(0, notches > 0 ? -80 : 80);
-      await new Promise(resolve => setTimeout(resolve, 74));
-    }
-    await settleIsoPaint(page);
-  }
-  const exact = await stage.locator('.iso-scene-surface').evaluate(surface => {
-    const card = window.__isoPaint, style = getComputedStyle(surface);
-    const { x, y, w, h } = card._viewOr(card._baseVb());
-    const box = surface.querySelector('svg').viewBox.baseVal;
-    return card._zoom >= 5 && style.transform === 'none' && style.willChange === 'opacity' &&
-      Math.abs(box.x - x) < 1e-4 && Math.abs(box.y - y) < 1e-4 &&
-      Math.abs(box.width - w) < 1e-4 && Math.abs(box.height - h) < 1e-4;
-  });
-  check('a large zoom round trip restores the exact SVG without the scaling hint', exact);
-  await stage.locator('.hp-iso-raster').first().waitFor({ state: 'detached' });
-  check('a settled large zoom shows no bitmap', await stage.locator('.hp-iso-raster').count(), 0);
-}
+assert.ok(litArea > 1000, `Sun must illuminate a visible area of the real frame (${litArea} pixels)`);
+console.log(`OK: visible sunlight on ${litArea} pixels of the production 3D scene`);

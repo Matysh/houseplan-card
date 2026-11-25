@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
 import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
 import { currentGraphFixture } from './helpers/graph-fixture.mjs';
+import { reportPageErrors } from './serve.mjs';
 
 const { page, browser } = await startIsoPaintScene({ initScript: () => {
   const getContext = HTMLCanvasElement.prototype.getContext;
@@ -15,8 +16,6 @@ const { page, browser } = await startIsoPaintScene({ initScript: () => {
   };
 } });
 try {
-  const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
   const present = () => page.waitForFunction(() => {
     const root = window.__isoPaint.renderRoot;
     return !!root.querySelector('[data-hp-plan-3d-ready]') && !!root.querySelector('.dev[data-hp-3d-native]');
@@ -105,7 +104,7 @@ try {
   }
   assert.equal(images.size, 6, 'each card must receive its own scene and projection');
   assert.equal(await page.evaluate(() => window.__hpTestGpuContexts.size), beforeDashboard, 'all six cards use the existing context');
-  assert.deepEqual(errors, []);
+  if (await reportPageErrors()) throw new Error('Uncaught browser exception in the 3D card');
   console.log(`OK: ${initial.markers} production marker bodies, ${initial.hitCount}/${initial.anchorCount} sampled hit positions, zoom, 2D, recovery and six cards`);
 } finally {
   await browser.close();
