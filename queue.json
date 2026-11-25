@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25228,
+  "revision": 25229,
   "nextTicket": 707,
   "nextFence": 707,
   "tasks": {
@@ -7197,6 +7197,10 @@
       "digest": "c8d2b5dff45040ff76d1f5ae75ed868752c36bfdbf6c21484fb142d0a75b2056",
       "issue": 1568
     },
+    "github:45713188062:1:completions:message:221150ee9799c0a88dd165bba4661af5664bb93682d93429d7851a3168a1eb82": {
+      "digest": "23aa5fadd4de984da89226652f8d40a653905f26e1d09f9b791b42d015c4ba45",
+      "issue": 1568
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7272,7 +7276,8 @@
           "entry": 1,
           "detail": "Поведение: test/ui-lab-session.test.mjs: failed",
           "eventId": "finish:f6a47191-a837-44a6-9215-49b7f08927a1:finish:3:return:return:1568"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:1007f051-61da-4ac0-b31b-4e6dddf64fa7": {
