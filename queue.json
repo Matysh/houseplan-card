@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24939,
+  "revision": 24940,
   "nextTicket": 700,
   "nextFence": 700,
   "tasks": {
@@ -6831,18 +6831,12 @@
       }
     },
     "1567": {
-      "requestId": "spec:1567:06be94bf5e61a2e1a1389df708d8c0022688408372297e41a9302ddb3cfd09bb",
-      "contextDigest": "06be94bf5e61a2e1a1389df708d8c0022688408372297e41a9302ddb3cfd09bb",
+      "requestId": "spec:1567:1ddcd5d93637b4f6629a09665fde8564ab25b8facc2a9df01fa849897b00a282",
+      "contextDigest": "1ddcd5d93637b4f6629a09665fde8564ab25b8facc2a9df01fa849897b00a282",
       "base": "b9e82e034013cf7ad8cfae72ad36600169ec0649",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795630001980,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45670747152",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795630085061
     }
   },
   "reviewPublications": {
@@ -6885,6 +6879,19 @@
         "occurredAt": "2026-11-25T13:19:00.131Z"
       },
       "runId": 45622352279
+    },
+    "spec:1567:spec:1567:1ddcd5d93637b4f6629a09665fde8564ab25b8facc2a9df01fa849897b00a282": {
+      "issue": 1567,
+      "kind": "spec",
+      "requestId": "spec:1567:1ddcd5d93637b4f6629a09665fde8564ab25b8facc2a9df01fa849897b00a282",
+      "materialSha": "b9e82e034013cf7ad8cfae72ad36600169ec0649",
+      "expectedBase": "b9e82e034013cf7ad8cfae72ad36600169ec0649",
+      "patchId": "1ddcd5d93637b4f6629a09665fde8564ab25b8facc2a9df01fa849897b00a282",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-25T18:08:05.061Z"
+      }
     }
   },
   "waiting": [],
@@ -6930,6 +6937,10 @@
       "digest": "9ab4ff928c730f7b1e08e19665fa62efa659a010b2e5fbd8d486fe58ab3f7c14",
       "issue": 1567
     },
+    "github:45671945910:1:label:spec-request": {
+      "digest": "10dff38d0009f47edaafcc9ef301a8ad3b98f730a1b3c256835462a35a7db983",
+      "issue": 1567
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6957,6 +6968,22 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "github:45671945910:1:label:spec-request:spec-resubmitted:1567": {
+      "digest": "10dff38d0009f47edaafcc9ef301a8ad3b98f730a1b3c256835462a35a7db983",
+      "issue": 1567,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1567,
+        "at": 1795630085061,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1567:1ddcd5d93637b4f6629a09665fde8564ab25b8facc2a9df01fa849897b00a282",
+        "reviewChanges": "База `b9e82e0340` (#1566). Проверить достаточность общего решения без случайных исключений. В исходниках плита (`planPrismMesh` в `Plan3dWorld.present`) и чистые комнаты (`rooms3d` в `HouseplanCard`) задают два отдельных этапа поверхности пола; у `MarkerAtlas` максимум 128; `Plan3dLightField` применяет floorClip в общей маске, а мебельные грани сортируются группами частей. Величины и визуальные последствия предстоит измерить, ограничения старого 2.5D — в docs/ISOMETRIC.md. Выкладываемые данные — синтетические примеры, оригинальные скриншоты частного дома в репозиторий не переносятся.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
