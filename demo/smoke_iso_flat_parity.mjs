@@ -202,8 +202,13 @@ if(!screenOnly) {
     const borderless = [];
     for(const rotation of [0,90,180,270]) {
       await iso(page,false);await fit(page);const flat = await snapshot(page);
-      await iso(page,true);await fit(page);const hidden = await snapshot(page);
-      const valid = hidden.walls===0 && hidden.volumeIds.length===0 && hidden.flatIds.length===5
+      await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{
+        cfg.settings={...cfg.settings,volumetric_view:true};
+        return cfg;
+      }));
+      await fit(page);const hidden = await snapshot(page);
+      const valid = hidden.projection==='flat' && hidden.stored.config.settings.volumetric_view===true
+        && hidden.walls===0 && hidden.volumeIds.length===0 && hidden.flatIds.length===5
         && equal(flat.matrix,hidden.matrix) && equal(flat.devices,hidden.devices) && equal(flat.labels,hidden.labels)
         && close(flat.worldCenter,hidden.worldCenter) && close(hidden.inverseHit,[320,320])
         && Math.abs(flat.view.w-hidden.view.w)<.02 && Math.abs(flat.zoom-hidden.zoom)<1e-8;

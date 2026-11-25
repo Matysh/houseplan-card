@@ -142,9 +142,12 @@ test('issue 266 surface files do not compete for selector declarations', () => {
 });
 
 test('issue 266 the media wrappers survived the move', () => {
-  const all = FILES.map((name) => sourceOf(name)).join('\n');
-  assert.equal((all.match(/@media \(forced-colors: active\)/g) || []).length, 2,
-    'both forced-colors blocks must survive — golden never emulates them');
+  const forcedColors = parseRules(planStyles.cssText)
+    .filter(rule => rule.kind === 'rule' && rule.scope.some(scope => scope.includes('forced-colors: active')));
+  for (const selector of ['.plan-snap-line', '.hidden-wall-line', '.plan-snap-node', '.hidden-wall-node']) {
+    assert.ok(forcedColors.some(rule => rule.selectors.includes(selector)
+      && rule.declarations.some(declaration => declaration.trim() === 'stroke: CanvasText')), selector);
+  }
   // 10 historical source wrappers; two were MIXED-zone and split into
   // per-zone copies by the generator. #437's overlay stylesheet is loaded
   // with its lazy runtime and has its own source contract, so the five eager
