@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 24460,
-  "nextTicket": 689,
+  "revision": 24461,
+  "nextTicket": 690,
   "nextFence": 689,
   "tasks": {
     "1024": {
@@ -6092,6 +6092,20 @@
         "status": "published",
         "sourceSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5"
       }
+    },
+    "1564": {
+      "issue": 1564,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1564-wall-parity-entrypoint",
+      "materialSha": "547cea142f3a4fbec5781ea346534ed763e85026",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 689,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795600423822,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6713,7 +6727,9 @@
       "runId": 45584833471
     }
   },
-  "waiting": [],
+  "waiting": [
+    1564
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6857,6 +6873,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:37f1a9b1-df7e-46d5-85de-5a29e0e59728": {
+      "digest": "b5edc2efd432ffac6c1ec4c642ec606fe13c572971f92c47b390159cb339315f",
+      "issue": 1564,
+      "message": {
+        "kind": "queued",
+        "issue": 1564,
+        "at": 1795600423822,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "547cea142f3a4fbec5781ea346534ed763e85026"
       }
     }
   },
