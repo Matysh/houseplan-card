@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25172,
+  "revision": 25173,
   "nextTicket": 705,
   "nextFence": 705,
   "tasks": {
@@ -6299,7 +6299,7 @@
       "ownerDecision": null,
       "ticket": 704,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795644119038,
       "reviewEntry": 2,
       "patchId": "95cc562a5a112eb1f45e04f365f2ffb2fff5f0ab",
@@ -6320,6 +6320,15 @@
         "at": 1795644036101,
         "entry": 1,
         "eventId": "github:45709422677:1:tick:0:expire:return:1569"
+      },
+      "s6": {
+        "id": "20261125T220217961-8c35a724",
+        "name": "Тесты для задачи #1569 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T220217961-8c35a724/report.json",
+        "materialSha": "5b45209452ed59329ca3d2054bf53f7336144172",
+        "status": "passed",
+        "finishedAt": "2026-11-25T22:09:30.203Z",
+        "failures": []
       }
     }
   },
@@ -6992,9 +7001,9 @@
     "fence": 704,
     "materialSha": "5b45209452ed59329ca3d2054bf53f7336144172",
     "expectedBase": "ec0582978408f0af1bab5eff9bfca4084373d3ba",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795644122981,
-    "expiresAt": 1795644842561,
+    "expiresAt": 1795648172724,
     "patchId": "95cc562a5a112eb1f45e04f365f2ffb2fff5f0ab"
   },
   "events": {
@@ -7238,6 +7247,34 @@
         "layer": "product",
         "materialSha": "5b45209452ed59329ca3d2054bf53f7336144172",
         "phase": "sync"
+      }
+    },
+    "finish:0bd4b479-655a-407a-ad36-c03a1c4f3f2b:finish:3:s6-complete": {
+      "digest": "93519a8c46c6cd8a692d575aa66baf1ba0fa5b17a2f0259fb0883d9feecdbf54",
+      "issue": 1569,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1569,
+        "at": 1795644572724,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "5b45209452ed59329ca3d2054bf53f7336144172",
+        "phase": "review",
+        "evidence": {
+          "id": "20261125T220217961-8c35a724",
+          "name": "Тесты для задачи #1569 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T220217961-8c35a724/report.json",
+          "materialSha": "5b45209452ed59329ca3d2054bf53f7336144172",
+          "status": "passed",
+          "finishedAt": "2026-11-25T22:09:30.203Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Общую политику применять только к диагностированным перекрытиям поверхностей кладки и откоса. Утверждение про торец подтверждается кодом оболочки и замкнутой прямоугольной синтетической геометрией; GPU-симптом дополнительно воспроизвести.\n\n### Исправления по предыдущему ревью\n\n- [Раунд 1](https://github.com/Matysh/houseplan-card/actions/runs/45696407648): калитка добавлена в скоуп, AC1 и AC3. Отделка владеет общей площадью независимо от наличия подоконника/перемычки, поэтому случай без тела кладки проверяется наравне с остальными.\n- Явно назван владелец отделки, уточнены границы видимого перекрытия и неизменность SVG 2.5D. В WebGL используется общая геометрия торцов для обоих режимов прозрачности, непрозрачные поверхности остаются сгруппированными.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
