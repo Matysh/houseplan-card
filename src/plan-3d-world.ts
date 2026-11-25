@@ -14,6 +14,7 @@ import type { PhysicalStairVolume } from './stairs-volume';
 import { Plan3dLightField, type Plan3dLight } from './plan-3d-light-field';
 import { planFaceMesh, planPrismMesh, type Plan3dVertex } from './plan-3d-mesh';
 import { plan3dCladWallSides, plan3dWallInk, plan3dWallShell } from './plan-3d-wall-shell';
+import { Plan3dTransparency } from './plan-3d-transparency';
 import { Plan3dMarkerLayer, type MarkerRaster, type Plan3dMarker } from './plan-3d-markers';
 import { markerContactChains } from './iso-marker-outline';
 
@@ -278,6 +279,7 @@ export class Plan3dWorld {
   private floorInkLoading = false;
   private floorInkWork?: { controller: AbortController; ready: Promise<boolean> };
   private readonly light: Plan3dLightField;
+  private readonly transparency = new Plan3dTransparency();
   private structureKey: readonly unknown[] = [];
   private openingKey: readonly unknown[] = [];
   private furnitureKey: readonly unknown[] = [];
@@ -289,6 +291,7 @@ export class Plan3dWorld {
     this.markers = new Plan3dMarkerLayer(document);
     this.scene.add(this.ground, this.structure, this.architecture, this.backdrop, this.openings, this.furniture, this.stairs, this.rooms, this.contacts,
       this.floorInk, this.ribbons, this.markers.group, this.markerGlass);
+    this.scene.onBeforeRender = (_renderer, _scene, camera) => this.transparency.prepare(camera);
   }
 
   presentMarkers(markers: readonly Plan3dMarker[], density: number, raster?: MarkerRaster): void {
@@ -403,7 +406,9 @@ export class Plan3dWorld {
     const options = { color: paint.color, opacity: paint.opacity, transparent: paint.opacity < 1,
       depthWrite: paint.opacity >= 1, side: paint.front ? FrontSide : DoubleSide,
       forceSinglePass: true, toneMapped: false, visible: paint.opacity > 0 };
-    return paint.lit ? this.light.material(options, paint.shadeSides) : new MeshBasicMaterial(options);
+    const material = paint.lit ? this.light.material(options, paint.shadeSides) : new MeshBasicMaterial(options);
+    if (material.transparent) material.userData.plan3dSurfaceKey = JSON.stringify(paint);
+    return material;
   }
 
   private mesh(geometry: BufferGeometry, paints: readonly Paint[]): Mesh {
@@ -774,9 +779,21 @@ export class Plan3dWorld {
       this.replace(this.furniture, furniture.flatMap(item => this.furnitureMeshes(item, decorWidth, decorHeight, visualScale)));
       this.furnitureKey = furnitureKey;
     }
+    if (display.transparentWalls3d && (top.opacity < 1 || side.opacity < 1)
+      && polygons(physical.walls).length && this.furniture.children.length) {
+      const transparentMeshes = (group: Group) => group.children.filter(
+        (object): object is Mesh<BufferGeometry, MeshBasicMaterial> => object instanceof Mesh
+          && object.material instanceof MeshBasicMaterial && object.material.transparent && object.material.opacity > 0
+          && !object.material.map && !object.material.alphaMap,
+      );
+      const shell = [...transparentMeshes(this.structure), ...transparentMeshes(this.openings)];
+      const blended = this.transparency.setSources([...shell, ...transparentMeshes(this.furniture)], shell.length);
+      if (blended && !blended.parent) this.scene.add(blended);
+    } else this.transparency.clear();
   }
 
   dispose(): void {
+    this.transparency.clear();
     this.replace(this.structure, []);
     this.replace(this.architecture, []);
     this.replace(this.ground, []);

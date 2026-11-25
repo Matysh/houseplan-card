@@ -11,6 +11,7 @@ const bundle = await rollup({
     viewport: 'test-build/plan-3d-viewport.js',
     world: 'test-build/plan-3d-world.js',
     openings: 'test-build/iso-openings.js',
+    transparency: 'test-build/plan-3d-transparency.js',
     motion: 'test-build/plan-3d-light-motion.js',
     host: 'test-build/plan-3d-host.js',
   },
@@ -43,6 +44,7 @@ try {
     const { Plan3dViewport } = await import('http://plan-3d.test/viewport.js');
     const { Plan3dWorld } = await import('http://plan-3d.test/world.js');
     const { buildIsoOpeningBasis, projectIsoOpeningStructure } = await import('http://plan-3d.test/openings.js');
+    const { Plan3dTransparency } = await import('http://plan-3d.test/transparency.js');
     const { Plan3dLightMotion } = await import('http://plan-3d.test/motion.js');
     const { Plan3dHost } = await import('http://plan-3d.test/host.js');
     const getContext = HTMLCanvasElement.prototype.getContext;
@@ -136,9 +138,63 @@ try {
                 adjacent: [pixel(canvas, 97, 97), pixel(canvas, 103, 103)] });
             }
           }
-      }
+        }
       }
       plan.dispose();
+      return frames;
+    })();
+    const transparentIntersection = await (async () => {
+      const order = new Plan3dTransparency();
+      const scene = new T.Scene();
+      const back = new T.Mesh(new T.BoxGeometry(20, 20, 20), new T.MeshBasicMaterial({ color: 0, side: T.BackSide }));
+      const furniture = new T.Mesh(new T.PlaneGeometry(2, 2), alpha(0xff0000));
+      const wallA = new T.Mesh(new T.PlaneGeometry(1.3, 1), alpha(0x00ff00));
+      wallA.geometry.rotateY(Math.PI / 4).translate(0, -.5, 0);
+      const wallB = new T.Mesh(new T.PlaneGeometry(1.3, 1), alpha(0x00ff00));
+      wallB.geometry.rotateY(Math.PI / 4).translate(0, .5, 0);
+      function alpha(color) {
+        return new T.MeshBasicMaterial({ color, transparent: true, opacity: .5, depthWrite: false, side: T.DoubleSide, forceSinglePass: true });
+      }
+      const sources = [wallA, wallB, furniture];
+      scene.add(back, ...sources);
+      scene.onBeforeRender = (_renderer, _scene, camera) => order.prepare(camera);
+      const sample = async (camera, point) => {
+        camera.updateMatrixWorld();
+        await new Promise(resolve => {
+          painted = resolve;
+          lit.present({ scene, camera });
+        });
+        const p = new T.Vector3(...point).project(camera);
+        return pixel(canvas, Math.floor((p.x + 1) * 100), Math.floor((1 - p.y) * 100));
+      };
+      const frames = [];
+      for (const lens of ['ortho', 'perspective']) {
+        const camera = lens === 'ortho' ? new T.OrthographicCamera(-1.2, 1.2, 1.2, -1.2, .1, 20)
+          : new T.PerspectiveCamera(28, 1, .1, 20);
+        for (const direction of [1, -1]) {
+          camera.position.set(lens === 'ortho' ? 0 : .6, 0, 5 * direction);
+          camera.lookAt(0, 0, 0);
+          const probes = [[-.3, .4, 0], [-.3, -.4, 0], [.3, .4, 0], [.3, -.4, 0]];
+          const baseline = [];
+          for (const point of probes) baseline.push(await sample(camera, point));
+          scene.add(order.setSources(sources, 2));
+          const sorted = [];
+          for (const point of probes) sorted.push(await sample(camera, point));
+          const occluder = new T.Mesh(new T.PlaneGeometry(2, 2), new T.MeshBasicMaterial({ color: 0x1234ab, side: T.DoubleSide }));
+          occluder.position.z = direction * .8;
+          scene.add(occluder);
+          const opaque = await sample(camera, probes[0]);
+          scene.remove(occluder);
+          occluder.geometry.dispose();
+          occluder.material.dispose();
+          order.clear();
+          frames.push({ lens, direction, baseline, sorted, opaque });
+        }
+      }
+      for (const source of [back, ...sources]) {
+        source.geometry.dispose();
+        source.material.dispose();
+      }
       return frames;
     })();
     const largeRadius = await lightFrame([{ ...lamp, radius: 2_000,
@@ -376,7 +432,7 @@ try {
     const deadline = performance.now() + 2000;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
-    return { contexts, pixels, picking, frames, paperHeight, windowJamb, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
+    return { contexts, pixels, picking, frames, paperHeight, windowJamb, transparentIntersection, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
       fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas, steppedAtlas,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
@@ -443,6 +499,16 @@ try {
   for (const frame of evidence.windowJamb) {
     assert.deepEqual([frame.center, ...frame.adjacent], [revealColor, revealColor, revealColor],
       'finish at both jambs has the same fill throughout zoom: ' + JSON.stringify(frame));
+  }
+  for (const { direction, lens, baseline, sorted, opaque } of evidence.transparentIntersection) {
+    const greenInFront = [64, 128, 0, 255], redInFront = [128, 64, 0, 255];
+    const colors = direction > 0 ? [greenInFront, redInFront] : [redInFront, greenInFront];
+    const expected = colors.flatMap(color => [color, color]);
+    const near = (a, b) => a.every((value, i) => Math.abs(value - b[i]) <= 1);
+    assert.ok(baseline.some((value, i) => !near(value, expected[i])), 'mesh-centre negative control must demonstrate wrong ordering');
+    assert.ok(sorted.every((value, i) => near(value, expected[i])),
+      'transparent wall must blend at fragment order from both sides: ' + JSON.stringify({ lens, direction, sorted }));
+    assert.deepEqual(opaque, [18, 52, 171, 255], 'opaque geometry still occludes both transparent layers');
   }
   const { baseline, lamp, ribbon, disabled, back, blocked } = evidence.wallLighting;
   assert.ok(lamp[0][0] > baseline[0][0] + 20 && lamp[2][0] > baseline[2][0] + 20,
