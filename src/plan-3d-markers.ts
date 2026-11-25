@@ -80,6 +80,10 @@ interface AtlasPage {
   free: number[];
 }
 interface AtlasCell { page: AtlasPage; index: number; }
+const BASE_CELL_LIMIT = 128;
+const ATLAS_PAGE_EDGE = 1024;
+const HIGH_PAGE_LIMIT = 4; // Each high-resolution RGBA page is 4 MiB.
+const atlasRow = (cell: number) => Math.min(8, ATLAS_PAGE_EDGE / cell);
 
 /** Atlas pages grow with the number of visible glyphs and retire when empty.
  * Each state change writes just the affected cell, without rebuilding plates. */
@@ -92,10 +96,9 @@ class MarkerAtlas {
   allocate(cell: number): AtlasCell | undefined {
     let page = this.pages.find(item => item.cell === cell && item.free.length);
     if (!page) {
-      const row = Math.min(8, 1024 / cell), side = cell * row;
+      const row = atlasRow(cell), side = cell * row;
       const size = side * side * 4;
-      if (cell > 128 && this.pages.reduce((bytes, item) => bytes + (item.cell > 128 ? item.bytes.length : 0), 0)
-        + size > 16 * 1024 * 1024) return;
+      if (cell > BASE_CELL_LIMIT && this.pages.filter(item => item.cell > BASE_CELL_LIMIT).length >= HIGH_PAGE_LIMIT) return;
       const bytes = new Uint8Array(size);
       const texture = new DataTexture(bytes, side, side);
       texture.colorSpace = SRGBColorSpace;
@@ -106,6 +109,19 @@ class MarkerAtlas {
       this.pages.push(page);
     }
     return { page, index: page.free.pop()! };
+  }
+
+  pagesToCompact(limits: ReadonlyMap<number, number>): Set<AtlasPage> {
+    const spare = new Set<AtlasPage>();
+    const sizes = new Set(this.pages.filter(page => page.cell > BASE_CELL_LIMIT).map(page => page.cell));
+    for (const size of sizes) {
+      // Keep the fullest pages of each size. Empty sparse pages before
+      // assigning the new crop: retained slots can otherwise hold two old
+      // pages even when they all fit in just one.
+      const sameSize = this.pages.filter(page => page.cell === size).sort((a, b) => a.free.length - b.free.length);
+      for (const page of sameSize.slice(limits.get(size) ?? 0)) spare.add(page);
+    }
+    return spare;
   }
 
   paint(cell: AtlasCell, glyph: Plan3dMarkerGlyph, foreground: string, background: string, aspect: number): void {
@@ -229,15 +245,17 @@ export class Plan3dMarkerLayer {
 
   present(markers: readonly Plan3dMarker[], devicePixelsPerUnit: number, raster?: MarkerRaster): void {
     const live = new Set<string>();
-    const work: { key: string; marker: Plan3dMarker; face: Plan3dMarkerFace; size: number; priority: number }[] = [];
+    const work: { key: string; marker: Plan3dMarker; face: Plan3dMarkerFace;
+      size: number; priority: number; order: number }[] = [];
     for (const marker of markers) marker.faces.forEach((face, index) => {
       const key = marker.id + ':' + index;
       if (!(face.left < face.right && face.top < face.bottom && marker.diameter > 0)) return;
       live.add(key);
       const nominal = Math.max(face.right - face.left, face.bottom - face.top) * marker.diameter * devicePixelsPerUnit;
       const measured = raster && nominal > 80 ? capPixels(marker, face, raster) : undefined;
-      const size = measured ? cellSize(measured.pixels) : Math.min(128, cellSize(nominal));
-      work.push({key, marker, face, size, priority: measured?.priority ?? Infinity});
+      const baseline = Math.min(BASE_CELL_LIMIT, cellSize(nominal));
+      const size = Math.max(baseline, measured ? cellSize(measured.pixels) : 0);
+      work.push({ key, marker, face, size, priority: measured?.priority ?? Infinity, order: work.length + 1 });
     });
     for (const [key, paint] of this.markers) {
       if (live.has(key)) continue;
@@ -248,22 +266,35 @@ export class Plan3dMarkerLayer {
     // Release from the former crop first. Otherwise earlier devices in floor
     // order would keep the pages when the user pans without changing zoom.
     const slots = new Map<number, number>();
+    const limits = new Map<number, number>();
     let pages = 0;
-    const nearest = work.filter(row => row.face.glyph && row.size > 128)
+    const nearest = work.filter(row => row.face.glyph && row.size > BASE_CELL_LIMIT)
       .sort((a, b) => a.priority - b.priority);
     for (const row of nearest) {
-      while (row.size > 128) {
+      while (row.size > BASE_CELL_LIMIT) {
         const free = slots.get(row.size) ?? 0;
         if (free) { slots.set(row.size, free - 1); break; }
-        if (pages < 4) { pages++; slots.set(row.size, (1024 / row.size) ** 2 - 1); break; }
+        if (pages < HIGH_PAGE_LIMIT) {
+          pages++;
+          limits.set(row.size, (limits.get(row.size) ?? 0) + 1);
+          slots.set(row.size, atlasRow(row.size) ** 2 - 1);
+          break;
+        }
         row.size /= 2;
       }
     }
     for (const {key, face, size} of work) {
       const paint = this.markers.get(key);
-      if (paint?.cell && (!face.glyph || paint.cell.page.cell > size)) this.clearInk(paint);
+      if (paint?.cell && (!face.glyph || paint.cell.page.cell !== size)) this.clearInk(paint);
     }
-    work.forEach(({key, marker, face, size}, index) => this.update(key, marker, face, size, index + 1));
+    const spare = this.atlas.pagesToCompact(limits);
+    if (spare.size) for (const paint of this.markers.values())
+      if (paint.cell && spare.has(paint.cell.page)) this.clearInk(paint);
+    // Allocation order follows focus priority; draw/pick order stays in the
+    // original marker order regardless of which pages were compacted.
+    const update = ({ key, marker, face, size, order }: typeof work[number]) => this.update(key, marker, face, size, order);
+    for (const row of nearest) if (row.size > BASE_CELL_LIMIT) update(row);
+    for (const row of work) if (row.size <= BASE_CELL_LIMIT || !row.face.glyph) update(row);
   }
 
   private update(key: string, marker: Plan3dMarker, face: Plan3dMarkerFace, size: number, order: number): void {

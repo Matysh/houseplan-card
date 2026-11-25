@@ -285,6 +285,28 @@ try {
       paint();
       return { before, after: [cell('near-a'), cell('near-b'), bytes()] };
     })();
+    const steppedAtlas = (() => {
+      const narrow = Array.from({ length: 10 }, (_, i) => ({
+        ...marker, id: 'narrow-' + i, center: [35 + i, 0], diameter: 15,
+      }));
+      const wide = Array.from({ length: 9 }, (_, i) => ({
+        ...marker, id: 'wide-' + i, center: [i - 4, 0], diameter: 26,
+      }));
+      // Retained small caps initially occupy both old pages, including the
+      // sparse tail. The next zoom needs one small page and three large ones.
+      const layout = [...narrow.slice(0,8), ...wide.slice(0,8), narrow[8], wide[8], narrow[9]];
+      const measure = () => ({
+        center: wide.map(m => world.markers.markers.get(m.id + ':0').cell.page.cell),
+        edge: narrow.map(m => world.markers.markers.get(m.id + ':0').cell.page.cell),
+        pages: world.markers.atlas.pages.map(page => page.cell).sort((a,b) => a-b),
+      });
+      world.presentMarkers(layout, 8, { camera, width: 1600, height: 1600 });
+      const before = measure();
+      world.presentMarkers(layout, 11, { camera, width: 2200, height: 2200 });
+      const after = measure(), previous = [...world.markers.atlas.pages];
+      world.presentMarkers(layout, 11, { camera, width: 2200, height: 2200 });
+      return { before, after, reused: previous.every(page => world.markers.atlas.pages.includes(page)) };
+    })();
     world.presentMarkers([], 1);
     world.present({ ...input, lights: [], rooms: [{ id: 'room', color: '#a07832', opacity: 1,
       geometry: [[[[-95, -95], [-95, 95], [95, 95], [95, -95]]]] }],
@@ -316,7 +338,7 @@ try {
       await new Promise(resolve => requestAnimationFrame(resolve));
     return { contexts, pixels, picking, frames, paperHeight, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
-      fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas,
+      fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas, steppedAtlas,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
   });
@@ -348,8 +370,13 @@ try {
   assert.equal(evidence.valueInk.hit, 'thermometer');
   assert.deepEqual(evidence.coincident, { upperOnly: true, lowerOnly: true, upperHit: 'upper', lowerHit: 'lower' },
     'coincident devices show and pick exactly one cap with its own glyph, never a blend of both');
-  assert.deepEqual(evidence.atlas.before, [1024,64,16 * 1024 * 1024], 'high density favors the centered cap under the atlas budget');
-  assert.deepEqual(evidence.atlas.after, [64,1024,4 * 1024 * 1024], 'panning at fixed zoom moves high density to the new crop');
+  assert.deepEqual(evidence.atlas.before, [1024,128,16 * 1024 * 1024], 'high density favors the centered cap under the atlas budget');
+  assert.deepEqual(evidence.atlas.after, [128,1024,4 * 1024 * 1024], 'panning keeps a readable offscreen fallback and moves high density to the new crop');
+  assert.deepEqual(evidence.steppedAtlas.before.pages, [256,256]);
+  assert.deepEqual(evidence.steppedAtlas.after, {
+    center: Array(9).fill(512), edge: Array(10).fill(256), pages: [256,512,512,512],
+  }, 'fragmented old pages cannot starve the centered caps after a zoom step');
+  assert.equal(evidence.steppedAtlas.reused, true, 'unchanged frames retain the reconciled pages');
   assert.deepEqual(evidence.roomColor, [160, 120, 50, 255]);
   assert.deepEqual(evidence.ribbonColor, [255, 255, 0, 255]);
   assert.equal(evidence.ribbonHit, 'switch-1');
