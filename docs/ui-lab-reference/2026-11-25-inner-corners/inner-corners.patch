@@ -1,0 +1,271 @@
+diff --git a/src/iso-architectural-edges.ts b/src/iso-architectural-edges.ts
+index 1a0813f90a..378a8a72eb 100644
+--- a/src/iso-architectural-edges.ts
++++ b/src/iso-architectural-edges.ts
+@@ -6,7 +6,7 @@ import { architecturalWallTone } from './iso-architectural-tone';
+ import { isoRotationBasis, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
+ import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
+ 
+-type Face = { index:number; a:PlanPoint; b:PlanPoint; low:number; high:number; d:string; nx:number; ny:number; color:string };
++type Face = { index:number; a:PlanPoint; b:PlanPoint; low:number; high:number; d:string; nx:number; ny:number; color:string; edgeOnly?:boolean };
+ type Paint = { fill:(index:number)=>string; edges:TemplateResult|typeof nothing;
+   edge:(index:number,d:string,fragment:number)=>TemplateResult|typeof nothing };
+ const memo=new WeakMap<object,{key:string;paint:Paint}>();
+@@ -37,7 +37,9 @@ function faceOf(entry:IsoWallDepthQueueEntry,index:number,camera:IsoCamera,color
+   if(nx*sin+ny*cos<0){nx=-nx;ny=-ny;}
+   const sx=nx*cos-ny*sin, sy=nx*sin+ny*cos;
+   const light=(1+(-.8*sx+.6*sy))/2;
+-  return {index,a,b,low,high,d,nx,ny,color:architecturalWallTone(color,light)};
++  return {index,a,b,low,high,d,nx,ny,color:architecturalWallTone(color,light),
++    edgeOnly:entry.layer==='wall-side' ? entry.face.edgeOnly
++      : entry.layer==='opening' && entry.surface.hiddenInTranslucentMasonry};
+ }
+ 
+ export function architecturalPainter(queue:readonly IsoWallDepthQueueEntry[],camera:IsoCamera,color:string):Paint {
+@@ -64,11 +66,15 @@ export function architecturalPainter(queue:readonly IsoWallDepthQueueEntry[],cam
+   };
+   const renderEdge = (face:Face,d:string,fragment:number) => {
+     const segments:{a:PlanPoint;b:PlanPoint;z1:number;z2:number}[]=[];
+-    if(face.low<epsilon)segments.push({a:face.a,b:face.b,z1:0,z2:0});
++    if(!face.edgeOnly && face.low<epsilon)segments.push({a:face.a,b:face.b,z1:0,z2:0});
+     for(const point of [face.a,face.b]) {
+       let intervals=[[face.low,face.high]];
+       for(const other of peersAt(point)) {
+-        if(other===face || Math.abs(face.nx*other.ny-face.ny*other.nx)>epsilon)continue;
++        if(other===face)continue;
++        // A visible face already owns silhouette corners; back faces only
++        // contribute the missing inner corners. Coplanar joints remain absent.
++        if(!(face.edgeOnly && !other.edgeOnly)
++          && Math.abs(face.nx*other.ny-face.ny*other.nx)>epsilon)continue;
+         // Remove shared coplanar construction seams, including apron/lintel joins.
+         intervals=intervals.flatMap(([a,b])=>other.high<=a+epsilon||other.low>=b-epsilon?[[a,b]]:
+           [[a,Math.min(b,other.low)],[Math.max(a,other.high),b]].filter(([l,h])=>h-l>epsilon));
+diff --git a/src/iso-lab-visibility.ts b/src/iso-lab-visibility.ts
+index 51b0c6451b..558a1dc1c0 100644
+--- a/src/iso-lab-visibility.ts
++++ b/src/iso-lab-visibility.ts
+@@ -616,7 +616,7 @@ export function composeIsoTranslucentStructure(
+ ): readonly IsoDepthFragment[] {
+   const key = JSON.stringify([camera,scale,masonry,furniture.map(({footprint,height})=>[footprint,height]),
+     queue.map(entry => entry.layer === 'opening' ? [entry.surface.material,entry.surface.kind,entry.surface.d]
+-      : [entry.layer,entry.face.d])]);
++      : [entry.layer,entry.face.d,entry.layer==='wall-side' && entry.face.edgeOnly])]);
+   if (key === transparentKey) return transparentResult;
+   const {coordinates,restore} = depthClipCoordinates(camera,scale);
+   const masonryKinds = queue.map(masonrySurface);
+@@ -624,7 +624,8 @@ export function composeIsoTranslucentStructure(
+     const kind = masonryKinds[index];
+     if (kind && masonry[kind] === 0) return null;
+     const face = faceOf(entry,camera,coordinates);
+-    if (face && kind) face.opaque = masonry[kind] === 1;
++    if (face && kind) face.opaque = masonry[kind] === 1
++      && !(entry.layer==='wall-side' && entry.face.edgeOnly);
+     return face;
+   }), ...furniture.map(item => furnitureDepthSurface(item,camera,coordinates))];
+   const result: RankedFragment[] = [];
+@@ -651,7 +652,9 @@ export function composeIsoTranslucentStructure(
+         else continue;
+       }
+       const duplicateMasonry = coplanar && masonryKinds[index] !== undefined
+-        && masonryKinds[index] === masonryKinds[otherIndex];
++        && masonryKinds[index] === masonryKinds[otherIndex]
++        && !(queue[index]?.layer==='wall-side' && queue[index].face.edgeOnly)
++        && !(queue[otherIndex]?.layer==='wall-side' && queue[otherIndex].face.edgeOnly);
+       for (const [ring] of other.geom) {
+         const cover = halfPlane(ring,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
+         if (!cover.length) continue;
+diff --git a/src/iso-masonry-joins.ts b/src/iso-masonry-joins.ts
+index 860ec6afbe..182e66aabc 100644
+--- a/src/iso-masonry-joins.ts
++++ b/src/iso-masonry-joins.ts
+@@ -23,6 +23,8 @@ type Span = {from: number; to: number; offset: number};
+ type OpeningMasonry = {
+   sidesWithPanels: readonly IsoWallFace[];
+   sidesWithoutPanels: readonly IsoWallFace[];
++  cornerSidesWithPanels: readonly IsoWallFace[];
++  cornerSidesWithoutPanels: readonly IsoWallFace[];
+   surfaces: readonly IsoOpeningRenderSurface[];
+ };
+ const cached = new WeakMap<object,OpeningMasonry>();
+@@ -112,6 +114,8 @@ export function connectTranslucentOpeningMasonry(scene: IsoRenderScene): Opening
+     surfaces,
+     sidesWithPanels: scene.geometry.sides.flatMap(face=>trimJambs(face,jambs,scene.camera,true)),
+     sidesWithoutPanels: scene.geometry.sides.flatMap(face=>trimJambs(face,jambs,scene.camera,false)),
++    cornerSidesWithPanels: (scene.geometry.backSides ?? []).flatMap(face=>trimJambs(face,jambs,scene.camera,true)),
++    cornerSidesWithoutPanels: (scene.geometry.backSides ?? []).flatMap(face=>trimJambs(face,jambs,scene.camera,false)),
+   };
+   cached.set(scene.geometry,result);
+   return result;
+diff --git a/src/iso-scene-render.ts b/src/iso-scene-render.ts
+index 1f55f7e4e4..3ddb16a4e9 100644
+--- a/src/iso-scene-render.ts
++++ b/src/iso-scene-render.ts
+@@ -301,7 +301,9 @@ function renderIsoStructure(
+   const uniformTopPlane = (scene.camera?.floorScaleY ?? 1) !== 1;
+   if (transparentMasonry && scene.camera) {
+     const joins = connectTranslucentOpeningMasonry(scene);
+-    const geometry = {...scene.geometry,sides:layers.panels ? joins.sidesWithPanels : joins.sidesWithoutPanels};
++    const geometry = {...scene.geometry,sides:layers.panels
++      ? [...joins.sidesWithPanels,...joins.cornerSidesWithPanels]
++      : [...joins.sidesWithoutPanels,...joins.cornerSidesWithoutPanels]};
+     const visible = openingSurfaces.filter(surface => !surface.hiddenInTranslucentMasonry
+       && surface.material !== 'wall-side' && surface.material !== 'wall-top');
+     const joined = buildIsoWallDepthQueue(geometry,[...visible,...joins.surfaces],uniformTopPlane);
+@@ -481,13 +483,19 @@ function renderIsoTranslucentMasonry(
+     })),
+   ] : joined;
+   const solid = queue.filter(entry => {
++    if(entry.layer==='wall-side' && entry.face.edgeOnly)return false;
+     const kind = masonrySurface(entry);
+     return !kind || masonry[kind] === 1;
+   });
+   if (overlays) for (const placement of overlays.devices.values()) {
+     placement.wallMask = deviceWallOcclusion(solid,camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
+   }
+-  const architecture = architecturalPainter(queue,camera,wallColor);
++  // Back-facing apron/lintel faces are adjacency witnesses only. They remove
++  // construction joints from the new corner ink without painting a second
++  // layer of masonry or restoring the old vertical stripes below windows.
++  const architecture = architecturalPainter([...queue,...scene.openingSurfaces
++    .filter(surface=>surface.hiddenInTranslucentMasonry && surface.material==='wall-side')
++    .map(surface=>({layer:'opening' as const,depth:surface.depth,surface}))],camera,wallColor);
+   const paintWallLight = isoWallLightPainter(wallLights,camera,cellCm,scene.geometry);
+   const fragments = composeIsoTranslucentStructure(queue,camera,gridVisualScale(cellCm),masonry,furniture);
+   const partitions=new Map<number,number>();
+@@ -515,7 +523,7 @@ function renderIsoTranslucentMasonry(
+         // Only computational cuts need exclusive pixel ownership. The actual
+         // silhouette of an unsplit surface retains normal antialiasing.
+         const paintEdges=(partitions.get(index)??0)>1 ? 'crispEdges' : nothing;
+-        const face = roundColumn !== undefined
++        const face = entry.layer==='wall-side' && entry.face.edgeOnly ? nothing : roundColumn !== undefined
+           ? svg`<path data-hp-round-column=${roundColumn} d=${d} fill-rule="evenodd" shape-rendering=${paintEdges} fill-opacity=${masonry[kind]}
+             fill=${'url(#hp-iso-column-'+roundColumn+')'}></path>`
+           : svg`<path class=${kind === 'side' ? 'iso-wall-side' : 'iso-wall-top'} d=${d} shape-rendering=${paintEdges} fill-opacity=${masonry[kind]}
+@@ -531,7 +539,8 @@ function renderIsoTranslucentMasonry(
+             : paintsContinuousCut ? svg`<defs><clipPath id=${clip}><path d=${d} clip-rule="evenodd"></path></clipPath></defs>
+                 <use href="#hp-iso-translucent-cut-paint" fill-opacity=${masonry[kind]} clip-path=${'url(#'+clip+')'}></use>
+                 <use href="#hp-iso-translucent-cut-contour" opacity=${masonry[kind]} clip-path=${'url(#'+clip+')'}></use>` : nothing}
+-          ${lightFace ? svg`<g opacity=${masonry[kind]}>${paintWallLight(lightFace,fragment)}</g>` : nothing}
++          ${lightFace && !(entry.layer==='wall-side' && entry.face.edgeOnly)
++            ? svg`<g opacity=${masonry[kind]}>${paintWallLight(lightFace,fragment)}</g>` : nothing}
+         </g>`;
+       })}
+     </g>
+diff --git a/src/iso-walls.ts b/src/iso-walls.ts
+index 79f0ece6e9..a300f7f9e9 100644
+--- a/src/iso-walls.ts
++++ b/src/iso-walls.ts
+@@ -5,6 +5,8 @@ import {
+ 
+ export interface IsoWallFace {
+   d: string;
++  /** Back-facing masonry carries corner ink in translucent mode, never fill. */
++  edgeOnly?: boolean;
+   roundColumn?: number;
+   planEdge?: readonly [PlanPoint, PlanPoint];
+   height?: number;
+@@ -33,6 +35,7 @@ export interface IsoWallGeometry {
+   /** Independently paintable top components for the shared Stage 4 depth queue. */
+   topFaces: readonly IsoWallTopFace[];
+   sides: readonly IsoWallFace[];
++  backSides?: readonly IsoWallFace[];
+   contactPath: string;
+   edgeCount: number;
+ }
+@@ -141,6 +144,7 @@ export function buildIsoWallGeometry(
+   const tops: string[] = [];
+   const topFaces: IsoWallTopFace[] = [];
+   const sides: IsoWallFace[] = [];
++  const backSides: IsoWallFace[] = [];
+   const contacts: string[] = [];
+   let edgeCount = 0;
+   for (let polygon = 0; polygon < (geometry || []).length; polygon++) {
+@@ -165,11 +169,12 @@ export function buildIsoWallGeometry(
+         const floorA = projectPlanPoint(a, 0, camera);
+         const floorB = projectPlanPoint(b, 0, camera);
+         contacts.push(`M ${pointText(floorA)} L ${pointText(floorB)}`);
+-        if (visibleNormalY(a, b, camera) <= 1e-9) continue;
++        const back = visibleNormalY(a, b, camera) <= 1e-9;
+         const topB = projectPlanPoint(b, height, camera);
+         const topA = projectPlanPoint(a, height, camera);
+         const facePoints = Object.freeze([floorA, floorB, topB, topA]);
+-        sides.push({
++        (back ? backSides : sides).push({
++          ...(back ? {edgeOnly:true} : {}),
+           d: `M ${facePoints.map(pointText).join(' L ')} Z`,
+           points: facePoints,
+           planEdge: [a,b], height,
+@@ -191,7 +196,7 @@ export function buildIsoWallGeometry(
+     || a.ring - b.ring || a.edge - b.edge);
+   topFaces.sort((a, b) => a.depth - b.depth || a.component - b.component);
+   return {
+-    topPath: tops.join(' '), topFaces, sides, contactPath: contacts.join(' '), edgeCount,
++    topPath: tops.join(' '), topFaces, sides, backSides, contactPath: contacts.join(' '), edgeCount,
+   };
+ }
+ 
+diff --git a/test/iso-architectural-tone.test.mjs b/test/iso-architectural-tone.test.mjs
+index dfeded576b..392ae2d0cf 100644
+--- a/test/iso-architectural-tone.test.mjs
++++ b/test/iso-architectural-tone.test.mjs
+@@ -4,6 +4,7 @@ import {architecturalFloorTone, architecturalWallTone} from '../test-build/iso-a
+ import {architecturalPainter} from '../test-build/iso-architectural-edges.js';
+ import {colorLuma, parseCssColor} from '../test-build/iso-materials.js';
+ import {ISO_CAMERA} from '../test-build/iso-projection.js';
++import {buildIsoWallGeometry} from '../test-build/iso-walls.js';
+ 
+ const luma = c => colorLuma(parseCssColor(c));
+ test('#1495 white, near-black and coloured masonry preserve directional contrast', () => {
+@@ -40,3 +41,31 @@ test('#1495 an apron shares the wall tone, a raised lintel has no floor contact'
+   assert.equal(paint.fill(0),paint.fill(2));
+   assert.deepEqual(edgePaths(architecturalPainter([masonry(15,20)],ISO_CAMERA,'#9ab5b2')).map(p=>p.segments),[2]);
+ });
++
++test('transparent walls retain the far corner without adding back-face floor ink', () => {
++  for (const rotDeg of [35,125,215,305]) {
++    const camera={...ISO_CAMERA,rotDeg};
++    const geometry=buildIsoWallGeometry([[[[0,0],[100,0],[100,70],[0,70]]]],camera,20);
++    assert.equal(geometry.sides.length,2);
++    assert.equal(geometry.backSides.length,2);
++    assert(geometry.backSides.every(face=>face.edgeOnly));
++    const queue=[...geometry.sides,...geometry.backSides].map(face=>({layer:'wall-side',face}));
++    const ink=architecturalPainter(queue,camera,'#303030').edges.values[0];
++    // Each back face owns half of the otherwise missing far vertical edge.
++    // Shared silhouette ends and all back-face floor contacts remain absent.
++    assert.deepEqual(ink.slice(2).map(t=>t.values[2].split('M ').length-1),[1,1]);
++  }
++});
++
++test('back-facing apron and lintel suppress construction lines at a window end', () => {
++  const side=makeFace([0,0],[100,0]);side.face.edgeOnly=true;
++  const hidden=(low,high)=>({layer:'opening',surface:{material:'wall-side',hiddenInTranslucentMasonry:true,
++    d:'M 100 0 L 150 0 L 150 20 Z',points:[{point:[100,0],z:low},{point:[150,0],z:low},
++      {point:[150,0],z:high},{point:[100,0],z:high}]}});
++  const ink=architecturalPainter([side,hidden(0,5),hidden(15,20)],ISO_CAMERA,'#303030').edges.values[0][0].values[2];
++  // Left physical corner remains full height; only the actual opening interval
++  // is inked at the right, with no continuation below sill/above lintel.
++  assert.equal(ink.split('M ').length-1,2);
++  const expected=architecturalPainter([side],ISO_CAMERA,'#303030').edges.values[0][0].values[2];
++  assert.notEqual(ink,expected);
++});
+diff --git a/test/iso-wall-transparency.test.mjs b/test/iso-wall-transparency.test.mjs
+index 022eb78c52..85dab3fd70 100644
+--- a/test/iso-wall-transparency.test.mjs
++++ b/test/iso-wall-transparency.test.mjs
+@@ -41,6 +41,16 @@ test('a furniture envelope does not cut a continuous wall into separate paint sh
+   assert.deepEqual(orderAt(fragments,...point),[0,1]);
+ });
+ 
++test('corner-only back faces never occlude paint behind their empty surface', () => {
++  const camera={...ISO_CAMERA,origin:[0,0],rotDeg:0};
++  const face=wall([[0,0],[20,0],[20,10],[0,10]].map(([x,z])=>projectPlanPoint([x,0],z,camera)));
++  face.face.edgeOnly=true;
++  const furniture=[{footprint:[[5,-5],[15,-5],[15,-3],[5,-3]],height:5}];
++  const fragments=composeIsoTranslucentStructure([face],camera,1,{side:1,top:1},furniture);
++  const point=projectPlanPoint([10,0],4,camera);
++  assert(orderAt(fragments,...point).includes(1),'empty back face must not remove the furniture');
++});
++
+ test('#1530 an opaque cut fully hides the device side and glass behind it', () => {
+   for (const lens of [undefined,{center:[100,100],rate:.002}]) {
+     const camera = {...ISO_CAMERA,origin:[0,0],rotDeg:0,perspective:lens};

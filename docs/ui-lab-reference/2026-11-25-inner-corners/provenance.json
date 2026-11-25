@@ -1,0 +1,24 @@
+{
+  "issue": 1560,
+  "recordedOn": "2026-11-25",
+  "status": "local-prototype",
+  "ownerRequestedSeparateIssue": true,
+  "ownerApproved": false,
+  "productImplemented": false,
+  "baseline": {
+    "ref": "v1.86.1-beta.8",
+    "commit": "d4004f33edee67b2953b769431dc887c8ff7f32a",
+    "priorReferenceCommit": "116795ce8b18909fdbe8a9d04269a839eb9af7e9",
+    "priorReferencePath": "docs/ui-lab-reference/2026-11-24-wall-base-seams"
+  },
+  "fingerprint": "24b48aa7fd02f7793e30bd1960a40285fb6531fcd93cdd6b117e580ea79f6fef",
+  "files": [
+    "src/iso-walls.ts",
+    "src/iso-masonry-joins.ts",
+    "src/iso-architectural-edges.ts",
+    "src/iso-lab-visibility.ts",
+    "src/iso-scene-render.ts",
+    "test/iso-architectural-tone.test.mjs",
+    "test/iso-wall-transparency.test.mjs"
+  ]
+}
