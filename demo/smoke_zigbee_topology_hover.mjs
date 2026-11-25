@@ -185,7 +185,7 @@ const result = await page.evaluate(async () => {
   await card.updateComplete;
   await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
-  await wait(() => !!root().querySelector('[data-hp="iso-walls"]'), 'Iso walls');
+  await wait(() => !!root().querySelector('canvas[data-hp-plan-3d]'), 'Iso walls');
   const isoBeforePanZoom = await isoTopologyGeometry();
   out.isoMarkersRaised = isoBeforePanZoom.raised;
   out.isoTopologyUsesRaisedDomCentres = isoBeforePanZoom.aligned;

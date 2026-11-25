@@ -154,7 +154,8 @@ test('#1545 live publication retains the same decoded image only for the current
     if (originalImage) Object.defineProperty(globalThis,'Image',originalImage);
     else delete globalThis.Image;
   });
-  const h=harness({read:async()=>({...packet,size:portable.size})});
+  const image = new Blob(['<svg xmlns="http://www.w3.org/2000/svg"/>'], {type:'image/svg+xml'});
+  const h=harness({read:async()=>({...packet,image,size:portable.size})});
   t.after(()=>h.owner.dispose());
   h.set(portable);
   h.owner.observe(portable);

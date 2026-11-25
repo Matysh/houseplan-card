@@ -203,7 +203,7 @@ const result = await page.evaluate(async (source) => {
   await window.__hpEnsureHarnessIsoRuntime(card);
   await update(false);
   const isoWalls = card._isoSource().build().walls;
-  out.hiddenIsoUsesMasonry = !!root().querySelector('[data-hp="iso-walls"]')
+  out.hiddenIsoUsesMasonry = !!root().querySelector('canvas[data-hp-plan-3d]')
     && isoWalls.flat(2).length > 0;
   out.hiddenIsoHasNoEnclosedHoles = enclosedVectorHoles(isoWalls, node) === 0;
   out.renderNeverWritesConfig = JSON.stringify(card._serverCfg.spaces[0]) === persisted;

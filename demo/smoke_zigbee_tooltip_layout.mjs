@@ -129,7 +129,7 @@ for (const provider of ['z2m', 'zha']) {
         svgRect: svg ? rect(svg) : null, screenMatrix: matrix ? [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f] : null,
         routeGeometry },
       projectionIso: root.querySelector('.stage').classList.contains('projection-iso'),
-      isoWalls: !!root.querySelector('[data-hp="iso-walls"]'),
+      isoWalls: !!root.querySelector('canvas[data-hp-plan-3d]'),
       sourceRaised: floor?.length === 2 && visual?.length === 2
         && Math.hypot(floor[0] - visual[0], floor[1] - visual[1]) > 0.1,
       tipText: tip?.textContent || '', badgesDisjoint,

@@ -84,7 +84,7 @@ const result = await page.evaluate(async (fixtureConfig) => {
   const iso = card._isoSource().build();
   out.hiddenIsoUsesCompleteMasonry = iso.walls.length
     === canonical.components.reduce((sum, component) => sum + component.geom.length, 0)
-    && !!root().querySelector('[data-hp="iso-walls"]');
+    && !!root().querySelector('canvas[data-hp-plan-3d]');
   out.renderNeverWrites = JSON.stringify(card._serverCfg.spaces[0]) === sourceBeforeRender;
 
   let writes = 0;

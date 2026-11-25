@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { startIsoPaintScene, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
+import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
+import { currentGraphFixture } from './helpers/graph-fixture.mjs';
 
 const { page, browser } = await startIsoPaintScene({ initScript: () => {
   const getContext = HTMLCanvasElement.prototype.getContext;
@@ -39,6 +41,7 @@ try {
       saved: card._serverCfg.settings.volumetric_view, writes: window.__isoPaintWrites };
   });
   await present();
+  await page.waitForFunction(() => window.__isoPaint._plan3dHost?.world.furniture.children.length > 0);
   const initial = await facts();
   assert.equal(initial.markers, initial.expected);
   assert.ok(initial.hitCount >= initial.anchorCount * .85 && initial.anchorCount > 12, JSON.stringify(initial));
@@ -58,17 +61,29 @@ try {
   assert.equal(recovered.saved, true);
   assert.deepEqual(recovered.writes, []);
   const beforeDashboard = await page.evaluate(() => window.__hpTestGpuContexts.size);
-  await page.evaluate(() => {
+  const small = makeLargeHouseFixture({ floors: 1, roomsPerFloor: 3, devices: 8, openings: 3,
+    partitions: 0, columns: 0, decor: 0, stairs: 0 });
+  small.config = currentGraphFixture(small.config);
+  small.config.settings.volumetric_view = true;
+  await page.evaluate(fixture => {
     const primary = window.__isoPaint, host = primary.parentElement;
     host.style.display = 'grid';
     host.style.gridTemplateColumns = 'repeat(3,minmax(0,1fr))';
     for (const rotation of [45, 90, 135, 180, 225]) {
       const card = document.createElement('houseplan-card');
       card.setConfig({ type: 'custom:houseplan-card', view: 'iso', plan_rotation: rotation, icon_size: 2.5 });
-      card.hass = primary.hass;
+      card.hass = { ...primary.hass, devices: fixture.devices, entities: fixture.entities,
+        states: fixture.states, areas: fixture.areas, callWS: async message => {
+          if (message.type === 'houseplan/config/get') return { config: structuredClone(fixture.config), rev: 1,
+            can_write: true, device_contact_api: 1, plan_graph_api: 1 };
+          if (message.type === 'houseplan/layout/get') return { layout: structuredClone(fixture.layout), rev: 1 };
+          if (message.type === 'config/device_registry/list') return Object.values(fixture.devices);
+          if (message.type === 'config/entity_registry/list') return Object.values(fixture.entities);
+          return primary.hass.callWS(message);
+        } };
       host.append(card);
     }
-  });
+  }, small);
   const cards = page.locator('#host > houseplan-card');
   assert.equal(await cards.count(), 6);
   const images = new Set();
@@ -91,7 +106,7 @@ try {
   assert.equal(images.size, 6, 'each card must receive its own scene and projection');
   assert.equal(await page.evaluate(() => window.__hpTestGpuContexts.size), beforeDashboard, 'all six cards use the existing context');
   assert.deepEqual(errors, []);
-  console.log(`OK: ${initial.markers} production marker bodies, ${initial.hitCount}/${initial.anchorCount} sampled hit positions, zoom, 2D and recovery`);
+  console.log(`OK: ${initial.markers} production marker bodies, ${initial.hitCount}/${initial.anchorCount} sampled hit positions, zoom, 2D, recovery and six cards`);
 } finally {
   await browser.close();
 }

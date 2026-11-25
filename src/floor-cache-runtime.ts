@@ -1,7 +1,7 @@
 import { FloorCacheStore, type CacheAddress, type CachePayload } from './floor-cache-store';
 import { FloorCacheScheduler } from './floor-cache-scheduler';
 import { cacheSha256 } from './floor-cache-key';
-import { cacheTextChecksum } from './floor-cache-job';
+import { cacheTextChecksum, type FloorJob } from './floor-cache-job';
 import { decodeGeometryValue, type GeometryWire } from './floor-cache-codec';
 import { isFloorGeometryFrame, type FloorGeometryFrame, type FloorGeometryInput } from './floor-geometry-frame';
 import type { LightBarrierRevision } from './glow-scene';
@@ -18,10 +18,23 @@ export interface FloorRuntimeHost {
   changed(kind?: 'geometry' | 'light'): void;
 }
 interface Entry { frame: FloorGeometryFrame; wire: GeometryWire; payload?: CachePayload; lightKey: string; light: unknown }
+type GeometryResult = ReturnType<FloorCacheScheduler['runWithOutcome']>;
+interface GeometryFlight {
+  scheduler: FloorCacheScheduler;
+  result: GeometryResult;
+  subscribers: number;
+}
+// Full cards in one document can ask for the same accepted floor at once.
+// Only the encoded output is shared. Each card still checks its own authority
+// and decodes/hydrates a private frame before it can render or publish it.
+const geometryFlights = new Map<string, GeometryFlight>();
 /** One owner fences cache reads, work, hydration and publication. Authority
  * object and navigation sequence remain independent of persistent identity. */
 export class FloorCacheRuntime {
   private scheduler = new FloorCacheScheduler();
+  private sharedGeometry: { scheduler: FloorCacheScheduler; release(): void } | undefined;
+  private readonly sharedMetrics = { workerJobs: 0, fallbackJobs: 0, cancelled: 0, workerErrors: 0,
+    timeouts: 0, workerTimeouts: 0, last: null as FloorCacheScheduler['metrics']['last'] };
   private readonly store = new FloorCacheStore();
   private memory = new Map<string, Entry>();
   private sequence = 0;
@@ -60,13 +73,21 @@ export class FloorCacheRuntime {
     return task && this.lightCurrent(task) ? this.memory.get(task.selection.persistentKey)?.light : undefined;
   }
   get fit() { return this.pending ? this.preview?.fit : undefined; }
-  get diagnostic() { return { ...this.metrics, store: this.store.metrics, scheduler: this.scheduler.metrics,
-    stage: this.scheduler.stage, failure: this.failure }; }
+  get diagnostic() {
+    const local = this.scheduler.metrics, shared = this.sharedMetrics;
+    return { ...this.metrics, store: this.store.metrics, scheduler: {
+      workerJobs: local.workerJobs + shared.workerJobs, fallbackJobs: local.fallbackJobs + shared.fallbackJobs,
+      cancelled: local.cancelled + shared.cancelled, workerErrors: local.workerErrors + shared.workerErrors,
+      timeouts: local.timeouts + shared.timeouts, workerTimeouts: local.workerTimeouts + shared.workerTimeouts,
+      last: local.last ?? shared.last,
+    }, stage: this.sharedGeometry?.scheduler.stage ?? this.scheduler.stage, failure: this.failure };
+  }
   get supportFacts() {
-    const last = this.scheduler.metrics.last;
+    const stage = this.sharedGeometry?.scheduler.stage ?? this.scheduler.stage;
+    const last = this.scheduler.metrics.last ?? this.sharedMetrics.last;
     return {
       state: this.failure ? 'error' : this.pending ? 'pending' : this.selected ? 'ready' : 'idle',
-      ...(this.scheduler.stage ? { active: this.scheduler.stage } : {}),
+      ...(stage ? { active: stage } : {}),
       ...(last ? { last_stage: last.stage, last_result: last.outcome } : {}),
       ...(this.failure ? { failure: this.failure } : {}),
     };
@@ -149,6 +170,40 @@ export class FloorCacheRuntime {
   private address(selection: Selection): CacheAddress | null {
     return selection.scope ? { scope: selection.scope, floor: String(selection.input.raw.id), key: selection.persistentKey } : null;
   }
+
+  private async prepareGeometry(selection: Selection, disk: CachePayload | null): GeometryResult {
+    const job: FloorJob = { kind: 'geometry', input: selection.input, disk, light: selection.light };
+    if (selection.input.projection !== 'iso' || !selection.scope) return this.scheduler.runWithOutcome(job);
+    const key = cacheSha256([selection.scope, selection.input.raw.id, selection.persistentKey,
+      selection.input.floorKey, selection.input.cleanKey, selection.light.fingerprint, disk?.checksum]);
+    let existing = geometryFlights.get(key);
+    if (!existing) {
+      const scheduler = new FloorCacheScheduler();
+      existing = { scheduler, result: scheduler.runWithOutcome(job), subscribers: 0 };
+      geometryFlights.set(key, existing);
+    }
+    const flight = existing;
+    flight.subscribers++;
+    const subscriber = { scheduler: flight.scheduler, release: () => {
+      if (this.sharedGeometry !== subscriber) return;
+      this.sharedGeometry = undefined;
+      if (--flight.subscribers === 0) {
+        geometryFlights.delete(key);
+        flight.scheduler.dispose();
+      }
+    } };
+    this.sharedGeometry = subscriber;
+    try {
+      const result = await flight.result;
+      if (this.sharedGeometry === subscriber) {
+        const { metrics } = flight.scheduler;
+        for (const counter of ['workerJobs', 'fallbackJobs', 'cancelled', 'workerErrors', 'timeouts', 'workerTimeouts'] as const)
+          this.sharedMetrics[counter] += metrics[counter];
+        this.sharedMetrics.last = metrics.last;
+      }
+      return result;
+    } finally { subscriber.release(); }
+  }
   private readPreview(selection: Selection, sequence: number): void {
     const warm = this.host.preview?.(selection.fitKey, selection.scope, selection.persistentKey);
     if (warm && validFloorPreview(warm, selection.fitKey) && warm.fit.projection === selection.input.projection)
@@ -197,7 +252,7 @@ export class FloorCacheRuntime {
     if (authorityChanged) { this.memory.clear(); this.areaMemory.clear(); this.published.clear(); this.publishing.clear(); }
     this.memoryAuthority = selection.authority; this.memoryConnection = selection.connection; this.memoryScope = selection.scope;
     this.lightTask = null; this.failedLight = '';
-    const sequence = ++this.sequence; this.scheduler.cancel(); this.selected = selection;
+    const sequence = ++this.sequence; this.sharedGeometry?.release(); this.scheduler.cancel(); this.selected = selection;
     this.key = `${sequence}|${selection.persistentKey}|${selection.light.fingerprint}`;
     this.canonicalKey = '';
     this.failure = null;
@@ -232,7 +287,7 @@ export class FloorCacheRuntime {
       try {
         const disk = address ? await this.store.read(address, 'geometry') : null;
         if (!isCurrent()) return;
-        const { result, outcome } = await this.scheduler.runWithOutcome({ kind: 'geometry', input: selection.input, disk, light: selection.light });
+        const { result, outcome } = await this.prepareGeometry(selection, disk);
         if (!isCurrent()) return;
         if (!result) {
           if (outcome === 'limited' || outcome === 'error') { useCanonical(); return; }
@@ -343,7 +398,7 @@ export class FloorCacheRuntime {
     if (!this.failure || !this.sameStructure(this.selected, this.selection())) return false;
     this.invalidate(); this.scheduler.retryWorker(); return true;
   }
-  invalidate(): void { this.sequence++; this.lightTask = null; this.failedLight = ''; this.scheduler.cancel(); this.selected = null;
+  invalidate(): void { this.sequence++; this.lightTask = null; this.failedLight = ''; this.sharedGeometry?.release(); this.scheduler.cancel(); this.selected = null;
     this.key = ''; this.readyKey = ''; this.canonicalKey = ''; this.preview = null; this.failure = null; }
   dispose(): void { this.disposed = true; this.invalidate(); this.scheduler.dispose(); this.store.close(); }
 }

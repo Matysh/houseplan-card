@@ -85,7 +85,7 @@ const out = await page.evaluate(async () => {
   await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
   await settle();
-  const isoFalseHasNoLabels = !!root().querySelector('[data-hp="iso-walls"]')
+  const isoFalseHasNoLabels = !!root().querySelector('canvas[data-hp-plan-3d]')
     && labels().length === 0;
   await window.__hpHarnessProjection(card, 'flat');
   await settle();

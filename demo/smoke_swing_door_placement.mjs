@@ -129,7 +129,7 @@ try {
     await window.__hpTest.setVolumetricView(true);
     await window.__hpTest.settled();
   });
-  await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('[data-hp="iso-walls"]'));
+  await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('canvas[data-hp-plan-3d]'));
   assert.equal(await isoOffset(), halfDepth);
   if (capture) await page.screenshot({ animations: 'disabled', path: join(capture, 'iso-positive.png') });
   for (let rotation = 0; rotation < 8; rotation++) {
@@ -149,7 +149,7 @@ try {
     old.replaceWith(fresh);
     window.__card = fresh;
   });
-  await page.waitForFunction(() => !!window.__card?.renderRoot.querySelector('[data-hp="iso-walls"]'));
+  await page.waitForFunction(() => !!window.__card?.renderRoot.querySelector('canvas[data-hp-plan-3d]'));
   assert.equal((await saved()).swing_position, 'positive');
   assert.equal(await isoOffset(), halfDepth);
   results.reloadedIsoKeepsPlacement = true;

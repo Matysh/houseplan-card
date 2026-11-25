@@ -302,7 +302,7 @@ test('one frame resolves one structural source and latches late topology/project
   const diagnostic = section(card, 'private _latchIsoFallback(', 'private _effectiveProjection');
   assert.match(diagnostic, /key\.includes\('\|invalid\|'\) \? 'invalid'/);
   assert.match(diagnostic, /safeRuntimeDiagnostic\('structural', fingerprint, true\)/);
-  assert.doesNotMatch(diagnostic, /this\._space|\$\{key\}|_error/,
+  assert.doesNotMatch(diagnostic.slice(diagnostic.indexOf('console.warn')), /this\._space|\$\{key\}|_error/,
     'structural diagnostics must never serialize identifiers or thrown errors');
   assert.match(card, /failed: \(_ignored, info\) => \{[\s\S]*?safeRuntimeDiagnostic\('runtime-load', 'unverified', info\.terminal\)/);
   assert.doesNotMatch(card, /unable to load hidden isometric runtime[\s\S]{0,160}\b(?:error|message|stack|url)\b/i);

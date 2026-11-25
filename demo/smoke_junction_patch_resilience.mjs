@@ -212,7 +212,7 @@ const result = await page.evaluate(async (spaceFixture) => {
   await window.__hpEnsureHarnessIsoRuntime(card);
   await update(false);
   const isoWalls = card._isoSource().build().walls;
-  out.hiddenIsoKeepsMasonry = !!root().querySelector('[data-hp="iso-walls"]')
+  out.hiddenIsoKeepsMasonry = !!root().querySelector('canvas[data-hp-plan-3d]')
     && isoWalls.flat(2).length > 0;
   out.hiddenIsoRetainsMeasuredWedge = geometryContains(isoWalls);
   out.hiddenIsoStopsAtFiniteRayEndpoint = !geometryContains(

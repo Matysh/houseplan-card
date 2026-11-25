@@ -182,10 +182,9 @@ try {
       const bounds = scene.getBoundingClientRect();
       const at = camera.perspective ? card._screenToVb(spot.x-bounds.x,spot.y-bounds.y) : [270,445];
       marker.remove();
-      const surface = scene.parentElement;
-      const validPaintOrder = camera.perspective
-        ? !!(floor.closest('[data-hp-iso-perspective-floor]').compareDocumentPosition(scene) & Node.DOCUMENT_POSITION_FOLLOWING)
-        : surface.childElementCount === 1 && scene.contains(floor) && !!scene.querySelector('.iso-underlay-svg');
+      const canvas = element.querySelector('canvas[data-hp-plan-3d]'), markers = element.querySelector('.devlayer');
+      const validPaintOrder = !!canvas && !!markers && card._plan3dHost?.view === scene
+        && Boolean(canvas.compareDocumentPosition(markers) & Node.DOCUMENT_POSITION_FOLLOWING);
       return {lens:!!camera.perspective,validPaintOrder,error:Math.hypot(at[0]-270,at[1]-445)};
     });
     check('only direct ISO cameras use perspective at ' + logical, proof.lens === (logical % 90 === 45));
@@ -198,8 +197,8 @@ try {
     const axes = await readingAxes();
     check('room caption, device icon, badge with its text, and lock read along the expected axis at ' + logical,
       axes.every(axis => axis && Math.hypot(axis[0] - baseline[0], axis[1] - baseline[1]) < 1e-5));
-    sides.push(await card.locator('.iso-walls-svg').evaluate(svg => svg.innerHTML));
     await frame('iso-' + logical);
+    sides.push(await card.locator('canvas[data-hp-plan-3d-ready]').evaluate(canvas => canvas.toDataURL()));
     if (logical % 90) {
       await card.locator('[data-hp="device"][data-id="angled"]').click();
       await page.waitForFunction(() => window.__card._infoCard?.id === 'angled');

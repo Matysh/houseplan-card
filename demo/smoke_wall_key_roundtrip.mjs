@@ -115,7 +115,7 @@ const result = await page.evaluate(async (source) => {
     await window.__hpHarnessProjection(card, 'iso');
     await window.__hpEnsureHarnessIsoRuntime(card);
     await update(false);
-    out[`${prefix}hidden_iso_uses_masonry`] = !!root().querySelector('[data-hp="iso-walls"]')
+    out[`${prefix}hidden_iso_uses_masonry`] = !!root().querySelector('canvas[data-hp-plan-3d]')
       && card._isoSource().build().walls.flat(2).length > 0;
     out[`${prefix}render_never_writes_config`] = JSON.stringify(
       card._serverCfg.spaces[0],

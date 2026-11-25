@@ -145,8 +145,6 @@ await page.evaluate(async () => {
       backdropBox: rect('.bdbox'),
       backdropBoxStroke: number(style('.bdbox')?.strokeWidth),
       backdropBoxDash: style('.bdbox')?.strokeDasharray ?? '',
-      isoWallBox: rect('[data-hp="iso-walls"]'),
-      isoFloorBox: rect('[data-hp="iso-underlay"]'),
       planSnapLineStroke: number(style('.plan-snap-line')?.strokeWidth),
       snapIntervalsPerMeter: 100 / card._cellCm,
       projection: card._effectiveProjection(),

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FloorCacheRuntime } from '../test-build/floor-cache-runtime.js';
+import { FloorCacheScheduler } from '../test-build/floor-cache-scheduler.js';
 import { prepareFloorGeometry } from '../test-build/floor-geometry-frame.js';
 import { encodeGeometryValue } from '../test-build/floor-cache-codec.js';
 import { physicalFloorFingerprint, cleanFloorFingerprint } from '../test-build/floor-geometry-key.js';
@@ -30,6 +31,46 @@ function harness(initial){
     publish(value,isCurrent){publications.push({value,isCurrent});return Promise.resolve(isCurrent());},close(){this.closed=true},metrics:{}};
   return{owner,hydrated,jobs,reads,publications,changes,frames,set:value=>{current=value}};
 }
+test('#1514 concurrent 3D cards share only the encoded job within the same account scope', async ({mock}) => {
+  const jobs = [];
+  mock.method(FloorCacheScheduler.prototype, 'runWithOutcome', function(job) {
+    const work = defer();
+    jobs.push({ ...work, job, scheduler: this });
+    return work.promise;
+  });
+  const base = selection('A', {});
+  const initial = { ...base, persistentKey: base.persistentKey.replace('|flat', '|iso'),
+    input: { ...base.input, projection: 'iso' } };
+  const retired = harness(initial);
+  const first = harness({ ...initial, authority: {} });
+  const second = harness({ ...initial, authority: {} });
+  const otherUser = harness({ ...initial, authority: {}, scope: 'user-B' });
+  const consumers = [retired, first, second, otherUser];
+  try {
+    for (const consumer of consumers) {
+      consumer.owner.ensure();
+      consumer.reads[0].resolve(null);
+    }
+    await flush();
+    assert.equal(jobs.length, 2);
+    assert.notStrictEqual(jobs[0].scheduler, jobs[1].scheduler);
+    retired.set(null);
+    retired.owner.ensure();
+    jobs[0].resolve({ result: await result(jobs[0].job.input), outcome: 'ready' });
+    await flush();
+    assert.deepEqual(retired.hydrated, []);
+    assert.deepEqual(first.hydrated, ['A']);
+    assert.deepEqual(second.hydrated, ['A']);
+    assert.notStrictEqual(first.frames[0].frame, second.frames[0].frame);
+    assert.deepEqual(otherUser.hydrated, []);
+    jobs[1].resolve({ result: await result(jobs[1].job.input), outcome: 'ready' });
+    await flush();
+    assert.deepEqual(otherUser.hydrated, ['A']);
+    assert.notStrictEqual(otherUser.frames[0].frame, first.frames[0].frame);
+  } finally {
+    for (const consumer of consumers) consumer.owner.dispose();
+  }
+});
 test('#1454 late IDB replies cannot reacquire A after A→B→A navigation',async()=>{
   const authority={}, a=selection('A',authority), b=selection('B',authority), h=harness(a);
   assert.equal(h.owner.ensure(),false);

@@ -21,6 +21,8 @@ is the lazy 3D entry point. It hands the physical surfaces and current states
 to `plan-3d-world.ts`. `plan-3d-viewport.ts` shares one WebGL2 context per
 document, with a canvas and a camera for each visible plan. The worker is an isolated hashed module in the
 ordinary asset manifest, with a build handshake and no host/transport ingress.
+Simultaneous 3D cards may share an in-flight encoded geometry calculation for
+the same scoped source. Each card checks authority and decodes its own frame.
 Summary demands per-floor area scalars through the same owner instead of
 performing a hidden wall union on the UI thread. See `CANVAS.md` and
 `WARM-REMOUNT.md` for the preparation, fit, publication and lifecycle contracts.

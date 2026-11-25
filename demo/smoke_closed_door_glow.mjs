@@ -176,7 +176,7 @@ try {
     card._isoSceneRuntime={...runtime,resolveIsoFramePresentation:()=>{throw Error('controlled closed-leaf presentation refusal');}};
     card.requestUpdate();
   }); await settle();
-  assert.equal(await page.locator('houseplan-card [data-hp="iso-walls"]').count(),0);
+  assert.equal(await page.locator('houseplan-card canvas[data-hp-plan-3d]').count(),0);
   assert.deepEqual((await prepareClosedDoorLight(page,fallbackFixture)).clip,fallbackFlat,'latched fallback must not retain Iso optical cache');
   await page.evaluate(async()=>{
     window.__card._isoSceneRuntime=window.__door1449Runtime; delete window.__door1449Runtime;

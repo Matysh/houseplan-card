@@ -148,7 +148,7 @@ const result = await page.evaluate(async () => {
   await window.__hpEnsureHarnessIsoRuntime(card);
   await settle();
   const isoWalls = card._isoSource().build().walls;
-  out.hiddenIsoMatchesCanonical = !!root().querySelector('[data-hp="iso-walls"]')
+  out.hiddenIsoMatchesCanonical = !!root().querySelector('canvas[data-hp-plan-3d]')
     && pointInGeometry([300, 96], isoWalls) && !pointInGeometry([700, 96], isoWalls);
   return out;
 });
