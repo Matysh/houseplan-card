@@ -12,6 +12,7 @@ const bundle = await rollup({
     world: 'test-build/plan-3d-world.js',
     openings: 'test-build/iso-openings.js',
     transparency: 'test-build/plan-3d-transparency.js',
+    volumes: 'test-build/furniture-volume-runtime.js',
     motion: 'test-build/plan-3d-light-motion.js',
     host: 'test-build/plan-3d-host.js',
   },
@@ -316,6 +317,54 @@ try {
     world.present({ ...input, lights: [], stairs, backdrop: { ...backdrop, opacity: 0 } });
     await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
     const stairWithoutBackdrop = pixel(canvas, 65, 65);
+    const worldBlending = await (async () => {
+      const { FURNITURE_VOLUME_RUNTIME } = await import('http://plan-3d.test/volumes.js');
+      await FURNITURE_VOLUME_RUNTIME.ensure();
+      const plan = new Plan3dWorld(document, .005);
+      const rect = (z) => [[[-90, z], [90, z], [90, z + 4], [-90, z + 4]]];
+      const back = rect(-22), front = rect(22);
+      const display = { color: '#1c2430', opacity: .55, wallFill: { c: '#28323c', a: .62 }, transparentWalls3d: true };
+      const stair = { ...stairs[0], volume: { ...stairs[0].volume, height: 14,
+        faces: [{ name: 'tread', cap: true, vertices: [[-15, -12, 14], [15, -12, 14], [15, 12, 14], [-15, 12, 14]] }] } };
+      const prop = { id: 'furniture', kind: 'furniture', symbol: 'fridge', x: .3, y: .3, w: .05, h: .05 };
+      const furniture = [{ record: prop, shape: prop, color: '#215443', opacity: .65, liftCm: 0 }];
+      const ribbon = { id: 'ribbon', owner: 'ribbon-owner', path: { points: [[28, 0], [50, 0]], closed: false },
+        width: 6, depth: 2, outline: '#555555', color: '#ffce12', opacity: .45 };
+      const outline = { id: 'outline', members: ['marker'], virtual: false, diameter: 8, outline: 'M 42 -6 L 52 -6 L 52 6 L 42 6 Z' };
+      const p = new T.OrthographicCamera(-85, 85, 85, -85, 1, 300);
+      p.position.set(0, 55, 100);
+      p.lookAt(0, 14, 0);
+      const bothWalls = [front, back];
+      const fullPhysical = { ...input.physical, walls: bothWalls, floor: [] };
+      const show = (walls, stairs, other = {}) => {
+        const physical = walls === bothWalls ? fullPhysical : { ...input.physical, walls, floor: [] };
+        plan.present({ ...input, physical, display, stairs, lights: [], ...other });
+        lit.present({ scene: plan.scene, camera: p }, true);
+        return pixel(canvas, 100, 100);
+      };
+      const rear = show([back], []), forward = show([front], []), step = show([], [stair]);
+      const all = { furniture, ribbons: [ribbon] };
+      plan.presentOutlines([outline], 22);
+      const composite = show(bothWalls, [stair], all);
+      const order = plan.transparency.mesh;
+      if (!order) throw Error('Missing combined physical scene for #1568');
+      const included = [plan.stairs, plan.markerGlass, plan.ribbons].map(group => group.children.some(
+        mesh => mesh.isMesh && mesh.material.transparent && mesh.layers.mask === 0 && mesh.visible,
+      ));
+      const picked = lit.pick(.5, .5);
+      const unchangedInput = plan.transparency.sources;
+      // World updates a live ribbon's material in place, including from zero
+      // opacity. The combined pass must still reference that material.
+      const packedCore = plan.ribbonMeshes.get(ribbon.id).core.material;
+      plan.present({ ...input, physical: fullPhysical, display, furniture, stairs: [stair],
+        lights: [], ribbons: [{ ...ribbon, opacity: 0 }] });
+      lit.present({ scene: plan.scene, camera: p }, true);
+      const coreTracked = order.material.includes(packedCore) && packedCore.opacity === 0;
+      const stillActive = order === plan.transparency.mesh && plan.transparency.sources.some(mesh => mesh.material === packedCore);
+      plan.dispose();
+      return { rear, forward, step, composite, included, picked, coreTracked, stillActive,
+        hadPhysicalPickSource: unchangedInput.some(mesh => mesh.userData.plan3dPick?.id === 'stair:stairs') };
+    })();
     world.present({ ...input, lights: [], backdrop: { ...backdrop, url: 'data:image/png;base64,AAAA' } });
     const invalidBackdropReady = await world.ready();
     const marker = { id: 'thermometer', center: [50, 45], diameter: 36, height: 20, faces: [{
@@ -433,7 +482,7 @@ try {
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
     return { contexts, pixels, picking, frames, paperHeight, windowJamb, transparentIntersection, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
-      invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
+      invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, worldBlending, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
       fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas, steppedAtlas,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
@@ -450,6 +499,18 @@ try {
   assert.ok(evidence.stairWithoutBackdrop[1] > 50, 'the pale tread has visible fill');
   assert.ok(evidence.stairPixel[2] - evidence.stairWithoutBackdrop[2] > 65, 'the stair transmits what is behind its tread');
   assert.equal(evidence.stairHit, 'stair:stairs');
+  const { forward, rear, step, composite, picked, included, coreTracked, stillActive, hadPhysicalPickSource } = evidence.worldBlending;
+  const over = (near, far) => {
+    const n = near[3] / 255, f = far[3] / 255, a = n + f * (1 - n);
+    return near.slice(0, 3).map((channel, i) => (channel * n + far[i] * f * (1 - n)) / a).concat(255 * a);
+  };
+  assert.ok([forward, rear, step].every(layer => layer[3] > 0 && layer[3] < 255),
+    'all three independent depth samples must be translucent: ' + JSON.stringify(evidence.worldBlending));
+  assert.ok(composite.every((channel, i) => Math.abs(channel - over(forward, over(step, rear))[i]) <= 5),
+    'the near wall is in front of the stair while the far wall is behind: ' + JSON.stringify(evidence.worldBlending));
+  assert.equal(picked, 'stair:stairs', 'color pass does not consume original stair pick geometry');
+  assert.deepEqual(included, [true, true, true], 'stairs, marker glass and LED cores share wall depth');
+  assert.ok(coreTracked && stillActive && hadPhysicalPickSource, 'live ribbon state reuses the referenced physical paint');
   assert.deepEqual(evidence.markerIcon, [255, 255, 255, 255]);
   assert.deepEqual(evidence.markerBody, [32, 80, 32, 255]);
   assert.equal(evidence.markerHit, 'thermometer');

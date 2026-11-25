@@ -34,10 +34,13 @@ When a plan has translucent masonry and furniture, the WebGL world partitions
 the affected faces at architectural planes. A furniture surface can lie in
 front of a wall on one side of that partition and behind it on the other.
 In the resulting wall-free cells, furniture retains its previous local order.
-The partition is rebuilt only when the contributing meshes change. Camera
-updates only select and order existing fragments; they do not change the
-lights, antialiasing, or pick pass. A bounded build falls back to the complete
-original scene for unusually complex input rather than dropping geometry.
+Translucent stair surfaces, device outlines and LED cores participate in the
+same partition so a wall can sit between them and another transparent object.
+Floor paint, shadows and late edge ink keep their own render priorities.
+Original geometry remains available to the separate device and stair pick pass.
+The partition is rebuilt only when the contributing meshes change, not for
+camera motion or a live LED paint update. A bounded build falls back to the
+complete original scene for unusually complex input rather than dropping geometry.
 High zoom can refine the glyph raster on each visible device cap without
 moving any scene objects. The soft device and label shadows are
 non-interactive floor paint and do not enter neutral previews.

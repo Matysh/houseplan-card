@@ -280,6 +280,8 @@ export class Plan3dWorld {
   private floorInkWork?: { controller: AbortController; ready: Promise<boolean> };
   private readonly light: Plan3dLightField;
   private readonly transparency = new Plan3dTransparency();
+  private transparencyEnabled = false;
+  private transparencyDirty = true;
   private structureKey: readonly unknown[] = [];
   private openingKey: readonly unknown[] = [];
   private furnitureKey: readonly unknown[] = [];
@@ -291,7 +293,10 @@ export class Plan3dWorld {
     this.markers = new Plan3dMarkerLayer(document);
     this.scene.add(this.ground, this.structure, this.architecture, this.backdrop, this.openings, this.furniture, this.stairs, this.rooms, this.contacts,
       this.floorInk, this.ribbons, this.markers.group, this.markerGlass);
-    this.scene.onBeforeRender = (_renderer, _scene, camera) => this.transparency.prepare(camera);
+    this.scene.onBeforeRender = (_renderer, _scene, camera) => {
+      this.syncTransparency();
+      this.transparency.prepare(camera);
+    };
   }
 
   presentMarkers(markers: readonly Plan3dMarker[], density: number, raster?: MarkerRaster): void {
@@ -382,6 +387,7 @@ export class Plan3dWorld {
         this.mesh(planFaceMesh(rims), [{ color: virtual ? '#92a9b7' : '#e6edf1', opacity: virtual ? .72 : .52 }])];
       for (const mesh of meshes) mesh.userData.plan3dPick = { occludes: false };
       this.markerGlass.add(...meshes);
+      this.transparencyDirty = true;
       this.glassMeshes.set(id, { key, meshes });
     }
     for (const [id, entry] of this.glassMeshes) if (!live.has(id)) {
@@ -391,6 +397,7 @@ export class Plan3dWorld {
   }
 
   private disposeGlass(meshes: readonly Mesh[]): void {
+    this.transparencyDirty = true;
     for (const mesh of meshes) {
       this.markerGlass.remove(mesh);
       mesh.geometry.dispose();
@@ -418,6 +425,8 @@ export class Plan3dWorld {
   }
 
   private replace(target: Group, meshes: DrawObject[]): void {
+    if (target === this.structure || target === this.openings || target === this.furniture || target === this.stairs)
+      this.transparencyDirty = true;
     for (const child of [...target.children]) {
       if (!(child instanceof Mesh) && !(child instanceof LineSegments)) continue;
       child.geometry.dispose();
@@ -579,6 +588,7 @@ export class Plan3dWorld {
             polygonOffsetFactor: -1, polygonOffsetUnits: -1, toneMapped: false }));
         core.userData.plan3dPick = { occludes: false };
         this.ribbons.add(body, core);
+        this.transparencyDirty = true;
         this.ribbonMeshes.set(id, paint = { geometry: key, body, core });
       }
       paint.core.material.color.set(color);
@@ -592,6 +602,7 @@ export class Plan3dWorld {
 
   private disposeRibbon({ body, core }: { body: Mesh; core: Mesh<BufferGeometry, MeshBasicMaterial> }): void {
     this.ribbons.remove(body, core);
+    this.transparencyDirty = true;
     body.geometry.dispose(); core.geometry.dispose(); core.material.dispose();
     const materials = Array.isArray(body.material) ? body.material : [body.material];
     for (const material of materials) material.dispose();
@@ -779,17 +790,32 @@ export class Plan3dWorld {
       this.replace(this.furniture, furniture.flatMap(item => this.furnitureMeshes(item, decorWidth, decorHeight, visualScale)));
       this.furnitureKey = furnitureKey;
     }
-    if (display.transparentWalls3d && (top.opacity < 1 || side.opacity < 1)
-      && polygons(physical.walls).length && this.furniture.children.length) {
-      const transparentMeshes = (group: Group) => group.children.filter(
-        (object): object is Mesh<BufferGeometry, MeshBasicMaterial> => object instanceof Mesh
-          && object.material instanceof MeshBasicMaterial && object.material.transparent && object.material.opacity > 0
-          && !object.material.map && !object.material.alphaMap,
-      );
-      const shell = [...transparentMeshes(this.structure), ...transparentMeshes(this.openings)];
-      const blended = this.transparency.setSources([...shell, ...transparentMeshes(this.furniture)], shell.length);
-      if (blended && !blended.parent) this.scene.add(blended);
-    } else this.transparency.clear();
+    const enabled = display.transparentWalls3d && ((top.opacity > 0 && top.opacity < 1) || (side.opacity > 0 && side.opacity < 1))
+      && Array.isArray(physical.walls) && physical.walls.length > 0 && this.furniture.children.length > 0;
+    if (enabled !== this.transparencyEnabled) {
+      this.transparencyEnabled = enabled;
+      this.transparencyDirty = true;
+    }
+  }
+
+  private syncTransparency(): void {
+    if (!this.transparencyDirty) return;
+    this.transparencyDirty = false;
+    if (!this.transparencyEnabled) {
+      this.transparency.clear();
+      return;
+    }
+    const transparentMeshes = (groups: Group[]) => groups.flatMap(group => group.children.filter(
+      (object): object is Mesh<BufferGeometry, MeshBasicMaterial> => object instanceof Mesh && object.renderOrder === 0
+        && object.material instanceof MeshBasicMaterial && object.material.transparent && object.material.visible
+        && !object.material.map && !object.material.alphaMap,
+    ));
+    const shell = transparentMeshes([this.structure, this.openings]);
+    // These are physical surfaces at the same priority as the masonry.
+    // Floor paint/shadows and explicit late edge ink have their own strata.
+    const content = transparentMeshes([this.furniture, this.stairs, this.markerGlass, this.ribbons]);
+    const blended = this.transparency.setSources([...shell, ...content], shell.length);
+    if (blended && !blended.parent) this.scene.add(blended);
   }
 
   dispose(): void {

@@ -146,6 +146,9 @@ export class Plan3dTransparency {
   private structuralCount = 0;
   private centers: Vector3[] = [];
   private readonly eye = new Vector3();
+  private readonly center = new Vector3();
+  private sourceDepths = new Float64Array(0);
+  private sourceLayers: number[] = [];
   private readonly frustum = new Frustum();
   private readonly projection = new Matrix4();
   private readonly lastProjection = new Matrix4();
@@ -172,6 +175,7 @@ export class Plan3dTransparency {
       if (!geometry.boundingSphere) geometry.computeBoundingSphere();
       return geometry.boundingSphere?.center.clone() ?? new Vector3();
     });
+    this.sourceDepths = new Float64Array(surfaces.length);
     const geometry = new BufferGeometry();
     geometry.setAttribute('position', new BufferAttribute(Float32Array.from(data.position), 3));
     geometry.setAttribute('normal', new BufferAttribute(Float32Array.from(data.normal), 3));
@@ -180,7 +184,13 @@ export class Plan3dTransparency {
     const mesh = this.mesh = new Mesh(geometry, paints);
     mesh.userData.plan3dPick = { occludes: false };
     mesh.frustumCulled = false;
-    for (const surface of surfaces) surface.visible = false;
+    // Keep original objects in the pick traversal, with their original
+    // geometry and material policy. Only the color camera excludes them.
+    this.sourceLayers = surfaces.map(surface => {
+      const mask = surface.layers.mask;
+      surface.layers.mask = 0;
+      return mask;
+    });
     return mesh;
   }
 
@@ -200,7 +210,8 @@ export class Plan3dTransparency {
     const { geometry, material } = mesh;
     const index = geometry.getIndex()!;
     const order = index.array as Uint32Array;
-    const sortCenter = this.centers.map(center => center.clone().applyMatrix4(projection).z);
+    const sortCenter = this.sourceDepths;
+    for (const [i, center] of this.centers.entries()) sortCenter[i] = this.center.copy(center).applyMatrix4(projection).z;
     geometry.clearGroups();
     let cursor = 0, dirty = false;
     const visit = (node: Node | undefined) => {
@@ -230,11 +241,12 @@ export class Plan3dTransparency {
     if (this.mesh) {
       this.mesh.removeFromParent();
       this.mesh.geometry.dispose();
-      for (const source of this.sources) source.visible = true;
+      this.sources.forEach((source, i) => { source.layers.mask = this.sourceLayers[i]; });
     }
     this.sources = [];
     this.structuralCount = 0;
     this.centers = [];
+    this.sourceLayers = [];
     this.mesh = undefined;
     this.root = undefined;
     this.prepared = false;
