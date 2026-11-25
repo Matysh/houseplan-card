@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24420,
+  "revision": 24421,
   "nextTicket": 689,
   "nextFence": 689,
   "tasks": {
@@ -6071,173 +6071,25 @@
     },
     "1563": {
       "issue": 1563,
+      "branch": "codex/1563-standalone-room-labels",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1563-standalone-room-labels",
-      "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 688,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795597808468,
-      "reviewEntry": 3,
-      "patchId": "5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab",
-      "changedFiles": [
-        "custom_components/houseplan/core/plan_commands.py",
-        "demo/smoke_standalone_room_label_layout.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CORE-HOST.md",
-        "docs/STANDALONE-FRONTEND.md",
-        "docs/release-ledger/v2.0.0/1563.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/plan-optimize-write.ts",
-        "src/standalone-entry.ts",
-        "src/standalone-layout-write.ts",
-        "src/standalone-plan-host.ts",
-        "test/browser-attestation.test.mjs",
-        "test/config-adoption-ownership.test.mjs",
-        "test/standalone-layout-write.test.mjs",
-        "tests_backend/test_ha_websocket.py",
-        "tests_backend/test_plan_commands.py"
-      ],
-      "notice": {
-        "key": "2:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795597468040,
-        "entry": 2,
-        "requestId": "review:1563:2:86b717dbb0eb4e221ce7575b55072f43bc433bda:7e85eee9281283120d82f6fb9b9c12017136401d",
-        "transitionConfirmed": true
-      },
-      "s6": {
-        "id": "20261125T091026769-910b37ad",
-        "name": "Тесты для задачи #1563 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T091026769-910b37ad/report.json",
-        "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-        "status": "passed",
-        "finishedAt": "2026-11-25T09:22:24.157Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "7e85eee9281283120d82f6fb9b9c12017136401d",
+      "mergedSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
+      "mergedAt": 1795598829270,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1563:3:5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab:7e85eee9281283120d82f6fb9b9c12017136401d",
-      "reviewMaterial": {
-        "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-        "expectedBase": "7e85eee9281283120d82f6fb9b9c12017136401d",
-        "patchId": "5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1563:3:5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab:7e85eee9281283120d82f6fb9b9c12017136401d",
-        "eventId": "github:45584788995:1:tick:0:review-retry",
-        "at": 1795598571044,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1563,
-        "requestId": "review:1563:3:5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab:7e85eee9281283120d82f6fb9b9c12017136401d",
-        "kind": "code",
-        "base": "7e85eee9281283120d82f6fb9b9c12017136401d",
-        "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-        "patchId": "5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1563,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1563",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Подтверждён тот же путь записи на dev. Предлагается точечная форма существующей команды вместо расширения маркерных capabilities и передачи полного config/layout. Просьба проверить совместимость старой пары, ownership/CAS и наблюдение отказа до dispatch, а также отсутствие ложного успеха при позднем ответе. Пользователь просит разблокировать внешний редактор, не выпуская новый stable.\n\n### Исправления по предыдущему ревью\n\n[Результат раунда 1](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7156537741). Определены восстановление серверной позиции при rejected/unknown, источник before для нового жеста, блокировка при неудачной сверке и точный момент снятия ошибки. Добавлены критерии проверки продолжения без remount при удачном read и запрета несогласованного retry при неудачном. Уточнены сравнение x/y/s/k и сохранение метаданных, правила CAS/no-op, PLAN_ONLY-граница, Undo и формат наблюдаемого состояния mount. Продуктовые проверки на S4 не выполнялись.\n\n[Результат код-ревью](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7157848385). Блокер: удерживаемый pointer после rejected/unknown мог создать новый slot, пока старый жест не завершён. Drag и resize получают токен на pointerdown, теряют его при отказе/retire и завершают на pointerup/cancel; stage не принимает прежний токен даже после успешной сверки. Только новый pointerdown может инициировать retry. Node и реальный браузер проверяют продолжение удерживаемого drag, отсутствие записи и сохранение статуса отказа после восстановления, затем ACK нового жеста.\n\nДополнительно: штатная очистка позиций после принятой пары Optimize/Copy или Import теперь завершает standalone-очередь и снимает токены, чтобы не оставлять потерянный pending. При отзыве scope не сохраняем идентификаторы прежнего проекта в публичных entries: агрегат unresolved остаётся до нового mount, а документация объясняет эту границу и ручное reopen при недоступном серверном read. Новая браузерная проверка собирает собственный каталог, не перезаписывая файлы другого сценария.\n\n### Реализация\n\n- Core: ограниченный room_label-вариант layout/set под PLAN_ONLY; совместный lock и CAS владельца по x/y/s/k, защита от переполнения layout, сохранение чужих данных и собственного непубличного metadata. Точка риска: ACK вида ok/rev/room_label только после durable write; глобальная ревизия не заменяет CAS конкретной записи.\n- SDK: отдельная очередь одной подписи, которая использует существующий debounce и write-authority. Статусы getSaveState/subscribeSaveState и целевая сверка после rejected/unknown. Остальные записи не отправляются повторно; очередная редакция не переписывает принятый снимок и не переживает отзыв прав. Новый жест после удачного восстановления берёт свежую базу; при неудачном read блокируется до reopen. Старый HA-путь не открывает дополнительный API.\n- Фактически прошли: tsc; 7 адресных Python-тестов ядра; 2 теста настоящих websocket-обработчиков HA; 15 Node-тестов очереди состояния и границы mount; браузерный smoke по реальному pointer drag/resize на standalone + Python core, серверная сверка и remount, pending перед запросом, конфликт, потерянный ACK, отзыв прав, старая несовместимая пара. Штатный S6 выдаст отдельный полный результат выбранных областей.\n- При проверке обратить внимание на authority при восстановительном чтении, отмену новых неотправленных редакций при отказе, отличие durable ACK от read при потере ответа и обратную совместимость. Исправленная пара dev-артефактов будет подготовлена из принятого SHA; GitHub Release и ассеты 1.86.1 не трогаем.\n\n- По первому S6: новый browser smoke прошёл; устранены отказы статических правил. Старый HA writer и его существующий мутационный якорь восстановлены без изменения поведения, standalone staging идёт через ConfigAdoption. Снижен pin прямых присваиваний в editor с 5 до 3, добавлен новый pinned-browser smoke в реестр, а обработчик сохранения назван reportFailure отдельно от lazy-loader failed. Шесть адресных проверок этих поправок зелёные; итог проверяет повторный S6."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокер прошлого раунда устранён. Работу можно принимать.\n\nРаньше удерживаемый pointer после `rejected`/`unknown` создавал новый slot и мог перезаписать чужую позицию с ложным `accepted`. Теперь drag и resize получают токен жеста (claim) на pointerdown. `stage` принимает правку только по живому токену, а при ошибке `drain` удаляет токен этой подписи. Поэтому продолжение старого жеста после восстановительного чтения ничего не пишет, не меняет экран и не снимает статус ошибки. Повтор начинается только с нового pointerdown, и его база — серверное значение. Это закрывает и требование ТЗ отменять более новые неотправленные правки той же подписи: токен нового жеста, начатого во время отправки, тоже удаляется.\n\nПопутно закрыто прошлое улучшение. Принятые Optimize/Copy и Import теперь вызывают `retire()` у standalone-очереди: висящих pending и токенов `begin()` не остаётся.\n\nЯдро, handshake и HA-маршрут с прошлого раунда не менялись, прежняя положительная оценка остаётся в силе. Набор S6 на 655e5df прошёл (статус passed). Новых существенных дефектов не нашёл. Остались необязательные улучшения UX состояния после retire.",
-          "understanding": "Проблема. В standalone с PLAN_ONLY перемещение и масштаб подписи комнаты шли через `layout/update`. Capability-фасад отклонял эту команду ещё до хоста, а хост ошибочно показывал «Сохранено».\n\nРешение, принятое в прошлом раунде:\n- в core есть CAS-форма `layout/set` с `room_label` (только PLAN_ONLY, одна запись `rl_<room>`, канонические x/y/s/k, durable ACK с принятой позицией);\n- флаг `room_label_layout_patch_api` обязателен в handshake;\n- SDK-очередь `StandaloneLayoutWrite` публикует `getSaveState`/`subscribeSaveState` со статусами pending/accepted/rejected/unknown;\n- после ошибки делается целевое `layout/get` без повторной отправки, а если перечитать не удалось, подпись блокируется до remount.\n\nЧто изменилось в этом раунде:\n1. `StandaloneLayoutWrite.beginGesture/endGesture` и карта `gestures`. `_labelDown`/`_rlResizeDown` берут токен (`null` во время восстановления или блокировки — жест не начинается). `_labelUp`/`_rlResizeUp` (они же обработчики pointercancel) освобождают токен. `stage(key, next, claim)` отклоняет чужой или устаревший токен. В `drain.catch` вызывается `this.gestures.delete(key)`, в `retire()` — `gestures.clear()`.\n2. В `_stageRoomLabelPosition` при включённой очереди локальный layout меняется и попадает в `_dirtyPos` только если `stage` принял правку. В HA токен `undefined`, путь прежний.\n3. `_retireStandaloneLayoutWrites` вызывается в `commitPlanOptimization` и в import apply перед `_dirtyPos.clear()`.\n4. Node-тест и ветка smoke проверяют удерживаемый drag через конфликт. Документация описывает границу удерживаемого pointer и агрегат после отзыва.\n\nРазобранные пути:\n- жесты `_labelDown/_labelMove/_labelUp/_rlResizeDown/_rlResizeMove/_rlResizeUp` (houseplan-editor-runtime.ts:10726–10826) и привязка pointerup/pointercancel (houseplan-card.ts:15774–15802);\n- `_stageRoomLabelPosition`, `_persistLayout`, `enableStandaloneLayoutWrite`, `_reloadStandaloneLayout`, `_reloadLayoutOnly` (houseplan-card.ts:7304–7460);\n- `StandaloneLayoutWrite` целиком, `LayoutWriteReload` (begin/retire/guard);\n- места очистки `_dirtyPos` и производители `_dirtyPos.add` (устройства в PLAN_ONLY отсутствуют);\n- `standalone-entry.ts` (порядок retire → publish → отписка);\n- новые тесты и smoke.",
-          "analysis": [
-            {
-              "topic": "Закрытие блокера: удерживаемый жест после rejected/unknown",
-              "assessment": "Исправлено правильно и минимально. Токен жеста отделяет «намеренный новый жест» от «продолжения старого» на уровне очереди, а не обработчиков UI, поэтому drag и resize защищены одинаково. Разбор сценариев:\n- Отказ посреди удерживаемого drag: `drain.catch` удаляет токен. Все последующие `_labelMove` получают `stage → false`, `_stageRoomLabelPosition` выходит раньше `stageLocalLayout`, и восстановленная серверная позиция на экране не перетирается.\n- Тот же случай после успешного `recover`: `canStage` уже true, но токен прежний, поэтому записи нет.\n- `_labelUp` со старым токеном ничего не трогает: `endGesture` сравнивает идентичность.\n- Новый жест, начатый пока предыдущая запись в полёте: он тоже теряет токен при отказе этой записи. Это соответствует требованию ТЗ отменять более новые неотправленные редакции.\n- Во время recovery `beginGesture` возвращает null, и жест вообще не начинается.\n- В HA `_beginRoomLabelGesture` возвращает `undefined`, это не null, так что путь прежний.",
-              "evidence": "src/standalone-layout-write.ts: `beginGesture`/`endGesture`, `stage` (`this.gestures.get(key) !== claim`), `drain.catch` (`this.gestures.delete(key)`), `retire` (`gestures.clear()`). src/houseplan-card.ts:7417–7427. src/houseplan-editor-runtime.ts:10730–10734, 10771, 10788–10795, 10823. test/standalone-layout-write.test.mjs «conflict is retained…»: `stage(..., held)` после `finishRead(true)` возвращает false, calls.length остаётся 1, статус rejected. demo/smoke_standalone_room_label_layout.mjs: `gesture(...,hold=true)` → conflict → `shown(remote.x)` → движение и mouseup без записи, сервер равен remote, статус rejected; затем новый жест получает accepted."
-            },
-            {
-              "topic": "Очистка позиций Optimize/Import и висящие токены",
-              "assessment": "Прошлое улучшение закрыто. `retire()` очищает slots и токены и освобождает `begin()`-токены `LayoutWriteReload`, поэтому полный reconcile больше не ждёт вечно. Владелец `_layoutIO` при этом не меняется, и после Optimize новые жесты работают. Поздний ACK записи, отправленной до Optimize, к отсоединённому slot не применяется (`attached()`), а агрегат `unresolved` честно остаётся true. Это консервативно: ложного успеха нет.",
-              "evidence": "src/plan-optimize-write.ts:95–97. src/houseplan-editor-runtime.ts:9881–9883. src/layout-write-reload.ts:19–34. src/standalone-layout-write.ts `retire()`: `interrupted ||= ...status !== 'accepted'`."
-            },
-            {
-              "topic": "Восстановление и база следующей записи (повторная проверка)",
-              "assessment": "Без изменений и корректно. Rejected/unknown-slot не входит в `pendingKeys`, поэтому `_reloadStandaloneLayout` не накладывает отклонённую правку. `recover` убирает ключ из `_dirtyPos`. Новый slot берёт `before` из accepted cache, который после `adoptMergedLayout` равен серверному ответу. Сериализация в рамках одной цепочки опирается на собственный ACK (`slot.before = position`). Устаревший ответ чтения (`rev < _layoutRev`) отбрасывается и трактуется как неудачная сверка, то есть блокировка до remount: это безопасно.",
-              "evidence": "src/houseplan-card.ts:7378–7403. src/standalone-layout-write.ts: ветка pending в `stage` и цикл `drain`."
-            },
-            {
-              "topic": "Core, совместимость пар, граница PLAN_ONLY",
-              "assessment": "В этом раунде не менялись, прежний разбор остаётся в силе:\n- узкая CAS-ветка только при PLAN_ONLY, сохраняются чужие записи и лишние поля, отдельно проверяется `MAX_LAYOUT`;\n- Undo инвалидируется штатным хвостом `layout_set`, событие одно;\n- флаг объявляется только при PLAN_ONLY и обязателен в handshake;\n- HA `layout/update` не тронут.",
-              "evidence": "custom_components/houseplan/core/plan_commands.py: `_room_label_fields`, `_room_label_layout`, ветка `room_label` в `layout_set`, условный флаг в `config_get`. src/standalone-plan-host.ts: `STANDALONE_REQUIRED_APIS`. tests_backend/test_plan_commands.py, tests_backend/test_ha_websocket.py."
-            },
-            {
-              "topic": "Проверки",
-              "assessment": "Набор S6 «Тесты для задачи #1563 (перед ревью)» на 655e5df прошёл. Новый блокерный сценарий покрыт на двух уровнях: Node-тест проверяет очередь с удержанным токеном, pinned-browser smoke — реальный удерживаемый pointer с конфликтом и последующий новый жест. Отдельного Node-теста на `retire` из Optimize/Import нет, но изменение тривиально и использует тот же `retire()`, что покрыт тестом отзыва.",
-              "evidence": "receipt 20261125T091026769-910b37ad, status passed, failures []. test/standalone-layout-write.test.mjs, demo/smoke_standalone_room_label_layout.mjs."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Агрегат после Optimize/Import. Сейчас `retire()` при принятой Optimize/Import ставит липкий `interrupted`, если у любой подписи остался статус rejected/unknown, даже уже сверенный с сервером. При этом сама запись удаляется из `entries`. В результате ошибку, которую до Optimize можно было снять ACK нового жеста, после Optimize снимет только remount, и хост не видит, какая подпись затронута. Для Optimize/Import (в отличие от отзыва scope) можно оставлять завершённые rejected/unknown записи в `entries` и не переносить их в `interrupted`, а в `interrupted` переводить только незавершённые pending. Выгода — объяснимый leave guard без лишнего remount. Цена — параметр у `retire` и одна проверка в Node-тесте.",
-            "Добавить небольшой Node-тест: stage → без flush → `_retireStandaloneLayoutWrites` → токен `begin()` освобождён, `pending:false`, `unresolved:true`. Он зафиксирует поправку для Optimize/Import, которая сейчас подтверждена только чтением кода."
-          ],
-          "boundaries": "Это повторное ревью кода (S7) по исходникам 655e5df2ac40384fdd1f3602acaa6572d2dc7dd5 против базы 7e85eee. Сборки, тесты и smoke я не запускал. Использован результат S6 (run 20261125T091026769-910b37ad, passed); утверждения автора о прогонах приняты как его сведения.\n\nПодробно перечитаны:\n- жесты подписи и их привязки pointerup/pointercancel;\n- `_stageRoomLabelPosition`, `_persistLayout`, `enableStandaloneLayoutWrite`, `_reloadStandaloneLayout`;\n- `StandaloneLayoutWrite` по диффу и `LayoutWriteReload`;\n- места `_dirtyPos.add`/`clear`;\n- новые тесты и ветка smoke.\n\nCore, handshake и HA-маршрут в этом раунде не менялись, поэтому заново построчно не разбирались: опираюсь на анализ прошлого раунда.\n\nВне проверки остались SaaS-адаптер house-planner, паритет канонизации TS и Python сверх подтверждённого smoke, а также подготовка dev-артефактов ZIP и wheel из одного SHA: по ТЗ она идёт после принятия."
-        },
-        "usage": {
-          "input_tokens": 18,
-          "cache_creation_input_tokens": 143778,
-          "cache_read_input_tokens": 959937,
-          "output_tokens": 15425,
-          "output_tokens_details": {
-            "thinking_tokens": 8883
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 143778,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 753,
-              "cache_read_input_tokens": 132145,
-              "cache_creation_input_tokens": 15837,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 15837
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокер прошлого раунда устранён. Работу можно принимать.\n\nРаньше удерживаемый pointer после `rejected`/`unknown` создавал новый slot и мог перезаписать чужую позицию с ложным `accepted`. Теперь drag и resize получают токен жеста (claim) на pointerdown. `stage` принимает правку только по живому токену, а при ошибке `drain` удаляет токен этой подписи. Поэтому продолжение старого жеста после восстановительного чтения ничего не пишет, не меняет экран и не снимает статус ошибки. Повтор начинается только с нового pointerdown, и его база — серверное значение. Это закрывает и требование ТЗ отменять более новые неотправленные правки той же подписи: токен нового жеста, начатого во время отправки, тоже удаляется.\n\nПопутно закрыто прошлое улучшение. Принятые Optimize/Copy и Import теперь вызывают `retire()` у standalone-очереди: висящих pending и токенов `begin()` не остаётся.\n\nЯдро, handshake и HA-маршрут с прошлого раунда не менялись, прежняя положительная оценка остаётся в силе. Набор S6 на 655e5df прошёл (статус passed). Новых существенных дефектов не нашёл. Остались необязательные улучшения UX состояния после retire.\n\n## Понимание решения\n\nПроблема. В standalone с PLAN_ONLY перемещение и масштаб подписи комнаты шли через `layout/update`. Capability-фасад отклонял эту команду ещё до хоста, а хост ошибочно показывал «Сохранено».\n\nРешение, принятое в прошлом раунде:\n- в core есть CAS-форма `layout/set` с `room_label` (только PLAN_ONLY, одна запись `rl_<room>`, канонические x/y/s/k, durable ACK с принятой позицией);\n- флаг `room_label_layout_patch_api` обязателен в handshake;\n- SDK-очередь `StandaloneLayoutWrite` публикует `getSaveState`/`subscribeSaveState` со статусами pending/accepted/rejected/unknown;\n- после ошибки делается целевое `layout/get` без повторной отправки, а если перечитать не удалось, подпись блокируется до remount.\n\nЧто изменилось в этом раунде:\n1. `StandaloneLayoutWrite.beginGesture/endGesture` и карта `gestures`. `_labelDown`/`_rlResizeDown` берут токен (`null` во время восстановления или блокировки — жест не начинается). `_labelUp`/`_rlResizeUp` (они же обработчики pointercancel) освобождают токен. `stage(key, next, claim)` отклоняет чужой или устаревший токен. В `drain.catch` вызывается `this.gestures.delete(key)`, в `retire()` — `gestures.clear()`.\n2. В `_stageRoomLabelPosition` при включённой очереди локальный layout меняется и попадает в `_dirtyPos` только если `stage` принял правку. В HA токен `undefined`, путь прежний.\n3. `_retireStandaloneLayoutWrites` вызывается в `commitPlanOptimization` и в import apply перед `_dirtyPos.clear()`.\n4. Node-тест и ветка smoke проверяют удерживаемый drag через конфликт. Документация описывает границу удерживаемого pointer и агрегат после отзыва.\n\nРазобранные пути:\n- жесты `_labelDown/_labelMove/_labelUp/_rlResizeDown/_rlResizeMove/_rlResizeUp` (houseplan-editor-runtime.ts:10726–10826) и привязка pointerup/pointercancel (houseplan-card.ts:15774–15802);\n- `_stageRoomLabelPosition`, `_persistLayout`, `enableStandaloneLayoutWrite`, `_reloadStandaloneLayout`, `_reloadLayoutOnly` (houseplan-card.ts:7304–7460);\n- `StandaloneLayoutWrite` целиком, `LayoutWriteReload` (begin/retire/guard);\n- места очистки `_dirtyPos` и производители `_dirtyPos.add` (устройства в PLAN_ONLY отсутствуют);\n- `standalone-entry.ts` (порядок retire → publish → отписка);\n- новые тесты и smoke.\n\n## Разбор решения\n\n### Закрытие блокера: удерживаемый жест после rejected/unknown\n\nИсправлено правильно и минимально. Токен жеста отделяет «намеренный новый жест» от «продолжения старого» на уровне очереди, а не обработчиков UI, поэтому drag и resize защищены одинаково. Разбор сценариев:\n- Отказ посреди удерживаемого drag: `drain.catch` удаляет токен. Все последующие `_labelMove` получают `stage → false`, `_stageRoomLabelPosition` выходит раньше `stageLocalLayout`, и восстановленная серверная позиция на экране не перетирается.\n- Тот же случай после успешного `recover`: `canStage` уже true, но токен прежний, поэтому записи нет.\n- `_labelUp` со старым токеном ничего не трогает: `endGesture` сравнивает идентичность.\n- Новый жест, начатый пока предыдущая запись в полёте: он тоже теряет токен при отказе этой записи. Это соответствует требованию ТЗ отменять более новые неотправленные редакции.\n- Во время recovery `beginGesture` возвращает null, и жест вообще не начинается.\n- В HA `_beginRoomLabelGesture` возвращает `undefined`, это не null, так что путь прежний.\n\nОснование: src/standalone-layout-write.ts: `beginGesture`/`endGesture`, `stage` (`this.gestures.get(key) !== claim`), `drain.catch` (`this.gestures.delete(key)`), `retire` (`gestures.clear()`). src/houseplan-card.ts:7417–7427. src/houseplan-editor-runtime.ts:10730–10734, 10771, 10788–10795, 10823. test/standalone-layout-write.test.mjs «conflict is retained…»: `stage(..., held)` после `finishRead(true)` возвращает false, calls.length остаётся 1, статус rejected. demo/smoke_standalone_room_label_layout.mjs: `gesture(...,hold=true)` → conflict → `shown(remote.x)` → движение и mouseup без записи, сервер равен remote, статус rejected; затем новый жест получает accepted.\n\n### Очистка позиций Optimize/Import и висящие токены\n\nПрошлое улучшение закрыто. `retire()` очищает slots и токены и освобождает `begin()`-токены `LayoutWriteReload`, поэтому полный reconcile больше не ждёт вечно. Владелец `_layoutIO` при этом не меняется, и после Optimize новые жесты работают. Поздний ACK записи, отправленной до Optimize, к отсоединённому slot не применяется (`attached()`), а агрегат `unresolved` честно остаётся true. Это консервативно: ложного успеха нет.\n\nОснование: src/plan-optimize-write.ts:95–97. src/houseplan-editor-runtime.ts:9881–9883. src/layout-write-reload.ts:19–34. src/standalone-layout-write.ts `retire()`: `interrupted ||= ...status !== 'accepted'`.\n\n### Восстановление и база следующей записи (повторная проверка)\n\nБез изменений и корректно. Rejected/unknown-slot не входит в `pendingKeys`, поэтому `_reloadStandaloneLayout` не накладывает отклонённую правку. `recover` убирает ключ из `_dirtyPos`. Новый slot берёт `before` из accepted cache, который после `adoptMergedLayout` равен серверному ответу. Сериализация в рамках одной цепочки опирается на собственный ACK (`slot.before = position`). Устаревший ответ чтения (`rev < _layoutRev`) отбрасывается и трактуется как неудачная сверка, то есть блокировка до remount: это безопасно.\n\nОснование: src/houseplan-card.ts:7378–7403. src/standalone-layout-write.ts: ветка pending в `stage` и цикл `drain`.\n\n### Core, совместимость пар, граница PLAN_ONLY\n\nВ этом раунде не менялись, прежний разбор остаётся в силе:\n- узкая CAS-ветка только при PLAN_ONLY, сохраняются чужие записи и лишние поля, отдельно проверяется `MAX_LAYOUT`;\n- Undo инвалидируется штатным хвостом `layout_set`, событие одно;\n- флаг объявляется только при PLAN_ONLY и обязателен в handshake;\n- HA `layout/update` не тронут.\n\nОснование: custom_components/houseplan/core/plan_commands.py: `_room_label_fields`, `_room_label_layout`, ветка `room_label` в `layout_set`, условный флаг в `config_get`. src/standalone-plan-host.ts: `STANDALONE_REQUIRED_APIS`. tests_backend/test_plan_commands.py, tests_backend/test_ha_websocket.py.\n\n### Проверки\n\nНабор S6 «Тесты для задачи #1563 (перед ревью)» на 655e5df прошёл. Новый блокерный сценарий покрыт на двух уровнях: Node-тест проверяет очередь с удержанным токеном, pinned-browser smoke — реальный удерживаемый pointer с конфликтом и последующий новый жест. Отдельного Node-теста на `retire` из Optimize/Import нет, но изменение тривиально и использует тот же `retire()`, что покрыт тестом отзыва.\n\nОснование: receipt 20261125T091026769-910b37ad, status passed, failures []. test/standalone-layout-write.test.mjs, demo/smoke_standalone_room_label_layout.mjs.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Агрегат после Optimize/Import. Сейчас `retire()` при принятой Optimize/Import ставит липкий `interrupted`, если у любой подписи остался статус rejected/unknown, даже уже сверенный с сервером. При этом сама запись удаляется из `entries`. В результате ошибку, которую до Optimize можно было снять ACK нового жеста, после Optimize снимет только remount, и хост не видит, какая подпись затронута. Для Optimize/Import (в отличие от отзыва scope) можно оставлять завершённые rejected/unknown записи в `entries` и не переносить их в `interrupted`, а в `interrupted` переводить только незавершённые pending. Выгода — объяснимый leave guard без лишнего remount. Цена — параметр у `retire` и одна проверка в Node-тесте.\n- Добавить небольшой Node-тест: stage → без flush → `_retireStandaloneLayoutWrites` → токен `begin()` освобождён, `pending:false`, `unresolved:true`. Он зафиксирует поправку для Optimize/Import, которая сейчас подтверждена только чтением кода.\n\n## Границы анализа\n\nЭто повторное ревью кода (S7) по исходникам 655e5df2ac40384fdd1f3602acaa6572d2dc7dd5 против базы 7e85eee. Сборки, тесты и smoke я не запускал. Использован результат S6 (run 20261125T091026769-910b37ad, passed); утверждения автора о прогонах приняты как его сведения.\n\nПодробно перечитаны:\n- жесты подписи и их привязки pointerup/pointercancel;\n- `_stageRoomLabelPosition`, `_persistLayout`, `enableStandaloneLayoutWrite`, `_reloadStandaloneLayout`;\n- `StandaloneLayoutWrite` по диффу и `LayoutWriteReload`;\n- места `_dirtyPos.add`/`clear`;\n- новые тесты и ветка smoke.\n\nCore, handshake и HA-маршрут в этом раунде не менялись, поэтому заново построчно не разбирались: опираюсь на анализ прошлого раунда.\n\nВне проверки остались SaaS-адаптер house-planner, паритет канонизации TS и Python сверх подтверждённого smoke, а также подготовка dev-артефактов ZIP и wheel из одного SHA: по ТЗ она идёт после принятия.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 7e85eee9281283120d82f6fb9b9c12017136401d → 655e5df2ac40384fdd1f3602acaa6572d2dc7dd5\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1563, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПодтверждён тот же путь записи на dev. Предлагается точечная форма существующей команды вместо расширения маркерных capabilities и передачи полного config/layout. Просьба проверить совместимость старой пары, ownership/CAS и наблюдение отказа до dispatch, а также отсутствие ложного успеха при позднем ответе. Пользователь просит разблокировать внешний редактор, не выпуская новый stable.\n\n### Исправления по предыдущему ревью\n\n[Результат раунда 1](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7156537741). Определены восстановление серверной позиции при rejected/unknown, источник before для нового жеста, блокировка при неудачной сверке и точный момент снятия ошибки. Добавлены критерии проверки продолжения без remount при удачном read и запрета несогласованного retry при неудачном. Уточнены сравнение x/y/s/k и сохранение метаданных, правила CAS/no-op, PLAN_ONLY-граница, Undo и формат наблюдаемого состояния mount. Продуктовые проверки на S4 не выполнялись.\n\n[Результат код-ревью](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7157848385). Блокер: удерживаемый pointer после rejected/unknown мог создать новый slot, пока старый жест не завершён. Drag и resize получают токен на pointerdown, теряют его при отказе/retire и завершают на pointerup/cancel; stage не принимает прежний токен даже после успешной сверки. Только новый pointerdown может инициировать retry. Node и реальный браузер проверяют продолжение удерживаемого drag, отсутствие записи и сохранение статуса отказа после восстановления, затем ACK нового жеста.\n\nДополнительно: штатная очистка позиций после принятой пары Optimize/Copy или Import теперь завершает standalone-очередь и снимает токены, чтобы не оставлять потерянный pending. При отзыве scope не сохраняем идентификаторы прежнего проекта в публичных entries: агрегат unresolved остаётся до нового mount, а документация объясняет эту границу и ручное reopen при недоступном серверном read. Новая браузерная проверка собирает собственный каталог, не перезаписывая файлы другого сценария.\n\n### Реализация\n\n- Core: ограниченный room_label-вариант layout/set под PLAN_ONLY; совместный lock и CAS владельца по x/y/s/k, защита от переполнения layout, сохранение чужих данных и собственного непубличного metadata. Точка риска: ACK вида ok/rev/room_label только после durable write; глобальная ревизия не заменяет CAS конкретной записи.\n- SDK: отдельная очередь одной подписи, которая использует существующий debounce и write-authority. Статусы getSaveState/subscribeSaveState и целевая сверка после rejected/unknown. Остальные записи не отправляются повторно; очередная редакция не переписывает принятый снимок и не переживает отзыв прав. Новый жест после удачного восстановления берёт свежую базу; при неудачном read блокируется до reopen. Старый HA-путь не открывает дополнительный API.\n- Фактически прошли: tsc; 7 адресных Python-тестов ядра; 2 теста настоящих websocket-обработчиков HA; 15 Node-тестов очереди состояния и границы mount; браузерный smoke по реальному pointer drag/resize на standalone + Python core, серверная сверка и remount, pending перед запросом, конфликт, потерянный ACK, отзыв прав, старая несовместимая пара. Штатный S6 выдаст отдельный полный результат выбранных областей.\n- При проверке обратить внимание на authority при восстановительном чтении, отмену новых неотправленных редакций при отказе, отличие durable ACK от read при потере ответа и обратную совместимость. Исправленная пара dev-артефактов будет подготовлена из принятого SHA; GitHub Release и ассеты 1.86.1 не трогаем.\n\n- По первому S6: новый browser smoke прошёл; устранены отказы статических правил. Старый HA writer и его существующий мутационный якорь восстановлены без изменения поведения, standalone staging идёт через ConfigAdoption. Снижен pin прямых присваиваний в editor с 5 до 3, добавлен новый pinned-browser smoke в реестр, а обработчик сохранения назван reportFailure отдельно от lazy-loader failed. Шесть адресных проверок этих поправок зелёные; итог проверяет повторный S6.\n```\n\n</details>\n",
-        "createdAt": "2026-11-25T09:26:34.105Z",
-        "artifactId": 15008646382,
-        "runId": 45584833471,
-        "runAttempt": 1,
-        "completedAt": "2026-11-25T09:26:37Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45584833471",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "7e85eee9281283120d82f6fb9b9c12017136401d"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6861,19 +6713,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1563,
-    "worker": "finish",
-    "token": "688:finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374:finish:1:admit",
-    "fence": 688,
-    "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-    "expectedBase": "7e85eee9281283120d82f6fb9b9c12017136401d",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795597812746,
-    "expiresAt": 1795602425822,
-    "patchId": "5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab",
-    "reviewRequest": "review:1563:3:5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab:7e85eee9281283120d82f6fb9b9c12017136401d"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6899,10 +6739,6 @@
       "digest": "a480d8f58c583e5b654eefdb63525c1fd235c967989a97bad2717fcfbf4487a4",
       "issue": 1514
     },
-    "github:45571834265:1:label:spec-request": {
-      "digest": "bb07aca855f588adfa95811a9df79909d9179aa0dc64305b60163b530aba869e",
-      "issue": 1563
-    },
     "github:45572118601:1:spec:1514:spec-presentation": {
       "digest": "2c8704b58a1c436ab99d5abba7b8f84a6767dcd37bff28108a48691de0534384",
       "issue": 1514
@@ -6922,26 +6758,6 @@
     "github:45572451188:1:label:spec-request": {
       "digest": "4f6f6ef383d2b2b0bd349bfbe19546e76a3b9a30c04bffff98bcbcc08de37b51",
       "issue": 1514
-    },
-    "github:45572719885:1:spec:1563:spec-presentation": {
-      "digest": "000d3e8944c836dd6039ddf90f6573cec0fb0b0f58ca445c62e4813ed5d416d4",
-      "issue": 1563
-    },
-    "github:45572719885:1:spec:1563:spec-complete": {
-      "digest": "134678e375ec208403acb5b6a4a0535fc681a1650509a3bcd102c4a99f540d7f",
-      "issue": 1563
-    },
-    "github:45572719885:1:spec:1563:spec-label": {
-      "digest": "1f0d614ee53bd75bbf839d9e829f3a5189d00c213d6fdcdd78fdf9b0fbb55577",
-      "issue": 1563
-    },
-    "github:45572719885:1:completions:report:0e5ca7b87adef7f86c1a63cfef579c363b9816aeeff8b5cf0278d3c93fd6a811": {
-      "digest": "6bbc52f361667dc24f613163fa1fd9d5cee5a404566a3b68a04ace9ad9aa651f",
-      "issue": 1563
-    },
-    "github:45573105222:1:label:spec-request": {
-      "digest": "817bd37660e65a71b5f7265bec8fa73887ad9b25f52e5f73e05c8d55b8350e74",
-      "issue": 1563
     },
     "github:45573269634:1:spec:1514:spec-presentation": {
       "digest": "ea80358ec314c55e3d7a3594909cb64bccd72fddd0e4c7b16c73bb1e30f5b2f2",
@@ -6963,22 +6779,6 @@
       "digest": "53403ab871b465e89f8e48f20bf044dd076c0de4279a4e30f501f92d7d23da48",
       "issue": 1514
     },
-    "github:45573845919:1:spec:1563:spec-presentation": {
-      "digest": "8fc63fcc603fb51c688b0bce779f05e99bcd13766bfa03282c23d31928224391",
-      "issue": 1563
-    },
-    "github:45573845919:1:spec:1563:spec-complete": {
-      "digest": "515b4392727ab324c477be4462008ba18d87d40a1567b9b331ccbd1edc8d7ef1",
-      "issue": 1563
-    },
-    "github:45573845919:1:spec:1563:spec-label": {
-      "digest": "889d8e4aedfd237c201af2e4298b02260ce6b47bb3d3a81235729a3a93b01afa",
-      "issue": 1563
-    },
-    "github:45573845919:1:completions:report:e721505dae2bbe0139787b5886ed04a45eeec7fc27eb74521bc92f62a9d8c158": {
-      "digest": "abf88da25c79f0045bb8117caea3c15ed3a75393192a9d977c5d0434a03236a8",
-      "issue": 1563
-    },
     "github:45574065896:1:spec:1514:spec-presentation": {
       "digest": "064f2336c8bf9fa439ecd7faee2473253e9cea1f8a3284d01618285f821f4cdf",
       "issue": 1514
@@ -6994,270 +6794,6 @@
     "github:45574065896:1:completions:report:c19c257251b39eac0c0e08904806b30a5524bce74114041f0a308cde9720fb07": {
       "digest": "2a82a89b6c6c0cdb3af5cdef51a8db1e8617212f42c525a0c81bd1252bf55fc8",
       "issue": 1514
-    },
-    "github:45576320661:1:completions:message:48230a6b037cc4a5dbaee8522d39d38f14889b356bdd9b16709798b79b07d21c": {
-      "digest": "a4a574ecd009b497e507e55bdccc3eed11936e0823e5854cf755d13d30dbb2fd",
-      "issue": 1563
-    },
-    "github:45576320661:1:completions:message:a399cb5670abf99c430fd9c2366541efbf7009f1bce2aea07ea0182c9d65d6c1": {
-      "digest": "cc74c790d00642a699c155fce08611e48d1b167ab2f470027bc5e8d73288e35f",
-      "issue": 1563
-    },
-    "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:3:synchronized": {
-      "digest": "5323710c891f7f3933e91354620f047fb3f311d60c1430551e115a4cbe2af3df",
-      "issue": 1563
-    },
-    "finish:11e7a8a4-b79b-48b2-9869-f65c36b12c9f": {
-      "digest": "f73c4e35d99f8524bfcb59f64b763b9e4b2885451b7e960c38b2147bc59713ce",
-      "issue": 1563
-    },
-    "finish:e7e46777-b961-4546-97a9-103d686cd5ff": {
-      "digest": "0d105ec869c1c4a899414b936a9b7bfb4caddddc1f11a68863048aad1b93b120",
-      "issue": 1563
-    },
-    "finish:ce83e72a-fd8d-4124-a39e-20cc808cd4b4": {
-      "digest": "e08b426c12cf444a67a5e80bed858fc474196aac510a6b3368c629c23f7af86d",
-      "issue": 1563
-    },
-    "finish:95e91e3d-0e52-4c89-9d29-4a6a04b8e9b7": {
-      "digest": "003ef0ff853e65e13b01eaa75042be6ad7181f95c1a1344c342423597f64fcd8",
-      "issue": 1563
-    },
-    "finish:948d8866-9d46-4908-a639-b699e89c05e3": {
-      "digest": "7e33f557451682453e6c15c4a36844be5f87c5faff6ad7208dc619774c8b5963",
-      "issue": 1563
-    },
-    "finish:cadbbb33-23eb-4c7c-804d-454a1b1a7465": {
-      "digest": "2142ec33aa459e92a45f8042680b9227a15adcc8fe7d5bc7a891d609ba3c35b6",
-      "issue": 1563
-    },
-    "finish:6212ab42-597a-4ab4-bae6-6c72da0bf578": {
-      "digest": "55d10a5f7b33f028093412ee87ef5162ef24bfdeeb8d26f25d5e6cecf5c7bc77",
-      "issue": 1563
-    },
-    "finish:3e767108-1893-426e-bc75-e237373f0c22": {
-      "digest": "d1613b0f1b05a10fd537fd33c012cefffab0e9d416894588a2a904614c0b37e9",
-      "issue": 1563
-    },
-    "finish:a3020b62-d2a4-4dfc-bb00-e7bc1c9b1031": {
-      "digest": "30385c46724baa3556a6c66cd7c28d9d701657ee940c5adb7cb2b4d127f4d8ef",
-      "issue": 1563
-    },
-    "finish:a995837c-760f-4c17-af46-929795ccd833": {
-      "digest": "dbc86325aa169a91a293ddace43055e6354531ed8ebda94e2dcdb175596aec4e",
-      "issue": 1563
-    },
-    "finish:ab612498-fa90-44d8-87b2-e57b61d2e6d0": {
-      "digest": "f0f135654c97775ee48addca589e7a8c4539c42ff69270794ca0e9eb84e5f807",
-      "issue": 1563
-    },
-    "finish:177456a2-2b06-4cb5-9353-75ab20f21f79": {
-      "digest": "3bca10a0b24ad4583a5a4548482f3daeb51195d4d1636c3af8b6ec7829156b45",
-      "issue": 1563
-    },
-    "finish:b043406f-96cd-4d97-bee5-afd3aa959722": {
-      "digest": "4fa43c8eec0de2bf14957634a877d2198fd8efa25536b32dc362be7af2800cbe",
-      "issue": 1563
-    },
-    "finish:43a4d347-9be8-4f13-a987-99eeaec68a23": {
-      "digest": "1391bd0264d9d1a305787eb52631ad4dd91130d4d54ded3a903e8ad3cd9d1a09",
-      "issue": 1563
-    },
-    "finish:42fbd746-3701-4472-aa49-884aaf6ee5ec": {
-      "digest": "9a9de152cdcf62203ebdea850329418b1f73e162554a88291a923615a23dbf8f",
-      "issue": 1563
-    },
-    "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:4:return": {
-      "digest": "6b5b9f3691133c7fb516166a0f550204b29930b53c728ed5cae2f3e02641a625",
-      "issue": 1563
-    },
-    "finish:d2f9ea2b-e8e3-47b8-bb6f-de0a5713b7a2:finish:2:synchronized": {
-      "digest": "e817a6e26bb7d685aca47745e844ad69f19c3e7ef1c1a9e8aa6fb04ca82030eb",
-      "issue": 1563
-    },
-    "finish:507cc3ce-c5ec-4e36-b0ae-e0576b63d654": {
-      "digest": "da639586c2316f8950ed421b8ad0b9cbf1c886c95e75d6f1e36edc4eb9126561",
-      "issue": 1563
-    },
-    "finish:ad939020-1d19-4026-8113-53fd17bc8400": {
-      "digest": "277b61616f53a8845154a9d25f02a44a93e1e261f360d0a05e9441b6b86bfd1f",
-      "issue": 1563
-    },
-    "finish:bfd5c28f-1c0e-40fc-91f8-0dc702e61621": {
-      "digest": "531d57a3ac796f3e14907aa8a60cb211cf38bda1c331faa48022dc05526b96b3",
-      "issue": 1563
-    },
-    "finish:97f23704-d152-41f0-98b4-72858f98ae58": {
-      "digest": "6d986fefab98095dca928a7c0832e601333f994b67c162059724e3ad56c92c19",
-      "issue": 1563
-    },
-    "finish:f89986c8-478f-40ad-861f-a71c9313baff": {
-      "digest": "57aceb276a8548438ae57102fb4f8b5739b1f96da26f47de815fe3409197011c",
-      "issue": 1563
-    },
-    "finish:2b26af85-1ff9-43bb-bbf6-3a78e467f65b": {
-      "digest": "7cc5293047739313ce40472d11fd28537fd0897f895faf36d5ac2153c4e3abc1",
-      "issue": 1563
-    },
-    "finish:7eefbd0f-2a2c-4f25-9fa4-622f994e1f22": {
-      "digest": "4a234882c02deb4e8420c70b74219bccfd6399b36cedb8ec67e86de10705a3eb",
-      "issue": 1563
-    },
-    "finish:5d51ccc4-6e83-4658-9a70-d4baaf6fac03": {
-      "digest": "0b4cad5c88e42e72ede595c9accdb6bc61cd04789b3f54cfb971357ece7018dc",
-      "issue": 1563
-    },
-    "finish:c355b94d-3b11-4c5c-930f-7dc308b2349b": {
-      "digest": "54c9fbc01cf53e07eefe2e85857d1f4206fdbe6386f87e395d9a3b89c8f02f29",
-      "issue": 1563
-    },
-    "finish:1334e0b2-85b2-41eb-a745-b6bce66fc400": {
-      "digest": "11fe19fa6b6495f94c8c7d94e442a818c6e7d7aabfb4bf99a8b9322ff8d0da74",
-      "issue": 1563
-    },
-    "finish:ad5b74c5-084a-4a09-bcfa-5ded888bc07f": {
-      "digest": "687ca529d7850d739a79bd47c08e2d6b5713128022bf8d0441c53a89a860e6a3",
-      "issue": 1563
-    },
-    "finish:87869521-ed3e-4487-9d46-6e4de17dbd1c": {
-      "digest": "4e4cd1c8bd38b6265cdb42e41f55049c1a0637c0eaa97a2ab1ce9350d86fd23b",
-      "issue": 1563
-    },
-    "finish:d2f9ea2b-e8e3-47b8-bb6f-de0a5713b7a2:finish:3:s6-label": {
-      "digest": "e0290f4e511768008ac10a8bfc1f6118f322690a4fddf7664e8a01a826d7cebc",
-      "issue": 1563
-    },
-    "finish:d2f9ea2b-e8e3-47b8-bb6f-de0a5713b7a2:finish:4:review-requested": {
-      "digest": "5d15502515f094db8bbea89293e364535ce831923205fac1bfd738555855f2db",
-      "issue": 1563
-    },
-    "github:45580878343:1:tick:0:review-retry": {
-      "digest": "6950446d541962d8f663c5b0d4a767828572a9e8ce26407d9aa7564dba6bd96e",
-      "issue": 1563
-    },
-    "github:45580878343:1:completions:notice:512d37247c4d5aa22ad2bcec45f748bb125b3ef63f98f09b86865cdabe1ce8b1": {
-      "digest": "b37dda4f6fe109956f44f3544811085b9fe94f735b35bb776ed8742902fcc900",
-      "issue": 1563
-    },
-    "github:45580878343:1:completions:message:512d37247c4d5aa22ad2bcec45f748bb125b3ef63f98f09b86865cdabe1ce8b1": {
-      "digest": "752d9c0256865d3918e1da5e91b0c4181b39f464ad8a2e6b70c0ab6136dd2d6e",
-      "issue": 1563
-    },
-    "github:45580878343:1:completions:message:839d461df0ead8a068f3b51b73c8bf81349f63f5841f90c1328b9bd78f66eb79": {
-      "digest": "160da138283b181924dd302e7d3d5434d5dee1d1b065db6957b1dbe3be30b6fc",
-      "issue": 1563
-    },
-    "github:45580878343:1:completions:message:aad05b5d9b49bdf8302347cd42e35bf7a696e47bf49400c791035aced9063f5a": {
-      "digest": "d464025ac411590394dabaf5b9deec491702816ff3592ef5964f6584ff991231",
-      "issue": 1563
-    },
-    "github:45580878343:1:completions:message:a273dc1e5331f5988b43e8e62bde72a9540de7585f19b6394e3d4d88a81acba5": {
-      "digest": "327191d9637a4248e730247d2faa5373c49efa10aa426f3a8726bb618809a60a",
-      "issue": 1563
-    },
-    "github:45581874979:1:tick:0:review-presentation": {
-      "digest": "35fb6cdcf3462008ddec7760d364f387b58938370816ebcce131f6f0f6ac42c5",
-      "issue": 1563
-    },
-    "github:45581874979:1:tick:0:return": {
-      "digest": "c6f865bce22ad6b62e304be5c6f950d757ab3dc8a024ca34abea75fa819bdecd",
-      "issue": 1563
-    },
-    "github:45581874979:1:tick:0:return-label": {
-      "digest": "60210a219fe4023fedea8d9a13900beedc2ce00e722fafd3b0f8f56ebdbea237",
-      "issue": 1563
-    },
-    "github:45581874979:1:completions:report:587644b2a9a778bb65ad996daaa5361a50dca0ad0a1cd5fcd2edcf6e4c97e7c9": {
-      "digest": "ef0bb5637f3b60f3b0885995fb8b65cc19a185e852865a32d3b046d850e0c47a",
-      "issue": 1563
-    },
-    "github:45581874979:1:completions:metadata:3d549e8a-7e49-4009-be0d-8dbdebf4b706:task-notice:1563::": {
-      "digest": "4cdca57f1917470486e065fb2dc2959a829d7f75f4b7fb34325bebd4dc6204bc",
-      "issue": 1563
-    },
-    "finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374:finish:2:synchronized": {
-      "digest": "4c28ebefe0686ff6a356f9b125d15e8375a35067b826d0d797171cea24c8228c",
-      "issue": 1563
-    },
-    "finish:14dd0558-12bc-47be-999f-1ab0b4500889": {
-      "digest": "9c977b53bc1d3004eac9b8dea9eae15100f129550fedfc3677d613002409ca14",
-      "issue": 1563
-    },
-    "finish:30d5a7ca-3fd4-4d12-92cd-9ba24a4b5bfd": {
-      "digest": "1c118beda6a6b85635948ff4f1692abc04428efbc5af05e50850a519f91705ee",
-      "issue": 1563
-    },
-    "finish:7d870380-ddde-42d1-8cd7-bfff940cade5": {
-      "digest": "1b5238295e7450bc12582963d792147e081c1203d2da077e1eec30f463257cea",
-      "issue": 1563
-    },
-    "finish:54fcd885-7518-4b20-8b2a-54e7c0d93272": {
-      "digest": "0ed5e6325beb4067bf48acc355fa7f9f5ff5d9bfa367229eafe453f09f304776",
-      "issue": 1563
-    },
-    "finish:b89df31b-4e8c-473b-9fe2-9760815a5698": {
-      "digest": "6f3a0d1784f502a448c68c325a29f26dfb947cb9a5f546144d7ddb290284e3d5",
-      "issue": 1563
-    },
-    "finish:3c05b8d1-40f7-4425-b336-64fa715a34bc": {
-      "digest": "0b5be685b17f5927073a88cd5f7f5dbdea38538586c4777ba7f254bb2b51f307",
-      "issue": 1563
-    },
-    "finish:03620377-0c0f-419f-b875-fb20a73181ad": {
-      "digest": "197d56f05adc3f9fd8570c5f66474525efcd66b189e10c687a9d15ecb395df54",
-      "issue": 1563
-    },
-    "finish:d95c8b2a-b36a-40ae-bc72-d95918821036": {
-      "digest": "758c2684a9a6a244a31181ffe6ae950552aacb0b5697365b137c4ece32cff7df",
-      "issue": 1563
-    },
-    "finish:732e2421-b36a-42ec-9b46-9eff586b3852": {
-      "digest": "425d86defcaa7e42e7f36152596dd29144bbcfed144ce0c482002d6a40d5ae16",
-      "issue": 1563
-    },
-    "finish:90fa289f-9373-418d-aeb9-4ebbd6aab42c": {
-      "digest": "645f16becd639750ff4893ad984d3314ac654738e4a4c7101837152ba09061d4",
-      "issue": 1563
-    },
-    "finish:ba96bd72-612b-454f-bc79-a855d218dfd2": {
-      "digest": "140630dd20ae561e803ad89872498589d1773256736291cf06354859e7040ae7",
-      "issue": 1563
-    },
-    "finish:df5bb402-a2c2-490b-83c4-a2fad694e1bd": {
-      "digest": "46d4a0ecc8cd0a1260d4a65262f3da108b86bcadb32fcbff81c063d648fbdf8d",
-      "issue": 1563
-    },
-    "finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374:finish:3:s6-label": {
-      "digest": "fca8a4bbaa92bcf4e90d4b90988d7f267ef6a71c3b9b72f0e0fea4128bd20940",
-      "issue": 1563
-    },
-    "finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374:finish:4:review-requested": {
-      "digest": "d328f36103fd89771254f8d19b8383c128c27eec649009b2d981e70893754c88",
-      "issue": 1563
-    },
-    "github:45584788995:1:tick:0:review-retry": {
-      "digest": "8bca44174432c92a6a9b70a4920d03cb66f16047a44d83fbe3ea5705db8ba935",
-      "issue": 1563
-    },
-    "github:45584788995:1:completions:message:4c4ce6f2c058f0599d1e159e52b2d73c4f2e49138e75811605960fe1a9eb2d8a": {
-      "digest": "ea44ed8ead2f1fafb024d8b97a22f259ab1683b07ca7c659eadd22d31fdfb293",
-      "issue": 1563
-    },
-    "github:45584788995:1:completions:message:1c854155a6fccfa4891ee4b8f69292222fa08446520cc140cf8f74b2bd6a1bc4": {
-      "digest": "41b018691cd18c4f275ef22a78d3750c72af54d7549f205fc6b244143268df8a",
-      "issue": 1563
-    },
-    "github:45584788995:1:completions:message:e827efa37759ba2079b00ec77c93c5f9832cc1fa7dea70d41d2f4751f38961c4": {
-      "digest": "9722cc3ea8c4b9f9cd0593a5f7b4287368a58176fe5678946b9d2921402b25ae",
-      "issue": 1563
-    },
-    "github:45585452940:1:tick:0:review-presentation": {
-      "digest": "2124343dcf887c435b3aeeaf02b8bf050f9f3077654faa2f754c3c0fb4a7b2fe",
-      "issue": 1563
-    },
-    "github:45585452940:1:tick:0:review-complete": {
-      "digest": "350c366200ab2d2e4b187bb8d4395fefdde26f7eb7ef3a10f924110d8281efc7",
-      "issue": 1563
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7305,23 +6841,6 @@
         "delivered": true
       }
     },
-    "github:45573105222:1:label:spec-request:spec-resubmitted:1563": {
-      "digest": "817bd37660e65a71b5f7265bec8fa73887ad9b25f52e5f73e05c8d55b8350e74",
-      "issue": 1563,
-      "message": {
-        "kind": "spec-resubmitted",
-        "issue": 1563,
-        "at": 1795593897756,
-        "previousRound": 1,
-        "round": 2,
-        "requestId": "spec:1563:6d8fbe8958d5a3f7ea03244f1c18b7f487e69160a6e229e088989cd22a068058",
-        "reviewChanges": "Подтверждён тот же путь записи на dev. Предлагается точечная форма существующей команды вместо расширения маркерных capabilities и передачи полного config/layout. Просьба проверить совместимость старой пары, ownership/CAS и наблюдение отказа до dispatch, а также отсутствие ложного успеха при позднем ответе. Пользователь просит разблокировать внешний редактор, не выпуская новый stable.\n\n### Исправления по предыдущему ревью\n\n[Результат раунда 1](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7156537741). Определены восстановление серверной позиции при rejected/unknown, источник before для нового жеста, блокировка при неудачной сверке и точный момент снятия ошибки. Добавлены критерии проверки продолжения без remount при удачном read и запрета несогласованного retry при неудачном. Уточнены сравнение x/y/s/k и сохранение метаданных, правила CAS/no-op, PLAN_ONLY-граница, Undo и формат наблюдаемого состояния mount. Продуктовые проверки на S4 не выполнялись.",
-        "fromStatus": "S3-spec",
-        "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
     "github:45573443870:1:label:spec-request:spec-resubmitted:1514": {
       "digest": "53403ab871b465e89f8e48f20bf044dd076c0de4279a4e30f501f92d7d23da48",
       "issue": 1514,
@@ -7335,192 +6854,6 @@
         "reviewChanges": "Владелец согласовал замену 2.5D, прежние ракурсы в первой версии, существующие объекты и источники, векторный SVG в 2D. Основные альтернативы — оставить SVG под GPU по образцу #1472 или продублировать всю модель/камеру для экспорта. Обе оставляют старый объёмный runtime или два источника геометрии. Предлагается один движок с общими физическими входами и плоским экспортом. Особенно проверить возможность выдержать внешний вид прямых ракурсов, приоритет и границы света у срезов/прозрачных проёмов, совместимость portable preview и реальную стоимость запуска в нескольких карточках. На S3 прочитаны исходники и ревью #1472. Продуктовых прогонов и прототипа на этом этапе нет.\n\n### Исправления по предыдущему ревью\n\n- Свет. Зафиксированы оптические призмы и приём света мебелью, объёмный вклад от источников и отдельный ограниченный объём для каждого солнечного проёма. Комнаты без проёма, внешний срез и фаза солнечного света проверяются отдельно.\n- Камера. Прямые ракурсы выводятся аналитически для перспективы со смещённой главной точкой, диагонали — для ортокамеры. Pan и zoom меняют область изображения. Сохранён кодек прежнего положения для чтения памяток. Аналитическая сверка 100 точек вне зоны ограничения линзы дала расхождение 1.31e-12 нормализованных единиц. Это подтверждение формулы, кадровые проверки ещё не проводились.\n- Устройства. Геометрия и визуальные знаки маркеров переходят в общий буфер глубины. Попадание определяется по тем же поверхностям по запросу и передаётся существующим HA-обработчикам.\n- Смежные уточнения. Превью от обоих источников остаётся в скоупе по #1545. Для сервера выбран ограниченный формат растрового кадра с мягким промахом и независимым ключом совместимости. Для нескольких карточек введён единый контекст на документ и приёмка на шести карточках. Уточнены подпись 3D и справка створок. [Ревью раунда 1](https://github.com/Matysh/houseplan-card/issues/1514#issuecomment-7156450386)\n\n- Радиус света. Уточнили замечание раунда 2: существующий радиус остаётся горизонтальным охватом на полу, с отдельным трёхмерным расчётом угла к каждой поверхности. Заданы высоты по умолчанию и добавлены три наблюдаемых случая для малых и обычных радиусов. Также уточнены выборка по грани, резкость атласа маркеров, поведение солнца у мебели, промах при недоступном WebP и тест вне области точного совпадения камер. [Ревью раунда 2](https://github.com/Matysh/houseplan-card/actions/runs/45572528199)",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:3f648435-5413-47e0-b282-b6715f2b99cd": {
-      "digest": "447c5d9f74e1603d25aff1edb73d4a3e33e5d0420d1c13922bd55accc80e7367",
-      "issue": 1563,
-      "message": {
-        "kind": "queued",
-        "issue": 1563,
-        "at": 1795595205456,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "e45be50fb6c472591b17fba25dec4b75fb604d27",
-        "delivered": true
-      }
-    },
-    "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:1:admit": {
-      "digest": "a1685b3982782134efbdf6d662da66ddd372607cb45625af8715560a4cab8333",
-      "issue": 1563,
-      "message": {
-        "kind": "admitted",
-        "issue": 1563,
-        "at": 1795595209250,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "e45be50fb6c472591b17fba25dec4b75fb604d27",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:4:return:return:1563": {
-      "digest": "6b5b9f3691133c7fb516166a0f550204b29930b53c728ed5cae2f3e02641a625",
-      "issue": 1563,
-      "message": {
-        "kind": "return",
-        "issue": 1563,
-        "at": 1795596218305,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795596218305,
-          "entry": 1,
-          "detail": "Поведение: test/browser-attestation.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-          "eventId": "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:4:return:return:1563"
-        },
-        "delivered": true
-      }
-    },
-    "finish:d2f9ea2b-e8e3-47b8-bb6f-de0a5713b7a2": {
-      "digest": "d678ea2564809c963c1b11d7ecc401a32f95904fc1c89510b22d47e7458ee392",
-      "issue": 1563,
-      "message": {
-        "kind": "queued",
-        "issue": 1563,
-        "at": 1795596305006,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
-        "delivered": true
-      }
-    },
-    "finish:d2f9ea2b-e8e3-47b8-bb6f-de0a5713b7a2:finish:1:admit": {
-      "digest": "99dfe870438a7dfb3c5d9a973bb586300841884b49f7d1109fff1a21051127e3",
-      "issue": 1563,
-      "message": {
-        "kind": "admitted",
-        "issue": 1563,
-        "at": 1795596309517,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:d2f9ea2b-e8e3-47b8-bb6f-de0a5713b7a2:finish:3:s6-complete": {
-      "digest": "b88a3e13af520af37749f4c39671977f385ce101af17b5df84564941872c8754",
-      "issue": 1563,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1563,
-        "at": 1795597049799,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
-        "phase": "review",
-        "evidence": {
-          "id": "20261125T084524864-cc6bc701",
-          "name": "Тесты для задачи #1563 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T084524864-cc6bc701/report.json",
-          "materialSha": "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
-          "status": "passed",
-          "finishedAt": "2026-11-25T08:57:28.727Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Подтверждён тот же путь записи на dev. Предлагается точечная форма существующей команды вместо расширения маркерных capabilities и передачи полного config/layout. Просьба проверить совместимость старой пары, ownership/CAS и наблюдение отказа до dispatch, а также отсутствие ложного успеха при позднем ответе. Пользователь просит разблокировать внешний редактор, не выпуская новый stable.\n\n### Исправления по предыдущему ревью\n\n[Результат раунда 1](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7156537741). Определены восстановление серверной позиции при rejected/unknown, источник before для нового жеста, блокировка при неудачной сверке и точный момент снятия ошибки. Добавлены критерии проверки продолжения без remount при удачном read и запрета несогласованного retry при неудачном. Уточнены сравнение x/y/s/k и сохранение метаданных, правила CAS/no-op, PLAN_ONLY-граница, Undo и формат наблюдаемого состояния mount. Продуктовые проверки на S4 не выполнялись.\n\n### Реализация\n\n- Core: ограниченный room_label-вариант layout/set под PLAN_ONLY; совместный lock и CAS владельца по x/y/s/k, защита от переполнения layout, сохранение чужих данных и собственного непубличного metadata. Точка риска: ACK вида ok/rev/room_label только после durable write; глобальная ревизия не заменяет CAS конкретной записи.\n- SDK: отдельная очередь одной подписи, которая использует существующий debounce и write-authority. Статусы getSaveState/subscribeSaveState и целевая сверка после rejected/unknown. Остальные записи не отправляются повторно; очередная редакция не переписывает принятый снимок и не переживает отзыв прав. Новый жест после удачного восстановления берёт свежую базу; при неудачном read блокируется до reopen. Старый HA-путь не открывает дополнительный API.\n- Фактически прошли: tsc; 7 адресных Python-тестов ядра; 2 теста настоящих websocket-обработчиков HA; 15 Node-тестов очереди состояния и границы mount; браузерный smoke по реальному pointer drag/resize на standalone + Python core, серверная сверка и remount, pending перед запросом, конфликт, потерянный ACK, отзыв прав, старая несовместимая пара. Штатный S6 выдаст отдельный полный результат выбранных областей.\n- При проверке обратить внимание на authority при восстановительном чтении, отмену новых неотправленных редакций при отказе, отличие durable ACK от read при потере ответа и обратную совместимость. Исправленная пара dev-артефактов будет подготовлена из принятого SHA; GitHub Release и ассеты 1.86.1 не трогаем.\n\n- По первому S6: новый browser smoke прошёл; устранены отказы статических правил. Старый HA writer и его существующий мутационный якорь восстановлены без изменения поведения, standalone staging идёт через ConfigAdoption. Снижен pin прямых присваиваний в editor с 5 до 3, добавлен новый pinned-browser smoke в реестр, а обработчик сохранения назван reportFailure отдельно от lazy-loader failed. Шесть адресных проверок этих поправок зелёные; итог проверяет повторный S6.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374": {
-      "digest": "18f71dfab8256d0e03ef7df440cc2f30096ab6c65c2ba6ec64ff5a4b66facc3e",
-      "issue": 1563,
-      "message": {
-        "kind": "queued",
-        "issue": 1563,
-        "at": 1795597808468,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-        "evidence": {
-          "id": "20261125T084524864-cc6bc701",
-          "name": "Тесты для задачи #1563 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T084524864-cc6bc701/report.json",
-          "materialSha": "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
-          "status": "passed",
-          "finishedAt": "2026-11-25T08:57:28.727Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374:finish:1:admit": {
-      "digest": "2f110b9f26469de1c32feb5a98981f85ec9c40382afb0a7645b4b16e9ebdfb63",
-      "issue": 1563,
-      "message": {
-        "kind": "admitted",
-        "issue": 1563,
-        "at": 1795597812746,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261125T084524864-cc6bc701",
-          "name": "Тесты для задачи #1563 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T084524864-cc6bc701/report.json",
-          "materialSha": "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
-          "status": "passed",
-          "finishedAt": "2026-11-25T08:57:28.727Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374:finish:3:s6-complete": {
-      "digest": "461a6f6b20d508fc5bbc976a670bde10af1e3444d22d9256af978c60a85b7693",
-      "issue": 1563,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1563,
-        "at": 1795598545507,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-        "phase": "review",
-        "evidence": {
-          "id": "20261125T091026769-910b37ad",
-          "name": "Тесты для задачи #1563 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T091026769-910b37ad/report.json",
-          "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-          "status": "passed",
-          "finishedAt": "2026-11-25T09:22:24.157Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "Подтверждён тот же путь записи на dev. Предлагается точечная форма существующей команды вместо расширения маркерных capabilities и передачи полного config/layout. Просьба проверить совместимость старой пары, ownership/CAS и наблюдение отказа до dispatch, а также отсутствие ложного успеха при позднем ответе. Пользователь просит разблокировать внешний редактор, не выпуская новый stable.\n\n### Исправления по предыдущему ревью\n\n[Результат раунда 1](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7156537741). Определены восстановление серверной позиции при rejected/unknown, источник before для нового жеста, блокировка при неудачной сверке и точный момент снятия ошибки. Добавлены критерии проверки продолжения без remount при удачном read и запрета несогласованного retry при неудачном. Уточнены сравнение x/y/s/k и сохранение метаданных, правила CAS/no-op, PLAN_ONLY-граница, Undo и формат наблюдаемого состояния mount. Продуктовые проверки на S4 не выполнялись.\n\n[Результат код-ревью](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7157848385). Блокер: удерживаемый pointer после rejected/unknown мог создать новый slot, пока старый жест не завершён. Drag и resize получают токен на pointerdown, теряют его при отказе/retire и завершают на pointerup/cancel; stage не принимает прежний токен даже после успешной сверки. Только новый pointerdown может инициировать retry. Node и реальный браузер проверяют продолжение удерживаемого drag, отсутствие записи и сохранение статуса отказа после восстановления, затем ACK нового жеста.\n\nДополнительно: штатная очистка позиций после принятой пары Optimize/Copy или Import теперь завершает standalone-очередь и снимает токены, чтобы не оставлять потерянный pending. При отзыве scope не сохраняем идентификаторы прежнего проекта в публичных entries: агрегат unresolved остаётся до нового mount, а документация объясняет эту границу и ручное reopen при недоступном серверном read. Новая браузерная проверка собирает собственный каталог, не перезаписывая файлы другого сценария.\n\n### Реализация\n\n- Core: ограниченный room_label-вариант layout/set под PLAN_ONLY; совместный lock и CAS владельца по x/y/s/k, защита от переполнения layout, сохранение чужих данных и собственного непубличного metadata. Точка риска: ACK вида ok/rev/room_label только после durable write; глобальная ревизия не заменяет CAS конкретной записи.\n- SDK: отдельная очередь одной подписи, которая использует существующий debounce и write-authority. Статусы getSaveState/subscribeSaveState и целевая сверка после rejected/unknown. Остальные записи не отправляются повторно; очередная редакция не переписывает принятый снимок и не переживает отзыв прав. Новый жест после удачного восстановления берёт свежую базу; при неудачном read блокируется до reopen. Старый HA-путь не открывает дополнительный API.\n- Фактически прошли: tsc; 7 адресных Python-тестов ядра; 2 теста настоящих websocket-обработчиков HA; 15 Node-тестов очереди состояния и границы mount; браузерный smoke по реальному pointer drag/resize на standalone + Python core, серверная сверка и remount, pending перед запросом, конфликт, потерянный ACK, отзыв прав, старая несовместимая пара. Штатный S6 выдаст отдельный полный результат выбранных областей.\n- При проверке обратить внимание на authority при восстановительном чтении, отмену новых неотправленных редакций при отказе, отличие durable ACK от read при потере ответа и обратную совместимость. Исправленная пара dev-артефактов будет подготовлена из принятого SHA; GitHub Release и ассеты 1.86.1 не трогаем.\n\n- По первому S6: новый browser smoke прошёл; устранены отказы статических правил. Старый HA writer и его существующий мутационный якорь восстановлены без изменения поведения, standalone staging идёт через ConfigAdoption. Снижен pin прямых присваиваний в editor с 5 до 3, добавлен новый pinned-browser smoke в реестр, а обработчик сохранения назван reportFailure отдельно от lazy-loader failed. Шесть адресных проверок этих поправок зелёные; итог проверяет повторный S6.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
       }
