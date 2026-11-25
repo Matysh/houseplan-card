@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 24992,
-  "nextTicket": 701,
+  "revision": 24993,
+  "nextTicket": 702,
   "nextFence": 701,
   "tasks": {
     "1024": {
@@ -6244,14 +6244,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1567-3d-polish",
-      "materialSha": "9870b3e5b064d80ab72771c84f7c20b533c8a4a6",
+      "materialSha": "85a281821fb02031c8b18f8eb2b5254d48c71918",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 700,
-      "queued": false,
+      "ticket": 701,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795631106429,
-      "reviewEntry": 1,
+      "readyAt": 1795632380431,
+      "reviewEntry": 2,
       "patchId": "fc85ad8e2b08c3067a58e7bd81a0f4c3e7359b00",
       "changedFiles": [
         "demo/smoke_plan_3d_gpu.mjs",
@@ -6271,9 +6271,6 @@
         "src/room-floor-paint.ts",
         "test/room-floor-paint-local.test.mjs"
       ],
-      "automationError": "checks-unavailable",
-      "automationSince": 1795632174076,
-      "reason": "checks-unavailable",
       "notice": {
         "key": "1:checks-unavailable",
         "reason": "checks-unavailable",
@@ -6933,7 +6930,9 @@
       "runId": 45622352279
     }
   },
-  "waiting": [],
+  "waiting": [
+    1567
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7226,6 +7225,19 @@
           "detail": "Локальный набор завершился с одним отказом; сводка устарела при подготовке правки. Материал будет заново предъявлен на S6.",
           "eventId": "finish:1567:invalidated:1795632322628:return:1567"
         }
+      }
+    },
+    "finish:e33b7b45-6fbc-4e93-a550-911238e33d2f": {
+      "digest": "93b1badd88312c73847392e110e6c4b9e21caa97670283c135a0c323afd9f938",
+      "issue": 1567,
+      "message": {
+        "kind": "queued",
+        "issue": 1567,
+        "at": 1795632380431,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "85a281821fb02031c8b18f8eb2b5254d48c71918"
       }
     }
   },
