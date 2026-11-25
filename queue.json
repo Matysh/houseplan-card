@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25451,
+  "revision": 25452,
   "nextTicket": 710,
   "nextFence": 710,
   "tasks": {
@@ -7265,7 +7265,8 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:3:return:return:1572"
-        }
+        },
+        "delivered": true
       }
     }
   },
