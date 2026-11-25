@@ -13,6 +13,7 @@ import type { SpaceDisplay } from './logic';
 import type { PhysicalStairVolume } from './stairs-volume';
 import { Plan3dLightField, type Plan3dLight } from './plan-3d-light-field';
 import { planFaceMesh, planPrismMesh, type Plan3dVertex } from './plan-3d-mesh';
+import { plan3dWallInk, plan3dWallShell, plan3dWallSideFaces } from './plan-3d-wall-shell';
 import { Plan3dMarkerLayer, type Plan3dMarker } from './plan-3d-markers';
 import { markerContactChains } from './iso-marker-outline';
 
@@ -154,38 +155,13 @@ function faceInk(faces: readonly Face[], color: string, opacity: number): LineSe
   return lineInk(edges, color, opacity);
 }
 
-function wallInk(walls: readonly Polygon[], surfaces: readonly IsoOpeningSurface[], height: number, top: Paint, side: Paint): LineSegments[] {
+function wallInk(shell: ReturnType<typeof plan3dWallShell>, top: Paint, side: Paint): LineSegments[] {
   const positions = (points: number[]) => new BufferGeometry().setAttribute('position', new Float32BufferAttribute(points, 3));
-  const lip = surfaces.filter(face => face.kind === 'opening-lintel-top' && face.points?.every(point => point.z === height))
-    .flatMap(face => face.points ? [[face.points.map(({ point }) => [...point])]] as Geom[] : []);
-  let caps = walls;
-  if (lip.length) {
-    // Union the adjacent cap faces before outlining: an opening header doesn't
-    // introduce two vertical saw cuts in an otherwise continuous cap.
-    try {
-      const inputs = [...walls as readonly Geom[], ...lip];
-      caps = union(inputs[0], ...inputs.slice(1));
-    } catch { /* The physical wall remains renderable without joined ink. */ }
-  }
-  const finish = (rings: readonly Polygon[], level: number): number[] => rings.flatMap(poly => poly.flatMap(ring =>
-    ring.flatMap((a, i) => {
-      const b = ring[(i + 1) % ring.length];
-      return a[0] === b[0] && a[1] === b[1] ? [] : [a[0], level, a[1], b[0], level, b[1]];
-    })));
-  const corners = walls.flatMap(poly => poly.flatMap(raw => {
-    const ring = raw.filter((point, i) => !i || point.some((v, a) => v !== raw[i - 1][a]));
-    if (ring.length > 1 && ring[0].every((v, a) => v === ring[ring.length - 1][a])) ring.pop();
-    return ring.flatMap(([x, y], i) => {
-      const [ax, ay] = ring[(i + ring.length - 1) % ring.length], [bx, by] = ring[(i + 1) % ring.length];
-      const u = [x - ax, y - ay], v = [bx - x, by - y];
-      const length = Math.hypot(...u) * Math.hypot(...v);
-      return length > 0 && (u[0] * v[0] + u[1] * v[1]) / length < .95 ? [x, 0, y, x, height, y] : [];
-    });
-  }));
+  const { cap, base, vertical } = plan3dWallInk(shell.bands);
   const inks: LineSegments[] = [];
-  if (top.opacity > 0 && caps.length) inks.push(lineInk(positions(finish(caps, height)), edgeTone(top.color), .54 * top.opacity));
-  if (side.opacity > 0 && walls.length)
-    inks.push(lineInk(positions([...finish(walls, 0), ...corners]), edgeTone(side.color), .4 * side.opacity));
+  if (top.opacity > 0 && cap.length) inks.push(lineInk(positions(cap), edgeTone(top.color), .54 * top.opacity));
+  if (side.opacity > 0 && (base.length || vertical.length))
+    inks.push(lineInk(positions([...base, ...vertical]), edgeTone(side.color), .4 * side.opacity));
   return inks;
 }
 
@@ -472,20 +448,11 @@ export class Plan3dWorld {
     return [...batches.values()].map(({ paint, faces }) => this.mesh(planFaceMesh(faces), [paint])).concat(translucent);
   }
 
-  private wallMeshes(walls: readonly Polygon[], height: number, top: Paint, side: Paint): Mesh[] {
+  private wallMeshes(walls: readonly Polygon[], shell: ReturnType<typeof plan3dWallShell>, height: number, top: Paint, side: Paint): Mesh[] {
     if (top.opacity >= 1 && side.opacity >= 1) return [this.mesh(planPrismMesh(walls, 0, height), [top, side, side])];
-    const meshes: Mesh[] = [];
-    for (const wall of walls) {
-      const cap = horizontal(wall, height);
-      if (top.opacity > 0) meshes.push(this.mesh(planFaceMesh([cap]), [top]));
-      if (!(side.opacity > 0)) continue;
-      for (const ring of cap) for (let i = 0; i < ring.length; i++) {
-        const a = ring[i], b = ring[(i + 1) % ring.length];
-        if (a[0] === b[0] && a[1] === b[1]) continue;
-        const face = [[a[0], a[1], 0], a, b, [b[0], b[1], 0]] as const;
-        meshes.push(this.mesh(planFaceMesh([[face]]), [side]));
-      }
-    }
+    const meshes = top.opacity > 0 ? walls.map(wall => this.mesh(planFaceMesh([horizontal(wall, height)]), [top])) : [];
+    if (side.opacity > 0) for (const face of plan3dWallSideFaces(shell.bands))
+      meshes.push(this.mesh(planFaceMesh([[face]]), [side]));
     return meshes;
   }
 
@@ -495,8 +462,6 @@ export class Plan3dWorld {
     this.groundKey = key;
     this.replace(this.ground, []);
     this.groundTexture?.dispose();
-    this.replace(this.contacts, []);
-    this.contactTexture?.dispose();
     this.groundTexture = undefined;
     if (!floor.length) return;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -763,14 +728,20 @@ export class Plan3dWorld {
       const floor: Paint = { color: paper, opacity: 1, lit: true };
       const edge: Paint = { color: colorString(new Color(paper).lerp(wallOnPaper, .38)), opacity: 1, lit: true, shadeSides: true };
       const walls = polygons(physical.walls);
+      const authoredMasonry = new Set(physical.openingSurfaces.filter(surface =>
+        surface.kind === 'window-apron-top' || surface.kind === 'opening-lintel-top').map(surface => surface.id));
+      const shell = plan3dWallShell(walls, physical.openings.filter(opening => authoredMasonry.has(opening.id)), wallHeight);
+      const useShellSides = shell.joined && (top.opacity < 1 || side.opacity < 1);
       const meshes = [
         this.mesh(planPrismMesh(polygons(physical.floor), -floorDepth, 0), [floor, edge, edge]),
-        ...this.wallMeshes(walls, wallHeight, top, { ...side, front: side.opacity < 1 }),
-        ...this.openingMeshes(physical.openingSurfaces.filter(surface => !display.hideOpenings
-          || surface.material === 'wall-top' || surface.material === 'wall-side' || surface.material === 'reveal'), palette, top, side),
+        ...this.wallMeshes(walls, shell, wallHeight, top, { ...side, front: side.opacity < 1 }),
+        ...this.openingMeshes(physical.openingSurfaces.filter(surface =>
+          !(useShellSides && (surface.kind === 'window-apron-side' || surface.kind === 'opening-lintel-side'))
+          && (!display.hideOpenings || surface.material === 'wall-top'
+            || surface.material === 'wall-side' || surface.material === 'reveal')), palette, top, side),
       ];
       this.replace(this.structure, meshes);
-      this.replace(this.architecture, wallInk(walls, physical.openingSurfaces, wallHeight, top, side));
+      this.replace(this.architecture, wallInk(shell, top, side));
       this.structureKey = structureKey;
     }
 
@@ -795,6 +766,8 @@ export class Plan3dWorld {
     this.replace(this.architecture, []);
     this.replace(this.ground, []);
     this.groundTexture?.dispose();
+    this.replace(this.contacts, []);
+    this.contactTexture?.dispose();
     this.replace(this.openings, []);
     this.replace(this.furniture, []);
     this.replace(this.stairs, []);

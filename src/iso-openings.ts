@@ -554,7 +554,7 @@ function openingPrism(
   const result = ring.map((a,i) => verticalSurface(sideKind, sideMaterial,
     a, ring[(i+1)%ring.length], bottom, top, camera,
     visibleSides ? { ...(!visibleSides[i] ? { hiddenInTranslucentMasonry: true } : {}),
-      masonrySide: i % 2 ? 'join' : winding > 0 ? 'reverse' : 'outward' } : undefined));
+      masonrySide: i % 2 ? 'join' : winding > 0 ? 'outward' : 'reverse' } : undefined));
   result.push(projectedSurface(topKind, topMaterial, ring.map(point=>({point,z:top})), camera));
   if (undersideKind) result.push(projectedSurface(undersideKind, sideMaterial,
     [...ring].reverse().map(point=>({point,z:bottom})), camera,
@@ -624,7 +624,7 @@ export function projectIsoOpeningStructure(
       const direction = reveal.jamb === 0 ? 1 : -1;
       const facing = direction * along;
       const dx = reveal.opposite[0] - reveal.selected[0], dy = reveal.opposite[1] - reveal.selected[1];
-      const outward = direction * (-dy * tx + dx * ty) > 0;
+      const outward = direction * (dy * tx - dx * ty) > 0;
       surfaces.push(verticalSurface(
         'jamb-reveal', 'reveal', reveal.selected, reveal.opposite,
         lower, upper, camera, { jamb: reveal.jamb, hiddenInTranslucentMasonry: facing <= 1e-9,

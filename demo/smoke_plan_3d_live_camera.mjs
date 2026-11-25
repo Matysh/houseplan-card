@@ -109,6 +109,12 @@ try {
   await finishTrace(page, 'held pan', { fast: true });
   const lastHeld = await page.evaluate(() => window.hpCameraTrace.at(-1).html);
   await page.mouse.up();
+  const pickedImmediately = await card.evaluate(c => [...c.renderRoot.querySelectorAll('.dev[data-hp-3d-native]')]
+    .some(element => {
+      const bounds = element.querySelector('.device-core').getBoundingClientRect();
+      return c._plan3dHost.pick(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2) === element.dataset.id;
+    }));
+  assert.ok(pickedImmediately, 'native pick is available after releasing pan without waiting for a redraw');
   await settleIsoPaint(page);
   await startTrace(page);
   await twoFrames(page);

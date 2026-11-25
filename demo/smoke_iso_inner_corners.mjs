@@ -40,7 +40,9 @@ try {
       const first = vertical[0];
       const corners = vertical.every((j, k) => j === first + k * 2
         && positions.getX(j) === positions.getX(j + 1) && positions.getZ(j) === positions.getZ(j + 1)
-        && positions.getY(j) === 0 && Math.abs(positions.getY(j + 1) - height) < .01);
+        && positions.getY(j) >= 0 && positions.getY(j + 1) > positions.getY(j)
+        && positions.getY(j + 1) <= height + .01);
+      const intact = vertical.some(j => positions.getY(j) === 0 && Math.abs(positions.getY(j + 1) - height) < .01);
       const read = () => host.canvas.getContext('2d').getImageData(0, 0, host.canvas.width, host.canvas.height).data;
       const paint = () => host.viewport.present({ ...host.frame }, true);
       paint();
@@ -54,7 +56,7 @@ try {
           if (Math.abs(withEdges[j] - withoutEdges[j]) + Math.abs(withEdges[j + 1] - withoutEdges[j + 1])
             + Math.abs(withEdges[j + 2] - withoutEdges[j + 2]) > 3) pixels++;
         }
-        return { rotation: card._rotation, vertical: vertical.length, corners, pixels,
+        return { rotation: card._rotation, vertical: vertical.length, corners, intact, pixels,
           depth: material.depthTest && !material.depthWrite,
           translucent: material.opacity > 0 && material.opacity < .5 };
       } finally {
@@ -62,7 +64,7 @@ try {
         paint();
       }
     });
-    assert.ok(observed.vertical > 0 && observed.corners && observed.depth && observed.translucent,
+    assert.ok(observed.vertical > 0 && observed.corners && observed.intact && observed.depth && observed.translucent,
       'vertical ink follows real corners and respects depth: ' + JSON.stringify(observed));
     assert.ok(observed.pixels > 12, 'vertical ink contributes visible pixels: ' + JSON.stringify(observed));
     angles.push(observed);

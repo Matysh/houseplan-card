@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { buildIsoOpeningBasis, isoOpeningMasonry, projectIsoOpeningStructure, projectIsoOpening } from '../test-build/iso-openings.js';
 import { projectPlanPoint } from '../test-build/iso-projection.js';
 import { isoMarkerBehindWall } from '../test-build/iso-marker-context.js';
+import { planFaceMesh } from '../test-build/plan-3d-mesh.js';
+import { plan3dWallInk, plan3dWallShell, plan3dWallSideFaces } from '../test-build/plan-3d-wall-shell.js';
 
 const opening = (patch={}) => ({id:'one',sourceIndex:0,type:'window',x:100,y:80,angle:0,length:120,
   flipH:false,flipV:false,face:{ox:0,oy:5,cm:20,side:1},...patch});
@@ -87,11 +89,52 @@ test('#1566 translucent window aprons keep outside normals and omit only the hos
       assert.equal(sides.filter(s => s.masonrySide === 'join').length, 2);
       for (const face of sides.filter(s => s.masonrySide !== 'join')) {
         const [a, b] = face.points.map(({ point }) => point);
-        const direction = face.masonrySide === 'reverse' ? -1 : 1;
-        const normal = [(a[1] - b[1]) * direction, (b[0] - a[0]) * direction];
-        assert.ok(normal[0] * (a[0] - center[0]) + normal[1] * (a[1] - center[1]) > 0);
+        const points = face.points.map(({ point: [x, y], z }) => [x, y, z]);
+        if (face.masonrySide === 'reverse') points.reverse();
+        const mesh = planFaceMesh([[points]]);
+        const normal = mesh.getAttribute('normal');
+        assert.ok(normal.getX(0) * (a[0] - center[0]) + normal.getZ(0) * (a[1] - center[1]) > 0);
+        mesh.dispose();
+      }
+      for (const reveal of projectIsoOpeningStructure(basis, camera(yaw), true).filter(s => s.kind === 'jamb-reveal')) {
+        const points = reveal.points.map(({ point: [x, y], z }) => [x, y, z]);
+        if (reveal.masonrySide === 'reverse') points.reverse();
+        const mesh = planFaceMesh([[points]]);
+        const normal = mesh.getAttribute('normal');
+        assert.ok(normal.getX(0) * (reveal.jamb === 0 ? 1 : -1) > .9);
+        mesh.dispose();
       }
     }
+  }
+});
+
+test('#1566 wall sides and ink have no joints behind an apron or lintel', () => {
+  const rect = (x0, x1) => [[[x0, 5], [x1, 5], [x1, -5], [x0, -5], [x0, 5]]];
+  for (const type of ['door', 'window', 'passage']) {
+    const basis = buildIsoOpeningBasis(opening({type, y: 0}), 84);
+    const shell = plan3dWallShell([rect(0, 40), rect(160, 200)], [basis], 84);
+    const body = isoOpeningMasonry(basis);
+    const expected = type === 'window' ? [body.top, 84] : [0, body.bottom];
+    assert.equal(shell.joined, true);
+    const faces = plan3dWallSideFaces(shell.bands);
+    for (const x of [40, 160]) {
+      const joins = faces.filter(face => face.every(vertex => vertex[0] === x));
+      assert.equal(joins.length, 1, type);
+      assert.deepEqual([...new Set(joins[0].map(vertex => vertex[2]))], expected, type);
+      const actual = planFaceMesh([[joins[0]]]);
+      assert.equal(actual.getAttribute('normal').getX(0), x === 40 ? 1 : -1);
+      actual.dispose();
+    }
+    const { vertical } = plan3dWallInk(shell.bands);
+    const segments = Array.from({ length: vertical.length / 6 }, (_, i) => vertical.slice(i * 6, i * 6 + 6));
+    const atJambs = segments.filter(([x]) => x === 40 || x === 160);
+    assert.equal(atJambs.length, 4, type);
+    for (const [, low, , , high] of atJambs) assert.deepEqual([low, high], expected, type);
+    assert.ok(segments.some(([x, low, , , high]) => x === 0 && low === 0 && high === 84), 'external corner is unbroken');
+    const facade = faces.find(face => face.every(vertex => vertex[1] === -5));
+    const mesh = planFaceMesh([[facade]]);
+    assert.equal(mesh.getAttribute('normal').getZ(0), -1, 'outer faces point out of masonry');
+    mesh.dispose();
   }
 });
 

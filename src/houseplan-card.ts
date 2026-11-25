@@ -14146,6 +14146,11 @@ export class HouseplanCard extends LitElement {
     const spatial = isoFrame?.layers.structural === true;
     let sun3d: readonly import('./iso-sun').IsoSunBeam[] = [];
     if (iso) this._renderSunRays(space, beams => { sun3d = beams; });
+    // One eager pattern for flat view and the 3D ground texture (#689).
+    const hatchStep = wallHatchStepUnits(this._cellCm);
+    const stripe = 2 * (hatchStep / HATCH_BASE_STEP_UNITS);
+    const wallHatch = svg`<defs><pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
+        width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)"><path d="M0 0 L0 ${hatchStep}" stroke="${disp.color || '#607d8b'}" stroke-width="${stripe}"></path></pattern></defs>`;
     if (isoScene && isoFrame?.layers.structural && isoRuntime) {
       this._plan3dDevices = isoFrame.overlays?.devices;
       const content = this._frameOf();
@@ -14267,11 +14272,6 @@ export class HouseplanCard extends LitElement {
     const paperShapes = this._paperShapes(space.rooms); const isoFirstFramePending = !this._modeProjectionCrossing && this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime);
     const transitionStageBg = modeVisual?.stageColor || stageBg;
     const transitionBrightness = modeVisual?.sceneBrightness ?? 1;
-    // View owns the eager hatch: one pattern at every zoom (#689 reverted #685's gradient).
-    const hatchStep = wallHatchStepUnits(this._cellCm);
-    const stripe = 2 * (hatchStep / HATCH_BASE_STEP_UNITS);
-    const wallHatch = svg`<defs><pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
-        width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)"><path d="M0 0 L0 ${hatchStep}" stroke="${disp.color || '#607d8b'}" stroke-width="${stripe}"></path></pattern></defs>`;
     const sceneSpace = space;
     const renderRooms = (roomMode: HouseplanMode, canonical = true, fills = roomFills, flat = !iso): TemplateResult => {
       const planRoom = roomMode === 'plan';
