@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1469,
+  "revision": 1470,
   "active": "v1.86.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -284396,7 +284396,8 @@
           "from": "edb2e66bb14a7dadd122daf3eb3f0ca7deaf45c3",
           "to": "286b799101d831676ab30f7c8add3e1ec1889607",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "e177278eaa21176df7487eabdea3973b8d3637cb"
         }
       ],
       "diagnostics": [],
@@ -285224,7 +285225,8 @@
           "sha": "f20873dc6bae5ac98a852c7c41558307c185b890"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "e177278eaa21176df7487eabdea3973b8d3637cb",
           "issue": 1561,
           "branch": "issue/1561-release-return-286b799101d8",
           "worktree": "/home/sergey/hp-beta-1861-10/artifacts/process-next/return-worktrees/286b799101d8",
@@ -291936,7 +291938,8 @@
     "beta-1861-10-publish-286b7991:completion:29090366-c7ed-497b-9a00-35aee30933df": "c8e3187fc641d881ed37c43c6e0254a9c9cf7932d79c35b2ac6bf7a5eaeebdb3",
     "beta-1861-10-publish-286b7991:completion:e737575e-771d-4844-9718-6fe3d7cd5921": "76871299ab1a87a74ae6683641b3c6a748eb97d6748ec1279c9bc7dad42b668b",
     "beta-1861-10-publish-286b7991:completion:4a0bfadc-abc2-4989-a63f-5e901ff20f85": "01a83ed7baf20b066390b05690d627adf0382d65ca712e1ff2a5d69a6a8eb3a6",
-    "beta-1861-10-publish-286b7991:completion:c5156293-a5e9-4fdd-8a02-b20ca399e736": "7f89b8922c79c57bf166bf1faf059b1a33e6fb370c4e55f58a90d835a1fa6aed"
+    "beta-1861-10-publish-286b7991:completion:c5156293-a5e9-4fdd-8a02-b20ca399e736": "7f89b8922c79c57bf166bf1faf059b1a33e6fb370c4e55f58a90d835a1fa6aed",
+    "beta-1861-10-publish-286b7991:completion:6ccedbe3-1e98-4da8-a130-2c99f28e0c10": "c353975ffbcca9b4af375fe558819968894961ca604de142ecb1b94d95a461e8"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
