@@ -126,6 +126,14 @@ class MarkerAtlas {
       for (const path of glyph.paths) context.fill(new Path2D(path.d), path.rule);
     }
     const pixels = context.getImageData(0, 0, size, size).data;
+    // Keep the same ink colour on both sides of a coverage edge. Canvas
+    // returns transparent black outside the path; interpolating against that
+    // produces dark fringes around light glyphs on coloured device faces.
+    let strongest = 0;
+    for (let i = 4; i < pixels.length; i += 4) if (pixels[i + 3] > pixels[strongest + 3]) strongest = i;
+    for (let i = 0; i < pixels.length; i += 4) {
+      pixels[i] = pixels[strongest]; pixels[i + 1] = pixels[strongest + 1]; pixels[i + 2] = pixels[strongest + 2];
+    }
     const x = cell.index % 8 * size, y = Math.floor(cell.index / 8) * size;
     const stride = size * 4;
     for (let row = 0; row < size; row++) {
@@ -222,8 +230,12 @@ export class Plan3dMarkerLayer {
       geometry.rotateX(-Math.PI / 2);
       geometry.rotateY(-angle);
       geometry.translate((left + right) * diameter / 2, 0, (top + bottom) * diameter / 2);
+      // Alpha is coverage, not a cutout. A hard threshold fills the counters
+      // of tiny digits and closes the spacing between thin icon details.
+      // The plate still owns depth and picking; ink never erases either.
       const ink = new Mesh(geometry, new MeshBasicMaterial({ map: cell.page.texture, side: DoubleSide,
-        alphaTest: .02, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+        transparent: true, depthWrite: false, forceSinglePass: true, toneMapped: false,
+        polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
       ink.userData.plan3dPick = { occludes: false };
       this.group.add(ink);
       paint.cell = cell;

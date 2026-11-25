@@ -211,6 +211,21 @@ try {
     world.presentMarkers([{ ...marker, faces: [{ ...marker.faces[0], foreground: '#ff0000' }] }], 1);
     await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
     const markerChanged = pixel(canvas, 150, 145);
+    const glyphPixels = async glyph => {
+      world.presentMarkers([{ ...marker, faces: [{ ...marker.faces[0], glyph }] }], 1);
+      await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+      const pixels = canvas.getContext('2d').getImageData(140, 135, 20, 20).data;
+      let coverage = 0, ink = 0;
+      for (let i = 0; i < pixels.length; i += 4) {
+        const [r, g, b] = pixels.subarray(i, i + 3);
+        if (r > 248 && g > 248 && b > 248) ink++;
+        if (r > 36 && r < 245 && g > r + 2 && Math.abs(r - b) < 3) coverage++;
+      }
+      return { coverage, ink, center: pixel(canvas, 150, 145), hit: lit.pick(.75, .725) };
+    };
+    const hollowIcon = await glyphPixels({ ...marker.faces[0].glyph,
+      paths: [{ d: 'M0 0H24V24H0Z M7.8 7.8V16.2H16.2V7.8Z', rule: 'evenodd' }] });
+    const valueInk = await glyphPixels({ kind: 'text', value: '80%', font: 'sans-serif', fraction: .55 });
     world.presentMarkers([], 1);
     world.present({ ...input, lights: [], rooms: [{ id: 'room', color: '#a07832', opacity: 1,
       geometry: [[[[-95, -95], [-95, 95], [95, 95], [95, -95]]]] }],
@@ -242,7 +257,7 @@ try {
       await new Promise(resolve => requestAnimationFrame(resolve));
     return { contexts, pixels, picking, frames, largeRadius, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
-      fullPixels, motionPixels, motionHit, settledPixels,
+      fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
   });
@@ -265,6 +280,13 @@ try {
   assert.equal(evidence.motionHit, evidence.markerHit, 'the smaller raster retains native picking');
   assert.equal(evidence.settledPixels, evidence.fullPixels);
   assert.deepEqual(evidence.markerChanged, [255, 0, 0, 255]);
+  assert.deepEqual(evidence.hollowIcon.center, evidence.markerBody, 'the icon retains the hole in its silhouette');
+  assert.ok(evidence.hollowIcon.ink > 25 && evidence.hollowIcon.coverage > 8,
+    'icon edges blend with the coloured face: ' + JSON.stringify(evidence.hollowIcon));
+  assert.ok(evidence.valueInk.ink > 5 && evidence.valueInk.coverage > 8,
+    'value text has both solid ink and antialiasing: ' + JSON.stringify(evidence.valueInk));
+  assert.equal(evidence.hollowIcon.hit, 'thermometer');
+  assert.equal(evidence.valueInk.hit, 'thermometer');
   assert.deepEqual(evidence.roomColor, [160, 120, 50, 255]);
   assert.deepEqual(evidence.ribbonColor, [255, 255, 0, 255]);
   assert.equal(evidence.ribbonHit, 'switch-1');
