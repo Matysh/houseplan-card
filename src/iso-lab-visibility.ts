@@ -624,18 +624,21 @@ let transparentResult: readonly IsoDepthFragment[] = [];
 export function composeIsoTranslucentStructure(
   queue: readonly IsoWallDepthQueueEntry[], camera: IsoCamera, scale: number,
   masonry: IsoMasonryOpacity, furniture: readonly IsoDepthFurniture[],
+  cornerInk?: ReadonlySet<number>,
 ): readonly IsoDepthFragment[] {
   const key = JSON.stringify([camera,scale,masonry,furniture.map(({footprint,height})=>[footprint,height]),
     queue.map(entry => entry.layer === 'opening' ? [entry.surface.material,entry.surface.kind,entry.surface.d]
-      : [entry.layer,entry.face.d])]);
+      : [entry.layer,entry.face.d,entry.layer==='wall-side' && entry.face.edgeOnly]),
+    cornerInk && [...cornerInk]]);
   if (key === transparentKey) return transparentResult;
   const {coordinates,restore} = depthClipCoordinates(camera,scale);
   const masonryKinds = queue.map(masonrySurface);
+  const edgeOnly = queue.map(entry=>entry.layer==='wall-side' && entry.face.edgeOnly===true);
   const faces: (DepthSurface | null)[] = [...queue.map((entry,index) => {
     const kind = masonryKinds[index];
-    if (kind && masonry[kind] === 0) return null;
+    if (kind && masonry[kind] === 0 || (edgeOnly[index] && cornerInk && !cornerInk.has(index))) return null;
     const face = faceOf(entry,camera,coordinates);
-    if (face && kind) face.opaque = masonry[kind] === 1;
+    if (face && kind) face.opaque = !edgeOnly[index] && masonry[kind] === 1;
     return face;
   }), ...furniture.map(item => furnitureDepthSurface(item,camera,coordinates))];
   // First remove opaque occlusion and duplicate masonry without introducing
@@ -646,7 +649,8 @@ export function composeIsoTranslucentStructure(
     let visible = new Map<number, Multi>([[0,face.geom]]);
     for (const [otherIndex,other] of faces.entries()) {
       if (index === otherIndex || !other || !visible.size) continue;
-      const sameMasonry = masonryKinds[index] !== undefined && masonryKinds[index] === masonryKinds[otherIndex];
+      const sameMasonry = !edgeOnly[index] && !edgeOnly[otherIndex]
+        && masonryKinds[index] !== undefined && masonryKinds[index] === masonryKinds[otherIndex];
       if (!ranked && !other.opaque && !sameMasonry) continue;
       const a = face.bounds, b = other.bounds;
       const overlap = [Math.max(a[0],b[0]),Math.max(a[1],b[1]),Math.min(a[2],b[2]),Math.min(a[3],b[3])];

@@ -41,6 +41,33 @@ test('a furniture envelope does not cut a continuous wall into separate paint sh
   assert.deepEqual(orderAt(fragments,...point),[0,1]);
 });
 
+test('#1560 back corners take depth from real paint without becoming occluders', () => {
+  const camera={...ISO_CAMERA,origin:[0,0],rotDeg:0};
+  const quad=(a,b,y)=>[[a,0],[b,0],[b,10],[a,10]].map(([x,z])=>projectPlanPoint([x,y],z,camera));
+  const corner=wall(quad(0,20,0));
+  corner.face.edgeOnly=true;
+  const opening=(a,b,material)=>({layer:'opening',depth:0,surface:{material,kind:'leaf',
+    d:'M '+quad(a,b,2).join(' L ')+' Z',
+    points:[[a,0],[b,0],[b,10],[a,10]].map(([x,z])=>({point:[x,2],z}))}});
+  const queue=[corner,wall(quad(1,5,2)),opening(7,11,'door-side'),opening(13,16,'glass-side')];
+  const furniture=[{footprint:[[17,2],[19,2],[19,3],[17,3]],height:9}];
+  const material={side:1,top:.5};
+  const ink=new Set([0]);
+  const result=composeIsoTranslucentStructure(queue,camera,1,material,furniture,ink);
+  const at=(x)=>orderAt(result,...projectPlanPoint([x,0],4,camera));
+  assert.deepEqual(at(3),[1],'opaque wall clips the back corner');
+  assert.deepEqual(at(9),[2],'opaque door clips the back corner');
+  assert.deepEqual(at(14),[0,3],'glazing paints over the corner without deleting it');
+  assert.deepEqual(at(18),[0,4],'the real furniture silhouette itself covers the corner');
+  assert.deepEqual(at(6),[0],'outside any nearer surface the corner is retained');
+  const far=[corner,wall(quad(1,5,-2))];
+  assert.deepEqual(orderAt(composeIsoTranslucentStructure(far,camera,1,material,[],ink),
+    ...projectPlanPoint([3,0],4,camera)),[1,0],'the back-corner plane does not erase real paint behind it');
+  const omitted=composeIsoTranslucentStructure(queue,camera,1,material,furniture,new Set());
+  assert(!omitted.some(entry=>entry.index===0),'a back face without any remaining ink does not enter depth sorting');
+  assert.strictEqual(composeIsoTranslucentStructure(queue,camera,1,material,furniture,new Set()),omitted);
+});
+
 test('#1530 an opaque cut fully hides the device side and glass behind it', () => {
   for (const lens of [undefined,{center:[100,100],rate:.002}]) {
     const camera = {...ISO_CAMERA,origin:[0,0],rotDeg:0,perspective:lens};

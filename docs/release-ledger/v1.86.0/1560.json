@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1560,
+  "baseStable": "v1.86.0",
+  "category": "line-fix",
+  "rationale": "Finish the corner rendering of translucent 2.5D masonry introduced by #1518 in the current line; that wall mode was not in v1.86.0.",
+  "summary": {
+    "ru": "Тонкие линии внутренних углов видны через прозрачные стены в 2.5D.",
+    "en": "Thin interior corner lines remain visible through transparent 2.5D walls."
+  }
+}

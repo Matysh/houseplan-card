@@ -299,12 +299,15 @@ function renderIsoStructure(
   const uniformTopPlane = (scene.camera?.floorScaleY ?? 1) !== 1;
   if (transparentMasonry && scene.camera) {
     const joins = connectTranslucentOpeningMasonry(scene);
-    const geometry = {...scene.geometry,sides:layers.panels ? joins.sidesWithPanels : joins.sidesWithoutPanels};
+    const sides = layers.panels ? joins.sidesWithPanels : joins.sidesWithoutPanels;
+    const hasCornerInk = transparentMasonry.side > 0
+      && (transparentMasonry.side < 1 || transparentMasonry.top < 1);
+    const geometry = {...scene.geometry,sides:hasCornerInk ? [...sides,...joins.cornerSides(layers.panels)] : sides};
     const visible = openingSurfaces.filter(surface => !surface.hiddenInTranslucentMasonry
       && surface.material !== 'wall-side' && surface.material !== 'wall-top');
     const joined = buildIsoWallDepthQueue(geometry,[...visible,...joins.surfaces],uniformTopPlane);
     return renderIsoTranslucentMasonry(scene, scene.camera, layers, joined, cellCm,
-      furniture, overlays, wallLights, wallColor, transparentMasonry);
+      furniture, overlays, wallLights, wallColor, transparentMasonry, hasCornerInk ? joins.cornerWitnesses : []);
   }
   const ordered = buildIsoWallDepthQueue(scene.geometry, openingSurfaces, uniformTopPlane);
   const depthQueue = ISO_LAB_OPENINGS && scene.camera
@@ -465,6 +468,7 @@ function renderIsoTranslucentMasonry(
   joined: readonly IsoWallDepthQueueEntry[], cellCm: number, furniture: readonly IsoFurniturePaint[],
   overlays: IsoOverlayRenderScene | null, wallLights: readonly IsoWallLightSource[],
   wallColor: string, masonry: IsoMasonryOpacity,
+  cornerWitnesses: readonly IsoOpeningRenderSurface[],
 ): Pick<IsoFramePresentation,'walls'|'foreground'|'shadowClip'> {
   const {geometry:cut,d:wallCut} = continuousWallCut(scene,joined);
   const capHeight = scene.geometry.topFaces[0]?.height ?? scene.openings[0]?.wallHeight;
@@ -479,15 +483,21 @@ function renderIsoTranslucentMasonry(
     })),
   ] : joined;
   const solid = queue.filter(entry => {
+    if(entry.layer==='wall-side' && entry.face.edgeOnly)return false;
     const kind = masonrySurface(entry);
     return !kind || masonry[kind] === 1;
   });
   if (overlays) for (const placement of overlays.devices.values()) {
     placement.wallMask = deviceWallOcclusion(solid,camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
   }
-  const architecture = architecturalPainter(queue,camera,wallColor);
+  const architecture = architecturalPainter(queue,camera,wallColor,
+    cornerWitnesses.map(surface=>({layer:'opening',depth:surface.depth,surface})));
+  const cornerInk = new Set<number>();
+  queue.forEach((entry,index)=>{
+    if(entry.layer==='wall-side' && entry.face.edgeOnly && architecture.hasInk(index))cornerInk.add(index);
+  });
   const paintWallLight = isoWallLightPainter(wallLights,camera,cellCm,scene.geometry);
-  const fragments = composeIsoTranslucentStructure(queue,camera,gridVisualScale(cellCm),masonry,furniture);
+  const fragments = composeIsoTranslucentStructure(queue,camera,gridVisualScale(cellCm),masonry,furniture,cornerInk);
   const foreground = svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key} data-hp-translucent-masonry
     ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
     ${renderIsoDefs(layers,'walls',cellCm)}
@@ -507,6 +517,8 @@ function renderIsoTranslucentMasonry(
         const kind = masonrySurface(entry);
         if (!kind && opening) return renderIsoOpeningSurface(opening,d,false);
         if (!kind) return nothing;
+        if (entry.layer==='wall-side' && entry.face.edgeOnly)
+          return svg`<g class="iso-architectural-edges" data-hp-inner-corner opacity=${masonry.side}>${architecture.edge(index,d,fragment)}</g>`;
         const roundColumn = entry.layer === 'wall-side' ? entry.face.roundColumn : undefined;
         // The depth solver removes artificial cuts. Genuine crossings can
         // still require separate fragments; retain antialiasing on their

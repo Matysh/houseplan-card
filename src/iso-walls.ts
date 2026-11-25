@@ -5,6 +5,8 @@ import {
 
 export interface IsoWallFace {
   d: string;
+  /** Reuse this plane for edge ink, without adding back-facing wall paint. */
+  edgeOnly?: boolean;
   roundColumn?: number;
   planEdge?: readonly [PlanPoint, PlanPoint];
   height?: number;
@@ -33,6 +35,8 @@ export interface IsoWallGeometry {
   /** Independently paintable top components for the shared Stage 4 depth queue. */
   topFaces: readonly IsoWallTopFace[];
   sides: readonly IsoWallFace[];
+  /** Unprojected straight sides that can supply otherwise missing corner ink. */
+  backSides?: readonly WallSideBasis[];
   contactPath: string;
   edgeCount: number;
 }
@@ -121,6 +125,22 @@ function visibleNormalY(a: PlanPoint, b: PlanPoint, camera: IsoCamera): number {
     + lens.rate * depthScale * side * (lens.center[0] - sx);
 }
 
+type WallSideBasis = Pick<IsoWallFace, 'polygon' | 'ring' | 'edge' | 'roundColumn'>
+  & { planEdge: readonly [PlanPoint, PlanPoint]; height: number };
+
+function projectWallSide(side: WallSideBasis, camera: IsoCamera,
+  [floorA, floorB] = side.planEdge.map(p => projectPlanPoint(p, 0, camera))): IsoWallFace {
+  const [a,b] = side.planEdge;
+  const points = Object.freeze([floorA, floorB,
+    projectPlanPoint(b, side.height, camera), projectPlanPoint(a, side.height, camera)]);
+  return {...side,points,d:`M ${points.map(pointText).join(' L ')} Z`,
+    depth:Math.max(floorA[1],floorB[1])};
+}
+
+export function projectIsoCornerSides(geometry: IsoWallGeometry, camera: IsoCamera): readonly IsoWallFace[] {
+  return (geometry.backSides ?? []).map(side => ({...projectWallSide(side,camera),edgeOnly:true}));
+}
+
 /** Build one top surface and at most one side per canonical ring edge: O(E). */
 export function buildIsoWallGeometry(
   geometry: any,
@@ -141,6 +161,7 @@ export function buildIsoWallGeometry(
   const tops: string[] = [];
   const topFaces: IsoWallTopFace[] = [];
   const sides: IsoWallFace[] = [];
+  const backSides: WallSideBasis[] = [];
   const contacts: string[] = [];
   let edgeCount = 0;
   for (let polygon = 0; polygon < (geometry || []).length; polygon++) {
@@ -165,17 +186,11 @@ export function buildIsoWallGeometry(
         const floorA = projectPlanPoint(a, 0, camera);
         const floorB = projectPlanPoint(b, 0, camera);
         contacts.push(`M ${pointText(floorA)} L ${pointText(floorB)}`);
-        if (visibleNormalY(a, b, camera) <= 1e-9) continue;
-        const topB = projectPlanPoint(b, height, camera);
-        const topA = projectPlanPoint(a, height, camera);
-        const facePoints = Object.freeze([floorA, floorB, topB, topA]);
-        sides.push({
-          d: `M ${facePoints.map(pointText).join(' L ')} Z`,
-          points: facePoints,
-          planEdge: [a,b], height,
+        const side: WallSideBasis = { planEdge:[a,b], height, polygon, ring, edge,
           roundColumn: columnEdges.size ? columnEdges.get(edgeKey(a, b)) : undefined,
-          depth: Math.max(floorA[1], floorB[1]), polygon, ring, edge,
-        });
+        };
+        if (visibleNormalY(a,b,camera) > 1e-9) sides.push(projectWallSide(side,camera,[floorA,floorB]));
+        else if (side.roundColumn === undefined) backSides.push(side);
       }
     }
     if (componentPaths.length) {
@@ -191,7 +206,7 @@ export function buildIsoWallGeometry(
     || a.ring - b.ring || a.edge - b.edge);
   topFaces.sort((a, b) => a.depth - b.depth || a.component - b.component);
   return {
-    topPath: tops.join(' '), topFaces, sides, contactPath: contacts.join(' '), edgeCount,
+    topPath: tops.join(' '), topFaces, sides, backSides, contactPath: contacts.join(' '), edgeCount,
   };
 }
 

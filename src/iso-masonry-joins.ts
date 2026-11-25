@@ -2,7 +2,7 @@ import { GRID_PITCH } from './canvas-constants';
 import { isoOpeningMasonry, projectIsoOpeningMasonry } from './iso-openings';
 import { projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
 import type { IsoOpeningRenderSurface, IsoRenderScene } from './iso-scene-geometry';
-import type { IsoWallFace } from './iso-walls';
+import { projectIsoCornerSides, type IsoWallFace, type IsoWallGeometry } from './iso-walls';
 
 // The host cut pads its ends by up to twice its GRID_PITCH * .0002 epsilon.
 // Match the actual cut edge within that error, then make the new face overlap
@@ -23,9 +23,11 @@ type Span = {from: number; to: number; offset: number};
 type OpeningMasonry = {
   sidesWithPanels: readonly IsoWallFace[];
   sidesWithoutPanels: readonly IsoWallFace[];
+  cornerSides: (panels: boolean) => readonly IsoWallFace[];
+  cornerWitnesses: readonly IsoOpeningRenderSurface[];
   surfaces: readonly IsoOpeningRenderSurface[];
 };
-const cached = new WeakMap<object,OpeningMasonry>();
+const cached = new WeakMap<IsoWallGeometry,OpeningMasonry>();
 const relative = (p: PlanPoint, origin: PlanPoint, axis: PlanPoint) =>
   (p[0] - origin[0]) * axis[0] + (p[1] - origin[1]) * axis[1];
 
@@ -88,6 +90,7 @@ export function connectTranslucentOpeningMasonry(scene: IsoRenderScene): Opening
     ring.map((a,i) => [a,ring[(i+1)%ring.length]] as const)));
   const jambs: Jamb[] = [];
   const surfaces: IsoOpeningRenderSurface[] = [];
+  const cornerWitnesses: IsoOpeningRenderSurface[] = [];
   for (const basis of scene.openings) {
     if (!isoOpeningMasonry(basis)) continue;
     const {start,end,tangent,normal} = basis.axis;
@@ -104,14 +107,28 @@ export function connectTranslucentOpeningMasonry(scene: IsoRenderScene): Opening
       return offsets.length ? direction*(Math.max(0,...offsets)+overlap) : 0;
     };
     const faces = projectIsoOpeningMasonry(basis,scene.camera,[limit(startJamb,-1),limit(endJamb,1)]);
-    surfaces.push(...faces.filter(face=>!face.hiddenInTranslucentMasonry).map(face=>({
-      ...face,id:basis.id,type:basis.type,sourceIndex:basis.sourceIndex,
-    })));
+    for (const face of faces) {
+      const surface = {...face,id:basis.id,type:basis.type,sourceIndex:basis.sourceIndex};
+      if (!face.hiddenInTranslucentMasonry) surfaces.push(surface);
+      else if (face.material === 'wall-side') cornerWitnesses.push(surface);
+    }
   }
+  const corners = new Map<boolean,readonly IsoWallFace[]>();
+  // Keep only the structural inputs in the cache closure; the live scene
+  // may also hold frame and overlay data which changes during interaction.
+  const {geometry,camera} = scene;
   const result = {
-    surfaces,
-    sidesWithPanels: scene.geometry.sides.flatMap(face=>trimJambs(face,jambs,scene.camera,true)),
-    sidesWithoutPanels: scene.geometry.sides.flatMap(face=>trimJambs(face,jambs,scene.camera,false)),
+    surfaces,cornerWitnesses,
+    sidesWithPanels: geometry.sides.flatMap(face=>trimJambs(face,jambs,camera,true)),
+    sidesWithoutPanels: geometry.sides.flatMap(face=>trimJambs(face,jambs,camera,false)),
+    cornerSides(panels: boolean) {
+      let sides = corners.get(panels);
+      if (!sides) {
+        sides = projectIsoCornerSides(geometry,camera).flatMap(face=>trimJambs(face,jambs,camera,panels));
+        corners.set(panels,sides);
+      }
+      return sides;
+    },
   };
   cached.set(scene.geometry,result);
   return result;

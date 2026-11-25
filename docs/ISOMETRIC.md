@@ -239,6 +239,12 @@ their actual overlaps admit a single depth order. A real order cycle keeps
 local ranks and normal edge smoothing. The fill alpha applies to the paint,
 not a separately composited bounding group. Padded coplanar opening joints do not draw vertical ink;
 physical corners and real gaps still do (#1555).
+Translucent masonry also reveals missing vertical lines at physical back
+corners (#1560). These use the same adaptive stroke, clipped to their own
+planes and sorted with openings and furniture. Back-facing opening masonry
+is adjacency information only: it suppresses padded coplanar joints, never
+adding paint. Only back planes with surviving ink enter depth resolution;
+they cannot occlude other objects, cast shadows, or receive wall light.
 Windows and doors use their own material. The
 optional opening accent tints frames, leaves, reveals and all sill faces.
 Its alpha controls tint strength. White and zero strength reproduce the
