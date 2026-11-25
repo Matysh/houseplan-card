@@ -13,7 +13,7 @@ import type { SpaceDisplay } from './logic';
 import type { PhysicalStairVolume } from './stairs-volume';
 import { Plan3dLightField, type Plan3dLight } from './plan-3d-light-field';
 import { planFaceMesh, planPrismMesh, type Plan3dVertex } from './plan-3d-mesh';
-import { plan3dWallInk, plan3dWallShell, plan3dWallSideFaces } from './plan-3d-wall-shell';
+import { plan3dCladWallSides, plan3dWallInk, plan3dWallShell } from './plan-3d-wall-shell';
 import { Plan3dMarkerLayer, type MarkerRaster, type Plan3dMarker } from './plan-3d-markers';
 import { markerContactChains } from './iso-marker-outline';
 
@@ -450,11 +450,16 @@ export class Plan3dWorld {
     return [...batches.values()].map(({ paint, faces }) => this.mesh(planFaceMesh(faces), [paint])).concat(translucent);
   }
 
-  private wallMeshes(walls: readonly Polygon[], shell: ReturnType<typeof plan3dWallShell>, height: number, top: Paint, side: Paint): Mesh[] {
-    if (top.opacity >= 1 && side.opacity >= 1) return [this.mesh(planPrismMesh(walls, 0, height), [top, side, side])];
-    const meshes = top.opacity > 0 ? walls.map(wall => this.mesh(planFaceMesh([horizontal(wall, height)]), [top])) : [];
-    if (side.opacity > 0) for (const face of plan3dWallSideFaces(shell.bands))
-      meshes.push(this.mesh(planFaceMesh([[face]]), [side]));
+  private wallMeshes(walls: readonly Polygon[], shell: ReturnType<typeof plan3dWallShell>, height: number,
+    surfaces: readonly IsoOpeningSurface[], top: Paint, side: Paint): Mesh[] {
+    const meshes: Mesh[] = [];
+    const append = (faces: Face[], paint: Paint) => {
+      if (!faces.length || paint.opacity <= 0) return;
+      if (paint.opacity >= 1) meshes.push(this.mesh(planFaceMesh(faces), [paint]));
+      else for (const face of faces) meshes.push(this.mesh(planFaceMesh([face]), [paint]));
+    };
+    append(walls.map(wall => horizontal(wall, height)), top);
+    append(plan3dCladWallSides(shell.bands, surfaces).map(face => [face]), side);
     return meshes;
   }
 
@@ -735,14 +740,14 @@ export class Plan3dWorld {
       const authoredMasonry = new Set(physical.openingSurfaces.filter(surface =>
         surface.kind === 'window-apron-top' || surface.kind === 'opening-lintel-top').map(surface => surface.id));
       const shell = plan3dWallShell(walls, physical.openings.filter(opening => authoredMasonry.has(opening.id)), wallHeight);
-      const useShellSides = shell.joined && (top.opacity < 1 || side.opacity < 1);
+      const surfaces = physical.openingSurfaces.filter(surface =>
+        !(shell.joined && (surface.kind === 'window-apron-side' || surface.kind === 'opening-lintel-side'))
+        && (!display.hideOpenings || surface.material === 'wall-top'
+          || surface.material === 'wall-side' || surface.material === 'reveal'));
       const meshes = [
         this.mesh(planFaceMesh(base.map(polygon => horizontal(polygon, 0))), [floor]),
-        ...this.wallMeshes(walls, shell, wallHeight, top, { ...side, front: side.opacity < 1 }),
-        ...this.openingMeshes(physical.openingSurfaces.filter(surface =>
-          !(useShellSides && (surface.kind === 'window-apron-side' || surface.kind === 'opening-lintel-side'))
-          && (!display.hideOpenings || surface.material === 'wall-top'
-            || surface.material === 'wall-side' || surface.material === 'reveal')), palette, top, side),
+        ...this.wallMeshes(walls, shell, wallHeight, surfaces, top, { ...side, front: side.opacity < 1 }),
+        ...this.openingMeshes(surfaces, palette, top, side),
       ];
       this.replace(this.structure, meshes);
       this.replace(this.architecture, wallInk(shell, top, side));

@@ -4,7 +4,7 @@ import { buildIsoOpeningBasis, isoOpeningMasonry, projectIsoOpeningStructure, pr
 import { projectPlanPoint } from '../test-build/iso-projection.js';
 import { isoMarkerBehindWall } from '../test-build/iso-marker-context.js';
 import { planFaceMesh } from '../test-build/plan-3d-mesh.js';
-import { plan3dWallInk, plan3dWallShell, plan3dWallSideFaces } from '../test-build/plan-3d-wall-shell.js';
+import { plan3dCladWallSides, plan3dWallInk, plan3dWallShell, plan3dWallSideFaces } from '../test-build/plan-3d-wall-shell.js';
 
 const opening = (patch={}) => ({id:'one',sourceIndex:0,type:'window',x:100,y:80,angle:0,length:120,
   flipH:false,flipV:false,face:{ox:0,oy:5,cm:20,side:1},...patch});
@@ -144,4 +144,42 @@ test('#1451 a lintel occludes only its actual height interval, not the clear doo
   assert.equal(isoMarkerBehindWall([0,0],wall,84,cam,84*.92),false);
   assert.equal(isoMarkerBehindWall([0,-74],wall,84,cam,84*.92),true);
   assert.equal(isoMarkerBehindWall([0,0],wall,84*.36,cam),true);
+});
+
+test('#1569 opening finish owns the shared jamb region, preserving the uncoated thickness and height', () => {
+  for (const angle of [0, 27, 90]) for (const type of ['window', 'door', 'passage', 'gate']) {
+    const radians = angle * Math.PI / 180, cos = Math.cos(radians), sin = Math.sin(radians);
+    const point = ([x, y]) => [x * cos - y * sin, x * sin + y * cos];
+    const rect = (x0, x1) => [[[x0, 5], [x1, 5], [x1, -5], [x0, -5], [x0, 5]].map(point)];
+    const [x, y] = point([100, 0]);
+    const [ox, oy] = point([0, 5]);
+    const basis = buildIsoOpeningBasis(opening({ type, x, y, angle, face: { ox, oy, cm: 20, side: 1 } }), 84);
+    const surfaces = projectIsoOpeningStructure(basis, camera(35), true);
+    const shell = plan3dWallShell([rect(0, 40), rect(160, 200)], [basis], 84);
+    assert.equal(shell.joined, type !== 'gate');
+    const boundary = plan3dWallSideFaces(shell.bands);
+    const length = face => Math.hypot(face[1][0] - face[0][0], face[1][1] - face[0][1]);
+    const area = face => length(face) * (face[2][2] - face[0][2]);
+    const totalArea = faces => faces.reduce((total, face) => total + area(face), 0);
+    const isJamb = (face, at) => face.every(([a, b]) => Math.abs(a * cos + b * sin - at) < 1e-6);
+    const openings = surfaces.filter(surface => surface.kind === 'jamb-reveal');
+    for (const [index, at] of [40, 160].entries()) {
+      const reveal = openings[index];
+      const a = reveal.points[0].point;
+      const low = Math.min(...reveal.points.map(p => p.z)), high = Math.max(...reveal.points.map(p => p.z));
+      const clippedReveal = { ...reveal, points: reveal.points.map(({ point: [px, py], z }) => ({
+        point: [(px + a[0]) / 2, (py + a[1]) / 2], z: (z + (low + high) / 2) / 2,
+      })) };
+      const original = totalArea(boundary.filter(face => isJamb(face, at)));
+      const remaining = totalArea(plan3dCladWallSides(shell.bands, [reveal]).filter(face => isJamb(face, at)));
+      const partial = totalArea(plan3dCladWallSides(shell.bands, [clippedReveal]).filter(face => isJamb(face, at)));
+      const owned = Math.max(...reveal.points.map(({ point: [px, py] }) => Math.hypot(px - a[0], py - a[1]))) * (high - low);
+      assert.ok(Math.abs(original - remaining - owned) < 1e-4, `${type} ${angle} jamb ${index}: ${original}/${remaining}/${owned}`);
+      assert.ok(Math.abs(original - partial - owned / 4) < 1e-4, 'partial finish removes area only at its junction');
+      const detached = { ...reveal, points: reveal.points.map(({ point: [px, py], z }) => ({
+        point: [px + .001 * cos, py + .001 * sin], z,
+      })) };
+      assert.deepEqual(plan3dCladWallSides(shell.bands, [detached]), boundary, 'a separate plane remains separate');
+    }
+  }
 });

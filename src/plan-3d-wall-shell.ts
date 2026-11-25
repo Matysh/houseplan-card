@@ -1,5 +1,5 @@
 import { union, type Geom } from 'polyclip-ts';
-import { isoOpeningMasonry, type IsoOpeningBasis } from './iso-openings';
+import { isoOpeningMasonry, type IsoOpeningBasis, type IsoOpeningSurface } from './iso-openings';
 import type { Plan3dVertex } from './plan-3d-mesh';
 import type { PlanPoint } from './iso-projection';
 
@@ -69,6 +69,49 @@ export function plan3dWallSideFaces(bands: readonly Band[]): Plan3dVertex[][] {
   }
   for (const run of runs.values()) push(run);
   return faces;
+}
+
+/** Cladding owns the area it covers on a masonry side. Split that side in
+ * (distance along the edge, height), keeping both non-overlapping remainders.
+ * This is a geometry rule, not a camera-dependent depth bias. */
+export function plan3dCladWallSides(
+  bands: readonly Band[], surfaces: readonly IsoOpeningSurface[],
+): Plan3dVertex[][] {
+  const jambs = surfaces.flatMap(surface => surface.kind === 'jamb-reveal' && surface.points?.length === 4
+    ? [surface.points] : []);
+  const faces = plan3dWallSideFaces(bands);
+  if (!jambs.length) return faces;
+  const gap = 1e-6; // plan/height units; absorb construction roundoff only
+  const between = (low: number, high: number, value: number) => Math.max(low, Math.min(high, value));
+  type Region = [left: number, right: number, bottom: number, top: number];
+  return faces.flatMap(face => {
+    const [[ax, ay, low], [bx, by], [, , high]] = face;
+    const length = Math.hypot(bx - ax, by - ay);
+    if (length <= gap) return [face];
+    const dx = (bx - ax) / length, dy = (by - ay) / length;
+    let pieces: Region[] = [[0, length, low, high]];
+    let clipped = false;
+    for (const points of jambs) {
+      if (!points.every(({ point: [x, y] }) => Math.abs((x - ax) * dy - (y - ay) * dx) <= gap)) continue;
+      const along = points.map(({ point: [x, y] }) => (x - ax) * dx + (y - ay) * dy);
+      const heights = points.map(({ z }) => z);
+      const l = Math.min(...along), r = Math.max(...along), b = Math.min(...heights), t = Math.max(...heights);
+      pieces = pieces.flatMap(piece => {
+        const [start, end, bottom, top] = piece;
+        const x0 = between(start, end, l), x1 = between(start, end, r);
+        const z0 = between(bottom, top, b), z1 = between(bottom, top, t);
+        if (x1 - x0 <= gap || z1 - z0 <= gap) return [piece];
+        clipped = true;
+        const remains: Region[] = [[start, x0, bottom, top], [x1, end, bottom, top],
+          [x0, x1, bottom, z0], [x0, x1, z1, top]];
+        return remains.filter(([a, c, f, g]) => c - a > gap && g - f > gap);
+      });
+    }
+    if (!clipped) return [face];
+    const at = (d: number, z: number): Plan3dVertex => d === 0 ? [ax, ay, z]
+      : d === length ? [bx, by, z] : [ax + d * dx, ay + d * dy, z];
+    return pieces.map(([l, r, b, t]) => [at(l, b), at(r, b), at(r, t), at(l, t)]);
+  });
 }
 
 export function plan3dWallInk(bands: readonly Band[]) {

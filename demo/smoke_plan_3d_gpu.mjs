@@ -10,6 +10,7 @@ const bundle = await rollup({
     engine: 'node_modules/three/build/three.module.js',
     viewport: 'test-build/plan-3d-viewport.js',
     world: 'test-build/plan-3d-world.js',
+    openings: 'test-build/iso-openings.js',
     motion: 'test-build/plan-3d-light-motion.js',
     host: 'test-build/plan-3d-host.js',
   },
@@ -41,6 +42,7 @@ try {
     const T = await import('http://plan-3d.test/engine.js');
     const { Plan3dViewport } = await import('http://plan-3d.test/viewport.js');
     const { Plan3dWorld } = await import('http://plan-3d.test/world.js');
+    const { buildIsoOpeningBasis, projectIsoOpeningStructure } = await import('http://plan-3d.test/openings.js');
     const { Plan3dLightMotion } = await import('http://plan-3d.test/motion.js');
     const { Plan3dHost } = await import('http://plan-3d.test/host.js');
     const getContext = HTMLCanvasElement.prototype.getContext;
@@ -101,6 +103,44 @@ try {
     const base = world.structure.children[0].geometry;
     base.computeBoundingBox();
     const paperHeight = [base.boundingBox.min.y, base.boundingBox.max.y];
+    const windowJamb = await (async () => {
+      const plan = new Plan3dWorld(document, .005);
+      const rect = (x0, x1) => [[[x0, 5], [x1, 5], [x1, -5], [x0, -5], [x0, 5]]];
+      const height = 50;
+      const frames = [];
+      for (const type of ['window', 'gate']) {
+        const basis = buildIsoOpeningBasis({ id: type, sourceIndex: 0, type, x: 100, y: 0,
+          angle: 0, length: 120, flipH: false, flipV: false, face: { ox: 0, oy: 5, cm: 50, side: 1 } }, height);
+        const physical = { floor: [], walls: [rect(0, 40), rect(160, 200)], openings: [basis],
+          openingSurfaces: projectIsoOpeningStructure(basis, undefined, true).map(surface => ({ ...surface, id: basis.id })) };
+        for (const opacity of [1, .6]) {
+          plan.present({ ...input, physical, cellCm: 5, lights: [],
+            display: { color: '#282828', opacity, wallFill: { c: '#282828', a: opacity }, transparentWalls3d: opacity < 1 } });
+          for (const x of [40, 160]) for (const angle of [0, 35]) {
+            const radians = angle * Math.PI / 180, direction = x === 40 ? 1 : -1;
+            const look = new T.Vector3(x, 28, 0);
+            const p = new T.OrthographicCamera(-12, 12, 12, -12, 1, 300);
+            p.position.copy(look).add(new T.Vector3(95 * direction * Math.cos(radians), 19, 95 * Math.sin(radians)));
+            p.lookAt(look);
+            p.updateMatrixWorld();
+            const render = () => new Promise(resolve => {
+              painted = resolve;
+              lit.present({ scene: plan.scene, camera: p });
+            });
+            for (const zoom of [1, 1.43, 2.37, 3.2]) {
+              p.zoom = zoom;
+              p.updateProjectionMatrix();
+              await render();
+              // Probe inside the finish, away from frame members, ink, and edges.
+              frames.push({ type, opacity, x, angle, zoom, center: pixel(canvas, 100, 100),
+                adjacent: [pixel(canvas, 97, 97), pixel(canvas, 103, 103)] });
+            }
+          }
+      }
+      }
+      plan.dispose();
+      return frames;
+    })();
     const largeRadius = await lightFrame([{ ...lamp, radius: 2_000,
       visible: ['M 0 -100 L 100 -100 L 100 100 L 0 100 Z'],
       floorClip: ['M -100 -100 L 40 -100 L 40 100 L -100 100 Z', 'M -40 -100 L 100 -100 L 100 100 L -40 100 Z'],
@@ -336,7 +376,7 @@ try {
     const deadline = performance.now() + 2000;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
-    return { contexts, pixels, picking, frames, paperHeight, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
+    return { contexts, pixels, picking, frames, paperHeight, windowJamb, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
       fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas, steppedAtlas,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
@@ -398,6 +438,12 @@ try {
   assert.equal(evidence.disabledSun, undefined, 'night and disabled gates clear solar light immediately');
   const [unlit, red, blue] = evidence.frames;
   assert.deepEqual(evidence.paperHeight, [0,0], 'the floor has no exposed side under exterior walls');
+  const revealColor = evidence.windowJamb[0].center;
+  assert.ok(revealColor[0] > 75 && revealColor[3] === 255, 'the reveal stays visible and distinct from the dark wall');
+  for (const frame of evidence.windowJamb) {
+    assert.deepEqual([frame.center, ...frame.adjacent], [revealColor, revealColor, revealColor],
+      'finish at both jambs has the same fill throughout zoom: ' + JSON.stringify(frame));
+  }
   const { baseline, lamp, ribbon, disabled, back, blocked } = evidence.wallLighting;
   assert.ok(lamp[0][0] > baseline[0][0] + 20 && lamp[2][0] > baseline[2][0] + 20,
     'a lamp reaches the wall and floor: ' + JSON.stringify(evidence.wallLighting));
