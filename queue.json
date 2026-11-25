@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25164,
+  "revision": 25165,
   "nextTicket": 705,
   "nextFence": 705,
   "tasks": {
@@ -6302,7 +6302,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795644119038,
       "reviewEntry": 2,
-      "patchId": "845a52b5bcbf843572ecf53514fe6e29c6afee29",
+      "patchId": "95cc562a5a112eb1f45e04f365f2ffb2fff5f0ab",
       "changedFiles": [
         "demo/smoke_plan_3d_gpu.mjs",
         "docs/CHANGELOG.md",
@@ -6991,10 +6991,11 @@
     "token": "704:finish:0bd4b479-655a-407a-ad36-c03a1c4f3f2b:finish:1:admit",
     "fence": 704,
     "materialSha": "5b45209452ed59329ca3d2054bf53f7336144172",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "ec0582978408f0af1bab5eff9bfca4084373d3ba",
+    "phase": "testing",
     "admittedAt": 1795644122981,
-    "expiresAt": 1795644422981
+    "expiresAt": 1795644430298,
+    "patchId": "95cc562a5a112eb1f45e04f365f2ffb2fff5f0ab"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7083,6 +7084,10 @@
     },
     "github:45709422677:1:completions:notice:c7e7ef655ef8be40c16b6a2a01d5992e123673531a1af5a46dcd9c625b08c934": {
       "digest": "1faacfab7acde4e9601f2db66334072775791596a7a3ff47b5626842eb73b3b7",
+      "issue": 1569
+    },
+    "finish:0bd4b479-655a-407a-ad36-c03a1c4f3f2b:finish:2:synchronized": {
+      "digest": "a1a0e1cfe31ac70c5f010f0d99fdcece1bb314cc3e31f399dd2e759eeac2a98a",
       "issue": 1569
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
