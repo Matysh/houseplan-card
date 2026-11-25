@@ -848,6 +848,9 @@ export interface HouseplanEditorHostPort {
   _saveConfigDebounced: Debounced<() => void>;
   _saveNav: () => void;
   _savePos: (d: DevItem, x: number, y: number) => void;
+  _canChangeRoomLabel(id: string): boolean;
+  _stageRoomLabelPosition(id: string, position: DeviceLayout[string]): void;
+  readonly _standaloneLayoutWrite?: unknown;
   _screenToVb: (sx: number, sy: number) => number[];
   _segments: number[][];
   _selId: string | null;
@@ -10721,6 +10724,7 @@ public _labelDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
     if (this.host._mode !== 'plan') return;
     ev.preventDefault();
     ev.stopPropagation();
+    if (!this.host._canChangeRoomLabel('rl_' + (r.id || ''))) return;
     const p = this._labelPos(r, spaceId);
     this.host._drag = { id: 'rl_' + (r.id || ''), sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
     capturePointer(ev);
@@ -10766,6 +10770,7 @@ public _rlResizeDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
     if (this.host._mode !== 'plan') return;
     ev.preventDefault();
     ev.stopPropagation();
+    if (!this.host._canChangeRoomLabel('rl_' + (r.id || ''))) return;
     const card = (ev.target as HTMLElement).closest('.roomlabel') as HTMLElement | null;
     if (!card) return;
     const b = card.getBoundingClientRect();
@@ -10782,8 +10787,8 @@ public _rlResizeMove(ev: PointerEvent): void {
     ev.stopPropagation();
     const dist = Math.max(8, Math.hypot(ev.clientX - rs.cx, ev.clientY - rs.cy));
     const k = Math.min(3, Math.max(0.5, rs.k0 * (dist / rs.d0)));
-    const rec: any = this.host._layout[rs.id];
-    if (!rec) {
+    const rec = this.host._layout[rs.id];
+    if (!rec || this.host._standaloneLayoutWrite && rec.s !== rs.space) {
       // the card was never dragged: pin its current default position first
       const roomId = rs.id.slice(3);
       const sp = this.host._spaceModelById(rs.space);
@@ -10792,14 +10797,10 @@ public _rlResizeMove(ev: PointerEvent): void {
       if (!room) return;
       const p = this._labelPos(room, rs.space);
 
-      this.host._layout = {
-        ...this.host._layout,
-        [rs.id]: { s: rs.space, x: p.x / NORM_W, y: p.y / NORM_W, k },
-      };
+      this.host._stageRoomLabelPosition(rs.id, { ...rec, s: rs.space, x: p.x / NORM_W, y: p.y / NORM_W, k });
     } else {
-      this.host._layout = { ...this.host._layout, [rs.id]: { ...rec, k } };
+      this.host._stageRoomLabelPosition(rs.id, { ...rec, k });
     }
-    this.host._dirtyPos.add(rs.id);
   }
 
 public _rlResizeUp(): void {

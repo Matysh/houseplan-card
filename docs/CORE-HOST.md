@@ -115,6 +115,37 @@ Zigbee, entity management and full installation-backup endpoints are not exposed
 by this library. No web server, accounts, deployment or production tenant DB
 is bundled.
 
+### Room label position patch (#1563)
+
+With `CommandPolicy.PLAN_ONLY`, `config/get` advertises
+`room_label_layout_patch_api: 1`. Hosts forward the following mutually
+exclusive form of the existing `layout/set` route to the shared core:
+
+```json
+{
+  "type": "houseplan/layout/set",
+  "room_label": {
+    "room_id": "living", "space_id": "ground",
+    "before": {"s": "ground", "x": 0.3, "y": 0.2, "k": 1.2},
+    "position": {"s": "ground", "x": 0.425, "y": 0.2625, "k": 1.2}
+  }
+}
+```
+
+Use `before: null` only for an absent entry. Tests and hosts must distinguish
+missing `s`/`k` in a previously stored position from an explicitly set value.
+Core compares the canonical coordinate and label fields for this room under
+the transaction, checks current room ownership and live write authority, and
+preserves every other layout entry and any extra fields of this entry.
+`position.s` must match the owning space, and optional `k` must be 0.5–3.
+A stale `before` returns `conflict` even when the proposed position is now in
+storage. On success the durable reply is
+`{ok:true,rev,room_label:{room_id,space_id,position}}`; a no-op retains the
+revision. Real changes keep the usual `layout/set` invalidation of obsolete
+Undo snapshots and emit one `houseplan_layout_updated` after the commit.
+The host must not return or synthesize a successful receipt before durable
+commit. The HA route and full-layout form are unchanged.
+
 ## Build and install
 
 In an author/build environment install `build packaging setuptools wheel`,

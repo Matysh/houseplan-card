@@ -8,13 +8,13 @@ from __future__ import annotations
 import copy
 import json
 import logging
+import math
 import time
 from dataclasses import dataclass
 from typing import Any
 
 import voluptuous as vol
 
-from .marker_placement import repair_marker_spaces
 from .command_effects import BestEffortEffects
 from .command_execution import (
     begin_preparation,
@@ -57,6 +57,7 @@ from .import_export import live_layout
 from .input_policy import HA_INPUT_POLICY, STRICT_INPUT_POLICY, InputLimit
 from .junction_limits import JunctionLimitError, validate_junction_limits
 from .led_strips import led_strip_link_report, preserve_led_strips
+from .marker_placement import repair_marker_spaces
 from .opening_features import guard_opening_features_write
 from .plan_graph_exact import GraphError
 from .plans import content_retirement
@@ -104,6 +105,58 @@ PLAN_APIS = {"wall_node_move_api": 1, "wall_node_merge_api": 1, "wall_node_attac
              "wall_node_delete_api": 1, "plan_graph_api": 1, "room_label_layout_api": 1,
              "graph_change_api": 2, "opening_features_api": 1, "structural_upload_api": 1,
              "decor_assets_api": DECOR_ASSETS_API_VERSION, "furniture_workstation_api": 1, "furniture_tv_mount_api": 1}
+
+
+_ROOM_LABEL_FIELDS = frozenset({"x", "y", "s", "k"})
+
+
+def _room_label_fields(value, *, desired=False) -> dict:
+    if (not isinstance(value, dict) or value.keys() - _ROOM_LABEL_FIELDS
+            or any(type(value.get(key)) not in (int, float) for key in ("x", "y"))
+            or ("s" in value and not isinstance(value["s"], str))
+            or ("k" in value and (type(value["k"]) not in (int, float)
+                                  or (type(value["k"]) is float and not math.isfinite(value["k"]))
+                                  or desired and not 0.5 <= value["k"] <= 3))):
+        raise CommandError("invalid_format", "Invalid room label position")
+    try:
+        return POS_SCHEMA(value)
+    except (vol.Invalid, OverflowError) as error:
+        raise CommandError("invalid_format", "Invalid room label coordinates") from error
+
+
+def _room_label_layout(message: dict, config: dict, current: dict) -> tuple[dict, dict]:
+    patch = message["room_label"]
+    if (message.keys() != {"type", "room_label"} or not isinstance(patch, dict)
+            or patch.keys() != {"room_id", "space_id", "before", "position"}):
+        raise CommandError("invalid_format", "Expected a single room label patch")
+    room_id, space_id = patch["room_id"], patch["space_id"]
+    if not isinstance(room_id, str) or not room_id or not isinstance(space_id, str) or not space_id:
+        raise CommandError("invalid_format", "Missing room label owner")
+    key = "rl_" + room_id
+    owners = [space["id"] for space in config.get("spaces") or []
+              for room in space.get("rooms") or [] if room.get("id") == room_id]
+    if owners != [space_id] or any(marker.get("id") == key for marker in config.get("markers") or []):
+        raise CommandError("conflict", "The room label no longer belongs to the requested room")
+    before = None if patch["before"] is None else _room_label_fields(patch["before"])
+    position = _room_label_fields(patch["position"], desired=True)
+    if position.get("s") != space_id:
+        raise CommandError("invalid_format", "The room label position must name its owning space")
+    stored = current.get(key)
+    if stored is not None and not isinstance(stored, dict):
+        raise CommandError("invalid_format", "Stored room label position is invalid")
+    existing = None if stored is None else _room_label_fields({
+        field: value for field, value in stored.items() if field in _ROOM_LABEL_FIELDS})
+    if existing != before:
+        raise CommandError("conflict", "The room label changed elsewhere")
+    receipt = {"room_label": {"room_id": room_id, "space_id": space_id, "position": position}}
+    if existing == position:
+        return current, receipt
+    if stored is None and len(current) >= MAX_LAYOUT:
+        raise CommandError("invalid_format", "Too many saved layout positions")
+    # This operation does not own other fields on this label, other layout
+    # keys, or the plan configuration, including hidden HA bindings.
+    updated = {field: value for field, value in (stored or {}).items() if field not in _ROOM_LABEL_FIELDS}
+    return {**current, key: {**updated, **position}}, receipt
 
 
 def changed_summary_entity_ids(config: dict, previous: dict | None) -> set[str] | None:
@@ -267,6 +320,7 @@ class PlanCommands:
             "integration_version": environment.identity.integration_version,
             "frontend_fingerprint": environment.identity.frontend_fingerprint,
             "build": environment.identity.build, **PLAN_APIS,
+            **({"room_label_layout_patch_api": 1} if environment.policy is CommandPolicy.PLAN_ONLY else {}),
             **({"house_transfer_api": 1} if environment.house is not None else {}),
             **({"graph_migration": {"version": 1, "source_available": True}}
                if isinstance(pair.layout_data.get("plan_graph_migration_backup"), dict) else {})}
@@ -288,24 +342,31 @@ class PlanCommands:
             pair = await self.load(transaction)
             data, config_data = pair.layout_data, pair.config_data
             current_rev = int(data.get("rev", 0))
-            if ("expected_config_rev" in message
-                    and message["expected_config_rev"] != int(config_data.get("rev", 0))):
-                raise CommandError("conflict", "Device configuration changed elsewhere")
-            if "expected_rev" not in message and current_rev:
-                self.effects.missing_revision("layout/set", current_rev)
-                raise CommandError("conflict",
-                                   "Layout revision is required; reload the layout, or — for "
-                                   "external clients — include expected_rev from "
-                                   f"houseplan/layout/get (current rev {current_rev})")
-            if "expected_rev" in message and message["expected_rev"] != current_rev:
-                raise CommandError("conflict", f"Layout changed elsewhere (rev {current_rev})")
-            try:
-                layout = live_layout(config_data.get("config") or {}, LAYOUT_SCHEMA(message["layout"]))
-                validate_contact_bases(layout, data.get("layout", {}))
-            except (KeyError, vol.Invalid) as error:
-                raise CommandError("invalid_format", str(error)) from error
+            receipt = {}
+            if "room_label" in message:
+                if self.environment is None or self.environment.policy is not CommandPolicy.PLAN_ONLY:
+                    raise CommandError("invalid_format", "Room label patch is a standalone operation")
+                self.authority.ensure()
+                layout, receipt = _room_label_layout(message, config_data.get("config") or {}, data.get("layout", {}))
+            else:
+                if ("expected_config_rev" in message
+                        and message["expected_config_rev"] != int(config_data.get("rev", 0))):
+                    raise CommandError("conflict", "Device configuration changed elsewhere")
+                if "expected_rev" not in message and current_rev:
+                    self.effects.missing_revision("layout/set", current_rev)
+                    raise CommandError("conflict",
+                                       "Layout revision is required; reload the layout, or — for "
+                                       "external clients — include expected_rev from "
+                                       f"houseplan/layout/get (current rev {current_rev})")
+                if "expected_rev" in message and message["expected_rev"] != current_rev:
+                    raise CommandError("conflict", f"Layout changed elsewhere (rev {current_rev})")
+                try:
+                    layout = live_layout(config_data.get("config") or {}, LAYOUT_SCHEMA(message["layout"]))
+                    validate_contact_bases(layout, data.get("layout", {}))
+                except (KeyError, vol.Invalid) as error:
+                    raise CommandError("invalid_format", str(error)) from error
             if layout == data.get("layout", {}):
-                return {"ok": True, "rev": current_rev}
+                return {"ok": True, "rev": current_rev, **receipt}
             new_rev = current_rev + 1
             self.before_commit()
             await transaction.save_layout(data, layout, new_rev,
@@ -313,7 +374,7 @@ class PlanCommands:
                                           authorize=self.authority.ensure)
             await self.effects.release_snapshot(data, config_data.get("config") or {}, {})
         self.effects.emit("houseplan_layout_updated", {"rev": new_rev})
-        return {"ok": True, "rev": new_rev}
+        return {"ok": True, "rev": new_rev, **receipt}
 
     async def discard_optimizer_snapshot(self, transaction: PlanTransaction) -> None:
         pair = await transaction.load()

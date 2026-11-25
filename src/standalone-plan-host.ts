@@ -4,7 +4,8 @@ import { hostError, once, type PlanHost, type HostPresentationContext, type Unsu
 import { normalizeRuntimeVersion } from './version-recovery';
 
 export const STANDALONE_REQUIRED_APIS = Object.freeze({opening_features_api:1,graph_change_api:2,plan_graph_api:1,
-  room_label_layout_api:1,decor_assets_api:1,wall_node_move_api:1,wall_node_delete_api:1,wall_node_merge_api:1,wall_node_attach_api:1});
+  room_label_layout_api:1,room_label_layout_patch_api:1,decor_assets_api:1,
+  wall_node_move_api:1,wall_node_delete_api:1,wall_node_merge_api:1,wall_node_attach_api:1});
 export function validateStandaloneHandshake(response:Record<string,unknown>,fingerprint:string,version:string):void {
   if(!response || !normalizeRuntimeVersion(response.integration_version)
     || normalizeRuntimeVersion(response.integration_version)!==normalizeRuntimeVersion(version)

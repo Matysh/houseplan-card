@@ -1,7 +1,7 @@
 /** Explicit isolated composition root. Importing it does not register the card. */
 import { html, nothing, render } from 'lit';
 import { HouseplanCard, CARD_VERSION } from './houseplan-card';
-import type { PlanHost } from './plan-host';
+import type { PlanHost, Unsubscribe } from './plan-host';
 import { hostError } from './plan-host';
 import { createStandaloneHost, validateStandaloneHost } from './standalone-plan-host';
 import { createStandalonePresentation, type StandalonePresentationOptions } from './standalone-presentation';
@@ -9,8 +9,10 @@ import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import { ensureLanguage } from './i18n/registry';
 import { t, langOf } from './i18n';
 import { noticeStyles } from './styles/notice.styles';
+import { StandaloneLayoutWrite, type StandaloneSaveState } from './standalone-layout-write';
 export { PLAN_ONLY_CAPABILITIES } from './plan-capabilities';
 export type { PlanHost } from './plan-host';
+export type { StandaloneSaveEntry, StandaloneSaveState } from './standalone-layout-write';
 
 const mounts=new WeakSet<HTMLElement>();
 // Resolved from the actual emitted owner chunk, not the facade's directory.
@@ -27,6 +29,13 @@ export function mountHouseplan(container: HTMLElement, source: PlanHost, options
   root.style.cssText='height:100%;min-height:400px;min-width:0';
   const status=document.createElement('div');root.append(status);
   let control:ReturnType<typeof createStandaloneHost> | undefined, card:HouseplanCard | undefined, disposed=false;
+  let saveState: StandaloneSaveState = Object.freeze({ pending:false,unresolved:false,entries:Object.freeze([]) });
+  let releaseSave: Unsubscribe | undefined;
+  const saveListeners = new Set<(state:StandaloneSaveState) => void>();
+  const publishSave = (next:StandaloneSaveState) => {
+    saveState=next;
+    for(const receive of [...saveListeners])try{receive(next);}catch{ /* observer owns its failure */ }
+  };
   const ui=createStandalonePresentation(root,options,context=>control?.publish(context));
   mounts.add(container);container.append(root);
   const link=document.createElement('link');link.rel='stylesheet';link.href=stylesheet;root.prepend(link);
@@ -39,6 +48,7 @@ export function mountHouseplan(container: HTMLElement, source: PlanHost, options
   };
   const incompatible=()=>{
     card?.remove();card=undefined;
+    releaseSave?.();releaseSave=undefined;
     if(!disposed){root.append(status);void showHostError();}
   };
   const ready=(async()=>{
@@ -51,6 +61,7 @@ export function mountHouseplan(container: HTMLElement, source: PlanHost, options
       card=document.createElement('houseplan-card') as HouseplanCard;
       // No hass assignment/default HaPlanHost construction before this injection.
       card.planHost=control.host;card.panelHost=true;
+      releaseSave=card.enableStandaloneLayoutWrite(ports=>new StandaloneLayoutWrite(ports)).subscribeSaveState(publishSave);
       card.setConfig({type:'custom:houseplan-card'});
       render(nothing,status);status.remove();root.append(card);
       return card;
@@ -60,6 +71,14 @@ export function mountHouseplan(container: HTMLElement, source: PlanHost, options
     }finally{root.inert=false;root.removeAttribute('aria-busy');}
   })();
   return {ready,get element(){return card;},version:CARD_VERSION,
+    getSaveState:()=>saveState,
+    subscribeSaveState(receive:(state:StandaloneSaveState)=>void):Unsubscribe{
+      if(disposed)throw hostError('context-changed');
+      saveListeners.add(receive);
+      try{receive(saveState);}catch{ /* observer owns its failure */ }
+      return ()=>{saveListeners.delete(receive);};
+    },
     updatePresentation(next:Partial<StandalonePresentationOptions>){if(disposed)throw hostError('context-changed');return ui.update(next);},
-    dispose(){if(disposed)return;disposed=true;control?.dispose();card?.remove();ui.dispose();root.remove();mounts.delete(container);}};
+    dispose(){if(disposed)return;disposed=true;control?.dispose();card?.remove();releaseSave?.();saveListeners.clear();
+      ui.dispose();root.remove();mounts.delete(container);}};
 }

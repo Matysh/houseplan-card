@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Save room-label positions and scale in the standalone editor using point-level conflict detection and observable save outcomes (#1563).
+
 ## v1.86.1 — 2026-11-25
 
 - Promote v1.86.1-beta.10 to stable. Includes prepared floor previews, independent screen profiles, straight-on 2.5D views and translucent masonry with depth-sorted interior corners (#1515, #1516, #1518, #1520, #1522, #1526, #1560).

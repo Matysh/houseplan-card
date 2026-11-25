@@ -1,5 +1,6 @@
 """Independent expected command results, not HA-vs-demo self-comparison."""
 import copy
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -10,6 +11,8 @@ from custom_components.houseplan.core.command_ports import (
     CommandPolicy,
     HostIdentity,
 )
+from custom_components.houseplan.core.content_index import ContentSnapshot
+from custom_components.houseplan.core.import_leases import DictionaryImportLeases
 from custom_components.houseplan.core.memory_host import (
     MemoryAuthority,
     MemoryEffects,
@@ -17,8 +20,6 @@ from custom_components.houseplan.core.memory_host import (
     ThreadCpuExecutor,
 )
 from custom_components.houseplan.core.plan_commands import PlanCommands
-from custom_components.houseplan.core.content_index import ContentSnapshot
-from custom_components.houseplan.core.import_leases import DictionaryImportLeases
 from custom_components.houseplan.core.room_appearance import normalize_room_appearance
 from custom_components.houseplan.core.validation import CONFIG_SCHEMA
 from custom_components.houseplan.core.wall_segment_model import (
@@ -96,6 +97,79 @@ async def test_layout_write_preserves_unknown_metadata_and_invalidates_undo():
     assert commands.effects.events == [("houseplan_layout_updated", {"rev": 8})]
     assert await commands.execute({"type": "houseplan/layout/get", "space_id": "other"}) == {
         "layout": {}, "rev": 8, "can_optimize_undo": False, "undo_kind": None}
+
+
+def room_label(room, before, position, space="floor"):
+    return {"type": "houseplan/layout/set", "room_label": {
+        "room_id": room, "space_id": space, "before": before, "position": position,
+    }}
+
+
+async def test_room_label_cas_two_clients_preserves_other_layout_and_config():
+    commands = service()
+    config = commands.storage.config_data
+    config["config"]["spaces"][0]["rooms"].append({"id": "second", "area": "kept"})
+    config["config"]["markers"] = [{"id": "hidden", "binding": "entity:light.kept"}]
+    previous = {"s": "legacy-floor", "x": .2, "y": .3, "k": 1.1}
+    hidden = {"s": "floor", "x": .4, "y": .5, "contact_basis": {"keep": 1}}
+    commands.storage.layout_data["layout"].update(rl_room={**previous, "future": True}, hidden=hidden)
+    before = commands.storage.snapshot()
+    commands2 = PlanCommands(commands.storage, ThreadCpuExecutor(), MemoryAuthority(),
+                             commands.effects, commands.environment)
+    new = {"s": "floor", "x": .6, "y": .6, "k": 1.3}
+    other = {"s": "floor", "x": .3, "y": .6}
+    assert (await commands.execute(room_label("room", previous, new))) == {
+        "ok": True, "rev": 8, "room_label": {"room_id": "room", "space_id": "floor", "position": new}}
+    assert (await commands2.execute(room_label("second", None, other)))["rev"] == 9
+    with pytest.raises(CommandError) as rejected:
+        await commands2.execute(room_label("room", previous, new))
+    assert rejected.value.code == "conflict"  # Even when the desired value already matches.
+    assert (await commands.execute(room_label("room", new, new)))["rev"] == 9
+    after = commands.storage.snapshot()
+    assert after.config_data == before.config_data
+    assert after.layout_data == {"rev": 9, "unknown_metadata": {"keep": True}, "layout": {
+        "rl_room": {**new, "future": True}, "rl_second": other, "hidden": hidden,
+    }}
+    assert commands.effects.events == [
+        ("houseplan_layout_updated", {"rev": 8}), ("houseplan_layout_updated", {"rev": 9}),
+    ]
+
+
+async def test_room_label_contract_is_standalone_only_and_rejects_invalid_writes(monkeypatch):
+    commands = service()
+    assert (await commands.execute({"type": "houseplan/config/get"}))["room_label_layout_patch_api"] == 1
+    prior = {"s": "floor", "x": .2, "y": .3}
+    new = {"s": "floor", "x": .4, "y": .5}
+    snapshot = commands.storage.snapshot()
+    for message, code in [
+        (room_label("missing", None, new), "conflict"),
+        (room_label("room", prior, {**new, "s": "other"}), "invalid_format"),
+        (room_label("room", prior, {**new, "k": 3.1}), "invalid_format"),
+        (room_label("room", prior, {**new, "x": True}), "invalid_format"),
+        (room_label("room", {**prior, "k": 1}, new), "conflict"),
+        ({**room_label("room", prior, new), "layout": {}}, "invalid_format"),
+    ]:
+        with pytest.raises(CommandError) as rejected:
+            await commands.execute(message)
+        assert rejected.value.code == code
+    commands.authority.can_write = False
+    with pytest.raises(CommandError) as rejected:
+        await commands.execute(room_label("room", prior, new))
+    assert rejected.value.code == "unauthorized"
+    commands.authority.can_write = True
+    commands.environment = replace(commands.environment, policy=CommandPolicy.HA)
+    assert "room_label_layout_patch_api" not in await commands.execute({"type": "houseplan/config/get"})
+    with pytest.raises(CommandError) as rejected:
+        await commands.execute(room_label("room", prior, new))
+    assert rejected.value.code == "invalid_format"
+    assert commands.storage.snapshot() == snapshot
+    assert commands.effects.events == []
+    commands.environment = replace(commands.environment, policy=CommandPolicy.PLAN_ONLY)
+    commands.storage.config_data["config"]["spaces"][0]["rooms"].append({"id": "second"})
+    monkeypatch.setattr("custom_components.houseplan.core.plan_commands.MAX_LAYOUT", 1)
+    with pytest.raises(CommandError) as rejected:
+        await commands.execute(room_label("second", None, new))
+    assert rejected.value.code == "invalid_format"
 
 
 async def test_layout_missing_revision_and_authority_loss_do_not_change_storage():

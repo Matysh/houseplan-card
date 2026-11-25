@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1563,
+  "baseStable": "v1.86.1",
+  "category": "stable-fix",
+  "rationale": "Restore room-label drag and resize persistence for users of the published standalone editor.",
+  "summary": {
+    "ru": "Сохранять положение и масштаб подписей комнат в автономном редакторе.",
+    "en": "Persist room label position and scale in the standalone editor."
+  }
+}

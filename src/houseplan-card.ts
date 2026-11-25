@@ -204,6 +204,7 @@ import {
 } from './config-reload-authority';
 import { CardReadLifecycle } from './card-read-lifecycle';
 import { LayoutWriteReload } from './layout-write-reload';
+import type { StandaloneLayoutWrite, StandaloneLayoutWritePorts } from './standalone-layout-write';
 import type { OptimisticAttempt } from './serialized-write-queue';
 import {
   COLUMN_MAX_CM, directionalOccluders, floorMinusBodies, geometryOuterRings,
@@ -1088,6 +1089,7 @@ export class HouseplanCard extends LitElement {
       this._saveConfigDebounced.cancel();
       this._writeChain = Promise.resolve(); this._writesPending = 0;
       this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
+      this._standaloneLayoutWrite?.retire();
       this._layoutIO.retire(); this._devicePositionBusy = false;
       this._pendingPhysicalWrites.clear();
       if (reconcile) {
@@ -1409,6 +1411,7 @@ export class HouseplanCard extends LitElement {
   private readonly _configReloadAuthority = new ConfigReloadAuthority();
   private readonly _read = new CardReadLifecycle();
   private readonly _layoutIO = new LayoutWriteReload(pending => this._configWriteGuard(pending));
+  private _standaloneLayoutWrite?: StandaloneLayoutWrite;
   private readonly _configWriteContext = new ConfigWriteContext();
   private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
   /** One-deep server snapshot; invalidated by the first later plan edit. */
@@ -4693,6 +4696,7 @@ export class HouseplanCard extends LitElement {
     this._read.invalidate();
     if (interruptedRead) this._read.defer();
     this._loading = false;
+    this._standaloneLayoutWrite?.retire();
     this._layoutIO.retire(); this._devicePositionBusy = false;
     this._liveRt?.dispose();
     this._radarLive.stop();
@@ -7300,6 +7304,12 @@ export class HouseplanCard extends LitElement {
   private async _reloadLayoutOnly(): Promise<void> {
     if (!this._serverStorage || !this.planHost.environment.connected) return;
     this._beginContinuityCandidate('layout-reload', false);
+    if (this._standaloneLayoutWrite) {
+      try { await this._reloadStandaloneLayout(); }
+      catch { /* A failed refresh cannot acknowledge a write. */ }
+      finally { this._continuityDataReady = true; this.requestUpdate(); }
+      return;
+    }
     // Snapshot BEFORE flushing. `flush()` runs the debounced writer
     // synchronously, and the first thing that does is empty `_dirtyPos` — so
     // reading the dirty set afterwards found nothing to protect and the server's
@@ -7340,12 +7350,87 @@ export class HouseplanCard extends LitElement {
   /** Positions sent to the server and not acknowledged yet (HP-1461-02). */
   private _sentPos = new Map<string, DeviceLayout[string] | null>();
 
+  /** Installed only by the verified standalone mount, never by the HA entry. */
+  public enableStandaloneLayoutWrite(create: (ports: StandaloneLayoutWritePorts) => StandaloneLayoutWrite): StandaloneLayoutWrite {
+    return this._standaloneLayoutWrite ??= create({
+      guard: () => {
+        const current = this._layoutIO.guard();
+        return () => current() && this._loadOk && this.planHost.environment.permissions.write;
+      },
+      begin: () => this._layoutIO.begin(),
+      base: id => this._adoption.snapshot(null)?.layout[id],
+      send: command => this.planHost.request(command),
+      accept: (id, position, rev) => {
+        const saved = this._adoption.snapshot(null);
+        const gap = rev > this._layoutRev + 1;
+        if (saved && saved.layout_rev <= rev) {
+          const extra = Object.entries(saved.layout[id] ?? {}).filter(([key]) => !['x', 'y', 's', 'k'].includes(key));
+          this._adoption.acceptLayoutPosition(id, { ...Object.fromEntries(extra), ...position }, rev);
+        } else {
+          this._adoption.noteLayoutRevision(rev);
+        }
+        this._adoption.refreshLayoutFingerprint();
+        this._cacheSnapshot();
+        // An independent label may have committed first. Its event alone
+        // cannot fill this gap after our receipt advances the revision.
+        if (gap) void this._reloadStandaloneLayout().catch(() => undefined);
+      },
+      recover: id => {
+        this._dirtyPos.delete(id);
+        return this._reloadStandaloneLayout();
+      },
+      failed: error => this._captureToast()(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed'),
+    });
+  }
+
+  /** Do not flush or overlay rejected drafts while reconciling the server. */
+  private async _reloadStandaloneLayout(): Promise<boolean> {
+    const current = this._layoutIO.guard();
+    if (!current() || !this.planHost.environment.connected) return false;
+    const resp = await this.planHost.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' });
+    if (!current() || !resp?.layout || !Number.isSafeInteger(resp.rev) || Number(resp.rev) < this._layoutRev) return false;
+    const merged = { ...resp.layout };
+    for (const id of this._standaloneLayoutWrite!.pendingKeys()) {
+      const position = this._layout[id];
+      if (position) merged[id] = position;
+    }
+    this._adoption.adoptMergedLayout(merged, resp);
+    this._canOptimizeUndo = !!resp.can_optimize_undo;
+    this._undoKind = (resp.undo_kind || null) as any;
+    this._cacheSnapshot();
+    this.requestUpdate();
+    return true;
+  }
+
+  private _canChangeRoomLabel(id: string): boolean {
+    return this._standaloneLayoutWrite?.canStage(id) ?? true;
+  }
+
+  private _stageRoomLabelPosition(id: string, position: DeviceLayout[string]): void {
+    if (this._standaloneLayoutWrite) {
+      const { k, ...rest } = position;
+      position = canonicalizePosition({
+        ...rest, ...(typeof k === 'number' && Number.isFinite(k) ? { k: Math.min(3, Math.max(.5, k)) } : {}),
+      });
+      if (!this._standaloneLayoutWrite.stage(id, position)) return;
+    }
+    this._layout = { ...this._layout, [id]: position };
+    this._dirtyPos.add(id);
+  }
+
   private _persistLocalLayout(): void {
     this._layout = canonicalizeLayoutGeometry(this._layout);
     localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
   }
 
   private _persistLayout = this._debounceToast((showToast) => {
+    if (this._standaloneLayoutWrite) {
+      for (const id of this._dirtyPos) {
+        this._dirtyPos.delete(id);
+        this._standaloneLayoutWrite.flush(id);
+      }
+      return;
+    }
     if (this._serverStorage) {
       const isCurrent = this._layoutIO.guard();
       if (!isCurrent() || !this._loadOk) return;
@@ -7959,10 +8044,11 @@ export class HouseplanCard extends LitElement {
 
   private _savePos(d: DevItem, x: number, y: number): void {
     if (!this._spaceModelById(d.space)) return;
-    this._layout = applyDevicePlacement(
+    const next = applyDevicePlacement(
       this._layout, d.id, this._devicePlacementForCanvas(d, x, y),
     );
-    this._dirtyPos.add(d.id);
+    if (this._standaloneLayoutWrite && d.id.startsWith('rl_')) this._stageRoomLabelPosition(d.id, next[d.id]);
+    else { this._layout = next; this._dirtyPos.add(d.id); }
     this._persistLayout();
   }
 

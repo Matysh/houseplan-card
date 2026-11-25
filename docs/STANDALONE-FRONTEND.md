@@ -82,7 +82,7 @@ this SDK's product version (the separate dev SHA/channel still distinguishes
 unreleased code). Do not manufacture the current
 fingerprint for an incompatible host. This build requires the APIs declared by
 `STANDALONE_REQUIRED_APIS` in `src/standalone-plan-host.ts`: opening features,
-graph change v2, plan graph, room-label layout, decor assets, node move/delete/
+graph change v2, plan graph, room-label layout and point writes, decor assets, node move/delete/
 merge/attach. Merge and attach use the existing node-move intent route, not
 invented endpoints. Missing/mismatched facts produce the standalone notice
 before connecting a writable editor. Every later `config/get`, including after
@@ -104,6 +104,36 @@ All reads, saves, Optimize/Undo, assets and transfer use the existing ports and
 capability guards. A painted draft is not a successful save. Ordinary Save and
 remount preserve hidden HA markers/contact/lock data in authoritative storage;
 the plan-only UI never displays or executes those device features.
+
+### Observing room-label writes (#1563)
+
+Move and resize of a room label use the plan-only `layout/set` variant
+documented in [CORE-HOST](CORE-HOST.md#room-label-position-patch-1563). Forward
+that request unchanged to the matching core. In `config/get`, the new
+`room_label_layout_patch_api: 1` is mandatory for this SDK independently of
+`room_label_layout_api: 1`, which describes the paired geometry command.
+Version and frontend fingerprint must still match. Do not manufacture the
+flag in an older adapter: use the editor and core built from the same commit.
+
+`mounted.getSaveState()` returns an immutable snapshot with `pending`,
+`unresolved` and `entries`. `mounted.subscribeSaveState(callback)` delivers the
+current snapshot immediately and returns an unsubscribe function. Entries
+have `kind: 'room_label'`, `roomId`, `spaceId`, `status` and an optional failure
+`code`. A gesture is `pending` before any transport request; only a verified
+receipt makes that entry `accepted`. The transport should reject with a known
+domain code only if it knows the command did not commit. A lost/malformed
+receipt is `unknown`; an explicit failure is `rejected`. Transport idle is
+not an acknowledgement.
+
+Keep the leave guard enabled while `pending || unresolved`, in addition to
+any other host-owned pending work. Show a saved indication for this operation
+only from an accepted receipt when no other operation is pending/unresolved.
+After a failed attempt the editor rereads the authoritative position without
+automatically resending any draft. A new gesture on that label is available
+after the read (or after reopen if the read failed); rejection or uncertainty
+remains until a new acknowledged gesture, or an explicit reopen/discard by
+the user. A read that happens to match a lost receipt is not an ACK.
+Revocation/dispose cannot acknowledge a previous project's pending work.
 
 Portable transfer is **single-space plan-only JSON**, not ZIP or full backup.
 The core projection is authoritative: markers are empty, opening/leaf HA links

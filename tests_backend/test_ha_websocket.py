@@ -1108,6 +1108,28 @@ async def test_deleted_marker_rejects_a_stale_layout_update(
     }
 
 
+async def test_standalone_label_patch_keeps_legacy_ha_point_writes(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    facts = (await client.receive_json())["result"]
+    assert facts["room_label_layout_api"] == 1
+    assert "room_label_layout_patch_api" not in facts
+    saved = {
+        "rl_room": {"s": "floor", "x": .25, "y": .35, "k": 1.2},
+        "automatic_device": {"s": "floor", "x": .5, "y": .55},
+    }
+    for key, position in saved.items():
+        await client.send_json_auto_id({
+            "type": "houseplan/layout/update", "device_id": key, "pos": position,
+        })
+        assert (await client.receive_json())["success"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    assert (await client.receive_json())["result"]["layout"] == saved
+
+
 async def test_trail_delete_clears_the_server_book(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
