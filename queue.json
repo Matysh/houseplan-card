@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25162,
-  "nextTicket": 704,
+  "revision": 25163,
+  "nextTicket": 705,
   "nextFence": 704,
   "tasks": {
     "1024": {
@@ -6294,14 +6294,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1569-window-reveal",
-      "materialSha": "4e517619beacabcbbc912d92c7c821a135991031",
+      "materialSha": "5b45209452ed59329ca3d2054bf53f7336144172",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 703,
-      "queued": false,
+      "ticket": 704,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795642486205,
-      "reviewEntry": 1,
+      "readyAt": 1795644119038,
+      "reviewEntry": 2,
       "patchId": "845a52b5bcbf843572ecf53514fe6e29c6afee29",
       "changedFiles": [
         "demo/smoke_plan_3d_gpu.mjs",
@@ -6312,7 +6312,6 @@
         "src/plan-3d-world.ts",
         "test/iso-opening-masonry.test.mjs"
       ],
-      "reason": "executor-admission-expired",
       "notice": {
         "key": "1:executor-admission-expired",
         "reason": "executor-admission-expired",
@@ -6985,7 +6984,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1569
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7169,6 +7170,19 @@
           "eventId": "github:45709422677:1:tick:0:expire:return:1569"
         },
         "delivered": true
+      }
+    },
+    "finish:0bd4b479-655a-407a-ad36-c03a1c4f3f2b": {
+      "digest": "e4bfec1e719997785810dc4afd9552d82065fe7b764fdd103f8ed5c16a26e34a",
+      "issue": 1569,
+      "message": {
+        "kind": "queued",
+        "issue": 1569,
+        "at": 1795644119038,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "5b45209452ed59329ca3d2054bf53f7336144172"
       }
     }
   },
