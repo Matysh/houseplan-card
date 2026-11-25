@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24534,
+  "revision": 24535,
   "nextTicket": 693,
   "nextFence": 693,
   "tasks": {
@@ -7173,7 +7173,8 @@
           "at": 1795603958820,
           "entry": 1,
           "eventId": "finish:6e6557d8-295f-4afe-8588-9b86e597786e:finish:3:return:return:1514"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:eb42f4d6-8b27-4e5c-86de-c4aeebfef370": {
