@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25383,
+  "revision": 25384,
   "nextTicket": 709,
   "nextFence": 709,
   "tasks": {
@@ -6375,7 +6375,16 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795649362520,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "4a00805d241f3faad05bbac807c82000a54b68b3",
+      "changedFiles": [
+        "demo/smoke_plan_3d_gpu.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v2.0.0/1571.json",
+        "src/houseplan-card.ts",
+        "src/plan-3d-world.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7046,10 +7055,11 @@
     "token": "708:finish:a5d685d8-f1f4-460c-8f3d-015202052bd6:finish:1:admit",
     "fence": 708,
     "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "14468186a748bce76eed9390083fedc460df51d1",
+    "phase": "testing",
     "admittedAt": 1795649366065,
-    "expiresAt": 1795649666065
+    "expiresAt": 1795649672430,
+    "patchId": "4a00805d241f3faad05bbac807c82000a54b68b3"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7071,6 +7081,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "finish:a5d685d8-f1f4-460c-8f3d-015202052bd6:finish:2:synchronized": {
+      "digest": "53ed0ca46665935db100d0eaafab8978cf9dd3fc8ec3494a6e8fc438c56e0aea",
+      "issue": 1571
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
