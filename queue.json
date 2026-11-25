@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25157,
+  "revision": 25158,
   "nextTicket": 704,
   "nextFence": 704,
   "tasks": {
@@ -7167,7 +7167,8 @@
           "at": 1795644036101,
           "entry": 1,
           "eventId": "github:45709422677:1:tick:0:expire:return:1569"
-        }
+        },
+        "delivered": true
       }
     }
   },
