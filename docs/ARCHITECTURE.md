@@ -16,8 +16,10 @@ document source and user; other adapters must explicitly supply it or stay
 memory-only. `floor-cache-runtime.ts` owns the disposable L1/L2 store and one
 navigation-priority module-worker scheduler. Its accepted derived frames hydrate
 existing consumers, not an alternative geometry model. `iso-scene-geometry.ts`
-contains the shared DOM-free isometric calculations; `iso-scene-render.ts`
-retains the lazy render facade. The worker is an isolated hashed module in the
+supplies the shared physical geometry and camera bounds. `plan-3d-runtime.ts`
+is the lazy 3D entry point. It hands the physical surfaces and current states
+to `plan-3d-world.ts`. `plan-3d-viewport.ts` shares one WebGL2 context per
+document, with a canvas and a camera for each visible plan. The worker is an isolated hashed module in the
 ordinary asset manifest, with a build handshake and no host/transport ingress.
 Summary demands per-floor area scalars through the same owner instead of
 performing a hidden wall union on the UI thread. See `CANVAS.md` and

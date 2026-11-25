@@ -9,6 +9,7 @@ const bundle = await rollup({
     engine: 'node_modules/three/build/three.module.js',
     viewport: 'test-build/plan-3d-viewport.js',
     world: 'test-build/plan-3d-world.js',
+    motion: 'test-build/plan-3d-light-motion.js',
   },
   plugins: [nodeResolve()],
 });
@@ -39,6 +40,7 @@ try {
     const T = await import('http://plan-3d.test/engine.js');
     const { Plan3dViewport } = await import('http://plan-3d.test/viewport.js');
     const { Plan3dWorld } = await import('http://plan-3d.test/world.js');
+    const { Plan3dLightMotion } = await import('http://plan-3d.test/motion.js');
     const getContext = HTMLCanvasElement.prototype.getContext;
     let contexts = 0;
     let gpu;
@@ -94,6 +96,12 @@ try {
     const lamp = { points: [[8, 0]], height: 250, radius: 25, color: '#ff0000', intensity: 1, visible };
     const led = { points: [[15, 20], [15, 50]], height: 2, radius: 10, color: '#00ff00', intensity: 1, visible };
     const frames = [await lightFrame([]), await lightFrame([lamp, led]), await lightFrame([{ ...lamp, color: '#0000ff' }, led])];
+    const motion = new Plan3dLightMotion();
+    const solar = { ...lamp, id: 'window', intensity: .4, sun: { inward: [1, 0], depth: 10, tilt: .5 } };
+    motion.set([{ ...lamp, id: 'lamp' }, solar], 'scene-a', 10, true);
+    motion.set([solar], 'scene-a', 20, true);
+    const fading = motion.frame(270);
+    const settled = motion.frame(520);
     const snapshot = await lit.snapshot({ scene: world.scene, camera }, { width: 200, height: 200 });
     if (!snapshot) throw new Error('Static WebP was not encoded');
     const bitmap = await createImageBitmap(snapshot);
@@ -117,6 +125,25 @@ try {
     const stairHit = lit.pick(.325, .325);
     world.present({ ...input, lights: [], backdrop: { ...backdrop, url: 'data:image/png;base64,AAAA' } });
     const invalidBackdropReady = await world.ready();
+    const marker = { id: 'thermometer', center: [50, 45], diameter: 36, height: 20, faces: [{
+      left: -.5, right: .5, top: -.5, bottom: .5, rx: .5, ry: .5, color: '#205020', edge: '#032003', foreground: '#ffffff',
+      glyph: { kind: 'icon', bounds: [0, 0, 24, 24], angle: 0, fraction: .6,
+        paths: [{ d: 'M 0 0 H 24 V 24 H 0 Z', rule: 'nonzero' }] },
+    }] };
+    world.presentMarkers([marker], 1);
+    await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+    const markerIcon = pixel(canvas, 150, 145), markerBody = pixel(canvas, 136, 145);
+    const markerHit = lit.pick(.75, .725);
+    world.presentMarkers([{ ...marker, faces: [{ ...marker.faces[0], foreground: '#ff0000' }] }], 1);
+    await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+    const markerChanged = pixel(canvas, 150, 145);
+    world.presentMarkers([], 1);
+    world.present({ ...input, lights: [], rooms: [{ id: 'room', color: '#a07832', opacity: 1,
+      geometry: [[[[-95, -95], [-95, 95], [95, 95], [95, -95]]]] }],
+      ribbons: [{ id: 'strip-1', owner: 'switch-1', path: { points: [[-25, 30], [45, 30]], closed: false }, width: 8,
+        depth: 1, outline: '#222222', color: '#ffff00', opacity: 1 }] });
+    await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+    const roomColor = pixel(canvas, 90, 100), ribbonColor = pixel(canvas, 110, 130), ribbonHit = lit.pick(.55, .65);
     lit.dispose();
     world.dispose();
 
@@ -125,7 +152,9 @@ try {
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
     return { contexts, pixels, picking, frames, staticSize, backdropReady, backdropPixel,
-      invalidBackdropReady, stairPixel, stairHit, failures: cards.map(card => card.failures()) };
+      invalidBackdropReady, stairPixel, stairHit, markerIcon, markerBody, markerHit, markerChanged,
+      roomColor, ribbonColor, ribbonHit, fading, settled,
+      failures: cards.map(card => card.failures()) };
   });
   assert.deepEqual(errors, []);
   assert.equal(evidence.contexts, 1);
@@ -138,6 +167,17 @@ try {
   assert.equal(evidence.invalidBackdropReady, false);
   assert.deepEqual(evidence.stairPixel, [0, 128, 0, 255]);
   assert.equal(evidence.stairHit, 'stair:stairs');
+  assert.deepEqual(evidence.markerIcon, [255, 255, 255, 255]);
+  assert.deepEqual(evidence.markerBody, [32, 80, 32, 255]);
+  assert.equal(evidence.markerHit, 'thermometer');
+  assert.deepEqual(evidence.markerChanged, [255, 0, 0, 255]);
+  assert.deepEqual(evidence.roomColor, [160, 120, 50, 255]);
+  assert.deepEqual(evidence.ribbonColor, [255, 255, 0, 255]);
+  assert.equal(evidence.ribbonHit, 'switch-1');
+  assert.equal(evidence.fading.active, true);
+  assert.deepEqual(evidence.fading.sources.map(({ id, intensity }) => [id, intensity]), [['lamp', .5], ['window', .4]]);
+  assert.equal(evidence.settled.active, false);
+  assert.deepEqual(evidence.settled.sources.map(({ id, intensity }) => [id, intensity]), [['window', .4]]);
   const [unlit, red, blue] = evidence.frames;
   assert.deepEqual(red[1], unlit[1], 'the optical mask keeps the adjacent room dark');
   assert.ok(red[2][0] > 100, 'a short radius still reaches the floor below a high lamp');

@@ -1,4 +1,36 @@
-# Isometric (2.5D) View
+# 3D View
+
+## Current renderer
+
+The House Plan panel, full Lovelace cards and external screen profiles share
+the 3D presentation. The existing `volumetric_view` setting and the `iso`
+configuration value select it. Editors, static space cards and spaces with
+hidden borders use the flat representation. 3D uses the canonical plan model
+and its existing device bindings, controls, room settings and light sources.
+
+`plan-3d-runtime.ts` prepares physical walls, floor, opening poses, stairs,
+furniture, LED strips and device markers for one world-space scene. Four
+diagonal presets use an orthographic camera. Four direct presets use a
+perspective camera with an offset projection center. Pan and zoom crop that
+projection. The saved orientation remains compatible with existing profiles.
+
+Each document shares one WebGL2 context. Each card retains its own displayed
+canvas and updates it when a frame is needed. Walls, surfaces and device
+marker bodies share the depth buffer. The pointer can request an identifier
+pass at the current position. Keyboard focus, room labels and HA controls
+stay in the DOM. GPU or runtime failure switches the card to interactive 2D
+and offers recovery while preserving the saved 3D preference.
+
+Warm startup can show a neutral WebP from the browser or server cache for
+the same camera and viewport. It contains the physical plan and decor with
+neutral opening poses. Live readings, devices, lights and device-driven art
+arrive with the live frame. SVG export builds a separate flat vector view
+while the current 3D view stays on screen.
+
+## Prior 2.5D implementation
+
+The sections below record the preceding SVG renderer and the compatibility
+rules carried over from it.
 
 The current presentation integrates the accepted #1451 UI Lab handoff dated
 18 November 2026. It replaces #713's vertical oblique, uncompressed floor.

@@ -131,10 +131,10 @@ the file — and if a future version wants to reclaim that space, it asks.
 - Energy monitoring/analytics → HA Energy.
 - Photorealistic rendering, a free 3D camera, a separate 3D model and 3D
   furniture/interior editing → niche tools (easy-floorplan et al.); we are a
-  live spatial map, not an interior editor. A narrow exception approved for
-  [#89](https://github.com/Matysh/houseplan-card/issues/89) is a deterministic
-  2.5D presentation of the existing canonical plan: the same J1/J2/J3 state,
-  actions and geometry, with no second model and no free camera.
+  live spatial map. The 3D view approved in
+  [#1514](https://github.com/Matysh/houseplan-card/issues/1514) renders the
+  canonical plan and its existing state, actions, objects and lights. Users
+  navigate with fixed presets and continue to edit the plan in 2D.
 - General CAD, architectural drafting and construction-document tooling →
   specialised applications. A narrow read-only exception approved on
   2026-08-15 and scoped on 2026-09-07 for

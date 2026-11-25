@@ -8,6 +8,16 @@ const fixture = makeLargeHouseFixture({ floors:2, roomsPerFloor:8, devices:24, o
   partitions:3, columns:2, decor:12, stairs:2 });
 const results = {};
 const serverPackets = new Map();
+const readPreviewView = async img => {
+  const image = await (await fetch(img.src)).blob();
+  if (image.type === 'image/webp') {
+    const card = window.__startupFixture(), stored = card._startupStyle.value;
+    const { x, y, w, h } = card._presentationView(stored.view, stored.zoom, stored.fit.base);
+    return `${x} ${y} ${w} ${h}`;
+  }
+  const doc = new DOMParser().parseFromString(await image.text(), 'image/svg+xml');
+  return doc.documentElement.getAttribute('viewBox');
+};
 await page.exposeFunction('startupFixtureServer', ({ type, packet, ...address }) => {
   const key = JSON.stringify(address);
   if (type.endsWith('/put')) { serverPackets.set(key, packet); return { stored:true }; }
@@ -187,12 +197,20 @@ try {
     assert.equal(await snapshot.count(), 0, label + ' never read from cold hint alone');
     await page.evaluate(() => window.__releaseStartupFixture());
     await snapshot.waitFor({state:'visible',timeout:6_000});
-    const observed = await page.evaluate(async () => {
+    const observed = await page.evaluate(async projection => {
       const c = window.__startupFixture(), img = c.renderRoot.querySelector('.hp-startup-view');
       const stage = img.closest('.stage'), pill = stage.querySelector('.floor-preparation-status');
       const bounds = stage.getBoundingClientRect(), status = pill.getBoundingClientRect();
-      const text = await (await fetch(img.src)).text();
-      const svg = new DOMParser().parseFromString(text,'image/svg+xml').documentElement;
+      const image = await (await fetch(img.src)).blob();
+      const text = projection === 'flat' ? await image.text() : null;
+      const svg = text ? new DOMParser().parseFromString(text, 'image/svg+xml').documentElement
+        : document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      if (projection === 'iso') {
+        const stored = c._startupStyle.value;
+        const view = c._presentationView(stored.view, stored.zoom, stored.fit.base);
+        svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+        svg.setAttribute('preserveAspectRatio', 'none');
+      }
       // Measure the actual SVG coordinate transform inside the image box.
       // The witness is an empty SVG: no scene content or executable nodes from storage enter the DOM.
       window.__startupAnchor = (viewport, width, height) => {
@@ -218,13 +236,16 @@ try {
         if (still && window.__startupFrames.length < 250) requestAnimationFrame(sample);
       };
       requestAnimationFrame(sample);
-      return { imageOnly: svg.localName === 'svg' && !svg.querySelector('foreignObject, script, [data-hp], [tabindex]')
+      const bitmap = projection === 'iso' ? await createImageBitmap(image) : null;
+      const validBitmap = !!bitmap && image.type === 'image/webp' && bitmap.width > 0 && bitmap.height > 0;
+      bitmap?.close();
+      return { imageOnly: validBitmap || !!text && svg.localName === 'svg' && !svg.querySelector('foreignObject, script, [data-hp], [tabindex]')
         && !text.includes('sensor.') && !text.includes('424242') && !text.includes('startup_door_contact')
         && svg.querySelectorAll('image[href^="data:image/png"]').length >= 2,
         status: status.left >= bounds.left && status.left < bounds.left + 36 && status.top >= bounds.top && status.top < bounds.top + 36,
-        view: svg.getAttribute('viewBox'), bytes: text.length, anchors,
+        view: svg.getAttribute('viewBox'), bytes: image.size, anchors,
         clip:{x:bounds.left,y:bounds.top,width:bounds.width,height:bounds.height} };
-    });
+    }, projection);
     assert.ok(observed.imageOnly, label + ': static, no entity/action data');
     assert.ok(observed.status, label + ': loading status inside top-left of plan');
     if (process.env.HP_STARTUP_SCREENSHOTS) await page.screenshot({
@@ -353,10 +374,7 @@ try {
       await mount({projection,surface,user,hold:true});
       await page.evaluate(() => window.__releaseStartupFixture());
       await snapshot.waitFor({state:'visible',timeout:6_000});
-      const previewView = await snapshot.evaluate(async img => {
-        const raw = await (await fetch(img.src)).text();
-        return new DOMParser().parseFromString(raw,'image/svg+xml').documentElement.getAttribute('viewBox');
-      });
+      const previewView = await snapshot.evaluate(readPreviewView);
       await ready(projection,surface);
       assert.ok(cmp(previewView,centred.svg) && cmp(previewView,(await camera()).svg),
         'saved centred camera is identical in the passive image and the real repaint');
@@ -441,10 +459,7 @@ try {
     await page.evaluate(() => window.__releaseStartupFixture());
     const serverImage = page.locator('img[data-hp-startup-source=server]');
     await serverImage.waitFor({state:'visible',timeout:8000});
-    const referenceView = await serverImage.evaluate(async img => {
-      const xml = await (await fetch(img.src)).text();
-      return new DOMParser().parseFromString(xml,'image/svg+xml').documentElement.getAttribute('viewBox');
-    });
+    const referenceView = await serverImage.evaluate(readPreviewView);
     await done();
     const frames = await page.evaluate(() => window.__startupTrace);
     const first = frames.findIndex(f => f.source === 'server');
@@ -524,6 +539,6 @@ try {
     assert.ok(terminal, 'terminal preparation error must replace the passive preview');
   }
 } catch (error) {
-  check('startup SVG matrix completed', false);
+  check('startup preview matrix completed', false);
   throw error;
 } finally { await finish(browser, results); }

@@ -139,7 +139,7 @@ export function buildBundleManifest(bundle, fingerprint) {
           ? 'onboarding'
           : modules.some((id) => id.endsWith('/src/houseplan-editor-runtime.ts'))
             ? 'editor'
-            : modules.some((id) => id.endsWith('/src/iso-scene-render.ts'))
+            : modules.some((id) => id.endsWith('/src/plan-3d-runtime.ts'))
               ? 'isometric'
               : modules.some((id) => id.endsWith('/src/pdf/pdf-export.ts'))
                 ? 'pdf'
@@ -196,7 +196,7 @@ export function buildBundleManifest(bundle, fingerprint) {
     || /(?:^|\/)editor(?:-[^/]+)?\.js$/.test(path))
     && !localeRoots.includes(path) && !onboardingRoots.includes(path));
   const isometricRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'isometric'
-    || path.includes('iso-scene-render-'));
+    || path.includes('plan-3d-runtime-') || path.includes('iso-scene-render-'));
   const furnitureArtRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'furniture-art');
   const pdfRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'pdf'
     || path.includes('pdf-export-'));
@@ -318,7 +318,7 @@ export function editorRuntimeRetryUrlPlugin({ coverage = coverageMapsEnabled() }
       const onboarding = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/houseplan-onboarding-runtime.ts')));
       const isometric = chunks.find((chunk) => Object.keys(chunk.modules)
-        .some((id) => id.replaceAll('\\', '/').endsWith('/src/iso-scene-render.ts')));
+        .some((id) => id.replaceAll('\\', '/').endsWith('/src/plan-3d-runtime.ts')));
       const german = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/i18n/de.ts')));
       const french = chunks.find((chunk) => Object.keys(chunk.modules)

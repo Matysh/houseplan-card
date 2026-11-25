@@ -1,14 +1,14 @@
 # Light on the plan — the model (source of truth)
 
 
-In 2.5D View, visible vertical wall sides also sample the existing optical
-field at their base. The gradient varies along each wall and keeps colour
-and brightness constant up each vertical line. Lamps and LED polylines use
-the same radius, obstacle visibility, floor clip and falloff as the floor
-field. The cut and horizontal sills keep their material. The profile cache
-follows source/visibility changes, physical scale and the visible side.
-Pan and zoom transform the painted field through the camera without a new
-optical solve.
+In 3D, `plan-3d-light-field.ts` samples the same optical visibility map on
+the GPU. The plan distance and falloff define a lamp's or LED's horizontal
+reach. The emitter height and surface normal determine how light reaches
+vertical faces and furniture. The floor keeps the calibrated horizontal
+falloff, and the wall cut keeps its base material. Source colour and intensity
+can change while the visibility map is reused. Sunlight has its own source
+keys and transition, independent of lamp state. Pan and zoom change the
+camera crop while the sources stay in plan coordinates.
 
 ## Per-leaf shade transmission and sliding apertures (#1024)
 

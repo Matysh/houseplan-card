@@ -1,4 +1,4 @@
-// #654: the first visible successful frame is already 2.5D with the settled
+// #654: the first visible successful frame is already 3D with the settled
 // floor classification. The same boundary covers ordinary View and kiosk;
 // a failed lazy chunk must release to the existing safe Flat fallback.
 import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 
 async function observe({ volumetric = true, kiosk = false, delay = 0, fail = false }) {
   const { page, browser } = await launchPanelCold({ width: 900, height: 760 });
-  await page.route('**/iso-scene-render-*.js*', async (route) => {
+  await page.route('**/plan-3d-runtime-*.js*', async (route) => {
     if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
     if (fail) await route.fulfill({ status: 503, body: 'injected iso runtime failure' });
     else await route.fallback();
@@ -29,6 +29,7 @@ async function observe({ volumetric = true, kiosk = false, delay = 0, fail = fal
     const layoutResult = await hass.callWS({ type: 'houseplan/layout/get' });
     const config = structuredClone(configResult.config);
     config.settings = { ...(config.settings || {}), ...(wantsIso ? { volumetric_view: true } : {}) };
+    if (wantsIso) for (const space of config.spaces) space.settings = { ...space.settings, show_borders: true };
     const rev = window.__pushServerConfig(config);
     const snapshot = {
       config, rev, layout: layoutResult.layout, layout_rev: layoutResult.rev,
@@ -53,16 +54,15 @@ async function observe({ volumetric = true, kiosk = false, delay = 0, fail = fal
       const wrap = stage?.querySelector(':scope > .zoomwrap');
       // An empty preparation SVG is not an intermediate Flat plan. Any actual
       // architectural L1 pixels still count; do not skip a populated preview.
-      const painted = !!wrap?.querySelector('path, polygon, polyline, rect, circle, ellipse, line, image');
-      const visible = painted && getComputedStyle(wrap).visibility === 'visible' && +getComputedStyle(wrap).opacity > 0;
       const iso = !!stage?.classList.contains('projection-iso');
+      const gpu = !!wrap?.querySelector('canvas[data-hp-plan-3d-ready]');
+      const painted = iso ? gpu : !!wrap?.querySelector('path, polygon, polyline, rect, circle, ellipse, line, image');
+      const visible = painted && getComputedStyle(wrap).visibility === 'visible' && +getComputedStyle(wrap).opacity > 0;
       const light = !!stage?.querySelector('.dev.iso-floor-light');
-      const shadow = stage?.querySelector('.iso-tile-shadow');
-      records.push({ visible, iso, light, readiness: stage?.dataset.hpIsoReadiness || '',
+      records.push({ visible, iso, light, gpu, readiness: stage?.dataset.hpIsoReadiness || '',
         status: !!stage?.querySelector('.floor-preparation-status'),
         waitsForLive: stage?.hasAttribute('data-hp-startup-pending') ?? false,
-        shadowOpacity: shadow ? getComputedStyle(shadow).opacity : null,
-        shadowPlane: !!stage?.querySelector('.iso-floor-shadow-plane'),
+        fallback: !!stage?.querySelector('.plan-3d-fallback button'),
         markerPlacement: stage?.querySelector('.dev')?.getAttribute('data-hp-iso-floor') || null });
       return records.at(-1);
     };
@@ -89,16 +89,16 @@ const out = {
     .filter((row) => row.visible).every((row) => row.iso),
   ordinaryFirstVisibleIsSettledIso: ordinary.firstVisible?.iso === true
     && ordinary.firstVisible.light === true && ordinary.firstVisible.readiness === 'ready'
-    && ordinary.firstVisible.shadowOpacity === '1',
+    && ordinary.firstVisible.gpu,
   ordinaryPendingOutlivesBootCap: ordinary.records.some((row) =>
     !row.visible && row.readiness === 'pending' && row.status),
   kioskNeverShowsIntermediateFlat: kiosk.records
     .filter((row) => row.visible).every((row) => row.iso),
   kioskFirstVisibleIsSettledIso: kiosk.firstVisible?.iso === true
     && kiosk.firstVisible.light === true && kiosk.firstVisible.readiness === 'ready'
-    && kiosk.firstVisible.shadowOpacity === '1',
+    && kiosk.firstVisible.gpu,
   failedChunkReleasesFiniteFlatFallback: failed.firstVisible?.iso === false
-    && failed.firstVisible.readiness === 'fallback' && failed.firstVisible.waitsForLive === false,
+    && failed.firstVisible.readiness === 'fallback' && failed.firstVisible.waitsForLive === false && failed.firstVisible.fallback,
   flatKioskHasNoIsoWait: flat.firstVisible?.iso === false
     && flat.firstVisible.readiness === '' && flat.firstVisible.waitsForLive === false,
 };

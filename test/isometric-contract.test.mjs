@@ -15,6 +15,7 @@ const overlays = readFileSync(new URL('../src/iso-overlays.ts', import.meta.url)
 const projection = readFileSync(new URL('../src/iso-projection.ts', import.meta.url), 'utf8');
 const sceneRender = readFileSync(new URL('../src/iso-scene-render.ts', import.meta.url), 'utf8');
 const sceneGeometry = readFileSync(new URL('../src/iso-scene-geometry.ts', import.meta.url), 'utf8');
+const spatialRuntime = readFileSync(new URL('../src/plan-3d-runtime.ts', import.meta.url), 'utf8');
 const editorRuntime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
 const packageJson = readFileSync(new URL('../package.json', import.meta.url), 'utf8');
 const spaceCard = readFileSync(new URL('../src/space-card.ts', import.meta.url), 'utf8');
@@ -33,11 +34,11 @@ const styleBodiesFor = (...selectorParts) => [...styles.matchAll(/([^{}]+)\{([^{
   .map((match) => match[2])
   .join('\n');
 
-test('#649/#1516 full plan surfaces inherit 2.5D, while the space card remains Flat', () => {
+test('#649/#1516 the full plan surfaces share the saved 3D preference and static space cards stay flat', () => {
   const preference = section(card, 'private get _isoEnabled()', 'private readonly _furnitureVolumeObserver');
   assert.match(preference, /this\.panelHost \? this\._externalScreen\.view : this\._config\?\.view/);
   assert.match(preference, /return validPlanView\(view\) \? view === 'iso' : volumetricViewOf\(this\._settings\);/);
-  assert.match(card, /return this\._mode === 'view' && this\._isoEnabled \? 'iso' : 'flat';/);
+  assert.match(card, /return this\._mode === 'view' && this\._isoEnabled && this\._spaceDisplayForRender\(\)\.showBorders \? 'iso' : 'flat';/);
   assert.doesNotMatch(card, /data-hp="projection-toggle"|_viewPreference|houseplan_card_view_v1|_labsIso/,
     'no browser-wide projection preference, header button or alpha gate');
   assert.doesNotMatch(labs, /id: 'iso'/, 'the alpha registry no longer ships 2.5D');
@@ -51,11 +52,11 @@ test('#649/#1516 full plan surfaces inherit 2.5D, while the space card remains F
   assert.doesNotMatch(labs, /CARD_VERSION|houseplan_card_labs_v1|params\.getAll\('hp-labs'\)/);
 });
 
-test('Stage 4 code is loaded only through the hidden alpha runtime boundary', () => {
-  assert.match(sceneRender, /export \* from '\.\/iso-scene-geometry'/,
+test('3D uses the lazy runtime and the same geometry authority as the worker', () => {
+  assert.match(spatialRuntime, /export \* from '\.\/iso-scene-geometry'/,
     'the lazy renderer must expose the same pure geometry implementation used by the worker');
-  assert.equal([...card.matchAll(/await import\('\.\/iso-scene-render'\)/g)].length, 1);
-  for (const module of ['iso-scene-render', 'iso-scene-geometry', 'iso-walls', 'iso-openings', 'iso-overlays']) {
+  assert.equal([...card.matchAll(/await import\('\.\/plan-3d-runtime'\)/g)].length, 1);
+  for (const module of ['plan-3d-runtime', 'iso-scene-render', 'iso-scene-geometry', 'iso-walls', 'iso-openings', 'iso-overlays']) {
     const valueImport = new RegExp(`import\\s+(?!type\\b)[^;]+from './${module}';`, 's');
     assert.doesNotMatch(card, valueImport, `${module} leaked into the eager card graph`);
     assert.doesNotMatch(editorRuntime, valueImport, `${module} leaked into the lazy editor graph`);
@@ -63,12 +64,13 @@ test('Stage 4 code is loaded only through the hidden alpha runtime boundary', ()
   for (const module of ['iso-walls', 'iso-openings', 'iso-overlays'])
     assert.match(sceneGeometry, new RegExp(`from './${module}'`),
       `${module} must remain owned by the shared pure structural implementation`);
-  assert.match(sceneRender, /import \{ buildIsoWallDepthQueue,[\s\S]*?from '\.\/iso-scene-geometry'/,
+  assert.match(spatialRuntime, /import \{ resolveIsoDecorationLayers, resolveIsoOpeningPanels,[^\n]+from '\.\/iso-scene-geometry'/,
     'the lazy renderer consumes the shared geometry implementation, not duplicate producers');
   assert.doesNotMatch(sceneGeometry, /from ['"](?:lit|@mdi\/js)['"]/,
     'the worker-owned structural module must not import presentation assets');
   assert.match(card, /const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__'/);
-  assert.match(sceneRender, /ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__'/);
+  assert.match(spatialRuntime, /ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__'/);
+  assert.doesNotMatch(spatialRuntime, /iso-scene-render|renderIsoSunWash|IsoLightTransition/);
   assert.match(card, /if \(this\._isoEnabled\) void this\._ensureIsoSceneRuntime\(\)/);
 });
 
@@ -86,7 +88,7 @@ test('Stage 4 browser harnesses await the lazy runtime and cold alpha-off skips 
   assert.ok((contractSmoke.match(/startsWith\('projection-'\)/g) || []).length >= 3,
     'alpha-off, editor and removal witnesses must preserve the legacy Flat stage classes');
   assert.match(contractSmoke,
-    /\/iso-scene-render-\[\^\/\]\+\\\.js/,
+    /\/plan-3d-runtime-\[\^\/\]\+\\\.js/,
     'the cold-alpha guard must identify the generated lazy chunk, not generic requests');
 });
 
@@ -115,17 +117,17 @@ test('every browser smoke that explicitly selects Iso waits for its lazy runtime
     'the shared helper must await load and a painted settled frame');
 });
 
-test('Stage 4 composes ordered inert SVG groups below screen-facing HTML', () => {
+test('3D paints one canvas under the interactive and accessible controls', () => {
   const projection = section(card, '<div class="iso-scene-surface"', '${\'\'/* docs/CANVAS.md §6');
   let previous = -1;
-  for (const selector of ['${isoUnderlay}', 'isoFloorInk()', 'iso-shadows-svg', 'iso-walls-svg',
-    'iso-floor-shadow-plane', 'iso-furniture-foreground', 'ledBody()']) {
+  for (const selector of ['floorTargets()', 'ledTargets()', 'canvas data-hp-plan-3d']) {
     const position = projection.indexOf(selector);
     assert.ok(position > previous, selector);
     previous = position;
   }
-  assert.match(projection, /floorCamera\?\.perspective \? nothing : isoFloorInk\(\)/,
-    'the affine scene paints the floor in the shared architecture SVG');
+  assert.match(projection, /floorCamera\?\.perspective \? nothing : floorTargets\(\)/,
+    'the affine camera preserves the transparent floor hit targets');
+  assert.doesNotMatch(projection, /iso-underlay-svg|iso-shadows-svg|iso-walls-svg|iso-furniture-foreground/);
   assert.match(sceneRender, /class="iso-wall-top"/);
   assert.match(sceneRender, /class="iso-wall-side"/);
   assert.match(sceneRender, /class="iso-opening-panel iso-\$\{surface\.type\} iso-opening-\$\{surface\.kind\} iso-material-\$\{surface\.material\}"/);
@@ -273,10 +275,9 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
 
 test('show_borders:false keeps the Flat floor plane and removes every volume cue', () => {
   assert.match(card, /isoLayers && !isoLayers\.floorSymbols/);
-  assert.match(card, /<svg class="plan-svg"[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
+  assert.match(card, /<svg class="plan-svg"[\s\S]*?data-hp-live-viewbox="camera"/);
   // The browser parity test compares the painted plane, fit and input at all four turns.
-  assert.match(card, /class="iso-floor-scene" transform=\$\{this\._floorTransform\}/);
-  assert.match(card, /isoLayers\?\.structural \? svg`[\s\S]*?<g class="iso-shadows-svg"/);
+  assert.match(card, /class="iso-floor-scene" transform=\$\{this\._floorTransform\} opacity="0"/);
   assert.match(card, /if \(!runtime \|\| !layers\?\.structural \|\| !structural\) return null/);
   const baseView = section(card, 'private _baseVb(', '/** How many objects');
   const effective = section(card, 'private _effectiveProjection()', 'private _floorView');
@@ -310,12 +311,9 @@ test('one frame resolves one structural source and latches late topology/project
   assert.match(effective, /fallback = \(\) => \{ if \(this\._renderProjection === 'iso'\)/,
     'the persistent latch must not erase later Flat pan/zoom frames');
   const renderBody = section(card, 'private _renderBody()', 'private _renderSpaceDialog');
-  assert.equal([...renderBody.matchAll(/resolveIsoFramePresentation\(/g)].length, 1);
-  const startup = section(card, 'private _startupIsoFrame(', 'private async _captureStartupSvg(');
-  assert.match(startup, /resolveIsoFramePresentation\([\s\S]*?amountOf: opening => resolvedOpeningAmount\(opening, \(\) => null\)/,
-    'a separate idle snapshot can reuse structure without live opening state');
-  assert.match(renderBody, /this\._startupSource = previewView => \{[\s\S]*?this\._startupIsoFrame\(/,
-    'only the deferred capture runs the neutral pass');
+  assert.equal([...renderBody.matchAll(/preparePlan3dFrame\(/g)].length, 1);
+  assert.match(renderBody, /this\._startup3dSource = \(\) => \([\s\S]*?lights: \[\],[\s\S]*?opening => resolvedOpeningAmount\(opening, \(\) => null\)/,
+    'a deferred 3D snapshot reuses the geometry with neutral lights and opening state');
   assert.doesNotMatch(renderBody, /this\._isoScene\(/);
   assert.match(renderBody, /catch \(error\)[\s\S]*?_latchIsoFallback[\s\S]*?_cancelCameraTransition\(false\)[\s\S]*?projection = 'flat'; iso = false/);
   assert.match(renderBody, /this\._view = null;[\s\S]*?_baseVb\('flat', null\)/);
@@ -412,10 +410,12 @@ test('#649 room labels keep the configured colour in both themes; 2.5D only drop
   assert.equal(styleBodiesFor('projection-iso', 'theme-dark', '.roomlabel'), '');
 });
 
-test('Stage 4 adds no schema, dependency, storage, network or HA action surface', () => {
+test('the projected model and the 3D render graph add no storage or HA action surface', () => {
   for (const source of [openings, overlays, projection, sceneRender]) {
     assert.doesNotMatch(source, /localStorage\s*\.|fetch\(|XMLHttpRequest|WebSocket|callService\(|Math\.random/);
   }
-  assert.doesNotMatch(packageJson, /three|babylon|webgl/i);
+  const dependencies = JSON.parse(packageJson).dependencies;
+  assert.ok(/^\d+\.\d+\.\d+$/.test(dependencies.three), 'the approved GPU engine has an exact dependency pin');
+  assert.doesNotMatch(card, /from ['"]three['"]/, 'the eagerly loaded card does not import the GPU engine');
   assert.doesNotMatch(card, /iso2|isometric_stage|stage2_enabled|stage3_enabled|hp_alpha_stage/);
 });

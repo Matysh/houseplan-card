@@ -1,4 +1,4 @@
-import { Camera, Color, Matrix4, Mesh, MeshBasicMaterial, NoColorSpace, Scene, SRGBColorSpace,
+import { Camera, Color, Frustum, Matrix4, Mesh, MeshBasicMaterial, NoColorSpace, Scene, SRGBColorSpace,
   WebGLRenderer, WebGLRenderTarget, type Material, type Object3D } from 'three';
 import { startupWebpFromCanvas } from './startup-floor-wire';
 
@@ -23,6 +23,7 @@ class Plan3dOutput {
   private readonly pickTarget = new WebGLRenderTarget(1, 1, { depthBuffer: true, stencilBuffer: false });
   private readonly pickCamera = new Camera();
   private readonly pickCrop = new Matrix4();
+  private readonly pickFrustum = new Frustum();
   private readonly pixel = new Uint8Array(4);
   private readonly views = new Set<Plan3dViewport>();
   private readonly pending = new Set<Plan3dViewport>();
@@ -106,6 +107,8 @@ class Plan3dOutput {
     this.pickCamera.updateMatrixWorld(true);
     this.pickCamera.projectionMatrix.multiplyMatrices(this.pickCrop, frame.camera.projectionMatrix);
     this.pickCamera.projectionMatrixInverse.copy(this.pickCamera.projectionMatrix).invert();
+    this.pickFrustum.setFromProjectionMatrix(this.pickCrop.multiplyMatrices(
+      this.pickCamera.projectionMatrix, this.pickCamera.matrixWorldInverse));
     frame.scene.updateMatrixWorld(true);
 
     const scene = new Scene();
@@ -136,6 +139,7 @@ class Plan3dOutput {
     };
     frame.scene.traverseVisible((object: Object3D) => {
       if (!(object instanceof Mesh)) return;
+      if (object.frustumCulled && !this.pickFrustum.intersectsObject(object)) return;
       const policy = object.userData.plan3dPick as Plan3dPickSurface | undefined;
       if (!policy?.id && policy?.occludes === false) return;
       const id = policy?.id;
@@ -226,6 +230,11 @@ export class Plan3dViewport {
     this.output.queue(this);
   }
 
+  density(worldWidth: number): number {
+    const dpr = this.canvas.ownerDocument.defaultView?.devicePixelRatio || 1;
+    return (this.cssSize.width || this.canvas.clientWidth) * Math.min(dpr, 2) / worldWidth;
+  }
+
   paint(): void {
     const frame = this.frame;
     const { width, height } = this.cssSize;
@@ -279,6 +288,7 @@ export class Plan3dViewport {
     this.intersection?.disconnect();
     this.frame = undefined;
     this.painted = undefined;
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.output.detach(this);
   }
 }

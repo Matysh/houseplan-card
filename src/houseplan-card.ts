@@ -322,7 +322,7 @@ import {
   type RoomFitGestureCandidate,
 } from './room-fit';
 import type { FurniturePlacementPress } from './furniture-placement-press';
-import { authoredHouseplanSceneViewport, authoredHouseplanViewport, refreshHouseplanViewportNodes, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
+import { authoredHouseplanSceneViewport, authoredHouseplanViewport, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
 import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
@@ -345,16 +345,14 @@ import {
 import {
   isoDisplayWallHeight, isoCameraFor, directIsoRotation, isoViewTurn, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, isoReadingYaw, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
-import {renderIsoPerspectiveFloor, renderIsoPerspectiveSnapshot} from './iso-perspective-floor';
+import { renderIsoPerspectiveFloor } from './iso-perspective-floor';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
 import type { IsoWallLightSource } from './iso-wall-light';
-import { IsoLightTransition } from './iso-light-transition';
 import {acceptedViewFrame, canonicalPhysicalCamera, hasMeasuredViewSize, physicalViewCamera, presentedView, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
-import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume, tvCabinetSurfaceCm } from './iso-lab-furniture';
+import { furnitureParts, tvCabinetSurfaceCm } from './iso-lab-furniture';
 import { tvCabinet, tvOnCabinet } from './tv-mount';
 import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
 import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
-import { renderIsoLabFurniture, furnitureShadow } from './iso-lab-furniture-render';
 import { isoLockGlass } from './iso-marker-outline';
 import { renderIsoMarkerGlass } from './iso-marker-glass';
 import {
@@ -369,9 +367,9 @@ import { controlMotion } from './ui-motion';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
 import type {
-  IsoFramePresentation, IsoFurniturePaint, IsoOverlayRenderScene, IsoRenderScene, IsoSceneCacheEntry,
+  IsoOverlayRenderScene, IsoRenderScene, IsoSceneCacheEntry,
   IsoStructuralSource,
-} from './iso-scene-render';
+} from './plan-3d-runtime';
 import {
   acquireHaRegistries, cacheHaBindingStatuses,
   fullRegistryHass, haRegistryBuildSignature, haRegistryDiagnostics, haRegistrySnapshot,
@@ -422,7 +420,7 @@ import { LazyChromeTooltips } from './chrome-tooltip-lazy';
 import { HiddenDevicePreference, HiddenDeviceRoster, hiddenDevicePreferenceKey, hiddenDeviceStorage } from './hidden-device-visibility';
 import { isoWallMaterialVars, isoOpeningMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
 import {
-  isoFloorShadowGradient, renderIsoLabelFloorShadow, renderIsoMarkerFloorShadow, type IsoFloorShadow,
+  renderIsoLabelFloorShadow, renderIsoMarkerFloorShadow, type IsoFloorShadow,
 } from './iso-floor-shadows';
 import { displayVersion } from './card-version';
 import { ConfigFingerprintPass } from './config-fingerprint-pass';
@@ -808,20 +806,25 @@ export class HouseplanCard extends LitElement {
    * the ordinary View graph, but use the same exact-build, atomic installation
    * contract as the editor runtimes so a stale chunk can never half-install.
    */
-  private _isoSceneRuntime: typeof import('./iso-scene-render') | null = null;
+  private _isoSceneRuntime: typeof import('./plan-3d-runtime') | null = null;
   private _plan3dHost: import('./plan-3d-host').Plan3dHost | undefined;
+  private _plan3dAuthority?: PlanHost['authorityKey'];
   private _plan3dPresentation: import('./plan-3d-host').Plan3dPresentation | undefined;
-  private _plan3dFailure: { key: string; space: string } | undefined;
+  private _plan3dFailure: { key: string; space: string; load?: 'retry' | 'reload' } | undefined;
   private _flatExportScene: ((view: FrameRect, rotation: PlanRotation) => TemplateResult) | undefined;
+  private _plan3dDevices?: ReadonlyMap<string, IsoOverlayPlacement>;
 
   private _disposePlan3dHost(): void {
+    this._plan3dHost?.canvas.removeAttribute('data-hp-plan-3d-ready');
     this._plan3dHost?.dispose();
     this._plan3dHost = undefined;
+    this._plan3dAuthority = undefined;
   }
 
   private _syncPlan3dHost(): void {
     const runtime = this._isoSceneRuntime;
     const presentation = this._plan3dPresentation;
+    const authority = this.planHost.authorityKey;
     const canvas = this.renderRoot.querySelector<HTMLCanvasElement>('canvas[data-hp-plan-3d]');
     const view = this.renderRoot.querySelector<SVGSVGElement>('svg[data-hp="stage"]');
     if (!presentation || !runtime || !canvas || !view) {
@@ -830,22 +833,39 @@ export class HouseplanCard extends LitElement {
     }
     const fail = () => {
       const key = this._renderIsoScene?.key ?? this._isoInvalidKey();
-      if (this._space) this._plan3dFailure = { key, space: this._space };
       this._latchIsoFallback(key, '3d-render');
       this._isoProjectionSnapshot = null;
       this._disposePlan3dHost();
       if (this.isConnected) this.requestUpdate();
     };
     try {
-      if (this._plan3dHost?.canvas !== canvas || this._plan3dHost?.view !== view) {
+      if (this._plan3dHost?.canvas !== canvas || this._plan3dHost?.view !== view || this._plan3dAuthority !== authority) {
         this._disposePlan3dHost();
-        this._plan3dHost = new runtime.Plan3dHost(canvas, view, this._gridPitch * .002, fail, () => {
+        this._plan3dAuthority = authority;
+        this._plan3dHost = new runtime.Plan3dHost(canvas, view, this._gridPitch * .002, fail, (nativeMarkers, outlines) => {
+          for (const element of this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-hp-3d-device]')) {
+            const id = element.dataset.id ?? '';
+            element.toggleAttribute('data-hp-3d-native', nativeMarkers.has(id));
+            element.toggleAttribute('data-hp-3d-native-outline', outlines.has(id));
+          }
           if (canvas.hasAttribute('data-hp-plan-3d-ready')) return;
           canvas.setAttribute('data-hp-plan-3d-ready', '');
           this.requestUpdate();
         });
       }
-      this._plan3dHost.present(presentation);
+      const contacts = this._deviceContacts;
+      const markers = [...this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-hp-3d-device]')].flatMap(element => {
+        const id = element.dataset.id ?? '', placement = this._plan3dDevices?.get(id);
+        const geometry = contacts?.volumeFaces(id);
+        const diameter = placement?.deviceSize;
+        if (!placement || !diameter || !geometry) return [];
+        const turn = (isoReadingYaw(presentation.preset.rotDeg) - presentation.preset.rotDeg) * Math.PI / 180;
+        const iconAngle = Number(element.dataset.hp3dDevice) * Math.PI / 180;
+        const faces = runtime.readPlan3dMarkerFaces(element, geometry, turn + iconAngle);
+        return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: presentation.sectionHeight, faces }] : [];
+      });
+      const outlines = contacts?.volumeOutlines(new Set(markers.map(marker => marker.id)));
+      this._plan3dHost.present(presentation, markers, outlines);
     } catch {
       fail();
     }
@@ -854,24 +874,26 @@ export class HouseplanCard extends LitElement {
   private readonly _retryPlan3d = (): void => {
     const failed = this._plan3dFailure;
     if (!failed || failed.space !== this._space) return;
+    if (failed.load === 'reload') { this.ownerDocument.defaultView?.location.reload(); return; }
     this._isoFallback.delete(failed.key);
     this._plan3dFailure = undefined;
     this._isoProjectionSnapshot = null;
+    if (failed.load === 'retry') void this._ensureIsoSceneRuntime();
     this.requestUpdate();
   };
 
   private readonly _isoSceneRuntimeLoader = new EditorRuntimeLoader<
-    typeof import('./iso-scene-render')
+    typeof import('./plan-3d-runtime')
   >({
     expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
     load: async (attempt) => {
       const module = attempt === 0
-        ? await import('./iso-scene-render')
+        ? await import('./plan-3d-runtime')
         : await import(/* @vite-ignore */ (() => {
             const url = new URL(ISO_RETRY_ASSET, import.meta.url);
             url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
             return url.href;
-          })()) as typeof import('./iso-scene-render');
+          })()) as typeof import('./plan-3d-runtime');
       return {
         fingerprint: module.ISO_SCENE_RUNTIME_FINGERPRINT,
         create: () => module,
@@ -880,6 +902,7 @@ export class HouseplanCard extends LitElement {
     install: (runtime) => {
       const from = this._effectiveProjection(); this._isoFirstFrame.runtimeReady();
       this._isoSceneRuntime = runtime;
+      if (this._plan3dFailure?.load) this._plan3dFailure = undefined;
       this._floorPreparation?.rehydrate();
       this._isoProjectionSnapshot = null;
       const to = this._effectiveProjection();
@@ -888,6 +911,7 @@ export class HouseplanCard extends LitElement {
     },
     failed: (_ignored, info) => {
       this._isoFirstFrame.runtimeFailure(); console.warn('[houseplan] hidden isometric runtime diagnostic', safeRuntimeDiagnostic('runtime-load', 'unverified', info.terminal));
+      if (this._space) this._plan3dFailure = { key: 'load', space: this._space, load: info.terminal ? 'reload' : 'retry' };
       if (this.isConnected) this.requestUpdate();
     },
   });
@@ -1941,15 +1965,6 @@ export class HouseplanCard extends LitElement {
     try { this.requestUpdate(); } finally { this._modeScenePhaseRequest = false; }
   }
   private readonly _modeSceneBuilds: Record<string, number> = {};
-  private readonly _isoLight = new IsoLightTransition<{
-    glow: TemplateResult; led: TemplateResult | undefined; lights: IsoWallLightSource[];
-  }>(() => this.requestUpdate(), () => refreshHouseplanViewportNodes(this));
-
-  private _isoAuthoredScene(): SVGSVGElement | HTMLDivElement | null {
-    return this.renderRoot.querySelector(
-      '.iso-scene-surface > :is(.plan-svg, .iso-perspective-light-frame):not([data-hp-retained-light])',
-    );
-  }
 
   private _modeGlowInputs: readonly unknown[] | null = null;
   private _modeSceneFinishPending = false;
@@ -3307,19 +3322,8 @@ export class HouseplanCard extends LitElement {
       && this._continuity.state === 'steady' && this._floorSourceAccepted());
   }
 
-  /** Separate optional idle capture from the live frame's failure boundary. */
-  private _startupIsoFrame(display: SpaceDisplay, scene: IsoRenderScene | null,
-    furniture?: () => IsoFurniturePaint[]): IsoFramePresentation | null {
-    return this._isoSceneRuntime?.resolveIsoFramePresentation({
-      projection: 'iso', display, scene, openings: this._openingsR.filter(o => !o.orphanReason),
-      cellCm: this._cellCm, amountOf: opening => resolvedOpeningAmount(opening, () => null),
-      visualOf: opening => resolveOpeningVisual(opening, () => null, resolvedOpeningAmount(opening, () => null)),
-      overlays: () => null, furniture: furniture?.(), wallLights: [],
-    }) ?? null;
-  }
-
   private async _captureStartupSvg(stage: HTMLElement, source: () => TemplateResult[], view: FrameRect, signal: AbortSignal,
-    portable?: (nodes: StartupVector[]) => void): Promise<Blob | null> {
+    portable?: (nodes: StartupVector[]) => void, stretch = false): Promise<Blob | null> {
     const container = this.ownerDocument.createElement('div'), shell = this.ownerDocument.createElement('div');
     // Resolve the same styles on a connected tree without publishing a second
     // .stage to card observers, native selectors, or the accessibility tree.
@@ -3345,7 +3349,7 @@ export class HouseplanCard extends LitElement {
     scene.classList.add('plan-svg');
     scene.setAttribute('width', String(rect.width)); scene.setAttribute('height', String(rect.height));
     scene.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
-    scene.setAttribute('preserveAspectRatio', original.getAttribute('preserveAspectRatio') || 'xMidYMid meet');
+    scene.setAttribute('preserveAspectRatio', stretch ? 'none' : original.getAttribute('preserveAspectRatio') || 'xMidYMid meet');
     if (stage.hasAttribute('data-hp-iso-floor-markers')) shell.setAttribute('data-hp-iso-floor-markers','true');
     wrap.append(scene); shell.append(wrap); isolated.append(shell); this.renderRoot.appendChild(container);
     try {
@@ -4323,7 +4327,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private get _desiredProjection(): 'flat' | 'iso' {
-    return this._mode === 'view' && this._isoEnabled ? 'iso' : 'flat';
+    return this._mode === 'view' && this._isoEnabled && this._spaceDisplayForRender().showBorders ? 'iso' : 'flat';
   }
 
   private _viewPlane: ViewPlane = null;
@@ -4821,7 +4825,6 @@ export class HouseplanCard extends LitElement {
     // pointer kept here would turn the next press after a reattach into a pinch.
     this._abandonViewInput();
     this._sunFadeReset();
-    this._isoLight.clear();
     clearTimeout(this._reloadRetry);
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined; // a cleared id must not block a reschedule
@@ -6430,8 +6433,8 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(changed: PropertyValues): void {
-    this._syncPlan3dHost();
     this._cfgPass.run(() => this._updatedModeReadScope(changed));
+    this._syncPlan3dHost();
   }
   private _updatedModeReadScope(changed: PropertyValues): void {
     if (this._floorPreparation?.failed) {
@@ -6483,7 +6486,6 @@ export class HouseplanCard extends LitElement {
           if (this.isConnected && runtime === this._floorPreparation && token !== runtime?.paintToken) this.requestUpdate(); });
     }
     this._publishFloorCacheAfterPaint();
-    this._isoLight.present(this._isoAuthoredScene());
     this._modePresentationNodes.clear();
     this._modePresentation.adoptRenderedStyles();
     this._syncModeRoomHooks();
@@ -8325,6 +8327,14 @@ export class HouseplanCard extends LitElement {
     );
   }
 
+  private _nativeDeviceForAction(ev: Event, fallback: DevItem): DevItem | undefined {
+    const target = ev.currentTarget as HTMLElement | null;
+    if (!(ev instanceof MouseEvent) || ev.type === 'click' && ev.detail === 0
+      || !target?.hasAttribute('data-hp-3d-native') || this._mode !== 'view') return fallback;
+    const id = this._plan3dHost?.pick(ev.clientX, ev.clientY);
+    return id ? this._renderDevices.find(device => device.id === id && device.space === this._space) : undefined;
+  }
+
   private _showDeviceTip(ev: PointerEvent | WheelEvent, d: DevItem): void {
     if (this._liveRt) this._liveRt.devicePointerTip(ev, d);
     else this._viewRuntimes.withLive(runtime => runtime.devicePointerTip(ev, d));
@@ -8340,7 +8350,10 @@ export class HouseplanCard extends LitElement {
 
   /** View and Devices context menus keep the same screen-space hit owner. */
   private _ctxDevice(ev: MouseEvent, d: DevItem): void {
-    d = this._deviceForPointerEvent(ev as PointerEvent, d);
+    const picked = this._nativeDeviceForAction(ev, d);
+    if (!picked) return;
+    d = (ev.currentTarget as Element | null)?.hasAttribute('data-hp-3d-native')
+      ? picked : this._deviceForPointerEvent(ev as PointerEvent, picked);
     if (this._mode === 'devices') { this._editorRuntime?.deviceCopy.open(ev, d); return; }
     if (this._mode !== 'view') return;
     ev.preventDefault();
@@ -8366,8 +8379,10 @@ export class HouseplanCard extends LitElement {
     // if a future CSS change accidentally makes a marker a hit target again.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
     if (this._deviceDragRetirement.blocksClick(ev as PointerEvent)) return;
+    const picked = this._nativeDeviceForAction(ev, d);
+    if (!picked) return;
     ev.stopPropagation();
-    d = this._deviceForClickEvent(ev, d);
+    d = (ev.currentTarget as Element | null)?.hasAttribute('data-hp-3d-native') ? picked : this._deviceForClickEvent(ev, picked);
     if (this._deviceDrag?.moved || this._suppressClick || this._holdFired) return;
     if (this._mode === 'devices') {
       const properties = this._editorRuntime?.properties;
@@ -8841,6 +8856,7 @@ export class HouseplanCard extends LitElement {
   private _latchIsoFallback(key: string, _ignored: unknown): void {
     if (this._isoFallback.has(key)) return;
     this._isoFallback.add(key);
+    if (this._space) this._plan3dFailure = { key, space: this._space };
     const fingerprint = key.includes('|invalid|') ? 'invalid' : key.split('|').pop() || 'invalid';
     console.warn('HOUSEPLAN ISO FALLBACK: #89/#160', safeRuntimeDiagnostic('structural', fingerprint, true));
   }
@@ -8858,7 +8874,7 @@ export class HouseplanCard extends LitElement {
       if (FURNITURE_VOLUME_RUNTIME.state() === 'fallback') return fallback();
     }
     if (!this._spaceDisplayForRender().showBorders)
-      return this._isoFallback.has(`${this._space}|no-borders`) ? fallback() : finish('iso');
+      return fallback();
     let key = this._isoInvalidKey();
     this._clearIsoInvalidFallback(key);
     if (this._isoFallback.has(key)) return fallback();
@@ -9978,13 +9994,15 @@ export class HouseplanCard extends LitElement {
     // capture it or create a layout drag.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
     if (ev.button !== 0) return; // context-menu input must not arm a drag or hold
+    const picked = this._nativeDeviceForAction(ev, d);
+    if (!picked) { ev.preventDefault(); return; }
     if (this._mode === 'devices' && this._editorRuntime?.properties.wide && !this._editorRuntime.properties.selectDevice(d)) {
       ev.preventDefault(); ev.stopPropagation(); return;
     }
     this._deviceDragRetirement.begin(ev.pointerId);
     if (this._mode === 'view' && ev.pointerType === 'touch' && this._touchSequenceMultitouch) return;
-    d = this._deviceHits.begin(
-      this.renderRoot, this._renderDevices, this._space, ev, d,
+    d = (ev.currentTarget as Element | null)?.hasAttribute('data-hp-3d-native') ? picked : this._deviceHits.begin(
+      this.renderRoot, this._renderDevices, this._space, ev, picked,
     );
     if (this._mode === 'view') {
       // view: no drag, no capture — panning may start on an icon; only the
@@ -11431,7 +11449,7 @@ export class HouseplanCard extends LitElement {
   private _renderDecorLayer(
     onlyId?: string | readonly string[] | null,
     planView = this._viewOr(this._baseVb()),
-    paint: 'all' | 'floor' | 'volume' = 'all',
+    paint: 'all' | 'floor' = 'all',
     staticOnly = false,
   ): TemplateResult {
     const W = NORM_W, H = this._decorH;
@@ -11465,23 +11483,7 @@ export class HouseplanCard extends LitElement {
     if (paint !== 'all' && decorShapes.some(({shape})=>shape.kind==='furniture')) void FURNITURE_VOLUME_RUNTIME.ensure(this);
     // Tilted Lab furniture sits above floor light. Keep flat/unsupported decor
     // in its original slot; each object is painted exactly once.
-    if (paint !== 'all') decorShapes = decorShapes.filter(({shape: sh}) => {
-      const volume = sh.kind === 'furniture' && !!furnitureParts(sh.symbol);
-      return paint === 'volume' ? volume : !volume;
-    });
-    if (paint === 'volume') {
-      const camera=isoCameraFor(this._rotation);
-      const depth = (entry: typeof decorShapes[number]) =>
-        furnitureViewDepth(entry.shape as Extract<DecorShape,{kind:'furniture'}>,W,H,camera);
-      const furniture=decorShapes.filter(({shape})=>shape.kind==='furniture' && furnitureParts(shape.symbol))
-        .sort((a,b) => {
-          const delta = depth(a)-depth(b);
-          return Math.abs(delta) > 1e-9 ? delta : Number(!!a.cabinet)-Number(!!b.cabinet);
-        });
-      let next=0;
-      // Retain other decor's paint slots; only order supported volume subjects.
-      decorShapes=decorShapes.map(entry=>entry.shape.kind==='furniture' && furnitureParts(entry.shape.symbol) ? furniture[next++] : entry);
-    }
+    if (paint === 'floor') decorShapes = decorShapes.filter(({ shape }) => shape.kind !== 'furniture' || !furnitureParts(shape.symbol));
     const shapes = decorShapes.map(({record, shape: sh, owner, cabinet}) => guard([this._modeSceneRevision, FURNITURE_VOLUME_RUNTIME.state(), record, cabinet, furnitureScreenScale, onlyId, paint, this._rotation, this._renderProjection, this._cellCm,
       editing && this._decorSel === owner.id, erasing, preparedSelect,
       sh.kind === 'image' && !this._decorAssets.has(sh.asset_id) && editing], () => {
@@ -11553,11 +11555,6 @@ export class HouseplanCard extends LitElement {
             @pointerdown=${down}></rect>` : nothing}`;
       }
       if (sh.kind === 'furniture') {
-        if (paint === 'volume') {
-          const scale=gridVisualScale(this._cellCm);
-          const mesh=furnitureMesh(sh,W,H,isoCameraFor(this._rotation),scale,cabinet ? tvCabinetSurfaceCm() : 0);
-          if(mesh) return renderIsoLabFurniture(mesh,sh.id,sh.symbol,style.color,scale,!cabinet);
-        }
         // One path per piece. Designer art keeps its native viewBox and is
         // scaled to the user's stored box; vector-effect rejects that local
         // non-uniform transform while furnitureScreenScale restores the outer
@@ -13018,7 +13015,7 @@ export class HouseplanCard extends LitElement {
         this._isoSunCache = { key: isoKey, wallHeight, beams: isoSun.computeIsoSunBeams({ ...inputs, azimuth: sun.azimuth, elevation: sun.elevation, northDeg: north!, wallHeight, lightFloorRooms: this._isoLightFloors ?? undefined }) };
       }
       capture3d?.(this._isoSunCache.beams);
-      return isoSun.renderIsoSunWash(this._isoSunCache.beams, this._isoSunCache.wallHeight, this._sunOut, this._modeTransitionVisual?.viewWeight ?? 1) as TemplateResult;
+      return svg``;
     }
     if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
       this._floorCacheBuilds.sunRays++;
@@ -13935,9 +13932,6 @@ export class HouseplanCard extends LitElement {
     `);
   }
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
-    this._plan3dPresentation = undefined;
-    this._startup3dSource = undefined;
-    this._flatExportScene = undefined;
     this._floorHolding = false; this._floorPassive = false;
     this._startupSource = undefined;
     this._observeStartupFloor();
@@ -14100,114 +14094,80 @@ export class HouseplanCard extends LitElement {
     let isoScene = iso ? this._renderIsoScene : null;
     this._adoptViewPlane(isoScene?.camera ?? null);
     let view = this._authoredView(this._viewOr(this._baseVb(projection, isoScene)), projection);
-    let isoFrame: IsoFramePresentation | null = null;
-    let isoGlowLayer: TemplateResult | undefined;
-    let isoLedField: TemplateResult | undefined;
-    let isoWallLights: IsoWallLightSource[] = [];
+    let isoFrame: ReturnType<typeof import('./plan-3d-runtime').preparePlan3dFrame> | null = null;
+    const currentWallLights: IsoWallLightSource[] = [];
+    this._plan3dPresentation = undefined;
+    this._startup3dSource = undefined;
+    this._flatExportScene = undefined;
+    this._plan3dDevices = undefined;
     const scale = gridVisualScale(this._cellCm);
     let useFurnitureVolume = iso && disp.showBorders && ISO_LAB_FURNITURE && this._mode === 'view';
-    let furnitureShadows: TemplateResult | TemplateResult[] | typeof nothing = nothing;
     let stairVolumes: ReturnType<StairViewRuntime['volumeItems']> | undefined;
-    let startupFurniture: (() => IsoFurniturePaint[]) | undefined;
     const furniture3d: import('./plan-3d-world').Plan3dFurniture[] = [];
     try {
-      if (iso) {
-        const glow = this._renderGlowLayer(space, disp, view, sources => isoWallLights.push(...sources));
-        const led = this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow,
-          source => isoWallLights.push(source));
-        const openingPose = this._openingsR.map(opening => this._openingAmtForProjection(opening, projection)).join(',');
-        const scope = [this.planHost.authorityKey, isoScene?.key, this._cfgEpoch, this._layoutRev,
-          this._rotation, this._presentation.themes?.darkMode, openingPose].join('|');
-        const signature = JSON.stringify(isoWallLights.map(source => [
-          source.key, source.color, source.alpha, source.radius, source.points,
-        ]));
-        const field = this._isoLight.choose(scope, signature, { glow, led, lights: isoWallLights },
-          this._isoAuthoredScene(), !this._reducedMotion && !this._modeTransitionBusy && !this._floorPassive);
-        isoGlowLayer = field.glow;
-        isoLedField = field.led;
-        isoWallLights = field.lights;
-      } else this._isoLight.clear();
-      const sampleFurnitureLight = isoRuntime?.isoFurnitureLightSampler(isoWallLights, isoScene?.geometry);
-      const camera = isoScene?.camera;
-      const neutralFurniture: Array<() => IsoFurniturePaint> = [];
-      startupFurniture = () => neutralFurniture.map(paint => paint());
-      const furniture: (IsoFurniturePaint & {lift:number;shadow:TemplateResult|typeof nothing})[] = useFurnitureVolume && camera && !disp.hideDecor
-        ? this._decorList.filter((item): item is Extract<DecorShape,{kind:'furniture'}> => item.kind === 'furniture')
-          .flatMap(item=>{
+      if (isoScene && isoRuntime) {
+        this._renderGlowLayer(space, disp, view, sources => currentWallLights.push(...sources));
+        this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow,
+          source => currentWallLights.push(source));
+        if (useFurnitureVolume && !disp.hideDecor) {
+          for (const item of this._decorList) {
+            if (item.kind !== 'furniture') continue;
             const cabinet = item.tv_cabinet_id ? tvCabinet(this._decorList, item) : undefined;
-            const lift = cabinet ? tvCabinetSurfaceCm() : 0;
+            const liftCm = cabinet ? tvCabinetSurfaceCm() : 0;
             const shape = cabinet ? tvOnCabinet(item, cabinet) : item;
-            const volume = furnitureVolume(shape,NORM_W,this._decorH,camera,scale,lift);
-            if (!volume) return [];
-            const {mesh,footprint,height} = volume;
-            const style = this._decorResolvedStyle(item);
-            furniture3d.push({ record: item, cabinet, shape, liftCm: lift, color: style.color, opacity: .65 });
-            neutralFurniture.push(() => ({footprint,height,mesh,lift,opacity:1,
-              body:svg`<g transform=${isoFloorMatrixCss(camera)}>
-                ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,scale,false)}</g>`}));
-            return [{footprint,height,mesh,lift,opacity:1,
-              shadow:lift ? nothing : furnitureShadow(mesh,scale,false),
-              body:svg`<g transform=${isoFloorMatrixCss(camera)}>
-                ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,scale,false,sampleFurnitureLight)}</g>`}];
-          }) : [];
-      if(iso && camera){
-        stairVolumes=this._stairsView.volumeItems(camera);
-        for(const [id,volume] of stairVolumes){
-          const item = new Map([[id,volume]]);
-          const transform = isoFloorMatrixCss(camera);
-          const depthPaint = disp.transparentWalls3d;
-          furniture.push({...volume,lift:0,
-            shadow:furnitureShadow(volume.mesh,scale,false),
-            body:svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume',depthPaint ? 'paint' : 'all')}</g>`,
-            hit:depthPaint ? svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume','hit')}</g>` : undefined});
-          neutralFurniture.push(() => ({...volume,lift:0,hit:undefined,
-            body:svg`<g transform=${transform}>${this._stairsView.renderLayer(item,'volume','paint')}</g>`}));
+            furniture3d.push({ record: item, cabinet, shape, liftCm, color: this._decorResolvedStyle(item).color, opacity: .65 });
+          }
         }
-        const [,b,,d]=isoFloorMatrix(camera);
-        const depth=(item:typeof furniture[number])=>item.footprint.reduce((sum,p)=>sum+b*p[0]+d*p[1],0)/item.footprint.length;
-        furniture.sort((x,y)=>{
-          const delta = depth(x)-depth(y);
-          // A mounted TV shares its cabinet's center and must paint above it.
-          return Math.abs(delta)>1e-9 ? delta : x.lift-y.lift;
+        stairVolumes = this._stairsView.volumeItems(isoScene.camera);
+        isoFrame = isoRuntime.preparePlan3dFrame({
+          display: disp, scene: isoScene, openings: this._openingsR,
+          amountOf: opening => this._openingAmtForProjection(opening, projection),
+          visualOf: opening => resolveOpeningVisual(opening,
+            eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null,
+            this._openingAmt(opening)),
+          overlays: layers => this._isoOverlayScene(space, devs, disp, layers, isoScene, iconPct, deviceBasePct, showLqi),
         });
       }
-      isoFrame = isoRuntime?.resolveIsoFramePresentation({
-        projection, display: disp, scene: isoScene, openings: this._openingsR, furniture,
-        wallLights: isoWallLights,
-        amountOf: opening => this._openingAmtForProjection(opening, projection), cellCm: this._cellCm,
-        visualOf: opening => resolveOpeningVisual(opening,
-          eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null,
-          this._openingAmt(opening)),
-        overlays: (layers) => this._isoOverlayScene(
-          space, devs, disp, layers, isoScene, iconPct, deviceBasePct, showLqi),
-      }) ?? null;
-      if (useFurnitureVolume) {
-        furnitureShadows = isoFrame?.layers.structural && furniture.length
-          ? svg`<defs><filter id="hp-iso-furniture-penumbra" color-interpolation-filters="sRGB">
-              <feGaussianBlur stdDeviation=${3.5 * scale}></feGaussianBlur>
-            </filter></defs><g filter="url(#hp-iso-furniture-penumbra)">${furniture.map(item => item.shadow)}</g>`
-          : !disp.hideDecor ? this._renderDecorLayer(undefined, view, 'volume') : nothing;
-      }
     } catch (error) {
-      this._latchIsoFallback(disp.showBorders
-        ? isoScene?.key || this._isoInvalidKey() : `${space.id}|no-borders`, error);
+      this._latchIsoFallback(isoScene?.key || this._isoInvalidKey(), error);
       this._cancelCameraTransition(false); projection = 'flat'; iso = false; isoScene = null; isoFrame = null;
       this._renderProjection = 'flat'; this._renderIsoScene = null;
       this._isoProjectionSnapshot = 'flat'; this._view = null;
       this._viewPlane = null; this._viewPlaneKnown = true;
-      this._isoLight.clear();
-      // The same Lit pass rendered the raised leaf's light barriers before
-      // Iso failed. The Flat fallback must resolve its own optical plane.
+      // The same Lit pass rendered raised opening barriers before the failure.
       this._lightBarrierPass.invalidate(space);
-      useFurnitureVolume = false; furnitureShadows = nothing;
-      stairVolumes = undefined; isoGlowLayer = undefined; isoLedField = undefined;
+      useFurnitureVolume = false;
+      stairVolumes = undefined;
       view = this._authoredView(this._viewOr(this._baseVb('flat', null)), 'flat');
     }
+    const spatial = isoFrame?.layers.structural === true;
     const sceneView = iso ? authoredHouseplanSceneViewport(this, view) : view;
     let sun3d: readonly import('./iso-sun').IsoSunBeam[] = [];
-    const sunLayer = iso ? this._renderSunRays(space, beams => { sun3d = beams; }) : undefined;
+    if (iso) this._renderSunRays(space, beams => { sun3d = beams; });
     if (isoScene && isoFrame?.layers.structural && isoRuntime) {
+      this._plan3dDevices = isoFrame.overlays?.devices;
       const content = this._frameOf();
+      const floorInk = (neutral: boolean): import('./plan-3d-world').Plan3dFloorInk | undefined => {
+        const bounds = content.all, decor = this._decorList;
+        const strokes = !disp.hideDecor && decor.some(shape => shape.kind !== 'furniture' || !useFurnitureVolume || !furnitureParts(shape.symbol));
+        const zeroWalls = this._zeroWalls();
+        const stairs = this._curSpaceCfg?.stairs;
+        if (!strokes && !zeroWalls.lines.length && !stairs?.length) return;
+        const authority = this.planHost.authorityKey;
+        const scope = space.id;
+        const key = [scope, neutral, bounds.x, bounds.y, bounds.w, bounds.h, this._cellCm, decor, disp.hideDecor,
+          useFurnitureVolume, disp.color, zeroWalls, stairs,
+          ...decor.flatMap(shape => shape.kind === 'text' && !neutral ? [this._renderDeviceSnapshot?.facts.get(`decor:${space.id}:${shape.id}`)]
+            : shape.kind === 'image' ? [this._display(this._decorAssets.get(shape.asset_id)?.url)] : [])];
+        return { scope, key, bounds, capture: signal => {
+          const stage = this._stageEl;
+          if (!stage || this.planHost.authorityKey !== authority || this._space !== scope) return Promise.resolve(null);
+          return this._captureStartupSvg(stage, () => [
+            svg`${this._renderZeroWalls(disp)}${this._stairsView.renderLayer(stairVolumes)}`,
+            strokes ? this._renderDecorLayer(undefined, bounds, useFurnitureVolume ? 'floor' : 'all', neutral) : svg``,
+          ], bounds, signal, undefined, true);
+        } };
+      };
       const cuts = this._openCuts(), union = this._wallUnionGeometry()?.roomGeom;
       const rooms3d = (fills: typeof roomFills) => space.rooms.flatMap((room, index) => {
         const color = fills.byRoom.get(room);
@@ -14223,15 +14183,19 @@ export class HouseplanCard extends LitElement {
         preset: isoCameraFor(this._rotationForProjection('iso')),
         bounds: isoRuntime.isoWorldBounds(isoScene, content.rect), content: content.all,
         sectionHeight: gridVisualUnits(isoDisplayWallHeight(), this._cellCm),
+        lightScope: [this.planHost.authorityKey, isoScene.key, this._space].join('|'),
+        animateLights: !this._reducedMotion && !this._modeTransitionBusy && !this._floorPassive,
         world: {
           physical: isoScene.physical, display: disp, cellCm: this._cellCm, visualScale: scale,
           paper: space.bg ? this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', '#111') : '#fff',
           backdrop: space.bg ? { url: this._display(space.bg.href), x: space.bg.x, y: space.bg.y,
             w: space.bg.w, h: space.bg.h, angle: space.bg.angle ?? 0, opacity: space.bg.opacity ?? 1 } : undefined,
+          floorInk: floorInk(false),
           panels: isoFrame.panels, rooms: rooms3d(roomFills), furniture: furniture3d, stairs: this._stairsView.physicalItems(),
+          ribbons: this._ledRt(space)?.plan3dLedRibbons(this as never, space, disp.glow),
           decorWidth: NORM_W, decorHeight: this._decorH,
-          lights: [...isoWallLights.map(source => ({
-            ...source, points: source.points.map(([x, y]) => [x, y]),
+          lights: [...currentWallLights.map(source => ({
+            ...source, id: source.key, points: source.points.map(([x, y]) => [x, y]),
             height: (source.key.startsWith('led:') ? 2 : 250) / this._cellCm * this._gridPitch,
             intensity: source.alpha,
           } as import('./plan-3d-light-field').Plan3dLight)),
@@ -14240,7 +14204,7 @@ export class HouseplanCard extends LitElement {
             const height = window?.windowProfile?.glassTop ?? window?.apertureTop
               ?? gridVisualUnits(isoDisplayWallHeight(), this._cellCm);
             return {
-              points: [beam.a, beam.b], height, radius: Math.hypot(...beam.shift),
+              id: `sun:${beam.openingId}:${beam.roomId}`, points: [beam.a, beam.b], height, radius: Math.hypot(...beam.shift),
               color: beam.lightFloor ? '#e2b95e' : '#ffe9b4',
               intensity: this._sunOut ? 0 : beam.lightFloor ? .46 : .62,
               visible: beam.polys.map(poly => 'M ' + poly.map(point => point.join(' ')).join(' L ') + ' Z'),
@@ -14252,16 +14216,13 @@ export class HouseplanCard extends LitElement {
       if (this._mode === 'view' && projection === this._desiredProjection && !this._modeTransitionBusy) {
         const live = this._plan3dPresentation, { layers } = isoFrame, scene = isoScene;
         this._startup3dSource = () => ({ ...live, world: {
-          ...live.world, lights: [], rooms: rooms3d(this._resolvedRoomFills(space, disp, true)),
+          ...live.world, lights: [], ribbons: [], floorInk: floorInk(true), rooms: rooms3d(this._resolvedRoomFills(space, disp, true)),
           panels: isoRuntime.resolveIsoOpeningPanels(layers, scene, this._openingsR, opening => resolvedOpeningAmount(opening, () => null),
             opening => resolveOpeningVisual(opening, () => null, resolvedOpeningAmount(opening, () => null))),
         } });
       }
     }
     const floorCamera = this._isoFloorCamera;
-    const isoLightFrame = (content: TemplateResult) => floorCamera?.perspective
-      ? html`<div class="iso-perspective-light-frame">${content}</div>`
-      : content;
     const markerCamera = ISO_LAB_FLOOR_MARKERS && floorCamera;
     // Opposite views share the same lettering. In a direct view the
     // horizontal plan axis determines the reading direction.
@@ -14270,9 +14231,7 @@ export class HouseplanCard extends LitElement {
     const roomLabelDepth = roomLabelCamera ? isoTileDepthStyles(roomLabelCamera) : null;
     const isoLayers = isoFrame?.layers ?? null;
     const isoOverlays = isoFrame?.overlays ?? null;
-    const maskFloorShadows = ISO_LAB_FLOOR_MARKERS && isoLayers?.structural && !!isoScene;
-    const raiseRoomLabels = maskFloorShadows && disp.showNames;
-    const floorShadowUnit = iso ? iconPct * iconUnit(space) * this._effectiveKioskScale.icon / 100 : 0;
+    const raiseRoomLabels = ISO_LAB_FLOOR_MARKERS && isoLayers?.structural && !!isoScene && disp.showNames;
     const floorView = this._planVisibleRect(view);
     // Background around the plan (view/kiosk; editors keep their own canvas).
     // Both settings dialogs preview their pending value live.
@@ -14287,12 +14246,6 @@ export class HouseplanCard extends LitElement {
     const dayCycle = this._dayCycleState();
     const dayCycleWeight = modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
     const paperShapes = this._paperShapes(space.rooms); const isoFirstFramePending = !this._modeProjectionCrossing && this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime);
-    const transitionFromMode = this._modeTransition.state?.from.presentedMode
-      ?? (this._modeTransitionPreparing ? modeVisual?.presentedMode : undefined);
-    const glowLayerVisible = !this._markup || !!modeVisual && (
-      modeVisual.presentedMode === 'view' || modeVisual.presentedMode === 'devices'
-      || transitionFromMode === 'view' || transitionFromMode === 'devices'
-    );
     const transitionStageBg = modeVisual?.stageColor || stageBg;
     const transitionBrightness = modeVisual?.sceneBrightness ?? 1;
     // View owns the eager hatch: one pattern at every zoom (#689 reverted #685's gradient).
@@ -14604,149 +14557,40 @@ export class HouseplanCard extends LitElement {
     // During the outgoing fade, the retained 2.5D scene keeps View styling
     // until the projection swap. The header already represents the edit mode.
     const stageMode = iso ? 'view' : this._mode;
-    if (this._mode === 'view' && projection === this._desiredProjection && !isoFirstFramePending && !this._modeTransitionBusy) {
+    if (!spatial && this._mode === 'view' && projection === this._desiredProjection && !isoFirstFramePending && !this._modeTransitionBusy) {
       const transform = this._floorTransform;
       const floorLayer = (content: unknown) => svg`<g class=${iso ? 'iso-floor-scene' : nothing} transform=${transform}>${content}</g>`;
       this._startupSource = previewView => {
-        const neutral = iso ? this._startupIsoFrame(disp, isoScene, startupFurniture) : null;
-        const fragments: TemplateResult[] = [];
-        const floorFragments: TemplateResult[] = [];
-        if (neutral?.layers.structural) fragments.push(svg`<g class="iso-underlay-svg">${neutral.underlay}</g>`);
-        floorFragments.push(floorLayer(svg`${wallHatch}${renderPaperShapes(paperShapes)}`));
+        const fragments: TemplateResult[] = [floorLayer(svg`${wallHatch}${renderPaperShapes(paperShapes)}`)];
         if (space.bg) {
           if (!backdropHref || !backdropPaint) throw Error('asset-unavailable');
-          floorFragments.push(floorLayer(svg`<image class="hp-backdrop" href=${backdropHref}
+          fragments.push(floorLayer(svg`<image class="hp-backdrop" href=${backdropHref}
             x=${backdropPaint.x} y=${backdropPaint.y} width=${backdropPaint.w} height=${backdropPaint.h}
             opacity=${space.bg.opacity ?? 1} transform=${backdropPaint.transform ?? nothing} preserveAspectRatio="none"></image>`));
         }
-        floorFragments.push(floorLayer(renderRooms('view', true, this._resolvedRoomFills(space, disp, true))));
+        fragments.push(floorLayer(renderRooms('view', true, this._resolvedRoomFills(space, disp, true))));
         if (!disp.hideDecor) {
           if (this._decorList.some(item => item.kind === 'image' && !this._display(this._decorAssets.get(item.asset_id)?.url)))
             throw Error('asset-unavailable');
-          floorFragments.push(floorLayer(this._renderDecorLayer(undefined, previewView, useFurnitureVolume ? 'floor' : 'all', true)));
+          fragments.push(floorLayer(this._renderDecorLayer(undefined, previewView, 'all', true)));
         }
-        floorFragments.push(floorLayer(this._stairsView.renderLayer(stairVolumes)));
-        if (useFurnitureVolume && neutral?.layers.structural && furnitureShadows !== nothing)
-          floorFragments.push(floorLayer(furnitureShadows));
-        floorFragments.push(floorLayer(svg`${this._renderZeroWalls(disp)}${this._renderWallBodies(disp, true)}`));
-        if (!disp.hideOpenings && (!neutral || neutral.layers.floorSymbols))
-          floorFragments.push(floorLayer(this._renderOpenings(disp, undefined, false, true)));
-        if (floorCamera?.perspective) fragments.push(renderIsoPerspectiveSnapshot(floorCamera,this._frameOf().all,floorFragments));
-        else fragments.push(...floorFragments);
-        if (neutral?.layers.structural) fragments.push(svg`
-          <g class="iso-shadows-svg">${neutral.shadows}</g><g class="iso-walls-svg">${neutral.walls}</g>`);
-        if (neutral && neutral.foreground !== nothing) fragments.push(svg`<g class="iso-furniture-foreground">${neutral.foreground}</g>`);
+        fragments.push(floorLayer(this._stairsView.renderLayer()),
+          floorLayer(svg`${this._renderZeroWalls(disp)}${this._renderWallBodies(disp, true)}`));
+        if (!disp.hideOpenings) fragments.push(floorLayer(this._renderOpenings(disp, undefined, false, true)));
         return fragments;
       };
     }
     const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${stageMode === 'plan' ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${stageMode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${stageMode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
     this._modePreparedStageClass = stageClass;
-    const isoUnderlay = isoLayers?.structural ? svg`<g class="iso-underlay-svg" aria-hidden="true" pointer-events="none">${isoFrame?.underlay ?? nothing}</g>` : nothing;
-    const ledShadow = () => svg`<g class="iso-led-shadow-plane" transform=${this._floorTransform}>
-      ${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'shadow') ?? nothing}</g>`;
-    const ledBody = () => svg`<g class="iso-led-plane" transform=${this._floorTransform} pointer-events="none">
-      ${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'body') ?? nothing}</g>`;
-    const isoFloorInk = () => svg`<g class="iso-floor-scene" transform=${this._floorTransform}>
-
-            ${''/* THE PAPER IS THE ROOMS (docs/DECOR-EDITOR.md §3.3, owner
-                   2026-08-04). Opaque shapes stop the scene background —
-                   bg_color or the day-cycle environment — from bleeding through the
-                   plan. They follow the ROOM CONTOURS and nothing else: one
-                   shape per room in exactly the room's own geometry, so an
-                   L-shaped house or a pair of detached buildings never grows a
-                   white bounding rectangle, and an empty space has no paper at
-                   all. A backdrop image no longer makes paper of its own — it
-                   is drawn ON this sheet, one layer below the geometry, so a
-                   picture with transparency and no rooms under it shows the
-                   scene through, which is the deliberate consequence.
-                   `space` comes from _renderCfg, so a live resize preview
-                   controller preview moves the paper together with the rooms.
-                   One <g> keeps the visible sheet and filtered silhouette free of room seams. */}
-            ${wallHatch}${renderPaperShapes(paperShapes)}
-            ${this._editing ? this._renderMarkupDefs(vb) : nothing}
-            ${''/* the grid is a property of the plane, not of a box: it follows
-                   the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
-            ${this._editing && !this._markup && this._gridLevels()
-              ? svg`<rect data-hp-live-grid x="${liveGridBounds(floorView).x}" y="${liveGridBounds(floorView).y}" width="${liveGridBounds(floorView).w}" height="${liveGridBounds(floorView).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
-              : nothing}
-            ${space.bg && backdropHref
-              ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${backdropPaint!.x}" y="${backdropPaint!.y}" width="${backdropPaint!.w}" height="${backdropPaint!.h}"
-                  opacity="${(space.bg.opacity ?? 1) * (modeVisual?.backdropOpacity ?? (this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1))}"
-                  @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
-                  transform=${backdropPaint!.transform ?? nothing}
-                  @dblclick=${(e: Event) => this._openBackdropDialog(e)}
-                  preserveAspectRatio="none" />`
-              : nothing}
-            ${renderRooms(this._mode)}
-            ${this._renderRoomHoverFill(roomHover)}
-            ${''/* Decor is one composition layer above every floor treatment
-                   (room fill/hover and opening tunnels) and below
-                   live lighting, physical plan geometry and devices. Keep
-                   hide_decor visual-only: the decor editor must always paint
-                   stored shapes so they remain editable. */}
-            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view, useFurnitureVolume ? 'floor' : 'all')}
-            ${this._mode === 'plan' && this._editorRuntime
-              ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer(stairVolumes)}
-            ${this._mode === 'plan' ? svg`<g data-hp-live-stairs></g>` : nothing}
-            ${glowLayerVisible ? isoGlowLayer ?? this._renderGlowLayer(space, disp, view) : nothing}
-            ${glowLayerVisible ? isoLedField ?? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
-            ${sunLayer ?? this._renderSunRays(space)}
-            ${''/* #1451: the wash stays on the floor, visible through translucent
-                   furniture instead of painting a yellow stripe over its body. */}
-            ${furnitureShadows}
-            ${this._editorInk('guides', this._editing, () => svg`<g class="hp-editor-only-layer">${this._renderAlignGuides()}</g>`)}
-            ${this._editorInk('markup', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderMarkupLayer(vb)}</g>`)}
-            ${''/* «Скрыть проёмы» (space.hide_openings) — same deal: the plan
-                   editor keeps drawing doors, windows and gates so they stay
-                   editable, and only the symbols are hidden elsewhere. What
-                   an opening MEANS is untouched: light still spills through
-                   it, the sun still comes in at its window, and the contact
-                   sensor still opens it. */}
-            ${''/* View: zero-thickness geometry still meets thick walls on their
-                   centreline, but paints BELOW the physical wall body. The
-                   hatch therefore masks the visually awkward half-dashes
-                   inside thick jambs without changing the stored span. */}
-            ${!this._editing ? this._renderZeroWalls(disp) : nothing}
-            ${this._renderWallBodies(disp)}
-            ${this._markup && this._tool === 'resize' ? this._renderResizeMeasurements() : nothing}
-            ${this._renderRoomHoverOutline(roomHover)}
-            ${''/* Editors: saved zero-thickness walls deliberately paint AFTER
-                   thick wall bodies. Their
-                   full centreline geometry remains visible for editing. */}
-            ${this._editing ? this._renderZeroWalls(disp) : nothing}
-            ${this._editorInk('hidden-walls', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderHiddenWallDiagnosticOverlay()}</g>`)}
-            ${this._editorInk('opening-preview', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderOpeningPlacementPreview()}</g>`)}
-            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
-            ${''/* Static architectural axes and endpoints are a Plan-editor
-                   invariant. Tool-specific hover/snap state is resolved inside
-                   the overlay and remains exclusive to Walls. */}
-            ${''/* Active chain ink paints above the wall bodies: persisted
-                   draft segments already own opaque masonry, which would
-                   otherwise cover the chain axis and nodes (#307). It stays
-                   below the snap overlay so snap highlights keep priority. */}
-            ${this._editorInk('chain', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderActiveChainInk()}</g>`)}
-            ${this._editorInk('nodes', this._markup, () => svg`<g class="hp-plan-only-layer hp-plan-snap-layer">${this._renderPlanSnapOverlay()}</g>`)}
-            ${disp.hideOpenings && !this._markup
-              ? nothing
-              : isoLayers && !isoLayers.floorSymbols
-                ? nothing
-                : this._renderOpenings(disp)}
-            ${!iso ? this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing : nothing}
-            ${this._mode === 'devices' && (this._ledEditor || space.led_strips?.some((s) => s.active !== false))
-              ? this._ledEd(space.id)?.layer(space) : nothing}
-            ${this._renderWallThickUi()}
-            ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
-            ${''/* editor chrome, not plan content: the backdrop frame sits on
-                   top of everything the plan draws so its handles stay
-                   grabbable (docs/DECOR-EDITOR.md §3.2). It exists only in the
-                   backdrop editor, where rooms and devices are pointer-inert. */}
-            ${this._editorRuntime?.backdropGesture.renderFrame(view)}
-            ${this._renderTextFrame(view)}
-            ${this._editorRuntime?.properties.selection()}
-            ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
-            <g data-hp-live-editor></g>
-
-      ${floorCamera?.perspective && leds.size ? ledShadow() : nothing}</g>`;
+    const ledTargets = () => svg`<g transform=${this._floorTransform} opacity="0">
+      ${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view, 'body') ?? nothing}</g>`;
+    const floorTargets = () => svg`<g class="iso-floor-scene" transform=${this._floorTransform} opacity="0">
+      ${space.bg && backdropHref && backdropPaint ? svg`<image data-hp="backdrop" href=${backdropHref}
+        x=${backdropPaint.x} y=${backdropPaint.y} width=${backdropPaint.w} height=${backdropPaint.h}
+        transform=${backdropPaint.transform ?? nothing}
+        @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}></image>` : nothing}
+      ${renderRooms('view')}
+      ${this._stairsView.renderLayer(stairVolumes)}</g>`;
     const stage = html`
 
         <div class=${this._modeTransitionPreparing && this._modePreparingStageClass ? this._modePreparingStageClass : stageClass}
@@ -14796,7 +14640,8 @@ export class HouseplanCard extends LitElement {
           ${this._plan3dFailure?.space === this._space && this._desiredProjection === 'iso' && !iso && !this._startupPending
             ? html`<div class="plan-3d-fallback hpf-loading-pill" role="status">
                 <span>${this._t('plan.3d_fallback')}</span>
-                <button type="button" class="btn" @click=${this._retryPlan3d}>${this._t('continuity.retry')}</button>
+                <button type="button" class="btn" @click=${this._retryPlan3d}>${this._t(
+                  this._plan3dFailure.load === 'reload' ? 'view.runtime_reload' : 'continuity.retry')}</button>
               </div>` : nothing}
           ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
           ${this._ledEditor?.chrome() ?? nothing}
@@ -14808,67 +14653,20 @@ export class HouseplanCard extends LitElement {
             style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}${this._modeProjectionCrossing ? `;opacity:${this._modeProjectionOpacity}` : ''}${modeVisual && !this._modeTransitionPreparing ? `;width:${this._modeSceneSize?.[0] ?? modeVisual.stageWidth}px;height:${this._modeSceneSize?.[1] ?? modeVisual.stageHeight}px` : ''}">
           ${this._modeProjectionSource && this._modeProjectionScene ? this._modeProjectionScene : this._modeProjectionScene = html`
           ${iso ? html`<div class="iso-scene-surface" data-hp-live-scene="camera">
-          ${isoLightFrame(html`
-          ${floorCamera?.perspective ? html`
-            ${svg`<svg data-hp-live-viewbox="camera" aria-hidden="true" style="pointer-events:none" preserveAspectRatio="none"
-              viewBox="${sceneView.x} ${sceneView.y} ${sceneView.w} ${sceneView.h}">${isoUnderlay}</svg>`}
-            ${renderIsoPerspectiveFloor(floorCamera,isoFloorInk(),sceneView,perspectiveSize)}` : nothing}
+          ${floorCamera?.perspective ? renderIsoPerspectiveFloor(floorCamera, floorTargets(), sceneView, perspectiveSize) : nothing}
           <svg class="plan-svg" data-hp="stage" data-grid-step=${this._gridPitch} data-hp-layer="plan"
-            data-projection=${isoScene ? 'iso' : 'flat'} data-yaw=${isoScene?.camera.rotDeg ?? this._rotation}
-            data-rotation=${this._rotation} data-floor-scale-y=${isoScene?.camera.floorScaleY ?? 1}
-            data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
+            data-projection="iso" data-yaw=${isoScene?.camera.rotDeg ?? this._rotation}
+            data-rotation=${this._rotation} data-floor-scale-y=${isoScene?.camera.floorScaleY ?? 1} data-hp-live-viewbox="camera"
             viewBox="${sceneView.x} ${sceneView.y} ${sceneView.w} ${sceneView.h}"
             preserveAspectRatio=${floorCamera?.perspective ? 'none' : 'xMidYMid meet'}
             style=${floorCamera?.perspective ? 'pointer-events:none' : nothing}>
-            ${floorCamera?.perspective ? nothing : isoUnderlay}
-            ${floorCamera?.perspective ? nothing : isoFloorInk()}
-            ${isoLayers?.structural ? svg`
-              <g class="iso-shadows-svg" aria-hidden="true" pointer-events="none">${isoFrame?.shadows ?? nothing}</g>
-              <g class="iso-walls-svg" aria-hidden="true" pointer-events="none">${isoFrame?.walls ?? nothing}</g>
-            ` : nothing}
-            ${iso && (!maskFloorShadows || isoFrame?.shadowClip != null) ? svg`<g class="iso-floor-shadow-plane" aria-hidden="true" pointer-events="none">
-              <defs>
-                ${isoFloorShadowGradient}
-                ${disp.showNames ? svg`<filter id="hp-iso-label-penumbra" color-interpolation-filters="sRGB"
-                  x="-50%" y="-100%" width="200%" height="300%">
-                  <feGaussianBlur stdDeviation=${floorShadowUnit * .08}></feGaussianBlur>
-                </filter>` : nothing}
-                ${maskFloorShadows && isoScene ? svg`
-                  <clipPath id="hp-iso-shadow-footprint"><path d=${isoScene.floor.footprintPath} clip-rule="evenodd"></path></clipPath>
-                  <clipPath id="hp-iso-shadow-visible"><path d=${isoFrame?.shadowClip ?? ''} clip-rule="evenodd"></path></clipPath>
-                ` : nothing}
-              </defs>
-              <g clip-path=${maskFloorShadows ? 'url(#hp-iso-shadow-footprint)' : nothing}>
-                <g clip-path=${maskFloorShadows ? 'url(#hp-iso-shadow-visible)' : nothing}>
-                  <g class="iso-tile-shadows">
-                    ${repeat(devs, (d) => d.id, (d) => {
-                      const placement = isoOverlays?.devices.get(d.id);
-                      if (placement?.occluded) return nothing;
-                      const presentation = this._devicePresentation(d, showLqi), pos = this._pos(d);
-                      const anchor = placement || { floorScene: turnPoint([pos.x, pos.y], this._rotation) };
-                      const diameter = placement?.deviceSize
-                        ?? deviceBasePct * iconUnit(space) * this._effectiveKioskScale.icon * presentation.scale / 100;
-                      return renderIsoMarkerFloorShadow(d.id, 'device', anchor, { camera: floorCamera, diameter }, presentation);
-                    })}
-                    ${this._renderOpeningLocks(view, isoOverlays?.locks, {
-                      camera: floorCamera, diameter: floorShadowUnit * .62,
-                    })}
-                  </g>
-                  ${disp.showNames ? svg`<g>
-                    ${space.rooms.map(r => this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r), {
-                      camera: floorCamera, diameter: floorShadowUnit * .5,
-                    }))}
-                  </g>` : nothing}
-                  ${floorCamera?.perspective ? nothing : ledShadow()}
-                </g>
-              </g>
-            </g>` : nothing}
-            ${isoFrame && isoFrame.foreground !== nothing ? svg`<g class="iso-furniture-foreground"
-              aria-hidden=${stairVolumes?.size ? nothing : 'true'} pointer-events="none">${isoFrame.foreground}</g>` : nothing}
-            ${floorCamera?.perspective ? nothing : ledBody()}
+            ${floorCamera?.perspective ? nothing : floorTargets()}
+            ${stairVolumes?.size && floorCamera ? svg`<g transform=${isoFloorMatrixCss(floorCamera)}>
+              ${this._stairsView.renderLayer(stairVolumes, 'volume', 'hit')}</g>` : nothing}
+            ${floorCamera?.perspective ? nothing : ledTargets()}
           </svg>
-          ${floorCamera?.perspective && leds.size ? renderIsoPerspectiveFloor(floorCamera,ledBody(),sceneView,perspectiveSize,
-            gridVisualUnits(isoDisplayWallHeight(),this._cellCm),'led') : nothing}`)}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
+          ${floorCamera?.perspective && leds.size ? renderIsoPerspectiveFloor(floorCamera, ledTargets(), sceneView,
+            perspectiveSize, gridVisualUnits(isoDisplayWallHeight(), this._cellCm), 'led') : nothing}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
           ${this._plan3dPresentation ? html`<canvas data-hp-plan-3d aria-hidden="true"></canvas>` : nothing}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always
@@ -15664,6 +15462,7 @@ export class HouseplanCard extends LitElement {
              attribute binding REMOVES the attribute, so a virtual marker has
              no data-entity at all rather than "undefined". */}
       data-hp="device"
+      data-hp-3d-device=${isoPlacement?.plane === 'raised' ? presentation.angle : nothing}
       .hpIsoWallMask=${wallMask}
       data-selected=${String(this._mode === 'devices' && this._selId === d.id)}
       data-id="${d.id}"

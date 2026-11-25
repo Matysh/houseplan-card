@@ -233,6 +233,8 @@ export const planStyles = css`
     .zoomwrap > canvas[data-hp-plan-3d] {
       position:absolute; inset:0; width:100%; height:100%; z-index:2; pointer-events:none;
     }
+    .dev[data-hp-3d-native] :is(.device-core, .value-badge) { opacity:0; }
+    .dev[data-hp-3d-native-outline] .iso-marker-glass { opacity:0; }
     .plan-3d-fallback { position:absolute; inset:12px auto auto 12px; z-index:5; display:flex; align-items:center; gap:8px; }
     /* Keep the idle SVG composited without freezing its raster density at
        the previous zoom. Camera motion supplies its own transform hint. */

@@ -7,7 +7,6 @@
  */
 // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
-export { Plan3dHost } from './plan-3d-host';
 import { nothing, svg, type TemplateResult } from 'lit';
 import { architecturalPainter } from './iso-architectural-edges';
 import { connectTranslucentOpeningMasonry } from './iso-masonry-joins';

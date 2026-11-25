@@ -31,10 +31,10 @@ for(const scenario of cases) {
     const html=readFileSync(new URL('./srv/demo.html',import.meta.url),'utf8');
     await page.route(url=>url.pathname==='/houseplan',route=>route.fulfill({contentType:'text/html',body:html}));
     let delayed=0,restoringRuntime=false;
-    await page.route(/\/(?:iso-scene-(?:geometry|render)|furniture-volume\.generated|floor-worker)-[^/]+\.js$/,async route=>{
+    await page.route(/\/(?:plan-3d-runtime|iso-scene-geometry|furniture-volume\.generated|floor-worker)-[^/]+\.js$/,async route=>{
       delayed++;
       const wait=scenario.host==='kiosk'&&!scenario.earlyRuntime&&restoringRuntime
-        &&route.request().url().includes('/iso-scene-render-')?2200:120;
+        &&route.request().url().includes('/plan-3d-runtime-')?2200:120;
       await new Promise(resolve=>setTimeout(resolve,wait));await route.fallback();
     });
     const mount=(restoring=false)=>page.evaluate(async({fixture,scenario,restoring})=>{

@@ -8,7 +8,7 @@ const out = await page.evaluate(async () => {
   const root = () => card.renderRoot;
   const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
   const isoRuntimeRequests = () => [...performance.getEntriesByType('resource')]
-    .filter((entry) => /\/iso-scene-render-[^/]+\.js(?:$|\?)/.test(entry.name)).length;
+    .filter((entry) => /\/plan-3d-runtime-[^/]+\.js(?:$|\?)/.test(entry.name)).length;
   const ensureIsoRuntime = async () => {
     if (typeof card._ensureIsoSceneRuntime !== 'function'
         || !(await card._ensureIsoSceneRuntime())) {
@@ -68,7 +68,7 @@ const out = await page.evaluate(async () => {
   }));
   await window.__hpTest.settled();
   result.legacySettingKeepsFlat = card._serverCfg.settings?.real_3d === true
-    && !root().querySelector('[data-projection="iso"], [data-real-3d-ready]')
+    && !root().querySelector('[data-projection="iso"], [data-hp-plan-3d-ready]')
     && isoRuntimeRequests() === 0;
   let configSpace = card._serverCfg.spaces.find((space) => space.id === 'f1');
   configSpace.settings = {
@@ -97,16 +97,15 @@ const out = await page.evaluate(async () => {
   await window.__hpTest.settled();
   await frame();
   result.alphaDoesNotEnableIso = window.__hpAlpha === true && JSON.stringify(window.__hpLabs) === '[]'
-    && !root().querySelector('[data-hp="iso-walls"]') && isoRuntimeRequests() === 0;
+    && !root().querySelector('canvas[data-hp-plan-3d]') && isoRuntimeRequests() === 0;
   history.replaceState(null, '', '#space=f1&hp_alpha=0');
   dispatchEvent(new HashChangeEvent('hashchange'));
   await window.__hpTest.settled();
   await enable();
   result.settingLoadsIsoRuntimeOnce = isoRuntimeRequests() === 1;
-  result.legacySettingUsesNativeIsometricView = card._serverCfg.settings?.real_3d === true
+  result.savedPreferenceUses3d = card._serverCfg.settings?.volumetric_view === true
     && !!root().querySelector('[data-projection="iso"]')
-    && !root().querySelector('[data-real-3d-ready]')
-    && !performance.getEntriesByType('resource').some(entry => /iso-view-gl|three-vendor/.test(entry.name));
+    && !!root().querySelector('canvas[data-hp-plan-3d]');
   const openingBases = card._isoSource()?.build().openings || [];
   const basis = (id) => openingBases.find((opening) => opening.id === id);
   const centredDoor = basis('iso-centred-door');
@@ -142,63 +141,27 @@ const out = await page.evaluate(async () => {
   const roomLabel = root().querySelector('[data-hp="room-label"]');
   const openingLock = root().querySelector('.oplock');
   const stage = root().querySelector('.stage');
-  result.isoRendered = !!root().querySelector('[data-hp="iso-underlay"] .iso-ambient-shadow')
-    && !!root().querySelector('[data-hp="iso-walls"] .iso-wall-top');
-  result.noDecorativeFloorStrip = !root().querySelector('.iso-floor-side, .iso-floor-edge');
-  result.stage4RevisionAdvertised = stage?.getAttribute('data-hp-iso-stage') === '4';
   const projectionRoot = root().querySelector('.plan-svg[data-projection="iso"]');
-  result.sharedProjectionSnapshot = root().querySelectorAll('[data-hp-live-viewbox="camera"]').length === 1
-    && Boolean(projectionRoot?.hasAttribute('viewBox'))
-    && ['.iso-underlay-svg', '.iso-floor-scene', '.iso-shadows-svg', '.iso-walls-svg', '.iso-led-plane']
-      .every((selector) => projectionRoot?.querySelector(selector)?.ownerSVGElement === projectionRoot);
-  const materialDefs = [...root().querySelectorAll('[data-hp-iso-material-def]')];
-  const requiredDefs = [
-    'hp-iso-wall-side', 'hp-iso-wall-top', 'hp-iso-wall-texture',
-    'hp-iso-floor-texture', 'hp-iso-ambient-shadow',
-  ];
-  result.stage4DefinitionsBounded = materialDefs.length >= requiredDefs.length
-    && materialDefs.length <= 16
-    && new Set(materialDefs.map((node) => node.id)).size === materialDefs.length
-    && requiredDefs.every((id) => materialDefs.some((node) => node.id === id));
-  const shadowNodes = [...root().querySelectorAll('.iso-ambient-shadow')];
-  const fixedLightTransform = card._isoSceneRuntime.isoFixedLightTransform(card._cellCm);
-  result.fixedLightVectorShared = shadowNodes.length === 1
-    && shadowNodes[0].getAttribute('transform') === fixedLightTransform
-    && !root().querySelector('.iso-contact-shadow, .iso-leaf-shadow,'
-      + ' #hp-iso-contact-shadow, #hp-iso-leaf-shadow');
-  const wallBase = [...projectionRoot.querySelectorAll('.iso-wall-base-paper')];
-  const sample = document.createElement('canvas').getContext('2d');
-  const insideBase = (x,y) => wallBase.some(path => sample.isPointInPath(
-    new Path2D(path.getAttribute('d')),x,y,'evenodd'));
-  const halfWidth = 15 * card._gridPitch / card._cellCm / 2;
-  result.fullWidthBaseUnderWindow = [-.95,0,.95].every(f => insideBase(500,wallAxisY + f*halfWidth))
-    && [-1.1,1.1].every(f => !insideBase(500,wallAxisY + f*halfWidth));
-  result.doorAndGateKeepGroundGaps = [325,605,745].every(x =>
-    [-.85,0,.85].every(f => !insideBase(x,wallAxisY + f*halfWidth)));
-  result.wallBaseUsesFlatMasonryPaint = wallBase.length > 0 && wallBase.every(path =>
-    path.getAttribute('fill') === '#ffffff' && path.nextElementSibling.matches('.wallbody-fill')
-    && path.nextElementSibling.nextElementSibling.matches('.wallbody')
-    && path.getAttribute('d') === path.nextElementSibling.nextElementSibling.getAttribute('d'));
-  const hasOpeningSurface = (id, surface, material) => !!root().querySelector(
-    `[data-hp="iso-openings"] [data-id="${id}"][data-surface="${surface}"].iso-material-${material}`,
-  );
-  // A single view only owns the visible facets. The opening-geometry tests
-  // separately cover faces that this camera and masonry hide.
-  result.stage4OpeningMaterials = [
+  const canvas = root().querySelector('canvas[data-hp-plan-3d]');
+  const world = card._plan3dPresentation?.world;
+  result.isoRendered = canvas?.width > 0 && canvas?.height > 0 && !!world?.physical.walls.length;
+  result.sharedProjectionSnapshot = card._plan3dHost?.view === projectionRoot
+    && card._plan3dHost?.canvas === canvas && Boolean(projectionRoot?.hasAttribute('viewBox'));
+  result.onlyNativeScenePaint = root().querySelectorAll('canvas[data-hp-plan-3d]').length === 1
+    && !root().querySelector('.iso-walls-svg,.iso-furniture-foreground,.iso-shadows-svg');
+  const surfaces = [...world.physical.openingSurfaces, ...world.panels.flatMap(panel =>
+    panel.surfaces.map(surface => ({ ...surface, id: panel.id })))];
+  const hasOpeningSurface = (id, kind, material) => surfaces.some(surface =>
+    surface.id === id && surface.kind === kind && surface.material === material && surface.points.length >= 3);
+  result.openingSurfacesKeepPhysicalParts = [
     ['iso-centred-door', 'jamb-reveal', 'reveal'],
     ['iso-centred-door', 'leaf-front', 'matte-leaf'],
     ['iso-centred-door', 'leaf-back', 'matte-leaf'],
     ['iso-centred-door', 'leaf-edge', 'matte-leaf'],
-    ['iso-centred-door', 'leaf-top', 'matte-leaf'],
     ['iso-flipped-window', 'window-sill', 'light-sill'],
-    ['iso-flipped-window', 'window-sash-side', 'light-frame'],
-    ['iso-flipped-window', 'window-sash-bottom', 'light-frame'],
-    ['iso-flipped-window', 'window-sash-top', 'light-frame'],
     ['iso-flipped-window', 'window-glass', 'glass-side'],
     ['iso-centred-gate', 'jamb-reveal', 'reveal'],
-  ].every(([id, surface, material]) => hasOpeningSurface(id, surface, material))
-    && !!root().querySelector('[data-hp="iso-openings"] [data-id="iso-centred-gate"].iso-material-gate-panel')
-    && !root().querySelector('[data-hp="iso-openings"] .iso-material-dark-glass');
+  ].every(([id, kind, material]) => hasOpeningSurface(id, kind, material));
   // #1474: devices, locks and captions share the 140 cm wall cut.
   const isoLift = 140 / card._cellCm * card._gridPitch * Math.cos(40 * Math.PI / 180);
   const liftOf = (node) => {
@@ -260,7 +223,7 @@ const out = await page.evaluate(async () => {
     && JSON.stringify(overlaysAfterZoomIn) === JSON.stringify(overlaysBeforeZoom)
     && JSON.stringify(overlaySceneSnapshot()) === JSON.stringify(overlaysBeforeZoom);
   const deviceBefore = device ? center(device) : null;
-  const fingerprintBeforeLive = root().querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint;
+  const fingerprintBeforeLive = card._renderIsoScene?.key;
   const geometryBeforeLive = card._isoGeometryCache.get(fingerprintBeforeLive)?.geometry;
   const buildsBeforeLive = Number(stage?.getAttribute('data-hp-iso-structural-builds'));
   const sourceMethod = card._isoSource;
@@ -278,7 +241,7 @@ const out = await page.evaluate(async () => {
   card._isoSource = sourceMethod;
   card._isoScene = sceneMethod;
   const deviceAfter = root().querySelector('[data-hp="device"]');
-  result.haUpdateKeepsGeometry = root().querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint
+  result.haUpdateKeepsGeometry = card._renderIsoScene?.key
     && card._isoGeometryCache.size === 1;
   result.haUpdateKeepsAnchor = !!deviceBefore && !!deviceAfter
     && Math.hypot(...center(deviceAfter).map((value, index) => value - deviceBefore[index])) <= 1;
@@ -287,7 +250,7 @@ const out = await page.evaluate(async () => {
   card.requestUpdate();
   await window.__hpTest.settled();
   await frame();
-  const fingerprintAfterHover = root().querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint;
+  const fingerprintAfterHover = card._renderIsoScene?.key;
   const buildsAfterHover = Number(root().querySelector('.stage')
     ?.getAttribute('data-hp-iso-structural-builds'));
   result.haAndHoverReuseStructuralScene = !!fingerprintBeforeLive
@@ -380,8 +343,10 @@ const out = await page.evaluate(async () => {
   let moreInfoCalls = 0;
   card._openMoreInfo = () => { moreInfoCalls++; };
   const sensorDevice = root().querySelector('.dev[data-id="d_temp"]');
+  const sensorCenter = sensorDevice ? center(sensorDevice.querySelector('.device-core') ?? sensorDevice) : [0, 0];
   const deviceContext = new MouseEvent('contextmenu', {
     bubbles: true, composed: true, cancelable: true, button: 2,
+    clientX: sensorCenter[0], clientY: sensorCenter[1],
   });
   sensorDevice?.dispatchEvent(deviceContext);
   await window.__hpTest.settled();
@@ -424,14 +389,14 @@ const out = await page.evaluate(async () => {
   while (card._modeTransitionBusy) await frame();
   result.editorIsFlat = card._mode === 'plan'
     && !root().querySelector('[data-hp="projection-toggle"]')
-    && !root().querySelector('[data-hp="iso-walls"]')
+    && !root().querySelector('canvas[data-hp-plan-3d]')
     && ![...root().querySelector('.stage').classList]
       .some((name) => name.startsWith('projection-'));
   card._setMode('view');
   await window.__hpTest.settled();
   while (card._modeTransitionBusy) await frame();
   result.viewRestoresIso = !!root().querySelector('.stage.projection-iso')
-    && !!root().querySelector('[data-hp="iso-walls"]');
+    && !!root().querySelector('canvas[data-hp-plan-3d]');
 
   const nativeCssSupports = CSS.supports;
   const fallbackCountBeforeCapabilityProbe = card._isoFallback.size;
@@ -439,20 +404,15 @@ const out = await page.evaluate(async () => {
   card.requestUpdate();
   await window.__hpTest.settled();
   await frame();
-  result.throwingCapabilityProbeStaysSolidIso = card._effectiveProjection() === 'iso'
+  result.throwingCapabilityProbeKeeps3d = card._effectiveProjection() === 'iso'
     && card._isoFallback.size === fallbackCountBeforeCapabilityProbe
-    && !!root().querySelector('[data-hp="iso-walls"] .iso-wall-top')
-    && !!root().querySelector('[data-hp="iso-openings"] .iso-opening-panel')
-    && !root().querySelector('.iso-overlay-plate, .iso-overlay-plate-texture')
-    && !root().querySelector('.iso-overlay-tether, .iso-overlay-ground, #hp-iso-overlay-ground')
-    && !root().querySelector('[data-hp-iso-material-def]')
-    && !root().querySelector('.iso-ambient-shadow');
+    && !!root().querySelector('canvas[data-hp-plan-3d]');
   CSS.supports = nativeCssSupports;
   card.requestUpdate();
   await window.__hpTest.settled();
   await frame();
-  result.capabilityProbeRecoveryRestoresNuance = card._effectiveProjection() === 'iso'
-    && !!root().querySelector('[data-hp-iso-material-def]')
+  result.capabilityProbeRecoveryKeeps3d = card._effectiveProjection() === 'iso'
+    && !!root().querySelector('canvas[data-hp-plan-3d]')
     && card._isoFallback.size === fallbackCountBeforeCapabilityProbe;
 
   const healthySource = card._isoSource;
@@ -482,7 +442,7 @@ const out = await page.evaluate(async () => {
   await window.__hpTest.setVolumetricView(true);
   rebind();
   result.invalidSourceExplicitRetryRestoresIso = !card._isoFallback.has(firstInvalidKey)
-    && !!root().querySelector('[data-hp="iso-walls"]');
+    && !!root().querySelector('canvas[data-hp-plan-3d]');
 
   const sourceKeyBeforeEpochRecovery = card._isoSource()?.key;
   const originalSmokeWall = configSpace.partitions[0];
@@ -508,7 +468,7 @@ const out = await page.evaluate(async () => {
     && !card._isoFallback.has(epochInvalidKey)
     && !card._isoFallback.has(nextEpochInvalidKey)
     && card._effectiveProjection() === 'iso'
-    && !!root().querySelector('[data-hp="iso-walls"]');
+    && !!root().querySelector('canvas[data-hp-plan-3d]');
   configSpace.partitions[0] = originalSmokeWall;
   card._cfgEpoch++;
   card.requestUpdate();
@@ -534,14 +494,14 @@ const out = await page.evaluate(async () => {
   await window.__hpTest.settled();
   result.fallbackLatched = attempts === 1
     && !root().querySelector('.stage.projection-iso')
-    && !root().querySelector('[data-hp="iso-walls"]')
+    && !root().querySelector('canvas[data-hp-plan-3d]')
     && card._serverCfg.settings?.volumetric_view === true;
   shouldFail = false;
   await window.__hpTest.setVolumetricView(false);
   await window.__hpTest.setVolumetricView(true);
   rebind();
   result.explicitRetryRestoresIso = attempts >= 2
-    && !!root().querySelector('[data-hp="iso-walls"]')
+    && !!root().querySelector('canvas[data-hp-plan-3d]')
     && !!root().querySelector('.stage.projection-iso');
   card._isoSource = source;
   card._isoGeometryCache.delete(fallbackKey);
@@ -605,27 +565,27 @@ const out = await page.evaluate(async () => {
     && /"fingerprint":"[a-z0-9]+"/.test(fallbackWarnings[0])
     && /"terminal":true/.test(fallbackWarnings[0])
     && !/(private_identifier|sensor\.|https?:|token=|stack)/i.test(fallbackWarnings[0])
-    && !root().querySelector('[data-hp="iso-walls"]')
+    && !root().querySelector('canvas[data-hp-plan-3d]')
     && card._serverCfg.settings?.volumetric_view === true;
   card._isoSceneRuntime = runtime;
   await window.__hpTest.setVolumetricView(false);
   await window.__hpTest.setVolumetricView(true);
   rebind();
 
-  result.lateFailureExplicitRetryRestoresIso = !!root().querySelector('[data-hp="iso-walls"]');
+  result.lateFailureExplicitRetryRestoresIso = !!root().querySelector('canvas[data-hp-plan-3d]');
   console.warn = warning;
 
   await window.__hpTest.setVolumetricView(false);
   await frame();
   result.removalIsImmediateFlat = card._serverCfg.settings?.volumetric_view === false
     && !root().querySelector('[data-hp="projection-toggle"]')
-    && !root().querySelector('[data-hp="iso-walls"]')
+    && !root().querySelector('canvas[data-hp-plan-3d]')
     && !root().querySelector('[id^="hp-iso-"]')
     && ![...root().querySelector('.stage').classList]
       .some((name) => name.startsWith('projection-'));
   await enable();
   result.reenableRestoresIso = !!root().querySelector('.stage.projection-iso')
-    && !!root().querySelector('[data-hp="iso-walls"]');
+    && !!root().querySelector('canvas[data-hp-plan-3d]');
   return result;
 });
 

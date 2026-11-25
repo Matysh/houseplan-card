@@ -32,6 +32,8 @@ function rings(path: string, open = false): Point[][] {
   if(open && ring.length>1)out.push(ring);
   return out;
 }
+
+export function markerContactChains(outline: string): readonly (readonly PlanPoint[])[] { return rings(outline, true); }
 const cross=(a:Point,b:Point)=>a[0]*b[1]-a[1]*b[0];
 const sub=(a:Point,b:Point):Point=>[a[0]-b[0],a[1]-b[1]];
 const add=(p:Point,v:Point,k:number):Point=>[p[0]+v[0]*k,p[1]+v[1]*k];

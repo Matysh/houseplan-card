@@ -97,6 +97,24 @@ export class DeviceContactRenderer {
     return authored?.x === point.x && authored.y === point.y
       ? this.scene?.shapes.get(id)?.marker.diameter : undefined;
   }
+  public volumeFaces(id: string): readonly IsoDeviceFace[] | undefined {
+    const element = this.elements.get(id)?.element;
+    if (!element) return undefined;
+    const shell = element.querySelector('.device-shell');
+    const measured = this.presentations.get(element);
+    return measured && measured.shell === shell ? measured.presentation.faces : this.faces.get(metricKey(shell));
+  }
+
+  public volumeOutlines(native: ReadonlySet<string>) {
+    const scene = this.scene;
+    if (!this.plane || !scene) return [];
+    return [...scene.components(native)].flatMap(component => {
+      if (!component.every(shape => native.has(shape.marker.id))) return [];
+      const group = contactContourShapes(component.map(shape => this.present(shape, component.length > 1)));
+      return [{ id: group[0].marker.id, members: group.map(shape => shape.marker.id), outline: contactOutline(group, true),
+        diameter: Math.max(...group.map(shape => shape.marker.diameter)), virtual: group.every(shape => shape.marker.virtual) }];
+    });
+  }
   public reference(id:string):ContactMarker|undefined { return this.layout.reference(id); }
   public referenceMembers(id: string): string[] { return this.layout.referenceMembers(id); }
 

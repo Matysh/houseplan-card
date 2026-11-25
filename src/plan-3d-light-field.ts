@@ -4,6 +4,7 @@ import { GLOW_FALLOFF } from './glow-scene';
 import type { PlanPoint } from './iso-projection';
 
 export interface Plan3dLight {
+  id?: string;
   /** Single positioned lamp or an LED polyline in plan coordinates. */
   points: readonly PlanPoint[];
   height: number;
@@ -29,11 +30,11 @@ const sourceBounds = (source: Plan3dLight) => {
   return [minX - r, minY - r, maxX - minX + 2 * r, maxY - minY + 2 * r] as const;
 };
 
-function dataTexture(values: number[]): DataTexture {
+function dataTexture(values: number[], previous?: DataTexture): DataTexture {
   const row = Math.max(1, Math.ceil(values.length / (STRIDE * 4)));
-  const data = new Float32Array(row * STRIDE * 4);
+  const data = previous?.image.height === row ? previous.image.data as Float32Array : new Float32Array(row * STRIDE * 4);
   data.set(values);
-  const texture = new DataTexture(data, STRIDE, row, RGBAFormat, FloatType);
+  const texture = data === previous?.image.data ? previous : new DataTexture(data, STRIDE, row, RGBAFormat, FloatType);
   texture.minFilter = texture.magFilter = NearestFilter;
   texture.needsUpdate = true;
   return texture;
@@ -52,6 +53,7 @@ const LIGHT_GLSL = `
   uniform int uHpLightCount;
   uniform float uHpTileCount;
   uniform float uHpNormalOffset;
+  uniform float uHpSideShade;
   vec4 hpData(int index) {
     return texelFetch(uHpLights, ivec2(index % ${STRIDE}, index / ${STRIDE}), 0);
   }
@@ -64,6 +66,7 @@ const LIGHT_GLSL = `
     vec2 position = vHpWorld.xz;
     vec2 probe = position + N.xz * uHpNormalOffset;
     vec3 remaining = vec3(1.0);
+    vec3 reflected = vec3(1.0);
     for (int i = 0; i < uHpLightCount; i++) {
       vec4 bounds = hpData(i * 4);
       vec2 uv = (probe - bounds.xy) / bounds.zw;
@@ -85,7 +88,9 @@ const LIGHT_GLSL = `
         vec3 towardWindow = vec3(-sun.x, max(0.001, sun.w), -sun.y);
         float incidence = vHpWorld.y == 0.0 && N.y > .999 ? 1.0 : max(dot(N, normalize(towardWindow)), .18);
         float fading = hpFalloff(travel / sun.z);
-        remaining *= 1.0 - pigment.rgb * clamp(pigment.a * visible * fading * incidence, 0.0, 1.0);
+        float energy = clamp(pigment.a * visible * fading * incidence, 0.0, 1.0);
+        remaining *= 1.0 - pigment.rgb * energy;
+        reflected *= 1.0 - (1.0 - pigment.rgb) * energy * .32;
         continue;
       }
       vec2 closest = next;
@@ -107,8 +112,11 @@ const LIGHT_GLSL = `
       float incidence = vHpWorld.y == 0.0 && N.y > 0.999 ? 1.0 : angle;
       float energy = clamp(pigment.a * visible * fall * incidence, 0.0, 1.0);
       remaining *= 1.0 - pigment.rgb * energy;
+      reflected *= 1.0 - (1.0 - pigment.rgb) * energy * .32;
     }
-    return 1.0 - (1.0 - base) * remaining;
+    float ambient = mix(1.0, .88 + .11 * max(0.0, dot(N, normalize(vec3(-.8, .65, .6)))),
+      uHpSideShade * (1.0 - abs(N.y)));
+    return (1.0 - (1.0 - base * ambient) * remaining) * mix(vec3(1.0), reflected, base);
   }
 `;
 
@@ -193,8 +201,8 @@ export class Plan3dLightField {
         sun?.inward[0] ?? 0, sun?.inward[1] ?? 0, sun?.depth ?? 0, sun?.tilt ?? 0);
       for (const [x, y] of source.points) points.push(x, y, 0, 0);
     }
-    const texture = dataTexture(values.concat(points));
-    this.texture?.dispose();
+    const texture = dataTexture(values.concat(points), this.texture);
+    if (texture !== this.texture) this.texture?.dispose();
     this.texture = texture;
     this.uniforms.uHpLights.value = texture;
     this.uniforms.uHpLightCount.value = usable.length;
@@ -203,10 +211,11 @@ export class Plan3dLightField {
     this.opticalKey = opticalKey;
   }
 
-  material(params: MeshBasicMaterialParameters): MeshBasicMaterial {
+  material(params: MeshBasicMaterialParameters, shadeSides = false): MeshBasicMaterial {
     const material = new MeshBasicMaterial({ ...params, toneMapped: false });
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, this.uniforms);
+      shader.uniforms.uHpSideShade = { value: shadeSides ? 1 : 0 };
       shader.vertexShader = shader.vertexShader
         .replace('#include <common>', '#include <common>\nvarying vec3 vHpWorld;\nvarying vec3 vHpNormal;')
         .replace('#include <project_vertex>', `#include <project_vertex>

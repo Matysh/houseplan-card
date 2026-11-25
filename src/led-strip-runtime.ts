@@ -269,6 +269,18 @@ export function ledStripePath(strip: LedStripModel, faces: FaceContext | null, d
   return value;
 }
 
+export function plan3dLedRibbons(host: LedCardHost, space: SpaceModel, spaceGlow: boolean) {
+  const frame = ledFrameFor(host, space, spaceGlow);
+  const diameter = frame.d * ISO_ICON_SCALE;
+  return frame.views.flatMap(view => {
+    const { t, path } = ledStripePath(view.strip, frame.faces, diameter);
+    if (path.points.length < 2) return [];
+    return [{ id: view.strip.id, owner: view.device.id, path, width: t, depth: frame.d * .075,
+      outline: OUTLINE, color: view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE,
+      opacity: view.state === 'off' ? .7 : 1 }];
+  });
+}
+
 /**
  * The nearest stripe under a pointer (ТЗ §7): the visible derived path on
  * screen, hit radius max(22 px, t/2), ties to the stable id.
