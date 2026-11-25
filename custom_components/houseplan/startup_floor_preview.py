@@ -33,6 +33,8 @@ QUOTA_BYTES = 16 * 1024 * 1024
 STORE_OVERHEAD_BYTES = 1024
 PREFIX = "houseplan.startup-paint"
 FORMAT = 1
+RASTER_FORMAT = 2
+RASTER_PIXELS = 2_000_000
 HEX = re.compile(r"[0-9a-f]{64}")
 LOCAL = re.compile(r"#[A-Za-z_][A-Za-z0-9_.:-]{0,127}")
 REF = re.compile(r"url\((#[A-Za-z_][A-Za-z0-9_.:-]{0,127})\)", re.I)
@@ -113,8 +115,66 @@ def _valid_attribute(tag, key, value):
     return True
 
 
+def _webp_dimensions(image: bytes) -> tuple[int, int]:
+    """Accept static WebP with no metadata or animation payload."""
+    if (len(image) < 20 or image[:4] != b"RIFF" or image[8:12] != b"WEBP"
+            or int.from_bytes(image[4:8], "little") != len(image) - 8):
+        raise ValueError("webp header")
+    index = 12
+    extended = None
+    alpha = False
+    dimensions = None
+    while index < len(image):
+        if index + 8 > len(image) or dimensions is not None:
+            raise ValueError("webp chunks")
+        kind = image[index:index + 4]
+        count = int.from_bytes(image[index + 4:index + 8], "little")
+        start = index + 8
+        end = start + count
+        if end + (count & 1) > len(image):
+            raise ValueError("webp length")
+        if kind == b"VP8X" and index == 12 and count == 10 and image[start:start + 4] == b"\x10\0\0\0":
+            extended = (1 + int.from_bytes(image[start + 4:start + 7], "little"),
+                        1 + int.from_bytes(image[start + 7:start + 10], "little"))
+        elif kind == b"ALPH" and extended and not alpha and count > 1:
+            alpha = True
+        elif kind == b"VP8 " and count >= 10 and not image[start] & 1 and image[start + 3:start + 6] == b"\x9d\x01\x2a":
+            dimensions = (int.from_bytes(image[start + 6:start + 8], "little") & 0x3fff,
+                          int.from_bytes(image[start + 8:start + 10], "little") & 0x3fff)
+        elif kind == b"VP8L" and count >= 5 and image[start] == 0x2f and extended is None:
+            bits = int.from_bytes(image[start + 1:start + 5], "little")
+            if bits >> 29:
+                raise ValueError("webp version")
+            dimensions = (1 + (bits & 0x3fff), 1 + ((bits >> 14) & 0x3fff))
+        else:
+            raise ValueError("webp chunk")
+        index = end + (count & 1)
+    if not dimensions or not all(dimensions) or dimensions[0] * dimensions[1] > RASTER_PIXELS:
+        raise ValueError("webp pixels")
+    if extended is not None and (not alpha or extended != dimensions):
+        raise ValueError("webp alpha")
+    return dimensions
+
+
+def _valid_raster(packet, projection, rotation):
+    if (projection != "iso" or set(packet) != {"version", "fit", "size", "view", "zoom", "image"}
+            or not _valid_fit(packet["fit"], projection, rotation)):
+        return False
+    size, view, zoom, image = packet["size"], packet["view"], packet["zoom"], packet["image"]
+    if (not isinstance(size, list) or len(size) != 2
+            or not all(type(item) is int and 0 < item <= 16_384 for item in size)
+            or not isinstance(view, list) or len(view) != 4
+            or not all(type(item) in (int, float) and abs(item) <= 10_000_000 for item in view)
+            or not all(item > 0 for item in view[2:])
+            or type(zoom) not in (int, float) or not 0 < zoom <= 10_000
+            or not isinstance(image, str) or len(image) > BASE64_BYTES):
+        return False
+    _webp_dimensions(base64.b64decode(image, validate=True))
+    return True
+
+
 def validate_preview(wire: str, projection: str, rotation: int) -> int:
-    """Check bounded gzip + inert typed geometry, return decoded wire bytes."""
+    """Check bounded gzip and inert vector or raster data, returning the wire bytes."""
     if not isinstance(wire, str) or len(wire) > BASE64_BYTES:
         raise ValueError("wire limit")
     data = base64.b64decode(wire, validate=True)
@@ -125,6 +185,10 @@ def validate_preview(wire: str, projection: str, rotation: int) -> int:
     if len(raw) > VECTOR_BYTES or not decoder.eof or decoder.unused_data:
         raise ValueError("expanded limit")
     packet = json.loads(raw)
+    if isinstance(packet, dict) and type(packet.get("version")) is int and packet["version"] == RASTER_FORMAT:
+        if not _valid_raster(packet, projection, rotation):
+            raise ValueError("raster shape")
+        return len(data)
     if (not isinstance(packet, dict) or set(packet) != {"version", "fit", "nodes", "pool"}
             or type(packet["version"]) is not int or packet["version"] != FORMAT
             or not _valid_fit(packet["fit"], projection, rotation)

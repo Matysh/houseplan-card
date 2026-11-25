@@ -66,6 +66,35 @@ def test_finite_plan_units_for_receiver_paint():
     ]), "flat", 0) > 0
 
 
+def test_static_webp_preview_has_its_own_bounded_contract():
+    """A GPU capture can use the cache without relaxing the vector validator."""
+    packet = {
+        "version": 2,
+        "fit": json.loads(gzip.decompress(base64.b64decode(wire())))["fit"],
+        "size": [400, 240],
+        "view": [1, 2, 10, 15],
+        "zoom": 1,
+        "image": "UklGRmgAAABXRUJQVlA4WAoAAAAQAAAABAAAAgAAQUxQSBAAAAABDzD/ERFCIYAA"
+                 "KGgi+h8PVlA4IDIAAADwAQCdASoFAAMAAQAcJYwC7DBAPJVCAAAA/vRRAsO/t+RUYWEsvRePv3xh7C4GFgAAAA==",
+    }
+    packet["fit"]["projection"] = "iso"
+
+    def encoded(value):
+        return base64.b64encode(gzip.compress(json.dumps(value).encode())).decode()
+
+    assert validate_preview(encoded(packet), "iso", 0) > 0
+    with pytest.raises(ValueError):
+        validate_preview(encoded(packet), "flat", 0)
+    with pytest.raises(ValueError):
+        validate_preview(encoded({**packet, "view": [1, 2, 0, 15]}), "iso", 0)
+    data = bytearray(base64.b64decode(packet["image"]))
+    data[20] |= 2  # An animated VP8X header is outside the raster contract.
+    with pytest.raises(ValueError):
+        validate_preview(encoded({**packet, "image": base64.b64encode(data).decode()}), "iso", 0)
+    with pytest.raises(ValueError):
+        validate_preview(encoded({**packet, "image": "PHN2Zy8+"}), "iso", 0)
+
+
 async def test_preview_scope_survives_reload_but_not_equal_rev_restore(
     hass, enable_custom_integrations, hass_ws_client,
 ):

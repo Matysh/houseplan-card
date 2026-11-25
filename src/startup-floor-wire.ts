@@ -11,6 +11,14 @@ export const STARTUP_WIRE_PAINT_BYTES = 8 * 1024 * 1024;
 export const STARTUP_SVG_NS = 'http://www.w3.org/2000/svg';
 export type StartupVector = [tag: string, attributes: Record<string, string>, children: StartupVector[]];
 export interface StartupGeometry { version: 1; fit: FloorFitPacket; nodes: StartupVector[] }
+export interface StartupRaster {
+  version: 2;
+  fit: FloorFitPacket;
+  size: readonly [number, number];
+  view: { x: number; y: number; w: number; h: number };
+  zoom: number;
+  image: Blob;
+}
 export interface StartupRemoteAddress {
   readonly source: readonly [string, string];
   readonly variant: string;
@@ -128,6 +136,118 @@ async function collect(stream: ReadableStream<Uint8Array<ArrayBuffer>>, limit: n
   }
 }
 
+function base64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let start = 0; start < bytes.length; start += 8192)
+    binary += String.fromCharCode(...bytes.subarray(start, start + 8192));
+  return btoa(binary);
+}
+
+function fromBase64(value: unknown): Uint8Array<ArrayBuffer> | null {
+  if (typeof value !== 'string' || value.length > 4 * Math.ceil(STARTUP_WIRE_BYTES / 3)
+    || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) return null;
+  try {
+    const bytes = Uint8Array.from(atob(value), ch => ch.charCodeAt(0));
+    return bytes.length <= STARTUP_WIRE_BYTES ? bytes : null;
+  } catch { return null; }
+}
+
+/** Header checks bound the image before passing untrusted cache data to a
+ * decoder. Its container contains a single static frame and no metadata. */
+export function validStartupWebp(bytes: Uint8Array): boolean {
+  const data = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const tag = (i: number) => String.fromCharCode(...bytes.subarray(i, i + 4));
+  if (bytes.length < 20 || bytes.length > STARTUP_WIRE_BYTES || tag(0) !== 'RIFF'
+    || data.getUint32(4, true) !== bytes.length - 8 || tag(8) !== 'WEBP') return false;
+  let width = 0, height = 0, expectedWidth = 0, expectedHeight = 0, alpha = false;
+  for (let i = 12; i < bytes.length;) {
+    if (i + 8 > bytes.length || width || height) return false;
+    const count = data.getUint32(i + 4, true), start = i + 8, end = start + count + (count & 1);
+    if (end > bytes.length) return false;
+    const kind = tag(i);
+    const little24 = (at: number) => bytes[at] | bytes[at + 1] << 8 | bytes[at + 2] << 16;
+    if (kind === 'VP8X' && i === 12 && count === 10 && data.getUint32(start, true) === 16) {
+      expectedWidth = 1 + little24(start + 4);
+      expectedHeight = 1 + little24(start + 7);
+    } else if (kind === 'ALPH' && expectedWidth && !alpha && count > 1) alpha = true;
+    else if (kind === 'VP8 ' && count >= 10 && !(bytes[start] & 1) && little24(start + 3) === 0x2a019d) {
+      width = data.getUint16(start + 6, true) & 0x3fff;
+      height = data.getUint16(start + 8, true) & 0x3fff;
+    } else if (kind === 'VP8L' && count >= 5 && bytes[start] === 0x2f && !expectedWidth) {
+      const bits = data.getUint32(start + 1, true);
+      if (bits >>> 29) return false;
+      width = 1 + (bits & 0x3fff);
+      height = 1 + ((bits >>> 14) & 0x3fff);
+    } else return false;
+    i = end;
+  }
+  return width > 0 && height > 0 && width * height <= 2_000_000
+    && (!expectedWidth || alpha && expectedWidth === width && expectedHeight === height);
+}
+
+/** Chromium writes an ICC profile even when encoding an sRGB canvas.
+ * Strip only the encoder's color profile. Receivers still reject metadata. */
+export async function startupWebpFromCanvas(blob: Blob | null): Promise<Blob | null> {
+  if (blob?.type !== 'image/webp' || blob.size > STARTUP_WIRE_BYTES) return null;
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  if (validStartupWebp(bytes)) return blob;
+  const data = new DataView(bytes.buffer);
+  const tag = (i: number) => String.fromCharCode(...bytes.subarray(i, i + 4));
+  if (bytes.length < 30 || tag(0) !== 'RIFF' || tag(8) !== 'WEBP'
+    || data.getUint32(4, true) !== bytes.length - 8 || tag(12) !== 'VP8X'
+    || data.getUint32(16, true) !== 10 || !(bytes[20] & 32)) return null;
+  const extracted = bytes.slice(0, 12);
+  const content: Uint8Array<ArrayBuffer>[] = [];
+  let total = 12;
+  for (let i = 12; i < bytes.length;) {
+    if (i + 8 > bytes.length) return null;
+    const count = data.getUint32(i + 4, true), end = i + 8 + count + (count & 1);
+    if (end > bytes.length) return null;
+    const kind = tag(i);
+    if (kind !== 'ICCP') {
+      const chunk = bytes.slice(i, end);
+      if (i === 12) chunk[8] &= ~32;
+      if (i !== 12 || chunk[8] !== 0) { content.push(chunk); total += chunk.length; }
+    }
+    i = end;
+  }
+  const clean = new Uint8Array(total);
+  new DataView(extracted.buffer).setUint32(4, total - 8, true);
+  clean.set(extracted);
+  let position = extracted.length;
+  for (const chunk of content) { clean.set(chunk, position); position += chunk.length; }
+  return validStartupWebp(clean) ? new Blob([clean], { type: 'image/webp' }) : null;
+}
+
+export async function encodeStartupRaster(packet: StartupRaster, signal: AbortSignal): Promise<string> {
+  const { view, image, ...metadata } = packet;
+  if (image.type !== 'image/webp' || image.size > STARTUP_WIRE_BYTES) throw Error('raster-format');
+  const bytes = new Uint8Array(await image.arrayBuffer());
+  if (!validStartupWebp(bytes)) throw Error('raster-format');
+  const wire = new Blob([JSON.stringify({ ...metadata,
+    view: [view.x, view.y, view.w, view.h], image: base64(bytes) })]);
+  return base64(await collect(wire.stream().pipeThrough(new CompressionStream('gzip')), STARTUP_WIRE_BYTES, signal));
+}
+
+export async function decodeStartupRaster(encoded: unknown, address: StartupRemoteAddress,
+  signal: AbortSignal): Promise<StartupRaster | null> {
+  if (address.projection !== 'iso') return null;
+  const zip = fromBase64(encoded);
+  if (!zip) return null;
+  const data = await collect(new Blob([zip]).stream().pipeThrough(new DecompressionStream('gzip')), STARTUP_WIRE_VECTOR_BYTES, signal);
+  const wire: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(data));
+  if (!plainObject(wire) || Object.keys(wire).length !== 6 || wire.version !== 2 || !validFit(wire.fit, address)
+    || !Array.isArray(wire.size) || wire.size.length !== 2
+    || !wire.size.every(n => Number.isInteger(n) && n > 0 && n <= 16_384)
+    || !Array.isArray(wire.view) || wire.view.length !== 4 || !wire.view.every(safeNumber)
+    || wire.view[2] <= 0 || wire.view[3] <= 0 || typeof wire.zoom !== 'number' || !(wire.zoom > 0 && wire.zoom <= 10_000)) return null;
+  const raster = fromBase64(wire.image);
+  if (!raster || !validStartupWebp(raster)) return null;
+  const [x, y, w, h] = wire.view;
+  return { version: 2, fit: wire.fit, size: [wire.size[0], wire.size[1]], view: { x, y, w, h }, zoom: wire.zoom,
+    image: new Blob([raster], { type: 'image/webp' }) };
+}
+
 export async function encodeStartupGeometry(packet: StartupGeometry, signal: AbortSignal): Promise<string> {
   const pool: string[] = [], interned = new Map<string, number>();
   type Compact = [string, Record<string, number>, Compact[]];
@@ -143,17 +263,13 @@ export async function encodeStartupGeometry(packet: StartupGeometry, signal: Abo
   const json = new Blob([JSON.stringify({ ...packet, pool, nodes: packet.nodes.map(pack) })]);
   if (json.size > STARTUP_WIRE_VECTOR_BYTES) throw Error('vector-size');
   const bytes = await collect(json.stream().pipeThrough(new CompressionStream('gzip')), STARTUP_WIRE_BYTES, signal);
-  let binary = '';
-  for (let start = 0; start < bytes.length; start += 8192) binary += String.fromCharCode(...bytes.subarray(start, start + 8192));
-  return btoa(binary);
+  return base64(bytes);
 }
 
 export async function decodeStartupGeometry(encoded: unknown, address: StartupRemoteAddress,
   signal: AbortSignal): Promise<StartupGeometry | null> {
-  if (typeof encoded !== 'string' || encoded.length > 4 * Math.ceil(STARTUP_WIRE_BYTES / 3)
-    || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return null;
-  const zip = Uint8Array.from(atob(encoded), ch => ch.charCodeAt(0));
-  if (zip.length > STARTUP_WIRE_BYTES) return null;
+  const zip = fromBase64(encoded);
+  if (!zip) return null;
   const data = await collect(new Blob([zip]).stream().pipeThrough(new DecompressionStream('gzip')), STARTUP_WIRE_VECTOR_BYTES, signal);
   const wire: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(data));
   if (!plainObject(wire) || Object.keys(wire).length !== 4 || wire.version !== 1 || !validFit(wire.fit, address)

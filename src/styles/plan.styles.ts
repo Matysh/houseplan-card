@@ -230,6 +230,9 @@ export const planStyles = css`
     .hp-mode-crossfade { position:absolute; inset:0; z-index:1; pointer-events:none; }
     .plan-svg { z-index: 1; }
     .iso-scene-surface { position:absolute; inset:0; z-index:1; }
+    .zoomwrap > canvas[data-hp-plan-3d] {
+      position:absolute; inset:0; width:100%; height:100%; z-index:2; pointer-events:none;
+    }
     /* Keep the idle SVG composited without freezing its raster density at
        the previous zoom. Camera motion supplies its own transform hint. */
     .iso-scene-surface { filter:var(--hp-iso-gesture-blur, none); will-change:opacity; }

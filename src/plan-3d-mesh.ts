@@ -2,6 +2,47 @@ import { BufferAttribute, BufferGeometry, ShapeUtils, Vector2 } from 'three';
 import type { PlanPoint } from './iso-projection';
 
 type PlanPolygon = readonly (readonly PlanPoint[])[];
+export type Plan3dVertex = readonly [x: number, y: number, height: number];
+
+/** Triangulate surfaces in their own dominant plane. Vertices never pass
+ * through the view camera, so the same mesh works from either side. */
+export function planFaceMesh(faces: readonly (readonly (readonly Plan3dVertex[])[])[]): BufferGeometry {
+  const positions: number[] = [];
+  for (const loops of faces) {
+    const [outer, ...holes] = loops.filter(loop => loop.length >= 3);
+    if (!outer) continue;
+    let nx = 0, ny = 0, nz = 0;
+    for (let i = 0; i < outer.length; i++) {
+      const a = outer[i], b = outer[(i + 1) % outer.length];
+      nx += (a[1] - b[1]) * (a[2] + b[2]);
+      ny += (a[2] - b[2]) * (a[0] + b[0]);
+      nz += (a[0] - b[0]) * (a[1] + b[1]);
+    }
+    const ax = Math.abs(nx), ay = Math.abs(ny), az = Math.abs(nz);
+    if (Math.max(ax, ay, az) < 1e-10) continue;
+    const project = ([x, y, z]: Plan3dVertex) =>
+      az >= ax && az >= ay ? new Vector2(x, y) : ax >= ay ? new Vector2(y, z) : new Vector2(z, x);
+    const points = [outer, ...holes].map(ring =>
+      ring.length && ring[0].every((value, i) => value === ring[ring.length - 1][i]) ? ring.slice(0, -1) : ring);
+    const vertices = points.flat();
+    const [contour, ...cutouts] = points.map(ring => ring.map(project));
+    const normal = az >= ax && az >= ay ? nz : ax >= ay ? nx : ny;
+    const flat = [contour, ...cutouts].flat();
+    for (const [i, j, k] of ShapeUtils.triangulateShape(contour, cutouts)) {
+      const a = flat[i], b = flat[j], c = flat[k];
+      const forward = ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) * normal > 0;
+      // World XZ uses the plan's XY. This swap reverses handedness.
+      for (const index of forward ? [i, k, j] : [i, j, k]) {
+        const [x, y, z] = vertices[index];
+        positions.push(x, z, y);
+      }
+    }
+  }
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
+  geometry.computeVertexNormals();
+  return geometry;
+}
 
 function openRing(points: readonly PlanPoint[]): Vector2[] {
   const ring: Vector2[] = [];

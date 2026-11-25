@@ -31,7 +31,8 @@ const validAddress = (a: StartupAddress) => !!a.scope && a.scope.length <= 2048 
   && !!a.floor && a.floor.length <= 256 && /^[a-f0-9]{64}$/.test(a.variant) && /^[a-f0-9]{64}$/.test(a.revision);
 const saneNumber = (n: number) => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 10_000_000;
 function validPacket(p?: StartupFloorView): p is StartupFloorView {
-  return !!p && p.image instanceof Blob && p.image.type === 'image/svg+xml'
+  return !!p && p.image instanceof Blob && (p.image.type === 'image/svg+xml'
+    || p.image.type === 'image/webp' && p.fit?.projection === 'iso')
     && p.image.size > 0 && p.image.size <= STARTUP_IMAGE_LIMIT
     && Array.isArray(p.size) && p.size.length === 2 && p.size.every(n => saneNumber(n) && n > 0 && n <= 16384)
     && !!p.view && [p.view.x, p.view.y, p.view.w, p.view.h].every(saneNumber)

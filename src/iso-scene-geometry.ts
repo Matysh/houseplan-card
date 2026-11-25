@@ -366,6 +366,8 @@ export type IsoRenderScene = IsoSceneCacheEntry & {
   key: string;
   frame: Rect;
   camera: Readonly<IsoCamera>;
+  /** Camera-independent source for consumers of world-space geometry. */
+  physical: IsoPhysicalScene;
   canonicalFrame?: Rect;
   /** Presentation-only metadata; never stored in the structural LRU. */
   overlayFitEntries?: readonly IsoOverlayRenderEntry[];
@@ -411,6 +413,9 @@ function lensBounds(physical: IsoPhysicalScene): Rect | null {
   const result = bounds(physical.floor) ?? bounds(physical.walls);
   isoPhysicalBounds.set(physical, result);
   return result;
+}
+export function isoWorldBounds(scene: IsoRenderScene, fallback: Rect): Rect {
+  return lensBounds(scene.physical) ?? fallback;
 }
 const isoProjectedScenes = new WeakMap<IsoSceneCacheEntry, Map<number, IsoSceneCacheEntry>>();
 export interface IsoCacheSnapshot {
@@ -631,8 +636,9 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
   const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);
   const cached = lruRead(input.cache, input.source.key);
   let value = cached.hit ? cached.value : undefined;
-  if (!value) {
-    const structural = input.source.build();
+  let structural = value && isoPhysicalScenes.get(value);
+  if (!value || !structural) {
+    structural = input.source.build();
     value = {
       geometry: buildIsoWallGeometry(structural.walls, ISO_CAMERA, wallHeight, structural.roundColumnRings),
       floor: buildIsoFloorGeometry(structural.floor, floorEdgeHeight),
@@ -645,8 +651,7 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
   if (rotation !== 0) {
     let projections = isoProjectedScenes.get(value);
     if (!projections) { projections = new Map(); isoProjectedScenes.set(value, projections); }
-    const physical = isoPhysicalScenes.get(value);
-    if (!physical) throw new Error('missing physical isometric source');
+    const physical = structural;
     let projected = projections.get(rotation);
     const bounds = camera.rotDeg % 90 === 0 ? lensBounds(physical) : null;
     if (bounds) {
@@ -681,7 +686,7 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
     floorDepth: floorEdgeHeight,
     raisedHeight,
   }, camera);
-  return { key: input.source.key, ...value, frame, camera };
+  return { key: input.source.key, ...value, frame, camera, physical: structural };
 }
 
 /** Lazy orchestration of canonical/active fit; the eager card supplies only its frame inputs. */

@@ -1,6 +1,6 @@
 import { StartupFloorStore, type StartupAddress, type StartupFloorView } from './startup-floor-store';
 import { loadStartupFloorImage } from './startup-floor-svg';
-import type { StartupGeometry, StartupRemoteAddress } from './startup-floor-wire';
+import type { StartupGeometry, StartupRaster, StartupRemoteAddress } from './startup-floor-wire';
 
 export interface StartupSelection extends StartupAddress {
   authority: object;
@@ -10,10 +10,14 @@ export interface StartupSelection extends StartupAddress {
   remote?: StartupRemoteAddress;
 }
 interface Ready extends StartupFloorView { element: HTMLImageElement; remote: boolean }
-export interface StartupCapture extends Omit<StartupFloorView, 'image'> { image: Blob | null; geometry?: StartupGeometry }
+export interface StartupCapture extends Omit<StartupFloorView, 'image'> {
+  image: Blob | null;
+  geometry?: StartupGeometry;
+  raster?: StartupRaster;
+}
 export interface StartupRemoteSource {
   read(selection: StartupSelection, signal: AbortSignal): Promise<StartupFloorView | null>;
-  publish(selection: StartupSelection, packet: StartupGeometry, signal: AbortSignal): Promise<boolean>;
+  publish(selection: StartupSelection, packet: StartupGeometry | StartupRaster, signal: AbortSignal): Promise<boolean>;
 }
 const key = (s: StartupSelection) => JSON.stringify([s.scope, s.floor, s.variant, s.revision]);
 const portableKey = (scope: string, floor: string, projection: string, rotation: number, source: readonly string[]) =>
@@ -178,7 +182,7 @@ export class StartupFloor {
         }
         if (!current()) return;
         this.facts.capture = 'working';
-        const { geometry, image, ...packet } = await work(owner.abort.signal, portable);
+        const { geometry, raster, image, ...packet } = await work(owner.abort.signal, portable);
         if (!current()) return;
         this.facts.bytes = image?.size ?? 0;
         const stored = cached || !!image && await this.store.write(selection, { ...packet, image }, current);
@@ -186,9 +190,10 @@ export class StartupFloor {
         if (portable && current()) {
           // Record this attempt separately: an old IDB hit must still be
           // allowed to seed the server once without a canonical plan save.
-          if (geometry) {
+          const remote = raster ?? geometry;
+          if (remote) {
             this.facts.remote = this.facts.remote === 'shown' ? 'shown' : 'publishing';
-            const ok = await this.remote!.publish(selection, geometry, owner.abort.signal);
+            const ok = await this.remote!.publish(selection, remote, owner.abort.signal);
             if (current() && this.facts.remote !== 'shown') this.facts.remote = ok ? 'stored' : 'unavailable';
           } else if (this.facts.remote !== 'shown') this.facts.remote = 'unsupported-vector';
           if (current()) this.rememberPortable(remoteId);

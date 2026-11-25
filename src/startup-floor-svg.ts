@@ -1,5 +1,5 @@
 import { STARTUP_IMAGE_LIMIT, STARTUP_VECTOR_LIMIT } from './startup-floor-store';
-import { STARTUP_WIRE_PAINT_BYTES, startupVector, type StartupVector } from './startup-floor-wire';
+import { STARTUP_WIRE_BYTES, STARTUP_WIRE_PAINT_BYTES, startupVector, validStartupWebp, type StartupVector } from './startup-floor-wire';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const tags = new Set(('svg g defs path rect circle ellipse line polyline polygon clipPath mask linearGradient radialGradient stop '
@@ -192,8 +192,11 @@ const cssDefault = new Map([
 ]);
 
 export async function loadStartupFloorImage(blob: Blob, signal: AbortSignal, constructedFromTypedVector = false): Promise<HTMLImageElement | null> {
-  if (signal.aborted || !constructedFromTypedVector && !await isStartupSvg(await blob.text(), signal) || signal.aborted)
-    return null;
+  if (signal.aborted) return null;
+  const valid = blob.type === 'image/webp'
+    ? blob.size <= STARTUP_WIRE_BYTES && validStartupWebp(new Uint8Array(await blob.arrayBuffer()))
+    : blob.type === 'image/svg+xml' && (constructedFromTypedVector || await isStartupSvg(await blob.text(), signal));
+  if (!valid || signal.aborted) return null;
   const url = URL.createObjectURL(blob);
   const revoke = () => URL.revokeObjectURL(url);
   signal.addEventListener('abort', revoke, { once: true });
