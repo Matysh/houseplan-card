@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 24621,
-  "nextTicket": 695,
+  "revision": 24622,
+  "nextTicket": 696,
   "nextFence": 695,
   "tasks": {
     "1024": {
@@ -6292,17 +6292,16 @@
       "materialSha": "4aebd7d64bf688073a224e985402863948f667b6",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 694,
-      "queued": false,
+      "ticket": 695,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795610349043,
-      "reviewEntry": 1,
+      "readyAt": 1795610958127,
+      "reviewEntry": 2,
       "patchId": "8484b1a821bd0ab87075267de8c64fbb9a160038",
       "changedFiles": [
         "demo/smoke_device_contact_reflow.mjs",
         "src/houseplan-card.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6920,7 +6919,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1565
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7560,6 +7561,19 @@
           "detail": "Поведение: test/ui-lab-session.test.mjs: failed",
           "eventId": "finish:85590ac3-0419-4407-91d1-78e8486db46a:finish:3:return:return:1565"
         }
+      }
+    },
+    "finish:268ffc40-8de7-4e9b-baed-464e8c55df89": {
+      "digest": "3d31d9f0d8a18068f1f3e27cb41724206086f2c3665f065e960c9b923aabca3a",
+      "issue": 1565,
+      "message": {
+        "kind": "queued",
+        "issue": 1565,
+        "at": 1795610958127,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "4aebd7d64bf688073a224e985402863948f667b6"
       }
     }
   },
