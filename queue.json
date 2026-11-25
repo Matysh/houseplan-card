@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24767,
+  "revision": 24768,
   "nextTicket": 697,
   "nextFence": 697,
   "tasks": {
@@ -6784,8 +6784,9 @@
       "contextDigest": "dbb8602cef5f3f3580b2327c4114bf79706b696a184413a3ef9e275e4e69ba91",
       "base": "863b706d1a60db865e8ac55538b247576dcf586e",
       "round": 2,
-      "status": "pending",
-      "updatedAt": 1795615680447
+      "status": "accepted",
+      "updatedAt": 1795615907045,
+      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45630783407"
     }
   },
   "reviewPublications": {
@@ -6893,6 +6894,10 @@
     },
     "github:45631301498:1:spec:1566:spec-presentation": {
       "digest": "5f0b024a135dc4dbb09407ffc022f29fad79dea9b397db3818222cd4e909e515",
+      "issue": 1566
+    },
+    "github:45631301498:1:spec:1566:spec-complete": {
+      "digest": "c5d6f4cdf187e7f3049183b81b1cceae37a6baae29df67e43c79a30f75614507",
       "issue": 1566
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
