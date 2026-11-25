@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25430,
-  "nextTicket": 709,
+  "revision": 25431,
+  "nextTicket": 710,
   "nextFence": 709,
   "tasks": {
     "1024": {
@@ -6385,6 +6385,20 @@
       "devBuild": {
         "status": "pending"
       }
+    },
+    "1572": {
+      "issue": 1572,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1572-webgl-marker-offline",
+      "materialSha": "9356b714ce0de8b755bd0b5159c8e88be39cfd0a",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 709,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795650302136,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7062,7 +7076,9 @@
       "runId": 45723000579
     }
   },
-  "waiting": [],
+  "waiting": [
+    1572
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7112,6 +7128,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:d415c2fc-82ce-4cb8-876e-4522c328214a": {
+      "digest": "8c42a4e1b8833fe7a1fd59cb726ae4a9ef196ea44b7186706df88c210cb1f74e",
+      "issue": 1572,
+      "message": {
+        "kind": "queued",
+        "issue": 1572,
+        "at": 1795650302136,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9356b714ce0de8b755bd0b5159c8e88be39cfd0a"
       }
     }
   },
