@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25133,
+  "revision": 25134,
   "nextTicket": 703,
   "nextFence": 703,
   "tasks": {
@@ -6890,18 +6890,12 @@
       "updatedAt": 1795639247640
     },
     "1569": {
-      "requestId": "spec:1569:ddc0615144e461a0ce2c3f104e59fdd1a92d28cc9f2fbc367b6df41629f81e7f",
-      "contextDigest": "ddc0615144e461a0ce2c3f104e59fdd1a92d28cc9f2fbc367b6df41629f81e7f",
+      "requestId": "spec:1569:d606a0db89d21a16180fb65c985c3be1661981b95a9c1fd9ac492f5b62c296ff",
+      "contextDigest": "d606a0db89d21a16180fb65c985c3be1661981b95a9c1fd9ac492f5b62c296ff",
       "base": "ec0582978408f0af1bab5eff9bfca4084373d3ba",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795639242644,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45696407648",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795639342878
     }
   },
   "reviewPublications": {
@@ -6957,6 +6951,19 @@
         "round": 1,
         "occurredAt": "2026-11-25T20:40:47.640Z"
       }
+    },
+    "spec:1569:spec:1569:d606a0db89d21a16180fb65c985c3be1661981b95a9c1fd9ac492f5b62c296ff": {
+      "issue": 1569,
+      "kind": "spec",
+      "requestId": "spec:1569:d606a0db89d21a16180fb65c985c3be1661981b95a9c1fd9ac492f5b62c296ff",
+      "materialSha": "ec0582978408f0af1bab5eff9bfca4084373d3ba",
+      "expectedBase": "ec0582978408f0af1bab5eff9bfca4084373d3ba",
+      "patchId": "d606a0db89d21a16180fb65c985c3be1661981b95a9c1fd9ac492f5b62c296ff",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-25T20:42:22.878Z"
+      }
     }
   },
   "waiting": [],
@@ -7006,6 +7013,10 @@
       "digest": "8d2bbef40b4f10613a21981ae4e3c350304cf52ec8cf9a5b2caaae16522156e7",
       "issue": 1569
     },
+    "github:45697462705:1:label:spec-request": {
+      "digest": "3271e79338e62c3d3c744d76a4a268861d4aabfaab6b22d72ca529c8e295b688",
+      "issue": 1569
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7033,6 +7044,22 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "github:45697462705:1:label:spec-request:spec-resubmitted:1569": {
+      "digest": "3271e79338e62c3d3c744d76a4a268861d4aabfaab6b22d72ca529c8e295b688",
+      "issue": 1569,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1569,
+        "at": 1795639342878,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1569:d606a0db89d21a16180fb65c985c3be1661981b95a9c1fd9ac492f5b62c296ff",
+        "reviewChanges": "Общую политику применять только к диагностированным перекрытиям поверхностей кладки и откоса. Утверждение про торец подтверждается кодом оболочки и замкнутой прямоугольной синтетической геометрией; GPU-симптом дополнительно воспроизвести.\n\n### Исправления по предыдущему ревью\n\n- [Раунд 1](https://github.com/Matysh/houseplan-card/actions/runs/45696407648): калитка добавлена в скоуп, AC1 и AC3. Отделка владеет общей площадью независимо от наличия подоконника/перемычки, поэтому случай без тела кладки проверяется наравне с остальными.\n- Явно назван владелец отделки, уточнены границы видимого перекрытия и неизменность SVG 2.5D. В WebGL используется общая геометрия торцов для обоих режимов прозрачности, непрозрачные поверхности остаются сгруппированными.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
