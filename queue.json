@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24836,
+  "revision": 24837,
   "nextTicket": 698,
   "nextFence": 698,
   "tasks": {
@@ -6212,7 +6212,7 @@
       "ownerDecision": null,
       "ticket": 697,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1795618289240,
       "reviewEntry": 1,
       "patchId": "962d7169653aae4893f7b261f23a70c846322204",
@@ -6256,6 +6256,20 @@
         "at": 1795620117386,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1566:1:962d7169653aae4893f7b261f23a70c846322204:863b706d1a60db865e8ac55538b247576dcf586e",
+        "at": 1795620715120
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1795620715120,
+        "entry": 1,
+        "requestId": "review:1566:1:962d7169653aae4893f7b261f23a70c846322204:863b706d1a60db865e8ac55538b247576dcf586e"
       }
     }
   },
@@ -6907,19 +6921,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1566,
-    "worker": "finish",
-    "token": "697:finish:dd205c3d-5057-4cc6-b969-0f3e1be7df78:finish:1:admit",
-    "fence": 697,
-    "materialSha": "09d08d749909298ace9e0c8e5fe2717ea9c30ae2",
-    "expectedBase": "863b706d1a60db865e8ac55538b247576dcf586e",
-    "phase": "review",
-    "admittedAt": 1795618293356,
-    "expiresAt": 1795623689729,
-    "patchId": "962d7169653aae4893f7b261f23a70c846322204",
-    "reviewRequest": "review:1566:1:962d7169653aae4893f7b261f23a70c846322204:863b706d1a60db865e8ac55538b247576dcf586e"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7151,6 +7153,10 @@
     },
     "finish:5962b90b-b946-4c61-862b-56ec468a035e:finish:10:review-presentation": {
       "digest": "9bc8224304c232d07496556541399001a9a71a7f1d06512d2de3af724bfd9d9d",
+      "issue": 1566
+    },
+    "finish:5962b90b-b946-4c61-862b-56ec468a035e:finish:10:return": {
+      "digest": "2fe93b4a2cca4c2a24af4ada385450ea6376d93ff9a74441ebaea59ce837a771",
       "issue": 1566
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
