@@ -4410,12 +4410,12 @@ export class HouseplanCard extends LitElement {
     }
   };
 
-  private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
+  private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean; labelGesture?: object } | null = null;
   private _deviceDrag: DeviceDragState | null = null;
   private get _deviceContacts() { return this._liveRt?.contacts; }
   private _deviceMagnets = true;
   private readonly _deviceDragRetirement = new DeviceDragRetirement();
-  private _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number } | null = null;
+  private _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number; labelGesture?: object } | null = null;
   private readonly _viewHold = new ViewHoldGesture();
   private _holdFired = false;
 
@@ -7402,17 +7402,25 @@ export class HouseplanCard extends LitElement {
     return true;
   }
 
-  private _canChangeRoomLabel(id: string): boolean {
-    return this._standaloneLayoutWrite?.canStage(id) ?? true;
+  private _beginRoomLabelGesture(id: string): object | null | undefined {
+    return this._standaloneLayoutWrite?.beginGesture(id);
   }
 
-  private _stageRoomLabelPosition(id: string, position: DeviceLayout[string]): void {
+  private _endRoomLabelGesture(id: string, claim?: object): void {
+    if (claim) this._standaloneLayoutWrite?.endGesture(id, claim);
+  }
+
+  private _retireStandaloneLayoutWrites(): void {
+    this._standaloneLayoutWrite?.retire();
+  }
+
+  private _stageRoomLabelPosition(id: string, position: DeviceLayout[string], claim?: object): void {
     if (this._standaloneLayoutWrite) {
       const { k, ...rest } = position;
       position = canonicalizePosition({
         ...rest, ...(typeof k === 'number' && Number.isFinite(k) ? { k: Math.min(3, Math.max(.5, k)) } : {}),
       });
-      if (!this._standaloneLayoutWrite.stage(id, position)) return;
+      if (!claim || !this._standaloneLayoutWrite.stage(id, position, claim)) return;
     }
     this._adoption.stageLocalLayout({ ...this._layout, [id]: position });
     this._dirtyPos.add(id);

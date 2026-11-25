@@ -37,6 +37,7 @@ type Slot = {
 
 export class StandaloneLayoutWrite {
   private readonly slots = new Map<string, Slot>();
+  private readonly gestures = new Map<string, object>();
   private readonly listeners = new Set<(state: StandaloneSaveState) => void>();
   private interrupted = false;
 
@@ -67,13 +68,22 @@ export class StandaloneLayoutWrite {
     const slot = this.slots.get(key);
     return !slot?.blocked && !slot?.recovering;
   }
+  beginGesture(key: string): object | null {
+    if (!this.canStage(key)) return null;
+    const claim = {};
+    this.gestures.set(key, claim);
+    return claim;
+  }
+  endGesture(key: string, claim: object): void {
+    if (this.gestures.get(key) === claim) this.gestures.delete(key);
+  }
   pendingKeys(): string[] {
     return [...this.slots].filter(([, slot]) => slot.entry.status === 'pending').map(([key]) => key);
   }
 
-  stage(key: string, next: DeviceLayoutEntry): boolean {
+  stage(key: string, next: DeviceLayoutEntry, claim: object): boolean {
     const slot = this.slots.get(key);
-    if (!this.canStage(key) || !next.s) return false;
+    if (this.gestures.get(key) !== claim || !this.canStage(key) || !next.s) return false;
     const desired = roomLabelFields(next)!;
     if (slot?.entry.status === 'pending') {
       if (same(desired, slot.desired)) return false;
@@ -101,6 +111,7 @@ export class StandaloneLayoutWrite {
   }
 
   retire(): void {
+    this.gestures.clear();
     if (!this.slots.size) return;
     this.interrupted ||= [...this.slots.values()].some(slot => slot.entry.status !== 'accepted');
     const old = [...this.slots.values()];
@@ -153,6 +164,9 @@ export class StandaloneLayoutWrite {
       const rejection = !dispatched || ['conflict', 'unauthorized', 'not_ready', 'invalid_format', 'too_large'].includes(String(code));
       slot.recovering = true;
       slot.flush = false;
+      // The mouse may still be held after the recovery read completes. A
+      // continued pointermove is not a new intention to overwrite the server.
+      this.gestures.delete(key);
       this.end(slot, rejection ? 'rejected' : 'unknown', typeof code === 'string' ? code : 'transport');
       try {
         if (attached() && slot.current()) this.ports.reportFailure(error);

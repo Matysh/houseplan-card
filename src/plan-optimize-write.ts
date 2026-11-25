@@ -28,6 +28,7 @@ export interface PlanOptimizeWriteHost extends PlanHostProvider {
   _canOptimizeUndo: boolean;
   _undoKind: 'optimize' | 'import' | 'space_delete' | null;
   _dirtyPos: Set<string>;
+  _retireStandaloneLayoutWrites?(): void;
   _sentPos: Map<string, DeviceLayout[string] | null>;
   _cfgEpoch: number;
   _modelCache: unknown;
@@ -92,6 +93,7 @@ export async function commitPlanOptimization(
   host._devicePositionHistory.clear();
   host._canOptimizeUndo = response.can_undo === true;
   host._undoKind = response.can_undo === true ? 'optimize' : null;
+  host._retireStandaloneLayoutWrites?.();
   host._dirtyPos.clear();
   host._sentPos.clear();
   host._cfgEpoch++;

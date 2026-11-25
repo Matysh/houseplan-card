@@ -22,9 +22,9 @@ const config = currentGraphFixture({spaces:[{
   walls:[a,b].flatMap(poly => poly.map((point,i)=>({a:point,b:poly[(i+1)%poly.length],cm:16}))),
   wall_segments:[],partitions:[],openings:[],decor:[],stairs:[],
 }],markers:[{id:'hidden',binding:'entity:light.kept',space:'floor',room_id:'first'}],settings:{filter_seeded:true}});
-const dist=resolve('dist-standalone');
-const manifest=process.argv.includes('--reuse-verified-bundle')
-  ? JSON.parse(readFileSync(resolve(dist,MANIFEST),'utf8')) : await buildStandalone();
+const reuse=process.argv.includes('--reuse-verified-bundle');
+const dist=resolve(reuse?'dist-standalone':'artifacts/standalone-room-label-layout/bundle');
+const manifest=reuse ? JSON.parse(readFileSync(resolve(dist,MANIFEST),'utf8')) : await buildStandalone(dist);
 verifyStandaloneManifest(dist,manifest);
 assert.equal(manifest.source.commit,execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim());
 assert.equal(manifest.source.fingerprint,sourceFingerprint(process.cwd()),'use the current frontend bytes');
@@ -54,7 +54,7 @@ try{
   await page.route('**/standalone-dist/**',route=>{
     const path=new URL(route.request().url()).pathname.slice('/standalone-dist/'.length);
     const contentType=path.endsWith('.css')?'text/css':path.endsWith('.ttf')?'font/ttf':'text/javascript';
-    return route.fulfill({contentType,body:readFileSync(standalonePath(resolve('dist-standalone'),path))});
+    return route.fulfill({contentType,body:readFileSync(standalonePath(dist,path))});
   });
   await page.route('**/standalone-host.js',route=>route.fulfill({contentType:'text/javascript',body:readFileSync('demo/standalone/host.js')}));
   await page.route('**/standalone-core-rpc',async route=>{
@@ -93,7 +93,7 @@ try{
   const status=(room,status)=>page.waitForFunction(([room,status])=>
     window.labelMount.getSaveState().entries.some(entry=>entry.roomId===room&&entry.status===status),[room,status]);
   const shown=(room,x)=>page.waitForFunction(([room,x])=>window.labelCard._layout['rl_'+room]?.x===x,[room,x]);
-  const gesture=async(room,dx,dy,resize=false)=>{
+  const gesture=async(room,dx,dy,resize=false,hold=false)=>{
     const label=card.locator('[data-hp="room-label"][data-id="'+room+'"]');
     const target=resize?label.locator('.rlhandle.br'):label.locator('.rlfit');
     if(resize){
@@ -114,7 +114,8 @@ try{
     const x=box.x+box.width/2,y=box.y+box.height/2;
     await page.mouse.move(x,y);await page.mouse.down();
     await page.mouse.move(x+dx,y+dy,{steps:4});
-    await page.mouse.up();
+    if(!hold)await page.mouse.up();
+    return {x,y};
   };
   await editor();
   const hold={seen:pause(),before:pause()};
@@ -140,13 +141,20 @@ try{
 
   const conflict={seen:pause(),before:pause()};
   control=conflict;
-  await gesture('first',36,-20);
+  const dragged=await gesture('first',36,-20,false,true);
   await reached(conflict.seen);
   const remote={...moved,x:.27,y:.30};
   await write('first',moved,remote);
   conflict.before.release();
   await status('first','rejected');
   await shown('first',remote.x);
+  await page.waitForFunction(()=>window.labelHost.pendingCount===0);
+  // Mouseup has not occurred: after recovery this is still the same gesture.
+  await page.mouse.move(dragged.x+68,dragged.y-34,{steps:4});
+  await page.mouse.up();
+  assert.equal(await page.evaluate(()=>window.labelMount.getSaveState().entries.find(e=>e.roomId==='first').status),'rejected');
+  assert.equal(await page.evaluate(()=>window.labelCard._layout.rl_first.x),remote.x);
+  assert.deepEqual((await get()).layout.rl_first,remote);
   await gesture('second',27,22,true);
   await status('second','accepted');
   assert.equal(await page.evaluate(()=>window.labelMount.getSaveState().unresolved),true);

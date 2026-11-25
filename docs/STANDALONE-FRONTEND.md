@@ -133,7 +133,11 @@ automatically resending any draft. A new gesture on that label is available
 after the read (or after reopen if the read failed); rejection or uncertainty
 remains until a new acknowledged gesture, or an explicit reopen/discard by
 the user. A read that happens to match a lost receipt is not an ACK.
-Revocation/dispose cannot acknowledge a previous project's pending work.
+An already held pointer does not start that new gesture, even after the
+recovery read completes. If authority disappears before the read can run
+(for example on disconnect), offer to reopen from the server. Revocation or
+a replacement plan cannot confirm old pending work; the aggregate uncertainty
+can outlive individual entries, whose identifiers are retired with their scope.
 
 Portable transfer is **single-space plan-only JSON**, not ZIP or full backup.
 The core projection is authoritative: markers are empty, opening/leaf HA links

@@ -666,7 +666,7 @@ export interface HouseplanEditorHostPort {
   _display: (url: string | null | undefined) => string;
   _wallChainSegmentCms: number[];
   _wallChainRedo: Array<{ id: string; point: number[]; cm: number }>;
-  _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean; } | null;
+  _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean; labelGesture?: object } | null;
   /** #400: device dragging has its own state since #74; `_drag` is null in
    *  the devices mode, so anything excluding "the thing being dragged" there
    *  must read this instead. Only the id is needed by the editor runtime. */
@@ -826,7 +826,7 @@ export interface HouseplanEditorHostPort {
   >;
   _restoreZoom: () => void;
   _redoDevicePosition: () => void;
-  _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number; } | null;
+  _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number; labelGesture?: object } | null;
   _roomCenter: (r: RoomCfg) => number[];
   _roomCustomFill: FillColorEntry | null;
   _roomNameColor: FillColorEntry | null;
@@ -848,8 +848,10 @@ export interface HouseplanEditorHostPort {
   _saveConfigDebounced: Debounced<() => void>;
   _saveNav: () => void;
   _savePos: (d: DevItem, x: number, y: number) => void;
-  _canChangeRoomLabel(id: string): boolean;
-  _stageRoomLabelPosition(id: string, position: DeviceLayout[string]): void;
+  _beginRoomLabelGesture(id: string): object | null | undefined;
+  _endRoomLabelGesture(id: string, claim?: object): void;
+  _retireStandaloneLayoutWrites?(): void;
+  _stageRoomLabelPosition(id: string, position: DeviceLayout[string], claim?: object): void;
   readonly _standaloneLayoutWrite?: unknown;
   _screenToVb: (sx: number, sy: number) => number[];
   _segments: number[][];
@@ -9877,6 +9879,7 @@ public async _applyBackupImport(): Promise<void> {
         if (!this._ownsBackupImport(request)) return;
       }
       this.host._geometryHistory.clear();
+      this.host._retireStandaloneLayoutWrites?.();
       this.host._dirtyPos.clear();
       this.host._sentPos.clear();
       this.host._defPos = {};
@@ -10724,9 +10727,11 @@ public _labelDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
     if (this.host._mode !== 'plan') return;
     ev.preventDefault();
     ev.stopPropagation();
-    if (!this.host._canChangeRoomLabel('rl_' + (r.id || ''))) return;
+    const id = 'rl_' + (r.id || '');
+    const labelGesture = this.host._beginRoomLabelGesture(id);
+    if (labelGesture === null) return;
     const p = this._labelPos(r, spaceId);
-    this.host._drag = { id: 'rl_' + (r.id || ''), sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
+    this.host._drag = { id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false, labelGesture };
     capturePointer(ev);
     this.host._tip = null;
   }
@@ -10753,7 +10758,7 @@ public _labelMove(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
     const label = { id, space: spaceId } as DevItem;
     if (this.host._standaloneLayoutWrite) {
       const pos = this.host._devicePlacementForCanvas(label, nx, ny);
-      this.host._stageRoomLabelPosition(id, { ...this.host._layout[id], ...pos, s: spaceId });
+      this.host._stageRoomLabelPosition(id, { ...this.host._layout[id], ...pos, s: spaceId }, this.host._drag.labelGesture);
       this.host._persistLayout();
     } else {
       this.host._savePos(label, nx, ny);
@@ -10763,6 +10768,7 @@ public _labelMove(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
 public _labelUp(r: RoomCfg): void {
     const id = 'rl_' + (r.id || '');
     if (!this.host._drag || this.host._drag.id !== id) return;
+    this.host._endRoomLabelGesture(id, this.host._drag.labelGesture);
     const moved = this.host._drag.moved;
     this.host._drag = moved ? this.host._drag : null;
     if (moved) window.setTimeout(() => (this.host._drag = null), 0);
@@ -10777,14 +10783,16 @@ public _rlResizeDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
     if (this.host._mode !== 'plan') return;
     ev.preventDefault();
     ev.stopPropagation();
-    if (!this.host._canChangeRoomLabel('rl_' + (r.id || ''))) return;
     const card = (ev.target as HTMLElement).closest('.roomlabel') as HTMLElement | null;
     if (!card) return;
+    const id = 'rl_' + (r.id || '');
+    const labelGesture = this.host._beginRoomLabelGesture(id);
+    if (labelGesture === null) return;
     const b = card.getBoundingClientRect();
     const cx = b.left + b.width / 2;
     const cy = b.top + b.height / 2;
     const d0 = Math.max(8, Math.hypot(ev.clientX - cx, ev.clientY - cy));
-    this.host._rlResize = { id: 'rl_' + (r.id || ''), space: spaceId, k0: this._labelScale(r), cx, cy, d0 };
+    this.host._rlResize = { id, space: spaceId, k0: this._labelScale(r), cx, cy, d0, labelGesture };
     capturePointer(ev);
   }
 
@@ -10804,14 +10812,15 @@ public _rlResizeMove(ev: PointerEvent): void {
       if (!room) return;
       const p = this._labelPos(room, rs.space);
 
-      this.host._stageRoomLabelPosition(rs.id, { ...rec, s: rs.space, x: p.x / NORM_W, y: p.y / NORM_W, k });
+      this.host._stageRoomLabelPosition(rs.id, { ...rec, s: rs.space, x: p.x / NORM_W, y: p.y / NORM_W, k }, rs.labelGesture);
     } else {
-      this.host._stageRoomLabelPosition(rs.id, { ...rec, k });
+      this.host._stageRoomLabelPosition(rs.id, { ...rec, k }, rs.labelGesture);
     }
   }
 
 public _rlResizeUp(): void {
     if (!this.host._rlResize) return;
+    this.host._endRoomLabelGesture(this.host._rlResize.id, this.host._rlResize.labelGesture);
     this.host._rlResize = null;
     this.host._persistLayout();
   }

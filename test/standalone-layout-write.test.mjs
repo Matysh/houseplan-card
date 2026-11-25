@@ -26,16 +26,23 @@ const fixture = ({recover} = {}) => {
     revoke(){epoch={};writer.retire();},dropConnection(){epoch={};}};
 };
 const stateOf = (writer, roomId) => writer.getSaveState().entries.find(entry => entry.roomId === roomId)?.status;
+const gesture = (writer, key, value) => {
+  const claim = writer.beginGesture(key);
+  if (!claim) return false;
+  const result = writer.stage(key,value,claim);
+  writer.endGesture(key,claim);
+  return result;
+};
 
 test('debounce state precedes dispatch and newer edits serialize on the accepted point', async () => {
   const f = fixture(), {writer,calls,base} = f;
-  assert.equal(writer.stage('rl_a', position(.4)), true);
+  assert.equal(gesture(writer,'rl_a',position(.4)),true);
   assert.equal(stateOf(writer,'a'),'pending');
   assert.equal(calls.length,0);
   base.rl_a = position(.25); // A later read must not rebase this started gesture.
   writer.flush('rl_a');
   assert.deepEqual(calls[0].command.room_label.before,position(.2));
-  writer.stage('rl_a',position(.5,1.4)); writer.flush('rl_a');
+  gesture(writer,'rl_a',position(.5,1.4)); writer.flush('rl_a');
   assert.equal(calls.length,1);
   ack(calls[0]); await tick();
   assert.equal(stateOf(writer,'a'),'pending');
@@ -45,7 +52,7 @@ test('debounce state precedes dispatch and newer edits serialize on the accepted
   assert.equal(f.active,0);
   // Once idle, a new gesture uses the latest authoritative server value.
   base.rl_a = position(.55,1.4);
-  writer.stage('rl_a',position(.6,1.4)); writer.flush('rl_a');
+  gesture(writer,'rl_a',position(.6,1.4)); writer.flush('rl_a');
   assert.deepEqual(calls[2].command.room_label.before,position(.55,1.4));
   ack(calls[2],11); await tick();
 });
@@ -54,18 +61,22 @@ test('conflict is retained; recovery discards queued edits and a deliberate retr
   let finishRead;
   const f = fixture({recover: key => new Promise(resolve => { assert.equal(key,'rl_a'); finishRead = resolve; })});
   const {writer,calls,base} = f;
-  writer.stage('rl_a',position(.4)); writer.flush('rl_a');
-  writer.stage('rl_a',position(.5)); writer.flush('rl_a');
+  const held = writer.beginGesture('rl_a');
+  writer.stage('rl_a',position(.4),held); writer.flush('rl_a');
+  writer.stage('rl_a',position(.5),held); writer.flush('rl_a');
   calls[0].reject(reject('conflict')); await tick();
   assert.equal(stateOf(writer,'a'),'rejected');
   assert.equal(writer.canStage('rl_a'),false);
-  assert.equal(writer.stage('rl_a',position(.6)),false);
+  assert.equal(writer.stage('rl_a',position(.6),held),false);
   base.rl_a=position(.26); finishRead(true); await tick();
   assert.equal(writer.canStage('rl_a'),true);
+  assert.equal(writer.stage('rl_a',position(.61),held),false,'recovery does not resurrect the still-held gesture');
+  writer.flush('rl_a');
+  assert.equal(stateOf(writer,'a'),'rejected');
   assert.equal(calls.length,1,'no automatic overwrite');
-  writer.stage('rl_b',position(.31)); writer.flush('rl_b'); ack(calls[1]); await tick();
+  gesture(writer,'rl_b',position(.31)); writer.flush('rl_b'); ack(calls[1]); await tick();
   assert.equal(writer.getSaveState().unresolved,true,'other accepted entry does not mask rejection');
-  writer.stage('rl_a',position(.6)); writer.flush('rl_a');
+  gesture(writer,'rl_a',position(.6)); writer.flush('rl_a');
   assert.deepEqual(calls[2].command.room_label.before,position(.26));
   ack(calls[2]); await tick();
   assert.equal(writer.getSaveState().pending,false);
@@ -74,11 +85,11 @@ test('conflict is retained; recovery discards queued edits and a deliberate retr
 
 test('unverified receipt and failed recovery do not permit another write', async () => {
   const {writer,calls,base} = fixture({recover:async()=>false});
-  writer.stage('rl_a',position(.4)); writer.flush('rl_a');
+  gesture(writer,'rl_a',position(.4)); writer.flush('rl_a');
   calls[0].resolve({ok:true,rev:8}); await tick();
   assert.equal(stateOf(writer,'a'),'unknown');
   assert.equal(writer.getSaveState().unresolved,true);
-  assert.equal(writer.stage('rl_a',position(.5)),false);
+  assert.equal(gesture(writer,'rl_a',position(.5)),false);
   writer.flush('rl_a');
   assert.equal(calls.length,1);
   assert.deepEqual(base.rl_a,position(.2));
@@ -86,8 +97,8 @@ test('unverified receipt and failed recovery do not permit another write', async
 
 test('revocation neither dispatches a queued write nor accepts an old-project reply', async () => {
   const f = fixture(), {writer,calls,base,states} = f;
-  writer.stage('rl_a',position(.4)); writer.flush('rl_a');
-  writer.stage('rl_b',position(.5));
+  gesture(writer,'rl_a',position(.4)); writer.flush('rl_a');
+  gesture(writer,'rl_b',position(.5));
   f.revoke();
   writer.flush('rl_b'); ack(calls[0]); await tick();
   assert.equal(calls.length,1);
@@ -99,7 +110,7 @@ test('revocation neither dispatches a queued write nor accepts an old-project re
 
 test('loss of authority before dispatch is observable even though the host has no requests', async () => {
   const f = fixture(), {writer,calls} = f;
-  writer.stage('rl_a',position(.4));
+  gesture(writer,'rl_a',position(.4));
   f.dropConnection();
   writer.flush('rl_a'); await tick();
   assert.equal(calls.length,0);
