@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24624,
+  "revision": 24625,
   "nextTicket": 696,
   "nextFence": 696,
   "tasks": {
@@ -6311,6 +6311,15 @@
         "entry": 1,
         "detail": "Поведение: test/ui-lab-session.test.mjs: failed",
         "eventId": "finish:85590ac3-0419-4407-91d1-78e8486db46a:finish:3:return:return:1565"
+      },
+      "s6": {
+        "id": "20261125T124935592-21d33691",
+        "name": "Тесты для задачи #1565 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-stable-audit-1860-beta3/.git/process-next/runs/20261125T124935592-21d33691/report.json",
+        "materialSha": "4aebd7d64bf688073a224e985402863948f667b6",
+        "status": "passed",
+        "finishedAt": "2026-11-25T12:51:10.236Z",
+        "failures": []
       }
     }
   },
@@ -6927,9 +6936,9 @@
     "fence": 695,
     "materialSha": "4aebd7d64bf688073a224e985402863948f667b6",
     "expectedBase": "547cea142f3a4fbec5781ea346534ed763e85026",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795610962296,
-    "expiresAt": 1795611268838,
+    "expiresAt": 1795614671670,
     "patchId": "8484b1a821bd0ab87075267de8c64fbb9a160038"
   },
   "events": {
@@ -7255,6 +7264,10 @@
     },
     "finish:268ffc40-8de7-4e9b-baed-464e8c55df89:finish:2:synchronized": {
       "digest": "ad6290167f987fd198734cc89e4a863098f1c643ef3698f3bd16108175f3626c",
+      "issue": 1565
+    },
+    "finish:268ffc40-8de7-4e9b-baed-464e8c55df89:finish:3:s6-complete": {
+      "digest": "56885d8d3eb56d7d63e627fba64e6cddedc1ebe73e5fe6ad2cfaa18c901aebd0",
       "issue": 1565
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
