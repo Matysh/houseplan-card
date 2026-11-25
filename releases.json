@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1482,
+  "revision": 1483,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -297527,14 +297527,16 @@
           "from": "286b799101d831676ab30f7c8add3e1ec1889607",
           "to": "18fad1cbb475d9bb143cfbfff813be634235c84e",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "f175b7e00d8535149c61c2d28a922620a3a70928"
         },
         {
           "from": "18fad1cbb475d9bb143cfbfff813be634235c84e",
           "to": "f175b7e00d8535149c61c2d28a922620a3a70928",
           "syncMode": "merge",
-          "status": "pending",
-          "tag": "v1.86.1"
+          "status": "ported",
+          "tag": "v1.86.1",
+          "devSha": "7e85eee9281283120d82f6fb9b9c12017136401d"
         }
       ],
       "diagnostics": [],
@@ -297980,7 +297982,8 @@
           "status": "not-required"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
           "issue": 1562,
           "branch": "issue/1562-release-return-f175b7e00d85",
           "worktree": "/home/sergey/hp-stable-1861/artifacts/process-next/return-worktrees/f175b7e00d85",
@@ -304387,7 +304390,8 @@
     "stable-1861-publish-f175b7e:completion:fb66e359-4f9c-45bb-ae09-8ac46aa47e78": "4cf6827bd59c92673b1e192356ca9d6c3a7caa42449dad1ff666c1b3d9c9f2dc",
     "stable-1861-publish-f175b7e:completion:297c9037-ace9-40d6-921d-0a77ca88d7f6": "886c3cea35950bdea84321c6f8de5f603fa8294590c0ee6dc0ffd1445715a416",
     "stable-1861-publish-f175b7e:completion:7698ffe5-4675-454f-8c25-fb70fc28ed79": "641ee1abd99ed93977c9e2f8dfb5862d1223813e0a4c54c33afa3711629b8fa7",
-    "stable-1861-publish-f175b7e:completion:0120ba37-54a1-4fe5-b155-c2fa0407039b": "9f91401e2ec2087e5e968ca58d64042417fc8965e288098528ea1a5fe83b962e"
+    "stable-1861-publish-f175b7e:completion:0120ba37-54a1-4fe5-b155-c2fa0407039b": "9f91401e2ec2087e5e968ca58d64042417fc8965e288098528ea1a5fe83b962e",
+    "stable-1861-publish-f175b7e:completion:92b8945b-dad0-4fbf-99b2-461dfeb85975": "01b09aebe97b05662c908011eae28fcf959ffa07b6c0cc357d56748c4c70b87e"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
