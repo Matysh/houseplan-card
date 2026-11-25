@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24521,
+  "revision": 24522,
   "nextTicket": 693,
   "nextFence": 693,
   "tasks": {
@@ -4313,10 +4313,12 @@
       "status": "S6-in-progress",
       "readyAt": 1795606861076,
       "reviewEntry": 3,
-      "patchId": "05b776633e1ac9bc9a8624361349756beb149596",
+      "patchId": "eff8b97c8637e2b32527c35f73c0c5330eaaa4a7",
       "changedFiles": [
         "custom_components/houseplan/startup_floor_preview.py",
+        "demo/golden/closed-door-light.mjs",
         "demo/smoke_closed_door_glow.mjs",
+        "demo/smoke_floor_persistent_cache.mjs",
         "demo/smoke_grid_scale_invariance.mjs",
         "demo/smoke_hide_room_names.mjs",
         "demo/smoke_iso_device_contours.mjs",
@@ -4336,6 +4338,7 @@
         "demo/smoke_plan_3d_gpu.mjs",
         "demo/smoke_plan_rotation.mjs",
         "demo/smoke_projection_cold_view_camera.mjs",
+        "demo/smoke_stairs.mjs",
         "demo/smoke_startup_floor.mjs",
         "demo/smoke_svg_export.mjs",
         "demo/smoke_swing_door_placement.mjs",
@@ -4369,6 +4372,7 @@
         "src/iso-marker-outline.ts",
         "src/iso-scene-geometry.ts",
         "src/led-strip-runtime.ts",
+        "src/live-viewport.ts",
         "src/pdf/hp-pdf-dialog.ts",
         "src/pdf/pdf-export.ts",
         "src/pdf/svg-flat-stage.ts",
@@ -6851,10 +6855,11 @@
     "token": "692:finish:19d3fffe-4439-472b-906a-0e971ff74ae3:finish:1:admit",
     "fence": 692,
     "materialSha": "a8468994f5ad9d9228cf2d70eea00047df18e36d",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "547cea142f3a4fbec5781ea346534ed763e85026",
+    "phase": "testing",
     "admittedAt": 1795606865138,
-    "expiresAt": 1795607165138
+    "expiresAt": 1795607171018,
+    "patchId": "eff8b97c8637e2b32527c35f73c0c5330eaaa4a7"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7043,6 +7048,10 @@
     },
     "finish:eb42f4d6-8b27-4e5c-86de-c4aeebfef370:finish:3:return": {
       "digest": "6a56e1147aa7fa491f0b514cd87d289166acce577cada53964630ed0bb4b8534",
+      "issue": 1514
+    },
+    "finish:19d3fffe-4439-472b-906a-0e971ff74ae3:finish:2:synchronized": {
+      "digest": "d7b495d9d44664b412da5f347c4b320c45a83b9bddb51ad859ef99c4e0dbc5e6",
       "issue": 1514
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
