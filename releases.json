@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1483,
+  "revision": 1484,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -297997,6 +297997,14 @@
             }
           }
         }
+      },
+      "announcement": {
+        "tag": "v1.86.1",
+        "digest": "072574d6e7e1ed56759d1f61be2d0199ed4e8e50203caa9e4f63e63eba5bf0b6",
+        "contentDigest": "9acf48fd9e195f23defc445c04a4b6bff1d040164b28bcd3d2a2426467d97a24",
+        "attempt": 1,
+        "status": "sending",
+        "startedAt": "2026-11-25T07:19:08.284Z"
       }
     }
   },
@@ -304391,7 +304399,8 @@
     "stable-1861-publish-f175b7e:completion:297c9037-ace9-40d6-921d-0a77ca88d7f6": "886c3cea35950bdea84321c6f8de5f603fa8294590c0ee6dc0ffd1445715a416",
     "stable-1861-publish-f175b7e:completion:7698ffe5-4675-454f-8c25-fb70fc28ed79": "641ee1abd99ed93977c9e2f8dfb5862d1223813e0a4c54c33afa3711629b8fa7",
     "stable-1861-publish-f175b7e:completion:0120ba37-54a1-4fe5-b155-c2fa0407039b": "9f91401e2ec2087e5e968ca58d64042417fc8965e288098528ea1a5fe83b962e",
-    "stable-1861-publish-f175b7e:completion:92b8945b-dad0-4fbf-99b2-461dfeb85975": "01b09aebe97b05662c908011eae28fcf959ffa07b6c0cc357d56748c4c70b87e"
+    "stable-1861-publish-f175b7e:completion:92b8945b-dad0-4fbf-99b2-461dfeb85975": "01b09aebe97b05662c908011eae28fcf959ffa07b6c0cc357d56748c4c70b87e",
+    "github:45567075448:1:complete:completion:871c5fe7-6d0f-4336-bd58-a8136f1ac392": "7f74037b59b1dba13e3bc0c175947d04a375d48ad4a55a24fc4c71d75c7607f8"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
