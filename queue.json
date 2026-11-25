@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24366,
+  "revision": 24367,
   "nextTicket": 687,
   "nextFence": 687,
   "tasks": {
@@ -6099,7 +6099,18 @@
         "test/standalone-layout-write.test.mjs",
         "tests_backend/test_ha_websocket.py",
         "tests_backend/test_plan_commands.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795596218305,
+        "entry": 1,
+        "detail": "Поведение: test/browser-attestation.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
+        "eventId": "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:4:return:return:1563"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6708,18 +6719,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1563,
-    "worker": "finish",
-    "token": "686:finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:1:admit",
-    "fence": 686,
-    "materialSha": "e45be50fb6c472591b17fba25dec4b75fb604d27",
-    "expectedBase": "7e85eee9281283120d82f6fb9b9c12017136401d",
-    "phase": "testing",
-    "admittedAt": 1795595209250,
-    "expiresAt": 1795596468533,
-    "patchId": "3f12b28134ec9b87b341cbb80f02eab2a13e62d8"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6913,6 +6913,10 @@
       "digest": "9a9de152cdcf62203ebdea850329418b1f73e162554a88291a923615a23dbf8f",
       "issue": 1563
     },
+    "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:4:return": {
+      "digest": "6b5b9f3691133c7fb516166a0f550204b29930b53c728ed5cae2f3e02641a625",
+      "issue": 1563
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7020,6 +7024,26 @@
         "materialSha": "e45be50fb6c472591b17fba25dec4b75fb604d27",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:4:return:return:1563": {
+      "digest": "6b5b9f3691133c7fb516166a0f550204b29930b53c728ed5cae2f3e02641a625",
+      "issue": 1563,
+      "message": {
+        "kind": "return",
+        "issue": 1563,
+        "at": 1795596218305,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795596218305,
+          "entry": 1,
+          "detail": "Поведение: test/browser-attestation.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
+          "eventId": "finish:3f648435-5413-47e0-b282-b6715f2b99cd:finish:4:return:return:1563"
+        }
       }
     }
   },
