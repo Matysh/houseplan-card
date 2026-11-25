@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24764,
+  "revision": 24765,
   "nextTicket": 697,
   "nextFence": 697,
   "tasks": {
@@ -6780,18 +6780,12 @@
       }
     },
     "1566": {
-      "requestId": "spec:1566:a591ff3c274f58f87782e0e016dac8511efc50fdd8471bdfb126fbf578864321",
-      "contextDigest": "a591ff3c274f58f87782e0e016dac8511efc50fdd8471bdfb126fbf578864321",
+      "requestId": "spec:1566:dbb8602cef5f3f3580b2327c4114bf79706b696a184413a3ef9e275e4e69ba91",
+      "contextDigest": "dbb8602cef5f3f3580b2327c4114bf79706b696a184413a3ef9e275e4e69ba91",
       "base": "863b706d1a60db865e8ac55538b247576dcf586e",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795615605336,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45629776721",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795615680447
     }
   },
   "reviewPublications": {
@@ -6834,6 +6828,19 @@
         "occurredAt": "2026-11-25T13:19:00.131Z"
       },
       "runId": 45622352279
+    },
+    "spec:1566:spec:1566:dbb8602cef5f3f3580b2327c4114bf79706b696a184413a3ef9e275e4e69ba91": {
+      "issue": 1566,
+      "kind": "spec",
+      "requestId": "spec:1566:dbb8602cef5f3f3580b2327c4114bf79706b696a184413a3ef9e275e4e69ba91",
+      "materialSha": "863b706d1a60db865e8ac55538b247576dcf586e",
+      "expectedBase": "863b706d1a60db865e8ac55538b247576dcf586e",
+      "patchId": "dbb8602cef5f3f3580b2327c4114bf79706b696a184413a3ef9e275e4e69ba91",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-25T14:08:00.447Z"
+      }
     }
   },
   "waiting": [],
@@ -6879,6 +6886,10 @@
       "digest": "f522aef93c2dea95a6897e93a5caf967f3b1d52962eab89a27f5ae78244d3de4",
       "issue": 1566
     },
+    "github:45630676775:1:label:spec-request": {
+      "digest": "d8b24573236922fc57c45fbd796a323b7727af95a45e2108655e3233f9852074",
+      "issue": 1566
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6906,6 +6917,22 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "github:45630676775:1:label:spec-request:spec-resubmitted:1566": {
+      "digest": "d8b24573236922fc57c45fbd796a323b7727af95a45e2108655e3233f9852074",
+      "issue": 1566,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1566,
+        "at": 1795615680447,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1566:dbb8602cef5f3f3580b2327c4114bf79706b696a184413a3ef9e275e4e69ba91",
+        "reviewChanges": "Проверить стык активной камеры и обычного viewBox в `live-viewport.ts`, `houseplan-card.ts` и `plan-3d-host.ts`: предпочтение передаче явно опубликованного кадра, не чтению CSS-матрицы и не растягиванию старого растра с обрезанными краями. Для визуальной части переиспользовать канонические контуры, палитры и оптическое поле, не возвращать второй SVG-слой геометрии. Диагностика исходного поведения и размеры расхождения в начале issue; новые проверки ещё не выполнялись.\n\n### Исправления по предыдущему ревью\n\n- [Первый раунд](https://github.com/Matysh/houseplan-card/actions/runs/45629776721): защита от второго rAF теперь часть контракта; кадр DOM и готовый canvas публикуются до одного браузерного paint. Pick привязан к показанному кадру и не переходит на предыдущую сцену. AC1 добавляет три последовательных быстрых кадра и отрицательное доказательство на искусственной задержке на один кадр.\n- При перегрузке GPU coalescing действует на всю камеру, не на отдельный слой. Уточнение устаревшего описания владельца кадра в `docs/ARCHITECTURE.md` входит в реализацию. Объём задачи сохраняется по поручению владельца; язык критериев отделяет геометрическую корректность от визуальной сверки.\n- Дополнительная диагностика на чистом 863b706d: Chromium, синтетический план, 20 промежуточных и опорных замеров; максимальное расхождение при удерживаемой панораме 198,31 CSS px, после отпускания меньше 0,001 px. Это исходный свидетель, а не приёмка нового кода.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
