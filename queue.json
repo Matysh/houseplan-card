@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24495,
+  "revision": 24496,
   "nextTicket": 692,
   "nextFence": 692,
   "tasks": {
@@ -4313,14 +4313,17 @@
       "status": "S6-in-progress",
       "readyAt": 1795604247226,
       "reviewEntry": 2,
-      "patchId": "91e3da3d4b770485c47d09f104ef1e2e2742b99d",
+      "patchId": "05b776633e1ac9bc9a8624361349756beb149596",
       "changedFiles": [
         "custom_components/houseplan/startup_floor_preview.py",
         "demo/smoke_closed_door_glow.mjs",
         "demo/smoke_grid_scale_invariance.mjs",
         "demo/smoke_hide_room_names.mjs",
+        "demo/smoke_iso_device_contours.mjs",
         "demo/smoke_iso_device_presentation.mjs",
+        "demo/smoke_iso_device_signal.mjs",
         "demo/smoke_iso_first_frame.mjs",
+        "demo/smoke_iso_label_bounds.mjs",
         "demo/smoke_iso_raster_parity.mjs",
         "demo/smoke_iso_sun.mjs",
         "demo/smoke_iso_theme_walls.mjs",
@@ -6848,10 +6851,11 @@
     "token": "691:finish:eb42f4d6-8b27-4e5c-86de-c4aeebfef370:finish:1:admit",
     "fence": 691,
     "materialSha": "a58cf30b3d71e1659fa09472f6bb6a5f68c1b32d",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "547cea142f3a4fbec5781ea346534ed763e85026",
+    "phase": "testing",
     "admittedAt": 1795604251301,
-    "expiresAt": 1795604551301
+    "expiresAt": 1795604557971,
+    "patchId": "05b776633e1ac9bc9a8624361349756beb149596"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6944,6 +6948,10 @@
     },
     "finish:6e6557d8-295f-4afe-8588-9b86e597786e:finish:3:return": {
       "digest": "75a021da15e19e98bd261ae83611f7b139b646f510582b74f95fcf0e22c5a6f4",
+      "issue": 1514
+    },
+    "finish:eb42f4d6-8b27-4e5c-86de-c4aeebfef370:finish:2:synchronized": {
+      "digest": "91c75b7e7c801d7274ec43b23ff16ff2d36ad82499369185e2c6070162d507cb",
       "issue": 1514
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
