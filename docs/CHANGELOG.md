@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Save room-label positions and scale in the standalone editor using point-level conflict detection and observable save outcomes (#1563).
-- Test maintenance: run the nightly wall-node parity guard as a Python module from the repository root (#1564).
+- Test maintenance: run the nightly wall-node parity guard as a Python module with its compiled fixture dependencies (#1564).
 
 ## v1.86.1 — 2026-11-25
 

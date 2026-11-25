@@ -55,8 +55,13 @@ def frontend(request, build_dir):
     if any(not path.is_file() for path in required):
         raise FileNotFoundError("wall parity prerequisites are missing; compile tsconfig.junction-parity.json")
     env = {**os.environ, "HP_WALL_PARITY_BUILD": str(build_dir)}
-    result = subprocess.run(["node", str(RUNNER)], cwd=ROOT, env=env,
-                            input=json.dumps(request), text=True, capture_output=True, check=True)
+    try:
+        result = subprocess.run(["node", str(RUNNER)], cwd=ROOT, env=env,
+                                input=json.dumps(request), text=True, capture_output=True, check=True)
+    except subprocess.CalledProcessError as error:
+        if error.stderr:
+            error.add_note(error.stderr.strip())
+        raise
     return json.loads(result.stdout)
 
 

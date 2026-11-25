@@ -436,10 +436,11 @@ exit-camera coverage remains unchanged. The five legacy wall-identity
 witnesses likewise target the retained v10 decoder suite, not the current
 graph facade used by the strict TS/Python parity run. The dedicated
 `wall-node-rotated-host-ratio-parity-1380` witness keeps that full matrix
-on the regular five-part nightly route: its clean control compiles
-`tsconfig.junction-parity.json` and runs `wall_node_parity.py` (including
-delete parity). Its fault independently rounds the two carrier lengths
-before division, so the exact rotated-host `tq` comparison must fail.
+on the nightly route. Its control compiles the shared fixture dependencies
+with `tsconfig.test.json` and runs `python -m tests_backend.wall_node_parity`
+from the repository root (including delete parity). Its fault independently
+rounds the two carrier lengths before division, so the exact rotated-host
+`tq` comparison must fail.
 This is a background witness, not a new mandatory gate for every task.
 
 - `furniture-release-ignores-pan-1081`

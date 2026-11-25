@@ -3615,13 +3615,12 @@ for `model-invariants --config`; no user home is copied into fixtures.
 `python -m tests_backend.wall_node_parity` executes the common TS/Python
 fixture matrix, including atomized unsupported junctions, opening intervals,
 and independently proven inverse operations (not an optional skipped test).
+Prepare it with `npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs`
+because the corpus imports fixtures that use the shared test build.
 
-#845 makes this matrix mandatory in the existing `geometry_parity` job:
-`npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs`,
-then `python -m tests_backend.junction_parity` and
-`python -m tests_backend.wall_node_parity --build-dir=test-build/junction-parity`
-from the repository root. Missing build, Node or loader material fails, never
-skips. The matrix adds pair/T/2×2-X/L,
+#845 made this matrix mandatory in the former `geometry_parity` job. The
+nightly wall-node witness starts it from the repository root. Missing build,
+Node or loader material fails, never skips. The matrix adds pair/T/2×2-X/L,
 T-partition and shared-opening room plans on/off grid, complete candidate and
 cross-idempotence comparison, and exact Undo/Redo with browser `before_space`.
 `test/fixtures/845-wall-identity-parity.json` is the common D1–D6/number witness.
