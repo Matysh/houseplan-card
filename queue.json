@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24991,
+  "revision": 24992,
   "nextTicket": 701,
   "nextFence": 701,
   "tasks": {
@@ -6272,7 +6272,18 @@
         "test/room-floor-paint-local.test.mjs"
       ],
       "automationError": "checks-unavailable",
-      "automationSince": 1795632174076
+      "automationSince": 1795632174076,
+      "reason": "checks-unavailable",
+      "notice": {
+        "key": "1:checks-unavailable",
+        "reason": "checks-unavailable",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795632326845,
+        "entry": 1,
+        "detail": "Локальный набор завершился с одним отказом; сводка устарела при подготовке правки. Материал будет заново предъявлен на S6.",
+        "eventId": "finish:1567:invalidated:1795632322628:return:1567"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6923,18 +6934,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1567,
-    "worker": "finish",
-    "token": "700:finish:c3620cc6-bb62-4c1a-ad02-58017a2f2496:finish:1:admit",
-    "fence": 700,
-    "materialSha": "9870b3e5b064d80ab72771c84f7c20b533c8a4a6",
-    "expectedBase": "b9e82e034013cf7ad8cfae72ad36600169ec0649",
-    "phase": "testing",
-    "admittedAt": 1795631110542,
-    "expiresAt": 1795632623329,
-    "patchId": "fc85ad8e2b08c3067a58e7bd81a0f4c3e7359b00"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7112,6 +7112,10 @@
       "digest": "a4c9e31669f46329c76808eedfa3fdff7755f27466d2655099bb46d46eb09766",
       "issue": 1567
     },
+    "finish:1567:invalidated:1795632322628": {
+      "digest": "131c7a5bcc12e9b785bb9059cd550c6b32434080a2179e32651a5153eadcba4b",
+      "issue": 1567
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7202,6 +7206,26 @@
         "materialSha": "9870b3e5b064d80ab72771c84f7c20b533c8a4a6",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:1567:invalidated:1795632322628:return:1567": {
+      "digest": "131c7a5bcc12e9b785bb9059cd550c6b32434080a2179e32651a5153eadcba4b",
+      "issue": 1567,
+      "message": {
+        "kind": "return",
+        "issue": 1567,
+        "at": 1795632326845,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-unavailable",
+          "reason": "checks-unavailable",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795632326845,
+          "entry": 1,
+          "detail": "Локальный набор завершился с одним отказом; сводка устарела при подготовке правки. Материал будет заново предъявлен на S6.",
+          "eventId": "finish:1567:invalidated:1795632322628:return:1567"
+        }
       }
     }
   },
