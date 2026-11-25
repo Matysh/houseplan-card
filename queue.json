@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24626,
+  "revision": 24627,
   "nextTicket": 696,
   "nextFence": 696,
   "tasks": {
@@ -7451,26 +7451,6 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
-      }
-    },
-    "finish:85590ac3-0419-4407-91d1-78e8486db46a:finish:3:return:return:1565": {
-      "digest": "22889c61b147ce76b23e3540211d7b4fca7cb0cb349a3eb644f8db4f67016d54",
-      "issue": 1565,
-      "message": {
-        "kind": "return",
-        "issue": 1565,
-        "at": 1795610933776,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795610933776,
-          "entry": 1,
-          "detail": "Поведение: test/ui-lab-session.test.mjs: failed",
-          "eventId": "finish:85590ac3-0419-4407-91d1-78e8486db46a:finish:3:return:return:1565"
-        }
       }
     },
     "finish:268ffc40-8de7-4e9b-baed-464e8c55df89": {
