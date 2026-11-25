@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 24488,
-  "nextTicket": 690,
+  "revision": 24489,
+  "nextTicket": 691,
   "nextFence": 690,
   "tasks": {
     "1024": {
@@ -4300,6 +4300,20 @@
         "sourceSha": "b6d5e3bfd099f15cbec1fff054d6bd9e84e7a585"
       }
     },
+    "1514": {
+      "issue": 1514,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1514-real-3d",
+      "materialSha": "555335d46774465643ba309642fc433e8e475a92",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 690,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795603843873,
+      "reviewEntry": 1
+    },
     "1515": {
       "issue": 1515,
       "branch": "codex/1515-iso-eighth-turn",
@@ -6736,7 +6750,9 @@
       "runId": 45584833471
     }
   },
-  "waiting": [],
+  "waiting": [
+    1514
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6892,6 +6908,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "547cea142f3a4fbec5781ea346534ed763e85026"
+      }
+    },
+    "finish:6e6557d8-295f-4afe-8588-9b86e597786e": {
+      "digest": "ce30cc42592919b054063d5cbbece8196311b4da8249394912ebba1d249fb1ad",
+      "issue": 1514,
+      "message": {
+        "kind": "queued",
+        "issue": 1514,
+        "at": 1795603843873,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "555335d46774465643ba309642fc433e8e475a92"
       }
     }
   },
