@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24398,
+  "revision": 24399,
   "nextTicket": 689,
   "nextFence": 689,
   "tasks": {
@@ -6082,7 +6082,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795597808468,
       "reviewEntry": 3,
-      "patchId": "86b717dbb0eb4e221ce7575b55072f43bc433bda",
+      "patchId": "5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab",
       "changedFiles": [
         "custom_components/houseplan/core/plan_commands.py",
         "demo/smoke_standalone_room_label_layout.mjs",
@@ -6093,6 +6093,7 @@
         "docs/release-ledger/v2.0.0/1563.json",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts",
+        "src/plan-optimize-write.ts",
         "src/standalone-entry.ts",
         "src/standalone-layout-write.ts",
         "src/standalone-plan-host.ts",
@@ -6740,10 +6741,11 @@
     "token": "688:finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374:finish:1:admit",
     "fence": 688,
     "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "7e85eee9281283120d82f6fb9b9c12017136401d",
+    "phase": "testing",
     "admittedAt": 1795597812746,
-    "expiresAt": 1795598112746
+    "expiresAt": 1795598119402,
+    "patchId": "5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7044,6 +7046,10 @@
     },
     "github:45581874979:1:completions:metadata:3d549e8a-7e49-4009-be0d-8dbdebf4b706:task-notice:1563::": {
       "digest": "4cdca57f1917470486e065fb2dc2959a829d7f75f4b7fb34325bebd4dc6204bc",
+      "issue": 1563
+    },
+    "finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374:finish:2:synchronized": {
+      "digest": "4c28ebefe0686ff6a356f9b125d15e8375a35067b826d0d797171cea24c8228c",
       "issue": 1563
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
