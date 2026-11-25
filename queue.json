@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24225,
+  "revision": 24226,
   "nextTicket": 686,
   "nextFence": 686,
   "tasks": {
@@ -6123,151 +6123,25 @@
     "1562": {
       "issue": 1562,
       "branch": "issue/1562-release-return-f175b7e00d85",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "f175b7e00d8535149c61c2d28a922620a3a70928",
-      "releaseTag": "v1.86.1",
-      "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
-      "ownerDecision": null,
-      "ticket": 685,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795590209482,
-      "reviewEntry": 1,
-      "patchId": "b13b2bd5547c460a7b4c4b71601edbb1b9a651a1",
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "docs/changelog_user_stable_en.md",
-        "docs/changelog_user_stable_ru.md",
-        "docs/release-ledger/cycle.json",
-        "package-lock.json",
-        "package.json",
-        "process-next/lib/catalog.mjs",
-        "process-next/test/catalog.test.mjs",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "tools/build_site_release.py",
-        "tools/test_build_site_release.py"
-      ],
-      "s6": {
-        "id": "20261125T070350689-70a20037",
-        "name": "Тесты для задачи #1562 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T070350689-70a20037/report.json",
-        "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
-        "status": "passed",
-        "finishedAt": "2026-11-25T07:13:32.811Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "e177278eaa21176df7487eabdea3973b8d3637cb",
+      "mergedSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
+      "mergedAt": 1795591026133,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1562:1:b13b2bd5547c460a7b4c4b71601edbb1b9a651a1:e177278eaa21176df7487eabdea3973b8d3637cb",
-      "reviewMaterial": {
-        "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
-        "expectedBase": "e177278eaa21176df7487eabdea3973b8d3637cb",
-        "patchId": "b13b2bd5547c460a7b4c4b71601edbb1b9a651a1"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1562,
-        "requestId": "review:1562:1:b13b2bd5547c460a7b4c4b71601edbb1b9a651a1:e177278eaa21176df7487eabdea3973b8d3637cb",
-        "kind": "code",
-        "base": "e177278eaa21176df7487eabdea3973b8d3637cb",
-        "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
-        "patchId": "b13b2bd5547c460a7b4c4b71601edbb1b9a651a1",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1562,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1562",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Служебный возврат опубликованного v1.86.1 в dev выполнен корректно. Head содержит то же, что опубликованный коммит f175b7e: номера версий 1.86.1 во всех четырёх местах, записи stable в changelog и release notes, а также исправление упаковки сайта из f175b7e. К этому добавлен отдельный коммит, который открывает следующий цикл: baseStable v1.86.1, цель v2.0.0, milestone 18. Опубликованная история не переписана. Цикл обновлён в рамках правил `release-cycle.mjs`. Перенесённая правка упаковки сайта логична и не создаёт цикла зависимостей в раннере. Блокеров нет.",
-          "understanding": "Задача #1562 — служебный возврат опубликованного stable v1.86.1 в dev через общую очередь. До изменения dev (e177278) находился в состоянии после возврата beta.10: версии `1.86.1-beta.10`, а cycle.json указывал v1.86.0 → v1.86.1 (milestone 19). Head складывается из двух коммитов. 156b4e7 возвращает опубликованный релиз: подготовку stable 18fad1c и исправление f175b7e «Fix standalone site packaging for stable releases». 7e85eee открывает следующий цикл и меняет только `docs/release-ledger/cycle.json`. Я сверил с f175b7e пакетную версию, `build_site_release.py` и `catalog.mjs`: они совпадают. cycle.json в 156b4e7 ещё совпадает с опубликованным, значит единственное новое изменение вне опубликованной истории — открытие цикла. Разобранные пути: построение плана stable в `catalog.mjs`, планировщик `runner.mjs` с семантикой `after`/`requires` и проверкой циклов, формирование совместимости в `build_site_release.py` вместе с `house_document.py`/`furniture_workstation.py`, а также правила `release-cycle.mjs`.",
-          "analysis": [
-            {
-              "topic": "Сохранность опубликованной истории",
-              "assessment": "Diff base→head состоит из содержимого релиза v1.86.1 и коммита открытия цикла. Своих правок продуктового кода в dev сверх опубликованного нет. Версии согласованы во всех четырёх местах: package.json, package-lock, manifest/const.py и оба CARD_VERSION. Тексты release notes и пользовательских changelog совпадают с опубликованными. Ссылки ведут на milestone 19, то есть на завершённый 1.86.1.",
-              "evidence": "git_log: 7e85eee → 156b4e7 → f175b7e → e177278. Файлы `package.json`, `tools/build_site_release.py:58-73` и `process-next/lib/catalog.mjs:253-260` при f175b7e совпадают с head. `cycle.json` при 156b4e7 совпадает с опубликованным."
-            },
-            {
-              "topic": "Открытие следующего цикла (cycle.json)",
-              "assessment": "Новое состояние удовлетворяет `verifyReleaseCycle`: base v1.86.1 не ниже опубликованного тега, target 2.0.0 > base, номер milestone — положительное целое, title «2.0.0» совпадает с target. `planStableCycle` выбирает ближайший открытый milestone с версией выше опубликованной. То, что этим milestone оказался 18 «2.0.0», а не какой-нибудь 1.86.2/1.87.0, согласуется с алгоритмом, но список открытых milestone GitHub мне недоступен.",
-              "evidence": "`process-next/lib/release-cycle.mjs:13-46`. Diff `docs/release-ledger/cycle.json`."
-            },
-            {
-              "topic": "Порядок site-release и demo-assets в профиле stable",
-              "assessment": "`demo-assets` перегенерирует отслеживаемую фикстуру иконок. Из-за этого `verify_source` в site-release находил изменения в рабочем дереве. Теперь у `demo-assets` есть `after: ['site-release']`, и шаг запускается только после site-release. Это лишь порядок, а не зависимость: раннер ждёт наличия результата (`runner.mjs:173`), но блокирует шаг только при неуспешных `requires` (`:174`). Поэтому падение site-release не отменяет браузерные проверки, и тест это фиксирует. Цикла нет: site-release зависит от release-package (→ product-build) и test-build, но не от demo-assets. `visit` в `runner.mjs:36-43` учитывает `after` при поиске циклов. Цена решения: браузерные шаги stable теперь ждут эксклюзивный site-release с таймаутом до 15 минут. Для stable это приемлемо.",
-              "evidence": "`process-next/lib/catalog.mjs:142-146, 253-266`. `process-next/lib/runner.mjs:36-43, 169-188`. `process-next/test/catalog.test.mjs:183-196`."
-            },
-            {
-              "topic": "Совместимость в манифесте сайта",
-              "assessment": "Раньше значение искали в AST `house_document.py` как единственный литерал-словарь с ключом `furniture_workstation_api`. После того как экспорт стал вычислять уровень динамически через `required_workstation_api`, такого литерала не осталось, и упаковка падала. Теперь манифест берёт `API_VERSION` из `furniture_workstation.py`, то есть максимальный поддерживаемый уровень. По смыслу это правильно: импорт принимает 1 и 2, а конкретный архив объявляет только нужный ему уровень. Формат значения проходит проверку `site-release.mjs:30` (safe integer).",
-              "evidence": "`tools/build_site_release.py:58-73`. `custom_components/houseplan/core/house_document.py:172-175, 202-205, 229`. `furniture_workstation.py:8` (`API_VERSION = 2`). `process-next/lib/site-release.mjs:30`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Допустимый диапазон furniture API задан в двух местах: `house_document.parse_document` жёстко проверяет `(1, 2)`, а манифест сайта читает `API_VERSION`. При повышении API до 3 манифест начнёт объявлять 3, а импорт продолжит отвергать такие архивы, пока `(1, 2)` не исправят вручную. Можно выразить проверку в `parse_document` через `range(1, API_VERSION + 1)`. Тогда источник истины будет один, а изменение небольшое. Это не относится к служебному возврату и подходит для обычной задачи.",
-            "Тест `test_manifest_advertises_the_supported_api_not_one_archives_requirement` жёстко ожидает значение 2 из реального репозитория и упадёт при штатном повышении API. Если сравнивать с `literal(..., 'API_VERSION')` или проверять только ключ и тип, тест останется полезным и не потребует правки при каждом повышении. Компромисс: так он перестанет обнаруживать случайное изменение константы."
-          ],
-          "boundaries": "Ревью сделано только по исходникам и истории Git: сборки и тесты я не запускал. Использован результат S6 — набор «Тесты для задачи #1562 (перед ревью)» на материале 7e85eee со статусом passed и без отказов. Какие именно шаги в него вошли и выполнялись ли `process-next/test/catalog.test.mjs` и `tools/test_build_site_release.py`, по снимку определить нельзя. Список открытых milestone GitHub мне недоступен. Поэтому верность выбора «18 / 2.0.0» как ближайшего следующего milestone проверена только на соответствие алгоритму `planStableCycle`, а не по фактическим данным. Тексты релиза не оценивались по существу: это уже опубликованная история, и по условиям задачи её нужно сохранить, а не переписывать."
-        },
-        "usage": {
-          "input_tokens": 22,
-          "cache_creation_input_tokens": 56920,
-          "cache_read_input_tokens": 354764,
-          "output_tokens": 7795,
-          "output_tokens_details": {
-            "thinking_tokens": 2354
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 56920,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 795,
-              "cache_read_input_tokens": 46336,
-              "cache_creation_input_tokens": 10584,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 10584
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nСлужебный возврат опубликованного v1.86.1 в dev выполнен корректно. Head содержит то же, что опубликованный коммит f175b7e: номера версий 1.86.1 во всех четырёх местах, записи stable в changelog и release notes, а также исправление упаковки сайта из f175b7e. К этому добавлен отдельный коммит, который открывает следующий цикл: baseStable v1.86.1, цель v2.0.0, milestone 18. Опубликованная история не переписана. Цикл обновлён в рамках правил `release-cycle.mjs`. Перенесённая правка упаковки сайта логична и не создаёт цикла зависимостей в раннере. Блокеров нет.\n\n## Понимание решения\n\nЗадача #1562 — служебный возврат опубликованного stable v1.86.1 в dev через общую очередь. До изменения dev (e177278) находился в состоянии после возврата beta.10: версии `1.86.1-beta.10`, а cycle.json указывал v1.86.0 → v1.86.1 (milestone 19). Head складывается из двух коммитов. 156b4e7 возвращает опубликованный релиз: подготовку stable 18fad1c и исправление f175b7e «Fix standalone site packaging for stable releases». 7e85eee открывает следующий цикл и меняет только `docs/release-ledger/cycle.json`. Я сверил с f175b7e пакетную версию, `build_site_release.py` и `catalog.mjs`: они совпадают. cycle.json в 156b4e7 ещё совпадает с опубликованным, значит единственное новое изменение вне опубликованной истории — открытие цикла. Разобранные пути: построение плана stable в `catalog.mjs`, планировщик `runner.mjs` с семантикой `after`/`requires` и проверкой циклов, формирование совместимости в `build_site_release.py` вместе с `house_document.py`/`furniture_workstation.py`, а также правила `release-cycle.mjs`.\n\n## Разбор решения\n\n### Сохранность опубликованной истории\n\nDiff base→head состоит из содержимого релиза v1.86.1 и коммита открытия цикла. Своих правок продуктового кода в dev сверх опубликованного нет. Версии согласованы во всех четырёх местах: package.json, package-lock, manifest/const.py и оба CARD_VERSION. Тексты release notes и пользовательских changelog совпадают с опубликованными. Ссылки ведут на milestone 19, то есть на завершённый 1.86.1.\n\nОснование: git_log: 7e85eee → 156b4e7 → f175b7e → e177278. Файлы `package.json`, `tools/build_site_release.py:58-73` и `process-next/lib/catalog.mjs:253-260` при f175b7e совпадают с head. `cycle.json` при 156b4e7 совпадает с опубликованным.\n\n### Открытие следующего цикла (cycle.json)\n\nНовое состояние удовлетворяет `verifyReleaseCycle`: base v1.86.1 не ниже опубликованного тега, target 2.0.0 > base, номер milestone — положительное целое, title «2.0.0» совпадает с target. `planStableCycle` выбирает ближайший открытый milestone с версией выше опубликованной. То, что этим milestone оказался 18 «2.0.0», а не какой-нибудь 1.86.2/1.87.0, согласуется с алгоритмом, но список открытых milestone GitHub мне недоступен.\n\nОснование: `process-next/lib/release-cycle.mjs:13-46`. Diff `docs/release-ledger/cycle.json`.\n\n### Порядок site-release и demo-assets в профиле stable\n\n`demo-assets` перегенерирует отслеживаемую фикстуру иконок. Из-за этого `verify_source` в site-release находил изменения в рабочем дереве. Теперь у `demo-assets` есть `after: ['site-release']`, и шаг запускается только после site-release. Это лишь порядок, а не зависимость: раннер ждёт наличия результата (`runner.mjs:173`), но блокирует шаг только при неуспешных `requires` (`:174`). Поэтому падение site-release не отменяет браузерные проверки, и тест это фиксирует. Цикла нет: site-release зависит от release-package (→ product-build) и test-build, но не от demo-assets. `visit` в `runner.mjs:36-43` учитывает `after` при поиске циклов. Цена решения: браузерные шаги stable теперь ждут эксклюзивный site-release с таймаутом до 15 минут. Для stable это приемлемо.\n\nОснование: `process-next/lib/catalog.mjs:142-146, 253-266`. `process-next/lib/runner.mjs:36-43, 169-188`. `process-next/test/catalog.test.mjs:183-196`.\n\n### Совместимость в манифесте сайта\n\nРаньше значение искали в AST `house_document.py` как единственный литерал-словарь с ключом `furniture_workstation_api`. После того как экспорт стал вычислять уровень динамически через `required_workstation_api`, такого литерала не осталось, и упаковка падала. Теперь манифест берёт `API_VERSION` из `furniture_workstation.py`, то есть максимальный поддерживаемый уровень. По смыслу это правильно: импорт принимает 1 и 2, а конкретный архив объявляет только нужный ему уровень. Формат значения проходит проверку `site-release.mjs:30` (safe integer).\n\nОснование: `tools/build_site_release.py:58-73`. `custom_components/houseplan/core/house_document.py:172-175, 202-205, 229`. `furniture_workstation.py:8` (`API_VERSION = 2`). `process-next/lib/site-release.mjs:30`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Допустимый диапазон furniture API задан в двух местах: `house_document.parse_document` жёстко проверяет `(1, 2)`, а манифест сайта читает `API_VERSION`. При повышении API до 3 манифест начнёт объявлять 3, а импорт продолжит отвергать такие архивы, пока `(1, 2)` не исправят вручную. Можно выразить проверку в `parse_document` через `range(1, API_VERSION + 1)`. Тогда источник истины будет один, а изменение небольшое. Это не относится к служебному возврату и подходит для обычной задачи.\n- Тест `test_manifest_advertises_the_supported_api_not_one_archives_requirement` жёстко ожидает значение 2 из реального репозитория и упадёт при штатном повышении API. Если сравнивать с `literal(..., 'API_VERSION')` или проверять только ключ и тип, тест останется полезным и не потребует правки при каждом повышении. Компромисс: так он перестанет обнаруживать случайное изменение константы.\n\n## Границы анализа\n\nРевью сделано только по исходникам и истории Git: сборки и тесты я не запускал. Использован результат S6 — набор «Тесты для задачи #1562 (перед ревью)» на материале 7e85eee со статусом passed и без отказов. Какие именно шаги в него вошли и выполнялись ли `process-next/test/catalog.test.mjs` и `tools/test_build_site_release.py`, по снимку определить нельзя. Список открытых milestone GitHub мне недоступен. Поэтому верность выбора «18 / 2.0.0» как ближайшего следующего milestone проверена только на соответствие алгоритму `planStableCycle`, а не по фактическим данным. Тексты релиза не оценивались по существу: это уже опубликованная история, и по условиям задачи её нужно сохранить, а не переписывать.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: e177278eaa21176df7487eabdea3973b8d3637cb → 7e85eee9281283120d82f6fb9b9c12017136401d\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-25T07:16:34.159Z",
-        "artifactId": 14999878847,
-        "runId": 45566511783,
-        "runAttempt": 1,
-        "completedAt": "2026-11-25T07:16:38Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45566511783",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "e177278eaa21176df7487eabdea3973b8d3637cb"
+      "releaseTag": "v1.86.1",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -6877,19 +6751,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1562,
-    "worker": "github-coordinator",
-    "token": "685:github:45565107244:1:tick:0:admit",
-    "fence": 685,
-    "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
-    "expectedBase": "e177278eaa21176df7487eabdea3973b8d3637cb",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795590213146,
-    "expiresAt": 1795594622890,
-    "patchId": "b13b2bd5547c460a7b4c4b71601edbb1b9a651a1",
-    "reviewRequest": "review:1562:1:b13b2bd5547c460a7b4c4b71601edbb1b9a651a1:e177278eaa21176df7487eabdea3973b8d3637cb"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -6910,82 +6772,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "release-return-finish:0ca88eb9-bf16-46e9-93aa-1ff7c391a332:finish:2:synchronized": {
-      "digest": "354c82da7a45d584d89905f9cef640914b1b5f43a2fbf338e6afaebd83eaee26",
-      "issue": 1562
-    },
-    "github:45565107244:1:completions:message:5a76fc85c7bcdaa4776b28a285ec0b7b9550bfc2f9810eaa9bc75d92f8e17b32": {
-      "digest": "34222e85498ed55f9a135b15c43e57fbdfa43e931146cc92184f9b7db6be040e",
-      "issue": 1562
-    },
-    "github:45565107244:1:completions:message:69f9a4064991675250d7f8b99734f0b6ff7dd4e2e04ca762ebf3d456a7a4cbbc": {
-      "digest": "0af921deae58c98b3b7bab8e3255623cd71a7e7fffba72a94541ab708fcf5773",
-      "issue": 1562
-    },
-    "github:45565107244:1:completions:message:cbfb4759b84c483549f4ad4cc70a4c79c91f480eed8fc9456ecb4c84f15b83b0": {
-      "digest": "19444d5ed76a45a36155fd2ba25f7fb9d7ae7e1ab0ae66469919f7df14705142",
-      "issue": 1562
-    },
-    "finish:baa70461-1f26-499f-add4-334bf60aee0a": {
-      "digest": "16b26fb6574db0b6bbbe58ea96ee1ef7d2a437dda05f16277ebe3031c7eabc09",
-      "issue": 1562
-    },
-    "finish:ce2f4966-adae-4fb6-b79f-08e0f1a560cd": {
-      "digest": "625dfd02b690a39596b26f26b20caf1efa01f36bf471da49888ccdb233afc57a",
-      "issue": 1562
-    },
-    "finish:97965b55-7e7f-4f73-b345-16a2b274f9b7": {
-      "digest": "7a0ab1e54418f5383d767a98e295252ead9c58ff11072f92a2194a7fb533ebfe",
-      "issue": 1562
-    },
-    "finish:f7f77a53-c897-4675-99e2-8a7b58c14cfc": {
-      "digest": "de9637ce393bf173644d1080f17c9095c58987464f1d6dae1568b5d424a0a2a8",
-      "issue": 1562
-    },
-    "finish:a976243e-1b52-4f82-9ccd-29b6a0eb9d29": {
-      "digest": "4536ff9c23ca73106d99aebbb600133620e3beda32839b06f399a3d266fe6088",
-      "issue": 1562
-    },
-    "finish:65c9c62a-b333-43ff-95a1-7201fae67599": {
-      "digest": "196baa51f655edd971b10773b98f5aa2e3148c7dc4314c8cdb7ec95ac453801c",
-      "issue": 1562
-    },
-    "finish:8d118937-1c05-4d41-951e-1bcabc8d2401": {
-      "digest": "1bad3099046a3c9b044483e2db8911a452273afc10f89e76917a06185f46af20",
-      "issue": 1562
-    },
-    "finish:754249a2-ad53-4de4-ad89-602896531dab": {
-      "digest": "4aea575fa4225c5d026c822ac896bcb60d9ba6cf25b99ba51f0f1a2a1c9b732c",
-      "issue": 1562
-    },
-    "finish:19151675-ac3c-48fe-b86b-6aa49b388cc5": {
-      "digest": "693c1fd8a939c734dcd97a21f11766f81e6ffcd0684653f2b72cdab9e6d5f564",
-      "issue": 1562
-    },
-    "finish:c825600a-60b8-48e4-8cc7-4b303900bc2d": {
-      "digest": "75d8c48213cefcc08e44b3a461dbd6e114cb9c4728c14e0010714f654548d266",
-      "issue": 1562
-    },
-    "release-return-finish:0ca88eb9-bf16-46e9-93aa-1ff7c391a332:finish:3:s6-label": {
-      "digest": "72f1e30186594259ae5b2f7d7b273bac1b8dc6fabdd4d9d52fa717dfc706b872",
-      "issue": 1562
-    },
-    "release-return-finish:0ca88eb9-bf16-46e9-93aa-1ff7c391a332:finish:4:review-requested": {
-      "digest": "f54cd92602fdacfbe97b2209dfe90470e62d00a3ea2e706f93c4e3fec2d6f3d5",
-      "issue": 1562
-    },
-    "github:45566477577:1:completions:message:d8e841d1a5b3c9c17304bfe5ba480345685b745ba0a7940b50cc07b7921eb875": {
-      "digest": "aec29543f3d76793a22cead2bd83a288cf0800c3492c71e1f1dd9c131e8216d0",
-      "issue": 1562
-    },
-    "github:45566873477:1:tick:0:review-presentation": {
-      "digest": "6afc7f39be967cd1ce38f6e67e1dbfc1de71fa519b77f50108767f3393576cad",
-      "issue": 1562
-    },
-    "github:45566873477:1:tick:0:review-complete": {
-      "digest": "dab0bc5ebe84b369219ddd811573841504725d7c6007d43e2aef9c47f9bd54c7",
-      "issue": 1562
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7013,65 +6799,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-return:0ca88eb9-bf16-46e9-93aa-1ff7c391a332": {
-      "digest": "37630d719360c7cf5262c2f6ff54105283e5156feaf252c1f162cb9ab9183222",
-      "issue": 1562,
-      "message": {
-        "kind": "queued",
-        "issue": 1562,
-        "at": 1795590209482,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
-        "delivered": true
-      }
-    },
-    "github:45565107244:1:tick:0:admit": {
-      "digest": "77cce596136d0e73a64e5fe1898071747bbf1c34fda5aed7b55a27bde13c14a7",
-      "issue": 1562,
-      "message": {
-        "kind": "admitted",
-        "issue": 1562,
-        "at": 1795590213146,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-return-finish:0ca88eb9-bf16-46e9-93aa-1ff7c391a332:finish:3:s6-complete": {
-      "digest": "7b1f946186a44e5fb0e6085ab4c2cc63d342b43f1536827c8b1b87a0836dad0e",
-      "issue": 1562,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1562,
-        "at": 1795590816733,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
-        "phase": "review",
-        "evidence": {
-          "id": "20261125T070350689-70a20037",
-          "name": "Тесты для задачи #1562 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T070350689-70a20037/report.json",
-          "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
-          "status": "passed",
-          "finishedAt": "2026-11-25T07:13:32.811Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
