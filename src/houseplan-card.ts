@@ -872,9 +872,16 @@ export class HouseplanCard extends LitElement {
         const configuredAngle = Number(element.getAttribute('data-hp-3d-device'));
         const iconAngle = (Number.isFinite(configuredAngle) ? configuredAngle : 0) * Math.PI / 180;
         const faces = runtime.readPlan3dMarkerFaces(element, geometry, turn + iconAngle);
-        return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: presentation.sectionHeight, faces }] : [];
+        const opacity = element.matches('.unavail:not(.led-badge)')
+          ? Number.parseFloat(element.ownerDocument.defaultView?.getComputedStyle(element)
+            .getPropertyValue('--hp-device-offline-opacity') ?? '') || 1 : 1;
+        return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: presentation.sectionHeight,
+          faces, opacity }] : [];
       });
-      const outlines = contacts?.volumeOutlines(new Set(markers.map(marker => marker.id)));
+      const opacityByMarker = new Map(markers.map(marker => [marker.id, marker.opacity]));
+      const outlines = contacts?.volumeOutlines(new Set(opacityByMarker.keys())).map(group => ({
+        ...group, opacity: Math.max(...group.members.map(id => opacityByMarker.get(id) ?? 1)),
+      }));
       this._plan3dHost.present(presentation, this._viewOr(this._baseVb()), markers, outlines);
     } catch {
       fail();

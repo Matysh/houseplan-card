@@ -10,6 +10,7 @@
 - Remove competing wall and jamb faces that could flicker when zooming in WebGL 3D (#1569).
 - Keep Zigbee routes behind device cores and restore marker clicks when returning from 3D to Flat (#1573).
 - Restore the inset room highlight and its opening gaps when hovering in WebGL 3D (#1571).
+- Show confirmed unavailable devices with the same dimmed appearance in WebGL 3D as in the flat view (#1572).
 
 ## v1.86.1 — 2026-11-25
 

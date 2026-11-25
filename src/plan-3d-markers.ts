@@ -15,6 +15,7 @@ export interface Plan3dMarkerFace extends IsoDeviceFace {
   color: string;
   edge: string;
   foreground: string;
+  inkOpacity?: number;
   glyph?: Plan3dMarkerGlyph;
 }
 
@@ -23,6 +24,7 @@ export interface Plan3dMarker {
   center: PlanPoint;
   diameter: number;
   height: number;
+  opacity?: number;
   faces: readonly Plan3dMarkerFace[];
 }
 
@@ -53,20 +55,23 @@ export function readPlan3dMarkerFaces(
     const text = node.querySelector('.valtext,.value-badge-content');
     let glyph: Plan3dMarkerGlyph | undefined;
     let foreground = style.color;
+    let inkOpacity = 1;
     if (icon) {
       glyph = iconGlyph(icon, iconTurn);
       // An asynchronous HA icon keeps its existing presentation until the
       // provider has resolved its path, including custom icon sets.
       if (!glyph) return;
       foreground = window.getComputedStyle(icon).color;
+      inkOpacity = Number(window.getComputedStyle(icon).opacity);
     } else if (text) {
       const textStyle = window.getComputedStyle(text);
       const size = Number.parseFloat(textStyle.fontSize), height = Number.parseFloat(style.height);
       glyph = { kind: 'text', value: text.textContent ?? '', font: textStyle.fontFamily,
         fraction: height > 0 ? Math.min(.85, size / height) : .45 };
       foreground = textStyle.color;
+      inkOpacity = Number(textStyle.opacity);
     }
-    faces.push({ ...face, color: style.backgroundColor, foreground, edge: '#808080', glyph });
+    faces.push({ ...face, color: style.backgroundColor, foreground, edge: '#808080', glyph, inkOpacity });
   }
   return faces;
 }
@@ -124,7 +129,8 @@ class MarkerAtlas {
     return spare;
   }
 
-  paint(cell: AtlasCell, glyph: Plan3dMarkerGlyph, foreground: string, background: string, aspect: number): void {
+  paint(cell: AtlasCell, glyph: Plan3dMarkerGlyph, foreground: string, background: string, aspect: number,
+    inkOpacity: number): void {
     const { bytes, texture, side, cell: size } = cell.page;
     this.canvas.width = this.canvas.height = size;
     const context = this.canvas.getContext('2d', { willReadFrequently: true });
@@ -135,6 +141,7 @@ class MarkerAtlas {
     // show the icons of several different markers on one visible plate.
     context.fillStyle = new Color(background).getStyle();
     context.fillRect(0, 0, size, size);
+    context.globalAlpha = inkOpacity;
     context.fillStyle = foreground;
     context.translate(size / 2, size / 2);
     if (glyph.kind === 'text') {
@@ -346,7 +353,16 @@ export class Plan3dMarkerLayer {
     const cap = paint.body.material[0];
     // In the equal-depth case resolve a tie in the same marker order as the
     // interactive DOM and the colour-picking pass.
-    paint.body.renderOrder = order;
+    const opacity = marker.opacity ?? 1, translucent = opacity < 1;
+    // The prism is convex and paints only its outward faces. The visible cap
+    // already contains its glyph, so the whole shell is blended once, against
+    // the same scene depth rather than as a second screen-space marker.
+    paint.body.renderOrder = translucent ? 0 : order;
+    for (const material of paint.body.material) {
+      material.opacity = opacity;
+      material.transparent = translucent;
+      material.depthWrite = !translucent;
+    }
     paint.body.material[1].color.set(face.edge);
     paint.body.material[2].color.set(face.edge);
     paint.body.position.set(x, height, y);
@@ -369,9 +385,9 @@ export class Plan3dMarkerLayer {
     }
     if (!paint.cell) throw new Error('Cannot allocate the marker cap');
     cap.color.set(0xffffff);
-    const glyphKey = JSON.stringify([face.glyph, face.foreground, face.color]);
+    const glyphKey = JSON.stringify([face.glyph, face.foreground, face.color, face.inkOpacity]);
     if (paint.glyphKey !== glyphKey) {
-      this.atlas.paint(paint.cell, face.glyph, face.foreground, face.color, w / h);
+      this.atlas.paint(paint.cell, face.glyph, face.foreground, face.color, w / h, face.inkOpacity ?? 1);
       paint.glyphKey = glyphKey;
     }
   }

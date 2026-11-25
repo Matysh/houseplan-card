@@ -164,21 +164,64 @@ try {
   await page.evaluate(() => document.querySelector('houseplan-space-card').remove());
   await setDeviceOfflineStates(page, { 'media_player.offline_down': 'unavailable' });
 
+  const nativePaint = () => page.evaluate(() => {
+    const host = window.__card._plan3dHost;
+    if (!host?.canvas.hasAttribute('data-hp-plan-3d-ready')) return null;
+    const markers = host.world.markers.markers;
+    const id = 'offline-down', body = markers.get(id + ':0')?.body;
+    if (!body || !host.frame) return null;
+    const size = host.canvas.getBoundingClientRect();
+    const camera = host.frame.camera, ctx = host.canvas.getContext('2d');
+    const shape = host.markers.find(marker => marker.id === id);
+    const face = shape.faces[0];
+    const p = body.position.clone();
+    p.x += (face.left + face.right) / 2 * shape.diameter;
+    p.z += (face.top + face.bottom) / 2 * shape.diameter;
+    p.project(camera);
+    const x = (p.x + 1) / 2, y = (1 - p.y) / 2;
+    return {
+      offline: [...markers.entries()].filter(([key]) => key.startsWith(id + ':'))
+        .map(([, { body }]) => body.material.map(material => [material.opacity, material.transparent, material.depthTest])),
+      normalOpaque: markers.get('offline-icon:0')?.body.material.every(material => material.opacity === 1),
+      unknownOpaque: markers.get('offline-unknown:0')?.body.material.every(material => material.opacity === 1),
+      shadow: host.world.contacts.children[0]?.material.map?.image?.toDataURL(),
+      pixel: [...ctx.getImageData(Math.floor(x * host.canvas.width), Math.floor(y * host.canvas.height), 1, 1).data],
+      pick: host.pick(size.left + x * size.width, size.top + y * size.height),
+    };
+  });
   for (const profile of ['dark', 'custom', 'iso']) {
     await page.evaluate(async profile => {
       const card = window.__card;
       card.hass = { ...card.hass, themes: { ...card.hass.themes, darkMode: true } };
       card.style.setProperty('--card-background-color', profile === 'custom' ? '#442c4f' : '#202126');
       card.style.setProperty('--primary-text-color', '#ece4da');
-      if (profile === 'iso') await window.__hpTest.setVolumetricView(true);
+      if (profile === 'iso') {
+        await window.__hpTest.setServerConfig(config => {
+          const floor = config.spaces.find(space => space.id === card._space);
+          floor.settings = { ...floor.settings, show_borders: true };
+        });
+        await window.__hpTest.setVolumetricView(true);
+      }
     }, profile);
     await waitDeviceOfflinePaint(page);
     const paint = await readDeviceOfflinePaint(page, ['offline-down', 'offline-icon']);
     observations[profile] = paint;
-    out[`wholeMarkerPolicy_${profile}`] = dim(paint.faces['offline-down']?.parent)
+    const native = profile === 'iso' ? await nativePaint() : null;
+    out[`wholeMarkerPolicy_${profile}`] = native ? native.offline.length >= 2
+      && native.offline.every(face => face.every(([opacity, transparent, depthTest]) =>
+        closeTo(opacity, .35) && transparent && depthTest))
+      && native.normalOpaque && native.unknownOpaque : dim(paint.faces['offline-down']?.parent)
       && dim(paint.faces['offline-down']?.glyph) && dim(badge(paint.faces['offline-down'])?.paint)
       && paint.faces['offline-down']?.core?.background === paint.faces['offline-icon']?.core?.background;
-    if (profile === 'iso') out.isoShadowKeepsOrdinaryPaint = await page.evaluate(() => {
+    if (native) {
+      await setDeviceOfflineStates(page, { 'media_player.offline_down': 'off' });
+      const recovered = await nativePaint();
+      out.isoShadowKeepsOrdinaryPaint = !!native.shadow && native.shadow === recovered.shadow;
+      out.isoRecoveryRepaintsTheSamePickableMarker = native.pick === 'offline-down' && recovered.pick === native.pick
+        && JSON.stringify(native.pixel) !== JSON.stringify(recovered.pixel)
+        && recovered.offline.every(face => face.every(([opacity, transparent]) => opacity === 1 && !transparent));
+      await setDeviceOfflineStates(page, { 'media_player.offline_down': 'unavailable' });
+    } else if (profile === 'iso') out.isoShadowKeepsOrdinaryPaint = await page.evaluate(() => {
       const root = window.__card.renderRoot;
       const shadow = id => root.querySelector(`.iso-tile-shadow[data-shadow-of="${id}"]`);
       const down = shadow('offline-down'), normal = shadow('offline-icon');

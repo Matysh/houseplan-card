@@ -79,6 +79,7 @@ export interface Plan3dOutline {
   outline: string;
   diameter: number;
   virtual: boolean;
+  opacity?: number;
 }
 
 export interface Plan3dWorldInput {
@@ -379,9 +380,9 @@ export class Plan3dWorld {
 
   presentOutlines(outlines: readonly Plan3dOutline[], height: number): void {
     const live = new Set<string>();
-    for (const { id, outline, diameter, virtual } of outlines) {
+    for (const { id, outline, diameter, virtual, opacity = 1 } of outlines) {
       if (!outline || !Number.isFinite(diameter) || diameter <= 0) continue;
-      const key = [height, diameter, virtual, outline].join('|');
+      const key = [height, diameter, virtual, opacity, outline].join('|');
       live.add(id);
       const previous = this.glassMeshes.get(id);
       if (previous?.key === key) continue;
@@ -398,8 +399,8 @@ export class Plan3dWorld {
         const strokes = virtual ? dashedRim(chain, diameter) : [chain];
         for (const points of strokes) rims.push(...rimFaces(points, diameter * (virtual ? .021 : .016), top, low));
       }
-      const meshes = [this.mesh(planFaceMesh(faces), [{ color: '#f5fbff', opacity: .14 }]),
-        this.mesh(planFaceMesh(rims), [{ color: virtual ? '#92a9b7' : '#e6edf1', opacity: virtual ? .72 : .52 }])];
+      const meshes = [this.mesh(planFaceMesh(faces), [{ color: '#f5fbff', opacity: .14 * opacity }]),
+        this.mesh(planFaceMesh(rims), [{ color: virtual ? '#92a9b7' : '#e6edf1', opacity: (virtual ? .72 : .52) * opacity }])];
       for (const mesh of meshes) mesh.userData.plan3dPick = { occludes: false };
       this.markerGlass.add(...meshes);
       this.transparencyDirty = true;

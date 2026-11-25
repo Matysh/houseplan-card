@@ -405,7 +405,7 @@ export const devicesStyles = css`
     .stage.projection-iso.mode-view .dev[data-hp-zigbee-topology-endpoint] {
       z-index: 8;
     }
-    .dev.unavail:not(.led-badge) { opacity:0.35; }
+    .dev.unavail:not(.led-badge) { --hp-device-offline-opacity: 0.35; opacity:var(--hp-device-offline-opacity); }
     .dev.led-badge.unavail .device-core > ha-icon,
     .dev.led-badge.unavail .device-core > .valtext,
     .dev.led-badge.unavail .value-badge-content {
