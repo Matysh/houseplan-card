@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1470,
+  "revision": 1471,
   "active": "v1.86.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -285239,14 +285239,14 @@
       "kind": "stable",
       "branch": "release/1.86.1",
       "sourceSha": "286b799101d831676ab30f7c8add3e1ec1889607",
-      "sha": "18fad1cbb475d9bb143cfbfff813be634235c84e",
+      "sha": "f175b7e00d8535149c61c2d28a922620a3a70928",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "18fad1cbb475d9bb143cfbfff813be634235c84e",
+        "candidate": "f175b7e00d8535149c61c2d28a922620a3a70928",
         "base": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
         "issues": [
           {
@@ -285642,6 +285642,12 @@
         {
           "from": "286b799101d831676ab30f7c8add3e1ec1889607",
           "to": "18fad1cbb475d9bb143cfbfff813be634235c84e",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "18fad1cbb475d9bb143cfbfff813be634235c84e",
+          "to": "f175b7e00d8535149c61c2d28a922620a3a70928",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -291939,7 +291945,8 @@
     "beta-1861-10-publish-286b7991:completion:e737575e-771d-4844-9718-6fe3d7cd5921": "76871299ab1a87a74ae6683641b3c6a748eb97d6748ec1279c9bc7dad42b668b",
     "beta-1861-10-publish-286b7991:completion:4a0bfadc-abc2-4989-a63f-5e901ff20f85": "01a83ed7baf20b066390b05690d627adf0382d65ca712e1ff2a5d69a6a8eb3a6",
     "beta-1861-10-publish-286b7991:completion:c5156293-a5e9-4fdd-8a02-b20ca399e736": "7f89b8922c79c57bf166bf1faf059b1a33e6fb370c4e55f58a90d835a1fa6aed",
-    "beta-1861-10-publish-286b7991:completion:6ccedbe3-1e98-4da8-a130-2c99f28e0c10": "c353975ffbcca9b4af375fe558819968894961ca604de142ecb1b94d95a461e8"
+    "beta-1861-10-publish-286b7991:completion:6ccedbe3-1e98-4da8-a130-2c99f28e0c10": "c353975ffbcca9b4af375fe558819968894961ca604de142ecb1b94d95a461e8",
+    "stable-1861-packaging-fix-f175b7e": "a0409c5190f43b52d20f1d2c9dafeed3d8d1c5735dd7d59d1f72ab3104c43671"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
