@@ -216,6 +216,8 @@ export interface IsoOpeningSurface {
   edge?: 'hinge' | 'tip';
   /** Host-interior or back-facing surface retained by the opaque renderer. */
   hiddenInTranslucentMasonry?: boolean;
+  /** Camera-independent side policy for translucent world-space masonry. */
+  masonrySide?: 'outward' | 'reverse' | 'join';
 }
 
 export interface IsoOpeningPanel {
@@ -434,7 +436,7 @@ export function buildIsoOpeningBasis(
 const pointText = (point: ScenePoint): string =>
   `${Number(point[0].toFixed(4))} ${Number(point[1].toFixed(4))}`;
 
-type IsoOpeningSurfaceMetadata = Pick<IsoOpeningSurface, 'jamb' | 'edge' | 'hiddenInTranslucentMasonry'>;
+type IsoOpeningSurfaceMetadata = Pick<IsoOpeningSurface, 'jamb' | 'edge' | 'hiddenInTranslucentMasonry' | 'masonrySide'>;
 
 export interface IsoSpatialPoint {
   point: PlanPoint;
@@ -545,9 +547,14 @@ function openingPrism(
   visibleSides?: readonly boolean[],
 ): IsoOpeningSurface[] {
   if (!(top > bottom)) return [];
+  const winding = visibleSides ? ring.reduce((area, [x, y], i) => {
+    const [bx, by] = ring[(i + 1) % ring.length];
+    return area + x * by - bx * y;
+  }, 0) : 0;
   const result = ring.map((a,i) => verticalSurface(sideKind, sideMaterial,
     a, ring[(i+1)%ring.length], bottom, top, camera,
-    visibleSides && !visibleSides[i] ? { hiddenInTranslucentMasonry:true } : undefined));
+    visibleSides ? { ...(!visibleSides[i] ? { hiddenInTranslucentMasonry: true } : {}),
+      masonrySide: i % 2 ? 'join' : winding > 0 ? 'reverse' : 'outward' } : undefined));
   result.push(projectedSurface(topKind, topMaterial, ring.map(point=>({point,z:top})), camera));
   if (undersideKind) result.push(projectedSurface(undersideKind, sideMaterial,
     [...ring].reverse().map(point=>({point,z:bottom})), camera,
@@ -614,10 +621,14 @@ export function projectIsoOpeningStructure(
     const along = tx*sin + ty*cos;
     for (const reveal of reveals) {
       // Each jamb faces into the aperture, in opposite directions along the wall.
-      const facing = reveal.jamb === 0 ? along : -along;
+      const direction = reveal.jamb === 0 ? 1 : -1;
+      const facing = direction * along;
+      const dx = reveal.opposite[0] - reveal.selected[0], dy = reveal.opposite[1] - reveal.selected[1];
+      const outward = direction * (-dy * tx + dx * ty) > 0;
       surfaces.push(verticalSurface(
         'jamb-reveal', 'reveal', reveal.selected, reveal.opposite,
-        lower, upper, camera, { jamb: reveal.jamb, hiddenInTranslucentMasonry: facing <= 1e-9 },
+        lower, upper, camera, { jamb: reveal.jamb, hiddenInTranslucentMasonry: facing <= 1e-9,
+          masonrySide: outward ? 'outward' : 'reverse' },
       ));
     }
   }

@@ -2581,9 +2581,11 @@ publish their exact endpoint through the shared viewport. A retained Lit
 update during a camera gesture uses the published basis. The terminal
 wheel commit publishes the exact camera once after the quiet period.
 
-`Plan3dHost` observes the camera viewBox and draws from the meshes already
-resident in the WebGL scene. During gestures the canvas and the input
-surfaces use the same viewport. The exact camera commit updates the crop.
+`Plan3dHost` consumes the crop published by the live viewport, not the
+retained camera SVG's viewBox. The gesture paint projects the DOM and paints
+the resident WebGL meshes in the same animation frame; the canvas does not
+inherit the anchor transform. The exact Lit commit uses the same crop and
+refreshes marker glyph density. Picking uses the last painted camera.
 
 The vacuum SVG inside the HTML device layer inherits that layer's camera
 once (#871). The 3D rebase updates its `viewBox` alongside marker

@@ -841,7 +841,10 @@ export class HouseplanCard extends LitElement {
       if (this._plan3dHost?.canvas !== canvas || this._plan3dHost?.view !== view || this._plan3dAuthority !== authority) {
         this._disposePlan3dHost();
         this._plan3dAuthority = authority;
+        let paintedMarkers: ReadonlySet<string> | undefined;
         this._plan3dHost = new runtime.Plan3dHost(canvas, view, this._gridPitch * .002, fail, (nativeMarkers, outlines) => {
+          if (paintedMarkers === nativeMarkers) return;
+          paintedMarkers = nativeMarkers;
           for (const element of this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-hp-3d-device]')) {
             const id = element.dataset.id ?? '';
             element.toggleAttribute('data-hp-3d-native', nativeMarkers.has(id));
@@ -864,10 +867,17 @@ export class HouseplanCard extends LitElement {
         return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: presentation.sectionHeight, faces }] : [];
       });
       const outlines = contacts?.volumeOutlines(new Set(markers.map(marker => marker.id)));
-      this._plan3dHost.present(presentation, markers, outlines);
+      this._plan3dHost.present(presentation, this._viewOr(this._baseVb()), markers, outlines);
     } catch {
       fail();
     }
+  }
+
+  // Live viewport owns the DOM projection and supplies the same crop in
+  // the same animation frame. The SVG viewBox is only its retained anchor.
+  private _paintPlan3dViewport(view: FrameRect): void {
+    if (this._renderProjection === 'iso' && this._plan3dPresentation)
+      this._plan3dHost?.paintCamera(view);
   }
 
   private readonly _retryPlan3d = (): void => {
@@ -14139,16 +14149,20 @@ export class HouseplanCard extends LitElement {
     if (isoScene && isoFrame?.layers.structural && isoRuntime) {
       this._plan3dDevices = isoFrame.overlays?.devices;
       const content = this._frameOf();
+      // Ground-level masonry is shared with the 2D plan. It includes window
+      // aprons but not door thresholds. Only translucent 3D exposes this ink.
+      const wallBase = disp.transparentWalls3d && (disp.opacity > 0 || disp.wallFill.a > 0)
+        && (disp.opacity < 1 || disp.wallFill.a < 1) ? this._isoWallBaseGeometry() : null;
       const floorInk = (neutral: boolean): import('./plan-3d-world').Plan3dFloorInk | undefined => {
         const bounds = content.all, decor = this._decorList;
         const strokes = !disp.hideDecor && decor.some(shape => shape.kind !== 'furniture' || !useFurnitureVolume || !furnitureParts(shape.symbol));
         const zeroWalls = this._zeroWalls();
         const stairs = this._curSpaceCfg?.stairs;
-        if (!strokes && !zeroWalls.lines.length && !stairs?.length) return;
+        if (!strokes && !zeroWalls.lines.length && !stairs?.length && !wallBase) return;
         const authority = this.planHost.authorityKey;
         const scope = space.id;
         const key = [scope, neutral, bounds.x, bounds.y, bounds.w, bounds.h, this._cellCm, decor, disp.hideDecor,
-          useFurnitureVolume, disp.color, zeroWalls, stairs,
+          useFurnitureVolume, disp.color, zeroWalls, stairs, wallBase, wallBase && disp.wallFill.c, wallBase && disp.wallFill.a,
           ...decor.flatMap(shape => shape.kind === 'text' && !neutral ? [this._renderDeviceSnapshot?.facts.get(`decor:${space.id}:${shape.id}`)]
             : shape.kind === 'image' ? [this._display(this._decorAssets.get(shape.asset_id)?.url)] : [])];
         return { scope, key, bounds, capture: signal => {
@@ -14157,6 +14171,11 @@ export class HouseplanCard extends LitElement {
           return this._captureStartupSvg(stage, () => [
             svg`${this._renderZeroWalls(disp)}${this._stairsView.renderLayer(stairVolumes)}`,
             strokes ? this._renderDecorLayer(undefined, bounds, useFurnitureVolume ? 'floor' : 'all', neutral) : svg``,
+            wallBase ? svg`${wallHatch}${wallBase.paths.map(({ d, fillRule }) => svg`
+              <path d=${d} fill="#fff" fill-rule=${fillRule}></path>
+              <path d=${d} fill=${disp.wallFill.c} fill-opacity=${disp.wallFill.a} fill-rule=${fillRule}></path>
+              <path d=${d} fill="url(#hp-wall-hatch)" fill-rule=${fillRule}
+                stroke=${disp.color} stroke-width=${gridVisualUnits(.6, this._cellCm)}></path>`)}` : svg``,
           ], bounds, signal, undefined, true);
         } };
       };
@@ -14177,6 +14196,14 @@ export class HouseplanCard extends LitElement {
         sectionHeight: gridVisualUnits(isoDisplayWallHeight(), this._cellCm),
         lightScope: [this.planHost.authorityKey, isoScene.key, this._space].join('|'),
         animateLights: !this._reducedMotion && !this._modeTransitionBusy && !this._floorPassive,
+        labelShadows: disp.showNames ? space.rooms.flatMap((room): import('./plan-3d-world').Plan3dContactShadow[] => {
+          const placement = isoFrame?.overlays?.rooms.get(room);
+          if (!room.name || !placement) return [];
+          const opacity = roomNameColorOf(disp.nameColor, room).a;
+          const font = 10 * scale * this._labelScale(room) * disp.cardNameScale
+            * this._effectiveKioskScale.font * clampScale(room.settings?.name_scale);
+          return [[...placement.floorAnchor, font * (1 + Math.min(32, [...room.name].length) * .57), font * 1.6, opacity * .16]];
+        }) : [],
         world: {
           physical: isoScene.physical, display: disp, cellCm: this._cellCm, visualScale: scale,
           paper: space.bg ? this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', '#111') : '#fff',

@@ -1,8 +1,8 @@
-import { CanvasTexture, Color, DoubleSide, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Scene, SRGBColorSpace, Texture,
-  type BufferGeometry } from 'three';
+import { BufferGeometry, CanvasTexture, Color, DoubleSide, EdgesGeometry, Float32BufferAttribute,
+  FrontSide, Group, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, PlaneGeometry, Scene, SRGBColorSpace, Texture } from 'three';
 import { union, type Geom } from 'polyclip-ts';
 import { gridVisualUnits } from './grid-scale';
-import { isoOpeningMaterialVars, isoWallMaterial } from './iso-materials';
+import { colorLuma, isoOpeningMaterialVars, isoWallMaterial, parseCssColor } from './iso-materials';
 import { FURNITURE_HEIGHT_SCALE, furnitureParts, furniturePlanPoint, furnitureVolumeFaces } from './iso-lab-furniture';
 import { workstationParts } from './iso-lab-workstation';
 import { ISO_FLOOR_EDGE_HEIGHT, isoDisplayWallHeight, type PlanPoint, type ViewRect } from './iso-projection';
@@ -17,8 +17,9 @@ import { Plan3dMarkerLayer, type Plan3dMarker } from './plan-3d-markers';
 import { markerContactChains } from './iso-marker-outline';
 
 type Polygon = readonly (readonly PlanPoint[])[];
-type Paint = Readonly<{ color: string; opacity: number; lit?: boolean; shadeSides?: boolean }>;
+type Paint = Readonly<{ color: string; opacity: number; lit?: boolean; shadeSides?: boolean; front?: boolean }>;
 type Face = readonly (readonly Plan3dVertex[])[];
+type DrawObject = Mesh | LineSegments;
 
 export interface Plan3dFurniture {
   record: DecorFurniture;
@@ -60,6 +61,8 @@ export interface Plan3dFloorInk {
   bounds: ViewRect;
   capture(signal: AbortSignal): Promise<Blob | null>;
 }
+
+export type Plan3dContactShadow = readonly [x: number, y: number, w: number, h: number, alpha: number];
 
 export interface Plan3dOutline {
   id: string;
@@ -128,6 +131,63 @@ const signedArea = (ring: readonly PlanPoint[]) => ring.reduce((area, [x, y], in
 }, 0);
 const horizontal = (polygon: Polygon, height: number): Face => polygon.map((ring, index) =>
   ((signedArea(ring) > 0) === (index === 0) ? ring : [...ring].reverse()).map(([x, y]): Plan3dVertex => [x, y, height]));
+
+const edgeTone = (color: string) => colorLuma(parseCssColor(color) ?? [255, 255, 255]) < .5 ? '#e8f0f2' : '#536770';
+
+function lineInk(geometry: BufferGeometry, color: string, opacity: number): LineSegments {
+  const material = new LineBasicMaterial({ color, opacity, transparent: true, depthWrite: false, toneMapped: false });
+  // Keep the stroke visible on its own face without lifting it off the
+  // world-space edge or letting it cross surfaces materially in front.
+  material.onBeforeCompile = shader => {
+    shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>',
+      '#include <project_vertex>\ngl_Position.z -= 0.000001 * gl_Position.w;');
+  };
+  const mesh = new LineSegments(geometry, material);
+  mesh.renderOrder = 2;
+  return mesh;
+}
+
+function faceInk(faces: readonly Face[], color: string, opacity: number): LineSegments {
+  const topology = planFaceMesh(faces);
+  const edges = new EdgesGeometry(topology, 19);
+  topology.dispose();
+  return lineInk(edges, color, opacity);
+}
+
+function wallInk(walls: readonly Polygon[], surfaces: readonly IsoOpeningSurface[], height: number, top: Paint, side: Paint): LineSegments[] {
+  const positions = (points: number[]) => new BufferGeometry().setAttribute('position', new Float32BufferAttribute(points, 3));
+  const lip = surfaces.filter(face => face.kind === 'opening-lintel-top' && face.points?.every(point => point.z === height))
+    .flatMap(face => face.points ? [[face.points.map(({ point }) => [...point])]] as Geom[] : []);
+  let caps = walls;
+  if (lip.length) {
+    // Union the adjacent cap faces before outlining: an opening header doesn't
+    // introduce two vertical saw cuts in an otherwise continuous cap.
+    try {
+      const inputs = [...walls as readonly Geom[], ...lip];
+      caps = union(inputs[0], ...inputs.slice(1));
+    } catch { /* The physical wall remains renderable without joined ink. */ }
+  }
+  const finish = (rings: readonly Polygon[], level: number): number[] => rings.flatMap(poly => poly.flatMap(ring =>
+    ring.flatMap((a, i) => {
+      const b = ring[(i + 1) % ring.length];
+      return a[0] === b[0] && a[1] === b[1] ? [] : [a[0], level, a[1], b[0], level, b[1]];
+    })));
+  const corners = walls.flatMap(poly => poly.flatMap(raw => {
+    const ring = raw.filter((point, i) => !i || point.some((v, a) => v !== raw[i - 1][a]));
+    if (ring.length > 1 && ring[0].every((v, a) => v === ring[ring.length - 1][a])) ring.pop();
+    return ring.flatMap(([x, y], i) => {
+      const [ax, ay] = ring[(i + ring.length - 1) % ring.length], [bx, by] = ring[(i + 1) % ring.length];
+      const u = [x - ax, y - ay], v = [bx - x, by - y];
+      const length = Math.hypot(...u) * Math.hypot(...v);
+      return length > 0 && (u[0] * v[0] + u[1] * v[1]) / length < .95 ? [x, 0, y, x, height, y] : [];
+    });
+  }));
+  const inks: LineSegments[] = [];
+  if (top.opacity > 0 && caps.length) inks.push(lineInk(positions(finish(caps, height)), edgeTone(top.color), .54 * top.opacity));
+  if (side.opacity > 0 && walls.length)
+    inks.push(lineInk(positions([...finish(walls, 0), ...corners]), edgeTone(side.color), .4 * side.opacity));
+  return inks;
+}
 
 function ribbonFloor({ points, closed }: Plan3dLedRibbon['path'], width: number): Polygon[] {
   const n = points.length;
@@ -213,9 +273,13 @@ export class Plan3dWorld {
   readonly scene = new Scene();
   private readonly markers: Plan3dMarkerLayer;
   private readonly structure = new Group();
+  private readonly architecture = new Group();
   private readonly ground = new Group();
   private groundTexture?: CanvasTexture;
   private groundKey: readonly unknown[] = [];
+  private readonly contacts = new Group();
+  private contactTexture?: CanvasTexture;
+  private contactKey: readonly unknown[] = [];
   private readonly openings = new Group();
   private readonly furniture = new Group();
   private readonly stairs = new Group();
@@ -247,11 +311,70 @@ export class Plan3dWorld {
   constructor(private readonly document: Document, normalOffset: number, private readonly changed?: () => void) {
     this.light = new Plan3dLightField(document, normalOffset);
     this.markers = new Plan3dMarkerLayer(document);
-    this.scene.add(this.ground, this.structure, this.backdrop, this.openings, this.furniture, this.stairs, this.rooms,
+    this.scene.add(this.ground, this.structure, this.architecture, this.backdrop, this.openings, this.furniture, this.stairs, this.rooms, this.contacts,
       this.floorInk, this.ribbons, this.markers.group, this.markerGlass);
   }
 
   presentMarkers(markers: readonly Plan3dMarker[], density: number): void { this.markers.present(markers, density); }
+
+  /** One bounded floor texture, not one transparent GPU object per badge.
+   * It changes with world positions, not with the view or light intensity. */
+  presentContacts(floor: unknown, box: ViewRect, markers: readonly Plan3dMarker[], labels: readonly Plan3dContactShadow[]): void {
+    const dots: Plan3dContactShadow[] = [...labels];
+    for (const { center, diameter, faces } of markers) {
+      for (const face of faces) {
+        const angle = face.angle ?? 0, c = Math.cos(angle), s = Math.sin(angle);
+        const dx = (face.left + face.right) * diameter / 2, dy = (face.top + face.bottom) * diameter / 2;
+        dots.push([center[0] + c * dx - s * dy, center[1] + s * dx + c * dy,
+          (face.right - face.left + .42) * diameter, (face.bottom - face.top + .42) * diameter, .28]);
+      }
+    }
+    const { x, y, w, h } = box;
+    const key = [floor, x, y, w, h, ...dots.flat()];
+    if (same(key, this.contactKey)) return;
+    this.contactKey = key;
+    this.replace(this.contacts, []);
+    this.contactTexture?.dispose();
+    this.contactTexture = undefined;
+    if (!dots.length || !(w > 0 && h > 0 && Number.isFinite(w + h))) return;
+    const density = Math.min(2, 1024 / Math.max(w, h));
+    const canvas = this.document.createElement('canvas');
+    canvas.width = Math.ceil(w * density);
+    canvas.height = Math.ceil(h * density);
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    const clip = new Path2D();
+    for (const poly of polygons(floor)) for (const ring of poly) {
+      ring.forEach(([px, py], i) => i ? clip.lineTo(px, py) : clip.moveTo(px, py));
+      clip.closePath();
+    }
+    context.setTransform(canvas.width / w, 0, 0, canvas.height / h, -x * canvas.width / w, -y * canvas.height / h);
+    context.clip(clip, 'evenodd');
+    for (const [px, py, width, height, opacity] of dots) {
+      if (!(width > 0 && height > 0 && opacity > 0) || !Number.isFinite(px + py + width + height + opacity)) continue;
+      context.save();
+      context.translate(px, py);
+      context.scale(width / 2, height / 2);
+      const brush = context.createRadialGradient(0, 0, 0, 0, 0, 1);
+      brush.addColorStop(0, `rgba(28,32,38,${opacity})`);
+      brush.addColorStop(.43, `rgba(28,32,38,${opacity * .83})`);
+      brush.addColorStop(.71, `rgba(28,32,38,${opacity * .33})`);
+      brush.addColorStop(1, 'rgba(28,32,38,0)');
+      context.fillStyle = brush;
+      context.fillRect(-1, -1, 2, 2);
+      context.restore();
+    }
+    this.contactTexture = new CanvasTexture(canvas);
+    this.contactTexture.colorSpace = SRGBColorSpace;
+    const geometry = new PlaneGeometry(w, h);
+    geometry.rotateX(-Math.PI / 2);
+    geometry.translate(x + w / 2, 0, y + h / 2);
+    const mesh = new Mesh(geometry, new MeshBasicMaterial({ map: this.contactTexture, transparent: true, depthWrite: false,
+      polygonOffset: true, polygonOffsetUnits: -4, polygonOffsetFactor: -4, toneMapped: false }));
+    mesh.renderOrder = -.5;
+    mesh.userData.plan3dPick = { occludes: false };
+    this.replace(this.contacts, [mesh]);
+  }
 
   presentOutlines(outlines: readonly Plan3dOutline[], height: number): void {
     const live = new Set<string>();
@@ -300,7 +423,8 @@ export class Plan3dWorld {
 
   private material(paint: Paint): MeshBasicMaterial {
     const options = { color: paint.color, opacity: paint.opacity, transparent: paint.opacity < 1,
-      depthWrite: paint.opacity >= 1, side: DoubleSide, toneMapped: false, visible: paint.opacity > 0 };
+      depthWrite: paint.opacity >= 1, side: paint.front ? FrontSide : DoubleSide,
+      forceSinglePass: true, toneMapped: false, visible: paint.opacity > 0 };
     return paint.lit ? this.light.material(options, paint.shadeSides) : new MeshBasicMaterial(options);
   }
 
@@ -310,9 +434,9 @@ export class Plan3dWorld {
     return mesh;
   }
 
-  private replace(target: Group, meshes: Mesh[]): void {
+  private replace(target: Group, meshes: DrawObject[]): void {
     for (const child of [...target.children]) {
-      if (!(child instanceof Mesh)) continue;
+      if (!(child instanceof Mesh) && !(child instanceof LineSegments)) continue;
       child.geometry.dispose();
       const materials = Array.isArray(child.material) ? child.material : [child.material];
       for (const material of materials) material.dispose();
@@ -324,11 +448,16 @@ export class Plan3dWorld {
   private openingMeshes(surfaces: readonly IsoOpeningSurface[], palette: Record<string, string>, top: Paint, side: Paint): Mesh[] {
     const batches = new Map<string, { paint: Paint; faces: Face[] }>();
     const translucent: Mesh[] = [];
+    const translucentMasonry = top.opacity < 1 || side.opacity < 1;
     for (const surface of surfaces) {
       if (!surface.points?.length) continue;
-      if (top.opacity < 1 && surface.hiddenInTranslucentMasonry) continue;
-      const paint = openingPaint(surface, palette, top, side);
-      const face: Face = [surface.points.map(({ point: [x, y], z }) => [x, y, z])];
+      const useFacing = translucentMasonry && surface.masonrySide !== undefined;
+      if (translucentMasonry && (surface.masonrySide === 'join'
+        || (!useFacing && surface.hiddenInTranslucentMasonry))) continue;
+      const color = openingPaint(surface, palette, top, side);
+      const paint = useFacing ? { ...color, front: true } : color;
+      const points = surface.points.map(({ point: [x, y], z }): Plan3dVertex => [x, y, z]);
+      const face: Face = [useFacing && surface.masonrySide === 'reverse' ? points.reverse() : points];
       // A glass or fabric face has its own sortable location. Batching all
       // translucent panes under one material loses their relative order.
       if (paint.opacity < 1) {
@@ -366,6 +495,8 @@ export class Plan3dWorld {
     this.groundKey = key;
     this.replace(this.ground, []);
     this.groundTexture?.dispose();
+    this.replace(this.contacts, []);
+    this.contactTexture?.dispose();
     this.groundTexture = undefined;
     if (!floor.length) return;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -402,7 +533,7 @@ export class Plan3dWorld {
     this.replace(this.ground, [mesh]);
   }
 
-  private furnitureMeshes(item: Plan3dFurniture, width: number, depth: number, visualScale: number): Mesh[] {
+  private furnitureMeshes(item: Plan3dFurniture, width: number, depth: number, visualScale: number): DrawObject[] {
     const { shape, liftCm, color, opacity } = item;
     const base = furnitureParts(shape.symbol);
     if (!base) return [];
@@ -418,8 +549,10 @@ export class Plan3dWorld {
       const pigment = new Color(color);
       const top = colorString(new Color('#f7fbfc').lerp(pigment, .12));
       const side = colorString(new Color('#e4edf0').lerp(pigment, .16));
-      return [this.mesh(planFaceMesh(split(true)), [{ color: top, opacity, lit: true }]),
-        this.mesh(planFaceMesh(split(false)), [{ color: side, opacity, lit: true }])];
+      const caps = split(true), sides = split(false);
+      return [this.mesh(planFaceMesh(caps), [{ color: top, opacity: opacity * .72, lit: true }]),
+        this.mesh(planFaceMesh(sides), [{ color: side, opacity: opacity * .52, lit: true }]),
+        faceInk([...caps, ...sides], color, opacity * .35)];
     });
   }
 
@@ -427,13 +560,16 @@ export class Plan3dWorld {
     const key = stairs.flatMap(({ id, volume, color }) => [id, volume, color]);
     if (same(key, this.stairKey)) return;
     const meshes = stairs.flatMap(({ id, volume, color }) => {
-      const top = new Color(color), side = top.clone().multiplyScalar(.83);
-      return [true, false].map(cap => {
-        const faces = volume.faces.filter(face => face.cap === cap).map(face => [face.vertices]);
-        const mesh = this.mesh(planFaceMesh(faces), [{ color: colorString(cap ? top : side), opacity: 1, lit: true }]);
+      const pigment = new Color(color);
+      const top = colorString(new Color('#f7fbfc').lerp(pigment, .12));
+      const side = colorString(new Color('#e4edf0').lerp(pigment, .16));
+      const faces = [true, false].map(cap => volume.faces.filter(face => face.cap === cap).map(face => [face.vertices]));
+      const solid = faces.map((surfaces, index) => {
+        const mesh = this.mesh(planFaceMesh(surfaces), [{ color: index ? side : top, opacity: index ? .34 : .47, lit: true }]);
         mesh.userData.plan3dPick = { id: `stair:${id}` };
         return mesh;
       });
+      return [...solid, faceInk(faces.flat(), color, .3)];
     });
     this.replace(this.stairs, meshes);
     this.stairKey = key;
@@ -625,14 +761,16 @@ export class Plan3dWorld {
       const wallHeight = gridVisualUnits(isoDisplayWallHeight(), cellCm);
       this.groundShadow(polygons(physical.floor), floorDepth, visualScale);
       const floor: Paint = { color: paper, opacity: 1, lit: true };
-      const edge: Paint = { color: '#c3c7c9', opacity: 1, lit: true, shadeSides: true };
+      const edge: Paint = { color: colorString(new Color(paper).lerp(wallOnPaper, .38)), opacity: 1, lit: true, shadeSides: true };
+      const walls = polygons(physical.walls);
       const meshes = [
         this.mesh(planPrismMesh(polygons(physical.floor), -floorDepth, 0), [floor, edge, edge]),
-        ...this.wallMeshes(polygons(physical.walls), wallHeight, top, side),
+        ...this.wallMeshes(walls, wallHeight, top, { ...side, front: side.opacity < 1 }),
         ...this.openingMeshes(physical.openingSurfaces.filter(surface => !display.hideOpenings
           || surface.material === 'wall-top' || surface.material === 'wall-side' || surface.material === 'reveal'), palette, top, side),
       ];
       this.replace(this.structure, meshes);
+      this.replace(this.architecture, wallInk(walls, physical.openingSurfaces, wallHeight, top, side));
       this.structureKey = structureKey;
     }
 
@@ -654,6 +792,7 @@ export class Plan3dWorld {
 
   dispose(): void {
     this.replace(this.structure, []);
+    this.replace(this.architecture, []);
     this.replace(this.ground, []);
     this.groundTexture?.dispose();
     this.replace(this.openings, []);

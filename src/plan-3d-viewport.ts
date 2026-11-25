@@ -5,6 +5,7 @@ import { startupWebpFromCanvas } from './startup-floor-wire';
 export interface Plan3dFrame {
   scene: Scene;
   camera: Camera;
+  motion?: boolean;
 }
 
 export interface Plan3dPickSurface {
@@ -75,6 +76,16 @@ class Plan3dOutput {
         for (const target of batch) if (this.views.has(target)) target.paint();
       }) ?? 0;
     }
+  }
+
+  paintNow(view: Plan3dViewport): void {
+    if (this.lost || !this.views.has(view)) return;
+    this.pending.delete(view);
+    if (!this.pending.size && this.request) {
+      this.document.defaultView?.cancelAnimationFrame(this.request);
+      this.request = 0;
+    }
+    if (!this.document.hidden) view.paint();
   }
 
   draw(frame: Plan3dFrame, context: CanvasRenderingContext2D, size: Size): void {
@@ -193,6 +204,8 @@ export class Plan3dViewport {
   private cssSize: Size = { width: 0, height: 0 };
   private visible = true;
   private disposed = false;
+  private drawMs = 0;
+  private motionScale = 1;
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly failure: () => void,
     private readonly onPaint: () => void, private readonly onResume?: () => void) {
@@ -224,10 +237,11 @@ export class Plan3dViewport {
     }
   }
 
-  present(frame: Plan3dFrame): void {
+  present(frame: Plan3dFrame, immediate = false): void {
     if (this.disposed || this.frame === frame) return;
     this.frame = frame;
-    this.output.queue(this);
+    if (immediate) this.output.paintNow(this);
+    else this.output.queue(this);
   }
 
   resume(): void {
@@ -245,9 +259,18 @@ export class Plan3dViewport {
     const frame = this.frame;
     const { width, height } = this.cssSize;
     if (!frame || frame === this.painted || !this.visible || width <= 0 || height <= 0 || this.disposed) return;
-    const density = Math.min(this.canvas.ownerDocument.defaultView?.devicePixelRatio || 1, 2, Math.sqrt(PIXEL_LIMIT / width / height));
+    const window = this.canvas.ownerDocument.defaultView;
+    // Copying the shared WebGL backing store is synchronous. On a slow
+    // device reduce only raster resolution during motion, never the camera.
+    // Latch until the exact frame so adjacent samples don't resize the GPU
+    // surface back and forth. A fast view keeps the ordinary raster.
+    if (!frame.motion) this.motionScale = 1;
+    else if (this.drawMs > 36) this.motionScale = .5;
+    const density = this.motionScale * Math.min(window?.devicePixelRatio || 1, 2, Math.sqrt(PIXEL_LIMIT / width / height));
     try {
+      const start = window?.performance.now() ?? 0;
       this.output.draw(frame, this.context, { width: Math.max(1, Math.floor(width * density)), height: Math.max(1, Math.floor(height * density)) });
+      this.drawMs = (window?.performance.now() ?? 0) - start;
       this.painted = frame;
       this.onPaint();
     } catch {
@@ -257,10 +280,10 @@ export class Plan3dViewport {
 
   /** Coordinates are fractions of the visible canvas, from its top left. */
   pick(x: number, y: number): string | undefined {
-    if (this.disposed || !this.visible || !this.frame || this.frame !== this.painted
+    if (this.disposed || !this.visible || !this.painted || this.canvas.ownerDocument.hidden
       || !(x >= 0 && x < 1 && y >= 0 && y < 1)) return undefined;
     try {
-      return this.output.pick(this.frame, x, y, this.canvas);
+      return this.output.pick(this.painted, x, y, this.canvas);
     } catch {
       this.fail();
       return undefined;

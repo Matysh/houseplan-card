@@ -21,6 +21,15 @@ pass at the current position. Keyboard focus, room labels and HA controls
 stay in the DOM. GPU or runtime failure switches the card to interactive 2D
 and offers recovery while preserving the saved 3D preference.
 
+The live viewport publishes both the DOM projection and the visible WebGL
+crop in the same frame. Thin edges follow the physical cuts and corners.
+When painting is slow, gestures can use a smaller raster of that same
+crop; the settled frame recovers the ordinary pixel density.
+Transparent masonry reveals the hatched wall footprint under windows, not
+through doorways. Pale furniture and stair faces have translucent materials
+and fine depth-tested contours. The soft device and label shadows are
+non-interactive floor paint and do not enter neutral previews.
+
 The document pauses canvas paints while hidden. On return, the host samples
 the current light transitions before repainting. An unfinished transition
 continues from its current intensity, and an elapsed one shows the final

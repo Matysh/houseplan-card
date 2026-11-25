@@ -4,6 +4,7 @@
 
 - Save room-label positions and scale in the standalone editor using point-level conflict detection and observable save outcomes (#1563).
 - Test maintenance: run the nightly wall-node parity guard as a Python module with its compiled fixture dependencies (#1564).
+- Keep 3D geometry in sync with labels and devices during pan and zoom, and restore fine edges, wall-base hatching, translucent stairs and soft contact shadows (#1566).
 
 ## v1.86.1 — 2026-11-25
 

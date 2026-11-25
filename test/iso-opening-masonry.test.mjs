@@ -77,6 +77,24 @@ test('#1451 zero-depth hosts and external gates acquire no floating masonry',()=
   assert.deepEqual(projectIsoOpeningStructure(buildIsoOpeningBasis(opening({type:'passage'}))),[]);
 });
 
+test('#1566 translucent window aprons keep outside normals and omit only the host seams', () => {
+  for (const side of [-1, 1]) {
+    const basis = buildIsoOpeningBasis(opening({ face: { ox: 0, oy: side * 5, cm: 20, side } }), 84);
+    const ring = isoOpeningMasonry(basis).ring;
+    const center = ring.reduce(([x, y], [a, b]) => [x + a / 4, y + b / 4], [0, 0]);
+    for (let yaw = 0; yaw < 360; yaw += 45) {
+      const sides = projectIsoOpeningStructure(basis, camera(yaw), true).filter(s => s.kind === 'window-apron-side');
+      assert.equal(sides.filter(s => s.masonrySide === 'join').length, 2);
+      for (const face of sides.filter(s => s.masonrySide !== 'join')) {
+        const [a, b] = face.points.map(({ point }) => point);
+        const direction = face.masonrySide === 'reverse' ? -1 : 1;
+        const normal = [(a[1] - b[1]) * direction, (b[0] - a[0]) * direction];
+        assert.ok(normal[0] * (a[0] - center[0]) + normal[1] * (a[1] - center[1]) > 0);
+      }
+    }
+  }
+});
+
 test('#1451 a lintel occludes only its actual height interval, not the clear doorway',()=>{
   const cam=camera(0),wall=[[[[-10,20],[10,20],[10,25],[-10,25]]]];
   assert.equal(isoMarkerBehindWall([0,0],wall,84,cam),true);

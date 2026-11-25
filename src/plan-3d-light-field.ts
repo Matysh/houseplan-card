@@ -119,9 +119,9 @@ const LIGHT_GLSL = `
         vec3 towardWindow = vec3(-sun.x, max(0.001, sun.w), -sun.y);
         float incidence = vHpWorld.y == 0.0 && N.y > .999 ? 1.0 : max(dot(N, normalize(towardWindow)), .18);
         float fading = hpFalloff(travel / sun.z);
-        float energy = clamp(pigment.a * visible * fading * incidence, 0.0, 1.0);
+        float energy = clamp(1.22 * pigment.a * visible * fading * incidence, 0.0, 1.0);
         remaining *= 1.0 - pigment.rgb * energy;
-        reflected *= 1.0 - (1.0 - pigment.rgb) * energy * .32;
+        reflected *= 1.0 - (1.0 - pigment.rgb) * energy * .52;
         continue;
       }
       vec2 closest = next;
@@ -141,11 +141,13 @@ const LIGHT_GLSL = `
       // Preserve the calibrated floor envelope. World normals and emitter
       // height distribute that light on the upright faces and raised objects.
       float incidence = vHpWorld.y == 0.0 && N.y > 0.999 ? 1.0 : angle;
-      float energy = clamp(pigment.a * visible * fall * incidence, 0.0, 1.0);
+      float energy = clamp(1.20 * pigment.a * visible * fall * incidence, 0.0, 1.0);
       remaining *= 1.0 - pigment.rgb * energy;
-      reflected *= 1.0 - (1.0 - pigment.rgb) * energy * .32;
+      reflected *= 1.0 - (1.0 - pigment.rgb) * energy * .48;
     }
-    float ambient = mix(1.0, .88 + .11 * max(0.0, dot(N, normalize(vec3(-.8, .65, .6)))),
+    // Architectural ambient describes orientation, not a synthetic emitter.
+    // Keep it anchored in plan space so rotating the view doesn't recolor a wall.
+    float ambient = mix(1.0, .78 + .21 * max(0.0, dot(N, normalize(vec3(-.9, .24, .55)))),
       uHpSideShade * (1.0 - abs(N.y)));
     return (1.0 - (1.0 - base * ambient) * remaining) * mix(vec3(1.0), reflected, base);
   }

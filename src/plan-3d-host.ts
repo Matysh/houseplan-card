@@ -1,5 +1,5 @@
 import { plan3dCamera } from './plan-3d-camera';
-import { Plan3dWorld, type Plan3dOutline, type Plan3dWorldInput } from './plan-3d-world';
+import { Plan3dWorld, type Plan3dContactShadow, type Plan3dOutline, type Plan3dWorldInput } from './plan-3d-world';
 import { Plan3dViewport, type Plan3dFrame } from './plan-3d-viewport';
 import type { Plan3dMarker } from './plan-3d-markers';
 import { Plan3dLightMotion } from './plan-3d-light-motion';
@@ -13,6 +13,7 @@ export interface Plan3dPresentation {
   sectionHeight: number;
   lightScope?: string;
   animateLights?: boolean;
+  labelShadows?: readonly Plan3dContactShadow[];
 }
 
 /** Joins the 3D camera to the viewport already used by House Plan gestures.
@@ -20,9 +21,10 @@ export interface Plan3dPresentation {
 export class Plan3dHost {
   private readonly world: Plan3dWorld;
   private readonly viewport: Plan3dViewport;
-  private readonly observer: MutationObserver;
   private presentation: Plan3dPresentation | undefined;
+  private crop: ViewRect | undefined;
   private markers: readonly Plan3dMarker[] = [];
+  private markerIds: ReadonlySet<string> = new Set();
   private outlineMembers: ReadonlySet<string> = new Set();
   private readonly light = new Plan3dLightMotion();
   private animate = 0;
@@ -35,54 +37,61 @@ export class Plan3dHost {
     normalOffset: number, private readonly onFailure: () => void,
     onPaint: (markers: ReadonlySet<string>, outlines: ReadonlySet<string>) => void) {
     const document = canvas.ownerDocument;
-    const window = document.defaultView;
-    if (!window?.MutationObserver) throw new Error('Plan 3D camera cannot be observed');
     this.world = new Plan3dWorld(document, normalOffset, () => this.draw());
     try {
       this.viewport = new Plan3dViewport(canvas, () => this.fail(), () => {
         if (canvas.hasAttribute('data-hp-plan-3d-ready') || !this.world.loading)
-          onPaint(new Set(this.markers.map(marker => marker.id)), this.outlineMembers);
+          onPaint(this.markerIds, this.outlineMembers);
       }, () => this.draw());
     } catch (error) {
       this.world.dispose();
       throw error;
     }
-    this.observer = new window.MutationObserver(() => this.draw());
-    this.observer.observe(view, { attributes: true, attributeFilter: ['viewBox'] });
   }
 
-  present(presentation: Plan3dPresentation, markers: readonly Plan3dMarker[] = [], outlines: readonly Plan3dOutline[] = []): void {
+  present(presentation: Plan3dPresentation, crop: ViewRect, markers: readonly Plan3dMarker[] = [], outlines: readonly Plan3dOutline[] = []): void {
     if (this.disposed) return;
     try {
       this.light.set(presentation.world.lights, presentation.lightScope ?? '', this.now(), presentation.animateLights === true);
       this.world.present({ ...presentation.world, lights: this.light.frame(this.now()).sources });
       this.world.presentOutlines(outlines, presentation.sectionHeight);
+      this.world.presentContacts(presentation.world.physical.floor, presentation.bounds, markers, presentation.labelShadows ?? []);
       this.outlineMembers = new Set(outlines.filter(outline => outline.outline).flatMap(outline => outline.members));
       this.presentation = presentation;
       this.markers = markers;
-      this.draw();
+      this.markerIds = new Set(markers.map(marker => marker.id));
+      this.crop = crop;
+      this.draw(true);
     } catch {
       this.fail();
     }
   }
 
-  private draw(): void {
-    const presentation = this.presentation;
-    if (this.disposed || !presentation) return;
+  paintCamera(crop: ViewRect): void {
+    const previous = this.crop;
+    if (previous && crop.x === previous.x && crop.y === previous.y && crop.w === previous.w && crop.h === previous.h) return;
+    this.crop = crop;
+    this.draw(true, true);
+  }
+
+  private draw(immediate = false, cameraOnly = false): void {
+    const { presentation, crop } = this;
+    if (this.disposed || !presentation || !crop) return;
     try {
-      const { x, y, width: w, height: h } = this.view.viewBox.baseVal;
-      if (!(w > 0 && h > 0)) return;
+      if (!(crop.w > 0 && crop.h > 0)) return;
       const { bounds, content, preset, sectionHeight } = presentation;
-      const camera = plan3dCamera(preset, bounds, content, sectionHeight, { x, y, w, h });
-      const density = this.viewport.density(w);
-      if (density !== this.markerDensity || this.markers !== this.paintedMarkers) {
+      const camera = plan3dCamera(preset, bounds, content, sectionHeight, crop);
+      const density = this.viewport.density(crop.w);
+      // The gesture moves existing meshes. Reconcile glyph raster density on
+      // the next authored frame instead of touching every marker each tick.
+      if (!cameraOnly && (density !== this.markerDensity || this.markers !== this.paintedMarkers)) {
         this.markerDensity = density;
         this.paintedMarkers = this.markers;
         this.world.presentMarkers(this.markers, density);
       }
-      this.updateLights();
-      this.frame = { scene: this.world.scene, camera };
-      this.viewport.present(this.frame);
+      if (!cameraOnly) this.updateLights();
+      this.frame = { scene: this.world.scene, camera, motion: cameraOnly };
+      this.viewport.present(this.frame, immediate);
     } catch {
       this.fail();
     }
@@ -135,11 +144,11 @@ export class Plan3dHost {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    this.observer.disconnect();
     this.canvas.ownerDocument.defaultView?.cancelAnimationFrame(this.animate);
     this.viewport.dispose();
     this.world.dispose();
     this.presentation = undefined;
+    this.crop = undefined;
     this.markers = [];
     this.paintedMarkers = this.frame = undefined;
   }

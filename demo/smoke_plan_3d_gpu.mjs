@@ -121,7 +121,7 @@ try {
         document.dispatchEvent(new Event('visibilitychange'));
       };
       const present = (intensity, animateLights = true) => host.present({ world: { ...input, lights: [{ ...lamp, id: 'lamp', intensity }] },
-        bounds, content: bounds, preset, sectionHeight: 50, lightScope: 'visibility-test', animateLights });
+        bounds, content: bounds, preset, sectionHeight: 50, lightScope: 'visibility-test', animateLights }, bounds);
       try {
         present(1, false);
         await ticks(6);
@@ -188,6 +188,9 @@ try {
     const backdropPixel = pixel(canvas, 140, 140);
     const stairPixel = pixel(canvas, 65, 65);
     const stairHit = lit.pick(.325, .325);
+    world.present({ ...input, lights: [], stairs, backdrop: { ...backdrop, opacity: 0 } });
+    await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+    const stairWithoutBackdrop = pixel(canvas, 65, 65);
     world.present({ ...input, lights: [], backdrop: { ...backdrop, url: 'data:image/png;base64,AAAA' } });
     const invalidBackdropReady = await world.ready();
     const marker = { id: 'thermometer', center: [50, 45], diameter: 36, height: 20, faces: [{
@@ -199,6 +202,12 @@ try {
     await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
     const markerIcon = pixel(canvas, 150, 145), markerBody = pixel(canvas, 136, 145);
     const markerHit = lit.pick(.75, .725);
+    const fullPixels = canvas.width * canvas.height;
+    lit.drawMs = 100;
+    lit.present({ scene: world.scene, camera, motion: true }, true);
+    const motionPixels = canvas.width * canvas.height, motionHit = lit.pick(.75, .725);
+    lit.present({ scene: world.scene, camera }, true);
+    const settledPixels = canvas.width * canvas.height;
     world.presentMarkers([{ ...marker, faces: [{ ...marker.faces[0], foreground: '#ff0000' }] }], 1);
     await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
     const markerChanged = pixel(canvas, 150, 145);
@@ -217,6 +226,13 @@ try {
       return Array.from({ length: 76 }, (_, i) => [99, 100].some(y => pixel(canvas, 62 + i, y)[0] > 45));
     };
     const solidRim = await paintedRim(false), dashedRim = await paintedRim(true);
+    world.presentOutlines([], 25);
+    world.present({ ...input, paper: '#dddddd', lights: [] });
+    await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+    const unshadowed = [pixel(canvas, 100, 100), pixel(canvas, 132, 100)];
+    world.presentContacts(input.physical.floor, { x: -100, y: -100, w: 200, h: 200 }, [], [[0, 0, 40, 32, .3]]);
+    await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+    const shadowed = [pixel(canvas, 100, 100), pixel(canvas, 132, 100)];
     lit.dispose();
     world.dispose();
 
@@ -225,7 +241,8 @@ try {
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
     return { contexts, pixels, picking, frames, largeRadius, restoredLight, staticSize, backdropReady, backdropPixel,
-      invalidBackdropReady, stairPixel, stairHit, markerIcon, markerBody, markerHit, markerChanged,
+      invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
+      fullPixels, motionPixels, motionHit, settledPixels,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
   });
@@ -238,15 +255,21 @@ try {
   assert.equal(evidence.backdropReady, true);
   assert.deepEqual(evidence.backdropPixel, [18, 52, 254, 255]);
   assert.equal(evidence.invalidBackdropReady, false);
-  assert.deepEqual(evidence.stairPixel, [0, 128, 0, 255]);
+  assert.ok(evidence.stairWithoutBackdrop[1] > 50, 'the pale tread has visible fill');
+  assert.ok(evidence.stairPixel[2] - evidence.stairWithoutBackdrop[2] > 65, 'the stair transmits what is behind its tread');
   assert.equal(evidence.stairHit, 'stair:stairs');
   assert.deepEqual(evidence.markerIcon, [255, 255, 255, 255]);
   assert.deepEqual(evidence.markerBody, [32, 80, 32, 255]);
   assert.equal(evidence.markerHit, 'thermometer');
+  assert.ok(evidence.motionPixels < evidence.fullPixels, 'slow motion reduces raster work, not camera coverage');
+  assert.equal(evidence.motionHit, evidence.markerHit, 'the smaller raster retains native picking');
+  assert.equal(evidence.settledPixels, evidence.fullPixels);
   assert.deepEqual(evidence.markerChanged, [255, 0, 0, 255]);
   assert.deepEqual(evidence.roomColor, [160, 120, 50, 255]);
   assert.deepEqual(evidence.ribbonColor, [255, 255, 0, 255]);
   assert.equal(evidence.ribbonHit, 'switch-1');
+  assert.ok(evidence.unshadowed[0][0] - evidence.shadowed[0][0] > 25, 'the contact shadow softens the floor under the anchor');
+  assert.deepEqual(evidence.shadowed[1], evidence.unshadowed[1], 'the contact shadow stays local');
   assert.ok(evidence.solidRim.every(Boolean), 'a physical device draws a continuous rim');
   const gaps = evidence.dashedRim.filter((ink, i, samples) => !ink && samples[i - 1]).length;
   assert.ok(gaps >= 5 && evidence.dashedRim.filter(Boolean).length >= 25, 'a virtual device paints distinct dashes and gaps');

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1566,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Fix camera presentation and finish visual parity for the unreleased WebGL renderer introduced in #1514.",
+  "summary": {
+    "ru": "Синхронизация камеры 3D и деталей объёмного вида с эталонным видом 2.5D.",
+    "en": "Synchronize the 3D camera with the DOM and restore the reference appearance of 2.5D."
+  }
+}

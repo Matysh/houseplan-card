@@ -55,6 +55,7 @@ interface LiveViewportHost {
   _zoom: number;
   _liveViewportTarget?: () => LiveViewBox | undefined;
   _liveViewportLimits?: () => ViewportExposureLimits;
+  _paintPlan3dViewport?: (view: LiveViewBox) => void;
   readonly _renderProjection?: 'iso' | 'flat';
   readonly _zoomBadge?: { percent: number; hidden: boolean };
   readonly _modeSceneClip?: string | null;
@@ -447,6 +448,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
     state.raf = 0; state.pending = null;
     paintMotion(host, state, next, force);
+    host._paintPlan3dViewport?.(next.view);
     host._editorRuntime?.wallDimensions?.paintCamera(next.view);
     return;
   }
@@ -459,6 +461,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     const root = host.renderRoot as ParentNode | undefined;
     if (!next || !root) return;
     paintMotion(host, state, next);
+    host._paintPlan3dViewport?.(next.view);
     host._editorRuntime?.wallDimensions?.paintCamera(next.view);
   });
 }
