@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25448,
+  "revision": 25449,
   "nextTicket": 710,
   "nextFence": 710,
   "tasks": {
@@ -6410,7 +6410,18 @@
         "src/plan-3d-markers.ts",
         "src/plan-3d-world.ts",
         "src/styles/devices.styles.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795650923569,
+        "entry": 1,
+        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
+        "eventId": "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:3:return:return:1572"
+      }
     }
   },
   "ownerDecisions": {},
@@ -7089,18 +7100,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1572,
-    "worker": "finish",
-    "token": "709:finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:1:admit",
-    "fence": 709,
-    "materialSha": "95661464015fb2db97d1f4733e032da3752a2f29",
-    "expectedBase": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-    "phase": "testing",
-    "admittedAt": 1795650306522,
-    "expiresAt": 1795651220605,
-    "patchId": "5e4b6cf774e3cbdec54698ff1077a45c58a50373"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7182,6 +7182,10 @@
       "digest": "041a0438e667548fafa849212946336e41547a6f950b3a8392c50bdb72009f2c",
       "issue": 1572
     },
+    "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:3:return": {
+      "digest": "c3fe1ad8943eb24354a771986a5ea1d080bae2b92070de5cf137be25431da9b7",
+      "issue": 1572
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7250,6 +7254,26 @@
         "track": "show",
         "layer": "product",
         "materialSha": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d"
+      }
+    },
+    "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:3:return:return:1572": {
+      "digest": "c3fe1ad8943eb24354a771986a5ea1d080bae2b92070de5cf137be25431da9b7",
+      "issue": 1572,
+      "message": {
+        "kind": "return",
+        "issue": 1572,
+        "at": 1795650923569,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795650923569,
+          "entry": 1,
+          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
+          "eventId": "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:3:return:return:1572"
+        }
       }
     }
   },
