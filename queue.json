@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24882,
+  "revision": 24883,
   "nextTicket": 700,
   "nextFence": 700,
   "tasks": {
@@ -6263,10 +6263,7 @@
         "materialSha": "b9e82e034013cf7ad8cfae72ad36600169ec0649",
         "expectedBase": "863b706d1a60db865e8ac55538b247576dcf586e",
         "patchId": "2d2edf32399eff10817a9865935b3278f9678827"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795623934806,
-      "automationDetail": "GitHub GET failed (504)"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6925,7 +6922,7 @@
     "expectedBase": "863b706d1a60db865e8ac55538b247576dcf586e",
     "phase": "review",
     "admittedAt": 1795623736394,
-    "expiresAt": 1795627422630,
+    "expiresAt": 1795627553785,
     "patchId": "2d2edf32399eff10817a9865935b3278f9678827",
     "reviewRequest": "review:1566:3:2d2edf32399eff10817a9865935b3278f9678827:863b706d1a60db865e8ac55538b247576dcf586e"
   },
@@ -7240,6 +7237,10 @@
     },
     "finish:8b4f0d0e-3cba-4cd3-89ea-35497486da8a:finish:5:automation-pending": {
       "digest": "1e7f9b4190a684dae7b674f8da5d8f7b2e45707605cc3e10160a8de0f20a423f",
+      "issue": 1566
+    },
+    "github:45653400753:1:tick:0:heartbeat": {
+      "digest": "9e9fdd40418cf9c5a2868dde10f0aad5faf593531011f7de56a90211e3efea9e",
       "issue": 1566
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
