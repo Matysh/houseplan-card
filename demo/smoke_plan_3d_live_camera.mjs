@@ -8,11 +8,7 @@ const twoFrames = page => page.evaluate(() => new Promise(resolve =>
 const start = async mobile => {
   const size = mobile ? { width: 520, height: 820 } : { width: 1280, height: 900 };
   const env = await startIsoPaintScene({ ...size, browserArgs: ['--enable-unsafe-swiftshader'],
-    reducedMotion: 'no-preference',
-    createPage: mobile ? async (_context, browser) => (await browser.newContext({
-      viewport: size, hasTouch: true, isMobile: true, deviceScaleFactor: 1,
-      reducedMotion: 'no-preference',
-    })).newPage() : undefined,
+    reducedMotion: 'no-preference', hasTouch: mobile, isMobile: mobile,
   });
   await env.page.locator('houseplan-card canvas[data-hp-plan-3d-ready]').waitFor();
   return env;

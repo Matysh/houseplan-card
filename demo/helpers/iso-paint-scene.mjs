@@ -4,7 +4,7 @@ import { currentGraphFixture } from './graph-fixture.mjs';
 import { join } from 'node:path';
 
 export async function startIsoPaintScene({width=1480,height=1080,referenceRoot,browserArgs=[],createPage,
-  dpr=1, launchOptions, configureFixture, initScript, reducedMotion='reduce'}={}) {
+  dpr=1, launchOptions, configureFixture, initScript, reducedMotion='reduce', hasTouch=false, isMobile=false}={}) {
   if (!launchOptions) requirePinnedBrowser('#1470 paired paint/raster evidence');
   const fixture=makeIsoPaintFixture();
   configureFixture?.(fixture);
@@ -13,7 +13,7 @@ export async function startIsoPaintScene({width=1480,height=1080,referenceRoot,b
     await context.addInitScript(initScript);
     return createPage ? createPage(context, browser) : context.newPage();
   } : createPage;
-  const args=[{width,height},dpr,browserArgs,{reducedMotion,createPage:openPage,launchOptions}];
+  const args=[{width,height},dpr,browserArgs,{reducedMotion,createPage:openPage,launchOptions,hasTouch,isMobile}];
   if(referenceRoot)args.push(join(referenceRoot,'demo/srv'),referenceRoot);
   const env=await launch(...args);
   try {
