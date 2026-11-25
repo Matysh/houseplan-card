@@ -25,7 +25,7 @@ export class Plan3dHost {
     const document = canvas.ownerDocument;
     const window = document.defaultView;
     if (!window?.MutationObserver) throw new Error('Plan 3D camera cannot be observed');
-    this.world = new Plan3dWorld(document, normalOffset);
+    this.world = new Plan3dWorld(document, normalOffset, () => this.draw());
     try {
       this.viewport = new Plan3dViewport(canvas, () => this.fail(), onPaint);
     } catch (error) {
@@ -67,6 +67,7 @@ export class Plan3dHost {
     const world = new Plan3dWorld(this.canvas.ownerDocument, 0);
     try {
       world.present(presentation.world);
+      if (!await world.ready() || this.disposed || signal.aborted) return null;
       const { bounds, content, preset, sectionHeight } = presentation;
       const camera = plan3dCamera(preset, bounds, content, sectionHeight, view);
       const blob = await this.viewport.snapshot({ scene: world.scene, camera }, { width: size[0], height: size[1] });

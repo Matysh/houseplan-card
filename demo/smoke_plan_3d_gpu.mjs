@@ -99,6 +99,24 @@ try {
     const bitmap = await createImageBitmap(snapshot);
     const staticSize = [bitmap.width, bitmap.height];
     bitmap.close();
+    const image = document.createElement('canvas');
+    image.width = image.height = 16;
+    const ctx = image.getContext('2d');
+    ctx.fillStyle = '#1234fe';
+    ctx.fillRect(0, 0, 16, 16);
+    const backdrop = { url: image.toDataURL(), x: -75, y: -75, w: 150, h: 150, angle: 0, opacity: 1 };
+    const stairs = [{ id: 'stairs', color: '#008000', volume: {
+      footprint: [[-50, -50], [-15, -50], [-15, -15], [-50, -15]], height: 20, steps: 1,
+      faces: [{ name: 'tread', cap: true, vertices: [[-50, -50, 20], [-15, -50, 20], [-15, -15, 20], [-50, -15, 20]] }],
+    } }];
+    world.present({ ...input, lights: [], stairs, backdrop });
+    const backdropReady = await world.ready();
+    await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+    const backdropPixel = pixel(canvas, 140, 140);
+    const stairPixel = pixel(canvas, 65, 65);
+    const stairHit = lit.pick(.325, .325);
+    world.present({ ...input, lights: [], backdrop: { ...backdrop, url: 'data:image/png;base64,AAAA' } });
+    const invalidBackdropReady = await world.ready();
     lit.dispose();
     world.dispose();
 
@@ -106,7 +124,8 @@ try {
     const deadline = performance.now() + 2000;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
-    return { contexts, pixels, picking, frames, staticSize, failures: cards.map(card => card.failures()) };
+    return { contexts, pixels, picking, frames, staticSize, backdropReady, backdropPixel,
+      invalidBackdropReady, stairPixel, stairHit, failures: cards.map(card => card.failures()) };
   });
   assert.deepEqual(errors, []);
   assert.equal(evidence.contexts, 1);
@@ -114,13 +133,18 @@ try {
   assert.deepEqual(evidence.pixels, [[255, 0, 0, 255], ...Array.from({ length: 5 }, () => [0, 255, 0, 255])]);
   assert.deepEqual(evidence.failures, [1, 1, 1, 1, 1, 1]);
   assert.deepEqual(evidence.staticSize, [200, 200]);
+  assert.equal(evidence.backdropReady, true);
+  assert.deepEqual(evidence.backdropPixel, [18, 52, 254, 255]);
+  assert.equal(evidence.invalidBackdropReady, false);
+  assert.deepEqual(evidence.stairPixel, [0, 128, 0, 255]);
+  assert.equal(evidence.stairHit, 'stair:stairs');
   const [unlit, red, blue] = evidence.frames;
   assert.deepEqual(red[1], unlit[1], 'the optical mask keeps the adjacent room dark');
   assert.ok(red[2][0] > 100, 'a short radius still reaches the floor below a high lamp');
   assert.deepEqual(red[3], unlit[3], 'the saved radius bounds the floor footprint');
   assert.ok(red[4][1] > 100, 'the LED lights the floor along its path');
   assert.ok(blue[0][2] > 160 && blue[0][0] === unlit[0][0], 'changing the state recolors the lit area');
-  console.log('OK: shared WebGL2 output, covered device picking, context loss, and world-space lamp/LED light');
+  console.log('OK: shared WebGL2 output, covered picking, stairs, backdrop, context loss, and world-space lamp/LED light');
 } finally {
   await browser?.close();
   await bundle.close();

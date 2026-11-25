@@ -7,29 +7,29 @@ import { isoCameraDepth, isoDisplayWallHeight, projectPlanPoint, unprojectIsoAff
 import type { FurnitureMesh, FurnitureMeshPart } from './iso-lab-furniture';
 
 type Vertex = readonly [number,number,number];
+export interface StairVolumeFace { name: string; vertices: readonly Vertex[]; cap: boolean; }
+export interface PhysicalStairVolume {
+  faces: readonly StairVolumeFace[];
+  footprint: PlanPoint[];
+  height: number;
+  steps: number;
+}
 export interface StairVolume {
   mesh: FurnitureMesh; footprint: PlanPoint[]; height: number; hit: string; steps: number;
 }
-const cache=new WeakMap<object,Map<IsoCamera,StairVolume>>();
+const cache=new WeakMap<PhysicalStairVolume,Map<IsoCamera,StairVolume>>();
+const physicalCache = new WeakMap<object, PhysicalStairVolume>();
 const path=(points:readonly PlanPoint[])=>`M ${points.map(p=>p.map(v=>+v.toFixed(5)).join(' ')).join(' L ')} Z`;
 
-export function stairVolume(stair:Stair,cellCm:number,camera:IsoCamera):StairVolume|null {
+export function physicalStairVolume(stair: Stair, cellCm: number): PhysicalStairVolume | null {
   if(stair.kind==='straight'&&stair.direction!=='forward')return null;
   const geometry=cachedStairRenderGeometry(stair,cellCm);
-  const previous=cache.get(geometry)?.get(camera);if(previous)return previous;
-  const height=gridVisualUnits(isoDisplayWallHeight(),cellCm),parts:FurnitureMeshPart[]=[];
+  const previous = physicalCache.get(geometry);
+  if (previous) return previous;
+  const height=gridVisualUnits(isoDisplayWallHeight(),cellCm),faces:StairVolumeFace[]=[];
   const angle=stair.angle*Math.PI/180,c=Math.cos(angle),s=Math.sin(angle);
   const world=(x:number,y:number,z:number):Vertex=>[stair.x*NORM_W+x*c-y*s,stair.y*NORM_W+x*s+y*c,z];
-  const add=(name:string,vertices:readonly Vertex[],cap=false)=>{
-    const screen=vertices.map(([x,y,z])=>projectPlanPoint([x,y],z,camera));
-    const area=screen.reduce((sum,p,i)=>{const q=screen[(i+1)%screen.length];return sum+p[0]*q[1]-q[0]*p[1];},0);
-    if(area<=1e-8)return;
-    const ink=path(screen.map(p=>unprojectIsoAffine(p,camera)));
-    const center = (axis: 0 | 1) => vertices.reduce((sum, p) => sum + p[axis], 0) / vertices.length;
-    parts.push({name,top:cap?ink:'',side:cap?'':ink,
-      depth:vertices.reduce((sum,[x,y,z])=>sum+isoCameraDepth([x,y],z,camera),0)/vertices.length,
-      lightPoint: [center(0), center(1)]});
-  };
+  const add = (name: string, vertices: readonly Vertex[], cap = false) => faces.push({ name, vertices, cap });
   let steps:number;
   if(stair.kind==='straight'){
     steps=geometry.treads.length+1;
@@ -63,13 +63,33 @@ export function stairVolume(stair:Stair,cellCm:number,camera:IsoCamera):StairVol
     }
     prism('centre-post',Array.from({length:32},(_,i)=>[Math.cos(i*Math.PI/16)*radius*.18,Math.sin(i*Math.PI/16)*radius*.18]),0,height);
   }
+  const result = { faces, height, steps, footprint: geometry.outline.map(p => [p[0], p[1]] as PlanPoint) };
+  physicalCache.set(geometry, result);
+  return result;
+}
+
+export function stairVolume(stair:Stair,cellCm:number,camera:IsoCamera):StairVolume|null {
+  const physical = physicalStairVolume(stair, cellCm);
+  if (!physical) return null;
+  const previous = cache.get(physical)?.get(camera);
+  if (previous) return previous;
+  const { height, footprint, steps } = physical, parts: FurnitureMeshPart[] = [];
+  for (const { name, vertices, cap } of physical.faces) {
+    const screen=vertices.map(([x,y,z])=>projectPlanPoint([x,y],z,camera));
+    const area=screen.reduce((sum,p,i)=>{const q=screen[(i+1)%screen.length];return sum+p[0]*q[1]-q[0]*p[1];},0);
+    if(area<=1e-8)continue;
+    const ink=path(screen.map(p=>unprojectIsoAffine(p,camera)));
+    const center = (axis: 0 | 1) => vertices.reduce((sum, p) => sum + p[axis], 0) / vertices.length;
+    parts.push({name,top:cap?ink:'',side:cap?'':ink,
+      depth:vertices.reduce((sum,[x,y,z])=>sum+isoCameraDepth([x,y],z,camera),0)/vertices.length,
+      lightPoint: [center(0), center(1)]});
+  }
   parts.sort((a,b)=>a.depth-b.depth);
-  const footprint=geometry.outline.map(p=>[p[0],p[1]] as PlanPoint);
   const floor=camera.perspective ? footprint.map(p=>unprojectIsoAffine(projectPlanPoint(p,0,camera),camera)) : footprint;
   const points=[...floor,...footprint.map(p=>unprojectIsoAffine(projectPlanPoint(p,height,camera),camera))];
   const left=Math.min(...points.map(p=>p[0]))-1,top=Math.min(...points.map(p=>p[1]))-1;
   const lightBox=[left,top,Math.max(...points.map(p=>p[0]))-left+1,Math.max(...points.map(p=>p[1]))-top+1] as const;
   const result={mesh:{parts,shadow:path(footprint),lightBox},footprint,height,steps,hit:parts.map(p=>p.top+' '+p.side).join(' ')};
-  let cameras=cache.get(geometry);if(!cameras){cameras=new Map();cache.set(geometry,cameras);}cameras.set(camera,result);
+  let cameras=cache.get(physical);if(!cameras){cameras=new Map();cache.set(physical,cameras);}cameras.set(camera,result);
   return result;
 }

@@ -7,7 +7,7 @@ import {
 } from './stairs';
 import { stairTargetState } from './stairs-editor-model';
 import type { SpaceModel } from './types';
-import { stairVolume, type StairVolume } from './stairs-volume';
+import { physicalStairVolume, stairVolume, type StairVolume } from './stairs-volume';
 import type { IsoCamera } from './iso-projection';
 import { renderIsoLabFurniture } from './iso-lab-furniture-render';
 import { gridVisualScale } from './grid-scale';
@@ -108,6 +108,14 @@ export class StairViewRuntime {
 
   public volumeItems(camera:IsoCamera):Map<string,StairVolume> {
     return new Map(this.stairs.flatMap(stair=>{const volume=stairVolume(stair,this.owner._cellCm,camera);return volume?[[stair.id,volume] as const]:[];}));
+  }
+
+  public physicalItems() {
+    return this.stairs.flatMap(stair => {
+      const volume = physicalStairVolume(stair, this.owner._cellCm);
+      const style = stairVisualStyle(stair, this.owner._decorStyle);
+      return volume ? [{ id: stair.id, volume, color: style.color }] : [];
+    });
   }
 
   public renderLayer(volumes?:ReadonlyMap<string,StairVolume>,part:'flat'|'volume'='flat',

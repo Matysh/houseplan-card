@@ -616,11 +616,12 @@ export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boo
 export function renderLedLayerFor(
   host: LedCardHost, space: SpaceModel, spaceGlow: boolean, view: { w: number },
   paint: LedStripeInput['paint'] = 'all',
+  flat = false,
 ): TemplateResult {
   const frame = ledFrameFor(host, space, spaceGlow);
   const width = host._renderPixelsPerUnit ? host._renderPixelsPerUnit(view) * view.w : host._stageEl?.clientWidth;
   // ТЗ §7: 2.5D only in View; editors keep Flat. D takes the shared tile scale.
-  const iso = host._renderProjection === 'iso' && host._mode === 'view';
+  const iso = !flat && host._renderProjection === 'iso' && host._mode === 'view';
   const d = iso ? frame.d * ISO_ICON_SCALE : frame.d;
   const theme = deviceThemeClass(host._renderPlanHass) === 'theme-dark' ? 'dark' : 'light';
   const lightFloor = !!host._isoLightFloors?.size;

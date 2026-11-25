@@ -1,4 +1,5 @@
-import { Color, DoubleSide, Group, Mesh, MeshBasicMaterial, Scene, type BufferGeometry } from 'three';
+import { Color, DoubleSide, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Scene, SRGBColorSpace, Texture,
+  type BufferGeometry } from 'three';
 import { gridVisualUnits } from './grid-scale';
 import { isoOpeningMaterialVars, isoWallMaterial } from './iso-materials';
 import { FURNITURE_HEIGHT_SCALE, furnitureParts, furniturePlanPoint, furnitureVolumeFaces } from './iso-lab-furniture';
@@ -8,6 +9,7 @@ import type { IsoOpeningPanel, IsoOpeningSurface } from './iso-openings';
 import type { IsoRenderScene } from './iso-scene-geometry';
 import type { DecorFurniture } from './editors/decor/types';
 import type { SpaceDisplay } from './logic';
+import type { PhysicalStairVolume } from './stairs-volume';
 import { Plan3dLightField, type Plan3dLight } from './plan-3d-light-field';
 import { planFaceMesh, planPrismMesh, type Plan3dVertex } from './plan-3d-mesh';
 
@@ -31,13 +33,22 @@ export interface Plan3dRoom {
   opacity: number;
 }
 
+export interface Plan3dImage {
+  url: string;
+  x: number; y: number; w: number; h: number;
+  angle: number;
+  opacity: number;
+}
+
 export interface Plan3dWorldInput {
   physical: IsoRenderScene['physical'];
   display: SpaceDisplay;
   paper: string;
+  backdrop?: Plan3dImage;
   panels: readonly IsoOpeningPanel[];
   rooms: readonly Plan3dRoom[];
   furniture: readonly Plan3dFurniture[];
+  stairs?: readonly { id: string; volume: PhysicalStairVolume; color: string }[];
   cellCm: number;
   visualScale: number;
   decorWidth: number;
@@ -88,16 +99,24 @@ export class Plan3dWorld {
   private readonly structure = new Group();
   private readonly openings = new Group();
   private readonly furniture = new Group();
+  private readonly stairs = new Group();
   private readonly rooms = new Group();
   private readonly roomMeshes = new Map<string, { geometry: unknown; mesh: Mesh<BufferGeometry, MeshBasicMaterial> }>();
+  private readonly backdrop = new Group();
+  private backdropKey: string | undefined;
+  private backdropTexture: Texture | undefined;
+  private backdropReady: Promise<void> | undefined;
+  private backdropFailed = false;
+  private imageGeneration = 0;
   private readonly light: Plan3dLightField;
   private structureKey: readonly unknown[] = [];
   private openingKey: readonly unknown[] = [];
   private furnitureKey: readonly unknown[] = [];
+  private stairKey: readonly unknown[] = [];
 
-  constructor(document: Document, normalOffset: number) {
+  constructor(private readonly document: Document, normalOffset: number, private readonly changed?: () => void) {
     this.light = new Plan3dLightField(document, normalOffset);
-    this.scene.add(this.structure, this.openings, this.furniture, this.rooms);
+    this.scene.add(this.structure, this.backdrop, this.openings, this.furniture, this.stairs, this.rooms);
   }
 
   private material(paint: Paint): MeshBasicMaterial {
@@ -158,6 +177,22 @@ export class Plan3dWorld {
     });
   }
 
+  private updateStairs(stairs: NonNullable<Plan3dWorldInput['stairs']>): void {
+    const key = stairs.flatMap(({ id, volume, color }) => [id, volume, color]);
+    if (same(key, this.stairKey)) return;
+    const meshes = stairs.flatMap(({ id, volume, color }) => {
+      const top = new Color(color), side = top.clone().multiplyScalar(.83);
+      return [true, false].map(cap => {
+        const faces = volume.faces.filter(face => face.cap === cap).map(face => [face.vertices]);
+        const mesh = this.mesh(planFaceMesh(faces), [{ color: colorString(cap ? top : side), opacity: 1, lit: true }]);
+        mesh.userData.plan3dPick = { id: `stair:${id}` };
+        return mesh;
+      });
+    });
+    this.replace(this.stairs, meshes);
+    this.stairKey = key;
+  }
+
   private updateRooms(rooms: readonly Plan3dRoom[]): void {
     const live = new Set<string>();
     for (const { id, geometry, color, opacity } of rooms) {
@@ -173,8 +208,9 @@ export class Plan3dWorld {
       const faces = polygons(geometry).map(polygon =>
         polygon.map(ring => [...ring].reverse().map(([x, y]): Plan3dVertex => [x, y, 0])));
       const material = this.light.material({ color, opacity, visible: opacity > 0, transparent: true, depthWrite: false,
-        polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
       const mesh = new Mesh(planFaceMesh(faces), material);
+      mesh.renderOrder = 2;
       mesh.userData.plan3dPick = { occludes: false };
       this.roomMeshes.set(id, { geometry, mesh });
       this.rooms.add(mesh);
@@ -192,10 +228,55 @@ export class Plan3dWorld {
     mesh.material.dispose();
   }
 
+  private updateBackdrop(input: Plan3dImage | undefined): void {
+    const key = input && JSON.stringify([input.url, input.x, input.y, input.w, input.h, input.angle, input.opacity]);
+    if (this.backdropKey === key) return;
+    this.backdropKey = key;
+    const generation = ++this.imageGeneration;
+    this.replace(this.backdrop, []);
+    this.backdropTexture?.dispose();
+    this.backdropTexture = this.backdropReady = undefined;
+    this.backdropFailed = false;
+    if (!input || !(input.w > 0 && input.h > 0 && input.opacity > 0)) return;
+    if (!input.url) {
+      this.backdropFailed = true;
+      return;
+    }
+    const image = this.document.createElement('img');
+    image.src = input.url;
+    this.backdropReady = image.decode().then(() => {
+      if (this.imageGeneration !== generation) return;
+      const texture = new Texture(image);
+      texture.colorSpace = SRGBColorSpace;
+      texture.needsUpdate = true;
+      const geometry = new PlaneGeometry(input.w, input.h);
+      geometry.rotateX(-Math.PI / 2);
+      geometry.rotateY(-input.angle * Math.PI / 180);
+      geometry.translate(input.x + input.w / 2, 0, input.y + input.h / 2);
+      const material = this.light.material({ map: texture, opacity: input.opacity, transparent: true, depthWrite: false,
+        polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+      const mesh = new Mesh(geometry, material);
+      mesh.renderOrder = 1;
+      mesh.userData.plan3dPick = { occludes: false };
+      this.backdropTexture = texture;
+      this.replace(this.backdrop, [mesh]);
+      this.changed?.();
+    }, () => {
+      if (this.imageGeneration === generation) this.backdropFailed = true;
+    });
+  }
+
+  async ready(): Promise<boolean> {
+    await this.backdropReady;
+    return !this.backdropFailed;
+  }
+
   present(input: Plan3dWorldInput): void {
     const { physical, display, cellCm, panels, furniture, paper, visualScale, decorWidth, decorHeight } = input;
     this.light.set(input.lights);
+    this.updateBackdrop(input.backdrop);
     this.updateRooms(input.rooms);
+    this.updateStairs(input.stairs ?? []);
     const style = isoWallMaterial(display.color, display.wallFill.c, display.opacity);
     const top: Paint = { color: display.transparentWalls3d ? display.color : style.topHi,
       opacity: display.transparentWalls3d ? display.opacity : 1 };
@@ -240,7 +321,9 @@ export class Plan3dWorld {
     this.replace(this.structure, []);
     this.replace(this.openings, []);
     this.replace(this.furniture, []);
+    this.replace(this.stairs, []);
     this.updateRooms([]);
+    this.updateBackdrop(undefined);
     this.light.dispose();
   }
 }

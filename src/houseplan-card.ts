@@ -349,7 +349,7 @@ import {renderIsoPerspectiveFloor, renderIsoPerspectiveSnapshot} from './iso-per
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
 import type { IsoWallLightSource } from './iso-wall-light';
 import { IsoLightTransition } from './iso-light-transition';
-import {acceptedViewFrame, canonicalPhysicalCamera, hasMeasuredViewSize, physicalViewCamera, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
+import {acceptedViewFrame, canonicalPhysicalCamera, hasMeasuredViewSize, physicalViewCamera, presentedView, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
 import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume, tvCabinetSurfaceCm } from './iso-lab-furniture';
 import { tvCabinet, tvOnCabinet } from './tv-mount';
 import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
@@ -811,6 +811,8 @@ export class HouseplanCard extends LitElement {
   private _isoSceneRuntime: typeof import('./iso-scene-render') | null = null;
   private _plan3dHost: import('./plan-3d-host').Plan3dHost | undefined;
   private _plan3dPresentation: import('./plan-3d-host').Plan3dPresentation | undefined;
+  private _plan3dFailure: { key: string; space: string } | undefined;
+  private _flatExportScene: ((view: FrameRect, rotation: PlanRotation) => TemplateResult) | undefined;
 
   private _disposePlan3dHost(): void {
     this._plan3dHost?.dispose();
@@ -827,7 +829,9 @@ export class HouseplanCard extends LitElement {
       return;
     }
     const fail = () => {
-      this._latchIsoFallback(this._renderIsoScene?.key ?? this._isoInvalidKey(), '3d-render');
+      const key = this._renderIsoScene?.key ?? this._isoInvalidKey();
+      if (this._space) this._plan3dFailure = { key, space: this._space };
+      this._latchIsoFallback(key, '3d-render');
       this._isoProjectionSnapshot = null;
       this._disposePlan3dHost();
       if (this.isConnected) this.requestUpdate();
@@ -846,6 +850,15 @@ export class HouseplanCard extends LitElement {
       fail();
     }
   }
+
+  private readonly _retryPlan3d = (): void => {
+    const failed = this._plan3dFailure;
+    if (!failed || failed.space !== this._space) return;
+    this._isoFallback.delete(failed.key);
+    this._plan3dFailure = undefined;
+    this._isoProjectionSnapshot = null;
+    this.requestUpdate();
+  };
 
   private readonly _isoSceneRuntimeLoader = new EditorRuntimeLoader<
     typeof import('./iso-scene-render')
@@ -13244,14 +13257,25 @@ export class HouseplanCard extends LitElement {
       hass: this._presentation,
       backdropUrl: space.bg ? this._display(space.bg.href) : '',
       decorAssets,
-      svgSource: () => {
+      svgFlatFrom3d: !!this._plan3dPresentation,
+      svgSource: async () => {
         const stage = this._stageEl;
         if (!stage || this._mode !== 'view') throw new Error('svg.view_required');
         if (this._booting || this._bootFading || this._modeTransitionBusy
           || this._continuity.overlayBlocksInteraction || stage.classList.contains('hpiso-pending')) throw new Error('svg.not_ready');
-        const config = this._serverCfg;
-        return { stage, isCurrent: () => this.isConnected && this._canEdit && this._norm
-          && this._mode === 'view' && this._space === space.id && this._serverCfg === config && stage.isConnected };
+        const config = this._serverCfg, authority = this.planHost.authorityKey;
+        const isCurrent = () => this.isConnected && this._canEdit && this._norm
+          && this._mode === 'view' && this._space === space.id && this._serverCfg === config && stage.isConnected
+          && this.planHost.authorityKey === authority;
+        if (!this._plan3dPresentation) return { stage, isCurrent };
+        const draw = this._flatExportScene, frame = this._viewFrame;
+        if (!draw || !frame?.plane) throw Error('svg.not_ready');
+        const rotation = flatPlanRotation(this._rotation);
+        const base = this._baseVb('flat', null);
+        const display = this._displayBase(base);
+        const flatFrame: ProjectionViewFrame = { ...frame, base, display, plane: null, rotation };
+        const flat = canonicalPhysicalCamera(physicalViewCamera(this._cameraView(this._baseVb()), this._zoom, frame), flatFrame);
+        return runtime.prepareFlatStage(stage, draw(presentedView(flat.viewBox, flat.zoom, flatFrame), rotation), isCurrent);
       },
       sharedWallGeometry,
       resolveInnerContour: (roomId) => this._innerRoomContour(
@@ -13913,6 +13937,7 @@ export class HouseplanCard extends LitElement {
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     this._plan3dPresentation = undefined;
     this._startup3dSource = undefined;
+    this._flatExportScene = undefined;
     this._floorHolding = false; this._floorPassive = false;
     this._startupSource = undefined;
     this._observeStartupFloor();
@@ -14201,7 +14226,10 @@ export class HouseplanCard extends LitElement {
         world: {
           physical: isoScene.physical, display: disp, cellCm: this._cellCm, visualScale: scale,
           paper: space.bg ? this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', '#111') : '#fff',
-          panels: isoFrame.panels, rooms: rooms3d(roomFills), furniture: furniture3d, decorWidth: NORM_W, decorHeight: this._decorH,
+          backdrop: space.bg ? { url: this._display(space.bg.href), x: space.bg.x, y: space.bg.y,
+            w: space.bg.w, h: space.bg.h, angle: space.bg.angle ?? 0, opacity: space.bg.opacity ?? 1 } : undefined,
+          panels: isoFrame.panels, rooms: rooms3d(roomFills), furniture: furniture3d, stairs: this._stairsView.physicalItems(),
+          decorWidth: NORM_W, decorHeight: this._decorH,
           lights: [...isoWallLights.map(source => ({
             ...source, points: source.points.map(([x, y]) => [x, y]),
             height: (source.key.startsWith('led:') ? 2 : 250) / this._cellCm * this._gridPitch,
@@ -14273,7 +14301,7 @@ export class HouseplanCard extends LitElement {
     const wallHatch = svg`<defs><pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
         width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)"><path d="M0 0 L0 ${hatchStep}" stroke="${disp.color || '#607d8b'}" stroke-width="${stripe}"></path></pattern></defs>`;
     const sceneSpace = space;
-    const renderRooms = (roomMode: HouseplanMode, canonical = true, fills = roomFills): TemplateResult => {
+    const renderRooms = (roomMode: HouseplanMode, canonical = true, fills = roomFills, flat = !iso): TemplateResult => {
       const planRoom = roomMode === 'plan';
 
               // audit L1: hoisted out of the per-room map — these depend on the
@@ -14312,7 +14340,7 @@ export class HouseplanCard extends LitElement {
                 const fillC = fills.byRoom.get(r) || null;
                 if (fillC) {
                   cls += ' filled';
-                  st.push(`--room-fill:${iso ? architecturalFloorTone(fillC.color, disp.wallFill.c, effFill === 'custom') : fillC.color}`, `--room-fill-op:${fillC.opacity}`);
+                  st.push(`--room-fill:${flat ? fillC.color : architecturalFloorTone(fillC.color, disp.wallFill.c, effFill === 'custom')}`, `--room-fill-op:${fillC.opacity}`);
                 } else st.push('--room-fill:transparent', '--room-fill-op:0');
                 style = st.join(';');
               }
@@ -14535,6 +14563,44 @@ export class HouseplanCard extends LitElement {
             ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
             <g data-hp-live-editor></g>` }
     ];
+    const radarFrames = [...this._radarLive.frames.values()].filter((frame) => {
+      const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);
+      return !!marker && radarMarkerLiveInSpace(marker, this._space);
+    });
+    const perspectiveSize = this._modeSceneSize ?? this._lastValidStageSize ?? [sceneView.w, sceneView.h] as const;
+    if (this._plan3dPresentation) {
+      this._flatExportScene = (flatView, rotation) => {
+        const keep = (id: string, render: ModeSceneLayer['render']): ModeSceneLayer => ({ id, inputs: [], render });
+        const layers: ModeSceneLayer[] = [
+          ...modeLayers.filter(layer => layer.id === 'paper'),
+          keep('backdrop', () => space.bg && backdropHref && backdropPaint
+            ? svg`<image class="hp-backdrop" data-hp="backdrop" href=${backdropHref}
+                x=${backdropPaint.x} y=${backdropPaint.y} width=${backdropPaint.w} height=${backdropPaint.h}
+                opacity=${space.bg.opacity ?? 1} transform=${backdropPaint.transform ?? nothing} preserveAspectRatio="none"></image>`
+            : nothing),
+          keep('rooms', () => renderRooms('view', true, roomFills, true)),
+          keep('decor', () => disp.hideDecor ? nothing : this._renderDecorLayer(undefined, flatView)),
+          keep('stairs', () => this._stairsView.renderLayer()),
+          ...modeLayers.filter(layer => layer.id === 'zero-view'),
+          keep('walls', () => this._renderWallBodies(disp, true)),
+          keep('openings', () => disp.hideOpenings ? nothing : this._renderOpenings(disp, undefined, false)),
+          keep('led', () => this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, flatView, 'all', true)),
+        ];
+        const icon = iconCqw(iconPct, space, flatView.w, this._effectiveKioskScale.icon).toFixed(3);
+        const baseIcon = iconCqw(deviceBasePct, space, flatView.w, this._effectiveKioskScale.icon).toFixed(3);
+        return html`${this._renderStageEnvironment(dayCycle, 1)}<div class="zoomwrap">
+          ${renderModeSceneLayers(layers, flatView, rotation ? turnMatrix(rotation) : undefined,
+            this._gridPitch, 'view', undefined, false, rotation)}
+          <div class="devlayer" style="--icon-size:${icon}cqw;--device-base-size:${baseIcon}cqw;--rl-icon-size:${icon}cqw;--rl-font:${this._effectiveKioskScale.font}">
+            ${renderRadarLive(radarFrames, flatView, point => turnPoint(point, rotation))}
+            ${devs.map(device => this._renderDevice(device, flatView, contactBaseDiameter, showLqi, undefined, rotation))}
+            ${ledDevs.map(device => this._ledBadge(device, flatView, undefined, rotation))}
+            ${this._renderVacuums(this._renderVacuumDevices, flatView, space.id, perspectiveSize, rotation)}
+            ${this._renderOpeningLocks(flatView, undefined, undefined, rotation)}
+            ${disp.showNames ? space.rooms.map(room => this._renderRoomLabel(room, space, flatView, disp, undefined, undefined, rotation)) : nothing}
+          </div></div>`;
+      };
+    }
     // During the outgoing fade, the retained 2.5D scene keeps View styling
     // until the projection swap. The header already represents the edit mode.
     const stageMode = iso ? 'view' : this._mode;
@@ -14681,7 +14747,6 @@ export class HouseplanCard extends LitElement {
             <g data-hp-live-editor></g>
 
       ${floorCamera?.perspective && leds.size ? ledShadow() : nothing}</g>`;
-    const perspectiveSize = this._modeSceneSize ?? this._lastValidStageSize ?? [sceneView.w,sceneView.h] as const;
     const stage = html`
 
         <div class=${this._modeTransitionPreparing && this._modePreparingStageClass ? this._modePreparingStageClass : stageClass}
@@ -14728,6 +14793,11 @@ export class HouseplanCard extends LitElement {
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderStageEnvironment(dayCycle, dayCycleWeight)}
           ${this._renderStartupFloor(this._startupPending)}
+          ${this._plan3dFailure?.space === this._space && this._desiredProjection === 'iso' && !iso && !this._startupPending
+            ? html`<div class="plan-3d-fallback hpf-loading-pill" role="status">
+                <span>${this._t('plan.3d_fallback')}</span>
+                <button type="button" class="btn" @click=${this._retryPlan3d}>${this._t('continuity.retry')}</button>
+              </div>` : nothing}
           ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
           ${this._ledEditor?.chrome() ?? nothing}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
@@ -14813,10 +14883,7 @@ export class HouseplanCard extends LitElement {
                  kiosk multipliers still feed --dev-size. */}
           <div data-hp-live-marker-clip><div data-hp-live-marker-surface><div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
             ${renderRadarLive(
-              [...this._radarLive.frames.values()].filter((frame) => {
-                const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);
-                return !!marker && radarMarkerLiveInSpace(marker, this._space);
-              }),
+              radarFrames,
               view,
               (point) => floorCamera ? projectPlanPoint(point, 0, floorCamera) : turnPoint(point, this._rotation),
             )}
@@ -15417,12 +15484,15 @@ export class HouseplanCard extends LitElement {
    * of the active route, which is the whole point of #162.
    */
   private _renderVacuums(devs: readonly DevItem[], view: FrameRect, spaceId: string,
-    perspectiveSize: readonly [number, number]): TemplateResult | typeof nothing {
+    perspectiveSize: readonly [number, number], flatRotation?: PlanRotation): TemplateResult | typeof nothing {
     if (this._markup || this._mode === 'decor') return nothing;
+    const exportFrame = flatRotation !== undefined;
     const viewKey = this._space + '|' + view.x + '|' + view.y + '|' + view.w + '|' + view.h;
     const jumpAll = this._vacJumpOnce || viewKey !== this._vacViewKey;
-    this._vacViewKey = viewKey;
-    this._vacJumpOnce = false;
+    if (!exportFrame) {
+      this._vacViewKey = viewKey;
+      this._vacJumpOnce = false;
+    }
     const pucks: TemplateResult[] = [];
     const trails: TemplateResult[] = [];
     const previousRuns: Array<{ path: VacPath; matrix: Affine; id: string; entity: string | null; style: string }> = [];
@@ -15482,7 +15552,7 @@ export class HouseplanCard extends LitElement {
           const pieces: unknown[] = [];
           if (pathD) pieces.push(svg`<path data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="current" data-vacuum-owner=${d.id} style=${trailStyle} class="core" d="${pathD}"></path>`);
           const last = raw[raw.length - 1];
-          if (active && current.allowTip && (!current.native || current.hybrid) && (!frame.limited || current.hybrid) && last?.length >= (current.hybrid ? 1 : 2)) {
+          if (!exportFrame && active && current.allowTip && (!current.native || current.hybrid) && (!frame.limited || current.hybrid) && last?.length >= (current.hybrid ? 1 : 2)) {
             hasTips = true;
             const anchor = last[last.length - 1];
             const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
@@ -15496,7 +15566,8 @@ export class HouseplanCard extends LitElement {
       if (!active || !tele?.pos || !matrix) continue;
       const [cx, cy] = applyAffine(matrix, tele.pos.x, tele.pos.y);
       const point = [cx, cy];
-      const [left, top] = this._framePercent(point, view);
+      const [left, top] = flatRotation === undefined ? this._framePercent(point, view)
+        : this._framePercent(turnPoint([cx, cy], flatRotation), view, true);
       const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
       const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
       pucks.push(html`<div
@@ -15513,14 +15584,17 @@ export class HouseplanCard extends LitElement {
       trailBudget -= frame.count;
       if (frame.d) trails.unshift(svg`<g class="prev" data-hp="vacuum-trail-segment" data-entity=${previous.entity} data-kind="previous" data-vacuum-owner=${previous.id} style=${previous.style}><path class="core" d="${frame.d}"></path></g>`);
     }
-    if (pucks.length && hasTips && this.isConnected && this.ownerDocument.visibilityState !== 'hidden') {
-      if (!this._vacRaf) this._vacRafLoop();
-    } else if (this._vacRaf) {
-      cancelAnimationFrame(this._vacRaf); this._vacRaf = 0;
+    if (!exportFrame) {
+      if (pucks.length && hasTips && this.isConnected && this.ownerDocument.visibilityState !== 'hidden') {
+        if (!this._vacRaf) this._vacRafLoop();
+      } else if (this._vacRaf) {
+        cancelAnimationFrame(this._vacRaf); this._vacRaf = 0;
+      }
     }
     if (!pucks.length && !trails.length) return nothing;
-    const floor = this._isoFloorCamera;
-    const trailInk = svg`<g data-hp-plan-rotation-frame transform=${this._floorTransform}>${trails}</g>`;
+    const floor = exportFrame ? null : this._isoFloorCamera;
+    const transform = exportFrame ? flatRotation ? turnMatrix(flatRotation) : nothing : this._floorTransform;
+    const trailInk = svg`<g data-hp-plan-rotation-frame transform=${transform}>${trails}</g>`;
     return html`
       ${trails.length ? floor?.perspective ? renderIsoPerspectiveFloor(floor,trailInk,view,
         perspectiveSize,0,'vacuum') : svg`<svg class="vactrail" data-hp="vacuum-trail"
@@ -15534,6 +15608,7 @@ export class HouseplanCard extends LitElement {
     contactBaseDiameter: number,
     showLqi: import('./signal-visibility').SignalVisibility = true,
     isoPlacement?: IsoOverlayPlacement,
+    flatRotation?: PlanRotation,
   ): TemplateResult {
     const resolved = this._devicePresentation(d, showLqi);
     const effectiveDiameter = this._deviceContacts?.diameter(d.id, this._pos(d, false));
@@ -15543,16 +15618,18 @@ export class HouseplanCard extends LitElement {
     return html`${guard([this._modeSceneRevision, resolved, limitedSize,
       d.id, d.name, d.primary, d.area, d.virtual, d.hidden, d.userHidden, d.bindingStatus?.kind,
       ...(isoPlacement ? [view.x, view.y, view.w, view.h] : []),
-      showLqi, isoPlacement, isoPlacement?.wallMask, this._rotation, this._selId,
+      showLqi, isoPlacement, isoPlacement?.wallMask, this._rotation, flatRotation, this._selId,
       this._mode === 'devices' && this._selId === d.id], () => {
     this._modeSceneBuilds['device-shells'] = (this._modeSceneBuilds['device-shells'] || 0) + 1;
     const pos = this._pos(d);
     const point = isoPlacement
       ? isoPlacement.visualScene
       : [pos.x, pos.y];
-    const [left, top] = this._framePercent(point, view, !!isoPlacement);
-    const presentation = this._rotation && !(this._isoFloorCamera && ISO_LAB_FLOOR_MARKERS) && typeof d.marker?.angle === 'number'
-      ? { ...resolved, angle: resolved.angle + this._rotation } : resolved;
+    const [left, top] = flatRotation === undefined ? this._framePercent(point, view, !!isoPlacement)
+      : framePercent([point[0], point[1]], view, flatRotation);
+    const rotation = flatRotation ?? this._rotation;
+    const presentation = rotation && (flatRotation !== undefined || !(this._isoFloorCamera && ISO_LAB_FLOOR_MARKERS))
+      && typeof d.marker?.angle === 'number' ? { ...resolved, angle: resolved.angle + rotation } : resolved;
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
     if (limitedSize !== null) st.push(`--dev-size:${limitedSize}cqw`);
     const wallMask = isoPlacement?.wallMask;
@@ -15643,12 +15720,14 @@ export class HouseplanCard extends LitElement {
     })}`;
   }
   /** #780 r1 M1: the value badge of a strip, passive, at its anchor (`_pos`). */
-  private _ledBadge(d: DevItem, view: { x: number; y: number; w: number; h: number }, iso?: IsoOverlayPlacement) {
+  private _ledBadge(d: DevItem, view: { x: number; y: number; w: number; h: number }, iso?: IsoOverlayPlacement,
+    flatRotation?: PlanRotation) {
     const presentation = this._devicePresentation(d, false);
     const face = presentation.haDisabled ? nothing : renderDeviceShadowFace(presentation);
     if (face === nothing) return nothing;
     const pos = this._pos(d), point = iso?.visualScene ?? [pos.x, pos.y];
-    const [left, top] = this._framePercent(point, view, !!iso);
+    const [left, top] = flatRotation === undefined ? this._framePercent(point, view, !!iso)
+      : framePercent([point[0], point[1]], view, flatRotation);
     return html`<div class="dev led-badge ${presentation.offline ? 'unavail' : ''} ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
       style="left:${left}%;top:${top}%">${face}</div>`;
   }
@@ -15831,13 +15910,15 @@ export class HouseplanCard extends LitElement {
     disp: SpaceDisplay,
     isoPlacement?: IsoOverlayPlacement,
     shadow?: IsoFloorShadow,
+    flatRotation?: PlanRotation,
   ): TemplateResult | typeof nothing {
     // audit/feedback: rooms without a name still need their gear in the Plan
     // editor — that is where you name them (field report, 2026-07-27)
     if (!r.name && !this._markup) return nothing;
     const p = this._labelPos(r, space.id);
     const point = isoPlacement ? isoPlacement.visualScene : [p.x, p.y];
-    const [left, top] = this._framePercent(point, view, !!isoPlacement);
+    const [left, top] = flatRotation === undefined ? this._framePercent(point, view, !!isoPlacement)
+      : framePercent([point[0], point[1]], view, flatRotation);
     const nameColor = this._roomDialog && this._roomEditId === r.id
       ? roomNameColorOf(disp.nameColor, { settings: { name_color: this._roomNameColor } })
       : roomNameColorOf(disp.nameColor, r);
@@ -16237,6 +16318,7 @@ export class HouseplanCard extends LitElement {
     view: { x: number; y: number; w: number; h: number },
     isoPlacements?: ReadonlyMap<string, IsoOverlayPlacement>,
     shadow?: IsoFloorShadow,
+    flatRotation?: PlanRotation,
   ): TemplateResult {
     const items = this._openingsR.filter(
       (o) => !o.orphanReason && (o.type === 'door' || o.type === 'gate')
@@ -16265,7 +16347,8 @@ export class HouseplanCard extends LitElement {
       const point = isoPlacement
         ? isoPlacement.visualScene
         : floorAnchor;
-      const [left, top] = this._framePercent(point, view, !!isoPlacement);
+      const [left, top] = flatRotation === undefined ? this._framePercent(point, view, !!isoPlacement)
+        : framePercent([point[0], point[1]], view, flatRotation);
       const lockState = `${locked ? 'locked' : known ? 'unlocked' : 'unknown'} ${this._isoLightFloors?.has(isoPlacement?.owner?.id ?? '') ? 'iso-floor-light' : ''}`;
       if (shadow) return isoPlacement?.occluded ? nothing : renderIsoMarkerFloorShadow(
         String(o.id), 'opening-lock', isoPlacement || { floorScene: turnPoint(floorAnchor, this._rotation) }, shadow,

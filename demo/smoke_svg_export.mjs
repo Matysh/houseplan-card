@@ -107,6 +107,7 @@ const facts = async (xml) => page.evaluate((text) => {
     backdrop: doc.querySelectorAll('.hp-backdrop').length,
     native: doc.documentElement.querySelectorAll(':scope > svg').length,
     walls: doc.documentElement.querySelectorAll(':scope > svg .wallbody-fill,:scope > svg .iso-wall-top').length,
+    flatGeometry: !!doc.querySelector('.wallbody-fill') && !doc.querySelector('.iso-wall-top,.iso-floor-scene,canvas'),
     safe: !doc.querySelector('script,ha-icon,ha-svg-icon,iframe,object'),
     private: !doc.querySelector('[data-entity],[data-id],[data-area]'),
     external: [...doc.querySelectorAll('*')].some(el => [...el.attributes].some(a => /^(href|src|xlink:href)$/.test(a.name) && !/^(data:|#)/.test(a.value))),
@@ -163,13 +164,15 @@ for (const iso of [false, true]) {
     style: '.zoombadge { visibility:hidden !important; }',
   });
   await open(); await selectSvg(); await field('svg-devices').check();
+  check(`3d-flat-svg-hint-${iso}`, await dialog.locator('[data-hp-svg-from-3d]').count(), iso ? 1 : 0);
   await field('export-background').selectOption('current');
   const saved = await download();
   const f = await facts(saved.xml);
   check(`svg-has-no-zoom-ui-${iso}`, !saved.xml.includes('zoombadge'));
   check(`devices-${iso ? 'iso' : 'flat'}`, f.devices > 0);
   check(`vacuum-led-radar-${iso}`, f.vacuum > 0 && f.led > 0 && f.radar > 0);
-  check(`#1043 off LED cutout survives standalone SVG-${iso}`, f.ledCutouts, iso ? 1 : 0);
+  check(`flat-vector-geometry-${iso}`, f.flatGeometry);
+  check(`#1043 off LED cutout survives flat SVG-${iso}`, f.ledCutouts, iso ? 1 : 0);
   check(`svg-extension-${iso}`, saved.name.endsWith('.svg'));
   const after = await page.evaluate(() => ({
     config: JSON.stringify(window.__card._serverCfg), layout: JSON.stringify(window.__card._layout),
@@ -196,7 +199,7 @@ for (const iso of [false, true]) {
   }, [original.toString('base64'), rendered.toString('base64')]);
   console.log('SVG_VISUAL', { iso, ...difference });
   check(`offline-no-network-${iso}`, network.length, 0);
-  check(`visual-current-view-${iso}`, difference.ratio < 0.003);
+  if (!iso) check('visual-current-flat-view', difference.ratio < 0.003);
   if (output) {
     const name = iso ? 'iso' : 'flat'; writeFileSync(resolve(output, name + '.svg'), saved.xml);
     writeFileSync(resolve(output, name + '-view.png'), original); writeFileSync(resolve(output, name + '-svg.png'), rendered);
