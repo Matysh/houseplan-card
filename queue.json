@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24987,
+  "revision": 24988,
   "nextTicket": 701,
   "nextFence": 701,
   "tasks": {
@@ -6270,7 +6270,9 @@
         "src/plan-3d-world.ts",
         "src/room-floor-paint.ts",
         "test/room-floor-paint-local.test.mjs"
-      ]
+      ],
+      "automationError": "checks-unavailable",
+      "automationSince": 1795632174076
     }
   },
   "ownerDecisions": {},
@@ -7092,6 +7094,10 @@
     },
     "finish:d4a19725-5357-4ac7-b215-54b4cbe56a51": {
       "digest": "c04f54a959f810682eb0999ab01e35d3f4897f4b2365d19471bf052ed04e7008",
+      "issue": 1567
+    },
+    "finish:c3620cc6-bb62-4c1a-ad02-58017a2f2496:finish:3:automation-pending": {
+      "digest": "c6731c25545095dd0ff9faa2e02970c432dd7a617b13da8c44d64a094c0c7c3a",
       "issue": 1567
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
