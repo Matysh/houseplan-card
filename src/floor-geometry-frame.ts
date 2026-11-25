@@ -196,7 +196,7 @@ export function isFloorGeometryFrame(value: unknown, input: FloorGeometryInput):
       && tunnel.faces.every(face => [-1, 1].includes(face.side) && typeof face.roomId === 'string'
         && typeof face.d === 'string' && Array.isArray(face.contours) && face.contours.every(ring)))) return false;
   if (![...frame.floorPaint.value].every(([key, paint]) => typeof key === 'string' && !!paint && typeof paint.path === 'string'
-    && typeof paint.basePath === 'string' && typeof paint.extended === 'boolean' && Array.isArray(paint.bounds)
+    && geom(paint.geometry) && typeof paint.basePath === 'string' && typeof paint.extended === 'boolean' && Array.isArray(paint.bounds)
     && paint.bounds.length === 4 && paint.bounds.every(Number.isFinite))) return false;
   if (input.raw.plan_graph) {
     if (!frame.partsSemantic || !Array.isArray(frame.partsSemantic.columns) || !frame.partsSemantic.columns.every(ring)

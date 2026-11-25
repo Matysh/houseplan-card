@@ -75,7 +75,7 @@ test('#659 the 3D canvas and projected interaction materials retain their render
       + '  const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);\n'
       + '  const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);\n'
       + '  const cached = lruRead(input.cache, input.source.key);');
-  contains('src/plan-3d-world.ts', 'this.groundShadow(polygons(physical.floor), floorDepth, visualScale);',
+  contains('src/plan-3d-world.ts', 'this.groundShadow(base, visualScale);',
     'return [this.mesh(planPrismMesh(walls, 0, height), [top, side, side])];');
   contains('src/hp-color-opacity.ts', 'return this.flatSwatch && !this.coverSwatch;');
 });

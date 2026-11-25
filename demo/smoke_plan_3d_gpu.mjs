@@ -98,6 +98,9 @@ try {
     const lamp = { points: [[8, 0]], height: 250, radius: 25, color: '#ff0000', intensity: 1, visible };
     const led = { points: [[15, 20], [15, 50]], height: 2, radius: 10, color: '#00ff00', intensity: 1, visible };
     const frames = [await lightFrame([]), await lightFrame([lamp, led]), await lightFrame([{ ...lamp, color: '#0000ff' }, led])];
+    const base = world.structure.children[0].geometry;
+    base.computeBoundingBox();
+    const paperHeight = [base.boundingBox.min.y, base.boundingBox.max.y];
     const largeRadius = await lightFrame([{ ...lamp, radius: 2_000,
       visible: ['M 0 -100 L 100 -100 L 100 100 L 0 100 Z'],
       floorClip: ['M -100 -100 L 40 -100 L 40 100 L -100 100 Z', 'M -40 -100 L 100 -100 L 100 100 L -40 100 Z'],
@@ -311,7 +314,7 @@ try {
     const deadline = performance.now() + 2000;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
-    return { contexts, pixels, picking, frames, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
+    return { contexts, pixels, picking, frames, paperHeight, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
       fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
@@ -367,6 +370,7 @@ try {
   assert.equal(evidence.risingSun.radius, 40, 'the new footprint appears with a smooth intensity change');
   assert.equal(evidence.disabledSun, undefined, 'night and disabled gates clear solar light immediately');
   const [unlit, red, blue] = evidence.frames;
+  assert.deepEqual(evidence.paperHeight, [0,0], 'the floor has no exposed side under exterior walls');
   const { baseline, lamp, ribbon, disabled, back, blocked } = evidence.wallLighting;
   assert.ok(lamp[0][0] > baseline[0][0] + 20 && lamp[2][0] > baseline[2][0] + 20,
     'a lamp reaches the wall and floor: ' + JSON.stringify(evidence.wallLighting));

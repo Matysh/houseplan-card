@@ -139,6 +139,7 @@ test('#1454 prepared frame is a bounded lossless runtime-cache payload, includin
     ['opening index key',frame=>{frame.openingIndex.key='wrong'}],
     ['opening tunnel key',frame=>{frame.tunnels.key='wrong'}],
     ['floor paint key',frame=>{frame.floorPaint.key='wrong'}],
+    ['missing native room floor',frame=>{delete frame.floorPaint.value.values().next().value.geometry}],
     ['source fingerprint',frame=>{frame.union.value.sourceFingerprint='wrong'}],
     ['coordinate scale',frame=>{frame.union.value.coordinateScale=NORM_W/2}],
     ['missing inner contours',frame=>{frame.inner=[]}],
