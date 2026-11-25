@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24311,
+  "revision": 24312,
   "nextTicket": 686,
   "nextFence": 686,
   "tasks": {
@@ -6627,18 +6627,12 @@
       }
     },
     "1563": {
-      "requestId": "spec:1563:a9685e15b4fcf26149b86c60432e235aade9f0d92cbdccab71674b21470c8f17",
-      "contextDigest": "a9685e15b4fcf26149b86c60432e235aade9f0d92cbdccab71674b21470c8f17",
+      "requestId": "spec:1563:6d8fbe8958d5a3f7ea03244f1c18b7f487e69160a6e229e088989cd22a068058",
+      "contextDigest": "6d8fbe8958d5a3f7ea03244f1c18b7f487e69160a6e229e088989cd22a068058",
       "base": "7e85eee9281283120d82f6fb9b9c12017136401d",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795593717098,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45571932056",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795593897756
     }
   },
   "reviewPublications": {
@@ -6679,6 +6673,19 @@
       "presentation": {
         "round": 2,
         "occurredAt": "2026-11-25T07:59:49.966Z"
+      }
+    },
+    "spec:1563:spec:1563:6d8fbe8958d5a3f7ea03244f1c18b7f487e69160a6e229e088989cd22a068058": {
+      "issue": 1563,
+      "kind": "spec",
+      "requestId": "spec:1563:6d8fbe8958d5a3f7ea03244f1c18b7f487e69160a6e229e088989cd22a068058",
+      "materialSha": "7e85eee9281283120d82f6fb9b9c12017136401d",
+      "expectedBase": "7e85eee9281283120d82f6fb9b9c12017136401d",
+      "patchId": "6d8fbe8958d5a3f7ea03244f1c18b7f487e69160a6e229e088989cd22a068058",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-25T08:04:57.756Z"
       }
     }
   },
@@ -6749,6 +6756,10 @@
       "digest": "6bbc52f361667dc24f613163fa1fd9d5cee5a404566a3b68a04ace9ad9aa651f",
       "issue": 1563
     },
+    "github:45573105222:1:label:spec-request": {
+      "digest": "817bd37660e65a71b5f7265bec8fa73887ad9b25f52e5f73e05c8d55b8350e74",
+      "issue": 1563
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -6793,6 +6804,22 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "github:45573105222:1:label:spec-request:spec-resubmitted:1563": {
+      "digest": "817bd37660e65a71b5f7265bec8fa73887ad9b25f52e5f73e05c8d55b8350e74",
+      "issue": 1563,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1563,
+        "at": 1795593897756,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1563:6d8fbe8958d5a3f7ea03244f1c18b7f487e69160a6e229e088989cd22a068058",
+        "reviewChanges": "Подтверждён тот же путь записи на dev. Предлагается точечная форма существующей команды вместо расширения маркерных capabilities и передачи полного config/layout. Просьба проверить совместимость старой пары, ownership/CAS и наблюдение отказа до dispatch, а также отсутствие ложного успеха при позднем ответе. Пользователь просит разблокировать внешний редактор, не выпуская новый stable.\n\n### Исправления по предыдущему ревью\n\n[Результат раунда 1](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7156537741). Определены восстановление серверной позиции при rejected/unknown, источник before для нового жеста, блокировка при неудачной сверке и точный момент снятия ошибки. Добавлены критерии проверки продолжения без remount при удачном read и запрета несогласованного retry при неудачном. Уточнены сравнение x/y/s/k и сохранение метаданных, правила CAS/no-op, PLAN_ONLY-граница, Undo и формат наблюдаемого состояния mount. Продуктовые проверки на S4 не выполнялись.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
