@@ -154,6 +154,14 @@ try {
         depth: 1, outline: '#222222', color: '#ffff00', opacity: 1 }] });
     await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
     const roomColor = pixel(canvas, 90, 100), ribbonColor = pixel(canvas, 110, 130), ribbonHit = lit.pick(.55, .65);
+    world.present({ ...input, lights: [] });
+    const outline = { id: 'outline', members: ['outline'], outline: 'M -40 0 L 40 0', diameter: 45 };
+    const paintedRim = async virtual => {
+      world.presentOutlines([{ ...outline, virtual }], 25);
+      await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+      return Array.from({ length: 76 }, (_, i) => [99, 100].some(y => pixel(canvas, 62 + i, y)[0] > 45));
+    };
+    const solidRim = await paintedRim(false), dashedRim = await paintedRim(true);
     lit.dispose();
     world.dispose();
 
@@ -163,7 +171,7 @@ try {
       await new Promise(resolve => requestAnimationFrame(resolve));
     return { contexts, pixels, picking, frames, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairHit, markerIcon, markerBody, markerHit, markerChanged,
-      roomColor, ribbonColor, ribbonHit, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
+      roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
       failures: cards.map(card => card.failures()) };
   });
   assert.deepEqual(errors, []);
@@ -184,6 +192,9 @@ try {
   assert.deepEqual(evidence.roomColor, [160, 120, 50, 255]);
   assert.deepEqual(evidence.ribbonColor, [255, 255, 0, 255]);
   assert.equal(evidence.ribbonHit, 'switch-1');
+  assert.ok(evidence.solidRim.every(Boolean), 'a physical device draws a continuous rim');
+  const gaps = evidence.dashedRim.filter((ink, i, samples) => !ink && samples[i - 1]).length;
+  assert.ok(gaps >= 5 && evidence.dashedRim.filter(Boolean).length >= 25, 'a virtual device paints distinct dashes and gaps');
   assert.equal(evidence.fading.active, true);
   assert.deepEqual(evidence.fading.sources.map(({ id, intensity }) => [id, intensity]), [['lamp', .5], ['window', .4]]);
   assert.equal(evidence.settled.active, false);

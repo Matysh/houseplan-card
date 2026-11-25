@@ -62,39 +62,40 @@ try {
         const marker = label.closest('.dev');
         const rect = label.getBoundingClientRect();
         return { id: marker.dataset.id, text: label.textContent.trim(), bounds: rect.toJSON(),
-          masked: marker.hasAttribute('data-hp-device-occlusion'),
+          native: marker.hasAttribute('data-hp-3d-native'),
           insideMask: !!label.closest('.device-occlusion-body') };
       });
     });
     const painted = await page.screenshot();
-    const withoutMask = '.dev .device-occlusion-body { mask: none !important }';
-    const signalOnly = '.dev .device-shell, .dev .iso-marker-glass { visibility: hidden !important }';
-    const setProbe = css => page.evaluate(css => {
-      const root = window.__isoPaint.renderRoot;
-      const style = root.querySelector('#lqi-mask-control') || document.createElement('style');
-      style.id = 'lqi-mask-control';
-      style.textContent = css;
-      if (!style.isConnected) root.append(style);
-    }, css);
-    await setProbe(withoutMask);
-    const unmasked = await page.screenshot();
-    await setProbe(signalOnly);
-    const signal = await page.screenshot();
-    await setProbe(signalOnly + withoutMask);
-    const reference = await page.screenshot();
-    await page.evaluate(() => window.__isoPaint.renderRoot.querySelector('#lqi-mask-control').remove());
+    const probe = async (depthTest, visible = true) => {
+      await page.evaluate(async ({ depthTest, visible }) => {
+        const host = window.__isoPaint._plan3dHost;
+        const group = host.world.markers.group;
+        group.visible = visible;
+        group.traverse(node => {
+          if (!node.isMesh) return;
+          for (const material of [node.material].flat()) material.depthTest = depthTest;
+        });
+        host.draw();
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      }, { depthTest, visible });
+      return page.screenshot();
+    };
+    const unmasked = await probe(false);
+    const reference = await probe(true, false);
+    await probe(true);
 
     const label = `${view}/${zoom}`;
     const maskDelta = (await compareInPage(page, painted, unmasked)).differing;
-    check(`${label}: the wall still masks device paint`, signals.some(row => row.masked) && maskDelta > 30);
+    check(`${label}: wall depth still covers part of the native markers`, signals.every(row => row.native) && maskDelta > 30);
     const readings = signals.map(row => {
-      const actual = signalPixels(signal, row.bounds), expected = signalPixels(reference, row.bounds);
+      const actual = signalPixels(painted, row.bounds), expected = signalPixels(reference, row.bounds);
       return { ...row, pixels: actual.length, reference: expected.length,
         intact: actual.length === expected.length && actual.every((offset, i) => offset === expected[i]) };
     });
-    check(`${label}: visible 255 readings retain their pixels with the body mask active`,
+    check(`${label}: visible 255 readings retain their pixels with body depth enabled`,
       readings.length === 3 && readings.every(row => row.text === '255' && !row.insideMask && row.intact)
-        && readings.filter(row => row.masked && row.pixels > 100).length >= 2);
+        && readings.filter(row => row.pixels > 100).length >= 2);
     observations.push({ view, zoom, maskDelta, readings });
     writeFileSync(`${dir}/${view}-${zoom}.png`, painted);
   }

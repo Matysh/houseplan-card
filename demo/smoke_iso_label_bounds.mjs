@@ -4,16 +4,10 @@ import { check, finish } from './serve.mjs';
 import { startIsoPaintScene, settleIsoPaint, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
 
 const {page,browser}=await startIsoPaintScene();
-await page.evaluate(()=>{
-  const testPoint=CanvasRenderingContext2D.prototype.isPointInPath;
-  window.__wallLightSamples=0;
-  CanvasRenderingContext2D.prototype.isPointInPath=function(...args){
-    window.__wallLightSamples++;
-    return testPoint.apply(this,args);
-  };
-});
+await page.locator('canvas[data-hp-plan-3d-ready]').waitFor({state:'attached'});
 const snapshot=()=>page.evaluate(()=>{
   const card=window.__isoPaint,root=card.renderRoot;
+  const world=card._plan3dHost?.world;
   const layer=root.querySelector('.devlayer').getBoundingClientRect();
   return {layout:JSON.stringify(card._layout),
     labels:[...root.querySelectorAll('.iso-room-label-plane .roomlabel')].map(label=>{
@@ -22,8 +16,9 @@ const snapshot=()=>page.evaluate(()=>{
       const y=layer.top+parseFloat(label.style.top)*layer.height/100;
       return {error:Math.max(Math.abs((r.left+r.right)/2-x),Math.abs((r.top+r.bottom)/2-y)),
         width:r.width,mask:getComputedStyle(plane).maskImage,opacity:getComputedStyle(plane).opacity};
-    }),builds:card._isoStructuralBuildCount,wallLightSamples:window.__wallLightSamples,
-    wallLights:root.querySelectorAll('.iso-wall-light').length};
+    }),builds:card._isoStructuralBuildCount,lightMaskVersion:world?.light.masks.version,
+    wallLights:world?.structure.children.slice(1).some(mesh=>[mesh.material].flat()
+      .some(material=>material.customProgramCacheKey()==='houseplan-world-light'))&&world?.light.uniforms.uHpLightCount.value>0};
 });
 const aligned=({labels})=>labels.length===8&&labels.every(row=>row.error<=1&&row.mask==='none'&&row.opacity==='1');
 try {
@@ -36,12 +31,11 @@ try {
     return !!surface?.style.transform && !!layer && !layer.style.transform
       && getComputedStyle(surface).contain==='paint';
   }));
-  check('each caption shadow blurs inside its own paint bounds', await page.evaluate(() => {
-    const shadows = [...window.__isoPaint.renderRoot.querySelectorAll('.iso-room-label-shadow')];
-    return shadows.length === 8 && shadows.every(node => node.getAttribute('filter') === 'url(#hp-iso-label-penumbra)'
-      && !node.parentElement.hasAttribute('filter'));
+  check('raised captions remain separate from the model and retain their text edge', await page.evaluate(() => {
+    const names=[...window.__isoPaint.renderRoot.querySelectorAll('.iso-room-label-plane .rlname')];
+    return names.length===8&&names.every(name=>getComputedStyle(name).textShadow!=='none');
   }));
-  check('lit walls mount beside the original floor light',original.wallLights>0);
+  check('wall faces receive the world light field',original.wallLights===true);
   for(const rotation of [0,45,90,135,180,225,270,315]) {
     await zoomIsoPaint(page,1);
     const before=await snapshot();
@@ -52,7 +46,7 @@ try {
     check(`camera ${rotation}: raised labels remain aligned without structural rebuild`,
       aligned(after)&&before.builds===after.builds);
     check('panning reuses the wall-light profile',
-      before.wallLightSamples===after.wallLightSamples&&before.wallLights===after.wallLights);
+      before.lightMaskVersion===after.lightMaskVersion&&before.wallLights===after.wallLights);
     await page.locator('[data-hp="rotate-right"]').first().click();await settleIsoPaint(page);
   }
   await zoomIsoPaint(page,1);

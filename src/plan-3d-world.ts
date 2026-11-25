@@ -149,6 +149,36 @@ function ribbonFloor({ points, closed }: Plan3dLedRibbon['path'], width: number)
   return parts.length ? union(parts[0], ...parts.slice(1)) : [];
 }
 
+function dashedRim(points: readonly PlanPoint[], diameter: number): PlanPoint[][] {
+  // Device outlines use the same 6:5 rhythm at every device size. Carry the
+  // phase through the little segments of a rounded corner and across joins.
+  const unit = Math.max(diameter / 45, .0001);
+  const dash = 6 * unit, gap = 5 * unit;
+  const pieces: PlanPoint[][] = [];
+  let piece: PlanPoint[] | undefined, ink = true, remaining = dash;
+  for (let i = 1; i < points.length; i++) {
+    const [ax, ay] = points[i - 1], [bx, by] = points[i];
+    const length = Math.hypot(bx - ax, by - ay);
+    const at = (along: number): PlanPoint => [ax + (bx - ax) * along / length, ay + (by - ay) * along / length];
+    let position = 0;
+    while (position < length) {
+      const step = Math.min(remaining, length - position);
+      if (ink) {
+        if (!piece) { piece = [at(position)]; pieces.push(piece); }
+        piece.push(at(position + step));
+      }
+      position += step;
+      remaining -= step;
+      if (remaining <= 0) {
+        ink = !ink;
+        remaining = ink ? dash : gap;
+        piece = undefined;
+      }
+    }
+  }
+  return pieces;
+}
+
 /** Owns resident physical meshes and material state for one plan. Only the
  * changed group is replaced on a topology, opening or furniture update. */
 export class Plan3dWorld {
@@ -198,27 +228,29 @@ export class Plan3dWorld {
   presentOutlines(outlines: readonly Plan3dOutline[], height: number): void {
     const live = new Set<string>();
     for (const { id, outline, diameter, virtual } of outlines) {
-      if (!outline) continue;
+      if (!outline || !Number.isFinite(diameter) || diameter <= 0) continue;
       const key = [height, diameter, virtual, outline].join('|');
       live.add(id);
       const previous = this.glassMeshes.get(id);
       if (previous?.key === key) continue;
       if (previous) this.disposeGlass(previous.meshes);
-      const depth = diameter * .24, low = height - depth;
+      // The wall top owns its depth exactly where a rim touches the cut.
+      const top = height - diameter * .0001, low = top - diameter * .24;
       const chains = markerContactChains(outline);
       const faces: Face[] = [], rims: Face[] = [];
       for (const chain of chains) {
         for (let i = 1; i < chain.length; i++) {
           const [a, b] = [chain[i - 1], chain[i]];
-          faces.push([[[...a, low], [...a, height], [...b, height], [...b, low]]]);
+          faces.push([[[...a, low], [...a, top], [...b, top], [...b, low]]]);
         }
-        const floor = ribbonFloor({ points: chain, closed: false }, diameter * .016);
-        for (const polygon of floor) {
-          rims.push(horizontal(polygon, height), horizontal(polygon, low));
+        const strokes = virtual ? dashedRim(chain, diameter) : [chain];
+        for (const points of strokes) {
+          const floor = ribbonFloor({ points, closed: false }, diameter * (virtual ? .021 : .016));
+          for (const polygon of floor) rims.push(horizontal(polygon, top), horizontal(polygon, low));
         }
       }
       const meshes = [this.mesh(planFaceMesh(faces), [{ color: '#f5fbff', opacity: .14 }]),
-        this.mesh(planFaceMesh(rims), [{ color: '#e6edf1', opacity: virtual ? .3 : .52 }])];
+        this.mesh(planFaceMesh(rims), [{ color: virtual ? '#92a9b7' : '#e6edf1', opacity: virtual ? .72 : .52 }])];
       for (const mesh of meshes) mesh.userData.plan3dPick = { occludes: false };
       this.markerGlass.add(...meshes);
       this.glassMeshes.set(id, { key, meshes });
