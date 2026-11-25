@@ -253,6 +253,10 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
   if (event === 'stable') {
     const stableVersion = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8')).version;
     if (ordinaryStableVersion(stableVersion)) {
+      // The standalone package is proved against a clean tracked checkout.
+      // Browser preparation regenerates the tracked demo icon fixture.
+      const demo = steps.find(item => item.id === 'demo-assets');
+      demo.after = [...(demo.after ?? []), SITE_RELEASE_STEP];
       steps.push(step(SITE_RELEASE_STEP, 'Проверенный комплект редактора и ядра для сайта', helper('site-release'),
         [...browserInputs, ...pythonInputs, 'tools/build_site_release.py', 'tools/build_core_package.py',
           'tools/smoke_core_package.py', 'tools/core_external_conformance_fixture.py',

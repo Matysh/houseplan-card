@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.86.1 — 2026-11-25
+
+- Promote v1.86.1-beta.10 to stable. Includes prepared floor previews, independent screen profiles, straight-on 2.5D views and translucent masonry with depth-sorted interior corners (#1515, #1516, #1518, #1520, #1522, #1526, #1560).
+- Preserve wall-base continuity beneath windows, doorway gaps and the floor shadow, and fix the first Optimize Plans preview after saving a new plan (#1549, #1555).
+- Deliver the checked standalone editor and plan-core wheel separately from the HACS ZIP (#1465).
+
 ## v1.86.1-beta.10 — 2026-11-25
 
 - Show thin interior corner lines through transparent 2.5D walls while preserving their depth and the existing wall paint (#1560).

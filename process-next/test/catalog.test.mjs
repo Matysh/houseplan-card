@@ -181,12 +181,18 @@ test('stable retains beta identities for reuse and separates converter failure f
   assert.equal(diagnostic.command, null); assert.equal(diagnostic.diagnostic, true); assert.match(diagnostic.unavailable, /prerequisites/);
   assert.ok(stable.steps.some(item => item.id === 'backend-coverage-threshold'));
   const site = stable.steps.find(item => item.id === 'site-release');
+  const demo = stable.steps.find(item => item.id === 'demo-assets');
   const version = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8')).version;
   if (/^\d+\.\d+\.\d+$/.test(version)) {
     assert.ok(site && site.exclusive && !site.diagnostic);
     assert.deepEqual(site.requires, ['release-package', 'test-build']);
+    assert.ok(demo.after.includes(site.id), 'site packaging precedes regeneration of tracked demo icons');
+    assert.ok(!demo.requires.includes(site.id), 'site failure does not prevent independent browser checks');
     assert.equal(site.outputs.length, 3);
-  } else assert.ok(!site);
+  } else {
+    assert.ok(!site);
+    assert.ok(!demo.after?.includes('site-release'));
+  }
   assert.ok(!beta.steps.some(item => item.id === 'site-release'));
   assert.ok(!stable.steps.some(item => item.id.startsWith('mutation') || item.id === 'infra-behavior'));
 });

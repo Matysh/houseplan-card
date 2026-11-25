@@ -10,6 +10,20 @@ English. It does not rewrite the published release.
 Each entry's final link opens the milestone page by number with closed issues
 (`…/milestone/N?closed=1`), so it does not depend on the milestone title.
 
+<!-- release: v1.86.1 -->
+<!-- base: v1.86.0 -->
+## Houseplan 1.86.1 release
+
+🏠 **Eight 2.5D angles and transparent walls.** Four straight-on views with subtle perspective join the diagonal views. Enable transparent walls per space and set the opacity of the sides and top cut separately. Interior corners remain readable through walls, and their lines stay behind any doors or furniture that hide them. [#1526](https://github.com/Matysh/houseplan-card/issues/1526), [#1518](https://github.com/Matysh/houseplan-card/issues/1518), [#1560](https://github.com/Matysh/houseplan-card/issues/1560)
+
+⚡ **See your plan sooner.** Once you’ve viewed a floor with the same Home Assistant account, a prepared preview with furniture can appear even on the first visit in a new browser. Devices and lighting appear when the live plan is ready. [#1520](https://github.com/Matysh/houseplan-card/issues/1520), [#1522](https://github.com/Matysh/houseplan-card/issues/1522)
+
+🖥️ **A different view for each screen.** Configure plan orientation independently for full-size dashboard cards and external displays. Resizing device icons preserves their wall and group attachments when there’s room. [#1516](https://github.com/Matysh/houseplan-card/issues/1516), [#1517](https://github.com/Matysh/houseplan-card/issues/1517)
+
+Also fixed visible seams along 2.5D wall bases and an Optimize Plans preview error just after saving a new plan. [#1555](https://github.com/Matysh/houseplan-card/issues/1555), [#1549](https://github.com/Matysh/houseplan-card/issues/1549)
+
+[Full list of changes](https://github.com/Matysh/houseplan-card/milestone/19?closed=1)
+
 <!-- release: v1.86.0 -->
 <!-- base: v1.85.2 -->
 ## Houseplan 1.86.0 release
