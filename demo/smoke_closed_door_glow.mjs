@@ -209,7 +209,7 @@ try {
     const card=window.__card, runtime=card._isoSceneRuntime;
     window.__door1449Runtime=runtime;
     // Controlled optional-render failure through the real existing boundary.
-    card._isoSceneRuntime={...runtime,resolveIsoFramePresentation:()=>{throw Error('controlled closed-leaf presentation refusal');}};
+    card._isoSceneRuntime={...runtime,preparePlan3dFrame:()=>{throw Error('controlled closed-leaf presentation refusal');}};
     card.requestUpdate();
   }); await settle();
   assert.equal(await page.locator('houseplan-card canvas[data-hp-plan-3d]').count(),0);
