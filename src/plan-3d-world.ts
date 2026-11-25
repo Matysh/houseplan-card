@@ -452,6 +452,12 @@ export class Plan3dWorld {
 
   private wallMeshes(walls: readonly Polygon[], shell: ReturnType<typeof plan3dWallShell>, height: number,
     surfaces: readonly IsoOpeningSurface[], top: Paint, side: Paint): Mesh[] {
+    // Do not split plain opaque walls into separate cap and side batches.
+    // A gate has no joined masonry but still needs the shared jamb clipping.
+    if (top.opacity >= 1 && side.opacity >= 1 && !shell.joined
+      && !surfaces.some(surface => surface.kind === 'jamb-reveal')) {
+      return [this.mesh(planPrismMesh(walls, 0, height), [top, side, side])];
+    }
     const meshes: Mesh[] = [];
     const append = (faces: Face[], paint: Paint) => {
       if (!faces.length || paint.opacity <= 0) return;
