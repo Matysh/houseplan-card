@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24410,
+  "revision": 24411,
   "nextTicket": 689,
   "nextFence": 689,
   "tasks": {
@@ -6079,7 +6079,7 @@
       "ownerDecision": null,
       "ticket": 688,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795597808468,
       "reviewEntry": 3,
       "patchId": "5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab",
@@ -6114,19 +6114,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261125T084524864-cc6bc701",
+        "id": "20261125T091026769-910b37ad",
         "name": "Тесты для задачи #1563 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T084524864-cc6bc701/report.json",
-        "materialSha": "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T091026769-910b37ad/report.json",
+        "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
         "status": "passed",
-        "finishedAt": "2026-11-25T08:57:28.727Z",
+        "finishedAt": "2026-11-25T09:22:24.157Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1563:2:86b717dbb0eb4e221ce7575b55072f43bc433bda:7e85eee9281283120d82f6fb9b9c12017136401d",
-        "at": 1795597468040
-      }
+      "reviewRound": null
     }
   },
   "ownerDecisions": {},
@@ -6742,9 +6738,9 @@
     "fence": 688,
     "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
     "expectedBase": "7e85eee9281283120d82f6fb9b9c12017136401d",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795597812746,
-    "expiresAt": 1795598773991,
+    "expiresAt": 1795602145507,
     "patchId": "5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab"
   },
   "events": {
@@ -7328,6 +7324,34 @@
           "finishedAt": "2026-11-25T08:57:28.727Z",
           "failures": []
         }
+      }
+    },
+    "finish:95ea3f5c-a88d-4f40-a600-fd11fde1d374:finish:3:s6-complete": {
+      "digest": "461a6f6b20d508fc5bbc976a670bde10af1e3444d22d9256af978c60a85b7693",
+      "issue": 1563,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1563,
+        "at": 1795598545507,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
+        "phase": "review",
+        "evidence": {
+          "id": "20261125T091026769-910b37ad",
+          "name": "Тесты для задачи #1563 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T091026769-910b37ad/report.json",
+          "materialSha": "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
+          "status": "passed",
+          "finishedAt": "2026-11-25T09:22:24.157Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Подтверждён тот же путь записи на dev. Предлагается точечная форма существующей команды вместо расширения маркерных capabilities и передачи полного config/layout. Просьба проверить совместимость старой пары, ownership/CAS и наблюдение отказа до dispatch, а также отсутствие ложного успеха при позднем ответе. Пользователь просит разблокировать внешний редактор, не выпуская новый stable.\n\n### Исправления по предыдущему ревью\n\n[Результат раунда 1](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7156537741). Определены восстановление серверной позиции при rejected/unknown, источник before для нового жеста, блокировка при неудачной сверке и точный момент снятия ошибки. Добавлены критерии проверки продолжения без remount при удачном read и запрета несогласованного retry при неудачном. Уточнены сравнение x/y/s/k и сохранение метаданных, правила CAS/no-op, PLAN_ONLY-граница, Undo и формат наблюдаемого состояния mount. Продуктовые проверки на S4 не выполнялись.\n\n[Результат код-ревью](https://github.com/Matysh/houseplan-card/issues/1563#issuecomment-7157848385). Блокер: удерживаемый pointer после rejected/unknown мог создать новый slot, пока старый жест не завершён. Drag и resize получают токен на pointerdown, теряют его при отказе/retire и завершают на pointerup/cancel; stage не принимает прежний токен даже после успешной сверки. Только новый pointerdown может инициировать retry. Node и реальный браузер проверяют продолжение удерживаемого drag, отсутствие записи и сохранение статуса отказа после восстановления, затем ACK нового жеста.\n\nДополнительно: штатная очистка позиций после принятой пары Optimize/Copy или Import теперь завершает standalone-очередь и снимает токены, чтобы не оставлять потерянный pending. При отзыве scope не сохраняем идентификаторы прежнего проекта в публичных entries: агрегат unresolved остаётся до нового mount, а документация объясняет эту границу и ручное reopen при недоступном серверном read. Новая браузерная проверка собирает собственный каталог, не перезаписывая файлы другого сценария.\n\n### Реализация\n\n- Core: ограниченный room_label-вариант layout/set под PLAN_ONLY; совместный lock и CAS владельца по x/y/s/k, защита от переполнения layout, сохранение чужих данных и собственного непубличного metadata. Точка риска: ACK вида ok/rev/room_label только после durable write; глобальная ревизия не заменяет CAS конкретной записи.\n- SDK: отдельная очередь одной подписи, которая использует существующий debounce и write-authority. Статусы getSaveState/subscribeSaveState и целевая сверка после rejected/unknown. Остальные записи не отправляются повторно; очередная редакция не переписывает принятый снимок и не переживает отзыв прав. Новый жест после удачного восстановления берёт свежую базу; при неудачном read блокируется до reopen. Старый HA-путь не открывает дополнительный API.\n- Фактически прошли: tsc; 7 адресных Python-тестов ядра; 2 теста настоящих websocket-обработчиков HA; 15 Node-тестов очереди состояния и границы mount; браузерный smoke по реальному pointer drag/resize на standalone + Python core, серверная сверка и remount, pending перед запросом, конфликт, потерянный ACK, отзыв прав, старая несовместимая пара. Штатный S6 выдаст отдельный полный результат выбранных областей.\n- При проверке обратить внимание на authority при восстановительном чтении, отмену новых неотправленных редакций при отказе, отличие durable ACK от read при потере ответа и обратную совместимость. Исправленная пара dev-артефактов будет подготовлена из принятого SHA; GitHub Release и ассеты 1.86.1 не трогаем.\n\n- По первому S6: новый browser smoke прошёл; устранены отказы статических правил. Старый HA writer и его существующий мутационный якорь восстановлены без изменения поведения, standalone staging идёт через ConfigAdoption. Снижен pin прямых присваиваний в editor с 5 до 3, добавлен новый pinned-browser smoke в реестр, а обработчик сохранения назван reportFailure отдельно от lazy-loader failed. Шесть адресных проверок этих поправок зелёные; итог проверяет повторный S6.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
