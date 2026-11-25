@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24286,
+  "revision": 24287,
   "nextTicket": 686,
   "nextFence": 686,
   "tasks": {
@@ -2745,44 +2745,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "68fb9d6ec311e669bd7a9299022173d6a551e599"
-      }
-    },
-    "1469": {
-      "issue": 1469,
-      "branch": "codex/1469-cold-iso-camera",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
-      "mergedSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-      "mergedAt": 1795076967607,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1469:3:a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c:f4f474cf489015af967bbd6fa03cda62c07bc975",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "7d1e756b122790a51466a8670096a5e06773ee85"
       }
     },
     "1470": {
@@ -6086,10 +6048,20 @@
       "removedToRelease": false,
       "reviewRequest": "review:1562:1:b13b2bd5547c460a7b4c4b71601edbb1b9a651a1:e177278eaa21176df7487eabdea3973b8d3637cb",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "releaseTag": "v1.86.1",
       "devBuild": {
