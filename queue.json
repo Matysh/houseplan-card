@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25156,
+  "revision": 25157,
   "nextTicket": 704,
   "nextFence": 704,
   "tasks": {
@@ -6316,7 +6316,7 @@
       "notice": {
         "key": "1:executor-admission-expired",
         "reason": "executor-admission-expired",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1795644036101,
         "entry": 1,
@@ -7070,6 +7070,10 @@
     },
     "finish:b993bc0a-6657-4c6a-bad6-8d4456f25fef:finish:2:synchronized": {
       "digest": "29e666f8f6da5f30c4456f84dc4404d447fa57aa25d0b59d8dd639fba9d6876a",
+      "issue": 1569
+    },
+    "github:45709422677:1:completions:notice:c7e7ef655ef8be40c16b6a2a01d5992e123673531a1af5a46dcd9c625b08c934": {
+      "digest": "1faacfab7acde4e9601f2db66334072775791596a7a3ff47b5626842eb73b3b7",
       "issue": 1569
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
