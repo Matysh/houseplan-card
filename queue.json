@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25467,
-  "nextTicket": 710,
+  "revision": 25468,
+  "nextTicket": 711,
   "nextFence": 710,
   "tasks": {
     "1024": {
@@ -6392,14 +6392,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1572-webgl-marker-offline",
-      "materialSha": "95661464015fb2db97d1f4733e032da3752a2f29",
+      "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 709,
-      "queued": false,
+      "ticket": 710,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795650302136,
-      "reviewEntry": 1,
+      "readyAt": 1795651067659,
+      "reviewEntry": 2,
       "patchId": "5e4b6cf774e3cbdec54698ff1077a45c58a50373",
       "changedFiles": [
         "demo/smoke_device_offline.mjs",
@@ -6411,7 +6411,6 @@
         "src/plan-3d-world.ts",
         "src/styles/devices.styles.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7099,7 +7098,9 @@
       "runId": 45723000579
     }
   },
-  "waiting": [],
+  "waiting": [
+    1572
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7267,6 +7268,19 @@
           "eventId": "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:3:return:return:1572"
         },
         "delivered": true
+      }
+    },
+    "finish:e9e067ac-c296-425f-a5df-dbb17591b4c9": {
+      "digest": "40f384b17419907593f184dd1d605e522cc2cfce70b8b9ebdc6fa9460291234e",
+      "issue": 1572,
+      "message": {
+        "kind": "queued",
+        "issue": 1572,
+        "at": 1795651067659,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f"
       }
     }
   },
