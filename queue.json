@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24791,
+  "revision": 24792,
   "nextTicket": 698,
   "nextFence": 698,
   "tasks": {
@@ -6233,7 +6233,9 @@
         "src/plan-3d-viewport.ts",
         "src/plan-3d-world.ts",
         "test/iso-opening-masonry.test.mjs"
-      ]
+      ],
+      "automationError": "checks-unavailable",
+      "automationSince": 1795619183618
     }
   },
   "ownerDecisions": {},
@@ -7005,6 +7007,10 @@
     },
     "finish:e8095182-ed7d-4f11-a747-509954fc6901": {
       "digest": "de4fd53a276737e2a25880c4a99f2533b7f5d1a531e8cd20fed4783e84e0e12e",
+      "issue": 1566
+    },
+    "finish:dd205c3d-5057-4cc6-b969-0f3e1be7df78:finish:4:automation-pending": {
+      "digest": "82aa3debb0ae5f33216cfc1935f9086f7ea9cb1cd8f6ab628baf334801e9e7a5",
       "issue": 1566
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
