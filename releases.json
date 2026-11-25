@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1451,
+  "revision": 1452,
   "active": "v1.86.1-beta.10",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -276596,7 +276596,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.86.1-beta.10",
@@ -284806,7 +284806,8 @@
           "en": "## v1.86.1-beta.10 — 2026-11-25\n\n- Show thin interior corner lines through transparent 2.5D walls while preserving their depth and the existing wall paint (#1560).\n\n- Test maintenance: update the reviewed 2.5D wall-base references and remove timing races from light fade and warm floor switching checks (#1557, #1558, #1559)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.86.1-beta.10"
     }
   },
   "published": {
@@ -291083,7 +291084,8 @@
     "ship-review:result:fed4f851-900a-497d-a4a8-8edd4babfbdc": "6b795ec2c199ed6dd0b9387a6b7d55d96aeff474c0f7376013461bd66fc62a95",
     "beta-1861-10-publish-286b7991:runner-report": "ace7ba2dc8e769f4a1fd4b8a8ec10643303afc5b06a1b3282a46282d1e46e23f",
     "beta-1861-10-publish-286b7991:metrics": "30fd96708c917ebee5eb2979be378d08bd3bf9bf21430e795b58db8d22c4e076",
-    "beta-1861-10-publish-286b7991:prepared:01906076-e3d1-429e-babc-a543e075e407": "bd1430beb6180a50aee5f1d7935aa6f621bb34531fb235975901d316be772fab"
+    "beta-1861-10-publish-286b7991:prepared:01906076-e3d1-429e-babc-a543e075e407": "bd1430beb6180a50aee5f1d7935aa6f621bb34531fb235975901d316be772fab",
+    "beta-1861-10-publish-286b7991:started:1451": "ec8b3d9de944e67215d878e776d80606850306d8b7e7d5b3a5ceb5d834b38589"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
