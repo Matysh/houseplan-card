@@ -1,11 +1,11 @@
-<!-- release: v1.86.1-beta.9 -->
-<!-- base: v1.86.1-beta.8 -->
+<!-- release: v1.86.1-beta.10 -->
+<!-- base: v1.86.1-beta.9 -->
 <!-- language: ru -->
-## House Plan 1.86.1-beta.9
+## House Plan 1.86.1-beta.10
 
-В 2.5D основание стен теперь показано на всю толщину и непрерывно под окнами; разрывы под дверями и мягкая тень сохранены. Убраны светлые швы возле мебели и при масштабировании или перемещении плана (#1555).
+Внутренние углы теперь читаются сквозь прозрачные стены в 2.5D. Тонкие линии не меняют заливку стен и не рисуются поверх дверей или мебели, которые их заслоняют (#1560).
 
 <!-- language: en -->
-## House Plan 1.86.1-beta.9
+## House Plan 1.86.1-beta.10
 
-The 2.5D wall base now spans its full thickness beneath windows without closing doorway gaps or losing the soft shadow. Removed false seams beside furniture and when zooming or panning the plan (#1555).
+Interior corners are now visible through transparent 2.5D walls. The thin lines do not change the wall fill or draw over doors and furniture that hide them (#1560).

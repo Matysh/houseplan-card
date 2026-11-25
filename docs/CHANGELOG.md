@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+## v1.86.1-beta.10 — 2026-11-25
+
 - Show thin interior corner lines through transparent 2.5D walls while preserving their depth and the existing wall paint (#1560).
+
+- Test maintenance: update the reviewed 2.5D wall-base references and remove timing races from light fade and warm floor switching checks (#1557, #1558, #1559).
 
 ## v1.86.1-beta.9 — 2026-11-25
 
