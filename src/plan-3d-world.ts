@@ -64,6 +64,13 @@ export interface Plan3dFloorInk {
   capture(signal: AbortSignal): Promise<Blob | null>;
 }
 
+export interface Plan3dRoomHover {
+  bounds: ViewRect;
+  fillD: string;
+  outlineD: string;
+  accent: string;
+}
+
 export type Plan3dContactShadow = readonly [x: number, y: number, w: number, h: number, alpha: number];
 
 export interface Plan3dOutline {
@@ -80,6 +87,7 @@ export interface Plan3dWorldInput {
   paper: string;
   backdrop?: Plan3dImage;
   floorInk?: Plan3dFloorInk;
+  roomHover?: Plan3dRoomHover;
   panels: readonly IsoOpeningPanel[];
   rooms: readonly Plan3dRoom[];
   furniture: readonly Plan3dFurniture[];
@@ -267,6 +275,9 @@ export class Plan3dWorld {
   private readonly roomMeshes = new Map<string, { geometry: unknown; mesh: Mesh<BufferGeometry, MeshBasicMaterial> }>();
   private readonly backdrop = new Group();
   private readonly floorInk = new Group();
+  private readonly roomHover = new Group();
+  private roomHoverKey: readonly unknown[] = [];
+  private roomHoverTexture: CanvasTexture | undefined;
   private backdropKey: string | undefined;
   private backdropTexture: Texture | undefined;
   private backdropReady: Promise<void> | undefined;
@@ -292,7 +303,7 @@ export class Plan3dWorld {
     this.light = new Plan3dLightField(document, normalOffset);
     this.markers = new Plan3dMarkerLayer(document);
     this.scene.add(this.ground, this.structure, this.architecture, this.backdrop, this.openings, this.furniture, this.stairs, this.rooms, this.contacts,
-      this.floorInk, this.ribbons, this.markers.group, this.markerGlass);
+      this.floorInk, this.roomHover, this.ribbons, this.markers.group, this.markerGlass);
     this.scene.onBeforeRender = (_renderer, _scene, camera) => {
       this.syncTransparency();
       this.transparency.prepare(camera);
@@ -677,17 +688,55 @@ export class Plan3dWorld {
     });
   }
 
-  private planarInk(texture: Texture, { x, y, w, h }: ViewRect, angle: number, opacity: number, order: number): Mesh {
+  private planarInk(texture: Texture, { x, y, w, h }: ViewRect, angle: number, opacity: number, order: number, lit = true): Mesh {
     const geometry = new PlaneGeometry(w, h);
     geometry.rotateX(-Math.PI / 2);
     geometry.rotateY(-angle * Math.PI / 180);
     geometry.translate(x + w / 2, 0, y + h / 2);
-    const material = this.light.material({ map: texture, opacity, transparent: true, depthWrite: false,
-      polygonOffset: true, polygonOffsetFactor: -(order + 4), polygonOffsetUnits: -(order + 4) });
+    const options = { map: texture, opacity, transparent: true, depthWrite: false,
+      polygonOffset: true, polygonOffsetFactor: -(order + 4), polygonOffsetUnits: -(order + 4) };
+    const material = lit ? this.light.material(options) : new MeshBasicMaterial({ ...options, toneMapped: false });
     const mesh = new Mesh(geometry, material);
     mesh.renderOrder = order;
     mesh.userData.plan3dPick = { occludes: false };
     return mesh;
+  }
+
+  private updateRoomHover(input: Plan3dRoomHover | undefined, scale: number): void {
+    const key = input ? [input.fillD, input.outlineD, input.accent, scale,
+      input.bounds.x, input.bounds.y, input.bounds.w, input.bounds.h] : [];
+    if (same(key, this.roomHoverKey)) return;
+    this.roomHoverKey = key;
+    this.replace(this.roomHover, []);
+    this.roomHoverTexture?.dispose();
+    this.roomHoverTexture = undefined;
+    if (!input) return;
+    const { bounds, fillD, outlineD, accent } = input;
+    const { x, y, w, h } = bounds;
+    if (!(w > 0 && h > 0 && scale > 0) || ![x, y, w, h, scale].every(Number.isFinite)) return;
+    const density = Math.min(2, 1024 / Math.max(w, h));
+    const paint = this.document.createElement('canvas');
+    paint.width = Math.ceil(w * density);
+    paint.height = Math.ceil(h * density);
+    const ctx = paint.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(paint.width / w, 0, 0, paint.height / h, -x * paint.width / w, -y * paint.height / h);
+    ctx.fillStyle = 'rgba(0,0,0,.22)';
+    ctx.fill(new Path2D(fillD), 'evenodd');
+    const outline = new Path2D(outlineD);
+    ctx.strokeStyle = accent;
+    ctx.lineJoin = ctx.lineCap = 'round';
+    ctx.globalAlpha = .28;
+    ctx.lineWidth = 8 * scale;
+    ctx.stroke(outline);
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 3 * scale;
+    ctx.stroke(outline);
+    const texture = this.roomHoverTexture = new CanvasTexture(paint);
+    texture.colorSpace = SRGBColorSpace;
+    // On the physical floor, above room paint and below the floor decor.
+    // Opaque walls/furniture still occlude it; it does not intercept picking.
+    this.replace(this.roomHover, [this.planarInk(texture, bounds, 0, 1, -1.5, false)]);
   }
 
   private updateFloorInk(input: Plan3dFloorInk | undefined): void {
@@ -741,6 +790,7 @@ export class Plan3dWorld {
     this.updateBackdrop(input.backdrop);
     this.updateFloorInk(input.floorInk);
     this.updateRooms(input.rooms);
+    this.updateRoomHover(input.roomHover, visualScale);
     this.updateStairs(input.stairs ?? []);
     this.updateRibbons(input.ribbons ?? [], gridVisualUnits(isoDisplayWallHeight(), cellCm));
     const style = isoWallMaterial(display.color, display.wallFill.c, display.opacity);
@@ -820,6 +870,7 @@ export class Plan3dWorld {
 
   dispose(): void {
     this.transparency.clear();
+    this.updateRoomHover(undefined, 1);
     this.replace(this.structure, []);
     this.replace(this.architecture, []);
     this.replace(this.ground, []);

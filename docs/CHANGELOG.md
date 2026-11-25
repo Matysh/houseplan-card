@@ -8,6 +8,7 @@
 - Blend transparent walls and furniture in depth order so a wall behind a cabinet no longer darkens part of its face (#1568).
 - Refine 3D walls, thresholds and translucent furniture, keep device symbols sharp at high zoom, and let lamps and LED strips light nearby walls as well as the floor (#1567).
 - Remove competing wall and jamb faces that could flicker when zooming in WebGL 3D (#1569).
+- Restore the inset room highlight and its opening gaps when hovering in WebGL 3D (#1571).
 
 ## v1.86.1 — 2026-11-25
 

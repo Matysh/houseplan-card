@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1571,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Restore room hover in the unreleased WebGL renderer.",
+  "summary": {
+    "ru": "Подсветка комнаты при наведении в 3D.",
+    "en": "Room hover highlight in 3D."
+  }
+}

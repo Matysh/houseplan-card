@@ -103,6 +103,17 @@ try {
     const lamp = { points: [[8, 0]], height: 250, radius: 25, color: '#ff0000', intensity: 1, visible };
     const led = { points: [[15, 20], [15, 50]], height: 2, radius: 10, color: '#00ff00', intensity: 1, visible };
     const frames = [await lightFrame([]), await lightFrame([lamp, led]), await lightFrame([{ ...lamp, color: '#0000ff' }, led])];
+    const roomHover = await (async () => {
+      const shape = { bounds: { x: -100, y: -100, w: 200, h: 200 }, accent: '#ec4030',
+        fillD: 'M -35 -30 H 30 V 30 H -35 Z M -8 -8 H 8 V 8 H -8 Z',
+        outlineD: 'M -35 -30 V -8 M -35 8 V 30 H 30' };
+      async function frame(roomHover) {
+        world.present({ ...input, paper: '#aaaaaa', roomHover, lights: [] });
+        await new Promise(resolve => { painted = resolve; lit.present({ scene: world.scene, camera }); });
+        return [[82,100],[100,100],[145,100],[65,80],[65,100]].map(([x,y]) => pixel(canvas,x,y));
+      }
+      return [await frame(), await frame(shape), await frame()];
+    })();
     const base = world.structure.children[0].geometry;
     base.computeBoundingBox();
     const paperHeight = [base.boundingBox.min.y, base.boundingBox.max.y];
@@ -481,7 +492,7 @@ try {
     const deadline = performance.now() + 2000;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
-    return { contexts, pixels, picking, frames, paperHeight, windowJamb, transparentIntersection, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
+    return { contexts, pixels, picking, frames, roomHover, paperHeight, windowJamb, transparentIntersection, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, worldBlending, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
       fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas, steppedAtlas,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
@@ -494,6 +505,12 @@ try {
   assert.deepEqual(evidence.failures, [1, 1, 1, 1, 1, 1]);
   assert.deepEqual(evidence.staticSize, [200, 200]);
   assert.equal(evidence.backdropReady, true);
+  const [beforeHover, hovered, afterHover] = evidence.roomHover;
+  assert.ok(hovered[0][0] < beforeHover[0][0] - 20, 'the hovered clean floor is visibly shaded');
+  assert.deepEqual(hovered.slice(1,3), beforeHover.slice(1,3), 'holes and neighboring floors are not filled');
+  assert.ok(hovered[3][0] > hovered[3][1] + 50 && Math.abs(hovered[4][0] - hovered[4][1]) < 2,
+    'the accent follows the contour and does not bridge a gap');
+  assert.deepEqual(afterHover, beforeHover, 'leave removes the complete hover layer');
   assert.deepEqual(evidence.backdropPixel, [18, 52, 254, 255]);
   assert.equal(evidence.invalidBackdropReady, false);
   assert.ok(evidence.stairWithoutBackdrop[1] > 50, 'the pale tread has visible fill');

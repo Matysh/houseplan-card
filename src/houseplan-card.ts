@@ -14149,6 +14149,7 @@ export class HouseplanCard extends LitElement {
       view = this._authoredView(this._viewOr(this._baseVb('flat', null)), 'flat');
     }
     const spatial = isoFrame?.layers.structural === true;
+    const roomHover = this._roomHoverPaths(space);
     let sun3d: readonly import('./iso-sun').IsoSunBeam[] = [];
     if (iso) this._renderSunRays(space, beams => { sun3d = beams; });
     // One eager pattern for flat view and the 3D ground texture (#689).
@@ -14234,6 +14235,8 @@ export class HouseplanCard extends LitElement {
           backdrop: space.bg ? { url: this._display(space.bg.href), x: space.bg.x, y: space.bg.y,
             w: space.bg.w, h: space.bg.h, angle: space.bg.angle ?? 0, opacity: space.bg.opacity ?? 1 } : undefined,
           floorInk: floorInk(false),
+          roomHover: roomHover ? { ...roomHover, bounds: content.all,
+            accent: this._cssColor('var(--hp-accent, var(--primary-color, #039be5))', '#039be5') } : undefined,
           panels: isoFrame.panels, rooms: rooms3d(roomFills), furniture: furniture3d, stairs: this._stairsView.physicalItems(),
           ribbons: this._ledRt(space)?.plan3dLedRibbons(this as never, space, disp.glow),
           decorWidth: NORM_W, decorHeight: this._decorH,
@@ -14260,7 +14263,8 @@ export class HouseplanCard extends LitElement {
       if (this._mode === 'view' && projection === this._desiredProjection && !this._modeTransitionBusy) {
         const live = this._plan3dPresentation, { layers } = isoFrame, scene = isoScene;
         this._startup3dSource = () => ({ ...live, world: {
-          ...live.world, lights: [], ribbons: [], floorInk: floorInk(true), rooms: rooms3d(this._resolvedRoomFills(space, disp, true)),
+          ...live.world, lights: [], ribbons: [], roomHover: undefined,
+          floorInk: floorInk(true), rooms: rooms3d(this._resolvedRoomFills(space, disp, true)),
           panels: isoRuntime.resolveIsoOpeningPanels(layers, scene, this._openingsR, opening => resolvedOpeningAmount(opening, () => null),
             opening => resolveOpeningVisual(opening, () => null, resolvedOpeningAmount(opening, () => null))),
         } });
@@ -14282,7 +14286,6 @@ export class HouseplanCard extends LitElement {
     const stageBg = this._editing ? '' : this._stageBg(disp);
     // opening rulers: the drag of an existing one OR the placement preview
     const opMeasure = this._opMeasureView;
-    const roomHover = this._roomHoverPaths(space);
     const backdropHref = space.bg ? this._display(space.bg.href) : '';
     const backdropPaint = space.bg ? backdropPaintBox(space.bg,this._cellCm) : null;
 
