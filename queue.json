@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24284,
+  "revision": 24285,
   "nextTicket": 686,
   "nextFence": 686,
   "tasks": {
@@ -2745,40 +2745,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "68fb9d6ec311e669bd7a9299022173d6a551e599"
-      }
-    },
-    "1468": {
-      "issue": 1468,
-      "branch": "issue/1468-release-return-163fc4a94159",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-      "mergedSha": "f4f474cf489015af967bbd6fa03cda62c07bc975",
-      "mergedAt": 1795066835710,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.85.3-beta.2",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "f4f474cf489015af967bbd6fa03cda62c07bc975"
       }
     },
     "1469": {
@@ -6085,10 +6051,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "releaseTag": "v1.86.1-beta.10",
       "devBuild": {
