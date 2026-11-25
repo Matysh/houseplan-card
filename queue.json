@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24940,
+  "revision": 24941,
   "nextTicket": 700,
   "nextFence": 700,
   "tasks": {
@@ -6983,7 +6983,8 @@
         "reviewChanges": "База `b9e82e0340` (#1566). Проверить достаточность общего решения без случайных исключений. В исходниках плита (`planPrismMesh` в `Plan3dWorld.present`) и чистые комнаты (`rooms3d` в `HouseplanCard`) задают два отдельных этапа поверхности пола; у `MarkerAtlas` максимум 128; `Plan3dLightField` применяет floorClip в общей маске, а мебельные грани сортируются группами частей. Величины и визуальные последствия предстоит измерить, ограничения старого 2.5D — в docs/ISOMETRIC.md. Выкладываемые данные — синтетические примеры, оригинальные скриншоты частного дома в репозиторий не переносятся.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
