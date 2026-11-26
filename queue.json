@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27399,
+  "revision": 27400,
   "nextTicket": 747,
   "nextFence": 747,
   "tasks": {
@@ -6232,7 +6232,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1589-ha-floor-onboarding",
-      "materialSha": "d6507fb3bae0f4ec1795ba335c550f5dae30554b",
+      "materialSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 746,
@@ -6240,7 +6240,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795728029102,
       "reviewEntry": 2,
-      "patchId": "94689b59c6cf60d8b21283d9a14ba4e9876492b7",
+      "patchId": "9dd08083a21f014869f1635ec516eb74d2e121cb",
       "changedFiles": [
         "demo/helpers/first-space.mjs",
         "demo/smoke_first_space_floor_import.mjs",
@@ -6249,10 +6249,13 @@
         "docs/release-ledger/v1.86.1/1589.json",
         "process-next/lib/source-dependencies.mjs",
         "process-next/lib/task-selection.mjs",
+        "scripts/mutation-registry.mjs",
         "src/editors/space-form-state.ts",
         "src/editors/space-form.ts",
         "src/houseplan-editor-runtime.ts",
-        "src/houseplan-onboarding-runtime.ts"
+        "src/houseplan-onboarding-runtime.ts",
+        "test/dialog-baseline.test.mjs",
+        "test/mutation-browser-offload.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -6969,11 +6972,12 @@
     "worker": "finish",
     "token": "746:finish:974d6940-17f1-409c-8b0c-6624b02e5929:finish:2:admit",
     "fence": 746,
-    "materialSha": "d6507fb3bae0f4ec1795ba335c550f5dae30554b",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
+    "expectedBase": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
+    "phase": "testing",
     "admittedAt": 1795728526653,
-    "expiresAt": 1795728826653
+    "expiresAt": 1795728836547,
+    "patchId": "9dd08083a21f014869f1635ec516eb74d2e121cb"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7078,6 +7082,10 @@
     },
     "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec:finish:3:return": {
       "digest": "f02edc706bbd758b3ddfe75c95e4e8857c9365d7f94fee98658c08eb02ab5f93",
+      "issue": 1589
+    },
+    "finish:974d6940-17f1-409c-8b0c-6624b02e5929:finish:3:synchronized": {
+      "digest": "b8b9d748a95c615e3ea662834f2764eec4ee3a01b060a286efbd71aa29ad3787",
       "issue": 1589
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
