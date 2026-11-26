@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27009,
-  "nextTicket": 739,
+  "revision": 27010,
+  "nextTicket": 740,
   "nextFence": 739,
   "tasks": {
     "1001": {
@@ -9,14 +9,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1001-ha-automation-alerts",
-      "materialSha": "27a5b77e61749989c85cf6f5d7780e333f62b52d",
+      "materialSha": "1af123618b77fe71e860941605dedd41b279069d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 738,
-      "queued": false,
+      "ticket": 739,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795697691546,
-      "reviewEntry": 1,
+      "readyAt": 1795700004624,
+      "reviewEntry": 2,
       "patchId": "a50abc06085b48482bb06a92b4d1d97d1deeb269",
       "changedFiles": [
         "custom_components/houseplan/diagnostics.py",
@@ -68,20 +68,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1001:1:a50abc06085b48482bb06a92b4d1d97d1deeb269:3b305aeebc34c0618109d27c692f9a4ae3415cba",
-      "reviewMaterial": {
-        "materialSha": "27a5b77e61749989c85cf6f5d7780e333f62b52d",
-        "expectedBase": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-        "patchId": "a50abc06085b48482bb06a92b4d1d97d1deeb269"
-      },
-      "reviewRetry": {
-        "requestId": "review:1001:1:a50abc06085b48482bb06a92b4d1d97d1deeb269:3b305aeebc34c0618109d27c692f9a4ae3415cba",
-        "eventId": "github:45827670031:1:tick:0:review-retry",
-        "at": 1795699063422,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1001:1:a50abc06085b48482bb06a92b4d1d97d1deeb269:3b305aeebc34c0618109d27c692f9a4ae3415cba",
         "at": 1795699469812
@@ -7571,7 +7557,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1001
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7881,6 +7869,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:60a4ff8c-4868-44cd-a143-c4b47b132263": {
+      "digest": "27e53858ff320fdae13545850f1fb05f47ee90d66d6086a1466445badcc1aacb",
+      "issue": 1001,
+      "message": {
+        "kind": "queued",
+        "issue": 1001,
+        "at": 1795700004624,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "1af123618b77fe71e860941605dedd41b279069d",
+        "evidence": {
+          "id": "20261126T125745203-040ac819",
+          "name": "Тесты для задачи #1001 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1001-08LPBl/.git/process-next/runs/20261126T125745203-040ac819/report.json",
+          "materialSha": "27a5b77e61749989c85cf6f5d7780e333f62b52d",
+          "status": "passed",
+          "finishedAt": "2026-11-26T13:17:07.827Z",
+          "failures": []
+        }
       }
     }
   },
