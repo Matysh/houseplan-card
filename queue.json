@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25992,
-  "nextTicket": 721,
+  "revision": 25993,
+  "nextTicket": 722,
   "nextFence": 720,
   "tasks": {
     "1024": {
@@ -6558,6 +6558,20 @@
         "src/stairs-volume.ts",
         "test/stairs.test.mjs"
       ]
+    },
+    "1577": {
+      "issue": 1577,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1577-webgl-door-light",
+      "materialSha": "065bf71607de941b29d30e0a73d0042f2d2d9788",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 721,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795670931372,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7250,7 +7264,8 @@
     }
   },
   "waiting": [
-    1575
+    1575,
+    1577
   ],
   "active": {
     "issue": 1576,
@@ -7411,6 +7426,19 @@
         "layer": "product",
         "materialSha": "cddb8ea6c3b1f0fe2f384f53c276615f1f9a2130",
         "delivered": true
+      }
+    },
+    "finish:2cfda14b-a853-4c5c-87bd-8bb0c7589f79": {
+      "digest": "619f4f86870691f15028daa30fa63519c50884812c2e2ee4245b5b9c66492c4d",
+      "issue": 1577,
+      "message": {
+        "kind": "queued",
+        "issue": 1577,
+        "at": 1795670931372,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "065bf71607de941b29d30e0a73d0042f2d2d9788"
       }
     }
   },
