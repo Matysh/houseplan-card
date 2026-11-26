@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1485,
-  "active": null,
+  "revision": 1486,
+  "active": "v2.0.0-beta.1-20261126",
   "candidates": {
     "v1.84.0-beta.2": {
       "id": "v1.84.0-beta.2",
@@ -298008,6 +298008,185 @@
         "messageId": 1094,
         "finishedAt": "2026-11-25T07:19:14.746Z"
       }
+    },
+    "v2.0.0-beta.1-20261126": {
+      "id": "v2.0.0-beta.1-20261126",
+      "kind": "beta",
+      "branch": "release/2.0.0-beta.1-20261126",
+      "sourceSha": "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5",
+      "sha": "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5",
+      "runner": null,
+      "running": null,
+      "status": "prepared",
+      "membership": {
+        "schema": 1,
+        "tag": "v2.0.0-beta.1",
+        "candidate": "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5",
+        "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
+        "issues": [
+          {
+            "number": 1514,
+            "commits": [
+              "34d47ac990c27213aee5428a6f145641d4159e60",
+              "781dc2745dae59b72819e9808cebdcd64b21a290",
+              "7efb1a8312277c04f1d9087f8d0604870189df74",
+              "85b7a0f4eb33c2386069c93fe4fce5b24fe28b62",
+              "863b706d1a60db865e8ac55538b247576dcf586e",
+              "9cd21207a8bafc58addd7c2766ea139416b7c4ac",
+              "b0cff1b5198c3a907325a0945e1c2f82b987903f"
+            ]
+          },
+          {
+            "number": 1563,
+            "commits": [
+              "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
+              "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
+              "e45be50fb6c472591b17fba25dec4b75fb604d27"
+            ]
+          },
+          {
+            "number": 1564,
+            "commits": [
+              "547cea142f3a4fbec5781ea346534ed763e85026",
+              "fa12cdeaa569df911954b4f3621515d645cba54d"
+            ]
+          },
+          {
+            "number": 1565,
+            "commits": [
+              "4aebd7d64bf688073a224e985402863948f667b6"
+            ]
+          },
+          {
+            "number": 1566,
+            "commits": [
+              "09d08d749909298ace9e0c8e5fe2717ea9c30ae2",
+              "70869031b696df4931eb2eb6bde083ded7ffbea8",
+              "b679c34918304587f1521cffb03c7cedaebba514",
+              "b9e82e034013cf7ad8cfae72ad36600169ec0649",
+              "cee8e1e6695c8ee5db0ac2f2be3b23cde9822679",
+              "eed47ebadeaa3887144062fbf09e2ae2ef7720e0"
+            ]
+          },
+          {
+            "number": 1567,
+            "commits": [
+              "85a281821fb02031c8b18f8eb2b5254d48c71918",
+              "9870b3e5b064d80ab72771c84f7c20b533c8a4a6",
+              "ec0582978408f0af1bab5eff9bfca4084373d3ba"
+            ]
+          },
+          {
+            "number": 1568,
+            "commits": [
+              "14468186a748bce76eed9390083fedc460df51d1",
+              "b3b73024918c2ef9daa99bc98b0265c78836ff74",
+              "c51890ba23ee72961e346f71bef950a01c2480e4"
+            ]
+          },
+          {
+            "number": 1569,
+            "commits": [
+              "4e517619beacabcbbc912d92c7c821a135991031",
+              "5b45209452ed59329ca3d2054bf53f7336144172"
+            ]
+          },
+          {
+            "number": 1570,
+            "commits": [
+              "0540bcf097fb08aabe739e88c38883ab439b0c0b",
+              "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
+              "a1ac0219ab2b4f8702cc1799393e6a2197208dd7",
+              "bc8e04cb194d15c2febe20eee1a13dbe8d34e49a",
+              "dba345bf0f07b1b676e34667ec167d4ac57fbc07"
+            ]
+          },
+          {
+            "number": 1571,
+            "commits": [
+              "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d"
+            ]
+          },
+          {
+            "number": 1572,
+            "commits": [
+              "0f696c05c529bff05b89325e8f00c329e9e00b48",
+              "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+              "bc2c6ac45be56ab45b5c321cb8d70c3f3db96647"
+            ]
+          },
+          {
+            "number": 1573,
+            "commits": [
+              "af48a3bb57b013879d80c70d7fd1c66d12b177bb"
+            ]
+          },
+          {
+            "number": 1574,
+            "commits": [
+              "751db20d7e3ab8b1b047536f34e4946b24aa5b8c"
+            ]
+          },
+          {
+            "number": 1575,
+            "commits": [
+              "6560b865829e17fcc46247d422c7ec2dc1752945",
+              "b1b099b885c772eebb216382c482ed9d96064447"
+            ]
+          },
+          {
+            "number": 1576,
+            "commits": [
+              "d1419a1c50a6c05de40065f2af66e72728ecf570"
+            ]
+          },
+          {
+            "number": 1577,
+            "commits": [
+              "87440fd83d17bb144b2bbfcc320c2ab9b2ffba5c",
+              "8efe705401730d83e9ffbfa4a6053fe2752ed90c"
+            ]
+          },
+          {
+            "number": 1578,
+            "commits": [
+              "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9"
+            ]
+          },
+          {
+            "number": 1579,
+            "commits": [
+              "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5"
+            ]
+          }
+        ]
+      },
+      "includedIssues": [
+        1514,
+        1563,
+        1564,
+        1565,
+        1566,
+        1567,
+        1568,
+        1569,
+        1570,
+        1571,
+        1572,
+        1573,
+        1574,
+        1575,
+        1576,
+        1577,
+        1578,
+        1579
+      ],
+      "reviewRequired": false,
+      "review": null,
+      "metrics": null,
+      "metricsAcceptedSha": null,
+      "portToDev": [],
+      "diagnostics": []
     }
   },
   "published": {
@@ -304403,7 +304582,8 @@
     "stable-1861-publish-f175b7e:completion:0120ba37-54a1-4fe5-b155-c2fa0407039b": "9f91401e2ec2087e5e968ca58d64042417fc8965e288098528ea1a5fe83b962e",
     "stable-1861-publish-f175b7e:completion:92b8945b-dad0-4fbf-99b2-461dfeb85975": "01b09aebe97b05662c908011eae28fcf959ffa07b6c0cc357d56748c4c70b87e",
     "github:45567075448:1:complete:completion:871c5fe7-6d0f-4336-bd58-a8136f1ac392": "7f74037b59b1dba13e3bc0c175947d04a375d48ad4a55a24fc4c71d75c7607f8",
-    "github:45567075448:1:complete:completion:cf717f4b-b6af-4c46-a8e2-59cfccc0f149": "a418aacc8e4a16f915556476a17f0a4e5fcc63fcaf3d0126425261abc10963ac"
+    "github:45567075448:1:complete:completion:cf717f4b-b6af-4c46-a8e2-59cfccc0f149": "a418aacc8e4a16f915556476a17f0a4e5fcc63fcaf3d0126425261abc10963ac",
+    "beta-200-20261126-create": "488eceab4cfc56f4ccaa48575b5c5f649ce9ebc009a88441617ca3c7baaa5f41"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
