@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25569,
+  "revision": 25570,
   "nextTicket": 714,
   "nextFence": 712,
   "tasks": {
@@ -6466,162 +6466,26 @@
     },
     "1573": {
       "issue": 1573,
+      "branch": "codex/1573-zigbee-native-marker-layers",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1573-zigbee-native-marker-layers",
-      "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 711,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795651728886,
-      "reviewEntry": 1,
-      "patchId": "8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c",
-      "changedFiles": [
-        "demo/smoke_device_battery_zigbee.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v2.0.0/1573.json",
-        "src/houseplan-card.ts",
-        "src/hp-zigbee-topology-overlay.ts",
-        "src/plan-3d-host.ts",
-        "src/plan-3d-markers.ts",
-        "src/plan-3d-world.ts",
-        "src/styles/iso-lab-markers.styles.ts",
-        "src/zigbee-topology-overlay-bridge.ts"
-      ],
-      "s6": {
-        "id": "20261126T000907326-19f4fa51",
-        "name": "Тесты для задачи #1573 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T000907326-19f4fa51/report.json",
-        "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "status": "passed",
-        "finishedAt": "2026-11-26T00:18:44.941Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
+      "mergedSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
+      "mergedAt": 1795652720660,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1573:1:8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-      "reviewMaterial": {
-        "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "expectedBase": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "patchId": "8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1573:1:8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "eventId": "github:45727838393:1:tick:0:review-retry",
-        "at": 1795652350897,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1573,
-        "requestId": "review:1573:1:8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "kind": "code",
-        "base": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "patchId": "8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1573,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1573",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокеров не нашёл. Изменение закрывает три причины регрессии из #1573, и каждая исправлена в своём месте. (1) После выхода из WebGL на маркерах оставались атрибуты `data-hp-3d-native*`. Из-за них в Flat ядро и бейдж были прозрачны (`opacity:0`), линия была видна сквозь значок, а клики уходили в `_nativeDeviceForAction` без хоста и терялись. Теперь `_disposePlan3dHost` снимает эти атрибуты. (2) В WebGL ядро рисуется в canvas под оверлеем, поэтому DOM-порядок слоёв не мог убрать маршрут с ядра. Теперь маршрут и его копию над батареей вырезает SVG-маска из экранного контура (выпуклой оболочки) настоящего меша ядра. Бейджи в маску не входят, так что линия по-прежнему рисуется поверх бейджа и батареи, как требует критерий. (3) В 2.5D правило `iso-lab-markers` с z-index 5 для наведённого маркера перебивало «подъём» конечного устройства на 8. Новые селекторы повторяют контракт 8 с той же специфичностью и стоят позже, поэтому побеждают. Отдельно добавлен `pointerleave` на `.stage`: оверлей очищается при уходе указателя даже тогда, когда DOM-цель не совпадает с наведённым маркером. Принять работу мешает только одно: часть доказательств для WebGL и для возврата в Flat слабее, чем заявлено. Это перечислено в improvements; дефекта, который требовал бы возврата, я не установил.",
-          "understanding": "Проблема. После #1569/#1568 на dev в smoke_device_battery_zigbee видимые линии Zigbee пересекали ядра конечных устройств (Flat и WebGL), а при переносе указателя линии иногда оставались. На 1.86.1 тот же тест проходит.\n\nДо изменения:\n- Хост WebGL помечал DOM-маркеры атрибутами `data-hp-3d-native`/`-outline`: `plan.styles.ts:235-236` прячет `.device-core,.value-badge`, а `houseplan-card.ts:8353-8355` берёт владельца клика из `pick` хоста. `_disposePlan3dHost` эти атрибуты не снимал. Если Lit переиспользовал элементы `.dev` при возврате в Flat (или при откате в DOM 2.5D после `fail()`), ядро оставалось невидимым, а `_plan3dHost?.pick` возвращал `undefined`, поэтому `_clickDevice`/`_ctxDevice` молча завершались.\n- В WebGL ядро существует только в canvas. Оверлей Zigbee лежит выше, поэтому z-index 8 у DOM-маркера ядро не защищал.\n- В DOM 2.5D правило `:host([data-pointer-hover]) .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev:not(.unavail)[data-hp-device-hover]{z-index:5}` по специфичности (≈0,9,0) перебивало правило конечной точки из `devices.styles.ts:405` (0,5,0). Ядро наведённого конечного устройства оказывалось под маршрутом.\n\nПосле изменения:\n- `_disposePlan3dHost` снимает оба атрибута до `dispose()`.\n- Добавлен `Plan3dMarkerLayer.screenCoreSilhouettes`: берёт меш `id:0` (это ядро: `readPlan3dMarkerFaces` перечисляет `.device-core,.value-badge` в порядке документа, ядро идёт первым), проецирует его вершины текущей камерой кадра (`frame.camera`) в координаты экрана canvas и строит выпуклую оболочку (monotone chain).\n- Карта передаёт функцию в оверлей только при `_plan3dPresentation`. Оверлей в общем layout-кадре (рядом с `_clipRouteCopies`) переводит оболочки в собственные единицы SVG и заполняет два `<mask>`: для основного слоя маршрутов и для копии над батареей. Есть дедупликация по сигнатуре.\n- В `iso-lab-markers.styles.ts` добавлены три селектора с z-index 8 для конечных устройств (обычное, наведённое, с фокусом).\n- В оверлее появился обработчик `pointerleave` на `.stage`, который вызывает `_clear()`; он корректно снимается в `_disconnectParent`.\n\nРазобранные пути:\n- Жизненный цикл хоста: `_syncPlan3dHost`, ветки dispose и fail, замыкание onPaint с `paintedMarkers`.\n- Выбор действия по атрибуту native: `_nativeDeviceForAction`, `_clickDevice`, `_ctxDevice`.\n- Порядок граней и создание мешей в `plan-3d-markers.ts`, обновление `frame` в `Plan3dHost.draw`.\n- В оверлее: render, layout-кадр, MutationObserver, `_pointerOver`/`_pointerOut`/`_adoptPointerHover`, `_clear`.\n- Путь очистки наведения в карте: `.dev @pointerleave` → `clearPointerHover` → `_deviceHits.hover(null)` → снятие `data-hp-device-hover` → наблюдатель оверлея.\n- Специфичность и порядок правил z-index в `devices.styles.ts` и `iso-lab-markers.styles.ts`.\n- Изменённый smoke целиком.",
-          "analysis": [
-            {
-              "topic": "Снятие нативного владения краской при выходе из WebGL",
-              "assessment": "Исправление точное и находится в правильном месте: атрибуты ставит хост через onPaint, значит при уничтожении хоста их и надо снимать. Это закрывает сразу три сценария: возврат в Flat, откат в DOM 2.5D после `fail()` (раньше ядра там тоже оставались невидимыми) и молчаливую потерю кликов. Новый хост при смене authority снова выставит атрибуты при первом onPaint, потому что `paintedMarkers` живёт в новом замыкании. Цена небольшая: при пересоздании хоста ядра в DOM могут на мгновение стать видимыми до первого нативного кадра. Это честнее прежнего состояния, когда ядра были невидимы без какой-либо краски.",
-              "evidence": "`src/houseplan-card.ts:816-825` (новое снятие атрибутов), `849-856` (onPaint ставит атрибуты), `8350-8356` (`pick` без хоста → `undefined` → `_clickDevice:8403 return`), `src/styles/plan.styles.ts:235-236`."
-            },
-            {
-              "topic": "Маска маршрутов по силуэту нативного ядра",
-              "assessment": "Подход оправдан. Оверлей обязан оставаться над canvas, чтобы линия была поверх бейджа и батареи, поэтому «спрятать» ядро можно только вычитанием его экранного контура. Берётся именно меш ядра (`:0`), а не бейджи, что прямо соответствует критерию «за телом, но поверх бейджа». Оболочка призмы выпуклая (скруглённый прямоугольник), поэтому выпуклая оболочка проекции точна, включая боковые стенки. Маска стоит на обоих слоях, так что копия над батареей тоже не рисует по ядру. Пересчёт идёт только в существующем layout-кадре и только для текущих конечных точек; DOM не трогается, если сигнатура не изменилась. Слабые места: маска обновляется только когда запускается layout-кадр. Атрибуты `data-hp-3d-native` не входят в `attributeFilter`, поэтому если нативный меш появится уже во время наведения (поздняя загрузка глифа, готовность хоста после начала наведения), маска останется пустой до следующей релевантной мутации. При смене наведения старые полигоны живут один кадр. Обе ситуации краевые и переходные.",
-              "evidence": "`src/plan-3d-markers.ts:246-276`, `src/plan-3d-host.ts:125-129` (пустой результат до `data-hp-plan-3d-ready`), `src/hp-zigbee-topology-overlay.ts:219-220, 320-340, 697-710`, `396-397` (`attributeFilter`)."
-            },
-            {
-              "topic": "z-index конечных устройств в 2.5D",
-              "assessment": "Это тот же приём, что и в #809/#813: контракт повторяется с равной специфичностью ниже по каскаду. Специфичность наведённого варианта (`:host(...)` + 4 класса/атрибута stage + `.dev` + атрибут конечной точки + атрибут наведения) равна правилу z-index 5 с `:not(.unavail)`; фокусный вариант тоже равен своему правилу 5. Новые правила идут позже, поэтому побеждают. Обычный маркер не затронут. Smoke-проверки #809/#813 (`iso_nonEndpointKeepsBaseLayer`, `iso_hoveredNonEndpointKeepsHoverLayer`, `iso_focused*`) явно проверяют, что 2/5/8 сохраняются. Третий селектор без hover и focus при этом не избыточен: он перебивает базовые правила плавающих маркеров с меньшей специфичностью.",
-              "evidence": "`src/styles/iso-lab-markers.styles.ts:200-210`, `src/styles/devices.styles.ts:383-407`, `demo/smoke_device_battery_zigbee.mjs:299-389`."
-            },
-            {
-              "topic": "Очистка при уходе указателя",
-              "assessment": "`pointerleave` на `.stage` — простая и безопасная страховка. Когда DOM-цель отличается от владельца наведения, `_pointerOut` выходит раньше (`from.dataset.id !== _hovered`), и до изменения очистка зависела только от снятия `data-hp-device-hover` картой. При этом пропуске во время `_cameraGestureActive` (`houseplan-card.ts:15540`) атрибут мог остаться. Новый обработчик закрывает уход со всей сцены. Перенос указателя внутри сцены по-прежнему держится на старом пути через наблюдатель атрибута наведения. Исходный сбой (`mouse.move(10,10)` и ожидание исчезновения стрелок, строки 418-420) входит в тот же smoke, который в S6 прошёл. Побочный эффект: если перетаскивание камеры мышью выходит за пределы сцены, линии очистятся, хотя карта сохраняет наведение. После возврата указателя `pointerover` их восстановит, так что это приемлемо.",
-              "evidence": "`src/hp-zigbee-topology-overlay.ts:376, 416, 447-460`; `src/live-hover.ts:206-214`; `src/device-hit-owner.ts:383-392`."
-            },
-            {
-              "topic": "Доказательная база smoke",
-              "assessment": "Сильная сторона: парные кадры с маршрутом и без него на обеих проекциях. Для WebGL отдельный кадр `route-active-control` снимается после снятия временного сдвига подписи, поэтому проверка ядра не смешивается с проверкой подписи. Слабые места: (а) на WebGL область «внутри ядра» определяется той же функцией `screenCoreSilhouettes`, которая строит маску. Проверка подтверждает, что маска работает внутри оболочки, но не что оболочка совпадает с реальной краской canvas. Математика стандартная (`project` камеры кадра + `getBoundingClientRect` canvas), поэтому риск несовпадения мне кажется низким. (б) `flatNeverRetainsNativePaintOwnership` выполняется в первой итерации до какого-либо 3D: фикстура объёмный вид не включает, так что проверка бессодержательна. Возврат из 3D в Flat косвенно покрывают пиксельные проверки ядер Flat во втором и третьем циклах (после iso), а восстановление кликов не проверяет ни одна проверка. (в) Перенос подписи на батарею в WebGL — синтетическая расстановка. Как свидетельство порядка слоёв она допустима, и в комментарии это честно оговорено.",
-              "evidence": "`demo/smoke_device_battery_zigbee.mjs:76-77, 92-104, 123, 161-172, 188-298, 413-555`; `demo/helpers/device-battery-fixture.mjs` (поиск по `setVolumetricView` ничего не нашёл)."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Перенести `flatNeverRetainsNativePaintOwnership` на момент после реального возврата из iso: например, в начало второго цикла (строка 190, `iso=false`) или после строки 415. Там же добавить настоящий клик мышью по Flat-маркеру и проверить, что срабатывает действие или диалог, а не молчаливый `return`. Именно это обещает CHANGELOG («restore marker clicks»). Сейчас проверка атрибутов выполняется до первого входа в 3D и ничего не доказывает.",
-            "Сделать проверку ядра в WebGL независимой от проверяемого кода: внутри `nativeCore` дополнительно требовать, чтобы `window.__card._plan3dHost.pick(x, y)` возвращал `d_temp` (или чтобы пиксель кадра без маршрутов имел цвет грани ядра). Тогда тест подтвердит, что оболочка совпадает с реальной краской canvas, а не только что маска работает внутри себя. Цена — несколько вызовов `pick` в одном `evaluate`.",
-            "Добавить `data-hp-3d-native` в `attributeFilter` наблюдателя оверлея (или вызывать `onLayout`/`_scheduleLayout` из onPaint хоста) — по выбору. Тогда маска пересчитается, когда нативный меш конечной точки появится уже во время наведения (поздний глиф, готовность хоста после начала наведения). Сейчас в этом краевом случае линия до следующей мутации идёт поверх ядра.",
-            "При желании — короткий комментарий у `_pointerLeave` о том, зачем нужен отдельный выход со сцены: когда DOM-цель отличается от владельца наведения, `_pointerOut` намеренно ничего не делает. Без этого обработчик выглядит дублем очистки в карте."
-          ],
-          "boundaries": "Сборку, smoke и браузер я не запускал. Использовал только квитанцию S6 «Тесты для задачи #1573 (перед ревью)» на `af48a3bb` со статусом passed и без отказов; конкретный состав набора я не видел. Контекст исполнителя не предоставлен.\n\nПо исходникам изучены:\n- полный diff;\n- `hp-zigbee-topology-overlay.ts` (render, layout, обработчики указателя, наблюдатель);\n- `plan-3d-markers.ts` (порядок граней, создание мешей);\n- `plan-3d-host.ts`;\n- в `houseplan-card.ts`: жизненный цикл хоста и обработчики действий маркера;\n- `live-hover.ts`, `device-hit-owner.ts` (снятие атрибута наведения);\n- каскад z-index в `devices.styles.ts` и `iso-lab-markers.styles.ts`;\n- изменённый smoke целиком.\n\nНе проверено:\n- фактическое совпадение экранной оболочки с краской canvas при разных DPR, поворотах и наклонах;\n- поведение маски при живом панорамировании и зуме: я исхожу из того, что слой оверлея и камера WebGL сдвигаются одним и тем же аффинным преобразованием, как и сами маршруты;\n- корневая причина «иногда остаются линии» внутри сцены (без выхода с неё): прямой регрессионный сценарий с несовпадающей DOM-целью в diff отсутствует, а исходный сбой из smoke покрыт прошедшим S6."
-        },
-        "usage": {
-          "input_tokens": 58,
-          "cache_creation_input_tokens": 150386,
-          "cache_read_input_tokens": 2058770,
-          "output_tokens": 25624,
-          "output_tokens_details": {
-            "thinking_tokens": 15867
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 150386,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 988,
-              "cache_read_input_tokens": 131364,
-              "cache_creation_input_tokens": 23226,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 23226
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокеров не нашёл. Изменение закрывает три причины регрессии из #1573, и каждая исправлена в своём месте. (1) После выхода из WebGL на маркерах оставались атрибуты `data-hp-3d-native*`. Из-за них в Flat ядро и бейдж были прозрачны (`opacity:0`), линия была видна сквозь значок, а клики уходили в `_nativeDeviceForAction` без хоста и терялись. Теперь `_disposePlan3dHost` снимает эти атрибуты. (2) В WebGL ядро рисуется в canvas под оверлеем, поэтому DOM-порядок слоёв не мог убрать маршрут с ядра. Теперь маршрут и его копию над батареей вырезает SVG-маска из экранного контура (выпуклой оболочки) настоящего меша ядра. Бейджи в маску не входят, так что линия по-прежнему рисуется поверх бейджа и батареи, как требует критерий. (3) В 2.5D правило `iso-lab-markers` с z-index 5 для наведённого маркера перебивало «подъём» конечного устройства на 8. Новые селекторы повторяют контракт 8 с той же специфичностью и стоят позже, поэтому побеждают. Отдельно добавлен `pointerleave` на `.stage`: оверлей очищается при уходе указателя даже тогда, когда DOM-цель не совпадает с наведённым маркером. Принять работу мешает только одно: часть доказательств для WebGL и для возврата в Flat слабее, чем заявлено. Это перечислено в improvements; дефекта, который требовал бы возврата, я не установил.\n\n## Понимание решения\n\nПроблема. После #1569/#1568 на dev в smoke_device_battery_zigbee видимые линии Zigbee пересекали ядра конечных устройств (Flat и WebGL), а при переносе указателя линии иногда оставались. На 1.86.1 тот же тест проходит.\n\nДо изменения:\n- Хост WebGL помечал DOM-маркеры атрибутами `data-hp-3d-native`/`-outline`: `plan.styles.ts:235-236` прячет `.device-core,.value-badge`, а `houseplan-card.ts:8353-8355` берёт владельца клика из `pick` хоста. `_disposePlan3dHost` эти атрибуты не снимал. Если Lit переиспользовал элементы `.dev` при возврате в Flat (или при откате в DOM 2.5D после `fail()`), ядро оставалось невидимым, а `_plan3dHost?.pick` возвращал `undefined`, поэтому `_clickDevice`/`_ctxDevice` молча завершались.\n- В WebGL ядро существует только в canvas. Оверлей Zigbee лежит выше, поэтому z-index 8 у DOM-маркера ядро не защищал.\n- В DOM 2.5D правило `:host([data-pointer-hover]) .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev:not(.unavail)[data-hp-device-hover]{z-index:5}` по специфичности (≈0,9,0) перебивало правило конечной точки из `devices.styles.ts:405` (0,5,0). Ядро наведённого конечного устройства оказывалось под маршрутом.\n\nПосле изменения:\n- `_disposePlan3dHost` снимает оба атрибута до `dispose()`.\n- Добавлен `Plan3dMarkerLayer.screenCoreSilhouettes`: берёт меш `id:0` (это ядро: `readPlan3dMarkerFaces` перечисляет `.device-core,.value-badge` в порядке документа, ядро идёт первым), проецирует его вершины текущей камерой кадра (`frame.camera`) в координаты экрана canvas и строит выпуклую оболочку (monotone chain).\n- Карта передаёт функцию в оверлей только при `_plan3dPresentation`. Оверлей в общем layout-кадре (рядом с `_clipRouteCopies`) переводит оболочки в собственные единицы SVG и заполняет два `<mask>`: для основного слоя маршрутов и для копии над батареей. Есть дедупликация по сигнатуре.\n- В `iso-lab-markers.styles.ts` добавлены три селектора с z-index 8 для конечных устройств (обычное, наведённое, с фокусом).\n- В оверлее появился обработчик `pointerleave` на `.stage`, который вызывает `_clear()`; он корректно снимается в `_disconnectParent`.\n\nРазобранные пути:\n- Жизненный цикл хоста: `_syncPlan3dHost`, ветки dispose и fail, замыкание onPaint с `paintedMarkers`.\n- Выбор действия по атрибуту native: `_nativeDeviceForAction`, `_clickDevice`, `_ctxDevice`.\n- Порядок граней и создание мешей в `plan-3d-markers.ts`, обновление `frame` в `Plan3dHost.draw`.\n- В оверлее: render, layout-кадр, MutationObserver, `_pointerOver`/`_pointerOut`/`_adoptPointerHover`, `_clear`.\n- Путь очистки наведения в карте: `.dev @pointerleave` → `clearPointerHover` → `_deviceHits.hover(null)` → снятие `data-hp-device-hover` → наблюдатель оверлея.\n- Специфичность и порядок правил z-index в `devices.styles.ts` и `iso-lab-markers.styles.ts`.\n- Изменённый smoke целиком.\n\n## Разбор решения\n\n### Снятие нативного владения краской при выходе из WebGL\n\nИсправление точное и находится в правильном месте: атрибуты ставит хост через onPaint, значит при уничтожении хоста их и надо снимать. Это закрывает сразу три сценария: возврат в Flat, откат в DOM 2.5D после `fail()` (раньше ядра там тоже оставались невидимыми) и молчаливую потерю кликов. Новый хост при смене authority снова выставит атрибуты при первом onPaint, потому что `paintedMarkers` живёт в новом замыкании. Цена небольшая: при пересоздании хоста ядра в DOM могут на мгновение стать видимыми до первого нативного кадра. Это честнее прежнего состояния, когда ядра были невидимы без какой-либо краски.\n\nОснование: `src/houseplan-card.ts:816-825` (новое снятие атрибутов), `849-856` (onPaint ставит атрибуты), `8350-8356` (`pick` без хоста → `undefined` → `_clickDevice:8403 return`), `src/styles/plan.styles.ts:235-236`.\n\n### Маска маршрутов по силуэту нативного ядра\n\nПодход оправдан. Оверлей обязан оставаться над canvas, чтобы линия была поверх бейджа и батареи, поэтому «спрятать» ядро можно только вычитанием его экранного контура. Берётся именно меш ядра (`:0`), а не бейджи, что прямо соответствует критерию «за телом, но поверх бейджа». Оболочка призмы выпуклая (скруглённый прямоугольник), поэтому выпуклая оболочка проекции точна, включая боковые стенки. Маска стоит на обоих слоях, так что копия над батареей тоже не рисует по ядру. Пересчёт идёт только в существующем layout-кадре и только для текущих конечных точек; DOM не трогается, если сигнатура не изменилась. Слабые места: маска обновляется только когда запускается layout-кадр. Атрибуты `data-hp-3d-native` не входят в `attributeFilter`, поэтому если нативный меш появится уже во время наведения (поздняя загрузка глифа, готовность хоста после начала наведения), маска останется пустой до следующей релевантной мутации. При смене наведения старые полигоны живут один кадр. Обе ситуации краевые и переходные.\n\nОснование: `src/plan-3d-markers.ts:246-276`, `src/plan-3d-host.ts:125-129` (пустой результат до `data-hp-plan-3d-ready`), `src/hp-zigbee-topology-overlay.ts:219-220, 320-340, 697-710`, `396-397` (`attributeFilter`).\n\n### z-index конечных устройств в 2.5D\n\nЭто тот же приём, что и в #809/#813: контракт повторяется с равной специфичностью ниже по каскаду. Специфичность наведённого варианта (`:host(...)` + 4 класса/атрибута stage + `.dev` + атрибут конечной точки + атрибут наведения) равна правилу z-index 5 с `:not(.unavail)`; фокусный вариант тоже равен своему правилу 5. Новые правила идут позже, поэтому побеждают. Обычный маркер не затронут. Smoke-проверки #809/#813 (`iso_nonEndpointKeepsBaseLayer`, `iso_hoveredNonEndpointKeepsHoverLayer`, `iso_focused*`) явно проверяют, что 2/5/8 сохраняются. Третий селектор без hover и focus при этом не избыточен: он перебивает базовые правила плавающих маркеров с меньшей специфичностью.\n\nОснование: `src/styles/iso-lab-markers.styles.ts:200-210`, `src/styles/devices.styles.ts:383-407`, `demo/smoke_device_battery_zigbee.mjs:299-389`.\n\n### Очистка при уходе указателя\n\n`pointerleave` на `.stage` — простая и безопасная страховка. Когда DOM-цель отличается от владельца наведения, `_pointerOut` выходит раньше (`from.dataset.id !== _hovered`), и до изменения очистка зависела только от снятия `data-hp-device-hover` картой. При этом пропуске во время `_cameraGestureActive` (`houseplan-card.ts:15540`) атрибут мог остаться. Новый обработчик закрывает уход со всей сцены. Перенос указателя внутри сцены по-прежнему держится на старом пути через наблюдатель атрибута наведения. Исходный сбой (`mouse.move(10,10)` и ожидание исчезновения стрелок, строки 418-420) входит в тот же smoke, который в S6 прошёл. Побочный эффект: если перетаскивание камеры мышью выходит за пределы сцены, линии очистятся, хотя карта сохраняет наведение. После возврата указателя `pointerover` их восстановит, так что это приемлемо.\n\nОснование: `src/hp-zigbee-topology-overlay.ts:376, 416, 447-460`; `src/live-hover.ts:206-214`; `src/device-hit-owner.ts:383-392`.\n\n### Доказательная база smoke\n\nСильная сторона: парные кадры с маршрутом и без него на обеих проекциях. Для WebGL отдельный кадр `route-active-control` снимается после снятия временного сдвига подписи, поэтому проверка ядра не смешивается с проверкой подписи. Слабые места: (а) на WebGL область «внутри ядра» определяется той же функцией `screenCoreSilhouettes`, которая строит маску. Проверка подтверждает, что маска работает внутри оболочки, но не что оболочка совпадает с реальной краской canvas. Математика стандартная (`project` камеры кадра + `getBoundingClientRect` canvas), поэтому риск несовпадения мне кажется низким. (б) `flatNeverRetainsNativePaintOwnership` выполняется в первой итерации до какого-либо 3D: фикстура объёмный вид не включает, так что проверка бессодержательна. Возврат из 3D в Flat косвенно покрывают пиксельные проверки ядер Flat во втором и третьем циклах (после iso), а восстановление кликов не проверяет ни одна проверка. (в) Перенос подписи на батарею в WebGL — синтетическая расстановка. Как свидетельство порядка слоёв она допустима, и в комментарии это честно оговорено.\n\nОснование: `demo/smoke_device_battery_zigbee.mjs:76-77, 92-104, 123, 161-172, 188-298, 413-555`; `demo/helpers/device-battery-fixture.mjs` (поиск по `setVolumetricView` ничего не нашёл).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Перенести `flatNeverRetainsNativePaintOwnership` на момент после реального возврата из iso: например, в начало второго цикла (строка 190, `iso=false`) или после строки 415. Там же добавить настоящий клик мышью по Flat-маркеру и проверить, что срабатывает действие или диалог, а не молчаливый `return`. Именно это обещает CHANGELOG («restore marker clicks»). Сейчас проверка атрибутов выполняется до первого входа в 3D и ничего не доказывает.\n- Сделать проверку ядра в WebGL независимой от проверяемого кода: внутри `nativeCore` дополнительно требовать, чтобы `window.__card._plan3dHost.pick(x, y)` возвращал `d_temp` (или чтобы пиксель кадра без маршрутов имел цвет грани ядра). Тогда тест подтвердит, что оболочка совпадает с реальной краской canvas, а не только что маска работает внутри себя. Цена — несколько вызовов `pick` в одном `evaluate`.\n- Добавить `data-hp-3d-native` в `attributeFilter` наблюдателя оверлея (или вызывать `onLayout`/`_scheduleLayout` из onPaint хоста) — по выбору. Тогда маска пересчитается, когда нативный меш конечной точки появится уже во время наведения (поздний глиф, готовность хоста после начала наведения). Сейчас в этом краевом случае линия до следующей мутации идёт поверх ядра.\n- При желании — короткий комментарий у `_pointerLeave` о том, зачем нужен отдельный выход со сцены: когда DOM-цель отличается от владельца наведения, `_pointerOut` намеренно ничего не делает. Без этого обработчик выглядит дублем очистки в карте.\n\n## Границы анализа\n\nСборку, smoke и браузер я не запускал. Использовал только квитанцию S6 «Тесты для задачи #1573 (перед ревью)» на `af48a3bb` со статусом passed и без отказов; конкретный состав набора я не видел. Контекст исполнителя не предоставлен.\n\nПо исходникам изучены:\n- полный diff;\n- `hp-zigbee-topology-overlay.ts` (render, layout, обработчики указателя, наблюдатель);\n- `plan-3d-markers.ts` (порядок граней, создание мешей);\n- `plan-3d-host.ts`;\n- в `houseplan-card.ts`: жизненный цикл хоста и обработчики действий маркера;\n- `live-hover.ts`, `device-hit-owner.ts` (снятие атрибута наведения);\n- каскад z-index в `devices.styles.ts` и `iso-lab-markers.styles.ts`;\n- изменённый smoke целиком.\n\nНе проверено:\n- фактическое совпадение экранной оболочки с краской canvas при разных DPR, поворотах и наклонах;\n- поведение маски при живом панорамировании и зуме: я исхожу из того, что слой оверлея и камера WebGL сдвигаются одним и тем же аффинным преобразованием, как и сами маршруты;\n- корневая причина «иногда остаются линии» внутри сцены (без выхода с неё): прямой регрессионный сценарий с несовпадающей DOM-целью в diff отсутствует, а исходный сбой из smoke покрыт прошедшим S6.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: cb77645a5a916d1d38cfed2f35cbe67a382a1e7d → af48a3bb57b013879d80c70d7fd1c66d12b177bb\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-26T00:24:40.075Z",
-        "artifactId": 15075956457,
-        "runId": 45727872786,
-        "runAttempt": 1,
-        "completedAt": "2026-11-26T00:24:43Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45727872786",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795652714799,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     }
   },
   "ownerDecisions": {},
@@ -7303,19 +7167,7 @@
     1572,
     1570
   ],
-  "active": {
-    "issue": 1573,
-    "worker": "finish",
-    "token": "711:finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:1:admit",
-    "fence": 711,
-    "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-    "expectedBase": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795651733669,
-    "expiresAt": 1795656309723,
-    "patchId": "8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c",
-    "reviewRequest": "review:1573:1:8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7465,90 +7317,6 @@
       "digest": "fba498f4fdbda9910bbf2ef55a9586423b21be60c62a5698db1749f69f37c06a",
       "issue": 1572
     },
-    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:2:synchronized": {
-      "digest": "8cf119296bd3d57d0c88ac2b6faecd8286fb60fac21386f48de7aa8e7eb6ede5",
-      "issue": 1573
-    },
-    "github:45726607188:1:completions:message:6fde93a104fc87749ca9a2b1201a7aae462259430426b89de903ef7d35be8eee": {
-      "digest": "b717088ca6aa4e2050395d11272996b291f28b145f2032b5bdb9b861a4e66017",
-      "issue": 1573
-    },
-    "github:45726607188:1:completions:message:bd0f35cc83c9c162d1660b521c4861419d45b4236f7a2fa44dc987810c1a6e61": {
-      "digest": "eb82e65d67461afdd8d030f8d18e6d007db033e8ca9c67ff1024ccd8ee0faacb",
-      "issue": 1573
-    },
-    "finish:c435ddfe-9671-439b-99de-db4872a94d75": {
-      "digest": "26e4c68bc1953e663fdd4666616f595fe4dd61cc41a776008efeee9c4ed40852",
-      "issue": 1573
-    },
-    "finish:8ab257f8-f3f2-4616-8e9d-7422b37e41e1": {
-      "digest": "219f90e6fb38e271325865fb4d3d99abd2717d37c26db2f09177ad43f9d18aef",
-      "issue": 1573
-    },
-    "finish:cf472e2d-362d-4537-9b1d-235448626fee": {
-      "digest": "ff6acf0b1bef723af8e33a914fe49e2cd8a9ec4d11a938e99615c05b063b2d36",
-      "issue": 1573
-    },
-    "finish:4ccd1366-d826-4856-a6e4-e4a6f58d85a3": {
-      "digest": "04ddfd7ab06ea0488daa373754854bb88316d000fd606625e61e4aa96e5429cb",
-      "issue": 1573
-    },
-    "finish:fb842dbb-43bb-4580-8ba7-67ca2e3a5551": {
-      "digest": "cc7e0ee854e0912b55f1ea005ecaad86f44b31f514bebac89f64ca06f14a18c0",
-      "issue": 1573
-    },
-    "finish:858fbbae-fe52-423f-a3fd-ded7697ec6b9": {
-      "digest": "49a9e7142987b7228360288f513b5f9f201242a3f99c7219a228a42a3f66aef5",
-      "issue": 1573
-    },
-    "finish:630d402e-d438-4b22-9f2c-136b9ab8d46b": {
-      "digest": "173e694524353d09d972d43c5d1f5d16c9740aea9f66e47b4c3eb48b4165956d",
-      "issue": 1573
-    },
-    "finish:edbdcbc8-7189-4a9c-a20a-6131eae3c403": {
-      "digest": "7af5517e5bc0b47d7e4da9a0e77fc4dbe00b18dae1e740a064cbb4124a8e14c5",
-      "issue": 1573
-    },
-    "github:45727611057:1:completions:message:327683e33767d8b5ae2c8ac3d1e96f13061c583fa02ee4c656e98009bcb348d3": {
-      "digest": "dc4b06d8fdcd150ead23b6a5fc256cb0cb586877f4160233997058beadb3405e",
-      "issue": 1573
-    },
-    "github:45727611057:1:completions:message:7fd11e3464d657a65d7b93274f5f5e2a8caeb2ca0e034da4c84ad287f5d3804f": {
-      "digest": "adeda3382006504c7ed0d6089c05aedc69bcda366bf1553222e43bd343f45095",
-      "issue": 1573
-    },
-    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:3:s6-label": {
-      "digest": "3fd0684f2a544a44de9e2bf834acfeebec9411ad8e958e619f66eae6a2420cd5",
-      "issue": 1573
-    },
-    "finish:6c671dc3-80fc-4b46-968b-b476d8da173f": {
-      "digest": "8f652627bbc9f7aac86d2b98cba316c97ae4a0333e6cde6c79a322c46a49b4c1",
-      "issue": 1573
-    },
-    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:4:review-requested": {
-      "digest": "c2e9cf2f186ede1fac6868217a18415e7342e3544c6df33577d90bcedae4f621",
-      "issue": 1573
-    },
-    "github:45727838393:1:tick:0:review-retry": {
-      "digest": "b7adea38e79467769d68d136fc51ed2e516e77208bcf3b95c8bf2f7a498d99a6",
-      "issue": 1573
-    },
-    "github:45727838393:1:completions:message:207a163b12de9101897c2dc264e132f87804b99a91fe41ca020555ac6cb30813": {
-      "digest": "6f07c6b30255a1a74c05ca143eab9e826aa82588d91bffd96af63a35772f36c5",
-      "issue": 1573
-    },
-    "github:45728546457:1:tick:0:review-presentation": {
-      "digest": "2e0c07c76a84f9d6ae7545dddb2675ee906e23b280fc5760cebff3addd783dd4",
-      "issue": 1573
-    },
-    "github:45728546457:1:tick:0:review-complete": {
-      "digest": "fabd2b5ec280e749e2f2237ff9e828f7bb54b8b256ad58c25a4be8f991e79b0f",
-      "issue": 1573
-    },
-    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:9:automation-pending": {
-      "digest": "3c88fc4b62f69c18c3a26d44c6e37ab87bfbfa9a91c178e57f23787bee3c2446",
-      "issue": 1573
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7687,35 +7455,6 @@
         "delivered": true
       }
     },
-    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86": {
-      "digest": "15f64f270682379d060ad06d6c43a6f58f983b6081f3358d97fde2d6c9116754",
-      "issue": 1573,
-      "message": {
-        "kind": "queued",
-        "issue": 1573,
-        "at": 1795651728886,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "delivered": true
-      }
-    },
-    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:1:admit": {
-      "digest": "8ef1f8acc656f1ade951ac7874e7e19bf5e4717d7f6a80e57ec2de59a19e025c",
-      "issue": 1573,
-      "message": {
-        "kind": "admitted",
-        "issue": 1573,
-        "at": 1795651733669,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:0c6f7078-c1e2-44a1-b3c6-38b3f14d6026": {
       "digest": "621ef974297919a6211ea06b5b9e24c44c88ca96a3145825f99a0c6077451264",
       "issue": 1572,
@@ -7750,36 +7489,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "ace6385ba7118b4921a5fa0c6f1c05b6e87975e2",
-        "delivered": true
-      }
-    },
-    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:3:s6-complete": {
-      "digest": "2ca7da93f7356875dcdcef92d7ee48e228db581860daf33afe4db241958ef3d7",
-      "issue": 1573,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1573,
-        "at": 1795652326246,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "phase": "review",
-        "evidence": {
-          "id": "20261126T000907326-19f4fa51",
-          "name": "Тесты для задачи #1573 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T000907326-19f4fa51/report.json",
-          "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-          "status": "passed",
-          "finishedAt": "2026-11-26T00:18:44.941Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
