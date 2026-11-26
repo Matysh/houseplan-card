@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26767,
+  "revision": 26768,
   "nextTicket": 737,
   "nextFence": 736,
   "tasks": {
@@ -6798,10 +6798,7 @@
         "entry": 1,
         "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
         "eventId": "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:3:return:return:1581"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795694636291,
-      "automationDetail": "Commit tracked task changes before finish"
+      }
     },
     "1582": {
       "issue": 1582,
@@ -7565,10 +7562,11 @@
     "token": "735:finish:b3fd8680-e7f3-4230-9f13-3b03b96d21ac:finish:1:admit",
     "fence": 735,
     "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
+    "phase": "testing",
     "admittedAt": 1795694631382,
-    "expiresAt": 1795695050266
+    "expiresAt": 1795695068385,
+    "patchId": "b156f575e0581a7872361e7f99e643d0da8a01ae"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7769,6 +7767,10 @@
     },
     "finish:ceee385a-ba69-43f8-bc38-2b5dbb4f258a": {
       "digest": "877895c56cfd543c67e60021c97e23f6ead95b44f7059fd3847a0690e738f9d4",
+      "issue": 1581
+    },
+    "finish:b3fd8680-e7f3-4230-9f13-3b03b96d21ac:finish:4:synchronized": {
+      "digest": "02215cd66b5e8f024812767183a5c47ad46d42b470e3d8841fdfa674de8ec61f",
       "issue": 1581
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
