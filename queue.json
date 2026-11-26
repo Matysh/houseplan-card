@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26623,
-  "nextTicket": 733,
+  "revision": 26624,
+  "nextTicket": 734,
   "nextFence": 733,
   "tasks": {
     "1024": {
@@ -6746,6 +6746,23 @@
         "src/plan-3d-world.ts",
         "test/plan-3d-floor-mask.test.mjs"
       ]
+    },
+    "1582": {
+      "issue": 1582,
+      "branch": "issue/1582-release-return-4e522bebc352",
+      "layer": "product",
+      "track": "show",
+      "ownerAssigned": false,
+      "syncMode": "merge",
+      "mergeSourceSha": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1",
+      "releaseTag": "v2.0.0-beta.1",
+      "materialSha": "4222d8cf6d8adaafb995ddcf99292a41d7782de2",
+      "ownerDecision": null,
+      "ticket": 733,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795692544059,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7423,7 +7440,9 @@
       "runId": 45799718453
     }
   },
-  "waiting": [],
+  "waiting": [
+    1582
+  ],
   "active": {
     "issue": 1580,
     "worker": "finish",
@@ -7553,6 +7572,19 @@
         "materialSha": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "release-return:4b4be159-fbd4-4c73-9bad-a68f4161f952": {
+      "digest": "8ebe01cd046759d362519fd835796a21dcaa8f9ccbf83b5b9e69315009378600",
+      "issue": 1582,
+      "message": {
+        "kind": "queued",
+        "issue": 1582,
+        "at": 1795692544059,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "4222d8cf6d8adaafb995ddcf99292a41d7782de2"
       }
     }
   },
