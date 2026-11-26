@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1580,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Correct the WebGL solar receiver and soften its existing beam footprint in the unreleased 3D renderer.",
+  "summary": {
+    "ru": "Свет из окон ложится на пол с мягкими краями в WebGL 3D.",
+    "en": "Window sunlight falls on the floor with soft edges in WebGL 3D."
+  }
+}

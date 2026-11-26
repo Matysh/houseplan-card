@@ -14429,18 +14429,13 @@ export class HouseplanCard extends LitElement {
             height: (source.key.startsWith('led:') ? 2 : 250) / this._cellCm * this._gridPitch,
             intensity: source.alpha,
           } as import('./plan-3d-light-field').Plan3dLight)),
-          ...sun3d.map(beam => {
-            const window = isoScene!.physical.openings.find(opening => opening.id === beam.openingId);
-            const height = window?.windowProfile?.glassTop ?? window?.apertureTop
-              ?? gridVisualUnits(isoDisplayWallHeight(), this._cellCm);
-            return {
-              id: `sun:${beam.openingId}:${beam.roomId}`, points: [beam.a, beam.b], height, radius: Math.hypot(...beam.shift),
-              color: beam.lightFloor ? '#e2b95e' : '#ffe9b4',
-              intensity: this._sunOut ? 0 : beam.lightFloor ? .46 : .62,
-              visible: beam.polys.map(poly => 'M ' + poly.map(point => point.join(' ')).join(' L ') + ' Z'),
-              sun: { inward: beam.normal, depth: beam.depth, tilt: height / beam.depth },
-            };
-          })],
+          ...sun3d.map(beam => ({
+            id: `sun:${beam.openingId}:${beam.roomId}`, points: [beam.a, beam.b], height: 0,
+            radius: Math.hypot(...beam.shift), color: beam.lightFloor ? '#e2b95e' : '#ffe9b4',
+            intensity: this._sunOut ? 0 : beam.lightFloor ? .46 : .62,
+            visible: beam.polys.map(poly => 'M ' + poly.map(point => point.join(' ')).join(' L ') + ' Z'),
+            sun: { inward: beam.normal, depth: beam.depth },
+          }))],
         },
       };
       if (this._mode === 'view' && projection === this._desiredProjection && !this._modeTransitionBusy) {

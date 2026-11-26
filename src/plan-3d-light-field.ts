@@ -35,11 +35,12 @@ export interface Plan3dLight {
   ribbon?: boolean;
   rule?: CanvasFillRule;
   floorClip?: readonly string[] | null;
-  sun?: { inward: PlanPoint; depth: number; tilt: number };
+  sun?: { inward: PlanPoint; depth: number };
 }
 
 const TILE = 128;
 const PAD = 2;
+const SOLAR_FEATHER_TEXELS = 4;
 const STRIDE = 1024;
 const LIGHT_TEXELS = 6;
 const NO_OPENINGS: readonly IsoOpeningBasis[] = [];
@@ -114,6 +115,7 @@ const LIGHT_GLSL = `
   uniform float uHpTileCount;
   uniform float uHpNormalOffset;
   uniform float uHpSideShade;
+  uniform bool uHpFloorPaint;
   vec4 hpData(int index) {
     return texelFetch(uHpLights, ivec2(index % ${STRIDE}, index / ${STRIDE}), 0);
   }
@@ -167,7 +169,9 @@ const LIGHT_GLSL = `
     for (int i = 0; i < uHpLightCount; i++) {
       int index = i * ${LIGHT_TEXELS};
       vec4 sun = hpData(index + 3);
-      bool wall = sun.z <= 0.0 && abs(N.y) < .01;
+      bool solar = sun.z > 0.0;
+      if (solar && !uHpFloorPaint) continue;
+      bool wall = !solar && abs(N.y) < .01;
       vec4 bounds = hpData(index + (wall ? 4 : 0));
       vec2 samplePoint = probe;
       if (wall) {
@@ -195,11 +199,11 @@ const LIGHT_GLSL = `
       if (wall) visible = texture2D(uHpWallMasks, maskUv).a;
       else {
         vec2 floorMask = texture2D(uHpMasks, maskUv).rg;
-        // Distance provides a continuous sub-texel contour, with the same
-        // world-space softness at every zoom. Sunlight and raised receivers
-        // keep their original coverage from the same packed sample.
-        visible = sun.z <= 0.0 && floorReceiver
-          ? smoothstep(.25, .75, floorMask.r) : floorMask.g;
+        // Feather the solar contour inward so the soft edge never expands
+        // beyond the clipped beam. Artificial floor shadows retain their
+        // narrower transition, and raised receivers retain raw coverage.
+        visible = solar ? smoothstep(.5, 1.0, floorMask.r)
+          : floorReceiver ? smoothstep(.25, .75, floorMask.r) : floorMask.g;
       }
       if (visible < 0.001) continue;
       vec4 optical = hpData(index + 1);
@@ -207,14 +211,11 @@ const LIGHT_GLSL = `
       int start = int(optical.z);
       int count = int(optical.w);
       vec2 next = hpData(start).xy;
-      if (sun.z > 0.0) {
-        vec2 p = probe - next;
-        float travel = dot(sun.xy, p);
-        if (travel < 0.0 || travel >= sun.z || vHpWorld.y > max(0.0, optical.y - travel * sun.w)) continue;
-        vec3 towardWindow = vec3(-sun.x, max(0.001, sun.w), -sun.y);
-        float incidence = floorReceiver ? 1.0 : max(dot(N, normalize(towardWindow)), .18);
+      if (solar) {
+        float travel = dot(sun.xy, position - next);
+        if (travel < 0.0 || travel >= sun.z) continue;
         float fading = hpFalloff(travel / sun.z);
-        float energy = clamp(1.22 * pigment.a * visible * fading * incidence, 0.0, 1.0);
+        float energy = clamp(1.22 * pigment.a * visible * fading, 0.0, 1.0);
         remaining *= 1.0 - pigment.rgb * energy;
         reflected *= 1.0 - (1.0 - pigment.rgb) * energy * .52;
         continue;
@@ -343,8 +344,8 @@ export class Plan3dLightField {
 
   set(sources: readonly Plan3dLight[], openings = this.openings): void {
     const usable = sources.filter(source => source.radius > 0 && source.points.length && (source.visible.length || source.wallVisible?.length));
-    const maskKey = JSON.stringify(usable.map(({ points, radius, visible, rule, floorClip, wallVisible, wallClip }) =>
-      [points, radius, visible, rule, floorClip, wallVisible, wallClip]));
+    const maskKey = JSON.stringify(usable.map(({ points, radius, visible, rule, floorClip, wallVisible, wallClip, sun }) =>
+      [points, radius, visible, rule, floorClip, wallVisible, wallClip, !!sun]));
     const opticalKey = JSON.stringify(usable.map(({ color, height, intensity, sun, ribbon }) => [color, height, intensity, sun, ribbon]));
     const sameMask = maskKey === this.maskKey;
     const openingChanged = openings !== this.openings;
@@ -386,7 +387,7 @@ export class Plan3dLightField {
         context.clearRect(0, 0, TILE, TILE);
         this.drawMask(context, source.visible, rule, source.floorClip, bounds[index], 0, 0);
         packFloorMask(context.getImageData(0, 0, TILE, TILE).data, TILE, pixels, edge, column, row,
-          source.sun ? null : this.floorDistances);
+          this.floorDistances, source.sun ? SOLAR_FEATHER_TEXELS : undefined);
         if (!source.sun) this.drawMask(this.wallContext, source.wallVisible ?? source.visible, rule,
           source.wallClip, this.wallBounds[index], column, row);
       }
@@ -410,7 +411,7 @@ export class Plan3dLightField {
       }
       values.push(...bounds[index], source.radius, source.height, pointStart,
         source.points.length, color.r, color.g, color.b, source.intensity,
-        sun?.inward[0] ?? 0, sun?.inward[1] ?? 0, sun?.depth ?? 0, sun?.tilt ?? (source.ribbon ? -1 : 0),
+        sun?.inward[0] ?? 0, sun?.inward[1] ?? 0, sun?.depth ?? 0, source.ribbon ? -1 : 0,
         ...this.wallBounds[index], firstHead, heads.length, heads.length ? lowest : 0, 0);
     }
     const texture = dataTexture(values.concat(points), this.texture);
@@ -423,11 +424,12 @@ export class Plan3dLightField {
     this.opticalKey = opticalKey;
   }
 
-  material(params: MeshBasicMaterialParameters, shadeSides = false): MeshBasicMaterial {
+  material(params: MeshBasicMaterialParameters, shadeSides = false, floorPaint = false): MeshBasicMaterial {
     const material = new MeshBasicMaterial({ ...params, toneMapped: false });
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, this.uniforms);
       shader.uniforms.uHpSideShade = { value: shadeSides ? 1 : 0 };
+      shader.uniforms.uHpFloorPaint = { value: floorPaint };
       shader.vertexShader = shader.vertexShader
         .replace('#include <common>', '#include <common>\nvarying vec3 vHpWorld;\nvarying vec3 vHpNormal;')
         .replace('#include <project_vertex>', `#include <project_vertex>

@@ -19,7 +19,7 @@ import { Plan3dMarkerLayer, type MarkerRaster, type Plan3dMarker } from './plan-
 import { markerContactChains } from './iso-marker-outline';
 
 type Polygon = readonly (readonly PlanPoint[])[];
-type Paint = Readonly<{ color: string; opacity: number; lit?: boolean; shadeSides?: boolean; front?: boolean }>;
+type Paint = Readonly<{ color: string; opacity: number; lit?: boolean; shadeSides?: boolean; floorPaint?: boolean; front?: boolean }>;
 type Face = readonly (readonly Plan3dVertex[])[];
 type DrawObject = Mesh | LineSegments;
 
@@ -430,7 +430,7 @@ export class Plan3dWorld {
     const options = { color: paint.color, opacity: paint.opacity, transparent: paint.opacity < 1,
       depthWrite: paint.opacity >= 1, side: paint.front ? FrontSide : DoubleSide,
       forceSinglePass: true, toneMapped: false, visible: paint.opacity > 0 };
-    const material = paint.lit ? this.light.material(options, paint.shadeSides) : new MeshBasicMaterial(options);
+    const material = paint.lit ? this.light.material(options, paint.shadeSides, paint.floorPaint) : new MeshBasicMaterial(options);
     if (material.transparent) material.userData.plan3dSurfaceKey = JSON.stringify(paint);
     return material;
   }
@@ -645,7 +645,7 @@ export class Plan3dWorld {
       if (previous) this.disposeRoom(previous.mesh);
       const faces = polygons(geometry).map(polygon => horizontal(polygon, 0));
       const material = this.light.material({ color, opacity, visible: opacity > 0, transparent: true, depthWrite: false,
-        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }, false, true);
       const mesh = new Mesh(planFaceMesh(faces), material);
       mesh.renderOrder = -2;
       mesh.userData.plan3dPick = { occludes: false };
@@ -707,7 +707,7 @@ export class Plan3dWorld {
     geometry.translate(x + w / 2, 0, y + h / 2);
     const options = { map: texture, opacity, transparent: true, depthWrite: false,
       polygonOffset: true, polygonOffsetFactor: -(order + 4), polygonOffsetUnits: -(order + 4) };
-    const material = lit ? this.light.material(options) : new MeshBasicMaterial({ ...options, toneMapped: false });
+    const material = lit ? this.light.material(options, false, true) : new MeshBasicMaterial({ ...options, toneMapped: false });
     const mesh = new Mesh(geometry, material);
     mesh.renderOrder = order;
     mesh.userData.plan3dPick = { occludes: false };
@@ -827,7 +827,7 @@ export class Plan3dWorld {
       const wallHeight = gridVisualUnits(isoDisplayWallHeight(), cellCm);
       const base = polygons(physical.floor);
       this.groundShadow(base, visualScale);
-      const floor: Paint = { color: paper, opacity: 1, lit: true };
+      const floor: Paint = { color: paper, opacity: 1, lit: true, floorPaint: true };
       const walls = polygons(physical.walls);
       const authoredMasonry = new Set(physical.openingSurfaces.filter(surface =>
         surface.kind === 'window-apron-top' || surface.kind === 'opening-lintel-top').map(surface => surface.id));

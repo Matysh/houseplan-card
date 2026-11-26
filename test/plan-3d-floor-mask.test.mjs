@@ -29,12 +29,22 @@ test('floor shadow stores sub-texel distance as well as unchanged coverage in tw
   }
 });
 
-test('a thin aperture and the non-floor coverage path are not erased by quantization (#1578)', () => {
+test('a thin aperture retains its fractional coverage (#1578)', () => {
   const src = coverage(x => x === 14 ? 64 : 0), dst = new Uint8Array(size * size * 2);
   const index = 14 * 2;
   packFloorMask(src, size, dst, size, 0, 0, new Float32Array(size * size));
   assert.ok(dst[index] > 64, 'sub-texel light still reaches the floor');
-  packFloorMask(src, size, dst, size, 0, 0, null);
-  assert.equal(dst[index], 0, 'sun does not compute a signed-distance band');
-  assert.equal(dst[index + 1], 64, 'sun keeps the original coverage');
+  assert.equal(dst[index + 1], 64, 'raised receivers keep the original coverage');
+});
+
+test('a wider solar feather retains the same edge and coverage in the same tile (#1580)', () => {
+  const src = coverage(x => x >= 14 ? 255 : 0);
+  const dst = new Uint8Array(size * size * 2);
+  packFloorMask(src, size, dst, size, 0, 0, new Float32Array(size * size), 4);
+  const distance = x => dst[2 * (10 * size + x)];
+  assert.equal(distance(9), 0);
+  assert.ok(distance(13) < 128 && distance(14) > 127);
+  assert.ok(distance(14) < distance(15) && distance(15) < distance(16) && distance(16) < distance(17));
+  assert.equal(distance(18), 255);
+  assert.equal(dst[2 * (10 * size + 14) + 1], 255);
 });

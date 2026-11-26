@@ -382,6 +382,17 @@ Layer order: ABOVE room fills (and the glow layer), BELOW devices and
 labels (those live in the HTML `devlayer` anyway). Night
 (`elevation ≤ 0`) → no wedges. Wedges work under BOTH `bg_mode`s.
 
+## Window sunlight in WebGL 3D (#1580)
+
+The WebGL view paints sunlight onto the floor, including its room fill and
+plan artwork. Walls, window reveals and raised objects keep their usual
+shading. Lamps and LED strips continue to illuminate their own receivers.
+
+The solar footprint follows the existing openings, room outlines and
+obstacles. The floor texture stores the edge as a signed distance and fades
+sunlight inward over a four-texel band. The atlas stays at 128 pixels per
+tile and follows plan coordinates while the camera zooms or pans.
+
 ## 2.5D: the soft sun wash (#649)
 
 In the 2.5D View (General settings › Display › Show the plan in 2.5D) the Flat
