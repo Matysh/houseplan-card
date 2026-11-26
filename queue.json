@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25600,
+  "revision": 25601,
   "nextTicket": 714,
   "nextFence": 713,
   "tasks": {
@@ -6424,7 +6424,7 @@
       "ownerDecision": null,
       "ticket": 712,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795652031440,
       "reviewEntry": 3,
       "patchId": "14bf0dfb3ece486a088628e5121c85729c47331d",
@@ -6450,19 +6450,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261125T235804732-389cfd33",
+        "id": "20261126T002622815-c27809e7",
         "name": "Тесты для задачи #1572 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T235804732-389cfd33/report.json",
-        "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T002622815-c27809e7/report.json",
+        "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
         "status": "passed",
-        "finishedAt": "2026-11-26T00:01:07.869Z",
+        "finishedAt": "2026-11-26T00:35:37.736Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1572:2:6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "at": 1795651642920
-      }
+      "reviewRound": null
     },
     "1573": {
       "issue": 1573,
@@ -7174,9 +7170,9 @@
     "fence": 712,
     "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
     "expectedBase": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795652729711,
-    "expiresAt": 1795653594655,
+    "expiresAt": 1795656939220,
     "patchId": "14bf0dfb3ece486a088628e5121c85729c47331d"
   },
   "events": {
@@ -7589,6 +7585,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb"
+      }
+    },
+    "finish:0c6f7078-c1e2-44a1-b3c6-38b3f14d6026:finish:2:s6-complete": {
+      "digest": "782a503350d31e82e9cde6bd9451b68d6fd4ac76ad97b40b4fe2e28ea5b0d24f",
+      "issue": 1572,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1572,
+        "at": 1795653339220,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T002622815-c27809e7",
+          "name": "Тесты для задачи #1572 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T002622815-c27809e7/report.json",
+          "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+          "status": "passed",
+          "finishedAt": "2026-11-26T00:35:37.736Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "### Исправления по предыдущему ревью\nПересобираем shader variant только при смене transparent. Тест теперь монтирует доступный маркер, переводит его в unavailable, восстанавливает и снова отключает: на одном меше проверяются пиксели, hit-id и неизменная тень. Без needsUpdate два пиксельных условия красные; с исправлением весь browser smoke зелёный. Две прежние проверки привязки мутантов тоже зелёные.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
