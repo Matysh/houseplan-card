@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26920,
+  "revision": 26921,
   "nextTicket": 739,
   "nextFence": 739,
   "tasks": {
@@ -57,7 +57,10 @@
         "src/space-card.ts",
         "test/external-alerts-runtime.test.mjs",
         "tests_backend/test_ha_external_alerts.py"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1795697723101,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     },
     "1024": {
       "issue": 1024,
@@ -7646,6 +7649,10 @@
     },
     "finish:95b4b606-2310-4fac-ba77-17c21ee44641:finish:2:synchronized": {
       "digest": "ffdd9319cd37f0f6a236ea3c570a6329f966cf2e50fbe29c2c65c0a271a92b10",
+      "issue": 1001
+    },
+    "finish:95b4b606-2310-4fac-ba77-17c21ee44641:finish:3:automation-pending": {
+      "digest": "a7570c71a4a399e77faaaef704e338e1a0ab47460d0286bd6de8fd399ed3e45b",
       "issue": 1001
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
