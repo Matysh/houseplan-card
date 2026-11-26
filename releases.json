@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1496,
+  "revision": 1497,
   "active": "v2.0.0-beta.1-20261126",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -298371,7 +298371,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v2.0.0-beta.1",
         "candidate": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1",
         "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
         "issues": [
@@ -305647,6 +305647,178 @@
         "source": "chat",
         "sourceRef": "2026-11-26 Houseplan chat: 2.0.0-beta.1 size decision for cfb05d6c, identical ZIP and standalone JS on 4e522beb",
         "decisionText": "Да, принять эти размеры: весь frontend gzip 2 417 432 Б (+5,86%), ZIP 5 773 222 Б (+4,89%), начальный View 499 636 Б (−1,00%) к 1.86.1. Публикация только после остальных проверок."
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v2.0.0-beta.1",
+          "candidate": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1",
+          "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
+          "issues": [
+            {
+              "number": 1514,
+              "commits": [
+                "34d47ac990c27213aee5428a6f145641d4159e60",
+                "781dc2745dae59b72819e9808cebdcd64b21a290",
+                "7efb1a8312277c04f1d9087f8d0604870189df74",
+                "85b7a0f4eb33c2386069c93fe4fce5b24fe28b62",
+                "863b706d1a60db865e8ac55538b247576dcf586e",
+                "9cd21207a8bafc58addd7c2766ea139416b7c4ac",
+                "b0cff1b5198c3a907325a0945e1c2f82b987903f"
+              ]
+            },
+            {
+              "number": 1563,
+              "commits": [
+                "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
+                "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
+                "e45be50fb6c472591b17fba25dec4b75fb604d27"
+              ]
+            },
+            {
+              "number": 1564,
+              "commits": [
+                "547cea142f3a4fbec5781ea346534ed763e85026",
+                "fa12cdeaa569df911954b4f3621515d645cba54d"
+              ]
+            },
+            {
+              "number": 1565,
+              "commits": [
+                "4aebd7d64bf688073a224e985402863948f667b6"
+              ]
+            },
+            {
+              "number": 1566,
+              "commits": [
+                "09d08d749909298ace9e0c8e5fe2717ea9c30ae2",
+                "70869031b696df4931eb2eb6bde083ded7ffbea8",
+                "b679c34918304587f1521cffb03c7cedaebba514",
+                "b9e82e034013cf7ad8cfae72ad36600169ec0649",
+                "cee8e1e6695c8ee5db0ac2f2be3b23cde9822679",
+                "eed47ebadeaa3887144062fbf09e2ae2ef7720e0"
+              ]
+            },
+            {
+              "number": 1567,
+              "commits": [
+                "85a281821fb02031c8b18f8eb2b5254d48c71918",
+                "9870b3e5b064d80ab72771c84f7c20b533c8a4a6",
+                "ec0582978408f0af1bab5eff9bfca4084373d3ba"
+              ]
+            },
+            {
+              "number": 1568,
+              "commits": [
+                "14468186a748bce76eed9390083fedc460df51d1",
+                "b3b73024918c2ef9daa99bc98b0265c78836ff74",
+                "c51890ba23ee72961e346f71bef950a01c2480e4"
+              ]
+            },
+            {
+              "number": 1569,
+              "commits": [
+                "4e517619beacabcbbc912d92c7c821a135991031",
+                "5b45209452ed59329ca3d2054bf53f7336144172"
+              ]
+            },
+            {
+              "number": 1570,
+              "commits": [
+                "0540bcf097fb08aabe739e88c38883ab439b0c0b",
+                "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
+                "a1ac0219ab2b4f8702cc1799393e6a2197208dd7",
+                "bc8e04cb194d15c2febe20eee1a13dbe8d34e49a",
+                "dba345bf0f07b1b676e34667ec167d4ac57fbc07"
+              ]
+            },
+            {
+              "number": 1571,
+              "commits": [
+                "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d"
+              ]
+            },
+            {
+              "number": 1572,
+              "commits": [
+                "0f696c05c529bff05b89325e8f00c329e9e00b48",
+                "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+                "bc2c6ac45be56ab45b5c321cb8d70c3f3db96647"
+              ]
+            },
+            {
+              "number": 1573,
+              "commits": [
+                "af48a3bb57b013879d80c70d7fd1c66d12b177bb"
+              ]
+            },
+            {
+              "number": 1574,
+              "commits": [
+                "751db20d7e3ab8b1b047536f34e4946b24aa5b8c"
+              ]
+            },
+            {
+              "number": 1575,
+              "commits": [
+                "6560b865829e17fcc46247d422c7ec2dc1752945",
+                "b1b099b885c772eebb216382c482ed9d96064447"
+              ]
+            },
+            {
+              "number": 1576,
+              "commits": [
+                "d1419a1c50a6c05de40065f2af66e72728ecf570"
+              ]
+            },
+            {
+              "number": 1577,
+              "commits": [
+                "87440fd83d17bb144b2bbfcc320c2ab9b2ffba5c",
+                "8efe705401730d83e9ffbfa4a6053fe2752ed90c"
+              ]
+            },
+            {
+              "number": 1578,
+              "commits": [
+                "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9"
+              ]
+            },
+            {
+              "number": 1579,
+              "commits": [
+                "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1514,
+          1563,
+          1564,
+          1565,
+          1566,
+          1567,
+          1568,
+          1569,
+          1570,
+          1571,
+          1572,
+          1573,
+          1574,
+          1575,
+          1576,
+          1577,
+          1578,
+          1579
+        ],
+        "version": "2.0.0-beta.1",
+        "body": "<!-- release: v2.0.0-beta.1 -->\n<!-- base: v1.86.1 -->\n<!-- language: ru -->\n## Houseplan 2.0.0-beta.1\n\nПервая бета 2.0.0 переводит объёмный вид на WebGL. Стены, проёмы, мебель и устройства учитывают глубину сцены; лампы и LED-ленты освещают пол и стены. Значки и показания остаются чёткими при приближении. План по-прежнему редактируется в 2D, а экспорт SVG остаётся плоским. [#1514](https://github.com/Matysh/houseplan-card/issues/1514), [#1566](https://github.com/Matysh/houseplan-card/issues/1566), [#1567](https://github.com/Matysh/houseplan-card/issues/1567)\n\nСерверное 3D-превью с мебелью подстраивается под экран. При первом переключении на этаж Houseplan показывает индикатор подготовки и заменяет прежний этаж только тогда, когда новый отрисован целиком. [#1574](https://github.com/Matysh/houseplan-card/issues/1574), [#1579](https://github.com/Matysh/houseplan-card/issues/1579)\n\nЭто тестовый выпуск. Если заметите артефакт в 3D, приложите скриншот и укажите браузер, ракурс и примерный масштаб.\n\n<!-- language: en -->\n## Houseplan 2.0.0-beta.1\n\nThe first 2.0.0 beta moves the volumetric view to WebGL. Walls, openings, furniture and devices respect scene depth, while lamps and LED strips illuminate both floors and walls. Device icons and readings stay sharp when zoomed in. Plan editing and SVG export remain in 2D. [#1514](https://github.com/Matysh/houseplan-card/issues/1514), [#1566](https://github.com/Matysh/houseplan-card/issues/1566), [#1567](https://github.com/Matysh/houseplan-card/issues/1567)\n\nThe server-prepared 3D preview includes furniture and adapts to the screen. On a cold floor switch, Houseplan shows a loading notice and replaces the outgoing floor only when the new frame is fully drawn. [#1574](https://github.com/Matysh/houseplan-card/issues/1574), [#1579](https://github.com/Matysh/houseplan-card/issues/1579)\n\nThis is a prerelease. If you notice a 3D rendering artifact, please include a screenshot and note your browser, viewing angle and approximate zoom.\n",
+        "technical": {
+          "ru": "## v2.0.0-beta.1 — 2026-11-26\n\n- Объёмный план теперь использует WebGL: учитывает глубину стен, проёмов, мебели и устройств, а свет падает и на пол, и на стены. Редакторы и экспорт SVG остаются плоскими (#1514, #1566, #1567).\n- При первом переключении на этаж показывается индикатор подготовки, а сам этаж появляется только после отрисовки полного кадра (#1579).\n- Автономный редактор сохраняет положение и масштаб подписей комнат с проверкой конфликтов по отдельной подписи и явным состоянием сохранения (#1563).\n- Ночная проверка совпадения расчётов узлов стен запускается как модуль Python с предварительной сборкой зависимостей тестовых планов (#1564).\n- В 3D геометрия больше не отстаёт от подписей и устройств при движении камеры. Возвращены тонкие рёбра, штриховка основания, полупрозрачные лестницы и мягкие тени (#1566).\n- Прозрачные стены и мебель в 3D смешиваются по глубине: стена за шкафом больше не затемняет часть его корпуса (#1568).\n- В 3D убраны лишние полосы у стен и в порогах, улучшен вид полупрозрачной мебели, значки и значения устройств чётче при приближении. Лампы и LED-ленты освещают не только пол, но и обращённые к ним стены (#1567).\n- В WebGL 3D устранено наложение торцов стен и откосов, из-за которого откосы мерцали при зуме (#1569).\n- Обводка прямой лестницы в WebGL 3D сохраняет рёбра ступеней без лишних диагоналей (#1576).\n- Линии Zigbee не перекрывают значки, а при возврате из 3D плоские значки не теряют видимость и реакцию на нажатие (#1573).\n- В WebGL 3D восстановлены боковые отступы у бейджей значений (#1575).\n- В 3D видна подсветка лестниц и наведённых значков, поддерживается системная контрастная палитра, а прогретые этажи используют уже рассчитанный цвет фона (#1570).\n- В WebGL 3D снова видны заливка и контур комнаты при наведении; контур не перекрывает проёмы (#1571).\n- В WebGL 3D устранена лишняя полоса света над дверными проёмами (#1577).\n- Недоступные устройства приглушаются в WebGL 3D так же, как на плоском плане (#1572).\n- Серверное 3D-превью этажа с мебелью подстраивается под экран телефона и компьютера без повторного снимка (#1574).\n- Края теней на полу остаются гладкими при приближении в WebGL 3D (#1578).",
+          "en": "## v2.0.0-beta.1 — 2026-11-26\n\n- Use native WebGL for the volumetric plan: physical wall, opening, furniture and device depth, with lights on floors and walls. Keep the existing 2D editors and flat SVG export (#1514, #1566, #1567).\n- Reveal a cold floor only after its complete frame is ready, with loading feedback while it is being prepared (#1579).\n- Save room-label positions and scale in the standalone editor using point-level conflict detection and observable save outcomes (#1563).\n- Test maintenance: run the nightly wall-node parity guard as a Python module with its compiled fixture dependencies (#1564).\n- Keep 3D geometry in sync with labels and devices during pan and zoom, and restore fine edges, wall-base hatching, translucent stairs and soft contact shadows (#1566).\n- Blend transparent walls and furniture in depth order so a wall behind a cabinet no longer darkens part of its face (#1568).\n- Refine 3D walls, thresholds and translucent furniture, keep device symbols sharp at high zoom, and let lamps and LED strips light nearby walls as well as the floor (#1567).\n- Remove competing wall and jamb faces that could flicker when zooming in WebGL 3D (#1569).\n- Keep the outline of straight stair treads without diagonals from the mesh in WebGL 3D (#1576).\n- Keep Zigbee routes behind device cores and restore marker clicks when returning from 3D to Flat (#1573).\n- Keep the correct side padding on WebGL 3D value badges (#1575).\n- Keep stair-arrival and marker hover feedback visible in 3D, respect forced-colour palettes, and reuse the resolved background colour on warm floor switches (#1570).\n- Restore the inset room highlight and its opening gaps when hovering in WebGL 3D (#1571).\n- Remove artificial strips of brighter light over door jambs in WebGL 3D (#1577).\n- Show confirmed unavailable devices with the same dimmed appearance in WebGL 3D as in the flat view (#1572).\n- Reuse the full 3D floor preview with furniture across phone and desktop viewports (#1574).\n- Keep diagonal floor shadows smooth while zooming the WebGL 3D view (#1578)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -312054,7 +312226,8 @@
     "beta-200-20261126-final-metrics": "e006312806c6ce4f37cda68cb52ae744dd75c5e0f86ff6f89de406e8fb7122a6",
     "beta-200-20261126-accepted-size": "8b695abf6bf34ae43b6d464417aafbbc7a6a1f8fc7b86f7144036a60f2ce35c5",
     "beta-200-20261126-publication:runner-report": "1a289ecc1f37958f44510308333aed9553a755b39dceff2dc134fd99ddcd01ca",
-    "beta-200-20261126-publication:metrics": "15fc0f0b215bc6656c7ca00d353240593a3469a7ebd4ea8d66969361e64b2410"
+    "beta-200-20261126-publication:metrics": "15fc0f0b215bc6656c7ca00d353240593a3469a7ebd4ea8d66969361e64b2410",
+    "beta-200-20261126-publication:prepared:b78179c5-0aa8-4bec-8328-24b4aad1c632": "93dacd65b2c232f4d40910af253df9ac3f8f1290eaef47059d9677ce4ef77fde"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
