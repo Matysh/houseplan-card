@@ -104,7 +104,7 @@ test('#659 live editor templates own guides in every editor and hide settled cop
 test('#659 settings handlers preserve dirty, discard, inversion and field ownership', () => {
   contains('src/editors/space-form.ts',
     'onChange:v => set(port,{...d,fillMode:v})',
-    'const canSave = dirty && problems.length === 0 && !d.busy;',
+    'const canSave = canSaveSpaceDialog(d, dirty, problems.length > 0);',
     'if (!dirty || d.busy) { close(); return; }',
     'checked:!d.hideDecor, onChange:v => set(port,{...d,hideDecor:!v})',
   );

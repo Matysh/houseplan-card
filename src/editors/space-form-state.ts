@@ -66,6 +66,11 @@ export function spaceDialogDirty(host: object, d: SpaceDialogState): boolean {
   return dialogDirty(host, 'space', spaceDialogDraftKey(d));
 }
 
+/** Creating a valid space is a change even with an untouched HA floor name. */
+export function canSaveSpaceDialog(d: Pick<SpaceDialogState, 'mode' | 'busy'>, dirty: boolean, hasProblems: boolean): boolean {
+  return (d.mode === 'create' || dirty) && !hasProblems && !d.busy;
+}
+
 export interface SpaceDialogProblem {
   /** `id` контрола, к которому ведёт «Review N fields». */
   field: string;

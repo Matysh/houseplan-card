@@ -21,7 +21,7 @@ import {
 import {
   DEFAULT_CUSTOM_FILL, SPACE_FILL_UI_MODES, stageBgOf,
 } from '../logic';
-import { forgetSpaceDialogBaseline, spaceDialogDirty, spaceDialogProblems } from './space-form-state';
+import { canSaveSpaceDialog, forgetSpaceDialogBaseline, spaceDialogDirty, spaceDialogProblems } from './space-form-state';
 import {
   strictNumber, switchSpacePlanSource, touchSpaceDisplay, type SpaceDialogState,
 } from '../space-dialog';
@@ -115,8 +115,7 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
   const problems = spaceDialogProblems(d, port.idPrefix, host._imperial);
   const problemFor = (fieldId: string) => problems.find((p) => p.field === fieldId);
   const dirty = spaceDialogDirty(host, d);
-  // Creating a valid space is itself a change, even with an untouched HA floor name.
-  const canSave = (d.mode === 'create' || dirty) && problems.length === 0 && !d.busy;
+  const canSave = canSaveSpaceDialog(d, dirty, problems.length > 0);
   const importing = host._importTotal > 0 && d.mode === 'create';
   const progress = importing
     ? t('import.progress', { i: host._importTotal - host._importQueue.length, n: host._importTotal })

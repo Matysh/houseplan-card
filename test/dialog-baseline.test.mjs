@@ -33,7 +33,7 @@ test('#1093 only the acknowledged current form skips retained exit paint', () =>
   assert.equal(animateDialogExit(host, 'space'), true);
 });
 import {
-  forgetSpaceDialogBaseline, rememberSpaceDialogBaseline, spaceDialogDirty, spaceDialogDraftKey,
+  canSaveSpaceDialog, forgetSpaceDialogBaseline, rememberSpaceDialogBaseline, spaceDialogDirty, spaceDialogDraftKey,
 } from '../test-build/editors/space-form-state.js';
 import {
   forgetGeneralBaseline, generalDirty, generalDraftKey, rememberGeneralBaseline,
@@ -203,6 +203,16 @@ test('#631 space dialog: every transient key is ignored, a real setting makes it
   assert.equal(spaceDialogDraftKey(spaceDraft(transient)), spaceDialogDraftKey(base));
   forgetSpaceDialogBaseline(host);
   assert.equal(spaceDialogDirty(host, base), true);
+});
+
+test('#1589 space dialog: a valid create need not be dirty, an edit must be', () => {
+  assert.equal(canSaveSpaceDialog({ mode: 'create' }, false, false), true);
+  assert.equal(canSaveSpaceDialog({ mode: 'edit' }, false, false), false);
+  assert.equal(canSaveSpaceDialog({ mode: 'edit' }, true, false), true);
+  for (const mode of ['create', 'edit']) {
+    assert.equal(canSaveSpaceDialog({ mode }, true, true), false, `${mode}: field errors`);
+    assert.equal(canSaveSpaceDialog({ mode, busy: true }, true, false), false, `${mode}: pending write`);
+  }
 });
 
 test('#631 space dialog: a picked plan file is compared by name, not by its bytes', () => {

@@ -16692,13 +16692,12 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'space-save-enabled-without-changes',
     guard: 'node demo/smoke_space_settings_form.mjs',
-    because: '#600 К10/AC6 (решение владельца Q1): «Сохранить» активен только при '
-      + 'изменениях. Убрать dirty из условия — вернуть прежнее поведение, и футер '
-      + 'перестанет говорить правду о том, есть ли что сохранять',
+    because: '#600 К10/AC6 и #1589: сохранение существующего пространства требует изменений; '
+      + 'новое пространство с допустимыми исходными значениями уже можно создать.',
     patches: [{
-      file: 'src/editors/space-form.ts',
-      find: '  const canSave = dirty && problems.length === 0 && !d.busy;',
-      replace: '  const canSave = problems.length === 0 && !d.busy;',
+      file: 'src/editors/space-form-state.ts',
+      find: "  return (d.mode === 'create' || dirty) && !hasProblems && !d.busy;",
+      replace: '  return !hasProblems && !d.busy;',
     }],
   },
   {
