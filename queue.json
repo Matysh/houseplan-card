@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27378,
-  "nextTicket": 746,
+  "revision": 27379,
+  "nextTicket": 747,
   "nextFence": 745,
   "tasks": {
     "1001": {
@@ -6232,14 +6232,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1589-ha-floor-onboarding",
-      "materialSha": "91a2284fe8c9badf1263ac81bf0039177bd0217f",
+      "materialSha": "d6507fb3bae0f4ec1795ba335c550f5dae30554b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 744,
-      "queued": false,
+      "ticket": 746,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795726962394,
-      "reviewEntry": 1,
+      "readyAt": 1795728029102,
+      "reviewEntry": 2,
       "patchId": "94689b59c6cf60d8b21283d9a14ba4e9876492b7",
       "changedFiles": [
         "demo/helpers/first-space.mjs",
@@ -6254,7 +6254,6 @@
         "src/houseplan-editor-runtime.ts",
         "src/houseplan-onboarding-runtime.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6957,7 +6956,8 @@
     }
   },
   "waiting": [
-    1590
+    1590,
+    1589
   ],
   "active": null,
   "events": {
@@ -7155,6 +7155,19 @@
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec:finish:3:return:return:1589"
         }
+      }
+    },
+    "finish:974d6940-17f1-409c-8b0c-6624b02e5929": {
+      "digest": "3a5fd2e4939104503e58b90df6d8fd133be130410bba4378d5154ecc4422ed49",
+      "issue": 1589,
+      "message": {
+        "kind": "queued",
+        "issue": 1589,
+        "at": 1795728029102,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d6507fb3bae0f4ec1795ba335c550f5dae30554b"
       }
     }
   },
