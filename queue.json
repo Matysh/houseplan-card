@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27179,
+  "revision": 27180,
   "nextTicket": 743,
   "nextFence": 743,
   "tasks": {
@@ -3016,40 +3016,6 @@
         "src/houseplan-editor-runtime.ts"
       ],
       "reason": "owner-stopped"
-    },
-    "1488": {
-      "issue": 1488,
-      "branch": "issue/1488-release-return-4b3b5b501a3b",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "3e5f3deaeb36612fd1ed50679cc6fe6f8d79025b",
-      "mergedSha": "365df93ee67a75d71dc47c26e262ede8136fe027",
-      "mergedAt": 1795172319493,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.86.0-beta.1",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "365df93ee67a75d71dc47c26e262ede8136fe027"
-      }
     },
     "1489": {
       "issue": 1489,
@@ -6127,21 +6093,22 @@
       "reviewRequest": "review:1573:1:8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": true,
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": false,
-        "classificationAt": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
         "commentCurrent": true,
-        "commentDigest": "461782c36f016e0e633c",
+        "commentDigest": "d1c65df9ac3a3cbebb03",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
+          "milestone": true,
           "target": null
+        },
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 18
         }
       },
       "devBuild": {
