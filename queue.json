@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26626,
+  "revision": 26627,
   "nextTicket": 734,
   "nextFence": 733,
   "tasks": {
@@ -6729,7 +6729,7 @@
       "ownerDecision": null,
       "ticket": 732,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795691940218,
       "reviewEntry": 1,
       "patchId": "5f1071eafee68a62a62c9402a0347545c73b6e2c",
@@ -6745,7 +6745,16 @@
         "src/plan-3d-light-field.ts",
         "src/plan-3d-world.ts",
         "test/plan-3d-floor-mask.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261126T111930139-d668d000",
+        "name": "Тесты для задачи #1580 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261126T111930139-d668d000/report.json",
+        "materialSha": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
+        "status": "passed",
+        "finishedAt": "2026-11-26T11:29:26.242Z",
+        "failures": []
+      }
     },
     "1582": {
       "issue": 1582,
@@ -7450,9 +7459,9 @@
     "fence": 732,
     "materialSha": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
     "expectedBase": "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795691947097,
-    "expiresAt": 1795692867879,
+    "expiresAt": 1795696173781,
     "patchId": "5f1071eafee68a62a62c9402a0347545c73b6e2c"
   },
   "events": {
@@ -7594,6 +7603,34 @@
         "layer": "product",
         "materialSha": "4222d8cf6d8adaafb995ddcf99292a41d7782de2",
         "delivered": true
+      }
+    },
+    "finish:28239003-5d77-47fa-aa81-e4d3bbb864f5:finish:3:s6-complete": {
+      "digest": "a9d88103ad4caf4ad71bbdc807a624db61b4f6327a35507008b2d85b976171e9",
+      "issue": 1580,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1580,
+        "at": 1795692573781,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T111930139-d668d000",
+          "name": "Тесты для задачи #1580 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261126T111930139-d668d000/report.json",
+          "materialSha": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
+          "status": "passed",
+          "finishedAt": "2026-11-26T11:29:26.242Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "В новом WebGL 3D солнечный источник обрабатывался для вертикальных и поднятых поверхностей. Шейдер вычислял вклад в стену под подоконником, а край на полу выбирался из растрового канала покрытия. Теперь солнечный свет получают только материалы напольной заливки, подложки и плоского рисунка. У маски остаётся исходный контур оконного света и преград. Плавность даёт переход внутрь контура по расстоянию до края, в полосе 4 текселя той же карты 128×128 на источник. Для ламп и LED действуют прежние маски и прежняя ширина перехода. Камера не меняет карту.\n\nСинтетический WebGL-сценарий на прежнем коде подтвердил оба симптома. После исправления участок стены под подоконником совпадает с кадром без солнца при двух режимах прозрачности стены. Пятно хорошо видно на полу, а соседний пол и поднятая горизонтальная поверхность сохраняют свои цвета. На диагонали при 8× RMS составил 1,71 → 0,26 px, ширина перехода 10–90% на плане 1,19 → 2,10. На обычном масштабе ширина 1,20 → 2,11. Сборка тестов и 57 сценариев геометрии солнца и масок прошли. Регрессия света ламп и LED вошла в тот же GPU-прогон.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
