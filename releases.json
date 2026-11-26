@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1493,
+  "revision": 1494,
   "active": "v2.0.0-beta.1-20261126",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -305268,7 +305268,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1",
       "portToDev": [
         {
           "from": "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5",
@@ -305290,6 +305290,12 @@
         "selectionDigest": "1271c3f3bcce842592e0f2798b65f5900640e72dad56a90c7231c0204ce4a54a",
         "status": "not-required",
         "inventoryComplete": true
+      },
+      "metricsDecision": {
+        "decisionId": "beta-200-20261126-owner-size",
+        "source": "chat",
+        "sourceRef": "2026-11-26 Houseplan chat: 2.0.0-beta.1 size decision for cfb05d6c, identical ZIP and standalone JS on 4e522beb",
+        "decisionText": "Да, принять эти размеры: весь frontend gzip 2 417 432 Б (+5,86%), ZIP 5 773 222 Б (+4,89%), начальный View 499 636 Б (−1,00%) к 1.86.1. Публикация только после остальных проверок."
       }
     }
   },
@@ -311694,7 +311700,8 @@
     "beta-200-20261126-approved-goldens": "b96999b7a96f3a2135b13be241c3e5a78ae794403843c958583a6a312bb0f969",
     "ship-review:prepare:68df2596-9c59-497c-b7fd-b5b1985c170d": "639f134649dcc5e382eb07fce4a386c49fb467a591c6354685f1d0fdd80266d9",
     "ship-review:result:9fa0aa8f-0e9d-4d20-ba5e-7406460349f3": "e812b9bc2c221ba2fdf12d21ea6d7a1852a4184de5df61ff4c984cf413879cbf",
-    "beta-200-20261126-final-metrics": "e006312806c6ce4f37cda68cb52ae744dd75c5e0f86ff6f89de406e8fb7122a6"
+    "beta-200-20261126-final-metrics": "e006312806c6ce4f37cda68cb52ae744dd75c5e0f86ff6f89de406e8fb7122a6",
+    "beta-200-20261126-accepted-size": "8b695abf6bf34ae43b6d464417aafbbc7a6a1f8fc7b86f7144036a60f2ce35c5"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
