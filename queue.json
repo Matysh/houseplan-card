@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25887,
+  "revision": 25888,
   "nextTicket": 719,
   "nextFence": 719,
   "tasks": {
@@ -6503,7 +6503,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1574-portable-webgl-preview",
-      "materialSha": "a044b85569c8b33eaa43d90ecc0f654027c34569",
+      "materialSha": "751db20d7e3ab8b1b047536f34e4946b24aa5b8c",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 718,
@@ -6511,7 +6511,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795660262425,
       "reviewEntry": 3,
-      "patchId": "cc7620f29d06b20e7bb55d9a944cc4eb3d6144f4",
+      "patchId": "9b5a672e1ea7efabeada17bfd8ba6448b34a4c97",
       "changedFiles": [
         "custom_components/houseplan/startup_floor_preview.py",
         "docs/CHANGELOG.md",
@@ -6535,10 +6535,7 @@
         "entry": 2,
         "detail": "Браузер: floor preparation deadline: failed; Браузер: screen camera 1165: failed",
         "eventId": "finish:00946e14-de7f-4c42-a8e2-b62481983443:finish:2:return:return:1574"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795660301415,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      }
     }
   },
   "ownerDecisions": {},
@@ -7222,11 +7219,12 @@
     "worker": "finish",
     "token": "718:finish:30c5ace2-af66-4c6a-861f-441199d1622a:finish:1:admit",
     "fence": 718,
-    "materialSha": "a044b85569c8b33eaa43d90ecc0f654027c34569",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "751db20d7e3ab8b1b047536f34e4946b24aa5b8c",
+    "expectedBase": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
+    "phase": "testing",
     "admittedAt": 1795660266439,
-    "expiresAt": 1795660625400
+    "expiresAt": 1795660668755,
+    "patchId": "9b5a672e1ea7efabeada17bfd8ba6448b34a4c97"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7355,6 +7353,10 @@
     },
     "dev-build:45742705354:1:webhook:e0f27185-45d4-4a38-b2e3-b6a327800553:delivered": {
       "digest": "659f9cb6b602770c527a33f8325eed9d9a5298871fbe33e0ecee5b1f2e952039",
+      "issue": 1574
+    },
+    "finish:30c5ace2-af66-4c6a-861f-441199d1622a:finish:3:synchronized": {
+      "digest": "573f91a4792e0b3e66a2de0a6232b8888fb7d5a257dce49ff60fed7b9a82eb38",
       "issue": 1574
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
