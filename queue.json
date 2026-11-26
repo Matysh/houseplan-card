@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25627,
+  "revision": 25628,
   "nextTicket": 714,
   "nextFence": 713,
   "tasks": {
@@ -6416,155 +6416,25 @@
     },
     "1572": {
       "issue": 1572,
+      "branch": "codex/1572-webgl-marker-offline",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1572-webgl-marker-offline",
-      "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 712,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795652031440,
-      "reviewEntry": 3,
-      "patchId": "14bf0dfb3ece486a088628e5121c85729c47331d",
-      "changedFiles": [
-        "demo/smoke_device_offline.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v2.0.0/1572.json",
-        "scripts/mutation-registry.mjs",
-        "src/houseplan-card.ts",
-        "src/plan-3d-markers.ts",
-        "src/plan-3d-world.ts",
-        "src/styles/devices.styles.ts"
-      ],
-      "notice": {
-        "key": "2:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795651642920,
-        "entry": 2,
-        "requestId": "review:1572:2:6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "transitionConfirmed": true
-      },
-      "s6": {
-        "id": "20261126T002622815-c27809e7",
-        "name": "Тесты для задачи #1572 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T002622815-c27809e7/report.json",
-        "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-        "status": "passed",
-        "finishedAt": "2026-11-26T00:35:37.736Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
+      "mergedSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+      "mergedAt": 1795653552389,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1572:3:14bf0dfb3ece486a088628e5121c85729c47331d:af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-      "reviewMaterial": {
-        "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-        "expectedBase": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "patchId": "14bf0dfb3ece486a088628e5121c85729c47331d"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1572:3:14bf0dfb3ece486a088628e5121c85729c47331d:af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "eventId": "github:45729850727:1:tick:0:review-retry",
-        "at": 1795653370656,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1572,
-        "requestId": "review:1572:3:14bf0dfb3ece486a088628e5121c85729c47331d:af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "kind": "code",
-        "base": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-        "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-        "patchId": "14bf0dfb3ece486a088628e5121c85729c47331d",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1572,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1572",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Исправления по предыдущему ревью\nПересобираем shader variant только при смене transparent. Тест теперь монтирует доступный маркер, переводит его в unavailable, восстанавливает и снова отключает: на одном меше проверяются пиксели, hit-id и неизменная тень. Без needsUpdate два пиксельных условия красные; с исправлением весь browser smoke зелёный. Две прежние проверки привязки мутантов тоже зелёные."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Оба прежних блокера устранены, работу можно принимать. Первый: при живой смене прозрачности `Plan3dMarkerLayer.update` теперь ставит `material.needsUpdate = true`. Так в three заново компилируется вариант шейдера без `OPAQUE`, и устройство, которое пропало при уже открытой 3D-сцене, действительно приглушается, а не только переходит в прозрачный проход. Второй: smoke теперь проходит переход «в сети → недоступно → восстановлено → снова недоступно» на одном и том же меше. Он сравнивает пиксели, попадание по маркеру (pick) и тень на полу. Исполнитель сообщает, что без `needsUpdate` два пиксельных условия падают, это согласуется с устройством теста. Прежние необязательные замечания остались необязательными: при совпадении плоскостей маркеров порядок попадания не следует DOM, а при `transparentWalls3d` полупрозрачные маркеры сортируются вместе с прозрачной архитектурой.",
-          "understanding": "Проблема. В WebGL 3D HTML-маркер скрыт, а нативная призма из `Plan3dMarkerLayer` всегда была непрозрачной. Из-за этого состояние «недоступно» из плоского вида (`.dev.unavail` с opacity 0.35) пропадало.\n\nРешение (не изменилось с прошлого раунда):\n1. Значение 0.35 вынесено в CSS-переменную `--hp-device-offline-opacity`.\n2. `_syncPlan3dHost` читает эту переменную для `.unavail:not(.led-badge)` и передаёт её в `Plan3dMarker.opacity`. Контур группы получает максимум прозрачности её членов.\n3. `update` выставляет материалам призмы `opacity/transparent/depthWrite`.\n4. Собственная opacity иконки или текста переносится в атлас (`inkOpacity`).\n5. Тень (`presentContacts`) прозрачность не получает.\n\nЧто нового в этом раунде:\n- `src/plan-3d-markers.ts:361-370`: `needsUpdate` выставляется только при фактической смене `transparent`, поэтому при каждом кадре шейдер лишний раз не пересобирается.\n- `demo/smoke_device_offline.mjs:167-233`: добавлен хелпер `nativePaint`. Он проецирует центр грани маркера в экран и читает пиксель canvas, `host.pick`, id меша, поля материалов и dataURL текстуры тени. Профиль iso стартует при `offline_down = 'off'`, затем проходит цепочку live → offline → recovered → offline и сверяет все четыре точки.\n\nРазобранные пути: `Plan3dHost.present` → `draw(true)` → `presentMarkers` → `update`. Отрисовка синхронная и немедленная, поэтому чтение сразу после `setDeviceOfflineStates` (оно ждёт анимации DOM) видит уже новый кадр. Также проверено, что меш переиспользуется при неизменном `geometryKey`, а значит, сценарий действительно проверяет программу, которая была скомпилирована непрозрачной.",
-          "analysis": [
-            {
-              "topic": "Исправление: пересборка шейдера при живой смене прозрачности",
-              "assessment": "Исправление минимальное и точное. `needsUpdate` выставляется у всех трёх материалов, включая боковые [1] и [2], у которых раньше он не выставлялся никогда. Это происходит только при переключении `transparent`, а смена одной `opacity` остаётся дешёвым обновлением uniform. Альтернатива — держать материалы всегда прозрачными — изменила бы сортировку обычных маркеров, так что выбранный путь лучше. Комментарий в коде объясняет неочевидную причину (вариант OPAQUE зависит от версии материала, а не от uniform), его стоит сохранить.",
-              "evidence": "`src/plan-3d-markers.ts:356-370`; материалы создаются один раз на геометрию в `:345-351`."
-            },
-            {
-              "topic": "Покрытие перехода в smoke",
-              "assessment": "Прежний пробел закрыт. Состояние `initiallyLive` снимается, когда материал уже скомпилирован как непрозрачный, а `native` — на первой живой потере связи на том же меше (`mesh` совпадает во всех четырёх точках). Тест проверяет: `initiallyLive ≈ recovered` (±2), `offlineAgain ≈ native` (±2), `offlineAgain` отличается от `recovered` на ≥8 хотя бы в одном канале. Отсюда следует, что первая живая потеря видимо меняет пиксель так же, как повторная. Без `needsUpdate` первая потеря дала бы пиксель как у `initiallyLive`, и условие не выполнилось бы. Это совпадает со словами исполнителя о красных проверках без исправления. Тест не доказывает, что смешение составляет ровно 35%: для этого есть отдельная проверка `opacity ≈ .35`. Пиксельный критерий только подтверждает, что эта прозрачность действительно применяется. Для задачи этого достаточно. Pick и неизменная текстура тени проверяются на тех же точках.",
-              "evidence": "`demo/smoke_device_offline.mjs:193-233`, особенно `:208-209` и `:229-233`; `src/plan-3d-host.ts:52-64` и `:86-97` — present выполняет немедленный draw."
-            },
-            {
-              "topic": "Остальные части решения",
-              "assessment": "По сравнению с прошлым раундом не изменились, прежняя положительная оценка в силе. Источник прозрачности — CSS-переменная, которую не затрагивает transition. Кэш атласа учитывает `inkOpacity`. Тень на полу независима от приглушения. Контур группы приглушается по максимуму прозрачности членов, и `glassMeshes` пересобирается, потому что opacity входит в ключ. Строки в реестре мутантов согласованы с новой CSS-строкой.",
-              "evidence": "`src/houseplan-card.ts:871-885`, `src/plan-3d-world.ts:380-404`, `src/styles/devices.styles.ts:408`, `scripts/mutation-registry.mjs`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Повтор прошлого необязательного замечания. Для полупрозрачного маркера `renderOrder = 0`, поэтому при совпадении плоскостей pick-проход отдаёт приоритет доступному маркеру, а не следует порядку DOM. Если сохранять `order` и для прозрачного списка, комментарий о «tie in the same marker order» снова станет верным для всех маркеров. Цена — пара строк.",
-            "При `transparentWalls3d` полупрозрачные маркеры сортируются вместе с объединённым мешем `Plan3dTransparency` по центру сцены. Если дать им `renderOrder` между 0 и 2, они гарантированно будут рисоваться после прозрачной архитектуры, и исчезнет возможное наложение стен на маркер. Это гипотеза, пикселями она не проверялась.",
-            "Рядом с `--hp-device-offline-opacity` полезен короткий комментарий: переменная используется вместо computed `opacity`, потому что `opacity` на `.dev` анимируется transition, а DOM-маркер в нативном 3D скрыт."
-          ],
-          "boundaries": "Сборку, тесты и браузер я не запускал. Использован отчёт S6 `20261126T002622815-c27809e7` (passed, материал `9cf397ca`). Что именно он покрывает, я оценил по исходнику `demo/smoke_device_offline.mjs`. Утверждение исполнителя, что без `needsUpdate` тест красный, отдельным результатом не подтверждено, но согласуется с логикой проверок. Исходников three.js в репозитории нет. Вывод о том, что вариант OPAQUE пересобирается только через `needsUpdate`, опирается на известное устройство three ≥ r151. По исходникам изучены: `src/plan-3d-markers.ts` (present/update/retire), `src/plan-3d-host.ts` (present/draw), `demo/helpers/device-offline.mjs` (`setDeviceOfflineStates`) и diff всех изменённых файлов. Остальные модули разбирались в прошлом раунде и в этом не менялись."
-        },
-        "usage": {
-          "input_tokens": 14,
-          "cache_creation_input_tokens": 53653,
-          "cache_read_input_tokens": 259305,
-          "output_tokens": 5650,
-          "output_tokens_details": {
-            "thinking_tokens": 1211
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 53653,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 766,
-              "cache_read_input_tokens": 47151,
-              "cache_creation_input_tokens": 10706,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 10706
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nОба прежних блокера устранены, работу можно принимать. Первый: при живой смене прозрачности `Plan3dMarkerLayer.update` теперь ставит `material.needsUpdate = true`. Так в three заново компилируется вариант шейдера без `OPAQUE`, и устройство, которое пропало при уже открытой 3D-сцене, действительно приглушается, а не только переходит в прозрачный проход. Второй: smoke теперь проходит переход «в сети → недоступно → восстановлено → снова недоступно» на одном и том же меше. Он сравнивает пиксели, попадание по маркеру (pick) и тень на полу. Исполнитель сообщает, что без `needsUpdate` два пиксельных условия падают, это согласуется с устройством теста. Прежние необязательные замечания остались необязательными: при совпадении плоскостей маркеров порядок попадания не следует DOM, а при `transparentWalls3d` полупрозрачные маркеры сортируются вместе с прозрачной архитектурой.\n\n## Понимание решения\n\nПроблема. В WebGL 3D HTML-маркер скрыт, а нативная призма из `Plan3dMarkerLayer` всегда была непрозрачной. Из-за этого состояние «недоступно» из плоского вида (`.dev.unavail` с opacity 0.35) пропадало.\n\nРешение (не изменилось с прошлого раунда):\n1. Значение 0.35 вынесено в CSS-переменную `--hp-device-offline-opacity`.\n2. `_syncPlan3dHost` читает эту переменную для `.unavail:not(.led-badge)` и передаёт её в `Plan3dMarker.opacity`. Контур группы получает максимум прозрачности её членов.\n3. `update` выставляет материалам призмы `opacity/transparent/depthWrite`.\n4. Собственная opacity иконки или текста переносится в атлас (`inkOpacity`).\n5. Тень (`presentContacts`) прозрачность не получает.\n\nЧто нового в этом раунде:\n- `src/plan-3d-markers.ts:361-370`: `needsUpdate` выставляется только при фактической смене `transparent`, поэтому при каждом кадре шейдер лишний раз не пересобирается.\n- `demo/smoke_device_offline.mjs:167-233`: добавлен хелпер `nativePaint`. Он проецирует центр грани маркера в экран и читает пиксель canvas, `host.pick`, id меша, поля материалов и dataURL текстуры тени. Профиль iso стартует при `offline_down = 'off'`, затем проходит цепочку live → offline → recovered → offline и сверяет все четыре точки.\n\nРазобранные пути: `Plan3dHost.present` → `draw(true)` → `presentMarkers` → `update`. Отрисовка синхронная и немедленная, поэтому чтение сразу после `setDeviceOfflineStates` (оно ждёт анимации DOM) видит уже новый кадр. Также проверено, что меш переиспользуется при неизменном `geometryKey`, а значит, сценарий действительно проверяет программу, которая была скомпилирована непрозрачной.\n\n## Разбор решения\n\n### Исправление: пересборка шейдера при живой смене прозрачности\n\nИсправление минимальное и точное. `needsUpdate` выставляется у всех трёх материалов, включая боковые [1] и [2], у которых раньше он не выставлялся никогда. Это происходит только при переключении `transparent`, а смена одной `opacity` остаётся дешёвым обновлением uniform. Альтернатива — держать материалы всегда прозрачными — изменила бы сортировку обычных маркеров, так что выбранный путь лучше. Комментарий в коде объясняет неочевидную причину (вариант OPAQUE зависит от версии материала, а не от uniform), его стоит сохранить.\n\nОснование: `src/plan-3d-markers.ts:356-370`; материалы создаются один раз на геометрию в `:345-351`.\n\n### Покрытие перехода в smoke\n\nПрежний пробел закрыт. Состояние `initiallyLive` снимается, когда материал уже скомпилирован как непрозрачный, а `native` — на первой живой потере связи на том же меше (`mesh` совпадает во всех четырёх точках). Тест проверяет: `initiallyLive ≈ recovered` (±2), `offlineAgain ≈ native` (±2), `offlineAgain` отличается от `recovered` на ≥8 хотя бы в одном канале. Отсюда следует, что первая живая потеря видимо меняет пиксель так же, как повторная. Без `needsUpdate` первая потеря дала бы пиксель как у `initiallyLive`, и условие не выполнилось бы. Это совпадает со словами исполнителя о красных проверках без исправления. Тест не доказывает, что смешение составляет ровно 35%: для этого есть отдельная проверка `opacity ≈ .35`. Пиксельный критерий только подтверждает, что эта прозрачность действительно применяется. Для задачи этого достаточно. Pick и неизменная текстура тени проверяются на тех же точках.\n\nОснование: `demo/smoke_device_offline.mjs:193-233`, особенно `:208-209` и `:229-233`; `src/plan-3d-host.ts:52-64` и `:86-97` — present выполняет немедленный draw.\n\n### Остальные части решения\n\nПо сравнению с прошлым раундом не изменились, прежняя положительная оценка в силе. Источник прозрачности — CSS-переменная, которую не затрагивает transition. Кэш атласа учитывает `inkOpacity`. Тень на полу независима от приглушения. Контур группы приглушается по максимуму прозрачности членов, и `glassMeshes` пересобирается, потому что opacity входит в ключ. Строки в реестре мутантов согласованы с новой CSS-строкой.\n\nОснование: `src/houseplan-card.ts:871-885`, `src/plan-3d-world.ts:380-404`, `src/styles/devices.styles.ts:408`, `scripts/mutation-registry.mjs`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Повтор прошлого необязательного замечания. Для полупрозрачного маркера `renderOrder = 0`, поэтому при совпадении плоскостей pick-проход отдаёт приоритет доступному маркеру, а не следует порядку DOM. Если сохранять `order` и для прозрачного списка, комментарий о «tie in the same marker order» снова станет верным для всех маркеров. Цена — пара строк.\n- При `transparentWalls3d` полупрозрачные маркеры сортируются вместе с объединённым мешем `Plan3dTransparency` по центру сцены. Если дать им `renderOrder` между 0 и 2, они гарантированно будут рисоваться после прозрачной архитектуры, и исчезнет возможное наложение стен на маркер. Это гипотеза, пикселями она не проверялась.\n- Рядом с `--hp-device-offline-opacity` полезен короткий комментарий: переменная используется вместо computed `opacity`, потому что `opacity` на `.dev` анимируется transition, а DOM-маркер в нативном 3D скрыт.\n\n## Границы анализа\n\nСборку, тесты и браузер я не запускал. Использован отчёт S6 `20261126T002622815-c27809e7` (passed, материал `9cf397ca`). Что именно он покрывает, я оценил по исходнику `demo/smoke_device_offline.mjs`. Утверждение исполнителя, что без `needsUpdate` тест красный, отдельным результатом не подтверждено, но согласуется с логикой проверок. Исходников three.js в репозитории нет. Вывод о том, что вариант OPAQUE пересобирается только через `needsUpdate`, опирается на известное устройство three ≥ r151. По исходникам изучены: `src/plan-3d-markers.ts` (present/update/retire), `src/plan-3d-host.ts` (present/draw), `demo/helpers/device-offline.mjs` (`setDeviceOfflineStates`) и diff всех изменённых файлов. Остальные модули разбирались в прошлом раунде и в этом не менялись.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: af48a3bb57b013879d80c70d7fd1c66d12b177bb → 9cf397ca66435c5fbcad73e7d292ad5e839bb810\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1572, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Исправления по предыдущему ревью\nПересобираем shader variant только при смене transparent. Тест теперь монтирует доступный маркер, переводит его в unavailable, восстанавливает и снова отключает: на одном меше проверяются пиксели, hit-id и неизменная тень. Без needsUpdate два пиксельных условия красные; с исправлением весь browser smoke зелёный. Две прежние проверки привязки мутантов тоже зелёные.\n```\n\n</details>\n",
-        "createdAt": "2026-11-26T00:38:25.479Z",
-        "artifactId": 15075508816,
-        "runId": 45729882201,
-        "runAttempt": 1,
-        "completedAt": "2026-11-26T00:38:31Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45729882201",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "af48a3bb57b013879d80c70d7fd1c66d12b177bb"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1573": {
@@ -7283,19 +7153,7 @@
   "waiting": [
     1570
   ],
-  "active": {
-    "issue": 1572,
-    "worker": "github-coordinator",
-    "token": "712:github:45728546457:1:tick:2:admit",
-    "fence": 712,
-    "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-    "expectedBase": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795652729711,
-    "expiresAt": 1795657149124,
-    "patchId": "14bf0dfb3ece486a088628e5121c85729c47331d",
-    "reviewRequest": "review:1572:3:14bf0dfb3ece486a088628e5121c85729c47331d:af48a3bb57b013879d80c70d7fd1c66d12b177bb"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7316,214 +7174,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:2:synchronized": {
-      "digest": "6c6e6162600c63382412f52dbd173f65d58dcc9202fbf711237e33c4df2f62b4",
-      "issue": 1572
-    },
-    "github:45723712418:1:completions:message:563638b761abb4d88ff7000e9ee37748b119e2da2c1ced188c119137dd4ace89": {
-      "digest": "1466acb5a5961ff07cfc9dbc7e5d6ea2233c2c20b159e748f3a158b042d35758",
-      "issue": 1572
-    },
-    "github:45723712418:1:completions:message:45a2e2642bf6e5890112d735061892162faa62e71babccebb41adc4cfd09ca92": {
-      "digest": "e740105af9ea440c04b1e01ed6ed8735cc6d65aa6c4905b8a8dcb89198af28a3",
-      "issue": 1572
-    },
-    "finish:ae4a0ffb-3074-496d-8913-e4832fe3bf6d": {
-      "digest": "552bc471b053904bd6fb2de739bdac6d5fbf1791de1d43807091c986c01d8856",
-      "issue": 1572
-    },
-    "dev-build:45723498777:1:webhook": {
-      "digest": "9e98bb98a1fa5d908f4d00702156c87071098d4d02e1c0050d37590a7d979dad",
-      "issue": 1572
-    },
-    "dev-build:45723498777:1:webhook:942628c7-98e7-40c9-9518-e283deb45676:delivered": {
-      "digest": "02ef22b65f618d9bc249aae4768f07e15e04fc6fe3fbf7e213793531cb061a81",
-      "issue": 1572
-    },
-    "finish:aa3b5d86-ab38-4f1c-954e-bfe9a662a190": {
-      "digest": "d8d83d1a96c882820d184470b5e47df924f56345c595a20d2d2eb7842a3166f3",
-      "issue": 1572
-    },
-    "finish:7853b964-6965-4ec1-82d4-bcc69532695f": {
-      "digest": "68a651de5aeebd3c7b412fee64217f63d5c1db3f97eba23324a87ba73ee758fc",
-      "issue": 1572
-    },
-    "finish:6ecc2ad9-efb4-4624-8af0-75493606189b": {
-      "digest": "58010ee5e7d62017f225ad32dc49376840aa4c2fc84fd0176d0d82789cca8738",
-      "issue": 1572
-    },
-    "finish:fe3e64bb-aa11-4ea8-8147-b2085df72830": {
-      "digest": "c326828c385b7371b72083ee171fe57c780ac97ccbb0c28eeac1b824fb86c263",
-      "issue": 1572
-    },
-    "finish:625f28b9-210c-4417-ab45-635784e728e6": {
-      "digest": "19bdf2a88a3ed233deb417b60b75757b2a32d837a1fe0dc9b2094902cd9242a0",
-      "issue": 1572
-    },
-    "finish:84ee28d7-ccd6-4067-a0d9-53a031b89ed0": {
-      "digest": "e74b9c8dfbc31437471214f63ea7cebba966ee2661df5426cb9f24aabd61a6a9",
-      "issue": 1572
-    },
-    "finish:abfb5219-ed71-4903-a3f9-c8a7c0ad8756": {
-      "digest": "69b6c733471dd805691d9f4b566bbc39b23b4014c3489136ff25bd1259650a3b",
-      "issue": 1572
-    },
-    "finish:45733da5-0ed9-437b-8d97-7f3568cf9a3c": {
-      "digest": "df9fdb6ad39f910df272f5dde9eb93fb9ad20f5f1b58892db9f028e3b36ea490",
-      "issue": 1572
-    },
-    "finish:121b49db-ddd6-4deb-8b68-1d4d8d53e0b9": {
-      "digest": "041a0438e667548fafa849212946336e41547a6f950b3a8392c50bdb72009f2c",
-      "issue": 1572
-    },
-    "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:3:return": {
-      "digest": "c3fe1ad8943eb24354a771986a5ea1d080bae2b92070de5cf137be25431da9b7",
-      "issue": 1572
-    },
-    "github:45725045343:1:completions:notice:4e8d3ee91acf904d2645f308d5262a031488c925afc62e6d7dc4f322a7a9a515": {
-      "digest": "e4217ec32ccee549171419f5cce64ce106c99537b583c20b246cd679222ecae3",
-      "issue": 1572
-    },
-    "finish:e9e067ac-c296-425f-a5df-dbb17591b4c9:finish:2:synchronized": {
-      "digest": "1d41e272051c4da076a992a05905990cb31adabe96de164c50b94641ecbebf2e",
-      "issue": 1572
-    },
-    "finish:5834da13-68e3-44ac-8d6c-da99e0ef1388": {
-      "digest": "7cc554aa97e0c257aa727ed8287db1de660bb393d4ddda7d4745820a8bdec5a2",
-      "issue": 1572
-    },
-    "finish:12a9724b-2286-4cbe-a3dc-5c712a497e6f": {
-      "digest": "864c58b07e496ccdfe0467ce051d1069c66c6cbc8164de5fdc6d0da5711a1456",
-      "issue": 1572
-    },
-    "finish:3d162e9c-e8e4-493f-93ab-955094a4cc2e": {
-      "digest": "6607ced0ea4f97034634f1462579ae325033f860dc9a5c257ee5924a6545794d",
-      "issue": 1572
-    },
-    "finish:e9e067ac-c296-425f-a5df-dbb17591b4c9:finish:3:s6-label": {
-      "digest": "f358bb18cd753cfce3bcedc6d920d741864e0eecdd6c0665c5cf3c3d5fac12d5",
-      "issue": 1572
-    },
-    "finish:e9e067ac-c296-425f-a5df-dbb17591b4c9:finish:4:review-requested": {
-      "digest": "b83621aea75b6e18d1cb44069083440d2d9495505ccafddbbf430361fbad2e23",
-      "issue": 1572
-    },
-    "github:45725661586:1:tick:0:review-retry": {
-      "digest": "ac6c4b1b0d2d36ee6f73bf7fa5cac4784f652e88e20ce8b94a95aa81ed740c17",
-      "issue": 1572
-    },
-    "github:45725661586:1:completions:message:7d76ddc86cd85b4382cc29b1e4c070ce8943c1813a4069e1ec9e7d9d65d1743b": {
-      "digest": "ee6728380f03ac39014c5ffb9cd6e2e889ae5f4f8ef2f1858b8e9bc390e9b1ff",
-      "issue": 1572
-    },
-    "github:45725661586:1:completions:message:af35c18521699f43cfe05974414fbb40de70006f62d2de560d75774bdb3d7f04": {
-      "digest": "e1e0af68e41a8eaa78362b9778a04115876a5f59ec363c29c0cf307824f83d09",
-      "issue": 1572
-    },
-    "github:45725661586:1:completions:message:34e528827a5fee945055ef8b998ea23e2b2212cd91d296d5b1bab291527eb4f0": {
-      "digest": "21137ea385de5517e7a774ab4337c4126ffad7c57958746754d19dc33a33f653",
-      "issue": 1572
-    },
-    "github:45726376803:1:tick:0:review-presentation": {
-      "digest": "0142e676663cd8de2c86b5f8c0bc9fdba761f41a87a92ec535164b1d193fe911",
-      "issue": 1572
-    },
-    "github:45726376803:1:tick:0:return": {
-      "digest": "5cf57883f089dbf53af0df1d8a60751276b0afd795bc2b9e8cdc64db099ebb91",
-      "issue": 1572
-    },
-    "github:45726376803:1:tick:0:return-label": {
-      "digest": "ecd1c4b71e3a652b6b1897f9d7b5324ab363e7615919189675c0f6e1694706f2",
-      "issue": 1572
-    },
-    "github:45726376803:1:completions:report:565aa1a0b58bf2a20c251da3f9645548db20d96ca50182bf03af55954ab2f537": {
-      "digest": "61db32566bc4c0333cddfc0550de1d0f81b52904bc8634e326d16f443e296643",
-      "issue": 1572
-    },
-    "github:45726376803:1:completions:metadata:4be1cc36-7cea-4aaf-9603-7138a076974f:task-notice:1572::": {
-      "digest": "fba498f4fdbda9910bbf2ef55a9586423b21be60c62a5698db1749f69f37c06a",
-      "issue": 1572
-    },
-    "github:45728546457:1:completions:message:85a2900d9087268aab493346a272e8ef5c5c3e89292ba88ab05b98fb81fe8511": {
-      "digest": "84d575a014b6c613c2061df1b0a2ac85c67b619401e4d257ad854c7dcf69115a",
-      "issue": 1572
-    },
-    "finish:0c6f7078-c1e2-44a1-b3c6-38b3f14d6026:finish:1:synchronized": {
-      "digest": "88e967abb1abd7f2994e4510076c947c1de64b9ad33c2d1b4791c57fb18d5356",
-      "issue": 1572
-    },
-    "finish:0eed6584-ea6a-43b4-b443-3a4d81885212": {
-      "digest": "e468a81f2d3bac9368f61ddc549047223e3d76ea10d8552a7e2d2ee5a6470a01",
-      "issue": 1572
-    },
-    "finish:c5ba4778-5a21-4028-94ad-3f2a12328ed4": {
-      "digest": "e457752cfb20f79f63275ac5daf5a35fca71ea4d034fdc6e7da22f7cf21beb16",
-      "issue": 1572
-    },
-    "dev-build:45728546457:1:webhook": {
-      "digest": "05c5bfa19581fbfaef1c17b0c27beb257aa0ec773295c79e57410531937a655e",
-      "issue": 1572
-    },
-    "dev-build:45728546457:1:webhook:23380663-9c06-4df2-aea6-b176cd262e72:delivered": {
-      "digest": "249fd1147dc2b45fa0f1fde59f378455bcf9c18b2c1cab254d478ac3d910b961",
-      "issue": 1572
-    },
-    "finish:9ce2df87-59cf-4196-b372-5a8768a046db": {
-      "digest": "22098163272462142625b97d3285065c772396fdd8cbb2ddfe59e96f33c9689b",
-      "issue": 1572
-    },
-    "finish:2ae93a17-b633-4b0f-af4d-f8495f2f689f": {
-      "digest": "7b69629f5a006189cbba8b2f76fda864be382a744b7c55df17b570118d1ebdb4",
-      "issue": 1572
-    },
-    "finish:c8b05f72-b673-4d94-ac57-ff475655b7c3": {
-      "digest": "7adf3510d2895ecc005e7bd85f2b2d29e02903e0780f2b502eeff8fcd21ce773",
-      "issue": 1572
-    },
-    "finish:8a66e3db-bdf9-44d4-ad2a-7dc7507d6660": {
-      "digest": "8b29b32d2dfac97db61ff8b6d272387b5b89f4644fc1828d967b67fa040c5fdf",
-      "issue": 1572
-    },
-    "finish:1622a942-39ae-41fb-982a-59047b2db356": {
-      "digest": "593455ac20e01d498263b3502e5702f4a3be7a633a6573e625c733d002d8a5fb",
-      "issue": 1572
-    },
-    "finish:caaa728a-c704-465d-9a6d-bdd8d0515ae3": {
-      "digest": "2a292c0b0c184b654e36857ead1972e96771c1ac01af0f66def3e376599e7f3b",
-      "issue": 1572
-    },
-    "finish:d463cbbe-7d4b-418b-a548-8f17a9a89612": {
-      "digest": "219dc7ebcd4e5bf5c12225653b3d3e03d25fc1a43f91bdf8bf292632d6e5de94",
-      "issue": 1572
-    },
-    "finish:0c6f7078-c1e2-44a1-b3c6-38b3f14d6026:finish:2:s6-label": {
-      "digest": "406e3da3dad5b53dc913c93af1808eaeb07f600406ab97edef2d9db32b286c04",
-      "issue": 1572
-    },
-    "finish:0c6f7078-c1e2-44a1-b3c6-38b3f14d6026:finish:3:review-requested": {
-      "digest": "501a7201e4f2c8e7251b149e38aa0b0c91d47db498ea1aca02d7081dc27f83aa",
-      "issue": 1572
-    },
-    "github:45729850727:1:tick:0:review-retry": {
-      "digest": "4d26617bf82b87bf6661abaf312e460f04f8cd7a2b733f1d876bf306ef6edacc",
-      "issue": 1572
-    },
-    "github:45729850727:1:completions:message:e2b39b5addc73bf98738fd4609c363771559eec3aa3d643f0be218f85d8fd581": {
-      "digest": "8812f5bf0fecbe40cb3dbe894a62e4827a155ea25bd39e96f7ea64848627bb01",
-      "issue": 1572
-    },
-    "github:45729850727:1:completions:message:e3ad75efea28ba7d6196eb93d2bd1997de31ab4f74ca4d8480439ffbf51dce92": {
-      "digest": "72ed227807936640e473f0bcc02b62df4d0e896c6dc2ac6fcb6c95cb738aa257",
-      "issue": 1572
-    },
-    "github:45730182785:1:tick:0:review-presentation": {
-      "digest": "06fe700290d5ad2f465cb16f486f9ef8634ad00004735cdb2cd9a9b516924cca",
-      "issue": 1572
-    },
-    "github:45730182785:1:tick:0:review-complete": {
-      "digest": "6265ddcbe50835c953fafb50c8d45c8a014a5e72438131b35192e1f31a1611b0",
-      "issue": 1572
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7554,138 +7204,6 @@
         "delivered": true
       }
     },
-    "finish:d415c2fc-82ce-4cb8-876e-4522c328214a": {
-      "digest": "8c42a4e1b8833fe7a1fd59cb726ae4a9ef196ea44b7186706df88c210cb1f74e",
-      "issue": 1572,
-      "message": {
-        "kind": "queued",
-        "issue": 1572,
-        "at": 1795650302136,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "9356b714ce0de8b755bd0b5159c8e88be39cfd0a",
-        "delivered": true
-      }
-    },
-    "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:1:admit": {
-      "digest": "7487579dcbbdf5e305b688c44f63d6c87b4f67313622adb62cb07c94dda0b796",
-      "issue": 1572,
-      "message": {
-        "kind": "admitted",
-        "issue": 1572,
-        "at": 1795650306522,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "9356b714ce0de8b755bd0b5159c8e88be39cfd0a",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:3:return:return:1572": {
-      "digest": "c3fe1ad8943eb24354a771986a5ea1d080bae2b92070de5cf137be25431da9b7",
-      "issue": 1572,
-      "message": {
-        "kind": "return",
-        "issue": 1572,
-        "at": 1795650923569,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795650923569,
-          "entry": 1,
-          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-          "eventId": "finish:d415c2fc-82ce-4cb8-876e-4522c328214a:finish:3:return:return:1572"
-        },
-        "delivered": true
-      }
-    },
-    "finish:e9e067ac-c296-425f-a5df-dbb17591b4c9": {
-      "digest": "40f384b17419907593f184dd1d605e522cc2cfce70b8b9ebdc6fa9460291234e",
-      "issue": 1572,
-      "message": {
-        "kind": "queued",
-        "issue": 1572,
-        "at": 1795651067659,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
-        "delivered": true
-      }
-    },
-    "finish:e9e067ac-c296-425f-a5df-dbb17591b4c9:finish:1:admit": {
-      "digest": "51cfca8497d50f1c75b2edb325f2636e8431349bbd4c22d5b28a8e0bdf84a120",
-      "issue": 1572,
-      "message": {
-        "kind": "admitted",
-        "issue": 1572,
-        "at": 1795651071592,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:e9e067ac-c296-425f-a5df-dbb17591b4c9:finish:3:s6-complete": {
-      "digest": "da5da3186ff178e0b7ef4914fedefc1a8d9e93b108cfca253ca5aa7aaa2a1b4d",
-      "issue": 1572,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1572,
-        "at": 1795651268675,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
-        "phase": "review",
-        "evidence": {
-          "id": "20261125T235804732-389cfd33",
-          "name": "Тесты для задачи #1572 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T235804732-389cfd33/report.json",
-          "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
-          "status": "passed",
-          "finishedAt": "2026-11-26T00:01:07.869Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:0c6f7078-c1e2-44a1-b3c6-38b3f14d6026": {
-      "digest": "621ef974297919a6211ea06b5b9e24c44c88ca96a3145825f99a0c6077451264",
-      "issue": 1572,
-      "message": {
-        "kind": "queued",
-        "issue": 1572,
-        "at": 1795652031440,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "01110eea60307c327c7f5dad9cb94bba5d05cc1d",
-        "evidence": {
-          "id": "20261125T235804732-389cfd33",
-          "name": "Тесты для задачи #1572 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T235804732-389cfd33/report.json",
-          "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
-          "status": "passed",
-          "finishedAt": "2026-11-26T00:01:07.869Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
     "finish:5f04740e-7a62-46c1-9777-29da8df709a6": {
       "digest": "d9a21481ae91630ec58ae2a388216c60cb2119b764c906714553e1aaf536d987",
       "issue": 1570,
@@ -7697,60 +7215,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "ace6385ba7118b4921a5fa0c6f1c05b6e87975e2",
-        "delivered": true
-      }
-    },
-    "github:45728546457:1:tick:2:admit": {
-      "digest": "e0c859871cf5426451116b5bdad15618304f8a90328a87902184dd04034bd8d9",
-      "issue": 1572,
-      "message": {
-        "kind": "admitted",
-        "issue": 1572,
-        "at": 1795652729711,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "01110eea60307c327c7f5dad9cb94bba5d05cc1d",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261125T235804732-389cfd33",
-          "name": "Тесты для задачи #1572 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T235804732-389cfd33/report.json",
-          "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
-          "status": "passed",
-          "finishedAt": "2026-11-26T00:01:07.869Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:0c6f7078-c1e2-44a1-b3c6-38b3f14d6026:finish:2:s6-complete": {
-      "digest": "782a503350d31e82e9cde6bd9451b68d6fd4ac76ad97b40b4fe2e28ea5b0d24f",
-      "issue": 1572,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1572,
-        "at": 1795653339220,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-        "phase": "review",
-        "evidence": {
-          "id": "20261126T002622815-c27809e7",
-          "name": "Тесты для задачи #1572 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T002622815-c27809e7/report.json",
-          "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-          "status": "passed",
-          "finishedAt": "2026-11-26T00:35:37.736Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "### Исправления по предыдущему ревью\nПересобираем shader variant только при смене transparent. Тест теперь монтирует доступный маркер, переводит его в unavailable, восстанавливает и снова отключает: на одном меше проверяются пиксели, hit-id и неизменная тень. Без needsUpdate два пиксельных условия красные; с исправлением весь browser smoke зелёный. Две прежние проверки привязки мутантов тоже зелёные.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
