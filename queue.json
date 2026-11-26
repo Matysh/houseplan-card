@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25736,
-  "nextTicket": 716,
+  "revision": 25737,
+  "nextTicket": 717,
   "nextFence": 716,
   "tasks": {
     "1024": {
@@ -6557,11 +6557,11 @@
       "materialSha": "a044b85569c8b33eaa43d90ecc0f654027c34569",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 714,
-      "queued": false,
+      "ticket": 716,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795655011300,
-      "reviewEntry": 1,
+      "readyAt": 1795656172669,
+      "reviewEntry": 2,
       "patchId": "cc7620f29d06b20e7bb55d9a944cc4eb3d6144f4",
       "changedFiles": [
         "custom_components/houseplan/startup_floor_preview.py",
@@ -6577,7 +6577,6 @@
         "test/startup-floor-wire.test.mjs",
         "tests_backend/test_ha_startup_floor_preview.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7251,7 +7250,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1574
+  ],
   "active": {
     "issue": 1570,
     "worker": "finish",
@@ -7636,6 +7637,19 @@
         "layer": "product",
         "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
         "phase": "sync"
+      }
+    },
+    "finish:00946e14-de7f-4c42-a8e2-b62481983443": {
+      "digest": "0918b2f257b53593493cbec636bda7fb94cd975ffb32665addf161d40d4ee6ea",
+      "issue": 1574,
+      "message": {
+        "kind": "queued",
+        "issue": 1574,
+        "at": 1795656172669,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a044b85569c8b33eaa43d90ecc0f654027c34569"
       }
     }
   },
