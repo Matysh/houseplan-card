@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26818,
+  "revision": 26819,
   "nextTicket": 737,
   "nextFence": 737,
   "tasks": {
@@ -6871,152 +6871,25 @@
     },
     "1583": {
       "issue": 1583,
+      "branch": "codex/1583-release-return-short-s6",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/1583-release-return-short-s6",
-      "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 735,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795694058714,
-      "reviewEntry": 1,
-      "patchId": "897179dbd9677a1fd3fccc49053c4adf14261123",
-      "changedFiles": [
-        "PROCESS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/catalog/verify-published-return.mjs",
-        "process-next/lib/catalog.mjs",
-        "process-next/lib/queue.mjs",
-        "process-next/lib/release.mjs",
-        "process-next/remote.mjs",
-        "process-next/test/queue.test.mjs",
-        "process-next/test/release.test.mjs",
-        "process-next/test/remote.test.mjs",
-        "process-next/test/return-worker.test.mjs"
-      ],
-      "s6": {
-        "id": "20261126T120851489-810b229a",
-        "name": "Тесты для задачи #1583 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T120851489-810b229a/report.json",
-        "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
-        "status": "passed",
-        "finishedAt": "2026-11-26T12:09:18.183Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "55d6b21782f947114e40fcbfadcca1771a2869ed",
+      "mergedSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+      "mergedAt": 1795695272133,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1583:1:897179dbd9677a1fd3fccc49053c4adf14261123:55d6b21782f947114e40fcbfadcca1771a2869ed",
-      "reviewMaterial": {
-        "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
-        "expectedBase": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-        "patchId": "897179dbd9677a1fd3fccc49053c4adf14261123"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1583:1:897179dbd9677a1fd3fccc49053c4adf14261123:55d6b21782f947114e40fcbfadcca1771a2869ed",
-        "eventId": "github:45817023778:1:tick:0:review-retry",
-        "at": 1795694986832,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1583,
-        "requestId": "review:1583:1:897179dbd9677a1fd3fccc49053c4adf14261123:55d6b21782f947114e40fcbfadcca1771a2869ed",
-        "kind": "code",
-        "base": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-        "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
-        "patchId": "897179dbd9677a1fd3fccc49053c4adf14261123",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1583,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1583",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "До: возврат уже проверенной беты шёл в обычный продуктовый S6; зачёт опубликованного ревью не менял выборку. После: тот же доказанный автоматический merge выбирает один повторно вычисляемый Git-шаг с отчётом общего runner; в самом исполнителе не готовятся Node/backend/браузерные зависимости и не вызывается Actions fallback. В обычном S6 поведение не меняется.\n\nДоказательство связано с точными SHA базы, тега и результата, Git patch ID и задачей возврата. Помимо совпадения итогового дерева проверены новые коммиты слияния: линеарные ручные коммиты (даже возвращающие прежнее дерево), конфликт и ручное изменение merge отсекаются. Чистый resync разрешён только после свежего доказательства; старое освобождение от ревью не сохраняется при синхронизации без доказательства.\n\nЛокально: 112 адресных тестов `release.test.mjs`, `queue.test.mjs`, `remote.test.mjs`; в том числе реальный Git и runner на временном репозитории (один результат, грязный checkout и сдвинутый удалённый тег отвергнуты). Интеграция возврата дополнительно проверяет обычный маршрут при записи следующего цикла stable. Штатный инфраструктурный набор: 25/25 шагов, 372 учтённых кейса с зачётом применимых результатов, без продуктового набора. #1582 не менялась и не перезапускалась."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Решение подходит для задачи, блокеров нет. Если Git доказал, что возврат опубликованного тега — чистое автоматическое слияние, S6 сводится к одной проверке Git на чистом checkout. Подготовка продуктовой среды, продуктовый набор и Actions fallback в этом случае не запускаются. Короткий профиль включается только по доказательству, которое лежит в состоянии очереди и привязано к текущему допуску: базе, материалу, тегу, исходному коммиту и patchId. Запрос исполнителя повлиять на это не может. Конфликт, ручные коммиты (включая коммит метаданных следующего stable-цикла и коммит с последующим revert) и смена базы без нового доказательства ведут в обычные S6 и ревью по треку. Сама проверка Git стала строже: кроме совпадения итогового дерева, она проверяет каждый новый коммит истории. Это закрывает реальную дыру прежней проверки, которая смотрела только на дерево. Тесты я не запускал; набор S6 для 9a0691f6 по предоставленному отчёту прошёл без отказов.",
-          "understanding": "Проблема: служебная задача возврата опубликованного тега в dev уже умела пропускать второе ревью, но S6 всё равно планировался как обычный продуктовый. Например, #1582 запланировала 739 шагов для уже проверенной беты. Кроме того, прежнее доказательство в `publishedReturnReview` сравнивало только `merge-tree(base, tag)` с деревом материала. Поэтому оно приняло бы ручную правку с последующим revert или конфликт, разрешённый до сдвига dev.\n\nКак стало:\n1) `ReleaseGitAdapter.publishedReturnReview` (release.mjs:273–310) проверяет следующее. Удалённый тег указывает точно на `mergeSourceSha`. База и тег — предки материала. `merge-tree --write-tree` даёт дерево материала. Каждый коммит из `rev-list materialSha ^base ^source` — merge ровно с двумя родителями, а его дерево совпадает с автоматическим `merge-tree` этих родителей. В доказательство теперь входит `expectedBase`.\n2) `matchingPublishedReturnReview` (queue.mjs:19–26) сверяет доказательство с задачей (`syncMode: 'merge'`, `mergeSourceSha`, `releaseTag`) и с текущим `active` (`expectedBase`, `materialSha`, `patchId`). При `synchronized` прежнее published-доказательство всегда удаляется, а новое принимается только при полном совпадении (строки 192–193). В `s6-complete` зачёт published-ревью определяется той же функцией (строки 205–206).\n3) `finishTask.runS6` (remote.mjs:399–416) вычисляет `short` только из `task`/`active` очереди. В этом случае он не вызывает fallback и `prepareEnvironment`, строит `planPublishedReturnS6` и запускает его без reuse.\n4) Шаг `verify-published-return.mjs` в checkout проверяет, что HEAD равен materialSha и checkout чист, затем заново вычисляет доказательство. Удалённый тег перечитывается, после этого снова проверяются HEAD и чистота. Результат передаётся общему runner через `PROCESS_NEXT_RESULT`.\n\nКакие пути я разобрал:\n- создание ветки возврата `prepareDevReturn` (release.mjs:336–384): worktree от dev, `merge --no-ff` тега, при необходимости отдельный коммит цикла;\n- `returnPublishedHistory` и проводка `finish` в remote.mjs:607–614: localGit и `config.workspace` указывают на один worktree;\n- `synchronize` в finishTask (370–398);\n- coordinator: фазы sync, testing и ready-to-merge с `resynchronize` при сдвиге dev (coordinator.mjs:201–268);\n- `runPlan`: `alwaysRun`, `expectedNonempty`, `materialIdentity`, `defaultStateDir`;\n- тесты queue, release (реальный Git), remote и return-worker.",
-          "analysis": [
-            {
-              "topic": "Строгость Git-доказательства",
-              "assessment": "Это главная содержательная ценность изменения. Обход всех коммитов вне двух допущенных историй с пересчётом автоматического merge для каждого надёжнее сравнения одного итогового дерева. Отсекаются: линейные коммиты, в том числе коммит цикла stable и пары «правка + revert»; ручное изменение merge-коммита; подмешанная непроверенная ветка, потому что её коммиты попадают в rev-list с одним родителем; octopus-слияния. Пустая история отклоняется, но ветка возврата всегда создаётся через `merge --no-ff`, так что для штатного пути это не ограничение. Повторная синхронизация (M2 = merge(M1, новая база)) разрешена, потому что каждый merge в цепочке проверяется отдельно. Если git слишком старый, есть конфликт или merge-tree падает, проверка возвращает null и задача идёт обычным маршрутом. Такой отказ безопасен.",
-              "evidence": "release.mjs:296–309; prepareDevReturn release.mjs:370–376; тест revert в release.test.mjs (manual commits with no net tree change); тест 'a moved dev base needs a fresh proof' использует merge(M1, newBase)"
-            },
-            {
-              "topic": "Привязка к допуску и невозможность включить профиль запросом",
-              "assessment": "Короткий профиль выбирается только по `task.review` в состоянии очереди. Оно попадает туда лишь из вычисленного `synchronize` доказательства и только при совпадении с `active`. `event.request` в этом решении не участвует: тест передаёт `request: { proof, profile: 'published-return' }` обычной задаче и получает обычный маршрут. При каждом `synchronized` прежнее published-доказательство удаляется, даже при том же patchId. Поэтому после смены базы оно не переносится, и `ready-to-merge → resynchronize` всегда требует свежей проверки. Удачное решение: одна функция `matchingPublishedReturnReview` используется и в reducer, и в выборе S6, так что правила не расходятся.",
-              "evidence": "queue.mjs:19–26, 188–193, 205–206; remote.mjs:402, 411; queue.test.mjs 'a published review cannot survive resynchronization…'; remote.test.mjs 'finish selects one Git check…' (случаи clean/ordinary/manual/stale)"
-            },
-            {
-              "topic": "Короткий S6 как шаг общего runner",
-              "assessment": "Без собственного мини-раннера: используются обычный `runPlan`, отчёт, `materialIdentity` и идентичность входов, `expectedNonempty` и `alwaysRun`, `reuse: false`. Поэтому S6 даёт обычную квитанцию, а сохранённый результат не может подменить проверку. Верификатор заново читает удалённый тег и проверяет чистоту checkout до и после доказательства. Путь Actions fallback для короткого случая сознательно не используется: Node и Git уже есть у исполнителя, который делал synchronize. Скрипт исполняется из самого материала, но этот материал как раз доказан как автоматический merge проверенных dev и тега, а доказательство при synchronize вычислял код исполнителя. Повторная проверка в S6 — дополнительная защита, а не единственный барьер.",
-              "evidence": "catalog.mjs:61–67; verify-published-return.mjs; runner.mjs:121–122, 156, 192–198; remote.mjs:611–613 (localGit.cwd совпадает с config.workspace)"
-            },
-            {
-              "topic": "Обычные пути не изменились",
-              "assessment": "Для задач без published-доказательства `runS6` работает как прежде: fallback при `s6 === 'github'`, иначе `prepareEnvironment`, затем `planProfile` и `reuse: true`. Удержание обычного принятого ревью по patchId в `s6-complete` сохранено. Возврат с коммитом цикла stable идёт через обычный S6 с подготовкой среды и через обычное ревью, это проверяет интеграционный тест return-worker.",
-              "evidence": "remote.mjs:403–413; queue.mjs:205–206; return-worker.test.mjs (installations 1 для preparedCycle, 0 для чистого возврата; review-complete только при preparedCycle)"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Сбой верификатора в S6 (например, временная сетевая ошибка `ls-remote` или `fetch`) сейчас становится `checks-failed`. Задача возвращается, и `returnPublishedHistory` при следующем запуске требует ручного исправления (`Return requires an executor correction: checks-failed`). Можно разделять два случая: «доказательство больше не выполняется» (настоящий отказ) и «Git или сеть недоступны» (`unavailable`/повтор). Цена — немного логики в скрипте. Выгода: возврат беты не застрянет на сетевом сбое. Для обычного S6 поведение такое же, поэтому это не блокер.",
-            "Аргумент `patchId` верификатор не перепроверяет, а только копирует в доказательство. Материал и так закреплён по SHA, поэтому дефекта нет. Но стоит либо убрать `patchId` из аргументов шага, либо явно оставить в комментарии, что он лишь связывает отчёт с допуском. Так читатель не будет думать, что верификатор проверяет и его."
-          ],
-          "boundaries": "Ревью выполнено только по исходникам на 9a0691f6. Сборки, тесты и Git-команды я не запускал. Использован отчёт S6 20261126T120851489-810b229a («Тесты для задачи #1583 (перед ревью)», status passed, failures пусто, материал 9a0691f6). Указанные автором 112 адресных тестов и 25/25 шагов инфраструктурного набора принимаю как его заявление, подтверждённое этой квитанцией. Отдельно счётчики я не проверял. Поведение `git merge-tree --write-tree` на крисскросс-историях и при нестандартных merge-настройках оценено по устройству ort: возможное расхождение даёт только ложный отказ, то есть обычный маршрут, и не создаёт ложного зачёта. Не проверял: задачи, которые уже были в очереди до развёртывания с доказательством старого формата без `expectedBase`/`materialSha`. По коду они безопасно уйдут в обычное ревью; #1582 изменение не затрагивает, если её исполнитель не перезапускается с новым кодом."
-        },
-        "usage": {
-          "input_tokens": 44,
-          "cache_creation_input_tokens": 80751,
-          "cache_read_input_tokens": 1075404,
-          "output_tokens": 15595,
-          "output_tokens_details": {
-            "thinking_tokens": 8625
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 80751,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 994,
-              "cache_read_input_tokens": 71320,
-              "cache_creation_input_tokens": 13635,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 13635
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРешение подходит для задачи, блокеров нет. Если Git доказал, что возврат опубликованного тега — чистое автоматическое слияние, S6 сводится к одной проверке Git на чистом checkout. Подготовка продуктовой среды, продуктовый набор и Actions fallback в этом случае не запускаются. Короткий профиль включается только по доказательству, которое лежит в состоянии очереди и привязано к текущему допуску: базе, материалу, тегу, исходному коммиту и patchId. Запрос исполнителя повлиять на это не может. Конфликт, ручные коммиты (включая коммит метаданных следующего stable-цикла и коммит с последующим revert) и смена базы без нового доказательства ведут в обычные S6 и ревью по треку. Сама проверка Git стала строже: кроме совпадения итогового дерева, она проверяет каждый новый коммит истории. Это закрывает реальную дыру прежней проверки, которая смотрела только на дерево. Тесты я не запускал; набор S6 для 9a0691f6 по предоставленному отчёту прошёл без отказов.\n\n## Понимание решения\n\nПроблема: служебная задача возврата опубликованного тега в dev уже умела пропускать второе ревью, но S6 всё равно планировался как обычный продуктовый. Например, #1582 запланировала 739 шагов для уже проверенной беты. Кроме того, прежнее доказательство в `publishedReturnReview` сравнивало только `merge-tree(base, tag)` с деревом материала. Поэтому оно приняло бы ручную правку с последующим revert или конфликт, разрешённый до сдвига dev.\n\nКак стало:\n1) `ReleaseGitAdapter.publishedReturnReview` (release.mjs:273–310) проверяет следующее. Удалённый тег указывает точно на `mergeSourceSha`. База и тег — предки материала. `merge-tree --write-tree` даёт дерево материала. Каждый коммит из `rev-list materialSha ^base ^source` — merge ровно с двумя родителями, а его дерево совпадает с автоматическим `merge-tree` этих родителей. В доказательство теперь входит `expectedBase`.\n2) `matchingPublishedReturnReview` (queue.mjs:19–26) сверяет доказательство с задачей (`syncMode: 'merge'`, `mergeSourceSha`, `releaseTag`) и с текущим `active` (`expectedBase`, `materialSha`, `patchId`). При `synchronized` прежнее published-доказательство всегда удаляется, а новое принимается только при полном совпадении (строки 192–193). В `s6-complete` зачёт published-ревью определяется той же функцией (строки 205–206).\n3) `finishTask.runS6` (remote.mjs:399–416) вычисляет `short` только из `task`/`active` очереди. В этом случае он не вызывает fallback и `prepareEnvironment`, строит `planPublishedReturnS6` и запускает его без reuse.\n4) Шаг `verify-published-return.mjs` в checkout проверяет, что HEAD равен materialSha и checkout чист, затем заново вычисляет доказательство. Удалённый тег перечитывается, после этого снова проверяются HEAD и чистота. Результат передаётся общему runner через `PROCESS_NEXT_RESULT`.\n\nКакие пути я разобрал:\n- создание ветки возврата `prepareDevReturn` (release.mjs:336–384): worktree от dev, `merge --no-ff` тега, при необходимости отдельный коммит цикла;\n- `returnPublishedHistory` и проводка `finish` в remote.mjs:607–614: localGit и `config.workspace` указывают на один worktree;\n- `synchronize` в finishTask (370–398);\n- coordinator: фазы sync, testing и ready-to-merge с `resynchronize` при сдвиге dev (coordinator.mjs:201–268);\n- `runPlan`: `alwaysRun`, `expectedNonempty`, `materialIdentity`, `defaultStateDir`;\n- тесты queue, release (реальный Git), remote и return-worker.\n\n## Разбор решения\n\n### Строгость Git-доказательства\n\nЭто главная содержательная ценность изменения. Обход всех коммитов вне двух допущенных историй с пересчётом автоматического merge для каждого надёжнее сравнения одного итогового дерева. Отсекаются: линейные коммиты, в том числе коммит цикла stable и пары «правка + revert»; ручное изменение merge-коммита; подмешанная непроверенная ветка, потому что её коммиты попадают в rev-list с одним родителем; octopus-слияния. Пустая история отклоняется, но ветка возврата всегда создаётся через `merge --no-ff`, так что для штатного пути это не ограничение. Повторная синхронизация (M2 = merge(M1, новая база)) разрешена, потому что каждый merge в цепочке проверяется отдельно. Если git слишком старый, есть конфликт или merge-tree падает, проверка возвращает null и задача идёт обычным маршрутом. Такой отказ безопасен.\n\nОснование: release.mjs:296–309; prepareDevReturn release.mjs:370–376; тест revert в release.test.mjs (manual commits with no net tree change); тест 'a moved dev base needs a fresh proof' использует merge(M1, newBase)\n\n### Привязка к допуску и невозможность включить профиль запросом\n\nКороткий профиль выбирается только по `task.review` в состоянии очереди. Оно попадает туда лишь из вычисленного `synchronize` доказательства и только при совпадении с `active`. `event.request` в этом решении не участвует: тест передаёт `request: { proof, profile: 'published-return' }` обычной задаче и получает обычный маршрут. При каждом `synchronized` прежнее published-доказательство удаляется, даже при том же patchId. Поэтому после смены базы оно не переносится, и `ready-to-merge → resynchronize` всегда требует свежей проверки. Удачное решение: одна функция `matchingPublishedReturnReview` используется и в reducer, и в выборе S6, так что правила не расходятся.\n\nОснование: queue.mjs:19–26, 188–193, 205–206; remote.mjs:402, 411; queue.test.mjs 'a published review cannot survive resynchronization…'; remote.test.mjs 'finish selects one Git check…' (случаи clean/ordinary/manual/stale)\n\n### Короткий S6 как шаг общего runner\n\nБез собственного мини-раннера: используются обычный `runPlan`, отчёт, `materialIdentity` и идентичность входов, `expectedNonempty` и `alwaysRun`, `reuse: false`. Поэтому S6 даёт обычную квитанцию, а сохранённый результат не может подменить проверку. Верификатор заново читает удалённый тег и проверяет чистоту checkout до и после доказательства. Путь Actions fallback для короткого случая сознательно не используется: Node и Git уже есть у исполнителя, который делал synchronize. Скрипт исполняется из самого материала, но этот материал как раз доказан как автоматический merge проверенных dev и тега, а доказательство при synchronize вычислял код исполнителя. Повторная проверка в S6 — дополнительная защита, а не единственный барьер.\n\nОснование: catalog.mjs:61–67; verify-published-return.mjs; runner.mjs:121–122, 156, 192–198; remote.mjs:611–613 (localGit.cwd совпадает с config.workspace)\n\n### Обычные пути не изменились\n\nДля задач без published-доказательства `runS6` работает как прежде: fallback при `s6 === 'github'`, иначе `prepareEnvironment`, затем `planProfile` и `reuse: true`. Удержание обычного принятого ревью по patchId в `s6-complete` сохранено. Возврат с коммитом цикла stable идёт через обычный S6 с подготовкой среды и через обычное ревью, это проверяет интеграционный тест return-worker.\n\nОснование: remote.mjs:403–413; queue.mjs:205–206; return-worker.test.mjs (installations 1 для preparedCycle, 0 для чистого возврата; review-complete только при preparedCycle)\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Сбой верификатора в S6 (например, временная сетевая ошибка `ls-remote` или `fetch`) сейчас становится `checks-failed`. Задача возвращается, и `returnPublishedHistory` при следующем запуске требует ручного исправления (`Return requires an executor correction: checks-failed`). Можно разделять два случая: «доказательство больше не выполняется» (настоящий отказ) и «Git или сеть недоступны» (`unavailable`/повтор). Цена — немного логики в скрипте. Выгода: возврат беты не застрянет на сетевом сбое. Для обычного S6 поведение такое же, поэтому это не блокер.\n- Аргумент `patchId` верификатор не перепроверяет, а только копирует в доказательство. Материал и так закреплён по SHA, поэтому дефекта нет. Но стоит либо убрать `patchId` из аргументов шага, либо явно оставить в комментарии, что он лишь связывает отчёт с допуском. Так читатель не будет думать, что верификатор проверяет и его.\n\n## Границы анализа\n\nРевью выполнено только по исходникам на 9a0691f6. Сборки, тесты и Git-команды я не запускал. Использован отчёт S6 20261126T120851489-810b229a («Тесты для задачи #1583 (перед ревью)», status passed, failures пусто, материал 9a0691f6). Указанные автором 112 адресных тестов и 25/25 шагов инфраструктурного набора принимаю как его заявление, подтверждённое этой квитанцией. Отдельно счётчики я не проверял. Поведение `git merge-tree --write-tree` на крисскросс-историях и при нестандартных merge-настройках оценено по устройству ort: возможное расхождение даёт только ложный отказ, то есть обычный маршрут, и не создаёт ложного зачёта. Не проверял: задачи, которые уже были в очереди до развёртывания с доказательством старого формата без `expectedBase`/`materialSha`. По коду они безопасно уйдут в обычное ревью; #1582 изменение не затрагивает, если её исполнитель не перезапускается с новым кодом.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 55d6b21782f947114e40fcbfadcca1771a2869ed → 9a0691f613399b8415f7ee528a932d0338deab50\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1583, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nДо: возврат уже проверенной беты шёл в обычный продуктовый S6; зачёт опубликованного ревью не менял выборку. После: тот же доказанный автоматический merge выбирает один повторно вычисляемый Git-шаг с отчётом общего runner; в самом исполнителе не готовятся Node/backend/браузерные зависимости и не вызывается Actions fallback. В обычном S6 поведение не меняется.\n\nДоказательство связано с точными SHA базы, тега и результата, Git patch ID и задачей возврата. Помимо совпадения итогового дерева проверены новые коммиты слияния: линеарные ручные коммиты (даже возвращающие прежнее дерево), конфликт и ручное изменение merge отсекаются. Чистый resync разрешён только после свежего доказательства; старое освобождение от ревью не сохраняется при синхронизации без доказательства.\n\nЛокально: 112 адресных тестов `release.test.mjs`, `queue.test.mjs`, `remote.test.mjs`; в том числе реальный Git и runner на временном репозитории (один результат, грязный checkout и сдвинутый удалённый тег отвергнуты). Интеграция возврата дополнительно проверяет обычный маршрут при записи следующего цикла stable. Штатный инфраструктурный набор: 25/25 шагов, 372 учтённых кейса с зачётом применимых результатов, без продуктового набора. #1582 не менялась и не перезапускалась.\n```\n\n</details>\n",
-        "createdAt": "2026-11-26T12:13:56.830Z",
-        "artifactId": 15116103015,
-        "runId": 45817072508,
-        "runAttempt": 1,
-        "completedAt": "2026-11-26T12:14:02Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45817072508",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "55d6b21782f947114e40fcbfadcca1771a2869ed"
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -7696,19 +7569,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1583,
-    "worker": "github-coordinator",
-    "token": "736:github:45816614953:1:tick:0:admit",
-    "fence": 736,
-    "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
-    "expectedBase": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795694817267,
-    "expiresAt": 1795698869525,
-    "patchId": "897179dbd9677a1fd3fccc49053c4adf14261123",
-    "reviewRequest": "review:1583:1:897179dbd9677a1fd3fccc49053c4adf14261123:55d6b21782f947114e40fcbfadcca1771a2869ed"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7874,54 +7735,6 @@
       "digest": "3196dd072812b240dbb9aee3ce40c7f7286460fa52a78900e1e470fa836d8efa",
       "issue": 1582
     },
-    "github:45816614953:1:completions:message:0ce17994970092fca473464179a39ab72c4e35a0e2c22728e2301df6447a605b": {
-      "digest": "807801355b8225e2d26e08eebc052012da545ba9717cf3e9632a6facb4f9051e",
-      "issue": 1583
-    },
-    "github:45816614953:1:completions:message:4f9b53401d62202aa27e617bd41c55315b10b0c296d791144d7b935a37b5be15": {
-      "digest": "89b0f95a20aeb2d388ffeb5b519db208f89bee5610f463275d0930b4d03b83ca",
-      "issue": 1583
-    },
-    "github:45816614953:1:completions:message:ba07709f449e4759e9271cad4ab26189bd5da065130b6aec1917a7af750c5122": {
-      "digest": "8f356ba9699e56454ea0d3596a8c5f4322ce6a12ebd6852307b111fb556d8d28",
-      "issue": 1583
-    },
-    "github:45816614953:1:completions:message:15598902b69427c075cb4ce6763a7cfbcb576240d2fa836ef509c230cf43384e": {
-      "digest": "7820f37ed692688fdc9783df5e47e5ec5365f494714db6bf4aa57c529e9f1bba",
-      "issue": 1583
-    },
-    "finish:3d3dab79-a260-4ba3-b0e1-2e7672df7a2d:finish:1:synchronized": {
-      "digest": "69aaa9f29f105ef0b19af8711e3523f8d6272899963f0c2a00c043c901ae56f0",
-      "issue": 1583
-    },
-    "finish:3d3dab79-a260-4ba3-b0e1-2e7672df7a2d:finish:2:s6-label": {
-      "digest": "06802aa25e6a66fba55bc59116bb0a7b133d1b1bc2a7cc8a592b85e48a859f87",
-      "issue": 1583
-    },
-    "finish:3d3dab79-a260-4ba3-b0e1-2e7672df7a2d:finish:3:review-requested": {
-      "digest": "b6d00193d28cd4876024843de8f26645d8d2443c2e8d081357fab5152872c62f",
-      "issue": 1583
-    },
-    "github:45817023778:1:tick:0:review-retry": {
-      "digest": "73fc0d69bad6dc6768301dafa99ab51589ae8ddbcd8b824254be319706283421",
-      "issue": 1583
-    },
-    "github:45817023778:1:completions:message:f5d9c4019d7a49761fc167bdfd1d596ad1124c571a60d3ba093a7012f713bc2c": {
-      "digest": "e633d7cf130dc1844b1275bf2588dd30cfd21e665a85351b2703ef30fac1b9bc",
-      "issue": 1583
-    },
-    "github:45817026306:1:completions:message:82b98db61fda8106e39f500836ce438a9323e8f8e06a4b4c0249b13224a29074": {
-      "digest": "e8f4716de10ee315b66c2a4580977dbc791808d6c166b01e417408089f9f9d1a",
-      "issue": 1583
-    },
-    "github:45817741024:1:tick:0:review-presentation": {
-      "digest": "7f074afb1d45f169fa81ff78a844a39f960faee24e2694fa54d6ea4ee7709cbc",
-      "issue": 1583
-    },
-    "github:45817741024:1:tick:0:review-complete": {
-      "digest": "0cf391930932d59d70417f82a4b0ab5f26022afcb16942045ee4791f99ec77fa",
-      "issue": 1583
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7980,20 +7793,6 @@
         "delivered": true
       }
     },
-    "finish:b670345a-f5c5-471b-90f8-11cc8d3340b6": {
-      "digest": "5be721bc1af3feae8a2f93b7cd40fde03b9fb1f3268409973086b1bce3080103",
-      "issue": 1583,
-      "message": {
-        "kind": "queued",
-        "issue": 1583,
-        "at": 1795694058714,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "b38f4575ade019751fde5f389f2e693a115580b7",
-        "delivered": true
-      }
-    },
     "release-return-finish:4b4be159-fbd4-4c73-9bad-a68f4161f952:finish:2:s6-complete": {
       "digest": "d9674eaebdc3fb7a3fb78dd6b0f026ab7497b14c278d363693d732ce0ca4de25",
       "issue": 1582,
@@ -8018,51 +7817,6 @@
         "newReview": true,
         "resubmission": false,
         "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "github:45816614953:1:tick:0:admit": {
-      "digest": "0912b719171fce737393d1a8c060fab02b1dc291d29dd6f43cc0c5a55156ec86",
-      "issue": 1583,
-      "message": {
-        "kind": "admitted",
-        "issue": 1583,
-        "at": 1795694817267,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "b38f4575ade019751fde5f389f2e693a115580b7",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:3d3dab79-a260-4ba3-b0e1-2e7672df7a2d:finish:2:s6-complete": {
-      "digest": "2a01a4c330571b4f8cf019a02d5c49e1e3608ee8b87543405d6b8d6e4ac360ab",
-      "issue": 1583,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1583,
-        "at": 1795694959221,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
-        "phase": "review",
-        "evidence": {
-          "id": "20261126T120851489-810b229a",
-          "name": "Тесты для задачи #1583 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T120851489-810b229a/report.json",
-          "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
-          "status": "passed",
-          "finishedAt": "2026-11-26T12:09:18.183Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "До: возврат уже проверенной беты шёл в обычный продуктовый S6; зачёт опубликованного ревью не менял выборку. После: тот же доказанный автоматический merge выбирает один повторно вычисляемый Git-шаг с отчётом общего runner; в самом исполнителе не готовятся Node/backend/браузерные зависимости и не вызывается Actions fallback. В обычном S6 поведение не меняется.\n\nДоказательство связано с точными SHA базы, тега и результата, Git patch ID и задачей возврата. Помимо совпадения итогового дерева проверены новые коммиты слияния: линеарные ручные коммиты (даже возвращающие прежнее дерево), конфликт и ручное изменение merge отсекаются. Чистый resync разрешён только после свежего доказательства; старое освобождение от ревью не сохраняется при синхронизации без доказательства.\n\nЛокально: 112 адресных тестов `release.test.mjs`, `queue.test.mjs`, `remote.test.mjs`; в том числе реальный Git и runner на временном репозитории (один результат, грязный checkout и сдвинутый удалённый тег отвергнуты). Интеграция возврата дополнительно проверяет обычный маршрут при записи следующего цикла stable. Штатный инфраструктурный набор: 25/25 шагов, 372 учтённых кейса с зачётом применимых результатов, без продуктового набора. #1582 не менялась и не перезапускалась.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
