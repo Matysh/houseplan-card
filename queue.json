@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26239,
+  "revision": 26240,
   "nextTicket": 727,
   "nextFence": 727,
   "tasks": {
@@ -7775,7 +7775,8 @@
           "status": "passed",
           "finishedAt": "2026-11-26T06:20:48.504Z",
           "failures": []
-        }
+        },
+        "delivered": true
       }
     },
     "finish:1ba1a789-8fb4-46ad-9497-16b695df0090:finish:1:admit": {
