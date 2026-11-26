@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26769,
+  "revision": 26770,
   "nextTicket": 737,
   "nextFence": 736,
   "tasks": {
@@ -6771,42 +6771,24 @@
     },
     "1581": {
       "issue": 1581,
+      "branch": "codex/1581-dialog-focus-witness",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1581-dialog-focus-witness",
-      "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 736,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795694627233,
-      "reviewEntry": 2,
-      "patchId": "b156f575e0581a7872361e7f99e643d0da8a01ae",
-      "changedFiles": [
-        "demo/smoke_ui_polish_976.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "scripts/mutation-registry.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
+      "status": "S8-merged",
+      "expectedBase": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
+      "mergedSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
+      "mergedAt": 1795694793172,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
         "status": "pending",
-        "fromStatus": "S6-in-progress",
-        "at": 1795694597105,
-        "entry": 1,
-        "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
-        "eventId": "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:3:return:return:1581"
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261126T120614619-ab5a87f1",
-        "name": "Тесты для задачи #1581 (перед слиянием)",
-        "reportPath": "/home/sergey/hp-1581-WGWObg/.git/process-next/runs/20261126T120614619-ab5a87f1/report.json",
-        "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-        "status": "passed",
-        "finishedAt": "2026-11-26T12:06:26.416Z",
-        "failures": []
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1582": {
@@ -7565,18 +7547,7 @@
   "waiting": [
     1583
   ],
-  "active": {
-    "issue": 1581,
-    "worker": "finish",
-    "token": "735:finish:b3fd8680-e7f3-4230-9f13-3b03b96d21ac:finish:1:admit",
-    "fence": 735,
-    "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-    "expectedBase": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795694631382,
-    "expiresAt": 1795698387614,
-    "patchId": "b156f575e0581a7872361e7f99e643d0da8a01ae"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7742,50 +7713,6 @@
       "digest": "3196dd072812b240dbb9aee3ce40c7f7286460fa52a78900e1e470fa836d8efa",
       "issue": 1582
     },
-    "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:2:synchronized": {
-      "digest": "6406fe59370987382049dbda7d31b6473900493d395a77236677e6cf292dd51d",
-      "issue": 1581
-    },
-    "finish:d744c5f5-0565-488c-8b37-dda73f41c678": {
-      "digest": "6d0327f181f8d574b26c2b3d5beac5a9079cbcfd965f21c4638083ab32fc6c75",
-      "issue": 1581
-    },
-    "github:45815492038:1:completions:message:e8cca30ac727d6fb55568964f801c91c3fec7e4e401b9f8842c6f9c24906bed4": {
-      "digest": "85df360bf0b6e5590fd43f86e5c0dac05911fcab671c9abd959c460d10489e2b",
-      "issue": 1581
-    },
-    "finish:39d03877-d482-4c5e-9595-1bb15991df87": {
-      "digest": "ace16a91948e7bcf3b89b1b8430fcffcd88f7ebb9296a2ed70c6a6e14a653070",
-      "issue": 1581
-    },
-    "finish:0963a4f5-020f-41aa-aa46-77cf87603bed": {
-      "digest": "ea9fc5fa5c4074a96e3efab5df434ea6abc931fda4d7161b021ae20a196d929f",
-      "issue": 1581
-    },
-    "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:3:return": {
-      "digest": "9a7d459af23e069d3b0dd0d1582870bde54e79267e4c42ef13f65e9ac7e7f0b4",
-      "issue": 1581
-    },
-    "finish:b3fd8680-e7f3-4230-9f13-3b03b96d21ac:finish:2:automation-pending": {
-      "digest": "21211fc522795bf82d6e2083bde5b8302f70d6d7837e75eae46b69b2c17860e3",
-      "issue": 1581
-    },
-    "finish:69bf50cb-de58-42a7-b48f-24a1267c4154": {
-      "digest": "5d2e0e17c5b0fe647478647d9f630f267ab3dfb86da2dfaf9896de3c906d34cd",
-      "issue": 1581
-    },
-    "finish:ceee385a-ba69-43f8-bc38-2b5dbb4f258a": {
-      "digest": "877895c56cfd543c67e60021c97e23f6ead95b44f7059fd3847a0690e738f9d4",
-      "issue": 1581
-    },
-    "finish:b3fd8680-e7f3-4230-9f13-3b03b96d21ac:finish:4:synchronized": {
-      "digest": "02215cd66b5e8f024812767183a5c47ad46d42b470e3d8841fdfa674de8ec61f",
-      "issue": 1581
-    },
-    "finish:b3fd8680-e7f3-4230-9f13-3b03b96d21ac:finish:5:s6-complete": {
-      "digest": "ff66c5a12058224e8372d744060380d588fddeec6784bc1865e4e4ab81c9c1a6",
-      "issue": 1581
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7844,20 +7771,6 @@
         "delivered": true
       }
     },
-    "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36": {
-      "digest": "988fd485ef6cbe6dc6ac3fcba7d7db2c5139514b9bdd784f4a407f44d63d0a34",
-      "issue": 1581,
-      "message": {
-        "kind": "queued",
-        "issue": 1581,
-        "at": 1795693585506,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-        "delivered": true
-      }
-    },
     "finish:b670345a-f5c5-471b-90f8-11cc8d3340b6": {
       "digest": "5be721bc1af3feae8a2f93b7cd40fde03b9fb1f3268409973086b1bce3080103",
       "issue": 1583,
@@ -7899,21 +7812,6 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:1:admit": {
-      "digest": "4d13f03311869386f6b7c1de7bbcfa6164a6646a629d21ef0153f60d05c74d69",
-      "issue": 1581,
-      "message": {
-        "kind": "admitted",
-        "issue": 1581,
-        "at": 1795694386638,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-        "phase": "sync",
         "delivered": true
       }
     },
