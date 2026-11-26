@@ -8,16 +8,32 @@ import { installUiPolish963Fixture } from './helpers/ui-polish-963-fixture.mjs';
 const { page, browser } = await launchColdView({ width: 1280, height: 900 });
 try {
   const shell = kind => page.locator(`hp-dialog[data-kind="${kind}"]`);
-  await page.locator('[data-hp="support"]').click();
+  const support = page.locator('[data-hp="support"]');
+  const supportFrame = () => support.evaluate(element => {
+    const style = getComputedStyle(element);
+    return { border: style.borderTopColor, outline: style.outlineStyle, shadow: style.boxShadow };
+  });
+  await page.mouse.move(0, 0);
+  const idleFrame = await supportFrame();
+  await support.click();
+  await page.mouse.move(0, 0);
   await expect(shell('support')).toBeVisible();
   const width = await shell('support').locator('.surface').evaluate(element => element.getBoundingClientRect().width);
   assert.equal(width, 610);
   await page.keyboard.press('Escape');
   await expect(shell('support')).toHaveCount(0);
-  await expect(page.locator('[data-hp="support"]')).toBeFocused();
-  assert.equal(await page.locator('[data-hp="support"]').evaluate(element => getComputedStyle(element).outlineStyle), 'none');
+  await expect(support).toBeFocused();
+  assert.deepEqual(await supportFrame(), idleFrame, 'Escape must restore focus without highlighting the Help button');
   await page.keyboard.press('Tab');
-  assert.equal(await page.locator('[data-hp="support"]').evaluate(element => element.classList.contains('hp-dialog-return-focus')), false);
+  await expect(support).not.toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(support).toBeFocused();
+  await expect.poll(async () => (await supportFrame()).border, {
+    message: 'Tab navigation back to Help must highlight its ordinary border',
+  }).not.toBe(idleFrame.border);
+  const tabFrame = await supportFrame();
+  assert.equal(tabFrame.outline, 'none');
+  assert.equal(tabFrame.shadow, 'none');
 
   await page.locator('[data-hp="settings"]').click();
   const settings = shell('settings'), signal = settings.locator('#gs-room-tooltip');

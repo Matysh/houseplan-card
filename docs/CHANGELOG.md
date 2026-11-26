@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Test maintenance: verify that closing Help with Escape leaves the button unhighlighted and that Tab navigation highlights its ordinary border (#1581).
+
 - Keep window sunlight on the floor in WebGL 3D and soften the edge of the light patch at high zoom (#1580).
 - Save room-label positions and scale in the standalone editor using point-level conflict detection and observable save outcomes (#1563).
 - Test maintenance: run the nightly wall-node parity guard as a Python module with its compiled fixture dependencies (#1564).
