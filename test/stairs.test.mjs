@@ -32,6 +32,7 @@ import {
   stairTargetState,
 } from '../test-build/stairs-editor-model.js';
 import { StairViewRuntime } from '../test-build/stairs-view.js';
+import { physicalStairVolume, straightStairInk } from '../test-build/stairs-volume.js';
 
 const straight = (extra = {}) => ({
   id: 'straight', kind: 'straight', x: 0.5, y: 0.5, angle: 0,
@@ -43,6 +44,30 @@ const spiral = (extra = {}) => ({
   id: 'spiral', kind: 'spiral', x: 0.5, y: 0.5, angle: 0,
   direction: 'clockwise', radius: 0.1,
   target_space_id: 'upper', ...extra,
+});
+
+test('straight stair ink follows step edges, not triangulation of the concave flanks (#1576)', () => {
+  for (const angle of [0, 29, 90, 147]) {
+    const volume = physicalStairVolume(straight({ angle }), 5);
+    assert.equal(volume.kind, 'straight');
+    const ink = straightStairInk(volume.faces);
+    const outline = new Set();
+    const pointKey = point => point.map(value => Math.round(value * 1e6)).join(',');
+    const sideKey = (a, b) => [pointKey(a), pointKey(b)].sort().join('|');
+    for (let i = 0; i < ink.length; i += 6) {
+      const [x, z, y, xx, zz, yy] = ink.slice(i, i + 6);
+      const key = sideKey([x, y, z], [xx, yy, zz]);
+      assert.ok(!outline.has(key), 'shared physical edges are emitted once');
+      outline.add(key);
+      assert.ok(Math.abs(z - zz) < 1e-8 || Math.hypot(x - xx, y - yy) < 1e-8,
+        'a step edge is horizontal or vertical, never diagonal');
+    }
+    for (const { vertices } of volume.faces) for (let i = 0; i < vertices.length; i++) {
+      assert.ok(outline.has(sideKey(vertices[i], vertices[(i + 1) % vertices.length])),
+        'keep the tread, riser and outer profile boundaries');
+    }
+  }
+  assert.equal(physicalStairVolume(spiral(), 5).kind, 'spiral');
 });
 
 test('#688 all stair linework shares one physical 3.6 cm contract', () => {

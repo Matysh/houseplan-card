@@ -10,7 +10,7 @@ import type { IsoOpeningPanel, IsoOpeningSurface } from './iso-openings';
 import type { IsoRenderScene } from './iso-scene-geometry';
 import type { DecorFurniture } from './editors/decor/types';
 import type { SpaceDisplay } from './logic';
-import type { PhysicalStairVolume } from './stairs-volume';
+import { straightStairInk, type PhysicalStairVolume } from './stairs-volume';
 import { Plan3dLightField, type Plan3dLight } from './plan-3d-light-field';
 import { planFaceMesh, planPrismMesh, type Plan3dVertex } from './plan-3d-mesh';
 import { plan3dCladWallSides, plan3dWallInk, plan3dWallShell } from './plan-3d-wall-shell';
@@ -583,7 +583,11 @@ export class Plan3dWorld {
         mesh.userData.plan3dPick = { id: `stair:${id}` };
         return mesh;
       });
-      return [...solid, faceInk(faces.flat(), color, .3)];
+      const ink = volume.kind === 'straight'
+        ? lineInk(new BufferGeometry().setAttribute('position',
+          new Float32BufferAttribute(straightStairInk(volume.faces), 3)), color, .3)
+        : faceInk(faces.flat(), color, .3);
+      return [...solid, ink];
     });
     this.replace(this.stairs, meshes);
     this.stairKey = key;

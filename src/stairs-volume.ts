@@ -9,6 +9,7 @@ import type { FurnitureMesh, FurnitureMeshPart } from './iso-lab-furniture';
 type Vertex = readonly [number,number,number];
 export interface StairVolumeFace { name: string; vertices: readonly Vertex[]; cap: boolean; }
 export interface PhysicalStairVolume {
+  kind: Stair['kind'];
   faces: readonly StairVolumeFace[];
   footprint: PlanPoint[];
   height: number;
@@ -63,8 +64,31 @@ export function physicalStairVolume(stair: Stair, cellCm: number): PhysicalStair
     }
     prism('centre-post',Array.from({length:32},(_,i)=>[Math.cos(i*Math.PI/16)*radius*.18,Math.sin(i*Math.PI/16)*radius*.18]),0,height);
   }
-  const result = { faces, height, steps, footprint: geometry.outline.map(p => [p[0], p[1]] as PlanPoint) };
+  const result = { kind: stair.kind, faces, height, steps, footprint: geometry.outline.map(p => [p[0], p[1]] as PlanPoint) };
   physicalCache.set(geometry, result);
+  return result;
+}
+
+/** Physical boundaries before triangulation. A straight flank is a single
+ * concave profile: triangle adjacency is not a reliable source of its ink.
+ * Preserve the cross-stair tread/riser edges, but emit each shared edge once. */
+export function straightStairInk(faces: readonly StairVolumeFace[]): number[] {
+  const result: number[] = [], edges = new Set<string>();
+  // Independently generated faces can differ by arithmetic roundoff.
+  const vertexKey = (vertex: Vertex) => vertex.map(value => Math.round(value * 1e7)).join(',');
+  for (const { vertices } of faces) {
+    const keys = vertices.map(vertexKey);
+    for (const [index, [x, y, z]] of vertices.entries()) {
+      const end = (index + 1) % vertices.length;
+      const a = keys[index], b = keys[end];
+      if (a === b) continue;
+      const key = a < b ? a + ':' + b : b + ':' + a;
+      if (edges.has(key)) continue;
+      edges.add(key);
+      const [xx, yy, zz] = vertices[end];
+      result.push(x, z, y, xx, zz, yy);
+    }
+  }
   return result;
 }
 

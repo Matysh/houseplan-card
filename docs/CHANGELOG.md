@@ -8,6 +8,7 @@
 - Blend transparent walls and furniture in depth order so a wall behind a cabinet no longer darkens part of its face (#1568).
 - Refine 3D walls, thresholds and translucent furniture, keep device symbols sharp at high zoom, and let lamps and LED strips light nearby walls as well as the floor (#1567).
 - Remove competing wall and jamb faces that could flicker when zooming in WebGL 3D (#1569).
+- Keep the outline of straight stair treads without diagonals from the mesh in WebGL 3D (#1576).
 - Keep Zigbee routes behind device cores and restore marker clicks when returning from 3D to Flat (#1573).
 - Keep stair-arrival and marker hover feedback visible in 3D, respect forced-colour palettes, and reuse the resolved background colour on warm floor switches (#1570).
 - Restore the inset room highlight and its opening gaps when hovering in WebGL 3D (#1571).
