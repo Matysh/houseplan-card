@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26794,
+  "revision": 26795,
   "nextTicket": 737,
   "nextFence": 737,
   "tasks": {
@@ -6873,14 +6873,29 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1583-release-return-short-s6",
-      "materialSha": "b38f4575ade019751fde5f389f2e693a115580b7",
+      "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 735,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795694058714,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "897179dbd9677a1fd3fccc49053c4adf14261123",
+      "changedFiles": [
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/catalog/verify-published-return.mjs",
+        "process-next/lib/catalog.mjs",
+        "process-next/lib/queue.mjs",
+        "process-next/lib/release.mjs",
+        "process-next/remote.mjs",
+        "process-next/test/queue.test.mjs",
+        "process-next/test/release.test.mjs",
+        "process-next/test/remote.test.mjs",
+        "process-next/test/return-worker.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7550,11 +7565,12 @@
     "worker": "github-coordinator",
     "token": "736:github:45816614953:1:tick:0:admit",
     "fence": 736,
-    "materialSha": "b38f4575ade019751fde5f389f2e693a115580b7",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+    "expectedBase": "55d6b21782f947114e40fcbfadcca1771a2869ed",
+    "phase": "testing",
     "admittedAt": 1795694817267,
-    "expiresAt": 1795695117267
+    "expiresAt": 1795695225382,
+    "patchId": "897179dbd9677a1fd3fccc49053c4adf14261123"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7735,6 +7751,10 @@
     },
     "github:45816614953:1:completions:message:15598902b69427c075cb4ce6763a7cfbcb576240d2fa836ef509c230cf43384e": {
       "digest": "7820f37ed692688fdc9783df5e47e5ec5365f494714db6bf4aa57c529e9f1bba",
+      "issue": 1583
+    },
+    "finish:3d3dab79-a260-4ba3-b0e1-2e7672df7a2d:finish:1:synchronized": {
+      "digest": "69aaa9f29f105ef0b19af8711e3523f8d6272899963f0c2a00c043c901ae56f0",
       "issue": 1583
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
