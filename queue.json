@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25803,
+  "revision": 25804,
   "nextTicket": 718,
   "nextFence": 718,
   "tasks": {
@@ -6376,7 +6376,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795658410889,
       "reviewEntry": 3,
-      "patchId": "1f21861b27b3b8a0d5180a8fc1b79bff10ba4bc9",
+      "patchId": "8eeebdfe71244627ea83d86cd741cc6f05ef56ee",
       "changedFiles": [
         "demo/golden/harness.mjs",
         "demo/golden/interior-window-light.mjs",
@@ -6421,6 +6421,7 @@
         "src/houseplan-card.ts",
         "src/iso-first-frame.ts",
         "src/plan-3d-host.ts",
+        "src/plan-3d-markers.ts",
         "src/plan-3d-world.ts",
         "src/styles/plan.styles.ts",
         "test/golden-matrix.test.mjs",
@@ -7272,10 +7273,11 @@
     "token": "717:finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:1:admit",
     "fence": 717,
     "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+    "phase": "testing",
     "admittedAt": 1795658414964,
-    "expiresAt": 1795658714964
+    "expiresAt": 1795658721415,
+    "patchId": "8eeebdfe71244627ea83d86cd741cc6f05ef56ee"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7685,6 +7687,10 @@
     "finish:00946e14-de7f-4c42-a8e2-b62481983443:finish:2:return": {
       "digest": "6d52ba03da94e801d97afafa471b5f4f27ac474a98a9573e20649ce1884021ab",
       "issue": 1574
+    },
+    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:2:synchronized": {
+      "digest": "833cfa2c5da20cde4620b68d9b3e7e098b81374d2f3009fe11f1430200c9f27a",
+      "issue": 1570
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
