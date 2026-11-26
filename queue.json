@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25833,
+  "revision": 25834,
   "nextTicket": 718,
   "nextFence": 718,
   "tasks": {
@@ -6456,7 +6456,14 @@
       },
       "automationError": "automation-error",
       "automationSince": 1795659974401,
-      "automationDetail": "fetch failed"
+      "automationDetail": "fetch failed",
+      "reviewRetry": {
+        "requestId": "review:1570:3:8eeebdfe71244627ea83d86cd741cc6f05ef56ee:9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+        "eventId": "github:45742378227:1:tick:0:review-retry",
+        "at": 1795659982354,
+        "runId": null,
+        "runAttempt": null
+      }
     },
     "1571": {
       "issue": 1571,
@@ -7821,6 +7828,10 @@
     },
     "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:4:automation-pending": {
       "digest": "764b1c01ebad8e4b34afb8a13e1e86ab0530f21e99ee0f5e2d44f80095dff16e",
+      "issue": 1570
+    },
+    "github:45742378227:1:tick:0:review-retry": {
+      "digest": "a83cb33e5cd26e1f86a6d88550e9633df10b632839a17b433010ce66ea072a7b",
       "issue": 1570
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
