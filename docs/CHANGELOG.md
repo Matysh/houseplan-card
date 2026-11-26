@@ -13,6 +13,7 @@
 - Keep the correct side padding on WebGL 3D value badges (#1575).
 - Keep stair-arrival and marker hover feedback visible in 3D, respect forced-colour palettes, and reuse the resolved background colour on warm floor switches (#1570).
 - Restore the inset room highlight and its opening gaps when hovering in WebGL 3D (#1571).
+- Remove artificial strips of brighter light over door jambs in WebGL 3D (#1577).
 - Show confirmed unavailable devices with the same dimmed appearance in WebGL 3D as in the flat view (#1572).
 - Reuse the full 3D floor preview with furniture across phone and desktop viewports (#1574).
 - Keep diagonal floor shadows smooth while zooming the WebGL 3D view (#1578).

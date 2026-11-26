@@ -799,7 +799,7 @@ export class Plan3dWorld {
   present(input: Plan3dWorldInput): void {
     const { physical, display, cellCm, panels, furniture, contrastColors, visualScale, decorWidth, decorHeight } = input;
     const paper = contrastColors?.paper ?? input.paper;
-    this.light.set(input.lights);
+    this.light.set(input.lights, physical.openings);
     this.updateBackdrop(input.backdrop);
     this.updateFloorInk(input.floorInk);
     this.updateRooms(contrastColors ? [] : input.rooms);

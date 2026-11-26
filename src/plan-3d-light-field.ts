@@ -2,6 +2,7 @@ import { CanvasTexture, Color, DataTexture, FloatType, LinearFilter, MeshBasicMa
   type MeshBasicMaterialParameters } from 'three';
 import { GLOW_FALLOFF } from './glow-scene';
 import type { PlanPoint } from './iso-projection';
+import { isoOpeningMasonry, type IsoOpeningBasis } from './iso-openings';
 import { packFloorMask } from './plan-3d-floor-mask';
 
 export interface PlanLightFieldSource {
@@ -40,7 +41,28 @@ export interface Plan3dLight {
 const TILE = 128;
 const PAD = 2;
 const STRIDE = 1024;
+const LIGHT_TEXELS = 6;
+const NO_OPENINGS: readonly IsoOpeningBasis[] = [];
 type MaskBounds = readonly [number, number, number, number];
+type DoorHead = { data: readonly number[]; bounds: MaskBounds };
+function doorHeads(openings: readonly IsoOpeningBasis[]): DoorHead[] {
+  return openings.flatMap(basis => {
+    if (basis.type !== 'door' && basis.type !== 'passage') return [];
+    const body = isoOpeningMasonry(basis);
+    if (!body || body.top <= body.bottom) return [];
+    const { center, tangent, start, end } = basis.axis;
+    const halfSpan = Math.hypot(end[0] - start[0], end[1] - start[1]) / 2;
+    const halfDepth = basis.face.depth / 2;
+    const xs = body.ring.map(point => point[0]), ys = body.ring.map(point => point[1]);
+    const x = Math.min(...xs), y = Math.min(...ys);
+    return [{ data: [...center, ...tangent, halfSpan, halfDepth, body.bottom, 0],
+      bounds: [x, y, Math.max(...xs) - x, Math.max(...ys) - y] }];
+  });
+}
+
+function overlaps([x, y, w, h]: MaskBounds, [xx, yy, ww, hh]: MaskBounds): boolean {
+  return x <= xx + ww && xx <= x + w && y <= yy + hh && yy <= y + h;
+}
 const sourceBounds = (source: Plan3dLight, visibility = source.visible): MaskBounds => {
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (const [x, y] of source.points) {
@@ -99,6 +121,42 @@ const LIGHT_GLSL = `
     ${falloff}
     return 0.0;
   }
+  #ifdef HP_ARCHITECTURAL_RECEIVER
+  bool hpDoorHeadBlocks(vec2 from, vec2 to, float fromHeight, float toHeight, vec4 portals) {
+    if (portals.y <= 0.0 || max(fromHeight, toHeight) <= portals.z) return false;
+    int first = int(portals.x);
+    for (int door = 0; door < int(portals.y); door++) {
+      vec4 axis = hpData(first + door * 2);
+      vec4 span = hpData(first + door * 2 + 1);
+      vec2 normal = vec2(-axis.w, axis.z);
+      vec2 a = from - axis.xy, b = to - axis.xy;
+      float d0 = dot(a, normal), d1 = dot(b, normal);
+      // Only crossing the host wall can encounter the lintel. A source on
+      // either side still lights its own face; the far face cannot borrow
+      // light just because the horizontal projection contains an aperture.
+      const float eps = .0001;
+      if (!(d0 > span.y + eps && d1 < -span.y + eps ||
+            d0 < -span.y - eps && d1 > span.y - eps)) continue;
+      float inv = 1.0 / (d1 - d0);
+      vec2 slab = (vec2(-span.y, span.y) - d0) * inv;
+      float enter = max(0.0, min(slab.x, slab.y)), exit = min(1.0, max(slab.x, slab.y));
+      float along = dot(a, axis.zw), tangentStep = dot(b - a, axis.zw);
+      if (abs(tangentStep) < eps) {
+        if (abs(along) > span.x) continue;
+      } else {
+        vec2 limits = (vec2(-span.x, span.x) - along) / tangentStep;
+        enter = max(enter, min(limits.x, limits.y));
+        exit = min(exit, max(limits.x, limits.y));
+      }
+      if (enter > exit) continue;
+      // Test the actual intersection interval, including a diagonal ray
+      // that enters or exits the head through one of its jamb planes.
+      float highest = max(mix(fromHeight, toHeight, enter), mix(fromHeight, toHeight, exit));
+      if (highest > span.z + eps) return true;
+    }
+    return false;
+  }
+  #endif
   vec3 hpLit(vec3 base) {
     vec3 N = normalize(vHpNormal) * (gl_FrontFacing ? 1.0 : -1.0);
     bool floorReceiver = vHpWorld.y == 0.0 && N.y > .999;
@@ -107,7 +165,7 @@ const LIGHT_GLSL = `
     vec3 remaining = vec3(1.0);
     vec3 reflected = vec3(1.0);
     for (int i = 0; i < uHpLightCount; i++) {
-      int index = i * 5;
+      int index = i * ${LIGHT_TEXELS};
       vec4 sun = hpData(index + 3);
       bool wall = sun.z <= 0.0 && abs(N.y) < .01;
       vec4 bounds = hpData(index + (wall ? 4 : 0));
@@ -116,7 +174,17 @@ const LIGHT_GLSL = `
         // A wall lies on the solved boundary. Sample a fractional texel on
         // its receiving side, bounded in plan units even for huge masks.
         float texel = 1.0 / max(length(N.xz / bounds.zw) * ${TILE - PAD * 2}.0, .0001);
-        float inward = max(uHpNormalOffset, min(.84 * texel, max(.8, uHpNormalOffset * 48.0)));
+        // Take the lamp sample inside the receiving room by up to one
+        // physical grid pitch. This avoids a half-opaque pixel on the wall's
+        // own boundary without changing the coverage of a real shadow edge.
+        // Preserve the established narrow wall probe for the LED fan.
+        #ifdef HP_ARCHITECTURAL_RECEIVER
+          bool led = sun.w < 0.0;
+          float cap = led ? max(.8, uHpNormalOffset * 48.0) : max(.8, uHpNormalOffset * 500.0);
+          float inward = max(uHpNormalOffset, min((led ? .84 : 1.45) * texel, cap));
+        #else
+          float inward = max(uHpNormalOffset, min(.84 * texel, max(.8, uHpNormalOffset * 48.0)));
+        #endif
         samplePoint = position + N.xz * inward;
       }
       vec2 uv = (samplePoint - bounds.xy) / bounds.zw;
@@ -169,6 +237,9 @@ const LIGHT_GLSL = `
       if (wall) {
         float facing = dot(N.xz, delta.xz);
         if (facing < (ribbon ? -uHpNormalOffset : .00001)) continue;
+        #ifdef HP_ARCHITECTURAL_RECEIVER
+          if (fall > 0.0 && hpDoorHeadBlocks(closest, position, optical.y, vHpWorld.y, hpData(index + 5))) continue;
+        #endif
         // The linear near-surface emitter can touch the wall exactly. The
         // visibility fan resolves its receiving side; preserve a local wash
         // at the base instead of applying a zero projected cosine.
@@ -203,6 +274,9 @@ export class Plan3dLightField {
   private bounds: MaskBounds[] = [];
   private wallBounds: MaskBounds[] = [];
   private opticalKey: string | undefined;
+  private openings: readonly IsoOpeningBasis[] = NO_OPENINGS;
+  private apertureHeads: readonly DoorHead[] = [];
+  private nearbyHeads: readonly (readonly DoorHead[])[] = [];
   private readonly uniforms;
 
   constructor(document: Document, normalOffset: number) {
@@ -267,17 +341,25 @@ export class Plan3dLightField {
     ctx.restore();
   }
 
-  set(sources: readonly Plan3dLight[]): void {
+  set(sources: readonly Plan3dLight[], openings = this.openings): void {
     const usable = sources.filter(source => source.radius > 0 && source.points.length && (source.visible.length || source.wallVisible?.length));
     const maskKey = JSON.stringify(usable.map(({ points, radius, visible, rule, floorClip, wallVisible, wallClip }) =>
       [points, radius, visible, rule, floorClip, wallVisible, wallClip]));
     const opticalKey = JSON.stringify(usable.map(({ color, height, intensity, sun, ribbon }) => [color, height, intensity, sun, ribbon]));
     const sameMask = maskKey === this.maskKey;
-    if (sameMask && opticalKey === this.opticalKey) return;
+    const openingChanged = openings !== this.openings;
+    if (sameMask && !openingChanged && opticalKey === this.opticalKey) return;
+    if (openingChanged) {
+      this.openings = openings;
+      this.apertureHeads = doorHeads(openings);
+    }
 
     if (!sameMask) {
       this.bounds = usable.map(source => sourceBounds(source));
       this.wallBounds = usable.map(source => sourceBounds(source, source.wallVisible ?? source.visible));
+    }
+    if (openingChanged || !sameMask) {
+      this.nearbyHeads = this.wallBounds.map(bounds => this.apertureHeads.filter(head => overlaps(bounds, head.bounds)));
     }
     const bounds = this.bounds;
     const dim = Math.max(1, Math.ceil(Math.sqrt(usable.length)));
@@ -313,14 +395,23 @@ export class Plan3dLightField {
     }
 
     const values: number[] = [], points: number[] = [];
+    const payloadBase = usable.length * LIGHT_TEXELS;
     for (const [index, source] of usable.entries()) {
       const color = new Color(source.color);
       const sun = source.sun;
-      values.push(...bounds[index], source.radius, source.height, usable.length * 5 + points.length / 4,
+      const pointStart = payloadBase + points.length / 4;
+      for (const [x, y] of source.points) points.push(x, y, 0, 0);
+      const firstHead = payloadBase + points.length / 4;
+      const heads = sun ? [] : this.nearbyHeads[index];
+      let lowest = Infinity;
+      for (const head of heads) {
+        points.push(...head.data);
+        lowest = Math.min(lowest, head.data[6]);
+      }
+      values.push(...bounds[index], source.radius, source.height, pointStart,
         source.points.length, color.r, color.g, color.b, source.intensity,
         sun?.inward[0] ?? 0, sun?.inward[1] ?? 0, sun?.depth ?? 0, sun?.tilt ?? (source.ribbon ? -1 : 0),
-        ...this.wallBounds[index]);
-      for (const [x, y] of source.points) points.push(x, y, 0, 0);
+        ...this.wallBounds[index], firstHead, heads.length, heads.length ? lowest : 0, 0);
     }
     const texture = dataTexture(values.concat(points), this.texture);
     if (texture !== this.texture) this.texture?.dispose();
@@ -342,11 +433,14 @@ export class Plan3dLightField {
         .replace('#include <project_vertex>', `#include <project_vertex>
           vHpWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;
           vHpNormal = mat3(modelMatrix) * normal;`);
+      // Only actual wall (and masonry) receivers need the aperture test.
+      // Keep its texture reads and loop out of the high-coverage floor pass.
+      const receiver = shadeSides ? '#define HP_ARCHITECTURAL_RECEIVER\n' : '';
       shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', '#include <common>\n' + LIGHT_GLSL)
+        .replace('#include <common>', '#include <common>\n' + receiver + LIGHT_GLSL)
         .replace('#include <opaque_fragment>', 'outgoingLight = hpLit(outgoingLight);\n#include <opaque_fragment>');
     };
-    material.customProgramCacheKey = () => 'houseplan-world-light';
+    material.customProgramCacheKey = () => shadeSides ? 'houseplan-wall-light' : 'houseplan-world-light';
     return material;
   }
 

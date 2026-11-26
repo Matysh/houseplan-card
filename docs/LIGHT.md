@@ -17,6 +17,12 @@ The shader reconstructs the edge of artificial light on the floor from
 the distance channel. Sunlight and raised horizontal faces use the original
 coverage. Neither zoom nor pan changes tile resolution or rebuilds the atlas.
 
+For an upright receiver across a hosted door or passage, the artificial
+light ray must also clear the physical lintel over the full wall depth.
+The existing plan mask still supplies horizontal visibility and tracks
+closed/partial leaves. The 3D height test uses the same lintel geometry as
+the wall shell; it neither changes floor paint nor the solar envelope.
+
 ## Per-leaf shade transmission and sliding apertures (#1024)
 
 Window shade intervals are applied only after proving existing interior

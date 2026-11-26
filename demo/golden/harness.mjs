@@ -1130,7 +1130,7 @@ async function preparePlanKeyboardCapture(page, scenario) {
   }
 }
 
-export async function prepareGoldenScenario(page, scenario) {
+export async function prepareGoldenScenario(page, scenario, prepareFixture = prepareGoldenFixture) {
   await stableEnvironment(page, scenario);
   await page.addScriptTag({ content: `window.__hpTestSurfaceReady=${testSurfaceReady.toString()};window.__hpRenderedIsoReady=${renderedIsoReady.toString()};window.__hpRaisedIsoOverlaysReady=${raisedIsoOverlaysReady.toString()};` });
   {
@@ -1155,7 +1155,7 @@ export async function prepareGoldenScenario(page, scenario) {
   // scenario that deliberately hovers a marker must not leave the next one
   // capturing an unrelated room hover at the same viewport coordinates.
   await page.mouse.move(0, 0);
-  const fixture = prepareGoldenFixture(scenario);
+  const fixture = prepareFixture(scenario);
 
   if (scenario.headerSpaces) {
     const active = fixture.config.spaces.find(space => space.id === scenario.space);
