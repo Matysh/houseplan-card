@@ -423,7 +423,7 @@ import {
 } from './iso-floor-shadows';
 import { displayVersion } from './card-version';
 import { ConfigFingerprintPass } from './config-fingerprint-pass';
-const CARD_VERSION = '1.86.1';
+const CARD_VERSION = '2.0.0-beta.1';
 const TOAST_DURATION_MS = 3500;
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
