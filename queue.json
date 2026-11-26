@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27184,
+  "revision": 27185,
   "nextTicket": 743,
   "nextFence": 743,
   "tasks": {
@@ -3054,40 +3054,6 @@
         "sourceSha": "31b6052234aed5e6d7160ec7fe08844f221fc135"
       }
     },
-    "1494": {
-      "issue": 1494,
-      "branch": "issue/1494-release-return-6af2e11c1e83",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "31b6052234aed5e6d7160ec7fe08844f221fc135",
-      "mergedSha": "07331a4cde3fae8aaffc1a022ca49a50502c685e",
-      "mergedAt": 1795196161744,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.86.0-beta.2",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "07331a4cde3fae8aaffc1a022ca49a50502c685e"
-      }
-    },
     "1495": {
       "issue": 1495,
       "branch": "codex/1495-architectural-light",
@@ -6131,21 +6097,22 @@
       "reviewRequest": "review:1578:1:2963fb91256bc8030414e8e82a3e7e072ed1706c:6560b865829e17fcc46247d422c7ec2dc1752945",
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": true,
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": false,
-        "classificationAt": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
         "commentCurrent": true,
-        "commentDigest": "461782c36f016e0e633c",
+        "commentDigest": "d1c65df9ac3a3cbebb03",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
+          "milestone": true,
           "target": null
+        },
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 18
         }
       },
       "devBuild": {
