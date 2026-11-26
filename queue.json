@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25998,
+  "revision": 25999,
   "nextTicket": 722,
   "nextFence": 721,
   "tasks": {
@@ -6542,7 +6542,10 @@
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v2.0.0/1575.json",
         "src/device-contact-render.ts"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1795671014438,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     },
     "1576": {
       "issue": 1576,
@@ -7308,6 +7311,10 @@
     },
     "finish:a330124a-bfa9-451a-ad3f-29d5fed849aa:finish:2:synchronized": {
       "digest": "a563650cdbad9df637e52dc04360b0f6cb14afba101919ca0bedd3f0438b4352",
+      "issue": 1575
+    },
+    "finish:a330124a-bfa9-451a-ad3f-29d5fed849aa:finish:3:automation-pending": {
+      "digest": "7d53b142790e7b725b170f2b9da74646dde153ba83330ced41271746d3829178",
       "issue": 1575
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
