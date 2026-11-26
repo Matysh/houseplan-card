@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26174,
+  "revision": 26175,
   "nextTicket": 725,
   "nextFence": 725,
   "tasks": {
@@ -6678,7 +6678,7 @@
       "ownerDecision": null,
       "ticket": 724,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795674492031,
       "reviewEntry": 1,
       "patchId": "2963fb91256bc8030414e8e82a3e7e072ed1706c",
@@ -6692,7 +6692,16 @@
         "src/plan-3d-floor-mask.ts",
         "src/plan-3d-light-field.ts",
         "test/plan-3d-floor-mask.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261126T062830866-11b4eaeb",
+        "name": "Тесты для задачи #1578 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T062830866-11b4eaeb/report.json",
+        "materialSha": "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9",
+        "status": "passed",
+        "finishedAt": "2026-11-26T06:39:49.631Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -7378,9 +7387,9 @@
     "fence": 724,
     "materialSha": "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9",
     "expectedBase": "6560b865829e17fcc46247d422c7ec2dc1752945",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795674496034,
-    "expiresAt": 1795675457659,
+    "expiresAt": 1795678790867,
     "patchId": "2963fb91256bc8030414e8e82a3e7e072ed1706c"
   },
   "events": {
@@ -7797,6 +7806,34 @@
         "materialSha": "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:c271f30c-4acc-40b3-82d5-ef777de2434b:finish:4:s6-complete": {
+      "digest": "fa296d694ff2bf2a4fd20ba81e765066c11bc96c66c073ad8ed12412ab842d9c",
+      "issue": 1578,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1578,
+        "at": 1795675190867,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T062830866-11b4eaeb",
+          "name": "Тесты для задачи #1578 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T062830866-11b4eaeb/report.json",
+          "materialSha": "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9",
+          "status": "passed",
+          "finishedAt": "2026-11-26T06:39:49.631Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Прежнее разрешение 128×128 сохранено. При пересборке источника из исходной растровой маски извлекается субтексельный контур; знаковое расстояние в узкой полосе и неизменённое покрытие упакованы в RG8. Напольный искусственный свет читает расстояние, солнце и прочие поверхности сохраняют покрытие. Не нужен второй проход или новая текстура на зум.\n\nПроверки WSL: два адресных Node-кейса PASS. На реальном WebGL-кадре ошибка профиля диагонали (RMS 64 строк) 0,77 → 0,20 px; smoke красный до правки, зелёный после. Зафиксирован максимум 800%. Встроенная проверка бенчмарка подтверждает отсутствие ошибок компиляции шейдера. В двух сериях Chromium/SwiftShader на одном источнике медианы 52,4–52,6 → 51,3–52,1 мс, p95 57,2–58,5 → 58,1–60,0 мс; на 20 комнатах, 4 активных источниках — 178,9–181,1 → 173,3–186,9 мс, p95 195,0–197,6 → 199,4–203,9 мс. Стабильного ухудшения медианы не видно; хвост в этих сериях выше на несколько мс, это программный рендерер, не замер устройств пользователя. Пересборки масок 0/0, память обеих текстур −25% в обеих сценах. Эталоны не менялись.\n\nПовтор A/B поверх #1577 в том же Chromium/SwiftShader: один источник — медианы 50,6–51,1 → 49,0–50,3 мс, p95 55,9–56,9 → 55,2–56,5 мс; большой этаж, 20 комнат и 4 источника — медианы 167,1–168,3 → 166,1–167,2 мс, p95 183,7–186,7 → 184,6–189,1 мс. Диапазоны p95 пересекаются. Память текстур −25% и 0 пересборок везде; отдельный smoke подтвердил отсутствие перезагрузки текстур при реальном зуме до 800%. Оба визуальных сценария #1577 и #1578 на общей сборке зелёные.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
