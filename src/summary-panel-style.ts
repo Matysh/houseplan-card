@@ -52,6 +52,18 @@ export const summaryPanelCss = `
   .summary-weather-setting-row > hp-settings-select { flex:1; min-width:min(220px,100%); }
   .summary-weather-setting-row > .hpf-check { flex-shrink:0; }
   .summary-value { margin:0 11px; }
+  .summary-value > .summary-value-pending {
+    position:relative;
+    display:block;
+    inline-size:4.5em;
+    max-inline-size:100%;
+  }
+  .summary-value-pending > i {
+    position:absolute;
+    inset-inline-end:0;
+    inset-block-start:50%;
+    transform:translateY(-50%);
+  }
   .summary-measure {
     position: fixed;
     z-index: -1;

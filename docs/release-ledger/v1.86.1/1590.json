@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1590,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Keep the first visible preview aligned with live geometry when the room area placeholder resolves.",
+  "summary": {
+    "ru": "План сохраняет положение при загрузке площади комнат в сводке.",
+    "en": "The floor stays in place while the summary loads the total room area."
+  }
+}

@@ -103,7 +103,7 @@ async function openLargePlan(page, { reducedMotion = false } = {}) {
     const blockedMs = performance.now() - started;
     return {
       blockedMs, rows: f.rows().length, pending: f.pending(), texts: f.texts(),
-      hasOverlay: !!f.overlay(),
+      hasOverlay: !!f.overlay(), areaHeight: f.rows()[1]?.getBoundingClientRect().height,
     };
   });
   check('overlayShownOnFirstFrame', first.hasOverlay && first.rows === 3);
@@ -127,12 +127,14 @@ async function openLargePlan(page, { reducedMotion = false } = {}) {
     window.__longTaskObserver?.disconnect?.();
     return {
       waitedMs: performance.now() - started, pending: f.pending(), texts: f.texts(),
+      areaHeight: f.rows()[1]?.getBoundingClientRect().height,
       longest: window.__longTasks.length ? Math.max(...window.__longTasks) : 0,
       tasks: window.__longTasks.slice(0, 8),
       observed: !!window.__longTaskObserver,
     };
   });
   check('skeletonReplacedByValues', settled.pending === 0);
+  check('pendingAreaPreservesRowHeight', first.areaHeight > 0 && first.areaHeight === settled.areaHeight);
   check('valuesAreReal', settled.texts.every((text) => text && !/unavailable/i.test(text)));
   check('replacedWithinBudget', settled.waitedMs < 6000);
   // AC4: работа идёт порциями, а не одним куском. Остаточные 150–200 мс — это

@@ -364,7 +364,7 @@ export class LoadedSummaryPanelRuntime {
             // месте значения, плавная замена по готовности.
             return html`<div class="summary-value hpf-reading-pair" data-hp="summary-metric" data-id=${value.id}>
               <span class="hpf-reading-label">${value.label}</span>${state.kind === 'pending'
-                ? html`<strong class="summary-value-pending hpf-loading-value" aria-hidden="true"><i></i></strong>`
+                ? html`<strong class="hpf-reading-value summary-value-pending hpf-loading-value" aria-hidden="true">&#160;<i></i></strong>`
                 : html`<strong class="hpf-reading-value">${state.kind === 'ready' ? state.text : this.t('summary.unavailable')}</strong>`}
             </div>`;
           }) : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_block')}</div>`}
