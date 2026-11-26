@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25883,
+  "revision": 25884,
   "nextTicket": 719,
   "nextFence": 719,
   "tasks": {
@@ -7225,7 +7225,7 @@
     "expectedBase": null,
     "phase": "sync",
     "admittedAt": 1795660266439,
-    "expiresAt": 1795660566439
+    "expiresAt": 1795660625400
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7342,6 +7342,10 @@
     },
     "finish:30c5ace2-af66-4c6a-861f-441199d1622a:finish:2:automation-pending": {
       "digest": "6ab997a2789472a910f313ac50a23eb4d8c92520e486fd0bfb63bbbd2061a850",
+      "issue": 1574
+    },
+    "finish:ad80ec6e-82b3-4f37-9eda-cf723b3ea91f": {
+      "digest": "c23d240805253c1fd1d14ede05d5efa592baa26ca5ebd7114f8f92d5122e4198",
       "issue": 1574
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
