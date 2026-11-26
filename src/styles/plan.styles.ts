@@ -27,7 +27,13 @@ export const planStyles = css`
     .stage > .zoomwrap { user-select:none; -webkit-user-select:none; }
     /* The image precedes the live layer in the same stacking level. */
     .hp-startup-view { position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
-    .stage[data-hp-startup-pending] > :is(.zoomwrap,.zoombadge,.homearrow) { visibility:hidden; }
+    .stage:is([data-hp-startup-pending],[data-hp-floor-switch-waiting]) > :is(.zoomwrap,.zoombadge,.homearrow) {
+      visibility:hidden;
+    }
+    .stage[data-hp-floor-switch-entering] > .zoomwrap {
+      animation: hp-floor-switch-in 180ms ease-out both;
+    }
+    @keyframes hp-floor-switch-in { from { opacity: 0; } to { opacity: 1; } }
     .floor-status-over-retained { position:absolute; inset-inline:0; bottom:0; pointer-events:none; z-index:74; }
     .editorloading.floor-preparation-status {
       position:absolute; z-index:74; left:max(12px, env(safe-area-inset-left));
@@ -38,7 +44,8 @@ export const planStyles = css`
     }
     @keyframes hp-startup-live-in { from { opacity:0; } }
     @media (prefers-reduced-motion: reduce) {
-      .stage[data-hp-startup-finish] > :is(.zoomwrap,.zoombadge,.homearrow) { animation:none; }
+      .stage[data-hp-startup-finish] > :is(.zoomwrap,.zoombadge,.homearrow),
+      .stage[data-hp-floor-switch-entering] > .zoomwrap { animation:none; }
     }
     .stage > .zoomwrap :is(input,textarea,[contenteditable]:not([contenteditable='false'])) {
       user-select:text; -webkit-user-select:text;

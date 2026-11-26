@@ -640,6 +640,15 @@ interface DeviceInboxDialogState {
 
 type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
 
+interface FloorSwitchPresentation {
+  floor: string;
+  authority: PlanHost['authorityKey'];
+  phase: 'leaving' | 'waiting' | 'entering';
+  outgoing?: { node: HTMLElement; animation: Animation; wasInert: boolean };
+  statusFrame?: number;
+  showStatus?: boolean;
+}
+
 /**
  * #400: the paint order of the selection handles IS the hit priority, so it is
  * a named decision rather than a consequence of where the blocks happen to sit
@@ -808,6 +817,8 @@ export class HouseplanCard extends LitElement {
   private _isoSceneRuntime: typeof import('./plan-3d-runtime') | null = null;
   private _plan3dHost: import('./plan-3d-host').Plan3dHost | undefined;
   private _plan3dAuthority?: PlanHost['authorityKey'];
+  private _plan3dSubmittedFloor = '';
+  private _plan3dPaintedFloor = '';
   private _plan3dPresentation: import('./plan-3d-host').Plan3dPresentation | undefined;
   private _plan3dFailure: { key: string; space: string; load?: 'retry' | 'reload' } | undefined;
   private _planContrastMedia?: MediaQueryList;
@@ -836,9 +847,11 @@ export class HouseplanCard extends LitElement {
     this._plan3dHost?.dispose();
     this._plan3dHost = undefined;
     this._plan3dAuthority = undefined;
+    this._plan3dSubmittedFloor = this._plan3dPaintedFloor = '';
   }
 
   private _syncPlan3dHost(): void {
+    if (this._floorSwitch?.phase === 'leaving') return;
     const runtime = this._isoSceneRuntime;
     const presentation = this._plan3dPresentation;
     const authority = this.planHost.authorityKey;
@@ -860,7 +873,11 @@ export class HouseplanCard extends LitElement {
         this._disposePlan3dHost();
         this._plan3dAuthority = authority;
         let paintedMarkers: ReadonlySet<string> | undefined;
-        this._plan3dHost = new runtime.Plan3dHost(canvas, view, this._gridPitch * .002, fail, (nativeMarkers, outlines) => {
+        this._plan3dHost = new runtime.Plan3dHost(canvas, view, this._gridPitch * .002, fail, (nativeMarkers, outlines, complete) => {
+          if (complete && this._plan3dPaintedFloor !== this._plan3dSubmittedFloor) {
+            this._plan3dPaintedFloor = this._plan3dSubmittedFloor;
+            if (this._floorSwitch?.phase === 'waiting') this.requestUpdate();
+          }
           if (paintedMarkers === nativeMarkers) return;
           paintedMarkers = nativeMarkers;
           for (const element of this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-hp-3d-device]')) {
@@ -890,6 +907,7 @@ export class HouseplanCard extends LitElement {
       const outlines = contacts?.volumeOutlines(new Set(opacityByMarker.keys())).map(group => ({
         ...group, opacity: Math.max(...group.members.map(id => opacityByMarker.get(id) ?? 1)),
       }));
+      this._plan3dSubmittedFloor = this._floorPaintKey();
       this._plan3dHost.present(presentation, this._viewOr(this._baseVb()), markers, outlines);
     } catch {
       fail();
@@ -1715,13 +1733,21 @@ export class HouseplanCard extends LitElement {
   /** Which way the incoming plan moves when the active space changes. */
   private _slide: '' | 'left' | 'right' = '';
   private _slideTimer?: number;
+  private _floorSwitch: FloorSwitchPresentation | null = null;
+  private _presentedFloorAuthority?: PlanHost['authorityKey'];
+  private _presentedFloorConnection = -1;
+  private readonly _presentedFloors = new Map<string, string>();
 
   private _reducedMotion = false;
   private _motionMedia?: MediaQueryList;
   private _onMotionChange = (event: MediaQueryListEvent): void => {
     this._reducedMotion = event.matches;
     this._cancelDevicePressFeedback();
-    if (event.matches) this._cancelCameraTransition(true);
+    if (event.matches) {
+      this._cancelCameraTransition(true);
+      if (this._floorSwitch?.phase === 'leaving') this._finishLeavingFloor(this._floorSwitch);
+      else if (this._floorSwitch?.phase === 'entering') this._cancelFloorSwitch();
+    }
     // A preference change to reduced motion is authoritative immediately: do
     // not leave a 220 ms camera/chrome tween running until its old deadline.
     if (event.matches && this._modeTransitionPreparing) {
@@ -2605,6 +2631,11 @@ export class HouseplanCard extends LitElement {
       && !this._editorRuntimeOrThrow()._finishWallChainForNavigation(resume)) return false;
     this._cancelModeTransition(true);
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const stage = this.renderRoot.querySelector('.stage');
+    const outgoing = stage?.matches('.mode-view:not([data-hp-floor-cache]):not([data-hp-startup-pending]):not([data-hp-floor-switch-waiting])')
+      && this._floorSwitch?.phase !== 'waiting' ? stage.querySelector<HTMLElement>('.zoomwrap') : null;
+    const fadedOpacity = outgoing && this._floorSwitch && !reduce ? Number(getComputedStyle(outgoing).opacity) : 1;
+    this._cancelFloorSwitch();
     this._commitSpace(id);
     this._navApplied = true;
     this._path = [];
@@ -2621,6 +2652,13 @@ export class HouseplanCard extends LitElement {
     this._physicalDialog = null;
     this._editorRuntime?.physicalGesture.resetMove();
     this._restoreZoom(carousel);
+    if (this._mode === 'view' && !this._floorHasPresentedFrame()) {
+      this._slide = '';
+      clearTimeout(this._slideTimer);
+      this._slideTimer = undefined;
+      this._startFloorSwitch(!reduce && fadedOpacity > .01 ? outgoing ?? null : null, fadedOpacity);
+      return true;
+    }
     if (reduce) return true;
     this._slide = dir;
     clearTimeout(this._slideTimer);
@@ -2631,6 +2669,99 @@ export class HouseplanCard extends LitElement {
     }, 190);
     this.requestUpdate();
     return true;
+  }
+
+  private _floorPaintKey(): string {
+    return `${this._space}|${this._floorPreparation?.paintToken ?? ''}`;
+  }
+
+  private _syncPresentedFloorScope(): void {
+    const { authorityKey, environment } = this.planHost;
+    const connection = environment.connectionRevision || 0;
+    if (this._presentedFloorAuthority === authorityKey && this._presentedFloorConnection === connection) return;
+    this._presentedFloorAuthority = authorityKey;
+    this._presentedFloorConnection = connection;
+    this._presentedFloors.clear();
+  }
+
+  private _floorHasPresentedFrame(): boolean {
+    if (this._floorPreparation?.pending || this._floorPreparation?.failed) return false;
+    this._syncPresentedFloorScope();
+    const key = this._floorPreparation?.preparedGeometryKey;
+    return !key || this._presentedFloors.get(this._space) === key;
+  }
+
+  private _startFloorSwitch(node: HTMLElement | null, opacity: number): void {
+    const floor: FloorSwitchPresentation = { floor: this._space, authority: this.planHost.authorityKey, phase: 'waiting' };
+    this._floorSwitch = floor;
+    if (node?.animate) {
+      const animation = node.animate([{ opacity }, { opacity: 0 }], { ...controlMotion.leave, fill: 'forwards' });
+      floor.outgoing = { node, animation, wasInert: node.inert };
+      floor.phase = 'leaving';
+      node.inert = true;
+      void animation.finished.then(() => this._finishLeavingFloor(floor), () => {});
+    }
+    this.requestUpdate();
+  }
+
+  private _finishLeavingFloor(floor: FloorSwitchPresentation): void {
+    if (floor !== this._floorSwitch || floor.phase !== 'leaving') return;
+    floor.phase = 'waiting';
+    this.requestUpdate();
+  }
+
+  private _releaseLeavingFloor(floor: FloorSwitchPresentation): void {
+    if (!floor.outgoing) return;
+    const { node, animation, wasInert } = floor.outgoing;
+    floor.outgoing = undefined;
+    animation.cancel();
+    node.inert = wasInert;
+  }
+
+  private _cancelFloorSwitch(): void {
+    const floor = this._floorSwitch;
+    if (!floor) return;
+    this._floorSwitch = null;
+    this._releaseLeavingFloor(floor);
+    if (floor.statusFrame !== undefined) cancelAnimationFrame(floor.statusFrame);
+  }
+
+  private _syncFloorSwitch(): void {
+    const floor = this._floorSwitch;
+    if (floor?.phase === 'leaving') return;
+    if (floor) this._releaseLeavingFloor(floor);
+    this._syncPresentedFloorScope();
+    const key = this._floorPreparation?.preparedGeometryKey;
+    if (!floor && (!key || this._presentedFloors.get(this._space) === key)) return;
+
+    // A reused 3D canvas can still contain the outgoing floor. Only a paint
+    // reported for the current geometry selection can reveal the new scene.
+    const ready = this._mode === 'view' && this._loadOk && !this._booting && !this._bootFading
+      && this._floorCompleteSpace === this._space && this._floorCompleteAuthority === this.planHost.authorityKey
+      && !this._floorPassive && !this._floorPreparation?.pending && !this._floorPreparation?.failed
+      && !this._startupPending && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)
+      && (!this._usesScreenCamera || !this._screenReferencePending)
+      && this._continuity.state === 'steady' && this._continuityStageValid()
+      && (this._renderProjection !== 'iso' || this._plan3dPaintedFloor === this._floorPaintKey());
+    if (ready) {
+      if (key) this._presentedFloors.set(this._space, key);
+      if (floor?.phase !== 'waiting') return;
+      if (floor.statusFrame !== undefined) cancelAnimationFrame(floor.statusFrame);
+      floor.statusFrame = undefined;
+      if (this._reducedMotion) this._cancelFloorSwitch();
+      else floor.phase = 'entering';
+      this.requestUpdate();
+    } else if (floor?.phase === 'waiting' && !floor.showStatus && floor.statusFrame === undefined
+      && !this._floorPreparation?.failed && !this._floorPassive) {
+      // A complete frame rendered in this turn goes straight from leaving
+      // to entering. Only an actual wait needs an announcement.
+      floor.statusFrame = requestAnimationFrame(() => {
+        floor.statusFrame = undefined;
+        if (this._floorSwitch !== floor || floor.phase !== 'waiting') return;
+        floor.showStatus = true;
+        this.requestUpdate();
+      });
+    }
   }
 
   /** Direct space tabs use the same motion as swipe/carousel navigation. */
@@ -4880,6 +5011,8 @@ export class HouseplanCard extends LitElement {
     this._toast = '';
     this._toastPresentation.disconnect();
     clearTimeout(this._slideTimer);
+    this._cancelFloorSwitch();
+    this._presentedFloors.clear();
     clearTimeout(this._editorRuntimeLoadingTimer);
     this._editorRuntimeLoadingTimer = undefined;
     this._editorRuntimeLoadingVisible = false;
@@ -6480,8 +6613,10 @@ export class HouseplanCard extends LitElement {
   protected updated(changed: PropertyValues): void {
     this._cfgPass.run(() => this._updatedModeReadScope(changed));
     this._syncPlan3dHost();
+    this._syncFloorSwitch();
   }
   private _updatedModeReadScope(changed: PropertyValues): void {
+    if (this._floorSwitch?.phase === 'leaving') return;
     if (this._floorPreparation?.failed) {
       this._syncPlanViewportObservers();
       this._stageEl?.removeAttribute('inert');
@@ -13949,14 +14084,14 @@ export class HouseplanCard extends LitElement {
     const dayCycle = this._dayCycleState();
     // L1 remains a fit/camera hint in 2.5D, not a material-complete scene.
     // Do not flash its anonymous silhouette before the current floor is ready.
-    const visiblePreview = !failed && !this._startupFloor?.awaitsLive && this._desiredProjection === 'flat'
+    const visiblePreview = !failed && !this._floorSwitch && !this._startupFloor?.awaitsLive && this._desiredProjection === 'flat'
       && preview?.fit.projection === 'flat' ? preview : null;
     return this._renderPreparedFloorFrame(html`
       <div class="stage mode-view${this._spaceModel()?.bg ? '' : ' noplan'}${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
         data-hp-floor-cache=${failed ? 'error' : visiblePreview ? 'preview' : 'preparing'}
         style=${styleMap({ height: this._floorStageHeight(), background: this._stageBg(disp) || undefined, '--wall-fill': disp.wallFill.c })}>
         ${this._renderStageEnvironment(dayCycle)}
-        ${failed ? nothing : this._renderStartupFloor(true)}
+        ${failed ? nothing : this._floorSwitch ? this._startupStatus() : this._renderStartupFloor(true)}
         ${visiblePreview ? html`<div class="zoomwrap" inert style="pointer-events:none">
           <svg class="plan-svg" data-hp-cache-preview data-hp-live-viewbox="camera" aria-hidden="true" viewBox="${view.x} ${view.y} ${view.w} ${view.h}">
             ${renderFloorPreview(visiblePreview)}
@@ -13976,6 +14111,9 @@ export class HouseplanCard extends LitElement {
   }
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     this._floorHolding = false; this._floorPassive = false;
+    if (this._floorSwitch && (this._floorSwitch.floor !== this._space || this._mode !== 'view'
+      || this._floorSwitch.authority !== this.planHost.authorityKey || !this.planHost.environment.permissions.read))
+      this._cancelFloorSwitch();
     this._startupSource = undefined;
     this._observeStartupFloor();
     if (!this._config || !this.planHost.environment.ready) {
@@ -14089,6 +14227,7 @@ export class HouseplanCard extends LitElement {
     if (!this.planHost.environment.permissions.read) return nothing;
     const space = this._spaceModel();
     if (!space) return nothing;
+    if (this._floorSwitch?.phase === 'leaving') return this._renderPreparedFloorFrame(noChange, diagnostics);
     if (!this._ensureFloorPreparation()) {
       if (this._floorPreparation?.failed) {
         this._startupFloor?.disablePreview();
@@ -14676,8 +14815,11 @@ export class HouseplanCard extends LitElement {
           data-hp-iso-floor-markers=${markerCamera ? 'true' : nothing}
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
-          ?inert=${live(this._rotationMotion.blocksInput || this._modeTransition.active || this._startupPending)}
+          ?inert=${live(this._rotationMotion.blocksInput || this._modeTransition.active || this._startupPending
+            || this._floorSwitch?.phase === 'waiting')}
           ?data-hp-startup-pending=${this._startupPending}
+          ?data-hp-floor-switch-waiting=${this._floorSwitch?.phase === 'waiting'}
+          ?data-hp-floor-switch-entering=${this._floorSwitch?.phase === 'entering'}
           ?data-hp-startup-finish=${this._bootFading}
           style=${styleMap({
             height: modeVisual && !this._modeTransitionPreparing ? `${modeVisual.stageHeight}px` : this._floorStageHeight(),
@@ -14712,7 +14854,8 @@ export class HouseplanCard extends LitElement {
           }}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderStageEnvironment(dayCycle, dayCycleWeight)}
-          ${this._renderStartupFloor(this._startupPending)}
+          ${this._floorSwitch ? this._floorSwitch.phase === 'waiting' && this._floorSwitch.showStatus
+            ? this._startupStatus() : nothing : this._renderStartupFloor(this._startupPending)}
           ${this._plan3dFailure?.space === this._space && this._desiredProjection === 'iso' && !iso && !this._startupPending
             ? html`<div class="plan-3d-fallback hpf-loading-pill" role="status">
                 <span>${this._t('plan.3d_fallback')}</span>
@@ -14724,7 +14867,12 @@ export class HouseplanCard extends LitElement {
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction}
             @animationend=${(event: AnimationEvent) => {
-              if (event.target === event.currentTarget && event.animationName === 'hp-startup-live-in') this._finishStartupFade();
+              if (event.target !== event.currentTarget) return;
+              if (event.animationName === 'hp-startup-live-in') this._finishStartupFade();
+              if (event.animationName === 'hp-floor-switch-in' && this._floorSwitch?.phase === 'entering') {
+                this._cancelFloorSwitch();
+                this.requestUpdate();
+              }
             }}
             style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}${this._modeProjectionCrossing ? `;opacity:${this._modeProjectionOpacity}` : ''}${modeVisual && !this._modeTransitionPreparing ? `;width:${this._modeSceneSize?.[0] ?? modeVisual.stageWidth}px;height:${this._modeSceneSize?.[1] ?? modeVisual.stageHeight}px` : ''}">
           ${this._modeProjectionSource && this._modeProjectionScene ? this._modeProjectionScene : this._modeProjectionScene = html`
@@ -14802,7 +14950,8 @@ export class HouseplanCard extends LitElement {
     diagnostics = this._renderLife.diagnostics(
       this._planHass, this._markers, (binding) => this._bindingStatus(binding), this._haRegistry,
     )): TemplateResult {
-    const pending = !!this._floorPreparation?.pending || this._floorPassive || this._startupPending;
+    const pending = !!this._floorPreparation?.pending || this._floorPassive || this._startupPending
+      || this._floorSwitch?.phase === 'waiting' || this._floorSwitch?.phase === 'leaving';
     const failed = !!this._floorPreparation?.failed;
     const deviceSnapshot = this._renderDeviceSnapshot;
     const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')

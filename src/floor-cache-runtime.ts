@@ -61,6 +61,9 @@ export class FloorCacheRuntime {
   private selection(): Selection | null { try { return this.host.selection(); } catch { return null; } }
   get pending(): boolean { return !!this.key && this.readyKey !== this.key && this.canonicalKey !== this.key && !this.failure; }
   get failed() { return this.failure; }
+  get preparedGeometryKey(): string | undefined {
+    return !this.pending && !this.failure ? this.selected?.persistentKey : undefined;
+  }
   get publicationNeeded(): boolean {
     const publication = this.publication();
     return !!publication && this.published.get(publication.bucket) !== publication.generation

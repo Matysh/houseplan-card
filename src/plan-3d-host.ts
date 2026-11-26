@@ -48,13 +48,13 @@ export class Plan3dHost {
 
   constructor(readonly canvas: HTMLCanvasElement, readonly view: SVGSVGElement,
     normalOffset: number, private readonly onFailure: () => void,
-    onPaint: (markers: ReadonlySet<string>, outlines: ReadonlySet<string>) => void) {
+    onPaint: (markers: ReadonlySet<string>, outlines: ReadonlySet<string>, complete: boolean) => void) {
     const document = canvas.ownerDocument;
     this.world = new Plan3dWorld(document, normalOffset, () => this.draw());
     try {
       this.viewport = new Plan3dViewport(canvas, () => this.fail(), () => {
         if (canvas.hasAttribute('data-hp-plan-3d-ready') || !this.world.loading)
-          onPaint(this.markerIds, this.outlineMembers);
+          onPaint(this.markerIds, this.outlineMembers, !this.world.loading);
       }, () => this.draw());
     } catch (error) {
       this.world.dispose();
