@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26706,
-  "nextTicket": 735,
+  "revision": 26707,
+  "nextTicket": 736,
   "nextFence": 734,
   "tasks": {
     "1024": {
@@ -6795,6 +6795,20 @@
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
       ]
+    },
+    "1583": {
+      "issue": 1583,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/1583-release-return-short-s6",
+      "materialSha": "b38f4575ade019751fde5f389f2e693a115580b7",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 735,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795694058714,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7487,7 +7501,8 @@
     }
   },
   "waiting": [
-    1581
+    1581,
+    1583
   ],
   "active": {
     "issue": 1582,
@@ -7688,6 +7703,19 @@
         "layer": "product",
         "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
         "delivered": true
+      }
+    },
+    "finish:b670345a-f5c5-471b-90f8-11cc8d3340b6": {
+      "digest": "5be721bc1af3feae8a2f93b7cd40fde03b9fb1f3268409973086b1bce3080103",
+      "issue": 1583,
+      "message": {
+        "kind": "queued",
+        "issue": 1583,
+        "at": 1795694058714,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "b38f4575ade019751fde5f389f2e693a115580b7"
       }
     }
   },
