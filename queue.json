@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27094,
+  "revision": 27095,
   "nextTicket": 741,
   "nextFence": 741,
   "tasks": {
@@ -6838,7 +6838,12 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795701933447,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "20d1359e65c2830eba64694608ba6d7db4f37346",
+      "changedFiles": [
+        "docs/release-ledger/v1.86.1/1001.json",
+        "docs/release-ledger/v2.0.0/1001.json"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7537,10 +7542,11 @@
     "token": "740:finish:d6dc4d93-3ade-4bfe-815e-8bf8e2dc7bf2:finish:1:admit",
     "fence": 740,
     "materialSha": "f909f3f291ce762864187623d77cb0f8bfaa42f4",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "1af123618b77fe71e860941605dedd41b279069d",
+    "phase": "testing",
     "admittedAt": 1795701948269,
-    "expiresAt": 1795702248269
+    "expiresAt": 1795702255025,
+    "patchId": "20d1359e65c2830eba64694608ba6d7db4f37346"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7562,6 +7568,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "finish:d6dc4d93-3ade-4bfe-815e-8bf8e2dc7bf2:finish:2:synchronized": {
+      "digest": "1f164fc677ded40e97c2b5742a833961ca4891b5f5bbb6cb801adb6dfedb165d",
+      "issue": 1584
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
