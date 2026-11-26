@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26044,
-  "nextTicket": 722,
+  "revision": 26045,
+  "nextTicket": 723,
   "nextFence": 722,
   "tasks": {
     "1024": {
@@ -6553,14 +6553,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1575-webgl-badge",
-      "materialSha": "b1b099b885c772eebb216382c482ed9d96064447",
+      "materialSha": "6560b865829e17fcc46247d422c7ec2dc1752945",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 720,
-      "queued": false,
+      "ticket": 722,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795670433370,
-      "reviewEntry": 1,
+      "readyAt": 1795672159926,
+      "reviewEntry": 2,
       "patchId": "e2ba426c3e5674eb6ba1c39949dc7436e031dca4",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -6569,10 +6569,6 @@
         "docs/release-ledger/v2.0.0/1575.json",
         "src/device-contact-render.ts"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1795671014438,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7304,7 +7300,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1575
+  ],
   "active": {
     "issue": 1577,
     "worker": "finish",
@@ -7554,6 +7552,19 @@
         "layer": "product",
         "materialSha": "065bf71607de941b29d30e0a73d0042f2d2d9788",
         "phase": "sync"
+      }
+    },
+    "finish:b6f36602-c20d-41a0-8143-db8e4d4c9a82": {
+      "digest": "9cbbd50d7a9442bf82ced7cbddc492a2cdd1844ae55c61e089b6d749f363d04f",
+      "issue": 1575,
+      "message": {
+        "kind": "queued",
+        "issue": 1575,
+        "at": 1795672159926,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6560b865829e17fcc46247d422c7ec2dc1752945"
       }
     }
   },
