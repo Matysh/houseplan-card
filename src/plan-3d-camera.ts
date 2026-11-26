@@ -1,9 +1,34 @@
-import { OrthographicCamera, PerspectiveCamera, Vector3, WebGLCoordinateSystem } from 'three';
+import { Box3, OrthographicCamera, PerspectiveCamera, Vector3, WebGLCoordinateSystem, type Camera } from 'three';
 import { isoFloorMatrix, isoPerspectiveCamera, isoRotationBasis, applyIsoMatrix, type IsoCamera, type ViewRect } from './iso-projection';
 
 /** Plan X/Y are horizontal; height above the plan is Three's Y. */
 export function planWorldPoint(x: number, y: number, height: number): Vector3 {
   return new Vector3(x, height, y);
+}
+
+/** The crop changes NDC but not the physical lens. Bound each visible
+ * piece before projection so concave plans need not use one large box
+ * with empty corners that may extend behind the perspective lens. */
+export function plan3dPaintBounds(camera: Camera, source: ViewRect, boxes: Iterable<Box3>): ViewRect | null {
+  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  const p = new Vector3();
+  for (const box of boxes) {
+    if (box.isEmpty()) continue;
+    for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y])
+      for (const z of [box.min.z, box.max.z]) {
+        p.set(x, y, z).project(camera);
+        if (!Number.isFinite(p.x + p.y + p.z) || p.z < -1 || p.z > 1) return null;
+        const px = source.x + (p.x + 1) * source.w / 2;
+        const py = source.y + (1 - p.y) * source.h / 2;
+        left = Math.min(left, px); right = Math.max(right, px);
+        top = Math.min(top, py); bottom = Math.max(bottom, py);
+      }
+  }
+  const w = right - left, h = bottom - top;
+  if (!(w > 0 && h > 0) || !Number.isFinite(left + top + right + bottom)) return null;
+  // Keep antialiased lines outside the exact mesh projected box.
+  const pad = Math.max(w, h) * .02;
+  return { x: left - pad, y: top - pad, w: w + pad * 2, h: h + pad * 2 };
 }
 
 /** The preset controls pose. Changing the view rectangle crops its image and

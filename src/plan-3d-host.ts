@@ -1,4 +1,5 @@
-import { plan3dCamera } from './plan-3d-camera';
+import { Box3, Mesh, type Scene } from 'three';
+import { plan3dCamera, plan3dPaintBounds } from './plan-3d-camera';
 import { Plan3dWorld, type Plan3dContactShadow, type Plan3dOutline, type Plan3dWorldInput } from './plan-3d-world';
 import { Plan3dViewport, type Plan3dFrame } from './plan-3d-viewport';
 import { readPlan3dMarkerFaces, type Plan3dMarker } from './plan-3d-markers';
@@ -14,6 +15,18 @@ export interface Plan3dPresentation {
   lightScope?: string;
   animateLights?: boolean;
   labelShadows?: readonly Plan3dContactShadow[];
+}
+
+function* snapshotBoxes(scene: Scene): Iterable<Box3> {
+  scene.updateMatrixWorld(true);
+  const children: Mesh[] = [];
+  scene.traverseVisible(object => { if (object instanceof Mesh) children.push(object); });
+  const box = new Box3();
+  for (const mesh of children) {
+    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+    const bounds = mesh.geometry.boundingBox;
+    if (bounds) yield box.copy(bounds).applyMatrix4(mesh.matrixWorld);
+  }
 }
 
 /** Joins the 3D camera to the viewport already used by House Plan gestures.
@@ -151,16 +164,27 @@ export class Plan3dHost {
   }
 
   async snapshot(presentation: Plan3dPresentation, view: ViewRect, size: readonly [number, number],
-    signal: AbortSignal): Promise<Blob | null> {
-    if (this.disposed || signal.aborted) return null;
+    signal: AbortSignal, portable: boolean): Promise<{ image: Blob | null; full?: { image: Blob; rect: ViewRect } }> {
+    if (this.disposed || signal.aborted) return { image: null };
     const world = new Plan3dWorld(this.canvas.ownerDocument, 0);
     try {
       world.present(presentation.world);
-      if (!await world.ready() || this.disposed || signal.aborted) return null;
+      if (!await world.ready() || this.disposed || signal.aborted) return { image: null };
       const { bounds, content, preset, sectionHeight } = presentation;
       const camera = plan3dCamera(preset, bounds, content, sectionHeight, view);
-      const blob = await this.viewport.snapshot({ scene: world.scene, camera }, { width: size[0], height: size[1] });
-      return signal.aborted ? null : blob;
+      const image = await this.viewport.snapshot({ scene: world.scene, camera }, { width: size[0], height: size[1] });
+      if (signal.aborted || this.disposed) return { image: null };
+      if (!portable) return { image };
+      const rect = plan3dPaintBounds(camera, view, snapshotBoxes(world.scene));
+      if (!rect) return { image };
+      // Bounded independently of the source device's screen. The target
+      // repositions and clips this image without a second GPU pass.
+      const scale = 1500 / Math.max(rect.w, rect.h);
+      const full = await this.viewport.snapshot({
+        scene: world.scene, camera: plan3dCamera(preset, bounds, content, sectionHeight, rect),
+      }, { width: Math.max(1, Math.round(rect.w * scale)), height: Math.max(1, Math.round(rect.h * scale)) });
+      if (signal.aborted || this.disposed) return { image: null };
+      return { image, full: full ? { image: full, rect } : undefined };
     } finally {
       world.dispose();
     }

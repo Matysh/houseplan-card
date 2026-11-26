@@ -11,7 +11,7 @@ export const STARTUP_WIRE_PAINT_BYTES = 8 * 1024 * 1024;
 export const STARTUP_SVG_NS = 'http://www.w3.org/2000/svg';
 export type StartupVector = [tag: string, attributes: Record<string, string>, children: StartupVector[]];
 export interface StartupGeometry { version: 1; fit: FloorFitPacket; nodes: StartupVector[] }
-export interface StartupRaster {
+interface StartupViewportRaster {
   version: 2;
   fit: FloorFitPacket;
   size: readonly [number, number];
@@ -19,6 +19,14 @@ export interface StartupRaster {
   zoom: number;
   image: Blob;
 }
+export interface StartupSceneRaster {
+  version: 3;
+  fit: FloorFitPacket;
+  /** Full neutral scene in calibrated projection coordinates. */
+  rect: StartupViewportRaster['view'];
+  image: Blob;
+}
+export type StartupRaster = StartupViewportRaster | StartupSceneRaster;
 export interface StartupRemoteAddress {
   readonly source: readonly [string, string];
   readonly variant: string;
@@ -220,12 +228,15 @@ export async function startupWebpFromCanvas(blob: Blob | null): Promise<Blob | n
 }
 
 export async function encodeStartupRaster(packet: StartupRaster, signal: AbortSignal): Promise<string> {
-  const { view, image, ...metadata } = packet;
+  const { image, fit, version } = packet;
   if (image.type !== 'image/webp' || image.size > STARTUP_WIRE_BYTES) throw Error('raster-format');
   const bytes = new Uint8Array(await image.arrayBuffer());
   if (!validStartupWebp(bytes)) throw Error('raster-format');
-  const wire = new Blob([JSON.stringify({ ...metadata,
-    view: [view.x, view.y, view.w, view.h], image: base64(bytes) })]);
+  const r = packet.version === 3 ? packet.rect : packet.view;
+  const box = [r.x, r.y, r.w, r.h];
+  const wire = new Blob([JSON.stringify({ version, fit,
+    ...(packet.version === 3 ? { rect: box } : { size: packet.size, view: box, zoom: packet.zoom }),
+    image: base64(bytes) })]);
   return base64(await collect(wire.stream().pipeThrough(new CompressionStream('gzip')), STARTUP_WIRE_BYTES, signal));
 }
 
@@ -236,16 +247,31 @@ export async function decodeStartupRaster(encoded: unknown, address: StartupRemo
   if (!zip) return null;
   const data = await collect(new Blob([zip]).stream().pipeThrough(new DecompressionStream('gzip')), STARTUP_WIRE_VECTOR_BYTES, signal);
   const wire: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(data));
-  if (!plainObject(wire) || Object.keys(wire).length !== 6 || wire.version !== 2 || !validFit(wire.fit, address)
-    || !Array.isArray(wire.size) || wire.size.length !== 2
-    || !wire.size.every(n => Number.isInteger(n) && n > 0 && n <= 16_384)
-    || !Array.isArray(wire.view) || wire.view.length !== 4 || !wire.view.every(safeNumber)
-    || wire.view[2] <= 0 || wire.view[3] <= 0 || typeof wire.zoom !== 'number' || !(wire.zoom > 0 && wire.zoom <= 10_000)) return null;
+  if (!plainObject(wire) || !validFit(wire.fit, address)) return null;
+  if (wire.version !== 2 && wire.version !== 3) return null;
+  if (Object.keys(wire).length !== (wire.version === 2 ? 6 : 4)) return null;
+  const box = wire.version === 3 ? wire.rect : wire.view;
+  if (!Array.isArray(box) || box.length !== 4 || !box.every(safeNumber) || box[2] <= 0 || box[3] <= 0) return null;
   const raster = fromBase64(wire.image);
   if (!raster || !validStartupWebp(raster)) return null;
-  const [x, y, w, h] = wire.view;
+  const [x, y, w, h] = box;
+  const image = new Blob([raster], { type: 'image/webp' });
+  if (wire.version === 3) return { version: 3, fit: wire.fit, rect: { x, y, w, h }, image };
+  if (!Array.isArray(wire.size) || wire.size.length !== 2
+    || !wire.size.every(n => Number.isInteger(n) && n > 0 && n <= 16_384)
+    || typeof wire.zoom !== 'number' || !(wire.zoom > 0 && wire.zoom <= 10_000)) return null;
   return { version: 2, fit: wire.fit, size: [wire.size[0], wire.size[1]], view: { x, y, w, h }, zoom: wire.zoom,
-    image: new Blob([raster], { type: 'image/webp' }) };
+    image };
+}
+
+/** Place a full projected panel in the target crop; the stage clips it. */
+export function startupRasterRect(rect: StartupSceneRaster['rect'], viewport: StartupSceneRaster['rect'],
+  size: readonly [number, number]): StartupSceneRaster['rect'] | null {
+  const sx = size[0] / viewport.w, sy = size[1] / viewport.h;
+  const result = { x: (rect.x - viewport.x) * sx, y: (rect.y - viewport.y) * sy, w: rect.w * sx, h: rect.h * sy };
+  return Object.values(result).every(safeNumber) && result.w > 0 && result.h > 0
+    && result.x < size[0] && result.y < size[1] && result.x + result.w > 0 && result.y + result.h > 0
+    ? result : null;
 }
 
 export async function encodeStartupGeometry(packet: StartupGeometry, signal: AbortSignal): Promise<string> {

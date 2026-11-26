@@ -15,8 +15,9 @@ export interface StartupCapture extends Omit<StartupFloorView, 'image'> {
   geometry?: StartupGeometry;
   raster?: StartupRaster;
 }
+type StartupRemoteView = StartupFloorView & { placement?: { x: number; y: number; w: number; h: number } };
 export interface StartupRemoteSource {
-  read(selection: StartupSelection, signal: AbortSignal): Promise<StartupFloorView | null>;
+  read(selection: StartupSelection, signal: AbortSignal): Promise<StartupRemoteView | null>;
   publish(selection: StartupSelection, packet: StartupGeometry | StartupRaster, signal: AbortSignal): Promise<boolean>;
 }
 const key = (s: StartupSelection) => JSON.stringify([s.scope, s.floor, s.variant, s.revision]);
@@ -94,7 +95,7 @@ export class StartupFloor {
     const current = () => this.reading === owner && this.acceptsPreview && this.matches(selection);
     void (async () => {
       try {
-        let packet = await this.store.read(selection);
+        let packet: StartupRemoteView | null = await this.store.read(selection);
         let remote = false;
         if (!current()) return;
         if (packet?.zoomHint !== selection.zoomHint || packet && selection.size && !sameSize(packet.size, selection.size)) {
@@ -119,6 +120,10 @@ export class StartupFloor {
           return;
         }
         element.className = 'hp-startup-view';
+        if (remote && packet.placement) {
+          const { x, y, w, h } = packet.placement;
+          Object.assign(element.style, { inset: 'auto', left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+        }
         element.dataset.hpStartupSource = remote ? 'server' : 'browser';
         element.alt = '';
         element.setAttribute('aria-hidden', 'true');

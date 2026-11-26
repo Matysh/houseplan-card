@@ -34,6 +34,7 @@ STORE_OVERHEAD_BYTES = 1024
 PREFIX = "houseplan.startup-paint"
 FORMAT = 1
 RASTER_FORMAT = 2
+SCENE_RASTER_FORMAT = 3
 RASTER_PIXELS = 2_000_000
 HEX = re.compile(r"[0-9a-f]{64}")
 LOCAL = re.compile(r"#[A-Za-z_][A-Za-z0-9_.:-]{0,127}")
@@ -157,18 +158,23 @@ def _webp_dimensions(image: bytes) -> tuple[int, int]:
 
 
 def _valid_raster(packet, projection, rotation):
-    if (projection != "iso" or set(packet) != {"version", "fit", "size", "view", "zoom", "image"}
+    portable = packet["version"] == SCENE_RASTER_FORMAT
+    fields = {"version", "fit", "rect", "image"} if portable else {"version", "fit", "size", "view", "zoom", "image"}
+    if (projection != "iso" or set(packet) != fields
             or not _valid_fit(packet["fit"], projection, rotation)):
         return False
-    size, view, zoom, image = packet["size"], packet["view"], packet["zoom"], packet["image"]
-    if (not isinstance(size, list) or len(size) != 2
-            or not all(type(item) is int and 0 < item <= 16_384 for item in size)
-            or not isinstance(view, list) or len(view) != 4
+    view, image = packet["rect" if portable else "view"], packet["image"]
+    if (not isinstance(view, list) or len(view) != 4
             or not all(type(item) in (int, float) and abs(item) <= 10_000_000 for item in view)
             or not all(item > 0 for item in view[2:])
-            or type(zoom) not in (int, float) or not 0 < zoom <= 10_000
             or not isinstance(image, str) or len(image) > BASE64_BYTES):
         return False
+    if not portable:
+        size, zoom = packet["size"], packet["zoom"]
+        if (not isinstance(size, list) or len(size) != 2
+                or not all(type(item) is int and 0 < item <= 16_384 for item in size)
+                or type(zoom) not in (int, float) or not 0 < zoom <= 10_000):
+            return False
     _webp_dimensions(base64.b64decode(image, validate=True))
     return True
 
@@ -185,7 +191,8 @@ def validate_preview(wire: str, projection: str, rotation: int) -> int:
     if len(raw) > VECTOR_BYTES or not decoder.eof or decoder.unused_data:
         raise ValueError("expanded limit")
     packet = json.loads(raw)
-    if isinstance(packet, dict) and type(packet.get("version")) is int and packet["version"] == RASTER_FORMAT:
+    if (isinstance(packet, dict) and type(packet.get("version")) is int
+            and packet["version"] in (RASTER_FORMAT, SCENE_RASTER_FORMAT)):
         if not _valid_raster(packet, projection, rotation):
             raise ValueError("raster shape")
         return len(data)

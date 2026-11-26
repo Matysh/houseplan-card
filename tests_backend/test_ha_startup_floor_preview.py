@@ -83,6 +83,18 @@ def test_static_webp_preview_has_its_own_bounded_contract():
         return base64.b64encode(gzip.compress(json.dumps(value).encode())).decode()
 
     assert validate_preview(encoded(packet), "iso", 0) > 0
+    portable = {"version": 3, "fit": packet["fit"], "rect": [1, 2, 10, 15], "image": packet["image"]}
+    assert validate_preview(encoded(portable), "iso", 0) > 0
+    for broken in (
+        {**portable, "zoom": 1},
+        {**portable, "rect": [1, 2, 0, 15]},
+        {**portable, "rect": [10_000_001, 2, 10, 15]},
+        {**portable, "image": "PHN2Zy8+"},
+    ):
+        with pytest.raises(ValueError):
+            validate_preview(encoded(broken), "iso", 0)
+    with pytest.raises(ValueError):
+        validate_preview(encoded(portable), "iso", 45)
     with pytest.raises(ValueError):
         validate_preview(encoded(packet), "flat", 0)
     with pytest.raises(ValueError):

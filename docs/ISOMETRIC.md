@@ -45,6 +45,14 @@ High zoom can refine the glyph raster on each visible device cap without
 moving any scene objects. The soft device and label shadows are
 non-interactive floor paint and do not enter neutral previews.
 
+The optional server startup preview (#1522) captures a bounded neutral WebP of
+the full projected 3D scene, including furniture, plus its rectangle in
+projection units. It carries no device icons, live lighting, hover paint or
+source device viewport. The receiver measures its own stage and fits the same
+camera/preset as the live view; it positions and clips the image without
+running WebGL for the preview. The browser-local startup snapshot (#1520)
+remains keyed to the actual local viewport and independent of the server copy.
+
 The document pauses canvas paints while hidden. On return, the host samples
 the current light transitions before repainting. An unfinished transition
 continues from its current intensity, and an elapsed one shows the final

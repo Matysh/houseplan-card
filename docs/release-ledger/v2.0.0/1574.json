@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1574,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Restore the first-open portable preview contract for the new 3D renderer.",
+  "summary": {
+    "ru": "Точное серверное 3D-превью с мебелью на телефоне и компьютере.",
+    "en": "Portable 3D startup previews with furniture on phone and desktop."
+  }
+}

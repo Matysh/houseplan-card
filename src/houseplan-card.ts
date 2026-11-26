@@ -6,7 +6,7 @@ import { captureFloorPreview, renderFloorPreview } from './floor-cache-preview';
 import { StartupFloor, type StartupSelection } from './startup-floor';
 import { serializeStartupFloor } from './startup-floor-svg';
 import { decodeStartupGeometry, decodeStartupRaster, encodeStartupGeometry, encodeStartupRaster, isStartupSourceStamp, startupGeometryImage,
-  startupWireAvailable, type StartupGeometry, type StartupVector } from './startup-floor-wire';
+  startupRasterRect, startupWireAvailable, type StartupGeometry, type StartupVector } from './startup-floor-wire';
 import { isoDeviceFitInputs, nominalDeviceCore } from './iso-overlay-fit-inputs';
 import { prepareIsoWallBase, restoreFloorGeometrySemantics, type FloorGeometryFrame, type IsoWallBaseEntry } from './floor-geometry-frame';
 import { cleanFloorFromData } from './clean-floor';
@@ -3061,7 +3061,7 @@ export class HouseplanCard extends LitElement {
         || (this._renderOpeningEntityAvailable(opening.lock) === this._openingEntityAvailable(opening.lock)
           ? this._renderOpeningEntityAvailable(opening.lock) : null)) : [];
     if (locks.includes(null)) return null;
-    return cacheSha256([projection === 'iso' && disp.showBorders ? 2 : 1, ENTRY_BUILD_FINGERPRINT, projection, rotation, this._config, disp,
+    return cacheSha256([projection === 'iso' && disp.showBorders ? 3 : 1, ENTRY_BUILD_FINGERPRINT, projection, rotation, this._config, disp,
       this._showFar, this._showHidden, this._effectiveKioskScale, this._presentation.themes,
       this._presentation.language, roster, locks]);
   }
@@ -3278,6 +3278,11 @@ export class HouseplanCard extends LitElement {
     const plane = presentedViewPlane(fit, this._spaceDisplayForRender().showBorders, null);
     const presented = presentationViewport(camera.viewBox, fit.base, fit.display,
       plane ? isoViewTurn(plane) : fit.rotation, camera.zoom, size, null, plane?.floorScaleY ?? 1);
+    if (packet.version === 3) {
+      const placement = startupRasterRect(packet.rect, presented, size);
+      return placement ? { image: packet.image, size, view: camera.viewBox, zoom: camera.zoom,
+        zoomHint: selection.zoomHint, fit, placement } : null;
+    }
     return { image: startupGeometryImage(packet, size, presented), size,
       view: camera.viewBox, zoom: camera.zoom, zoomHint: selection.zoomHint, fit };
   }
@@ -3341,9 +3346,9 @@ export class HouseplanCard extends LitElement {
       projection: this._renderProjection, rotation: this._rotation };
     store.capture(selection, async (signal, portable) => {
       if (source3d) {
-        const image = await this._plan3dHost?.snapshot(source3d(), presented, size, signal) ?? null;
-        return { image, size, view, zoom, zoomHint: selection.zoomHint, fit,
-          raster: image && portable ? { version: 2, image, size, fit, view, zoom } : undefined };
+        const snapshot = await this._plan3dHost?.snapshot(source3d(), presented, size, signal, portable);
+        return { image: snapshot?.image ?? null, size, view, zoom, zoomHint: selection.zoomHint, fit,
+          raster: snapshot?.full ? { version: 3, fit, ...snapshot.full } : undefined };
       }
       let geometry: StartupGeometry | undefined;
       const image = await this._captureStartupSvg(stage, () => source!(presented), presented, signal,
