@@ -55,7 +55,9 @@ export class Plan3dHost {
       this.light.set(presentation.world.lights, presentation.lightScope ?? '', this.now(), presentation.animateLights === true);
       this.world.present({ ...presentation.world, lights: this.light.frame(this.now()).sources });
       this.world.presentOutlines(outlines, presentation.sectionHeight);
-      this.world.presentContacts(presentation.world.physical.floor, presentation.bounds, markers, presentation.labelShadows ?? []);
+      const contrast = !!presentation.world.contrastColors;
+      this.world.presentContacts(presentation.world.physical.floor, presentation.bounds,
+        contrast ? [] : markers, contrast ? [] : presentation.labelShadows ?? []);
       this.outlineMembers = new Set(outlines.filter(outline => outline.outline).flatMap(outline => outline.members));
       this.presentation = presentation;
       this.markers = markers;

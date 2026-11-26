@@ -10,6 +10,7 @@
 - Remove competing wall and jamb faces that could flicker when zooming in WebGL 3D (#1569).
 - Keep Zigbee routes behind device cores and restore marker clicks when returning from 3D to Flat (#1573).
 - Keep the stair-arrival pulse visible above 3D and reuse the resolved background colour on warm floor switches (#1570).
+- Keep the stair-arrival pulse visible above 3D, respect forced-colour palettes, and reuse the resolved background colour on warm floor switches (#1570).
 - Restore the inset room highlight and its opening gaps when hovering in WebGL 3D (#1571).
 - Show confirmed unavailable devices with the same dimmed appearance in WebGL 3D as in the flat view (#1572).
 

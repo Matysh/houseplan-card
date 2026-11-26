@@ -1728,6 +1728,18 @@ export async function prepareGoldenScenario(page, scenario) {
       if (contract.requireNoMaterialDefs && materialDefs !== 0) {
         throw new Error(`Stage 4 solid fallback retained material definitions: ${scenario.id}`);
       }
+      if (scenario.forcedColors && volume) {
+        const world = card._plan3dHost.world, [floor, ...walls] = world.structure.children;
+        const luma = color => .2126 * color.r + .7152 * color.g + .0722 * color.b;
+        const paper = luma(floor.material.color);
+        const contrast = color => {
+          const ink = luma(color);
+          return (Math.max(ink, paper) + .05) / (Math.min(ink, paper) + .05);
+        };
+        if (!volume.contrastColors || !walls[0] || world.contacts.children.length
+          || ![walls[0].material].flat().every(material => contrast(material.color) >= 3))
+          throw new Error(`forced colours lost the contrasting WebGL floor/wall boundary: ${scenario.id}`);
+      }
       if (contract.requireNoContactLimit && card._deviceContacts.resizeStatus) {
         throw new Error(`Stage 4 material fixture must fit the authored device icons: ${scenario.id}`);
       }
@@ -3061,7 +3073,7 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.rotation !== undefined) {
     result.rotation = await page.evaluate(({ expected, isIso }) => {
       const card = window.__goldenCard, root = card.renderRoot;
-      const host = isIso && card._plan3dHost;
+      const host = isIso ? card._plan3dHost : undefined;
       const camera = host?.viewport.painted?.camera;
       if (camera) {
         const box = host.canvas.getBoundingClientRect();

@@ -86,6 +86,7 @@ export interface Plan3dWorldInput {
   physical: IsoRenderScene['physical'];
   display: SpaceDisplay;
   paper: string;
+  contrastColors?: { paper: string; ink: string };
   backdrop?: Plan3dImage;
   floorInk?: Plan3dFloorInk;
   roomHover?: Plan3dRoomHover;
@@ -792,11 +793,12 @@ export class Plan3dWorld {
   }
 
   present(input: Plan3dWorldInput): void {
-    const { physical, display, cellCm, panels, furniture, paper, visualScale, decorWidth, decorHeight } = input;
+    const { physical, display, cellCm, panels, furniture, contrastColors, visualScale, decorWidth, decorHeight } = input;
+    const paper = contrastColors?.paper ?? input.paper;
     this.light.set(input.lights);
     this.updateBackdrop(input.backdrop);
     this.updateFloorInk(input.floorInk);
-    this.updateRooms(input.rooms);
+    this.updateRooms(contrastColors ? [] : input.rooms);
     this.updateRoomHover(input.roomHover, visualScale);
     this.updateStairs(input.stairs ?? []);
     this.updateRibbons(input.ribbons ?? [], gridVisualUnits(isoDisplayWallHeight(), cellCm));
@@ -806,10 +808,17 @@ export class Plan3dWorld {
     const wallOnPaper = new Color('#fff').lerp(new Color(display.wallFill.c), display.wallFill.a);
     const side: Paint = { color: display.transparentWalls3d ? display.wallFill.c : colorString(wallOnPaper),
       opacity: display.transparentWalls3d ? display.wallFill.a : 1, lit: true, shadeSides: true };
+    if (contrastColors) {
+      // CSS forced colours cannot recolour WebGL pixels. Use the resolved
+      // system ink and paper, including a light edge on a dark wall (or the
+      // reverse) rather than relying on near-identical custom pigments.
+      Object.assign(top, { color: contrastColors.ink, opacity: 1 });
+      Object.assign(side, { color: contrastColors.ink, opacity: 1, lit: false });
+    }
     const palette = isoOpeningMaterialVars(display.openingAccent3d?.c, display.openingAccent3d?.a);
     const styleKey = [cellCm, top.color, side.color, top.opacity, side.opacity, display.hideOpenings,
       display.openingAccent3d?.c, display.openingAccent3d?.a];
-    const structureKey = [physical, paper, ...styleKey];
+    const structureKey = [physical, paper, !!contrastColors, ...styleKey];
     if (!same(this.structureKey, structureKey)) {
       const wallHeight = gridVisualUnits(isoDisplayWallHeight(), cellCm);
       const base = polygons(physical.floor);
@@ -829,7 +838,12 @@ export class Plan3dWorld {
         ...this.openingMeshes(surfaces, palette, top, side),
       ];
       this.replace(this.structure, meshes);
-      this.replace(this.architecture, wallInk(shell, top, side));
+      const edges = wallInk(shell, top, side);
+      if (contrastColors) for (const edge of edges) {
+        const material = edge.material as LineBasicMaterial;
+        material.color.set(paper); material.opacity = 1;
+      }
+      this.replace(this.architecture, edges);
       this.structureKey = structureKey;
     }
 

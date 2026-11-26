@@ -810,6 +810,20 @@ export class HouseplanCard extends LitElement {
   private _plan3dAuthority?: PlanHost['authorityKey'];
   private _plan3dPresentation: import('./plan-3d-host').Plan3dPresentation | undefined;
   private _plan3dFailure: { key: string; space: string; load?: 'retry' | 'reload' } | undefined;
+  private _planContrastMedia?: MediaQueryList;
+  private _planContrastColors?: { paper: string; ink: string };
+  private readonly _onPlanContrastChange = (): void => {
+    if (!this._planContrastMedia?.matches) this._planContrastColors = undefined;
+    else {
+      const probe = this.ownerDocument.createElement('span');
+      probe.style.cssText = 'position:absolute;visibility:hidden;forced-color-adjust:none;color:CanvasText;background-color:Canvas';
+      this.renderRoot.append(probe);
+      const style = this.ownerDocument.defaultView?.getComputedStyle(probe);
+      this._planContrastColors = { paper: style?.backgroundColor || '#fff', ink: style?.color || '#000' };
+      probe.remove();
+    }
+    this.requestUpdate();
+  };
   private _flatExportScene: ((view: FrameRect, rotation: PlanRotation) => TemplateResult) | undefined;
   private _plan3dDevices?: ReadonlyMap<string, IsoOverlayPlacement>;
 
@@ -4695,6 +4709,9 @@ export class HouseplanCard extends LitElement {
     this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     this._reducedMotion = !!this._motionMedia?.matches;
     this._motionMedia?.addEventListener?.('change', this._onMotionChange);
+    this._planContrastMedia = this.ownerDocument.defaultView?.matchMedia('(forced-colors: active)');
+    this._planContrastMedia?.addEventListener('change', this._onPlanContrastChange);
+    if (this._planContrastMedia?.matches) this._onPlanContrastChange();
     this._syncVersionRecovery();
     this._versionRecovery.connect();
     svgScreenBlendSupported(this.ownerDocument).then((supported) => {
@@ -4816,6 +4833,9 @@ export class HouseplanCard extends LitElement {
     this._languageFailureUnsub = undefined;
     this._motionMedia?.removeEventListener?.('change', this._onMotionChange);
     this._motionMedia = undefined;
+    this._planContrastMedia?.removeEventListener('change', this._onPlanContrastChange);
+    this._planContrastMedia = undefined;
+    this._planContrastColors = undefined;
     this._deviceHitScrollUnsub?.(); this._deviceHitScrollUnsub = undefined; this._pinchZoomDirty = false;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
@@ -14246,6 +14266,7 @@ export class HouseplanCard extends LitElement {
         world: {
           physical: isoScene.physical, display: disp, cellCm: this._cellCm, visualScale: scale,
           paper: this._isoFirstFrame.paperColor,
+          contrastColors: this._planContrastColors,
           backdrop: space.bg ? { url: this._display(space.bg.href), x: space.bg.x, y: space.bg.y,
             w: space.bg.w, h: space.bg.h, angle: space.bg.angle ?? 0, opacity: space.bg.opacity ?? 1 } : undefined,
           floorInk: floorInk(false),
@@ -14277,7 +14298,7 @@ export class HouseplanCard extends LitElement {
       if (this._mode === 'view' && projection === this._desiredProjection && !this._modeTransitionBusy) {
         const live = this._plan3dPresentation, { layers } = isoFrame, scene = isoScene;
         this._startup3dSource = () => ({ ...live, world: {
-          ...live.world, lights: [], ribbons: [], roomHover: undefined,
+          ...live.world, contrastColors: undefined, lights: [], ribbons: [], roomHover: undefined,
           floorInk: floorInk(true), rooms: rooms3d(this._resolvedRoomFills(space, disp, true)),
           panels: isoRuntime.resolveIsoOpeningPanels(layers, scene, this._openingsR, opening => resolvedOpeningAmount(opening, () => null),
             opening => resolveOpeningVisual(opening, () => null, resolvedOpeningAmount(opening, () => null))),
