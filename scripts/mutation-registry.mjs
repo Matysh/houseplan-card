@@ -3530,8 +3530,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_device_contact_work.mjs',
     because: '#866 AC9: twenty distinct real badge values must share layout batches on a cold 200-marker floor; one write/read layout per distinct face is not bounded incremental work.',
     patches: [{file:'src/device-contact-render.ts',
-      find:'    const fresh = this.measure(pending);',
-      replace:'    const fresh = new Map<string, ContactRect>(); for (const [key, element] of pending) for (const [k, metric] of this.measure(new Map([[key, element]]))) fresh.set(k, metric);'}],
+      find:'    const fresh = this.measure(pending, standalone);',
+      replace:'    const fresh = new Map<string, ContactRect>(); for (const [key, element] of pending) for (const [k, metric] of this.measure(new Map([[key, element]]))) fresh.set(k, metric); this.measure(new Map(), standalone);'}],
   },
   {
     id: 'device-contact-rebuilds-identical-value-geometry',
