@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26095,
+  "revision": 26096,
   "nextTicket": 724,
   "nextFence": 724,
   "tasks": {
@@ -6612,7 +6612,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1577-webgl-door-light",
-      "materialSha": "823d90426b0029cb62c3c6e4869554a54d9195f0",
+      "materialSha": "0e6b5d680a6b179457d4be8d7383018e29e3bb32",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 723,
@@ -6620,7 +6620,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795672789851,
       "reviewEntry": 2,
-      "patchId": "694634a25f1a978607c0c13ec8bac3788c0f56e6",
+      "patchId": "684c3621a30b274c6174213732c623bc7ccbc73f",
       "changedFiles": [
         "demo/smoke_webgl_door_lintel.mjs",
         "docs/CHANGELOG.md",
@@ -7321,11 +7321,12 @@
     "worker": "github-coordinator",
     "token": "723:github:45766005074:1:tick:2:admit",
     "fence": 723,
-    "materialSha": "823d90426b0029cb62c3c6e4869554a54d9195f0",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "0e6b5d680a6b179457d4be8d7383018e29e3bb32",
+    "expectedBase": "6560b865829e17fcc46247d422c7ec2dc1752945",
+    "phase": "testing",
     "admittedAt": 1795673277887,
-    "expiresAt": 1795673577887
+    "expiresAt": 1795673589825,
+    "patchId": "684c3621a30b274c6174213732c623bc7ccbc73f"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7410,6 +7411,10 @@
     },
     "github:45765516004:1:completions:notice:5d58d8d7e5153198d211f720d77552b99baac31f5f60b9ef286534989c28b5f7": {
       "digest": "6325e79648c7731db75c4c4632e31459f9cbc93e79b9625d97ca6acb7967c259",
+      "issue": 1577
+    },
+    "finish:03642858-9b92-4bae-9706-ba69dfd5dfb7:finish:1:synchronized": {
+      "digest": "eda035e0c98d4e7cc901fd6ae8692af9d22a62758b6e20bd9b812a066b590e53",
       "issue": 1577
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
