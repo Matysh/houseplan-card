@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { launch, reportPageErrors } from './serve.mjs';
-import { prepareGoldenFixture, prepareGoldenScenario } from './golden/harness.mjs';
+import { prepareGoldenScenario } from './golden/harness.mjs';
 import { GOLDEN_SCENARIOS } from './golden/matrix.mjs';
 
 const root = resolve(process.argv[2] ?? '.');
@@ -30,9 +30,8 @@ try {
           ...(!initial ? { 'cover.golden_door_half': { state: door ? 'open' : 'closed',
             attributes: { current_position: door } } } : {}),
         },
-      }, scenario => {
-        const fixture = prepareGoldenFixture(scenario);
-        if (initial) return fixture;
+      }, (fixture, scenario) => {
+        if (initial) return;
         const space = fixture.config.spaces.find(space => space.id === scenario.space);
         space.wall_columns = [];
         space.partitions = [{ id: 'far-wall-receiver', a: [.32,.37], b: [.32,.78], cm: 18 }];
@@ -42,7 +41,6 @@ try {
           space.led_strips = [{ id: 'wall-wash', marker: 'golden-light-three', points: [[.53,.65],[.53,.75]] }];
           fixture.config.markers.push({ id: 'golden-light-three', binding: 'device:golden-light-three', space: space.id });
         }
-        return fixture;
       });
     await page.waitForFunction(active => {
       const card = window.__goldenCard;
