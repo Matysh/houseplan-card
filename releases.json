@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1542,
+  "revision": 1543,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -305625,13 +305625,15 @@
           "from": "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5",
           "to": "cfb05d6c6747f4adac77695d4c1d3ed9affc56dd",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1"
         },
         {
           "from": "cfb05d6c6747f4adac77695d4c1d3ed9affc56dd",
           "to": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba"
         }
       ],
       "diagnostics": [],
@@ -306269,12 +306271,12 @@
           "sha": "286b799101d831676ab30f7c8add3e1ec1889607"
         },
         "return-to-dev": {
-          "status": "pending",
+          "status": "completed",
+          "alreadyIncluded": true,
+          "devSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
           "issue": 1582,
           "branch": "issue/1582-release-return-4e522bebc352",
-          "worktree": "/home/sergey/hp-release-2.0.0-beta1/artifacts/process-next/return-worktrees/4e522bebc352",
-          "nextCycle": null,
-          "reason": "Return task is returned"
+          "nextCycle": null
         }
       }
     }
@@ -312736,7 +312738,8 @@
     "beta-200-20261126-publication:completion:07ccdddc-ce3e-4271-b9e5-986be3073ef9": "861442bb5a0f7d7bb4361b977201338904eabd04d7666bab097c99fb9fa9b69a",
     "beta-200-20261126-publication:completion:88adef77-4b86-4e6d-af69-3348e9198ce6": "ddc3edb600e53cbd85ad4714dedeb4199f89c922ef373323863bf51aac45cdab",
     "beta-200-20261126-publication:completion:f3d638a2-ef08-490e-9074-d361248ad1f9": "70a6e9846799d6c0f7525ad610475623165a611e945169f061a674d1b83ad3a2",
-    "beta-200-20261126-publication:completion:0e0a235f-6ae7-47ef-94de-72336ebfa95e": "40d03496d9214822fd31ae6f675e3aa124efb8a86dd61483366142594e5a1f18"
+    "beta-200-20261126-publication:completion:0e0a235f-6ae7-47ef-94de-72336ebfa95e": "40d03496d9214822fd31ae6f675e3aa124efb8a86dd61483366142594e5a1f18",
+    "release:3eafd143-b46b-4770-b323-e2d9a38a2683:completion:290fe7d8-247a-47ee-8589-745c4d8aa741": "22a2c7f106524de2c939eb0f83e3e2062277120b0be7a9bb83141cb87d823f98"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
