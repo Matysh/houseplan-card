@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25513,
-  "nextTicket": 712,
+  "revision": 25514,
+  "nextTicket": 713,
   "nextFence": 712,
   "tasks": {
     "1024": {
@@ -6405,14 +6405,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1572-webgl-marker-offline",
-      "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
+      "materialSha": "01110eea60307c327c7f5dad9cb94bba5d05cc1d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 710,
-      "queued": false,
+      "ticket": 712,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795651067659,
-      "reviewEntry": 2,
+      "readyAt": 1795652031440,
+      "reviewEntry": 3,
       "patchId": "6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0",
       "changedFiles": [
         "demo/smoke_device_offline.mjs",
@@ -6445,20 +6445,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1572:2:6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-      "reviewMaterial": {
-        "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
-        "expectedBase": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "patchId": "6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0"
-      },
-      "reviewRetry": {
-        "requestId": "review:1572:2:6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
-        "eventId": "github:45725661586:1:tick:0:review-retry",
-        "at": 1795651297195,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1572:2:6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
         "at": 1795651642920
@@ -7154,7 +7140,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1572
+  ],
   "active": {
     "issue": 1573,
     "worker": "finish",
@@ -7509,6 +7497,28 @@
         "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:0c6f7078-c1e2-44a1-b3c6-38b3f14d6026": {
+      "digest": "621ef974297919a6211ea06b5b9e24c44c88ca96a3145825f99a0c6077451264",
+      "issue": 1572,
+      "message": {
+        "kind": "queued",
+        "issue": 1572,
+        "at": 1795652031440,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "01110eea60307c327c7f5dad9cb94bba5d05cc1d",
+        "evidence": {
+          "id": "20261125T235804732-389cfd33",
+          "name": "Тесты для задачи #1572 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261125T235804732-389cfd33/report.json",
+          "materialSha": "a3093adbbfc698358b86873f7bd87e39d43c417f",
+          "status": "passed",
+          "finishedAt": "2026-11-26T00:01:07.869Z",
+          "failures": []
+        }
       }
     }
   },
