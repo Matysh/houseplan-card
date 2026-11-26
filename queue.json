@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25541,
+  "revision": 25542,
   "nextTicket": 714,
   "nextFence": 712,
   "tasks": {
@@ -7380,6 +7380,10 @@
       "digest": "adeda3382006504c7ed0d6089c05aedc69bcda366bf1553222e43bd343f45095",
       "issue": 1573
     },
+    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:3:s6-label": {
+      "digest": "3fd0684f2a544a44de9e2bf834acfeebec9411ad8e958e619f66eae6a2420cd5",
+      "issue": 1573
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7609,7 +7613,8 @@
         "resubmission": false,
         "reviewChanges": "",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
