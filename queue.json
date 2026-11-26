@@ -1,9 +1,23 @@
 {
   "schema": 1,
-  "revision": 26917,
-  "nextTicket": 738,
+  "revision": 26918,
+  "nextTicket": 739,
   "nextFence": 738,
   "tasks": {
+    "1001": {
+      "issue": 1001,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1001-ha-automation-alerts",
+      "materialSha": "e1dbb46a489d68d1f8a15867bca3a01fe942dc20",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 738,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795697691546,
+      "reviewEntry": 1
+    },
     "1024": {
       "issue": 1024,
       "branch": "codex/opening-features-1024",
@@ -7515,7 +7529,9 @@
       "runId": 45821584286
     }
   },
-  "waiting": [],
+  "waiting": [
+    1001
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7634,6 +7650,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba"
+      }
+    },
+    "finish:95b4b606-2310-4fac-ba77-17c21ee44641": {
+      "digest": "6b3128f47f8c3bad03a49fdabf3c6ffc1743d219f44475258028d0e44923c5be",
+      "issue": 1001,
+      "message": {
+        "kind": "queued",
+        "issue": 1001,
+        "at": 1795697691546,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "e1dbb46a489d68d1f8a15867bca3a01fe942dc20"
       }
     }
   },
