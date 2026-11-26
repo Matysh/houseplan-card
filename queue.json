@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26284,
+  "revision": 26285,
   "nextTicket": 729,
   "nextFence": 728,
   "tasks": {
@@ -6654,7 +6654,10 @@
       "reviewCorrection": {
         "requestId": "review:1577:2:684c3621a30b274c6174213732c623bc7ccbc73f:6560b865829e17fcc46247d422c7ec2dc1752945",
         "at": 1795674301442
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1795679290663,
+      "automationDetail": "fetch failed"
     },
     "1578": {
       "issue": 1578,
@@ -7706,6 +7709,10 @@
     },
     "github:45777837672:1:completions:message:f53ad4b91f2dc0c63c88ab494c0daf92103a1beadb067caba446c34217fbe616": {
       "digest": "193d32e6f16d956410f2f0450e2876c94e67efad34953bc65b3d6f1321d60c39",
+      "issue": 1577
+    },
+    "finish:13b564ab-85d9-4229-a693-162e1ad1925a:finish:3:automation-pending": {
+      "digest": "8a10378d7b0fffa6375d8815b81b76e4b527fc532ab3b0bd96464be1abd7f135",
       "issue": 1577
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
