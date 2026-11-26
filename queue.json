@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26039,
+  "revision": 26040,
   "nextTicket": 722,
   "nextFence": 722,
   "tasks": {
@@ -6625,14 +6625,22 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1577-webgl-door-light",
-      "materialSha": "065bf71607de941b29d30e0a73d0042f2d2d9788",
+      "materialSha": "7ebafc13035157e62823d029bae4fa90071d5374",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 721,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795670931372,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "694634a25f1a978607c0c13ec8bac3788c0f56e6",
+      "changedFiles": [
+        "demo/smoke_webgl_door_lintel.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v2.0.0/1577.json",
+        "src/plan-3d-light-field.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7302,11 +7310,12 @@
     "worker": "finish",
     "token": "721:finish:2cfda14b-a853-4c5c-87bd-8bb0c7589f79:finish:1:admit",
     "fence": 721,
-    "materialSha": "065bf71607de941b29d30e0a73d0042f2d2d9788",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "7ebafc13035157e62823d029bae4fa90071d5374",
+    "expectedBase": "d1419a1c50a6c05de40065f2af66e72728ecf570",
+    "phase": "testing",
     "admittedAt": 1795671914214,
-    "expiresAt": 1795672214214
+    "expiresAt": 1795672223814,
+    "patchId": "694634a25f1a978607c0c13ec8bac3788c0f56e6"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7408,6 +7417,10 @@
     "finish:a330124a-bfa9-451a-ad3f-29d5fed849aa:finish:5:return": {
       "digest": "faad47f6b3d417384f938a1b529808d9a3fb8753f2f9a684ac0d7d60a317a66f",
       "issue": 1575
+    },
+    "finish:2cfda14b-a853-4c5c-87bd-8bb0c7589f79:finish:2:synchronized": {
+      "digest": "9d5ab6a0f9f7f73c5218092507ee389d6127ace54c27788afb409430b3fa2bdc",
+      "issue": 1577
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
