@@ -148,6 +148,16 @@ if (native) {
       }),
     };
   }, [WHITE,TINTED]));
+  const centre = await page.locator(`.dev[data-id="${TINTED}"] .device-core`).boundingBox();
+  const nativeColour = (id) => window.__card._plan3dHost.markers.find(marker=>marker.id===id)?.faces[0].color;
+  await page.mouse.move(centre.x + centre.width / 2, centre.y + centre.height / 2);
+  await page.waitForFunction(id=>window.__card._plan3dHost.markers.find(marker=>marker.id===id)
+    ?.faces[0].color==='rgb(12, 130, 240)', TINTED, {timeout:2000});
+  res.nativeHoverIsBlue = await page.evaluate(nativeColour, TINTED) === 'rgb(12, 130, 240)';
+  await page.mouse.move(5, 5);
+  await page.waitForFunction(id=>window.__card._plan3dHost.markers.find(marker=>marker.id===id)
+    ?.faces[0].color==='rgb(240, 160, 12)', TINTED, {timeout:2000});
+  res.nativeLeaveRestoresTint = await page.evaluate(nativeColour, TINTED) === 'rgb(240, 160, 12)';
 } else {
 res.scale112 = near(D / flat.white.w, 1.12, 0.01);
 res.noRing = /rgba\(0, 0, 0, 0\)/.test(iso.white.ring) && /rgba\(0, 0, 0, 0\)/.test(iso.tinted.ring);

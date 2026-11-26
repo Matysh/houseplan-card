@@ -3644,7 +3644,9 @@ export class HouseplanCard extends LitElement {
     fitAll: () => this._fitAll('double-tap'),
     fitRoom: (roomId) => this._fitRoom(roomId),
   });
-  private readonly _deviceHits = new DeviceHitController(); private _deviceHitScrollUnsub?: () => void;
+  private readonly _deviceHits = new DeviceHitController((before, after) => {
+    this._plan3dHost?.refreshMarkerFaces([before, after]);
+  }); private _deviceHitScrollUnsub?: () => void;
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
   /**

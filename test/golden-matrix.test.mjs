@@ -1063,8 +1063,12 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
   assert.match(harness, /forcedColors: scenario\.forcedColors \? 'active' : 'none'/);
   assert.match(harness, /Stage 4 golden raised a floor-bound vacuum/);
   assert.match(harness, /Stage 4 no-borders golden retained low overlays/);
-  assert.match(harness, /!scenario\.stage3Golden\?\.noBorders\s*&&\s*!window\.__hpRenderedIsoReady\(card\)/,
-    'no-borders remains true Iso without requiring the intentionally absent volume stage');
+  assert.match(harness,
+    /scenario\.stage3Golden\?\.noBorders && card\._desiredProjection === 'flat'[\s\S]*?until\(\(\) => card\._renderProjection === 'flat'\)[\s\S]*?no-borders view retained 3D paint/,
+    'current no-borders falls back to Flat without volume; the fixture must assert that');
+  assert.match(harness,
+    /if \(!scenario\.stage3Golden\?\.noBorders\) await until\(\(\) => window\.__hpRenderedIsoReady\(card\)\)/,
+    'other isometric scenes still require actual volumetric paint');
   assert.match(harness,
     /\.\.\.\(scenario\.stage3Golden[\s\S]*?\? \{ themes: \{ darkMode: scenario\.theme === 'dark' \} \}[\s\S]*?: \{\}\)/,
     'explicit HA darkMode must be scoped to isometric golden scenarios');

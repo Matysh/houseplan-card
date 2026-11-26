@@ -1,9 +1,9 @@
 import { plan3dCamera } from './plan-3d-camera';
 import { Plan3dWorld, type Plan3dContactShadow, type Plan3dOutline, type Plan3dWorldInput } from './plan-3d-world';
 import { Plan3dViewport, type Plan3dFrame } from './plan-3d-viewport';
-import type { Plan3dMarker } from './plan-3d-markers';
+import { readPlan3dMarkerFaces, type Plan3dMarker } from './plan-3d-markers';
 import { Plan3dLightMotion } from './plan-3d-light-motion';
-import type { IsoCamera, ViewRect } from './iso-projection';
+import { isoReadingYaw, type IsoCamera, type ViewRect } from './iso-projection';
 
 export interface Plan3dPresentation {
   world: Plan3dWorldInput;
@@ -74,6 +74,28 @@ export class Plan3dHost {
     if (previous && crop.x === previous.x && crop.y === previous.y && crop.w === previous.w && crop.h === previous.h) return;
     this.crop = crop;
     this.draw(true, true);
+  }
+
+  /** DOM hit ownership is live, not a Lit update. Refresh only the two
+   * faces whose CSS hover state actually changed, using the current crop. */
+  refreshMarkerFaces(elements: readonly (Element | null)[]): void {
+    const preset = this.presentation?.preset;
+    if (!preset || this.disposed) return;
+    const turn = (isoReadingYaw(preset.rotDeg) - preset.rotDeg) * Math.PI / 180;
+    let changed = false;
+    const markers = this.markers.map(marker => {
+      const element = elements.find((node): node is HTMLElement =>
+        node instanceof HTMLElement && node.hasAttribute('data-hp-3d-native') && node.dataset.id === marker.id);
+      if (!element) return marker;
+      const angle = Number(element.getAttribute('data-hp-3d-device'));
+      const faces = readPlan3dMarkerFaces(element, marker.faces, turn + (Number.isFinite(angle) ? angle : 0));
+      if (!faces) return marker;
+      changed = true;
+      return { ...marker, faces };
+    });
+    if (!changed) return;
+    this.markers = markers;
+    this.draw();
   }
 
   private draw(immediate = false, cameraOnly = false): void {

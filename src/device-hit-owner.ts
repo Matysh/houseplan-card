@@ -281,6 +281,8 @@ export class DeviceHitController {
   private hoverId: string | null = null;
   private hoverElement: Element | null = null;
 
+  constructor(private readonly afterHover?: (before: Element | null, after: Element | null) => void) {}
+
   public invalidate(): void {
     this.index = null;
   }
@@ -382,12 +384,14 @@ export class DeviceHitController {
 
   public hover(root: ParentNode, id: string | null): void {
     if (this.hoverId === id && this.hoverElement?.isConnected) return;
-    this.hoverElement?.removeAttribute('data-hp-device-hover');
+    const before = this.hoverElement;
+    before?.removeAttribute('data-hp-device-hover');
     this.hoverId = id;
     this.hoverElement = id
       ? [...root.querySelectorAll('.devlayer > .dev[data-hp="device"][data-id], .led-hit[data-hp="device"][data-id]')]
         .find((item) => item.getAttribute('data-id') === id) || null
       : null;
     this.hoverElement?.setAttribute('data-hp-device-hover', '');
+    if (before || this.hoverElement) this.afterHover?.(before, this.hoverElement);
   }
 }

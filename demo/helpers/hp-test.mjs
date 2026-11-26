@@ -372,8 +372,11 @@ export function installHpTest(selectors) {
       const c = need('setVolumetricView');
       await facade.setServerConfig((cfg) => {
         cfg.settings = { ...(cfg.settings || {}), volumetric_view: !!on };
+        const selectedId = find(c, 'spaceSelectValue')?.value ?? cfg.spaces.find(({ id }) =>
+          find(c, 'spaceTab', { id })?.getAttribute('aria-current') === 'page')?.id
+          ?? (cfg.spaces.length === 1 ? cfg.spaces[0].id : null);
         for (const space of cfg.spaces) {
-          if (on && space.id === c._space && space.plan_url && space.settings?.show_borders == null) {
+          if (on && space.id === selectedId && space.plan_url && space.settings?.show_borders == null) {
             harnessBorders.set(space.id, space.settings?.show_borders);
             space.settings = { ...space.settings, show_borders: true };
           } else if (!on && harnessBorders.has(space.id)) {
@@ -390,7 +393,7 @@ export function installHpTest(selectors) {
       const stage = () => rootOf(c)?.querySelector('.stage');
       await waitFor('setVolumetricView',
         () => !!stage() && stage().classList.contains('projection-iso') === !!on,
-        () => `вид не стал ${on ? '3D' : 'Flat'} (.stage: ${stage()?.className || 'нет'}, ожидаемая проекция: ${c._desiredProjection})`,
+        () => `вид не стал ${on ? '3D' : 'Flat'} (.stage: ${stage()?.className || 'нет'})`,
         10000);
       await settled();
     },

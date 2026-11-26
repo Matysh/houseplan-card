@@ -3,9 +3,9 @@
   "issue": 1570,
   "baseStable": "v1.86.1",
   "category": "line-fix",
-  "rationale": "Preserve stair navigation feedback and system contrast, and reuse resolved theme paper in the new renderer.",
+  "rationale": "Preserve stair navigation, marker hover feedback and system contrast, and reuse resolved theme paper in the new renderer.",
   "summary": {
-    "ru": "Подсветка лестниц, системная контрастная палитра и быстрые переходы между прогретыми этажами в 3D.",
-    "en": "Visible stair arrivals, system contrast, and warm floor switches in 3D."
+    "ru": "Подсветка лестниц и значков, системная контрастная палитра и быстрые переходы между прогретыми этажами в 3D.",
+    "en": "Visible stair and marker feedback, system contrast, and warm floor switches in 3D."
   }
 }

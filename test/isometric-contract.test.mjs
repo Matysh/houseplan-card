@@ -102,7 +102,7 @@ test('every browser smoke that explicitly selects Iso waits for its lazy runtime
     assert.doesNotMatch(source, /_setProjection\(/, `${name} still selects 2.5D the pre-#649 way`);
     // The facade waits for `.stage.projection-iso`, which the card sets only
     // once the lazy runtime is installed (_effectiveProjection).
-    assert.match(source, /await (?:page\.evaluate\(\(\) => )?(?:window\.)?(?:__hpHarnessProjection|__hpEnsureHarnessIsoRuntime|ensureIsoRuntime|(?:__hpTest|\w+)\.setVolumetricView)\(/,
+    assert.match(source, /await\s+(?:page\.evaluate\(\s*\(\s*\)\s*=>\s*)?(?:window\.)?(?:__hpHarnessProjection|__hpEnsureHarnessIsoRuntime|ensureIsoRuntime|(?:__hpTest|\w+)\.setVolumetricView)\(/,
       `${name} selects Iso without waiting for the lazy runtime`);
   }
   assert.ok(consumers.length >= 14, 'the guard unexpectedly lost known Iso smoke consumers');
