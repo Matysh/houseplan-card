@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26129,
+  "revision": 26130,
   "nextTicket": 724,
   "nextFence": 724,
   "tasks": {
@@ -6618,7 +6618,7 @@
       "ownerDecision": null,
       "ticket": 723,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795672789851,
       "reviewEntry": 2,
       "patchId": "684c3621a30b274c6174213732c623bc7ccbc73f",
@@ -6638,6 +6638,15 @@
         "entry": 1,
         "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed",
         "eventId": "finish:2cfda14b-a853-4c5c-87bd-8bb0c7589f79:finish:3:return:return:1577"
+      },
+      "s6": {
+        "id": "20261126T060817136-bb0a0264",
+        "name": "Тесты для задачи #1577 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T060817136-bb0a0264/report.json",
+        "materialSha": "0e6b5d680a6b179457d4be8d7383018e29e3bb32",
+        "status": "passed",
+        "finishedAt": "2026-11-26T06:20:48.504Z",
+        "failures": []
       }
     }
   },
@@ -7324,9 +7333,9 @@
     "fence": 723,
     "materialSha": "0e6b5d680a6b179457d4be8d7383018e29e3bb32",
     "expectedBase": "6560b865829e17fcc46247d422c7ec2dc1752945",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795673277887,
-    "expiresAt": 1795674293214,
+    "expiresAt": 1795677649829,
     "patchId": "684c3621a30b274c6174213732c623bc7ccbc73f"
   },
   "events": {
@@ -7596,6 +7605,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "6560b865829e17fcc46247d422c7ec2dc1752945"
+      }
+    },
+    "finish:03642858-9b92-4bae-9706-ba69dfd5dfb7:finish:2:s6-complete": {
+      "digest": "df875578ae8e6785b951cd97d6cd9e45e4559d540e313ed913f8705c64b2e340",
+      "issue": 1577,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1577,
+        "at": 1795674049829,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0e6b5d680a6b179457d4be8d7383018e29e3bb32",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T060817136-bb0a0264",
+          "name": "Тесты для задачи #1577 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T060817136-bb0a0264/report.json",
+          "materialSha": "0e6b5d680a6b179457d4be8d7383018e29e3bb32",
+          "status": "passed",
+          "finishedAt": "2026-11-26T06:20:48.504Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Измерение показало: по бокам проёма выборка на собственной границе видимости стены давала частичное покрытие, тогда как над открытым вырезом маска была полной. Нормализация покрытия применяется только к вертикальным принимающим поверхностям. Проверка обращения грани к источнику, транспорт через проём, маска пола и положение света не менялись.\n\nНовая пиксельная проверка красная на 751db20d и зелёная на исправлении: резкий перепад между соседними пробами на границах проёма был 4–5, стал 1 по разности R–B. Есть проверка достаточного света в центре перемычки, прохода через дверь и тёмной области за стеной. Эталоны не изменены.\n\nПервый S6 обнаружил отсутствие общего вердикта в новом smoke. Подключён штатный контроль исключений браузера; статический контракт 10/10 и сам пиксельный smoke прошли после правки. Пиксельные критерии и рендер не менялись.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
