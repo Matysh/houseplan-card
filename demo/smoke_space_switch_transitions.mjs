@@ -29,8 +29,8 @@ const res = await page.evaluate(async () => {
     const deadline = performance.now() + 10000;
     do {
       await c.updateComplete;
-      if (!c._floorPreparation?.pending && !c._floorHolding
-        && root().querySelector('.stage:not([data-hp-floor-cache])')) return;
+      if (c._floorCompleteSpace === c._space
+        && root().querySelector('ha-card[data-hp-state="ready"] .stage:not([data-hp-floor-cache]):not([inert])')) return;
       if (performance.now() > deadline) throw new Error('new floor did not present its complete frame');
       await frame();
     } while (true);

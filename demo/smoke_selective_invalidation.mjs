@@ -119,9 +119,11 @@ try {
       let frames=0;
       const observe=()=>{
         frames++;
-        const c=window.__card,root=c.renderRoot;
-        if(c._space==='f2'&&!c._slide&&root.querySelector('[data-hp="wall"]')?.getBoundingClientRect().width>0
-            &&root.querySelectorAll('[data-hp="device"]').length>=40) {
+        const c=window.__card;
+        const stage=c.renderRoot.querySelector('ha-card[data-hp-state="ready"] .stage:not([inert])');
+        if(c._floorCompleteSpace==='f2'&&!c._slide&&!c._floorSwitch
+            &&stage?.querySelector('[data-hp="wall"]')?.getBoundingClientRect().width>0
+            &&stage.querySelectorAll('[data-hp="device"]').length>=40) {
           window.__show1093={trusted,frames,inputToSettledPaint:performance.now()-start};return;
         }
         requestAnimationFrame(observe);
