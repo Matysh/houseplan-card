@@ -29,14 +29,23 @@ try {
   const idle = () => wait(() => !window.__isoPaint._floorSwitch && !window.__isoPaint._floorPreparation?.pending);
   await stage.locator('canvas[data-hp-plan-3d-ready]').waitFor();
   await settleIsoPaint(page);
+  await status.waitFor({ state: 'hidden' });
   await page.evaluate(({ first, second }) => {
     const card = window.__isoPaint;
     const audit = window.__floorSwitchTest = { target: second, blocked: 0, finished: new Set(), frames: [] };
+    const runtime = card._floorPreparation;
+    const prepare = runtime.prepareGeometry;
+    runtime.prepareGeometry = function (selection, disk) {
+      if (selection.input.raw.id !== second) return prepare.call(this, selection, disk);
+      this.prepareGeometry = prepare;
+      const hold = new Promise(resolve => { audit.releaseGeometry = resolve; });
+      return Promise.all([prepare.call(this, selection, disk), hold]).then(([result]) => result);
+    };
     const prototype = Object.getPrototypeOf(card._plan3dHost.viewport);
     const paint = prototype.paint;
     prototype.paint = function () {
       if (card._plan3dHost?.viewport !== this) return paint.call(this);
-      if (audit.target === card._space) {
+      if (audit.target === card._space && card._floorCompleteSpace === card._space) {
         audit.blocked++;
         return;
       }
@@ -78,7 +87,22 @@ try {
 
   await page.evaluate(() => window.__floorSwitchTest.trace());
   await go(second);
+  await status.waitFor({ state: 'visible' });
+  await wait(() => typeof window.__floorSwitchTest.releaseGeometry === 'function');
+  await page.evaluate(() => {
+    const audit = window.__floorSwitchTest;
+    audit.statusNode = window.__isoPaint.renderRoot.querySelector('.floor-preparation-status');
+    audit.statusParent = audit.statusNode?.parentElement.className;
+    audit.releaseGeometry();
+  });
   await wait(() => window.__floorSwitchTest.blocked > 0);
+  const statusContinuity = await page.evaluate(() => {
+    const c = window.__isoPaint, a = window.__floorSwitchTest;
+    const current = c.renderRoot.querySelector('.floor-preparation-status');
+    return { same: a.statusNode === current, before: a.statusParent, after: current?.parentElement.className,
+      phase: c._floorSwitch?.phase, pending: c._floorPreparation?.pending };
+  });
+  assert.ok(statusContinuity.same, 'The loading pill must survive canvas mounting: ' + JSON.stringify(statusContinuity));
   await status.waitFor({ state: 'visible' });
   assert.match((await status.textContent()).trim(), /Updating plan/);
   assert.equal(await wrap.isVisible(), false);
@@ -110,8 +134,12 @@ try {
     card.setConfig({ ...card._config, view: 'flat' });
   });
   await wait(() => window.__isoPaint._renderProjection === 'flat' && !window.__isoPaint._floorPreparation?.pending);
-  await page.evaluate(() => {
+  await page.evaluate(target => {
     const card = window.__isoPaint, audit = window.__floorSwitchTest;
+    card._zoomBySpace[target] = 1.8;
+    audit.outgoingCamera = () => [...card.renderRoot.querySelectorAll('[data-hp-live-viewbox],.devlayer')]
+      .map(node => [node.getAttribute('viewBox'), node.style.transform]);
+    audit.sourceCamera = audit.outgoingCamera();
     const node = card.renderRoot.querySelector('.zoomwrap');
     const native = node.animate;
     node.animate = function (frames, options) {
@@ -124,9 +152,16 @@ try {
       return result;
     };
     audit.trace();
-  });
+  }, first);
   await go(first);
   await wait(() => !!window.__floorSwitchTest.exit && !window.__isoPaint._floorPreparation?.pending);
+  const outgoingCamera = await page.evaluate(async () => {
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const audit = window.__floorSwitchTest;
+    return { before: audit.sourceCamera, after: audit.outgoingCamera() };
+  });
+  assert.ok(outgoingCamera.before.length > 0);
+  assert.deepEqual(outgoingCamera.after, outgoingCamera.before, 'The retained stage must keep its original camera');
   const whileLeaving = await page.evaluate(() => window.__floorSwitchTest.sample());
   assert.equal(whileLeaving.phase, 'leaving');
   assert.equal(whileLeaving.pill, false);

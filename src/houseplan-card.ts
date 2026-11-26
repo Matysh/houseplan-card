@@ -321,7 +321,7 @@ import {
   type RoomFitGestureCandidate,
 } from './room-fit';
 import type { FurniturePlacementPress } from './furniture-placement-press';
-import { authoredHouseplanViewport, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
+import { authoredHouseplanViewport, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, cancelHouseplanViewportPaint, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
 import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
@@ -2651,6 +2651,7 @@ export class HouseplanCard extends LitElement {
     this._editorSecondary?.closeForNavigation();
     this._physicalDialog = null;
     this._editorRuntime?.physicalGesture.resetMove();
+    // Restoring the camera also selects and starts preparation for this floor.
     this._restoreZoom(carousel);
     if (this._mode === 'view' && !this._floorHasPresentedFrame()) {
       this._slide = '';
@@ -2695,6 +2696,7 @@ export class HouseplanCard extends LitElement {
     const floor: FloorSwitchPresentation = { floor: this._space, authority: this.planHost.authorityKey, phase: 'waiting' };
     this._floorSwitch = floor;
     if (node?.animate) {
+      cancelHouseplanViewportPaint(this);
       const animation = node.animate([{ opacity }, { opacity: 0 }], { ...controlMotion.leave, fill: 'forwards' });
       floor.outgoing = { node, animation, wasInert: node.inert };
       floor.phase = 'leaving';
@@ -7216,6 +7218,9 @@ export class HouseplanCard extends LitElement {
   private _liveEditorPaintCount = 0;
 
   private _liveVp(now = false, force = false): void {
+    // The model may already hold the next floor's camera while the painted DOM
+    // still belongs to the floor that is fading out.
+    if (this._floorSwitch?.phase === 'leaving') return;
     const preview = this._startupStyle?.value;
     if (preview && this._bootFading && !this._startupAtPreviewCamera(preview)) this._finishStartupFade();
     this._liveRt ? this._liveRt.viewport(now, force) : this.requestUpdate();
@@ -13932,7 +13937,9 @@ export class HouseplanCard extends LitElement {
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
     if (this._tapConfirm || this._kioskDialog || this._backdropGuard) ensureCompactDialogStyles(this);
-    return html`${body}${this._floorHolding ? html`<div class="floor-status-over-retained" style=${styleMap({top: this._kiosk ? '0px' : `${this._hdrH}px`})}>
+    const waitingForSwitch = this._floorSwitch?.phase === 'waiting' && this._floorSwitch.showStatus
+      && !this._floorPreparation?.failed;
+    return html`${body}${this._floorHolding || waitingForSwitch ? html`<div class="floor-status-over-retained" style=${styleMap({top: this._kiosk ? '0px' : `${this._hdrH}px`})}>
       ${this._startupStatus()}</div>` : nothing}
       ${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;
   }
@@ -14076,6 +14083,7 @@ export class HouseplanCard extends LitElement {
   private _renderPendingFloor(): TemplateResult {
     const failed = !!this._floorPreparation?.failed;
     this._floorPassive = !failed;
+    if (!failed && this._floorSwitch?.phase === 'waiting') this._floorSwitch.showStatus = true;
     const preview = this._floorPreparation?.preview || null;
     const base = preview?.fit.base || [0, 0, NORM_W, NORM_W];
     if (preview) this._adoptViewPlane(this._presentedViewPlane(preview.fit.projection));
@@ -14091,7 +14099,7 @@ export class HouseplanCard extends LitElement {
         data-hp-floor-cache=${failed ? 'error' : visiblePreview ? 'preview' : 'preparing'}
         style=${styleMap({ height: this._floorStageHeight(), background: this._stageBg(disp) || undefined, '--wall-fill': disp.wallFill.c })}>
         ${this._renderStageEnvironment(dayCycle)}
-        ${failed ? nothing : this._floorSwitch ? this._startupStatus() : this._renderStartupFloor(true)}
+        ${failed || this._floorSwitch ? nothing : this._renderStartupFloor(true)}
         ${visiblePreview ? html`<div class="zoomwrap" inert style="pointer-events:none">
           <svg class="plan-svg" data-hp-cache-preview data-hp-live-viewbox="camera" aria-hidden="true" viewBox="${view.x} ${view.y} ${view.w} ${view.h}">
             ${renderFloorPreview(visiblePreview)}
@@ -14854,8 +14862,7 @@ export class HouseplanCard extends LitElement {
           }}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderStageEnvironment(dayCycle, dayCycleWeight)}
-          ${this._floorSwitch ? this._floorSwitch.phase === 'waiting' && this._floorSwitch.showStatus
-            ? this._startupStatus() : nothing : this._renderStartupFloor(this._startupPending)}
+          ${this._floorSwitch ? nothing : this._renderStartupFloor(this._startupPending)}
           ${this._plan3dFailure?.space === this._space && this._desiredProjection === 'iso' && !iso && !this._startupPending
             ? html`<div class="plan-3d-fallback hpf-loading-pill" role="status">
                 <span>${this._t('plan.3d_fallback')}</span>

@@ -469,10 +469,8 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
 /** Record a complete Lit frame and reconcile gesture-scoped projections. */
 export function commitHouseplanViewport(value: object, keepSceneLayer = false): void {
   const host = value as LiveViewportHost;
+  cancelHouseplanViewportPaint(value);
   const state = stateOf(value);
-  if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
-  state.raf = 0;
-  state.pending = null;
   const current = frameOf(host);
   const basis = state.basis;
   const root = host.renderRoot as ParentNode | undefined;
@@ -508,8 +506,16 @@ export function refreshHouseplanViewportNodes(host: object): void {
   if (state && root) state.nodes = findViewportNodes(root);
 }
 
-export function disposeHouseplanViewport(host: object): void {
+/** Cancel pending camera work without changing the currently painted scene. */
+export function cancelHouseplanViewportPaint(host: object): void {
   const state = states.get(host);
-  if (state?.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
+  if (!state) return;
+  if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
+  state.raf = 0;
+  state.pending = null;
+}
+
+export function disposeHouseplanViewport(host: object): void {
+  cancelHouseplanViewportPaint(host);
   states.delete(host);
 }
