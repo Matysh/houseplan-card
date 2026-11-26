@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26731,
+  "revision": 26732,
   "nextTicket": 736,
   "nextFence": 734,
   "tasks": {
@@ -6770,7 +6770,7 @@
       "ownerDecision": null,
       "ticket": 733,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1795692544059,
       "reviewEntry": 1,
       "patchId": "29f372118b06d0baba8769d8e246d9e9f556ad77",
@@ -6817,6 +6817,20 @@
         "at": 1795694179907,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1582:1:29f372118b06d0baba8769d8e246d9e9f556ad77:71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
+        "at": 1795694369391
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1795694369391,
+        "entry": 1,
+        "requestId": "review:1582:1:29f372118b06d0baba8769d8e246d9e9f556ad77:71ac7f2af842e1d9764da2be000e4156ae9fcc3b"
       }
     },
     "1583": {
@@ -7541,19 +7555,7 @@
     1581,
     1583
   ],
-  "active": {
-    "issue": 1582,
-    "worker": "github-coordinator",
-    "token": "733:github:45811770248:1:tick:2:admit",
-    "fence": 733,
-    "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
-    "expectedBase": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
-    "phase": "review",
-    "admittedAt": 1795692892063,
-    "expiresAt": 1795697755011,
-    "patchId": "29f372118b06d0baba8769d8e246d9e9f556ad77",
-    "reviewRequest": "review:1582:1:29f372118b06d0baba8769d8e246d9e9f556ad77:71ac7f2af842e1d9764da2be000e4156ae9fcc3b"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7701,6 +7703,10 @@
     },
     "github:45815416168:1:tick:0:review-presentation": {
       "digest": "07a9d17157743dc4e917f1e4a461d2cdf5ccae904d063f7ef00733e8fb2ec86f",
+      "issue": 1582
+    },
+    "github:45815416168:1:tick:0:return": {
+      "digest": "687d990f04286eae12ce2f4b51238f5100440d2603753108f5480fbfa208724c",
       "issue": 1582
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
