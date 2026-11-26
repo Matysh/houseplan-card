@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1587,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Correct the first visible wall footprint on a warm floor switch in the WebGL renderer introduced for 2.0.",
+  "summary": {
+    "ru": "Основание полупрозрачных стен сохраняет цвет при переключении этажей в 3D.",
+    "en": "Translucent wall footprints keep their colour when switching floors in 3D."
+  }
+}

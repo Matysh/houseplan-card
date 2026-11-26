@@ -14339,7 +14339,7 @@ export class HouseplanCard extends LitElement {
     const roomHover = this._roomHoverPaths(space);
     let sun3d: readonly import('./iso-sun').IsoSunBeam[] = [];
     if (iso) this._renderSunRays(space, beams => { sun3d = beams; });
-    // One eager pattern for flat view and the 3D ground texture (#689).
+    // Eager pattern for the flat wall layer (#689).
     const hatchStep = wallHatchStepUnits(this._cellCm);
     const stripe = 2 * (hatchStep / HATCH_BASE_STEP_UNITS);
     const wallHatch = svg`<defs><pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
@@ -14356,11 +14356,11 @@ export class HouseplanCard extends LitElement {
         const strokes = !disp.hideDecor && decor.some(shape => shape.kind !== 'furniture' || !useFurnitureVolume || !furnitureParts(shape.symbol));
         const zeroWalls = this._zeroWalls();
         const stairs = this._curSpaceCfg?.stairs;
-        if (!strokes && !zeroWalls.lines.length && !stairs?.length && !wallBase) return;
+        if (!strokes && !zeroWalls.lines.length && !stairs?.length) return;
         const authority = this.planHost.authorityKey;
         const scope = space.id;
         const key = [scope, neutral, bounds.x, bounds.y, bounds.w, bounds.h, this._cellCm, decor, disp.hideDecor,
-          useFurnitureVolume, disp.color, zeroWalls, stairs, wallBase, wallBase && disp.wallFill.c, wallBase && disp.wallFill.a,
+          useFurnitureVolume, disp.color, zeroWalls, stairs,
           ...decor.flatMap(shape => shape.kind === 'text' && !neutral ? [this._renderDeviceSnapshot?.facts.get(`decor:${space.id}:${shape.id}`)]
             : shape.kind === 'image' ? [this._display(this._decorAssets.get(shape.asset_id)?.url)] : [])];
         return { scope, key, bounds, capture: signal => {
@@ -14369,11 +14369,6 @@ export class HouseplanCard extends LitElement {
           return this._captureStartupSvg(stage, () => [
             svg`${this._renderZeroWalls(disp)}${this._stairsView.renderLayer(stairVolumes)}`,
             strokes ? this._renderDecorLayer(undefined, bounds, useFurnitureVolume ? 'floor' : 'all', neutral) : svg``,
-            wallBase ? svg`${wallHatch}${wallBase.paths.map(({ d, fillRule }) => svg`
-              <path d=${d} fill="#fff" fill-rule=${fillRule}></path>
-              <path d=${d} fill=${disp.wallFill.c} fill-opacity=${disp.wallFill.a} fill-rule=${fillRule}></path>
-              <path d=${d} fill="url(#hp-wall-hatch)" fill-rule=${fillRule}
-                stroke=${disp.color} stroke-width=${gridVisualUnits(.6, this._cellCm)}></path>`)}` : svg``,
           ], bounds, signal, undefined, true);
         } };
       };
@@ -14423,6 +14418,7 @@ export class HouseplanCard extends LitElement {
           backdrop: space.bg ? { url: this._display(space.bg.href), x: space.bg.x, y: space.bg.y,
             w: space.bg.w, h: space.bg.h, angle: space.bg.angle ?? 0, opacity: space.bg.opacity ?? 1 } : undefined,
           floorInk: floorInk(false),
+          wallBase: wallBase && { paths: wallBase.paths, bounds: content.all },
           roomHover: roomHover ? { ...roomHover, bounds: content.all,
             accent: this._cssColor('var(--hp-accent, var(--primary-color, #039be5))', '#039be5') } : undefined,
           panels: isoFrame.panels, rooms: rooms3d(roomFills), furniture: furniture3d, stairs: this._stairsView.physicalItems(),
@@ -14845,6 +14841,7 @@ export class HouseplanCard extends LitElement {
             ...(markerCamera ? isoTileDepthStyles(markerCamera) : {}),
             '--wall-fill': disp.wallFill.c, '--wall-fill-op': String(disp.wallFill.a),
             '--iso-wall-side-op': iso ? String(disp.wallFill.a) : undefined,
+            '--hp-slide-opacity': iso && disp.transparentWalls3d && (disp.opacity < 1 || disp.wallFill.a < 1) ? '1' : undefined,
           })}
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}

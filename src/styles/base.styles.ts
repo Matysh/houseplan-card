@@ -189,11 +189,11 @@ export const baseStyles = [readingKitStyles, navigationStyles, iconActionStyles,
     /* Space changes keep their direction, but travel only a few percent: the
        motion explains what changed without making the whole plan fly around. */
     @keyframes hp-slide-left {
-      0%   { transform: translateX(4%); opacity: 0.72; }
+      0%   { transform: translateX(4%); opacity: var(--hp-slide-opacity, 0.72); }
       100% { transform: translateX(0);   opacity: 1; }
     }
     @keyframes hp-slide-right {
-      0%   { transform: translateX(-4%); opacity: 0.72; }
+      0%   { transform: translateX(-4%); opacity: var(--hp-slide-opacity, 0.72); }
       100% { transform: translateX(0);    opacity: 1; }
     }
     @keyframes hp-sunfade-in {

@@ -2,6 +2,8 @@ import { BufferGeometry, CanvasTexture, Color, DoubleSide, EdgesGeometry, Float3
   FrontSide, Group, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, PlaneGeometry, Scene, SRGBColorSpace, Texture, type Camera } from 'three';
 import { union, type Geom } from 'polyclip-ts';
 import { gridVisualUnits } from './grid-scale';
+import { HATCH_BASE_STEP_UNITS, wallHatchStepUnits } from './wall-thickness';
+import type { IsoWallBaseEntry } from './floor-geometry-frame';
 import { colorLuma, isoOpeningMaterialVars, isoWallMaterial, parseCssColor } from './iso-materials';
 import { FURNITURE_HEIGHT_SCALE, furnitureParts, furniturePlanPoint, furnitureVolumeFaces } from './iso-lab-furniture';
 import { workstationParts } from './iso-lab-workstation';
@@ -64,6 +66,11 @@ export interface Plan3dFloorInk {
   capture(signal: AbortSignal): Promise<Blob | null>;
 }
 
+type WallBase = {
+  paths: NonNullable<IsoWallBaseEntry['value']>['paths'];
+  bounds: ViewRect;
+};
+
 export interface Plan3dRoomHover {
   bounds: ViewRect;
   fillD: string;
@@ -89,6 +96,7 @@ export interface Plan3dWorldInput {
   contrastColors?: { paper: string; ink: string };
   backdrop?: Plan3dImage;
   floorInk?: Plan3dFloorInk;
+  wallBase?: WallBase | null;
   roomHover?: Plan3dRoomHover;
   panels: readonly IsoOpeningPanel[];
   rooms: readonly Plan3dRoom[];
@@ -277,6 +285,9 @@ export class Plan3dWorld {
   private readonly roomMeshes = new Map<string, { geometry: unknown; mesh: Mesh<BufferGeometry, MeshBasicMaterial> }>();
   private readonly backdrop = new Group();
   private readonly floorInk = new Group();
+  private readonly wallBase = new Group();
+  private readonly wallBasePaints: { key: readonly unknown[]; texture: CanvasTexture }[] = [];
+  private wallBaseKey: readonly unknown[] = [];
   private readonly roomHover = new Group();
   private roomHoverKey: readonly unknown[] = [];
   private roomHoverTexture: CanvasTexture | undefined;
@@ -305,7 +316,7 @@ export class Plan3dWorld {
     this.light = new Plan3dLightField(document, normalOffset);
     this.markers = new Plan3dMarkerLayer(document);
     this.scene.add(this.ground, this.structure, this.architecture, this.backdrop, this.openings, this.furniture, this.stairs, this.rooms, this.contacts,
-      this.floorInk, this.roomHover, this.ribbons, this.markers.group, this.markerGlass);
+      this.floorInk, this.wallBase, this.roomHover, this.ribbons, this.markers.group, this.markerGlass);
     this.scene.onBeforeRender = (_renderer, _scene, camera) => {
       this.syncTransparency();
       this.transparency.prepare(camera);
@@ -751,6 +762,64 @@ export class Plan3dWorld {
     this.replace(this.roomHover, [this.planarInk(texture, bounds, 0, 1, -1.5, false)]);
   }
 
+  private updateWallBase(input: WallBase | null | undefined, display: SpaceDisplay, cellCm: number): void {
+    const bounds = input?.bounds;
+    const key = input && bounds ? [input.paths, bounds.x, bounds.y, bounds.w, bounds.h,
+      display.color, display.wallFill.c, display.wallFill.a, cellCm] : [];
+    if (same(key, this.wallBaseKey)) return;
+    this.wallBaseKey = key;
+    if (!input || !bounds || !(bounds.w > 0 && bounds.h > 0)) {
+      this.replace(this.wallBase, []);
+      return;
+    }
+
+    // Geometry is already prepared. A wall base must be in the first frame,
+    // even on a cache miss or while an unrelated decor image is decoding.
+    const index = this.wallBasePaints.findIndex(paint => same(paint.key, key));
+    let paint = index < 0 ? undefined : this.wallBasePaints.splice(index, 1)[0];
+    if (!paint) {
+      const canvas = this.document.createElement('canvas');
+      const density = Math.min(2, 1536 / Math.max(bounds.w, bounds.h));
+      canvas.width = Math.max(1, Math.ceil(bounds.w * density));
+      canvas.height = Math.max(1, Math.ceil(bounds.h * density));
+      const ctx = canvas.getContext('2d')!;
+      ctx.scale(canvas.width / bounds.w, canvas.height / bounds.h);
+      ctx.translate(-bounds.x, -bounds.y);
+
+      // The SVG hatch has a vertical stroke centred on the left tile edge,
+      // clipped by the tile and rotated 45 degrees in plan coordinates.
+      const tile = this.document.createElement('canvas');
+      tile.width = tile.height = HATCH_BASE_STEP_UNITS;
+      const stripe = tile.getContext('2d')!;
+      stripe.fillStyle = display.color;
+      stripe.fillRect(0, 0, 1, tile.height);
+      const hatch = ctx.createPattern(tile, 'repeat')!;
+      const step = wallHatchStepUnits(cellCm);
+      hatch.setTransform(new DOMMatrix().rotate(45).scale(step / tile.width));
+      ctx.strokeStyle = display.color;
+      ctx.lineWidth = gridVisualUnits(.6, cellCm);
+      for (const { d, fillRule } of input.paths) {
+        const path = new Path2D(d);
+        ctx.fillStyle = '#fff';
+        ctx.fill(path, fillRule);
+        ctx.fillStyle = display.wallFill.c;
+        ctx.globalAlpha = display.wallFill.a;
+        ctx.fill(path, fillRule);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = hatch;
+        ctx.fill(path, fillRule);
+        ctx.stroke(path);
+      }
+      const texture = new CanvasTexture(canvas);
+      texture.colorSpace = SRGBColorSpace;
+      paint = { key, texture };
+    }
+    this.wallBasePaints.push(paint);
+    // Bound resident raster memory per card, including after material edits.
+    if (this.wallBasePaints.length > 2) this.wallBasePaints.shift()!.texture.dispose();
+    this.replace(this.wallBase, [this.planarInk(paint.texture, bounds, 0, 1, -.75)]);
+  }
+
   private updateFloorInk(input: Plan3dFloorInk | undefined): void {
     const key = input?.key ?? [];
     if (same(key, this.floorInkKey)) return;
@@ -802,6 +871,7 @@ export class Plan3dWorld {
     this.light.set(input.lights, physical.openings);
     this.updateBackdrop(input.backdrop);
     this.updateFloorInk(input.floorInk);
+    this.updateWallBase(input.wallBase, display, cellCm);
     this.updateRooms(contrastColors ? [] : input.rooms);
     this.updateRoomHover(input.roomHover, visualScale);
     this.updateStairs(input.stairs ?? []);
@@ -909,6 +979,9 @@ export class Plan3dWorld {
     this.updateRooms([]);
     this.updateBackdrop(undefined);
     this.updateFloorInk(undefined);
+    this.replace(this.wallBase, []);
+    for (const { texture } of this.wallBasePaints) texture.dispose();
+    this.wallBasePaints.length = 0;
     this.markers.dispose();
     this.presentOutlines([], 0);
     this.light.dispose();

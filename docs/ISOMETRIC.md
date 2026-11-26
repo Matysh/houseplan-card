@@ -28,6 +28,8 @@ crop; the settled frame recovers the ordinary pixel density.
 Transparent masonry reveals the hatched wall footprint under windows, not
 through doorways. The floor has no decorative side extrusion, and the
 same room-paint polygons as in Flat continue through each opening threshold.
+The first visible 3D frame includes the prepared wall footprint while floor
+decor loads. Sliding onto a warm floor with translucent walls preserves its opacity.
 Translucent furniture renders its facing model surfaces, not a wireframe of
 the far and interior faces. Stairs retain thin depth-tested contours.
 When a plan has translucent masonry and furniture, the WebGL world partitions

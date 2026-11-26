@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Keep the wall footprint at its settled colour throughout a warm 3D floor switch with translucent walls (#1587).
 - Show and clear visual signals on Houseplan device icons from a Home Assistant automation (#1001).
 - Test maintenance: verify that closing Help with Escape leaves the button unhighlighted and that Tab navigation highlights its ordinary border (#1581).
 
