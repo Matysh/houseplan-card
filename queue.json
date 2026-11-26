@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26061,
+  "revision": 26062,
   "nextTicket": 724,
   "nextFence": 723,
   "tasks": {
@@ -6558,7 +6558,7 @@
       "ownerDecision": null,
       "ticket": 722,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795672159926,
       "reviewEntry": 2,
       "patchId": "bb1f156e1442a8d19ac89d3882c6053ad87b4246",
@@ -6579,6 +6579,15 @@
         "entry": 1,
         "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
         "eventId": "finish:a330124a-bfa9-451a-ad3f-29d5fed849aa:finish:5:return:return:1575"
+      },
+      "s6": {
+        "id": "20261126T055949895-8645750f",
+        "name": "Тесты для задачи #1575 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T055949895-8645750f/report.json",
+        "materialSha": "6560b865829e17fcc46247d422c7ec2dc1752945",
+        "status": "passed",
+        "finishedAt": "2026-11-26T06:02:48.651Z",
+        "failures": []
       }
     },
     "1576": {
@@ -7321,9 +7330,9 @@
     "fence": 722,
     "materialSha": "6560b865829e17fcc46247d422c7ec2dc1752945",
     "expectedBase": "d1419a1c50a6c05de40065f2af66e72728ecf570",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795672776580,
-    "expiresAt": 1795673243184,
+    "expiresAt": 1795676569812,
     "patchId": "bb1f156e1442a8d19ac89d3882c6053ad87b4246"
   },
   "events": {
@@ -7679,6 +7688,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "823d90426b0029cb62c3c6e4869554a54d9195f0"
+      }
+    },
+    "finish:b6f36602-c20d-41a0-8143-db8e4d4c9a82:finish:3:s6-complete": {
+      "digest": "16ab02936d9de5253af55931794f2f88ed690778687b311530a7d5493b976421",
+      "issue": 1575,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1575,
+        "at": 1795672969812,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6560b865829e17fcc46247d422c7ec2dc1752945",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T055949895-8645750f",
+          "name": "Тесты для задачи #1575 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T055949895-8645750f/report.json",
+          "materialSha": "6560b865829e17fcc46247d422c7ec2dc1752945",
+          "status": "passed",
+          "finishedAt": "2026-11-26T06:02:48.651Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Размеры контактной конфигурации остались входом того же решателя. Для свободных бейджей в объёмном виде отдельное нормализованное измерение использует одиночный стиль для меша, его контура и хит-зоны. Входы и кэш измерений разделены; картинки/эталоны не изменены.\n\nСборка WSL и проверки соответствия пропорций и размера шрифта DOM при 0°, 90°, 180°, 270° прошли. PNG отличаются от прежних 2.5D-эталонов; это адресные диагностические кадры, не принятие эталонов. В ревью прошу обратить внимание на разведение графа контактов и фактического визуального корпуса, а также инвалидацию при смене режима/текста.\n\nПривязка существующего мутанта к вызову пакетного измерения обновлена. Мутант по-прежнему разделяет контактные замеры по одному элементу, не подменяя новый вариант для свободных бейджей. Два файла первичного отказа: 83/83 PASS локально. Дополнительно проверено длинное значение 12345.67 % с проверкой аспекта, шрифта и глубины.\n\nАдресный запуск `device-contact-measures-cold-faces-separately`: чистый smoke прошёл, на мутанте тот же тест падает по проверке пакетности; пойман 1 из 1.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
