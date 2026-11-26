@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27396,
+  "revision": 27397,
   "nextTicket": 747,
   "nextFence": 746,
   "tasks": {
@@ -6295,7 +6295,10 @@
         "status": "passed",
         "finishedAt": "2026-11-26T21:27:56.827Z",
         "failures": []
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1795728488010,
+      "automationDetail": "S6 needs its successful selected set; documentation has no runs"
     }
   },
   "ownerDecisions": {},
@@ -7155,6 +7158,10 @@
     },
     "finish:5cdd6a0a-de72-401c-b996-0fbe381e68e9": {
       "digest": "83cd94121f66816b9e35d9770a10e23b15c81d19c26b9019d0808ddec28dded1",
+      "issue": 1590
+    },
+    "finish:a3ae0f71-7bb7-49b1-97b3-9c3e5b2aa612:finish:2:automation-pending": {
+      "digest": "9055b30ad953332a93c7ec6979d03fe0cf048acb265cbbe90fc96734db37bd2b",
       "issue": 1590
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
