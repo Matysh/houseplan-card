@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27261,
+  "revision": 27262,
   "nextTicket": 744,
   "nextFence": 744,
   "tasks": {
@@ -6232,7 +6232,7 @@
       "ownerDecision": null,
       "ticket": 743,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795721426086,
       "reviewEntry": 1,
       "patchId": "28205d71972b7259d839e1eaadf649f4ab830e0a",
@@ -6246,7 +6246,16 @@
         "src/houseplan-card.ts",
         "src/plan-3d-world.ts",
         "src/styles/base.styles.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261126T193043570-04c0207f",
+        "name": "Тесты для задачи #1587 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1587-run/.git/process-next/runs/20261126T193043570-04c0207f/report.json",
+        "materialSha": "828dafd96f4764c090bd07558a13f921c239bf4f",
+        "status": "passed",
+        "finishedAt": "2026-11-26T19:43:24.350Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -6932,9 +6941,9 @@
     "fence": 743,
     "materialSha": "828dafd96f4764c090bd07558a13f921c239bf4f",
     "expectedBase": "ea3cfd012af67df72bab8a9ffadc86b2cd9c66af",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795721430755,
-    "expiresAt": 1795722449400,
+    "expiresAt": 1795725805675,
     "patchId": "28205d71972b7259d839e1eaadf649f4ab830e0a"
   },
   "events": {
@@ -7074,6 +7083,34 @@
         "materialSha": "828dafd96f4764c090bd07558a13f921c239bf4f",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:2e7c9843-f95d-42b9-af53-268bae2144f8:finish:3:s6-complete": {
+      "digest": "bee6733de0e6142d6fa79fed37f3de9dda59d2972d85e7b2bf3b4865110972de",
+      "issue": 1587,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1587,
+        "at": 1795722205675,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "828dafd96f4764c090bd07558a13f921c239bf4f",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T193043570-04c0207f",
+          "name": "Тесты для задачи #1587 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1587-run/.git/process-next/runs/20261126T193043570-04c0207f/report.json",
+          "materialSha": "828dafd96f4764c090bd07558a13f921c239bf4f",
+          "status": "passed",
+          "finishedAt": "2026-11-26T19:43:24.350Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "В Chromium на исходном dev в первом видимом кадре горячего 3D-перехода средняя точка основания имела RGB (152, 168, 177), после остановки — (47, 74, 93). На непрозрачном контрольном этаже расхождение в каналах было нулевым. Стены уже присутствовали в сцене, а отпечаток основания ожидал нового SVG-снимка декора.\n\nТеперь WebGL рисует отпечаток из подготовленных контуров до первого показа сцены. Учитываются границы, масштаб сетки, цвет и прозрачность. Два последних растра хранятся в пределах экземпляра сцены. Обычный боковой сдвиг при входе на этаж с прозрачными стенами сохраняет яркость.\n\nАдресный тест `demo/smoke_iso_warm_wall_base.mjs` переключает вкладки с непрозрачного этажа на полупрозрачный и обратно. Для каждого из 71 физических мест он сравнивает пиксель первого и установившегося кадра. В закреплённом Chromium 151 максимальная разница после исправления равна нулю в обоих направлениях, с обычным и уменьшенным движением. Прошёл также `demo/smoke_cold_floor_switch.mjs`, в том числе ожидание холодного 3D, смена цели и повтор после сбоя. При ревью особенно важны порядок слоёв с декором, границы растра и освобождение текстур.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
