@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27139,
+  "revision": 27140,
   "nextTicket": 742,
   "nextFence": 742,
   "tasks": {
@@ -6813,7 +6813,30 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795704622192,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "076fa12ff8bc735931fad0f92cee7047e13e372a",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "23a0d4975dc9b3fc93e71ac899eec446546860ee",
+        "tag": "v2.0.0-beta.2",
+        "verdict": "accepted",
+        "expectedBase": "f909f3f291ce762864187623d77cb0f8bfaa42f4",
+        "patchId": "076fa12ff8bc735931fad0f92cee7047e13e372a",
+        "materialSha": "0cbebe62bf00edd3689b691be6fbaa71cd5f9a84"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7498,10 +7521,11 @@
     "token": "741:release-return-finish:441753fa-98db-428d-8b13-e2e7a3042708:finish:1:admit",
     "fence": 741,
     "materialSha": "0cbebe62bf00edd3689b691be6fbaa71cd5f9a84",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "f909f3f291ce762864187623d77cb0f8bfaa42f4",
+    "phase": "testing",
     "admittedAt": 1795704626890,
-    "expiresAt": 1795704926890
+    "expiresAt": 1795704934293,
+    "patchId": "076fa12ff8bc735931fad0f92cee7047e13e372a"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7523,6 +7547,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "release-return-finish:441753fa-98db-428d-8b13-e2e7a3042708:finish:2:synchronized": {
+      "digest": "10d8dffcd28a2c4d60ce5d0292fa60ec94227c75a5a8fa39c2f608f46f49c531",
+      "issue": 1586
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
