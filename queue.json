@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25518,
-  "nextTicket": 713,
+  "revision": 25519,
+  "nextTicket": 714,
   "nextFence": 712,
   "tasks": {
     "1024": {
@@ -6363,6 +6363,20 @@
         "sourceSha": "5b45209452ed59329ca3d2054bf53f7336144172"
       }
     },
+    "1570": {
+      "issue": 1570,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1570-webgl-audit",
+      "materialSha": "ace6385ba7118b4921a5fa0c6f1c05b6e87975e2",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 713,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795652218622,
+      "reviewEntry": 1
+    },
     "1571": {
       "issue": 1571,
       "branch": "codex/1571-native-room-hover",
@@ -7141,7 +7155,8 @@
     }
   },
   "waiting": [
-    1572
+    1572,
+    1570
   ],
   "active": {
     "issue": 1573,
@@ -7535,6 +7550,19 @@
           "finishedAt": "2026-11-26T00:01:07.869Z",
           "failures": []
         }
+      }
+    },
+    "finish:5f04740e-7a62-46c1-9777-29da8df709a6": {
+      "digest": "d9a21481ae91630ec58ae2a388216c60cb2119b764c906714553e1aaf536d987",
+      "issue": 1570,
+      "message": {
+        "kind": "queued",
+        "issue": 1570,
+        "at": 1795652218622,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ace6385ba7118b4921a5fa0c6f1c05b6e87975e2"
       }
     }
   },
