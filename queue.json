@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27140,
+  "revision": 27141,
   "nextTicket": 742,
   "nextFence": 742,
   "tasks": {
@@ -6836,7 +6836,16 @@
         "package.json",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261126T145038890-99ee9c9a",
+        "name": "Короткий S6: возврат опубликованного тега · #1586",
+        "reportPath": "/home/sergey/hp-release-2.0.0-beta2-5IEUKI/.git/process-next/runs/20261126T145038890-99ee9c9a/report.json",
+        "materialSha": "0cbebe62bf00edd3689b691be6fbaa71cd5f9a84",
+        "status": "passed",
+        "finishedAt": "2026-11-26T14:50:39.812Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -7522,9 +7531,9 @@
     "fence": 741,
     "materialSha": "0cbebe62bf00edd3689b691be6fbaa71cd5f9a84",
     "expectedBase": "f909f3f291ce762864187623d77cb0f8bfaa42f4",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795704626890,
-    "expiresAt": 1795704934293,
+    "expiresAt": 1795708240913,
     "patchId": "076fa12ff8bc735931fad0f92cee7047e13e372a"
   },
   "events": {
@@ -7550,6 +7559,10 @@
     },
     "release-return-finish:441753fa-98db-428d-8b13-e2e7a3042708:finish:2:synchronized": {
       "digest": "10d8dffcd28a2c4d60ce5d0292fa60ec94227c75a5a8fa39c2f608f46f49c531",
+      "issue": 1586
+    },
+    "release-return-finish:441753fa-98db-428d-8b13-e2e7a3042708:finish:3:s6-complete": {
+      "digest": "c27d736847f24e270c66ed5ea8e64475a0af9e9d818913e692a2f167fcf55e99",
       "issue": 1586
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
