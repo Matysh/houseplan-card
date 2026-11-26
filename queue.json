@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26894,
+  "revision": 26895,
   "nextTicket": 738,
   "nextFence": 738,
   "tasks": {
@@ -6770,165 +6770,25 @@
     "1582": {
       "issue": 1582,
       "branch": "issue/1582-release-return-4e522bebc352",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1",
-      "releaseTag": "v2.0.0-beta.1",
-      "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-      "ownerDecision": null,
-      "ticket": 737,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795695978890,
-      "reviewEntry": 2,
-      "patchId": "53a87586eb5f2d467958c302b6fbc3dc41e2d194",
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/device-alert-maintenance-iso.png",
-        "demo/golden/baselines/panel-isometric-geometry-view-light.png",
-        "demo/golden/baselines/panel-isometric-large-warm-remount-dark.png",
-        "demo/golden/baselines/panel-isometric-opening-symbol-parity-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-forced-colors-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
-        "demo/golden/baselines/panel-isometric-stage6-hover-light.png",
-        "demo/golden/baselines/panel-narrow-kiosk-fixed.png",
-        "demo/golden/baselines/panel-stairs-isometric-dark.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "package-lock.json",
-        "package.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "s6": {
-        "id": "20261126T122640922-ce248356",
-        "name": "Тесты для задачи #1582 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T122640922-ce248356/report.json",
-        "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-        "status": "passed",
-        "finishedAt": "2026-11-26T12:38:17.777Z",
-        "failures": []
-      },
-      "reviewRound": 2,
-      "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795694369391,
-        "entry": 1,
-        "requestId": "review:1582:1:29f372118b06d0baba8769d8e246d9e9f556ad77:71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
-        "transitionConfirmed": true
-      },
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "9a0691f613399b8415f7ee528a932d0338deab50",
+      "mergedSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
+      "mergedAt": 1795696887316,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1582:2:53a87586eb5f2d467958c302b6fbc3dc41e2d194:9a0691f613399b8415f7ee528a932d0338deab50",
-      "reviewMaterial": {
-        "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-        "expectedBase": "9a0691f613399b8415f7ee528a932d0338deab50",
-        "patchId": "53a87586eb5f2d467958c302b6fbc3dc41e2d194"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1582:2:53a87586eb5f2d467958c302b6fbc3dc41e2d194:9a0691f613399b8415f7ee528a932d0338deab50",
-        "eventId": "github:45821530060:1:tick:0:review-retry",
-        "at": 1795696735132,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1582,
-        "requestId": "review:1582:2:53a87586eb5f2d467958c302b6fbc3dc41e2d194:9a0691f613399b8415f7ee528a932d0338deab50",
-        "kind": "code",
-        "base": "9a0691f613399b8415f7ee528a932d0338deab50",
-        "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-        "patchId": "53a87586eb5f2d467958c302b6fbc3dc41e2d194",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1582,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1582",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Исправления по предыдущему ревью\n\n- **#1580 ошибочно попал в выпущенную бету →** вернул запись в Unreleased / «Не выпущено» в обоих changelog. При синхронизации с актуальным dev то же произошло с #1581 и #1583; их записи тоже оставлены в Unreleased / «Не выпущено», без дубликатов.\n- **История релиза →** локальная проверка подтвердила побайтное совпадение истории начиная с раздела v2.0.0-beta.1 с опубликованным тегом, а также совпадение девяти PNG, индекса эталонов и release notes. Версия беты перенесена, изменения #1580 в исходниках dev сохранены. Опубликованные тег и файлы релиза не менялись."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокер первого раунда устранён. Записи #1580 и пришедшие из dev #1581 и #1583 теперь стоят в Unreleased / «Не выпущено» обоих changelog. Раздел `## v2.0.0-beta.1 — 2026-11-26` и вся история под ним совпадают с опубликованным тегом 4e522be. Версии, RELEASE-NOTES.md, индекс и provenance девяти эталонов, а также cycle.json тоже совпадают с релизом. Новых проблем не нашёл. Работу можно принимать.",
-          "understanding": "Служебная задача: вернуть в dev опубликованный релиз v2.0.0-beta.1 (cfb05d6 подготовил релиз, 4e522be добавил 9 эталонов) и не исказить опубликованную историю. Цепочка коммитов: 4222d8c возвращает релиз, 0c529a0 вливает dev с #1580, 82f2929 вливает dev 9a0691f с #1581 и #1583, 3b305ae исправляет changelog. В первом раунде union-слияние changelog увело строку #1580 под заголовок беты. В текущем head над заголовком беты стоят только три строки из dev (#1581, #1583, #1580), а сам раздел беты построчно совпадает с тегом. Относительно base 9a0691f diff в changelog теперь сводится к вставке заголовка беты и двух её новых строк (#1514/#1566/#1567, #1579) между записями dev и записями задач, вошедших в бету. Так и должен выглядеть возврат. Я сравнил начало CHANGELOG.md и CHANGELOG.ru.md в head и в 4e522be, RELEASE-NOTES.md в теге с diff, cycle.json в обоих снимках, часть индекса эталонов в теге с diff, поискал оставшиеся `1.86.1` и просмотрел журнал коммитов.",
-          "analysis": [
-            {
-              "topic": "CHANGELOG: прежний блокер",
-              "assessment": "Устранён. Раздел опубликованной беты не содержит строк, которых нет в теге, а Unreleased сохраняет все три записи dev без дубликатов. Разница в числе строк ровно на этот блок: 8191 против 8186 в английском файле, 7345 против 7340 в русском. Значит, остальная история не затронута, что согласуется с заявлением исполнителя о побайтном совпадении.",
-              "evidence": "head:docs/CHANGELOG.md:3-10: `## Unreleased`, затем #1581, #1583, #1580, затем `## v2.0.0-beta.1`. Строки 10-28 head совпадают со строками 5-23 в 4e522be:docs/CHANGELOG.md. Аналогично head:docs/CHANGELOG.ru.md:9-34 и 4e522be:docs/CHANGELOG.ru.md:9-29."
-            },
-            {
-              "topic": "Версии и cycle.json",
-              "assessment": "Версия 2.0.0-beta.1 стоит во всех шести местах. Строку `1.86.1` теперь находит только поле `baseStable` в release-ledger, и для цикла 2.0.0 это правильное значение. Файл cycle.json совпадает с тегом, так что обновление stable-цикла этим возвратом не затрагивается.",
-              "evidence": "diff: const.py, manifest.json, package.json, package-lock.json, src/houseplan-card.ts, src/houseplan-editor-runtime.ts. Файл docs/release-ledger/cycle.json одинаков в head и 4e522be."
-            },
-            {
-              "topic": "RELEASE-NOTES и эталоны",
-              "assessment": "RELEASE-NOTES.md в head дословно совпадает с файлом в теге. Хэши в индексе и provenance (sourceSha cfb05d6, решение владельца от 2026-11-26) взяты из релизного коммита. Сами PNG я не сравнивал: их соответствие следует из совпадения хэшей в индексе.",
-              "evidence": "4e522be:docs/RELEASE-NOTES.md:1-19 совпадает с правой стороной diff. 4e522be:demo/golden/baselines/baselines-index.json:382-386 содержит те же хэши, что и head: 247ac38…, a0ecb38…, 3796f2b…, 41360ed…."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Механизм возврата сам не защищает раздел релиза в changelog: при `merge=union` любые записи из dev оказываются под заголовком релиза, как это произошло здесь уже с тремя задачами. Предложение из первого раунда остаётся в силе: после слияния брать раздел релиза из тега, а строки, которых в теге нет, автоматически возвращать в Unreleased. Можно и проще — проверять в S6, что раздел релиза и всё ниже совпадает с тегом. Это закрыло бы целый класс ошибок, а не только этот случай. Для принятия текущей задачи не требуется."
-          ],
-          "boundaries": "Работу я проверял только чтением зафиксированного материала: diff, начала обоих changelog в head и 4e522be, RELEASE-NOTES.md и cycle.json в теге, фрагмента индекса эталонов в теге, поиска по `1.86.1` и журнала коммитов. PNG побайтно не сравнивал. Сборку и тесты не запускал. Использовал результат S6 «Тесты для задачи #1582 (перед ревью)»: статус passed, материал 3b305ae. Его состав мне неизвестен. Заявление исполнителя о побайтной сверке истории сам не воспроизводил, но совпадение фрагментов и разница в числе строк с ним согласуются."
-        },
-        "usage": {
-          "input_tokens": 14,
-          "cache_creation_input_tokens": 52032,
-          "cache_read_input_tokens": 278872,
-          "output_tokens": 4410,
-          "output_tokens_details": {
-            "thinking_tokens": 538
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 52032,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 740,
-              "cache_read_input_tokens": 50113,
-              "cache_creation_input_tokens": 6123,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 6123
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокер первого раунда устранён. Записи #1580 и пришедшие из dev #1581 и #1583 теперь стоят в Unreleased / «Не выпущено» обоих changelog. Раздел `## v2.0.0-beta.1 — 2026-11-26` и вся история под ним совпадают с опубликованным тегом 4e522be. Версии, RELEASE-NOTES.md, индекс и provenance девяти эталонов, а также cycle.json тоже совпадают с релизом. Новых проблем не нашёл. Работу можно принимать.\n\n## Понимание решения\n\nСлужебная задача: вернуть в dev опубликованный релиз v2.0.0-beta.1 (cfb05d6 подготовил релиз, 4e522be добавил 9 эталонов) и не исказить опубликованную историю. Цепочка коммитов: 4222d8c возвращает релиз, 0c529a0 вливает dev с #1580, 82f2929 вливает dev 9a0691f с #1581 и #1583, 3b305ae исправляет changelog. В первом раунде union-слияние changelog увело строку #1580 под заголовок беты. В текущем head над заголовком беты стоят только три строки из dev (#1581, #1583, #1580), а сам раздел беты построчно совпадает с тегом. Относительно base 9a0691f diff в changelog теперь сводится к вставке заголовка беты и двух её новых строк (#1514/#1566/#1567, #1579) между записями dev и записями задач, вошедших в бету. Так и должен выглядеть возврат. Я сравнил начало CHANGELOG.md и CHANGELOG.ru.md в head и в 4e522be, RELEASE-NOTES.md в теге с diff, cycle.json в обоих снимках, часть индекса эталонов в теге с diff, поискал оставшиеся `1.86.1` и просмотрел журнал коммитов.\n\n## Разбор решения\n\n### CHANGELOG: прежний блокер\n\nУстранён. Раздел опубликованной беты не содержит строк, которых нет в теге, а Unreleased сохраняет все три записи dev без дубликатов. Разница в числе строк ровно на этот блок: 8191 против 8186 в английском файле, 7345 против 7340 в русском. Значит, остальная история не затронута, что согласуется с заявлением исполнителя о побайтном совпадении.\n\nОснование: head:docs/CHANGELOG.md:3-10: `## Unreleased`, затем #1581, #1583, #1580, затем `## v2.0.0-beta.1`. Строки 10-28 head совпадают со строками 5-23 в 4e522be:docs/CHANGELOG.md. Аналогично head:docs/CHANGELOG.ru.md:9-34 и 4e522be:docs/CHANGELOG.ru.md:9-29.\n\n### Версии и cycle.json\n\nВерсия 2.0.0-beta.1 стоит во всех шести местах. Строку `1.86.1` теперь находит только поле `baseStable` в release-ledger, и для цикла 2.0.0 это правильное значение. Файл cycle.json совпадает с тегом, так что обновление stable-цикла этим возвратом не затрагивается.\n\nОснование: diff: const.py, manifest.json, package.json, package-lock.json, src/houseplan-card.ts, src/houseplan-editor-runtime.ts. Файл docs/release-ledger/cycle.json одинаков в head и 4e522be.\n\n### RELEASE-NOTES и эталоны\n\nRELEASE-NOTES.md в head дословно совпадает с файлом в теге. Хэши в индексе и provenance (sourceSha cfb05d6, решение владельца от 2026-11-26) взяты из релизного коммита. Сами PNG я не сравнивал: их соответствие следует из совпадения хэшей в индексе.\n\nОснование: 4e522be:docs/RELEASE-NOTES.md:1-19 совпадает с правой стороной diff. 4e522be:demo/golden/baselines/baselines-index.json:382-386 содержит те же хэши, что и head: 247ac38…, a0ecb38…, 3796f2b…, 41360ed….\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Механизм возврата сам не защищает раздел релиза в changelog: при `merge=union` любые записи из dev оказываются под заголовком релиза, как это произошло здесь уже с тремя задачами. Предложение из первого раунда остаётся в силе: после слияния брать раздел релиза из тега, а строки, которых в теге нет, автоматически возвращать в Unreleased. Можно и проще — проверять в S6, что раздел релиза и всё ниже совпадает с тегом. Это закрыло бы целый класс ошибок, а не только этот случай. Для принятия текущей задачи не требуется.\n\n## Границы анализа\n\nРаботу я проверял только чтением зафиксированного материала: diff, начала обоих changelog в head и 4e522be, RELEASE-NOTES.md и cycle.json в теге, фрагмента индекса эталонов в теге, поиска по `1.86.1` и журнала коммитов. PNG побайтно не сравнивал. Сборку и тесты не запускал. Использовал результат S6 «Тесты для задачи #1582 (перед ревью)»: статус passed, материал 3b305ae. Его состав мне неизвестен. Заявление исполнителя о побайтной сверке истории сам не воспроизводил, но совпадение фрагментов и разница в числе строк с ним согласуются.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 9a0691f613399b8415f7ee528a932d0338deab50 → 3b305aeebc34c0618109d27c692f9a4ae3415cba\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1582, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Исправления по предыдущему ревью\n\n- **#1580 ошибочно попал в выпущенную бету →** вернул запись в Unreleased / «Не выпущено» в обоих changelog. При синхронизации с актуальным dev то же произошло с #1581 и #1583; их записи тоже оставлены в Unreleased / «Не выпущено», без дубликатов.\n- **История релиза →** локальная проверка подтвердила побайтное совпадение истории начиная с раздела v2.0.0-beta.1 с опубликованным тегом, а также совпадение девяти PNG, индекса эталонов и release notes. Версия беты перенесена, изменения #1580 в исходниках dev сохранены. Опубликованные тег и файлы релиза не менялись.\n```\n\n</details>\n",
-        "createdAt": "2026-11-26T12:40:49.000Z",
-        "artifactId": 15117538351,
-        "runId": 45821584286,
-        "runAttempt": 1,
-        "completedAt": "2026-11-26T12:40:52Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45821584286",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "9a0691f613399b8415f7ee528a932d0338deab50"
+      "releaseTag": "v2.0.0-beta.1",
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1583": {
@@ -7655,19 +7515,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1582,
-    "worker": "finish",
-    "token": "737:finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:1:admit",
-    "fence": 737,
-    "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-    "expectedBase": "9a0691f613399b8415f7ee528a932d0338deab50",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795695983505,
-    "expiresAt": 1795700475671,
-    "patchId": "53a87586eb5f2d467958c302b6fbc3dc41e2d194",
-    "reviewRequest": "review:1582:2:53a87586eb5f2d467958c302b6fbc3dc41e2d194:9a0691f613399b8415f7ee528a932d0338deab50"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7689,189 +7537,9 @@
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
     },
-    "github:45811770248:1:completions:message:03fc9392092604b8ec133b3a4c387c4a9e49b2a944952af895132a045a9c2cdd": {
-      "digest": "d06ea153ad832864337dc8dc1b162ea9765c32c1c5f3d55e33772ab3834f60c3",
-      "issue": 1582
-    },
-    "release-return-finish:4b4be159-fbd4-4c73-9bad-a68f4161f952:finish:1:synchronized": {
-      "digest": "0792fed9d4270166980a4a8d62109e23b6e3bcbbf2b504576a438a8900470622",
-      "issue": 1582
-    },
-    "finish:3f91c436-3834-48d5-b426-36bf72e10a29": {
-      "digest": "36fa61aeb1b30d66d078aae8543c5dd5da9d8449467461b26d49a2c4e155537c",
-      "issue": 1582
-    },
-    "finish:13e82bd4-0dcf-4317-b7d7-2774e14b8246": {
-      "digest": "3b8637d849750f8828ea78f78bf54f1409a66613b0c37c79e7bda2d38975d201",
-      "issue": 1582
-    },
-    "finish:6a268489-cbea-47d5-9824-c4ed56e9e2df": {
-      "digest": "611bf0ff58026731665bebe550b42f429c39838b6114e9a796f289fe49caca8c",
-      "issue": 1582
-    },
-    "dev-build:45811770248:1:webhook": {
-      "digest": "e40e4617a7d5f6378cb77541a701070ac414afd62ba08650baa82a5fca3acccb",
-      "issue": 1582
-    },
-    "dev-build:45811770248:1:webhook:e467c483-b51b-4b40-86b7-ded93e96850d:delivered": {
-      "digest": "f34a7668d9cd75eb82b1bea010e83500c205aa86af4f12f51ad5781409a1385b",
-      "issue": 1582
-    },
-    "finish:9da7d4d4-f28a-4299-a19c-6fe1a0959871": {
-      "digest": "f078e7695dc16cebd69ed740f395bb28952f557b9f1c9bc00d0a89a757efaf96",
-      "issue": 1582
-    },
-    "finish:80619bf6-2ac0-47a5-a2f3-c4965e1f56d3": {
-      "digest": "e2bc8ae4cf785ffee35f50d399a4253f4a865f0f1633d06e2cbf9d35015b5cc5",
-      "issue": 1582
-    },
-    "finish:ce36929f-dfb5-4c6d-a5ab-48af33ad7d41": {
-      "digest": "22477c394df7c66f472cce5097fab522856510359b154333c2aaf9ef3bf62c44",
-      "issue": 1582
-    },
-    "finish:b2a1160f-c2b2-4da7-a5f8-01a39896f07a": {
-      "digest": "730fe4f3bd6f13bffe4712623d38991c7f985d2a89ee3608eb0c7843476d4b72",
-      "issue": 1582
-    },
-    "finish:ff989e5b-034a-4304-8cf2-1761897f85c2": {
-      "digest": "11f96680658b0037af7d6f347bfe7202896a717aed3c85b2b81189050dbea740",
-      "issue": 1582
-    },
-    "finish:0fd07235-aca9-45a4-afcb-b1145eaab094": {
-      "digest": "438cbc528d2b6504837ff2746b9b3526d91e22bf9cd7b2d9b98286a9e2a53e89",
-      "issue": 1582
-    },
-    "github:45813164483:1:completions:message:6339bbcf462d65d96c393fbcc57dd407ece0f3b96212ec652483463f3ba98297": {
-      "digest": "dc438e022050cd5b34dd32723efe3a65c15081ab04c5cd2ee4f7a96021f87938",
-      "issue": 1582
-    },
-    "finish:f560abeb-340c-4984-90a6-bc787daa78b0": {
-      "digest": "0e3620918f70b9fb5991a3dc85da59fdcac0e6fb199bd3891b56252b814b8086",
-      "issue": 1582
-    },
-    "finish:54afa21f-0b48-4bcb-bbe1-0f680093718f": {
-      "digest": "deb103d5edb27e9c027977651082f021f98add921aef46f583bf7ddd369cb09f",
-      "issue": 1582
-    },
-    "finish:772ab04e-009b-47d3-a7e8-e390c5f16d4b": {
-      "digest": "8c8d6e5863c12694c44bcc10941d41ae23a048e361794988826b64ddc756b300",
-      "issue": 1582
-    },
-    "github:45813563894:1:completions:message:ac76653372a3082cb694cc0fc5f8e859a1c493c2540085fbfced088152fb49a4": {
-      "digest": "fcd036a5587381b1a252691d4cfa2ce2bdaadb13961353274f21285a490aa770",
-      "issue": 1582
-    },
-    "finish:2d027f20-27b2-48af-a3f0-220895a0e94f": {
-      "digest": "4209db94de821f7228bdd69179afb8b39d69a590a6c8112cdad64b4fc22a5e8f",
-      "issue": 1582
-    },
-    "finish:aa22e775-db3e-46c2-84a5-65ce3d049874": {
-      "digest": "ffaa28dc46c1039c4f65820000aa6c4cf6743cdffa668a4e1ed804037e9fb54a",
-      "issue": 1582
-    },
-    "finish:18f0a38e-3238-4e79-96a8-5025aa9697ee": {
-      "digest": "283b5505e2f9d83c175a1762e61a8fe3c9c81bb3031f255b721c90ee3974d649",
-      "issue": 1582
-    },
-    "finish:8e43231b-ae44-4650-9236-32d6f9786ad0": {
-      "digest": "3349c3f22fdd6c5b13fa8c2fd41740092fb50a375ff1afc9c91c76ee9e04266f",
-      "issue": 1582
-    },
-    "finish:9f9c1d5f-54e7-4121-b7a6-be13ef7afc0b": {
-      "digest": "812c721900012bd09a74ae9c682937232d067637cdb51c548fa1e0ba78552b8d",
-      "issue": 1582
-    },
-    "finish:9728d7a5-8013-4564-adeb-442ab378391c": {
-      "digest": "1ff035878fec465e24817905195dd34a6b3826a28683c60ce0722e2990a70584",
-      "issue": 1582
-    },
-    "finish:e43cc91f-f90d-4d16-948f-b1c39483fd35": {
-      "digest": "7e9b60803be3a3b39c6155331624669f81c2094b459f846d40e2582af278397c",
-      "issue": 1582
-    },
-    "finish:4ff5d6cd-6808-4542-bd20-3c89784dc204": {
-      "digest": "eb26aeed2a3f3eae8ad38a9b42adba709820fd45a2dd14c7ebff3ff961555da9",
-      "issue": 1582
-    },
-    "release-return-finish:4b4be159-fbd4-4c73-9bad-a68f4161f952:finish:2:s6-label": {
-      "digest": "ac87a002cf4cd22bf1a314eee185d61d997afbbad8e3fe56329698639986ed88",
-      "issue": 1582
-    },
-    "release-return-finish:4b4be159-fbd4-4c73-9bad-a68f4161f952:finish:3:review-requested": {
-      "digest": "e7ee92a1a292be4e23c8364c233a7cca86369578246ffae4fdbf1163a989470e",
-      "issue": 1582
-    },
-    "github:45814976481:1:tick:0:review-retry": {
-      "digest": "738c4d06385a2dbb18e36bc69daeb8e4c3bd1648a91ac068dfd3bda538a6d079",
-      "issue": 1582
-    },
-    "github:45814976481:1:completions:message:7a805f2c27a68d8f9bac35b3548c0a84333013b882ad2d24773d71ed29150efc": {
-      "digest": "8c353b9c47033ec82c19439ce356e3304881ec59a918a8dd4a650faab3602c29",
-      "issue": 1582
-    },
-    "github:45814976481:1:completions:message:d67f533c88d2771448abee1e74a40f45b52c168365fc200caeb0c72f5f3625cf": {
-      "digest": "157ae368bd02e519985b54286f5084c0c09777ce3a282ba17760bddea2a47ac4",
-      "issue": 1582
-    },
-    "github:45815416168:1:tick:0:review-presentation": {
-      "digest": "07a9d17157743dc4e917f1e4a461d2cdf5ccae904d063f7ef00733e8fb2ec86f",
-      "issue": 1582
-    },
-    "github:45815416168:1:tick:0:return": {
-      "digest": "687d990f04286eae12ce2f4b51238f5100440d2603753108f5480fbfa208724c",
-      "issue": 1582
-    },
-    "github:45815416168:1:tick:0:return-label": {
-      "digest": "5310217c28bc160108e62083ecb431123d90026cec7b1a59c202571be5a37e61",
-      "issue": 1582
-    },
-    "github:45815416168:1:completions:report:bc508ec75e3c6278f5a1b0ce70837aeffa2641fb228f58ea7eaf56be868faba0": {
-      "digest": "13ab869b01aa9b5a964a2d3059edeb8cad2e1805e10fef348c09c56041c6d527",
-      "issue": 1582
-    },
-    "github:45815416168:1:completions:metadata:20ec65e8-2874-4f82-ac4b-1a2a8ba4c76e:task-notice:1582::": {
-      "digest": "3196dd072812b240dbb9aee3ce40c7f7286460fa52a78900e1e470fa836d8efa",
-      "issue": 1582
-    },
     "github:45819603213:1:label:spec-request": {
       "digest": "65a31dbdd2081b22abccff458f6333b91c3f1481dc58f207ea5be68348dce256",
       "issue": 1001
-    },
-    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:2:synchronized": {
-      "digest": "10c02f2bc59e53c75451d5a277bd666f30191fe0d28914fddc0c7b46ffb38daf",
-      "issue": 1582
-    },
-    "github:45819603213:1:completions:message:da71398981dd6ffcff1235ea28f1c5c1e4f69d3cce0c2f84b79d9fe8eaabf4af": {
-      "digest": "f09160dd582de7ff9829f1196172e014cb9c243d3798d90f6c00e67d59c2052c",
-      "issue": 1582
-    },
-    "github:45819603213:1:completions:message:92519c1c629c06dbebfa9634b6abec7117ed604d305df1613a9db2bda1abe6eb": {
-      "digest": "7faacd25e8aba380b4db53a6f2fb6f374253c39f9d37e24cbdc925a2fcd0b20d",
-      "issue": 1582
-    },
-    "finish:6590b198-2a66-4570-bd55-80867307d29f": {
-      "digest": "a139cb8458a702d6159e7804413421fda406bd4cfcb1b85551db143557343b99",
-      "issue": 1582
-    },
-    "finish:29467f8f-aebb-4852-93dd-2fd585d20464": {
-      "digest": "9fa7e68212b5028cef47e20bd5dbeb17bcbf2ac71e2ad1d0724b1dfed29b465d",
-      "issue": 1582
-    },
-    "finish:f1ff3951-2755-4867-83ed-c9b620a33ec8": {
-      "digest": "493fbb874c8ed48f0e325e48a7ecea4d7a3f7a4a48750cfb2106d80212c65715",
-      "issue": 1582
-    },
-    "finish:9d35f8e3-cb1e-48c1-a0dc-8ae303c85145": {
-      "digest": "bbbb71c3115533431be12f719d1a718b2bb4f2bf50d910c059931880411d727f",
-      "issue": 1582
-    },
-    "finish:b3656235-69a7-42ca-ae34-d770931c362e": {
-      "digest": "bf5cd8fe792205affd6da5494569d71c34836a1566036a6c2bfb3c0c074397e8",
-      "issue": 1582
-    },
-    "finish:fe070717-38eb-4eac-af9c-f75cdb83387f": {
-      "digest": "59ba3e04b89e2428185d2e438bd308f25ae16a1eea6f859d1ef6a23b201b03cf",
-      "issue": 1582
     },
     "github:45820589681:1:spec:1001:spec-presentation": {
       "digest": "e99ecde9347550bfc67284a46c548e37cd5e61949a2338619788a26d7de942d9",
@@ -7889,53 +7557,9 @@
       "digest": "83f90b9c7563af53a70612584e2a47501076c59c2b0e1e403f569f0ca8cec63e",
       "issue": 1001
     },
-    "finish:6c1a3a3a-2089-49bc-96ad-389234a020fd": {
-      "digest": "5360de9d76f81bbacfeb3bebf71515a82aa3277e4d6d47d7099ef76cf9f9d6c7",
-      "issue": 1582
-    },
-    "finish:b027fddd-cbe1-4b19-83f4-e40b420f97d8": {
-      "digest": "159359e52faa6c09fbfe7d74c2c969151779164919336902e0583f4dd19d7b41",
-      "issue": 1582
-    },
-    "finish:afd81482-53eb-4d27-83f3-7c74eb646294": {
-      "digest": "edee984998cdb2b41d77c31a2cc3ced28ebb4f5630fb2f825efcdb35cc0d485e",
-      "issue": 1582
-    },
     "github:45821027858:1:spec:1001:spec-request": {
       "digest": "c5fa14fc36801b798c84c601862dbf026ca547a36e2e3e814efd7e83b0ce11ec",
       "issue": 1001
-    },
-    "github:45821027858:1:completions:message:aeaf5dc3b631bafa23cc59b7079fb1e4413b3c871ebf09da0702bdbc04bc7e0e": {
-      "digest": "9e83fd312f181cd18a2af4868f686790fd8de586df69570f50b27755fedb753e",
-      "issue": 1582
-    },
-    "finish:9f9d42f8-5af7-4728-b1c2-2ed3002aeed8": {
-      "digest": "45baf5adf4b538dd8622660cab021908c39ba6946cdb7ec00853c8f3418383ee",
-      "issue": 1582
-    },
-    "finish:68ad6b07-00a1-41fa-9c99-43ab0ae98e8a": {
-      "digest": "7a4b0640b1b728cf5460c4fe4db8c7a2d89e04cb87fc4bef426e068c3f384bf4",
-      "issue": 1582
-    },
-    "finish:7fff07a7-aadb-4c7b-802c-61d5be7b8fe7": {
-      "digest": "137d23502dc67f7f0e24eab09908510e081fd96af0695b288830794a57012390",
-      "issue": 1582
-    },
-    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:3:s6-label": {
-      "digest": "8b9262ad4bd8ca4b7144b29c198229858a3f4e4d702b03f5b2d26b249bee5d03",
-      "issue": 1582
-    },
-    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:4:review-requested": {
-      "digest": "55d7ae58fa675770854c36a3c4726e270470930b817db902ea083ea0a6b7a229",
-      "issue": 1582
-    },
-    "github:45821530060:1:tick:0:review-retry": {
-      "digest": "dbb7e0b134d358c815cdeb69c3feb8e9c0add5430d3cec73bd264d8f505b9a7f",
-      "issue": 1582
-    },
-    "github:45821530060:1:completions:message:400ba72421dda99e3b8d6d20be37fa5fd12a170f41b8e56d4693c846d96e2cba": {
-      "digest": "ce9a74ba7e7c2524ee37184a4c97088cf9057f9fcfda8e732da01c85b88c13c1",
-      "issue": 1582
     },
     "github:45821701493:1:spec:1001:spec-presentation": {
       "digest": "e8a66adc2ee6446dd046ad1b22068ea71799372cd94b71f67fca3637f66b97f9",
@@ -7952,14 +7576,6 @@
     "github:45821701493:1:completions:report:2e9855279f7ac027625ba4145bbf47e5104278afbef24cc82356e8603370e178": {
       "digest": "9a1b2282b8a49519d26ee84b28e18e16211e418f6d1916a32997f115ea46b061",
       "issue": 1001
-    },
-    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:6:review-presentation": {
-      "digest": "11970eaff8de9203c3e967a4c47e73a60380c1d8599491723451aece42062c37",
-      "issue": 1582
-    },
-    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:6:review-complete": {
-      "digest": "24f01a676a5127b8f107414f04b4eb7b503b00dda1204aab001b394ea6d8ad85",
-      "issue": 1582
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7990,112 +7606,6 @@
         "delivered": true
       }
     },
-    "release-return:4b4be159-fbd4-4c73-9bad-a68f4161f952": {
-      "digest": "8ebe01cd046759d362519fd835796a21dcaa8f9ccbf83b5b9e69315009378600",
-      "issue": 1582,
-      "message": {
-        "kind": "queued",
-        "issue": 1582,
-        "at": 1795692544059,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4222d8cf6d8adaafb995ddcf99292a41d7782de2",
-        "delivered": true
-      }
-    },
-    "github:45811770248:1:tick:2:admit": {
-      "digest": "ba839fd28c7cfdd990f56d2d39ec793fe6763b1e8e616968e83760b1863c8c72",
-      "issue": 1582,
-      "message": {
-        "kind": "admitted",
-        "issue": 1582,
-        "at": 1795692892063,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4222d8cf6d8adaafb995ddcf99292a41d7782de2",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-return-finish:4b4be159-fbd4-4c73-9bad-a68f4161f952:finish:2:s6-complete": {
-      "digest": "d9674eaebdc3fb7a3fb78dd6b0f026ab7497b14c278d363693d732ce0ca4de25",
-      "issue": 1582,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1582,
-        "at": 1795694151783,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
-        "phase": "review",
-        "evidence": {
-          "id": "20261126T113552929-81d340ae",
-          "name": "Тесты для задачи #1582 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T113552929-81d340ae/report.json",
-          "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
-          "status": "passed",
-          "finishedAt": "2026-11-26T11:55:50.605Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad": {
-      "digest": "dc528d6a1a2e09276b22177d51f836c684366ecfb851f18189ffa2e945a10253",
-      "issue": 1582,
-      "message": {
-        "kind": "queued",
-        "issue": 1582,
-        "at": 1795695978890,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-        "evidence": {
-          "id": "20261126T113552929-81d340ae",
-          "name": "Тесты для задачи #1582 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T113552929-81d340ae/report.json",
-          "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
-          "status": "passed",
-          "finishedAt": "2026-11-26T11:55:50.605Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:1:admit": {
-      "digest": "ebb2cd51c0ae4da38990f667d711301d0c77dba1ba1a24701c49f1b19cf30d7c",
-      "issue": 1582,
-      "message": {
-        "kind": "admitted",
-        "issue": 1582,
-        "at": 1795695983505,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261126T113552929-81d340ae",
-          "name": "Тесты для задачи #1582 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T113552929-81d340ae/report.json",
-          "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
-          "status": "passed",
-          "finishedAt": "2026-11-26T11:55:50.605Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
     "github:45821027858:1:spec:1001:spec-request:spec-resubmitted:1001": {
       "digest": "c5fa14fc36801b798c84c601862dbf026ca547a36e2e3e814efd7e83b0ce11ec",
       "issue": 1001,
@@ -8109,36 +7619,6 @@
         "reviewChanges": "Два действия HA сохраняют внешние причины в отдельном оперативном хранилище до явного снятия. Главные места для проверки — выбор HA-цели, долгоживущие записи и доставка зрителям без расширения прав.\n\n### Исправления по предыдущему ревью\n\n- Добавлены нормализация ключа, пределы длины полей, предел на цель и общий предел записей. Идентичный повтор проходит без сохранения. Обновление и снятие доступны на пределе.\n- Цель-устройство включает размещённые привязки к устройству и к его сущностям. Сценарий без собственного значка устройства указан в AC2.\n- Уточнены сохранение до ответа, аутентифицированная доставка без текста на шине, доступ обычного зрителя, отказ ручного запуска без прав администратора и переименование сущности.\n\n[Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1001#issuecomment-7192152593). Редакция проверяется на соответствие шаблону перед передачей. Реализация, тесты и проверка в синтетическом HA относятся к S6.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:3:s6-complete": {
-      "digest": "5c32825c42c8e5a866756d27343eb6abf72abd75d864315bca35d8cc722c7420",
-      "issue": 1582,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1582,
-        "at": 1795696699009,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-        "phase": "review",
-        "evidence": {
-          "id": "20261126T122640922-ce248356",
-          "name": "Тесты для задачи #1582 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T122640922-ce248356/report.json",
-          "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
-          "status": "passed",
-          "finishedAt": "2026-11-26T12:38:17.777Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "### Исправления по предыдущему ревью\n\n- **#1580 ошибочно попал в выпущенную бету →** вернул запись в Unreleased / «Не выпущено» в обоих changelog. При синхронизации с актуальным dev то же произошло с #1581 и #1583; их записи тоже оставлены в Unreleased / «Не выпущено», без дубликатов.\n- **История релиза →** локальная проверка подтвердила побайтное совпадение истории начиная с раздела v2.0.0-beta.1 с опубликованным тегом, а также совпадение девяти PNG, индекса эталонов и release notes. Версия беты перенесена, изменения #1580 в исходниках dev сохранены. Опубликованные тег и файлы релиза не менялись.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
       }
