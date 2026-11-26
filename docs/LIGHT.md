@@ -12,6 +12,11 @@ its own footprint and transition. Pan and zoom crop the camera while the
 sources stay in plan coordinates. The prior SVG 2.5D implementation is
 unchanged.
 
+The floor atlas packs coverage and a narrow signed-distance band in RG8.
+The shader reconstructs the edge of artificial light on the floor from
+the distance channel. Sunlight and raised horizontal faces use the original
+coverage. Neither zoom nor pan changes tile resolution or rebuilds the atlas.
+
 ## Per-leaf shade transmission and sliding apertures (#1024)
 
 Window shade intervals are applied only after proving existing interior

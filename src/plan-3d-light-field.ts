@@ -1,7 +1,8 @@
-import { CanvasTexture, Color, DataTexture, FloatType, MeshBasicMaterial, NearestFilter, RGBAFormat,
+import { CanvasTexture, Color, DataTexture, FloatType, LinearFilter, MeshBasicMaterial, NearestFilter, RGBAFormat, RGFormat,
   type MeshBasicMaterialParameters } from 'three';
 import { GLOW_FALLOFF } from './glow-scene';
 import type { PlanPoint } from './iso-projection';
+import { packFloorMask } from './plan-3d-floor-mask';
 
 export interface PlanLightFieldSource {
   key: string;
@@ -100,6 +101,7 @@ const LIGHT_GLSL = `
   }
   vec3 hpLit(vec3 base) {
     vec3 N = normalize(vHpNormal) * (gl_FrontFacing ? 1.0 : -1.0);
+    bool floorReceiver = vHpWorld.y == 0.0 && N.y > .999;
     vec2 position = vHpWorld.xz;
     vec2 probe = position + N.xz * uHpNormalOffset;
     vec3 remaining = vec3(1.0);
@@ -121,7 +123,16 @@ const LIGHT_GLSL = `
       if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) continue;
       vec2 tile = vec2(mod(float(i), uHpTileCount), floor(float(i) / uHpTileCount));
       vec2 maskUv = (tile + (${PAD}.0 + uv * ${TILE - PAD * 2}.0) / ${TILE}.0) / uHpTileCount;
-      float visible = wall ? texture2D(uHpWallMasks, maskUv).a : texture2D(uHpMasks, maskUv).a;
+      float visible;
+      if (wall) visible = texture2D(uHpWallMasks, maskUv).a;
+      else {
+        vec2 floorMask = texture2D(uHpMasks, maskUv).rg;
+        // Distance provides a continuous sub-texel contour, with the same
+        // world-space softness at every zoom. Sunlight and raised receivers
+        // keep their original coverage from the same packed sample.
+        visible = sun.z <= 0.0 && floorReceiver
+          ? smoothstep(.25, .75, floorMask.r) : floorMask.g;
+      }
       if (visible < 0.001) continue;
       vec4 optical = hpData(index + 1);
       vec4 pigment = hpData(index + 2);
@@ -133,7 +144,7 @@ const LIGHT_GLSL = `
         float travel = dot(sun.xy, p);
         if (travel < 0.0 || travel >= sun.z || vHpWorld.y > max(0.0, optical.y - travel * sun.w)) continue;
         vec3 towardWindow = vec3(-sun.x, max(0.001, sun.w), -sun.y);
-        float incidence = vHpWorld.y == 0.0 && N.y > .999 ? 1.0 : max(dot(N, normalize(towardWindow)), .18);
+        float incidence = floorReceiver ? 1.0 : max(dot(N, normalize(towardWindow)), .18);
         float fading = hpFalloff(travel / sun.z);
         float energy = clamp(1.22 * pigment.a * visible * fading * incidence, 0.0, 1.0);
         remaining *= 1.0 - pigment.rgb * energy;
@@ -165,7 +176,7 @@ const LIGHT_GLSL = `
       }
       // Preserve the calibrated floor envelope. World normals and emitter
       // height distribute that light on the upright faces and raised objects.
-      float incidence = vHpWorld.y == 0.0 && N.y > 0.999 ? 1.0 : angle;
+      float incidence = floorReceiver ? 1.0 : angle;
       float energy = clamp(1.20 * pigment.a * visible * fall * incidence, 0.0, 1.0);
       remaining *= 1.0 - pigment.rgb * energy;
       reflected *= 1.0 - (1.0 - pigment.rgb) * energy * .48;
@@ -181,11 +192,11 @@ const LIGHT_GLSL = `
 /** Position/visibility textures are world data. Moving the camera never
  * touches them. Color-only changes leave the cached aperture mask alone. */
 export class Plan3dLightField {
-  private readonly atlas: HTMLCanvasElement;
-  private readonly context: CanvasRenderingContext2D;
+  private readonly floorMaskContext: CanvasRenderingContext2D;
   private readonly wallContext: CanvasRenderingContext2D;
   private readonly floorContext: CanvasRenderingContext2D;
-  private masks: CanvasTexture;
+  private readonly floorDistances = new Float32Array(TILE * TILE);
+  private masks: DataTexture;
   private wallMasks: CanvasTexture;
   private texture: DataTexture | undefined;
   private maskKey: string | undefined;
@@ -195,17 +206,18 @@ export class Plan3dLightField {
   private readonly uniforms;
 
   constructor(document: Document, normalOffset: number) {
-    this.atlas = document.createElement('canvas');
-    const context = this.atlas.getContext('2d');
+    const floorMask = document.createElement('canvas');
+    floorMask.width = floorMask.height = TILE;
+    const context = floorMask.getContext('2d', { willReadFrequently: true });
     const wallContext = document.createElement('canvas').getContext('2d');
     const floorTile = document.createElement('canvas');
     floorTile.width = floorTile.height = TILE;
     const floorContext = floorTile.getContext('2d');
     if (!context || !wallContext || !floorContext) throw new Error('Unable to prepare the plan light mask');
-    this.context = context;
+    this.floorMaskContext = context;
     this.wallContext = wallContext;
     this.floorContext = floorContext;
-    this.masks = this.maskTexture(this.atlas);
+    this.masks = this.floorMaskTexture(TILE);
     this.wallMasks = this.maskTexture(wallContext.canvas);
     this.uniforms = {
       uHpMasks: { value: this.masks },
@@ -215,6 +227,15 @@ export class Plan3dLightField {
       uHpTileCount: { value: 1 },
       uHpNormalOffset: { value: normalOffset },
     };
+  }
+
+  private floorMaskTexture(size: number): DataTexture {
+    // RG8: signed distance plus the original coverage, at half the texture
+    // size of the previous RGBA canvas atlas and with the same tile count.
+    const texture = new DataTexture(new Uint8Array(size * size * 2), size, size, RGFormat);
+    texture.minFilter = texture.magFilter = LinearFilter;
+    texture.needsUpdate = true;
+    return texture;
   }
 
   private maskTexture(canvas: HTMLCanvasElement): CanvasTexture {
@@ -262,24 +283,28 @@ export class Plan3dLightField {
     const dim = Math.max(1, Math.ceil(Math.sqrt(usable.length)));
     if (!sameMask) {
       const edge = dim * TILE;
-      if (this.atlas.width !== edge || this.atlas.height !== edge) {
-        this.atlas.width = this.atlas.height = edge;
-        // WebGL's immutable texture allocation must match the new canvas size.
+      if (this.masks.image.width !== edge) {
+        // WebGL's immutable texture allocation must match the new atlas size.
         this.masks.dispose();
-        this.masks = this.maskTexture(this.atlas);
+        this.masks = this.floorMaskTexture(edge);
         this.uniforms.uHpMasks.value = this.masks;
+      }
+      if (this.wallContext.canvas.width !== edge || this.wallContext.canvas.height !== edge) {
         const wallCanvas = this.wallContext.canvas;
         wallCanvas.width = wallCanvas.height = edge;
         this.wallMasks.dispose();
         this.wallMasks = this.maskTexture(wallCanvas);
         this.uniforms.uHpWallMasks.value = this.wallMasks;
       } else {
-        this.context.clearRect(0, 0, edge, edge);
         this.wallContext.clearRect(0, 0, edge, edge);
       }
+      const context = this.floorMaskContext, pixels = this.masks.image.data as Uint8Array;
       for (const [index, source] of usable.entries()) {
         const column = index % dim, row = Math.floor(index / dim), rule = source.rule ?? 'evenodd';
-        this.drawMask(this.context, source.visible, rule, source.floorClip, bounds[index], column, row);
+        context.clearRect(0, 0, TILE, TILE);
+        this.drawMask(context, source.visible, rule, source.floorClip, bounds[index], 0, 0);
+        packFloorMask(context.getImageData(0, 0, TILE, TILE).data, TILE, pixels, edge, column, row,
+          source.sun ? null : this.floorDistances);
         if (!source.sun) this.drawMask(this.wallContext, source.wallVisible ?? source.visible, rule,
           source.wallClip, this.wallBounds[index], column, row);
       }
@@ -329,7 +354,7 @@ export class Plan3dLightField {
     this.masks.dispose();
     this.wallMasks.dispose();
     this.texture?.dispose();
-    this.atlas.width = this.atlas.height = 0;
+    this.floorMaskContext.canvas.width = this.floorMaskContext.canvas.height = 0;
     this.wallContext.canvas.width = this.wallContext.canvas.height = 0;
   }
 }
