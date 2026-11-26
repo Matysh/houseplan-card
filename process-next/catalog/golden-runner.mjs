@@ -850,8 +850,17 @@ async function assertOpeningSymbolContract(page, contract) {
         if (item.turnPair) turns.set(item.id, { pair: item.turnPair, flipV: item.flipV, turn });
         rows.push({ id: item.id, offset, faceOffset, turn });
       }
-      if (root.querySelectorAll('.iso-opening-panel').length < expected.openings.length)
+      const native = root.querySelector('canvas[data-hp-plan-3d-ready]');
+      if (native) {
+        const world = card._plan3dPresentation?.world;
+        const meshes = card._plan3dHost?.world.openings.children ?? [];
+        const painted = meshes.some(mesh => mesh.geometry.getAttribute('position').count > 0);
+        if (!painted || expected.openings.some(({id}) => !world?.panels.some(panel =>
+          panel.id === id && panel.surfaces.some(surface => surface.points.length >= 3))))
+          throw new Error('semantic golden WebGL opening panels are missing');
+      } else if (root.querySelectorAll('.iso-opening-panel').length < expected.openings.length) {
         throw new Error('semantic golden Iso opening panels are missing');
+      }
     }
 
     for (const pairName of new Set([...turns.values()].map((item) => item.pair))) {

@@ -296,7 +296,7 @@ try {
   out.touchPanDoesNotOpenInfo = await page.evaluate(() => !window.__card.shadowRoot.querySelector('hp-dialog[data-kind="info"]'));
   // Positive control: no-dialog checks cannot pass merely because the scene
   // stopped accepting input. Re-measure after the pan and use a trusted click.
-  await page.touchscreen.tap(panned.core.x + panned.core.width / 2, panned.core.y + panned.core.height / 2);
+  await page.mouse.click(panned.core.x + panned.core.width / 2, panned.core.y + panned.core.height / 2);
   await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-dialog[data-kind="info"]'));
   out.coreStillOpensInfoAfterBatteryPan = true;
   await page.evaluate(() => window.__hpTest.close(undefined, { via: 'cancel' }));
