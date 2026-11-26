@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25605,
+  "revision": 25606,
   "nextTicket": 714,
   "nextFence": 713,
   "tasks": {
@@ -7419,6 +7419,10 @@
       "digest": "8812f5bf0fecbe40cb3dbe894a62e4827a155ea25bd39e96f7ea64848627bb01",
       "issue": 1572
     },
+    "github:45729850727:1:completions:message:e3ad75efea28ba7d6196eb93d2bd1997de31ab4f74ca4d8480439ffbf51dce92": {
+      "digest": "72ed227807936640e473f0bcc02b62df4d0e896c6dc2ac6fcb6c95cb738aa257",
+      "issue": 1572
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7644,7 +7648,8 @@
         "reviewChanges": "### Исправления по предыдущему ревью\nПересобираем shader variant только при смене transparent. Тест теперь монтирует доступный маркер, переводит его в unavailable, восстанавливает и снова отключает: на одном меше проверяются пиксели, hit-id и неизменная тень. Без needsUpdate два пиксельных условия красные; с исправлением весь browser smoke зелёный. Две прежние проверки привязки мутантов тоже зелёные.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
