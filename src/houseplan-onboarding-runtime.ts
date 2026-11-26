@@ -11,7 +11,7 @@ import './hp-settings-select';
 import {
   createEmptySpaceConfig,
 } from './space-dialog';
-import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
+import { rememberSpaceDialogBaseline, skipSpaceImportStep, spaceDialogProblems } from './editors/space-form-state';
 import { newSpaceDialogDraft, savedSpaceDialogDraft, spaceDialogSettings } from './editors/space-dialog-draft';
 import { loadSpacePlanList } from './editors/space-plan-list';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
@@ -334,16 +334,13 @@ export class HouseplanOnboardingRuntime {
   }
 
   public _skipImport(): void {
+    const firstSpace = skipSpaceImportStep(this.host, () => this._openNextImport());
+    if (!firstSpace) return;
     const showToast = captureToast(this.host);
-    this.host._spaceDialog = null;
-    if (this.host._importQueue.length) this._openNextImport();
-    else if (this.host._importTotal > 0 && this.host._model.length) {
-      this.host._importTotal = 0;
-      this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || this.host._space);
-      void this.host._requestMode('plan').then(() => {
-        showToast(this.host._t('import.done'), 'import.done');
-      });
-    }
+    this.host._commitSpace(firstSpace);
+    void this.host._requestMode('plan').then(() => {
+      showToast(this.host._t('import.done'), 'import.done');
+    });
   }
 
   public _renderImportDialog(): TemplateResult {

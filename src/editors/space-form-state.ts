@@ -1,5 +1,6 @@
 /**
- * #600 К10: «Сохранить» только при изменениях и вопрос при закрытии.
+ * #600 К10: существующее пространство сохраняется только при изменениях;
+ * при закрытии изменённого черновика требуется подтверждение.
  *
  * Dirty считается сравнением нормализованного черновика со снимком, сделанным
  * при открытии диалога. Ничего не персистится: снимок живёт в памяти рантайма и
@@ -39,6 +40,25 @@ export function rememberSpaceDialogBaseline(host: object, d: SpaceDialogState): 
 
 export function forgetSpaceDialogBaseline(host: object): void {
   forgetDialogBaseline(host, 'space');
+}
+
+/** End or advance a skipped step for either space-form runtime.
+ * Returns the first saved space only when import is finished and drawing can start. */
+export function skipSpaceImportStep(host: {
+  _spaceDialog: SpaceDialogState | null;
+  _importQueue: readonly string[];
+  _importTotal: number;
+  _serverCfg: { spaces: ReadonlyArray<{ id: string }> } | null;
+}, openNext: () => void): string | undefined {
+  if (host._spaceDialog?.mode !== 'create' || host._spaceDialog.busy || !host._importTotal) return;
+  forgetSpaceDialogBaseline(host);
+  host._spaceDialog = null;
+  if (host._importQueue.length) {
+    openNext();
+    return;
+  }
+  host._importTotal = 0;
+  return host._serverCfg?.spaces[0]?.id;
 }
 
 /** Есть ли несохранённые изменения (см. `dialog-baseline.ts` о поведении без снимка). */

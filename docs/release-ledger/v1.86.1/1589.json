@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1589,
+  "baseStable": "v1.86.1",
+  "category": "stable-fix",
+  "rationale": "Both floor wizard failures reproduce on the published v1.86.1 stable release.",
+  "summary": {
+    "ru": "Мастер этажей Home Assistant принимает предложенные имена и корректно завершается после пропуска всех этажей.",
+    "en": "Accept the suggested Home Assistant floor names and finish the wizard cleanly when every floor is skipped."
+  }
+}

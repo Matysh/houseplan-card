@@ -179,7 +179,7 @@ import {
   applyRoomTempThresholdDraft, createEmptySpaceConfig,
   roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, type SpaceDialogState,
 } from './space-dialog';
-import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
+import { rememberSpaceDialogBaseline, skipSpaceImportStep, spaceDialogProblems } from './editors/space-form-state';
 import { acceptGeneralBaseline, forgetGeneralBaseline, generalProblems, moonDraftOf, rememberGeneralBaseline, writeMoonSetting } from './editors/general-form-state';
 import {
   deviceBatteryModeOf, markerBatteryFields, writeDeviceBatterySetting, type DeviceBatteryMode,
@@ -9107,14 +9107,11 @@ public _openNextImport(): void {
   }
 
 public _skipImport(): void {
-    this.host._spaceDialog = null;
-    if (this.host._importQueue.length) this._openNextImport();
-    else if (this.host._importTotal > 0 && this.host._model.length) {
-      this.host._importTotal = 0;
-      this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || this.host._space);
-      this._setMode('plan');
-      this.host._showToast(this.host._t('import.done'), 'import.done');
-    }
+    const firstSpace = skipSpaceImportStep(this.host, () => this._openNextImport());
+    if (!firstSpace) return;
+    this.host._commitSpace(firstSpace);
+    this._setMode('plan');
+    this.host._showToast(this.host._t('import.done'), 'import.done');
   }
 
 public _renderImportDialog(): TemplateResult {

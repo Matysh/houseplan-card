@@ -115,8 +115,10 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
   const problems = spaceDialogProblems(d, port.idPrefix, host._imperial);
   const problemFor = (fieldId: string) => problems.find((p) => p.field === fieldId);
   const dirty = spaceDialogDirty(host, d);
-  const canSave = dirty && problems.length === 0 && !d.busy;
-  const progress = host._importTotal > 0 && d.mode === 'create'
+  // Creating a valid space is itself a change, even with an untouched HA floor name.
+  const canSave = (d.mode === 'create' || dirty) && problems.length === 0 && !d.busy;
+  const importing = host._importTotal > 0 && d.mode === 'create';
+  const progress = importing
     ? t('import.progress', { i: host._importTotal - host._importQueue.length, n: host._importTotal })
     : '';
   const close = () => {
@@ -186,8 +188,8 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
           </div>`
         : nothing}
       <div class="dialog-action-group dialog-action-commit">
-        ${host._importTotal > 0 && d.mode === 'create'
-          ? html`<button data-hp="action" data-action="import-skip" class="btn ghost" @click=${() => port.skipImport()}>${t('btn.skip')}</button>`
+        ${importing
+          ? html`<button data-hp="action" data-action="import-skip" class="btn ghost" ?disabled=${d.busy} @click=${() => port.skipImport()}>${t('btn.skip')}</button>`
           : nothing}
         <button class="btn ghost" data-hp="dialog-cancel" @click=${requestClose}>${t('btn.cancel')}</button>
         <button class="btn on" data-hp="dialog-confirm" @click=${() => port.save()} ?disabled=${!canSave}
