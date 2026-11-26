@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26057,
-  "nextTicket": 723,
+  "revision": 26058,
+  "nextTicket": 724,
   "nextFence": 723,
   "tasks": {
     "1024": {
@@ -6622,14 +6622,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1577-webgl-door-light",
-      "materialSha": "7ebafc13035157e62823d029bae4fa90071d5374",
+      "materialSha": "823d90426b0029cb62c3c6e4869554a54d9195f0",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 721,
-      "queued": false,
+      "ticket": 723,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795670931372,
-      "reviewEntry": 1,
+      "readyAt": 1795672789851,
+      "reviewEntry": 2,
       "patchId": "694634a25f1a978607c0c13ec8bac3788c0f56e6",
       "changedFiles": [
         "demo/smoke_webgl_door_lintel.mjs",
@@ -6638,7 +6638,6 @@
         "docs/release-ledger/v2.0.0/1577.json",
         "src/plan-3d-light-field.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7312,7 +7311,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1577
+  ],
   "active": {
     "issue": 1575,
     "worker": "finish",
@@ -7653,6 +7654,19 @@
         "layer": "product",
         "materialSha": "6560b865829e17fcc46247d422c7ec2dc1752945",
         "phase": "sync"
+      }
+    },
+    "finish:03642858-9b92-4bae-9706-ba69dfd5dfb7": {
+      "digest": "7510992e641352c338f17b087f2fe2c4803640f196df7ff2974a70c119e94541",
+      "issue": 1577,
+      "message": {
+        "kind": "queued",
+        "issue": 1577,
+        "at": 1795672789851,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "823d90426b0029cb62c3c6e4869554a54d9195f0"
       }
     }
   },
