@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26795,
+  "revision": 26796,
   "nextTicket": 737,
   "nextFence": 737,
   "tasks": {
@@ -6878,7 +6878,7 @@
       "ownerDecision": null,
       "ticket": 735,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795694058714,
       "reviewEntry": 1,
       "patchId": "897179dbd9677a1fd3fccc49053c4adf14261123",
@@ -6895,7 +6895,16 @@
         "process-next/test/release.test.mjs",
         "process-next/test/remote.test.mjs",
         "process-next/test/return-worker.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261126T120851489-810b229a",
+        "name": "Тесты для задачи #1583 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T120851489-810b229a/report.json",
+        "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+        "status": "passed",
+        "finishedAt": "2026-11-26T12:09:18.183Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -7567,9 +7576,9 @@
     "fence": 736,
     "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
     "expectedBase": "55d6b21782f947114e40fcbfadcca1771a2869ed",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795694817267,
-    "expiresAt": 1795695225382,
+    "expiresAt": 1795698559221,
     "patchId": "897179dbd9677a1fd3fccc49053c4adf14261123"
   },
   "events": {
@@ -7872,6 +7881,34 @@
         "materialSha": "b38f4575ade019751fde5f389f2e693a115580b7",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:3d3dab79-a260-4ba3-b0e1-2e7672df7a2d:finish:2:s6-complete": {
+      "digest": "2a01a4c330571b4f8cf019a02d5c49e1e3608ee8b87543405d6b8d6e4ac360ab",
+      "issue": 1583,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1583,
+        "at": 1795694959221,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T120851489-810b229a",
+          "name": "Тесты для задачи #1583 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T120851489-810b229a/report.json",
+          "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+          "status": "passed",
+          "finishedAt": "2026-11-26T12:09:18.183Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "До: возврат уже проверенной беты шёл в обычный продуктовый S6; зачёт опубликованного ревью не менял выборку. После: тот же доказанный автоматический merge выбирает один повторно вычисляемый Git-шаг с отчётом общего runner; в самом исполнителе не готовятся Node/backend/браузерные зависимости и не вызывается Actions fallback. В обычном S6 поведение не меняется.\n\nДоказательство связано с точными SHA базы, тега и результата, Git patch ID и задачей возврата. Помимо совпадения итогового дерева проверены новые коммиты слияния: линеарные ручные коммиты (даже возвращающие прежнее дерево), конфликт и ручное изменение merge отсекаются. Чистый resync разрешён только после свежего доказательства; старое освобождение от ревью не сохраняется при синхронизации без доказательства.\n\nЛокально: 112 адресных тестов `release.test.mjs`, `queue.test.mjs`, `remote.test.mjs`; в том числе реальный Git и runner на временном репозитории (один результат, грязный checkout и сдвинутый удалённый тег отвергнуты). Интеграция возврата дополнительно проверяет обычный маршрут при записи следующего цикла stable. Штатный инфраструктурный набор: 25/25 шагов, 372 учтённых кейса с зачётом применимых результатов, без продуктового набора. #1582 не менялась и не перезапускалась.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
