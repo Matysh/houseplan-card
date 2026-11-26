@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26656,
+  "revision": 26657,
   "nextTicket": 734,
   "nextFence": 734,
   "tasks": {
@@ -6751,13 +6751,35 @@
       "syncMode": "merge",
       "mergeSourceSha": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1",
       "releaseTag": "v2.0.0-beta.1",
-      "materialSha": "4222d8cf6d8adaafb995ddcf99292a41d7782de2",
+      "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
       "ownerDecision": null,
       "ticket": 733,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795692544059,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "29f372118b06d0baba8769d8e246d9e9f556ad77",
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/device-alert-maintenance-iso.png",
+        "demo/golden/baselines/panel-isometric-geometry-view-light.png",
+        "demo/golden/baselines/panel-isometric-large-warm-remount-dark.png",
+        "demo/golden/baselines/panel-isometric-opening-symbol-parity-dark.png",
+        "demo/golden/baselines/panel-isometric-stage3-forced-colors-dark.png",
+        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
+        "demo/golden/baselines/panel-isometric-stage6-hover-light.png",
+        "demo/golden/baselines/panel-narrow-kiosk-fixed.png",
+        "demo/golden/baselines/panel-stairs-isometric-dark.png",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7455,11 +7477,12 @@
     "worker": "github-coordinator",
     "token": "733:github:45811770248:1:tick:2:admit",
     "fence": 733,
-    "materialSha": "4222d8cf6d8adaafb995ddcf99292a41d7782de2",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
+    "expectedBase": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
+    "phase": "testing",
     "admittedAt": 1795692892063,
-    "expiresAt": 1795693192063
+    "expiresAt": 1795693239918,
+    "patchId": "29f372118b06d0baba8769d8e246d9e9f556ad77"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7484,6 +7507,10 @@
     },
     "github:45811770248:1:completions:message:03fc9392092604b8ec133b3a4c387c4a9e49b2a944952af895132a045a9c2cdd": {
       "digest": "d06ea153ad832864337dc8dc1b162ea9765c32c1c5f3d55e33772ab3834f60c3",
+      "issue": 1582
+    },
+    "release-return-finish:4b4be159-fbd4-4c73-9bad-a68f4161f952:finish:1:synchronized": {
+      "digest": "0792fed9d4270166980a4a8d62109e23b6e3bcbbf2b504576a438a8900470622",
       "issue": 1582
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
