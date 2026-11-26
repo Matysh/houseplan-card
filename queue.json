@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27355,
-  "nextTicket": 745,
+  "revision": 27356,
+  "nextTicket": 746,
   "nextFence": 745,
   "tasks": {
     "1001": {
@@ -6254,6 +6254,20 @@
         "src/houseplan-editor-runtime.ts",
         "src/houseplan-onboarding-runtime.ts"
       ]
+    },
+    "1590": {
+      "issue": 1590,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1590-summary-placeholder",
+      "materialSha": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 745,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795727919387,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6931,7 +6945,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1590
+  ],
   "active": {
     "issue": 1589,
     "worker": "finish",
@@ -7093,6 +7109,19 @@
         "materialSha": "91a2284fe8c9badf1263ac81bf0039177bd0217f",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:a3ae0f71-7bb7-49b1-97b3-9c3e5b2aa612": {
+      "digest": "963a9a9f050f8108c0db123a44720bae00e7c77cbfc2abf0c252a11cb87b0402",
+      "issue": 1590,
+      "message": {
+        "kind": "queued",
+        "issue": 1590,
+        "at": 1795727919387,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7"
       }
     }
   },
