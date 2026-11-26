@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, unlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { initialReleaseState, reduceRelease, releaseReadiness, releaseClosePlan, HacsClient, HacsDeliveryVerifier, ReleaseDiscoveryVerifier, ReleaseGitAdapter, ReleasePublisher, readPublishedMeasurement, readRunnerReport, normalizeMetricsDecision } from '../lib/release.mjs';
+import { planPublishedReturnS6 } from '../lib/catalog.mjs';
 import { runPlan } from '../lib/runner.mjs';
 import { runGit } from '../lib/github.mjs';
 import { sha256 } from '../lib/github.mjs';
@@ -483,7 +485,7 @@ test('a clean return merge reuses published review; extra code or a local-only t
   try { await f.git(['merge-tree', '--write-tree', f.expectedBase, f.task.mergeSourceSha]); }
   catch { supportsMergeTree = false; }
   assert.deepEqual(await f.adapter.publishedReturnReview(input), supportsMergeTree ? { source: 'published-release', sourceSha: f.task.mergeSourceSha,
-    tag: 'v1', verdict: 'accepted', patchId: D, materialSha: f.materialSha } : null);
+    tag: 'v1', verdict: 'accepted', expectedBase: f.expectedBase, patchId: D, materialSha: f.materialSha } : null);
   assert.deepEqual({ head: await f.git(['rev-parse', 'HEAD']), status: await f.git(['status', '--porcelain']) }, before);
   assert.equal(await f.adapter.publishedReturnReview({ ...input, task: { ...f.task, mergeSourceSha: f.expectedBase } }), null);
   await f.git(['tag', 'local-only', f.task.mergeSourceSha]);
@@ -491,6 +493,42 @@ test('a clean return merge reuses published review; extra code or a local-only t
   assert.equal(await f.adapter.publishedReturnReview({ ...input, materialSha: f.expectedBase }), null);
   await writeFile(join(f.cwd, 'unreviewed.txt'), 'new work\n'); await f.git(['add', '.']); await f.git(['commit', '-m', 'unreviewed addition']);
   assert.equal(await f.adapter.publishedReturnReview({ ...input, materialSha: await f.git(['rev-parse', 'HEAD']) }), null);
+  await f.git(['revert', '--no-edit', 'HEAD']);
+  assert.equal(await f.git(['rev-parse', 'HEAD^{tree}']), await f.git(['rev-parse', `${f.materialSha}^{tree}`]));
+  assert.equal(await f.adapter.publishedReturnReview({ ...input, materialSha: await f.git(['rev-parse', 'HEAD']) }), null,
+    'manual commits with no net tree change still take the ordinary path');
+});
+
+test('a moved dev base needs a fresh proof; a clean resync still uses a single Git check', async t => {
+  const f = await returnFixture(t);
+  await f.git(['checkout', 'dev']);
+  await writeFile(join(f.cwd, 'later.txt'), 'later dev work\n');
+  await f.git(['add', 'later.txt']); await f.git(['commit', '-m', 'advance dev']);
+  const expectedBase = await f.git(['rev-parse', 'HEAD']);
+  await f.git(['push', 'origin', 'dev']); await f.git(['checkout', 'issue/1-return']);
+  await f.git(['merge', '--no-ff', '-m', 'sync current dev', expectedBase]);
+  const input = { task: f.task, expectedBase, materialSha: await f.git(['rev-parse', 'HEAD']), patchId: D };
+  assert.equal(await f.adapter.publishedReturnReview({ ...input, expectedBase: f.expectedBase }), null);
+  try { await f.git(['merge-tree', '--write-tree', expectedBase, f.task.mergeSourceSha]); }
+  catch { return t.skip('Installed Git does not support --write-tree'); }
+  const proof = await f.adapter.publishedReturnReview(input);
+  assert.equal(proof?.expectedBase, expectedBase);
+  const script = fileURLToPath(new URL('../catalog/verify-published-return.mjs', import.meta.url));
+  const plan = planPublishedReturnS6({ issue: 1, layer: 'product', remote: 'origin', proof });
+  // The synthetic Git repository contains only the merge fixtures. Execute
+  // the real runner and verifier from the source checkout.
+  plan.steps[0].command[1] = script;
+  const verify = () => runPlan(plan, { root: f.cwd });
+  const pass = await verify();
+  assert.equal(pass.status, 'passed');
+  assert.equal(pass.materialSha, input.materialSha);
+  assert.equal(pass.results.length, 1);
+  assert.deepEqual(pass.results[0].counts, { tests: 1, passed: 1, failed: 0 });
+  await writeFile(join(f.cwd, 'model.txt'), 'unsaved change\n');
+  assert.equal((await verify()).status, 'failed');
+  await f.git(['restore', 'model.txt']);
+  await f.git(['push', 'origin', `+${expectedBase}:refs/tags/v1`]);
+  assert.equal((await verify()).status, 'failed', 'a moved remote tag is not the admitted publication');
 });
 test('manual release-return conflict resolution still requires its own review', async t => {
   const f = await returnFixture(t, { conflict: true });

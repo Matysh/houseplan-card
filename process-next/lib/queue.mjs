@@ -14,6 +14,16 @@ export function ownerDecisionRecord(value) {
 }
 // The installed track is binding; provenance is context, never a routing gate.
 export const ownerShip = task => task?.track === 'ship';
+// A publication exemption is tied to the exact current admission, not just an
+// unchanged-looking patch after dev has moved.
+export function matchingPublishedReturnReview(task, active, proof = task?.review) {
+  return task?.syncMode === 'merge' && sha(task.mergeSourceSha) && Boolean(task.releaseTag)
+    && Boolean(active?.patchId) && sha(active.expectedBase) && sha(active.materialSha)
+    && proof?.source === 'published-release' && proof.verdict === 'accepted'
+    && proof.sourceSha === task.mergeSourceSha && proof.tag === task.releaseTag
+    && proof.expectedBase === active.expectedBase && proof.materialSha === active.materialSha
+    && proof.patchId === active.patchId;
+}
 export const AUTOMATION_WAIT_MS = 30 * 60_000;
 export const REVIEW_RETRY_VISIBILITY_MS = 2 * 60_000;
 export function queueSummary(state) {
@@ -179,8 +189,8 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
         delete task.review; delete task.reviewRequest; delete task.reviewMaterial; delete task.reviewRetry; delete active.reviewRequest;
       }
       task.patchId = active.patchId; task.materialSha = event.materialSha;
-      if (event.review?.source === 'published-release' && event.review.patchId === active.patchId)
-        task.review = { ...copy(event.review), verdict: 'accepted' };
+      if (task.review?.source === 'published-release') delete task.review;
+      if (event.review && matchingPublishedReturnReview(task, active, event.review)) task.review = copy(event.review);
       if (event.layer) { if (!['docs', 'infra', 'product'].includes(event.layer)) throw Error('Invalid computed layer'); task.layer = event.layer; }
       if (event.changedFiles) task.changedFiles = copy(event.changedFiles);
       clearAutomation(task);
@@ -192,7 +202,8 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
         throw Error('S6 needs its successful selected set; documentation has no runs');
       task.s6 = copy(event.evidence ?? null);
       const ship = ownerShip(task);
-      const retainedReview = task.review?.verdict === 'accepted' && task.review.patchId === active.patchId;
+      const retainedReview = task.review?.source === 'published-release' ? matchingPublishedReturnReview(task, active)
+        : task.review?.verdict === 'accepted' && task.review.patchId === active.patchId;
       if (task.reviewRequest) active.reviewRequest = task.reviewRequest;
       active.phase = ship || retainedReview ? 'ready-to-merge' : 'review'; task.status = ship || retainedReview ? 'S6-in-progress' : 'S7-code-review';
       active.expiresAt = now + duration(active.phase); clearAutomation(task);

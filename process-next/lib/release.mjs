@@ -293,7 +293,20 @@ export class ReleaseGitAdapter extends GitAdapter {
       mergedTree = (await this.git(['merge-tree', '--write-tree', expectedBase, sourceSha])).split('\n')[0];
     } catch { return null; }
     if (mergedTree !== await this.git(['rev-parse', `${materialSha}^{tree}`])) return null;
-    return { source: 'published-release', sourceSha, tag, verdict: 'accepted', patchId, materialSha };
+    // A tree match alone would also accept a manual edit followed by a revert,
+    // or an earlier conflict resolved before dev advanced. Every commit outside
+    // the two admitted histories must itself be an unmodified automatic merge.
+    const history = await this.git(['rev-list', '--parents', materialSha, `^${expectedBase}`, `^${sourceSha}`]);
+    if (!history) return null;
+    for (const line of history.split('\n')) {
+      const parents = line.split(/\s+/);
+      if (parents.length !== 3 || !parents.every(sha)) return null;
+      const [commit, left, right] = parents;
+      const tree = left === expectedBase && right === sourceSha ? mergedTree
+        : await this.git(['merge-tree', '--write-tree', left, right]).then(value => value.split('\n')[0], () => null);
+      if (!tree || tree !== await this.git(['rev-parse', `${commit}^{tree}`])) return null;
+    }
+    return { source: 'published-release', sourceSha, tag, verdict: 'accepted', expectedBase, patchId, materialSha };
   }
   async resolveSource({ kind, published }) {
     const sourceSha = kind === 'beta' ? await this.remoteHead(this.dev)

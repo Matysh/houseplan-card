@@ -56,6 +56,15 @@ const step = (id, name, command, inputs, requires = [], extra = {}) => ({
 const unavailable = (id, name, reason, diagnostic = false, extra = {}) =>
   step(id, name, null, [], [], { unavailable: reason, diagnostic, ...extra });
 const helper = (name, ...args) => ['node', `process-next/catalog/${name}.mjs`, ...args];
+// Constructed only by the finishing executor from the exact admitted Git
+// proof; not a request option that could reduce ordinary S6 coverage.
+export function planPublishedReturnS6({ issue, layer, remote, proof }) {
+  return { event: 'task', issue, layer, name: `Короткий S6: возврат опубликованного тега · #${issue}`,
+    steps: [step('published-return:git', 'Git: чистое слияние опубликованного тега',
+      helper('verify-published-return', remote, proof.tag, proof.expectedBase, proof.sourceSha, proof.materialSha, proof.patchId),
+      ['process-next/catalog/verify-published-return.mjs', 'process-next/lib/release.mjs', 'process-next/lib/github.mjs'], [],
+      { alwaysRun: true, expectedNonempty: true })] };
+}
 const safeRelative = value => typeof value === 'string' && value && !value.startsWith('-')
   && !value.includes('\\') && !value.split('/').includes('..') && !value.startsWith('/') && !value.includes(':');
 

@@ -6,9 +6,9 @@ import { tmpdir } from 'node:os';
 import { randomUUID, createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { GitHubClient, GitHubQueueStore } from './lib/github.mjs';
-import { QueueController, StateConflict, ownerShip, queueSummary, pendingReviewPublications } from './lib/queue.mjs';
+import { QueueController, StateConflict, ownerShip, queueSummary, pendingReviewPublications, matchingPublishedReturnReview } from './lib/queue.mjs';
 import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileReviewReturnLabel, reconcileSpecReview, inspectTaskMaterial } from './lib/coordinator.mjs';
-import { planProfile } from './lib/catalog.mjs';
+import { planProfile, planPublishedReturnS6 } from './lib/catalog.mjs';
 import { runPlan } from './lib/runner.mjs';
 import { WorkflowFallbackAdapter } from './lib/fallback.mjs';
 import { initialReleaseState, reduceRelease, ReleaseGitAdapter, ReleasePublisher,
@@ -397,19 +397,23 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     return { ...material, review: task.releaseTag ? await git.publishedReturnReview({ task, ...material }) : null };
   };
   const runS6 = async ({ active, task }) => {
-    if (event.s6 === 'github') {
+    // Both executors already have Node/Git for synchronization. This single
+    // check needs no product runtime, even on a host using the Actions fallback.
+    const short = matchingPublishedReturnReview(task, active);
+    if (!short && event.s6 === 'github') {
       const fallback = dependencies.fallback ?? new WorkflowFallbackAdapter({ api, ...config.fallback });
       const result = await fallback.runS6({ active, task, request: { ...(event.request ?? {}),
         areaTests: event.areaTests ?? event.request?.areaTests ?? [] }, signal,
         onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
       return { ...result, evidence: result.receipt };
     }
-    if (dependencies.prepareEnvironment) await dependencies.prepareEnvironment();
-    const plan = await (dependencies.planProfile ?? planProfile)({ ...(event.request ?? {}), root: config.workspace, event: 'task', issue: task.issue,
+    if (!short && dependencies.prepareEnvironment) await dependencies.prepareEnvironment();
+    const plan = short ? planPublishedReturnS6({ issue: task.issue, layer: task.layer, remote: git.remote ?? 'origin', proof: task.review })
+      : await (dependencies.planProfile ?? planProfile)({ ...(event.request ?? {}), root: config.workspace, event: 'task', issue: task.issue,
       track: task.track, ownerAssigned: ownerShip(task), layer: task.layer, changedFiles: task.changedFiles ?? [], areaTests: event.areaTests ?? event.request?.areaTests ?? [] });
     if(plan.selection)onProgress({kind:'selection',text:selectionText(plan.selection)});
     const report = await (dependencies.runPlan ?? runPlan)(plan, { root: config.workspace, stateDir: config.localStateDir,
-      reuse: true, signal, onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
+      reuse: !short, signal, onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
     if(plan.selection)onProgress({kind:'selection',text:selectionText({...plan.selection,reasons:{}},report)});
     return { outcome: report.status, evidence: { id: report.id, name: report.name, reportPath: report.reportPath, materialSha: active.materialSha,
       status: report.status, finishedAt: report.finishedAt,
