@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26607,
-  "nextTicket": 732,
+  "revision": 26608,
+  "nextTicket": 733,
   "nextFence": 732,
   "tasks": {
     "1024": {
@@ -6718,6 +6718,20 @@
         "status": "published",
         "sourceSha": "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5"
       }
+    },
+    "1580": {
+      "issue": 1580,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1580-window-sunlight",
+      "materialSha": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 732,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795691940218,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7395,7 +7409,9 @@
       "runId": 45799718453
     }
   },
-  "waiting": [],
+  "waiting": [
+    1580
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7445,6 +7461,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:28239003-5d77-47fa-aa81-e4d3bbb864f5": {
+      "digest": "caa6f7ea00d334f74be545377e310f2b2f13c2438e84a0b6e43065d15dc27800",
+      "issue": 1580,
+      "message": {
+        "kind": "queued",
+        "issue": 1580,
+        "at": 1795691940218,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b"
       }
     }
   },
