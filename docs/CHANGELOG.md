@@ -2,14 +2,15 @@
 
 ## Unreleased
 
-## v2.0.0-beta.1 — 2026-11-26
-
-- Use native WebGL for the volumetric plan: physical wall, opening, furniture and device depth, with lights on floors and walls. Keep the existing 2D editors and flat SVG export (#1514, #1566, #1567).
-- Reveal a cold floor only after its complete frame is ready, with loading feedback while it is being prepared (#1579).
 - Test maintenance: verify that closing Help with Escape leaves the button unhighlighted and that Tab navigation highlights its ordinary border (#1581).
 
 - Use one Git-only S6 check for a proven clean return of an exact published tag to dev; keep normal checks and review for manual or conflicted returns (#1583).
 - Keep window sunlight on the floor in WebGL 3D and soften the edge of the light patch at high zoom (#1580).
+
+## v2.0.0-beta.1 — 2026-11-26
+
+- Use native WebGL for the volumetric plan: physical wall, opening, furniture and device depth, with lights on floors and walls. Keep the existing 2D editors and flat SVG export (#1514, #1566, #1567).
+- Reveal a cold floor only after its complete frame is ready, with loading feedback while it is being prepared (#1579).
 - Save room-label positions and scale in the standalone editor using point-level conflict detection and observable save outcomes (#1563).
 - Test maintenance: run the nightly wall-node parity guard as a Python module with its compiled fixture dependencies (#1564).
 - Keep 3D geometry in sync with labels and devices during pan and zoom, and restore fine edges, wall-base hatching, translucent stairs and soft contact shadows (#1566).
