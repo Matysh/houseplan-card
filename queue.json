@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27188,
+  "revision": 27189,
   "nextTicket": 743,
   "nextFence": 743,
   "tasks": {
@@ -3273,40 +3273,6 @@
         "sourceSha": "3a6f5f9cebcf950ce4b086c0471201123b410cd5"
       }
     },
-    "1502": {
-      "issue": 1502,
-      "branch": "issue/1502-release-return-954bdc137380",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "3a6f5f9cebcf950ce4b086c0471201123b410cd5",
-      "mergedSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050",
-      "mergedAt": 1795208288962,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.86.0-beta.3",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "2ad43cbdbb12b82bf81df09bd249977f82a31050"
-      }
-    },
     "1503": {
       "issue": 1503,
       "branch": "codex/1503-zigbee-topology-hover",
@@ -6305,10 +6271,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
