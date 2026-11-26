@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25506,
+  "revision": 25507,
   "nextTicket": 712,
   "nextFence": 712,
   "tasks": {
@@ -6476,7 +6476,21 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795651728886,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c",
+      "changedFiles": [
+        "demo/smoke_device_battery_zigbee.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v2.0.0/1573.json",
+        "src/houseplan-card.ts",
+        "src/hp-zigbee-topology-overlay.ts",
+        "src/plan-3d-host.ts",
+        "src/plan-3d-markers.ts",
+        "src/plan-3d-world.ts",
+        "src/styles/iso-lab-markers.styles.ts",
+        "src/zigbee-topology-overlay-bridge.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7147,10 +7161,11 @@
     "token": "711:finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:1:admit",
     "fence": 711,
     "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
+    "phase": "testing",
     "admittedAt": 1795651733669,
-    "expiresAt": 1795652033669
+    "expiresAt": 1795652039928,
+    "patchId": "8b8214e5c2b5bdd741d2c6bcc844a65e0f00329c"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7300,6 +7315,10 @@
     "github:45726376803:1:completions:metadata:4be1cc36-7cea-4aaf-9603-7138a076974f:task-notice:1572::": {
       "digest": "fba498f4fdbda9910bbf2ef55a9586423b21be60c62a5698db1749f69f37c06a",
       "issue": 1572
+    },
+    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86:finish:2:synchronized": {
+      "digest": "8cf119296bd3d57d0c88ac2b6faecd8286fb60fac21386f48de7aa8e7eb6ede5",
+      "issue": 1573
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
