@@ -148,16 +148,43 @@ if (native) {
       }),
     };
   }, [WHITE,TINTED]));
+  const previous = await page.evaluate(async id=>{
+    let previous;
+    await window.__hpTest.setServerConfig(cfg=>{
+      const i=cfg.markers.findIndex(marker=>marker.id===id||marker.binding==='device:'+id);
+      previous=i>=0 ? structuredClone(cfg.markers[i]) : null;
+      if(previous) cfg.markers[i]={...previous,angle:90};
+      else cfg.markers.push({id,binding:'device:'+id,angle:90});
+      return cfg;
+    });
+    return previous;
+  }, TINTED);
+  await page.waitForFunction(id=>window.__card.renderRoot.querySelector(`.dev[data-id="${id}"]`)
+    ?.getAttribute('data-hp-3d-device')==='90', TINTED);
   const centre = await page.locator(`.dev[data-id="${TINTED}"] .device-core`).boundingBox();
-  const nativeColour = (id) => window.__card._plan3dHost.markers.find(marker=>marker.id===id)?.faces[0].color;
+  const nativeFace = (id) => {
+    const node = window.__card.renderRoot.querySelector(`.dev[data-id="${id}"]`);
+    const face = window.__card._plan3dHost.markers.find(marker=>marker.id===id)?.faces[0];
+    return { color: face?.color, angle: face?.glyph?.angle, configured: node.getAttribute('data-hp-3d-device') };
+  };
+  const before = await page.evaluate(nativeFace, TINTED);
   await page.mouse.move(centre.x + centre.width / 2, centre.y + centre.height / 2);
   await page.waitForFunction(id=>window.__card._plan3dHost.markers.find(marker=>marker.id===id)
     ?.faces[0].color==='rgb(12, 130, 240)', TINTED, {timeout:2000});
-  res.nativeHoverIsBlue = await page.evaluate(nativeColour, TINTED) === 'rgb(12, 130, 240)';
+  const hovered = await page.evaluate(nativeFace, TINTED);
+  res.nativeHoverIsBlue = hovered.color === 'rgb(12, 130, 240)';
   await page.mouse.move(5, 5);
   await page.waitForFunction(id=>window.__card._plan3dHost.markers.find(marker=>marker.id===id)
     ?.faces[0].color==='rgb(240, 160, 12)', TINTED, {timeout:2000});
-  res.nativeLeaveRestoresTint = await page.evaluate(nativeColour, TINTED) === 'rgb(240, 160, 12)';
+  const after = await page.evaluate(nativeFace, TINTED);
+  res.nativeLeaveRestoresTint = after.color === 'rgb(240, 160, 12)';
+  res.nativeHoverKeepsAuthoredRotation = before.configured === '90' && Number.isFinite(before.angle)
+    && near(before.angle, hovered.angle, 1e-10) && near(before.angle, after.angle, 1e-10);
+  await page.evaluate(({id,previous})=>window.__hpTest.setServerConfig(cfg=>{
+    const i=cfg.markers.findIndex(marker=>marker.id===id||marker.binding==='device:'+id);
+    if(i>=0) cfg.markers.splice(i,1,...(previous ? [previous] : []));
+    return cfg;
+  }), {id:TINTED,previous});
 } else {
 res.scale112 = near(D / flat.white.w, 1.12, 0.01);
 res.noRing = /rgba\(0, 0, 0, 0\)/.test(iso.white.ring) && /rgba\(0, 0, 0, 0\)/.test(iso.tinted.ring);

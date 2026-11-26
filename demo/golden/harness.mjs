@@ -1378,17 +1378,17 @@ export async function prepareGoldenScenario(page, scenario) {
       // (the same rule as ensureIsoRuntime: golden never accepts a degraded
       // surface as the baseline).
       const activeDecor = fixture.config.spaces.find((space) => space.id === card._space)?.decor || [];
-      const expectedFurniture = activeDecor.filter((shape) => shape.kind === 'furniture').length;
+      const furnitureIds = activeDecor.filter((shape) => shape.kind === 'furniture').map(shape => shape.id);
+      const expectedFurniture = furnitureIds.length;
       if (expectedFurniture) {
         await card.updateComplete;
         const root = card.shadowRoot || card.renderRoot;
         let drawn = root.querySelectorAll('[data-kind="furniture"]').length;
         if (!drawn && scenario.projection === 'iso' && !scenario.stage3Golden?.noBorders) {
           await until(() => root.querySelector('canvas[data-hp-plan-3d-ready]'));
-          const world = card._plan3dHost?.world;
-          const input = card._plan3dPresentation?.world.furniture ?? [];
-          if (world?.furniture.children.filter(mesh => mesh.geometry.getAttribute('position').count > 0).length >= expectedFurniture)
-            drawn = input.length;
+          const meshes = card._plan3dHost?.world.furniture.children.filter(
+            mesh => mesh.geometry.getAttribute('position').count > 0) ?? [];
+          drawn = furnitureIds.filter(id => meshes.some(mesh => mesh.name.startsWith(`furniture:${id}:`))).length;
         }
         if (drawn < expectedFurniture) {
           throw new Error(`golden furniture artwork missing: ${scenario.id} (${drawn}/${expectedFurniture})`);

@@ -218,9 +218,10 @@ try {
   })));
   await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-id="d_light1"] .device-battery'));
   out.hiddenLedRestoresBattery = true;
-  // The preview round-trip above may normalize the action for the marker's
-  // temporary display modes. Specify the intended positive tap control.
-  await patchBatteryMarker(page, { tap_action: 'info' });
+  // The two saves configured only battery visibility. Verify the existing
+  // click action before exercising a real post-pan core click below.
+  out.batteryDialogPreservesTapAction = await page.evaluate(() =>
+    window.__card._serverCfg?.markers.find(marker=>marker.id==='d_temp')?.tap_action==='info');
 
   // A point outside the old shell is visually occupied, but is not a new click target.
   const desktopInput = await batteryInputProbe(page);

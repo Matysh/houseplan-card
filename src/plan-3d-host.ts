@@ -3,7 +3,7 @@ import { Plan3dWorld, type Plan3dContactShadow, type Plan3dOutline, type Plan3dW
 import { Plan3dViewport, type Plan3dFrame } from './plan-3d-viewport';
 import { readPlan3dMarkerFaces, type Plan3dMarker } from './plan-3d-markers';
 import { Plan3dLightMotion } from './plan-3d-light-motion';
-import { isoReadingYaw, type IsoCamera, type ViewRect } from './iso-projection';
+import type { IsoCamera, ViewRect } from './iso-projection';
 
 export interface Plan3dPresentation {
   world: Plan3dWorldInput;
@@ -81,14 +81,12 @@ export class Plan3dHost {
   refreshMarkerFaces(elements: readonly (Element | null)[]): void {
     const preset = this.presentation?.preset;
     if (!preset || this.disposed) return;
-    const turn = (isoReadingYaw(preset.rotDeg) - preset.rotDeg) * Math.PI / 180;
     let changed = false;
     const markers = this.markers.map(marker => {
       const element = elements.find((node): node is HTMLElement =>
         node instanceof HTMLElement && node.hasAttribute('data-hp-3d-native') && node.dataset.id === marker.id);
       if (!element) return marker;
-      const angle = Number(element.getAttribute('data-hp-3d-device'));
-      const faces = readPlan3dMarkerFaces(element, marker.faces, turn + (Number.isFinite(angle) ? angle : 0));
+      const faces = readPlan3dMarkerFaces(element, marker.faces, preset.rotDeg);
       if (!faces) return marker;
       changed = true;
       return { ...marker, faces };

@@ -3,7 +3,7 @@ import {
   MeshBasicMaterial, SRGBColorSpace, Vector3, type BufferGeometry, type Camera,
 } from 'three';
 import type { IsoDeviceFace } from './iso-overlays';
-import type { PlanPoint } from './iso-projection';
+import { isoReadingYaw, type PlanPoint } from './iso-projection';
 import { planPrismMesh } from './plan-3d-mesh';
 
 export type Plan3dMarkerGlyph = {
@@ -42,10 +42,15 @@ function iconGlyph(icon: Element, angle: number): Plan3dMarkerGlyph | undefined 
 /** CSS and HA own face colours, text and vector glyphs. The contact solver
  * provides the same measured and rotated capsules used by grouped devices. */
 export function readPlan3dMarkerFaces(
-  element: HTMLElement, geometry: readonly IsoDeviceFace[], iconTurn: number,
+  element: HTMLElement, geometry: readonly IsoDeviceFace[], sceneYawDegrees: number,
 ): readonly Plan3dMarkerFace[] | undefined {
   const window = element.ownerDocument.defaultView;
   if (!window) return;
+  // The authored attribute and the camera preset are both in degrees;
+  // the texture painter takes radians. Use the same source on live hover.
+  const configured = Number(element.getAttribute('data-hp-3d-device'));
+  const iconTurn = (isoReadingYaw(sceneYawDegrees) - sceneYawDegrees
+    + (Number.isFinite(configured) ? configured : 0)) * Math.PI / 180;
   const nodes = [...element.querySelectorAll<HTMLElement>('.device-core,.value-badge')];
   if (nodes.length !== geometry.length) return;
   const faces: Plan3dMarkerFace[] = [];
