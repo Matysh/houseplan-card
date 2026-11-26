@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26364,
-  "nextTicket": 729,
+  "revision": 26365,
+  "nextTicket": 730,
   "nextFence": 729,
   "tasks": {
     "1024": {
@@ -6700,14 +6700,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1579-cold-floor-switch",
-      "materialSha": "6a00275c38b56fce353aa9be66f0cb1a704f1785",
+      "materialSha": "3a911dbc64a9a2edc5b47633288ead14d17013f5",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 728,
-      "queued": false,
+      "ticket": 729,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795679197315,
-      "reviewEntry": 1,
+      "readyAt": 1795681616890,
+      "reviewEntry": 2,
       "patchId": "4f688f47002117fe0507196a862ac740ca11991c",
       "changedFiles": [
         "demo/smoke_cold_floor_switch.mjs",
@@ -6717,7 +6717,6 @@
         "src/plan-3d-host.ts",
         "src/styles/plan.styles.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7390,7 +7389,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1579
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7612,6 +7613,19 @@
           "entry": 1,
           "eventId": "finish:fbdf3244-60a3-47b0-ae87-c2c387184db3:finish:2:return:return:1579"
         }
+      }
+    },
+    "finish:bf689af1-be25-43a8-a31d-b6c9826727ec": {
+      "digest": "59f8a7663a090ead816c891c6848497c3fc3f380c71645965a1cd63a600de744",
+      "issue": 1579,
+      "message": {
+        "kind": "queued",
+        "issue": 1579,
+        "at": 1795681616890,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3a911dbc64a9a2edc5b47633288ead14d17013f5"
       }
     }
   },
