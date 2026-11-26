@@ -201,7 +201,11 @@ try {
     };
     const post = NativeWorker.prototype.postMessage;
     NativeWorker.prototype.postMessage = function(message, ...args) {
-      if (message.job?.kind === 'area') restoredAreaJobs.push(message.job.raw.id);
+      // The delayed preview worker can still forward an old message after mount.
+      // Count only jobs sent by the restored card's own summary scheduler.
+      if (message.job?.kind === 'area' && this === window.__cacheCard?._floorPreparation?.scheduler.worker) {
+        restoredAreaJobs.push(message.job.raw.id);
+      }
       return post.call(this, message, ...args);
     };
     try {
