@@ -360,7 +360,12 @@ export class Plan3dMarkerLayer {
     paint.body.renderOrder = translucent ? 0 : order;
     for (const material of paint.body.material) {
       material.opacity = opacity;
-      material.transparent = translucent;
+      if (material.transparent !== translucent) {
+        material.transparent = translucent;
+        // The OPAQUE shader variant is keyed by material version, not a
+        // uniform. Reuse the mesh but refresh the shader on a live change.
+        material.needsUpdate = true;
+      }
       material.depthWrite = !translucent;
     }
     paint.body.material[1].color.set(face.edge);

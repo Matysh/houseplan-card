@@ -185,11 +185,13 @@ try {
       normalOpaque: markers.get('offline-icon:0')?.body.material.every(material => material.opacity === 1),
       unknownOpaque: markers.get('offline-unknown:0')?.body.material.every(material => material.opacity === 1),
       shadow: host.world.contacts.children[0]?.material.map?.image?.toDataURL(),
+      mesh: body.id,
       pixel: [...ctx.getImageData(Math.floor(x * host.canvas.width), Math.floor(y * host.canvas.height), 1, 1).data],
       pick: host.pick(size.left + x * size.width, size.top + y * size.height),
     };
   });
   for (const profile of ['dark', 'custom', 'iso']) {
+    if (profile === 'iso') await setDeviceOfflineStates(page, { 'media_player.offline_down': 'off' });
     await page.evaluate(async profile => {
       const card = window.__card;
       card.hass = { ...card.hass, themes: { ...card.hass.themes, darkMode: true } };
@@ -203,6 +205,8 @@ try {
         await window.__hpTest.setVolumetricView(true);
       }
     }, profile);
+    const initiallyLive = profile === 'iso' ? await nativePaint() : null;
+    if (profile === 'iso') await setDeviceOfflineStates(page, { 'media_player.offline_down': 'unavailable' });
     await waitDeviceOfflinePaint(page);
     const paint = await readDeviceOfflinePaint(page, ['offline-down', 'offline-icon']);
     observations[profile] = paint;
@@ -221,6 +225,12 @@ try {
         && JSON.stringify(native.pixel) !== JSON.stringify(recovered.pixel)
         && recovered.offline.every(face => face.every(([opacity, transparent]) => opacity === 1 && !transparent));
       await setDeviceOfflineStates(page, { 'media_player.offline_down': 'unavailable' });
+      const offlineAgain = await nativePaint();
+      out.isoLiveLossRestoresSameDimmedPixelsOnSameMesh = initiallyLive.mesh === native.mesh && native.mesh === recovered.mesh
+        && recovered.mesh === offlineAgain.mesh && offlineAgain.pick === native.pick
+        && initiallyLive.pixel.every((value, i) => Math.abs(value - recovered.pixel[i]) <= 2)
+        && offlineAgain.pixel.every((value, i) => Math.abs(value - native.pixel[i]) <= 2)
+        && offlineAgain.pixel.some((value, i) => Math.abs(value - recovered.pixel[i]) >= 8);
     } else if (profile === 'iso') out.isoShadowKeepsOrdinaryPaint = await page.evaluate(() => {
       const root = window.__card.renderRoot;
       const shadow = id => root.querySelector(`.iso-tile-shadow[data-shadow-of="${id}"]`);
