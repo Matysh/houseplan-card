@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 26840,
+  "revision": 26841,
   "nextTicket": 738,
-  "nextFence": 737,
+  "nextFence": 738,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -6804,7 +6804,7 @@
       "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
       "ownerDecision": null,
       "ticket": 737,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795695978890,
       "reviewEntry": 2,
@@ -7554,10 +7554,18 @@
       "runId": 45817072508
     }
   },
-  "waiting": [
-    1582
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1582,
+    "worker": "finish",
+    "token": "737:finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:1:admit",
+    "fence": 737,
+    "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795695983505,
+    "expiresAt": 1795696283505
+  },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7822,6 +7830,29 @@
         "track": "show",
         "layer": "product",
         "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
+        "evidence": {
+          "id": "20261126T113552929-81d340ae",
+          "name": "Тесты для задачи #1582 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T113552929-81d340ae/report.json",
+          "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
+          "status": "passed",
+          "finishedAt": "2026-11-26T11:55:50.605Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:1:admit": {
+      "digest": "ebb2cd51c0ae4da38990f667d711301d0c77dba1ba1a24701c49f1b19cf30d7c",
+      "issue": 1582,
+      "message": {
+        "kind": "admitted",
+        "issue": 1582,
+        "at": 1795695983505,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
+        "phase": "sync",
         "evidence": {
           "id": "20261126T113552929-81d340ae",
           "name": "Тесты для задачи #1582 (перед ревью)",
