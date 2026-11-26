@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26158,
-  "nextTicket": 724,
+  "revision": 26159,
+  "nextTicket": 725,
   "nextFence": 724,
   "tasks": {
     "1024": {
@@ -6667,6 +6667,20 @@
         "requestId": "review:1577:2:684c3621a30b274c6174213732c623bc7ccbc73f:6560b865829e17fcc46247d422c7ec2dc1752945",
         "at": 1795674301442
       }
+    },
+    "1578": {
+      "issue": 1578,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1578-webgl-floor-shadow",
+      "materialSha": "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 724,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795674492031,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7344,7 +7358,9 @@
       "runId": 45765547290
     }
   },
-  "waiting": [],
+  "waiting": [
+    1578
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7675,6 +7691,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:c271f30c-4acc-40b3-82d5-ef777de2434b": {
+      "digest": "8246c34a996ca506d7390e83127b8543e5fb094bb4bd18cb3d22cc1548a4fb86",
+      "issue": 1578,
+      "message": {
+        "kind": "queued",
+        "issue": 1578,
+        "at": 1795674492031,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9"
       }
     }
   },
