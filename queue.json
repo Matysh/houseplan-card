@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27178,
+  "revision": 27179,
   "nextTicket": 743,
   "nextFence": 743,
   "tasks": {
@@ -3016,44 +3016,6 @@
         "src/houseplan-editor-runtime.ts"
       ],
       "reason": "owner-stopped"
-    },
-    "1485": {
-      "issue": 1485,
-      "branch": "codex/1485-iso-raster-session",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "54a8148959ffb71f0737532924c05b0a65de8b4a",
-      "mergedSha": "3e5f3deaeb36612fd1ed50679cc6fe6f8d79025b",
-      "mergedAt": 1795166903672,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1485:3:9937ef965e97d8686c303084aa1988ac072c4573:54a8148959ffb71f0737532924c05b0a65de8b4a",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "3e5f3deaeb36612fd1ed50679cc6fe6f8d79025b"
-      }
     },
     "1488": {
       "issue": 1488,
@@ -6127,21 +6089,22 @@
       "reviewRequest": "review:1572:3:14bf0dfb3ece486a088628e5121c85729c47331d:af48a3bb57b013879d80c70d7fd1c66d12b177bb",
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": true,
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": false,
-        "classificationAt": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
         "commentCurrent": true,
-        "commentDigest": "461782c36f016e0e633c",
+        "commentDigest": "d1c65df9ac3a3cbebb03",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
+          "milestone": true,
           "target": null
+        },
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 18
         }
       },
       "devBuild": {
