@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1575,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Keep the badge geometry and text metrics consistent in the unreleased WebGL renderer.",
+  "summary": {
+    "ru": "Восстановлены боковые отступы у бейджей значений в WebGL 3D.",
+    "en": "Restored the side padding on value badges in WebGL 3D."
+  }
+}

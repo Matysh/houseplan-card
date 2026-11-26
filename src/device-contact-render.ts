@@ -39,6 +39,7 @@ export interface DeviceContactFrame {
   glassProjection?: IsoMarkerGlassProjection;
 }
 interface MeasuredMarker { element: HTMLElement; ink: HTMLElement }
+interface MeasuredFace { box: ContactRect; faces: readonly IsoDeviceFace[]; }
 const metricKey = (shell: Element | null | undefined): string => shell
   ? JSON.stringify([shell.className, ...[...shell.querySelectorAll('.valtext,.value-badge')]
     .map((node) => [node.textContent, node.getAttribute('style')])]) : '';
@@ -69,6 +70,7 @@ export class DeviceContactRenderer {
   public readonly work = { measurements: 0, measurementBatches: 0, rebuilds: 0, paints: 0 };
   private readonly metrics = new Map<string, ContactRect>();
   private readonly faces = new Map<string, readonly IsoDeviceFace[]>();
+  private readonly standaloneFaces = new Map<string, MeasuredFace>();
   private elements = new Map<string, MeasuredMarker>();
   private frameKey = '';
   private floorKey = '';
@@ -83,7 +85,7 @@ export class DeviceContactRenderer {
   private fontDocument: Document | null = null;
   private invalidate: (() => void) | undefined;
   private readonly fontsChanged = (): void => {
-    this.metrics.clear(); this.faces.clear(); this.frameKey=''; this.invalidate?.();
+    this.metrics.clear(); this.faces.clear(); this.standaloneFaces.clear(); this.frameKey=''; this.invalidate?.();
   };
 
   /** Never return a previous snapshot's effective point for a newly authored drag. */
@@ -171,6 +173,7 @@ export class DeviceContactRenderer {
     this.appearanceChanged = false;
     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
     const uprightHalfTurn = frame.uprightHalfTurn ?? false;
+    const enteredRaisedView = !!frame.plane && !this.plane;
     const turned = this.rotation !== (frame.rotation ?? 0) || this.uprightHalfTurn !== uprightHalfTurn
       || String(this.plane) !== String(frame.plane)
       || this.glassProjection?.camera !== frame.glassProjection?.camera
@@ -190,7 +193,10 @@ export class DeviceContactRenderer {
     }
     const context = this.preparedFont?.root === root ? this.preparedFont.value : this.fontKey(root);
     this.preparedFont = null;
-    if(context!==this.fontContext){this.metrics.clear();this.faces.clear();this.fontContext=context;this.frameKey='';}
+    if (context !== this.fontContext) {
+      this.metrics.clear(); this.faces.clear(); this.standaloneFaces.clear();
+      this.fontContext = context; this.frameKey = '';
+    }
     const floor = frame.floor ? deviceContactFloor(frame.floor.config, frame.floor.model) : null;
     if (floor && !floor.safe) { const active = !!this.scene; if (active) this.clear(); return active; }
     const nodes = new Map([...root.querySelectorAll<HTMLElement>('.devlayer > .dev[data-hp="device"][data-id]')]
@@ -199,7 +205,7 @@ export class DeviceContactRenderer {
       m.virtual,m.legacyDiameters?.join(','),JSON.stringify(frame.layout?.[m.id]?.contact_basis),
       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
     const changedMasks = this.changedWallMasks(nodes);
-    if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) {
+    if (!enteredRaisedView && key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) {
       if (this.scene && (turned || changedMasks.size))
         this.paint(turned ? this.scene.shapes.keys() : changedMasks);
       this.paintWallMasks(nodes);
@@ -208,18 +214,21 @@ export class DeviceContactRenderer {
     const measured: ContactMarker[] = [];
     const nextElements = new Map<string, MeasuredMarker>();
     const pending = new Map<string, HTMLElement>();
+    const standalone = new Map<string, HTMLElement>();
     for (const m of frame.markers) {
       const element = nodes.get(m.id), shell = element?.querySelector('.device-shell');
       if (element && shell) {
         const faceKey = metricKey(shell);
         if (!this.metrics.has(faceKey)) pending.set(faceKey, element);
+        if (this.plane && !this.standaloneFaces.has(faceKey) && shell.querySelector('.value-badge'))
+          standalone.set(faceKey, element);
       }
     }
-    const fresh = this.measure(pending);
+    const fresh = this.measure(pending, standalone);
     if (this.plane) for (const [id,node] of nodes) {
       const painted = this.presentations.get(node);
       const shell = node.querySelector('.device-shell');
-      if (painted && (painted.shell !== shell || painted.metrics !== this.faces.get(metricKey(shell))))
+      if (painted && (painted.shell !== shell || painted.metrics !== this.presentationMetrics(painted.source, shell, painted.joined).faces))
         changedMasks.add(id);
     }
     for (const m of frame.markers) {
@@ -292,16 +301,18 @@ export class DeviceContactRenderer {
    * It is the real face and its real inherited font/CSS, not a second renderer
    * or a glyph-count approximation. Cached per distinct visible face metric.
    */
-  private measure(elements: ReadonlyMap<string, HTMLElement>): Map<string, ContactRect> {
+  private measure(elements: ReadonlyMap<string, HTMLElement>,
+    standalone: ReadonlyMap<string, HTMLElement> = new Map()): Map<string, ContactRect> {
     const result = new Map<string, ContactRect>();
-    if (!elements.size) return result;
+    if (!elements.size && !standalone.size) return result;
     // Write every probe before reading any rectangle: unique values must not
     // force a complete layout once per device on a cold floor/editor entry.
-    const probes = [...elements].map(([key, element]) => {
+    const probes = [...[...elements].map(([key, element]) => ({ key, element, contact: true })),
+      ...[...standalone].map(([key, element]) => ({ key, element, contact: false }))].map(({ key, element, contact }) => {
       const probe = element.cloneNode(true) as HTMLElement;
       // Measure the future contact variant, including its designer badge fit.
       // A standalone marker keeps its old CSS face until a real edge exists.
-      probe.setAttribute('data-hp-device-contact', ''); probe.removeAttribute('data-id');
+      probe.toggleAttribute('data-hp-device-contact', contact); probe.removeAttribute('data-id');
       probe.removeAttribute('data-hp'); probe.setAttribute('aria-hidden', 'true'); probe.inert = true;
       probe.style.cssText = 'position:absolute;left:0;top:0;margin:0;width:800px;height:800px;--dev-size:800px;transform:none;visibility:hidden;pointer-events:none';
       probe.style.setProperty('--hp-iso-content-turn','0deg');
@@ -312,17 +323,18 @@ export class DeviceContactRenderer {
       shell?.style.removeProperty('--hp-value-shift-y');
       probe.querySelector('.device-contact-ink')?.replaceChildren();
       element.parentElement?.append(probe);
-      return { key, probe };
+      return { key, probe, contact };
     });
-    for (const { key, probe } of probes) {
+    for (const { key, probe, contact } of probes) {
       const core = probe.getBoundingClientRect(), face = probe.querySelector('.device-shell-frame')?.getBoundingClientRect();
-      if (face && core.width > 0) result.set(key, {
+      if (!face || !(core.width > 0)) continue;
+      const box = {
         left: (face.left - core.left - core.width / 2) / core.width,
         right: (face.right - core.left - core.width / 2) / core.width,
         top: (face.top - core.top - core.height / 2) / core.width,
         bottom: (face.bottom - core.top - core.height / 2) / core.width,
-      });
-      if(core.width>0)this.faces.set(key,[...probe.querySelectorAll<HTMLElement>('.device-core,.value-badge')].map(node=>{
+      };
+      const faces = [...probe.querySelectorAll<HTMLElement>('.device-core,.value-badge')].map(node=>{
         const rect=node.getBoundingClientRect(),style=getComputedStyle(node);
         const radius=style.borderTopLeftRadius.split(' ');
         const radiusX=radius[0],radiusY=radius[1]||radiusX;
@@ -331,13 +343,16 @@ export class DeviceContactRenderer {
         return {left:(rect.left-core.left-core.width/2)/core.width,right:(rect.right-core.left-core.width/2)/core.width,
           top:(rect.top-core.top-core.height/2)/core.width,bottom:(rect.bottom-core.top-core.height/2)/core.width,
           rx:rx/core.width,ry:ry/core.width};
-      }));
+      });
+      if (contact) { result.set(key, box); this.faces.set(key, faces); }
+      else this.standaloneFaces.set(key, { box, faces });
     }
     for (const { probe } of probes) probe.remove();
     for (const [key, metric] of result) this.metrics.set(key, metric);
     while (this.metrics.size > 256) {
       const key=this.metrics.keys().next().value!;this.metrics.delete(key);this.faces.delete(key);
     }
+    while (this.standaloneFaces.size > 256) this.standaloneFaces.delete(this.standaloneFaces.keys().next().value!);
     this.work.measurements += probes.length; this.work.measurementBatches++;
     return result;
   }
@@ -357,18 +372,29 @@ export class DeviceContactRenderer {
     return (isoReadingYaw(yaw) - yaw) * Math.PI / 180;
   }
 
+  private presentationMetrics(shape: ContactShape, shell: Element | null, joined: boolean) {
+    const key = metricKey(shell);
+    const standalone = !joined && !Object.keys(shape.walls).length ? this.standaloneFaces.get(key) : undefined;
+    return { faces: standalone?.faces ?? this.faces.get(key), box: standalone?.box };
+  }
+
   private present(shape: ContactShape, joined: boolean): ContactShape {
     const node = this.elements.get(shape.marker.id)?.element;
     const shell = node?.querySelector<HTMLElement>('.device-shell');
     if (!node || !shell) return shape;
-    const metrics = this.faces.get(metricKey(shell));
+    const { faces: metrics, box } = this.presentationMetrics(shape, shell, joined);
     if (!metrics?.length) return shape;
     const turn = this.contentTurn, valueCore = node.classList.contains('valonly');
     const existing = this.presentations.get(node);
     if (existing?.shell === shell && existing.source === shape && existing.metrics === metrics
         && existing.turn === turn && existing.joined === joined && existing.valueCore === valueCore)
       return existing.presentation.shape;
-    const presentation = orientIsoDeviceFace(shape, metrics, turn, valueCore, joined);
+    // Preserve the contact solver's measured variant and graph, but free
+    // 3D markers (including their outlines and hits) use their actual DOM face.
+    const d = shape.marker.diameter;
+    const visual = box ? { ...shape, box: { left: box.left * d, right: box.right * d,
+      top: box.top * d, bottom: box.bottom * d } } : shape;
+    const presentation = orientIsoDeviceFace(visual, metrics, turn, valueCore, joined);
     this.presentations.set(node, { shell, source: shape, metrics, turn, joined, valueCore, presentation });
     const [x, y] = presentation.shift;
     shell.style.setProperty('--hp-value-shift-x', String(x));

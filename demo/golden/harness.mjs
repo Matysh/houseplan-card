@@ -3134,6 +3134,18 @@ export async function prepareGoldenScenario(page, scenario) {
         const rows = ids.map(id => {
           const device = host.markers.find(marker => marker.id === id);
           if (device?.faces.length !== 2) throw Error(`missing native icon/badge pair: ${id}`);
+          const marker = root.querySelector(`.dev[data-id="${CSS.escape(id)}"]`);
+          const badge = marker?.querySelector('.value-badge');
+          const text = badge?.querySelector('.value-badge-content');
+          if (!badge || !text) throw Error(`missing authored badge: ${id}`);
+          const style = getComputedStyle(badge);
+          const face = device.faces[1], measured = parseFloat(style.width) / parseFloat(style.height);
+          const aspect = (face.right - face.left) / (face.bottom - face.top);
+          if (Math.abs(aspect - measured) > .035)
+            throw Error(`3D capsule uses a different badge layout: ${id} (${aspect} vs ${measured})`);
+          const glyph = face.glyph, size = parseFloat(getComputedStyle(text).fontSize);
+          if (glyph?.kind !== 'text' || Math.abs(glyph.fraction - size / parseFloat(style.height)) > .02)
+            throw Error(`3D badge text does not match the authored font size: ${id}`);
           const poses = device.faces.map((face, i) => {
             const body = painted.get(id + ':' + i)?.body;
             if (!body?.material.every(m => m.depthTest && m.depthWrite))
