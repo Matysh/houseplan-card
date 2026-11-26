@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25835,
+  "revision": 25836,
   "nextTicket": 718,
   "nextFence": 718,
   "tasks": {
@@ -7838,6 +7838,10 @@
       "digest": "21089f92d392785304e66871df87423129c12f67cb0a7fc3bd95c2f6e2b68d25",
       "issue": 1574
     },
+    "github:45742378227:1:completions:message:477c4d10e52db886bb680166de2b3e4ad65db2bd743e38406c91f2057b1d70e9": {
+      "digest": "b28059764e7443ead25d2dd3bebbca771cbb34387f0202055d600c4a31506885",
+      "issue": 1570
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -8072,7 +8076,8 @@
           "entry": 2,
           "detail": "Браузер: floor preparation deadline: failed; Браузер: screen camera 1165: failed",
           "eventId": "finish:00946e14-de7f-4c42-a8e2-b62481983443:finish:2:return:return:1574"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8": {
