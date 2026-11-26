@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27224,
+  "revision": 27225,
   "nextTicket": 743,
   "nextFence": 743,
   "tasks": {
@@ -3309,40 +3309,6 @@
         "sourceSha": "c4cb576ca6e1e19b6836fb3863657e174d174877"
       }
     },
-    "1507": {
-      "issue": 1507,
-      "branch": "issue/1507-release-return-2725feedd276",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "7900aa8f04abe9bc984db1fe0431ab461d5e6d0c",
-      "mergedSha": "6b8ef512d27636767389a906461d64c096d8a1a6",
-      "mergedAt": 1795222214513,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.86.0",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "6b8ef512d27636767389a906461d64c096d8a1a6"
-      }
-    },
     "1508": {
       "issue": 1508,
       "branch": "codex/1508-mutation-witnesses",
@@ -5390,22 +5356,24 @@
       "reviewRequest": "review:1563:3:5e0b3c5c9fe2116caef01d4a22d54a3f82e93aab:7e85eee9281283120d82f6fb9b9c12017136401d",
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": true,
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": false,
-        "classificationAt": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
         "commentCurrent": true,
-        "commentDigest": "461782c36f016e0e633c",
+        "commentDigest": "b4a585966f4b15997bed",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
-          "target": null
-        }
+          "milestone": true,
+          "target": 18
+        },
+        "milestoneTarget": {
+          "milestone": 18,
+          "cycleMilestone": 18
+        },
+        "milestoneTitle": "2.0.0"
       },
       "devBuild": {
         "status": "published",
