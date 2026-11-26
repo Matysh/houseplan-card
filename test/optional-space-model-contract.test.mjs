@@ -91,7 +91,7 @@ test('empty render keeps create/import affordances without spatial layers', () =
   // #848 adds a sibling recovery notice, not another spatial branch. Keep the
   // complete stable shell order, including version recovery and danger confirm.
   assert.match(shell, /return html`\$\{body\}/);
-  assert.match(shell, /this\._floorHolding \? html`[\s\S]*?this\._startupStatus\(\)[\s\S]*?: nothing/);
+  assert.match(shell, /this\._floorHolding \|\| waitingForSwitch \? html`[\s\S]*?this\._startupStatus\(\)[\s\S]*?: nothing/);
   assert.match(methodBody('_startupStatus'), /role="status" aria-live="polite"/,
     'the shared status remains announced beside the retained frame');
   assert.match(shell,
