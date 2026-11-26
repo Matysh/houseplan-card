@@ -239,6 +239,84 @@ try {
         };
       } finally { w.dispose(); }
     })();
+    const windowLight = await (async () => {
+      const plan = new Plan3dWorld(document, .005);
+      const rect = (left, right) => [[[left, -5], [right, -5], [right, 5], [left, 5]]];
+      const window = buildIsoOpeningBasis({ id: 'sun-window', sourceIndex: 0, type: 'window', x: 0, y: 0,
+        angle: 0, length: 48, flipH: false, flipV: false, face: { ox: 0, oy: 5, cm: 12, side: 1 } }, 50);
+      const physical = { ...input.physical, walls: [rect(-65, -24), rect(24, 65)], openings: [window],
+        openingSurfaces: projectIsoOpeningStructure(window, undefined, true)
+          .map(surface => ({ ...surface, id: window.id })) };
+      const sun = { points: [[-24, 5], [24, 5]], height: 50, radius: 160, color: '#ffe9b4', intensity: .62,
+        visible: ['M -24 5 L 24 5 L 68 100 L 20 100 Z'],
+        // Legacy tilt also lets this same fixture expose the leak on the old shader.
+        sun: { inward: [0, 1], depth: 95, tilt: 50 / 95 } };
+      const render = p => new Promise(resolve => {
+        painted = resolve;
+        lit.present({ scene: plan.scene, camera: p });
+      });
+      const raised = new T.Mesh(new T.PlaneGeometry(10, 10).rotateX(-Math.PI / 2),
+        plan.light.material({ color: '#646464' }));
+      raised.position.set(4, 8, 32);
+      plan.scene.add(raised);
+      const wall = new T.OrthographicCamera(-58, 58, 58, -58, 1, 400);
+      wall.position.set(0, 62, 155);
+      wall.lookAt(0, 6, 17);
+      wall.updateMatrixWorld(true);
+      const sample = (p, x, height, z) => {
+        const { x: sx, y: sy } = new T.Vector3(x, height, z).project(p);
+        return pixel(canvas, Math.floor((sx + 1) * canvas.width / 2), Math.floor((1 - sy) * canvas.height / 2));
+      };
+      const readings = [];
+      try {
+        for (const transparentWalls3d of [false, true]) {
+          const display = { ...input.display, transparentWalls3d, wallFill: { c: '#515151', a: .6 } };
+          for (const lights of [[], [sun]]) {
+            plan.present({ ...input, display, physical, lights });
+            await render(wall);
+            readings.push([sample(wall, 0, 8, 5), sample(wall, 0, 0, 22),
+              sample(wall, 46, 0, 22), sample(wall, 4, 8, 32)]);
+          }
+        }
+        const edges = [];
+        for (const zoom of [1, 8]) {
+          const half = 32 / zoom;
+          const x = 24 + 44 * (52 - 5) / 95, z = 52;
+          const p = new T.OrthographicCamera(-half, half, half, -half, 1, 400);
+          p.position.set(x, 150, z); p.up.set(0, 0, -1); p.lookAt(x, 0, z);
+          await render(p);
+          const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+          const red = (column, row) => data[(row * canvas.width + column) * 4];
+          const crossings = [];
+          for (let row = 68; row < 132; row++) {
+            const low = red(194, row), high = red(5, row);
+            if (high - low < 20) throw Error('window beam edge lacks contrast');
+            const cross = fraction => {
+              const level = low + fraction * (high - low);
+              for (let col = 6; col < 195; col++) {
+                const left = red(col - 1, row), right = red(col, row);
+                if (left > level && right <= level) return col - 1 + (left - level) / (left - right);
+              }
+              throw Error('window beam edge is outside the viewport');
+            };
+            crossings.push([row, cross(.5), cross(.1) - cross(.9)]);
+          }
+          const average = column => crossings.reduce((sum, point) => sum + point[column], 0) / crossings.length;
+          const middle = average(1), center = average(0);
+          const slope = crossings.reduce((sum, [row, cross]) => sum + (row - center) * (cross - middle), 0)
+            / crossings.reduce((sum, [row]) => sum + (row - center) ** 2, 0);
+          const rms = Math.sqrt(crossings.reduce((sum, [row, cross]) =>
+            sum + (cross - middle - slope * (row - center)) ** 2, 0) / crossings.length);
+          edges.push({ zoom, rms, width: average(2) * 2 * half / canvas.width });
+        }
+        return { readings, edges };
+      } finally {
+        plan.scene.remove(raised);
+        raised.geometry.dispose();
+        raised.material.dispose();
+        plan.dispose();
+      }
+    })();
     const restoredLight = await (async () => {
       const canvas = document.createElement('canvas');
       canvas.style.cssText = 'position:fixed;top:220px;right:0';
@@ -289,7 +367,7 @@ try {
       }
     })();
     const motion = new Plan3dLightMotion();
-    const solar = { ...lamp, id: 'window', intensity: .4, sun: { inward: [1, 0], depth: 10, tilt: .5 } };
+    const solar = { ...lamp, id: 'window', intensity: .4, sun: { inward: [1, 0], depth: 10 } };
     motion.set([{ ...lamp, id: 'lamp' }, solar], 'scene-a', 10, true);
     motion.set([solar], 'scene-a', 20, true);
     const fading = motion.frame(270);
@@ -492,7 +570,7 @@ try {
     const deadline = performance.now() + 2000;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
-    return { contexts, pixels, picking, frames, roomHover, paperHeight, windowJamb, transparentIntersection, largeRadius, wallLighting, restoredLight, staticSize, backdropReady, backdropPixel,
+    return { contexts, pixels, picking, frames, roomHover, paperHeight, windowJamb, transparentIntersection, largeRadius, wallLighting, windowLight, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, worldBlending, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
       fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas, steppedAtlas,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
@@ -588,6 +666,19 @@ try {
       'transparent wall must blend at fragment order from both sides: ' + JSON.stringify({ lens, direction, sorted }));
     assert.deepEqual(opaque, [18, 52, 171, 255], 'opaque geometry still occludes both transparent layers');
   }
+  const { readings, edges } = evidence.windowLight;
+  console.log('Window sunlight:', JSON.stringify(evidence.windowLight));
+  for (let i = 0; i < readings.length; i += 2) {
+    const [darkWall, darkFloor, outside, darkRaised] = readings[i];
+    const [wall, floor, unlit, raised] = readings[i + 1];
+    assert.ok(floor[0] > darkFloor[0] + 30, 'the window still casts a distinct spot on the floor');
+    assert.deepEqual(wall, darkWall, 'sunlight does not brighten the wall under the sill');
+    assert.deepEqual(unlit, outside, 'the beam stays within the floor footprint');
+    assert.equal(darkRaised[0], 100, 'the raised-surface probe hits its own paint');
+    assert.deepEqual(raised, darkRaised, 'the floor beam stays below a raised horizontal surface');
+  }
+  assert.ok(edges.every(({ rms, width }) => rms < 1.0 && width > 1.65),
+    'ordinary and high-zoom footprints have a straight soft edge');
   const { baseline, lamp, ribbon, disabled, back, blocked } = evidence.wallLighting;
   assert.ok(lamp[0][0] > baseline[0][0] + 20 && lamp[2][0] > baseline[2][0] + 20,
     'a lamp reaches the wall and floor: ' + JSON.stringify(evidence.wallLighting));
