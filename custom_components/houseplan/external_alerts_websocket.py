@@ -67,7 +67,7 @@ async def ws_external_alerts_subscribe(hass, connection, msg):
             except (OSError, ValueError, KeyError, TypeError):
                 # A storage failure cannot justify continuing to display stale data.
                 rows = []
-            if active and still_authorized() and rows != last:
+            if rows is not None and active and still_authorized() and rows != last:
                 last = rows
                 connection.send_event(msg_id, {"signals": rows})
 

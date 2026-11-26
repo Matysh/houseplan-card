@@ -1,6 +1,7 @@
 """Home Assistant actions to show and clear a signal on the plan."""
 from __future__ import annotations
 
+from asyncio import sleep
 import logging
 import re
 
@@ -15,6 +16,7 @@ from .store import get_data
 
 _LOGGER = logging.getLogger(__name__)
 _KEY = re.compile(r"[A-Za-z0-9_-]{1,64}")
+_MAX_AUTOMATION_CONTEXTS = 256
 
 
 def _one_target(value):
@@ -62,23 +64,36 @@ def async_setup_services(hass):
     alerts = domain["external_alerts"] = ExternalAlerts(hass)
     hass.bus.async_listen("entity_registry_updated", alerts.remove_deleted_targets)
     hass.bus.async_listen("device_registry_updated", alerts.remove_deleted_targets)
+    automation_sources: dict[str, str] = {}
+
+    @callback
+    def remember_automation(event):
+        entity_id = event.data.get("entity_id")
+        if isinstance(entity_id, str) and entity_id.startswith("automation."):
+            automation_sources[event.context.id] = entity_id
+            if len(automation_sources) > _MAX_AUTOMATION_CONTEXTS:
+                del automation_sources[next(iter(automation_sources))]
+
+    hass.bus.async_listen("automation_triggered", remember_automation)
 
     async def apply(call):
         runtime = get_data(hass)
         if runtime is None:
             raise AlertActionError("alerts_unavailable")
         data = call.data
-        level = data.get("level")
-        # Automation actions carry the same context as the automation's state.
-        # A call authored by a script or ambiguous lineage has the generic label.
-        sources = [
-            state.entity_id for state in hass.states.async_all("automation")
-            if state.context.id == call.context.id
-        ] if level else []
+        level = data["level"] if call.service == "set_alert" else None
+        # An automation state can also carry the context of a call that turned
+        # it off. Use only a recorded start with the same context.
+        source = None
+        if level:
+            # HA defers a nested automation_triggered event until it finishes
+            # dispatching the trigger that started the automation.
+            await sleep(0)
+            source = automation_sources.get(call.context.id)
         try:
             await alerts.change(
                 runtime, Target.from_call(hass, data), data.get("key"),
-                level, data.get("message"), sources[0] if len(sources) == 1 else None,
+                level, data.get("message"), source,
             )
         except HomeAssistantError:
             raise

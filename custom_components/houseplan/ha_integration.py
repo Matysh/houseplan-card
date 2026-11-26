@@ -6,8 +6,9 @@ import logging
 from datetime import timedelta
 from pathlib import Path
 
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.event import async_track_time_interval
 
@@ -19,6 +20,7 @@ from .const import (
     FILES_DIR,
     PLANS_DIR,
 )
+from .external_alerts import CHANGED as EXTERNAL_ALERTS_CHANGED
 from .frontend_registration import (
     async_remove_frontend_registration,
     async_setup_frontend_registration,
@@ -308,6 +310,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
             stop_listener[0] = None
 
     entry.async_on_unload(_remove_stop_listener)
+
+    @callback
+    def _publish_external_alerts_when_loaded() -> None:
+        if entry.state is ConfigEntryState.LOADED:
+            hass.bus.async_fire(EXTERNAL_ALERTS_CHANGED)
+
+    entry.async_on_unload(entry.async_on_state_change(_publish_external_alerts_when_loaded))
     return True
 
 

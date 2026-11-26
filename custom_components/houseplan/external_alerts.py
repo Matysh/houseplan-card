@@ -39,7 +39,7 @@ class Target:
         entry = er.async_get(hass).async_get(entity_id)
         return cls("registry_entity", entry.id) if entry else cls("entity", entity_id)
 
-    def resolve(self, hass) -> tuple[str | None, str | None]:
+    def resolve(self, hass, *, require_state=False) -> tuple[str | None, str | None]:
         """Return the current entity and device identifiers."""
         if self.kind == "device":
             return None, self.ref if dr.async_get(hass).async_get(self.ref) is not None else None
@@ -48,9 +48,9 @@ class Target:
             if entry is not None:
                 return entry.entity_id, entry.device_id
             return None, None
-        if hass.states.get(self.ref) is not None:
-            return self.ref, None
-        return None, None
+        if require_state and hass.states.get(self.ref) is None:
+            return None, None
+        return self.ref, None
 
 
 @dataclass(frozen=True)
@@ -188,7 +188,7 @@ class ExternalAlerts:
         async with self.lock:
             if get_data(self.hass) is not runtime:
                 raise AlertActionError("alerts_unavailable")
-            entity_id, device_id = target.resolve(self.hass)
+            entity_id, device_id = target.resolve(self.hass, require_state=True)
             current = await self._load()
             if not entity_id and not device_id and (
                 level is not None or not any(row.target == target for row in current.values())
@@ -224,15 +224,18 @@ class ExternalAlerts:
                 raise AlertActionError("alerts_unavailable")
             await self._save(next_records)
 
-    async def snapshot(self, user):
+    async def snapshot(self, user) -> list[dict[str, Any]] | None:
+        """Return None until the current plan is available for projection."""
         async with self.lock:
             runtime = get_data(self.hass)
             if runtime is None:
-                return []
+                return None
             records = await self._load()
-            if not records:
+            placements = await self._placements(runtime) if records else None
+            if get_data(self.hass) is not runtime:
+                return None
+            if placements is None:
                 return []
-            placements = await self._placements(runtime)
             rows: list[dict[str, Any]] = []
             for signal in records.values():
                 entity_id, device_id = signal.target.resolve(self.hass)

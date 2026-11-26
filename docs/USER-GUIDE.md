@@ -1518,6 +1518,8 @@ For example, when the bedroom CO₂ reading crosses 1,000 ppm, show a signal on 
 
 Select a device to include its placed device icon and its separately placed entity icons. Select an entity to use its own icon first or its device icon when the entity has no separate placement. The selectors use Home Assistant targets. A Houseplan-only virtual icon is outside this set. Viewers see the same visual signal on the plan. Use a Home Assistant administrator account to run the action manually.
 
+If you remove a marker and the target has no remaining placement, its signal is hidden but still counts toward the limit. Use **Clear signal from plan** for the original target with an empty **Signal key** to clear all its signals.
+
 ### Automatic icon rules
 
 &emsp;&emsp;Open **Devices → Icon rules**. Rules match a device’s name plus model as a case-insensitive regular expression; the first matching row wins. Reorder rows for specific matches before general ones, use the test field to see the result, and reset to the recommended list if needed. Invalid expressions are marked rather than executed.

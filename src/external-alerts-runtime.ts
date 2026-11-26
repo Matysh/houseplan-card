@@ -52,6 +52,7 @@ export class ExternalAlertsRuntime implements ReactiveController {
   private connection?: Connection;
   private userId?: string;
   private generation = 0;
+  private retry?: ReturnType<typeof setTimeout>;
   private unsubscribe?: Release;
   private byMarker = new Map<string, Signal[]>();
   private dateFormat?: { lang: Lang; timeZone?: string; value: Intl.DateTimeFormat };
@@ -118,6 +119,8 @@ export class ExternalAlertsRuntime implements ReactiveController {
 
   private readonly stop = () => {
     this.generation++;
+    clearTimeout(this.retry);
+    this.retry = undefined;
     void dispose(this.unsubscribe);
     this.unsubscribe = undefined;
     if (this.byMarker.size) {
@@ -132,16 +135,27 @@ export class ExternalAlertsRuntime implements ReactiveController {
     this.stop();
     const generation = this.generation;
     const current = () => this.active && this.connection === connection && generation === this.generation;
-    void connection.subscribeMessage(frame => {
-      if (!current()) return;
-      const next = signalProjection(frame);
-      if (!next || (!next.size && !this.byMarker.size)) return;
-      this.byMarker = next;
-      this.changed();
-    }, { type: 'houseplan/external_alerts/subscribe' }, { resubscribe: false }).then(unsubscribe => {
-      if (current()) this.unsubscribe = unsubscribe;
-      else void dispose(unsubscribe);
-    }).catch(() => { /* Older HA integration versions keep their local causes. */ });
+    const subscribe = async (delay: number) => {
+      this.retry = undefined;
+      if (!current() || connection.connected === false) return;
+      try {
+        const unsubscribe = await connection.subscribeMessage!(frame => {
+          if (!current()) return;
+          const next = signalProjection(frame);
+          if (!next || (!next.size && !this.byMarker.size)) return;
+          this.byMarker = next;
+          this.changed();
+        }, { type: 'houseplan/external_alerts/subscribe' }, { resubscribe: false });
+        if (current()) this.unsubscribe = unsubscribe;
+        else void dispose(unsubscribe);
+      } catch (error) {
+        const code = (error as { code?: string } | null)?.code;
+        if (current() && (code === 'unknown_command' || code === 'not_ready')) {
+          this.retry = setTimeout(() => void subscribe(Math.min(delay * 2, 30_000)), delay);
+        }
+      }
+    };
+    void subscribe(1_000);
   };
 
   private release(): void {

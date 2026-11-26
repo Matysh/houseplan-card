@@ -1,5 +1,7 @@
 """#1001: durable HA actions and the authenticated live View subscription."""
+from asyncio import gather, wait_for
 from copy import deepcopy
+import json
 
 import pytest
 import voluptuous as vol
@@ -11,6 +13,8 @@ from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.houseplan.const import DOMAIN
+from custom_components.houseplan.core.wall_segment_model import commit_wall_segment_model
+from custom_components.houseplan.diagnostics import async_get_config_entry_diagnostics
 from custom_components.houseplan.external_alerts import CHANGED, ExternalAlerts, MAX_PER_TARGET
 from custom_components.houseplan.external_alerts_websocket import TYPE
 from custom_components.houseplan.services import SET_ALERT_SCHEMA
@@ -36,12 +40,14 @@ async def _setup(hass):
         "sensor", "fixture", "unplaced", suggested_object_id="unplaced",
     )
     hass.states.async_set("input_boolean.signal_helper", "off")
-    cfg = {"spaces": [{"id": "ground"}, {"id": "upper"}], "markers": [
+    spaces = [{"id": floor, "title": floor.title(), "view_box": [0, 0, 1, 1],
+               "rooms": [], "plan_url": None} for floor in ("ground", "upper")]
+    cfg, _ = commit_wall_segment_model({"spaces": spaces, "markers": [
         {"id": "device-face", "binding": f"device:{device.id}", "space": "ground"},
         {"id": "entity-face", "binding": f"entity:{exact.entity_id}", "space": "upper"},
         {"id": "helper", "binding": "entity:input_boolean.signal_helper", "space": "ground"},
         {"id": "virtual", "binding": "virtual", "space": "ground", "controls": [exact.entity_id]},
-    ]}
+    ], "settings": {}})
     await entry.runtime_data.config_store.async_save({"rev": 1, "config": cfg})
     await hass.async_block_till_done()
     return entry, device, exact, unplaced
@@ -109,6 +115,40 @@ async def test_system_actions_update_read_only_viewer_and_survive_reload(hass, h
     await _call(hass, "clear_alert", device_id=device.id)
 
 
+async def test_kiosk_subscribes_before_setup_and_recovers_without_another_action(hass, hass_ws_client):
+    entry, _, _, _ = await _setup(hass)
+    helper_id = "input_boolean.signal_helper"
+    await _call(hass, "set_alert", entity_id=helper_id, level="alarm", message="Persisted reason")
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    hass.states.async_remove(helper_id)
+
+    viewer = await hass_ws_client(hass)
+    await viewer.send_json_auto_id({"type": TYPE})
+    result = await wait_for(viewer.receive_json(), 5)
+    assert result["success"], result
+    await hass.async_block_till_done()
+    assert await hass.config_entries.async_setup(entry.entry_id)
+
+    frame = await wait_for(viewer.receive_json(), 5)
+    assert frame["id"] == result["id"]
+    signals = frame["event"]["signals"]
+    assert len(signals) == 1
+    assert signals[0]["level"] == "alarm"
+    assert signals[0]["message"] == "Persisted reason"
+    assert signals[0]["owners"] == [{"id": "helper", "binding": f"entity:{helper_id}"}]
+    assert hass.states.get(helper_id) is None
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    hass.bus.async_fire("houseplan_config_updated")
+    await hass.async_block_till_done()
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    await viewer.send_json_auto_id({"type": "ping"})
+    assert (await wait_for(viewer.receive_json(), 5))["type"] == "pong", "reload does not publish an empty snapshot"
+    await _call(hass, "clear_alert", entity_id=helper_id)
+    assert (await wait_for(viewer.receive_json(), 5))["event"]["signals"] == []
+
+
 async def test_rename_falls_back_to_device_and_helper_uses_exact_binding(hass, hass_ws_client):
     _, device, exact, unplaced = await _setup(hass)
     admin = await hass_ws_client(hass)
@@ -150,6 +190,37 @@ async def test_limit_keeps_existing_signals_and_allows_update(hass, hass_admin_u
     assert await alerts.snapshot(hass_admin_user) == []
 
 
+async def test_concurrent_calls_keep_distinct_signals_and_private_reason(hass, hass_ws_client, hass_admin_user):
+    entry, device, exact, _ = await _setup(hass)
+    config = deepcopy(await entry.runtime_data.config_store.async_load())
+    config["config"]["markers"][1]["hidden"] = True
+    await entry.runtime_data.config_store.async_save(config)
+    admin = await hass_ws_client(hass)
+
+    async def export_payload():
+        await admin.send_json_auto_id({"type": "houseplan/export/create", "kind": "full"})
+        result = await admin.receive_json()
+        assert result["success"], result
+        return result["result"]["document"]["payload"]
+
+    before = await export_payload()
+    await _call(hass, "set_alert", entity_id=exact.entity_id, key="early")
+    await gather(
+        _call(hass, "clear_alert", entity_id=exact.entity_id, key="early"),
+        _call(hass, "set_alert", entity_id=exact.entity_id, key="hidden", level="alarm"),
+        _call(hass, "set_alert", device_id=device.id, key="one", message="Private fixture reason"),
+        _call(hass, "set_alert", device_id=device.id, key="two"),
+    )
+    alerts = hass.data[DOMAIN]["external_alerts"]
+    rows = await alerts.snapshot(hass_admin_user)
+    assert sorted(row["id"].rsplit("/", 1)[-1] for row in rows) == ["one", "two"]
+    assert all([owner["id"] for owner in row["owners"]] == ["device-face"] for row in rows)
+    diagnostics = await async_get_config_entry_diagnostics(hass, entry)
+    assert diagnostics["external_alerts"] == {"attention": 2, "alarm": 1}
+    assert "Private fixture reason" not in json.dumps(diagnostics)
+    assert await export_payload() == before
+
+
 async def test_ha_automation_owns_both_conditions(hass, hass_admin_user):
     _, device, _, _ = await _setup(hass)
     assert await async_setup_component(hass, "automation", {"automation": [
@@ -181,3 +252,13 @@ async def test_ha_automation_owns_both_conditions(hass, hass_admin_user):
     hass.states.async_set("input_boolean.signal_helper", "off")
     await hass.async_block_till_done()
     assert await alerts.snapshot(hass_admin_user) == []
+
+
+async def test_shared_state_context_does_not_attribute_a_signal_to_another_automation(hass, hass_admin_user):
+    _, device, _, _ = await _setup(hass)
+    context = Context()
+    hass.states.async_set("automation.other", "off", {"friendly_name": "Other"}, context=context)
+    await hass.services.async_call(DOMAIN, "set_alert", {"device_id": device.id},
+                                   context=context, blocking=True)
+    alerts = hass.data[DOMAIN]["external_alerts"]
+    assert (await alerts.snapshot(hass_admin_user))[0]["source_name"] is None

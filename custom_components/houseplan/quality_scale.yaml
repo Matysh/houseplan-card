@@ -59,7 +59,7 @@ rules:
     comment: single_config_entry in manifest.
   # ---- Silver ----
   action-exceptions:
-    status: exempt
+    status: done
     comment: Service runtime errors use translation keys and WS handlers reply with typed error codes.
   config-entry-unloading:
     status: done

@@ -45,3 +45,63 @@ test('a restored subscription replaces the snapshot, and old readers cannot repa
   assert.equal(changes, 4);
   assert.equal(released, 3);
 });
+
+test('an already open kiosk retries both startup errors without a second ready event', async ({ mock }) => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  const listeners = new Map();
+  let attempts = 0;
+  let receive;
+  const connection = {
+    connected: false,
+    addEventListener(name, listener) { listeners.set(name, listener); },
+    removeEventListener(name) { listeners.delete(name); },
+    async subscribeMessage(callback) {
+      const code = ['unknown_command', 'not_ready'][attempts++];
+      if (code) throw { code };
+      receive = callback;
+      return () => {};
+    },
+  };
+  const runtime = new ExternalAlertsRuntime({ addController() {} }, () => ({ connection }), () => 'en', () => {});
+  const device = { id: 'one', bindingKind: 'device', bindingRef: 'one' };
+  runtime.hostConnected();
+  assert.equal(attempts, 0);
+  connection.connected = true;
+  listeners.get('ready')();
+  await Promise.resolve();
+  mock.timers.tick(1_000);
+  await Promise.resolve();
+  assert.equal(attempts, 2);
+  mock.timers.tick(1_999);
+  assert.equal(attempts, 2);
+  mock.timers.tick(1);
+  await Promise.resolve();
+  assert.equal(attempts, 3);
+  receive({ signals: [externalSignal('one', 'alarm')] });
+  assert.equal(runtime.issues(device)[0].severity, 'alarm');
+  runtime.hostDisconnected();
+});
+
+test('startup retries are canceled on detach and permission failures do not retry', async ({ mock }) => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  let attempts = 0;
+  let code = 'not_ready';
+  const connection = {
+    async subscribeMessage() {
+      attempts++;
+      throw { code };
+    },
+  };
+  const runtime = new ExternalAlertsRuntime({ addController() {} }, () => ({ connection }), () => 'en', () => {});
+  runtime.hostConnected();
+  await Promise.resolve();
+  runtime.hostDisconnected();
+  mock.timers.tick(60_000);
+  assert.equal(attempts, 1);
+  code = 'unauthorized';
+  runtime.hostConnected();
+  await Promise.resolve();
+  mock.timers.tick(60_000);
+  assert.equal(attempts, 2);
+  runtime.hostDisconnected();
+});
