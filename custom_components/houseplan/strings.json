@@ -1,4 +1,72 @@
 {
+  "services": {
+    "set_alert": {
+      "name": "Show signal on plan",
+      "description": "Set a visual signal on a Houseplan marker.",
+      "fields": {
+        "device_id": {
+          "name": "HA device",
+          "description": "Select one HA device or one HA entity."
+        },
+        "entity_id": {
+          "name": "HA entity",
+          "description": "Select one HA entity or one HA device."
+        },
+        "level": {
+          "name": "Level",
+          "description": "Choose the level of the visual signal."
+        },
+        "message": {
+          "name": "Reason",
+          "description": "Text shown in the device card."
+        },
+        "key": {
+          "name": "Signal key",
+          "description": "Use the same key to update or clear this signal."
+        }
+      }
+    },
+    "clear_alert": {
+      "name": "Clear signal from plan",
+      "description": "Clear a visual signal on a Houseplan marker.",
+      "fields": {
+        "device_id": {
+          "name": "HA device",
+          "description": "Select one HA device or one HA entity."
+        },
+        "entity_id": {
+          "name": "HA entity",
+          "description": "Select one HA entity or one HA device."
+        },
+        "key": {
+          "name": "Signal key",
+          "description": "Leave empty to clear all external signals for this target."
+        }
+      }
+    }
+  },
+  "selector": {
+    "signal_level": {
+      "options": {
+        "attention": "Attention",
+        "alarm": "Alarm"
+      }
+    }
+  },
+  "exceptions": {
+    "alerts_unavailable": {
+      "message": "Houseplan signals are unavailable."
+    },
+    "unknown_alert_target": {
+      "message": "The Home Assistant target does not exist."
+    },
+    "alert_target_not_on_plan": {
+      "message": "This target has no matching marker on the Houseplan plan."
+    },
+    "alert_limit": {
+      "message": "The active signal limit was reached. Clear a signal before adding a new one."
+    }
+  },
   "config": {
     "step": {
       "previous_data": {

@@ -1652,6 +1652,10 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'device-alert-reasons', deviceAlerts: 'alarm', alertCard: true, fixture: 'visual',
     space: 'golden-lighting', mode: 'view', iconSize: 5, language: 'ru', theme: 'dark',
     viewport: { width: 900, height: 950 }, ...page },
+  ...['attention', 'alarm'].map(externalAlert => ({
+    id: `device-alert-ha-${externalAlert}`, externalAlert, fixture: 'visual', space: 'golden-lighting',
+    mode: 'view', iconSize: 5, language: 'ru', theme: 'dark', viewport: { width: 900, height: 750 }, ...page,
+  })),
   ...['empty', 'numeric', 'enum'].map(alertForm => ({ id: `device-alert-form-${alertForm}`,
     deviceAlerts: 'form', alertForm, fixture: 'visual', space: 'golden-lighting', mode: 'devices',
     iconSize: 5, language: 'ru', theme: 'light', viewport: { width: alertForm === 'enum' ? 390 : 1280, height: 1000 }, ...page })),

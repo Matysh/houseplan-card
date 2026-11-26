@@ -24,9 +24,10 @@ export function renderDeviceIssues(
           body:html`<h3 class="hpf-heading">${severity === 'attention' ? group[0].groupTitle : translate(severity === 'alarm' ? 'device.issues.alarm_title' : 'device.issues.maintenance_title')}</h3>
         ${repeat(group, issue => issue.cause?.id || issue.eid, issue => html`<article class="device-issue hpf-reading-entry" data-source=${issue.eid} data-cause=${issue.cause?.id || issue.eid}>
           <strong>${issue.name}</strong>
-          <p>${issue.explanation || translate(`device.issues.${issue.reason}` as I18nKey)}</p>
+          ${issue.cause?.type === 'external' && !issue.explanation ? nothing
+            : html`<p>${issue.explanation || translate(`device.issues.${issue.reason}` as I18nKey)}</p>`}
           <span class="device-issue-state hpf-reading-label">${issue.stateText || issue.state}</span>
-          ${disclosure({ title:translate('device.issues.details'), content:html`
+          ${issue.cause?.type === 'external' ? nothing : disclosure({ title:translate('device.issues.details'), content:html`
             <code>${issue.eid}</code><code>${issue.state}${issue.deviceClass ? ` · ${issue.deviceClass}` : ''}</code>
             <button class="btn" type="button" @click=${() => openSource(issue.eid)}>
               <ha-icon icon="mdi:open-in-new"></ha-icon>${translate('device.issues.open_source')}

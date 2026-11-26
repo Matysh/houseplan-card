@@ -1508,7 +1508,15 @@ lovelace:
 
 &emsp;&emsp;Activation and removal each require three continuous seconds. Missing/incomparable values cannot activate a condition. Attention is a passive yellow triangle to the left; Alarm uses the existing red indication. The device card and actual preview retain every cause, separately from maintenance. Native critical alarms retain priority.
 
-&emsp;&emsp;Static modes and disabled live states create no custom live clock; reconnect starts confirmation afresh. This feature adds no room/summary counters or HA actions.
+&emsp;&emsp;Static modes and disabled live states create no custom live clock. Reconnect starts confirmation afresh.
+
+### Signals from Home Assistant automations
+
+In the Home Assistant automation editor, open **Then do → Add action** and select the House Plan action **Show signal on plan**. Choose one **HA device** or **HA entity**. Select **Attention** for a passive yellow sign or **Alarm** for the red alarm indication. The optional **Reason** appears in the device card. The trigger can use a different entity from the one selected for display.
+
+For example, when the bedroom CO₂ reading crosses 1,000 ppm, show a signal on the ventilation icon. In a second branch or automation, when CO₂ falls below 900 ppm, choose **Clear signal from plan** with the same target. The signal survives a restart and stays active until the clear action runs. Set the same **Signal key** on both actions when the target has several independent signals. A clear action with an empty key removes all external signals for that HA target.
+
+Select a device to include its placed device icon and its separately placed entity icons. Select an entity to use its own icon first or its device icon when the entity has no separate placement. The selectors use Home Assistant targets. A Houseplan-only virtual icon is outside this set. Viewers see the same visual signal on the plan. Use a Home Assistant administrator account to run the action manually.
 
 ### Automatic icon rules
 

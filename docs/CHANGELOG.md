@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Show and clear visual signals on Houseplan device icons from a Home Assistant automation (#1001).
 - Test maintenance: verify that closing Help with Escape leaves the button unhighlighted and that Tab navigation highlights its ordinary border (#1581).
 
 - Use one Git-only S6 check for a proven clean return of an exact published tag to dev; keep normal checks and review for manual or conflicted returns (#1583).

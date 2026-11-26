@@ -37,6 +37,7 @@ import { ledRelease, ledStripsByMarker } from './led-strip-gate';
 import {
   activitySourceSignature, resolveDevicePresentation, resolvePresentationSources,
 } from './device-presentation';
+import { ExternalAlertsRuntime } from './external-alerts-runtime';
 import { PresentationLightFrame } from './presentation-light-frame';
 import {
   advanceFiniteActivity, createFiniteActivityRuntime,
@@ -165,6 +166,8 @@ class HouseplanSpaceCard extends LitElement {
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotActivity = '';
   private _capturedSnapshotVirtual = '';
+  private readonly _externalAlerts = new ExternalAlertsRuntime(this, () => this.hass,
+    () => this._lang, () => { this._capturedSeq = -1; this.requestUpdate(); });
   private _activityRuntime = new Map<string, FiniteActivityRuntime>();
   private readonly _glowRuntimeState: GlowRuntimeState = createGlowRuntimeState();
   private readonly _glowRuntimeHost: GlowRuntimeHost = {
@@ -612,6 +615,7 @@ class HouseplanSpaceCard extends LitElement {
             batteryContext,
             signalContext,
             activityRuntime: this._activityRuntime.get(device.id),
+            alertIssues: this._externalAlerts.issues(device),
             sourceDetails: false,
             lightDevices: this._devices,
             lightSources: planLightSources,

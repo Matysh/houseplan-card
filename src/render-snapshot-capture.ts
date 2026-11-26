@@ -35,6 +35,7 @@ import type { SnapshotConsumerDemand } from './render-snapshot-consumers';
 export interface RenderSnapshotHost {
   _snapshotConsumerDemand?(): SnapshotConsumerDemand;
   _alerts?: Pick<import('./marker-alert-view-runtime').MarkerAlertViewRuntime, 'version' | 'issuesForDevice'>;
+  _externalAlerts?: Pick<import('./external-alerts-runtime').ExternalAlertsRuntime, 'issues'>;
   hass: any; // any-ok: the HA object as the card received it
   _planHass: any; // any-ok: active-registry projection of the card
   _fullRegistryHass: any; // any-ok: full-registry projection of the card
@@ -90,7 +91,7 @@ export interface RenderSnapshotReuse {
  * disagree. `options` adds what differs: battery, light graph, registry.
  */
 export function presentDevice(
-  host: Pick<RenderSnapshotHost, '_config' | '_activityRt' | '_reducedMotion' | '_showHidden' | '_alerts'>,
+  host: Pick<RenderSnapshotHost, '_config' | '_activityRt' | '_reducedMotion' | '_showHidden' | '_alerts' | '_externalAlerts'>,
   hass: any, device: DevItem, showLqi: import('./signal-visibility').SignalVisibility, // any-ok: the card's HA projection
   options: Omit<ResolvePresentationOptions, 'liveStates' | 'showTemperature' | 'showSignal'>,
 ): ResolvedDevicePresentation {
@@ -105,7 +106,8 @@ export function presentDevice(
     sourceDetails: false,
     reducedMotion: host._reducedMotion,
     showUserHidden: host._showHidden === true,
-    alertIssues: host._alerts?.issuesForDevice(device.id),
+    alertIssues: [...(host._alerts?.issuesForDevice(device.id) ?? []),
+      ...(host._externalAlerts?.issues(device) ?? [])],
     ...options,
   });
 }

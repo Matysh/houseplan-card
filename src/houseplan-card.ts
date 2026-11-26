@@ -30,6 +30,7 @@ import { ensureCompactDialogStyles } from './compact-dialog-styles';
 import { subscribeExternalScreenConfig, ExternalConfigStreamRecovery } from './external-screens-events';
 import { renderDeviceIssues } from './device-issues-view';
 import { DeviceSignalController, directSignalReadings } from './device-signal-runtime';
+import { ExternalAlertsRuntime } from './external-alerts-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 import { decorTextElementId } from './decor-text-element';
 import { headerContentWidth, renderHeaderSpaceNavigation } from './header-space-select';
@@ -716,6 +717,10 @@ export class HouseplanCard extends LitElement {
   public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;
   private _liveRt: import('./live-interaction-runtime').LiveRuntime | null = null;
   private _alerts?: import('./marker-alert-view-runtime').MarkerAlertViewRuntime;
+  private readonly _externalAlerts = new ExternalAlertsRuntime(this,
+    () => this._injectedPlanHost ? undefined : this.hass,
+    () => langOf(this._presentation, this._config?.language),
+    () => { this._capturedSeq = -1; this.requestUpdate(); });
   public _onboardingRuntime: import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime | null = null;
   private _editorRuntimeLoadingVisible = false;
   /** #39: pending large-backdrop decision; set only by the lazy pick flow. */

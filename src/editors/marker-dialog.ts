@@ -95,7 +95,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           batteryLowOnly: deviceBatteryModeOf(this.host._settings, this.host._serverCfg?.spaces.find(space => space.id === previewDevice.space)?.settings) === 'low',
           designPreview: true,
           activityRuntime: this.host._activityRt.get(previewDevice.id),
-          alertIssues: this.markerAlerts.previewIssues(),
+          alertIssues: [...this.markerAlerts.previewIssues(), ...(this.host._externalAlerts?.issues(previewDevice) ?? [])],
           lightDevices: previewLightDevices,
           registryHass: this.host._fullRegistryHass,
           reducedMotion: this.host._reducedMotion,

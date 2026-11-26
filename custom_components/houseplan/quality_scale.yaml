@@ -5,8 +5,8 @@
 rules:
   # ---- Bronze ----
   action-setup:
-    status: exempt
-    comment: The integration registers no service actions.
+    status: done
+    comment: Plan signal actions are registered during async_setup.
   appropriate-polling:
     status: exempt
     comment: No polling — storage + WebSocket API + frontend serving only.
@@ -25,8 +25,8 @@ rules:
     status: done
     comment: No external requirements.
   docs-actions:
-    status: exempt
-    comment: No service actions.
+    status: done
+    comment: Both plan signal actions are documented in the English and Russian user guides.
   docs-high-level-description:
     status: done
     comment: README.md.
@@ -60,7 +60,7 @@ rules:
   # ---- Silver ----
   action-exceptions:
     status: exempt
-    comment: No service actions; WS handlers reply with typed error codes.
+    comment: Service runtime errors use translation keys and WS handlers reply with typed error codes.
   config-entry-unloading:
     status: done
     comment: Unload supported; WS commands and static paths are global by design (documented in __init__).

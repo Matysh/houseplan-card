@@ -541,6 +541,7 @@ export interface HouseplanEditorHostPort {
   _editorToolbarGroupsFor(mode:HouseplanMode):readonly EditorToolbarGroup[];
   readonly _configWriteContext: import('./config-write-context').ConfigWriteContext;
   readonly _alerts?: import('./marker-alert-view-runtime').MarkerAlertViewRuntime;
+  readonly _externalAlerts?: Pick<import('./external-alerts-runtime').ExternalAlertsRuntime, 'issues'>;
   readonly _connectionWasLost: boolean;
   readonly panelHost: boolean;
   _panelHeaderNaturalHeight(mode: HouseplanMode): number | null;

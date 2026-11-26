@@ -1,4 +1,72 @@
 {
+  "services": {
+    "set_alert": {
+      "name": "Показать сигнал на плане",
+      "description": "Показывает визуальный сигнал на значке Houseplan.",
+      "fields": {
+        "device_id": {
+          "name": "Устройство HA",
+          "description": "Выберите одно устройство или одну сущность HA."
+        },
+        "entity_id": {
+          "name": "Сущность HA",
+          "description": "Выберите одну сущность или одно устройство HA."
+        },
+        "level": {
+          "name": "Уровень",
+          "description": "Выберите уровень визуального сигнала."
+        },
+        "message": {
+          "name": "Причина",
+          "description": "Текст для карточки устройства."
+        },
+        "key": {
+          "name": "Ключ сигнала",
+          "description": "Используйте тот же ключ для обновления или снятия сигнала."
+        }
+      }
+    },
+    "clear_alert": {
+      "name": "Снять сигнал с плана",
+      "description": "Снимает визуальный сигнал со значка Houseplan.",
+      "fields": {
+        "device_id": {
+          "name": "Устройство HA",
+          "description": "Выберите одно устройство или одну сущность HA."
+        },
+        "entity_id": {
+          "name": "Сущность HA",
+          "description": "Выберите одну сущность или одно устройство HA."
+        },
+        "key": {
+          "name": "Ключ сигнала",
+          "description": "Оставьте пустым, чтобы снять все внешние сигналы этой цели."
+        }
+      }
+    }
+  },
+  "selector": {
+    "signal_level": {
+      "options": {
+        "attention": "Внимание",
+        "alarm": "Тревога"
+      }
+    }
+  },
+  "exceptions": {
+    "alerts_unavailable": {
+      "message": "Сигналы Houseplan недоступны."
+    },
+    "unknown_alert_target": {
+      "message": "Цель Home Assistant не существует."
+    },
+    "alert_target_not_on_plan": {
+      "message": "Этой цели не соответствует ни один значок на плане Houseplan."
+    },
+    "alert_limit": {
+      "message": "Достигнут предел активных сигналов. Снимите один из сигналов перед добавлением нового."
+    }
+  },
   "config": {
     "step": {
       "previous_data": {

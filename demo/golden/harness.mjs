@@ -5,6 +5,7 @@ import { makeDirectPerspectiveFixture } from '../fixtures/direct-perspective-roo
 import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeMarkerAlertsFixture } from '../fixtures/marker-alerts.mjs';
 import { prepareMarkerAlerts } from './marker-alerts.mjs';
+import { externalSignal, installExternalAlertFixture } from '../helpers/external-alert-fixture.mjs';
 import { makeDeviceContactsFixture, prepareDeviceContacts } from './device-contacts.mjs';
 import { makeDeviceContactResizeFixture, prepareDeviceContactResize } from './device-contact-resize.mjs';
 import { prepareApprovedUi } from './approved-ui.mjs';
@@ -76,7 +77,7 @@ const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 const fixtureFor = (scenario) => scenario.directPerspective ? makeDirectPerspectiveFixture()
   : scenario.resizeJunction ? makeResizeJunctionFixture(scenario.resizeJunction.kind,scenario.resizeJunction.obstacle) : scenario.staticWallOpenings ? {
   config:makeStaticWallOpeningsFixture(scenario.staticWallOpenings),layout:{},devices:{},entities:{},states:{},areas:{},
-} : scenario.deviceAlerts ? makeMarkerAlertsFixture(scenario.deviceAlerts) : scenario.deviceIssues ? (() => {
+} : scenario.externalAlert ? makeMarkerAlertsFixture('form') : scenario.deviceAlerts ? makeMarkerAlertsFixture(scenario.deviceAlerts) : scenario.deviceIssues ? (() => {
   const fixture = makeVisualMatrixFixture(), sample = makeDeviceIssuesFixture();
   fixture.devices = sample.devices; fixture.entities = sample.entities; fixture.states = sample.states;
   fixture.devices.appliance.area_id = 'golden_light_left';
@@ -3372,6 +3373,17 @@ export async function prepareGoldenScenario(page, scenario, customizeFixture) {
     await page.mouse.move(point.x, point.y);
   }
   if (scenario.deviceAlerts) result.markerAlerts = await prepareMarkerAlerts(page, scenario);
+  if (scenario.externalAlert) {
+    const face = page.locator('[data-hp="device"][data-id="appliance"]');
+    await installExternalAlertFixture(page, '__goldenCard');
+    await page.evaluate(signal => window.__publishExternalAlerts([signal]),
+      externalSignal('appliance', scenario.externalAlert));
+    const indicator = scenario.externalAlert === 'alarm' ? '.device-pulse.alarm' : '.device-attention';
+    await face.locator(indicator).waitFor({ state: 'attached' });
+    await face.click();
+    const reason = page.locator(`hp-dialog[data-kind="info"] .device-issues.${scenario.externalAlert} [data-cause^="ha-alert:"]`);
+    await reason.getByText('Температура выше порога').waitFor();
+  }
   if (scenario.deviceIssues) {
     const alarm = scenario.deviceIssues === 'alarm';
     const face = page.locator('[data-hp="device"][data-id="appliance"]');

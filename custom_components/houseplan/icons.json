@@ -1,0 +1,6 @@
+{
+  "services": {
+    "set_alert": { "service": "mdi:alert-outline" },
+    "clear_alert": { "service": "mdi:bell-off-outline" }
+  }
+}

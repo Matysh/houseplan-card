@@ -1,4 +1,72 @@
 {
+  "services": {
+    "set_alert": {
+      "name": "Afficher un signal sur le plan",
+      "description": "Affiche un signal visuel sur une icône Houseplan.",
+      "fields": {
+        "device_id": {
+          "name": "Appareil HA",
+          "description": "Choisissez un appareil ou une entité HA."
+        },
+        "entity_id": {
+          "name": "Entité HA",
+          "description": "Choisissez une entité ou un appareil HA."
+        },
+        "level": {
+          "name": "Niveau",
+          "description": "Choisissez le niveau du signal visuel."
+        },
+        "message": {
+          "name": "Motif",
+          "description": "Texte affiché sur la fiche de l’appareil."
+        },
+        "key": {
+          "name": "Clé du signal",
+          "description": "Utilisez la même clé pour mettre à jour ou retirer le signal."
+        }
+      }
+    },
+    "clear_alert": {
+      "name": "Retirer un signal du plan",
+      "description": "Retire un signal visuel d’une icône Houseplan.",
+      "fields": {
+        "device_id": {
+          "name": "Appareil HA",
+          "description": "Choisissez un appareil ou une entité HA."
+        },
+        "entity_id": {
+          "name": "Entité HA",
+          "description": "Choisissez une entité ou un appareil HA."
+        },
+        "key": {
+          "name": "Clé du signal",
+          "description": "Laissez vide pour retirer tous les signaux externes de cette cible."
+        }
+      }
+    }
+  },
+  "selector": {
+    "signal_level": {
+      "options": {
+        "attention": "Attention",
+        "alarm": "Alarme"
+      }
+    }
+  },
+  "exceptions": {
+    "alerts_unavailable": {
+      "message": "Les signaux Houseplan sont indisponibles."
+    },
+    "unknown_alert_target": {
+      "message": "La cible Home Assistant n’existe pas."
+    },
+    "alert_target_not_on_plan": {
+      "message": "Aucune icône du plan Houseplan ne correspond à cette cible."
+    },
+    "alert_limit": {
+      "message": "La limite de signaux actifs est atteinte. Retirez un signal avant d’en ajouter un nouveau."
+    }
+  },
   "config": {
     "step": {
       "previous_data": {

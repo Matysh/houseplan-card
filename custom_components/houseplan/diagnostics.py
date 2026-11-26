@@ -6,6 +6,7 @@ from typing import Any
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
+from .const import DOMAIN
 from .store import HouseplanConfigEntry
 
 # Marker metadata may contain personal notes, external links and manual filenames.
@@ -21,6 +22,7 @@ async def async_get_config_entry_diagnostics(
     layout_raw = await data.store.async_load() or {}
     config = cfg_raw.get("config", {})
     layout = layout_raw.get("layout", {})
+    alerts = hass.data.get(DOMAIN, {}).get("external_alerts")
     return {
         "options": dict(entry.options),
         "rev": cfg_raw.get("rev", 0),
@@ -42,4 +44,5 @@ async def async_get_config_entry_diagnostics(
             {"settings": config.get("settings", {})}, TO_REDACT
         )["settings"],
         "layout_entries": len(layout),
+        "external_alerts": await alerts.counts() if alerts is not None else {},
     }

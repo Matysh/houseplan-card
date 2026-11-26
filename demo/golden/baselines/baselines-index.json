@@ -441,7 +441,9 @@
     "panel-device-contact-resize-iso-profile-larger-rotation-180": "852b388c5ca7662ce1066f2e4911f4fee0a7f9755b277151b08c678eea319897",
     "panel-device-contact-resize-flat-profile-larger-rotation-270": "04be3f469837ce2586752463a0574ad0faaf8502b8b71b7aad6efc638160eff3",
     "panel-device-contact-resize-iso-profile-larger-rotation-270": "e36527de78d6d33b723b38939714da40a899d54931fd98ae64400cd2d343154f",
-    "panel-iso-straight-perspective-1526": "0346f3908d953369ed843b2fac3789e63cb56ef1534c42b2401e0dffddf976b9"
+    "panel-iso-straight-perspective-1526": "0346f3908d953369ed843b2fac3789e63cb56ef1534c42b2401e0dffddf976b9",
+    "device-alert-ha-attention": "25226a5de84815fe93251bb19d764af4214fd80b9c8e3bf7095a6581d7b9cd2e",
+    "device-alert-ha-alarm": "e4317dded73b20118604a4c33b26b535b4d1c2550f885014f83f046961b3a3cc"
   },
   "scenarioProvenance": {
     "panel-wide-view-light-en": {
@@ -7673,6 +7675,46 @@
       },
       "host": "panel",
       "sourceSceneId": "panel-iso-straight-perspective-1526"
+    },
+    "device-alert-ha-attention": {
+      "acceptedAt": "2026-11-26T12:51:55.353Z",
+      "decision": "Owner accepted both #1001 gallery frames on 2026-11-26",
+      "reportSha256": "be0a9a0d23a10cc8102427a801231df055c593529a021b77af6421ebad3eddb3",
+      "sourceSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+      "sourceFingerprint": "9a8d6865782912e155f67ea6a8bc83025b2f4f9233ff7c88d25d16d1247c5e86",
+      "matrixVersion": 117,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "9a8d6865782912e155f67ea6a8bc83025b2f4f9233ff7c88d25d16d1247c5e86",
+        "harnessIconsSha256": "6c653a8e044293de0650c5d5c9381af5af08754790635d02375b069864cadc79",
+        "ci": null
+      },
+      "host": "lovelace",
+      "sourceSceneId": "device-alert-ha-attention"
+    },
+    "device-alert-ha-alarm": {
+      "acceptedAt": "2026-11-26T12:51:58.529Z",
+      "decision": "Owner accepted both #1001 gallery frames on 2026-11-26",
+      "reportSha256": "986d8b38f02766ca2903a93aff58a193bec8bc59cf18f06b0fb9fecdd60d2964",
+      "sourceSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+      "sourceFingerprint": "9a8d6865782912e155f67ea6a8bc83025b2f4f9233ff7c88d25d16d1247c5e86",
+      "matrixVersion": 117,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "9a8d6865782912e155f67ea6a8bc83025b2f4f9233ff7c88d25d16d1247c5e86",
+        "harnessIconsSha256": "6c653a8e044293de0650c5d5c9381af5af08754790635d02375b069864cadc79",
+        "ci": null
+      },
+      "host": "lovelace",
+      "sourceSceneId": "device-alert-ha-alarm"
     }
   }
 }

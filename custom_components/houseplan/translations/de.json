@@ -1,4 +1,72 @@
 {
+  "services": {
+    "set_alert": {
+      "name": "Signal im Plan anzeigen",
+      "description": "Ein visuelles Signal an einem Houseplan-Symbol anzeigen.",
+      "fields": {
+        "device_id": {
+          "name": "HA-Gerät",
+          "description": "Ein HA-Gerät oder eine HA-Entität auswählen."
+        },
+        "entity_id": {
+          "name": "HA-Entität",
+          "description": "Eine HA-Entität oder ein HA-Gerät auswählen."
+        },
+        "level": {
+          "name": "Stufe",
+          "description": "Die Stufe des visuellen Signals auswählen."
+        },
+        "message": {
+          "name": "Grund",
+          "description": "Text auf der Gerätekarte."
+        },
+        "key": {
+          "name": "Signalschlüssel",
+          "description": "Denselben Schlüssel zum Aktualisieren oder Entfernen verwenden."
+        }
+      }
+    },
+    "clear_alert": {
+      "name": "Signal vom Plan entfernen",
+      "description": "Ein visuelles Signal von einem Houseplan-Symbol entfernen.",
+      "fields": {
+        "device_id": {
+          "name": "HA-Gerät",
+          "description": "Ein HA-Gerät oder eine HA-Entität auswählen."
+        },
+        "entity_id": {
+          "name": "HA-Entität",
+          "description": "Eine HA-Entität oder ein HA-Gerät auswählen."
+        },
+        "key": {
+          "name": "Signalschlüssel",
+          "description": "Leer lassen, um alle externen Signale dieses Ziels zu entfernen."
+        }
+      }
+    }
+  },
+  "selector": {
+    "signal_level": {
+      "options": {
+        "attention": "Achtung",
+        "alarm": "Alarm"
+      }
+    }
+  },
+  "exceptions": {
+    "alerts_unavailable": {
+      "message": "Houseplan-Signale sind nicht verfügbar."
+    },
+    "unknown_alert_target": {
+      "message": "Das Home-Assistant-Ziel existiert nicht."
+    },
+    "alert_target_not_on_plan": {
+      "message": "Für dieses Ziel gibt es kein passendes Symbol im Houseplan."
+    },
+    "alert_limit": {
+      "message": "Die Höchstzahl aktiver Signale ist erreicht. Entferne zuerst ein Signal."
+    }
+  },
   "config": {
     "step": {
       "previous_data": {

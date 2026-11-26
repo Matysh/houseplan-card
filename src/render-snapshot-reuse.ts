@@ -152,7 +152,7 @@ class RenderSnapshotReuseSlot implements RenderSnapshotReuse {
     const deviceKeys = new Map(devices.map(device => [device.id, JSON.stringify([device,
       batteryModes.get(device.space) ?? deviceBatteryModeOf(host._settings), ledMarkers.get(device.space)?.has(device.id),
       lowSignal.get(device.space) ?? lowSignalProjectionNeeded(host._settings, undefined),
-      host._alerts?.issuesForDevice(device.id)])]));
+      host._alerts?.issuesForDevice(device.id), host._externalAlerts?.issues(device)])]));
     this.changedDevices = new Set([...deviceKeys].filter(([id, key]) => this.deviceKeys.get(id) !== key).map(([id]) => id));
     const rosterChanged = this.changedDevices.size > 0 || deviceKeys.size !== this.deviceKeys.size;
     this.deviceKeys = deviceKeys;

@@ -79,6 +79,11 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     """Register global handlers (survive config-entry reloads): WS commands, HTTP view."""
     hass.data.setdefault(DOMAIN, {})
     hp_ws.async_register(hass)
+    from .external_alerts_websocket import async_register as register_external_alerts
+    from .services import async_setup_services
+
+    async_setup_services(hass)
+    register_external_alerts(hass)
     from .backup_http import HouseplanArchiveDownloadView, HouseplanArchivePreviewView
     from .frontend_assets import HouseplanFrontendAssetView
     from .house_http import HouseplanHouseDownloadView, HouseplanHousePreviewView
