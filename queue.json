@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27472,
+  "revision": 27473,
   "nextTicket": 747,
   "nextFence": 747,
   "tasks": {
@@ -6191,169 +6191,25 @@
     },
     "1589": {
       "issue": 1589,
+      "branch": "codex/1589-ha-floor-onboarding",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1589-ha-floor-onboarding",
-      "materialSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 746,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795728029102,
-      "reviewEntry": 2,
-      "patchId": "9dd08083a21f014869f1635ec516eb74d2e121cb",
-      "changedFiles": [
-        "demo/helpers/first-space.mjs",
-        "demo/smoke_first_space_floor_import.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.86.1/1589.json",
-        "process-next/lib/source-dependencies.mjs",
-        "process-next/lib/task-selection.mjs",
-        "scripts/mutation-registry.mjs",
-        "src/editors/space-form-state.ts",
-        "src/editors/space-form.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/houseplan-onboarding-runtime.ts",
-        "test/dialog-baseline.test.mjs",
-        "test/mutation-browser-offload.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795728007341,
-        "entry": 1,
-        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-        "eventId": "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec:finish:3:return:return:1589"
-      },
-      "s6": {
-        "id": "20261126T212903600-a5b29a31",
-        "name": "Тесты для задачи #1589 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T212903600-a5b29a31/report.json",
-        "materialSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
-        "status": "passed",
-        "finishedAt": "2026-11-26T21:41:56.154Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
+      "mergedSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
+      "mergedAt": 1795729517497,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1589:2:9dd08083a21f014869f1635ec516eb74d2e121cb:9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
-      "reviewMaterial": {
-        "materialSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
-        "expectedBase": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
-        "patchId": "9dd08083a21f014869f1635ec516eb74d2e121cb"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1589:2:9dd08083a21f014869f1635ec516eb74d2e121cb:9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
-        "eventId": "github:45899917887:1:tick:0:review-retry",
-        "at": 1795729346757,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1589,
-        "requestId": "review:1589:2:9dd08083a21f014869f1635ec516eb74d2e121cb:9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
-        "kind": "code",
-        "base": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
-        "materialSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
-        "patchId": "9dd08083a21f014869f1635ec516eb74d2e121cb",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1589,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1589",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "- **Изменение.** Новое пространство сохраняется при валидном черновике, даже если предложенное имя не меняли. Существующее по-прежнему требует правки. Пропуск активного шага теперь общий для обоих рантаймов: сбрасывает прогресс на завершении, а в редактор переходит только при наличии сохранённого пространства. Skip заблокирован при ожидающей записи.\n- **Риски.** Общая форма используется и онбордингом, и редактором. Контракт хранения, состояние уже сохранённых пространств и валидация не менялись.\n- **Доказательства.** Браузерный сценарий на исходном dev воспроизвёл обе ошибки. На исправлении прошли один этаж, Save/Save, Skip/Save, Save/Skip, Skip/Skip, ручное создание после Skip/Skip, повторный клик при удержанном ответе сервера, восстановление после перезагрузки, пустое имя и отсутствие записи при закрытии существующего пространства без правок. Дополнительно проверена адресная связь теста с кодом в плане S6.\n- **Первый локальный S6.** Три проверки нашли старый якорь «только dirty». Правило вынесено в чистую функцию с поведенческой проверкой режимов create/edit. Мутант по-прежнему ломает запрет сохранения чистой правки и теперь ловится существующим unit-guard; адресный guard и повторные проверки уникальности якоря прошли. Проверки не отключались."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление решает обе проблемы из issue простым способом, в одном месте и без изменения контракта хранения. Для нового пространства кнопка Save теперь зависит только от валидности черновика и занятости формы, а для существующего по-прежнему требуется правка. Пропуск шага вынесен в общую функцию `skipSpaceImportStep`. Она сбрасывает `_importTotal` на последнем шаге, даже если в плане нет ни одного пространства. Поэтому после Skip/Skip кнопка Add space открывает обычную форму без счётчика и без Skip. Во время ожидающей записи Skip заблокирован и в разметке, и в самой функции. Блокеров я не нашёл. Есть два мелких необязательных замечания: комментарий и контекст автора неточно описывают условие перехода в редактор, а после завершения мастера через Skip режим рисования не включается, как после Save. Второе поведение было и до исправления.",
-          "understanding": "Как было: `renderSpaceForm` включал Save только при `dirty`. Мастер импорта запоминал исходный снимок формы уже с подставленным именем этажа HA, поэтому нетронутый шаг считался «чистым», и Save был недоступен. Оба рантайма (`_skipImport` в onboarding и в editor) сбрасывали `_importTotal` на последнем шаге только при `this.host._model.length > 0`. Если пропущены все этажи и пространств нет, `_importTotal` оставался больше нуля, и следующая форма Add space в режиме create показывала «Floor 2 of 2» и кнопку Skip.\n\nКак стало:\n1) В `space-form-state.ts` появилась чистая функция `canSaveSpaceDialog`: `(mode==='create' || dirty) && !hasProblems && !busy`. Её вызывает `space-form.ts:118`.\n2) `skipSpaceImportStep` ничего не делает, если форма не в режиме create, занята или импорт не идёт. Иначе она забывает снимок формы, закрывает диалог и открывает следующий этаж. На последнем шаге она обнуляет `_importTotal` и возвращает id первого пространства из `_serverCfg`, если оно есть. Оба `_skipImport` переходят в план только когда получили этот id.\n3) Кнопка Skip получила `?disabled=${d.busy}`.\n\nКакие пути разобраны:\n- `houseplan-card.ts:12996` выбирает рантайм для `_skipImport`. `_spaceDialogUsesOnboardingRuntime` после сброса `_importTotal` по-прежнему выбирает onboarding, потому что рантайм уже загружен.\n- `_saveSpaceDialog` в onboarding (строки 210–311): защита от повтора через `busy`, переход в план по `wasFirst || _importTotal>0`.\n- `_openNextImport` / `_startImport` в обоих рантаймах.\n- `close()` / `requestClose` в общей форме.\n- Источники создания черновика с заполненным именем: им заполнено только `_openNextImport`, `newSpaceDialogDraft` даёт пустое имя.\n- Существующий smoke `demo/smoke_space_create_display_defaults.mjs:66-73`: он вызывает `_skipImport` при непустой очереди, новый guard его не задевает.\n- Новый smoke и fixture с сохранением между перезагрузками, задержкой записи и проверкой ревизии.",
-          "analysis": [
-            {
-              "topic": "Правило сохранения create/edit",
-              "assessment": "Правило разделено правильно. Для create обязательная правка не имела смысла: создание пространства само по себе изменение. Пустое или пробельное имя по-прежнему блокируется через `spaceDialogProblems` (`!d.title.trim()`), и сам обработчик сохранения тоже проверяет `!dialog.title.trim()`. Для edit остаётся требование #600 К10: нетронутое существующее пространство сохранить нельзя. Правило вынесено в чистую функцию с unit-тестом на все комбинации. Это удачное решение, которое стоит сохранить: мутант из реестра теперь привязан к поведению, а не к строке шаблона. Из открывателей формы create имя заранее заполняет только мастер импорта, поэтому ручное создание с пустой формой ведёт себя как раньше.",
-              "evidence": "src/editors/space-form-state.ts:70-72; src/editors/space-form.ts:117-118; src/editors/space-dialog-draft.ts:21 (title: ''); src/houseplan-onboarding-runtime.ts:213-214; test/dialog-baseline.test.mjs:208-216; scripts/mutation-registry.mjs (space-save-enabled-without-changes, find совпадает со строкой 71)"
-            },
-            {
-              "topic": "Завершение очереди при пропуске",
-              "assessment": "Причина второй ошибки устранена: `_importTotal = 0` теперь выставляется на последнем шаге при любом состоянии модели. Общая функция убрала дублирование между onboarding и editor, где раньше одна и та же логика была написана дважды. Переход в план, `_commitSpace` и toast `import.done` выполняются, только если в `_serverCfg` есть хотя бы одно пространство. При пустом плане остаётся экран `No spaces yet`, как и ожидает ТЗ. Отказ от запасного варианта `|| this.host._space` корректен: при пустом плане выбирать нечего. Для editor-импорта при уже существующих пространствах поведение прежнее: после Skip/Skip выбирается первое пространство и открывается план.",
-              "evidence": "src/editors/space-form-state.ts:47-62; src/houseplan-onboarding-runtime.ts:336-344; src/houseplan-editor-runtime.ts:9109-9115; src/editors/space-form.ts:119-122,190-192 (счётчик и Skip зависят от `importing`)"
-            },
-            {
-              "topic": "Повторное нажатие и пропуск во время записи",
-              "assessment": "Повторный Save во время записи блокируется трижды: кнопка отключена через `canSaveSpaceDialog` по `busy`, обработчики обоих рантаймов проверяют `dialog.busy`, а `busy:true` выставляется синхронно до первого await. Skip раньше оставался доступен во время записи. Тогда диалог мог закрыться, следующий этаж открылся бы до окончания сохранения, а завершение записи затем перезаписало бы `_spaceDialog`. Теперь Skip отключён и в разметке, и в `skipSpaceImportStep`. Smoke проверяет это задержкой ответа сервера и двойным программным кликом.",
-              "evidence": "src/houseplan-onboarding-runtime.ts:213,220; src/editors/space-form.ts:191; demo/smoke_first_space_floor_import.mjs:56-63; demo/helpers/first-space.mjs (holdNextWrite/releaseWrite)"
-            },
-            {
-              "topic": "Браузерная регрессия",
-              "assessment": "Сценарий проходит через настоящие кнопки мастера и покрывает все требования ТЗ: один этаж, SS, KS, SK, KK, ручное создание после KK, пробельное имя, отсутствие записи при закрытии нетронутого существующего пространства и восстановление после перезагрузки с проверкой ревизии и отсутствия записей при чтении. Fixture честно проверяет `expected_rev` и хранит конфигурацию между перезагрузками, так что дубли и лишние ревизии были бы видны. Проверку переходов `spaceTransitions` разумно сделали устойчивой к фоновым записям без изменения пространств. Ветка `reachedEnd=false` позволяет на старой сборке воспроизвести обе ошибки в одном прогоне.",
-              "evidence": "demo/smoke_first_space_floor_import.mjs:31-122; demo/helpers/first-space.mjs:4-41; process-next/lib/source-dependencies.mjs (привязка smoke к src-файлам)"
-            },
-            {
-              "topic": "Точность комментария и контекста автора",
-              "assessment": "В контексте автора сказано «в редактор переходит только при наличии сохранённого пространства», а в JSDoc — «Returns the first saved space». На деле функция возвращает первое пространство в конфигурации, а не сохранённое в этом импорте. Это то же условие, что было раньше с `_model.length`, и для editor-импорта поверх существующего плана оно правильное. Ошибкой это не является, но формулировка может ввести в заблуждение того, кто будет сопровождать код.",
-              "evidence": "src/editors/space-form-state.ts:45-46,61"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Уточнить JSDoc у `skipSpaceImportStep`: функция возвращает первое существующее пространство в конфигурации, а не пространство, сохранённое в этом импорте. Это одна строка, зато в будущем никто не начнёт фильтровать по пространствам текущего импорта, ошибочно считая это исправлением.",
-            "В onboarding путь завершения мастера через Skip после сохранённого этажа (Save/Skip) вызывает только `_requestMode('plan')`. Путь через Save дополнительно выставляет `_tool='draw'`, очищает `_path` и вызывает `_primeDrawWallField()` (строки 280-284). Расхождение было и до исправления, ТЗ его не требует: критерий «открывается редактор плана» выполняется. Если нужно одинаково начинать рисование после последнего шага, удобнее вынести общий хелпер завершения мастера и вызывать его из Save и Skip. Цена — ещё одна точка, общая для обоих рантаймов."
-          ],
-          "boundaries": "Ревью выполнено только чтением исходников на head 8cdb003 и сравнением с base. Сборку, unit-тесты и smoke я не запускал. Опираюсь на квитанцию S6 «Тесты для задачи #1589 (перед ревью)», статус passed, материал 8cdb003. Браузерные прогоны Save/Skip, повтор клика и перезагрузку, описанные автором, я знаю только из его контекста и из текста smoke-теста. Отдельных логов этих прогонов в снимке нет. Собранные бандлы в `custom_components/houseplan/frontend/houseplan-assets/*` в этом коммите не пересобраны и содержат старую логику `_skipImport`. Я исхожу из того, что артефакты собираются на релизе, но релизный процесс отдельно не проверял. Поведение опубликованных пакетов v1.86.1 и v2.0.0-beta.2 не проверял: беру его из описания issue."
-        },
-        "usage": {
-          "input_tokens": 18,
-          "cache_creation_input_tokens": 80051,
-          "cache_read_input_tokens": 346548,
-          "output_tokens": 8924,
-          "output_tokens_details": {
-            "thinking_tokens": 3072
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 80051,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 923,
-              "cache_read_input_tokens": 64916,
-              "cache_creation_input_tokens": 15135,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 15135
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление решает обе проблемы из issue простым способом, в одном месте и без изменения контракта хранения. Для нового пространства кнопка Save теперь зависит только от валидности черновика и занятости формы, а для существующего по-прежнему требуется правка. Пропуск шага вынесен в общую функцию `skipSpaceImportStep`. Она сбрасывает `_importTotal` на последнем шаге, даже если в плане нет ни одного пространства. Поэтому после Skip/Skip кнопка Add space открывает обычную форму без счётчика и без Skip. Во время ожидающей записи Skip заблокирован и в разметке, и в самой функции. Блокеров я не нашёл. Есть два мелких необязательных замечания: комментарий и контекст автора неточно описывают условие перехода в редактор, а после завершения мастера через Skip режим рисования не включается, как после Save. Второе поведение было и до исправления.\n\n## Понимание решения\n\nКак было: `renderSpaceForm` включал Save только при `dirty`. Мастер импорта запоминал исходный снимок формы уже с подставленным именем этажа HA, поэтому нетронутый шаг считался «чистым», и Save был недоступен. Оба рантайма (`_skipImport` в onboarding и в editor) сбрасывали `_importTotal` на последнем шаге только при `this.host._model.length > 0`. Если пропущены все этажи и пространств нет, `_importTotal` оставался больше нуля, и следующая форма Add space в режиме create показывала «Floor 2 of 2» и кнопку Skip.\n\nКак стало:\n1) В `space-form-state.ts` появилась чистая функция `canSaveSpaceDialog`: `(mode==='create' || dirty) && !hasProblems && !busy`. Её вызывает `space-form.ts:118`.\n2) `skipSpaceImportStep` ничего не делает, если форма не в режиме create, занята или импорт не идёт. Иначе она забывает снимок формы, закрывает диалог и открывает следующий этаж. На последнем шаге она обнуляет `_importTotal` и возвращает id первого пространства из `_serverCfg`, если оно есть. Оба `_skipImport` переходят в план только когда получили этот id.\n3) Кнопка Skip получила `?disabled=${d.busy}`.\n\nКакие пути разобраны:\n- `houseplan-card.ts:12996` выбирает рантайм для `_skipImport`. `_spaceDialogUsesOnboardingRuntime` после сброса `_importTotal` по-прежнему выбирает onboarding, потому что рантайм уже загружен.\n- `_saveSpaceDialog` в onboarding (строки 210–311): защита от повтора через `busy`, переход в план по `wasFirst || _importTotal>0`.\n- `_openNextImport` / `_startImport` в обоих рантаймах.\n- `close()` / `requestClose` в общей форме.\n- Источники создания черновика с заполненным именем: им заполнено только `_openNextImport`, `newSpaceDialogDraft` даёт пустое имя.\n- Существующий smoke `demo/smoke_space_create_display_defaults.mjs:66-73`: он вызывает `_skipImport` при непустой очереди, новый guard его не задевает.\n- Новый smoke и fixture с сохранением между перезагрузками, задержкой записи и проверкой ревизии.\n\n## Разбор решения\n\n### Правило сохранения create/edit\n\nПравило разделено правильно. Для create обязательная правка не имела смысла: создание пространства само по себе изменение. Пустое или пробельное имя по-прежнему блокируется через `spaceDialogProblems` (`!d.title.trim()`), и сам обработчик сохранения тоже проверяет `!dialog.title.trim()`. Для edit остаётся требование #600 К10: нетронутое существующее пространство сохранить нельзя. Правило вынесено в чистую функцию с unit-тестом на все комбинации. Это удачное решение, которое стоит сохранить: мутант из реестра теперь привязан к поведению, а не к строке шаблона. Из открывателей формы create имя заранее заполняет только мастер импорта, поэтому ручное создание с пустой формой ведёт себя как раньше.\n\nОснование: src/editors/space-form-state.ts:70-72; src/editors/space-form.ts:117-118; src/editors/space-dialog-draft.ts:21 (title: ''); src/houseplan-onboarding-runtime.ts:213-214; test/dialog-baseline.test.mjs:208-216; scripts/mutation-registry.mjs (space-save-enabled-without-changes, find совпадает со строкой 71)\n\n### Завершение очереди при пропуске\n\nПричина второй ошибки устранена: `_importTotal = 0` теперь выставляется на последнем шаге при любом состоянии модели. Общая функция убрала дублирование между onboarding и editor, где раньше одна и та же логика была написана дважды. Переход в план, `_commitSpace` и toast `import.done` выполняются, только если в `_serverCfg` есть хотя бы одно пространство. При пустом плане остаётся экран `No spaces yet`, как и ожидает ТЗ. Отказ от запасного варианта `|| this.host._space` корректен: при пустом плане выбирать нечего. Для editor-импорта при уже существующих пространствах поведение прежнее: после Skip/Skip выбирается первое пространство и открывается план.\n\nОснование: src/editors/space-form-state.ts:47-62; src/houseplan-onboarding-runtime.ts:336-344; src/houseplan-editor-runtime.ts:9109-9115; src/editors/space-form.ts:119-122,190-192 (счётчик и Skip зависят от `importing`)\n\n### Повторное нажатие и пропуск во время записи\n\nПовторный Save во время записи блокируется трижды: кнопка отключена через `canSaveSpaceDialog` по `busy`, обработчики обоих рантаймов проверяют `dialog.busy`, а `busy:true` выставляется синхронно до первого await. Skip раньше оставался доступен во время записи. Тогда диалог мог закрыться, следующий этаж открылся бы до окончания сохранения, а завершение записи затем перезаписало бы `_spaceDialog`. Теперь Skip отключён и в разметке, и в `skipSpaceImportStep`. Smoke проверяет это задержкой ответа сервера и двойным программным кликом.\n\nОснование: src/houseplan-onboarding-runtime.ts:213,220; src/editors/space-form.ts:191; demo/smoke_first_space_floor_import.mjs:56-63; demo/helpers/first-space.mjs (holdNextWrite/releaseWrite)\n\n### Браузерная регрессия\n\nСценарий проходит через настоящие кнопки мастера и покрывает все требования ТЗ: один этаж, SS, KS, SK, KK, ручное создание после KK, пробельное имя, отсутствие записи при закрытии нетронутого существующего пространства и восстановление после перезагрузки с проверкой ревизии и отсутствия записей при чтении. Fixture честно проверяет `expected_rev` и хранит конфигурацию между перезагрузками, так что дубли и лишние ревизии были бы видны. Проверку переходов `spaceTransitions` разумно сделали устойчивой к фоновым записям без изменения пространств. Ветка `reachedEnd=false` позволяет на старой сборке воспроизвести обе ошибки в одном прогоне.\n\nОснование: demo/smoke_first_space_floor_import.mjs:31-122; demo/helpers/first-space.mjs:4-41; process-next/lib/source-dependencies.mjs (привязка smoke к src-файлам)\n\n### Точность комментария и контекста автора\n\nВ контексте автора сказано «в редактор переходит только при наличии сохранённого пространства», а в JSDoc — «Returns the first saved space». На деле функция возвращает первое пространство в конфигурации, а не сохранённое в этом импорте. Это то же условие, что было раньше с `_model.length`, и для editor-импорта поверх существующего плана оно правильное. Ошибкой это не является, но формулировка может ввести в заблуждение того, кто будет сопровождать код.\n\nОснование: src/editors/space-form-state.ts:45-46,61\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Уточнить JSDoc у `skipSpaceImportStep`: функция возвращает первое существующее пространство в конфигурации, а не пространство, сохранённое в этом импорте. Это одна строка, зато в будущем никто не начнёт фильтровать по пространствам текущего импорта, ошибочно считая это исправлением.\n- В onboarding путь завершения мастера через Skip после сохранённого этажа (Save/Skip) вызывает только `_requestMode('plan')`. Путь через Save дополнительно выставляет `_tool='draw'`, очищает `_path` и вызывает `_primeDrawWallField()` (строки 280-284). Расхождение было и до исправления, ТЗ его не требует: критерий «открывается редактор плана» выполняется. Если нужно одинаково начинать рисование после последнего шага, удобнее вынести общий хелпер завершения мастера и вызывать его из Save и Skip. Цена — ещё одна точка, общая для обоих рантаймов.\n\n## Границы анализа\n\nРевью выполнено только чтением исходников на head 8cdb003 и сравнением с base. Сборку, unit-тесты и smoke я не запускал. Опираюсь на квитанцию S6 «Тесты для задачи #1589 (перед ревью)», статус passed, материал 8cdb003. Браузерные прогоны Save/Skip, повтор клика и перезагрузку, описанные автором, я знаю только из его контекста и из текста smoke-теста. Отдельных логов этих прогонов в снимке нет. Собранные бандлы в `custom_components/houseplan/frontend/houseplan-assets/*` в этом коммите не пересобраны и содержат старую логику `_skipImport`. Я исхожу из того, что артефакты собираются на релизе, но релизный процесс отдельно не проверял. Поведение опубликованных пакетов v1.86.1 и v2.0.0-beta.2 не проверял: беру его из описания issue.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7 → 8cdb00332d689571a68afd8b775ead4003bae24a\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1589, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n- **Изменение.** Новое пространство сохраняется при валидном черновике, даже если предложенное имя не меняли. Существующее по-прежнему требует правки. Пропуск активного шага теперь общий для обоих рантаймов: сбрасывает прогресс на завершении, а в редактор переходит только при наличии сохранённого пространства. Skip заблокирован при ожидающей записи.\n- **Риски.** Общая форма используется и онбордингом, и редактором. Контракт хранения, состояние уже сохранённых пространств и валидация не менялись.\n- **Доказательства.** Браузерный сценарий на исходном dev воспроизвёл обе ошибки. На исправлении прошли один этаж, Save/Save, Skip/Save, Save/Skip, Skip/Skip, ручное создание после Skip/Skip, повторный клик при удержанном ответе сервера, восстановление после перезагрузки, пустое имя и отсутствие записи при закрытии существующего пространства без правок. Дополнительно проверена адресная связь теста с кодом в плане S6.\n- **Первый локальный S6.** Три проверки нашли старый якорь «только dirty». Правило вынесено в чистую функцию с поведенческой проверкой режимов create/edit. Мутант по-прежнему ломает запрет сохранения чистой правки и теперь ловится существующим unit-guard; адресный guard и повторные проверки уникальности якоря прошли. Проверки не отключались.\n```\n\n</details>\n",
-        "createdAt": "2026-11-26T21:44:47.404Z",
-        "artifactId": 15154764544,
-        "runId": 45899949313,
-        "runAttempt": 1,
-        "completedAt": "2026-11-26T21:44:50Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45899949313",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1590": {
@@ -7084,19 +6940,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1589,
-    "worker": "finish",
-    "token": "746:finish:974d6940-17f1-409c-8b0c-6624b02e5929:finish:2:admit",
-    "fence": 746,
-    "materialSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
-    "expectedBase": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795728526653,
-    "expiresAt": 1795733115249,
-    "patchId": "9dd08083a21f014869f1635ec516eb74d2e121cb",
-    "reviewRequest": "review:1589:2:9dd08083a21f014869f1635ec516eb74d2e121cb:9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7117,202 +6961,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec:finish:2:synchronized": {
-      "digest": "b83e983eb10597d58cdb1d750544aa9ac8658f7d1bcb6087156cb000247b2213",
-      "issue": 1589
-    },
-    "github:45895338499:1:completions:message:4786d5dade17c3b2c7b444126fdb99f3e17b05b34c35ee9d0e742708ef9799a4": {
-      "digest": "b174f77dc451c8a651899945b347ab1feee7d363232b070bc7795b3be0061be2",
-      "issue": 1589
-    },
-    "github:45895338499:1:completions:message:758ba593543cc3faa5553e2b9d57c4aaace576cd279635a33041c17428397e2e": {
-      "digest": "3809955879f6a9f175ea991d5effc8f360995c37843b1dda1fc39ef523bc6780",
-      "issue": 1589
-    },
-    "finish:02e2ae23-db2e-4c31-bce3-e9f9c98c2e63": {
-      "digest": "187217e846d2f29c8214bf8a46b8200123fc983487b65b7469fc2a07ded0c0bd",
-      "issue": 1589
-    },
-    "finish:b7e81fd6-3df4-4205-bc79-d99b7b551117": {
-      "digest": "df971cb572bc9c0c1349fb85d012967c0d52ad2d23641a2c7082ba0613343f43",
-      "issue": 1589
-    },
-    "finish:2807ed39-218f-4848-a3a9-7530ff97f6ca": {
-      "digest": "f54ba2870ddebcdbb4cb363e3416d1ce8ec68dfd8a6f57f45eb2d4de09cc0d7b",
-      "issue": 1589
-    },
-    "finish:55cc34b4-f3af-47e1-9439-f2dbb4b98b21": {
-      "digest": "820c322b94f3f8b39240d2745d1429aa6a4193cd84b1e8abceac70ce15067a97",
-      "issue": 1589
-    },
-    "finish:4d8b0190-1f9a-4e50-bff3-658996e4aa7d": {
-      "digest": "a992b8180516b50c002508eeedcd14b051eaf110a68d856d7c03a1b4db0bbded",
-      "issue": 1589
-    },
-    "finish:59b3ca21-eca6-497c-ad49-7986562e5eee": {
-      "digest": "6b8edc758866f779d729e4cdb96cd69eac92e9f53b028d7d523548a80bf53558",
-      "issue": 1589
-    },
-    "finish:0967c17e-d3d2-46ed-83ca-10eb8a7247dd": {
-      "digest": "c5120dee050d2179f2a2664c13f96f8c77ec8a6f4dbcb0dded3138e0e2b9f39f",
-      "issue": 1589
-    },
-    "finish:dfbf71c9-3d82-4262-b421-c130dfc1a879": {
-      "digest": "d4b0b26461ae90435c8af47c30ff2725c76f1622384b10a5b322b1ecb59b5916",
-      "issue": 1589
-    },
-    "finish:39a97501-3f7b-4b30-a3f5-ea32f1b48bd6": {
-      "digest": "5e06af4c23311e2fd0a457d48e6d5214389f3b8f9e75fc07ab25963114ef0f31",
-      "issue": 1589
-    },
-    "finish:5374532a-fc9a-4957-a7c0-d9303965f07f": {
-      "digest": "4986f3571696bd6de1142bdfae9ba7cc27df6b63379ff87f6681caf4c486b06d",
-      "issue": 1589
-    },
-    "finish:c898d417-f6c9-42fb-bb76-0fea7fe12f09": {
-      "digest": "016afe1cf740a8e57d9ef2045665df6910235ed8d0cd2283976ed9fe3fd7f6ca",
-      "issue": 1589
-    },
-    "finish:51c31adb-383a-4013-9a43-f621692c7e7b": {
-      "digest": "0dbead6cd529e4740f1073c97fae371488cdae80e90fc57056e5d8217ac42e7f",
-      "issue": 1589
-    },
-    "finish:30b771e3-cc85-47eb-941b-d0706a2c5e0c": {
-      "digest": "cd5c240d6caec387988effa254804991dfb191e016c31ae08b868d57ad91bbdd",
-      "issue": 1589
-    },
-    "finish:c7f7aafc-cabb-496b-9868-976c2a5711d9": {
-      "digest": "ba15176c23ba1a38ea08e49d5a1f860d825f8e78d2f5d8edb070ec0ae3518448",
-      "issue": 1589
-    },
-    "finish:2543f979-6bf4-453f-8283-e42d029ffd09": {
-      "digest": "742b2617739b099e1150a4913c9ddac9d06b66e6531cefb42c8112e4c8748c3e",
-      "issue": 1589
-    },
-    "finish:b580788c-284c-4f2d-aed2-3b91be30a5da": {
-      "digest": "ddef4dc97832986ff61d353ae49942ba4d7d5c82bf247c75b75048fc1540c2de",
-      "issue": 1589
-    },
-    "github:45897220404:1:completions:message:07ed3b35ebf9a68654a7b866b064da25d89f6a816020bfb5a61316af37729ecc": {
-      "digest": "754df8b4556b1c05e35475842176a2c5ab08e2e9a961873fedba7c9ccb2c9e27",
-      "issue": 1589
-    },
-    "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec:finish:3:return": {
-      "digest": "f02edc706bbd758b3ddfe75c95e4e8857c9365d7f94fee98658c08eb02ab5f93",
-      "issue": 1589
-    },
-    "finish:974d6940-17f1-409c-8b0c-6624b02e5929:finish:3:synchronized": {
-      "digest": "b8b9d748a95c615e3ea662834f2764eec4ee3a01b060a286efbd71aa29ad3787",
-      "issue": 1589
-    },
-    "github:45898397616:1:completions:notice:496208993890e221ad3da0a934a411c8924cbbc3dd9cf158e0a12643cdb958aa": {
-      "digest": "6789317a1a418b36c7bcdbb3c1505b56b059701e4f2f314cb535ad4a6db9691a",
-      "issue": 1589
-    },
-    "github:45898397616:1:completions:message:496208993890e221ad3da0a934a411c8924cbbc3dd9cf158e0a12643cdb958aa": {
-      "digest": "18afcd2f222344969e77ec5fed223b01c6c30ccc39d8ffb6ee878394c477c2e7",
-      "issue": 1589
-    },
-    "github:45898397616:1:completions:message:f6cfd42395c3697c40b506d59f7ef1838382ba012966e09e1deb1fa18523e83b": {
-      "digest": "5280a511e07725a66ef696a2b29f3cbbb5d65785d77d2eed8af13988807695bb",
-      "issue": 1589
-    },
-    "github:45898397616:1:completions:message:bb471c0276e1006b55a97f20223a812c6f1a928c31b13487a0ead630fa0db320": {
-      "digest": "a6cb41c1b9517ff8c16f4d44d9372552f79d9106fc9e0011c737b7a4af641b79",
-      "issue": 1589
-    },
-    "github:45898397616:1:completions:message:a0be6dee57ccde094cc133f4990acfc3cbd7098184a247b57e3827fa56da2dff": {
-      "digest": "e8dda66b07a00ce9ff2f7d29a251295c733c6c83ae83fd4bffb4c2e1b7d599aa",
-      "issue": 1589
-    },
-    "finish:60605cc0-40f5-45b9-b407-f4fab36925a0": {
-      "digest": "3f5b30972322bd37f9043b03f5cedaeb80193e04e51a9952f03e0e519853d00b",
-      "issue": 1589
-    },
-    "finish:b10cce2a-0da6-4ca2-aec9-fb6da94f44a8": {
-      "digest": "7076e52535ae59d5aa33baf23d2e49be21c516c4111d1f2ff691d603c886c547",
-      "issue": 1589
-    },
-    "finish:c3a0f8a9-7f61-4e81-8861-84088d860e92": {
-      "digest": "1a21c89e2fa3989c20187c44109a445fde80a16c0080de2b5f6043425d29cf9a",
-      "issue": 1589
-    },
-    "dev-build:45898397616:1:webhook": {
-      "digest": "729556e61582ad1cfa814909a43b78c1d0e2655a8ca6c0ecde519a6e7ef5b085",
-      "issue": 1589
-    },
-    "dev-build:45898397616:1:webhook:7822e0b5-18ac-46b8-83e9-3b8b73050ce6:delivered": {
-      "digest": "c6462e7952ab181d1f160fa67c3e732b9ed3dc41ed8f417c599137e00ecde1c7",
-      "issue": 1589
-    },
-    "finish:95335d0e-f2b3-4916-b611-e20d8066c36f": {
-      "digest": "5b9c1417fe8a8bee55ae494d0bdaccbaf027a836df8077008f897a91edc1891c",
-      "issue": 1589
-    },
-    "finish:a8465158-e817-4316-9db2-baa7d8dcd4f0": {
-      "digest": "ea12e0d5a125585638421d50662d9e38cd6fc76cde61075fa89f5a0eefc68076",
-      "issue": 1589
-    },
-    "finish:4847b0c0-2e6f-495c-ad23-cb533e68fc8a": {
-      "digest": "e8e6afa8f6b81d8a9ec853d129d681842e3fe80ccc3f315358bf268e991a0991",
-      "issue": 1589
-    },
-    "finish:e895afc9-4cd2-4955-a74f-ec42cef7ad02": {
-      "digest": "d2c882a68b201c93efaa016107926f1ea8101ae4852eb1c133aa8820d9f05fe5",
-      "issue": 1589
-    },
-    "finish:bea8f10f-9d73-4dea-921d-5f4a6af8d355": {
-      "digest": "58da6df722ca8178b1584f271236f6adeacfff13d1fde9ba9bf5e85d5c308fde",
-      "issue": 1589
-    },
-    "finish:2db87ccb-d30d-4e36-b398-6283f0dcc3b3": {
-      "digest": "211e5b06b80841161bf6b1e4e6a47a2b18827f84aa2c39e02fe761f71b415035",
-      "issue": 1589
-    },
-    "finish:1da37af2-39c5-47a6-90bc-bc5ada699f47": {
-      "digest": "2097beae336c482e46a86f8469896ed563b42113d74eb0178f4ef60e332ec1af",
-      "issue": 1589
-    },
-    "finish:8c3e47bc-1510-49f8-b72e-5d64062da240": {
-      "digest": "74b8ff015ad493f2f67f3feb8192f70a71e9ecf9a8827aaac06c40e1634334f5",
-      "issue": 1589
-    },
-    "finish:787b5131-7468-44fd-8258-071ddc723258": {
-      "digest": "204541df2e676cb12c81e0db8a68db7b91ea215130f89f1726b25b8e7845f704",
-      "issue": 1589
-    },
-    "finish:eed5ccc6-3bd2-45ad-96f9-48dca5cfd535": {
-      "digest": "b77d06e096949f0d186f059cd05b9fbb9b8854067bda5b4f20ee8f9fb7c88362",
-      "issue": 1589
-    },
-    "finish:974d6940-17f1-409c-8b0c-6624b02e5929:finish:4:s6-label": {
-      "digest": "1e883415ba762caa621c0c2a5eb183ae2d427b7a60c93d0d302203e07f0df458",
-      "issue": 1589
-    },
-    "finish:974d6940-17f1-409c-8b0c-6624b02e5929:finish:5:review-requested": {
-      "digest": "bada83f5b2bf05c732f7bdbf8870169a4ca6b932d90a59529fbacee8f31ad110",
-      "issue": 1589
-    },
-    "github:45899917887:1:tick:0:review-retry": {
-      "digest": "3615dc19fea25690f348c7a5a47aa6534e84744ca16a16ac69d2f8c4aa22e20f",
-      "issue": 1589
-    },
-    "github:45899917887:1:completions:message:f17583c4770b6a6470e54666ea686a3260be2189f714ef80f63ad771fd63c26b": {
-      "digest": "8df9ed0534d642378c9e65b28466db120ff7a7498b9d031fb5f018a9da456884",
-      "issue": 1589
-    },
-    "github:45899917887:1:completions:message:6a42b00251a71027b93329177c9410b0084dc6a50d00fed690f93f1bb9ea4102": {
-      "digest": "954caf203f94ba0a265b6c55ea741029c0b82a74b5228494b14dd309be79657b",
-      "issue": 1589
-    },
-    "github:45900236922:1:tick:0:review-presentation": {
-      "digest": "c633a2507645ed05ec0505ae6a3992d3fc18e59f88eac52dd5f753d56c04ae86",
-      "issue": 1589
-    },
-    "github:45900236922:1:tick:0:review-complete": {
-      "digest": "2035a9b641d38dfe0d94c437e7ecee1d754ccb0488fcf7516518bff57408dc6e",
-      "issue": 1589
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7340,115 +6988,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec": {
-      "digest": "43af75d7391caeb09c2dcfd478bd02b273f90a2f50be24f9cc7ba7923d3af01e",
-      "issue": 1589,
-      "message": {
-        "kind": "queued",
-        "issue": 1589,
-        "at": 1795726962394,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "91a2284fe8c9badf1263ac81bf0039177bd0217f",
-        "delivered": true
-      }
-    },
-    "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec:finish:1:admit": {
-      "digest": "acbd65dedb7e3339358165f82e81612d358432da69236790b83e31c9a6edf6b5",
-      "issue": 1589,
-      "message": {
-        "kind": "admitted",
-        "issue": 1589,
-        "at": 1795726965911,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "91a2284fe8c9badf1263ac81bf0039177bd0217f",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec:finish:3:return:return:1589": {
-      "digest": "f02edc706bbd758b3ddfe75c95e4e8857c9365d7f94fee98658c08eb02ab5f93",
-      "issue": 1589,
-      "message": {
-        "kind": "return",
-        "issue": 1589,
-        "at": 1795728007341,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795728007341,
-          "entry": 1,
-          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-          "eventId": "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec:finish:3:return:return:1589"
-        },
-        "delivered": true
-      }
-    },
-    "finish:974d6940-17f1-409c-8b0c-6624b02e5929": {
-      "digest": "3a5fd2e4939104503e58b90df6d8fd133be130410bba4378d5154ecc4422ed49",
-      "issue": 1589,
-      "message": {
-        "kind": "queued",
-        "issue": 1589,
-        "at": 1795728029102,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d6507fb3bae0f4ec1795ba335c550f5dae30554b",
-        "delivered": true
-      }
-    },
-    "finish:974d6940-17f1-409c-8b0c-6624b02e5929:finish:2:admit": {
-      "digest": "ceb725d2abb56373115176978fc1b55141f37fa5071c429b599f225585ddf893",
-      "issue": 1589,
-      "message": {
-        "kind": "admitted",
-        "issue": 1589,
-        "at": 1795728526653,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d6507fb3bae0f4ec1795ba335c550f5dae30554b",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:974d6940-17f1-409c-8b0c-6624b02e5929:finish:4:s6-complete": {
-      "digest": "e453f181bed07ab1370daa4e22c2c54137a5109967ccd583df344308ea55c4c6",
-      "issue": 1589,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1589,
-        "at": 1795729317306,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
-        "phase": "review",
-        "evidence": {
-          "id": "20261126T212903600-a5b29a31",
-          "name": "Тесты для задачи #1589 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T212903600-a5b29a31/report.json",
-          "materialSha": "8cdb00332d689571a68afd8b775ead4003bae24a",
-          "status": "passed",
-          "finishedAt": "2026-11-26T21:41:56.154Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "- **Изменение.** Новое пространство сохраняется при валидном черновике, даже если предложенное имя не меняли. Существующее по-прежнему требует правки. Пропуск активного шага теперь общий для обоих рантаймов: сбрасывает прогресс на завершении, а в редактор переходит только при наличии сохранённого пространства. Skip заблокирован при ожидающей записи.\n- **Риски.** Общая форма используется и онбордингом, и редактором. Контракт хранения, состояние уже сохранённых пространств и валидация не менялись.\n- **Доказательства.** Браузерный сценарий на исходном dev воспроизвёл обе ошибки. На исправлении прошли один этаж, Save/Save, Skip/Save, Save/Skip, Skip/Skip, ручное создание после Skip/Skip, повторный клик при удержанном ответе сервера, восстановление после перезагрузки, пустое имя и отсутствие записи при закрытии существующего пространства без правок. Дополнительно проверена адресная связь теста с кодом в плане S6.\n- **Первый локальный S6.** Три проверки нашли старый якорь «только dirty». Правило вынесено в чистую функцию с поведенческой проверкой режимов create/edit. Мутант по-прежнему ломает запрет сохранения чистой правки и теперь ловится существующим unit-guard; адресный guard и повторные проверки уникальности якоря прошли. Проверки не отключались.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
