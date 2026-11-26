@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26762,
-  "nextTicket": 736,
+  "revision": 26763,
+  "nextTicket": 737,
   "nextFence": 735,
   "tasks": {
     "1024": {
@@ -6777,11 +6777,11 @@
       "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 734,
-      "queued": false,
+      "ticket": 736,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795693585506,
-      "reviewEntry": 1,
+      "readyAt": 1795694627233,
+      "reviewEntry": 2,
       "patchId": "b156f575e0581a7872361e7f99e643d0da8a01ae",
       "changedFiles": [
         "demo/smoke_ui_polish_976.mjs",
@@ -6789,7 +6789,6 @@
         "docs/CHANGELOG.ru.md",
         "scripts/mutation-registry.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7555,7 +7554,8 @@
     }
   },
   "waiting": [
-    1583
+    1583,
+    1581
   ],
   "active": null,
   "events": {
@@ -7896,6 +7896,19 @@
           "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
           "eventId": "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:3:return:return:1581"
         }
+      }
+    },
+    "finish:b3fd8680-e7f3-4230-9f13-3b03b96d21ac": {
+      "digest": "e64ed28712590b95ed71aabec9d4e1fd081e9ea5ca20d364153648857d0d5388",
+      "issue": 1581,
+      "message": {
+        "kind": "queued",
+        "issue": 1581,
+        "at": 1795694627233,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed"
       }
     }
   },
