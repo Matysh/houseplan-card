@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26318,
+  "revision": 26319,
   "nextTicket": 729,
   "nextFence": 729,
   "tasks": {
@@ -6562,10 +6562,23 @@
       "removedToRelease": false,
       "reviewRequest": "review:1575:2:bb1f156e1442a8d19ac89d3882c6053ad87b4246:d1419a1c50a6c05de40065f2af66e72728ecf570",
       "completion": {
-        "status": "pending",
-        "labels": false,
+        "labels": true,
         "milestone": false,
-        "comment": false
+        "comment": true,
+        "status": "pending",
+        "errors": {
+          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
+        },
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "classificationAt": "8efe705401730d83e9ffbfa4a6053fe2752ed90c",
+        "commentCurrent": true,
+        "commentDigest": "461782c36f016e0e633c",
+        "commentFacts": {
+          "labels": true,
+          "milestone": false,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "published",
