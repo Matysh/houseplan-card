@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26160,
+  "revision": 26161,
   "nextTicket": 725,
   "nextFence": 725,
   "tasks": {
@@ -6680,7 +6680,19 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795674492031,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "2963fb91256bc8030414e8e82a3e7e072ed1706c",
+      "changedFiles": [
+        "demo/benchmark_webgl_floor_shadows.mjs",
+        "demo/smoke_webgl_floor_shadows.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/LIGHT.md",
+        "docs/release-ledger/v2.0.0/1578.json",
+        "src/plan-3d-floor-mask.ts",
+        "src/plan-3d-light-field.ts",
+        "test/plan-3d-floor-mask.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7365,10 +7377,11 @@
     "token": "724:finish:c271f30c-4acc-40b3-82d5-ef777de2434b:finish:1:admit",
     "fence": 724,
     "materialSha": "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "6560b865829e17fcc46247d422c7ec2dc1752945",
+    "phase": "testing",
     "admittedAt": 1795674496034,
-    "expiresAt": 1795674796034
+    "expiresAt": 1795674804295,
+    "patchId": "2963fb91256bc8030414e8e82a3e7e072ed1706c"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7562,6 +7575,10 @@
     "github:45768010945:1:completions:metadata:30dde332-f82c-4664-91ba-40ccc9e0bd2b:task-notice:1577::": {
       "digest": "1eab5450374b408bbf17b25b0525517937633b1a7dba0f8b73e7c82655da2bee",
       "issue": 1577
+    },
+    "finish:c271f30c-4acc-40b3-82d5-ef777de2434b:finish:3:synchronized": {
+      "digest": "e397406f4e28ecccb9006d025a418066d0c891214faa50894ad829ce5f10837a",
+      "issue": 1578
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
