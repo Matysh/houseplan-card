@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27335,
-  "nextTicket": 744,
+  "revision": 27336,
+  "nextTicket": 745,
   "nextFence": 744,
   "tasks": {
     "1001": {
@@ -6226,6 +6226,20 @@
         "status": "published",
         "sourceSha": "828dafd96f4764c090bd07558a13f921c239bf4f"
       }
+    },
+    "1589": {
+      "issue": 1589,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1589-ha-floor-onboarding",
+      "materialSha": "91a2284fe8c9badf1263ac81bf0039177bd0217f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 744,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795726962394,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6903,7 +6917,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1589
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6953,6 +6969,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:3f68366f-fe45-4f31-aa7c-a24221f81eec": {
+      "digest": "43af75d7391caeb09c2dcfd478bd02b273f90a2f50be24f9cc7ba7923d3af01e",
+      "issue": 1589,
+      "message": {
+        "kind": "queued",
+        "issue": 1589,
+        "at": 1795726962394,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "91a2284fe8c9badf1263ac81bf0039177bd0217f"
       }
     }
   },
