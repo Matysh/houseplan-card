@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25864,
-  "nextTicket": 718,
+  "revision": 25865,
+  "nextTicket": 719,
   "nextFence": 718,
   "tasks": {
     "1024": {
@@ -6505,11 +6505,11 @@
       "materialSha": "a044b85569c8b33eaa43d90ecc0f654027c34569",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 716,
-      "queued": false,
+      "ticket": 718,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795656172669,
-      "reviewEntry": 2,
+      "readyAt": 1795660262425,
+      "reviewEntry": 3,
       "patchId": "cc7620f29d06b20e7bb55d9a944cc4eb3d6144f4",
       "changedFiles": [
         "custom_components/houseplan/startup_floor_preview.py",
@@ -6534,8 +6534,7 @@
         "entry": 2,
         "detail": "Браузер: floor preparation deadline: failed; Браузер: screen camera 1165: failed",
         "eventId": "finish:00946e14-de7f-4c42-a8e2-b62481983443:finish:2:return:return:1574"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -7213,7 +7212,9 @@
       "runId": 45742439041
     }
   },
-  "waiting": [],
+  "waiting": [
+    1574
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7455,6 +7456,19 @@
           "eventId": "finish:00946e14-de7f-4c42-a8e2-b62481983443:finish:2:return:return:1574"
         },
         "delivered": true
+      }
+    },
+    "finish:30c5ace2-af66-4c6a-861f-441199d1622a": {
+      "digest": "54ba829e9b584f39915f25f4101ef68f28a8e449ee24506cce38d049e097fdad",
+      "issue": 1574,
+      "message": {
+        "kind": "queued",
+        "issue": 1574,
+        "at": 1795660262425,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a044b85569c8b33eaa43d90ecc0f654027c34569"
       }
     }
   },
