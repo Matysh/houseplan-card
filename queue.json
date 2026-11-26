@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25897,
+  "revision": 25898,
   "nextTicket": 719,
   "nextFence": 719,
   "tasks": {
@@ -6508,7 +6508,7 @@
       "ownerDecision": null,
       "ticket": 718,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795660262425,
       "reviewEntry": 3,
       "patchId": "9b5a672e1ea7efabeada17bfd8ba6448b34a4c97",
@@ -6535,6 +6535,15 @@
         "entry": 2,
         "detail": "Браузер: floor preparation deadline: failed; Браузер: screen camera 1165: failed",
         "eventId": "finish:00946e14-de7f-4c42-a8e2-b62481983443:finish:2:return:return:1574"
+      },
+      "s6": {
+        "id": "20261126T023255944-68073ca7",
+        "name": "Тесты для задачи #1574 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T023255944-68073ca7/report.json",
+        "materialSha": "751db20d7e3ab8b1b047536f34e4946b24aa5b8c",
+        "status": "passed",
+        "finishedAt": "2026-11-26T02:42:17.707Z",
+        "failures": []
       }
     }
   },
@@ -7221,9 +7230,9 @@
     "fence": 718,
     "materialSha": "751db20d7e3ab8b1b047536f34e4946b24aa5b8c",
     "expectedBase": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795660266439,
-    "expiresAt": 1795661175524,
+    "expiresAt": 1795664538939,
     "patchId": "9b5a672e1ea7efabeada17bfd8ba6448b34a4c97"
   },
   "events": {
@@ -7561,6 +7570,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752"
+      }
+    },
+    "finish:30c5ace2-af66-4c6a-861f-441199d1622a:finish:4:s6-complete": {
+      "digest": "520c7db5d9ebeae72586c78024a6df0bf9659acbc52620bf1b846f1d4af86147",
+      "issue": 1574,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1574,
+        "at": 1795660938939,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "751db20d7e3ab8b1b047536f34e4946b24aa5b8c",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T023255944-68073ca7",
+          "name": "Тесты для задачи #1574 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T023255944-68073ca7/report.json",
+          "materialSha": "751db20d7e3ab8b1b047536f34e4946b24aa5b8c",
+          "status": "passed",
+          "finishedAt": "2026-11-26T02:42:17.707Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "До: пакет v2 отклоняется при отличии размера или позы, мобильный клиент ничего не показывает после desktop. После: пакет v3 содержит только нейтральный WebP и прямоугольник полной проекции с мебелью. Получатель измеряет свой экран и штатно рассчитывает камеру, затем позиционирует картинку в stage; не меняет живую камеру и не запускает WebGL для превью. Локальный снимок остаётся независимым, несовместимый пакет не блокирует живой план. Вместо масштабирования обрезка из одного экрана покрывает все физические детали, даже вне кадра автора снимка. Без изменений в config/layout и правах.\n\nПроверено локально: 17 Node, 13 backend и оба сценария HA (0° и 45°, desktop + телефон, повторная публикация запрещена) на совмещённой сборке с #1570; старое поведение воспроизводится. Камера/рамка и позиции проверяются отдельно от допустимой разницы WebP. Полный stable-аудит и галерея ведутся отдельно, эталоны не изменялись.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
