@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26771,
+  "revision": 26772,
   "nextTicket": 737,
   "nextFence": 737,
   "tasks": {
@@ -7721,6 +7721,10 @@
       "digest": "3196dd072812b240dbb9aee3ce40c7f7286460fa52a78900e1e470fa836d8efa",
       "issue": 1582
     },
+    "github:45816614953:1:completions:message:0ce17994970092fca473464179a39ab72c4e35a0e2c22728e2301df6447a605b": {
+      "digest": "807801355b8225e2d26e08eebc052012da545ba9717cf3e9632a6facb4f9051e",
+      "issue": 1583
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7821,26 +7825,6 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
-      }
-    },
-    "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:3:return:return:1581": {
-      "digest": "9a7d459af23e069d3b0dd0d1582870bde54e79267e4c42ef13f65e9ac7e7f0b4",
-      "issue": 1581,
-      "message": {
-        "kind": "return",
-        "issue": 1581,
-        "at": 1795694597105,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795694597105,
-          "entry": 1,
-          "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
-          "eventId": "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:3:return:return:1581"
-        }
       }
     },
     "finish:b3fd8680-e7f3-4230-9f13-3b03b96d21ac": {
