@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27183,
+  "revision": 27184,
   "nextTicket": 743,
   "nextFence": 743,
   "tasks": {
@@ -3054,44 +3054,6 @@
         "sourceSha": "31b6052234aed5e6d7160ec7fe08844f221fc135"
       }
     },
-    "1493": {
-      "issue": 1493,
-      "branch": "codex/1493-raster-fade",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-      "mergedSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6",
-      "mergedAt": 1795190446217,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1493:1:ce98d8fc2162f7507a90a6baadc72024558baa8e:67ad4ad1aa10293de5bdc0d891642c5c23f75e85",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 16
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "e322c679addbb6b28277410d945db0a2bfc8e6b6"
-      }
-    },
     "1494": {
       "issue": 1494,
       "branch": "issue/1494-release-return-6af2e11c1e83",
@@ -6131,21 +6093,22 @@
       "reviewRequest": "review:1577:5:30b2e49aa787ab91a072eacb00337f83287c10ce:f1cbf09ed5611deb66507c8e2cfbba50b07bbad9",
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": true,
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": false,
-        "classificationAt": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
         "commentCurrent": true,
-        "commentDigest": "461782c36f016e0e633c",
+        "commentDigest": "d1c65df9ac3a3cbebb03",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
+          "milestone": true,
           "target": null
+        },
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 18
         }
       },
       "devBuild": {
