@@ -84,11 +84,13 @@ export async function batteryInputProbe(page, id = 'd_temp') {
     const shell = marker?.querySelector('.device-shell-frame')?.getBoundingClientRect();
     if (!frame || !shell || !icon) return { visible: false, passive: false, outsideOldHitArea: false };
     const point = { x: frame.x + frame.width / 2, y: frame.y + frame.height / 2 };
+    const native = root.querySelector('canvas[data-hp-plan-3d-ready]');
     const passive = getComputedStyle(battery).pointerEvents === 'none'
       && getComputedStyle(icon).pointerEvents === 'none';
     const visible = frame.width > 0 && frame.height > 0
       && frame.left >= 0 && frame.top >= 0 && frame.right < innerWidth && frame.bottom < innerHeight
-      && frame.left > shell.right && getComputedStyle(battery).visibility === 'visible'
+      && (native ? !window.__card._plan3dHost?.pick(point.x, point.y) : frame.left > shell.right)
+      && getComputedStyle(battery).visibility === 'visible'
       && document.elementFromPoint(point.x, point.y) === window.__card;
     const mode = window.__card._serverCfg.settings?.show_device_battery;
     let outsideOldHitArea = false;

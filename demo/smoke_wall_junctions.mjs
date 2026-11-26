@@ -121,7 +121,12 @@ const out = await page.evaluate(async () => {
   await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
   await update();
-  result.isoUsesJoinedFootprint = !!root().querySelector('.iso-walls .iso-wall-top')
+  const renderedWall=()=>!!root().querySelector('.iso-walls .iso-wall-top')
+    || (!!root().querySelector('canvas[data-hp-plan-3d-ready]')
+      &&card._plan3dHost?.world.structure.children.slice(1).some(mesh=>mesh.geometry.getAttribute('position').count>0));
+  const deadline=performance.now()+3500;
+  while(!renderedWall()&&performance.now()<deadline)await new Promise(requestAnimationFrame);
+  result.isoUsesJoinedFootprint = renderedWall()
     && card._isoSource().build().walls.flat(2).length > 0;
   await window.__hpHarnessProjection(card, 'flat');
   await update();

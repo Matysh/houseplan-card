@@ -10,7 +10,9 @@ export async function prepareSunTransparent(page, sealed) {
     const c=window.__goldenCard,iso=c._renderProjection==='iso';
     const rays=iso?c._isoSunCache.beams:c._sunRaysCache.rays;
     const receivers=rays.map(r=>[r.openingId,r.roomId]);
-    const fills=c.renderRoot.querySelectorAll('.sunlayer polygon,.sunlayer path').length;
+    const world=c.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]')&&c._plan3dPresentation?.world;
+    const fills=world?world.lights.filter(light=>light.sun&&light.intensity>0&&light.visible.length).length
+      :c.renderRoot.querySelectorAll('.sunlayer polygon,.sunlayer path').length;
     if(JSON.stringify(receivers)!==JSON.stringify(sealed?[]:[['W','R']])||(!sealed&&!fills)||(sealed&&fills))
       throw Error('Solar chain frame disagrees with the AC7 receiver/paint oracle');
     return {receivers,fills};

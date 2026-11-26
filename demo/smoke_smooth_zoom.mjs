@@ -1,8 +1,10 @@
 // #82: every discrete camera command uses one short, retargetable transition;
 // direct pointer gestures and structural/lifecycle changes remain atomic.
 import { launchColdView, checkAll, finish } from './serve.mjs';
+import { renderedIsoReady } from './helpers/test-surface-ready.mjs';
 
 const { page, browser } = await launchColdView({ width: 900, height: 720 });
+await page.addScriptTag({content:`window.__hpRenderedIsoReady=${renderedIsoReady.toString()};`});
 
 const out = await page.evaluate(async () => {
   const card = window.__card;
@@ -145,6 +147,10 @@ const out = await page.evaluate(async () => {
   card._reducedMotion = false;
 
   // Projection owns an atomic structural conversion and cancels the camera.
+  await window.__hpTest.setServerConfig(cfg => {
+    const floor=cfg.spaces.find(space=>space.id===card._space);
+    floor.settings={...floor.settings,show_borders:true};
+  });
   directBaseline(1);
   card._stepZoom(1);
   await frame();
@@ -152,8 +158,8 @@ const out = await page.evaluate(async () => {
   await window.__hpEnsureHarnessIsoRuntime(card);
   const projectionCancelled = !card._cameraTransition.active;
   await card.updateComplete;
-  await frame();
-  await frame();
+  for (let i=0;i<120&&!window.__hpRenderedIsoReady(card);i++) await frame();
+  const projectedFrameReady=window.__hpRenderedIsoReady(card);
   const isoExpected = card._cameraTargetAt(
     stage().clientWidth / 2, stage().clientHeight / 2, card._zoom * 1.4,
   ).target;
@@ -305,7 +311,7 @@ const out = await page.evaluate(async () => {
       && close(farFitFinal, 1),
     reducedMotionIsImmediate: !reducedBefore.active && close(reducedBefore.zoom, 1.4)
       && !reducedDuring.active && close(reducedDuring.zoom, 1.4),
-    projectionCancelsAndIsoSettlesExactly: projectionCancelled
+    projectionCancelsAndIsoSettlesExactly: projectionCancelled && projectedFrameReady
       && close(isoFinal.zoom, isoExpected.zoom)
       && sameView(isoFinal.view, isoExpected.viewBox),
     hiddenCommitsTargetOnce: !hiddenCommitted.active && close(hiddenCommitted.zoom, 1.4)

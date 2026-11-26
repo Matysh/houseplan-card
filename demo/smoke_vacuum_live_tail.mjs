@@ -51,7 +51,9 @@ try {
       const root=c.renderRoot,svg=root.querySelector('.vactrail');
       const line=svg?.querySelector('line.tip[data-mid="e_live1049"]');
       const puck=root.querySelector('.vacpuck[data-mid="e_live1049"]');
-      const matrix=svg?.getScreenCTM(),box=puck?.getBoundingClientRect();
+      // Trail and tip share a projected child group; the containing SVG is
+      // only the crop. The latter is not the plan-space transform in 3D.
+      const matrix=(line??svg?.querySelector('path.core'))?.getScreenCTM(),box=puck?.getBoundingClientRect();
       if(!matrix||!box)return {ready:false,gap:null};
       const point=(x,y)=>new DOMPoint(x,y).matrixTransform(matrix);
       const end=line?point(Number(line.getAttribute('x2')),Number(line.getAttribute('y2'))):null;

@@ -37,6 +37,11 @@ try {
     return [...(window.__card?.shadowRoot || document).querySelectorAll('.roomlabel')].map(label => {
       const metrics = label.querySelector('.rlmetrics');
       if (!metrics) return null;
+      // Centre the paint in the caption's own plane, not the axis-aligned
+      // screen rectangles of differently tilted reading rows. The pointer
+      // target in the live plane is exercised separately by the #665 smoke.
+      const prior = label instanceof HTMLElement ? label.style.transform : null;
+      if (label instanceof HTMLElement) label.style.transform = 'none';
       const name = box(label.querySelector('.rlfit')), row = box(metrics), root = box(label);
       const items = [...metrics.children].map(box);
       const contentCenter = (Math.min(...items.map(b => b.left)) + Math.max(...items.map(b => b.right))) / 2;
@@ -44,6 +49,7 @@ try {
       const ab = action && box(action);
       const area = !!label.querySelector('.rlgo');
       const anchor = area ? box(label.querySelector('.rlname')) : name;
+      if (prior !== null) label.style.transform = prior;
       return { id: label.dataset.id, name, row, root, text: metrics.textContent.trim(), count: items.length,
         delta: Math.max(Math.abs(anchor.cx - row.cx), Math.abs(anchor.cx - contentCenter), Math.abs(anchor.cx - root.cx)),
         area, action: ab && { width: ab.width, height: ab.height, gap: ab.left - name.right } };

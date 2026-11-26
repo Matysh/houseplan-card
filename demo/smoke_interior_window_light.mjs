@@ -34,6 +34,16 @@ try {
   };
   const inspect=(probes,{staticCard=false,led=false}={})=>page.evaluate(({probes,staticCard,led})=>{
     const c=staticCard?document.querySelector('houseplan-space-card'):window.__card,root=c.shadowRoot;
+    if(root.querySelector('canvas[data-hp-plan-3d-ready]')){
+      const lamp=c._devices.find(device=>device.primary==='light.ceiling');
+      const lights=c._plan3dPresentation.world.lights.filter(light=>!light.sun&&light.intensity>0
+        &&(led?light.ribbon:!light.ribbon&&light.id===`${c._space}|${lamp?.id}`));
+      const ctx=document.createElement('canvas').getContext('2d');
+      const has=([x,y])=>lights.some(light=>ctx.isPointInPath(new Path2D(light.visible.join(' ')),x*1000,y*1000,light.rule??'evenodd')
+        &&(!light.floorClip||ctx.isPointInPath(new Path2D(light.floorClip.join(' ')),x*1000,y*1000,'evenodd')));
+      return {pool:lights.length>0,paths:lights.flatMap(light=>light.visible).length,
+        target:has(probes.target),shadow:has(probes.shadow),clip:lights.flatMap(light=>light.visible)};
+    }
     const pool=root.querySelector(led?'.led-field-bands':'[data-glow-source="light.ceiling"] .glow-pool');
     const id=pool?.getAttribute('clip-path')?.match(/^url\(#(.+)\)$/)?.[1];
     const paths=id?[...root.querySelectorAll(`clipPath[id="${id}"] path`)]:[];
@@ -89,7 +99,9 @@ try {
   }));await settle();
   assert.deepEqual((await inspect(probes)).clip,flat.clip,'#1078 sunlight flags cannot change real artificial-light transport');
   await page.evaluate(async()=>{await window.__hpTest.setVolumetricView(true);});await settle();
-  assert.deepEqual((await inspect(probes)).clip,flat.clip,'2.5D uses the same transport region');
+  const isoLamp=await inspect(probes);
+  assert.ok(isoLamp.pool&&isoLamp.paths>0&&isoLamp.target&&!isoLamp.shadow,
+    `2.5D uses the same receiving-room and shadow transport: ${JSON.stringify({...isoLamp,clip:undefined})}`);
   await page.screenshot({path:new URL('lamp-iso.png',dir).pathname});
   await page.evaluate(async()=>{await window.__hpTest.setVolumetricView(false);});await settle();
   await mountStatic();

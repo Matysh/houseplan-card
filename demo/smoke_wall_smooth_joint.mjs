@@ -77,11 +77,29 @@ try {
   await page.evaluate(() => window.__hpTest.setMode('view'));
   assert.equal(await stored(), before, 'view/editor/zoom/pan do not write plan or revisions');
   await page.evaluate(async () => { await window.__hpTest.setVolumetricView(true); });
-  await page.waitForFunction(() => window.__card.renderRoot.querySelector('.iso-wall-top'));
-  const iso = await page.evaluate(() => [...window.__card.renderRoot.querySelectorAll('.iso-wall-top')]
-    .map(path => path.getAttribute('d')));
-  assert.ok(iso.length > 0);
-  assert.ok(iso.every(d => (d.match(/M /g) || []).length === 1), 'iso has no numeric hole');
+  await page.waitForFunction(() => window.__card.renderRoot.querySelector('.iso-wall-top,canvas[data-hp-plan-3d-ready]'));
+  const iso = await page.evaluate(() => {
+    const c=window.__card,host=c._plan3dHost;
+    if (!host?.canvas.hasAttribute('data-hp-plan-3d-ready')) {
+      const paths=[...c.renderRoot.querySelectorAll('.iso-wall-top')].map(path=>path.getAttribute('d'));
+      return paths.length>0&&paths.every(d=>(d.match(/M /g)||[]).length===1);
+    }
+    const covered=(x,z)=>host.world.structure.children.slice(1).some(mesh=>{
+      const g=mesh.geometry, p=g.getAttribute('position'), n=g.index?.count??p.count;
+      const y=host.presentation.sectionHeight;
+      const edge=(a,b)=>((p.getX(b)-p.getX(a))*(z-p.getZ(a))-(p.getZ(b)-p.getZ(a))*(x-p.getX(a)));
+      for(let j=0;j<n;j+=3){
+        const tri=[j,j+1,j+2].map(k=>g.index?.getX(k)??k);
+        if(tri.some(i=>Math.abs(p.getY(i)-y)>1e-3))continue;
+        const [a,b,d]=tri, sides=[edge(a,b),edge(b,d),edge(d,a)];
+        if(sides.every(v=>v>=-1e-4)||sides.every(v=>v<=1e-4))return true;
+      }
+      return false;
+    });
+    return covered((-109.68680625120072-79.16666666666667)/2,(523.3810973752643+516.6666666666667)/2)
+      && !covered(-160,141.66666666666666);
+  });
+  assert.ok(iso, 'the rendered cap has no numeric hole and no extra masonry');
   await page.screenshot({ path: new URL('iso.png', dir).pathname });
   await page.evaluate(() => window.__hpTest.setVolumetricView(false));
   const afterIso = JSON.parse(await stored());

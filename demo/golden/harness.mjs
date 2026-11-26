@@ -1381,7 +1381,15 @@ export async function prepareGoldenScenario(page, scenario) {
       const expectedFurniture = activeDecor.filter((shape) => shape.kind === 'furniture').length;
       if (expectedFurniture) {
         await card.updateComplete;
-        const drawn = (card.shadowRoot || card.renderRoot).querySelectorAll('[data-kind="furniture"]').length;
+        const root = card.shadowRoot || card.renderRoot;
+        let drawn = root.querySelectorAll('[data-kind="furniture"]').length;
+        if (!drawn && scenario.projection === 'iso' && !scenario.stage3Golden?.noBorders) {
+          await until(() => root.querySelector('canvas[data-hp-plan-3d-ready]'));
+          const world = card._plan3dHost?.world;
+          const input = card._plan3dPresentation?.world.furniture ?? [];
+          if (world?.furniture.children.filter(mesh => mesh.geometry.getAttribute('position').count > 0).length >= expectedFurniture)
+            drawn = input.length;
+        }
         if (drawn < expectedFurniture) {
           throw new Error(`golden furniture artwork missing: ${scenario.id} (${drawn}/${expectedFurniture})`);
         }
@@ -1661,21 +1669,27 @@ export async function prepareGoldenScenario(page, scenario) {
       await ensureIsoRuntime(card);
       await card.updateComplete;
       await frame();
-      if (card._effectiveProjection?.() !== 'iso') {
-        throw new Error(`isometric golden rendered Flat: ${scenario.id}`);
-      }
-      await until(() => card._renderProjection === 'iso');
-      if (!scenario.stage3Golden?.noBorders
-          && !window.__hpRenderedIsoReady(card)) {
-        throw new Error(`isometric golden did not render ready Stage 4 masonry: ${scenario.id}`);
+      if (scenario.stage3Golden?.noBorders && card._desiredProjection === 'flat') {
+        // Current 3D explicitly falls back to Flat when walls are disabled.
+        // Keep the same scene/registry slot and prove the safe fallback.
+        await until(() => card._renderProjection === 'flat');
+        if (card._spaceDisplayForRender().showBorders || card.renderRoot.querySelector('canvas[data-hp-plan-3d]'))
+          throw new Error(`no-borders view retained 3D paint: ${scenario.id}`);
+      } else {
+        if (card._effectiveProjection?.() !== 'iso') {
+          throw new Error(`isometric golden rendered Flat: ${scenario.id}`);
+        }
+        await until(() => card._renderProjection === 'iso');
+        if (!scenario.stage3Golden?.noBorders) await until(() => window.__hpRenderedIsoReady(card));
       }
     }
     if (scenario.stage3Golden) {
       const contract = scenario.stage3Golden;
       const expectedDark = scenario.theme === 'dark';
       const renderedStage = card.renderRoot.querySelector('.stage');
+      const flatFallback = contract.noBorders && card._renderProjection === 'flat';
       if (card.hass?.themes?.darkMode !== expectedDark
-          || !renderedStage?.classList.contains(expectedDark ? 'theme-dark' : 'theme-light')) {
+          || !renderedStage || !flatFallback && !renderedStage.classList.contains(expectedDark ? 'theme-dark' : 'theme-light')) {
         throw new Error(`Stage 4 golden did not use HA darkMode: ${scenario.id}`);
       }
       const raisedRoots = [...card.renderRoot.querySelectorAll(
@@ -1702,7 +1716,12 @@ export async function prepareGoldenScenario(page, scenario) {
           throw new Error(`Stage 4 golden lost the shared 140 cm wall-cut plane (#1474): ${scenario.id}`);
       }
       const materialDefs = card.renderRoot.querySelectorAll('[data-hp-iso-material-def]').length;
-      if (contract.requireMaterialDefs
+      const volume = card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]') && card._plan3dPresentation?.world;
+      if (contract.requireMaterialDefs && volume) {
+        const walls = card._plan3dHost?.world.structure.children;
+        if (!walls?.some((mesh, i) => i > 0 && mesh.geometry?.getAttribute('position')?.count > 0))
+          throw new Error(`3D golden lost native masonry surfaces: ${scenario.id}`);
+      } else if (contract.requireMaterialDefs
           && (!(materialDefs > 0) || materialDefs > contract.maxMaterialDefs)) {
         throw new Error(`Stage 4 golden material definitions ${materialDefs} are outside 1..${contract.maxMaterialDefs}: ${scenario.id}`);
       }
@@ -1739,7 +1758,8 @@ export async function prepareGoldenScenario(page, scenario) {
         }
       }
       if (contract.openingKinds) {
-        const renderedKinds = new Set([...card.renderRoot.querySelectorAll(
+        const renderedKinds = new Set(volume ? volume.panels.filter(panel => panel.surfaces.length).map(panel => panel.type)
+          : [...card.renderRoot.querySelectorAll(
           '[data-hp="iso-openings"] .iso-opening-panel[data-kind]',
         )].map((node) => node.getAttribute('data-kind')).filter(Boolean));
         const missing = contract.openingKinds.filter((kind) => !renderedKinds.has(kind));
@@ -1749,11 +1769,13 @@ export async function prepareGoldenScenario(page, scenario) {
       }
       if (contract.requirePassage) {
         const passage = card._openingsR?.find(opening => opening.type === 'passage');
-        const surfaces = [...card.renderRoot.querySelectorAll('[data-hp="iso-openings"] path[data-kind="passage"]')];
         const structural = new Set(['jamb-reveal', 'opening-lintel-side', 'opening-lintel-top',
           'opening-lintel-underside']);
-        if (!passage || !surfaces.length || surfaces.some(surface =>
-          !structural.has(surface.getAttribute('data-surface')) || surface.hasAttribute('data-leaf'))) {
+        const surfaces = volume ? volume.physical.openingSurfaces.filter(surface => surface.type === 'passage')
+          : [...card.renderRoot.querySelectorAll('[data-hp="iso-openings"] path[data-kind="passage"]')]
+            .map(node => ({ kind: node.getAttribute('data-surface'), leaf: node.hasAttribute('data-leaf') }));
+        if (!passage || !surfaces.length || surfaces.some(surface => !structural.has(surface.kind) || surface.leaf)
+          || volume?.panels.some(panel => panel.type === 'passage')) {
           throw new Error(`Stage 4 passage golden requires masonry without any leaf: ${scenario.id}`);
         }
       }
@@ -2840,7 +2862,16 @@ export async function prepareGoldenScenario(page, scenario) {
       }
     }
     if (scenario.stage3Golden?.requireLiveLayers) {
-      const live = {
+      const renderer = card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]') && card._plan3dHost?.world;
+      const shot = renderer && card._plan3dPresentation?.world;
+      const live = shot ? {
+        glow: shot.lights.filter(source => !source.sun && source.intensity > 0 && source.visible.length),
+        sun: shot.lights.filter(source => source.sun && source.intensity > 0 && source.visible.length),
+        fill: renderer.rooms.children,
+        hover: renderer.roomHover?.children ?? [],
+        decor: card._decorList.length && [...renderer.floorInk.children, ...renderer.furniture.children],
+        vacuum: card.renderRoot.querySelectorAll('.vactrail, .vacpuck'),
+      } : {
         glow: card.renderRoot.querySelectorAll('.glowlayer [data-glow-source]').length,
         sun: card.renderRoot.querySelectorAll('.sunlayer').length,
         fill: card.renderRoot.querySelectorAll('[data-hp="room"].filled').length,
@@ -2848,7 +2879,7 @@ export async function prepareGoldenScenario(page, scenario) {
         decor: card.renderRoot.querySelectorAll('.decorlayer > *').length,
         vacuum: card.renderRoot.querySelectorAll('.vactrail, .vacpuck').length,
       };
-      const missing = Object.entries(live).filter(([, count]) => !(count > 0));
+      const missing = Object.entries(live).filter(([, item]) => !((item?.length ?? item) > 0));
       if (missing.length) {
         throw new Error(`Stage 4 combined golden lacks ${missing.map(([name]) => name).join(',')}: ${scenario.id}`);
       }
@@ -3030,6 +3061,29 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.rotation !== undefined) {
     result.rotation = await page.evaluate(({ expected, isIso }) => {
       const card = window.__goldenCard, root = card.renderRoot;
+      const host = isIso && card._plan3dHost;
+      const camera = host?.viewport.painted?.camera;
+      if (camera) {
+        const box = host.canvas.getBoundingClientRect();
+        const at = (x, z, height = 0) => camera.position.clone().set(x, height, z).project(camera);
+        const origin = at(500, 400), along = at(600, 400), upright = at(500, 400, 100);
+        if (!host.world.floorInk.children.length && !host.world.furniture.children.length)
+          throw Error('rotation frame has no painted 3D decor');
+        if (expected % 90 === 45) {
+          const yaw = (expected + 45) % 360;
+          if (!camera.isPerspectiveCamera || host.presentation.preset.rotDeg !== yaw
+              || Math.abs(upright.x - origin.x) > 1e-5 || !(upright.y > origin.y))
+            throw Error('WebGL direct camera must keep wall edges upright');
+          return { expected, yaw, renderer: 'webgl' };
+        }
+        const dx = (along.x - origin.x) * box.width, dy = (origin.y - along.y) * box.height;
+        const length = Math.hypot(dx, dy), direction = [dx / length, dy / length];
+        const angle = (expected + 35) * Math.PI / 180, x = Math.cos(angle), y = Math.sin(angle) * Math.sin(40 * Math.PI / 180);
+        const expectedLength = Math.hypot(x, y);
+        if (!(length > 1) || direction.some((v, i) => Math.abs(v - [x, y][i] / expectedLength) > .001))
+          throw Error(`painted WebGL axis does not follow ${expected}: ${direction}`);
+        return { expected, direction, length, renderer: 'webgl' };
+      }
       if (isIso && expected % 90 === 45) {
         const scene = card._renderIsoScene;
         const floor = root.querySelector('[data-hp-iso-perspective-floor] .iso-floor-scene');
@@ -3059,9 +3113,33 @@ export async function prepareGoldenScenario(page, scenario) {
   }
   if (scenario.isoBadgeDepth) {
     result.isoBadgeDepth = await page.evaluate((ids) => {
-      const root = window.__goldenCard.renderRoot;
+      const card = window.__goldenCard, root = card.renderRoot;
       const stage = root.querySelector('.stage.projection-iso[data-hp-iso-floor-markers]');
       if (!stage) throw Error('badge depth witness needs the raised 2.5D plane');
+      const host = card._plan3dHost, camera = host?.viewport.painted?.camera;
+      if (camera) {
+        const painted = host.world.markers.markers;
+        const rows = ids.map(id => {
+          const device = host.markers.find(marker => marker.id === id);
+          if (device?.faces.length !== 2) throw Error(`missing native icon/badge pair: ${id}`);
+          const poses = device.faces.map((face, i) => {
+            const body = painted.get(id + ':' + i)?.body;
+            if (!body?.material.every(m => m.depthTest && m.depthWrite))
+              throw Error(`badge/cap is not using the depth buffer: ${id}`);
+            const p = body.position.clone();
+            p.x += (face.left + face.right) / 2 * device.diameter;
+            p.z += (face.top + face.bottom) / 2 * device.diameter;
+            return p.project(camera);
+          });
+          const depth = poses[0].z - poses[1].z, screen = poses[0].y - poses[1].y;
+          if (Math.abs(depth) < 1e-6 || Math.abs(screen) < .003 || (depth > 0) !== (screen > 0))
+            throw Error(`WebGL badge depth disagrees with projected centres: ${id}`);
+          return { id, nearer: depth > 0, depth, renderer: 'webgl' };
+        });
+        if (!rows.some(row => row.nearer) || !rows.some(row => !row.nearer))
+          throw Error('badge depth witness must include near and far badges');
+        return rows;
+      }
       const rows = ids.map(id => {
         const device = stage.querySelector(`.dev[data-id="${CSS.escape(id)}"]`);
         const core = device?.querySelector('.device-core');

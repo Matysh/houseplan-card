@@ -20,9 +20,11 @@ try {
   },fixture());
   const inspect=()=>page.evaluate(()=>{
     const c=window.__card;
+    const world=c.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]')&&c._plan3dPresentation?.world;
     return {flat:(c._sunRaysCache?.rays||[]).map(r=>[r.openingId,r.roomId]),
       iso:(c._isoSunCache?.beams||[]).map(r=>[r.openingId,r.roomId]),
-      polygons:c.renderRoot.querySelectorAll('.sunlayer polygon').length,
+      polygons:world?world.lights.filter(light=>light.sun&&light.intensity>0&&light.visible.length).length
+        :c.renderRoot.querySelectorAll('.sunlayer polygon').length,
       builds:{...c._floorCacheBuilds}};
   });
   const expected='[["W","R"]]';

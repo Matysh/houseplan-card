@@ -68,6 +68,25 @@ test('#1467 browser injection executes the identical standalone contracts',()=>{
   h.faces([]);assert.equal(iso(h.card),false);
 });
 
+test('#1570 native 3D readiness rejects an empty or wrong-projection canvas',()=>{
+  const h=fixture(), main=h.card.renderRoot.querySelector;
+  const pixels=new Uint8ClampedArray(32*32*4);
+  let projection='iso', drawn=0;
+  const ctx={drawImage(source,x,y,w,h){assert.equal(source,canvas);assert.deepEqual([x,y,w,h],[0,0,32,32]);drawn++;},
+    getImageData:()=>({data:pixels})};
+  const canvas={width:480,height:320,ownerDocument:{createElement:()=>({getContext:()=>ctx})}};
+  h.card.renderRoot.querySelector=selector=>selector==='canvas[data-hp-plan-3d-ready]'?canvas
+    :selector==='svg[data-hp="stage"]'?{getAttribute:()=>projection}:main(selector);
+  assert.equal(renderedIsoReady(h.card),false);
+  for(const i of [3,7,11,15])pixels[i]=255;
+  assert.equal(renderedIsoReady(h.card),true);
+  assert.equal(drawn,2);
+  projection='flat';assert.equal(renderedIsoReady(h.card),false);
+  projection='iso';h.stageAttrs.set('data-hp-iso-readiness','pending');
+  assert.equal(renderedIsoReady(h.card),false);
+  assert.equal(drawn,2,'do not sample stale canvas across a projection/loading handoff');
+});
+
 test('#1474 golden overlay placement requires the wall-cut lift and rejects shifted anchors',()=>{
   const visual = `24.5,${31.25 - (140 / 5) * (1000 / 240) * Math.sin(50 * Math.PI / 180)}`;
   const attrs=new Map([['data-hp-iso-floor','24.5,31.25'],['data-hp-iso-visual',visual],['data-hp-iso-nudged','false']]);

@@ -88,8 +88,12 @@ try {
       const sample=()=>{
         const c=window.__card,r=c.renderRoot,e=window.__vacCameraEvidence;
         const plan=r.querySelector('.plan-svg'), paths=[...r.querySelectorAll('.vactrail path.core')];
+        const host=c._plan3dHost, camera=host?.viewport.painted?.camera, frame=host?.canvas.getBoundingClientRect();
         const pathErrors=paths.map(path=>{
-          const p=path.getPointAtLength(0), a=p.matrixTransform(path.getScreenCTM()),b=p.matrixTransform(plan.getScreenCTM());
+          const p=path.getPointAtLength(0), a=p.matrixTransform(path.getScreenCTM());
+          const q=camera&&camera.position.clone().set(p.x,0,p.y).project(camera);
+          const b=q?{x:frame.left+(q.x+1)*frame.width/2,y:frame.top+(1-q.y)*frame.height/2}
+            :p.matrixTransform(plan.getScreenCTM());
           return Math.hypot(a.x-b.x,a.y-b.y);
         });
         const tipErrors=[...r.querySelectorAll('.vactrail line.tip.core')].map(tip=>{
@@ -179,6 +183,7 @@ try {
     for(const iso of [false,true]){
     const mode=`${kiosk?'kiosk':'view'}-${iso?'iso':'flat'}`;
     await page.evaluate(on=>window.__hpTest.setVolumetricView(on),iso);
+    if(iso)await page.waitForFunction(()=>!!window.__card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready],.iso-walls'));
     await nativePan(`${mode}-mouse`,false);
     await nativePan(`${mode}-touch`,true);
     await nativePan(`${mode}-cancel`,true,false,true);

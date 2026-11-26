@@ -562,8 +562,10 @@ export class Plan3dWorld {
       // Treat the recipes as closed volumes, as the 2.5D visible-face pass
       // does. Back-facing surfaces and a late wireframe would turn these
       // intentionally light materials into x-rays (including through walls).
-      return [this.mesh(planFaceMesh(split(true)), [{ color: top, opacity: opacity * .72, lit: true, front: true }]),
+      const painted = [this.mesh(planFaceMesh(split(true)), [{ color: top, opacity: opacity * .72, lit: true, front: true }]),
         this.mesh(planFaceMesh(split(false)), [{ color: side, opacity: opacity * .52, lit: true, front: true }])];
+      for (const mesh of painted) mesh.name = `furniture:${item.record.id}:${part.name}`;
+      return painted;
     });
   }
 

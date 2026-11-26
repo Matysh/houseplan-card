@@ -159,7 +159,10 @@ try {
   await startTrace(page);
   await clickHeaderAction(card, 'zoom-in');
   await settleIsoPaint(page);
-  await finishTrace(page, 'zoom button');
+  // A short discrete tween can paint only one intermediate frame on a
+  // contended software GPU. Still require an intermediate and a terminal
+  // movement, and check each one's registration with the native canvas.
+  await finishTrace(page, 'zoom button', { minimum: 2 });
   await clickHeaderAction(card, 'zoom-fit');
   await settleIsoPaint(page);
   const hits = await card.evaluate(c => [...c.renderRoot.querySelectorAll('.dev[data-hp-3d-native]')]
@@ -172,7 +175,7 @@ try {
   await card.locator('.roomlabel .rlfit', { hasText: 'Room 1.3' }).press('Enter');
   await page.waitForFunction(() => Boolean(window.__isoPaint._roomFocus));
   await settleIsoPaint(page);
-  await finishTrace(page, 'room focus');
+  await finishTrace(page, 'room focus', { minimum: 2 });
   await page.setViewportSize({ width: 1060, height: 800 });
   await settleIsoPaint(page);
   await startTrace(page);

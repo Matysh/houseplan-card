@@ -24,8 +24,13 @@ const inside=async iso=>page.evaluate(iso=>{
  const a=poly[i],b=poly[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])yes=!yes;}return yes;};
  const beams=iso?c._isoSunCache?.beams:c._sunRaysCache?.rays;
  const geometry=beams?.some(r=>r.polys.some(poly=>point(p,poly)))??false;
- const rendered=[...c.renderRoot.querySelectorAll('.sunlayer path,.sunlayer polygon')].some(el=>el.isPointInFill?.(new DOMPoint(...p)));
- return {geometry,rendered,symbol:c._openingAmt(door),p,beams:beams?.map(r=>[r.openingId,r.roomId])};
+ const lights=iso&&c.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]')
+   ? c._plan3dPresentation.world.lights.filter(light=>light.sun&&light.intensity>0) : null;
+ const ctx=lights&&document.createElement('canvas').getContext('2d');
+ const rendered=lights?lights.some(light=>light.visible.some(path=>ctx.isPointInPath(new Path2D(path),...p)))
+   : [...c.renderRoot.querySelectorAll('.sunlayer path,.sunlayer polygon')].some(el=>el.isPointInFill?.(new DOMPoint(...p)));
+ const sourceCount=lights?lights.length:c.renderRoot.querySelectorAll('.sunlayer path,.sunlayer polygon').length;
+ return {geometry,rendered,sourceCount,symbol:c._openingAmt(door),p,beams:beams?.map(r=>[r.openingId,r.roomId])};
 },iso);
 try{
  await page.evaluate(async config=>{await window.__hpTest.setServerConfig(config);await window.__hpTest.switchSpace('f1');const c=window.__card;
@@ -37,7 +42,9 @@ try{
  state=await inside(false);assert.equal(state.geometry,false,JSON.stringify(state));assert.equal(state.rendered,false,JSON.stringify(state));assert.equal(state.symbol,0);out.interiorGlassKeepsFlatLocal=true;
  await page.waitForTimeout(1200);await page.screenshot({path:'artifacts/glass-door-1348/flat.png'});
  await page.evaluate(() => window.__hpTest.setVolumetricView(true));
- state=await inside(true);assert.equal(state.geometry,false,JSON.stringify(state));assert.equal(state.symbol,0);assert.ok(await page.locator('.sunlayer polygon,.sunlayer path').count());out.interiorGlassKeepsIsoLocal=true;
+ await page.waitForFunction(()=>!!window.__card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready],.iso-walls'));
+ state=await inside(true);assert.equal(state.geometry,false,JSON.stringify(state));assert.equal(state.rendered,false,JSON.stringify(state));
+ assert.equal(state.symbol,0);assert.ok(state.sourceCount>0);out.interiorGlassKeepsIsoLocal=true;
  await page.waitForTimeout(1200);await page.screenshot({path:'artifacts/glass-door-1348/iso.png'});
  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{delete cfg.spaces[0].openings.find(o=>o.id==='glass').light_transparent;}));
  state=await inside(true);assert.equal(state.geometry,false,JSON.stringify(state));out.toggleInvalidatesIso=true;
@@ -45,8 +52,9 @@ try{
  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{Object.assign(cfg.spaces[0].openings.find(o=>o.id==='window'),{type:'door',light_transparent:true});}));
  for(const iso of [false,true]){await page.evaluate(iso=>window.__hpTest.setVolumetricView(iso),iso);
  const beams=await page.evaluate(iso=>{const c=window.__card;return (iso?c._isoSunCache?.beams:c._sunRaysCache?.rays)?.map(r=>r.openingId);},iso);
- assert.ok(beams?.includes('window'),'exterior glass door remains a solar source');assert.equal((await inside(iso)).geometry,false);}
+ assert.ok(beams?.includes('window'),'exterior glass door remains a solar source');
+ const sample=await inside(iso);assert.equal(sample.geometry,false);assert.ok(sample.sourceCount>0);}
  out.exteriorGlassBothRenderers=true;
  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{delete cfg.spaces[0].openings.find(o=>o.id==='window').light_transparent;}));
- assert.equal(await page.locator('.sunlayer polygon,.sunlayer path').count(),0,'opaque exterior door is not a solar source');out.exteriorOpaqueStaysDark=true;
+ assert.equal((await inside(true)).sourceCount,0,'opaque exterior door is not a solar source');out.exteriorOpaqueStaysDark=true;
 }catch(error){out.completed=false;throw error;}finally{checkAll(out);await finish(browser,out);}

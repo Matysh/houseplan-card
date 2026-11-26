@@ -225,7 +225,12 @@ for (const scenario of scenarios) {
     await mount({ ...accepted, settings: { ...accepted.settings, volumetric_view: true } });
     await page.evaluate(() => window.__hpTest.setMode('view'));
     await page.waitForFunction(() => window.__card._mode === 'view' && !window.__card._modeTransitionBusy);
-    await page.waitForFunction(() => window.__card.renderRoot.querySelector('.stage.projection-iso .iso-wall-top'));
+    await page.waitForFunction(() => {
+      const c=window.__card;
+      return !!c.renderRoot.querySelector('.stage.projection-iso .iso-wall-top')
+        || (!!c.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]')
+          &&c._plan3dHost.world.structure.children.slice(1).some(mesh=>mesh.geometry.getAttribute('position').count>0));
+    });
     assert.deepEqual(await page.evaluate(() => window.__card._serverCfg.spaces), accepted.spaces,
       '2.5D draws committed geometry, without modifying its carrier');
     assert.equal(await page.evaluate(() => window.__card.renderRoot.querySelectorAll('.hp-node-handle').length), 0);

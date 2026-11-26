@@ -26,8 +26,15 @@ const out = await page.evaluate(async () => {
   const labels = () => [...root().querySelectorAll('[data-hp="room-label"]')]
     .filter((label) => label.querySelector('.rlname') && label.querySelector('.rlmetrics'));
   const measure = () => labels().map((label) => {
+    // A tilted label has overlapping screen-aligned bounding boxes even
+    // though its two baselines have the right gap on the label's own plane.
+    // Capture the real layout boxes without the common projection transform;
+    // restore it synchronously before the next paint and hit test.
+    const prior = label.style.transform;
+    label.style.transform = 'none';
     const name = label.querySelector('.rlname').getBoundingClientRect();
     const metrics = label.querySelector('.rlmetrics').getBoundingClientRect();
+    label.style.transform = prior;
     return { id: label.dataset.id, name: name.height, gap: metrics.top - name.bottom };
   });
   // Two cameras through the public zoom controls: fit, then zoomed in until

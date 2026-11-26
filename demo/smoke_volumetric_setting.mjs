@@ -1,7 +1,7 @@
 // #649 п.4 (docs/ISOMETRIC.md, Stage 6): 2.5D is the installation-wide switch
 // «General settings › Appearance and background», first as approved in v10.
-// Saving it changes the View at once in every space and in the kiosk; editors
-// stay Flat; «Reset» turns it off; there is no card toggle and no alpha entry.
+// Saving it changes the View in floors with visible borders and in the kiosk;
+// editors stay Flat; «Reset» turns it off; there is no card toggle or alpha entry.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1280, height: 900 });
@@ -32,6 +32,9 @@ const res = await page.evaluate(async () => {
     await waitFor(() => !dlg());
   };
 
+  await t.setServerConfig(cfg=>{
+    for(const space of cfg.spaces)space.settings={...space.settings,show_borders:true};
+  });
   out.noCardToggle = !sr().querySelector('[data-hp="projection-toggle"], .projection-toggle');
   out.startsFlat = !iso();
   out.dialogOpens = await openSettings();

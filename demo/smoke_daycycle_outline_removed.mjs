@@ -7,11 +7,15 @@ const { page, browser } = await launch({width:2000,height:952},2);
 await prepareDesktopControls(page);
 const out={};
 const read=()=>page.evaluate(()=>{
-  const root=window.__card.renderRoot,stage=root.querySelector('.stage');
+  const card=window.__card,root=card.renderRoot,stage=root.querySelector('.stage');
+  const canvas=root.querySelector('canvas[data-hp-plan-3d-ready]');
+  const floor=card._plan3dHost?.world.structure.children[0];
+  const nativePaper=!!(canvas?.width&&canvas?.height&&floor?.geometry.getAttribute('position').count&&floor.material.opacity===1);
   return {outline:root.querySelectorAll('.hp-paper-outline-svg').length,
     paper:[...root.querySelectorAll('.hp-paperg')].map(n=>getComputedStyle(n).filter),
     environment:!!root.querySelector('.hp-day-cycle-bg.active'),
     paperCount:root.querySelectorAll('.hp-paper').length,
+    nativePaper,
     viewBox:root.querySelector('.plan-svg')?.getAttribute('viewBox'),
     iso:stage.classList.contains('projection-iso')};
 });
@@ -43,7 +47,7 @@ try{
     return !!root.querySelector('.plan-svg[data-projection="iso"]')&&!root.querySelector('.stage.hpiso-pending');
   },null,{timeout:9000});
   const iso=await read();
-  out.isometricKeepsEnvironmentAndPaper=iso.iso&&iso.environment&&iso.paperCount>0;
+  out.isometricKeepsEnvironmentAndPaper=iso.iso&&iso.environment&&(iso.paperCount>0||iso.nativePaper);
   out.isometricHasNoDecorativeOutline=iso.outline===0&&iso.paper.every(v=>v==='none');
   await page.screenshot({path:'demo/out/daycycle-outline-1092/isometric.png'});
   const stat=await page.evaluate(async()=>{

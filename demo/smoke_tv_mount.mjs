@@ -18,7 +18,33 @@ async function savedDecor() {
 }
 
 async function viewStand() {
-  await page.locator(tvStand).first().waitFor({state:'attached'});
+  await page.waitForFunction(selector=>{
+    const c=window.__card;
+    return c.renderRoot.querySelector(selector) || (c.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]')
+      && c._plan3dHost?.world.furniture.children.some(mesh=>mesh.name==='furniture:tv:stand-base'
+        && mesh.geometry.getAttribute('position').count>0));
+  },tvStand);
+  const native=await page.evaluate(()=>{
+    const host=window.__card._plan3dHost;
+    const camera=host?.viewport.painted?.camera;
+    if(!camera)return null;
+    const all=host.world.furniture.children;
+    const stand=all.find(mesh=>mesh.name==='furniture:tv:stand-base'&&mesh.geometry.getAttribute('position').count>0);
+    if(!stand)return null;
+    const geometry=stand.geometry;
+    geometry.computeBoundingBox();
+    const p=geometry.boundingBox.getCenter(camera.position.clone()).project(camera);
+    const box=host.canvas.getBoundingClientRect();
+    const cabinet=all.filter(mesh=>mesh.name.startsWith('furniture:cabinet:'));
+    const heights=meshes=>meshes.flatMap(mesh=>{
+      mesh.geometry.computeBoundingBox();
+      const box=mesh.geometry.boundingBox;return [box.min.y,box.max.y].filter(Number.isFinite);
+    });
+    const tvBottom=Math.min(...heights(all.filter(mesh=>mesh.name==='furniture:tv:stand-base')));
+    return {x:box.left+(1+p.x)*box.width/2,y:box.top+(1-p.y)*box.height/2,native:true,
+      tvBottom,cabinetTop:Math.max(...heights(cabinet))};
+  });
+  if(native)return native;
   return page.locator(tvStand).first().evaluate(path => {
     const point = path.getPointAtLength(0).matrixTransform(path.getCTM());
     return { x:point.x, y:point.y };
@@ -60,7 +86,9 @@ try {
   await page.evaluate(() => window.__hpTest.setMode('view'));
   const raised = await viewStand();
   check('mounted stand is projected above its former position', raised.y < floor.y - 5);
-  check('the cabinet paints before its raised TV even though the TV is stored first', await page.evaluate(() => {
+  if(raised.native)check('the native stand starts at the top of the cabinet',
+    Number.isFinite(raised.cabinetTop)&&Math.abs(raised.tvBottom-raised.cabinetTop)<.05);
+  else check('the cabinet paints before its raised TV even though the TV is stored first', await page.evaluate(() => {
     const root = window.__card.renderRoot;
     const cabinet = root.querySelector('[data-hp-furniture-volume][data-id="cabinet"]');
     const tv = root.querySelector('[data-hp-furniture-volume][data-id="tv"]');

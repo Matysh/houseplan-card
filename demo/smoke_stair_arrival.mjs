@@ -40,12 +40,13 @@ try {
       const contour = volume ? 'd' : 'points';
       const outline = n.getAttribute(contour);
       const hit = stair?.querySelector('.hp-stair-hit');
+      const native=!!n.getRootNode().querySelector('canvas[data-hp-plan-3d-ready]');
       return s.stroke === expected && s.fill === expected && s.fillOpacity === '0.22'
         && s.strokeWidth === '3px' && s.vectorEffect === 'non-scaling-stroke' && s.pointerEvents === 'none'
         && s.animationDuration === '1s' && s.animationIterationCount === '2' && s.animationTimingFunction === 'ease-in-out'
         && !!outline && outline === hit?.getAttribute(contour)
-        && (!volume || iso && !!n.closest('.iso-furniture-foreground'))
-        && (!iso || !!n.closest('.iso-floor-scene, .iso-furniture-foreground'));
+        && (!volume || iso && !!n.closest(native ? '.iso-scene-surface' : '.iso-furniture-foreground'))
+        && (!iso || !!n.closest(native ? '.iso-scene-surface' : '.iso-floor-scene, .iso-furniture-foreground'));
     }), { dark, iso });
     // Pause only the browser animation to inspect both pulses without changing product state/timers.
     out[`${name}TwoPulseFrames`] = await root.locator('[data-hp="stair-arrival"]').first().evaluate(n => {
@@ -54,6 +55,15 @@ try {
       const okay = opacity(0) === 0 && opacity(400) === 1 && opacity(1000) === 0 && opacity(1400) === 1 && opacity(2000) === 0;
       a.play(); return okay;
     });
+    if (iso && await root.locator('canvas[data-hp-plan-3d-ready]').count()) {
+      const highlight = root.locator('[data-hp="stair-arrival"]').first();
+      await highlight.evaluate(node=>{const a=node.getAnimations()[0];a.pause();a.currentTime=400;});
+      const shown = await root.locator('.stage').screenshot();
+      await highlight.evaluate(node=>{node.style.visibility='hidden';});
+      const hidden = await root.locator('.stage').screenshot();
+      await highlight.evaluate(node=>{node.style.visibility='';node.getAnimations()[0]?.play();});
+      out[`${name}PulsePaintsAboveNativeCanvas`] = !shown.equals(hidden);
+    }
     const camera = await page.evaluate(() => [window.__card._zoom, window.__card._view]);
     await page.waitForTimeout(2100);
     out[`${name}ExpiresAndNoExtraCamera`] = await count() === 0 && JSON.stringify(camera) === JSON.stringify(await page.evaluate(() => [window.__card._zoom, window.__card._view]));

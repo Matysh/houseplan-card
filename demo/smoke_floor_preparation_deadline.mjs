@@ -56,20 +56,45 @@ for (const projection of ['flat', 'iso']) for (const surface of ['panel', 'card'
     await page.evaluate(() => {
       const card = window.__deadlineCard(), runtime = card._floorPreparation, scheduler = runtime.scheduler;
       runtime.invalidate(); runtime.memory.clear(); scheduler.stopWorker();
-      const healthy = scheduler.factory;
-      scheduler.factory = () => ({ postMessage() {}, terminate() {} });
-      scheduler.loadFallback = () => new Promise(resolve => { window.__finishRetiredFallback = () => resolve({
-        computeFloorJob() { throw Error('retired fallback executed'); },
-      }); });
-      window.__enableHealthyFloorWorker = () => { scheduler.factory = healthy; };
+      const WorkerClass=window.Worker;
+      window.Worker=class extends WorkerClass {
+        constructor(url, options) {
+          if(options?.name==='houseplan-floor') return {postMessage(){},terminate(){}};
+          super(url,options);
+        }
+      };
+      window.__prepareDeadlineFallback=()=>{
+        // ISO uses the shared flight's scheduler, not this card's private
+        // Flat scheduler. Stall and release the same job the UI is awaiting.
+        const active=runtime.sharedGeometry?.scheduler??scheduler;
+        const now=active.now,load=active.loadFallback,origin=now();
+        window.__deadlineNow=0;
+        active.now=()=>origin+window.__deadlineNow;
+        active.loadFallback=()=>new Promise(resolve=>{window.__finishRetiredFallback=()=>resolve({
+          computeFloorJob(){throw Error('retired fallback executed');},
+        });});
+        window.__enableHealthyFloorWorker=()=>{
+          window.Worker=WorkerClass;active.now=now;active.loadFallback=load;
+        };
+      };
       card.requestUpdate();
     });
     await page.waitForFunction(() => {
       const c = window.__deadlineCard();
-      return c._floorHolding && c.renderRoot.querySelector('.stage[inert] .dev') && c.renderRoot.querySelector('.editorloading');
+      return c._floorHolding && c._floorPreparation.supportFacts.active === 'worker'
+        && c.renderRoot.querySelector('.stage[inert] .dev') && c.renderRoot.querySelector('.editorloading');
     });
+    await page.evaluate(() => { window.__prepareDeadlineFallback(); window.__deadlineNow = 15_000; });
     await page.clock.fastForward(15_000);
-    await page.waitForFunction(() => window.__deadlineCard()._floorPreparation.supportFacts.active === 'fallback-load');
+    await page.waitForFunction(() => window.__deadlineCard()._floorPreparation.supportFacts.active === 'fallback-load'
+      && typeof window.__finishRetiredFallback === 'function', null, {timeout: 5_000}).catch(async error => {
+      throw Error(key + ': ' + JSON.stringify(await page.evaluate(() => {
+        const runtime=window.__deadlineCard()._floorPreparation, scheduler=runtime.scheduler;
+        return { facts:runtime.supportFacts, stage:scheduler.stage, metrics:scheduler.metrics,
+          fallback:typeof window.__finishRetiredFallback, job:scheduler.active?.job?.kind };
+      })),{cause:error});
+    });
+    await page.evaluate(() => { window.__deadlineNow = 18_000; });
     await page.clock.fastForward(3_000);
     const error = page.locator('.floor-preparation-error');
     await error.waitFor({state:'visible'});
@@ -101,7 +126,14 @@ for (const projection of ['flat', 'iso']) for (const surface of ['panel', 'card'
     if (editorRecovery || key === 'external/iso') {
       await page.evaluate(() => {
         const c = window.__deadlineCard(), r = c._floorPreparation;
-        r.scheduler.stopWorker(); r.scheduler.factory = () => { throw Error('Worker unsupported'); };
+        r.scheduler.stopWorker();
+        const WorkerClass=window.Worker;
+        window.Worker=class extends WorkerClass {
+          constructor(url, options) {
+            if(options?.name==='houseplan-floor') throw Error('Worker unsupported');
+            super(url,options);
+          }
+        };
         c._pickSpace('perf-floor-2');
       });
       await page.waitForFunction(() => {

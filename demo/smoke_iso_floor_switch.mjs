@@ -52,11 +52,28 @@ const out = await page.evaluate(async () => {
   // one-render contract below measures already prepared floor switches.
   await hp.switchSpace('garden'); await hp.settled();
   await hp.switchSpace('f1'); await hp.settled();
-  const wallBase = () => root.querySelector('.iso-wall-base-paper')?.getAttribute('d');
+  const nativeBase = () => {
+    const host = card._plan3dHost;
+    if (!host?.canvas.hasAttribute('data-hp-plan-3d-ready')) return null;
+    const structure = host.world.structure.children, geometry = structure[0]?.geometry;
+    if (structure.length < 2 || !geometry?.getAttribute('position')?.count) return null;
+    return JSON.stringify({ vertices: structure.map(m => [...m.geometry.getAttribute('position').array]),
+      paper: structure[0].material.color.getHexString() });
+  };
+  const wallBase = () => nativeBase() ?? root.querySelector('.iso-wall-base-paper')?.getAttribute('d');
   const firstBase = wallBase();
   const warmed = card._floorCacheBuilds.isoWallBase;
+  const native = nativeBase() !== null;
+  const prepared = new Map([['f1', firstBase]]);
+  if (native) {
+    await hp.switchSpace('garden'); await hp.settled();
+    prepared.set('garden', nativeBase());
+    await hp.switchSpace('f1'); await hp.settled();
+  }
   result.wallBaseWasPrepared = typeof firstBase === 'string' && firstBase.length > 0
-    && warmed === 0 && card._isoWallBasePool.size >= 2;
+    && warmed === 0 && (native
+      ? !!prepared.get('garden') && prepared.get('garden') !== firstBase
+      : card._isoWallBasePool.size >= 2);
   let updates = 0;
   const update = card.update.bind(card);
   card.update = (changed) => { updates += 1; return update(changed); };
@@ -93,7 +110,8 @@ const out = await page.evaluate(async () => {
       readiness: stage()?.dataset.hpIsoReadiness || '',
       light, sameLight: light === firstShow.get(id),
       baseRebuilds: card._floorCacheBuilds.isoWallBase - warmed,
-      sameBase: typeof wallBase() === 'string' && (wallBase() === firstBase) === (id === 'f1'),
+      sameBase: native ? wallBase() === prepared.get(id)
+        : typeof wallBase() === 'string' && (wallBase() === firstBase) === (id === 'f1'),
     });
   }
   observer.disconnect();

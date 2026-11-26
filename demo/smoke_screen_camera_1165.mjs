@@ -113,6 +113,8 @@ out.bottomSummaryUsesFreeHeight=await page.evaluate(()=>{
 });
 out.isometricReference=await page.evaluate(async()=>{
   const c=window.__screenCameraCard,cfg=structuredClone(c._serverCfg);cfg.settings.volumetric_view=true;
+  const floor=cfg.spaces.find(space=>space.id===c._space);
+  floor.settings={...floor.settings,show_borders:true};
   const rev=window.__pushServerConfig(cfg),end=performance.now()+10000;
   while(c._cfgRev!==rev&&performance.now()<end)await new Promise(r=>setTimeout(r,20));
   if(!await c._ensureIsoSceneRuntime())return false;

@@ -117,7 +117,38 @@ await page.waitForTimeout(250);
 const iso = await read([WHITE, TINTED]);
 const D = iso.white?.w ?? NaN;
 const res = { flatStaysCircleWithRing: flatCircle };
+const native = await page.evaluate(() => !!window.__card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]'));
 res.isoOn = iso.iso;
+if (native) {
+  Object.assign(res, await page.evaluate(([white, tinted]) => {
+    const card=window.__card, host=card._plan3dHost, layer=host.world.markers.markers;
+    const shell = id=>layer.get(id+':0')?.body;
+    const props = id=>{
+      const body=shell(id), material=body?.material, pos=body?.geometry.getAttribute('position');
+      if (!pos?.count) return null;
+      let bottom=Infinity, top=-Infinity;
+      for(let i=0;i<pos.count;i++){bottom=Math.min(bottom,pos.getY(i));top=Math.max(top,pos.getY(i));}
+      const marker=host.markers.find(marker=>marker.id===id);
+      return { up:body.position.y===host.presentation.sectionHeight, thickness:top-bottom,
+        diameter:marker.diameter, depth:material.every(m=>m.depthWrite&&m.depthTest),
+        cap:material[0].map?.image.width, color:marker.faces[0].color };
+    };
+    const a=props(white), b=props(tinted), contacts=host.world.contacts.children;
+    const shadow=contacts[0]?.material.map?.image;
+    const alpha=shadow?.getContext('2d').getImageData(0,0,shadow.width,shadow.height).data;
+    return {
+      nativeRaisedRoundedSolid: !!a&&!!b&&[a,b].every(row=>row.up&&row.depth&&row.cap>0
+        &&Math.abs(row.thickness/row.diameter-.24)<.001),
+      configuredTintInTheNativePaint: b?.color==='rgb(240, 160, 12)',
+      onePassivePaintedShadow: contacts.length===1&&contacts[0].userData.plan3dPick.occludes===false
+        &&!!alpha?.some((value,offset)=>offset%4===3&&value>15),
+      noDuplicateTilePaint: [white,tinted].every(id=>{
+        const node=card.renderRoot.querySelector(`.dev[data-id="${id}"]`);
+        return node?.hasAttribute('data-hp-3d-native')&&Number(getComputedStyle(node.querySelector('.device-core')).opacity)===0;
+      }),
+    };
+  }, [WHITE,TINTED]));
+} else {
 res.scale112 = near(D / flat.white.w, 1.12, 0.01);
 res.noRing = /rgba\(0, 0, 0, 0\)/.test(iso.white.ring) && /rgba\(0, 0, 0, 0\)/.test(iso.tinted.ring);
 res.radiusFormula = near(iso.white.radius, Math.min(0.275 * D, 0.3 * iso.white.h), 0.05);
@@ -252,8 +283,10 @@ res.forcedNoShadow = forced.layerDisplay === 'none';
 res.forcedNoEdge = forced.white.edgeColor === null;
 res.forcedKeepsSize = near(forced.white.w, D, 0.05);
 await page.emulateMedia({ forcedColors: 'none' });
+}
 
-// ---- L6: without walls (show_borders off) tiles and shadows stay -----------
+// Without borders the current 3D viewer intentionally uses Flat; the old
+// SVG renderer permitted a wall-free projected view.
 await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
   const space = cfg.spaces.find((item) => item.id === 'f1');
   space.settings = { ...(space.settings || {}), show_borders: false };
@@ -261,10 +294,15 @@ await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
 }));
 await page.waitForTimeout(250);
 const noBorders = await read([WHITE, TINTED]);
+if(native){
+  res.noBordersFlatWithoutStaleCanvas=!noBorders.iso&&await page.evaluate(()=>
+    !window.__card.renderRoot.querySelector('canvas[data-hp-plan-3d]'));
+} else {
 res.noBordersKeepsTiles = noBorders.iso && near(noBorders.white.radius, Math.min(0.275 * D, 0.3 * noBorders.white.h), 0.05)
   && near(noBorders.white.edgeDepth, 0.1 * D, 0.05);
 res.noBordersKeepsShadows = noBorders.layer && noBorders.twinCount === noBorders.markerCount
   && !!noBorders.white.shadow;
+}
 await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
   const space = cfg.spaces.find((item) => item.id === 'f1');
   space.settings = { ...(space.settings || {}), show_borders: true };
@@ -391,6 +429,15 @@ const focusLayers = {};
 for (const theme of ['light', 'dark']) {
   await setTheme(theme === 'dark');
   await blurAll();
+  if(native){
+    await keyboardFocusUnder();
+    const state=await focusable();
+    focusLayers[`${theme}-focus`]=state;
+    res[`nativeKeyboardFocusAndTooltip_${theme}`]=state.focused===under&&state.focusVisible
+      &&await page.evaluate(()=>!!window.__card.renderRoot.querySelector('[data-hp-live-tip]'));
+    await blurAll();
+    continue;
+  }
   const idle = await overlapChange();
   focusLayers[`${theme}-idle`] = { ...(await focusable()), ...idle };
   // Control: the fixture really overlaps and the earlier marker is underneath.
@@ -408,7 +455,7 @@ for (const theme of ['light', 'dark']) {
 }
 await setTheme(false);
 // Control: hover lifts the same marker by its own rule (unchanged).
-{
+if(!native){
   const a = await coreBox(under);
   await page.mouse.move(a.left + a.width * 0.2, a.top + a.height / 2);
   await page.waitForTimeout(120);
@@ -428,6 +475,10 @@ await page.evaluate(async () => { await window.__hpTest.setVolumetricView(false)
 pair = await tabPair();
 [under, over] = pair;
 await placePair(.012);
+if(native){
+  const [a,b]=[await coreBox(under),await coreBox(over)];
+  await placePair(.012*(a.width*.38)/Math.max(1,b.left-a.left));
+}
 await blurAll();
 res.flatFocusFixtureOverlaps = underneath(await overlapChange());
 await keyboardFocusUnder();

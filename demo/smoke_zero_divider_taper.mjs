@@ -140,7 +140,12 @@ const res = await page.evaluate(async () => {
   await window.__hpHarnessProjection(c, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(c);
   await update();
-  out.isoUsesCanonicalBody = !!sr().querySelector('.iso-walls .iso-wall-top')
+  const isoWallPaint=()=>!!sr().querySelector('.iso-walls .iso-wall-top')
+    || (!!sr().querySelector('canvas[data-hp-plan-3d-ready]')
+      &&c._plan3dHost?.world.structure.children.slice(1).some(mesh=>mesh.geometry.getAttribute('position').count>0));
+  const deadline=performance.now()+3500;
+  while(!isoWallPaint()&&performance.now()<deadline)await new Promise(requestAnimationFrame);
+  out.isoUsesCanonicalBody = isoWallPaint()
     && c._isoSource().build().walls.flat(2).length > 0;
   await window.__hpHarnessProjection(c, 'flat');
   await update();

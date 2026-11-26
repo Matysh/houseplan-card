@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1570,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Preserve stair navigation feedback and avoid rereading theme paper in the new renderer during stable QA.",
+  "summary": {
+    "ru": "Видна подсветка лестниц при переходе, а прогретые этажи повторно используют цвет фона.",
+    "en": "Stair arrivals remain visible and warm floor switches reuse the resolved background colour."
+  }
+}

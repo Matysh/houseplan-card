@@ -171,6 +171,7 @@ export function installHpTest(selectors) {
     return Object.getOwnPropertyDescriptor(proto, 'value').set;
   };
 
+  const harnessBorders = new Map();
   const facade = {
     /** #1070: read-only camera/cache evidence; never drives a product action. */
     viewFrameSnapshot() {
@@ -362,20 +363,34 @@ export function installHpTest(selectors) {
     },
 
     /**
-     * #649: 2.5D is the installation-wide «General settings › Display» switch.
-     * Delivered the way another client's save arrives (setServerConfig keeps
-     * the card's current config); the oracle is the rendered stage class.
+     * Open a genuinely volumetric fixture via the installation-wide Display
+     * setting. A plan image with no explicit border preference defaults to
+     * Flat; prepare that fixture explicitly for 3D without overriding a
+     * scenario that deliberately authored hidden borders.
      */
     async setVolumetricView(on = true) {
       const c = need('setVolumetricView');
       await facade.setServerConfig((cfg) => {
         cfg.settings = { ...(cfg.settings || {}), volumetric_view: !!on };
+        for (const space of cfg.spaces) {
+          if (on && space.id === c._space && space.plan_url && space.settings?.show_borders == null) {
+            harnessBorders.set(space.id, space.settings?.show_borders);
+            space.settings = { ...space.settings, show_borders: true };
+          } else if (!on && harnessBorders.has(space.id)) {
+            if (space.settings?.show_borders === true) {
+              const before = harnessBorders.get(space.id);
+              if (before === undefined) delete space.settings.show_borders;
+              else space.settings.show_borders = before;
+            }
+            harnessBorders.delete(space.id);
+          }
+        }
         return cfg;
       });
       const stage = () => rootOf(c)?.querySelector('.stage');
       await waitFor('setVolumetricView',
         () => !!stage() && stage().classList.contains('projection-iso') === !!on,
-        () => `вид не стал ${on ? '2.5D' : 'Flat'} (.stage: ${stage()?.className || 'нет'})`,
+        () => `вид не стал ${on ? '3D' : 'Flat'} (.stage: ${stage()?.className || 'нет'}, ожидаемая проекция: ${c._desiredProjection})`,
         10000);
       await settled();
     },

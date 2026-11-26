@@ -21,6 +21,21 @@ export function renderedIsoReady(card) {
   const stage = root?.querySelector('.stage');
   const rawCount = stage?.getAttribute('data-hp-iso-structural-builds');
   const count = rawCount === null || rawCount === undefined ? NaN : Number(rawCount);
+  const canvas = root?.querySelector('canvas[data-hp-plan-3d-ready]');
+  if (canvas) {
+    if (stage?.getAttribute('data-hp-iso-readiness') !== 'ready' || !canvas.width || !canvas.height
+      || root.querySelector('svg[data-hp="stage"]')?.getAttribute('data-projection') !== 'iso') return false;
+    const tiny = canvas.ownerDocument.createElement('canvas');
+    tiny.width = tiny.height = 32;
+    const context = tiny.getContext('2d');
+    if (!context) return false;
+    context.drawImage(canvas, 0, 0, 32, 32);
+    const pixels = context.getImageData(0, 0, 32, 32).data;
+    let painted = 0;
+    for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 48 && ++painted >= 4) return true;
+    return false;
+  }
+  // Reference builds with the previous renderer still need their own oracle.
   const walls = root?.querySelector('[data-hp="iso-walls"][data-fingerprint]');
   const queue = walls?.querySelector('.iso-wall-depth-queue');
   const faces = queue?.querySelectorAll('path.iso-wall-top, path.iso-wall-side, path[data-hp-round-column]');

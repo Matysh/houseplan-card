@@ -176,14 +176,19 @@ checkAll(await page.evaluate(()=>{
     staticExactGeometry:['contact-a','contact-b','contact-m'].every(id=>JSON.stringify(scene.shapes.get(id))===JSON.stringify(full.shapes.get(id))),
     staticContactHitStaysPassive:[...card.renderRoot.querySelectorAll('.device-contact-hit')].every(n=>getComputedStyle(n).pointerEvents==='none')};
 }));
-await page.evaluate(async()=>{await window.__hpTest.setServerConfig(cfg=>{cfg.settings={...cfg.settings,volumetric_view:true};return cfg;});});
+await page.evaluate(()=>window.__hpTest.setVolumetricView(true));
 await page.waitForFunction(()=>!!window.__card.renderRoot.querySelector('.stage.projection-iso'));
 await settle();
 checkAll(await page.evaluate(()=>({isoNoFlatContours:window.__card.renderRoot.querySelectorAll('.device-contact-contour').length===0,
-  isoNoContactStyleState:window.__card.renderRoot.querySelectorAll('[data-hp-device-contact]').length===0,
-  isoHasExistingTileShadows:window.__card.renderRoot.querySelectorAll('.iso-tile-shadow').length>0})));
+  isoReplacesFlatContactWithVolume:!window.__card.renderRoot.querySelector('.device-contact-contour')
+    && (!!window.__card._plan3dHost?.world.markerGlass.children.length
+      || !!window.__card.renderRoot.querySelector('.iso-marker-glass')
+      || !window.__card.renderRoot.querySelector('[data-hp-device-contact]')),
+  isoHasExistingTileShadows:window.__card._plan3dHost?.world.contacts.children.some(mesh=>
+    mesh.visible&&mesh.material.map?.image?.width>0)
+    || window.__card.renderRoot.querySelectorAll('.iso-tile-shadow').length>0})));
 check('iso-toggle-does-not-write-layout',(await state()).writes,parityBefore.writes);
-await page.evaluate(async()=>{await window.__hpTest.setServerConfig(cfg=>{cfg.settings={...cfg.settings,volumetric_view:false};return cfg;});});
+await page.evaluate(()=>window.__hpTest.setVolumetricView(false));
 await page.waitForFunction(()=>!window.__card.renderRoot.querySelector('.stage.projection-iso'));await settle();
 const returned=await state();checkAll({flatRestoresContact:returned.components.every(id=>id==='contact-a'),
   projectionRoundtripKeepsPoint:isDeepStrictEqual(returned.layout,parityBefore.layout),projectionRoundtripNoWrite:returned.writes===parityBefore.writes});

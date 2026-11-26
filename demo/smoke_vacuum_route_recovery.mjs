@@ -63,7 +63,10 @@ for (const [screen, viewport] of [['desktop', { width: 1200, height: 900 }],
         const tip = root.querySelector('.vactrail line.tip.core');
         const puck = root.querySelector('.vacpuck[data-mid="e_vacuum_route918"]');
         const plan = root.querySelector('.plan-svg');
-        const point = new DOMPoint(320, 420).matrixTransform(plan.getScreenCTM());
+        const host=c._plan3dHost,camera=host?.viewport.painted?.camera,native=host?.canvas.getBoundingClientRect();
+        const p=camera?.position.clone().set(320,0,420).project(camera);
+        const point=p?{x:native.left+(p.x+1)*native.width/2,y:native.top+(1-p.y)*native.height/2}
+          :new DOMPoint(320, 420).matrixTransform(plan.getScreenCTM());
         const box = puck?.getBoundingClientRect();
         const centre = box ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : null;
         const tipEnd = tip ? new DOMPoint(+tip.getAttribute('x2'), +tip.getAttribute('y2'))

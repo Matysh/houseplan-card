@@ -106,6 +106,8 @@ await page.waitForFunction(() => { const c = window.__summaryCameraCard;
 out.bottomSummaryFits = await page.evaluate(async () => { await window.__summaryCameraFit(); return window.__summaryCameraCentered(); });
 await page.evaluate(async () => {
   const c = window.__summaryCameraCard, cfg = structuredClone(c._serverCfg); cfg.settings.volumetric_view = true;
+  const floor=cfg.spaces.find(space=>space.id===c._space);
+  floor.settings={...floor.settings,show_borders:true};
   window.__pushServerConfig(cfg); await c._ensureIsoSceneRuntime();
 });
 await page.waitForFunction(() => window.__summaryCameraCard.renderRoot.querySelector('.stage.projection-iso'));

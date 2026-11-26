@@ -229,6 +229,9 @@ export const planStyles = css`
     .hp-mode-crossfade { position:absolute; inset:0; z-index:1; pointer-events:none; }
     .plan-svg { z-index: 1; }
     .iso-scene-surface { position:absolute; inset:0; z-index:1; }
+    /* Passive input geometry stays below the canvas. Stair arrival and
+       keyboard feedback use this same layer only while they are visible. */
+    .iso-scene-surface:has([data-hp="stair-arrival"], .hp-stair:focus-visible) { z-index:3; }
     .zoomwrap > canvas[data-hp-plan-3d] {
       position:absolute; inset:0; width:100%; height:100%; z-index:2; pointer-events:none;
     }

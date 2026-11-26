@@ -95,6 +95,10 @@ export class IsoFirstFrameState {
     return this.floorMemo.rooms;
   }
 
+  /** The committed renderer and the light-floor classifier use the same
+   * resolved paper. Never reprobe computed style in a warm render. */
+  public get paperColor(): string { return `rgb(${this.paperRgb.join(', ')})`; }
+
   private commitPaper(key: string, rgb: Rgb): void {
     const changed = !this.paperReady || this.paperContext !== key
       || rgb.some((channel, index) => channel !== this.paperRgb[index]);

@@ -52,6 +52,10 @@ const out = {};
 for (const projection of ['flat', 'iso']) {
   await page.evaluate(async projection => {
     const c = window.__motionCard, cfg = structuredClone(c._serverCfg);
+    if(projection==='iso'){
+      const floor=cfg.spaces.find(space=>space.id===c._space);
+      floor.settings={...floor.settings,show_borders:true};
+    }
     cfg.settings.volumetric_view = projection === 'iso'; window.__pushServerConfig(cfg);
     if (projection === 'iso') await c._ensureIsoSceneRuntime();
     await window.__motionUntil(() => c._renderProjection === projection);

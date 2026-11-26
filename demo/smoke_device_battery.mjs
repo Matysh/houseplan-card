@@ -218,6 +218,9 @@ try {
   })));
   await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-id="d_light1"] .device-battery'));
   out.hiddenLedRestoresBattery = true;
+  // The preview round-trip above may normalize the action for the marker's
+  // temporary display modes. Specify the intended positive tap control.
+  await patchBatteryMarker(page, { tap_action: 'info' });
 
   // A point outside the old shell is visually occupied, but is not a new click target.
   const desktopInput = await batteryInputProbe(page);
@@ -244,9 +247,24 @@ try {
   const isoInput = await batteryInputProbe(page);
   out.isoBatteryFrameIsPassive = isoInput.passive;
   out.isoBatteryPointIsVisibleAndOutsideOldHitArea = isoInput.visible && isoInput.outsideOldHitArea;
-  out.isoKeepsScreenFacingBattery = iso.battery.x > iso.shell.right
-    && Math.abs(iso.battery.width - iso.battery.height) <= 0.8
-    && Math.abs(iso.battery.y + iso.battery.height / 2 - iso.shell.y - iso.shell.height / 2) <= 0.8;
+  const native = await page.evaluate(() => !!window.__card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]'));
+  if (native) {
+    out.isoKeepsBatteryBesideDeviceInReadingPlane = await page.evaluate(() => {
+      const root = window.__card.renderRoot, dev = root.querySelector('.dev[data-id="d_temp"]');
+      const old = dev.style.transform;
+      dev.style.transform = 'none';
+      const a = dev.querySelector('.device-shell-frame').getBoundingClientRect();
+      const b = dev.querySelector('.device-battery').getBoundingClientRect();
+      dev.style.transform = old;
+      return b.left > a.right && Math.abs(b.width-b.height)<=.8
+        && Math.abs((b.top+b.bottom-a.top-a.bottom)/2)<=.8;
+    });
+    out.isoBatteryPaintsLowInk = await batteryColorPixels(page, iso.battery, [240, 65, 12]) >= 4;
+  } else {
+    out.isoKeepsScreenFacingBattery = iso.battery.x > iso.shell.right
+      && Math.abs(iso.battery.width - iso.battery.height) <= 0.8
+      && Math.abs(iso.battery.y + iso.battery.height / 2 - iso.shell.y - iso.shell.height / 2) <= 0.8;
+  }
   await page.evaluate(() => window.__hpTest.setVolumetricView(false));
   const flatAgain = await batteryGeometry(page);
   out.viewSwitchDoesNotDriftBattery = Math.abs(flat.battery.x - flatAgain.battery.x) <= 1
@@ -271,13 +289,14 @@ try {
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   out.trustedTouchStartsThroughBattery = batteryPointerReachedPlan(await touchEvents(), 'touch');
   await cdp.detach();
+  await page.waitForFunction(() => !window.__card._cameraGestureActive && !window.__card._cameraTransition.active);
   await page.evaluate(() => window.__hpTest.settled());
   const panned = await batteryGeometry(page);
   out.touchPanStartsThroughBattery = Math.hypot(panned.core.x - mobile.core.x, panned.core.y - mobile.core.y) > 15;
   out.touchPanDoesNotOpenInfo = await page.evaluate(() => !window.__card.shadowRoot.querySelector('hp-dialog[data-kind="info"]'));
   // Positive control: no-dialog checks cannot pass merely because the scene
   // stopped accepting input. Re-measure after the pan and use a trusted click.
-  await page.mouse.click(panned.core.x + panned.core.width / 2, panned.core.y + panned.core.height / 2);
+  await page.touchscreen.tap(panned.core.x + panned.core.width / 2, panned.core.y + panned.core.height / 2);
   await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-dialog[data-kind="info"]'));
   out.coreStillOpensInfoAfterBatteryPan = true;
   await page.evaluate(() => window.__hpTest.close(undefined, { via: 'cancel' }));

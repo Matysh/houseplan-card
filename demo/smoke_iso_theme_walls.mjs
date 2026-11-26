@@ -36,7 +36,9 @@ try {
   const wall = light.structure.find(mesh => mesh.material[0].colour === opaqueCap);
   assert.ok(wall?.vertices > 0, 'Opaque caps use the configured colour over white');
   assert.ok(wall.material.every(material => material.opacity === 1 && material.depthWrite));
-  assert.notEqual(wall.material[0].colour, wall.material[1].colour);
+  assert.ok(light.structure.flatMap(mesh => mesh.material).some(material =>
+    material.colour !== opaqueCap && material.opacity === 1 && material.depthWrite),
+  'The wall faces use a distinct finish whether emitted in the cap mesh or a separate skin');
   assert.ok(light.openings.length && light.furniture.length, '3D openings and furniture have physical meshes');
   const setTheme = async darkMode => {
     await card.evaluate((node, isDark) => {

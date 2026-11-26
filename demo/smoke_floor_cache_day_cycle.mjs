@@ -55,13 +55,17 @@ try{
         gradient:active?getComputedStyle(active).backgroundImage:null,opacity:active?getComputedStyle(active).opacity:null,
         silhouettes:stage?.querySelectorAll('[data-hp-cache-preview] path,[data-hp-cache-preview] polygon').length??0,
         previewDom:!!stage?.querySelector('[data-hp-cache-preview]'),
-        iso:!!stage?.querySelector('.iso-walls'),devices:root.querySelectorAll('.dev').length};
+        iso:!!stage?.querySelector('.iso-walls')
+          || (!!stage?.querySelector('canvas[data-hp-plan-3d-ready]')
+            && window.__card._plan3dHost?.world.structure.children.length>0),
+        devices:root.querySelectorAll('.dev').length};
     };
   },fixture);
   const pending=()=>page.waitForFunction(()=>window.__floorLoading.held.length>0&&window.__card._floorPassive&&!!window.__card.renderRoot.querySelector('.stage'));
   const ready=()=>page.waitForFunction(()=>{
     const card=window.__card;return card._loadOk&&!card._booting&&!card._bootFading&&!card._floorPassive
-      &&!card._floorPreparation.pending&&card._renderProjection==='iso'&&!!card.renderRoot.querySelector('.dev');
+      &&!card._floorPreparation.pending&&card._renderProjection==='iso'
+      &&window.__floorLoading.snapshot().iso&&!!card.renderRoot.querySelector('.dev');
   });
   const snapshot=()=>page.evaluate(()=>window.__floorLoading.snapshot());
   const waitPublished=async prior=>page.waitForFunction(n=>window.__card._floorPreparation.diagnostic.store.writes>n,prior);

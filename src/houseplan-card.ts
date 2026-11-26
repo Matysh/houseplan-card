@@ -14245,7 +14245,7 @@ export class HouseplanCard extends LitElement {
         }) : [],
         world: {
           physical: isoScene.physical, display: disp, cellCm: this._cellCm, visualScale: scale,
-          paper: space.bg ? this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', '#111') : '#fff',
+          paper: this._isoFirstFrame.paperColor,
           backdrop: space.bg ? { url: this._display(space.bg.href), x: space.bg.x, y: space.bg.y,
             w: space.bg.w, h: space.bg.h, angle: space.bg.angle ?? 0, opacity: space.bg.opacity ?? 1 } : undefined,
           floorInk: floorInk(false),
