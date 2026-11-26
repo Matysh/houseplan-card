@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26989,
+  "revision": 26990,
   "nextTicket": 739,
   "nextFence": 739,
   "tasks": {
@@ -2862,39 +2862,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5"
-      }
-    },
-    "1473": {
-      "issue": 1473,
-      "branch": "codex/1473-render-layout-read",
-      "track": "show",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "fbfbdea4442539a5e6aadc46c16d2645165e449e",
-      "mergedSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-      "mergedAt": 1795082056514,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1473:1:67c5c04450a45a45960581124030b410d8f5ba9e:fbfbdea4442539a5e6aadc46c16d2645165e449e",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1474": {
@@ -6859,10 +6826,20 @@
       "removedToRelease": false,
       "reviewRequest": "review:1582:2:53a87586eb5f2d467958c302b6fbc3dc41e2d194:9a0691f613399b8415f7ee528a932d0338deab50",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "releaseTag": "v2.0.0-beta.1",
       "devBuild": {
