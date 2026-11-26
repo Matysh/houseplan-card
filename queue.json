@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26882,
+  "revision": 26883,
   "nextTicket": 738,
   "nextFence": 738,
   "tasks": {
@@ -7808,6 +7808,10 @@
       "digest": "137d23502dc67f7f0e24eab09908510e081fd96af0695b288830794a57012390",
       "issue": 1582
     },
+    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:3:s6-label": {
+      "digest": "8b9262ad4bd8ca4b7144b29c198229858a3f4e4d702b03f5b2d26b249bee5d03",
+      "issue": 1582
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7985,7 +7989,8 @@
         "resubmission": true,
         "reviewChanges": "### Исправления по предыдущему ревью\n\n- **#1580 ошибочно попал в выпущенную бету →** вернул запись в Unreleased / «Не выпущено» в обоих changelog. При синхронизации с актуальным dev то же произошло с #1581 и #1583; их записи тоже оставлены в Unreleased / «Не выпущено», без дубликатов.\n- **История релиза →** локальная проверка подтвердила побайтное совпадение истории начиная с раздела v2.0.0-beta.1 с опубликованным тегом, а также совпадение девяти PNG, индекса эталонов и release notes. Версия беты перенесена, изменения #1580 в исходниках dev сохранены. Опубликованные тег и файлы релиза не менялись.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
