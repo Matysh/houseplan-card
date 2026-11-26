@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25720,
+  "revision": 25721,
   "nextTicket": 716,
   "nextFence": 715,
   "tasks": {
@@ -6559,9 +6559,21 @@
       "status": "S6-in-progress",
       "readyAt": 1795655011300,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1795655261891,
-      "automationDetail": "Commit tracked task changes before finish"
+      "patchId": "cc7620f29d06b20e7bb55d9a944cc4eb3d6144f4",
+      "changedFiles": [
+        "custom_components/houseplan/startup_floor_preview.py",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/ISOMETRIC.md",
+        "docs/release-ledger/v2.0.0/1574.json",
+        "src/houseplan-card.ts",
+        "src/plan-3d-camera.ts",
+        "src/plan-3d-host.ts",
+        "src/startup-floor-wire.ts",
+        "src/startup-floor.ts",
+        "test/startup-floor-wire.test.mjs",
+        "tests_backend/test_ha_startup_floor_preview.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7234,10 +7246,11 @@
     "token": "714:finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:1:admit",
     "fence": 714,
     "materialSha": "a044b85569c8b33eaa43d90ecc0f654027c34569",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+    "phase": "testing",
     "admittedAt": 1795655242358,
-    "expiresAt": 1795655674498
+    "expiresAt": 1795655692514,
+    "patchId": "cc7620f29d06b20e7bb55d9a944cc4eb3d6144f4"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7398,6 +7411,10 @@
     },
     "finish:d5e3eb6e-8710-45dd-9970-daef5667d9a2": {
       "digest": "466d452165ecff763d6d1e851f3b287f65182b75a3b8df54f23d46ca0469617d",
+      "issue": 1574
+    },
+    "finish:43045779-f102-4271-afeb-02440d7c287f:finish:3:synchronized": {
+      "digest": "d93d955219d76d53dd7a6451f9be8ff839299fd6a56c40d513be37a5f35f03a2",
       "issue": 1574
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
