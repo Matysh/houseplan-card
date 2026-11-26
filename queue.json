@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27317,
+  "revision": 27318,
   "nextTicket": 744,
   "nextFence": 744,
   "tasks": {
@@ -2677,39 +2677,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "6d28743ea061ad639f508675d0c48fe22865cb5c"
-      }
-    },
-    "1465": {
-      "issue": 1465,
-      "branch": "codex/1465-standalone-release",
-      "track": "ask",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "6b8ef512d27636767389a906461d64c096d8a1a6",
-      "mergedSha": "d6756f108caf162b987bc3e217ac7492ab113e66",
-      "mergedAt": 1795228023054,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1465:2:fb26f661460635ce5a8aeb88801159c55dedba86:6b8ef512d27636767389a906461d64c096d8a1a6",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1466": {
@@ -6256,7 +6223,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "828dafd96f4764c090bd07558a13f921c239bf4f"
       }
     }
   },
@@ -6985,6 +6953,18 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:45886265976:1:1587": {
+      "digest": "46671ecd9d87e3539cbe88c03085581891a97fdef43f57f27cff3eb1d8a32346",
+      "issue": 1587,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1587,
+        "at": 1795722681223,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "828dafd96f4764c090bd07558a13f921c239bf4f"
       }
     }
   },
