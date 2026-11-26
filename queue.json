@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25843,
+  "revision": 25844,
   "nextTicket": 718,
   "nextFence": 718,
   "tasks": {
@@ -6365,200 +6365,25 @@
     },
     "1570": {
       "issue": 1570,
+      "branch": "codex/1570-webgl-audit",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1570-webgl-audit",
-      "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 717,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795658410889,
-      "reviewEntry": 3,
-      "patchId": "8eeebdfe71244627ea83d86cd741cc6f05ef56ee",
-      "changedFiles": [
-        "demo/golden/harness.mjs",
-        "demo/golden/interior-window-light.mjs",
-        "demo/golden/sun-transparent.mjs",
-        "demo/helpers/device-battery-fixture.mjs",
-        "demo/helpers/hp-test.mjs",
-        "demo/helpers/test-surface-ready.mjs",
-        "demo/smoke_daycycle_outline_removed.mjs",
-        "demo/smoke_device_battery.mjs",
-        "demo/smoke_device_contacts.mjs",
-        "demo/smoke_floor_cache_day_cycle.mjs",
-        "demo/smoke_floor_preparation_deadline.mjs",
-        "demo/smoke_glass_door_sun.mjs",
-        "demo/smoke_interior_window_light.mjs",
-        "demo/smoke_iso_floor_switch.mjs",
-        "demo/smoke_iso_room_label_metrics.mjs",
-        "demo/smoke_iso_theme_walls.mjs",
-        "demo/smoke_iso_tiles.mjs",
-        "demo/smoke_plan_3d_live_camera.mjs",
-        "demo/smoke_room_metrics_alignment.mjs",
-        "demo/smoke_screen_camera_1165.mjs",
-        "demo/smoke_smooth_zoom.mjs",
-        "demo/smoke_split_corner_wall.mjs",
-        "demo/smoke_stair_arrival.mjs",
-        "demo/smoke_summary_camera.mjs",
-        "demo/smoke_summary_camera_motion.mjs",
-        "demo/smoke_sun_transparent.mjs",
-        "demo/smoke_tv_mount.mjs",
-        "demo/smoke_vacuum_camera.mjs",
-        "demo/smoke_vacuum_live_tail.mjs",
-        "demo/smoke_vacuum_route_recovery.mjs",
-        "demo/smoke_volumetric_setting.mjs",
-        "demo/smoke_wall_junctions.mjs",
-        "demo/smoke_wall_node_topology.mjs",
-        "demo/smoke_wall_smooth_joint.mjs",
-        "demo/smoke_zero_divider_taper.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v2.0.0/1570.json",
-        "process-next/catalog/golden-runner.mjs",
-        "src/device-hit-owner.ts",
-        "src/houseplan-card.ts",
-        "src/iso-first-frame.ts",
-        "src/plan-3d-host.ts",
-        "src/plan-3d-markers.ts",
-        "src/plan-3d-world.ts",
-        "src/styles/plan.styles.ts",
-        "test/golden-matrix.test.mjs",
-        "test/isometric-contract.test.mjs",
-        "test/performance-surface-ready.test.mjs"
-      ],
-      "notice": {
-        "key": "2:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795658103442,
-        "entry": 2,
-        "requestId": "review:1570:2:1f21861b27b3b8a0d5180a8fc1b79bff10ba4bc9:9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-        "transitionConfirmed": true
-      },
-      "s6": {
-        "id": "20261126T020028076-dd9be048",
-        "name": "Тесты для задачи #1570 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T020028076-dd9be048/report.json",
-        "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-        "status": "passed",
-        "finishedAt": "2026-11-26T02:25:52.973Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+      "mergedSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
+      "mergedAt": 1795660168798,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1570:3:8eeebdfe71244627ea83d86cd741cc6f05ef56ee:9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-      "reviewMaterial": {
-        "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-        "expectedBase": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-        "patchId": "8eeebdfe71244627ea83d86cd741cc6f05ef56ee"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1570:3:8eeebdfe71244627ea83d86cd741cc6f05ef56ee:9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-        "eventId": "github:45742378227:1:tick:0:review-retry",
-        "at": 1795659982354,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1570,
-        "requestId": "review:1570:3:8eeebdfe71244627ea83d86cd741cc6f05ef56ee:9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-        "kind": "code",
-        "base": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-        "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-        "patchId": "8eeebdfe71244627ea83d86cd741cc6f05ef56ee",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1570,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1570",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Сохранены предметные проверки при замене старых SVG-слоёв на готовый WebGL-кадр; скрытые границы означают плоский View. Реальные дефекты: #1571 подсветка комнаты, #1572 недоступное устройство, #1573 Zigbee и оставшаяся нативная принадлежность маркера после выхода. В этой ветке также восстановлен видимый пульс лестницы (только в момент его отображения) и используется один уже разрешённый цвет бумаги, без повторного DOM-чтения при прогретом переключении. Файлы эталонов неизменны.\n\nРучное сравнение показало потерю контраста в системном forced-colors. WebGL теперь использует фактические системные Canvas/CanvasText для пола и стен, рисует контрастные рёбра, убирает декоративную тень и не меняет обычные темы или нейтральное сохранённое превью. Канвас и oracle контраста проверены адресно; кадр не принят автоматически.\n\n### Дополнительный разбор stable-аудита и S6\n\nВ исходном stable-профиле были выполнены все 623 запланированных шага. Все 50 первоначально красных browser smoke из него повторно прошли на совмещённом кандидате. Не сбрасывали эталоны и не отключали проверок. Дополнительно закрыты три отказа первого S6: фасад использует публичный выбранный этаж вместо новых приватных полей; визуальный тест доказывает рекомендуемый Flat при явно отключённых стенах и отдельно требует настоящий 3D в остальных сценариях; регэксп учитывает форматирование, но по-прежнему требует await. Адресно 81/81.\n\nВ hover-сцене было также нестабильное переключение цвета. Атрибут наведения меняется вне Lit, и WebGL раньше мог не снять цвет с нового CSS-состояния; скрытая HTML-анимация могла дать промежуточный тон. Обновляется только затронутая пара проекций, без обновления карточки и изменения камеры; оставляем обычные CSS-анимации для Flat. Локальный smoke проверяет синий и возврат цвета реальными событиями мыши; два независимых PNG после исправления совпали. Контракт переносимого серверного 3D-превью проверен и исправляется отдельно в #1574.\n\n### Ответ на замечание ревью: угол значка при наведении\n\nБлокер: в пути обновления только маркеров смешивались градусы атрибута и радианы камеры. Оба вызывают один readPlan3dMarkerFaces с градусами сцены, преобразование ровно в одном месте. Адресный native smoke с авторским углом 90°: на прежней сборке красная только проверка сохранения угла, на исправленной все проверки зелёные. Тест сохраняет прежнюю конфигурацию обычного Flat-контроля.\n\nДополнительно: в golden засчитываются уникальные id мебели с реальной геометрией, а не число мешей. Диалог батареи проверен без подстановки tap_action: сохранённое значение и фактическая реакция на клик остались info. Прицельная проверка мебели прошла подготовку сцены; 64/64 unit. Эталоны не обновлялись."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Единственный блокер прошлого раунда устранён, и сделано это лучше минимальной правки. Перевод угла значка из градусов в радианы теперь выполняется в одном месте — внутри `readPlan3dMarkerFaces`. Оба вызывающих пути (полный `present` карточки и точечный `refreshMarkerFaces` при наведении) передают туда одну и ту же величину: поворот сцены `preset.rotDeg` в градусах. Поэтому повторно разойтись они не могут. Формула совпадает с прежней формулой основного пути: `(isoReadingYaw(rot) − rot + configured) · π/180`. Значит, для обычного рендера поведение не меняется.\n\nNative smoke дополнен маркером с авторским углом 90°. Он проверяет, что угол глифа одинаков до наведения, во время наведения и после ухода курсора. По словам автора, на прежней сборке эта проверка была красной; квитанция S6 на 2ee70ca1 — passed. Попутно сделаны два необязательных улучшения из прошлого раунда: мебель в golden считается по уникальным id с реальной геометрией, а подстановка `tap_action` в smoke батареи заменена утверждением о сохранённом значении.\n\nБлокеров нет. Остаются необязательные замечания прошлого раунда: пульс лестниц без объёма, обновление палитры forced-colors при смене контрастной темы, заливки комнат в forced-colors. Они не мешают принять работу.",
-          "understanding": "Задача: перевести golden-оракулы и browser smoke со старой SVG-очереди граней 2.5D на проверки готового WebGL-кадра. Нельзя ослаблять проверки плоского вида, геометрии и интерактивности, нельзя обновлять эталоны. Реальные продуктовые причины падений нужно устранять отдельно. Решение в целом разобрано в прошлом раунде: оракулы проверяют пиксели канваса, меши, проекцию камеры, depthTest бейджей и геометрию света. noBorders доказывает существующий в продукте откат во Flat. Фасад `setVolumetricView` временно включает `show_borders` для этажа с `plan_url` без явной настройки. Продуктовые правки: точечное обновление цвета маркера при наведении, подъём слоя пульса лестницы, единый цвет бумаги, палитра forced-colors.\n\nС прошлого раунда добавлен один коммит 2ee70ca1 «Keep the authored marker rotation when hover repaints WebGL». До него `Plan3dHost.refreshMarkerFaces` прибавлял к повороту в радианах угол атрибута `data-hp-3d-device` в градусах. После него `readPlan3dMarkerFaces(element, geometry, sceneYawDegrees)` сам читает атрибут и переводит сумму в радианы. Карточка (src/houseplan-card.ts:882) и host (src/plan-3d-host.ts:89) передают `rotDeg`. Других вызывающих нет: есть только реэкспорт в plan-3d-runtime.ts:10. Разобраны путь `present` карточки, путь `refreshMarkerFaces` при наведении (`DeviceHitController.afterHover`), новый блок native smoke в demo/smoke_iso_tiles.mjs, правка подсчёта мебели в harness и проверка `tap_action` в smoke батареи.",
-          "analysis": [
-            {
-              "topic": "Исправление угла значка при наведении (прежний блокер)",
-              "assessment": "Устранено, причём устранена сама причина: расчёт поворота больше не дублируется. Функция принимает поворот сцены в градусах и одна отвечает за перевод в радианы, поэтому оба пути дают одинаковый угол. Новая формула алгебраически равна старой формуле основного пути, так что обычный рендер не меняется. В `refreshMarkerFaces` в качестве geometry передаются прежние `marker.faces`. Это корректно: `Plan3dMarkerFace extends IsoDeviceFace`, а `...face` затем перекрывается свежими color, foreground, glyph и inkOpacity. `opacity` маркера при наведении не пересчитывается, но наведение недоступность не меняет. Сохранять это решение: одна точка преобразования единиц.",
-              "evidence": "src/plan-3d-markers.ts:44–53 (`configured` из атрибута, `iconTurn = (isoReadingYaw(sceneYawDegrees) − sceneYawDegrees + configured) · π/180`); src/houseplan-card.ts:882; src/plan-3d-host.ts:79–97; поиск `readPlan3dMarkerFaces` показывает только эти два вызова."
-            },
-            {
-              "topic": "Адресная проверка поворота",
-              "assessment": "Проверка содержательная. Маркеру TINTED задаётся `angle: 90`, тест ждёт атрибут '90' и сравнивает `faces[0].glyph.angle` до наведения, во время и после ухода курсора, используя реальные события мыши. Прежнюю ошибку (90 рад вместо π/2) этот тест ловит. Абсолютное значение угла он не сверяет, только совпадение двух путей. Этого достаточно, потому что основной путь не менялся по смыслу. Конфигурация маркера восстанавливается после блока, так что последующий Flat-контроль не затрагивается.",
-              "evidence": "demo/smoke_iso_tiles.mjs, native-ветка: `nativeHoverKeepsAuthoredRotation`, восстановление `previous` через `setServerConfig`; заявление автора о красном результате на прежней сборке; квитанция S6 20261126T020028076-dd9be048, passed, материал 2ee70ca1."
-            },
-            {
-              "topic": "Попутно закрытые необязательные замечания",
-              "assessment": "Мебель в golden теперь засчитывается по уникальным id из decor, у которых есть меш с непустой геометрией. Одна модель больше не может закрыть несколько отсутствующих. В smoke батареи подстановка `tap_action: 'info'` убрана. Теперь тест утверждает, что после двух сохранений диалога значение осталось `info`, и дальше реальным кликом проверяет реакцию. Это честнее прежней маскировки.",
-              "evidence": "demo/golden/harness.mjs:1381–1393 (`furnitureIds.filter(id => meshes.some(mesh => mesh.name.startsWith(`furniture:${id}:`)))`); demo/smoke_device_battery.mjs: `batteryDialogPreservesTapAction`."
-            },
-            {
-              "topic": "Оставшиеся необязательные замечания прошлого раунда",
-              "assessment": "Не изменились и регрессиями не являются. Пульс лестницы без объёма (backward) в WebGL по-прежнему не виден, хотя формулировка CHANGELOG шире фактического поведения. Палитра forced-colors не обновляется при смене контрастной темы без выхода из режима. Заливки комнат в forced-colors убираются без отдельного решения владельца. Всё это остаётся в improvements.",
-              "evidence": "docs/CHANGELOG.md:12; src/houseplan-card.ts `_onPlanContrastChange`; src/plan-3d-world.ts `updateRooms(contrastColors ? [] : …)`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Пульс прибытия для лестниц без объёма (прямая, `direction: 'backward'`) в WebGL 3D всё ещё лежит в группе `iso-floor-scene` с `opacity=\"0\"`. Варианты: вывести подсветку отдельным слоем с тем же `_floorTransform` или сузить формулировку в CHANGELOG и ledger. В smoke стоит добавить такую лестницу и проверять все подсветки, а не только `.first()`.",
-            "Forced-colors: перечитывать Canvas/CanvasText и при смене `(prefers-color-scheme: dark)` или при смене темы. Иначе переключение между контрастными темами без выхода из режима оставит в WebGL старые цвета до переподключения карточки. Цена — ещё один слушатель с тем же обработчиком.",
-            "Удаление заливок комнат в forced-colors стоит подтвердить у владельца. Если заливки передают состояние, может подойти контур цветом CanvasText вместо полного удаления."
-          ],
-          "boundaries": "Сборку, тесты и браузер я не запускал (правила S7). Опираюсь на квитанцию S6 «Тесты для задачи #1570 (перед ревью)» (passed, материал 2ee70ca1e172…) и на заявления автора: красная проверка угла на прежней сборке, 64/64 unit. Сами отчёты прогонов я не видел. В этом раунде по исходникам изучены только изменения коммита 2ee70ca1 и их вызывающие пути. Остальное решение разобрано в прошлом раунде, и его выводы я не пересматривал, кроме проверки, что новый коммит их не затрагивает. Сравнение всех активных golden-кадров и утверждение отличий — шаг владельца, его я не оценивал. Задача #1574 в объём ревью не входит."
-        },
-        "usage": {
-          "input_tokens": 14,
-          "cache_creation_input_tokens": 99439,
-          "cache_read_input_tokens": 529681,
-          "output_tokens": 5963,
-          "output_tokens_details": {
-            "thinking_tokens": 1294
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 99439,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 730,
-              "cache_read_input_tokens": 92338,
-              "cache_creation_input_tokens": 11305,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 11305
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nЕдинственный блокер прошлого раунда устранён, и сделано это лучше минимальной правки. Перевод угла значка из градусов в радианы теперь выполняется в одном месте — внутри `readPlan3dMarkerFaces`. Оба вызывающих пути (полный `present` карточки и точечный `refreshMarkerFaces` при наведении) передают туда одну и ту же величину: поворот сцены `preset.rotDeg` в градусах. Поэтому повторно разойтись они не могут. Формула совпадает с прежней формулой основного пути: `(isoReadingYaw(rot) − rot + configured) · π/180`. Значит, для обычного рендера поведение не меняется.\n\nNative smoke дополнен маркером с авторским углом 90°. Он проверяет, что угол глифа одинаков до наведения, во время наведения и после ухода курсора. По словам автора, на прежней сборке эта проверка была красной; квитанция S6 на 2ee70ca1 — passed. Попутно сделаны два необязательных улучшения из прошлого раунда: мебель в golden считается по уникальным id с реальной геометрией, а подстановка `tap_action` в smoke батареи заменена утверждением о сохранённом значении.\n\nБлокеров нет. Остаются необязательные замечания прошлого раунда: пульс лестниц без объёма, обновление палитры forced-colors при смене контрастной темы, заливки комнат в forced-colors. Они не мешают принять работу.\n\n## Понимание решения\n\nЗадача: перевести golden-оракулы и browser smoke со старой SVG-очереди граней 2.5D на проверки готового WebGL-кадра. Нельзя ослаблять проверки плоского вида, геометрии и интерактивности, нельзя обновлять эталоны. Реальные продуктовые причины падений нужно устранять отдельно. Решение в целом разобрано в прошлом раунде: оракулы проверяют пиксели канваса, меши, проекцию камеры, depthTest бейджей и геометрию света. noBorders доказывает существующий в продукте откат во Flat. Фасад `setVolumetricView` временно включает `show_borders` для этажа с `plan_url` без явной настройки. Продуктовые правки: точечное обновление цвета маркера при наведении, подъём слоя пульса лестницы, единый цвет бумаги, палитра forced-colors.\n\nС прошлого раунда добавлен один коммит 2ee70ca1 «Keep the authored marker rotation when hover repaints WebGL». До него `Plan3dHost.refreshMarkerFaces` прибавлял к повороту в радианах угол атрибута `data-hp-3d-device` в градусах. После него `readPlan3dMarkerFaces(element, geometry, sceneYawDegrees)` сам читает атрибут и переводит сумму в радианы. Карточка (src/houseplan-card.ts:882) и host (src/plan-3d-host.ts:89) передают `rotDeg`. Других вызывающих нет: есть только реэкспорт в plan-3d-runtime.ts:10. Разобраны путь `present` карточки, путь `refreshMarkerFaces` при наведении (`DeviceHitController.afterHover`), новый блок native smoke в demo/smoke_iso_tiles.mjs, правка подсчёта мебели в harness и проверка `tap_action` в smoke батареи.\n\n## Разбор решения\n\n### Исправление угла значка при наведении (прежний блокер)\n\nУстранено, причём устранена сама причина: расчёт поворота больше не дублируется. Функция принимает поворот сцены в градусах и одна отвечает за перевод в радианы, поэтому оба пути дают одинаковый угол. Новая формула алгебраически равна старой формуле основного пути, так что обычный рендер не меняется. В `refreshMarkerFaces` в качестве geometry передаются прежние `marker.faces`. Это корректно: `Plan3dMarkerFace extends IsoDeviceFace`, а `...face` затем перекрывается свежими color, foreground, glyph и inkOpacity. `opacity` маркера при наведении не пересчитывается, но наведение недоступность не меняет. Сохранять это решение: одна точка преобразования единиц.\n\nОснование: src/plan-3d-markers.ts:44–53 (`configured` из атрибута, `iconTurn = (isoReadingYaw(sceneYawDegrees) − sceneYawDegrees + configured) · π/180`); src/houseplan-card.ts:882; src/plan-3d-host.ts:79–97; поиск `readPlan3dMarkerFaces` показывает только эти два вызова.\n\n### Адресная проверка поворота\n\nПроверка содержательная. Маркеру TINTED задаётся `angle: 90`, тест ждёт атрибут '90' и сравнивает `faces[0].glyph.angle` до наведения, во время и после ухода курсора, используя реальные события мыши. Прежнюю ошибку (90 рад вместо π/2) этот тест ловит. Абсолютное значение угла он не сверяет, только совпадение двух путей. Этого достаточно, потому что основной путь не менялся по смыслу. Конфигурация маркера восстанавливается после блока, так что последующий Flat-контроль не затрагивается.\n\nОснование: demo/smoke_iso_tiles.mjs, native-ветка: `nativeHoverKeepsAuthoredRotation`, восстановление `previous` через `setServerConfig`; заявление автора о красном результате на прежней сборке; квитанция S6 20261126T020028076-dd9be048, passed, материал 2ee70ca1.\n\n### Попутно закрытые необязательные замечания\n\nМебель в golden теперь засчитывается по уникальным id из decor, у которых есть меш с непустой геометрией. Одна модель больше не может закрыть несколько отсутствующих. В smoke батареи подстановка `tap_action: 'info'` убрана. Теперь тест утверждает, что после двух сохранений диалога значение осталось `info`, и дальше реальным кликом проверяет реакцию. Это честнее прежней маскировки.\n\nОснование: demo/golden/harness.mjs:1381–1393 (`furnitureIds.filter(id => meshes.some(mesh => mesh.name.startsWith(`furniture:${id}:`)))`); demo/smoke_device_battery.mjs: `batteryDialogPreservesTapAction`.\n\n### Оставшиеся необязательные замечания прошлого раунда\n\nНе изменились и регрессиями не являются. Пульс лестницы без объёма (backward) в WebGL по-прежнему не виден, хотя формулировка CHANGELOG шире фактического поведения. Палитра forced-colors не обновляется при смене контрастной темы без выхода из режима. Заливки комнат в forced-colors убираются без отдельного решения владельца. Всё это остаётся в improvements.\n\nОснование: docs/CHANGELOG.md:12; src/houseplan-card.ts `_onPlanContrastChange`; src/plan-3d-world.ts `updateRooms(contrastColors ? [] : …)`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Пульс прибытия для лестниц без объёма (прямая, `direction: 'backward'`) в WebGL 3D всё ещё лежит в группе `iso-floor-scene` с `opacity=\"0\"`. Варианты: вывести подсветку отдельным слоем с тем же `_floorTransform` или сузить формулировку в CHANGELOG и ledger. В smoke стоит добавить такую лестницу и проверять все подсветки, а не только `.first()`.\n- Forced-colors: перечитывать Canvas/CanvasText и при смене `(prefers-color-scheme: dark)` или при смене темы. Иначе переключение между контрастными темами без выхода из режима оставит в WebGL старые цвета до переподключения карточки. Цена — ещё один слушатель с тем же обработчиком.\n- Удаление заливок комнат в forced-colors стоит подтвердить у владельца. Если заливки передают состояние, может подойти контур цветом CanvasText вместо полного удаления.\n\n## Границы анализа\n\nСборку, тесты и браузер я не запускал (правила S7). Опираюсь на квитанцию S6 «Тесты для задачи #1570 (перед ревью)» (passed, материал 2ee70ca1e172…) и на заявления автора: красная проверка угла на прежней сборке, 64/64 unit. Сами отчёты прогонов я не видел. В этом раунде по исходникам изучены только изменения коммита 2ee70ca1 и их вызывающие пути. Остальное решение разобрано в прошлом раунде, и его выводы я не пересматривал, кроме проверки, что новый коммит их не затрагивает. Сравнение всех активных golden-кадров и утверждение отличий — шаг владельца, его я не оценивал. Задача #1574 в объём ревью не входит.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 9cf397ca66435c5fbcad73e7d292ad5e839bb810 → 2ee70ca1e172c8fcb5c18940d8519d1603d9c752\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1570, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nСохранены предметные проверки при замене старых SVG-слоёв на готовый WebGL-кадр; скрытые границы означают плоский View. Реальные дефекты: #1571 подсветка комнаты, #1572 недоступное устройство, #1573 Zigbee и оставшаяся нативная принадлежность маркера после выхода. В этой ветке также восстановлен видимый пульс лестницы (только в момент его отображения) и используется один уже разрешённый цвет бумаги, без повторного DOM-чтения при прогретом переключении. Файлы эталонов неизменны.\n\nРучное сравнение показало потерю контраста в системном forced-colors. WebGL теперь использует фактические системные Canvas/CanvasText для пола и стен, рисует контрастные рёбра, убирает декоративную тень и не меняет обычные темы или нейтральное сохранённое превью. Канвас и oracle контраста проверены адресно; кадр не принят автоматически.\n\n### Дополнительный разбор stable-аудита и S6\n\nВ исходном stable-профиле были выполнены все 623 запланированных шага. Все 50 первоначально красных browser smoke из него повторно прошли на совмещённом кандидате. Не сбрасывали эталоны и не отключали проверок. Дополнительно закрыты три отказа первого S6: фасад использует публичный выбранный этаж вместо новых приватных полей; визуальный тест доказывает рекомендуемый Flat при явно отключённых стенах и отдельно требует настоящий 3D в остальных сценариях; регэксп учитывает форматирование, но по-прежнему требует await. Адресно 81/81.\n\nВ hover-сцене было также нестабильное переключение цвета. Атрибут наведения меняется вне Lit, и WebGL раньше мог не снять цвет с нового CSS-состояния; скрытая HTML-анимация могла дать промежуточный тон. Обновляется только затронутая пара проекций, без обновления карточки и изменения камеры; оставляем обычные CSS-анимации для Flat. Локальный smoke проверяет синий и возврат цвета реальными событиями мыши; два независимых PNG после исправления совпали. Контракт переносимого серверного 3D-превью проверен и исправляется отдельно в #1574.\n\n### Ответ на замечание ревью: угол значка при наведении\n\nБлокер: в пути обновления только маркеров смешивались градусы атрибута и радианы камеры. Оба вызывают один readPlan3dMarkerFaces с градусами сцены, преобразование ровно в одном месте. Адресный native smoke с авторским углом 90°: на прежней сборке красная только проверка сохранения угла, на исправленной все проверки зелёные. Тест сохраняет прежнюю конфигурацию обычного Flat-контроля.\n\nДополнительно: в golden засчитываются уникальные id мебели с реальной геометрией, а не число мешей. Диалог батареи проверен без подстановки tap_action: сохранённое значение и фактическая реакция на клик остались info. Прицельная проверка мебели прошла подготовку сцены; 64/64 unit. Эталоны не обновлялись.\n```\n\n</details>\n",
-        "createdAt": "2026-11-26T02:28:49.432Z",
-        "artifactId": 15080789463,
-        "runId": 45742439041,
-        "runAttempt": 1,
-        "completedAt": "2026-11-26T02:28:52Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45742439041",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "9cf397ca66435c5fbcad73e7d292ad5e839bb810"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1571": {
@@ -7389,19 +7214,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1570,
-    "worker": "finish",
-    "token": "717:finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:1:admit",
-    "fence": 717,
-    "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-    "expectedBase": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795658414964,
-    "expiresAt": 1795663765992,
-    "patchId": "8eeebdfe71244627ea83d86cd741cc6f05ef56ee",
-    "reviewRequest": "review:1570:3:8eeebdfe71244627ea83d86cd741cc6f05ef56ee:9cf397ca66435c5fbcad73e7d292ad5e839bb810"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7422,134 +7235,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "finish:5f04740e-7a62-46c1-9777-29da8df709a6:finish:1:synchronized": {
-      "digest": "3e774187fbdd6bbb6b8cd1079886c61881cb4cb3fca286682e03bbf88778431b",
-      "issue": 1570
-    },
-    "github:45730182785:1:completions:message:fefeb808713bd945ccf1f77f3b0a58ec1d82dbe6b8654c4d8c6e2302e209c21a": {
-      "digest": "42ecee3829cd2c1d231bba511ee0fd290d1d4cdc4daed570b56eeedde60d8d67",
-      "issue": 1570
-    },
-    "finish:fc1452a4-1219-4dba-80a3-0df8fc6312e4": {
-      "digest": "13bf03fd1ee8f2f580081f07da04d0ee514e0cc976c07b44a120f80c18c82e1b",
-      "issue": 1570
-    },
-    "finish:738c63f7-c315-4ecc-b669-146a2536c5b8": {
-      "digest": "f4911bbba6fc872050019621ef08584f6264db7b58ed1fb5fc63b527d4de11f2",
-      "issue": 1570
-    },
-    "finish:3287000c-346c-481f-a902-736ca17b85ab": {
-      "digest": "95bb53b61ad65aa20635e1e4b2dea2e04cadf6c2d46123741ca84d62480dd8b4",
-      "issue": 1570
-    },
-    "dev-build:45730182785:1:webhook": {
-      "digest": "8e0c50dfd8328bad1968db035c55a5be8d19c3f98ce02a94ccf3aa33f7c30e9a",
-      "issue": 1570
-    },
-    "finish:1989764c-fe47-4fb2-8f38-b9faff1644a3": {
-      "digest": "9667d1b5cf4afebab35eaa641436689f449a909d24c1b8b576748d820505e20f",
-      "issue": 1570
-    },
-    "finish:6f02ce1a-66b9-49f0-9997-2526b72223c2": {
-      "digest": "f6b60896bc0739fcc6ace822269f12aa76510a374dca69d626a1c4b9b775b673",
-      "issue": 1570
-    },
-    "dev-build:45730269998:1:webhook:70e88411-27c4-4146-9a6c-c6adfcea4d67:delivered": {
-      "digest": "802f8b27de16ee554a0a95d42afc76d7c472d1c73ed9df83abce00974a96d0af",
-      "issue": 1570
-    },
-    "finish:1d1b0e4b-b559-42ac-bd97-e6e3c097185c": {
-      "digest": "c45a8f618143ec371ab3837148f977c1374b889bb5e4e405b560c8060d6a5c40",
-      "issue": 1570
-    },
-    "finish:fa1ef74f-d905-4d2a-907a-2325d273f307": {
-      "digest": "65df1f580c3a84b8c30438c1f894fe403d36270a516d9c0d7936563c920af27e",
-      "issue": 1570
-    },
-    "finish:f64dea9b-7da3-43ed-9d8e-20ad74d2bc5e": {
-      "digest": "d7da84f60816c900af4bcc434baedfdf850da2fe0fed4db30176de173a886b9b",
-      "issue": 1570
-    },
-    "finish:6d91a694-cc2d-40a5-a611-059332394d3a": {
-      "digest": "d44f840d34c4d571b7b303bbe2281f0a1b1e260420a35dc9bf0ad763dfb856b0",
-      "issue": 1570
-    },
-    "finish:6e0de4ff-0531-4536-bec2-963b0dbffae5": {
-      "digest": "7e4ebcaf62117bf62a5cb6c08fa0e7fbf7ec0f7e491965cb246a43975e9ab2a1",
-      "issue": 1570
-    },
-    "finish:86de769d-faec-4669-867b-fd94970baeec": {
-      "digest": "de3a13c703e9002682be51740dd1169e4d76682eb9480b1b1c02832cf3a7d72f",
-      "issue": 1570
-    },
-    "finish:4589da8c-c273-4417-aac3-c3b784ed3ccc": {
-      "digest": "6212c081bc2107c36fd26a9c87351440a16d164361d0adb9e998261173e1e11a",
-      "issue": 1570
-    },
-    "finish:087c72f2-1582-4919-a0dd-5e555bf20e2e": {
-      "digest": "af436568ddef655308d92486b18f831bfa52395fb4f91946cac31f3619e95f5a",
-      "issue": 1570
-    },
-    "finish:b899ddcd-2764-43ac-832d-06357d15880f": {
-      "digest": "62f668b2a94dc1e620fa5effdc4ba4964a3f79cc3c624a91d342892a3293b29f",
-      "issue": 1570
-    },
-    "finish:72982de0-2cd3-4f7f-95e7-372d2a0bd21c": {
-      "digest": "c966baf80e8eecab29adb6fa4c7212ee1f5057d433272c44e87ecac0a226d997",
-      "issue": 1570
-    },
-    "finish:f12328e5-b5c2-4f09-a90a-f1a1b9326d5a": {
-      "digest": "6db0faa1b98d909b96bd689ce1f90e12e85f73fba775f871039716ec5b2dc7be",
-      "issue": 1570
-    },
-    "finish:11daabea-794d-4cc1-919d-05308b5147bf": {
-      "digest": "d27e9e96049cb9056da5e781caaaa1d87a52d299c501fcfd602ee98549da242a",
-      "issue": 1570
-    },
-    "finish:da3b5389-7b13-455b-a10b-f1797daa0010": {
-      "digest": "d912fcc045a85d033bbbac05e0013ddec3562e1d301876ca5bfef047120b1882",
-      "issue": 1570
-    },
-    "finish:45664aba-baac-486b-845a-cf430c815e27": {
-      "digest": "49385f95c1047385364222e0679bc1cf82bb23d0393963ff520dad9f183e3fef",
-      "issue": 1570
-    },
-    "finish:ba00119a-c87e-4af9-b8c6-e5982f72c5e6": {
-      "digest": "ac2ddc2939ba738a23a12994618a51023e90e3813d0d8729352f2d1721ef8ff3",
-      "issue": 1570
-    },
-    "finish:53848de2-0fbe-4128-970f-d12d3b4dd1fc": {
-      "digest": "af1ba833a9b1065a2c80850eb02ea7dae3031fd30421e2200b78bd658a981210",
-      "issue": 1570
-    },
-    "finish:ad93c581-8444-404f-805a-b69df3003209": {
-      "digest": "c8e489b028d20367ec529d486bb370c24cb90c751d7f11c1ab29048853888936",
-      "issue": 1570
-    },
-    "finish:cefdc05a-a0fc-47cb-bc41-064029f034c8": {
-      "digest": "ebc8d2c6480fbb6830ee831c0834335050220e9ff8ba108fee9f8cee4db0dc40",
-      "issue": 1570
-    },
-    "github:45732982839:1:completions:message:274d4797ad3b83e77396d58e7a630cd60dc3be04ce384cc4d1e6effcd7e6dcf7": {
-      "digest": "378922016541ae6c8d6acb472390bf41a1032ca150ad1ec6e49cfd14595bc3f5",
-      "issue": 1570
-    },
-    "finish:4e61c9c6-00a1-4100-ba71-c2f8ab1059ce": {
-      "digest": "2feee05814b937be27ea3b42d8e4a996c0a90a6f955d48a471606c7a1e78e844",
-      "issue": 1570
-    },
-    "github:45733061427:1:completions:message:6d2c4de68353c2804f2f115d1f17147a167ec87eb1abf5ff6e42089f378e8b96": {
-      "digest": "f65d081b1afd6b01dc124bd42afe0184b6ee3e61316db1b75a88bb987b78dec2",
-      "issue": 1570
-    },
-    "finish:8c3fa5ee-9470-4d7f-8d87-b9f1867fb80a": {
-      "digest": "04d1698e4e9d942fdc96b33490d6899f8dfe59034ed5959bea7c36843719dfcb",
-      "issue": 1570
-    },
-    "finish:5f04740e-7a62-46c1-9777-29da8df709a6:finish:2:return": {
-      "digest": "354bbe569875eedc35361e5ac8437f93c45a9d9c02a384d461c3d4d19f1537a2",
-      "issue": 1570
     },
     "finish:43045779-f102-4271-afeb-02440d7c287f:finish:1:automation-pending": {
       "digest": "46020f1f6ee94fb988a7ae143f0a6c9045a5f4464a6ff5462dfb82b31155fe74",
@@ -7619,185 +7304,13 @@
       "digest": "e5e2cc1c5d695b2c6e59160dffc5664a75df005c9f26caee19787351b5a3f2aa",
       "issue": 1574
     },
-    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:3:synchronized": {
-      "digest": "f902c0613b711678c637e373970a69f0bfc83bf4f4b0e22fdea37b66dc542061",
-      "issue": 1570
-    },
-    "finish:932607f3-53d5-4ebf-9405-dd3509774699": {
-      "digest": "94ef6b771905548997187820de7a578b2878bee68fe3f21ee3206899a6c85177",
-      "issue": 1570
-    },
-    "finish:426296b6-acb1-4ee6-8948-c2dc98b11cae": {
-      "digest": "23c9ed89460638c8e431cd9efe62c91f482f0e2c89c202c375e98331822a401c",
-      "issue": 1570
-    },
-    "finish:0986e3a7-c5fb-4e45-96a5-a602929dfdd6": {
-      "digest": "31696dc3f0c57faf1e9c35921c8c48c39aa8123b3c456ffeab61ee1c55fd562d",
-      "issue": 1570
-    },
-    "finish:1c49930c-dd33-4768-ba00-9637b5346b35": {
-      "digest": "129af8c84f3ee5d5d7670182ab5f34bcc575bd65141d2117a295c314b12dab77",
-      "issue": 1570
-    },
-    "finish:54ed6ddc-0e5b-4ca2-a603-a5d5dd264436": {
-      "digest": "53ce1ed7fca97df74b4b31cc6d51602e5610ea8ce77b06abcbf1268d5694042e",
-      "issue": 1570
-    },
-    "finish:a6dc9a82-edaa-4379-90b0-c59f562743eb": {
-      "digest": "7eef06d0d98e432736523264a97b80cdc5276264d26dd64a73dcd7299bf765f7",
-      "issue": 1570
-    },
-    "finish:ba609fbf-8a29-4c4a-b21c-6720a0a011c6": {
-      "digest": "93d53ca913aaa05806b5606c9cb112f92362aad5dc3af1a187d89b48c3b61d3d",
-      "issue": 1570
-    },
-    "finish:98948978-1f28-408d-a119-cac0c0bca82c": {
-      "digest": "e74df1fba98320a5f39121f6a90e257d894ee3a0ca3789ab9e8120ec4d642a47",
-      "issue": 1570
-    },
-    "finish:65601fb9-822c-4cea-bfc4-2030cd0a1a17": {
-      "digest": "6f3032d3d7abf757f09323461e094b21eee0a11df9030e0f14c34990ba852188",
-      "issue": 1570
-    },
-    "finish:4af8c5da-8885-461c-9b75-1141b798e859": {
-      "digest": "147b499a666d83efda356c83a3b0ef2ea8d0e6ace1619fce408df52fcbc9c3af",
-      "issue": 1570
-    },
-    "finish:4ab77b57-10f3-4e8e-8e6a-8de44fcb618e": {
-      "digest": "aa416a0e915dd750b5072ebefa92328edb10150f83b73b45d0bf756473139c93",
-      "issue": 1570
-    },
-    "finish:5d914836-fb2a-482c-b348-611551f7b5fd": {
-      "digest": "c687192f21a5448ae984883346fae93807f05fffa7e9121d0087d0e9ca86ad28",
-      "issue": 1570
-    },
-    "finish:885b4266-1760-4107-aac7-fac70b203e86": {
-      "digest": "42568c72b9888d9bce37412ae12434c2821d6fabb621b9c456b533940548650c",
-      "issue": 1570
-    },
-    "finish:868d481a-d7f4-44c5-8cc8-0b08bec4cde5": {
-      "digest": "298d7a8f69472293c6924b47d47c9fdd788d34f507af6949a9b470f9f48fd4c2",
-      "issue": 1570
-    },
-    "finish:20d28530-8cf0-4172-8dd2-f691d303d690": {
-      "digest": "24ea88a572cf4015ae701f9db55d2123f53a4b66a6bed429e8af4656d0d36765",
-      "issue": 1570
-    },
-    "finish:daa12546-a825-4845-9dd3-d4bba3c20c4a": {
-      "digest": "72512bc0a92843e72898ae9fd8190bac2ba6e8408930c4a65ece5b5306cb4a02",
-      "issue": 1570
-    },
-    "finish:aee8e8bd-2e9b-4249-9886-2b0d84b3dfd4": {
-      "digest": "ba29bfb0c6e0e6d510bd9381fbfed674f64cc7971d262ac107b94dbcbd1875f7",
-      "issue": 1570
-    },
-    "finish:74763a28-1cd5-4dc6-9276-a5cc305a008d": {
-      "digest": "7782656f40965fa558aef83d67812fb265d9f083ee5c6367731c5a7b004713c5",
-      "issue": 1570
-    },
-    "finish:75154e5a-8e19-4b09-a7e1-fdc89febd034": {
-      "digest": "aae54a9138127a4a78b59ba8dd50113ffc55a38acbb8a4b86b9dd50aab85d9e7",
-      "issue": 1570
-    },
-    "finish:ac026f5d-edbf-43da-95e9-286b58e2db32": {
-      "digest": "71ac005db1f2ace48d79e50575bb784139b5e8d985d5576caa295e70a76de5d4",
-      "issue": 1570
-    },
-    "finish:3b47515e-ee04-44f5-94ec-dbb162a5bcdb": {
-      "digest": "c0a2919eb5a6ad1f0c8919a5e1a12b721dd81550e721c2f91b9aeb4398954820",
-      "issue": 1570
-    },
-    "finish:1d379f89-4b01-4a53-96ac-2ce291c359f8": {
-      "digest": "c5d5bba9bedf247c8a36019ccfc47a2b73f8e06ea66fa728fcb88331a5fe9927",
-      "issue": 1570
-    },
-    "finish:b8fc1851-5c1c-490b-9e7e-f2a5eae80928": {
-      "digest": "2b8b5e21cfc8b911b977a0e35763bd336056e413967f908be29b93a113c31ad5",
-      "issue": 1570
-    },
-    "finish:2336b3d4-e56c-411a-9965-922375459260": {
-      "digest": "c582a87c7af8e5062a3d003c608b80642f4a56d6c2388adcd183686859c8bfc1",
-      "issue": 1570
-    },
-    "finish:277bed0f-3c83-46a6-b659-8c1ba94b4fa4": {
-      "digest": "6cf84cd62a91d7155e1e06b17884d819282e1907948e5d2ffd507378995f98dd",
-      "issue": 1570
-    },
-    "finish:1c7e30c1-cb1f-4189-97b2-5220eca4c40f": {
-      "digest": "c2695940cdb11531aac32c2074fb484e6c3e4e786ab070a253e5fb99c2210762",
-      "issue": 1570
-    },
-    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:4:s6-label": {
-      "digest": "fe20ef7e6a4a7b0f50ebba3d825e5ac417d8516dd647beb89d85be3ad4235daa",
-      "issue": 1570
-    },
-    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:5:review-requested": {
-      "digest": "3196b8d3f7e813d34ac5b87043fd8cb0e45325ba114475868b8391dbc0b2096e",
-      "issue": 1570
-    },
-    "github:45738245271:1:tick:0:review-retry": {
-      "digest": "6879d7123506294131782269a5686c91f6a1a3aea8cc770567019c0388f97b9a",
-      "issue": 1570
-    },
-    "github:45738245271:1:completions:notice:03a6b6d5ebb286161a4d186abd4bef5c3ee17c6191bbc5eb5f98cef04ab015e4": {
-      "digest": "33287723ca3e3b2ef57169a8bd34b1d50a1696a749af2f11cd1c326e83bc270b",
-      "issue": 1570
-    },
-    "github:45738245271:1:completions:message:03a6b6d5ebb286161a4d186abd4bef5c3ee17c6191bbc5eb5f98cef04ab015e4": {
-      "digest": "1b50437ad69d8fa0bdefd16be211bd4fcb1c7124c8d41a7d364c0a40dd222427",
-      "issue": 1570
-    },
-    "github:45738245271:1:completions:message:c6d4ee4fe7af6f0e9ef90fc6b79ffdecb9c187c49cd4d3389506b17fe8ab930f": {
-      "digest": "6de136bebae30020cbde011ca0e45bb0ff41946dc5ae58758aeb4fa7ebe21e73",
-      "issue": 1570
-    },
-    "github:45738245271:1:completions:message:f7083bae3e90718d217f02ccbb68bb05be90c8a0283f6d620574ec99e13bfdc5": {
-      "digest": "5b8d0d90be91726ac84b249a421258f9ab1433645ab649932edffaab5c6d462f",
-      "issue": 1570
-    },
-    "github:45738245271:1:completions:message:977d7454cbbfa97183993d9cd59757130a7fe1967dc2e69fa53c3cfbe179727a": {
-      "digest": "f923a3058d118179bb348d991022484a509f884e8bc3420cd377b5cc54b9fce6",
-      "issue": 1570
-    },
-    "github:45738245271:1:completions:message:dc9df25e08cab5cc7a8d21701fcff7e99737f89abb90cf8b6e4fff13fb6ee023": {
-      "digest": "cba13d901aee88530f39ced279cacea7c374fc3f2349e16060cafc3fc07dc48a",
-      "issue": 1570
-    },
     "github:45738245271:1:completions:notice:4409a2d55efd26cbe77369d3c93a0e42d5875b9e9395d58f534d44fa2e912bdb": {
       "digest": "bb125261656c3819401d003b49187d0e02fe15f401713f5f456db4ab9737a443",
       "issue": 1574
     },
-    "github:45738245271:1:completions:message:4409a2d55efd26cbe77369d3c93a0e42d5875b9e9395d58f534d44fa2e912bdb": {
-      "digest": "c9a03359230c4054ded4edc221cb371d35ac3c395100b53d29bcb3aeeb4b1ae9",
-      "issue": 1570
-    },
-    "github:45738245271:1:completions:message:1a180644f0dd738dd7b43cb73ba19f80dc6b4b04772aa31e64e610a38e920b0d": {
-      "digest": "c3d9072d51c7d60da7807032bbf15375823a60005603ab3a1b0eeb7621d3e6d4",
-      "issue": 1570
-    },
-    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:10:review-presentation": {
-      "digest": "7180dd9caebe0283bf068c2b3a4a704267d914bef6abf0326a28c9ce9b5f5918",
-      "issue": 1570
-    },
-    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:10:return": {
-      "digest": "b8e31264cc8349e445cb6876a08fca140e8fe5c3684f90fcfba81fcfd345cd1a",
-      "issue": 1570
-    },
-    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:10:return-label": {
-      "digest": "a511c58dbf84423c78d5880f5831bd89270cb335bc90979cdc823a304fa91698",
-      "issue": 1570
-    },
-    "github:45738924086:1:completions:report:2958e25f0ab4ed80335e6e41231e8168de0430f9673c2c8d708df4aa2e7c22f4": {
-      "digest": "2fe7d720f96808d12c728edfb80f6b4b73025ef11ed457448509130abaa1c7cd",
-      "issue": 1570
-    },
     "github:45738924086:1:completions:message:babe77de9a7c6374fc55506d6b1878e1bef6b9f7b43979e6b18fc81dedcf05bf": {
       "digest": "ab974dc49eb0fb5345bc624c2734a91d5df8299fb905a0edb64dc8b5d250b034",
       "issue": 1574
-    },
-    "github:45738924086:1:completions:metadata:dce7714e-8553-42e2-996a-e61a8592b9ca:task-notice:1570::": {
-      "digest": "959d0f8a9a9d3b856124625677e577d17b931139119eb4a43030e69e5bfb2a5a",
-      "issue": 1570
     },
     "finish:00946e14-de7f-4c42-a8e2-b62481983443:finish:1:synchronized": {
       "digest": "d8d277de6df5d8cf18551950231939e006a592a7f6e42f90a153b2fb062182a2",
@@ -7811,161 +7324,9 @@
       "digest": "6d52ba03da94e801d97afafa471b5f4f27ac474a98a9573e20649ce1884021ab",
       "issue": 1574
     },
-    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:2:synchronized": {
-      "digest": "833cfa2c5da20cde4620b68d9b3e7e098b81374d2f3009fe11f1430200c9f27a",
-      "issue": 1570
-    },
-    "finish:4aa352b9-4150-4e49-bc62-37cad685287a": {
-      "digest": "76a2e5b0678d136f2091650a4f95e292eb237db3d23c239bdb63dbbb249c02b8",
-      "issue": 1570
-    },
-    "finish:54b58b3e-0b8f-4769-91ee-723a05aa14cb": {
-      "digest": "743c5971809982291f0c69ecef5570665ce128c35b572daea27cc7bf97f53814",
-      "issue": 1570
-    },
-    "finish:f6caf721-13b0-42a2-8f80-15e8a05cffe7": {
-      "digest": "eacfd95c096d3b634e18983b80592700d37a8fb6122ca7c70a5efb7d950c564d",
-      "issue": 1570
-    },
-    "finish:ddfd2c1a-cf25-4f24-b8a7-c3fd0fd08485": {
-      "digest": "1334cb4fe35581df0b5a483d84fda1749c888976b84c8483921e08d4338ca52b",
-      "issue": 1570
-    },
-    "finish:fcf20147-5e0d-4d72-9888-54f9b6348bd1": {
-      "digest": "97c365fff82b6f07cbb35974bcbf549462777f5dd839ab3b9a3499a79d4d4dc8",
-      "issue": 1570
-    },
-    "finish:3002936f-ffb1-438f-8583-b156da73b58e": {
-      "digest": "83835ec299dd6f64978075e67ae4f0aaf675c2a339873271148874991354d4b3",
-      "issue": 1570
-    },
-    "finish:6315f99a-c7ad-402b-aa7a-4d04c1dd5b3a": {
-      "digest": "2f5d8c9418b8d30e2802bad687e6a15418c64d21245d55736a9c90adc8b4c717",
-      "issue": 1570
-    },
-    "finish:a2c7fc99-cfd2-4dcc-9c48-ab3912d28c53": {
-      "digest": "7374705c6104be88f2ac0d3f3ae77877b94d1aa86cc490656c2b742d385edc5e",
-      "issue": 1570
-    },
-    "finish:855f99da-10d9-433a-8427-c055744baa52": {
-      "digest": "8e27b1c655477c00036622328a5b11c83279803daac4dca584124a2176f972a2",
-      "issue": 1570
-    },
-    "finish:2e091f06-b37c-4c12-b8cb-a07302967807": {
-      "digest": "58a4c15861fce4f1aa22e24dea5bd71c9c793af9f4474a9b40e3b866ed7651e9",
-      "issue": 1570
-    },
-    "finish:cb4a1702-e6f9-4e12-9fa7-a5e52352030e": {
-      "digest": "47586f2db05c561f9b2dbaff44a04671a9c2170dacfe5a7b1ae8c8ca47c67559",
-      "issue": 1570
-    },
-    "finish:d80a41c1-fe6e-4829-9022-c8b28a3e3a6d": {
-      "digest": "b33ae1e882dca0d5b1d88caa64fd6735dacde6a6731307778b9ad559dc1212db",
-      "issue": 1570
-    },
-    "finish:96e75dfa-bbae-459e-b089-824b5b11b647": {
-      "digest": "12704564243c925813c3fd7172131eaab209d3a4d6febb20d8f1a214f66f2599",
-      "issue": 1570
-    },
-    "finish:48f47e1f-45c0-4134-bcaf-3082ecd2a475": {
-      "digest": "87d5e717a0df3bcd3f0840bc95bb761411e71091cdbd54d868782efaea909d7d",
-      "issue": 1570
-    },
-    "finish:49816055-cebf-49ca-b760-a8a346245a62": {
-      "digest": "4d0e4c8a85db5a27d9396153c205abbf10a0438b17d3efa1b75767ad525d2044",
-      "issue": 1570
-    },
-    "finish:688a63fe-e421-40d6-a4e2-78392b82fbb6": {
-      "digest": "236e255114a5c32684fa845cb61b9b757acd114c9e8fc995eea32bf972e902ba",
-      "issue": 1570
-    },
-    "finish:563f01f1-0c2d-4c94-89f3-304517748dd5": {
-      "digest": "d62d2abe33dd1d351f2c3231a6a5ca560eb8a6cc9f66bb9b6fda36ada176f5fe",
-      "issue": 1570
-    },
-    "finish:3263e189-7dc8-4de6-8628-056a7db20a27": {
-      "digest": "ac61d0d34d2c0e9ed1593f669065c005836d05df972c6ecf835e73fe269a9fd5",
-      "issue": 1570
-    },
-    "finish:f583e2f5-fb4a-49bf-9c53-d98f73d9cd9f": {
-      "digest": "e2fb5936f5d7b5baa2357149d323ec6c3b38aece139b7bfa461ce5fab1b6ffc5",
-      "issue": 1570
-    },
-    "finish:ea10217e-ce7b-4a2c-b6b1-3cb38b23f7a0": {
-      "digest": "0bbd34d49f033d98a48af2cc702478e4374e3b22c4dd33f993111abc2d76f694",
-      "issue": 1570
-    },
-    "finish:827159a7-5ae4-4272-94d8-b16bc363b515": {
-      "digest": "74d43e55120334775e75c81cb863567a7bc033349d78f10da1e0eddca9483675",
-      "issue": 1570
-    },
-    "finish:35db3487-3fa4-4534-a275-d0ae18c86b85": {
-      "digest": "5e2a4c984cba61440d3d9c029fb1f2aba125a9b28d28375900a3170b7ee53a5e",
-      "issue": 1570
-    },
-    "finish:2a750a6e-a77d-4570-928d-ce76d1460ac1": {
-      "digest": "b10cf59722d7e2a6baa55c08e78958ea92498a2b229d5c6ea6511588f742b536",
-      "issue": 1570
-    },
-    "finish:3d4e70dc-7830-4527-b89a-a511ee23fb4e": {
-      "digest": "34943b04e92a521bdcae71b92406c2e649f9c227abffef2b3a20ba0302f39ed3",
-      "issue": 1570
-    },
-    "finish:49073234-627a-46ea-a5b6-51ea9bc81079": {
-      "digest": "2580ddddb134fd488064a587f80970c7eaa307eaa601917d5e0020cceb75fa92",
-      "issue": 1570
-    },
-    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:3:s6-label": {
-      "digest": "b827b01bd2c12f98cc0f6c607dcde574cb36136e2ab55e103993fb0a43dbdec6",
-      "issue": 1570
-    },
-    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:4:review-requested": {
-      "digest": "3da481c05045e3cc1627d47add7c82ba8b0444acc366521f8ea28c8cb5a4b4d5",
-      "issue": 1570
-    },
-    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:4:automation-pending": {
-      "digest": "764b1c01ebad8e4b34afb8a13e1e86ab0530f21e99ee0f5e2d44f80095dff16e",
-      "issue": 1570
-    },
-    "github:45742378227:1:tick:0:review-retry": {
-      "digest": "a83cb33e5cd26e1f86a6d88550e9633df10b632839a17b433010ce66ea072a7b",
-      "issue": 1570
-    },
     "github:45742378227:1:completions:notice:477c4d10e52db886bb680166de2b3e4ad65db2bd743e38406c91f2057b1d70e9": {
       "digest": "21089f92d392785304e66871df87423129c12f67cb0a7fc3bd95c2f6e2b68d25",
       "issue": 1574
-    },
-    "github:45742378227:1:completions:message:477c4d10e52db886bb680166de2b3e4ad65db2bd743e38406c91f2057b1d70e9": {
-      "digest": "b28059764e7443ead25d2dd3bebbca771cbb34387f0202055d600c4a31506885",
-      "issue": 1570
-    },
-    "github:45742378227:1:completions:message:730e434b9c3fb8ba9e0103c12a74cf04dcf8d65de5056f7560ce6d2cb8ee1e90": {
-      "digest": "b3ff3e4d87274fc13f5a15e3fc78dd0682d9ade3a6a84a8086110867696f4b2a",
-      "issue": 1570
-    },
-    "github:45742378227:1:completions:message:3519ee42f66d72f2b2b8fec7a9db9bb70ef5b904a8696b446e649929bc3b603e": {
-      "digest": "d5a6da7047e66b4f9c22ae6187bc89c2bae082bcf7fdc04ca0d198dc1a8cd4ad",
-      "issue": 1570
-    },
-    "github:45742378227:1:completions:message:35821fa33bad4273fa8a1284b35202a6a3500c8039e51563928cace66bd01dde": {
-      "digest": "79cbac202e1d5dae086c00e0088c051c6ebe5496c8c5af9d0d537e69501e45bd",
-      "issue": 1570
-    },
-    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:5:heartbeat": {
-      "digest": "e812a77befda7f0e356d980fa85fad884c4f50fa08d1e8d4817cebfb9ed69628",
-      "issue": 1570
-    },
-    "github:45742379282:1:tick:0:heartbeat": {
-      "digest": "86d570c1af352cc65cbce5740aacce911f66eb1a8ea3110f45b926ea6dd300c4",
-      "issue": 1570
-    },
-    "github:45742705354:1:tick:0:review-presentation": {
-      "digest": "52bcec3ebab675c88c5533c1d7e37c3609df2c8b42dff865f1bdc7bd4466ba05",
-      "issue": 1570
-    },
-    "github:45742705354:1:tick:0:review-complete": {
-      "digest": "6101ce2730226f2cc5f04f787a395a6fe6301a0e9dc31823c46c3aa3257dcfe0",
-      "issue": 1570
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7996,35 +7357,6 @@
         "delivered": true
       }
     },
-    "finish:5f04740e-7a62-46c1-9777-29da8df709a6": {
-      "digest": "d9a21481ae91630ec58ae2a388216c60cb2119b764c906714553e1aaf536d987",
-      "issue": 1570,
-      "message": {
-        "kind": "queued",
-        "issue": 1570,
-        "at": 1795652218622,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ace6385ba7118b4921a5fa0c6f1c05b6e87975e2",
-        "delivered": true
-      }
-    },
-    "github:45730182785:1:tick:2:admit": {
-      "digest": "e14ec723e79ffcd8e2fe10efda38faa1682e25ea3d1777260f6956ebdfe0b418",
-      "issue": 1570,
-      "message": {
-        "kind": "admitted",
-        "issue": 1570,
-        "at": 1795653560668,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ace6385ba7118b4921a5fa0c6f1c05b6e87975e2",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:43045779-f102-4271-afeb-02440d7c287f": {
       "digest": "aec6433ddf346c0416837e0caed54ad46bae3d984dcb68e9016a7a09d7e8d39f",
       "issue": 1574,
@@ -8036,41 +7368,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "a044b85569c8b33eaa43d90ecc0f654027c34569",
-        "delivered": true
-      }
-    },
-    "finish:5f04740e-7a62-46c1-9777-29da8df709a6:finish:2:return:return:1570": {
-      "digest": "354bbe569875eedc35361e5ac8437f93c45a9d9c02a384d461c3d4d19f1537a2",
-      "issue": 1570,
-      "message": {
-        "kind": "return",
-        "issue": 1570,
-        "at": 1795655195633,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795655195633,
-          "entry": 1,
-          "detail": "Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/hp-test-facade.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed",
-          "eventId": "finish:5f04740e-7a62-46c1-9777-29da8df709a6:finish:2:return:return:1570"
-        },
-        "delivered": true
-      }
-    },
-    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56": {
-      "digest": "b1ec677debdd4dc01dcd284842a99aa8db86993fad246b7b1bb3a23259777929",
-      "issue": 1570,
-      "message": {
-        "kind": "queued",
-        "issue": 1570,
-        "at": 1795655238613,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
         "delivered": true
       }
     },
@@ -8110,21 +7407,6 @@
         "delivered": true
       }
     },
-    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:2:admit": {
-      "digest": "2dc42d9be91103ad467184f4e25160eeca8af840b4a88cab0d66b9cbac3aaf52",
-      "issue": 1570,
-      "message": {
-        "kind": "admitted",
-        "issue": 1570,
-        "at": 1795656164144,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:00946e14-de7f-4c42-a8e2-b62481983443": {
       "digest": "0918b2f257b53593493cbec636bda7fb94cd975ffb32665addf161d40d4ee6ea",
       "issue": 1574,
@@ -8136,36 +7418,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "a044b85569c8b33eaa43d90ecc0f654027c34569",
-        "delivered": true
-      }
-    },
-    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:4:s6-complete": {
-      "digest": "a2d8647cba5f586802e099963ef674b4506ea1717ac1ded43399c0ab9974c9f7",
-      "issue": 1570,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1570,
-        "at": 1795657716509,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
-        "phase": "review",
-        "evidence": {
-          "id": "20261126T012256981-10fb8c4d",
-          "name": "Тесты для задачи #1570 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T012256981-10fb8c4d/report.json",
-          "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
-          "status": "passed",
-          "finishedAt": "2026-11-26T01:48:35.250Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Сохранены предметные проверки при замене старых SVG-слоёв на готовый WebGL-кадр; скрытые границы означают плоский View. Реальные дефекты: #1571 подсветка комнаты, #1572 недоступное устройство, #1573 Zigbee и оставшаяся нативная принадлежность маркера после выхода. В этой ветке также восстановлен видимый пульс лестницы (только в момент его отображения) и используется один уже разрешённый цвет бумаги, без повторного DOM-чтения при прогретом переключении. Файлы эталонов неизменны.\n\nРучное сравнение показало потерю контраста в системном forced-colors. WebGL теперь использует фактические системные Canvas/CanvasText для пола и стен, рисует контрастные рёбра, убирает декоративную тень и не меняет обычные темы или нейтральное сохранённое превью. Канвас и oracle контраста проверены адресно; кадр не принят автоматически.\n\n### Дополнительный разбор stable-аудита и S6\n\nВ исходном stable-профиле были выполнены все 623 запланированных шага. Все 50 первоначально красных browser smoke из него повторно прошли на совмещённом кандидате. Не сбрасывали эталоны и не отключали проверок. Дополнительно закрыты три отказа первого S6: фасад использует публичный выбранный этаж вместо новых приватных полей; визуальный тест доказывает рекомендуемый Flat при явно отключённых стенах и отдельно требует настоящий 3D в остальных сценариях; регэксп учитывает форматирование, но по-прежнему требует await. Адресно 81/81.\n\nВ hover-сцене было также нестабильное переключение цвета. Атрибут наведения меняется вне Lit, и WebGL раньше мог не снять цвет с нового CSS-состояния; скрытая HTML-анимация могла дать промежуточный тон. Обновляется только затронутая пара проекций, без обновления карточки и изменения камеры; оставляем обычные CSS-анимации для Flat. Локальный smoke проверяет синий и возврат цвета реальными событиями мыши; два независимых PNG после исправления совпали. Контракт переносимого серверного 3D-превью проверен и исправляется отдельно в #1574.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
@@ -8202,83 +7454,6 @@
           "detail": "Браузер: floor preparation deadline: failed; Браузер: screen camera 1165: failed",
           "eventId": "finish:00946e14-de7f-4c42-a8e2-b62481983443:finish:2:return:return:1574"
         },
-        "delivered": true
-      }
-    },
-    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8": {
-      "digest": "db332026b9d0e65ecc236592e9d2c1ce6caaa6f532bdfbf363092b20f7062b46",
-      "issue": 1570,
-      "message": {
-        "kind": "queued",
-        "issue": 1570,
-        "at": 1795658410889,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-        "evidence": {
-          "id": "20261126T012256981-10fb8c4d",
-          "name": "Тесты для задачи #1570 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T012256981-10fb8c4d/report.json",
-          "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
-          "status": "passed",
-          "finishedAt": "2026-11-26T01:48:35.250Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:1:admit": {
-      "digest": "336e00549e83720e13d7871b378b9cdc07f98c128541676e00b474149e9ab45c",
-      "issue": 1570,
-      "message": {
-        "kind": "admitted",
-        "issue": 1570,
-        "at": 1795658414964,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261126T012256981-10fb8c4d",
-          "name": "Тесты для задачи #1570 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T012256981-10fb8c4d/report.json",
-          "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
-          "status": "passed",
-          "finishedAt": "2026-11-26T01:48:35.250Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:3:s6-complete": {
-      "digest": "30805ba58734de5b3311ddfebf8286c697eebe8a10e7aea47f7d62d30063e2e2",
-      "issue": 1570,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1570,
-        "at": 1795659954297,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-        "phase": "review",
-        "evidence": {
-          "id": "20261126T020028076-dd9be048",
-          "name": "Тесты для задачи #1570 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T020028076-dd9be048/report.json",
-          "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
-          "status": "passed",
-          "finishedAt": "2026-11-26T02:25:52.973Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "Сохранены предметные проверки при замене старых SVG-слоёв на готовый WebGL-кадр; скрытые границы означают плоский View. Реальные дефекты: #1571 подсветка комнаты, #1572 недоступное устройство, #1573 Zigbee и оставшаяся нативная принадлежность маркера после выхода. В этой ветке также восстановлен видимый пульс лестницы (только в момент его отображения) и используется один уже разрешённый цвет бумаги, без повторного DOM-чтения при прогретом переключении. Файлы эталонов неизменны.\n\nРучное сравнение показало потерю контраста в системном forced-colors. WebGL теперь использует фактические системные Canvas/CanvasText для пола и стен, рисует контрастные рёбра, убирает декоративную тень и не меняет обычные темы или нейтральное сохранённое превью. Канвас и oracle контраста проверены адресно; кадр не принят автоматически.\n\n### Дополнительный разбор stable-аудита и S6\n\nВ исходном stable-профиле были выполнены все 623 запланированных шага. Все 50 первоначально красных browser smoke из него повторно прошли на совмещённом кандидате. Не сбрасывали эталоны и не отключали проверок. Дополнительно закрыты три отказа первого S6: фасад использует публичный выбранный этаж вместо новых приватных полей; визуальный тест доказывает рекомендуемый Flat при явно отключённых стенах и отдельно требует настоящий 3D в остальных сценариях; регэксп учитывает форматирование, но по-прежнему требует await. Адресно 81/81.\n\nВ hover-сцене было также нестабильное переключение цвета. Атрибут наведения меняется вне Lit, и WebGL раньше мог не снять цвет с нового CSS-состояния; скрытая HTML-анимация могла дать промежуточный тон. Обновляется только затронутая пара проекций, без обновления карточки и изменения камеры; оставляем обычные CSS-анимации для Flat. Локальный smoke проверяет синий и возврат цвета реальными событиями мыши; два независимых PNG после исправления совпали. Контракт переносимого серверного 3D-превью проверен и исправляется отдельно в #1574.\n\n### Ответ на замечание ревью: угол значка при наведении\n\nБлокер: в пути обновления только маркеров смешивались градусы атрибута и радианы камеры. Оба вызывают один readPlan3dMarkerFaces с градусами сцены, преобразование ровно в одном месте. Адресный native smoke с авторским углом 90°: на прежней сборке красная только проверка сохранения угла, на исправленной все проверки зелёные. Тест сохраняет прежнюю конфигурацию обычного Flat-контроля.\n\nДополнительно: в golden засчитываются уникальные id мебели с реальной геометрией, а не число мешей. Диалог батареи проверен без подстановки tap_action: сохранённое значение и фактическая реакция на клик остались info. Прицельная проверка мебели прошла подготовку сцены; 64/64 unit. Эталоны не обновлялись.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
