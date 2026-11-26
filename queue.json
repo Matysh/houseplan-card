@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26880,
+  "revision": 26881,
   "nextTicket": 738,
   "nextFence": 738,
   "tasks": {
@@ -6780,7 +6780,7 @@
       "ownerDecision": null,
       "ticket": 737,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795695978890,
       "reviewEntry": 2,
       "patchId": "53a87586eb5f2d467958c302b6fbc3dc41e2d194",
@@ -6806,19 +6806,15 @@
         "src/houseplan-editor-runtime.ts"
       ],
       "s6": {
-        "id": "20261126T113552929-81d340ae",
+        "id": "20261126T122640922-ce248356",
         "name": "Тесты для задачи #1582 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T113552929-81d340ae/report.json",
-        "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T122640922-ce248356/report.json",
+        "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
         "status": "passed",
-        "finishedAt": "2026-11-26T11:55:50.605Z",
+        "finishedAt": "2026-11-26T12:38:17.777Z",
         "failures": []
       },
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1582:1:29f372118b06d0baba8769d8e246d9e9f556ad77:71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
-        "at": 1795694369391
-      },
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -7554,9 +7550,9 @@
     "fence": 737,
     "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
     "expectedBase": "9a0691f613399b8415f7ee528a932d0338deab50",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795695983505,
-    "expiresAt": 1795696941936,
+    "expiresAt": 1795700299009,
     "patchId": "53a87586eb5f2d467958c302b6fbc3dc41e2d194"
   },
   "events": {
@@ -7958,6 +7954,34 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:885d5f43-446d-4d4b-ac5b-5b4bd1df30ad:finish:3:s6-complete": {
+      "digest": "5c32825c42c8e5a866756d27343eb6abf72abd75d864315bca35d8cc722c7420",
+      "issue": 1582,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1582,
+        "at": 1795696699009,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T122640922-ce248356",
+          "name": "Тесты для задачи #1582 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T122640922-ce248356/report.json",
+          "materialSha": "3b305aeebc34c0618109d27c692f9a4ae3415cba",
+          "status": "passed",
+          "finishedAt": "2026-11-26T12:38:17.777Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "### Исправления по предыдущему ревью\n\n- **#1580 ошибочно попал в выпущенную бету →** вернул запись в Unreleased / «Не выпущено» в обоих changelog. При синхронизации с актуальным dev то же произошло с #1581 и #1583; их записи тоже оставлены в Unreleased / «Не выпущено», без дубликатов.\n- **История релиза →** локальная проверка подтвердила побайтное совпадение истории начиная с раздела v2.0.0-beta.1 с опубликованным тегом, а также совпадение девяти PNG, индекса эталонов и release notes. Версия беты перенесена, изменения #1580 в исходниках dev сохранены. Опубликованные тег и файлы релиза не менялись.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
