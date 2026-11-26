@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1490,
+  "revision": 1491,
   "active": "v2.0.0-beta.1-20261126",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -298199,7 +298199,14 @@
           "status": "pending"
         }
       ],
-      "diagnostics": []
+      "diagnostics": [],
+      "shipReview": {
+        "sha": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1",
+        "requestId": "ship-review:58c9578d0322cc2a059e4deccb76155d17af507ef2fc89a95804ca8ec4350e7f",
+        "selectionDigest": "1271c3f3bcce842592e0f2798b65f5900640e72dad56a90c7231c0204ce4a54a",
+        "status": "pending",
+        "inventoryComplete": true
+      }
     }
   },
   "published": {
@@ -304600,7 +304607,8 @@
     "beta-200-20261126-freeze": "3c03a939a20e82ab3d4d646849513ec9c283591bd565cfd5f75d0bc8f1bb9edc",
     "ship-review:prepare:98e49590-f841-4d3c-9ef3-ab1562488488": "d496045328e64d5541d638c958ecef8a4c9ff36a14514c241af810bf8e7ef0c8",
     "ship-review:result:ff8a810c-a2dd-4e8c-a4c0-af3868d43c84": "2969b09b9dabb8bdfc51382a023f418b3e2345096a0307fb98733cf3ec691255",
-    "beta-200-20261126-approved-goldens": "b96999b7a96f3a2135b13be241c3e5a78ae794403843c958583a6a312bb0f969"
+    "beta-200-20261126-approved-goldens": "b96999b7a96f3a2135b13be241c3e5a78ae794403843c958583a6a312bb0f969",
+    "ship-review:prepare:68df2596-9c59-497c-b7fd-b5b1985c170d": "639f134649dcc5e382eb07fce4a386c49fb467a591c6354685f1d0fdd80266d9"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -326420,6 +326428,76 @@
         "completedAt": "2026-11-26T11:01:14Z",
         "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45806191468"
       }
+    },
+    "ship-review:58c9578d0322cc2a059e4deccb76155d17af507ef2fc89a95804ca8ec4350e7f": {
+      "packet": {
+        "schema": 1,
+        "candidateId": "v2.0.0-beta.1-20261126",
+        "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
+        "head": "4e522bebc352d1bde6c030e83b94fdab8d9b00e1",
+        "version": "v2.0.0-beta.1",
+        "selectionDigest": "1271c3f3bcce842592e0f2798b65f5900640e72dad56a90c7231c0204ce4a54a",
+        "requestId": "ship-review:58c9578d0322cc2a059e4deccb76155d17af507ef2fc89a95804ca8ec4350e7f",
+        "tasks": [
+          {
+            "issue": 1564,
+            "title": "[mutation-gate] отказ прогона по расписанию: 2026-11-25",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1564",
+            "body": "<!-- process-next-background:mutations:45583145938 -->\n<!-- process-next-background-cause:v1:00292a7b6db251afb0087731313366044736cc8aac3d0817bb220a20cc47a6bf -->\n\n## Фоновая проверка тестов — найдена проблема\n\n2026-11-25, часть 7/7, запуск 45583145938. Материал: `7e85eee9281283120d82f6fb9b9c12017136401d`.\n\nФоновая часть 7/7 мутационного набора по расписанию не прошёл: 2026-11-25, `dev` @ `7e85eee92812`.\nПрогон: https://github.com/Matysh/houseplan-card/actions/runs/45583145938\n\n| шард | результат |\n|---|---|\n| 7/7 | **красный** |\n\n## Свидетели без доказательства (1)\n\nЗаявленный тест не дал вердикт: такой исход не записывается в ledger и не переиспользуется.\n\n- шард 7/7 — чистая подготовка: python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity\n\nПричина отказа или незавершённого запуска: Фоновые мутации: часть 7/7: failed\n\n**Статусы продуктовых задач и выпусков не меняются.** Это отдельная диагностика чувствительности тестов; требуется разобрать указанный отказ. Остальные части выполняются в следующие ночи.",
+            "commits": [
+              "547cea142f3a4fbec5781ea346534ed763e85026",
+              "fa12cdeaa569df911954b4f3621515d645cba54d"
+            ],
+            "fingerprint": "5b27aeb96c0dac721031d914244d5be5ad227486eabb084f06fa628ddab0239c",
+            "track": "ship"
+          },
+          {
+            "issue": 1565,
+            "title": "Скрывать по таймеру уведомление об ограничении размера значков",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1565",
+            "body": "В режиме просмотра сообщение «Размер значков ограничен, чтобы сохранить привязки» остаётся видимым, пока действует ограничение размера. Оно появилось в рамках #1517.\n\n## Ожидаемое поведение\n\n- Показать уведомление при обнаружении ограничения и автоматически скрыть его по таймеру. Для длительности использовать обычное время показа уведомлений Houseplan.\n- При обновлении страницы показать уведомление снова, если ограничение по-прежнему действует.\n- Обычная перерисовка плана при том же ограничении не должна заново показывать скрытое уведомление или продлевать его показ.\n\nТаймер управляет только видимостью уведомления. Ограничение размеров и привязки устройств продолжают рассчитываться по правилам #1517.\n\n## Проверка\n\nОткрыть план с ограничением, дождаться исчезновения сообщения, затем обновить страницу. Сообщение должно появиться и снова автоматически скрыться. Если ограничение снято, при обновлении страницы сообщения быть не должно.",
+            "commits": [
+              "4aebd7d64bf688073a224e985402863948f667b6"
+            ],
+            "fingerprint": "9878f0a1d6fffde5c0d44287dabd67d859cfaba2dcba687d3e006b8676ae11af",
+            "track": "ship"
+          },
+          {
+            "issue": 1576,
+            "title": "WebGL 3D: убрать лишние диагонали под ступеньками лестницы",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1576",
+            "body": "### Проблема\nВ кадре `panel-stairs-isometric-dark` из галереи stable-аудита на dev `751db20d` у большой прямой лестницы видны лишние диагональные линии под ступеньками. На прежнем эталоне этих линий нет.\n\n### Диагностика\nНа той же синтетической сцене временно отключили только слой обводки прямой лестницы: диагонали исчезли, геометрия и заливка ступеней и боковин остались. Обводка извлекается из треугольной сетки лестницы (`updateStairs` → `faceInk`); у лестницы с углом 0° в ней обнаружено 18 наклонных сегментов, которых нет в физических рёбрах прямой лестницы.\n\n### Ожидаемый результат и проверка\n- Убрать технические диагонали на боковинах под ступеньками. Сохранить видимые рёбра самих ступеней и внешний контур лестницы.\n- Проверить `panel-stairs-isometric-dark` и ту же прямую лестницу при смене ракурса и приближения: диагонали не появляются, ступени читаются. Добавить проверку, что внутренние рёбра разбиения плоской боковины не попадают в обводку.\n- Убедиться, что обводка винтовой лестницы и плоский вид не пострадали. Приложить кадр «до/после»; новый эталон применять только после утверждения.",
+            "commits": [
+              "d1419a1c50a6c05de40065f2af66e72728ecf570"
+            ],
+            "fingerprint": "1ccdc7961912e63d1937d92958b755687a382fb3f705d6b39921a6fe5349b9ed",
+            "track": "ship"
+          }
+        ],
+        "pending": [],
+        "reused": [
+          {
+            "issue": 1564,
+            "fingerprint": "5b27aeb96c0dac721031d914244d5be5ad227486eabb084f06fa628ddab0239c",
+            "requestId": "ship-review:5f5e7f01ce4292536ca7f9507e7a4f60c7b4122a13a9c3feb3d28910a90444f3",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45806191468"
+          },
+          {
+            "issue": 1565,
+            "fingerprint": "9878f0a1d6fffde5c0d44287dabd67d859cfaba2dcba687d3e006b8676ae11af",
+            "requestId": "ship-review:5f5e7f01ce4292536ca7f9507e7a4f60c7b4122a13a9c3feb3d28910a90444f3",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45806191468"
+          },
+          {
+            "issue": 1576,
+            "fingerprint": "1ccdc7961912e63d1937d92958b755687a382fb3f705d6b39921a6fe5349b9ed",
+            "requestId": "ship-review:5f5e7f01ce4292536ca7f9507e7a4f60c7b4122a13a9c3feb3d28910a90444f3",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45806191468"
+          }
+        ],
+        "unclassified": []
+      },
+      "result": null
     }
   }
 }
