@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25986,
+  "revision": 25987,
   "nextTicket": 721,
   "nextFence": 720,
   "tasks": {
@@ -6549,9 +6549,15 @@
       "status": "S6-in-progress",
       "readyAt": 1795670373994,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1795670382644,
-      "automationDetail": "Commit tracked task changes before finish"
+      "patchId": "0743f36279d5e9df30c476e461641bc6d439ae99",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v2.0.0/1576.json",
+        "src/plan-3d-world.ts",
+        "src/stairs-volume.ts",
+        "test/stairs.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7252,10 +7258,11 @@
     "token": "719:finish:8d82e85f-b42b-44a9-9c43-d5a0452a5c91:finish:1:admit",
     "fence": 719,
     "materialSha": "d1419a1c50a6c05de40065f2af66e72728ecf570",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "751db20d7e3ab8b1b047536f34e4946b24aa5b8c",
+    "phase": "testing",
     "admittedAt": 1795670378008,
-    "expiresAt": 1795670916946
+    "expiresAt": 1795670941884,
+    "patchId": "0743f36279d5e9df30c476e461641bc6d439ae99"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7308,6 +7315,10 @@
     },
     "finish:e158a719-755a-4fe2-ab34-062043344686": {
       "digest": "c17315c74a499c13af0ea9af7aacb9dbe554988e0b1ed42c7b4a93a6c0ec6515",
+      "issue": 1576
+    },
+    "finish:8d82e85f-b42b-44a9-9c43-d5a0452a5c91:finish:6:synchronized": {
+      "digest": "f8b78dab7695c4e30fbcb98d7aa1c9f1ff158697da3befc71557f38cd617cec4",
       "issue": 1576
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
