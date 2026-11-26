@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27095,
+  "revision": 27096,
   "nextTicket": 741,
   "nextFence": 741,
   "tasks": {
@@ -6843,7 +6843,16 @@
       "changedFiles": [
         "docs/release-ledger/v1.86.1/1001.json",
         "docs/release-ledger/v2.0.0/1001.json"
-      ]
+      ],
+      "s6": {
+        "id": "20261126T140600259-2f6ab2e5",
+        "name": "Тесты для задачи #1584 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-1001-08LPBl/.git/process-next/runs/20261126T140600259-2f6ab2e5/report.json",
+        "materialSha": "f909f3f291ce762864187623d77cb0f8bfaa42f4",
+        "status": "passed",
+        "finishedAt": "2026-11-26T14:06:00.367Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -7543,9 +7552,9 @@
     "fence": 740,
     "materialSha": "f909f3f291ce762864187623d77cb0f8bfaa42f4",
     "expectedBase": "1af123618b77fe71e860941605dedd41b279069d",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795701948269,
-    "expiresAt": 1795702255025,
+    "expiresAt": 1795705561142,
     "patchId": "20d1359e65c2830eba64694608ba6d7db4f37346"
   },
   "events": {
@@ -7571,6 +7580,10 @@
     },
     "finish:d6dc4d93-3ade-4bfe-815e-8bf8e2dc7bf2:finish:2:synchronized": {
       "digest": "1f164fc677ded40e97c2b5742a833961ca4891b5f5bbb6cb801adb6dfedb165d",
+      "issue": 1584
+    },
+    "finish:d6dc4d93-3ade-4bfe-815e-8bf8e2dc7bf2:finish:3:s6-complete": {
+      "digest": "0acf7a6844458f4a0d9ec9a1decbb990136f29b153132ce75ae84082bc71e60d",
       "issue": 1584
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
