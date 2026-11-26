@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26764,
+  "revision": 26765,
   "nextTicket": 737,
   "nextFence": 736,
   "tasks": {
@@ -6798,7 +6798,10 @@
         "entry": 1,
         "detail": "Backend: tests_backend/test_plan_graph_support.py: failed",
         "eventId": "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:3:return:return:1581"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1795694636291,
+      "automationDetail": "Commit tracked task changes before finish"
     },
     "1582": {
       "issue": 1582,
@@ -7754,6 +7757,10 @@
     },
     "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36:finish:3:return": {
       "digest": "9a7d459af23e069d3b0dd0d1582870bde54e79267e4c42ef13f65e9ac7e7f0b4",
+      "issue": 1581
+    },
+    "finish:b3fd8680-e7f3-4230-9f13-3b03b96d21ac:finish:2:automation-pending": {
+      "digest": "21211fc522795bf82d6e2083bde5b8302f70d6d7837e75eae46b69b2c17860e3",
       "issue": 1581
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
