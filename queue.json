@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25504,
-  "nextTicket": 711,
+  "revision": 25505,
+  "nextTicket": 712,
   "nextFence": 711,
   "tasks": {
     "1024": {
@@ -6463,6 +6463,20 @@
         "requestId": "review:1572:2:6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0:cb77645a5a916d1d38cfed2f35cbe67a382a1e7d",
         "at": 1795651642920
       }
+    },
+    "1573": {
+      "issue": 1573,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1573-zigbee-native-marker-layers",
+      "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 711,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795651728886,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7126,7 +7140,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1573
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7413,6 +7429,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:69ff8260-cfbb-483e-8344-ddcd60d85e86": {
+      "digest": "15f64f270682379d060ad06d6c43a6f58f983b6081f3358d97fde2d6c9116754",
+      "issue": 1573,
+      "message": {
+        "kind": "queued",
+        "issue": 1573,
+        "at": 1795651728886,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "af48a3bb57b013879d80c70d7fd1c66d12b177bb"
       }
     }
   },
