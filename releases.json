@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1559,
+  "revision": 1560,
   "active": "v2.0.0-beta.2-20261126",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -306642,7 +306642,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v2.0.0-beta.2",
@@ -314326,7 +314326,8 @@
           "en": "## v2.0.0-beta.2 — 2026-11-26\n\n- Home Assistant automations can show and clear Attention and Alarm signals for devices or entities placed on the plan. An open plan restores active signals after reconnecting or restarting HA (#1001).\n- In WebGL 3D, sunlight from windows stays on the floor and has soft edges. Lamps and LED strips continue to light walls (#1580).\n- Restore the dialog focus handoff check in mutation testing (#1581). Check the merge result when automatically returning an exact published tag to dev (#1583)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v2.0.0-beta.2"
     }
   },
   "published": {
@@ -320803,7 +320804,8 @@
     "beta-200-2-metrics-decision-23a0d4975dc9b3fc93e71ac899eec446546860ee": "85f9c80f7cd7131d0b4e4361fe92f387d8db22b722a63e00d5a9eda1ec6bf40c",
     "beta-200-2-20261126-publication:runner-report": "539be404cda9ae72dbee9f4041fef98f3240e5387f6a3011559fc14aacd3960c",
     "beta-200-2-20261126-publication:metrics": "5b90689f8b157ed6ecec6a478afc81609a5f7115ed3c362d57e69852d340ec93",
-    "beta-200-2-20261126-publication:prepared:c0f549b6-b31c-4fc4-988e-f05d13359603": "8339822a34db2bc1c39afe9ee350a65a9da86f8a6809291832672330e99089e1"
+    "beta-200-2-20261126-publication:prepared:c0f549b6-b31c-4fc4-988e-f05d13359603": "8339822a34db2bc1c39afe9ee350a65a9da86f8a6809291832672330e99089e1",
+    "beta-200-2-20261126-publication:started:1559": "adb2cb8f85c49c941ef97dd9d82f6cd9957c45b76e7da140c81561302d7319e1"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
