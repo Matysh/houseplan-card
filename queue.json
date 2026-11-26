@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25832,
+  "revision": 25833,
   "nextTicket": 718,
   "nextFence": 718,
   "tasks": {
@@ -6453,7 +6453,10 @@
         "materialSha": "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
         "expectedBase": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
         "patchId": "8eeebdfe71244627ea83d86cd741cc6f05ef56ee"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1795659974401,
+      "automationDetail": "fetch failed"
     },
     "1571": {
       "issue": 1571,
@@ -7814,6 +7817,10 @@
     },
     "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:4:review-requested": {
       "digest": "3da481c05045e3cc1627d47add7c82ba8b0444acc366521f8ea28c8cb5a4b4d5",
+      "issue": 1570
+    },
+    "finish:7171a353-e34a-44f2-9da7-49b505a6f0b8:finish:4:automation-pending": {
+      "digest": "764b1c01ebad8e4b34afb8a13e1e86ab0530f21e99ee0f5e2d44f80095dff16e",
       "issue": 1570
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
