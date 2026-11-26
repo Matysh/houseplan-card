@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1558,
+  "revision": 1559,
   "active": "v2.0.0-beta.2-20261126",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -306645,7 +306645,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v2.0.0-beta.2",
         "candidate": "23a0d4975dc9b3fc93e71ac899eec446546860ee",
         "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
         "issues": [
@@ -314118,6 +314118,214 @@
         "source": "chat",
         "sourceRef": "Houseplan release request and size confirmation, 2026-11-26 Europe/Moscow, v2.0.0-beta.2",
         "decisionText": "Всё ок, принимаю. Я думал, что рост от предыдущей беты. От 1.86.1 это ок."
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v2.0.0-beta.2",
+          "candidate": "23a0d4975dc9b3fc93e71ac899eec446546860ee",
+          "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
+          "issues": [
+            {
+              "number": 1001,
+              "commits": [
+                "1af123618b77fe71e860941605dedd41b279069d",
+                "27a5b77e61749989c85cf6f5d7780e333f62b52d"
+              ]
+            },
+            {
+              "number": 1514,
+              "commits": [
+                "34d47ac990c27213aee5428a6f145641d4159e60",
+                "781dc2745dae59b72819e9808cebdcd64b21a290",
+                "7efb1a8312277c04f1d9087f8d0604870189df74",
+                "85b7a0f4eb33c2386069c93fe4fce5b24fe28b62",
+                "863b706d1a60db865e8ac55538b247576dcf586e",
+                "9cd21207a8bafc58addd7c2766ea139416b7c4ac",
+                "b0cff1b5198c3a907325a0945e1c2f82b987903f"
+              ]
+            },
+            {
+              "number": 1563,
+              "commits": [
+                "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
+                "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
+                "e45be50fb6c472591b17fba25dec4b75fb604d27"
+              ]
+            },
+            {
+              "number": 1564,
+              "commits": [
+                "547cea142f3a4fbec5781ea346534ed763e85026",
+                "fa12cdeaa569df911954b4f3621515d645cba54d"
+              ]
+            },
+            {
+              "number": 1565,
+              "commits": [
+                "4aebd7d64bf688073a224e985402863948f667b6"
+              ]
+            },
+            {
+              "number": 1566,
+              "commits": [
+                "09d08d749909298ace9e0c8e5fe2717ea9c30ae2",
+                "70869031b696df4931eb2eb6bde083ded7ffbea8",
+                "b679c34918304587f1521cffb03c7cedaebba514",
+                "b9e82e034013cf7ad8cfae72ad36600169ec0649",
+                "cee8e1e6695c8ee5db0ac2f2be3b23cde9822679",
+                "eed47ebadeaa3887144062fbf09e2ae2ef7720e0"
+              ]
+            },
+            {
+              "number": 1567,
+              "commits": [
+                "85a281821fb02031c8b18f8eb2b5254d48c71918",
+                "9870b3e5b064d80ab72771c84f7c20b533c8a4a6",
+                "ec0582978408f0af1bab5eff9bfca4084373d3ba"
+              ]
+            },
+            {
+              "number": 1568,
+              "commits": [
+                "14468186a748bce76eed9390083fedc460df51d1",
+                "b3b73024918c2ef9daa99bc98b0265c78836ff74",
+                "c51890ba23ee72961e346f71bef950a01c2480e4"
+              ]
+            },
+            {
+              "number": 1569,
+              "commits": [
+                "4e517619beacabcbbc912d92c7c821a135991031",
+                "5b45209452ed59329ca3d2054bf53f7336144172"
+              ]
+            },
+            {
+              "number": 1570,
+              "commits": [
+                "0540bcf097fb08aabe739e88c38883ab439b0c0b",
+                "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
+                "a1ac0219ab2b4f8702cc1799393e6a2197208dd7",
+                "bc8e04cb194d15c2febe20eee1a13dbe8d34e49a",
+                "dba345bf0f07b1b676e34667ec167d4ac57fbc07"
+              ]
+            },
+            {
+              "number": 1571,
+              "commits": [
+                "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d"
+              ]
+            },
+            {
+              "number": 1572,
+              "commits": [
+                "0f696c05c529bff05b89325e8f00c329e9e00b48",
+                "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+                "bc2c6ac45be56ab45b5c321cb8d70c3f3db96647"
+              ]
+            },
+            {
+              "number": 1573,
+              "commits": [
+                "af48a3bb57b013879d80c70d7fd1c66d12b177bb"
+              ]
+            },
+            {
+              "number": 1574,
+              "commits": [
+                "751db20d7e3ab8b1b047536f34e4946b24aa5b8c"
+              ]
+            },
+            {
+              "number": 1575,
+              "commits": [
+                "6560b865829e17fcc46247d422c7ec2dc1752945",
+                "b1b099b885c772eebb216382c482ed9d96064447"
+              ]
+            },
+            {
+              "number": 1576,
+              "commits": [
+                "d1419a1c50a6c05de40065f2af66e72728ecf570"
+              ]
+            },
+            {
+              "number": 1577,
+              "commits": [
+                "87440fd83d17bb144b2bbfcc320c2ab9b2ffba5c",
+                "8efe705401730d83e9ffbfa4a6053fe2752ed90c"
+              ]
+            },
+            {
+              "number": 1578,
+              "commits": [
+                "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9"
+              ]
+            },
+            {
+              "number": 1579,
+              "commits": [
+                "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5"
+              ]
+            },
+            {
+              "number": 1580,
+              "commits": [
+                "71ac7f2af842e1d9764da2be000e4156ae9fcc3b"
+              ]
+            },
+            {
+              "number": 1581,
+              "commits": [
+                "55d6b21782f947114e40fcbfadcca1771a2869ed"
+              ]
+            },
+            {
+              "number": 1583,
+              "commits": [
+                "9a0691f613399b8415f7ee528a932d0338deab50"
+              ]
+            },
+            {
+              "number": 1584,
+              "commits": [
+                "f909f3f291ce762864187623d77cb0f8bfaa42f4"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1001,
+          1514,
+          1563,
+          1564,
+          1565,
+          1566,
+          1567,
+          1568,
+          1569,
+          1570,
+          1571,
+          1572,
+          1573,
+          1574,
+          1575,
+          1576,
+          1577,
+          1578,
+          1579,
+          1580,
+          1581,
+          1583,
+          1584
+        ],
+        "version": "2.0.0-beta.2",
+        "body": "<!-- release: v2.0.0-beta.2 -->\n<!-- base: v1.86.1 -->\n<!-- language: ru -->\n## Houseplan 2.0.0-beta.2\n\nАвтоматизации Home Assistant теперь могут показывать на плане «Внимание» или «Тревогу». В редакторе автоматизаций выберите действие Houseplan **«Показать сигнал на плане»**, укажите устройство или сущность и при желании добавьте текст причины. Для второго условия есть действие **«Снять сигнал с плана»**. Активный сигнал сохраняется после перезапуска HA. [#1001](https://github.com/Matysh/houseplan-card/issues/1001)\n\nВ 3D свет из окон теперь ложится на пол с мягкой кромкой. Освещение стен от ламп и LED-лент сохраняется. [#1580](https://github.com/Matysh/houseplan-card/issues/1580)\n\n<!-- language: en -->\n## Houseplan 2.0.0-beta.2\n\nHome Assistant automations can now display an Attention or Alarm signal on the plan. Choose the Houseplan action **Show signal on plan**, select a device or entity and add a reason if you like. Use **Clear signal from plan** for the condition that clears it. An active signal survives a Home Assistant restart. [#1001](https://github.com/Matysh/houseplan-card/issues/1001)\n\nIn 3D, sunlight from windows now falls across the floor with soft edges. Lamps and LED strips still light the walls. [#1580](https://github.com/Matysh/houseplan-card/issues/1580)\n",
+        "technical": {
+          "ru": "## v2.0.0-beta.2 — 2026-11-26\n\n- Автоматизации Home Assistant показывают и снимают сигналы «Внимание» и «Тревога» для размещённых устройств или сущностей HA. Открытый план восстанавливает активные сигналы после переподключения и перезапуска HA (#1001).\n- В WebGL 3D солнечный свет из окон ложится на пол с мягкой кромкой. Лампы и LED-ленты по-прежнему освещают стены (#1580).\n- Восстановлена проверка переноса фокуса в диалогах в мутационном наборе (#1581). Автоматический возврат точного опубликованного тега в dev проверяет результат слияния без повторного прогона продукта (#1583).",
+          "en": "## v2.0.0-beta.2 — 2026-11-26\n\n- Home Assistant automations can show and clear Attention and Alarm signals for devices or entities placed on the plan. An open plan restores active signals after reconnecting or restarting HA (#1001).\n- In WebGL 3D, sunlight from windows stays on the floor and has soft edges. Lamps and LED strips continue to light walls (#1580).\n- Restore the dialog focus handoff check in mutation testing (#1581). Check the merge result when automatically returning an exact published tag to dev (#1583)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -320594,7 +320802,8 @@
     "beta-200-2-metrics-23a0d4975dc9b3fc93e71ac899eec446546860ee": "ae1e16cf2c60f80820ab09f78cb8465478d243074560960892e61d1500b793fd",
     "beta-200-2-metrics-decision-23a0d4975dc9b3fc93e71ac899eec446546860ee": "85f9c80f7cd7131d0b4e4361fe92f387d8db22b722a63e00d5a9eda1ec6bf40c",
     "beta-200-2-20261126-publication:runner-report": "539be404cda9ae72dbee9f4041fef98f3240e5387f6a3011559fc14aacd3960c",
-    "beta-200-2-20261126-publication:metrics": "5b90689f8b157ed6ecec6a478afc81609a5f7115ed3c362d57e69852d340ec93"
+    "beta-200-2-20261126-publication:metrics": "5b90689f8b157ed6ecec6a478afc81609a5f7115ed3c362d57e69852d340ec93",
+    "beta-200-2-20261126-publication:prepared:c0f549b6-b31c-4fc4-988e-f05d13359603": "8339822a34db2bc1c39afe9ee350a65a9da86f8a6809291832672330e99089e1"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
