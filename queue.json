@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 26429,
+  "revision": 26430,
   "nextTicket": 731,
-  "nextFence": 730,
+  "nextFence": 731,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -6704,7 +6704,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 730,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795684069226,
       "reviewEntry": 3,
@@ -7407,10 +7407,18 @@
       }
     }
   },
-  "waiting": [
-    1579
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1579,
+    "worker": "finish",
+    "token": "730:finish:2964ecdf-f7ad-4ef6-894a-8441cb6d1ea4:finish:1:admit",
+    "fence": 730,
+    "materialSha": "211bdacd5a535c351eccd7421188a1ae7e070276",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795684073501,
+    "expiresAt": 1795684373501
+  },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7857,6 +7865,30 @@
         "track": "show",
         "layer": "product",
         "materialSha": "211bdacd5a535c351eccd7421188a1ae7e070276",
+        "evidence": {
+          "id": "20261126T083121390-b54d6668",
+          "requestId": "s6:1579:4da5ccea396c8f29595755dde99cd512",
+          "runId": 45783283910,
+          "materialSha": "3a911dbc64a9a2edc5b47633288ead14d17013f5",
+          "status": "passed",
+          "finishedAt": "2026-11-26T08:52:46.478Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45783283910",
+          "execution": "github"
+        }
+      }
+    },
+    "finish:2964ecdf-f7ad-4ef6-894a-8441cb6d1ea4:finish:1:admit": {
+      "digest": "c6d702b1205c5e057a52191663b27c2b113a46a193d53b9e5a4ddebd773dc817",
+      "issue": 1579,
+      "message": {
+        "kind": "admitted",
+        "issue": 1579,
+        "at": 1795684073501,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "211bdacd5a535c351eccd7421188a1ae7e070276",
+        "phase": "sync",
         "evidence": {
           "id": "20261126T083121390-b54d6668",
           "requestId": "s6:1579:4da5ccea396c8f29595755dde99cd512",
