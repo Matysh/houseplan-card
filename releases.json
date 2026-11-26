@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1497,
+  "revision": 1498,
   "active": "v2.0.0-beta.1-20261126",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -298368,7 +298368,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v2.0.0-beta.1",
@@ -305819,7 +305819,8 @@
           "en": "## v2.0.0-beta.1 — 2026-11-26\n\n- Use native WebGL for the volumetric plan: physical wall, opening, furniture and device depth, with lights on floors and walls. Keep the existing 2D editors and flat SVG export (#1514, #1566, #1567).\n- Reveal a cold floor only after its complete frame is ready, with loading feedback while it is being prepared (#1579).\n- Save room-label positions and scale in the standalone editor using point-level conflict detection and observable save outcomes (#1563).\n- Test maintenance: run the nightly wall-node parity guard as a Python module with its compiled fixture dependencies (#1564).\n- Keep 3D geometry in sync with labels and devices during pan and zoom, and restore fine edges, wall-base hatching, translucent stairs and soft contact shadows (#1566).\n- Blend transparent walls and furniture in depth order so a wall behind a cabinet no longer darkens part of its face (#1568).\n- Refine 3D walls, thresholds and translucent furniture, keep device symbols sharp at high zoom, and let lamps and LED strips light nearby walls as well as the floor (#1567).\n- Remove competing wall and jamb faces that could flicker when zooming in WebGL 3D (#1569).\n- Keep the outline of straight stair treads without diagonals from the mesh in WebGL 3D (#1576).\n- Keep Zigbee routes behind device cores and restore marker clicks when returning from 3D to Flat (#1573).\n- Keep the correct side padding on WebGL 3D value badges (#1575).\n- Keep stair-arrival and marker hover feedback visible in 3D, respect forced-colour palettes, and reuse the resolved background colour on warm floor switches (#1570).\n- Restore the inset room highlight and its opening gaps when hovering in WebGL 3D (#1571).\n- Remove artificial strips of brighter light over door jambs in WebGL 3D (#1577).\n- Show confirmed unavailable devices with the same dimmed appearance in WebGL 3D as in the flat view (#1572).\n- Reuse the full 3D floor preview with furniture across phone and desktop viewports (#1574).\n- Keep diagonal floor shadows smooth while zooming the WebGL 3D view (#1578)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v2.0.0-beta.1"
     }
   },
   "published": {
@@ -312227,7 +312228,8 @@
     "beta-200-20261126-accepted-size": "8b695abf6bf34ae43b6d464417aafbbc7a6a1f8fc7b86f7144036a60f2ce35c5",
     "beta-200-20261126-publication:runner-report": "1a289ecc1f37958f44510308333aed9553a755b39dceff2dc134fd99ddcd01ca",
     "beta-200-20261126-publication:metrics": "15fc0f0b215bc6656c7ca00d353240593a3469a7ebd4ea8d66969361e64b2410",
-    "beta-200-20261126-publication:prepared:b78179c5-0aa8-4bec-8328-24b4aad1c632": "93dacd65b2c232f4d40910af253df9ac3f8f1290eaef47059d9677ce4ef77fde"
+    "beta-200-20261126-publication:prepared:b78179c5-0aa8-4bec-8328-24b4aad1c632": "93dacd65b2c232f4d40910af253df9ac3f8f1290eaef47059d9677ce4ef77fde",
+    "beta-200-20261126-publication:started:1497": "412beb02975679c2c0916c03dd82608dfb0315cde8720245e08a317fe82a371d"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
