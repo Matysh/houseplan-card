@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25980,
-  "nextTicket": 720,
+  "revision": 25981,
+  "nextTicket": 721,
   "nextFence": 720,
   "tasks": {
     "1024": {
@@ -6522,6 +6522,20 @@
         "sourceSha": "751db20d7e3ab8b1b047536f34e4946b24aa5b8c"
       }
     },
+    "1575": {
+      "issue": 1575,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1575-webgl-badge",
+      "materialSha": "cddb8ea6c3b1f0fe2f384f53c276615f1f9a2130",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 720,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795670433370,
+      "reviewEntry": 1
+    },
     "1576": {
       "issue": 1576,
       "track": "ship",
@@ -7229,7 +7243,9 @@
       "runId": 45744220547
     }
   },
-  "waiting": [],
+  "waiting": [
+    1575
+  ],
   "active": {
     "issue": 1576,
     "worker": "finish",
@@ -7330,6 +7346,19 @@
         "materialSha": "d1419a1c50a6c05de40065f2af66e72728ecf570",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:a330124a-bfa9-451a-ad3f-29d5fed849aa": {
+      "digest": "b7f44d3a9bc484e74598f146d7136b14a716ba166eb393596303e89e34365028",
+      "issue": 1575,
+      "message": {
+        "kind": "queued",
+        "issue": 1575,
+        "at": 1795670433370,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "cddb8ea6c3b1f0fe2f384f53c276615f1f9a2130"
       }
     }
   },
