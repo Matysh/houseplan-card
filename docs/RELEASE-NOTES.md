@@ -1,19 +1,15 @@
-<!-- release: v2.0.0-beta.1 -->
+<!-- release: v2.0.0-beta.2 -->
 <!-- base: v1.86.1 -->
 <!-- language: ru -->
-## Houseplan 2.0.0-beta.1
+## Houseplan 2.0.0-beta.2
 
-Первая бета 2.0.0 переводит объёмный вид на WebGL. Стены, проёмы, мебель и устройства учитывают глубину сцены; лампы и LED-ленты освещают пол и стены. Значки и показания остаются чёткими при приближении. План по-прежнему редактируется в 2D, а экспорт SVG остаётся плоским. [#1514](https://github.com/Matysh/houseplan-card/issues/1514), [#1566](https://github.com/Matysh/houseplan-card/issues/1566), [#1567](https://github.com/Matysh/houseplan-card/issues/1567)
+Автоматизации Home Assistant теперь могут показывать на плане «Внимание» или «Тревогу». В редакторе автоматизаций выберите действие Houseplan **«Показать сигнал на плане»**, укажите устройство или сущность и при желании добавьте текст причины. Для второго условия есть действие **«Снять сигнал с плана»**. Активный сигнал сохраняется после перезапуска HA. [#1001](https://github.com/Matysh/houseplan-card/issues/1001)
 
-Серверное 3D-превью с мебелью подстраивается под экран. При первом переключении на этаж Houseplan показывает индикатор подготовки и заменяет прежний этаж только тогда, когда новый отрисован целиком. [#1574](https://github.com/Matysh/houseplan-card/issues/1574), [#1579](https://github.com/Matysh/houseplan-card/issues/1579)
-
-Это тестовый выпуск. Если заметите артефакт в 3D, приложите скриншот и укажите браузер, ракурс и примерный масштаб.
+В 3D свет из окон теперь ложится на пол с мягкой кромкой. Освещение стен от ламп и LED-лент сохраняется. [#1580](https://github.com/Matysh/houseplan-card/issues/1580)
 
 <!-- language: en -->
-## Houseplan 2.0.0-beta.1
+## Houseplan 2.0.0-beta.2
 
-The first 2.0.0 beta moves the volumetric view to WebGL. Walls, openings, furniture and devices respect scene depth, while lamps and LED strips illuminate both floors and walls. Device icons and readings stay sharp when zoomed in. Plan editing and SVG export remain in 2D. [#1514](https://github.com/Matysh/houseplan-card/issues/1514), [#1566](https://github.com/Matysh/houseplan-card/issues/1566), [#1567](https://github.com/Matysh/houseplan-card/issues/1567)
+Home Assistant automations can now display an Attention or Alarm signal on the plan. Choose the Houseplan action **Show signal on plan**, select a device or entity and add a reason if you like. Use **Clear signal from plan** for the condition that clears it. An active signal survives a Home Assistant restart. [#1001](https://github.com/Matysh/houseplan-card/issues/1001)
 
-The server-prepared 3D preview includes furniture and adapts to the screen. On a cold floor switch, Houseplan shows a loading notice and replaces the outgoing floor only when the new frame is fully drawn. [#1574](https://github.com/Matysh/houseplan-card/issues/1574), [#1579](https://github.com/Matysh/houseplan-card/issues/1579)
-
-This is a prerelease. If you notice a 3D rendering artifact, please include a screenshot and note your browser, viewing angle and approximate zoom.
+In 3D, sunlight from windows now falls across the floor with soft edges. Lamps and LED strips still light the walls. [#1580](https://github.com/Matysh/houseplan-card/issues/1580)
