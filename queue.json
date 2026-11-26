@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26708,
+  "revision": 26709,
   "nextTicket": 736,
   "nextFence": 734,
   "tasks": {
@@ -6770,7 +6770,7 @@
       "ownerDecision": null,
       "ticket": 733,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795692544059,
       "reviewEntry": 1,
       "patchId": "29f372118b06d0baba8769d8e246d9e9f556ad77",
@@ -6794,7 +6794,16 @@
         "package.json",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261126T113552929-81d340ae",
+        "name": "Тесты для задачи #1582 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T113552929-81d340ae/report.json",
+        "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
+        "status": "passed",
+        "finishedAt": "2026-11-26T11:55:50.605Z",
+        "failures": []
+      }
     },
     "1583": {
       "issue": 1583,
@@ -7511,9 +7520,9 @@
     "fence": 733,
     "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
     "expectedBase": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795692892063,
-    "expiresAt": 1795694366752,
+    "expiresAt": 1795697751783,
     "patchId": "29f372118b06d0baba8769d8e246d9e9f556ad77"
   },
   "events": {
@@ -7720,6 +7729,34 @@
         "track": "show",
         "layer": "infra",
         "materialSha": "b38f4575ade019751fde5f389f2e693a115580b7"
+      }
+    },
+    "release-return-finish:4b4be159-fbd4-4c73-9bad-a68f4161f952:finish:2:s6-complete": {
+      "digest": "d9674eaebdc3fb7a3fb78dd6b0f026ab7497b14c278d363693d732ce0ca4de25",
+      "issue": 1582,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1582,
+        "at": 1795694151783,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
+        "phase": "review",
+        "evidence": {
+          "id": "20261126T113552929-81d340ae",
+          "name": "Тесты для задачи #1582 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261126T113552929-81d340ae/report.json",
+          "materialSha": "0c529a0ed02fe8df2de297ec7d0ce6280100a7e0",
+          "status": "passed",
+          "finishedAt": "2026-11-26T11:55:50.605Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
