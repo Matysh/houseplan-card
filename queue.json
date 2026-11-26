@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 25734,
+  "revision": 25735,
   "nextTicket": 716,
-  "nextFence": 715,
+  "nextFence": 716,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -6372,7 +6372,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 715,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795655238613,
       "reviewEntry": 2,
@@ -7248,10 +7248,18 @@
       }
     }
   },
-  "waiting": [
-    1570
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1570,
+    "worker": "finish",
+    "token": "715:finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:2:admit",
+    "fence": 715,
+    "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795656164144,
+    "expiresAt": 1795656464144
+  },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7606,6 +7614,20 @@
           "detail": "Браузер: floor preparation deadline: failed; Браузер: screen camera 1165: failed",
           "eventId": "finish:43045779-f102-4271-afeb-02440d7c287f:finish:4:return:return:1574"
         }
+      }
+    },
+    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56:finish:2:admit": {
+      "digest": "2dc42d9be91103ad467184f4e25160eeca8af840b4a88cab0d66b9cbac3aaf52",
+      "issue": 1570,
+      "message": {
+        "kind": "admitted",
+        "issue": 1570,
+        "at": 1795656164144,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
+        "phase": "sync"
       }
     }
   },
