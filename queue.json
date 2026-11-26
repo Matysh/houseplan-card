@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26876,
+  "revision": 26877,
   "nextTicket": 738,
   "nextFence": 738,
   "tasks": {
@@ -6867,18 +6867,12 @@
   "ownerDecisions": {},
   "specReviews": {
     "1001": {
-      "requestId": "spec:1001:3ae3528de5fd9c11546c4b1af3857e52086e5efc7ddb1757ebe31846946efdef",
-      "contextDigest": "3ae3528de5fd9c11546c4b1af3857e52086e5efc7ddb1757ebe31846946efdef",
+      "requestId": "spec:1001:68bedbc4097b585e5c52ff961427cdbde983651d53da060baef0d35ec4237b7a",
+      "contextDigest": "68bedbc4097b585e5c52ff961427cdbde983651d53da060baef0d35ec4237b7a",
       "base": "9a0691f613399b8415f7ee528a932d0338deab50",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795696371796,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45819724501",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795696524840
     },
     "1024": {
       "requestId": "spec:1024:b1bd9a8afb133daef6a22f250a062767118f93b4f8a19b527738aeccf79da9d2",
@@ -7537,6 +7531,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "spec:1001:spec:1001:68bedbc4097b585e5c52ff961427cdbde983651d53da060baef0d35ec4237b7a": {
+      "issue": 1001,
+      "kind": "spec",
+      "requestId": "spec:1001:68bedbc4097b585e5c52ff961427cdbde983651d53da060baef0d35ec4237b7a",
+      "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+      "expectedBase": "9a0691f613399b8415f7ee528a932d0338deab50",
+      "patchId": "68bedbc4097b585e5c52ff961427cdbde983651d53da060baef0d35ec4237b7a",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-26T12:35:24.840Z"
+      }
     }
   },
   "waiting": [],
@@ -7785,6 +7792,10 @@
       "digest": "edee984998cdb2b41d77c31a2cc3ced28ebb4f5630fb2f825efcdb35cc0d485e",
       "issue": 1582
     },
+    "github:45821027858:1:spec:1001:spec-request": {
+      "digest": "c5fa14fc36801b798c84c601862dbf026ca547a36e2e3e814efd7e83b0ce11ec",
+      "issue": 1001
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7918,6 +7929,22 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "github:45821027858:1:spec:1001:spec-request:spec-resubmitted:1001": {
+      "digest": "c5fa14fc36801b798c84c601862dbf026ca547a36e2e3e814efd7e83b0ce11ec",
+      "issue": 1001,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1001,
+        "at": 1795696524840,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1001:68bedbc4097b585e5c52ff961427cdbde983651d53da060baef0d35ec4237b7a",
+        "reviewChanges": "Два действия HA сохраняют внешние причины в отдельном оперативном хранилище до явного снятия. Главные места для проверки — выбор HA-цели, долгоживущие записи и доставка зрителям без расширения прав.\n\n### Исправления по предыдущему ревью\n\n- Добавлены нормализация ключа, пределы длины полей, предел на цель и общий предел записей. Идентичный повтор проходит без сохранения. Обновление и снятие доступны на пределе.\n- Цель-устройство включает размещённые привязки к устройству и к его сущностям. Сценарий без собственного значка устройства указан в AC2.\n- Уточнены сохранение до ответа, аутентифицированная доставка без текста на шине, доступ обычного зрителя, отказ ручного запуска без прав администратора и переименование сущности.\n\n[Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1001#issuecomment-7192152593). Редакция проверяется на соответствие шаблону перед передачей. Реализация, тесты и проверка в синтетическом HA относятся к S6.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
