@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 25715,
-  "nextTicket": 715,
+  "revision": 25716,
+  "nextTicket": 716,
   "nextFence": 714,
   "tasks": {
     "1024": {
@@ -6368,14 +6368,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1570-webgl-audit",
-      "materialSha": "a1ac0219ab2b4f8702cc1799393e6a2197208dd7",
+      "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 713,
-      "queued": false,
+      "ticket": 715,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795652218622,
-      "reviewEntry": 1,
+      "readyAt": 1795655238613,
+      "reviewEntry": 2,
       "patchId": "8e303c629f956825e8181fda7853a558982597a8",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -6424,7 +6424,6 @@
         "src/styles/plan.styles.ts",
         "test/performance-surface-ready.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7224,7 +7223,8 @@
     }
   },
   "waiting": [
-    1574
+    1574,
+    1570
   ],
   "active": null,
   "events": {
@@ -7466,6 +7466,19 @@
           "detail": "Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/hp-test-facade.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed",
           "eventId": "finish:5f04740e-7a62-46c1-9777-29da8df709a6:finish:2:return:return:1570"
         }
+      }
+    },
+    "finish:77cea016-c0be-475c-bc2c-4a1a54cccd56": {
+      "digest": "b1ec677debdd4dc01dcd284842a99aa8db86993fad246b7b1bb3a23259777929",
+      "issue": 1570,
+      "message": {
+        "kind": "queued",
+        "issue": 1570,
+        "at": 1795655238613,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "71634fd79f1e0707ed436db136e85f68d9a6a25d"
       }
     }
   },
