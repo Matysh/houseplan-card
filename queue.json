@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25582,
+  "revision": 25583,
   "nextTicket": 714,
   "nextFence": 713,
   "tasks": {
@@ -6419,7 +6419,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1572-webgl-marker-offline",
-      "materialSha": "01110eea60307c327c7f5dad9cb94bba5d05cc1d",
+      "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 712,
@@ -6427,7 +6427,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795652031440,
       "reviewEntry": 3,
-      "patchId": "6730a8eefa7ebfaa9350afc798ed07c8b63cc4c0",
+      "patchId": "14bf0dfb3ece486a088628e5121c85729c47331d",
       "changedFiles": [
         "demo/smoke_device_offline.mjs",
         "docs/CHANGELOG.md",
@@ -7171,11 +7171,12 @@
     "worker": "github-coordinator",
     "token": "712:github:45728546457:1:tick:2:admit",
     "fence": 712,
-    "materialSha": "01110eea60307c327c7f5dad9cb94bba5d05cc1d",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+    "expectedBase": "af48a3bb57b013879d80c70d7fd1c66d12b177bb",
+    "phase": "testing",
     "admittedAt": 1795652729711,
-    "expiresAt": 1795653029711
+    "expiresAt": 1795653075447,
+    "patchId": "14bf0dfb3ece486a088628e5121c85729c47331d"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7328,6 +7329,10 @@
     },
     "github:45728546457:1:completions:message:85a2900d9087268aab493346a272e8ef5c5c3e89292ba88ab05b98fb81fe8511": {
       "digest": "84d575a014b6c613c2061df1b0a2ac85c67b619401e4d257ad854c7dcf69115a",
+      "issue": 1572
+    },
+    "finish:0c6f7078-c1e2-44a1-b3c6-38b3f14d6026:finish:1:synchronized": {
+      "digest": "88e967abb1abd7f2994e4510076c947c1de64b9ad33c2d1b4791c57fb18d5356",
       "issue": 1572
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
