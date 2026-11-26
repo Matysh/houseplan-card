@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26696,
-  "nextTicket": 734,
+  "revision": 26697,
+  "nextTicket": 735,
   "nextFence": 734,
   "tasks": {
     "1024": {
@@ -6743,6 +6743,20 @@
         "sourceSha": "71ac7f2af842e1d9764da2be000e4156ae9fcc3b"
       }
     },
+    "1581": {
+      "issue": 1581,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1581-dialog-focus-witness",
+      "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 734,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795693585506,
+      "reviewEntry": 1
+    },
     "1582": {
       "issue": 1582,
       "branch": "issue/1582-release-return-4e522bebc352",
@@ -7472,7 +7486,9 @@
       "runId": 45811128729
     }
   },
-  "waiting": [],
+  "waiting": [
+    1581
+  ],
   "active": {
     "issue": 1582,
     "worker": "github-coordinator",
@@ -7622,6 +7638,19 @@
         "materialSha": "4222d8cf6d8adaafb995ddcf99292a41d7782de2",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:4a91ac9c-e0e2-4371-a516-ecc27a59eb36": {
+      "digest": "988fd485ef6cbe6dc6ac3fcba7d7db2c5139514b9bdd784f4a407f44d63d0a34",
+      "issue": 1581,
+      "message": {
+        "kind": "queued",
+        "issue": 1581,
+        "at": 1795693585506,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "55d6b21782f947114e40fcbfadcca1771a2869ed"
       }
     }
   },
