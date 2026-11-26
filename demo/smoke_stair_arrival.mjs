@@ -33,21 +33,28 @@ try {
     }, { iso, dark, kiosk });
     await link('go').focus(); await page.keyboard.press('Enter'); await settle();
     out[`${name}AllAndOnlyBackStairs`] = await count() === 2;
-    out[`${name}SharedContourStyle`] = await root.locator('[data-hp="stair-arrival"]').evaluateAll((nodes, { dark, iso }) => nodes.every(n => {
+    const contours = await root.locator('[data-hp="stair-arrival"]').evaluateAll((nodes, { dark, iso }) => nodes.map(n => {
       const s = getComputedStyle(n), expected = dark ? 'rgb(181, 107, 234)' : 'rgb(0, 138, 117)';
       const stair = n.closest('[data-hp="stair"]');
       const volume = stair?.getAttribute('data-hp-stair-volume') === 'true';
       const contour = volume ? 'd' : 'points';
       const outline = n.getAttribute(contour);
       const hit = stair?.querySelector('.hp-stair-hit');
-      const native=!!n.getRootNode().querySelector('canvas[data-hp-plan-3d-ready]');
-      return s.stroke === expected && s.fill === expected && s.fillOpacity === '0.22'
+      // The input/feedback layer is mounted before the canvas' first GPU
+      // frame. Identify its renderer here, then prove the painted pulse below.
+      const native=!!n.getRootNode().querySelector('canvas[data-hp-plan-3d]');
+      const found = { layer: n.closest('.iso-scene-surface')?.className ?? null, native, volume, style: [s.stroke, s.fill,
+        s.fillOpacity, s.strokeWidth, s.vectorEffect, s.pointerEvents, s.animationDuration, s.animationIterationCount, s.animationTimingFunction],
+        sameHit: !!outline && outline === hit?.getAttribute(contour) };
+      return { ...found, okay: s.stroke === expected && s.fill === expected && s.fillOpacity === '0.22'
         && s.strokeWidth === '3px' && s.vectorEffect === 'non-scaling-stroke' && s.pointerEvents === 'none'
         && s.animationDuration === '1s' && s.animationIterationCount === '2' && s.animationTimingFunction === 'ease-in-out'
         && !!outline && outline === hit?.getAttribute(contour)
         && (!volume || iso && !!n.closest(native ? '.iso-scene-surface' : '.iso-furniture-foreground'))
-        && (!iso || !!n.closest(native ? '.iso-scene-surface' : '.iso-floor-scene, .iso-furniture-foreground'));
+        && (!iso || !!n.closest(native ? '.iso-scene-surface' : '.iso-floor-scene, .iso-furniture-foreground')) };
     }), { dark, iso });
+    out[`${name}SharedContourStyle`] = contours.length === 2 && contours.every(row => row.okay);
+    if (!out[`${name}SharedContourStyle`]) console.log('Stair contour witness', name, JSON.stringify(contours));
     // Pause only the browser animation to inspect both pulses without changing product state/timers.
     out[`${name}TwoPulseFrames`] = await root.locator('[data-hp="stair-arrival"]').first().evaluate(n => {
       const a = n.getAnimations()[0]; a.pause();
@@ -55,7 +62,8 @@ try {
       const okay = opacity(0) === 0 && opacity(400) === 1 && opacity(1000) === 0 && opacity(1400) === 1 && opacity(2000) === 0;
       a.play(); return okay;
     });
-    if (iso && await root.locator('canvas[data-hp-plan-3d-ready]').count()) {
+    if (iso && await root.locator('canvas[data-hp-plan-3d]').count()) {
+      await root.locator('canvas[data-hp-plan-3d-ready]').waitFor({state:'attached'});
       const highlight = root.locator('[data-hp="stair-arrival"]').first();
       await highlight.evaluate(node=>{const a=node.getAnimations()[0];a.pause();a.currentTime=400;});
       const shown = await root.locator('.stage').screenshot();
