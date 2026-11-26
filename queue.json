@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27397,
+  "revision": 27398,
   "nextTicket": 747,
   "nextFence": 746,
   "tasks": {
@@ -6267,38 +6267,25 @@
     },
     "1590": {
       "issue": 1590,
+      "branch": "codex/1590-summary-placeholder",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1590-summary-placeholder",
-      "materialSha": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 745,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795727919387,
-      "reviewEntry": 1,
-      "patchId": "1b6ba9eaa1b5a0d638416d6cf27a2631218058a1",
-      "changedFiles": [
-        "demo/smoke_summary_first_paint.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.86.1/1590.json",
-        "src/summary-panel-runtime-loaded.ts",
-        "src/summary-panel-style.ts"
-      ],
-      "s6": {
-        "id": "20261126T212144405-fa15a3f4",
-        "name": "Тесты для задачи #1590 (перед слиянием)",
-        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261126T212144405-fa15a3f4/report.json",
-        "materialSha": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
-        "status": "passed",
-        "finishedAt": "2026-11-26T21:27:56.827Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "828dafd96f4764c090bd07558a13f921c239bf4f",
+      "mergedSha": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
+      "mergedAt": 1795728503118,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "automationError": "automation-error",
-      "automationSince": 1795728488010,
-      "automationDetail": "S6 needs its successful selected set; documentation has no runs"
+      "devBuild": {
+        "status": "pending"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6979,18 +6966,7 @@
   "waiting": [
     1589
   ],
-  "active": {
-    "issue": 1590,
-    "worker": "finish",
-    "token": "745:finish:974d6940-17f1-409c-8b0c-6624b02e5929:finish:1:admit",
-    "fence": 745,
-    "materialSha": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
-    "expectedBase": "828dafd96f4764c090bd07558a13f921c239bf4f",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795728033057,
-    "expiresAt": 1795732084744,
-    "patchId": "1b6ba9eaa1b5a0d638416d6cf27a2631218058a1"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7096,74 +7072,6 @@
       "digest": "f02edc706bbd758b3ddfe75c95e4e8857c9365d7f94fee98658c08eb02ab5f93",
       "issue": 1589
     },
-    "finish:a3ae0f71-7bb7-49b1-97b3-9c3e5b2aa612:finish:1:automation-pending": {
-      "digest": "8d0726adaf2f2cc34937342fad1be9651fa9a9fbc5bd4ba63aeac81e37d9b9bb",
-      "issue": 1590
-    },
-    "finish:505c84d2-cfe0-47e2-b6a0-330f469cce70:finish:1:synchronized": {
-      "digest": "6c4db7c8a18ffa4afda097dfdc624f636d092239af9df5d07db0f925ccaabd5e",
-      "issue": 1590
-    },
-    "finish:7e15554c-fd18-4a3d-8a09-5332ad7ac665": {
-      "digest": "92f2b99f813246f05196b3661291a3e4e08694e3153bf3c479edd5d51f950821",
-      "issue": 1590
-    },
-    "finish:a4146dc9-9351-4720-aa55-fd8aa58b5679": {
-      "digest": "f98ade9d009fe1f56c809aebea06e3611ebb9c83268286d14564aa7236c34650",
-      "issue": 1590
-    },
-    "finish:8073115e-d1b0-4231-80e6-d64cd3c24799": {
-      "digest": "0a9b8050bbf4d196c8e625acc66b7dbd3fb9d43380e25e969a1c9a2e8f0dc42f",
-      "issue": 1590
-    },
-    "finish:83d88643-1e1c-4790-a57e-c82fc0137839": {
-      "digest": "688f3e6126576c5a24e08e4dca8765d2cea194abfd0766bf2cf546a54589d5a0",
-      "issue": 1590
-    },
-    "finish:195fafdf-581d-4db4-a74b-8fc179532454": {
-      "digest": "84f19a7e2e2f4436e29ba29ca9739e3b741672f3161f36f4202c86d2a6ede924",
-      "issue": 1590
-    },
-    "finish:446d8677-1acf-4a32-9d82-6586a69cadb8": {
-      "digest": "a45fca92872e6cc20fcea4f130df40a27ff08074998cc55673b57b54e97ab3cd",
-      "issue": 1590
-    },
-    "finish:609f4b59-ecc3-4951-9c32-3fa459cf18d7": {
-      "digest": "706dea654893d6e28c37f34e7b1aaae71adaebd7091908c4bdc74d6752dec2ac",
-      "issue": 1590
-    },
-    "finish:b8a18f83-69ca-4037-a03e-ac2b38dea0a7": {
-      "digest": "10d66efabe3778e15619f0955f9e039a8b55cc346e4cf09fec73eb2d6c3b19c3",
-      "issue": 1590
-    },
-    "finish:d56561f5-abcd-4afc-bf9e-8a7077ca336a": {
-      "digest": "9f6768e1fc5a4c2f33c75d12d59f8f622e7b5fcd13b53d549b6b5d419528ef8c",
-      "issue": 1590
-    },
-    "finish:a21b89c7-1836-476b-bdfe-8726f77fdf2f": {
-      "digest": "f22e691a6fb473c9166db89974948231c9772589577522d39fb898f426808536",
-      "issue": 1590
-    },
-    "finish:ecd0a5f2-6c40-4cfb-9393-049f503c3c9b": {
-      "digest": "858c16900f51dd1ad59cade866ef0be817f0f72e8c992f787efc052cab8f16aa",
-      "issue": 1590
-    },
-    "finish:2b315d92-d4e5-452e-8b21-e248997866d4": {
-      "digest": "b45f93b53a3b13968b33f94e3031ff36651346c376b1da6118c534d3251c2756",
-      "issue": 1590
-    },
-    "finish:505c84d2-cfe0-47e2-b6a0-330f469cce70:finish:2:s6-complete": {
-      "digest": "169dc8bf9be7e492bcabfbbad3bbeeb05af409a30ac3f58b6eeae025539e3dd1",
-      "issue": 1590
-    },
-    "finish:5cdd6a0a-de72-401c-b996-0fbe381e68e9": {
-      "digest": "83cd94121f66816b9e35d9770a10e23b15c81d19c26b9019d0808ddec28dded1",
-      "issue": 1590
-    },
-    "finish:a3ae0f71-7bb7-49b1-97b3-9c3e5b2aa612:finish:2:automation-pending": {
-      "digest": "9055b30ad953332a93c7ec6979d03fe0cf048acb265cbbe90fc96734db37bd2b",
-      "issue": 1590
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7219,20 +7127,6 @@
         "layer": "product",
         "materialSha": "91a2284fe8c9badf1263ac81bf0039177bd0217f",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:a3ae0f71-7bb7-49b1-97b3-9c3e5b2aa612": {
-      "digest": "963a9a9f050f8108c0db123a44720bae00e7c77cbfc2abf0c252a11cb87b0402",
-      "issue": 1590,
-      "message": {
-        "kind": "queued",
-        "issue": 1590,
-        "at": 1795727919387,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7",
         "delivered": true
       }
     },
