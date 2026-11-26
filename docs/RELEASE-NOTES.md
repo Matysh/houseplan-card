@@ -1,27 +1,19 @@
-<!-- release: v1.86.1 -->
-<!-- stable-notes: 1 -->
-<!-- base: v1.86.0 -->
+<!-- release: v2.0.0-beta.1 -->
+<!-- base: v1.86.1 -->
 <!-- language: ru -->
-## Релиз Houseplan 1.86.1
+## Houseplan 2.0.0-beta.1
 
-🏠 **Восемь ракурсов 2.5D и прозрачные стены.** Между диагональными видами появились четыре прямых ракурса с лёгкой перспективой. Для каждого пространства можно включить прозрачные стены и отдельно задать прозрачность боковых граней и среза. Внутренние углы остаются различимы сквозь стену, а двери и мебель не перекрываются линиями, расположенными позади них. [#1526](https://github.com/Matysh/houseplan-card/issues/1526), [#1518](https://github.com/Matysh/houseplan-card/issues/1518), [#1560](https://github.com/Matysh/houseplan-card/issues/1560)
+Первая бета 2.0.0 переводит объёмный вид на WebGL. Стены, проёмы, мебель и устройства учитывают глубину сцены; лампы и LED-ленты освещают пол и стены. Значки и показания остаются чёткими при приближении. План по-прежнему редактируется в 2D, а экспорт SVG остаётся плоским. [#1514](https://github.com/Matysh/houseplan-card/issues/1514), [#1566](https://github.com/Matysh/houseplan-card/issues/1566), [#1567](https://github.com/Matysh/houseplan-card/issues/1567)
 
-⚡ **План виден раньше.** Если этаж уже открывали с той же учётной записью Home Assistant, готовое превью с мебелью может появиться даже на первом открытии в новом браузере. Устройства и освещение появляются, когда живой план готов. [#1520](https://github.com/Matysh/houseplan-card/issues/1520), [#1522](https://github.com/Matysh/houseplan-card/issues/1522)
+Серверное 3D-превью с мебелью подстраивается под экран. При первом переключении на этаж Houseplan показывает индикатор подготовки и заменяет прежний этаж только тогда, когда новый отрисован целиком. [#1574](https://github.com/Matysh/houseplan-card/issues/1574), [#1579](https://github.com/Matysh/houseplan-card/issues/1579)
 
-🖥️ **Свой вид на каждом экране.** Для полноразмерных карточек дашборда и внешних экранов можно независимо задать ракурс плана. При изменении масштаба значков они сохраняют свои привязки к стенам и группам, если для них хватает места. [#1516](https://github.com/Matysh/houseplan-card/issues/1516), [#1517](https://github.com/Matysh/houseplan-card/issues/1517)
+Это тестовый выпуск. Если заметите артефакт в 3D, приложите скриншот и укажите браузер, ракурс и примерный масштаб.
 
-Также исправлены светлые швы у основания стен в 2.5D и ошибка предпросмотра оптимизации сразу после сохранения нового плана. [#1555](https://github.com/Matysh/houseplan-card/issues/1555), [#1549](https://github.com/Matysh/houseplan-card/issues/1549)
-
-[Полный список изменений](https://github.com/Matysh/houseplan-card/milestone/19?closed=1)
 <!-- language: en -->
-## Houseplan 1.86.1 release
+## Houseplan 2.0.0-beta.1
 
-🏠 **Eight 2.5D angles and transparent walls.** Four straight-on views with subtle perspective join the diagonal views. Enable transparent walls per space and set the opacity of the sides and top cut separately. Interior corners remain readable through walls, and their lines stay behind any doors or furniture that hide them. [#1526](https://github.com/Matysh/houseplan-card/issues/1526), [#1518](https://github.com/Matysh/houseplan-card/issues/1518), [#1560](https://github.com/Matysh/houseplan-card/issues/1560)
+The first 2.0.0 beta moves the volumetric view to WebGL. Walls, openings, furniture and devices respect scene depth, while lamps and LED strips illuminate both floors and walls. Device icons and readings stay sharp when zoomed in. Plan editing and SVG export remain in 2D. [#1514](https://github.com/Matysh/houseplan-card/issues/1514), [#1566](https://github.com/Matysh/houseplan-card/issues/1566), [#1567](https://github.com/Matysh/houseplan-card/issues/1567)
 
-⚡ **See your plan sooner.** Once you’ve viewed a floor with the same Home Assistant account, a prepared preview with furniture can appear even on the first visit in a new browser. Devices and lighting appear when the live plan is ready. [#1520](https://github.com/Matysh/houseplan-card/issues/1520), [#1522](https://github.com/Matysh/houseplan-card/issues/1522)
+The server-prepared 3D preview includes furniture and adapts to the screen. On a cold floor switch, Houseplan shows a loading notice and replaces the outgoing floor only when the new frame is fully drawn. [#1574](https://github.com/Matysh/houseplan-card/issues/1574), [#1579](https://github.com/Matysh/houseplan-card/issues/1579)
 
-🖥️ **A different view for each screen.** Configure plan orientation independently for full-size dashboard cards and external displays. Resizing device icons preserves their wall and group attachments when there’s room. [#1516](https://github.com/Matysh/houseplan-card/issues/1516), [#1517](https://github.com/Matysh/houseplan-card/issues/1517)
-
-Also fixed visible seams along 2.5D wall bases and an Optimize Plans preview error just after saving a new plan. [#1555](https://github.com/Matysh/houseplan-card/issues/1555), [#1549](https://github.com/Matysh/houseplan-card/issues/1549)
-
-[Full list of changes](https://github.com/Matysh/houseplan-card/milestone/19?closed=1)
+This is a prerelease. If you notice a 3D rendering artifact, please include a screenshot and note your browser, viewing angle and approximate zoom.
