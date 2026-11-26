@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1547,
+  "revision": 1548,
   "active": "v2.0.0-beta.2-20261126",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -306508,7 +306508,7 @@
         "sha": "cc8ed027fd1698baa8fa1bce9c72e0d871cfdf4e",
         "requestId": "ship-review:f5446194570787793bdfb37c77bfc3ddffcacdeff83b2a840490b9da47a05300",
         "selectionDigest": "b0c91894e9fa5c869bb3e558ec2612250c8468354bc158165cbfa2c61ebd54f5",
-        "status": "pending",
+        "status": "accepted",
         "inventoryComplete": true
       }
     }
@@ -312975,7 +312975,8 @@
     "beta-200-2-20261126-create": "5fdc3e02ef7c0a2ed7f56125132193a7159fa1fdf8a96c7a51667f79ea56b9f8",
     "beta-200-2-20261126-freeze": "e4257a666aa4a85437e1c6af9f5e3c90de6fea797a9e54d24aabb3c24265f992",
     "ship-review:prepare:66ac16f7-78ae-40be-b8a3-816fc01bd8c8": "c8ace1800c1051ce173073cd0453627d970dcd12a6a8785ee3a35f331d5aef3c",
-    "beta-200-2-run-beta-200-2-20261126T141852Z": "6c45b28254ecb44e2c773a9f8fa830dba86d37337f6be35b96836027db51bf78"
+    "beta-200-2-run-beta-200-2-20261126T141852Z": "6c45b28254ecb44e2c773a9f8fa830dba86d37337f6be35b96836027db51bf78",
+    "ship-review:result:a9f46d22-6064-45c6-90cb-6ade7bcf3a63": "768c2516fb50d72e51e63664b137b53f524f7678405a3bea632390b643c7ac46"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -334969,7 +334970,99 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "version": 1,
+        "kind": "ship-batch",
+        "requestId": "ship-review:f5446194570787793bdfb37c77bfc3ddffcacdeff83b2a840490b9da47a05300",
+        "candidateId": "v2.0.0-beta.2-20261126",
+        "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
+        "materialSha": "cc8ed027fd1698baa8fa1bce9c72e0d871cfdf4e",
+        "selectionDigest": "b0c91894e9fa5c869bb3e558ec2612250c8468354bc158165cbfa2c61ebd54f5",
+        "releaseVersion": "v2.0.0-beta.2",
+        "workflowRunId": 45837796740,
+        "workflowRunAttempt": 1,
+        "verdict": "accepted",
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "В двух новых задачах пакета (#1581, #1584) серьёзных дефектов нет. Бету они не задерживают.\n\n#1581 восстанавливает чувствительность ночного свидетеля `dialog-return-focus-ring-flashes-976`. Прежняя подмена снимала класс `hp-dialog-return-focus`. После #1428 это перестало менять вид кнопки «Справка», поэтому тест проходил и со сломанным кодом. Новый тест сравнивает отрисовку кнопки (цвет рамки, outline, box-shadow) с исходной после возврата фокуса по Escape. Новая подмена добавляет класс `hpf-tab-focus`, то есть делает именно ту ошибку, от которой защищает требование: при автоматическом возврате фокуса кнопка подсвечивается. По исходникам подмена гарантированно меняет `border-top-color` кнопки, так что тест её поймает.\n\n#1584 переносит запись `1001.json` без изменений в каталог `v1.86.1`. Именно там её ищет координатор (`process-next/lib/release-data.mjs:13`).\n\nЕсть одно неблокирующее наблюдение. Связанное с #1584, оно лежит вне её объёма. В каталоге `docs/release-ledger/v2.0.0/` осталось ещё около 17 записей с `\"baseStable\": \"v1.86.1\"`. Среди них #1514, #1563, #1566–#1580 и уже принятая #1576. По тому же правилу координатор их не прочитает, и учёт выпуска этих задач останется в состоянии `pending`. Подробности в improvements.",
+          "understanding": "**#1581.** Ночной мутационный прогон показал, что тест `demo/smoke_ui_polish_976.mjs` не замечает подмену `dialog-return-focus-ring-flashes-976`.\n\nКак это работает:\n- `prepareDialogReturnFocus` (`src/dialog-return-focus.ts`) вешает на кнопку, открывшую диалог, класс `hp-dialog-return-focus`. Он гасит outline при программном возврате фокуса и снимается по Tab, pointerdown или blur.\n- После #1428 подсветка при навигации по Tab рисуется отдельным классом `hpf-tab-focus` (`src/ui-button-tab-focus.ts`). Его ставит только настоящий Tab: keydown/keyup, `isTrusted`, без Ctrl/Alt/Meta.\n- Для кнопки справки (`button.btn.hpf-icon-action.support-button`, `src/header-menu.ts:21`) этот класс меняет цвет рамки через `button.hpf-icon-action.hpf-tab-focus:focus { border-color:var(--primary-color) }` (`src/styles/icon-action.styles.ts:18`).\n\nПочему тест пропускал подмену. Старая подмена удаляла `hp-dialog-return-focus`, но на кнопку справки остаётся действовать только правило `.hp-dialog-return-focus:focus-visible { outline:none!important }`. Видимой разницы не было, и проверка `outlineStyle === 'none'` проходила.\n\nЧто изменилось:\n1. Тест снимает исходную отрисовку кнопки без наведения и фокуса.\n2. После Escape он требует полного совпадения рамки, outline и тени с исходным видом.\n3. Затем Tab уводит фокус, Shift+Tab возвращает его. Тест ожидает изменения цвета рамки (через `expect.poll`, на случай CSS-перехода), при этом outline и тень остаются `none`.\n4. Новая подмена добавляет `hpf-tab-focus` прямо при подготовке возврата фокуса, то есть моделирует «вспышку» обычной рамки после Escape.\n\n**#1584.** Координатор (`readTaskReleaseMilestone`) читает `docs/release-ledger/${cycle.baseStable}/${issue}.json`, а в `cycle.json` указано `baseStable: v1.86.1`. Запись #1001 лежала в `v2.0.0/`. Коммит переименовывает файл без изменения содержимого, значения `issue` и `baseStable` в нём совпадают с проверкой в `release-data.mjs:14`.\n\n**Что разобрано:**\n- код `dialog-return-focus.ts` и `ui-button-tab-focus.ts`, включая порядок `retireButtonTabFocus` → добавление класса;\n- CSS-правила, которые применяются к кнопке справки;\n- соседние тесты, которые проверяют снятие `hp-dialog-return-focus` после Tab (`smoke_editor_return_focus_1248.mjs:47,62`, `ui-lab/verify-polish.mjs:136`);\n- соответствие строки `find` в реестре мутаций исходнику;\n- путь чтения в `process-next/lib/release-data.mjs`, история `cycle.json` и состав каталогов ledger.",
+          "analysis": [
+            {
+              "topic": "#1581: новая подмена моделирует настоящую ошибку из требования",
+              "assessment": "Вместо удаления класса, которое ничего не меняло на экране, подмена добавляет `hpf-tab-focus` в момент автоматического возврата фокуса. Именно эту ошибку и запрещают #976 AC5 и #1428: кнопка подсвечивается без намеренного Tab. Подмена переживает весь путь Escape. `retireButtonTabFocus` выполняется до добавления класса (строка 7, затем 16), а `session.current` для этой кнопки не задан. Поэтому `clearPaint` класс не снимет, и при фокусе рамка гарантированно другая. Строка `find` дословно совпадает с `src/dialog-return-focus.ts:16`, подмена применится.",
+              "evidence": "`src/dialog-return-focus.ts:7,16`; `src/ui-button-tab-focus.ts:25-32,105-108`; `src/styles/icon-action.styles.ts:18`; `src/header-menu.ts:21`; `scripts/mutation-registry.mjs:1088-1097`."
+            },
+            {
+              "topic": "#1581: устройство проверки в тесте",
+              "assessment": "Сравнение всего кадра (рамка, outline, тень) с исходным видом надёжнее старой проверки одного outline. Тест не зависит от того, каким именно CSS-механизмом рисуется подсветка. `page.mouse.move(0, 0)` до снятия исходного кадра и после клика исключает влияние `:hover`. Вторая половина теста (Shift+Tab ведёт к подсветке рамки без outline и тени) защищает от противоположной ошибки: подавление не должно гасить намеренную навигацию. Shift+Tab корректно считается Tab-навигацией, потому что `tabPending` учитывает только Ctrl/Alt/Meta. Удалённая проверка снятия `hp-dialog-return-focus` после Tab продублирована в других smoke-тестах, так что покрытие не потеряно.",
+              "evidence": "`demo/smoke_ui_polish_976.mjs:11-36`; `src/ui-button-tab-focus.ts:36-37,43-48`; `demo/smoke_editor_return_focus_1248.mjs:47,62`; `demo/ui-lab/verify-polish.mjs:136`."
+            },
+            {
+              "topic": "#1584: перенос записи #1001",
+              "assessment": "Исправление верное и минимальное: файл переименован с идентичным содержимым (индекс blob `030f23e65` до и после). Путь соответствует чтению координатора, а `entry.issue === 1001` и `entry.baseStable === 'v1.86.1'` проходят проверку. Категория `major` даёт milestone из `cycle.json` (18, «2.0.0»), как и ожидает задача.",
+              "evidence": "diff `f909f3f`; `process-next/lib/release-data.mjs:9-28`; `docs/release-ledger/cycle.json:3-8`."
+            },
+            {
+              "topic": "Связь с остальными записями `v2.0.0/` (вне объёма #1584)",
+              "assessment": "Та же ошибка размещения повторяется у других задач текущего цикла: в `docs/release-ledger/v2.0.0/` лежат записи #1514, #1525, #1563, #1566–#1578, #1580 с `baseStable: v1.86.1`. `cycle.json` указывает на `v1.86.1` с коммита `7e85eee` (25.11), а других читателей с путём через `targetStable` в `process-next/` и `scripts/` нет. Значит, `readTaskReleaseMilestone` для этих задач вернёт `pending` с причиной «Release bookkeeping is not available», в том числе при повторной попытке через `fallbackSha`, которая читает тот же путь. Это не дефект #1584, задача явно ограничена записью #1001. Но корень у проблемы общий. Актуальное состояние milestone этих issue на GitHub по снимку проверить нельзя.",
+              "evidence": "`list_files docs/release-ledger` (раздел `v2.0.0/` — 17 файлов); `docs/release-ledger/v2.0.0/1514.json:4`, `.../1563.json:4`; `process-next/lib/release-data.mjs:13,19-25`; `git_log docs/release-ledger/cycle.json` (последний коммит `7e85eee` «Open release cycle after v1.86.1»)."
+            },
+            {
+              "topic": "Журналы изменений",
+              "assessment": "Записи в EN и RU по смыслу совпадают и соответствуют прецеденту #1564 (служебные тестовые правки отмечаются в «Unreleased»). Есть косметическая мелочь: после новой строки стоит пустая строка, из-за чего Markdown может отрисовать список как «рыхлый». На поведение это не влияет.",
+              "evidence": "`docs/CHANGELOG.md:5-6`; `docs/CHANGELOG.ru.md:10-11`."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Это наблюдение вне выбранных задач, напрямую связанное с #1584. Записи `docs/release-ledger/v2.0.0/{1514,1525,1563,1566,1567,1568,1569,1570,1571,1572,1573,1574,1575,1576,1577,1578,1580}.json` содержат `\"baseStable\": \"v1.86.1\"` и лежат не в том каталоге, где их ищет `process-next/lib/release-data.mjs:13`. В результате учёт выпуска этих задач застрянет в `pending`, а задачам категорий `major`/`stable-fix` не будет назначен milestone 2.0.0. Нужно перенести их в `docs/release-ledger/v1.86.1/` тем же способом, что и #1001. Чтобы ошибка не повторялась, стоит сделать сам механизм устойчивее, а не добавлять отдельный гейт. Например: пусть координатор при отсутствии записи по `baseStable` явно сообщает, что запись с подходящим `baseStable` найдена в каталоге `targetStable`. Или пусть инструкция и шаблон для исполнителя формируют путь из `cycle.baseStable`, а не из целевой версии. Перед переносом стоит проверить по GitHub, назначены ли этим issue milestone каким-то другим путём.",
+            "#1581, мелочь: удалить пустую строку после новой записи в `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md`, чтобы список «Unreleased» оставался плотным, как остальные пункты. Это чисто косметика."
+          ],
+          "boundaries": "- Этот шаг только читает код: тесты, `mutation-gate`, сборка и Validate не запускались.\n- Для #1581 использовано утверждение из issue: в Ubuntu WSL старый прогон на `8efe70540173` подмену пропустил (0/1), а исправленный тест её обнаружил (1/1). Как журнал прогона я его не видел. По исходникам вывод подтверждается: подмена ставит `hpf-tab-focus` на сфокусированную кнопку, и правило `button.hpf-icon-action.hpf-tab-focus:focus` меняет `border-color`.\n- Стабильность теста в разных браузерах и окружениях (например, что Shift+Tab действительно возвращает фокус на кнопку справки в этом демо) по снимку не проверить. Это остаётся на бета-тестирование.\n- Для #1584 и наблюдения про другие записи разобраны путь чтения в `process-next/lib/release-data.mjs`, история `cycle.json` и список файлов ledger. Актуальные milestone и статусы issue на GitHub в снимке недоступны.\n- Задачи #1564, #1565 и #1576 взяты из `batch.reused` и повторно не разбирались. Запись #1576 упомянута только как часть общего наблюдения про размещение ledger."
+        },
+        "usage": {
+          "input_tokens": 36,
+          "cache_creation_input_tokens": 66735,
+          "cache_read_input_tokens": 708106,
+          "output_tokens": 10705,
+          "output_tokens_details": {
+            "thinking_tokens": 3374
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 66735,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 830,
+              "cache_read_input_tokens": 55120,
+              "cache_creation_input_tokens": 13336,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 13336
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Пакетное код-ревью ship перед v2.0.0-beta.2 — принято\n\n## Вывод\n\nВ двух новых задачах пакета (#1581, #1584) серьёзных дефектов нет. Бету они не задерживают.\n\n#1581 восстанавливает чувствительность ночного свидетеля `dialog-return-focus-ring-flashes-976`. Прежняя подмена снимала класс `hp-dialog-return-focus`. После #1428 это перестало менять вид кнопки «Справка», поэтому тест проходил и со сломанным кодом. Новый тест сравнивает отрисовку кнопки (цвет рамки, outline, box-shadow) с исходной после возврата фокуса по Escape. Новая подмена добавляет класс `hpf-tab-focus`, то есть делает именно ту ошибку, от которой защищает требование: при автоматическом возврате фокуса кнопка подсвечивается. По исходникам подмена гарантированно меняет `border-top-color` кнопки, так что тест её поймает.\n\n#1584 переносит запись `1001.json` без изменений в каталог `v1.86.1`. Именно там её ищет координатор (`process-next/lib/release-data.mjs:13`).\n\nЕсть одно неблокирующее наблюдение. Связанное с #1584, оно лежит вне её объёма. В каталоге `docs/release-ledger/v2.0.0/` осталось ещё около 17 записей с `\"baseStable\": \"v1.86.1\"`. Среди них #1514, #1563, #1566–#1580 и уже принятая #1576. По тому же правилу координатор их не прочитает, и учёт выпуска этих задач останется в состоянии `pending`. Подробности в improvements.\n\n## Понимание решения\n\n**#1581.** Ночной мутационный прогон показал, что тест `demo/smoke_ui_polish_976.mjs` не замечает подмену `dialog-return-focus-ring-flashes-976`.\n\nКак это работает:\n- `prepareDialogReturnFocus` (`src/dialog-return-focus.ts`) вешает на кнопку, открывшую диалог, класс `hp-dialog-return-focus`. Он гасит outline при программном возврате фокуса и снимается по Tab, pointerdown или blur.\n- После #1428 подсветка при навигации по Tab рисуется отдельным классом `hpf-tab-focus` (`src/ui-button-tab-focus.ts`). Его ставит только настоящий Tab: keydown/keyup, `isTrusted`, без Ctrl/Alt/Meta.\n- Для кнопки справки (`button.btn.hpf-icon-action.support-button`, `src/header-menu.ts:21`) этот класс меняет цвет рамки через `button.hpf-icon-action.hpf-tab-focus:focus { border-color:var(--primary-color) }` (`src/styles/icon-action.styles.ts:18`).\n\nПочему тест пропускал подмену. Старая подмена удаляла `hp-dialog-return-focus`, но на кнопку справки остаётся действовать только правило `.hp-dialog-return-focus:focus-visible { outline:none!important }`. Видимой разницы не было, и проверка `outlineStyle === 'none'` проходила.\n\nЧто изменилось:\n1. Тест снимает исходную отрисовку кнопки без наведения и фокуса.\n2. После Escape он требует полного совпадения рамки, outline и тени с исходным видом.\n3. Затем Tab уводит фокус, Shift+Tab возвращает его. Тест ожидает изменения цвета рамки (через `expect.poll`, на случай CSS-перехода), при этом outline и тень остаются `none`.\n4. Новая подмена добавляет `hpf-tab-focus` прямо при подготовке возврата фокуса, то есть моделирует «вспышку» обычной рамки после Escape.\n\n**#1584.** Координатор (`readTaskReleaseMilestone`) читает `docs/release-ledger/${cycle.baseStable}/${issue}.json`, а в `cycle.json` указано `baseStable: v1.86.1`. Запись #1001 лежала в `v2.0.0/`. Коммит переименовывает файл без изменения содержимого, значения `issue` и `baseStable` в нём совпадают с проверкой в `release-data.mjs:14`.\n\n**Что разобрано:**\n- код `dialog-return-focus.ts` и `ui-button-tab-focus.ts`, включая порядок `retireButtonTabFocus` → добавление класса;\n- CSS-правила, которые применяются к кнопке справки;\n- соседние тесты, которые проверяют снятие `hp-dialog-return-focus` после Tab (`smoke_editor_return_focus_1248.mjs:47,62`, `ui-lab/verify-polish.mjs:136`);\n- соответствие строки `find` в реестре мутаций исходнику;\n- путь чтения в `process-next/lib/release-data.mjs`, история `cycle.json` и состав каталогов ledger.\n\n## Разбор решения\n\n### #1581: новая подмена моделирует настоящую ошибку из требования\n\nВместо удаления класса, которое ничего не меняло на экране, подмена добавляет `hpf-tab-focus` в момент автоматического возврата фокуса. Именно эту ошибку и запрещают #976 AC5 и #1428: кнопка подсвечивается без намеренного Tab. Подмена переживает весь путь Escape. `retireButtonTabFocus` выполняется до добавления класса (строка 7, затем 16), а `session.current` для этой кнопки не задан. Поэтому `clearPaint` класс не снимет, и при фокусе рамка гарантированно другая. Строка `find` дословно совпадает с `src/dialog-return-focus.ts:16`, подмена применится.\n\nОснование: `src/dialog-return-focus.ts:7,16`; `src/ui-button-tab-focus.ts:25-32,105-108`; `src/styles/icon-action.styles.ts:18`; `src/header-menu.ts:21`; `scripts/mutation-registry.mjs:1088-1097`.\n\n### #1581: устройство проверки в тесте\n\nСравнение всего кадра (рамка, outline, тень) с исходным видом надёжнее старой проверки одного outline. Тест не зависит от того, каким именно CSS-механизмом рисуется подсветка. `page.mouse.move(0, 0)` до снятия исходного кадра и после клика исключает влияние `:hover`. Вторая половина теста (Shift+Tab ведёт к подсветке рамки без outline и тени) защищает от противоположной ошибки: подавление не должно гасить намеренную навигацию. Shift+Tab корректно считается Tab-навигацией, потому что `tabPending` учитывает только Ctrl/Alt/Meta. Удалённая проверка снятия `hp-dialog-return-focus` после Tab продублирована в других smoke-тестах, так что покрытие не потеряно.\n\nОснование: `demo/smoke_ui_polish_976.mjs:11-36`; `src/ui-button-tab-focus.ts:36-37,43-48`; `demo/smoke_editor_return_focus_1248.mjs:47,62`; `demo/ui-lab/verify-polish.mjs:136`.\n\n### #1584: перенос записи #1001\n\nИсправление верное и минимальное: файл переименован с идентичным содержимым (индекс blob `030f23e65` до и после). Путь соответствует чтению координатора, а `entry.issue === 1001` и `entry.baseStable === 'v1.86.1'` проходят проверку. Категория `major` даёт milestone из `cycle.json` (18, «2.0.0»), как и ожидает задача.\n\nОснование: diff `f909f3f`; `process-next/lib/release-data.mjs:9-28`; `docs/release-ledger/cycle.json:3-8`.\n\n### Связь с остальными записями `v2.0.0/` (вне объёма #1584)\n\nТа же ошибка размещения повторяется у других задач текущего цикла: в `docs/release-ledger/v2.0.0/` лежат записи #1514, #1525, #1563, #1566–#1578, #1580 с `baseStable: v1.86.1`. `cycle.json` указывает на `v1.86.1` с коммита `7e85eee` (25.11), а других читателей с путём через `targetStable` в `process-next/` и `scripts/` нет. Значит, `readTaskReleaseMilestone` для этих задач вернёт `pending` с причиной «Release bookkeeping is not available», в том числе при повторной попытке через `fallbackSha`, которая читает тот же путь. Это не дефект #1584, задача явно ограничена записью #1001. Но корень у проблемы общий. Актуальное состояние milestone этих issue на GitHub по снимку проверить нельзя.\n\nОснование: `list_files docs/release-ledger` (раздел `v2.0.0/` — 17 файлов); `docs/release-ledger/v2.0.0/1514.json:4`, `.../1563.json:4`; `process-next/lib/release-data.mjs:13,19-25`; `git_log docs/release-ledger/cycle.json` (последний коммит `7e85eee` «Open release cycle after v1.86.1»).\n\n### Журналы изменений\n\nЗаписи в EN и RU по смыслу совпадают и соответствуют прецеденту #1564 (служебные тестовые правки отмечаются в «Unreleased»). Есть косметическая мелочь: после новой строки стоит пустая строка, из-за чего Markdown может отрисовать список как «рыхлый». На поведение это не влияет.\n\nОснование: `docs/CHANGELOG.md:5-6`; `docs/CHANGELOG.ru.md:10-11`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Это наблюдение вне выбранных задач, напрямую связанное с #1584. Записи `docs/release-ledger/v2.0.0/{1514,1525,1563,1566,1567,1568,1569,1570,1571,1572,1573,1574,1575,1576,1577,1578,1580}.json` содержат `\"baseStable\": \"v1.86.1\"` и лежат не в том каталоге, где их ищет `process-next/lib/release-data.mjs:13`. В результате учёт выпуска этих задач застрянет в `pending`, а задачам категорий `major`/`stable-fix` не будет назначен milestone 2.0.0. Нужно перенести их в `docs/release-ledger/v1.86.1/` тем же способом, что и #1001. Чтобы ошибка не повторялась, стоит сделать сам механизм устойчивее, а не добавлять отдельный гейт. Например: пусть координатор при отсутствии записи по `baseStable` явно сообщает, что запись с подходящим `baseStable` найдена в каталоге `targetStable`. Или пусть инструкция и шаблон для исполнителя формируют путь из `cycle.baseStable`, а не из целевой версии. Перед переносом стоит проверить по GitHub, назначены ли этим issue milestone каким-то другим путём.\n- #1581, мелочь: удалить пустую строку после новой записи в `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md`, чтобы список «Unreleased» оставался плотным, как остальные пункты. Это чисто косметика.\n\n## Границы анализа\n\n- Этот шаг только читает код: тесты, `mutation-gate`, сборка и Validate не запускались.\n- Для #1581 использовано утверждение из issue: в Ubuntu WSL старый прогон на `8efe70540173` подмену пропустил (0/1), а исправленный тест её обнаружил (1/1). Как журнал прогона я его не видел. По исходникам вывод подтверждается: подмена ставит `hpf-tab-focus` на сфокусированную кнопку, и правило `button.hpf-icon-action.hpf-tab-focus:focus` меняет `border-color`.\n- Стабильность теста в разных браузерах и окружениях (например, что Shift+Tab действительно возвращает фокус на кнопку справки в этом демо) по снимку не проверить. Это остаётся на бета-тестирование.\n- Для #1584 и наблюдения про другие записи разобраны путь чтения в `process-next/lib/release-data.mjs`, история `cycle.json` и список файлов ledger. Актуальные milestone и статусы issue на GitHub в снимке недоступны.\n- Задачи #1564, #1565 и #1576 взяты из `batch.reused` и повторно не разбирались. Запись #1576 упомянута только как часть общего наблюдения про размещение ledger.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: f175b7e00d8535149c61c2d28a922620a3a70928 → cc8ed027fd1698baa8fa1bce9c72e0d871cfdf4e\n\n## Переданный контекст исполнителя\n\nЗамороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: #1581, #1584.\n\nКоммиты: 55d6b21782f947114e40fcbfadcca1771a2869ed, f909f3f291ce762864187623d77cb0f8bfaa42f4.\n\nРанее принятое ревью сохранено для задач: #1564, #1565, #1576.\n\n</details>\n",
+        "createdAt": "2026-11-26T14:22:02.063Z",
+        "artifactId": 15126267485,
+        "runId": 45837796740,
+        "runAttempt": 1,
+        "completedAt": "2026-11-26T14:22:06Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45837796740"
+      }
     }
   }
 }
