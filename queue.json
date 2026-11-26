@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27143,
+  "revision": 27144,
   "nextTicket": 742,
   "nextFence": 742,
   "tasks": {
@@ -7547,20 +7547,6 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
-      }
-    },
-    "release-return-finish:441753fa-98db-428d-8b13-e2e7a3042708:finish:1:admit": {
-      "digest": "257c8cac7a47897e00ee09ef0df0019f8c377f4c1df2069bd00ccb76c84ba35b",
-      "issue": 1586,
-      "message": {
-        "kind": "admitted",
-        "issue": 1586,
-        "at": 1795704626890,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0cbebe62bf00edd3689b691be6fbaa71cd5f9a84",
-        "phase": "sync"
       }
     }
   },
