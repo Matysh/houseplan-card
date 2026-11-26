@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26841,
+  "revision": 26842,
   "nextTicket": 738,
   "nextFence": 738,
   "tasks": {
@@ -6881,6 +6881,14 @@
   },
   "ownerDecisions": {},
   "specReviews": {
+    "1001": {
+      "requestId": "spec:1001:3ae3528de5fd9c11546c4b1af3857e52086e5efc7ddb1757ebe31846946efdef",
+      "contextDigest": "3ae3528de5fd9c11546c4b1af3857e52086e5efc7ddb1757ebe31846946efdef",
+      "base": "9a0691f613399b8415f7ee528a932d0338deab50",
+      "round": 1,
+      "status": "pending",
+      "updatedAt": 1795695990957
+    },
     "1024": {
       "requestId": "spec:1024:b1bd9a8afb133daef6a22f250a062767118f93b4f8a19b527738aeccf79da9d2",
       "contextDigest": "b1bd9a8afb133daef6a22f250a062767118f93b4f8a19b527738aeccf79da9d2",
@@ -7552,6 +7560,19 @@
         "occurredAt": "2026-11-26T12:09:29.925Z"
       },
       "runId": 45817072508
+    },
+    "spec:1001:spec:1001:3ae3528de5fd9c11546c4b1af3857e52086e5efc7ddb1757ebe31846946efdef": {
+      "issue": 1001,
+      "kind": "spec",
+      "requestId": "spec:1001:3ae3528de5fd9c11546c4b1af3857e52086e5efc7ddb1757ebe31846946efdef",
+      "materialSha": "9a0691f613399b8415f7ee528a932d0338deab50",
+      "expectedBase": "9a0691f613399b8415f7ee528a932d0338deab50",
+      "patchId": "3ae3528de5fd9c11546c4b1af3857e52086e5efc7ddb1757ebe31846946efdef",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-26T12:26:30.957Z"
+      }
     }
   },
   "waiting": [],
@@ -7730,6 +7751,10 @@
     "github:45815416168:1:completions:metadata:20ec65e8-2874-4f82-ac4b-1a2a8ba4c76e:task-notice:1582::": {
       "digest": "3196dd072812b240dbb9aee3ce40c7f7286460fa52a78900e1e470fa836d8efa",
       "issue": 1582
+    },
+    "github:45819603213:1:label:spec-request": {
+      "digest": "65a31dbdd2081b22abccff458f6333b91c3f1481dc58f207ea5be68348dce256",
+      "issue": 1001
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
