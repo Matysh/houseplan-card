@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 26274,
-  "nextTicket": 728,
+  "revision": 26275,
+  "nextTicket": 729,
   "nextFence": 728,
   "tasks": {
     "1024": {
@@ -6679,6 +6679,20 @@
         "status": "published",
         "sourceSha": "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9"
       }
+    },
+    "1579": {
+      "issue": 1579,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1579-cold-floor-switch",
+      "materialSha": "14ca1e4d38ab9af13d0c19c9205ac2d796713b0e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 728,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795679197315,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7370,7 +7384,9 @@
       "runId": 45769786673
     }
   },
-  "waiting": [],
+  "waiting": [
+    1579
+  ],
   "active": {
     "issue": 1577,
     "worker": "finish",
@@ -7996,6 +8012,19 @@
           "finishedAt": "2026-11-26T06:20:48.504Z",
           "failures": []
         }
+      }
+    },
+    "finish:fbdf3244-60a3-47b0-ae87-c2c387184db3": {
+      "digest": "b36e21b13ab09d1f46d58ccabf7935b2869f4bc8e49f535764418e01f3788f9e",
+      "issue": 1579,
+      "message": {
+        "kind": "queued",
+        "issue": 1579,
+        "at": 1795679197315,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "14ca1e4d38ab9af13d0c19c9205ac2d796713b0e"
       }
     }
   },
