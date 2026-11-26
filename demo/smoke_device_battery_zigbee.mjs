@@ -47,9 +47,11 @@ try {
       ];
       return originalCallWS(message);
     } };
-    await window.__hpTest.setServerConfig(cfg => ({ ...cfg,
-      settings: { ...cfg.settings, zigbee_topology: { enabled: true } },
-    }));
+    await window.__hpTest.setServerConfig(cfg => {
+      const floor=cfg.spaces.find(space=>space.id===card._space);
+      floor.settings={...floor.settings,show_borders:true};
+      cfg.settings={...cfg.settings,zigbee_topology:{enabled:true}};
+    });
     card.shadowRoot.querySelector('[data-hp="settings"]').click();
     await window.__hpTest.settled();
     card.shadowRoot.querySelector('[data-section-target="zigbee"]').click();
@@ -71,6 +73,8 @@ try {
   for (const iso of [false, true]) {
     const mode = iso ? 'iso' : 'flat';
     await page.evaluate(iso => window.__hpTest.setVolumetricView(iso), iso);
+    if (!iso) out.flatNeverRetainsNativePaintOwnership = await page.evaluate(() =>
+      !window.__card.renderRoot.querySelector('[data-hp-3d-native],[data-hp-3d-native-outline]'));
     const geometry = await batteryGeometry(page);
     out[`${mode}_batteryHasRealGreenInk`] = await batteryColorPixels(page, geometry.battery, [29, 194, 29]) >= 8;
     out[`${mode}_batteryUsesOfficialMdi`] = await batteryMdiIcon(page, 'normal');
@@ -85,9 +89,19 @@ try {
       const rect = node => { const r = node.getBoundingClientRect();
         return { x: r.x, y: r.y, right: r.right, bottom: r.bottom, width: r.width, height: r.height }; };
       const battery = rect(marker.querySelector('.device-battery'));
-      const caption = rect(overlay.querySelector('[data-hp="zigbee-topology-parent-bubble"]'));
+      const captionNode=overlay.querySelector('[data-hp="zigbee-topology-parent-bubble"]');
+      const native=window.__card._plan3dHost;
+      const routeCaption=rect(captionNode);
+      if(native){
+        // The oblique badge and caption otherwise share only AABB corners.
+        // Superpose the existing elements on this witness, without changing
+        // their stacking or paint. Route-only crops below stay independent.
+        const before=routeCaption;
+        captionNode.style.translate=`${battery.x+battery.width/2-before.x-12}px ${battery.y+battery.height/2-before.y-before.height/2}px`;
+      }
+      const caption = rect(captionNode);
       const core = rect(marker.querySelector('.device-core'));
-      return { battery, caption, core, dpr: devicePixelRatio,
+      return { battery, caption, routeCaption, core, nativeCore:native?.screenCoreSilhouettes(new Set(['d_temp']))[0], dpr: devicePixelRatio,
         overlap: { x: Math.max(battery.x, caption.x), y: Math.max(battery.y, caption.y),
           right: Math.min(battery.right, caption.right), bottom: Math.min(battery.bottom, caption.bottom) } };
     });
@@ -103,7 +117,12 @@ try {
     const captionHidden = await screenshot('caption-hidden-control');
     await page.evaluate(() => {
       const overlay = window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot;
-      overlay.querySelector('[data-hp="zigbee-topology-parent-bubble"]').style.removeProperty('visibility');
+      const caption = overlay.querySelector('[data-hp="zigbee-topology-parent-bubble"]');
+      caption.style.removeProperty('visibility');caption.style.removeProperty('translate');
+    });
+    const routeActive = probe.nativeCore ? await screenshot('route-active-control') : active;
+    await page.evaluate(() => {
+      const overlay = window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot;
       for (const layer of overlay.querySelectorAll('[data-hp^="zigbee-topology-lines"]')) layer.style.visibility = 'hidden';
     });
     const routesHidden = await screenshot('routes-hidden-control');
@@ -111,14 +130,14 @@ try {
       for (const layer of window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot
         .querySelectorAll('[data-hp^="zigbee-topology-lines"]')) layer.style.removeProperty('visibility');
     });
-    const evidence = await page.evaluate(async ({ active, captionHidden, routesHidden, probe }) => {
+    const evidence = await page.evaluate(async ({ active, captionHidden, routesHidden, routeActive, probe }) => {
       const decode = async data => {
         const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
         const canvas = new OffscreenCanvas(bitmap.width, bitmap.height), ctx = canvas.getContext('2d');
         ctx.drawImage(bitmap, 0, 0);
         return ctx.getImageData(0, 0, bitmap.width, bitmap.height);
       };
-      const [a, hidden, noRoutes] = await Promise.all([decode(active), decode(captionHidden), decode(routesHidden)]);
+      const [a, hidden, noRoutes, route] = await Promise.all([decode(active), decode(captionHidden), decode(routesHidden), decode(routeActive)]);
       const at = (image, x, y) => {
         const index = (Math.floor(y * probe.dpr) * image.width + Math.floor(x * probe.dpr)) * 4;
         return [image.data[index], image.data[index + 1], image.data[index + 2]];
@@ -139,10 +158,15 @@ try {
         }
       }
       const cx = probe.core.x + probe.core.width / 2, cy = probe.core.y + probe.core.height / 2;
-      for (let x = Math.ceil(cx); x < probe.caption.x - 3; x++) {
+      const corePath=new Path2D();
+      probe.nativeCore?.forEach(([x,y],i)=>i?corePath.lineTo(x,y):corePath.moveTo(x,y));
+      if(probe.nativeCore)corePath.closePath();
+      const pathContext=new OffscreenCanvas(1,1).getContext('2d');
+      for (let x = Math.ceil(cx); x < probe.routeCaption.x - 3; x++) {
         for (let dy = -2; dy <= 2; dy++) {
-          if (!changed(at(a, x, cy + dy), at(noRoutes, x, cy + dy))) continue;
-          if (x < probe.core.right - 5) coreChanged++;
+          if (!changed(at(route, x, cy + dy), at(noRoutes, x, cy + dy))) continue;
+          if (probe.nativeCore ? [[-2,0],[2,0],[0,-2],[0,2]].every(([dx,d])=>
+            pathContext.isPointInPath(corePath,x+dx,cy+dy+d)) : x < probe.core.right - 5) coreChanged++;
           else if (x > probe.core.right + 3) exposedRoute++;
         }
       }
@@ -150,10 +174,12 @@ try {
         captionCoversInk: ink >= 3 && covered / ink >= 0.9,
         coreCoversRoute: coreChanged <= 2 && exposedRoute >= 3 };
     }, { active: active.toString('base64'), captionHidden: captionHidden.toString('base64'),
-      routesHidden: routesHidden.toString('base64'), probe });
+      routeActive: routeActive.toString('base64'), routesHidden: routesHidden.toString('base64'), probe });
     out[`${mode}_captionPaintsOverBattery`] = evidence.captionCoversInk;
     out[`${mode}_coreStillPaintsOverRoutes`] = evidence.coreCoversRoute;
     console.log(`Battery Zigbee ${mode} pixel evidence:`, evidence, probe);
+    await page.evaluate(()=>window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+      ?.querySelector('[data-hp="zigbee-topology-parent-bubble"]')?.style.removeProperty('translate'));
     await page.mouse.move(10, 10);
   }
   // #808 AC2: the line of a local link crosses a whole battery frame — the

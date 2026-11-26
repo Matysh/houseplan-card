@@ -1,5 +1,5 @@
 import { BufferGeometry, CanvasTexture, Color, DoubleSide, EdgesGeometry, Float32BufferAttribute,
-  FrontSide, Group, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, PlaneGeometry, Scene, SRGBColorSpace, Texture } from 'three';
+  FrontSide, Group, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, PlaneGeometry, Scene, SRGBColorSpace, Texture, type Camera } from 'three';
 import { union, type Geom } from 'polyclip-ts';
 import { gridVisualUnits } from './grid-scale';
 import { colorLuma, isoOpeningMaterialVars, isoWallMaterial, parseCssColor } from './iso-materials';
@@ -312,6 +312,10 @@ export class Plan3dWorld {
 
   presentMarkers(markers: readonly Plan3dMarker[], density: number, raster?: MarkerRaster): void {
     this.markers.present(markers, density, raster);
+  }
+
+  screenCoreSilhouettes(ids: ReadonlySet<string>, camera: Camera, box: DOMRectReadOnly) {
+    return this.markers.screenCoreSilhouettes(ids, camera, box);
   }
 
   /** One bounded floor texture, not one transparent GPU object per badge.

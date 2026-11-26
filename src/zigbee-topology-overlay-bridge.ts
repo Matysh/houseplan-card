@@ -10,6 +10,7 @@ export interface ZigbeeOverlayEligibility {
   view: boolean;
   kiosk: boolean;
 }
+export type ZigbeeCoreSilhouettes = (ids: ReadonlySet<string>) => readonly (readonly (readonly [number, number])[])[];
 export function zigbeeTopologyOverlayRequested(input: ZigbeeOverlayEligibility): boolean {
   return input.view && !input.kiosk && input.hass?.user?.is_admin === true
     && zigbeeTopologySettingsOf(input.settings).enabled;
@@ -23,11 +24,13 @@ export function renderZigbeeTopologyOverlay(input: ZigbeeOverlayEligibility & {
   viewKey: unknown;
   zoom: number;
   onLayout?: () => void;
+  nativeCores?: ZigbeeCoreSilhouettes;
   ready: boolean;
 }): TemplateResult | typeof nothing {
   if (!input.ready || !zigbeeTopologyOverlayRequested(input)) return nothing;
   return html`<hp-zigbee-topology-overlay aria-hidden="true" .hass=${input.hass} .devices=${input.devices}
     .registry=${input.registry} .currentSpace=${input.currentSpace} .spaces=${input.spaces}
     .z2mTopics=${zigbeeTopologySettingsOf(input.settings).z2mBaseTopics}
-    .viewKey=${input.viewKey} .zoom=${input.zoom} .onLayout=${input.onLayout}></hp-zigbee-topology-overlay>`;
+    .viewKey=${input.viewKey} .zoom=${input.zoom} .onLayout=${input.onLayout}
+    .nativeCores=${input.nativeCores}></hp-zigbee-topology-overlay>`;
 }

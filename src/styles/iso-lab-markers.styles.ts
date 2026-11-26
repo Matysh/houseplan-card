@@ -203,6 +203,11 @@ export const isoLabMarkersStyles = css`
     opacity: 1;
     z-index: 5;
   }
+  :host([data-pointer-hover]) .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev[data-hp-zigbee-topology-endpoint][data-hp-device-hover],
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev[data-hp-zigbee-topology-endpoint]:focus-visible,
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev[data-hp-zigbee-topology-endpoint] {
+    z-index: 8;
+  }
   @media (forced-colors: active) {
     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlname,
     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlmetrics,

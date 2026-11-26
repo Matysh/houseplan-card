@@ -814,6 +814,10 @@ export class HouseplanCard extends LitElement {
   private _plan3dDevices?: ReadonlyMap<string, IsoOverlayPlacement>;
 
   private _disposePlan3dHost(): void {
+    if (this._plan3dHost) for (const marker of this.renderRoot.querySelectorAll('[data-hp-3d-native],[data-hp-3d-native-outline]')) {
+      marker.removeAttribute('data-hp-3d-native');
+      marker.removeAttribute('data-hp-3d-native-outline');
+    }
     this._plan3dHost?.canvas.removeAttribute('data-hp-plan-3d-ready');
     this._plan3dHost?.dispose();
     this._plan3dHost = undefined;
@@ -7305,8 +7309,11 @@ export class HouseplanCard extends LitElement {
     return renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices,
       registry: this._haRegistry, currentSpace: spaceId, spaces: this._serverCfg?.spaces, viewKey: view,
       zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk,
+      nativeCores: this._plan3dPresentation ? this._zigbeeNativeCoreSilhouettes : undefined,
       ready: this._viewRuntimes.zigbee.state === 'ready', onLayout: () => this._liveRt?.hover() });
   }
+  private readonly _zigbeeNativeCoreSilhouettes = (ids: ReadonlySet<string>) =>
+    this._plan3dHost?.screenCoreSilhouettes(ids) ?? [];
   private _registerHaSmartHomeEvents(subscribe: (
     current: () => (() => void) | null | undefined, adopt: (release: () => void) => void,
     event: string, receive: (event: any) => void | Promise<void>,

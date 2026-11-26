@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1573,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Preserve route layering and live device interaction across the WebGL projection boundary.",
+  "summary": {
+    "ru": "Исправлен порядок слоёв Zigbee и возврат к плоским значкам.",
+    "en": "Fixed Zigbee layers and marker interaction after leaving 3D."
+  }
+}

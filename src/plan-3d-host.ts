@@ -122,6 +122,12 @@ export class Plan3dHost {
     return this.viewport.pick((clientX - box.left) / box.width, (clientY - box.top) / box.height);
   }
 
+  screenCoreSilhouettes(ids: ReadonlySet<string>): readonly (readonly (readonly [number, number])[])[] {
+    const camera = this.frame?.camera;
+    if (!camera || !this.canvas.hasAttribute('data-hp-plan-3d-ready')) return [];
+    return this.world.screenCoreSilhouettes(ids, camera, this.canvas.getBoundingClientRect());
+  }
+
   async snapshot(presentation: Plan3dPresentation, view: ViewRect, size: readonly [number, number],
     signal: AbortSignal): Promise<Blob | null> {
     if (this.disposed || signal.aborted) return null;

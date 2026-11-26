@@ -17,6 +17,7 @@ import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { DevItem } from './types';
 import { placeDeviceTooltip, type TipRect } from './live-tip-placement';
 import { ViewRuntimeFingerprintMismatch } from './view-runtime-boundary';
+import type { ZigbeeCoreSilhouettes } from './zigbee-topology-overlay-bridge';
 
 export const ZIGBEE_OVERLAY_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -36,6 +37,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     viewKey: { attribute: false },
     zoom: { type: Number },
     onLayout: { attribute: false },
+    nativeCores: { attribute: false },
   };
 
   hass!: ZigbeeTopologyHass;
@@ -47,6 +49,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   viewKey: unknown;
   zoom = 1;
   onLayout?: () => void;
+  nativeCores?: ZigbeeCoreSilhouettes;
   private _runtime = EMPTY_RUNTIME;
   private _hovered = '';
   private _staleTimer?: ReturnType<typeof setTimeout>;
@@ -214,6 +217,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         return;
       }
       this._clipRouteCopies();
+      this._maskNativeCores(width, height);
       this._fitParentCaptions();
       this.onLayout?.();
     });
@@ -313,6 +317,28 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     }));
   }
 
+  private _maskNativeCores(width: number, height: number): void {
+    if (!this.nativeCores) return;
+    const layer = this.getBoundingClientRect();
+    if (!(layer.width > 0 && layer.height > 0)) return;
+    const hulls = this.nativeCores(this._desiredEndpointIds);
+    const coordinates = hulls.map(hull => hull.map(([x, y]) =>
+      [(x-layer.left)*width/layer.width, (y-layer.top)*height/layer.height]
+        .map(n => n.toFixed(2)).join(',')).join(' '));
+    const signature = coordinates.join(';');
+    for (const mask of this.renderRoot.querySelectorAll<SVGMaskElement>('[data-hp-native-core-mask]')) {
+      if (mask.dataset.cores === signature) continue;
+      mask.dataset.cores = signature;
+      for (const old of mask.querySelectorAll('polygon')) old.remove();
+      for (const points of coordinates) {
+        const node = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        node.setAttribute('fill', 'black');
+        node.setAttribute('points', points);
+        mask.append(node);
+      }
+    }
+  }
+
   private _acceptRuntime(next: ZigbeeTopologyRuntimeSnapshot): void {
     if (next.revision === this._runtime.revision
         && next.topologies === this._runtime.topologies && next.states === this._runtime.states) return;
@@ -347,6 +373,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     this._eventRoot = parent.closest<HTMLElement>('.stage') || parent;
     this._eventRoot.addEventListener('pointerover', this._pointerOver);
     this._eventRoot.addEventListener('pointerout', this._pointerOut);
+    this._eventRoot.addEventListener('pointerleave', this._pointerLeave);
     this._eventRoot.addEventListener('pointerdown', this._pointerDown, true);
     if (typeof MutationObserver !== 'undefined') {
       this._markerObserver = new MutationObserver((records) => {
@@ -386,6 +413,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _disconnectParent(): void {
     this._eventRoot?.removeEventListener('pointerover', this._pointerOver);
     this._eventRoot?.removeEventListener('pointerout', this._pointerOut);
+    this._eventRoot?.removeEventListener('pointerleave', this._pointerLeave);
     this._eventRoot?.removeEventListener('pointerdown', this._pointerDown, true);
     this._markerObserver?.disconnect();
     this._markerObserver = undefined;
@@ -428,6 +456,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _pointerDown = (event: PointerEvent): void => {
     if (event.pointerType !== 'mouse') this._clear();
   };
+
+  private _pointerLeave = (): void => this._clear();
 
   private _clear(): void {
     this.removeAttribute('data-tooltip-owner');
@@ -664,13 +694,20 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       ...(!originRemote ? bubbles : []).map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor',
         bubble.arrow, true, index, copy)),
     ];
+    const mask = (id: string) => this.nativeCores ? svg`<mask id=${id} data-hp-native-core-mask
+      maskUnits="userSpaceOnUse" x="0" y="0" width=${width} height=${height}>
+      <rect x="0" y="0" width=${width} height=${height} fill="white"></rect>
+    </mask>` : nothing;
+    const useMask = (id: string) => this.nativeCores ? `url(#${id})` : nothing;
     return html`
       ${lines.length || bubbles.length ? svg`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
-        aria-hidden="true" data-hp="zigbee-topology-lines">${routes(false)}</svg>
+        aria-hidden="true" data-hp="zigbee-topology-lines">${mask('hp-zigbee-native-core-mask')}
+        <g mask=${useMask('hp-zigbee-native-core-mask')}>${routes(false)}</g></svg>
       <svg class="over-battery" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
         aria-hidden="true" data-hp="zigbee-topology-lines-over-battery">
         <clipPath id="hp-zigbee-route-clip"></clipPath>
-        <g clip-path="url(#hp-zigbee-route-clip)">${routes(true)}</g>
+        ${mask('hp-zigbee-native-copy-core-mask')}
+        <g mask=${useMask('hp-zigbee-native-copy-core-mask')} clip-path="url(#hp-zigbee-route-clip)">${routes(true)}</g>
       </svg>` : nothing}
       ${leds.length ? svg`<svg class="led-participants" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
         aria-hidden="true">${leds.map(({ id, point }, index) => this._ledParticipant(id, point, index))}</svg>` : nothing}

@@ -243,6 +243,38 @@ export class Plan3dMarkerLayer {
 
   constructor(document: Document) { this.atlas = new MarkerAtlas(document); }
 
+  /** Expose only current endpoint cores, not extruding badges. A crisp
+   * overlay can stay above the 3D canvas without painting through its caps. */
+  screenCoreSilhouettes(ids: ReadonlySet<string>, camera: Camera, box: DOMRectReadOnly): PlanPoint[][] {
+    return [...ids].flatMap(id => {
+      const body = this.markers.get(id + ':0')?.body;
+      const attribute = body?.geometry.getAttribute('position');
+      if (!attribute?.count || !body?.visible) return [];
+      const point = new Vector3(), unique = new Map<string, PlanPoint>();
+      body.updateWorldMatrix(true, false);
+      for (let i=0; i<attribute.count; i++) {
+        point.fromBufferAttribute(attribute, i).applyMatrix4(body.matrixWorld).project(camera);
+        const x = box.left + (point.x + 1) * box.width / 2;
+        const y = box.top + (1 - point.y) * box.height / 2;
+        if (Number.isFinite(x + y)) unique.set(x + ',' + y, [x, y]);
+      }
+      const points = [...unique.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      const rim = (list: readonly PlanPoint[]) => {
+        const result: PlanPoint[] = [];
+        for (const p of list) {
+          while (result.length > 1) {
+            const a = result[result.length - 2], b = result[result.length - 1];
+            if ((b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]) > 1e-7) break;
+            result.pop();
+          }
+          result.push(p);
+        }
+        return result.slice(0, -1);
+      };
+      return points.length < 3 ? [] : [[...rim(points), ...rim(points.reverse())]];
+    });
+  }
+
   present(markers: readonly Plan3dMarker[], devicePixelsPerUnit: number, raster?: MarkerRaster): void {
     const live = new Set<string>();
     const work: { key: string; marker: Plan3dMarker; face: Plan3dMarkerFace;
