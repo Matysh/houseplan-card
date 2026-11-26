@@ -442,12 +442,43 @@ test('release return binds computed Git proof, never a caller-supplied review ex
     let proofs = 0;
     h.dependencies.git.publishedReturnReview = async ({ task, expectedBase, materialSha, patchId }) => {
       proofs++; assert.equal(task.releaseTag, 'v1.0.1'); assert.equal(expectedBase, A); assert.equal(materialSha, B);
-      return clean ? { source: 'published-release', sourceSha: C, tag: 'v1.0.1', patchId, verdict: 'accepted' } : null;
+      return clean ? { source: 'published-release', sourceSha: C, tag: 'v1.0.1', expectedBase, materialSha, patchId, verdict: 'accepted' } : null;
     };
     await h.command('synchronized', { token, expectedBase: A, materialSha: B, review: { source: 'published-release', verdict: 'accepted', patchId: 'patch' } });
     await h.command('s6-complete', { token, materialSha: B, outcome: 'passed', evidence: { status: 'passed' } });
     assert.equal((await h.store.read()).state.active.phase, clean ? 'ready-to-merge' : 'review');
     assert.equal(proofs, 1);
+  }
+});
+
+test('finish selects one Git check for a proven return, never from caller options', async () => {
+  const proof = { source: 'published-release', sourceSha: C, tag: 'v1.0.1', expectedBase: A, materialSha: B, patchId: 'same', verdict: 'accepted' };
+  for (const [kind, s6, review] of [
+    ['clean', 'local', proof], ['clean', 'github', proof], ['ordinary', 'local', proof],
+    ['manual', 'local', null], ['manual', 'github', null], ['stale', 'local', { ...proof, expectedBase: C }],
+  ]) {
+    const h = queueHarness(), calls = [];
+    const short = kind === 'clean';
+    await h.queue.dispatch({ id: 'return', type: 'enqueue', task: { issue: 1, branch: 'issue/1', materialSha: B, layer: 'product', track: 'show',
+      ...(kind !== 'ordinary' ? { syncMode: 'merge', mergeSourceSha: C, releaseTag: 'v1.0.1' } : {}) } });
+    const dependencies = { sleep: async () => {},
+      synchronize: async () => ({ expectedBase: A, materialSha: B, patchId: 'same', layer: 'product', review }),
+      prepareEnvironment: async () => calls.push('prepare'),
+      planProfile: async () => { calls.push('plan'); return { steps: [{ id: 'ordinary' }] }; },
+      runPlan: async (plan, options) => {
+        calls.push(...plan.steps.map(item => item.id)); assert.equal(options.reuse, !short);
+        assert.equal(plan.steps.length, 1);
+        if (short) assert.deepEqual(plan.steps[0].command.slice(2), ['origin', 'v1.0.1', A, C, B, 'same']);
+        return { status: 'passed', results: [], id: 'receipt', name: 'report' };
+      },
+      fallback: { runS6: async () => { calls.push('fallback'); return { outcome: 'passed', receipt: { status: 'passed' } }; } },
+    };
+    const result = await finishTask({ config, event: { id: 'finish', issue: 1, branch: 'issue/1', s6,
+      request: { proof, profile: 'published-return' } }, queue: h.queue, api: h.dependencies.api, git: h.dependencies.git,
+      review: h.dependencies.review, dependencies, maxWaitMs: 1000 });
+    assert.equal(result.action, 'merged');
+    assert.deepEqual(calls, short ? ['published-return:git'] : s6 === 'github' ? ['fallback'] : ['prepare', 'plan', 'ordinary']);
+    assert.equal(h.actions.includes('review'), !short);
   }
 });
 

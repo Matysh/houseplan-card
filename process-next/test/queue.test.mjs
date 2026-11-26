@@ -303,13 +303,29 @@ test('remote review resumes after lease expiry without asking a departed executo
 
 test('verified published-release review is reused only for the exact synchronized patch, without an empty S7', () => {
   for (const patchId of ['same-patch', 'different-patch']) {
-    const h = harness(); h.event({ type: 'enqueue', task: task(1, 'show') }); h.event({ type: 'admit' }); const token = h.state.active.token;
+    const h = harness(); h.event({ type: 'enqueue', task: { ...task(1, 'show'), syncMode: 'merge', mergeSourceSha: B, releaseTag: 'v1.2.3' } });
+    h.event({ type: 'admit' }); const token = h.state.active.token;
     h.event({ type: 'synchronized', issue: 1, token, expectedBase: A, materialSha: B, patchId: 'same-patch',
-      review: { source: 'published-release', tag: 'v1.2.3', sourceSha: B, patchId } });
+      review: { source: 'published-release', tag: 'v1.2.3', sourceSha: B, verdict: 'accepted', expectedBase: A, materialSha: B, patchId } });
     h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
     assert.equal(h.state.active.phase, patchId === 'same-patch' ? 'ready-to-merge' : 'review');
     assert.equal(h.state.tasks[1].status, patchId === 'same-patch' ? 'S6-in-progress' : 'S7-code-review');
   }
+});
+
+test('a published review cannot survive resynchronization without new exact proof, even at the same patch', () => {
+  const h = harness(), sourceSha = 'c'.repeat(40), releaseTag = 'v1.2.3';
+  const token = prepared(h, { ...task(1), syncMode: 'merge', mergeSourceSha: sourceSha, releaseTag });
+  h.event({ type: 'resynchronize', issue: 1, token });
+  const review = { source: 'published-release', tag: releaseTag, sourceSha, verdict: 'accepted', expectedBase: A, materialSha: B, patchId: B };
+  h.event({ type: 'synchronized', issue: 1, token, expectedBase: A, materialSha: B, review });
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
+  assert.equal(h.state.active.phase, 'ready-to-merge');
+  h.event({ type: 'resynchronize', issue: 1, token });
+  h.event({ type: 'synchronized', issue: 1, token, expectedBase: sourceSha, materialSha: B, review });
+  assert.equal(h.state.tasks[1].review, undefined);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
+  assert.equal(h.state.active.phase, 'review');
 });
 
 test('an observed track updates waiting priority and never skips unfinished S6', () => {

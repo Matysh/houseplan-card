@@ -1087,8 +1087,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'dialog-return-focus-ring-flashes-976',
     guard: 'node demo/smoke_ui_polish_976.mjs',
-    because: '#976 AC5 requires a browser: actual Escape/restored focus and its computed outline must differ from deliberate subsequent Tab focus, not a CSS source string.',
-    patches: [{ file: 'src/dialog-return-focus.ts', find: "opener.classList.add('hp-dialog-return-focus');", replace: "opener.classList.remove('hp-dialog-return-focus');" }],
+    because: '#976 AC5 and #1428: Escape restores native focus without painting the ordinary button border used for deliberate Tab navigation.',
+    patches: [{ file: 'src/dialog-return-focus.ts',
+      find: "opener.classList.add('hp-dialog-return-focus');",
+      replace: "opener.classList.add('hp-dialog-return-focus', 'hpf-tab-focus');",
+    }],
   },
   {
     id: 'device-maintenance-promoted-to-alarm-972',

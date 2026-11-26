@@ -59,9 +59,14 @@ async function fixture(t, { reusedBranch = false, lostCreate = false, oldCycle =
       const queued = (await queue.store.read()).state.tasks[9]; assert.equal(queued.releaseTag, candidate.tag);
       const state = await queue.dispatch({ id: 'admit', type: 'admit' }), token = state.active.token;
       await queue.dispatch({ id: 'sync', type: 'synchronized', issue: 9, token, expectedBase: A, materialSha: C, patchId: C,
-        review: { source: 'published-release', verdict: 'accepted', patchId: C } });
-      await prepareEnvironment();
-      await queue.dispatch({ id: 's6', type: 's6-complete', issue: 9, token, materialSha: C, outcome: 'passed' });
+        review: preparedCycle ? null : { source: 'published-release', verdict: 'accepted', expectedBase: A,
+          materialSha: C, sourceSha: B, tag: candidate.tag, patchId: C } });
+      if (preparedCycle) await prepareEnvironment();
+      const checked = await queue.dispatch({ id: 's6', type: 's6-complete', issue: 9, token, materialSha: C, outcome: 'passed' });
+      if (checked.active.phase === 'review') {
+        assert.ok(preparedCycle, 'only a return with added cycle metadata needs review in this fixture');
+        await queue.dispatch({ id: 'reviewed', type: 'review-complete', issue: 9, token, materialSha: C, verdict: 'accepted' });
+      }
       await queue.dispatch({ id: 'merged', type: 'merged', issue: 9, token, materialSha: C, actualDevSha: C });
       included = true; if (preparedCycle) cycle = preparedCycle;
       await api.moveStatus(9, 'S8-merged'); return { action: 'merged' };
@@ -78,7 +83,7 @@ test('stable completion advances the cycle through the same return queue even if
     const result = await completePublishedRelease({ candidate, api: f.options.api, onUpdate: async () => {},
       announce: async () => ({ status: 'not-required' }),
       returnToDev: request => returnPublishedHistory({ ...f.options, ...request }) });
-    assert.equal(result.status, 'completed'); assert.equal(f.finished, 1); assert.equal(f.created, 1);
+    assert.equal(result.status, 'completed'); assert.equal(f.finished, 1); assert.equal(f.created, 1); assert.equal(f.installations, 1);
     assert.deepEqual(f.cycle, { schema: 1, baseStable: 'v1.1.0', targetStable: 'v2.0.0', milestone: { number: 8, title: '2.0.0' } });
     await returnPublishedHistory({ ...f.options, previous: result.candidate.completion['return-to-dev'] });
     assert.equal(f.finished, 1); assert.equal(f.created, 1);
@@ -112,7 +117,7 @@ test('a waiting stable return resumes its persisted cycle after milestone invent
 test('published history reaches dev through queued S6 and closes its service issue; retry does no work', async t => {
   const f = await fixture(t), result = await returnPublishedHistory(f.options);
   assert.equal(result.status, 'completed'); assert.equal(result.devSha, C);
-  assert.equal(f.created, 1); assert.equal(f.finished, 1); assert.equal(f.installations, 1);
+  assert.equal(f.created, 1); assert.equal(f.finished, 1); assert.equal(f.installations, 0);
   assert.equal(f.updates[0].result.issue, 9); assert.ok(f.updates[0].result.branch);
   assert.equal(f.issues.get(9).state, 'closed'); assert.deepEqual(f.issues.get(9).labels.sort(), ['infra', 'track:show']);
   assert.equal((await f.queue.store.read()).state.tasks[9].status, 'S8-merged');
