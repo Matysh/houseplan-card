@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27225,
-  "nextTicket": 743,
+  "revision": 27226,
+  "nextTicket": 744,
   "nextFence": 743,
   "tasks": {
     "1001": {
@@ -6221,6 +6221,20 @@
         "status": "published",
         "sourceSha": "0cbebe62bf00edd3689b691be6fbaa71cd5f9a84"
       }
+    },
+    "1587": {
+      "issue": 1587,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1587-warm-floor-wall-base",
+      "materialSha": "828dafd96f4764c090bd07558a13f921c239bf4f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 743,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795721426086,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6898,7 +6912,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1587
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -6948,6 +6964,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:2e7c9843-f95d-42b9-af53-268bae2144f8": {
+      "digest": "292b14fc5f703c18513e44222cb4fbd6da38595471f90e9b42ca27a60ed7d9b0",
+      "issue": 1587,
+      "message": {
+        "kind": "queued",
+        "issue": 1587,
+        "at": 1795721426086,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "828dafd96f4764c090bd07558a13f921c239bf4f"
       }
     }
   },
