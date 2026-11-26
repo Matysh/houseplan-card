@@ -8,6 +8,12 @@
 - Use one Git-only S6 check for a proven clean return of an exact published tag to dev; keep normal checks and review for manual or conflicted returns (#1583).
 - Keep window sunlight on the floor in WebGL 3D and soften the edge of the light patch at high zoom (#1580).
 
+## v2.0.0-beta.2 — 2026-11-26
+
+- Home Assistant automations can show and clear Attention and Alarm signals for devices or entities placed on the plan. An open plan restores active signals after reconnecting or restarting HA (#1001).
+- In WebGL 3D, sunlight from windows stays on the floor and has soft edges. Lamps and LED strips continue to light walls (#1580).
+- Restore the dialog focus handoff check in mutation testing (#1581). Check the merge result when automatically returning an exact published tag to dev (#1583).
+
 ## v2.0.0-beta.1 — 2026-11-26
 
 - Use native WebGL for the volumetric plan: physical wall, opening, furniture and device depth, with lights on floors and walls. Keep the existing 2D editors and flat SVG export (#1514, #1566, #1567).
