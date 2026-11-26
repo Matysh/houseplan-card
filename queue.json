@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 26154,
+  "revision": 26155,
   "nextTicket": 724,
   "nextFence": 724,
   "tasks": {
@@ -6618,7 +6618,7 @@
       "ownerDecision": null,
       "ticket": 723,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1795672789851,
       "reviewEntry": 2,
       "patchId": "684c3621a30b274c6174213732c623bc7ccbc73f",
@@ -6630,14 +6630,13 @@
         "src/plan-3d-light-field.ts"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795672716648,
-        "entry": 1,
-        "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed",
-        "eventId": "finish:2cfda14b-a853-4c5c-87bd-8bb0c7589f79:finish:3:return:return:1577"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1795674301442,
+        "entry": 2,
+        "requestId": "review:1577:2:684c3621a30b274c6174213732c623bc7ccbc73f:6560b865829e17fcc46247d422c7ec2dc1752945"
       },
       "s6": {
         "id": "20261126T060817136-bb0a0264",
@@ -6661,6 +6660,11 @@
         "at": 1795674073962,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1577:2:684c3621a30b274c6174213732c623bc7ccbc73f:6560b865829e17fcc46247d422c7ec2dc1752945",
+        "at": 1795674301442
       }
     }
   },
@@ -7354,19 +7358,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1577,
-    "worker": "github-coordinator",
-    "token": "723:github:45766005074:1:tick:2:admit",
-    "fence": 723,
-    "materialSha": "0e6b5d680a6b179457d4be8d7383018e29e3bb32",
-    "expectedBase": "6560b865829e17fcc46247d422c7ec2dc1752945",
-    "phase": "review",
-    "admittedAt": 1795673277887,
-    "expiresAt": 1795677653131,
-    "patchId": "684c3621a30b274c6174213732c623bc7ccbc73f",
-    "reviewRequest": "review:1577:2:684c3621a30b274c6174213732c623bc7ccbc73f:6560b865829e17fcc46247d422c7ec2dc1752945"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7542,6 +7534,10 @@
     },
     "finish:03642858-9b92-4bae-9706-ba69dfd5dfb7:finish:6:review-presentation": {
       "digest": "cfa2ba620b36e6eb2da698a826ac6833d7fa839f4e98e1b39efdc859ba3912c0",
+      "issue": 1577
+    },
+    "finish:03642858-9b92-4bae-9706-ba69dfd5dfb7:finish:6:return": {
+      "digest": "d69b386d5fccbe7e8a6f698bd432231344d44c9f85133fbdba650eaa49329537",
       "issue": 1577
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
