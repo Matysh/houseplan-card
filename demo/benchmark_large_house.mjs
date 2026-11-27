@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launch } from './serve.mjs';
+import { launch, launchColdView } from './serve.mjs';
 import { collectModeTransitionSamples } from './performance/mode-transition.mjs';
 import { LARGE_HOUSE_COUNTS, makeLargeHouseFixture } from './fixtures/large-house.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
@@ -115,6 +115,41 @@ if (planSnap) {
 }
 const viewport = { width: 1440, height: 1000 };
 
+function fixtureHass(fixture, onRequest = () => {}) {
+  const connection = {
+    subscribeEvents: async () => () => undefined,
+    subscribeMessage: async () => () => undefined,
+  };
+  return {
+    language: 'en', locale: { language: 'en' },
+    user: { id: 'perf', name: 'Performance fixture', is_admin: true },
+    devices: fixture.devices, entities: fixture.entities, areas: fixture.areas,
+    floors: {
+      one: { floor_id: 'one', name: 'One', level: 0 },
+      two: { floor_id: 'two', name: 'Two', level: 1 },
+      three: { floor_id: 'three', name: 'Three', level: 2 },
+    },
+    callWS: async (message) => {
+      onRequest();
+      if (message.type === 'houseplan/config/get')
+        return { config: structuredClone(fixture.config), rev: 1, can_write: true };
+      if (message.type === 'houseplan/layout/get')
+        return { layout: structuredClone(fixture.layout), rev: 1 };
+      if (message.type === 'config/device_registry/list') return Object.values(fixture.devices);
+      if (message.type === 'config/entity_registry/list') return Object.values(fixture.entities);
+      if (message.type === 'config_entries/get')
+        return [{ entry_id: 'perf_entry', domain: 'houseplan_perf', title: 'Synthetic performance fixture' }];
+      if (message.type === 'manifest/list') return [{ domain: 'houseplan_perf', name: 'House Plan Performance' }];
+      return { ok: true };
+    },
+    callService: async () => undefined,
+    connection,
+    localize: () => null,
+    formatEntityState: (state) => state.state,
+    config: { unit_system: { length: 'km' } },
+  };
+}
+
 const { page, browser } = await launch(
   viewport,
   1,
@@ -148,6 +183,7 @@ await page.addScriptTag({
 });
 const chromium = await browser.version();
 await page.addScriptTag({ content: `window.__hpTestSurfaceReady=${testSurfaceReady.toString()};` });
+await page.addScriptTag({ content: `window.__hpFixtureHass=${fixtureHass.toString()};` });
 let buildFingerprint;
 try {
   buildFingerprint = await assertFreshDemoBundle(page, targetRoot);
@@ -400,38 +436,7 @@ try {
         rotation: planRotation,
       });
       let wsCalls = 0;
-      const connection = {
-        subscribeEvents: async () => () => undefined,
-        subscribeMessage: async () => () => undefined,
-      };
-      const hassBase = {
-        language: 'en', locale: { language: 'en' },
-        user: { id: 'perf', name: 'Performance fixture', is_admin: true },
-        devices: fixture.devices, entities: fixture.entities, areas: fixture.areas,
-        floors: {
-          one: { floor_id: 'one', name: 'One', level: 0 },
-          two: { floor_id: 'two', name: 'Two', level: 1 },
-          three: { floor_id: 'three', name: 'Three', level: 2 },
-        },
-        callWS: async (message) => {
-          wsCalls++;
-          if (message.type === 'houseplan/config/get')
-            return { config: structuredClone(fixture.config), rev: 1, can_write: true };
-          if (message.type === 'houseplan/layout/get')
-            return { layout: structuredClone(fixture.layout), rev: 1 };
-          if (message.type === 'config/device_registry/list') return Object.values(fixture.devices);
-          if (message.type === 'config/entity_registry/list') return Object.values(fixture.entities);
-          if (message.type === 'config_entries/get')
-            return [{ entry_id: 'perf_entry', domain: 'houseplan_perf', title: 'Synthetic performance fixture' }];
-          if (message.type === 'manifest/list') return [{ domain: 'houseplan_perf', name: 'House Plan Performance' }];
-          return { ok: true };
-        },
-        callService: async () => undefined,
-        connection,
-        localize: () => null,
-        formatEntityState: (state) => state.state,
-        config: { unit_system: { length: 'km' } },
-      };
+      const hassBase = window.__hpFixtureHass(fixture, () => { wsCalls++; });
       const hassFor = (states) => ({ ...hassBase, states });
 
       const loadLongTasks = startLongTaskWindow();
@@ -1514,6 +1519,25 @@ try {
       } catch (error) {
         row.modeTransitions = { status: 'unavailable', diagnostic: true, reason: error.message, rows: [] };
         console.log('Диагностика переходов недоступна: ' + error.message);
+      }
+      try {
+        if (row.modeTransitions.status !== 'measured') throw Error('Warm editor diagnostic unavailable');
+        await page.evaluate(async () => {
+          const card = window.__hpModeDiagnosticCard;
+          const floor = card._model.find(space => space.id !== card._space)?.id;
+          if (!floor) throw Error('Missing comparison floor');
+          card._pickSpace(floor);
+          const deadline = performance.now() + 5000;
+          while (card._space !== floor || !window.__hpTestSurfaceReady(card, 'view')) {
+            if (performance.now() > deadline) throw Error('Comparison floor did not settle');
+            await new Promise(requestAnimationFrame);
+          }
+          await card.updateComplete;
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        });
+        row.afterFloorSwitch = await page.evaluate(collectModeTransitionSamples, { fixture: profile, afterFloorSwitch: true });
+      } catch (error) {
+        row.afterFloorSwitch = { reason: error.message, rows: [] };
       } finally {
         await page.evaluate(() => { window.__hpModeDiagnosticCard?.remove(); delete window.__hpModeDiagnosticCard; });
         await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -1552,6 +1576,51 @@ try {
   await browser.close();
 }
 
+// Fresh browser and document for each mode. A new card on the warm
+// benchmark page would still have the editor modules in the module map.
+async function coldModeDiagnostics() {
+  const result = { rows: [], failures: [] };
+  if (!cardSource.includes('_editorRuntimeLoader')) {
+    result.failures.push('Comparison bundle has no lazy editor runtime');
+    return result;
+  }
+  for (let sample = 0; sample < samples; sample++) {
+    for (const mode of ['plan', 'devices', 'decor']) {
+      let coldBrowser;
+      try {
+        const launched = await launchColdView(viewport, 1, [], { reducedMotion: 'no-preference' },
+          resolve(targetRoot, 'demo/srv'), targetRoot);
+        const coldPage = launched.page;
+        coldBrowser = launched.browser;
+        await coldPage.addScriptTag({ content: [
+          'window.__hpFixtureHass=' + fixtureHass.toString(),
+          'window.__hpTestSurfaceReady=' + testSurfaceReady.toString(),
+        ].join(';') });
+        await coldPage.evaluate((data) => {
+          const card = document.createElement('houseplan-card');
+          card.setConfig({ type: 'custom:houseplan-card', title: 'Cold editor benchmark', icon_size: 3.4 });
+          document.getElementById('host').replaceChildren(card);
+          window.__hpModeDiagnosticCard = card;
+          card.hass = { ...window.__hpFixtureHass(data), states: data.states };
+        }, fixture);
+        await coldPage.waitForFunction(floors => {
+          const card = window.__hpModeDiagnosticCard;
+          return card?._model?.length === floors && window.__hpTestSurfaceReady(card, 'view') && !card._bootFading;
+        }, fixture.counts.floors, { timeout: 10000 });
+        await coldPage.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        const measured = await coldPage.evaluate(collectModeTransitionSamples, { fixture: profile, coldTarget: mode });
+        result.rows.push({ ...measured.rows[0], sample });
+      } catch (error) {
+        result.failures.push(mode + ' sample ' + sample + ': ' + error.message);
+      } finally {
+        await coldBrowser?.close();
+      }
+    }
+  }
+  return result;
+}
+
+const coldModes = profile === 'large-house-v1' ? await coldModeDiagnostics() : null;
 const metricNames = [
   'modelReadyMs', 'firstStableRenderMs', 'spaceSwitchMs', 'stateUpdateMs',
   'resizePreviewMs', 'panZoomMs', 'settingsDialogMs', 'switchCycleMs',
@@ -1594,6 +1663,15 @@ const report = {
     diagnostic: true, viewport, deviceScaleFactor: 1, reducedMotion: false,
     cadence: 'RAF samples are proxies; actual presentation requires an addressed trace',
     rows: rows.flatMap(row => row.modeTransitions?.rows ?? []),
+    cold: coldModes,
+    afterFloorSwitch: {
+      rows: rows.flatMap(row => row.afterFloorSwitch?.rows ?? []),
+      failures: rows.map(row => row.afterFloorSwitch?.reason).filter(Boolean),
+    },
+    switchCycle: {
+      switches: 12, warmup: 'writer, editor runtime installed, all floors visited',
+      samplesMs: rows.map(row => row.switchCycleMs),
+    },
     failures: rows.filter(row => row.modeTransitions?.status !== 'measured').map(row => row.modeTransitions?.reason ?? 'not measured'),
   } } : {}),
   note: `Compare with a base-SHA report captured by the same runner and evaluate the ${profile} budget.`,

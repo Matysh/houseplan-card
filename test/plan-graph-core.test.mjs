@@ -120,6 +120,30 @@ test('legacy open spans/open_to, key thickness, partial zero run and opening exc
   const carrier=door.graph.edges.find(e=>e.id===door.space.openings[0].host.id);
   assert.equal(carrier.cm,15,'real masonry under the opening survives legacy zero run');
 });
+test('legacy contact bounds keep near overlays and opening hosts without masking malformed overlays', () => {
+  const near = 2e-7;
+  const input = {
+    id: 'contact-bounds', rooms: [],
+    wall_segments: [{ id: 'wall', a: [0, 0], b: [1, 0], cm: 15 }],
+    walls: [
+      { a: [.25, near], b: [.75, near], cm: 15 },
+      { a: [.125, near * 10], b: [.875, near * 10], cm: 20 },
+    ],
+    openings: [
+      { id: 'near', type: 'door', x: .5, y: near, length: .1, angle: 0 },
+      { id: 'far', type: 'door', x: .9, y: near * 10, length: .1, angle: 0 },
+    ],
+  };
+  const migrate = space => G.migrateGraphSpace(space, { sourceModelVersion: 10 });
+  const result = migrate(input);
+  assert.deepEqual(result.space.wall_segments.map(wall => [wall.a[0], wall.b[0]]),
+    [[0, .25], [.25, .75], [.75, 1]]);
+  assert.deepEqual(result.space.openings[0].host, { kind: 'wall', id: 'wall~1', tq: ['1', '2'], t: .5 });
+  assert.equal(result.space.openings[1].host, undefined);
+  const malformed = structuredClone(input);
+  malformed.walls[1].b = [.875];
+  assert.throws(() => migrate(malformed), /plan-exact:format:point/);
+});
 test('legacy room wall IDs are lineage when catalogue is absent; props and host exact projection survive',()=>{
   const space={id:'old',rooms:[{id:'r',poly:[[0,0],[1,0],[1,1],[0,1]],wall_ids:['a','b','c','d']}],
     walls:[{key:'0.500000,0.000000@0.0000',cm:15}]};

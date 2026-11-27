@@ -241,13 +241,20 @@ test('#1344 slow transition diagnostics are visible and cannot become release ga
   candidate.transition_diagnostics = { status: 'measured', rows: [{
     from: 'view', to: 'plan', firstMotionMs: 5000, rafSamples: 1,
     maxFrameGapMs: 5000, afterToInteractiveMs: 5000,
-  }] };
+  }], cold: { rows: [
+    { to: 'plan', firstMotionMs: 300, moduleLoadMs: 75, runtimeReadyMs: 250, firstLongTaskMs: 90, settledMs: 600 },
+    { to: 'plan', firstMotionMs: 500, moduleLoadMs: 125, runtimeReadyMs: 350, firstLongTaskMs: null, settledMs: 800 },
+  ] }, afterFloorSwitch: { rows: [{ firstMotionMs: 90 }, { firstMotionMs: 100 }] },
+  switchCycle: { switches: 12, samplesMs: [1100, 1110, 1300] } };
   const result = compareMeasurements(candidate, base, base);
   assert.deepEqual(result.primary, previous.primary);
   assert.equal(result.ready, previous.ready);
   assert.equal(result.requiresDecision, previous.requiresDecision);
   assert.match(renderMetrics(result), /Переходы режимов.*диагностика, не блокирует/);
   assert.match(renderMetrics(result), /5000.0/);
+  assert.match(renderMetrics(result), /plan \| 2 \| 400\.0 \| 100\.0 \| 300\.0 \| 90\.0 \| 700\.0/);
+  assert.match(renderMetrics(result), /Первый вход в «План» после смены этажа.*95\.0 мс/);
+  assert.match(renderMetrics(result), /Цикл 12 смен этажей.*1110\.0 мс/);
   assert.ok(!Object.keys(POLICY).some(key => /mode|transition/i.test(key)));
   candidate.transition_diagnostics = { status: 'unavailable', failures: ['browser did not settle'] };
   const missing = compareMeasurements(candidate, base, base);

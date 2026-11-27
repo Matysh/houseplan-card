@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1595,
+  "baseStable": "v1.86.1",
+  "category": "stable-fix",
+  "rationale": "Reduce delays in editor entry and floor navigation that were introduced in the stable line.",
+  "summary": {
+    "ru": "Ускорен первый вход в редакторы и цикл смены этажей в «Просмотре» с загруженным редактором.",
+    "en": "Speed up first editor entry and repeated floor switches in View with the editor loaded."
+  }
+}

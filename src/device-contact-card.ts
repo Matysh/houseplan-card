@@ -9,12 +9,13 @@ import { iconUnit } from './space-geometry';
 import type { DevItem, SpaceModel } from './types';
 import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DeviceHitController } from './device-hit-owner';
-import { floorGeometryKeyReader, type FloorKeySource } from './floor-geometry-key';
+import { floorGeometryKeyReader, WALL_UNION_POOL_LIMIT, type FloorKeySource } from './floor-geometry-key';
 import type { HassRenderSnapshot } from './render-invalidation';
 import type { PlanRotation } from './view-frame';
 import { isoDisplayWallHeight, type IsoCamera } from './iso-projection';
 import { gridVisualUnits } from './grid-scale';
 import { markerHeightGeometry } from './marker-height';
+import { lruRead, lruWrite } from './card-runtime';
 
 interface ContactCard extends FloorKeySource {
   renderRoot: ParentNode;
@@ -59,7 +60,7 @@ export function contactValueFrameChanged(value:object,renderer:DeviceContactRend
   }
   return false;
 }
-const wallCache = new WeakMap<object, { key: string; walls: ReturnType<typeof deviceContactWalls>; masonry: ContactMasonry }>();
+const wallCache = new WeakMap<object, Map<string, { walls: ReturnType<typeof deviceContactWalls>; masonry: ContactMasonry }>>();
 const wallKeys = new WeakMap<object, (spaceId: string) => string>();
 export function syncHouseplanDeviceContacts(value: object, renderer: DeviceContactRenderer): void {
   const host = value as ContactCard, space = host._spaceModel();
@@ -76,11 +77,14 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
   let keyOf = wallKeys.get(host);
   if (!keyOf) { keyOf = floorGeometryKeyReader(host); wallKeys.set(host, keyOf); }
   const key = `${keyOf(space.id)}|${visible}`;
-  let wall = wallCache.get(host);
-  if (wall?.key !== key) {
+  let cache = wallCache.get(host);
+  if (!cache) { cache = new Map(); wallCache.set(host, cache); }
+  const cached = lruRead(cache, key);
+  let wall = cached.hit ? cached.value : undefined;
+  if (!wall) {
     const masonry = visible ? host._wallUnionGeometry()?.components.flatMap((c) => c.geom) || [] : [];
-    wall = { key, masonry, walls: visible ? deviceContactWalls(masonry, host._zeroWalls().lines) : [] };
-    wallCache.set(host, wall);
+    wall = { masonry, walls: visible ? deviceContactWalls(masonry, host._zeroWalls().lines) : [] };
+    lruWrite(cache, key, wall, WALL_UNION_POOL_LIMIT);
   }
   const size = host._config?.icon_size ?? 2.5;
   const unit = iconUnit(space) / 100;

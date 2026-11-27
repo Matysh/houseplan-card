@@ -123,7 +123,10 @@ await page.evaluate(() => {
       while (c._modeTransitionBusy && performance.now() - started < 3000);
       await settle(); const end = modePaint(); samples.push(end);
       const peak = key => Math.max(...samples.map(sample => sample[key][1]));
-      return {sameNode: nodes.length ? nodes.length === 2 && nodes.every((node,index)=>node === modeSurfaces()[index] && node.isConnected) : room() === node, from: start.cls, to: end.cls,
+      const endpoints = modeSurfaces();
+      const expected = c._mode === 'plan' ? 2 : nodes.length;
+      return {sameNode: nodes.length ? endpoints.length === expected && nodes.every(node => endpoints.includes(node) && node.isConnected)
+        : room() === node, from: start.cls, to: end.cls,
         properties: ['shared-mode-timeline'], frozen: true,
         spansBothEnds: samples.some(sample => sample.fill[1] > Math.min(start.fill[1], end.fill[1]) + .005
           && sample.fill[1] < Math.max(start.fill[1], end.fill[1]) - .005),

@@ -1,12 +1,17 @@
 /** Browser-side diagnostic. RAF callbacks are proxies, not compositor proof.
  * Serialized by Playwright; keep this function independent of module imports. */
-export async function collectModeTransitionSamples({ fixture = 'large-house-v1', samples = 1 } = {}) {
+export async function collectModeTransitionSamples({ fixture = 'large-house-v1', samples = 1, coldTarget = null, afterFloorSwitch = false } = {}) {
   const card = window.__hpModeDiagnosticCard || window.__card;
-  if (!card || !card._editorRuntime) throw Error('Mode diagnostic requires a warm editor');
+  if (coldTarget) {
+    if (!card?._editorRuntimeLoader || card._mode !== 'view' || card._editorRuntime
+        || performance.getEntriesByType('resource').some(entry => entry.name.includes('/houseplan-editor-runtime'))) {
+      throw Error('Cold diagnostic requires an untouched View and unloaded module');
+    }
+  } else if (!card?._editorRuntime) throw Error('Mode diagnostic requires a warm editor');
   const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
-  const ready = async () => {
+  const ready = async (expected = card._mode) => {
     const start = performance.now();
-    while (card._modeTransitionBusy) {
+    while (card._mode !== expected || card._modeTransitionBusy || card._stageEl?.inert) {
       if (performance.now() - start > 5000) throw Error('Mode diagnostic did not settle');
       await frame();
     }
@@ -14,15 +19,46 @@ export async function collectModeTransitionSamples({ fixture = 'large-house-v1',
     await frame(); await frame();
   };
   const rows = [], initialMode = card._mode;
+  const transitions = coldTarget || afterFloorSwitch ? [['view', coldTarget ?? 'plan']] : [['view', 'plan'], ['plan', 'view'],
+    ['view', 'devices'], ['devices', 'view'], ['view', 'decor'], ['decor', 'view'], ['plan', 'devices']];
   const buildCounts = () => ({ ...card._modeSceneBuilds, ...Object.fromEntries(
     Object.entries(card._editorRuntime?.modeSceneBuilds ?? {}).map(([key, value]) => ['editor:' + key, value])) });
   try {
-  for (let sample = 0; sample < samples; sample++) {
-    for (const [from, to] of [['view', 'plan'], ['plan', 'view'], ['view', 'devices'],
-      ['devices', 'view'], ['view', 'decor'], ['decor', 'view'], ['plan', 'devices']]) {
+  for (let sample = 0; sample < (coldTarget ? 1 : samples); sample++) {
+    for (const [from, to] of transitions) {
       if (card._mode !== from) { card._setMode(from); await ready(); }
       await ready();
       const updates = [], frames = [], originals = {};
+      const longTasks = [];
+      const loaderOptions = coldTarget ? card._editorRuntimeLoader.options : null;
+      let taskObserver, moduleLoadMs = null, runtimeReadyMs = null;
+      if (loaderOptions) {
+        const load = originals.load = loaderOptions.load;
+        loaderOptions.load = async function (...args) {
+          const at = performance.now();
+          try {
+            const module = await load.apply(this, args);
+            if (!module.prepare) return module;
+            return { ...module, async prepare(...prepareArgs) {
+              const before = performance.now();
+              try { return await module.prepare(...prepareArgs); }
+              finally { moduleLoadMs += performance.now() - before; }
+            } };
+          } finally {
+            moduleLoadMs = (moduleLoadMs ?? 0) + performance.now() - at;
+          }
+        };
+        const ensure = originals.ensure = card._ensureEditorRuntime;
+        card._ensureEditorRuntime = async function (...args) {
+          const ready = await ensure.apply(this, args);
+          runtimeReadyMs = performance.now() - started;
+          return ready;
+        };
+        if (PerformanceObserver.supportedEntryTypes.includes('longtask')) {
+          taskObserver = new PerformanceObserver(list => longTasks.push(...list.getEntries()));
+          taskObserver.observe({ type: 'longtask' });
+        }
+      }
       const startBuilds = card._modeSceneBuilds || card._editorRuntime?.modeSceneBuilds ? buildCounts() : null;
       let started = 0, endpoint = null, interactive = null, rafIndex = 0, sampling = true, raf = 0;
       const mark = 'hp-mode:' + fixture + ':' + sample + ':' + from + '-' + to;
@@ -66,9 +102,14 @@ export async function collectModeTransitionSamples({ fixture = 'large-house-v1',
       };
       try {
         started = performance.now(); performance.mark(mark + ':start');
-        card._setMode(to);
-        await ready();
+        if (coldTarget || afterFloorSwitch) {
+          const button = card.renderRoot.querySelector('[data-hp="mode-tab"][data-mode="' + to + '"]');
+          if (!button) throw Error('Editor navigation is not available');
+          button.click();
+        } else card._setMode(to);
+        await ready(to);
         const end = performance.now();
+        if (taskObserver) longTasks.push(...taskObserver.takeRecords());
         const builds = startBuilds && Object.fromEntries(Object.entries(buildCounts())
           .map(([key, value]) => [key, value - (startBuilds[key] || 0)]));
         rows.push({ fixture, sample, from, to, firstMotionMs: frames[0]?.at ?? null,
@@ -79,20 +120,27 @@ export async function collectModeTransitionSamples({ fixture = 'large-house-v1',
           afterToInteractiveMs: endpoint === null || interactive === null ? null : interactive - endpoint,
           afterToReadyMs: endpoint === null ? null : end - endpoint,
           finalUpdates: endpoint === null ? null : updates.filter(value => value.at >= endpoint - started).length,
-          updates, frames, partBuilds: builds, inertAfter: stage.inert,
+          updates, frames, partBuilds: builds, inertAfter: card._stageEl.inert,
+          ...(coldTarget ? { moduleLoadMs, runtimeReadyMs, settledMs: end - started,
+            firstLongTaskMs: longTasks.find(task => task.startTime + task.duration >= started)?.duration ?? null } : {}),
           sceneNodes: card.renderRoot.querySelectorAll('.zoomwrap *').length });
       } finally {
         observer.disconnect(); sampling = false; cancelAnimationFrame(raf);
         card.performUpdate = originals.update;
         card._applyModeTransitionFrame = originals.frame;
+        taskObserver?.disconnect();
+        if (loaderOptions) {
+          loaderOptions.load = originals.load;
+          card._ensureEditorRuntime = originals.ensure;
+        }
       }
     }
   }
   } finally {
-    if (card._mode !== initialMode) { card._setMode(initialMode); await ready(); }
+    if (!coldTarget && card._mode !== initialMode) { card._setMode(initialMode); await ready(); }
   }
   return { status: 'measured', diagnostic: true, reducedMotion: false,
     cadence: 'RAF callbacks are proxies; presented frames require an addressed trace',
     interactive: 'MutationObserver observes inert removal after the final commit',
-    samples, fixture, rows };
+    samples: coldTarget ? 1 : samples, fixture, rows };
 }

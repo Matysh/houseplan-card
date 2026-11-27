@@ -135,8 +135,6 @@ export function renderMetrics(report) {
 export function renderModeDiagnostics(record) {
   if (!record) return '';
   const heading = '\n## Переходы режимов — диагностика, не блокирует\n\n';
-  if (record.status !== 'measured') return heading + 'Замер недоступен: '
-    + (record.failures ?? ['нет данных']).join('; ') + '\n';
   const groups = new Map();
   for (const row of record.rows ?? []) {
     const key = row.from + ' → ' + row.to;
@@ -147,13 +145,40 @@ export function renderModeDiagnostics(record) {
     const values = rows.map(row => row[key]).filter(Number.isFinite);
     return values.length ? median(values).toFixed(1) : 'нет данных';
   };
-  return heading + 'Тёплый редактор; reduced motion выключен. RAF-сэмплы — прокси, '
+  const warm = record.status !== 'measured'
+    ? 'Замер недоступен: ' + (record.failures ?? ['нет данных']).join('; ') + '\n'
+    : 'Тёплый редактор; reduced motion выключен. RAF-сэмплы — прокси, '
     + 'не доказательство предъявления кадра. Предъявление проверяется отдельной трассой. '
     + 'Интерактивность: снятие inert после конечного commit; время ниже отсчитывается от JS-тика to, не от compositor presentation.\n\n'
     + '| Переход | Начало, мс | RAF-сэмплы | Макс. разрыв, мс | От тика to до интерактивности, мс |\n'
     + '|---|---:|---:|---:|---:|\n'
     + [...groups].map(([key, rows]) => '| ' + key + ' | '
       + ['firstMotionMs', 'rafSamples', 'maxFrameGapMs', 'afterToInteractiveMs'].map(name => value(rows, name)).join(' | ') + ' |').join('\n') + '\n';
+
+  const coldGroups = new Map();
+  for (const row of record.cold?.rows ?? []) {
+    const rows = coldGroups.get(row.to) ?? [];
+    rows.push(row);
+    coldGroups.set(row.to, rows);
+  }
+  const cold = record.cold ? [
+    '', 'Первый вход из View, без предзагрузки. Время начала движения измерено по RAF. Загрузка включает подготовку зависимостей модуля.',
+    '', '| Редактор | Замеры | Начало, мс | Загрузка, мс | Готовность рантайма, мс | Первый long task, мс | До готовности сцены, мс |',
+    '|---|---:|---:|---:|---:|---:|---:|',
+    ...[...coldGroups].map(([mode, rows]) => '| ' + mode + ' | ' + rows.length + ' | '
+      + ['firstMotionMs', 'moduleLoadMs', 'runtimeReadyMs', 'firstLongTaskMs', 'settledMs'].map(name => value(rows, name)).join(' | ') + ' |'),
+    ...(record.cold.failures ?? []).map(reason => '- Замер недоступен: ' + reason),
+    '',
+  ].join('\n') : '';
+  const floorRows = record.afterFloorSwitch?.rows ?? [];
+  const firstOnFloor = floorRows.length ? '\nПервый вход в «План» после смены этажа при загруженном редакторе. Начало движения '
+    + value(floorRows, 'firstMotionMs') + ' мс (' + floorRows.length + ' замеров).\n' : '';
+  const floorFailures = (record.afterFloorSwitch?.failures ?? []).map(reason => '\nЗамер после смены этажа недоступен: ' + reason + '\n').join('');
+  const switches = record.switchCycle?.samplesMs?.filter(Number.isFinite) ?? [];
+  const cycle = switches.length ? '\nЦикл ' + record.switchCycle.switches
+    + ' смен этажей в режиме записи после прогрева этажей и рантайма редактора. Медиана '
+    + median(switches).toFixed(1) + ' мс (' + switches.length + ' замеров).\n' : '';
+  return heading + warm + cold + firstOnFloor + floorFailures + cycle;
 }
 
 /** 3D never enters POLICY, primary, or readiness. No inferred laptop baseline. */

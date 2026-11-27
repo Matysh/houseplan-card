@@ -404,9 +404,6 @@ export class WallNodeEditor {
   dispose(): void { this.cancel(); this.deleteMenu?.dispose(); this.port.dispose?.(); this.cache = null; this.clearLive(); this.listening = false;
     this.port.document.defaultView?.removeEventListener('pagehide', this.pagehide); }
 
-  /** Populate pure topology before the first warm Plan render; no DOM or commands. */
-  prepare(): void { this.nodes(); }
-
   renderMenu(): TemplateResult | typeof nothing { return this.deleteMenu?.render() ?? nothing; }
 
   render(live = false, prepared = false): TemplateResult | typeof nothing {

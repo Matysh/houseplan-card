@@ -19,7 +19,7 @@ function harness(){
     _isoFirstFrame:{pending:()=>false},_desiredProjection:'flat',_isoSceneRuntime:null,
     _continuityAssetsReady:()=>true,_curSpaceCfg:raw,_space:'floor',planHost:{authorityKey:authority},isConnected:true,
     _floorCacheSelection:()=>({fitKey:'key'}),_rotationMotion:{running:false},_floorSourceAccepted:()=>false,
-    updateComplete:Promise.resolve(),requestUpdate(){},_setMode(mode){this.entered=mode;}});
+    updateComplete:Promise.resolve(),_cfgPass:{run:fn=>fn()},requestUpdate(){this.updates=(this.updates??0)+1;},_setMode(mode){this.entered=mode;}});
   const paint=async()=>{for(let i=0;i<8;i++){await Promise.resolve();frames.splice(0).forEach(callback=>callback(0));}};
   return{card,runtime,paint,publications:()=>publications};
 }
@@ -32,9 +32,16 @@ test('#1454 retired authority cannot consume an editor intent after the paint aw
   const h=harness();h.card._publishFloorCacheAfterPaint();h.card.planHost={authorityKey:{}};await h.paint();
   assert.equal(h.card.entered,undefined);assert.equal(h.publications(),0);
 });
-test('#1454 a changed fit/paint token cannot capture or consume an intent under the old fit',async()=>{
-  const h=harness();h.card._publishFloorCacheAfterPaint();h.runtime.paintToken='new-fit';await h.paint();
-  assert.equal(h.card.entered,undefined);assert.equal(h.publications(),0);
+test('#1595 a changed fit retargets the existing paint wait without another Lit commit',async()=>{
+  const h=harness();
+  h.card._publishFloorCacheAfterPaint();
+  h.runtime.paintToken='new-fit';
+  h.card._floorPendingMode={mode:'decor',animate:false,warm:false};
+  await h.paint();
+  assert.equal(h.card.entered,'decor');
+  assert.equal(h.card._floorPendingMode,null);
+  assert.equal(h.card.updates,undefined);
+  assert.equal(h.publications(),0);
 });
 test('#1521 a failed preparation cannot consume the queued editor request before a successful retry',async()=>{
   for(const alreadyFailed of [false,true]){

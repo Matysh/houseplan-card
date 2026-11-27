@@ -7,6 +7,37 @@ import { collectModeTransitionSamples } from './performance/mode-transition.mjs'
 
 const { page, browser } = await launch({ width: 820, height: 760 });
 page.on('console',message=>{if(message.text().startsWith('Hidden projection')||message.text().startsWith('Warm chrome geometry'))console.log(message.text());});
+const lazyScene = await page.evaluate(async () => {
+  const card = window.__card;
+  const test = window.__hpTest;
+  const hasPlanInk = () => !!card.renderRoot.querySelector('[data-hp-mode-layer="plan-base"] .hp-plan-only-layer');
+  const planBuilds = () => card._editorRuntime.modeSceneBuilds.planStatic + card._editorRuntime.modeSceneBuilds.planNodes;
+  const firstFloor = card._space;
+  const another = card._model.find(space => space.id !== firstFloor).id;
+  const sharedRooms = () => card.renderRoot.querySelector('[data-hp-mode-layer="rooms"]');
+  const hasPlanControls = () => hasPlanInk() || !!card.renderRoot.querySelector('.rlgearbtn,.rlhandle');
+  const roomsBefore = sharedRooms();
+  const installLeavesPlanCold = !hasPlanControls() && planBuilds() === 0 && !!roomsBefore;
+  await test.setMode('devices');
+  const devicesLeavesPlanCold = !hasPlanControls() && planBuilds() === 0 && sharedRooms() === roomsBefore;
+  await test.setMode('plan');
+  const planOpensWithInk = hasPlanInk() && planBuilds() > 0;
+  await test.setMode('view');
+  const warmInk = card.renderRoot.querySelector('[data-hp-mode-layer="plan-base"] .hp-plan-only-layer');
+  await test.setMode('plan');
+  const sameFloorRetainsInk = !!warmInk && warmInk === card.renderRoot.querySelector('[data-hp-mode-layer="plan-base"] .hp-plan-only-layer');
+  await test.setMode('view');
+  const beforeSwitch = planBuilds();
+  await test.switchSpace(another);
+  const nextFloorLeavesPlanCold = !hasPlanControls() && planBuilds() === beforeSwitch && sharedRooms() === roomsBefore;
+  await test.setMode('plan');
+  const newFloorOpensWithInk = card._space === another && hasPlanInk() && planBuilds() > beforeSwitch && !warmInk.isConnected;
+  await test.setMode('view');
+  await test.switchSpace(firstFloor);
+  return { installLeavesPlanCold, devicesLeavesPlanCold, planOpensWithInk, sameFloorRetainsInk,
+    nextFloorLeavesPlanCold, newFloorOpensWithInk };
+});
+
 const result = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
@@ -199,5 +230,6 @@ for(const phase of [0,1])for(const action of ['ha','camera','reduced']){
   await page.evaluate(()=>{const c=window.__card,h=window.__modeHold;c._modeTransition._clock=h.clock;c._liveRt.syncContacts=h.sync;delete window.__modeHold;});
 }
 
+Object.assign(result, lazyScene);
 checkAll(result);
 await finish(browser, result);

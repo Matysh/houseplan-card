@@ -264,6 +264,19 @@ await warm.page.evaluate(() => {
   (card.shadowRoot || card.renderRoot).querySelector('[data-hp="settings"]')?.click();
 });
 await warm.page.waitForFunction(() => !!window.__card._settingsDialog && !!window.__card._editorRuntime);
+const revivedDraft = await warm.page.evaluate(() => structuredClone(window.__card._settingsDialog));
+out.fastReconciliationPaintsRestoredSettings = await gui.page.evaluate(async draft => {
+  const card = window.__card;
+  await card._editorRuntimeLoader.preload();
+  if (card._editorRuntime) return false;
+  card._settingsDialog = draft;
+  const deadline = performance.now() + 2500;
+  do {
+    await new Promise(requestAnimationFrame);
+    if (card._editorRuntime && card.renderRoot.querySelector('hp-dialog[data-kind="settings"]')) return true;
+  } while (performance.now() < deadline);
+  return false;
+}, revivedDraft);
 await warm.page.waitForTimeout(300);
 warmChunk.net.retry = 'abort';
 const warmBefore = warmChunk.seen.length;

@@ -1251,21 +1251,6 @@ export class HouseplanEditorRuntime {
     host._resize = new ResizeController<
       ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
     >();
-    this.prepareModeScene();
-  }
-  private _preparedNodeScene: readonly unknown[] | null = null;
-  public prepareModeScene(): void {
-    if (!this.host._canEdit || this.host._kiosk || !this.host.isConnected || !this.host.renderRoot) return;
-    const inputs = [this.host._space, this.host._cfgEpoch, this.host._cfgRev, this.host._serverCfg, this.host._cellCm, this.host._gridPitch];
-    if (this._preparedNodeScene?.every((value, index) => value === inputs[index])) return;
-    this._preparedNodeScene = inputs;
-    this._loadNodeMove();
-    this.nodeMove?.prepare();
-    const space = this.host._spaceModel();
-    if (space) for (const room of space.rooms) {
-      if (this.host._resize.dragging) this.roomGear.previewCenter(room, roomPoly(room), space.id);
-      else this.roomGear.center(room, roomPoly(room), space.id);
-    }
   }
   private _planNodeInkVisible = false;
   private _renderWallNodes(warm = false): TemplateResult | typeof nothing {
@@ -10837,11 +10822,15 @@ public _rlResizeUp(): void {
 
 public _cancelRoomGearForMultitouch(): boolean { return this.roomGear.cancelForMultitouch(); }
 
-public _renderRoomGear(
+public _renderRoomGears(space: SpaceModel, view: { x: number; y: number; w: number; h: number }) {
+    this.roomGear.adoptPlan(space);
+    return space.rooms.map(room => this._renderRoomGear(room, space, view, this.host._resize.dragging));
+  }
+
+private _renderRoomGear(
     r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number }, preview: boolean,
   ): TemplateResult | typeof nothing {
     if (!r.id) return nothing;
-    this.roomGear.adoptPlan(space);
     const polygon = roomPoly(r);
     const c = preview ? this.roomGear.previewCenter(r, polygon, space.id) : this.roomGear.center(r, polygon, space.id);
     if (!c) return nothing;
