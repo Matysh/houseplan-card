@@ -6,8 +6,11 @@ and LED strips, with separate masks for the painted floor and upright
 receivers. A wall samples into its receiving side at the mask's resolution,
 and only receives light from the source's facing side. Room Glow settings
 still gate the receiving wall. Lamps keep the calibrated horizontal floor
-falloff. A ribbon emits from the same height as its visible core (including
-automatic height), and its falloff uses the full distance to floors and walls.
+falloff. A ribbon with an authored height emits from its visible core and
+uses the full distance to floors and walls. With the height unset (Auto), the
+core sits at the display cut but light retains its legacy near-floor height
+and falloff. This keeps an existing short-radius ribbon useful without
+requiring users to edit their plan.
 Source colour and intensity reuse the visibility masks. Sunlight retains
 its own footprint and transition. Pan and zoom crop the camera while the
 sources stay in plan coordinates. The prior SVG 2.5D implementation is

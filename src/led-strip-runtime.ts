@@ -696,9 +696,14 @@ export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlo
     ? field || ledField(space.id, () => host.isConnected !== false && host.requestUpdate()) : null;
   if (!module) return svg`` as unknown as TemplateResult;
   return module.renderLedField({
-    // The top is also the luminous surface in updateRibbons(), not the
-    // configured bottom offset. Keep explicit zero and automatic consistent.
-    capture: capture && ((source, device) => capture({ ...source, ribbonHeight: ledHeight(host, device, frame.d).top })),
+    capture: capture && ((source, device) => {
+      const placement = ledHeight(host, device, frame.d);
+      const automatic = placement.level === 'auto';
+      // Auto is only an icon placement fallback, not an authored elevation.
+      // An existing strip with a 30 cm radius must keep lighting nearby surfaces.
+      const height = automatic ? 2 / host._cellCm * host._gridPitch : placement.top;
+      capture({ ...source, ribbon: { height, automatic } });
+    }),
     views: frame.views,
     scene: frame.scene,
     polygons: frame.polygons,

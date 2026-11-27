@@ -4,6 +4,7 @@
 
 - Keep uploaded decor images sharp when zooming in on the 3D plan (#1618).
 - In 3D, LED strip light reaches the floor and walls from the strip's actual height (#1617).
+- In 3D, LED light on the floor and walls follows the strip's configured height. Auto keeps the previous lighting (#1617).
 
 ## v2.0.0-beta.3 — 2026-11-28
 

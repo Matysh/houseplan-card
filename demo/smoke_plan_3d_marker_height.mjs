@@ -67,7 +67,7 @@ try {
       const emitters = host.presentation.world.ribbons.map(({ id, owner, height, depth }) => {
         const light = host.presentation.world.lights.find(light => light.id.endsWith('|' + id));
         return { owner, bottom: (height - depth) / units, top: height / units,
-          light: light?.height / units, ribbonLight: light?.ribbon === true };
+          light: light?.height / units, ribbonLight: light?.ribbon === true, automatic: light?.automaticRibbon };
       });
       return { rotation: card._rotation, perspective: camera.isPerspectiveCamera, markers,
         emitters, led: { bottom: (ribbon.height - ribbon.depth) / units, top: ribbon.height / units,
@@ -96,7 +96,9 @@ try {
     assert.ok(Math.abs(state.led.bottom - 100) < 1e-7, JSON.stringify(state));
     assert.equal(state.emitters.length, 3, JSON.stringify(state.emitters));
     for (const emitter of state.emitters) {
-      assert.ok(emitter.ribbonLight && Math.abs(emitter.light - emitter.top) < 1e-7, JSON.stringify(emitter));
+      const automatic = emitter.owner === 'ribbon-auto';
+      assert.equal(emitter.automatic, automatic, JSON.stringify(emitter));
+      assert.ok(emitter.ribbonLight && Math.abs(emitter.light - (automatic ? 2 : emitter.top)) < 1e-7, JSON.stringify(emitter));
       if (emitter.owner === 'ribbon-auto') assert.ok(Math.abs(emitter.top - 140) < 1e-7);
       else assert.ok(Math.abs(emitter.bottom - markerHeights[emitter.owner]) < 1e-7);
     }

@@ -14104,10 +14104,10 @@ export class HouseplanCard extends LitElement {
           panels: isoFrame.panels, rooms: rooms3d(roomFills), furniture: furniture3d, stairs: this._stairsView.physicalItems(),
           ribbons: this._ledRt(space)?.plan3dLedRibbons(this as never, space, disp.glow),
           decorWidth: NORM_W, decorHeight: this._decorH,
-          lights: [...currentWallLights.map(({ ribbonHeight, ...source }) => ({
+          lights: [...currentWallLights.map(({ ribbon, ...source }) => ({
             ...source, id: source.key, points: source.points.map(([x, y]) => [x, y]), wallClip,
-            ribbon: ribbonHeight !== undefined,
-            height: ribbonHeight ?? 250 / this._cellCm * this._gridPitch,
+            ribbon: !!ribbon, automaticRibbon: ribbon?.automatic,
+            height: ribbon?.height ?? 250 / this._cellCm * this._gridPitch,
             intensity: source.alpha,
           } as import('./plan-3d-light-field').Plan3dLight)),
           ...sun3d.map(beam => ({

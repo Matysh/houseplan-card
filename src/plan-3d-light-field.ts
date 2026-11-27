@@ -12,8 +12,8 @@ export interface PlanLightFieldSource {
   radius: number;
   /** One point for a lamp; a continuous polyline for an LED strip. */
   points: readonly (readonly number[])[];
-  /** Height of the visible LED core in world units. Absent for ordinary Glow. */
-  ribbonHeight?: number;
+  /** Emission height in world units; absent for ordinary Glow. */
+  ribbon?: { height: number; automatic: boolean };
   visible: readonly string[];
   /** Bare transport. LED fan paths already represent transport. */
   wallVisible?: readonly string[];
@@ -35,6 +35,8 @@ export interface Plan3dLight {
   wallVisible?: readonly string[];
   wallClip?: readonly string[] | null;
   ribbon?: boolean;
+  /** Compatibility for a strip without an authored height. */
+  automaticRibbon?: boolean;
   rule?: CanvasFillRule;
   floorClip?: readonly string[] | null;
   sun?: { inward: PlanPoint; depth: number };
@@ -236,9 +238,9 @@ const LIGHT_GLSL = `
       vec3 delta = vec3(closest.x, optical.y, closest.y) - vHpWorld;
       float angle = max(dot(N, delta) / max(length(delta), 0.0001), 0.0);
       bool ribbon = sun.w < 0.0;
-      // The plan fan still supplies reachability, but the ribbon's actual
-      // distance to a receiver includes the height of its luminous surface.
-      float fall = hpFalloff((ribbon ? length(delta) : sqrt(distance2)) / optical.x);
+      // Authored LED heights use 3D distance on all surfaces. An Auto strip
+      // retains the legacy floor envelope and still tests wall distance in 3D.
+      float fall = hpFalloff((sun.w < -1.5 || (wall && ribbon) ? length(delta) : sqrt(distance2)) / optical.x);
       if (wall) {
         float facing = dot(N.xz, delta.xz);
         if (facing < (ribbon ? -uHpNormalOffset : .00001)) continue;
@@ -250,8 +252,7 @@ const LIGHT_GLSL = `
         // at the base instead of applying a zero projected cosine.
         angle = max(angle, ribbon ? .48 : .24);
       }
-      // Preserve lamp floor calibration and the ribbon's broad floor wash;
-      // the ribbon already attenuates with the full distance above.
+      // Floor wash does not add a directional cosine to the distance falloff.
       float incidence = floorReceiver ? 1.0 : angle;
       float energy = clamp(1.20 * pigment.a * visible * fall * incidence, 0.0, 1.0);
       remaining *= 1.0 - pigment.rgb * energy;
@@ -350,7 +351,8 @@ export class Plan3dLightField {
     const usable = sources.filter(source => source.radius > 0 && source.points.length && (source.visible.length || source.wallVisible?.length));
     const maskKey = JSON.stringify(usable.map(({ points, radius, visible, rule, floorClip, wallVisible, wallClip, sun }) =>
       [points, radius, visible, rule, floorClip, wallVisible, wallClip, !!sun]));
-    const opticalKey = JSON.stringify(usable.map(({ color, height, intensity, sun, ribbon }) => [color, height, intensity, sun, ribbon]));
+    const opticalKey = JSON.stringify(usable.map(({ color, height, intensity, sun, ribbon, automaticRibbon }) =>
+      [color, height, intensity, sun, ribbon, automaticRibbon]));
     const sameMask = maskKey === this.maskKey;
     const openingChanged = openings !== this.openings;
     if (sameMask && !openingChanged && opticalKey === this.opticalKey) return;
@@ -415,7 +417,7 @@ export class Plan3dLightField {
       }
       values.push(...bounds[index], source.radius, source.height, pointStart,
         source.points.length, color.r, color.g, color.b, source.intensity,
-        sun?.inward[0] ?? 0, sun?.inward[1] ?? 0, sun?.depth ?? 0, source.ribbon ? -1 : 0,
+        sun?.inward[0] ?? 0, sun?.inward[1] ?? 0, sun?.depth ?? 0, source.ribbon ? (source.automaticRibbon ? -1 : -2) : 0,
         ...this.wallBounds[index], firstHead, heads.length, heads.length ? lowest : 0, 0);
     }
     const texture = dataTexture(values.concat(points), this.texture);
