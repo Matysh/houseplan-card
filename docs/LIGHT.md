@@ -5,8 +5,9 @@ In WebGL 3D, `plan-3d-light-field.ts` uses the same optical barriers for lamps
 and LED strips, with separate masks for the painted floor and upright
 receivers. A wall samples into its receiving side at the mask's resolution,
 and only receives light from the source's facing side. Room Glow settings
-still gate the receiving wall. The floor keeps its calibrated horizontal
-falloff; the LED wash also falls with distance up an upright surface.
+still gate the receiving wall. Lamps keep the calibrated horizontal floor
+falloff. A ribbon emits from the same height as its visible core (including
+automatic height), and its falloff uses the full distance to floors and walls.
 Source colour and intensity reuse the visibility masks. Sunlight retains
 its own footprint and transition. Pan and zoom crop the camera while the
 sources stay in plan coordinates. The prior SVG 2.5D implementation is

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1617,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "Only WebGL LED lighting ignores an elevation added on the 2.0.0 line; the stable flat and legacy 2.5D light fields are unchanged.",
+  "summary": {
+    "ru": "Свет LED-лент на полу и стенах в 3D учитывает высоту ленты.",
+    "en": "3D LED light on the floor and walls uses the strip's actual height."
+  }
+}

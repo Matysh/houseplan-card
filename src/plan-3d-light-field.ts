@@ -12,6 +12,8 @@ export interface PlanLightFieldSource {
   radius: number;
   /** One point for a lamp; a continuous polyline for an LED strip. */
   points: readonly (readonly number[])[];
+  /** Height of the visible LED core in world units. Absent for ordinary Glow. */
+  ribbonHeight?: number;
   visible: readonly string[];
   /** Bare transport. LED fan paths already represent transport. */
   wallVisible?: readonly string[];
@@ -234,7 +236,9 @@ const LIGHT_GLSL = `
       vec3 delta = vec3(closest.x, optical.y, closest.y) - vHpWorld;
       float angle = max(dot(N, delta) / max(length(delta), 0.0001), 0.0);
       bool ribbon = sun.w < 0.0;
-      float fall = hpFalloff((wall && ribbon ? length(delta) : sqrt(distance2)) / optical.x);
+      // The plan fan still supplies reachability, but the ribbon's actual
+      // distance to a receiver includes the height of its luminous surface.
+      float fall = hpFalloff((ribbon ? length(delta) : sqrt(distance2)) / optical.x);
       if (wall) {
         float facing = dot(N.xz, delta.xz);
         if (facing < (ribbon ? -uHpNormalOffset : .00001)) continue;
@@ -246,8 +250,8 @@ const LIGHT_GLSL = `
         // at the base instead of applying a zero projected cosine.
         angle = max(angle, ribbon ? .48 : .24);
       }
-      // Preserve the calibrated floor envelope. World normals and emitter
-      // height distribute that light on the upright faces and raised objects.
+      // Preserve lamp floor calibration and the ribbon's broad floor wash;
+      // the ribbon already attenuates with the full distance above.
       float incidence = floorReceiver ? 1.0 : angle;
       float energy = clamp(1.20 * pigment.a * visible * fall * incidence, 0.0, 1.0);
       remaining *= 1.0 - pigment.rgb * energy;

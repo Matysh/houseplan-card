@@ -696,7 +696,9 @@ export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlo
     ? field || ledField(space.id, () => host.isConnected !== false && host.requestUpdate()) : null;
   if (!module) return svg`` as unknown as TemplateResult;
   return module.renderLedField({
-    capture,
+    // The top is also the luminous surface in updateRibbons(), not the
+    // configured bottom offset. Keep explicit zero and automatic consistent.
+    capture: capture && ((source, device) => capture({ ...source, ribbonHeight: ledHeight(host, device, frame.d).top })),
     views: frame.views,
     scene: frame.scene,
     polygons: frame.polygons,

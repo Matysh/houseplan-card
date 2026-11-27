@@ -234,6 +234,7 @@ try {
       try {
         return {
           baseline: await frame([]), lamp: await frame([wallLight]), ribbon: await frame([wallRibbon]),
+          raisedRibbon: await frame([{ ...wallRibbon, height: 47 }]),
           disabled: await frame([{ ...wallLight, wallClip: [], floorClip: [] }]),
           back: await frame([], false), blocked: await frame([wallLight, wallRibbon], false),
         };
@@ -684,12 +685,15 @@ try {
   }
   assert.ok(edges.every(({ rms, width }) => rms < 1.0 && width > 1.65),
     'ordinary and high-zoom footprints have a straight soft edge');
-  const { baseline, lamp, ribbon, disabled, back, blocked } = evidence.wallLighting;
+  const { baseline, lamp, ribbon, raisedRibbon, disabled, back, blocked } = evidence.wallLighting;
   assert.ok(lamp[0][0] > baseline[0][0] + 20 && lamp[2][0] > baseline[2][0] + 20,
     'a lamp reaches the wall and floor: ' + JSON.stringify(evidence.wallLighting));
   assert.ok(ribbon[0][0] > baseline[0][0] + 20 && ribbon[2][0] > baseline[2][0] + 20,
     'an LED touching the wall lights both receivers: ' + JSON.stringify(evidence.wallLighting));
   assert.deepEqual(ribbon[1], baseline[1], 'the LED wall wash is localized near its level');
+  assert.ok(raisedRibbon[1][0] > baseline[1][0] + 20, 'the wall wash follows the raised LED');
+  assert.deepEqual(raisedRibbon[0], baseline[0], 'the wall at the foot is beyond the raised LED radius');
+  assert.deepEqual(raisedRibbon[2], baseline[2], 'the floor response includes the vertical source distance');
   assert.deepEqual(disabled, baseline, 'disabled room receivers stay dark');
   assert.deepEqual(blocked, back, 'opaque wall blocks both sources');
   assert.ok(evidence.largeRadius[0][0] > 100, 'the near side of a closed opening remains lit at a large radius');

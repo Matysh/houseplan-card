@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { startIsoPaintScene, settleIsoPaint, zoomIsoPaint } from './helpers/iso-paint-scene.mjs';
 import { reportPageErrors } from './serve.mjs';
 
-const markerHeights = { automatic: undefined, floor: 0, middle: 60, cut: 133.52, ribbon: 100 };
+const markerHeights = { automatic: undefined, floor: 0, middle: 60, cut: 133.52, ribbon: 100,
+  'ribbon-floor': 0, 'ribbon-auto': undefined };
 const { page, browser } = await startIsoPaintScene({
   width: 1100, height: 860,
   configureFixture(fixture) {
@@ -13,16 +14,20 @@ const { page, browser } = await startIsoPaintScene({
     space.openings = [];
     space.partitions = [{ id: 'height-wall', a: [.34,.28], b: [.63,.28], cm: 20 }];
     space.decor = [];
-    space.led_strips = [{ id: 'height-strip', marker: 'ribbon', points: [[.44,.73],[.59,.73],[.59,.78]] }];
+    space.settings = { ...space.settings, glow_enabled: true };
+    space.led_strips = [{ id: 'height-strip', marker: 'ribbon', points: [[.44,.73],[.59,.73],[.59,.78]] },
+      { id: 'floor-strip', marker: 'ribbon-floor', points: [[.12,.83],[.29,.83]] },
+      { id: 'auto-strip', marker: 'ribbon-auto', points: [[.70,.78],[.84,.78]] }];
     fixture.devices = {};
     fixture.entities = {};
     fixture.states = {};
     fixture.config.markers = Object.entries(markerHeights).map(([id, height]) => ({
       id, name: id, binding: 'virtual', icon: 'mdi:star', space: space.id,
+      ...(id.startsWith('ribbon') ? { is_light: true, room_id: 'test-only', glow_radius_cm: 40 } : {}),
       ...(height === undefined ? {} : { height_cm: height }),
     }));
     fixture.layout = Object.fromEntries(Object.keys(markerHeights).map((id, i) => {
-      const [x,y] = [[.29,.49],[.42,.24],[.28,.65],[.76,.42],[.54,.73]][i];
+      const [x,y] = [[.29,.49],[.42,.24],[.28,.65],[.76,.42],[.54,.73],[.21,.83],[.77,.78]][i];
       return [id, { s: space.id, x, y }];
     }));
   },
@@ -59,8 +64,13 @@ try {
       const [a,b] = ribbon.path.points;
       const point = screen((a[0]+b[0])/2, (a[1]+b[1])/2, ribbon.height);
       const domLed = root.elementsFromPoint(...point).some(el => el === led);
+      const emitters = host.presentation.world.ribbons.map(({ id, owner, height, depth }) => {
+        const light = host.presentation.world.lights.find(light => light.id.endsWith('|' + id));
+        return { owner, bottom: (height - depth) / units, top: height / units,
+          light: light?.height / units, ribbonLight: light?.ribbon === true };
+      });
       return { rotation: card._rotation, perspective: camera.isPerspectiveCamera, markers,
-        led: { bottom: (ribbon.height - ribbon.depth) / units, top: ribbon.height / units,
+        emitters, led: { bottom: (ribbon.height - ribbon.depth) / units, top: ribbon.height / units,
           hit: host.pick(...point), domLed, elevatedLayer: !!ledLayer } };
     });
   }
@@ -84,6 +94,12 @@ try {
     }
     assert.equal(state.led.elevatedLayer, true);
     assert.ok(Math.abs(state.led.bottom - 100) < 1e-7, JSON.stringify(state));
+    assert.equal(state.emitters.length, 3, JSON.stringify(state.emitters));
+    for (const emitter of state.emitters) {
+      assert.ok(emitter.ribbonLight && Math.abs(emitter.light - emitter.top) < 1e-7, JSON.stringify(emitter));
+      if (emitter.owner === 'ribbon-auto') assert.ok(Math.abs(emitter.top - 140) < 1e-7);
+      else assert.ok(Math.abs(emitter.bottom - markerHeights[emitter.owner]) < 1e-7);
+    }
   }
   assert.equal(new Set(turns.map(state => state.rotation)).size, 8);
   assert.ok(turns.some(state => state.markers.some(marker => marker.id === 'floor' && marker.hit === 'floor')));

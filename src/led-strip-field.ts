@@ -313,7 +313,7 @@ const grey = (value: number): string => {
 };
 
 export interface LedFieldInput {
-  capture?: (source: PlanLightFieldSource) => void;
+  capture?: (source: PlanLightFieldSource, device: LedStripView['device']) => void;
   views: readonly LedStripView[];
   scene: LightBarrierScene | null;
   polygons: readonly LightRoomPolygon[];
@@ -436,7 +436,7 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
     key: `led:${input.spaceId}|${view.strip.id}`, color: view.appearance.c, alpha: view.appearance.alpha,
     radius: view.radius, points: view.strip.points, visible: geometry.pieces.map(piece => piece.clip),
     rule: 'nonzero', floorClip: fieldFloor(scene), entering: transition.entering, leaving: transition.leaving,
-  });
+  }, view.device);
   const bands = Array.from({ length: LED_FIELD_BANDS }, (_, k) => {
     const outer = 1 - k / LED_FIELD_BANDS;
     const inner = 1 - (k + 1) / LED_FIELD_BANDS;
