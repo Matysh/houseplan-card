@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28737,
+  "revision": 28738,
   "nextTicket": 780,
   "nextFence": 775,
   "tasks": {
@@ -7441,14 +7441,6 @@
     "reviewRequest": "review:1600:2:b12ee743099f75fdaf914681d7c7d2688e8d89f7:bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89"
   },
   "events": {
-    "finish:a535a0ae-24c9-4c64-9a9e-36be8a9d8215": {
-      "digest": "153358df936ce5b54d420d82f5b285ed437cc99a76e578a5cb694071d28b5c3c",
-      "issue": 1594
-    },
-    "finish:44667e6a-8890-47b9-adde-8610b93f254a": {
-      "digest": "55c38e0eac046a478ee9ede22d44651412b7fcebbaf2ee0d456f0d7b7afe2035",
-      "issue": 1594
-    },
     "finish:b0870b79-a150-4735-9d15-aebc7069c169": {
       "digest": "c82f90439c1a19c7e2e34583bcf3b0f384fffca1712c2f92818c52592ee5e139",
       "issue": 1594
@@ -8268,6 +8260,10 @@
     "github:46031853954:1:completions:notice:9ed3944b2d873c2cee93dff563c332890b3e090998627fda374b8a840b7350f5": {
       "digest": "72dee40bd8ea8bc60a4a37c9dc72c1a77f0adf310952cb6373f9aebbe251604f",
       "issue": 1595
+    },
+    "github:46031853954:1:completions:message:9ed3944b2d873c2cee93dff563c332890b3e090998627fda374b8a840b7350f5": {
+      "digest": "8b070082f7db3a99cbf1da8496869e27e6371ae4463011b4016c5339445b9991",
+      "issue": 1600
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -9112,7 +9108,8 @@
           "entry": 1,
           "detail": "Поведение: test/bundle-assets.test.mjs: failed",
           "eventId": "finish:3aeb46a7-e3fe-4d18-85f5-13c80734601b:finish:2:return:return:1595"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:869ad6ca-c151-4ed6-abd4-8e7db02dc9e8:finish:1:admit": {
