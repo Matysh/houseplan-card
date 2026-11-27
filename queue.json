@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28536,
+  "revision": 28537,
   "nextTicket": 776,
   "nextFence": 771,
   "tasks": {
@@ -6357,7 +6357,7 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1600-core-compatibility",
-      "materialSha": "29c2bd1b0bc3edeaab705250d49916b95524d003",
+      "materialSha": "83e1b1f311874a3d833a21a182c289473762b35e",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 774,
@@ -7549,10 +7549,6 @@
     "patchId": "891cf429603e71fe3c1c11a3510e06ddbe4536cb"
   },
   "events": {
-    "finish:3ad0a273-aece-4768-8de5-6ca45ad75e61": {
-      "digest": "24d446ce739a70fbd5cd02cb2eac89f6ea064b9f644520b41b165295df698b72",
-      "issue": 1608
-    },
     "finish:1111905b-1a55-4743-ad9f-0d0c3cd4a444": {
       "digest": "f42174a06682a6f206b054b9c82c962def82fdc2b8fb4b3fea368b28330f16f1",
       "issue": 1608
@@ -8376,6 +8372,10 @@
     "finish:d243f81b-aae4-4d0f-b4fd-a9f91eaa9bbb": {
       "digest": "cdbc81d30c7335113c42970091a73fc3d2813fa50a6ac25a50d1c3026eba6415",
       "issue": 1609
+    },
+    "ready:1600:83e1b1f311874a3d833a21a182c289473762b35e": {
+      "digest": "6cc0d2abf230f0b1a8625cda234779c3e14a24eb1e1e68c2ddb6613e38954ec9",
+      "issue": 1600
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
