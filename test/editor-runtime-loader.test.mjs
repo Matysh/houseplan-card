@@ -291,43 +291,32 @@ test('lazy failure toast wording follows terminality (#353 AC5)', async () => {
   );
 });
 
-test('user-facing card loaders route their toast through lazyLoadFailureMessage (#353 AC5)', async () => {
-  const ts = (await import('typescript')).default;
-  const source = readFileSync(join(repoRoot, 'src', 'houseplan-card.ts'), 'utf8');
-  const file = ts.createSourceFile(
-    'houseplan-card.ts', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS,
-  );
-  const callbacks = [];
-  const visit = (node) => {
-    if (ts.isPropertyAssignment(node)
-        && node.name.getText(file) === 'failed'
-        && ts.isArrowFunction(node.initializer)) {
-      callbacks.push(node.initializer);
+test('user-facing card loaders route their toast through lazyLoadFailureMessage (#353 AC5)', () => {
+  for (const [path, count, userFacing] of [
+    ['src/houseplan-card.ts', 3, true],
+    ['src/card-plan-3d.ts', 1, false],
+  ]) {
+    const file = parse(path);
+    const callbacks = [];
+    walk(file, node => {
+      if (ts.isPropertyAssignment(node)
+          && node.name.getText(file) === 'failed'
+          && ts.isArrowFunction(node.initializer)) callbacks.push(node.initializer);
+    });
+    assert.equal(callbacks.length, count, `${path}: expected failed callbacks`);
+    for (const callback of callbacks) {
+      assert.equal(callback.parameters.length, 2, 'the failure info parameter must be declared');
+      const infoName = callback.parameters[1].name.getText(file);
+      let forwards = false;
+      walk(callback.body, node => {
+        if (ts.isCallExpression(node)
+            && node.expression.getText(file) === 'lazyLoadFailureMessage'
+            && node.arguments.length === 2
+            && node.arguments[1].getText(file) === infoName) forwards = true;
+      });
+      assert.equal(forwards, userFacing, `${path}: editor, onboarding and PDF forward terminality to the toast`);
     }
-    ts.forEachChild(node, visit);
-  };
-  visit(file);
-  assert.equal(callbacks.length, 4,
-    'editor, onboarding, PDF and hidden isometric runtimes all declare failed callbacks');
-  let forwardedCallbacks = 0;
-  for (const callback of callbacks) {
-    assert.equal(callback.parameters.length, 2, 'the failure info parameter must be declared');
-    const infoName = callback.parameters[1].name.getText(file);
-    let forwards = false;
-    const inspect = (node) => {
-      if (ts.isCallExpression(node)
-          && node.expression.getText(file) === 'lazyLoadFailureMessage'
-          && node.arguments.length === 2
-          && node.arguments[1].getText(file) === infoName) {
-        forwards = true;
-      }
-      ts.forEachChild(node, inspect);
-    };
-    inspect(callback.body);
-    if (forwards) forwardedCallbacks++;
   }
-  assert.equal(forwardedCallbacks, 3,
-    'editor, onboarding and PDF are user-facing; all must forward terminality to the toast');
 });
 const parse = path => ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true,
   path.endsWith('.ts') ? ts.ScriptKind.TS : ts.ScriptKind.JS);
