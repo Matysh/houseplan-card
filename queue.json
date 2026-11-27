@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29729,
+  "revision": 29730,
   "nextTicket": 799,
   "nextFence": 798,
   "tasks": {
@@ -5596,7 +5596,18 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795818567080,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "e1e9fdd4d47c091f9fda853c5d3d1527f572becd",
+      "changedFiles": [
+        "PROCESS.md",
+        "process-next/baselines/release-sizes-1593.json",
+        "process-next/catalog/measure.mjs",
+        "process-next/cli.mjs",
+        "process-next/lib/catalog.mjs",
+        "process-next/lib/metrics.mjs",
+        "process-next/lib/zip.mjs",
+        "process-next/test/metrics.test.mjs"
+      ]
     },
     "1594": {
       "issue": 1594,
@@ -7018,12 +7029,17 @@
     "token": "797:finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:1:admit",
     "fence": 797,
     "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
+    "phase": "testing",
     "admittedAt": 1795818605285,
-    "expiresAt": 1795818905285
+    "expiresAt": 1795818918548,
+    "patchId": "e1e9fdd4d47c091f9fda853c5d3d1527f572becd"
   },
   "events": {
+    "finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:2:synchronized": {
+      "digest": "bb6c8b05e7d1c5404b29ace5e261f0ffaf40b7d8bc028cdb5d5d1bbe9c900a16",
+      "issue": 1593
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
