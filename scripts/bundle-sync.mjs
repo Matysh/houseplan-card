@@ -22,6 +22,7 @@ import {
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateDemoIcons } from '../demo/gen_icons.mjs';
+import { generateDemoMdiAssets } from '../demo/helpers/mdi-assets.mjs';
 import {
   assertBundleManifest, assertOwnBundleTopology, orderedBundlePayload, verifyBundleTree, bundlePayloadFiles,
 } from './bundle-tree.mjs';
@@ -67,6 +68,7 @@ verifyBundleTree(SOURCE_ROOT);
 // The synthetic ha-icon reads this fixture, outside the product manifest.
 // Refresh from this tree whenever browser/Golden assets are prepared.
 const icons = generateDemoIcons(ROOT);
+generateDemoMdiAssets(ROOT);
 console.log(`demo icons: ${icons.icons} of ${icons.references} referenced`);
 
 for (const target of TARGETS) {

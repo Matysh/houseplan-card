@@ -29,5 +29,6 @@ demo/srv/assets/houseplan-panel.js
 demo/srv/assets/houseplan-assets.json
 demo/srv/assets/houseplan-assets/
 demo/srv/assets/houseplan-encoded/
+demo/srv/static/mdi/
 
 demo/ui-lab/gallery-dist/

@@ -93,7 +93,10 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
     mkdirSync(join(root, 'demo/helpers'));
     mkdirSync(join(root, 'src'));
     writeFileSync(join(root, 'demo/gen_icons.mjs'), readFileSync(new URL('../demo/gen_icons.mjs', import.meta.url)));
-    writeFileSync(join(root, 'demo/helpers/icon-sources.mjs'), readFileSync(new URL('../demo/helpers/icon-sources.mjs', import.meta.url)));
+    for (const name of ['icon-sources.mjs', 'mdi-assets.mjs']) {
+      writeFileSync(join(root, 'demo/helpers', name), readFileSync(new URL('../demo/helpers/' + name, import.meta.url)));
+    }
+    writeFileSync(join(root, 'src/mdi-icon-data.json'), JSON.stringify({ 'mdi:palette': 'M0 0L1 1' }));
     writeFileSync(join(root, 'src/card.ts'), 'const icon = "mdi:palette";');
     symlinkSync(new URL('../node_modules', import.meta.url), join(root, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
     const manifest = writeCurrentBundle(root);
@@ -108,6 +111,11 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
     assert.equal(demoOnly.status, 0, `${demoOnly.stdout}\n${demoOnly.stderr}`);
     const iconMap = () => JSON.parse(readFileSync(join(root, 'demo', 'srv', 'assets', 'icons.js'), 'utf8').slice('window.__ICONS='.length, -2));
     assert.ok(iconMap()['mdi:palette'], 'browser preparation must replace the stale synthetic icon map');
+    const readMdi = name => JSON.parse(readFileSync(join(root, 'demo/srv/static/mdi', name), 'utf8'));
+    const [part] = readMdi('iconMetadata.json').parts;
+    assert.deepEqual(readMdi('iconList.json'), [{ name: 'palette', keywords: [] }]);
+    assert.deepEqual(readMdi(part.file + '.json'), { palette: 'M0 0L1 1' });
+    assert.equal(existsSync(join(root, 'custom_components/houseplan/frontend/static/mdi')), false);
     writeFileSync(join(root, 'src/next.ts'), 'const icon = "mdi:floor-plan";');
     assert.equal(readFileSync(join(root, 'demo/srv/assets/houseplan-card.js'), 'utf8'), 'card facade');
     assert.equal(readFileSync(join(root, 'custom_components/houseplan/frontend/houseplan-card.js'), 'utf8'), 'old card',

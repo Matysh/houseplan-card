@@ -5,7 +5,6 @@ import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
 import { ensureHarnessEditorRuntime } from './editor-runtime-compat.mjs';
 import { installHarnessIsoRuntimeHelper } from './iso-runtime-compat.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
-import { mdiFixtureAsset } from './helpers/mdi-assets.mjs';
 import { enforcePinnedBrowser, requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -182,10 +181,8 @@ async function launchInternal(
     const u = new URL(r.request().url());
     let p = decodeURIComponent(u.pathname);
     if (p === '/') p = '/demo.html';
-    const mdiAsset = mdiFixtureAsset(p);
-    if (mdiAsset) return r.fulfill({ contentType: 'application/json', body: mdiAsset });
     const f = serveRoot + p;
-    return existsSync(f)
+    existsSync(f)
       ? r.fulfill({ status: 200, headers: { 'content-type': CT[p.slice(p.lastIndexOf('.'))] || 'application/octet-stream' }, body: readFileSync(f) })
       : r.fulfill({ status: 404, body: 'nf' });
   });

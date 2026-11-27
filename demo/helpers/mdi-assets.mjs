@@ -1,26 +1,23 @@
-/** Same-origin MDI fixtures for demos without a genuine HA frontend. */
-import { readFileSync } from 'node:fs';
+/** Materialize HA-shaped MDI files for the synthetic demo, outside the product bundle. */
+import { createHash } from 'node:crypto';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-const ROOT = '/static/mdi/';
-const FIRST = '1'.repeat(40);
-const SECOND = '2'.repeat(40);
-const BOUNDARY = 'map-marker';
-const FILES = new Set(['iconList.json', 'iconMetadata.json', FIRST + '.json', SECOND + '.json']);
-let assets;
+export function generateDemoMdiAssets(root) {
+  const output = resolve(root, 'demo/srv/static/mdi');
+  const icons = JSON.parse(readFileSync(resolve(root, 'src/mdi-icon-data.json'), 'utf8'));
+  const names = Object.keys(icons).sort();
+  const parts = [];
 
-export function mdiFixtureAsset(pathname) {
-  if (!pathname.startsWith(ROOT)) return undefined;
-  const file = pathname.slice(ROOT.length);
-  if (!FILES.has(file)) return undefined;
-  if (!assets) {
-    const icons = Object.entries(JSON.parse(readFileSync(new URL('../../src/mdi-icon-data.json', import.meta.url))))
-      .map(([name, glyph]) => [name.slice('mdi:'.length), glyph]);
-    assets = {
-      'iconList.json': JSON.stringify(icons.map(([name]) => ({name, keywords: []}))),
-      'iconMetadata.json': JSON.stringify({version: '7.4.47', parts: [{file: FIRST}, {start: BOUNDARY, file: SECOND}]}),
-      [FIRST + '.json']: JSON.stringify(Object.fromEntries(icons.filter(([name]) => name < BOUNDARY))),
-      [SECOND + '.json']: JSON.stringify(Object.fromEntries(icons.filter(([name]) => name >= BOUNDARY))),
-    };
+  mkdirSync(output, { recursive: true });
+  for (let offset = 0; offset < names.length; offset += 145) {
+    const entries = names.slice(offset, offset + 145).map(name => [name.slice(4), icons[name]]);
+    const payload = JSON.stringify(Object.fromEntries(entries));
+    const file = createHash('sha1').update(payload).digest('hex');
+    writeFileSync(resolve(output, file + '.json'), payload);
+    parts.push(offset ? { start: entries[0][0], file } : { file });
   }
-  return assets[file];
+  writeFileSync(resolve(output, 'iconList.json'),
+    JSON.stringify(names.map(name => ({ name: name.slice(4), keywords: [] }))));
+  writeFileSync(resolve(output, 'iconMetadata.json'), JSON.stringify({ parts }));
 }
