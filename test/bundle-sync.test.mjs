@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, symlinkSync,
@@ -104,7 +104,11 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
       'custom_components/houseplan/frontend', 'demo/srv/assets',
     ]) writeLegacyTarget(root, target);
 
-    // #657: без --release копия HACS не трогается — бандл меняет только кандидат.
+    writeFileSync(join(root, '.gitignore'), '/dist\n/custom_components/houseplan/frontend\n/demo/srv/assets\nnode_modules\n');
+    const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+    git('init', '-q'); git('add', '.');
+    git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'source only');
+    // Ordinary demo preparation leaves an optional local HA copy untouched.
     const demoOnly = spawnSync(process.execPath, ['scripts/bundle-sync.mjs'], {
       cwd: root, encoding: 'utf8',
     });
@@ -117,9 +121,11 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
     assert.deepEqual(readMdi(part.file + '.json'), { palette: 'M0 0L1 1' });
     assert.equal(existsSync(join(root, 'custom_components/houseplan/frontend/static/mdi')), false);
     writeFileSync(join(root, 'src/next.ts'), 'const icon = "mdi:floor-plan";');
+    git('add', 'src/next.ts');
+    git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'next source');
     assert.equal(readFileSync(join(root, 'demo/srv/assets/houseplan-card.js'), 'utf8'), 'card facade');
     assert.equal(readFileSync(join(root, 'custom_components/houseplan/frontend/houseplan-card.js'), 'utf8'), 'old card',
-      'обычная раскладка не должна менять закоммиченный бандл (#657)');
+      'обычная раскладка не должна менять локальную HA-копию');
     assert.equal(existsSync(join(root, 'custom_components/houseplan/frontend/houseplan-legacy.js')), true);
 
     const run = spawnSync(process.execPath, ['scripts/bundle-sync.mjs', '--release'], {
@@ -144,6 +150,9 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
       const file = manifest.encodings[0];
       assert.equal(sha256(readFileSync(join(root, target, file.path))), file.sha256);
     }
+
+    assert.equal(git('status', '--porcelain', '--untracked-files=all'), '', 'generated frontend and demo output remain ignored');
+    assert.equal(git('ls-files', 'custom_components/houseplan/frontend'), '');
 
     writeFileSync(join(root, 'dist/houseplan-orphan.js'), 'unlisted entry');
     const orphan = spawnSync(process.execPath, ['scripts/bundle-sync.mjs'], {

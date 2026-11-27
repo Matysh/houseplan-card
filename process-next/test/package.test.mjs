@@ -8,7 +8,7 @@ import { packageCandidate } from '../lib/package.mjs';
 import { collectMeasurement, measureZip } from '../lib/metrics.mjs';
 import { digest } from '../lib/storage.mjs';
 import { gzipSync } from 'node:zlib';
-function fixture(t) {
+function fixture(t, { legacySnapshot = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'hp-package-')); t.after(() => rmSync(root, { recursive: true, force: true }));
   const write = (path, value) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), value); };
   write('package.json', '{"version":"1.99.0-beta.1"}'); write('custom_components/houseplan/manifest.json', '{"version":"1.99.0-beta.1"}');
@@ -17,7 +17,8 @@ function fixture(t) {
   write('src/houseplan-card.ts', "const CARD_VERSION = '1.99.0-beta.1';\n");
   write('src/houseplan-editor-runtime.ts', "const CARD_VERSION = '1.99.0-beta.1';\n");
   write('custom_components/houseplan/__init__.py', 'value = 1\n'); write('custom_components/houseplan/THIRD_PARTY_NOTICES.md', 'license');
-  write('custom_components/houseplan/frontend/old.js', 'old must not ship'); write('docs/data-hp-contract.json', '{}'); write('.gitignore', 'dist/\nartifacts/\n');
+  if (legacySnapshot) write('custom_components/houseplan/frontend/old.js', 'old must not ship');
+  write('docs/data-hp-contract.json', '{}'); write('.gitignore', 'dist/\nartifacts/\n');
   const git = args => execFileSync('git', ['-c', 'core.hooksPath=/dev/null', ...args], { cwd: root, stdio: ['ignore','pipe','pipe'], encoding: 'utf8' });
   git(['init','-q']); git(['add','.']); git(['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','candidate']);
   const main = Buffer.from('new frontend'); write('dist/houseplan-card.js', main);
@@ -27,6 +28,9 @@ function fixture(t) {
 test('package uses prepared bytes, includes delivered licenses and keeps the source tree untouched', { skip: process.platform === 'win32' ? 'ZIP construction verified in prepared WSL/Python' : false }, t => {
   const { root, git } = fixture(t), result = packageCandidate({ root });
   assert.equal(git(['status','--porcelain']).trim(), '');
+  assert.equal(git(['ls-files','custom_components/houseplan/frontend']).trim(), '', 'source needs no frontend snapshot');
+  assert.deepEqual(readFileSync(join(result.candidateRoot, 'custom_components/houseplan/frontend/houseplan-assets.json')),
+    readFileSync(join(root, 'dist/houseplan-assets.json')), 'package keeps the prepared manifest and fingerprint');
   assert.equal(readFileSync(join(result.candidateRoot, 'custom_components/houseplan/THIRD_PARTY_NOTICES.md'), 'utf8'), 'license');
   assert.equal(readFileSync(result.standalone, 'utf8'), 'new frontend');
   const sizes = measureZip(result.zip); assert.equal(sizes.files.length, 2); assert.equal(sizes.buildFingerprint, 'same-build');
@@ -37,7 +41,7 @@ test('package uses prepared bytes, includes delivered licenses and keeps the sou
   performance.buildFingerprint = 'wrong-build'; assert.throws(() => collectMeasurement(args), /packaged frontend/);
 });
 test('uncommitted release bytes and mismatched assets cannot be packaged as the committed candidate', t => {
-  const { root, write } = fixture(t); write('custom_components/houseplan/__init__.py', 'changed');
+  const { root, write } = fixture(t, { legacySnapshot: true }); write('custom_components/houseplan/__init__.py', 'changed');
   assert.throws(() => packageCandidate({ root }), /Commit the release candidate/);
   write('custom_components/houseplan/__init__.py', 'value = 1\n'); write('dist/houseplan-card.js', 'wrong');
   assert.throws(() => packageCandidate({ root }), /Incomplete prepared frontend/);

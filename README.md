@@ -133,6 +133,10 @@ available in English, Russian, German and French.
 
 ## Installation
 
+Install through HACS/Marketplace or use the published `houseplan.zip` release
+asset for manual installation. A Git clone or GitHub source archive does not
+include the built frontend and cannot be installed directly.
+
 House Plan is a Home Assistant integration, not just a card. So there are three
 steps, and the last one matters most.
 

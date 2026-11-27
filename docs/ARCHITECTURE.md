@@ -1282,16 +1282,20 @@ houseplan-card/
 │  ├─ import_export.py · decor_assets.py · plans.py  # backup/import, decor images, plan blobs
 │  ├─ trails.py · vacuum_routes.py · radar*.py · virtual_lights.py  # live-subsystem backends
 │  ├─ config_flow.py · const.py · system_health.py · diagnostics.py · repairs.py · support_*.py
-│  └─ frontend/                          # only tracked bundle; release-only snapshot (#657/#1016)
+│  └─ frontend/                          # generated inside release ZIP; absent from Git (#1598)
 └─ docs/                                 # this documentation
 ```
 
 Rollup emits two stable roots, `houseplan-card.js` and `houseplan-panel.js`,
 plus hashed chunks and `dist/houseplan-assets.json` (graph, sizes, SHA-256).
-Only `custom_components/houseplan/frontend/` is committed and installed by HACS;
-`dist/` and the demo copy remain build artifacts. The prepared candidate packager
-combines integration sources with its built frontend; measurement policy belongs
-to PROCESS.md.
+Frontend bundles are not committed: `dist/`, the demo copy and any local
+`custom_components/houseplan/frontend/` materialization are ignored build artifacts.
+Install through HACS or the published `houseplan.zip`; a Git clone or GitHub
+source archive alone is not an installable integration. The prepared candidate
+packager combines tracked integration sources with the verified `dist/` payload
+under `frontend/` inside that ZIP, without changing the source commit or tag.
+For local HA development, `npm run bundle:release` materializes the ignored
+frontend beside the backend. Measurement policy belongs to PROCESS.md.
 The panel imports the card chunk by its hashed name, never through the card's
 unversioned facade: entries are served without `Cache-Control`, and a stale
 facade once ran an old card against the current backend (#535). Both roots keep

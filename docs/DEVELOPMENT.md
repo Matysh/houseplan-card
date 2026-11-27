@@ -50,10 +50,12 @@ Python и HA-зависимости нужны только наборам, ко
 свежая, достаточно `node scripts/bundle-sync.mjs`, без повторного build. Устройство стенда:
 [demo/stand/README.md](../demo/stand/README.md).
 
-Единственный отслеживаемый снимок frontend установленной интеграции находится
-в `custom_components/houseplan/frontend/`. Обычная задача не обновляет его
-попутно. Подготовленная упаковка кандидата пишет результат в
-`artifacts/process-next/candidate`; источник и готовый пакет — разные вещи.
+Frontend не хранится в Git. Установочный ZIP/HACS получает проверенный `dist/`
+в каталоге `frontend/` рядом с backend; Git clone и архив исходников для установки
+не подходят. Для локальной HA-разработки `npm run bundle:release` создаёт
+игнорируемый `custom_components/houseplan/frontend/`. Подготовленная упаковка
+кандидата пишет результат в `artifacts/process-next/candidate`, не меняя
+исходный checkout; источник и готовый пакет — разные вещи.
 
 Node-тесты, импортирующие `test-build/`, требуют свежей компиляции. Запускатель
 сам выполняет `process-next/catalog/prepare.mjs tests`, а затем выбранные

@@ -138,8 +138,8 @@ a documentation task or a substitute for product acceptance.
 - UI strings use the locale registry and dictionaries described above.
 - Tap actions preserve the safeguards in `src/device-toggle.ts`; changing
   labels or process rules does not change the product's permission model.
-- Ordinary tasks do not rewrite the tracked frontend release snapshot.
-  Release packaging is described in PROCESS.
+- Frontend bundles are generated and untracked. Release packaging combines
+  `dist/` with the backend in the installable ZIP; see PROCESS.
 - The integration's self-assessment is in
   `custom_components/houseplan/quality_scale.yaml`.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) maps the product; read the

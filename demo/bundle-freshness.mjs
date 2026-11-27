@@ -45,7 +45,7 @@ const verifyManifestTree = (root, expected) => {
   }
 };
 
-/** Refuse measurements/screenshots made by a committed bundle from old source. */
+/** Refuse measurements/screenshots made by a generated demo bundle from old source. */
 export async function assertFreshDemoBundle(page, root = process.cwd()) {
   // A comparative performance run may load an older tree whose fingerprint
   // contract is intentionally different from the candidate's. Validate that

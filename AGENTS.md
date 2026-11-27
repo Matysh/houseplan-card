@@ -16,8 +16,8 @@ House Plan is one HACS package:
 
 - `src/`: TypeScript + Lit frontend, including the panel and Lovelace card.
 - `custom_components/houseplan/`: Python storage integration.
-- `dist/`: ignored local build output. The tracked frontend snapshot is
-  `custom_components/houseplan/frontend/`; ordinary work does not rewrite it.
+- `dist/`: ignored local build output. Release packaging installs it as
+  `custom_components/houseplan/frontend/` inside the ZIP; no bundle is tracked.
 - `demo/`: synthetic browser harness. `demo/serve.mjs` starts it;
   `demo/golden/`, `demo/performance/`, `demo/guard/` and `demo/stand/`
   contain their fixtures and operating notes.

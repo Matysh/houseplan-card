@@ -1,25 +1,13 @@
 #!/usr/bin/env bash
 # Бандл головы dev для стенда разработки (#657).
 #
-# С #657 бандл в дереве dev меняется только релизным кандидатом, поэтому
-# между бетами `custom_components/houseplan/frontend/` в dev — бандл последней
-# беты. Свежий бандл головы dev Validate публикует в служебную ветку
-# `dev-build` (scripts/dev-build.mjs): один коммит без истории с
-# `custom_components/houseplan/frontend/**` и DEV-BUILD.json (SHA источника).
+# Frontend не хранится в Git (#1598). Готовая ветка dev-build содержит
+# backend и frontend одного проверенного SHA. Скрипт накладывает её frontend
+# на checkout стенда перед перезапуском HA. Устаревший dev-build остаётся
+# явным предупреждением, а не свидетельством установки текущего dev.
 #
-# Скрипт кладёт этот бандл поверх рабочей копии стенда. В
-# /opt/hp/bin/hp-update-dev.sh — два вызова вокруг `git pull` dev:
-#
-#   demo/stand/update-dev-bundle.sh --reset <checkout>   # до pull: вернуть отслеживаемый бандл
-#   git -C <checkout> pull --ff-only
-#   demo/stand/update-dev-bundle.sh <checkout>           # после pull, до перезапуска HA
-#
-# Первый вызов нужен, потому что наложенный бандл — локальная правка
-# отслеживаемых файлов, и pull кандидата беты на ней остановился бы.
-#
-# Если dev-build отстаёт от головы dev (Validate ещё идёт или упал), скрипт
-# предупреждает и всё равно ставит последний опубликованный бандл: он собран
-# из чуть более старого dev, но из того же конвейера, а не из дерева беты.
+# Старый caller --reset перед git pull поддерживается для checkout, ещё
+# отслеживающих snapshot. На новых исходниках ignored frontend не мешает pull.
 set -euo pipefail
 
 reset=false
@@ -31,9 +19,13 @@ target=custom_components/houseplan/frontend
 
 cd "$checkout"
 if $reset; then
-  git checkout -- "$target"
-  git clean -fdq -- "$target"
-  echo "update-dev-bundle: $target возвращён к закоммиченному"
+  if [ -n "$(git ls-files -- "$target")" ]; then
+    git checkout -- "$target"
+    git clean -fdq -- "$target"
+    echo "update-dev-bundle: $target возвращён к закоммиченному"
+  else
+    echo "update-dev-bundle: $target не отслеживается; reset не требуется"
+  fi
   exit 0
 fi
 git fetch --quiet "$remote" "+refs/heads/$branch:refs/remotes/$remote/$branch"

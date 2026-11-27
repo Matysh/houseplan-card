@@ -186,6 +186,27 @@ test('#657 стенд: update-dev-bundle.sh ставит бандл dev-build п
   } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
 });
 
+test('#1598 stand installs dev-build with no tracked frontend and keeps --reset harmless', () => {
+  const { root, origin, work } = fixture();
+  try {
+    git(work, 'rm', '-qr', DEV_BUILD_TARGET);
+    writeFileSync(join(work, '.gitignore'), `${DEV_BUILD_TARGET}\n`);
+    git(work, 'add', '.gitignore');
+    git(work, 'commit', '-qm', 'remove generated frontend');
+    git(work, 'push', '-q', 'origin', 'dev');
+    const head = git(work, 'rev-parse', 'HEAD');
+    writeDist(work, 'current generated card');
+    publishDevBuild({ cwd: work, sha: head, log: () => {} });
+    const stand = cloneStand(root, origin);
+    for (const args of [['--reset'], [], ['--reset']]) {
+      const run = runPosix('bash', [shellPath(STAND), ...args, shellPath(stand)], { env: { ...process.env, ...ENV } });
+      assert.equal(run.status, 0, run.stderr);
+    }
+    assert.equal(readFileSync(join(stand, DEV_BUILD_TARGET, 'houseplan-card.js'), 'utf8'), 'current generated card');
+    assert.equal(git(stand, 'status', '--porcelain', '--untracked-files=all'), '');
+  } finally { rmSync(root, REMOVE_FIXTURE_TREE); }
+});
+
 const backendOf = (repo, rev) => git(repo, 'ls-tree', '-r', '--name-only', rev, '--', DEV_BUILD_INTEGRATION)
   .split('\n').filter((path) => path && !path.startsWith(`${DEV_BUILD_TARGET}/`)).sort();
 
