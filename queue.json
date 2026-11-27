@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28812,
+  "revision": 28813,
   "nextTicket": 781,
   "nextFence": 777,
   "tasks": {
@@ -6002,7 +6002,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1594-mdi-packaging",
-      "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2",
+      "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 775,
@@ -6010,11 +6010,10 @@
       "status": "S6-in-progress",
       "readyAt": 1795787418639,
       "reviewEntry": 2,
-      "patchId": "eb8420682ef5cffe9c401ac6a0a9299ec8bf2518",
+      "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535",
       "changedFiles": [
-        "demo/helpers/ha-dialog-fixture.mjs",
+        ".gitignore",
         "demo/helpers/mdi-assets.mjs",
-        "demo/serve.mjs",
         "demo/smoke_device_icon_picker.mjs",
         "demo/smoke_standalone_entry.mjs",
         "demo/standalone/mdi-picker-probe.mjs",
@@ -6023,12 +6022,15 @@
         "docs/STANDALONE-PRESENTATION.md",
         "docs/release-ledger/v1.86.1/1594.json",
         "process-next/catalog/site-release-browser.mjs",
+        "process-next/lib/catalog.mjs",
         "process-next/lib/source-dependencies.mjs",
+        "scripts/bundle-sync.mjs",
         "src/editors/hp-icon-picker.ts",
         "src/icon-catalog.ts",
         "src/standalone-icon-catalog.ts",
         "src/standalone-presentation.ts",
-        "test/bundle-assets.test.mjs"
+        "test/bundle-assets.test.mjs",
+        "test/bundle-sync.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -7380,11 +7382,12 @@
     "worker": "finish",
     "token": "776:finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:4:admit",
     "fence": 776,
-    "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
+    "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+    "phase": "testing",
     "admittedAt": 1795797212713,
-    "expiresAt": 1795797512713
+    "expiresAt": 1795797519057,
+    "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535"
   },
   "events": {
     "finish:ac66f1d0-0b1e-4271-a7c2-eabd11724380": {
@@ -8198,6 +8201,10 @@
     "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return": {
       "digest": "35fa73b4e90ca74f453a534f2ed0fca1ea8899a97f5c735920e661a23cd17f8f",
       "issue": 1611
+    },
+    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:5:synchronized": {
+      "digest": "9279b5d45807efc28bebefa928934f70ca858e919fb3cd6dfe628fd371f80ebb",
+      "issue": 1594
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
