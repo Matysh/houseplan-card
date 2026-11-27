@@ -12,11 +12,20 @@ try{
     const menu=page.locator('houseplan-card .hpf-context-menu');await expect(menu).toBeVisible();
     const before=await goldenClip(page,scene.capture);
     assert.deepEqual([before.width,before.height],[157,154],`${theme}: preserve accepted menu footprint`);
-    const button=menu.locator('button:not(:disabled)').first();await button.hover();
-    await expect.poll(()=>button.evaluate(el=>{
-      const s=getComputedStyle(el);return [s.borderLeftWidth,s.borderLeftStyle,s.borderLeftColor===s.color,s.outlineStyle,s.boxShadow];
-    })).toEqual(['1px','solid',true,'none','none']);
+    const button=menu.locator('button:not(:disabled)').first();
+    const paint=()=>button.evaluate(el=>{
+      const style=getComputedStyle(el);
+      return {background:style.backgroundColor, color:style.color, border:style.border,
+        outline:style.outline, shadow:style.boxShadow};
+    });
+    await page.mouse.move(0,0);
+    const {background: idleBackground, ...idlePaint}=await paint();
+    await button.hover();
+    await expect.poll(async()=>(await paint()).background).not.toBe(idleBackground);
+    const {background: hoverBackground, ...hoverPaint}=await paint();
+    assert.notEqual(hoverBackground,idleBackground);
+    assert.deepEqual(hoverPaint,idlePaint,'hover changes only the row background');
     assert.deepEqual(await goldenClip(page,scene.capture),before,'hover does not resize or move menu');
   }
-  console.log('PASS #1444 context menus retain 157x154 crop, one hover border, both themes');
+  console.log('PASS #1444 context menus retain 157x154 crop and background-only hover in both themes');
 }finally{await finish(browser);}

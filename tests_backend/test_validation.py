@@ -258,7 +258,10 @@ def _idempotence_corpus():
                     "led_strips": [{"id": "led", "marker": "m", "points": [[0.1, 0.1], [0.5, 0.1]]},
                                    {"id": "orphan", "marker": "gone", "points": [[0.1, 0.3], [0.5, 0.3]]}]},
                    {"id": "g", "title": "G", "view_box": [0, 0, 1, 1], "rooms": [], "settings": {"bg_color": "#112233"}}],
-        "markers": [{"id": "m", "binding": "virtual"}],
+        "markers": [
+            {"id": "m", "binding": "virtual", "height_cm": 137.975},
+            {"id": "floor", "binding": "virtual", "space": "f", "height_cm": 0},
+        ],
         "settings": {"bg_mode": "static"},
     }
     return {
@@ -287,11 +290,13 @@ def test_issue_1096_config_schema_is_idempotent_on_its_own_output(name):
       canonicalize_config_geometry   lattice/scalar rounding is a projection
       _config_wall_segment_invariants a check, returns its input
       config_led_strip_links         unbound/adopted links are already normal
+      validate_marker_height_representations checks the resolved marker kind
       normalize_space_display        hide_openings/bg_mode are already normal
     """
     assert tuple(v.CONFIG_SCHEMA.validators) == (
         v.CONFIG_TYPE_SCHEMA, v.canonical_config, v.canonicalize_config_geometry,
-        v._config_wall_segment_invariants, v.config_led_strip_links, v.normalize_space_display,
+        v._config_wall_segment_invariants, v.config_led_strip_links,
+        v.validate_marker_height_representations, v.normalize_space_display,
     ), "a new CONFIG_SCHEMA step: confirm it is idempotent and list it here (#1096)"
     source = _idempotence_corpus()[name]
     stored = v.CONFIG_SCHEMA(json.loads(json.dumps(source)))
