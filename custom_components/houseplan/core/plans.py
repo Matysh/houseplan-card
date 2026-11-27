@@ -74,7 +74,7 @@ def _attachment_names(name: str):
 
 
 def reserve_filename(directory: Path, name: str) -> str:
-    """Legacy primitive: exclusively reserve an empty file at a usable name."""
+    """Reserve an empty file exclusively under a usable name."""
     directory.mkdir(parents=True, exist_ok=True)
     for candidate in _attachment_names(name):
         try:
