@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27982,
+  "revision": 27983,
   "nextTicket": 757,
   "nextFence": 757,
   "tasks": {
@@ -7020,7 +7020,8 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-27T09:33:19.740Z"
-      }
+      },
+      "runId": 45974718831
     }
   },
   "waiting": [],
@@ -7452,6 +7453,10 @@
     },
     "github:45974662272:1:completions:message:f93656d67907c9d6a6b4d3b1fdc742922549a27a670fa2ea2794be3ba8b9efde": {
       "digest": "a10cce950c20d44a4247ce69981af771b7ee81867bdbb12b0bf845fb8a0f6f61",
+      "issue": 1609
+    },
+    "github:45975825222:1:tick:0:review-presentation": {
+      "digest": "51effc6cfe25e85eba92c229f79cd59cad8a419ce8cb3e7520288d1eb8692551",
       "issue": 1609
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
