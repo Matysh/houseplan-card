@@ -61,7 +61,7 @@ export async function runWebglBenchmark({ profile, samples, warmups, iterations,
         const ready = async () => {
           let geometry;
           await until(() => {
-            if (!window.__hpSurfaceReady(card)) return false;
+            if (!window.__hpSurfaceReady(card) || card._floorSwitch || card._cameraTransition?.state) return false;
             try { geometry = window.__hpReadWebgl(card, profile); return true; }
             catch { return false; }
           }, 'presented 3D canvas');
