@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29536,
+  "revision": 29537,
   "nextTicket": 793,
   "nextFence": 793,
   "tasks": {
@@ -6236,7 +6236,13 @@
         "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46062915325",
         "execution": "github"
       },
-      "reviewRound": null
+      "reviewRound": null,
+      "reviewRequest": "review:1612:4:a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29:46ba17964dff6b655df64316d333383d0239dbef",
+      "reviewMaterial": {
+        "materialSha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+        "expectedBase": "46ba17964dff6b655df64316d333383d0239dbef",
+        "patchId": "a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29"
+      }
     },
     "1613": {
       "issue": 1613,
@@ -7065,6 +7071,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "code:1612:review:1612:4:a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29:46ba17964dff6b655df64316d333383d0239dbef": {
+      "issue": 1612,
+      "kind": "code",
+      "requestId": "review:1612:4:a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29:46ba17964dff6b655df64316d333383d0239dbef",
+      "materialSha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+      "expectedBase": "46ba17964dff6b655df64316d333383d0239dbef",
+      "patchId": "a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29",
+      "status": "pending",
+      "presentation": {
+        "round": null,
+        "occurredAt": "2026-11-27T20:26:45.659Z"
+      }
     }
   },
   "waiting": [],
@@ -7078,7 +7097,8 @@
     "phase": "review",
     "admittedAt": 1795811182864,
     "expiresAt": 1795814796484,
-    "patchId": "a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29"
+    "patchId": "a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29",
+    "reviewRequest": "review:1612:4:a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29:46ba17964dff6b655df64316d333383d0239dbef"
   },
   "events": {
     "finish:92b94c16-2920-4443-9b6c-b4a08c69ff68:finish:2:synchronized": {
@@ -7223,6 +7243,10 @@
     },
     "finish:3283960f-c99e-485f-b6c6-1efd158fbb63:finish:3:s6-label": {
       "digest": "f2812dc5ea7526d736055a5c71d814a131bc29c1b270bd0d32607918650c0416",
+      "issue": 1612
+    },
+    "finish:3283960f-c99e-485f-b6c6-1efd158fbb63:finish:4:review-requested": {
+      "digest": "3560bb521f2be7b6740deaf32f3ff6ac344523497388ad39058b2215b39ed3c2",
       "issue": 1612
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
