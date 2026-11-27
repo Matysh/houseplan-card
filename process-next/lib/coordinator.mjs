@@ -35,7 +35,8 @@ function retryStillBecomingVisible(retry, result, now) {
 const knownKinds = new Map(JSON.parse(readFileSync(new URL('../catalog/inventory.json', import.meta.url), 'utf8')).entries.map(entry => [entry.path, entry.kind]));
 
 export function taskLayerFromDiff(files) {
-  const source = files.filter(Boolean);
+  // Generated frontend is packaging output, including its removal from Git (#1598).
+  const source = files.filter(file => file && !file.startsWith('custom_components/houseplan/frontend/'));
   const doc = file => /\.md$/i.test(file) || /^(?:LICENSE|NOTICE)(?:\.[^/]+)?$/.test(file)
     || /^docs\/.*\.(?:png|jpe?g|webp|svg|gif|pdf)$/i.test(file);
   if (source.every(doc)) return 'docs';
