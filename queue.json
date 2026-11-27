@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28825,
+  "revision": 28826,
   "nextTicket": 782,
   "nextFence": 777,
   "tasks": {
@@ -7411,14 +7411,6 @@
     "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535"
   },
   "events": {
-    "finish:8d0da68d-5cc0-4050-ac03-1b7e99ffe282": {
-      "digest": "447df2ea57093e68ae94e150916b1bab0ebe74572ee3a37fa6a2e5ad16efc939",
-      "issue": 1594
-    },
-    "finish:0765885b-2ed8-46e9-8fc4-5fd95c7ecdcf": {
-      "digest": "3d855a7defd44231cb948c27c75bbd95aa3ec26e07ce95df7de6b07a77ba7c0d",
-      "issue": 1594
-    },
     "finish:f40faacf-e8dd-4eec-bc64-aef286b35446": {
       "digest": "2890f05e2e67cfeeb5746ed4447e86e7a9b8a8d211a7ed954614b0b5130bd21e",
       "issue": 1594
@@ -8242,6 +8234,10 @@
     "github:46035822142:1:completions:notice:b9ad0446518f7fdd7566ab2befe9a8d765c1baa9eec734cf0bdc6c5ee1ab610a": {
       "digest": "1938a91de3477b9e491a28de0bba8b59708e892792db5522e702799b5d7dd8b8",
       "issue": 1611
+    },
+    "github:46035822142:1:completions:message:b9ad0446518f7fdd7566ab2befe9a8d765c1baa9eec734cf0bdc6c5ee1ab610a": {
+      "digest": "d15d82ba5c758a5129038b2514c1695c1df9035950c3ffe7df792dfdd5b7ca7c",
+      "issue": 1594
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -9154,7 +9150,8 @@
           "entry": 1,
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
           "eventId": "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return:return:1611"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:4:admit": {
