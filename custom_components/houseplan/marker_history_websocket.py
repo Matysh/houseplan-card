@@ -119,9 +119,11 @@ async def ws_marker_history(hass, connection, msg):
     if rt is None:
         connection.send_error(msg["id"], "not_ready", "House Plan is not set up")
         return
+    authorize = ws._write_authority(hass, connection, runtime=rt)
     service = history(rt)
     try:
         async with rt.write_lock:
+            authorize()
             session = service.session(msg["history_session"], owner(connection), create=msg["action"] == "delete")
             replay = service.replay(session, msg["operation_id"], request_payload(msg))
             if replay is not None:
@@ -168,7 +170,7 @@ async def ws_marker_history(hass, connection, msg):
                                       "config_rev": cr + 1, "layout_rev": lr + 1, "final_metadata": final},
                                   {"kind": "marker_history_rollback", "config": previous, "layout": layout,
                                    "config_rev": cr, "layout_rev": lr, "final_metadata": original},
-                                  authorize=ws._write_authority(hass, connection))
+                                  authorize=authorize)
             command.after = forward
             if msg["action"] == "delete":
                 service.accept_create(session, msg.get("retained_tokens"), token, command)
@@ -205,6 +207,7 @@ async def ws_marker_history(hass, connection, msg):
 @websocket_api.async_response
 async def ws_marker_history_retain(hass, connection, msg):
     from . import websocket_api as ws
+    from .backup_files import durable_file_job
     if not ws._check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Editing permission required")
         return
@@ -212,13 +215,24 @@ async def ws_marker_history_retain(hass, connection, msg):
     if rt is None:
         connection.send_error(msg["id"], "not_ready", "House Plan is not set up")
         return
+    authorize = ws._write_authority(hass, connection, runtime=rt)
     try:
         async with rt.write_lock:
-            service = history(rt)
-            session = service.session(msg["history_session"], owner(connection))
-            service.release(session, msg["tokens"])
-            cd = await rt.config_store.async_load() or {}
-            await hass.async_add_executor_job(service.collect, Path(hass.config.path(FILES_DIR)), cd.get("config") or {})
+            authorize()
+            pair = await ws._resolved_write_pair(hass, connection, msg["id"], rt)
+            if pair is None:
+                return
+            async with rt.upload_lock:
+                authorize()
+                service = history(rt)
+                session = service.session(msg["history_session"], owner(connection))
+                service.release(session, msg["tokens"])
+                await durable_file_job(
+                    hass, service.collect, Path(hass.config.path(FILES_DIR)), pair.config_data.get("config") or {},
+                )
+    except ws.ImportFailure as error:
+        ws._send_import_error(connection, msg["id"], error)
+        return
     except HistoryError as error:
         connection.send_error(msg["id"], error.code, "History lease expired")
         return

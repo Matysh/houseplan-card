@@ -1551,8 +1551,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node scripts/backend-test-guard.mjs issue_935_concurrent_attachment_copies tests_backend/test_ha_marker_copy.py',
     because: '#935 AC3/AC6: two real file-copy commands with one store slot left must have one winner under the existing upload quota and lock.',
     patches: [{ file: 'custom_components/houseplan/websocket_api.py',
-      find: '            check_quota(base, f.stat().st_size, MAX_FILES_BYTES, MAX_FILES_COUNT)',
-      replace: '            # mutation: copied attachments bypass the existing store quota' }],
+      find: '                check_quota(base, item.stat().st_size, MAX_FILES_BYTES, MAX_FILES_COUNT)',
+      replace: '                # mutation: copied attachments bypass the existing store quota' }],
   },
   {
     id: 'copy-context-arms-right-button-drag',
@@ -15580,7 +15580,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'custom_components/houseplan/websocket_api.py',
       find: '        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)\n'
-        + '        if resolved is None:\n'
+        + '        if resolved is None or not _continue_write(connection, msg["id"], authorize):\n'
         + '            return\n'
         + '        config_data = resolved.config_data\n'
         + '        config = config_data.get("config") or {}\n'
@@ -15589,6 +15589,8 @@ const MUTANT_DEFINITIONS = [
         + '        resolved = ResolvedStorePair(\n'
         + '            config_data=config_data, layout_data=await rt.store.async_load() or {},\n'
         + '        )\n'
+        + '        if not _continue_write(connection, msg["id"], authorize):\n'
+        + '            return\n'
         + '        config = config_data.get("config") or {}\n'
         + '        markers = config.get("markers") or []\n',
     }],
@@ -16029,10 +16031,11 @@ const MUTANT_DEFINITIONS = [
       file: 'custom_components/houseplan/http_api.py',
       find: '            try:\n'
         + '                async with runtime.upload_lock:\n'
-        + '                    name = await hass.async_add_executor_job(_check_and_promote)\n',
+        + '                    authority.ensure()\n'
+        + '                    name = await durable_file_job(hass, _check_and_promote, discard=_discard_publication)\n',
       replace: '            try:\n'
-        + '                if True:  # mutant: quota check and promotion race\n'
-        + '                    name = await hass.async_add_executor_job(_check_and_promote)\n',
+        + '                authority.ensure()\n'
+        + '                name = await durable_file_job(hass, _check_and_promote, discard=_discard_publication)\n',
     }],
   },
   {

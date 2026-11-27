@@ -4401,16 +4401,16 @@ async def test_upload_leaves_no_temporary_behind(
     assert temps() == []
 
     # promotion itself blows up
-    real = http_api.reserve_filename
+    real = http_api.publish_attachment
 
     def _boom(*_a, **_k):
         raise OSError("disk on fire")
 
-    monkeypatch.setattr(http_api, "reserve_filename", _boom)
+    monkeypatch.setattr(http_api, "publish_attachment", _boom)
     resp = await http.post("/api/houseplan/upload", data=form(("c.pdf", b"C")))
     assert resp.status == 500
     assert temps() == [], "a failed promotion must not strand the upload"
-    monkeypatch.setattr(http_api, "reserve_filename", real)
+    monkeypatch.setattr(http_api, "publish_attachment", real)
 
     # and the happy path leaves nothing either
     resp = await http.post("/api/houseplan/upload", data=form(("d.pdf", b"D")))

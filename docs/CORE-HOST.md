@@ -6,6 +6,32 @@ it does not download a separate package at runtime. Python 3.14+, voluptuous and
 Pillow are required. Ordinary stable releases supply a checked wheel alongside
 the standalone editor; see [Standalone frontend](STANDALONE-FRONTEND.md#consume-an-ordinary-stable-release).
 
+## Trust boundary
+
+Use `PlanCommands.execute` for structured requests and the documented binary
+entry points: `upload_plan`, `upload_asset`, `import_preview`, `house_preview`,
+`stage_structural` and `resolve_structural`. Bind typed ports from
+`command_ports.py` to the authenticated principal and the authorized plan
+scope. A browser supplies input, not permission. A token is not a grant to
+another plan or user; never accept a storage root, tenant identity, or resource
+policy supplied by a client. An external editor uses `PLAN_ONLY` and the strict
+input profile, and must enforce its own authentication and authorization.
+
+Other importable modules include validators, migrations, geometry and
+filesystem helpers. They are not stable transport endpoints or a sandbox:
+callers pass only normalized data and host-owned paths. Trusted integrations
+that call pure input helpers directly must explicitly bound the entire
+preparation with `input_scope(STRICT_INPUT_POLICY)` where applicable; a relaxed
+policy is a trusted-host decision. Do not put a durable `PlanCommands` operation
+inside that scope: the facade closes its own budget before publishing.
+
+The host owns account/tenant isolation, request framing, concurrent and total
+resource limits, CPU execution, storage locking, recovery and durability.
+The reference host and JSON-client adapter illustrate these contracts and
+`houseplan_core.conformance` checks them without HA. Passing conformance
+does not certify a production host or its filesystem. See the
+[backend/core audit](security/1605-backend-core-audit.md) for the HA boundary.
+
 ## Ports and ownership
 
 ### Optional whole-house transfer (#1464)

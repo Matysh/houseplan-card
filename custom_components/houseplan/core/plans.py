@@ -19,7 +19,12 @@ from typing import Any, Protocol
 
 from .constants import MIN_FREE_BYTES, PLAN_ORPHAN_TTL_S
 from .file_usage import dir_usage as dir_usage
-from .validation import MAX_FILENAME, PLAN_EXTENSIONS, sanitize_filename
+from .validation import (
+    MAX_FILENAME,
+    PLAN_EXTENSIONS,
+    sanitize_filename,
+    sanitize_marker_id,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,21 +49,8 @@ def atomic_write(path: Path, data: bytes, *, prefix: str = ".upload-") -> None:
         temp.unlink(missing_ok=True)
 
 
-def reserve_filename(directory: Path, name: str) -> str:
-    """Atomically claim a free name inside `directory` and return it.
-
-    Creates the file, empty, with `O_CREAT | O_EXCL`, so the name is *taken* the
-    moment it is chosen. The previous version asked `exists()` and returned a
-    string; two uploads racing between the check and the write agreed on the
-    same name and one silently overwrote the other, both reporting success
-    (HP-1460-01). The caller writes the real bytes over the placeholder — it
-    owns the name by then — and must remove it if it never gets that far.
-
-    The result is guaranteed to satisfy `sanitize_filename(result) == result`:
-    the content view sanitises the name in the request too, so a name it would
-    shorten or rewrite is a file that is written and then never served.
-    """
-    directory.mkdir(parents=True, exist_ok=True)
+def _attachment_names(name: str):
+    """Yield bounded, round-trippable names without asserting they are free."""
     # Split the extension off the RAW name: sanitize_filename() truncates to
     # MAX_FILENAME, so sanitising first would cut ".pdf" off a long name and the
     # attachment would be stored — and served — without its type.
@@ -68,8 +60,7 @@ def reserve_filename(directory: Path, name: str) -> str:
         stem, suffix = base, ""
     stem = sanitize_filename(stem)
     ext = f".{sanitize_filename(suffix)[:16]}" if suffix else ""
-    i = 1
-    while True:
+    for i in range(1, 10001):
         tag = "" if i == 1 else f"-{i}"
         # budget the stem so the WHOLE name fits, including the collision tag —
         # appending "-2" to an already maximal name produced a url the view
@@ -79,15 +70,50 @@ def reserve_filename(directory: Path, name: str) -> str:
         candidate = sanitize_filename(candidate)
         if candidate.startswith("."):  # a name that is only an extension
             candidate = "file" + candidate
+        yield candidate
+
+
+def reserve_filename(directory: Path, name: str) -> str:
+    """Legacy primitive: exclusively reserve an empty file at a usable name."""
+    directory.mkdir(parents=True, exist_ok=True)
+    for candidate in _attachment_names(name):
         try:
             fd = os.open(directory / candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
         except FileExistsError:
-            i += 1
-            if i > 10000:  # pathological directory; do not spin forever
-                raise
             continue
         os.close(fd)
         return candidate
+    raise FileExistsError("No free attachment filename")
+
+
+def attachment_directory(root: Path, marker_id: str) -> Path:
+    """Use a direct child of the trusted store, not an alias of another directory."""
+    base = root.resolve()
+    directory = base / marker_id
+    if (not marker_id or sanitize_marker_id(marker_id) != marker_id
+            or directory.is_symlink() or directory.resolve().parent != base):
+        raise OSError("Invalid attachment directory")
+    return directory
+
+
+def publish_attachment(stage: Path, directory: Path, name: str) -> str:
+    """Publish complete staged bytes under an exclusive name on the same filesystem."""
+    directory.mkdir(parents=True, exist_ok=True)
+    with stage.open("rb") as stream:
+        os.fsync(stream.fileno())
+    for candidate in _attachment_names(name):
+        target = directory / candidate
+        try:
+            os.link(stage, target)
+        except FileExistsError:
+            continue
+        try:
+            stage.unlink()
+        except OSError:
+            target.unlink(missing_ok=True)
+            raise
+        return candidate
+    raise FileExistsError("No free attachment filename")
 
 
 def attachment_refs(cfg: dict[str, Any] | None) -> set[str]:

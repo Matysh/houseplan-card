@@ -727,9 +727,9 @@ class TrailRecorder:
                 )
             self._source_health[key] = reason
 
-    async def async_delete(self, marker: str) -> bool:
+    async def async_delete(self, marker: str, *, authorize=None) -> bool:
         """Stop and erase one marker without racing subscription refresh/save."""
-        return bool(await self._async_delete_many({marker}))
+        return bool(await self._async_delete_many({marker}, authorize=authorize))
 
     async def async_purge_orphans(self, config: dict[str, Any]) -> int:
         """Erase trails whose marker is absent or a removal tombstone.
@@ -823,9 +823,11 @@ class TrailRecorder:
                 self._schedule_save()
             raise
 
-    async def _async_delete_many(self, markers: set[str]) -> int:
+    async def _async_delete_many(self, markers: set[str], *, authorize=None) -> int:
         """Delete one or more books with one subscription/store transaction."""
         async with self._refresh_lock:
+            if authorize is not None:
+                authorize()
             removed = await self._delete_many_locked(markers)
         if removed:
             self.hass.bus.async_fire("houseplan_trail_updated", {})

@@ -113,13 +113,16 @@ class HaCpuExecutor:
 class HaWriteAuthority:
     def __init__(self, hass, connection, runtime):
         self.hass, self.connection = hass, connection
+        self.runtime = runtime
         self.user = getattr(connection, "user", None)
         self.owner_id = str(getattr(self.user, "id", ""))
         self.scope_id = runtime.instance_id
 
     @property
     def can_write(self):
-        return may_write(self.hass, getattr(self.connection, "user", None))
+        return (get_data(self.hass) is self.runtime
+                and getattr(self.connection, "user", None) is self.user
+                and may_write(self.hass, self.user))
 
     @property
     def archive_admin(self):

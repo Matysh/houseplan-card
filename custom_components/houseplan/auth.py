@@ -21,6 +21,8 @@ def may_write(hass: HomeAssistant, user) -> bool:
     integration is disabled — the policy is unknown, and "unknown" is not the
     same as "permissive": only admins are allowed through.
     """
+    if user is None or getattr(user, "is_active", True) is False:
+        return False
     is_admin = bool(getattr(user, "is_admin", False))
     entry = get_entry(hass)
     if entry is None:

@@ -125,14 +125,27 @@ from .core.backup_files import (
 )
 
 
-async def durable_file_job(hass, callback, *args):
-    """Never release transaction locks while its filesystem worker still writes."""
+async def durable_file_job(hass, callback, *args, discard=None):
+    """Settle the worker before releasing its lock, even after repeated cancellation.
+
+    `discard` may release only this request's uncommitted output.
+    """
     future = hass.async_add_executor_job(callback, *args)
-    try:
-        return await asyncio.shield(future)
-    except asyncio.CancelledError:
+    cancelled = False
+    while True:
         try:
-            await asyncio.shield(future)
-        except Exception:  # noqa: BLE001 - retain cancellation, after own work ended
-            pass
-        raise
+            result = await asyncio.shield(future)
+            break
+        except asyncio.CancelledError:
+            if future.cancelled():
+                raise
+            cancelled = True
+        except Exception:
+            if cancelled:
+                raise asyncio.CancelledError from None
+            raise
+    if cancelled:
+        if discard is not None:
+            await durable_file_job(hass, discard, result)
+        raise asyncio.CancelledError
+    return result

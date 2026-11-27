@@ -22,6 +22,7 @@ except ImportError:  # older HA versions
 
 from .asset_integrity import get_asset_integrity_verifier
 from .auth import may_write
+from .backup_files import durable_file_job
 from .const import (
     ASSETS_DIR,
     CONTENT_URL,
@@ -42,9 +43,10 @@ from .import_export import ImportFailure
 from .plans import (
     TMP_PREFIX,
     QuotaError,
+    attachment_directory,
     check_quota,
+    publish_attachment,
     read_bounded,
-    reserve_filename,
 )
 from .store import get_data
 from .validation import (
@@ -63,6 +65,28 @@ _LOGGER = logging.getLogger(__name__)
 _CHUNK = 64 * 1024
 # batch disk writes: one executor job per megabyte instead of per chunk
 _FLUSH_AT = 1024 * 1024
+_FORM_FIELD_BYTES = 1024
+_MAX_FORM_PARTS = 8
+
+
+class _MultipartLimit(ValueError):
+    pass
+
+
+async def _bounded_parts(request, names):
+    """Do not let ignored parts bypass streaming body limits."""
+    reader = await request.multipart()
+    count = 0
+    async for part in reader:
+        count += 1
+        if count > _MAX_FORM_PARTS:
+            raise _MultipartLimit
+        if part.name not in names:
+            if await read_bounded(part, _FORM_FIELD_BYTES, _CHUNK) is None:
+                raise _MultipartLimit
+            continue
+        yield part
+
 
 _MIME = {
     ".pdf": "application/pdf",
@@ -177,10 +201,14 @@ class HouseplanContentView(HomeAssistantView):
             if safe_sub != "_" or not ASSET_ID_RE.fullmatch(stem) or suffix not in ASSET_EXTENSIONS:
                 return web.Response(status=404)
             path = (base / safe_name).resolve()
+        elif kind == "files":
+            try:
+                path = (attachment_directory(base, safe_sub) / safe_name).resolve()
+            except OSError:
+                return web.Response(status=404)
         else:
-            path = (base / safe_name if kind == "plans" else base / safe_sub / safe_name).resolve()
-        # defence in depth: the sanitizers already strip separators
-        if not str(path).startswith(str(base)):
+            path = (base / safe_name).resolve()
+        if path == base or not path.is_relative_to(base):
             return web.Response(status=404)
 
         suffix = path.suffix.lower()
@@ -241,10 +269,7 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
         blocks: list[bytes] = []
         size = 0
         try:
-            reader = await request.multipart()
-            async for part in reader:
-                if part.name != "file":
-                    continue
+            async for part in _bounded_parts(request, {"file"}):
                 if filename is not None:
                     return web.json_response({"error": "invalid_format"}, status=400)
                 filename = part.filename or "image"
@@ -254,6 +279,8 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
                     if size > MAX_DECOR_ASSET_BYTES:
                         return web.json_response({"error": "too_large"}, status=413)
                     blocks.append(chunk)
+        except _MultipartLimit:
+            return web.json_response({"error": "too_large"}, status=413)
         except Exception as err:  # noqa: BLE001 - malformed multipart boundary
             _LOGGER.warning("House Plan decor asset upload: multipart read error: %s", err)
             return web.json_response({"error": "invalid_format"}, status=400)
@@ -279,11 +306,6 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
             _LOGGER.warning("House Plan decor asset upload: store failed: %s", err)
             return web.json_response({"error": "io_error"}, status=500)
         return web.json_response(result)
-
-
-# Form fields other than the file are a space id (<= 64 chars) and an
-# extension; a kilobyte is generous and keeps a hostile field from buffering.
-_PLAN_FIELD_BYTES = 1024
 
 
 class HouseplanPlanUploadView(HomeAssistantView):
@@ -322,8 +344,7 @@ class HouseplanPlanUploadView(HomeAssistantView):
         ext: str | None = None
         raw: bytes | None = None
         try:
-            reader = await request.multipart()
-            async for part in reader:
+            async for part in _bounded_parts(request, {"file", "space_id", "ext"}):
                 if part.name == "file":
                     if raw is not None:
                         return web.json_response({"error": "one_file_only"}, status=400)
@@ -331,12 +352,16 @@ class HouseplanPlanUploadView(HomeAssistantView):
                     if raw is None:
                         return too_large
                 elif part.name in ("space_id", "ext"):
-                    field = await read_bounded(part, _PLAN_FIELD_BYTES, _CHUNK)
-                    value = field.decode("utf-8", "replace") if field is not None else ""
+                    field = await read_bounded(part, _FORM_FIELD_BYTES, _CHUNK)
+                    if field is None:
+                        return too_large
+                    value = field.decode("utf-8", "replace")
                     if part.name == "space_id":
                         space_id = value
                     else:
                         ext = value
+        except _MultipartLimit:
+            return too_large
         except Exception as err:  # noqa: BLE001 - a broken multipart stream must answer 400, not crash the view
             _LOGGER.warning("House Plan plan upload: multipart read error: %s", err)
             return web.json_response({"error": "bad_request"}, status=400)
@@ -378,6 +403,9 @@ class HouseplanUploadView(HomeAssistantView):
         runtime = get_data(hass)
         if runtime is None:
             return web.json_response({"error": "not_ready"}, status=503)
+        from .command_adapter import HaWriteAuthority, HttpPrincipal
+
+        authority = HaWriteAuthority(hass, HttpPrincipal(request), runtime)
 
         # Content-Length includes multipart boundaries and headers, not just
         # file bytes. Reserve one streaming batch for that overhead and only
@@ -439,10 +467,12 @@ class HouseplanUploadView(HomeAssistantView):
 
         try:
             try:
-                reader = await request.multipart()
-                async for part in reader:
+                async for part in _bounded_parts(request, {"file", "marker_id"}):
                     if part.name == "marker_id":
-                        marker_id = sanitize_marker_id(await part.text())
+                        field = await read_bounded(part, _FORM_FIELD_BYTES, _CHUNK)
+                        if field is None:
+                            raise _MultipartLimit
+                        marker_id = sanitize_marker_id(field.decode("utf-8", "replace"))
                     elif part.name == "file":
                         if filename is not None:
                             # one upload per request: a second part would strand
@@ -459,7 +489,7 @@ class HouseplanUploadView(HomeAssistantView):
                         # buffer: a 50 MB manual used to cost ~100 MB of RSS
                         # mid-request (HP-1454-06). Blocks are batched so this
                         # is one executor job per megabyte, not per 64 KB.
-                        tmp = await hass.async_add_executor_job(_new_tmp)
+                        tmp = await durable_file_job(hass, _new_tmp, discard=lambda path: _cleanup([path]))
                         temps.append(tmp)
                         size = 0
                         pending: list[bytes] = []
@@ -475,12 +505,14 @@ class HouseplanUploadView(HomeAssistantView):
                             pending.append(chunk)
                             buffered += len(chunk)
                             if buffered >= _FLUSH_AT:
-                                await hass.async_add_executor_job(_flush, tmp, pending)
+                                await durable_file_job(hass, _flush, tmp, pending)
                                 pending, buffered = [], 0
                         if error:
                             break
                         if pending:
-                            await hass.async_add_executor_job(_flush, tmp, pending)
+                            await durable_file_job(hass, _flush, tmp, pending)
+            except _MultipartLimit:
+                error = ({"error": "too_large"}, 413)
             except Exception as err:  # noqa: BLE001 - a broken multipart stream must answer 400, not crash the view
                 _LOGGER.warning("House Plan upload: multipart read error: %s", err)
                 error = ({"error": "bad_request"}, 400)
@@ -491,26 +523,6 @@ class HouseplanUploadView(HomeAssistantView):
                 return web.json_response({"error": "no_file"}, status=400)
 
             tmp_path = temps[0]
-            target_dir = files_root / marker_id
-            safe_name = filename
-
-            def _promote() -> str:
-                """Claim a free name, then move the finished upload onto it.
-
-                Never overwrite an existing attachment: its bytes may be
-                referenced by the stored configuration, and this upload is not
-                part of that transaction — a cancelled dialog or a rejected save
-                would leave the old url serving the new content (HP-1454-02).
-                The name is reserved atomically, so two uploads racing on the
-                same filename cannot agree on it (HP-1460-01).
-                """
-                name = reserve_filename(target_dir, safe_name)
-                try:
-                    os.replace(tmp_path, target_dir / name)
-                except OSError:
-                    (target_dir / name).unlink(missing_ok=True)
-                    raise
-                return name
 
             def _check_and_promote() -> str:
                 # The staged file already sits under files_root: hand it to
@@ -523,11 +535,17 @@ class HouseplanUploadView(HomeAssistantView):
                     exclude=tmp_path,
                     additional_disk_bytes=0,
                 )
-                return _promote()
+                return publish_attachment(tmp_path, attachment_directory(files_root, marker_id), filename)
+
+            def _discard_publication(name: str) -> None:
+                _cleanup([attachment_directory(files_root, marker_id) / name])
 
             try:
                 async with runtime.upload_lock:
-                    name = await hass.async_add_executor_job(_check_and_promote)
+                    authority.ensure()
+                    name = await durable_file_job(hass, _check_and_promote, discard=_discard_publication)
+            except CommandError as err:
+                return web.json_response({"error": err.code}, status=403)
             except QuotaError as err:
                 _LOGGER.warning("House Plan upload refused: %s", err.detail)
                 return web.json_response(
@@ -536,7 +554,6 @@ class HouseplanUploadView(HomeAssistantView):
             except OSError as err:
                 _LOGGER.warning("House Plan upload: could not store the file: %s", err)
                 return web.json_response({"error": "io_error"}, status=500)
-            temps.remove(tmp_path)  # it is the attachment now, not a temporary
             return web.json_response(
                 {"ok": True, "url": f"{CONTENT_URL}/files/{marker_id}/{name}", "name": filename}
             )
@@ -545,4 +562,4 @@ class HouseplanUploadView(HomeAssistantView):
             # asyncio.CancelledError, which an `except Exception` never saw —
             # an aborted large upload leaked its temporary file every time
             if temps:
-                await hass.async_add_executor_job(_cleanup, list(temps))
+                await durable_file_job(hass, _cleanup, list(temps))

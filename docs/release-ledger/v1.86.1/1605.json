@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1605,
+  "baseStable": "v1.86.1",
+  "category": "stable-fix",
+  "rationale": "Tighten live write checks and file publication on existing v1.86.1 layout and attachment routes.",
+  "summary": {
+    "ru": "Сохранение позиций устройств и работа с вложениями учитывают отзыв прав и отмену операции.",
+    "en": "Respect write-access changes and cancellation when saving device positions or working with attachments."
+  }
+}

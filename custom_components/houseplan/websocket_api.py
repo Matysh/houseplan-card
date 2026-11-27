@@ -5,8 +5,10 @@ import base64
 import binascii
 import json
 import logging
+import os
 import re
 import secrets
+import tempfile
 import time
 from collections import Counter
 from pathlib import Path
@@ -19,6 +21,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
 
 from .auth import may_write
+from .backup_files import durable_file_job
 from .build_identity import UNKNOWN_BUILD, BuildIdentity
 from .const import (
     CONTENT_URL,
@@ -60,9 +63,11 @@ from .marker_copy import marker_copy_candidate
 from .marker_history import HistoryError
 from .marker_history_websocket import HISTORY_FIELDS
 from .plans import (
+    TMP_PREFIX,
     QuotaError,
+    attachment_directory,
     check_quota,
-    reserve_filename,
+    publish_attachment,
 )
 from .radar_validation import (
     RadarValidationError,
@@ -287,7 +292,7 @@ def _check_write(hass: HomeAssistant, connection) -> bool:
     return may_write(hass, getattr(connection, "user", None))
 
 
-def _write_authority(hass, connection, *, admin=False):
+def _write_authority(hass, connection, *, admin=False, runtime=None):
     """Recheck the same live owner after graph/source preparation awaits."""
     user = getattr(connection, "user", None)
     user_id = getattr(user, "id", None)
@@ -295,6 +300,7 @@ def _write_authority(hass, connection, *, admin=False):
     def authorize():
         if (getattr(connection, "user", None) is not user
                 or getattr(user, "id", None) != user_id
+                or runtime is not None and get_data(hass) is not runtime
                 or not _check_write(hass, connection)
                 or admin and not getattr(user, "is_admin", False)):
             raise ImportFailure("unauthorized", "Editing permission was lost")
@@ -310,6 +316,15 @@ def _send_import_error(connection, msg_id: int, err: ImportFailure) -> None:
     # Validation details may include arbitrary input or server-local paths.
     # Frontend localization already uses the stable code, as support does.
     connection.send_error(msg_id, err.code, err.public_message)
+
+
+def _continue_write(connection, msg_id, authorize) -> bool:
+    try:
+        authorize()
+    except ImportFailure as error:
+        _send_import_error(connection, msg_id, error)
+        return False
+    return True
 
 
 def _send_support_error(connection, msg_id: int, code: str) -> None:
@@ -716,13 +731,16 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
+    authorize = _write_authority(hass, connection, runtime=rt)
     async with rt.write_lock:
+        if not _continue_write(connection, msg["id"], authorize):
+            return
         # A stale browser may still finish a drag after another client deleted
         # the marker. Its tombstone is the server-side authority: acknowledge
         # but ignore the late point so re-adding starts without a zombie
         # position.
         resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
+        if resolved is None or not _continue_write(connection, msg["id"], authorize):
             return
         config_data = resolved.config_data
         config = config_data.get("config") or {}
@@ -762,6 +780,9 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
             return
         if layout.get(msg["device_id"]) == msg["pos"]:
             connection.send_result(msg["id"], {"ok": True, "rev": int(data.get("rev", 0))})
+            return
+        if msg["device_id"] not in layout and len(layout) >= MAX_LAYOUT:
+            connection.send_error(msg["id"], "invalid_format", "Too many saved layout positions")
             return
         layout = {**layout, msg["device_id"]: msg["pos"]}
         # keep the revision: a point-wise write used to drop it, which made the
@@ -823,10 +844,9 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
+    authorize = _write_authority(hass, connection, runtime=rt)
     import shutil
-    from pathlib import Path
 
-    from .const import FILES_DIR
     from .validation import sanitize_marker_id
 
     src_id = sanitize_marker_id(msg["from_id"])
@@ -835,41 +855,51 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
         connection.send_result(msg["id"], {"ok": True, "mapping": {}, "copied": 0})
         return
     base = Path(hass.config.path(FILES_DIR))
-    src = base / src_id
-    dst = base / dst_id
+
+    def _discard(mapping: dict[str, str]) -> None:
+        dst = attachment_directory(base, dst_id)
+        for name in mapping.values():
+            try:
+                (dst / name).unlink(missing_ok=True)
+            except OSError:
+                _LOGGER.warning("House Plan: could not discard an uncommitted marker copy", exc_info=True)
 
     def _copy() -> dict[str, str]:
+        src = attachment_directory(base, src_id)
+        dst = attachment_directory(base, dst_id)
         if not src.is_dir():
             return {}
         dst.mkdir(parents=True, exist_ok=True)
         mapping: dict[str, str] = {}
-        for f in sorted(src.iterdir()):
-            if not f.is_file():
-                continue
-            # #935: permanent copies share the upload store's unchanged limits.
-            check_quota(base, f.stat().st_size, MAX_FILES_BYTES, MAX_FILES_COUNT)
-            # a different file may already own this name — do NOT silently point
-            # the url at it. The shared helper CLAIMS a free one atomically, so
-            # a concurrent migrate or upload cannot pick the same one, and the
-            # name it returns is one the content view accepts back in a request.
-            name = reserve_filename(dst, f.name)
-            target = dst / name
-            try:
-                shutil.copy2(str(f), str(target))
-            except OSError:
-                target.unlink(missing_ok=True)  # never leave an empty placeholder
-                raise
-            mapping[f.name] = name
+        try:
+            for item in sorted(src.iterdir()):
+                if item.name.startswith(TMP_PREFIX) or item.is_symlink() or not item.is_file():
+                    continue
+                check_quota(base, item.stat().st_size, MAX_FILES_BYTES, MAX_FILES_COUNT)
+                fd, name = tempfile.mkstemp(prefix=TMP_PREFIX, dir=dst)
+                tmp = Path(name)
+                try:
+                    os.close(fd)
+                    shutil.copy2(item, tmp)
+                    mapping[item.name] = publish_attachment(tmp, dst, item.name)
+                finally:
+                    tmp.unlink(missing_ok=True)
+        except (OSError, QuotaError):
+            _discard(mapping)
+            raise
         return mapping
 
     try:
         async with rt.upload_lock:
-            mapping = await hass.async_add_executor_job(_copy)
+            if not _continue_write(connection, msg["id"], authorize):
+                return
+            mapping = await durable_file_job(hass, _copy, discard=_discard)
     except QuotaError as err:
         connection.send_error(msg["id"], "too_large", "Could not copy marker files: " + err.detail)
         return
-    except OSError as err:
-        connection.send_error(msg["id"], "io_error", f"Could not copy marker files: {err}")
+    except OSError:
+        _LOGGER.warning("House Plan: could not copy marker attachments", exc_info=True)
+        connection.send_error(msg["id"], "io_error", "Could not copy marker files")
         return
     connection.send_result(msg["id"], {"ok": True, "mapping": mapping, "copied": len(mapping)})
 
@@ -1003,21 +1033,28 @@ async def ws_files_cleanup(hass: HomeAssistant, connection, msg: dict[str, Any])
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
+    authorize = _write_authority(hass, connection, runtime=rt)
     from .plans import attachment_refs
 
     files_dir = Path(hass.config.path(FILES_DIR))
     async with rt.write_lock:
-        stored = await rt.config_store.async_load() or {}
-        refs = attachment_refs(stored.get("config") or {})
-        layout_data = await rt.store.async_load() or {}
-        backup = layout_data.get(_OPTIMIZE_BACKUP)
+        if not _continue_write(connection, msg["id"], authorize):
+            return
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        refs = attachment_refs(resolved.config_data.get("config") or {})
+        backup = resolved.layout_data.get(_OPTIMIZE_BACKUP)
         if isinstance(backup, dict) and backup.get("kind") == "space_delete":
             refs |= attachment_refs(backup.get("config") or {})
         if rt.marker_history is not None:
             refs |= rt.marker_history.refs()
-        removed, kept = await hass.async_add_executor_job(
-            _drop_unreferenced_marker_files, files_dir, msg["marker_id"], refs,
-        )
+        async with rt.upload_lock:
+            if not _continue_write(connection, msg["id"], authorize):
+                return
+            removed, kept = await durable_file_job(
+                hass, _drop_unreferenced_marker_files, files_dir, msg["marker_id"], refs,
+            )
     connection.send_result(msg["id"], {"ok": True, "removed": removed, "kept": kept})
 
 
@@ -1034,9 +1071,9 @@ def _drop_unreferenced_marker_files(
     from .validation import sanitize_marker_id
 
     mid = sanitize_marker_id(marker_id)
-    base = files_dir.resolve()
-    target = (base / mid).resolve() if mid else base
-    if not mid or not str(target).startswith(str(base)) or target == base:
+    try:
+        target = attachment_directory(files_dir, mid)
+    except OSError:
         return 0, 0
     if not target.is_dir():
         return 0, 0
@@ -1079,15 +1116,18 @@ async def ws_layout_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
+    authorize = _write_authority(hass, connection, runtime=rt)
     new_rev: int | None = None
     async with rt.write_lock:
+        if not _continue_write(connection, msg["id"], authorize):
+            return
         resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
+        if resolved is None or not _continue_write(connection, msg["id"], authorize):
             return
         data = resolved.layout_data
         layout = data.get("layout", {})
         if msg["device_id"] in layout:
-            del layout[msg["device_id"]]
+            layout = {key: value for key, value in layout.items() if key != msg["device_id"]}
             new_rev = int(data.get("rev", 0)) + 1
             await async_save_layout_state(
                 rt, data, layout, new_rev,
@@ -1472,10 +1512,16 @@ async def ws_trail_delete(hass: HomeAssistant, connection: websocket_api.ActiveC
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Only administrators may delete trails")
         return
-    if _runtime(hass, connection, msg["id"]) is None:
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
         return
     rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
-    removed = await rec.async_delete(msg["marker_id"]) if rec else False
+    authorize = _write_authority(hass, connection, runtime=rt)
+    try:
+        removed = await rec.async_delete(msg["marker_id"], authorize=authorize) if rec else False
+    except ImportFailure as error:
+        _send_import_error(connection, msg["id"], error)
+        return
     connection.send_result(msg["id"], {"ok": True, "removed": removed})
 
 

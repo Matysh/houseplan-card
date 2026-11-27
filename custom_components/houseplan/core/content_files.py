@@ -104,7 +104,7 @@ class FilesystemContent:
             retire_attachments(self.root / FILES_DIR, intent.attachments, intent.protected_attachments,
                                sweep_staging=intent.sweep_staging)
 
-        await self.cpu.run(collect)
+        await self._settle(collect)
 
     async def plan_catalog(self):
         def scan():
@@ -139,7 +139,7 @@ class FilesystemContent:
                 _LOGGER.warning("House Plan: could not delete %s: %s", path, error)
                 return False
 
-        return await self.cpu.run(remove)
+        return await self._settle(remove)
 
     async def asset_catalog(self):
         return await self.cpu.run(read_catalog, self.root / ASSETS_DIR)
@@ -183,4 +183,4 @@ class FilesystemContent:
                     pass
             return removed
 
-        return await self.cpu.run(remove)
+        return await self._settle(remove)
