@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29878,
+  "revision": 29879,
   "nextTicket": 801,
   "nextFence": 801,
   "tasks": {
@@ -6251,7 +6251,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795820158939,
       "reviewEntry": 2,
-      "patchId": "db5da05dcaee2eabc232b419c104de0573aee178",
+      "patchId": "265581c0d087d930761db9d7874670c34ddb8570",
       "changedFiles": [
         "demo/smoke_plan_3d_gpu.mjs",
         "demo/smoke_plan_3d_marker_height.mjs",
@@ -6259,10 +6259,12 @@
         "docs/CHANGELOG.ru.md",
         "docs/LIGHT.md",
         "docs/release-ledger/v1.86.1/1617.json",
+        "process-next/lib/source-dependencies.mjs",
         "src/houseplan-card.ts",
         "src/led-strip-field.ts",
         "src/led-strip-runtime.ts",
-        "src/plan-3d-light-field.ts"
+        "src/plan-3d-light-field.ts",
+        "src/plan-3d-light-motion.ts"
       ],
       "s6": {
         "id": "20261127T223640583-e7bebc9b",
@@ -7071,10 +7073,11 @@
     "token": "800:finish:064f0112-916f-450d-801c-30ae9b945c93:finish:1:admit",
     "fence": 800,
     "materialSha": "b108551beca75f85602c9bde4e8ef492ab46c037",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5de5efc9693f5c203a13c12b03c89895a19f6551",
+    "phase": "testing",
     "admittedAt": 1795820162543,
-    "expiresAt": 1795820462543
+    "expiresAt": 1795820468771,
+    "patchId": "265581c0d087d930761db9d7874670c34ddb8570"
   },
   "events": {
     "finish:b6f532f4-8cba-41e4-afee-f2b7a0b414d2:finish:1:synchronized": {
@@ -7127,6 +7130,10 @@
     },
     "github:46078573279:1:completions:metadata:6505f02b-c080-4995-aa84-898a6f6bef95:task-notice:1617::": {
       "digest": "237d70fa68ad30772f3b1863038ef9549b0313ecdb48d1496acd69ea0476e9fd",
+      "issue": 1617
+    },
+    "finish:064f0112-916f-450d-801c-30ae9b945c93:finish:2:synchronized": {
+      "digest": "1a076d61b804f7fa61ac06c706ad7e2ffaf74d7e0d3539d17a98bf51d5fcc66a",
       "issue": 1617
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
