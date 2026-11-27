@@ -1,15 +1,15 @@
-<!-- release: v2.0.0-beta.2 -->
+<!-- release: v2.0.0-beta.3 -->
 <!-- base: v1.86.1 -->
 <!-- language: ru -->
-## Houseplan 2.0.0-beta.2
+## Houseplan 2.0.0-beta.3
 
-Автоматизации Home Assistant теперь могут показывать на плане «Внимание» или «Тревогу». В редакторе автоматизаций выберите действие Houseplan **«Показать сигнал на плане»**, укажите устройство или сущность и при желании добавьте текст причины. Для второго условия есть действие **«Снять сигнал с плана»**. Активный сигнал сохраняется после перезапуска HA. [#1001](https://github.com/Matysh/houseplan-card/issues/1001)
+В настройках устройства или LED-ленты можно задать высоту над полом для 3D. Все восемь 3D-ракурсов используют наклонную перспективу. Подвижный значок робота-пылесоса едет по полу независимо от высоты док-станции. Плоский вид не учитывает высоту. [#1608](https://github.com/Matysh/houseplan-card/issues/1608), [#1612](https://github.com/Matysh/houseplan-card/issues/1612)
 
-В 3D свет из окон теперь ложится на пол с мягкой кромкой. Освещение стен от ламп и LED-лент сохраняется. [#1580](https://github.com/Matysh/houseplan-card/issues/1580)
+При восстановлении 3D после графического сбоя план не показывает недорисованный этаж. Ускорены первый вход в редактор и повторное переключение этажей. В приложении Home Assistant Companion успешные действия со значками дают лёгкую виброотдачу. Исправлено создание пространств с сохранением проёмов. [#1609](https://github.com/Matysh/houseplan-card/issues/1609), [#1595](https://github.com/Matysh/houseplan-card/issues/1595), [#1607](https://github.com/Matysh/houseplan-card/issues/1607), [#1611](https://github.com/Matysh/houseplan-card/issues/1611)
 
 <!-- language: en -->
-## Houseplan 2.0.0-beta.2
+## Houseplan 2.0.0-beta.3
 
-Home Assistant automations can now display an Attention or Alarm signal on the plan. Choose the Houseplan action **Show signal on plan**, select a device or entity and add a reason if you like. Use **Clear signal from plan** for the condition that clears it. An active signal survives a Home Assistant restart. [#1001](https://github.com/Matysh/houseplan-card/issues/1001)
+Set the height above the floor for devices and LED strips in 3D. All eight 3D views now use a tilted perspective. The moving robot vacuum marker travels along the floor regardless of the dock's height. The flat view ignores height. [#1608](https://github.com/Matysh/houseplan-card/issues/1608), [#1612](https://github.com/Matysh/houseplan-card/issues/1612)
 
-In 3D, sunlight from windows now falls across the floor with soft edges. Lamps and LED strips still light the walls. [#1580](https://github.com/Matysh/houseplan-card/issues/1580)
+When 3D recovers from a graphics interruption, the plan no longer shows a partially drawn floor. Opening an editor for the first time and revisiting floors are faster. Successful marker actions give light haptic feedback in the Home Assistant Companion App. Creating a space now preserves partition openings. [#1609](https://github.com/Matysh/houseplan-card/issues/1609), [#1595](https://github.com/Matysh/houseplan-card/issues/1595), [#1607](https://github.com/Matysh/houseplan-card/issues/1607), [#1611](https://github.com/Matysh/houseplan-card/issues/1611)
