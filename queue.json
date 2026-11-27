@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29371,
+  "revision": 29372,
   "nextTicket": 786,
   "nextFence": 786,
   "tasks": {
@@ -6318,15 +6318,15 @@
         "at": 1795807771910
       },
       "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795807771910,
-        "entry": 1,
-        "requestId": "review:1613:1:aeab367a38b12af0b403051daf6b5f4ab6397773:379a1ee4f682c2735f0b96f5258166a23f3f923b",
-        "transitionConfirmed": true
-      }
+        "key": "2:rebase-conflict",
+        "reason": "rebase-conflict",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795808309101,
+        "entry": 2,
+        "eventId": "finish:89f21d5c-4860-4826-addd-57848c9fb12e:finish:2:return:return:1613"
+      },
+      "reason": "rebase-conflict"
     },
     "1614": {
       "issue": 1614,
@@ -7131,17 +7131,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1613,
-    "worker": "finish",
-    "token": "785:finish:89f21d5c-4860-4826-addd-57848c9fb12e:finish:1:admit",
-    "fence": 785,
-    "materialSha": "8317d77318d52fd66e851bc02cad90b2ca7de291",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1795808303410,
-    "expiresAt": 1795808603410
-  },
+  "active": null,
   "events": {
     "github:46035822142:1:label:spec-request": {
       "digest": "a4a1e1a5c5ffe776fb69a7b1e0ced1ca9aeae94d49fb81b176c7b157dd7aa8e9",
@@ -7277,6 +7267,10 @@
     },
     "github:46056997091:1:completions:metadata:9ef7e2c0-f46f-4217-9490-523a4c5c889b:task-notice:1613::": {
       "digest": "2f16a315840a05e3db3ae2da08ded770107c8129901276828eb9d96edbd22ff9",
+      "issue": 1613
+    },
+    "finish:89f21d5c-4860-4826-addd-57848c9fb12e:finish:2:return": {
+      "digest": "85d475d0f43852fd4b6dee7f513f5b63706666b3977992413f43980d4fce8595",
       "issue": 1613
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -7460,6 +7454,25 @@
           "status": "passed",
           "finishedAt": "2026-11-27T19:20:47.924Z",
           "failures": []
+        }
+      }
+    },
+    "finish:89f21d5c-4860-4826-addd-57848c9fb12e:finish:2:return:return:1613": {
+      "digest": "85d475d0f43852fd4b6dee7f513f5b63706666b3977992413f43980d4fce8595",
+      "issue": 1613,
+      "message": {
+        "kind": "return",
+        "issue": 1613,
+        "at": 1795808309101,
+        "entry": 2,
+        "notice": {
+          "key": "2:rebase-conflict",
+          "reason": "rebase-conflict",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795808309101,
+          "entry": 2,
+          "eventId": "finish:89f21d5c-4860-4826-addd-57848c9fb12e:finish:2:return:return:1613"
         }
       }
     }
