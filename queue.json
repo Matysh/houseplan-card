@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29056,
+  "revision": 29057,
   "nextTicket": 784,
   "nextFence": 780,
   "tasks": {
@@ -6268,7 +6268,7 @@
       "ownerDecision": null,
       "ticket": 776,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795789104578,
       "reviewEntry": 2,
       "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026",
@@ -6318,6 +6318,15 @@
         "entry": 1,
         "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
         "eventId": "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:2:return:return:1603"
+      },
+      "s6": {
+        "id": "20261127T171722114-70dfdab8",
+        "name": "Тесты для задачи #1603 (перед ревью)",
+        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T171722114-70dfdab8/report.json",
+        "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
+        "status": "passed",
+        "finishedAt": "2026-11-27T17:51:41.368Z",
+        "failures": []
       }
     },
     "1604": {
@@ -7361,9 +7370,9 @@
     "fence": 779,
     "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
     "expectedBase": "68b4268626b93e90825e34bb91842f5c730e9add",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795799820442,
-    "expiresAt": 1795802167582,
+    "expiresAt": 1795805502865,
     "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026"
   },
   "events": {
@@ -8998,6 +9007,34 @@
         "track": "ask",
         "layer": "infra",
         "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32"
+      }
+    },
+    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:5:s6-complete": {
+      "digest": "d3d2cf4ade1aebedbdfaad06fd772c6de9cb57bd5b467fd59d32563d0681a898",
+      "issue": 1603,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1603,
+        "at": 1795801902865,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T171722114-70dfdab8",
+          "name": "Тесты для задачи #1603 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T171722114-70dfdab8/report.json",
+          "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
+          "status": "passed",
+          "finishedAt": "2026-11-27T17:51:41.368Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
