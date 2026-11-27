@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28043,
-  "nextTicket": 760,
+  "revision": 28044,
+  "nextTicket": 761,
   "nextFence": 760,
   "tasks": {
     "1001": {
@@ -6271,14 +6271,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1609-3d-tab-resume",
-      "materialSha": "6ed2e17695e7326ab03ffb1af2e8ae22b96b8ff6",
+      "materialSha": "c9e7ce794d44f41a161b84b0e0e524c04998d162",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 757,
-      "queued": false,
+      "ticket": 760,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795772855216,
-      "reviewEntry": 4,
+      "readyAt": 1795774756022,
+      "reviewEntry": 5,
       "patchId": "1b03f07481593c1e6d939c8175867a13f0fb1e06",
       "changedFiles": [
         "demo/helpers/plan-3d-lifecycle-native.mjs",
@@ -6325,8 +6325,7 @@
       "reviewCorrection": {
         "requestId": "review:1609:3:0c40f66ed471e9b2eb60e59f3f44371e161434a7:1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
         "at": 1795772520026
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -7038,7 +7037,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1609
+  ],
   "active": {
     "issue": 1608,
     "worker": "github-coordinator",
@@ -7936,6 +7937,28 @@
         "layer": "product",
         "materialSha": "84e82d3aefe4594d9de148a1fd3195ec42280c13",
         "phase": "sync"
+      }
+    },
+    "finish:bbd74815-8f15-4ca3-839c-c608edbaaa54": {
+      "digest": "915a343842fa44faf27200ded9a464f66ef2f0d55039682129379d0d0dc66fb3",
+      "issue": 1609,
+      "message": {
+        "kind": "queued",
+        "issue": 1609,
+        "at": 1795774756022,
+        "entry": 5,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "c9e7ce794d44f41a161b84b0e0e524c04998d162",
+        "evidence": {
+          "id": "20261127T091017259-853968fa",
+          "name": "Тесты для задачи #1609 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T091017259-853968fa/report.json",
+          "materialSha": "32cf10b8f4a243bde6ca82d7c4568ef08b40039a",
+          "status": "passed",
+          "finishedAt": "2026-11-27T09:33:06.732Z",
+          "failures": []
+        }
       }
     }
   },
