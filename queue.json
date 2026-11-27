@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28319,
+  "revision": 28320,
   "nextTicket": 772,
   "nextFence": 767,
   "tasks": {
@@ -7415,10 +7415,6 @@
     "patchId": "f90c6b3bf362de031cc4c7aa133966ce1397c477"
   },
   "events": {
-    "finish:ecb01186-05f7-4f4e-b1a8-904e5e2c822e": {
-      "digest": "4147bd8ab3ff3f2c7d6259bf5a78b455eaa18f5e101aeffa262c0e630c72c740",
-      "issue": 1609
-    },
     "finish:01690f4e-23a4-4ef3-b25e-6df3555ee7e2": {
       "digest": "6ce193922263764c9012e3b782827bc7b037f71f2f2b2d81ac1bb1239ab6edce",
       "issue": 1609
@@ -8283,6 +8279,10 @@
       "digest": "3d1c17255e13e157b7094a2c67979e2e3b9755879210f916e5b041d247e0cb84",
       "issue": 1598
     },
+    "finish:ebfd23a8-6ad9-45a3-ab3d-84868c9b557a:finish:5:s6-label": {
+      "digest": "926db8cea825ea3b3f7084c32a078bc01458e8c7e84e8fc0107327cee51ab1be",
+      "issue": 1598
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -8987,7 +8987,8 @@
         "resubmission": false,
         "reviewChanges": "### Цель и подход\n\nУдаляем устаревший bundle из дерева и описываем реальную установку ZIP/HACS. `npm run bundle:release` остаётся локальной материализацией для HA-разработки, её результат ignored. `demo/bundle-freshness.mjs` уже проверяет сгенерированный `demo/srv/assets`, а активные smoke не читают tracked snapshot: их исполняемая логика не меняется. `bundle-policy` не является caller текущего process-next; сохраняем совместимость публичной `npm run bundle:clean`: без tracked snapshot она оставляет ignored локальную сборку на месте. Прямой `--verify` проверяет только dist, а `--must-match` явно сообщает, что tracked snapshot отсутствует; исторические refs сохраняют старое сравнение.\n\n### Риски и места для внимания\n\nDev-стенд вызывает `update-dev-bundle.sh --reset` перед pull: legacy tracked checkout по-прежнему восстанавливается, новый checkout без frontend безопасно пропускает reset. Основной путь установки ветки dev-build остаётся прежним. Сверить ZIP manifest/fingerprint с dist и отсутствие generated файлов в source Git; packaging тест теперь работает без frontend в исходном fixture. Backend serving тесты используют собственные временные manifests, а не удаляемый snapshot.\n\n### Проверки и ограничения\n\nПлан S6: синтаксис изменённых инструментов; адресные package/bundle-sync/dev-build и process-next selection/catalog tests; backend frontend manifest/HTTP/registration tests на установленном HA harness. Первая попытка finish ошибочно вывела product-профиль из удалённых generated paths и была прервана; это не успешный продуктовый прогон. Классификация исправлена в текущем механизме: frontend output не является исходником, а demo/stand — инструменты установки; backend runtime по-прежнему относится к продукту. Адресный S6 текущего материала ещё ожидает очередь. Добавлен synthetic CLI regression для отсутствующего snapshot: local output сохранён, dist integrity по-прежнему обязательна. Для self-contained bundle-sync/dev-build fixtures явно описана классификация generated artifacts, чтобы infra S6 не запускал несвязанный product build. Реальный HA E2E и публикация релиза не требуются: формат и содержимое готового ZIP остаются прежними; решение сохранено в houseplan-e2e (ссылка ниже).\n\n### Совместимость companion installer\n\nВ `Matysh/houseplan-e2e` исправлена обязательная зависимость source branch/SHA installer от наличия старого `frontend/`: [commit 2e4b0c2](https://github.com/Matysh/houseplan-e2e/commit/2e4b0c28f71ba32110bbe4a7d74b26be24edb4b2). Только существующий legacy snapshot сохраняется/сравнивается; отсутствие snapshot приводит к обычной сборке и проверенному sync текущего source commit. Путь настоящего release ZIP не изменён. `node --test test/source-frontend.test.mjs`: **4/4 PASS** (нет snapshot; отказ sync; воспроизведённый legacy snapshot; замена устаревшего legacy snapshot), `node --check scripts/install-houseplan.mjs`: PASS. [Решение HA E2E: не надо](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1598.md) сохранено с поиском по #1598; Docker/HA не запускались.\n\n\n### Материал собственного ревью и удалённые сборочные файлы\n\nШтатный trusted runtime workflow берётся из `github.workflow_sha` на `dev`, а candidate читается отдельно. В текущем trusted runtime общий diff ограничен первыми 100000 символами: удаляемый generated snapshot может занять этот фрагмент. Это ограничение материала, а не исключение из содержательного ревью. Полный `changedFiles` и штатные `git_diff({path})`, `read_file`, `git_show` доступны. Для проверки реального изменения нужно читать named-file материал:\n\n- Установка/сборочная политика: `.gitignore`, `scripts/bundle-sync.mjs`, `scripts/bundle-policy.mjs`, `demo/stand/update-dev-bundle.sh`.\n- Маршрутизация и ревью: `process-next/lib/coordinator.mjs`, `process-next/lib/task-selection.mjs`, `process-next/lib/review.mjs`.\n- Адресные проверки: `process-next/test/package.test.mjs`, `process-next/test/coordinator.test.mjs`, `process-next/test/review.test.mjs`, `test/bundle-sync.test.mjs`, `test/bundle-policy.test.mjs`, `test/dev-build.test.mjs`; исходные backend serving tests перечислены в S6.\n- Документация: `AGENTS.md`, `CONTRIBUTING.md`, `PROCESS.md`, `README.md`, `README.ru.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, `docs/FURNITURE-VOLUME-LAB.md`, `process-next/AUTOMATION-PARITY.md`, оба `docs/CHANGELOG*.md`.\n\nВ candidate исправлен сам native builder: aggregate patch исключает только подтверждённые Git-удаления известных `custom_components/houseplan/frontend/` generated files; полный `changedFiles` и явный `excludedDeletedGeneratedFiles` сохранены. Добавленные/изменённые frontend-файлы остаются в diff. Named-file patch и старые blobs доступны без такого исключения. То же правило действует для ship batch по каждому выбранному коммиту. Synthetic regression: удаление payload >100000 символов не вытесняет scripts/docs/policy, а added/modified frontend остаётся видимым и прямое чтение удалённого артефакта доступно. Тест ещё ожидает S6. Это исправит последующие trusted ревью после merge; для собственного #1598 trusted runtime не переключается на candidate и результат не подменяется.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
