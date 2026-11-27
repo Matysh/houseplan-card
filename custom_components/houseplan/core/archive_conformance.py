@@ -6,6 +6,7 @@ import json
 import tempfile
 import zipfile
 from pathlib import Path
+from typing import Any, Callable, cast
 
 from . import backup_archive, house_archive
 from .house_document import build_merge
@@ -15,6 +16,13 @@ PRODUCERS = {
     "v1.86.1": "f175b7e00d8535149c61c2d28a922620a3a70928",
 }
 PNG_SHA256 = "431ced6916a2a21a156e38701afe55bbd7f88969fbbfc56d7fe099d47f265460"
+JsonObject = dict[str, Any]
+# The existing pure helper has no annotations. State its data-only signature
+# at this typed test boundary without changing the runtime importer.
+_merge = cast(
+    Callable[[JsonObject, JsonObject, JsonObject], tuple[JsonObject, JsonObject, JsonObject]],
+    build_merge,
+)
 
 
 def run_archives(fixtures: Path | None = None) -> list[str]:
@@ -41,11 +49,15 @@ def run_archives(fixtures: Path | None = None) -> list[str]:
         path = fixtures / row["path"]
         assert hashlib.sha256(path.read_bytes()).hexdigest() == row["sha256"]
         with tempfile.TemporaryDirectory(prefix="hp-archive-conformance-") as directory:
+            document: JsonObject
+            manifest: JsonObject
             if name == "plan-transfer.zip":
-                parsed = house_archive.read_archive(path)
+                house_payload = house_archive.read_archive(path)
+                document, manifest = house_payload.document, house_payload.manifest
             else:
-                parsed = backup_archive.read_archive(path, Path(directory))
-            document = parsed.document
+                backup_payload = backup_archive.read_archive(path, Path(directory))
+                document, manifest = backup_payload.document, backup_payload.manifest
+                assert backup_payload.topics == {}
             assert document["integration_version"] == document["card_version"] == tag[1:]
             assert document["model_version"] == 11
             config = document["payload"]["config"]
@@ -54,14 +66,14 @@ def run_archives(fixtures: Path | None = None) -> list[str]:
             assert config["spaces"][0]["stairs"][0]["target_space_id"] == "floor1"
             assert document["payload"]["layout"]["rl_room0"] == {
                 "s": "floor0", "x": .2, "y": .3, "k": 1.2}
-            assert parsed.manifest["complete"] is True and len(parsed.manifest["images"]) == 2
-            assert len(parsed.manifest["blobs"]) == 1
+            assert manifest["complete"] is True and len(manifest["images"]) == 2
+            assert len(manifest["blobs"]) == 1
             with zipfile.ZipFile(path) as archive:
-                for blob in parsed.manifest["blobs"]:
+                for blob in manifest["blobs"]:
                     assert hashlib.sha256(archive.read(blob)).hexdigest() == PNG_SHA256
             if name == "plan-transfer.zip":
                 assert document["kind"] == "house" and config["markers"] == []
-                merged, layout, _ = build_merge(document,
+                merged, layout, _ = _merge(document,
                     {"spaces": [{"id": "existing", "title": "Existing"}], "markers": [], "settings": {}}, {})
                 assert merged["spaces"][0] == {"id": "existing", "title": "Existing"}
                 added = merged["spaces"][1:]
@@ -71,6 +83,5 @@ def run_archives(fixtures: Path | None = None) -> list[str]:
             else:
                 assert document["kind"] == "full"
                 assert config["markers"][0]["id"] == "synthetic_marker"
-                assert parsed.topics == {}
             completed.append(f"{tag}/{name}: read images, geometry, labels and bindings")
     return completed

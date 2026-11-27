@@ -141,7 +141,7 @@
     {
       "id": "a31b5dcbe8ce9ed928db2270",
       "path": "custom_components/houseplan/core/archive_conformance.py",
-      "line": 27,
+      "line": 35,
       "text": "fixtures = Path(__file__).with_name(\"compatibility_fixtures\")",
       "occurrence": 1,
       "kind": "exclusion",
@@ -151,7 +151,7 @@
     {
       "id": "031936045877502efa6d6956",
       "path": "custom_components/houseplan/core/archive_conformance.py",
-      "line": 29,
+      "line": 37,
       "text": "fixtures = Path(__file__).resolve().parents[3] / \"demo/fixtures/core-compatibility\"",
       "occurrence": 1,
       "kind": "exclusion",
