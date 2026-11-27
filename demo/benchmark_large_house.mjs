@@ -44,16 +44,15 @@ if (allowStage2Base && !stage3Dense)
 const requireStage3 = stage3Dense && !allowStage2Base;
 const backdrop = profile === 'large-house-isometric-backdrop-v1';
 const isometric = profile === 'large-house-isometric-v1' || stage3Dense || backdrop;
-if (isometric) {
-  const { runWebglBenchmark } = await import('./performance/webgl-benchmark.mjs');
-  await runWebglBenchmark({ profile, samples, warmups, iterations, output, targetRoot });
-  process.exit(0);
-}
 const planSnap = profile === 'large-house-plan-snap-v1';
 const interaction = profile === 'large-house-interaction-v1';
 const planRotation = Number(valueArg('rotation') ?? 0);
 if (![0, 90, 180, 270].includes(planRotation) || planRotation !== 0 && !interaction)
   throw new Error('--rotation must be a quarter turn; nonzero turns require the interaction profile');
+if (isometric) {
+  const { runWebglBenchmark } = await import('./performance/webgl-benchmark.mjs');
+  await runWebglBenchmark({ profile, samples, warmups, iterations, output, targetRoot });
+} else {
 const requiresIsometric = isometric && existsSync(resolve(targetRoot, 'src/iso-projection.ts'));
 const requiresIsoStructuralBuildCounter = requiresIsometric
   && readFileSync(resolve(targetRoot, 'src/houseplan-card.ts'), 'utf8')
@@ -1607,4 +1606,6 @@ if (output) {
   console.log(output);
 } else {
   process.stdout.write(text);
+}
+
 }
