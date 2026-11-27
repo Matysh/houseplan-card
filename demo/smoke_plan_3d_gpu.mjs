@@ -385,6 +385,10 @@ try {
     const risingSun = motion.frame(3800).sources.find(light => light.sun);
     motion.set([], 'scene-a', 3800, true);
     const disabledSun = motion.frame(3800).sources.find(light => light.sun);
+    const automatic = { ...lamp, id: 'strip', ribbon: true, automaticRibbon: true };
+    motion.set([automatic], 'scene-b', 5000, true);
+    motion.set([{ ...automatic, automaticRibbon: false }], 'scene-b', 5100, true);
+    const configuredRibbon = motion.frame(5100).sources[0];
     const snapshot = await lit.snapshot({ scene: world.scene, camera }, { width: 200, height: 200 });
     if (!snapshot) throw new Error('Static WebP was not encoded');
     const bitmap = await createImageBitmap(snapshot);
@@ -579,7 +583,7 @@ try {
     return { contexts, pixels, picking, frames, roomHover, paperHeight, windowJamb, transparentIntersection, largeRadius, wallLighting, windowLight, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, worldBlending, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
       fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas, steppedAtlas,
-      roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
+      roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun, configuredRibbon,
       failures: cards.map(card => card.failures()), held, recoveringFailures };
   });
   assert.deepEqual(errors, []);
@@ -656,6 +660,7 @@ try {
   assert.equal(evidence.risingSun.intensity, .2);
   assert.equal(evidence.risingSun.radius, 40, 'the new footprint appears with a smooth intensity change');
   assert.equal(evidence.disabledSun, undefined, 'night and disabled gates clear solar light immediately');
+  assert.equal(evidence.configuredRibbon?.automaticRibbon, false, 'an authored height switches the optical mode immediately');
   const [unlit, red, blue] = evidence.frames;
   assert.deepEqual(evidence.paperHeight, [0,0], 'the floor has no exposed side under exterior walls');
   const revealColor = evidence.windowJamb[0].center;
