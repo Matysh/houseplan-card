@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28730,
+  "revision": 28731,
   "nextTicket": 780,
   "nextFence": 775,
   "tasks": {
@@ -6398,6 +6398,13 @@
         "status": "passed",
         "finishedAt": "2026-11-27T16:14:02.547Z",
         "failures": []
+      },
+      "reviewRound": null,
+      "reviewRequest": "review:1600:2:b12ee743099f75fdaf914681d7c7d2688e8d89f7:bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+      "reviewMaterial": {
+        "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+        "expectedBase": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+        "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7"
       }
     },
     "1603": {
@@ -7398,6 +7405,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "code:1600:review:1600:2:b12ee743099f75fdaf914681d7c7d2688e8d89f7:bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89": {
+      "issue": 1600,
+      "kind": "code",
+      "requestId": "review:1600:2:b12ee743099f75fdaf914681d7c7d2688e8d89f7:bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+      "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+      "expectedBase": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+      "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7",
+      "status": "pending",
+      "presentation": {
+        "round": null,
+        "occurredAt": "2026-11-27T16:14:19.516Z"
+      }
     }
   },
   "waiting": [
@@ -7417,7 +7437,8 @@
     "phase": "review",
     "admittedAt": 1795795983357,
     "expiresAt": 1795799649215,
-    "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7"
+    "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7",
+    "reviewRequest": "review:1600:2:b12ee743099f75fdaf914681d7c7d2688e8d89f7:bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89"
   },
   "events": {
     "finish:8199b101-c60f-4348-a965-0a33090b455e": {
@@ -8222,6 +8243,10 @@
     },
     "finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:3:s6-label": {
       "digest": "2d2719ef7e6535a602455eb003b9be3f0026f365ad309e47e7f51b14d8c5e83c",
+      "issue": 1600
+    },
+    "github:46031853954:1:tick:0:review-requested": {
+      "digest": "d248eb704809280e9a2e4f8db515d573cba3337da00291c84d5b5fa239c761ef",
       "issue": 1600
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
