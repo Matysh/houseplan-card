@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28099,
+  "revision": 28100,
   "nextTicket": 762,
   "nextFence": 761,
   "tasks": {
@@ -6390,7 +6390,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1609-3d-tab-resume",
-      "materialSha": "c9e7ce794d44f41a161b84b0e0e524c04998d162",
+      "materialSha": "44454148a8099075afbd35fb76532ef00479b47d",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 760,
@@ -6398,7 +6398,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795774756022,
       "reviewEntry": 5,
-      "patchId": "1b03f07481593c1e6d939c8175867a13f0fb1e06",
+      "patchId": "6475a222d994cd24cbe541e932c28bf8537a30a6",
       "changedFiles": [
         "demo/helpers/plan-3d-lifecycle-native.mjs",
         "demo/helpers/plan-3d-resume-fixture.mjs",
@@ -7164,11 +7164,12 @@
     "worker": "finish",
     "token": "760:finish:41ee2471-bdee-4304-a669-4360675ac204:finish:1:admit",
     "fence": 760,
-    "materialSha": "c9e7ce794d44f41a161b84b0e0e524c04998d162",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "44454148a8099075afbd35fb76532ef00479b47d",
+    "expectedBase": "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31",
+    "phase": "testing",
     "admittedAt": 1795775167967,
-    "expiresAt": 1795775467967
+    "expiresAt": 1795775494301,
+    "patchId": "6475a222d994cd24cbe541e932c28bf8537a30a6"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7754,6 +7755,10 @@
     "recover-1608:df52f15b-73ee-4cb0-91e4-f1fbc12fd9b8": {
       "digest": "4bf9382a3e1ff4eee0850c7dd15749dfc518a15c0587b2f175339cecc7766cd9",
       "issue": 1608
+    },
+    "finish:bbd74815-8f15-4ca3-839c-c608edbaaa54:finish:1:synchronized": {
+      "digest": "c26dce13b23b835e471139423ff1db1f63365e0f1016f02c1fd69a608d68f408",
+      "issue": 1609
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
