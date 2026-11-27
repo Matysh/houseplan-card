@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27908,
-  "nextTicket": 755,
+  "revision": 27909,
+  "nextTicket": 756,
   "nextFence": 755,
   "tasks": {
     "1001": {
@@ -6235,14 +6235,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1609-3d-tab-resume",
-      "materialSha": "1f8baf6671ed42eb014ce9d7a17cc9dd9327eba8",
+      "materialSha": "db76345c14f2c6874411c10e96131e31b289cc38",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 754,
-      "queued": false,
+      "ticket": 755,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795767499382,
-      "reviewEntry": 1,
+      "readyAt": 1795769055169,
+      "reviewEntry": 2,
       "patchId": "3f8b4e5fce6ce9486c0f1698ee961673a925ae3f",
       "changedFiles": [
         "demo/helpers/plan-3d-lifecycle-native.mjs",
@@ -6264,7 +6264,6 @@
         "src/visual-continuity.ts",
         "test/plan-3d-recovery.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6986,7 +6985,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1609
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7291,6 +7292,19 @@
           "detail": "Поведение: test/config-audit.test.mjs: failed; Поведение: test/floor-cache-day-cycle.test.mjs: failed; Поведение: test/furniture-assets.test.mjs: failed; Поведение: test/furniture-volume-generator.test.mjs: failed; Браузер: floor persistent cache isometric: failed",
           "eventId": "finish:9b38d4fe-2f32-4267-9a91-28bddf978b17:finish:3:return:return:1609"
         }
+      }
+    },
+    "finish:c7868b5e-45a0-43e0-986d-46d60f7bd7ae": {
+      "digest": "de77cd5471894538e289a0305ccf035054fe9af5357ee7193cee00c7241ca10b",
+      "issue": 1609,
+      "message": {
+        "kind": "queued",
+        "issue": 1609,
+        "at": 1795769055169,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "db76345c14f2c6874411c10e96131e31b289cc38"
       }
     }
   },
