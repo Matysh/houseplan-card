@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29889,
-  "nextTicket": 801,
+  "revision": 29890,
+  "nextTicket": 802,
   "nextFence": 801,
   "tasks": {
     "1001": {
@@ -6243,14 +6243,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1617-height-aware-led-light",
-      "materialSha": "b108551beca75f85602c9bde4e8ef492ab46c037",
+      "materialSha": "8329e2f5609b4c64c314a90d57cd4d3194a19dc6",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 800,
-      "queued": false,
+      "ticket": 801,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795820158939,
-      "reviewEntry": 2,
+      "readyAt": 1795820452572,
+      "reviewEntry": 3,
       "patchId": "265581c0d087d930761db9d7874670c34ddb8570",
       "changedFiles": [
         "demo/smoke_plan_3d_gpu.mjs",
@@ -6289,8 +6289,7 @@
         "entry": 2,
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed",
         "eventId": "finish:064f0112-916f-450d-801c-30ae9b945c93:finish:3:return:return:1617"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1618": {
       "issue": 1618,
@@ -7068,7 +7067,9 @@
       "runId": 46078951618
     }
   },
-  "waiting": [],
+  "waiting": [
+    1617
+  ],
   "active": null,
   "events": {
     "finish:b6f532f4-8cba-41e4-afee-f2b7a0b414d2:finish:1:synchronized": {
@@ -7327,6 +7328,28 @@
           "entry": 2,
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed",
           "eventId": "finish:064f0112-916f-450d-801c-30ae9b945c93:finish:3:return:return:1617"
+        }
+      }
+    },
+    "finish:0e19e332-63e7-49e4-a8b2-89aa43e6d5dc": {
+      "digest": "ede9b3f523bfb0f254088f2f4f468cdc3d18824ea6fcc7e318e1604bd74bd663",
+      "issue": 1617,
+      "message": {
+        "kind": "queued",
+        "issue": 1617,
+        "at": 1795820452572,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "8329e2f5609b4c64c314a90d57cd4d3194a19dc6",
+        "evidence": {
+          "id": "20261127T223640583-e7bebc9b",
+          "name": "Тесты для задачи #1617 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T223640583-e7bebc9b/report.json",
+          "materialSha": "153eccfdc5fc772a77d8d624649734ad82eae3be",
+          "status": "passed",
+          "finishedAt": "2026-11-27T22:39:59.273Z",
+          "failures": []
         }
       }
     }
