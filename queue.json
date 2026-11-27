@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29478,
+  "revision": 29479,
   "nextTicket": 791,
   "nextFence": 791,
   "tasks": {
@@ -7299,20 +7299,6 @@
           "detail": "Синтаксис и типы изменённых инструментов: failed",
           "eventId": "finish:77aee5fa-568e-44f3-8a8c-31e10253a9af:finish:3:return:return:1615"
         }
-      }
-    },
-    "finish:a0f8ddd9-eb90-4fd1-b838-56f7a042eb2f:finish:1:admit": {
-      "digest": "9fdb0d20fad172bb18b8239a339ad2a6ef31e81e9c4a8ea71a0f77254c825c1f",
-      "issue": 1615,
-      "message": {
-        "kind": "admitted",
-        "issue": 1615,
-        "at": 1795809657209,
-        "entry": 2,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "46ba17964dff6b655df64316d333383d0239dbef",
-        "phase": "sync"
       }
     }
   },
