@@ -16,6 +16,7 @@ interface CardPlan3dPort {
   pitch(): number;
   switchPhase(): 'leaving' | 'waiting' | 'entering' | undefined;
   floorKey(): string;
+  structureScope(): string | undefined;
   frameScope(): string | undefined;
   continuityToken(): number;
   needsPaintProof(): boolean;
@@ -51,8 +52,9 @@ export class CardPlan3d {
   devices?: ReadonlyMap<string, IsoOverlayPlacement>;
   startupSource?: () => Plan3dPresentation;
   private authority?: PlanHost['authorityKey'];
-  private submitted?: { stamp: string; scope: string; floor: string };
+  private submitted?: { stamp: string; scope: string; structure: string; floor: string };
   private lastScope?: string;
+  private lastStructure?: string;
   private paintedStamp?: string;
   private generation = 0;
   private recovery?: { retained?: string; showStatus: boolean; timer?: number };
@@ -99,8 +101,8 @@ export class CardPlan3d {
   }
 
   coverChangedCandidate(): void {
-    const scope = this.port.frameScope();
-    if (!this.recovery && this.lastScope && scope && scope !== this.lastScope)
+    const scope = this.port.structureScope();
+    if (!this.recovery && this.lastStructure && scope && scope !== this.lastStructure)
       this.startRecovery('3d-structure-candidate');
   }
 
@@ -113,6 +115,12 @@ export class CardPlan3d {
 
   finishEntrance(): void { this.entering = false; }
 
+  /** A settled flat/fallback scene must not wait for an impossible GPU copy. */
+  abandonRecovery(): void {
+    this.finishRecovery(false);
+    this.finishEntrance();
+  }
+
   private finishRecovery(reveal: boolean): void {
     const recovery = this.recovery;
     if (!recovery) return;
@@ -121,9 +129,10 @@ export class CardPlan3d {
     this.recovery = undefined;
   }
 
-  private prepareScope(): { stamp: string; scope: string; floor: string } | undefined {
-    const scope = this.port.frameScope(), stamp = this.stamp(scope);
-    return scope !== undefined && stamp !== undefined ? { stamp, scope, floor: this.port.floorKey() } : undefined;
+  private prepareScope(): CardPlan3d['submitted'] {
+    const structure = this.port.structureScope(), scope = this.port.frameScope(), stamp = this.stamp(scope);
+    return structure !== undefined && scope !== undefined && stamp !== undefined
+      ? { stamp, scope, structure, floor: this.port.floorKey() } : undefined;
   }
 
   private onOutput(event: Plan3dOutputEvent): void {
@@ -168,6 +177,7 @@ export class CardPlan3d {
     },
     failed: (_ignored, info) => {
       this.port.failedLoad();
+      this.abandonRecovery();
       console.warn('[houseplan] hidden isometric runtime diagnostic',
         safeRuntimeDiagnostic('runtime-load', 'unverified', info.terminal));
       const space = this.port.space();
@@ -214,8 +224,7 @@ export class CardPlan3d {
   }
 
   dispose(): void {
-    this.finishRecovery(false);
-    this.entering = false;
+    this.abandonRecovery();
     this.disposeHost();
   }
 
@@ -230,7 +239,7 @@ export class CardPlan3d {
     this.authority = undefined;
     this.paintedFloor = '';
     this.submitted = undefined;
-    this.lastScope = this.paintedStamp = undefined;
+    this.lastScope = this.lastStructure = this.paintedStamp = undefined;
   }
 
   sync(): void {
@@ -265,6 +274,7 @@ export class CardPlan3d {
             const frameChanged = this.paintedStamp !== stamp;
             this.paintedFloor = submitted.floor;
             this.lastScope = submitted.scope;
+            this.lastStructure = submitted.structure;
             this.paintedStamp = stamp;
             const reveal = this.recovery && (this.holding || this.port.recoveryAssetsReady());
             if (reveal) {

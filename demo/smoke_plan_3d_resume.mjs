@@ -56,6 +56,33 @@ try {
       && stage.querySelector('canvas[data-hp-plan-3d-ready]') && stage.querySelector('.dev[data-hp-3d-native]');
   });
   await complete();
+  phase = 'ordinary resize without graphics loss';
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await wait(() => window.__tabResume.card()?._reducedMotion === false);
+  await page.evaluate(() => {
+    const audit = window.__tabResume, card = audit.card();
+    const attributes = ['data-hp-3d-recovery-waiting', 'data-hp-3d-recovery-entering'];
+    audit.resizeMasks = [];
+    audit.resizeObserver = new MutationObserver(records => {
+      for (const { target, attributeName, oldValue } of records) {
+        if (oldValue !== null || target.hasAttribute(attributeName)) audit.resizeMasks.push(attributeName);
+      }
+    });
+    audit.resizeObserver.observe(card.renderRoot, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: attributes });
+  });
+  await page.setViewportSize({ width: 1120, height: 790 });
+  await wait(() => window.__tabResume.card().houseplanContinuityTrace()
+    .some(item => item.event === 'candidate-start' && item.reason === 'stage-resize'));
+  await complete();
+  assert.deepEqual(await page.evaluate(async () => {
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const audit = window.__tabResume;
+    audit.resizeObserver.disconnect();
+    return audit.resizeMasks;
+  }), [], 'ordinary 3D resize must not hide or fade in the live scene');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await wait(() => window.__tabResume.card()?._reducedMotion === true);
+
   phase = 'first WebGL loss';
   await page.evaluate(() => {
     const audit = window.__tabResume;
@@ -334,8 +361,30 @@ try {
   assert.equal(await page.evaluate(() => window.__tabResume.card().houseplanContinuityTrace()
     .some(item => item.event === '3d-discard')), false, 'a document discarded on a different route uses the ordinary start');
 
+  phase = 'discard with failed 3D runtime';
+  const isoChunk = /\/plan-3d-runtime-[^/?]+\.js(?:\?|$)/;
+  let failures = 0, failImport;
+  const holdImport = new Promise(resolve => { failImport = resolve; });
+  const rejectRuntime = async route => { failures++; await holdImport; await route.abort(); };
+  await page.route(isoChunk, rejectRuntime);
+  await open();
+  await loadFixture();
+  await mount();
+  await wait(() => window.__tabResume.card()?.houseplanContinuityTrace().some(item => item.event === '3d-discard'));
+  failImport();
+  const retry = stage.locator('.plan-3d-fallback button');
+  await retry.waitFor({ state: 'visible' });
+  assert.ok(failures >= 2, 'both lazy load attempts failed');
+  assert.equal(await stage.getAttribute('data-hp-3d-recovery-waiting'), null);
+  assert.equal(await stage.evaluate(element => !element.inert
+    && getComputedStyle(element.querySelector('.zoomwrap')).visibility === 'visible'),
+  true, 'flat fallback is visible and not inert');
+  await page.unroute(isoChunk, rejectRuntime);
+  await retry.click();
+  await complete();
+
   assert.equal(await reportPageErrors(), false);
-  console.log('OK: full panel WebGL and Canvas2D recovery, delayed reconnect, floor and authority fences, discard route exclusions');
+  console.log('OK: full panel resize, WebGL and Canvas2D recovery, delayed reconnect, floor and authority fences, discard and runtime retry');
 } finally {
   clearTimeout(deadline);
   await browser.close();

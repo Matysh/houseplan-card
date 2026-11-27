@@ -820,6 +820,7 @@ export class HouseplanCard extends LitElement {
     pitch: () => this._gridPitch,
     switchPhase: () => this._floorSwitch?.phase,
     floorKey: () => this._floorPaintKey(),
+    structureScope: () => this._plan3dStructureScope(),
     frameScope: () => this._plan3dFrameScope(),
     continuityToken: () => this._continuity.token,
     needsPaintProof: () => !this._continuity.hasCompleteFrame || this._continuity.state !== 'steady',
@@ -2242,16 +2243,21 @@ export class HouseplanCard extends LitElement {
     return `${this._space}|${this._floorPreparation?.paintToken ?? ''}`;
   }
 
-  private _plan3dFrameScope(): string | undefined {
+  private _plan3dStructureScope(): string | undefined {
     const { permissions } = this.planHost.environment;
     if (!permissions.read || this._desiredProjection !== 'iso' || this._routeDepartureHandled) return;
+    return JSON.stringify([this._space, this._adoption.currentConfigFingerprint(),
+      this._adoption.currentLayoutFingerprint(), permissions.write, permissions.admin]);
+  }
+
+  private _plan3dFrameScope(): string | undefined {
+    const structure = this._plan3dStructureScope();
+    if (structure === undefined) return;
     const size = this._stageEl;
     const view = this._view;
     return JSON.stringify([
-      this._space, this._rotation, view?.x, view?.y, view?.w, view?.h,
-      this._adoption.currentConfigFingerprint(), this._adoption.currentLayoutFingerprint(),
+      structure, this._rotation, view?.x, view?.y, view?.w, view?.h,
       size?.clientWidth, size?.clientHeight, this.ownerDocument.defaultView?.devicePixelRatio,
-      permissions.write, permissions.admin,
     ]);
   }
 
@@ -8653,6 +8659,7 @@ export class HouseplanCard extends LitElement {
     });
   }
   private _latchIsoFallback(key: string, _ignored: unknown): void {
+    this._spatial.abandonRecovery();
     if (this._isoFallback.has(key)) return;
     this._isoFallback.add(key);
     if (this._space) this._spatial.failure = { key, space: this._space };
@@ -13862,6 +13869,7 @@ export class HouseplanCard extends LitElement {
     if (this._floorSwitch?.phase === 'leaving') return this._renderPreparedFloorFrame(noChange, diagnostics);
     if (!this._ensureFloorPreparation()) {
       if (this._floorPreparation?.failed) {
+        this._spatial.abandonRecovery();
         this._startupFloor?.disablePreview();
         this._clearStartupAssetWait();
         this._finishStartupFade();
@@ -13881,6 +13889,10 @@ export class HouseplanCard extends LitElement {
     this._editorRuntime?._beginResizeBaseFrame();
     const vb = space.vb;
     let projection = this._effectiveProjection();
+    // A pending lazy import/theme still owes a 3D frame. A resolved flat
+    // plan owes no such frame and the ordinary flat retry must stay usable.
+    if (projection === 'flat' && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime))
+      this._spatial.abandonRecovery();
     if (this._startupPending && this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) === 'fallback') {
       this._startupFloor?.disablePreview();
       this._startupStyle = undefined;
@@ -14448,7 +14460,7 @@ export class HouseplanCard extends LitElement {
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
           ?inert=${live(this._rotationMotion.blocksInput || this._modeTransition.active || this._startupPending
             || this._floorSwitch?.phase === 'waiting' || this._spatial.recovering)}
-          ?data-hp-3d-recovery-waiting=${this._spatial.recovering}
+          ?data-hp-3d-recovery-waiting=${live(this._spatial.recovering)}
           ?data-hp-3d-recovery-entering=${this._spatial.entering}
           ?data-hp-startup-pending=${this._startupPending}
           ?data-hp-floor-switch-waiting=${this._floorSwitch?.phase === 'waiting'}
