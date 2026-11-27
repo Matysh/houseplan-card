@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28350,
+  "revision": 28351,
   "nextTicket": 772,
   "nextFence": 768,
   "tasks": {
@@ -7426,25 +7426,6 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
-    },
-    "code:1598:review:1598:2:f90c6b3bf362de031cc4c7aa133966ce1397c477:0a917f294e0393c317f4a4fdeec9dc4640bb0695": {
-      "issue": 1598,
-      "kind": "code",
-      "requestId": "review:1598:2:f90c6b3bf362de031cc4c7aa133966ce1397c477:0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-      "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
-      "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-      "patchId": "f90c6b3bf362de031cc4c7aa133966ce1397c477",
-      "status": "pending",
-      "presentation": {
-        "round": null,
-        "occurredAt": "2026-11-27T11:48:27.042Z",
-        "transition": {
-          "from": "S7-code-review",
-          "to": "S6-in-progress",
-          "confirmed": true
-        }
-      },
-      "runId": 45993490108
     }
   },
   "waiting": [
@@ -7466,10 +7447,6 @@
     "patchId": "eb8420682ef5cffe9c401ac6a0a9299ec8bf2518"
   },
   "events": {
-    "finish:ab8db921-729c-4d16-8c52-fabb23cfafaa": {
-      "digest": "ee97b8163a50231ef4d0eb7b72f483ae7a3b34bfc9255ef913440f3b9345137d",
-      "issue": 1609
-    },
     "finish:3fe3a6c9-d1ac-4d33-a8ff-0fb88d39c6af": {
       "digest": "5952ceee5d06cd5e73d20deed6872a915ea194f44bf59268f70e90f1037e301e",
       "issue": 1609
@@ -8329,6 +8306,10 @@
     "finish:da4849ba-1b63-4a9c-ac16-562b58378a52": {
       "digest": "4efb8d5db036ba3a70efaa51a02a0e7deb73d8809f49fddffbba8f180347640e",
       "issue": 1594
+    },
+    "github:45994107355:1:completions:report:0f4a9d5427ed3d14f5d1fd1cc081b5dd32c4b94f436a26f56cde075b286ce363": {
+      "digest": "6b63164de4ccfae1f028bec5453bdba5174bd5096e46ff8878a9b55b90ef7897",
+      "issue": 1598
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
