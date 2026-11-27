@@ -104,7 +104,7 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
       'custom_components/houseplan/frontend', 'demo/srv/assets',
     ]) writeLegacyTarget(root, target);
 
-    writeFileSync(join(root, '.gitignore'), '/dist\n/custom_components/houseplan/frontend\n/demo/srv/assets\nnode_modules\n');
+    writeFileSync(join(root, '.gitignore'), '/dist\n/custom_components/houseplan/frontend\n/demo/srv/assets\n/demo/srv/static/mdi\nnode_modules\n');
     const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
     git('init', '-q'); git('add', '.');
     git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'source only');
