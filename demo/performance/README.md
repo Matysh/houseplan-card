@@ -181,7 +181,9 @@ release requirements or per-task hard limits.
 
 The three legacy isometric command names now run `plan3d-webgl-v1`, never the
 retired SVG fingerprint oracle. Their derived fixture adds a sofa and fridge
-on each floor, leaving the historical large-house fixture unchanged. A passing
+on each floor, leaving the historical large-house fixture unchanged. Each sample
+uses a unique card identity so the warm remount memo cannot restore the previous
+floor; the runner asserts a real floor 1 to floor 2 change. A passing
 candidate needs a nonempty painted display canvas, the matching presented
 Three.js frame, real wall/opening/furniture/device meshes, materials and draw
 calls. Flat fallback is a failure: `3D не отрисовано`.

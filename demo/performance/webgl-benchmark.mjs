@@ -38,7 +38,7 @@ export async function runWebglBenchmark({ profile, samples, warmups, iterations,
         localStorage.clear();
         localStorage.setItem('houseplan_card_view_v1', JSON.stringify(Object.fromEntries(fixture.config.spaces.map(space => [space.id, 'iso']))));
         const card = document.createElement('houseplan-card');
-        card.setConfig({ type: 'custom:houseplan-card', title: 'WebGL benchmark', icon_size: 3.4 });
+        card.setConfig({ type: 'custom:houseplan-card', title: `WebGL benchmark ${sample}`, default_floor: 'perf-floor-1', icon_size: 3.4 });
         const hassBase = {
           language: 'en', locale: { language: 'en' }, user: { id: 'perf', name: 'Synthetic benchmark', is_admin: true },
           devices: fixture.devices, entities: fixture.entities, areas: fixture.areas,
@@ -70,6 +70,8 @@ export async function runWebglBenchmark({ profile, samples, warmups, iterations,
         };
         const initial = await ready();
         const firstStable3dMs = performance.now() - started;
+        if (card._space !== 'perf-floor-1') throw Error('Fresh 3D sample did not start on floor 1');
+        const floorSwitch = { from: card._space, to: 'perf-floor-2' };
         const switchStarted = performance.now();
         card._pickSpace('perf-floor-2'); await card.updateComplete; await ready();
         const spaceSwitch3dMs = performance.now() - switchStarted;
@@ -137,7 +139,7 @@ export async function runWebglBenchmark({ profile, samples, warmups, iterations,
           }
         }
         if (typeof globalThis.gc === 'function') { globalThis.gc(); await frame(); }
-        const result = { sample, firstStable3dMs, spaceSwitch3dMs, zoom3dMs, pan3dMs, stateUpdate3dMs, lightFade3dMs,
+        const result = { sample, floorSwitch, firstStable3dMs, spaceSwitch3dMs, zoom3dMs, pan3dMs, stateUpdate3dMs, lightFade3dMs,
           heapBytes: performance.memory?.usedJSHeapSize ?? null, preciseGc: typeof globalThis.gc === 'function', fadeObserved,
           gpu: { supported: !!timer && !gpuReason && gpuValues.length > 0, samplesMs: gpuReason ? [] : gpuValues, reason: gpuReason },
           initial, geometry: window.__hpReadWebgl(card, profile) };
