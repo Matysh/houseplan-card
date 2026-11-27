@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28199,
+  "revision": 28200,
   "nextTicket": 770,
   "nextFence": 765,
   "tasks": {
@@ -7299,18 +7299,12 @@
       }
     },
     "1595": {
-      "requestId": "spec:1595:258696fefb2069b4c44758431e2411b6937adf3afb9d525e0832059dc996b141",
-      "contextDigest": "258696fefb2069b4c44758431e2411b6937adf3afb9d525e0832059dc996b141",
+      "requestId": "spec:1595:da24fbb467742852160f5167c56abc4afe31c43de470137a312bc10cb6ca76cd",
+      "contextDigest": "da24fbb467742852160f5167c56abc4afe31c43de470137a312bc10cb6ca76cd",
       "base": "502258741f1753f27b35ee15c7264d196c2521f6",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795776190870,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45983762168",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795776372220
     },
     "1605": {
       "requestId": "spec:1605:2ece40c58e0b623a3727c9dcbf3717b234d60ea0570a577da2717ac9a68729a2",
@@ -7372,6 +7366,19 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
+      }
+    },
+    "spec:1595:spec:1595:da24fbb467742852160f5167c56abc4afe31c43de470137a312bc10cb6ca76cd": {
+      "issue": 1595,
+      "kind": "spec",
+      "requestId": "spec:1595:da24fbb467742852160f5167c56abc4afe31c43de470137a312bc10cb6ca76cd",
+      "materialSha": "502258741f1753f27b35ee15c7264d196c2521f6",
+      "expectedBase": "502258741f1753f27b35ee15c7264d196c2521f6",
+      "patchId": "da24fbb467742852160f5167c56abc4afe31c43de470137a312bc10cb6ca76cd",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-27T10:46:12.220Z"
       }
     }
   },
@@ -8155,6 +8162,10 @@
       "digest": "1415608efcf47eb7fa10d678e703855a2932bd26af1ccc603f6c47388b9d42fa",
       "issue": 1608
     },
+    "github:45984806474:1:spec:1595:spec-request": {
+      "digest": "db6b62c3bf97d26ceeb5efbc318af0db70c208052396d728094a5d3a21c78d0a",
+      "issue": 1595
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -8757,6 +8768,22 @@
         "layer": "product",
         "materialSha": "135f5834e1d9b4b81288890561fa14630d75b438",
         "delivered": true
+      }
+    },
+    "github:45984806474:1:spec:1595:spec-request:spec-resubmitted:1595": {
+      "digest": "db6b62c3bf97d26ceeb5efbc318af0db70c208052396d728094a5d3a21c78d0a",
+      "issue": 1595,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1595,
+        "at": 1795776372220,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1595:da24fbb467742852160f5167c56abc4afe31c43de470137a312bc10cb6ca76cd",
+        "reviewChanges": "Цель — убрать скрытую подготовку, сохранив согласованный UX #1344. На локальном стенде тот же benchmark дал 616,2 мс для v1.85.0 и 2 018 мс для исходного dev. Замеры здесь диагностические. На резервной копии HA заменён локальной заглушкой с исходными планом и настройками.\n\n### Исправления по предыдущему ревью\n\n- Пропущенный сценарий после смены этажа → AC5 требует отдельного измерения первого открытия «Плана» B при загруженном рантайме и проверяет готовность интерактивной сцены B. Для этого старта сохранено ранее принятое условие #1344 на сопоставимом стенде. Сборки на A и B наблюдаются раздельно.\n- Неопределённое слагаемое AC1 → определены границы import до create и время от клика до первого изменённого кадра. Измеряются явный холодный вход и завершённый preload. Полная установка, сцена и измерение целевого Layout учтены во времени старта.\n- Подготовка панелей → холодный вход пользуется существующим измерением целевого режима. Другие режимы подготавливаются в idle или по фактической необходимости. В диагностике будут separate холодный вход, warm same-floor, первый вход после смены этажа и цикл смен этажей.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
