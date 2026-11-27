@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28150,
+  "revision": 28151,
   "nextTicket": 766,
   "nextFence": 765,
   "tasks": {
@@ -6374,7 +6374,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1608-device-height-perspective",
-      "materialSha": "cd67b32157ffc69e3179f72da13f1bec2cb039d2",
+      "materialSha": "f45fce10a098e704dc49b7b1e6e63361a893c5e4",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 764,
@@ -6382,7 +6382,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795775755443,
       "reviewEntry": 3,
-      "patchId": "8d07ce2657cfac9b28c59290a3db0bdb27c71fcc",
+      "patchId": "73e2e63a1cb6b2ace1e2cea6f75e5441b1012045",
       "changedFiles": [
         "custom_components/houseplan/core/marker_height.py",
         "custom_components/houseplan/core/validation.py",
@@ -6469,6 +6469,7 @@
         "demo/smoke_vacuum_route_recovery.mjs",
         "demo/smoke_vacuum_style_1002.mjs",
         "demo/smoke_vacuum_tail_continuity.mjs",
+        "demo/smoke_webgl_floor_shadows.mjs",
         "demo/smoke_zigbee_led_topology.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -7312,11 +7313,12 @@
     "worker": "finish",
     "token": "764:finish:d5b0dd3d-210f-4a96-9f6e-bfc6357ba780:finish:1:admit",
     "fence": 764,
-    "materialSha": "cd67b32157ffc69e3179f72da13f1bec2cb039d2",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "f45fce10a098e704dc49b7b1e6e63361a893c5e4",
+    "expectedBase": "502258741f1753f27b35ee15c7264d196c2521f6",
+    "phase": "testing",
     "admittedAt": 1795775799368,
-    "expiresAt": 1795776099368
+    "expiresAt": 1795776131299,
+    "patchId": "73e2e63a1cb6b2ace1e2cea6f75e5441b1012045"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7978,6 +7980,10 @@
     "finish:fc8ec58c-dd65-4459-9156-5534f54aaed3:finish:3:return": {
       "digest": "0a6743c17476ac021caa6a4e27152194d2ced2aa9f6e5cbfba1bf4c2c05f2b88",
       "issue": 1598
+    },
+    "finish:088af8fd-72fc-4af3-a98b-09d81bdf4548:finish:1:synchronized": {
+      "digest": "f4bc1d0c19ea658b5e194d248aee334b2a28d3f872ace5f50b9b35ed8f801b35",
+      "issue": 1608
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
