@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28647,
+  "revision": 28648,
   "nextTicket": 778,
   "nextFence": 772,
   "tasks": {
@@ -6565,310 +6565,25 @@
     },
     "1608": {
       "issue": 1608,
+      "branch": "codex/1608-device-height-perspective",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1608-device-height-perspective",
-      "materialSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 771,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795780026636,
-      "reviewEntry": 4,
-      "patchId": "8dfb521710a8a56412d83ebf38ccdb5245c573b3",
-      "changedFiles": [
-        "custom_components/houseplan/core/marker_height.py",
-        "custom_components/houseplan/core/validation.py",
-        "custom_components/houseplan/marker_copy.py",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/device-alert-alarm-iso.png",
-        "demo/golden/baselines/device-alert-attention-iso.png",
-        "demo/golden/baselines/device-alert-maintenance-iso.png",
-        "demo/golden/baselines/direct-zigbee-lqi-iso-dark.png",
-        "demo/golden/baselines/hidden-devices-iso-dark.png",
-        "demo/golden/baselines/iso-led-strip-dark.png",
-        "demo/golden/baselines/isometric-geometry-view-dark.png",
-        "demo/golden/baselines/isometric-live-layers-dark.png",
-        "demo/golden/baselines/isometric-stage3-no-filter-dark.png",
-        "demo/golden/baselines/isometric-stage3-openings-dark.png",
-        "demo/golden/baselines/isometric-stage3-overlays-light.png",
-        "demo/golden/baselines/isometric-stage6-dark-darkfloor.png",
-        "demo/golden/baselines/isometric-stage6-dark-lightfloor.png",
-        "demo/golden/baselines/isometric-stage6-light-darkfloor.png",
-        "demo/golden/baselines/isometric-stage6-light-lightfloor.png",
-        "demo/golden/baselines/isometric-touch-kiosk-dark.png",
-        "demo/golden/baselines/isometric-wall-junctions-dark.png",
-        "demo/golden/baselines/lighting-closed-door-panel-iso-dark.png",
-        "demo/golden/baselines/lighting-interior-window-iso-dark.png",
-        "demo/golden/baselines/lighting-sun-transparent-chain-iso.png",
-        "demo/golden/baselines/panel-context-menu-decor-dark-hover-first-1608.png",
-        "demo/golden/baselines/panel-context-menu-decor-dark-hover-middle-1608.png",
-        "demo/golden/baselines/panel-context-menu-decor-dark-idle-1608.png",
-        "demo/golden/baselines/panel-context-menu-decor-light-hover-first-1608.png",
-        "demo/golden/baselines/panel-context-menu-decor-light-hover-middle-1608.png",
-        "demo/golden/baselines/panel-context-menu-decor-light-idle-1608.png",
-        "demo/golden/baselines/panel-context-menu-devices-dark-hover-first-1608.png",
-        "demo/golden/baselines/panel-context-menu-devices-dark-hover-middle-1608.png",
-        "demo/golden/baselines/panel-context-menu-devices-dark-idle-1608.png",
-        "demo/golden/baselines/panel-context-menu-devices-light-hover-first-1608.png",
-        "demo/golden/baselines/panel-context-menu-devices-light-hover-middle-1608.png",
-        "demo/golden/baselines/panel-context-menu-devices-light-idle-1608.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-base.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-individual-larger.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-individual-smaller.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-180.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-270.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger-rotation-90.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-larger.png",
-        "demo/golden/baselines/panel-device-contact-resize-iso-profile-smaller.png",
-        "demo/golden/baselines/panel-iso-straight-perspective-1526.png",
-        "demo/golden/baselines/panel-iso-value-badge-depth-0-1504.png",
-        "demo/golden/baselines/panel-iso-value-badge-depth-180-1504.png",
-        "demo/golden/baselines/panel-iso-value-badge-depth-270-1504.png",
-        "demo/golden/baselines/panel-iso-value-badge-depth-90-1504.png",
-        "demo/golden/baselines/panel-isometric-geometry-view-light.png",
-        "demo/golden/baselines/panel-isometric-large-warm-remount-dark.png",
-        "demo/golden/baselines/panel-isometric-opening-symbol-parity-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-forced-colors-dark.png",
-        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
-        "demo/golden/baselines/panel-isometric-stage6-hover-light.png",
-        "demo/golden/baselines/panel-narrow-kiosk-fixed.png",
-        "demo/golden/baselines/panel-stairs-isometric-dark.png",
-        "demo/golden/baselines/plan-rotation-iso-0-1070.png",
-        "demo/golden/baselines/plan-rotation-iso-180-1070.png",
-        "demo/golden/baselines/plan-rotation-iso-270-1070.png",
-        "demo/golden/baselines/plan-rotation-iso-90-1070.png",
-        "demo/golden/baselines/room-co2-iso-dark.png",
-        "demo/golden/baselines/view-device-menu-iso-edge-dark.png",
-        "demo/golden/baselines/zigbee-led-iso-dark.png",
-        "demo/golden/harness.mjs",
-        "demo/golden/matrix.mjs",
-        "demo/helpers/painted-svg-point.mjs",
-        "demo/helpers/test-surface-ready.mjs",
-        "demo/smoke_context_menu_geometry_1444.mjs",
-        "demo/smoke_device_contact_mixed_radius.mjs",
-        "demo/smoke_device_copy.mjs",
-        "demo/smoke_device_save_placement.mjs",
-        "demo/smoke_floor_persistent_cache.mjs",
-        "demo/smoke_iso_flat_parity.mjs",
-        "demo/smoke_isometric_contract.mjs",
-        "demo/smoke_plan_3d_card.mjs",
-        "demo/smoke_plan_3d_marker_height.mjs",
-        "demo/smoke_plan_rotation.mjs",
-        "demo/smoke_startup_floor.mjs",
-        "demo/smoke_sun.mjs",
-        "demo/smoke_vacuum_camera.mjs",
-        "demo/smoke_vacuum_dock_restart.mjs",
-        "demo/smoke_vacuum_ecovacs.mjs",
-        "demo/smoke_vacuum_live_tail.mjs",
-        "demo/smoke_vacuum_native_lifecycle.mjs",
-        "demo/smoke_vacuum_path_fidelity.mjs",
-        "demo/smoke_vacuum_route_recovery.mjs",
-        "demo/smoke_vacuum_style_1002.mjs",
-        "demo/smoke_vacuum_tail_continuity.mjs",
-        "demo/smoke_webgl_floor_shadows.mjs",
-        "demo/smoke_zigbee_led_topology.mjs",
-        "demo/srv/fixture-state.js",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/ISOMETRIC.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/release-ledger/v1.86.1/1608.json",
-        "process-next/lib/source-dependencies.mjs",
-        "scripts/bundle-budget.mjs",
-        "scripts/config-schema.json",
-        "scripts/mutation-registry.mjs",
-        "src/card-plan-3d.ts",
-        "src/device-contact-card.ts",
-        "src/device-contact-render.ts",
-        "src/device-contact-scene.ts",
-        "src/device-copy-editor.ts",
-        "src/editor-context-menu.styles.ts",
-        "src/editors/marker-dialog.ts",
-        "src/editors/marker-form-state.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/i18n/led/de.json",
-        "src/i18n/led/en.json",
-        "src/i18n/led/fr.json",
-        "src/i18n/led/ru.json",
-        "src/i18n/settings/de.json",
-        "src/i18n/settings/en.json",
-        "src/i18n/settings/fr.json",
-        "src/i18n/settings/ru.json",
-        "src/iso-marker-outline.ts",
-        "src/iso-overlays.ts",
-        "src/iso-perspective-floor.ts",
-        "src/iso-projection.ts",
-        "src/iso-scene-geometry.ts",
-        "src/led-strip-editor.ts",
-        "src/led-strip-runtime.ts",
-        "src/marker-height.ts",
-        "src/plan-3d-camera.ts",
-        "src/plan-3d-markers.ts",
-        "src/plan-3d-world.ts",
-        "src/svg-perspective-coordinates.ts",
-        "src/types.ts",
-        "test/device-contact.test.mjs",
-        "test/dialog-form-problems.test.mjs",
-        "test/i18n-dead-keys.test.mjs",
-        "test/iso-projection.test.mjs",
-        "test/iso-worker-cache-profile.test.mjs",
-        "test/view-accessibility.test.mjs",
-        "test/view-frame.test.mjs",
-        "tests_backend/test_ha_backup_archive.py",
-        "tests_backend/test_ha_marker_copy.py",
-        "tests_backend/test_ha_marker_history.py",
-        "tests_backend/test_validation.py"
-      ],
-      "notice": {
-        "key": "3:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795779821540,
-        "entry": 3,
-        "eventId": "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return:return:1608"
-      },
-      "s6": {
-        "id": "20261127T144359421-1cb51d4a",
-        "requestId": "s6:1608:6fd76a8f200bff79e54d281307c33596",
-        "runId": 46018292001,
-        "materialSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-        "status": "passed",
-        "finishedAt": "2026-11-27T15:21:39.572Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46018292001",
-        "execution": "github"
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
+      "mergedSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+      "mergedAt": 1795793438201,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1608:4:8dfb521710a8a56412d83ebf38ccdb5245c573b3:0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-      "reviewMaterial": {
-        "materialSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-        "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-        "patchId": "8dfb521710a8a56412d83ebf38ccdb5245c573b3"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1608,
-        "requestId": "review:1608:4:8dfb521710a8a56412d83ebf38ccdb5245c573b3:0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-        "kind": "code",
-        "base": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-        "materialSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-        "patchId": "8dfb521710a8a56412d83ebf38ccdb5245c573b3",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1608,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1608",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Кандидат [84e82d3ae](https://github.com/Matysh/houseplan-card/commit/84e82d3ae). Высота задаётся в сантиметрах от пола до нижней грани. Форма поддерживает см и дюймы, авто и ноль. Сервер различает пределы значка и активной LED-ленты. Копирование активной ленты переносит форму и высоту одной транзакцией с undo/redo. Восемь ракурсов используют общую наклонную перспективу для WebGL, DOM и попаданий. Контактные контуры в 3D соединяют соседей одного уровня.\n\nВладелец принял все 60 явно перечисленных кадров из подборки кандидата 96131c8dd. Эталоны и происхождение захватов сохранены в [c04f72d77](https://github.com/Matysh/houseplan-card/commit/c04f72d77). Плоский кадр с выключенными стенами побайтно совпал с фактическим кадром исходного dev. Расхождение этого кадра с прежним PNG уже было на dev.\n\nАдресно прошли 122 pytest по HA/JSON/ZIP, 70 проверок фронтенда, 24 проверки сохранения/конфликтов после корректировки, 50 проверок бандла и браузерные сценарии высоты, старого плоского вида, контуров и восьми ракурсов. Прежний лимит ленивого графа LED View поднят с 12 391 до 13 112 байт gzip при замере 13 101. Сборка загружает граф только при наличии лент. Полный S6 выполняется через штатный finish.\n\nВ [daa2029f4](https://github.com/Matysh/houseplan-card/commit/daa2029f49322f0a424c64aba7058ec613c3e545) проекция кэша получила переносимый ключ камеры. Кадры, подготовленные worker, переиспользуются при совпадающей линзе. Старый кэш и изменившаяся линза используют сохранённую физическую геометрию для перепроекции. Прошли 32 адресные проверки кэша, поворотов, доступности и браузерного контракта.\n\nАктуальная ветка заканчивается на [cd67b3215](https://github.com/Matysh/houseplan-card/commit/cd67b32157ffc69e3179f72da13f1bec2cb039d2). Сохранённый кэш теперь переносит объект камеры и сохраняет его identity при неизменной линзе, чтобы слои мебели и устройств переиспользовали свои данные. В старых тестах актуализированы явно устаревшие ожидания про рамку наведения, координаты края тени и перечень идемпотентных шагов схемы. Проверка тени измеряет 64 строки вдоль ожидаемой физической границы, в текущей перспективе получено 0,325 пикселя RMS при прежнем пределе 0,5. Пакетные результаты S6 собирает штатный исполнитель GitHub Actions."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокеров не нашёл, работу можно принимать. Высота устройств и LED-лент проходит единым путём: форма → `height_cm` → серверная схема → один расчёт геометрии в `src/marker-height.ts` → WebGL-корпус, DOM-плоскость, контуры, области нажатия. Поведение совпадает с ТЗ и с решениями владельца:\n- пустое поле означает «авто», 0 сохраняется;\n- предел для значка и для активной ленты различается на клиенте и на сервере;\n- переход от ленты к значку при слишком большой высоте блокируется с понятным сообщением;\n- копия активной ленты переносит её форму и высоту одной операцией с undo/redo;\n- группы контактов в 3D разделяются по уровням, а 2D-граф и XY не меняются.\n\nПерспектива для всех восьми ракурсов согласована между `projectPlanPoint`, CSS-линзой, `readIsoPerspectiveSvg` и `plan3dCamera`. Обратное преобразование экранной точки в точку плана с учётом `heightDepth` я проверил вручную, оно сходится. Остались только необязательные улучшения: запас бюджета ленивого LED-графа, отображение дюймов, конкретные сообщения об ошибках копирования ленты и документация UI Kit.",
-          "understanding": "Проблема. До изменения все обычные значки в 3D стояли верхней гранью на срезе стен (140 см). Корпус уходил вниз на 0,24 диаметра. Диагональные ракурсы были ортографическими, прямые использовали специальную 16%-перспективу. Контекстное меню при hover меняло цвет текста и рамку.\n\nПосле изменения:\n1. У маркера появилось необязательное поле `height_cm`: расстояние от пола до нижней грани.\n   - Пределы выводятся из профиля: 140 − 2,25%·240·5·0,24 = 133,52 см для значка и 140 − …·0,075 = 137,975 см для ленты. В TS (`markerHeightMaxCm`/`markerHeightLimitCm`) и в Python (`marker_height.py`) порядок операций одинаковый.\n   - Отсутствие значения сохраняет прежнюю автоматическую геометрию. Толщина в этом случае по-прежнему равна `diameter*0.24` или `0.075`.\n   - Явная высота даёт эталонную толщину в сантиметрах, переведённую в единицы сцены тем же способом, что и стены (`GRID_PITCH/5*gridVisualScale`). Верхняя грань = высота + толщина, но не выше среза.\n2. Форма (`marker-dialog.ts`, `marker-form-state.ts`) отделяет «не трогали» (`originalHeightCm` сохраняется без пересчёта единиц) от введённого текста. Предел зависит от того, привязан ли маркер к активной ленте (`_markerHeightLimit`, включая `pendingBind`). Ошибка показывается под полем, сохранение блокируется. Маркер при сохранении собирается заново, поэтому очистка поля удаляет ключ, то есть возвращает авто, а не ноль.\n3. Сервер: `marker_height_number` в `MARKER_SCHEMA` отбрасывает bool, строки, NaN, inf и отрицательные значения; верхней границей служит предел ленты. `validate_marker_height_representations` в `CONFIG_SCHEMA` и в `validate_scoped_candidate` применяет предел значка ко всем маркерам без активной ленты, после `config_led_strip_links`.\n4. Копирование (`marker_copy.py`): высота берётся из исходного маркера на сервере. Активная лента того же плана переносится так, чтобы середина её длины попала в выбранную клиентом позицию (`ledAnchor` и `_translated_strip` устроены одинаково, обе работают в нормированных единицах). Новый id получается детерминированным хешем от id маркера.\n5. 3D:\n   - `iso-scene-geometry` передаёт `visualOffset = height.top` в размещение, в `localPlaneStyles` (локальная CSS-база для бейджа, LQI и области нажатия) и в `deviceHeight/Thickness/Level`;\n   - `card-plan-3d` и `plan-3d-markers` строят корпус по этой толщине и ставят его на эту высоту;\n   - `plan-3d-world` строит контуры и ленты по собственной высоте;\n   - LED-цели нажатия в перспективе разбиты на плоскости по высоте ленты, а нажатие отдаётся WebGL-picker, что даёт корректную окклюзию стеной.\n6. Контакты: `DeviceContactScene.component` идёт только по рёбрам между соседями одного уровня. Для A–B–C с высотами 0/60/0 получаются три компонента, 2D при этом не затронут: `elevations` передаются только при `plane`.\n7. Перспектива: `isoPerspectiveCamera` больше не ограничена прямыми ракурсами. Коэффициент 1,25, `heightDepth` учитывает высоту в делителе. Кэш проекции хранит объект камеры и переиспользует его identity, пока линза не изменилась.\n8. Меню: при hover и клавиатурном выделении меняется только фон. Добавлены 12 эталонов.\n\nЧто я разобрал по исходникам: пути сохранения из формы (`_saveMarker`, `_markerDraft`), открытие формы, LED-редактор (`write` → защита `icon_height_conflict`, `bindPending`/`linkMarker` в той же транзакции), копирование на клиенте (`device-copy-editor`, `deviceCopyPosition`) и на сервере, серверную схему и scoped-merge, построение размещений и контуров (DOM и WebGL), LED-рендер в перспективе и маршрутизацию нажатий `_nativeDeviceTarget`, математику проекции, а также backend-тесты 1608 (отказы и round-trip, история копирования ленты).",
-          "analysis": [
-            {
-              "topic": "Единый расчёт высоты и пределов",
-              "assessment": "Хорошее решение, его стоит сохранить: один модуль задаёт и ограничения формы, и геометрию сцены, а числа не зашиты руками. При невалидном сохранённом значении `storedHeight` в геометрии откатывается к авто, а не ломает сцену. Из-за `Math.min(automaticTop, …)` верхняя грань физически не может выйти выше среза. Python-копия формулы оправдана: сервер не может импортировать TS. Синхронность двух копий фактически закреплена backend-тестом с 133.52 и 133.521, а также 137.975 в корпусе идемпотентности.",
-              "evidence": "src/marker-height.ts:9-67; custom_components/houseplan/core/marker_height.py:8-11; tests_backend/test_ha_marker_copy.py (test_issue_1608_config_rejects_invalid_marker_heights_without_losing_zero)"
-            },
-            {
-              "topic": "Форма: авто, 0, единицы, отсутствие округления",
-              "assessment": "Если поле не трогали, сохраняется исходное число без пересчёта через дюймы, поэтому переключение системы мер его не округляет. Ноль отличим от пустого значения: проверка `== null` и `strictNumber`. Пустой текст даёт `{}`, а маркер собирается заново, поэтому ключ исчезает. Предел в дюймах проверяется до умножения, затем идёт `Math.min(maxCm, …)`, так что введённый вручную показанный (округлённый вниз) максимум проходит. Отображаемый максимум округляется вниз (`roundingMode: 'floor'`) и потому всегда допустим.",
-              "evidence": "src/marker-height.ts:28-53; src/editors/marker-dialog.ts:177-186, 633-647; src/houseplan-editor-runtime.ts:8122, 8395-8400, 8525"
-            },
-            {
-              "topic": "Различие пределов значка и ленты, переход между представлениями",
-              "assessment": "Ограничение соблюдается в трёх местах согласованно. Форма берёт предел по текущей активной ленте или `pendingBind`. LED-редактор не даёт отвязать или деактивировать ленту, если высота выше предела значка (toast `led.icon_height_conflict`). Сервер отклоняет такую конфигурацию целиком. Привязка новой ленты из формы идёт в той же транзакции (`linkMarker` → `bindPending`), поэтому промежуточного состояния «маркер с высотой ленты без ленты» нет. Клиентское `ledStripsByMarker` дополнительно требует `points.length > 1`, но сервер всё равно требует минимум две точки, так что расхождения нет.",
-              "evidence": "src/houseplan-editor-runtime.ts:8395-8400; src/led-strip-editor.ts:484-490, 609-635; custom_components/houseplan/core/marker_height.py:20-36; custom_components/houseplan/core/validation.py:3091, 3231"
-            },
-            {
-              "topic": "Копирование активной ленты",
-              "assessment": "Перенос корректен по единицам: точки ленты и позиция layout нормированы, клиент считает свободное место в единицах NORM_W и возвращает позицию в нормированном виде. Сервер берёт высоту из источника и не доверяет клиенту. Лента ищется только на плане копии, а это тот же план, что у источника: проверка «Copy must stay on its source plan». Тест истории подтверждает, что undo/redo восстанавливает конфигурацию побайтно. Слабое место: переполнение `MAX_LED_STRIPS` или выход сдвинутых точек за `CANVAS_LIMIT` закончится общей ошибкой схемы, и пользователь увидит общее `device.copy_failed`. Это редкие граничные случаи, не блокер.",
-              "evidence": "custom_components/houseplan/marker_copy.py:15-31, 70-89; src/device-copy-editor.ts:146-154; src/device-copy.ts:82-105; tests_backend/test_ha_marker_history.py (test_issue_1608_strip_copy_…)"
-            },
-            {
-              "topic": "Связность контуров по уровням",
-              "assessment": "Обход в ширину проверяет равенство уровней на каждом ребре, поэтому A и C не объединяются через B на другом уровне. Ветки `move` и `replace` по-прежнему возвращают компонент без учёта уровней, но это надмножество затронутых узлов: лишняя перерисовка, а не пропуск. Боковые стороны соединения учитываются только для участников той же группы (`members.has(id)`), поэтому разделённые соседи не получают «приплюснутую» сторону. Уровни в DOM-рендере (`elevations`) и в WebGL (`deviceHeightLevel`) берутся из одного вызова `markerHeightGeometry`. Авто консервативно выделено в отдельный уровень, как в прототипе.",
-              "evidence": "src/device-contact-scene.ts:70-80, 103-113; src/device-contact-render.ts:183-199, 559-598; src/device-contact-card.ts:90-96; src/card-plan-3d.ts:179-183"
-            },
-            {
-              "topic": "Перспектива и согласованность WebGL/DOM/нажатий",
-              "assessment": "Формулы согласованы. В `projectPlanPoint` делитель включает `heightDepth*lift`. У CSS-линзы w-компонента равна `1-rate*heightDepth*lift`. Обратное преобразование в `readIsoPerspectiveSvg` я вывел вручную: dy=(hb·py+lift)/(1+rate·py), что совпадает с кодом. Камера three.js теперь действительно наклонена, а кадрирование задаётся смещением главной точки. Для бейджей и подписей вычисляется локальная якобиан-база (`isoLocalPlaneCss`) в точке якоря и на его высоте, поэтому независимого CSS-масштаба поверх камеры нет. Нажатия по нативным 3D-целям и LED-целям в перспективе разрешает WebGL-picker, и окклюзия стеной работает естественно. Сравнение камер через `JSON.stringify` на каждом resolve дёшево и сохраняет identity камеры для кэшей мебели и устройств.",
-              "evidence": "src/iso-projection.ts:54-72, 112-135, 232-253; src/iso-perspective-floor.ts:4-8; src/svg-perspective-coordinates.ts:15-33; src/plan-3d-camera.ts:54-71; src/houseplan-card.ts:8068-8083, 14366-14375, 14462-14463; src/iso-scene-geometry.ts:565-588"
-            },
-            {
-              "topic": "LED-слой в перспективе",
-              "assessment": "Цели нажатия LED теперь строятся из `world.ribbons` по плоскостям высот, а не по одному срезу. Раньше это зависело от `leds.size`. Без готовой 3D-презентации целей нет, но и видимой ленты в 3D тогда тоже нет: iso-сцена без WebGL уходит в fallback. Ортографическая ветка `liftOf` сохранена для полноты.",
-              "evidence": "src/houseplan-card.ts:14366-14375, 14462-14463; src/led-strip-runtime.ts:272-291, 650-662"
-            },
-            {
-              "topic": "Контекстное меню",
-              "assessment": "Убраны изменение цвета и рамки. Акцентный разделитель `button + button` не тронут. Клавиатурное состояние делит то же правило, что соответствует контракту UI Kit «одно состояние для hover и клавиатуры». Эталоны idle/hover (первый и средний пункты, устройства и декор, светлая и тёмная темы) добавлены в индекс с происхождением 96131c8dd. Клавиатурного golden нет, а индикатор фокуса стал слабее (только 12% фона).",
-              "evidence": "src/editor-context-menu.styles.ts:18-22; demo/golden/baselines/baselines-index.json (panel-context-menu-*-1608); docs/DIALOG-UI-KIT.md:11-27"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Бюджет ленивого LED View: потолок поднят до 13 112 B при замере 13 101 B, запас 11 байт. Следующее изменение LED упрётся в лимит. `src/led-strip-runtime.ts` теперь импортирует `marker-height.ts`, а тот тянет `strictNumber` из `space-dialog`, `ISO_VIEW_PROFILE` и `device-marker-geometry`. Стоит разделить модуль на геометрию (константы и `markerHeightGeometry`) и логику формы (`MarkerHeightDraft`, `enteredHeight`). Это сократит граф, который загружает лента, и обособит UI-парсинг. Цена: один дополнительный файл. Если же этот рост ожидаем, стоит согласовать запас с правилом #898 о 10%.",
-            "Дюймы в форме: если поле не трогали, показывается `String(cm/2.54)`, например 23.62204724409449. Сохранённое значение при этом не меняется, это правильно, но такой текст плохо читается. Можно показывать отформатированное значение, например до 6 знаков, сохраняя текущую семантику «не трогали — пишем исходные сантиметры». Достаточно поменять `markerHeightDraftText`, `markerHeightFields` от этого не зависит.",
-            "Копирование ленты: для `MAX_LED_STRIPS` и для точек, ушедших за `CANVAS_LIMIT` после сдвига, стоит заранее проверить условия в `marker_copy.py` и вернуть отдельную ошибку (или ограничить позицию на клиенте). Иначе пользователь видит общее `device.copy_failed`, не понимая причины.",
-            "Клавиатурный фокус в контекстном меню сейчас обозначается только 12-процентным фоном. ТЗ просит «проверить также клавиатурное состояние», а golden есть только для idle и hover. Полезно добавить кадр состояния `hpf-keyboard-current` или хотя бы проверить контраст индикатора фокуса.",
-            "`docs/DIALOG-UI-KIT.md` по-прежнему описывает hover и клавиатурное состояние как «одну обычную рамку UI Kit». Для контекстного меню теперь действует исключение «только фон», и его стоит записать там, чтобы следующий исполнитель не вернул рамку ради единообразия."
-          ],
-          "boundaries": "Сборку, тесты, браузерные сценарии и golden-сравнения я не запускал. Опираюсь на квитанцию S6 (run 46018292001, status passed, материал bb4b688cc) и на описание проверок исполнителем. Утверждения автора о 122 pytest, 70 фронтенд-проверках, 0,325 px RMS и подобном я не перепроверял. PNG-эталоны не открывал. Их принятие оформлено в `baselines-index.json` как решение владельца по кандидату 96131c8dd, и это принятие я не оспариваю.\n\nПо исходникам head/base изучены: `marker-height.ts` (TS и Python), форма и сохранение маркера, LED-редактор и привязка, копирование на клиенте и сервере, `validation.py` (схема и scoped-merge), `iso-scene-geometry`, `card-plan-3d`, `plan-3d-markers`, `plan-3d-world`, `device-contact-*`, `iso-projection`, `iso-perspective-floor`, `svg-perspective-coordinates`, `plan-3d-camera`, LED-runtime и рендер LED-целей в `houseplan-card.ts`, стили меню, backend-тесты 1608. Математику перспективы и обратного преобразования проверял вручную.\n\nДетально не разбирал: изменения в 20+ demo/smoke-файлах (кроме утверждений `smoke_plan_3d_marker_height.mjs`), `scripts/mutation-registry.mjs` и `config-schema.json`, документацию и CHANGELOG, тесты кэша worker. Поведение при недоступном WebGL (fallback) оценивал только по коду."
-        },
-        "usage": {
-          "input_tokens": 108,
-          "cache_creation_input_tokens": 216442,
-          "cache_read_input_tokens": 7931523,
-          "output_tokens": 30759,
-          "output_tokens_details": {
-            "thinking_tokens": 17636
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 216442,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1157,
-              "cache_read_input_tokens": 197588,
-              "cache_creation_input_tokens": 23058,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 23058
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокеров не нашёл, работу можно принимать. Высота устройств и LED-лент проходит единым путём: форма → `height_cm` → серверная схема → один расчёт геометрии в `src/marker-height.ts` → WebGL-корпус, DOM-плоскость, контуры, области нажатия. Поведение совпадает с ТЗ и с решениями владельца:\n- пустое поле означает «авто», 0 сохраняется;\n- предел для значка и для активной ленты различается на клиенте и на сервере;\n- переход от ленты к значку при слишком большой высоте блокируется с понятным сообщением;\n- копия активной ленты переносит её форму и высоту одной операцией с undo/redo;\n- группы контактов в 3D разделяются по уровням, а 2D-граф и XY не меняются.\n\nПерспектива для всех восьми ракурсов согласована между `projectPlanPoint`, CSS-линзой, `readIsoPerspectiveSvg` и `plan3dCamera`. Обратное преобразование экранной точки в точку плана с учётом `heightDepth` я проверил вручную, оно сходится. Остались только необязательные улучшения: запас бюджета ленивого LED-графа, отображение дюймов, конкретные сообщения об ошибках копирования ленты и документация UI Kit.\n\n## Понимание решения\n\nПроблема. До изменения все обычные значки в 3D стояли верхней гранью на срезе стен (140 см). Корпус уходил вниз на 0,24 диаметра. Диагональные ракурсы были ортографическими, прямые использовали специальную 16%-перспективу. Контекстное меню при hover меняло цвет текста и рамку.\n\nПосле изменения:\n1. У маркера появилось необязательное поле `height_cm`: расстояние от пола до нижней грани.\n   - Пределы выводятся из профиля: 140 − 2,25%·240·5·0,24 = 133,52 см для значка и 140 − …·0,075 = 137,975 см для ленты. В TS (`markerHeightMaxCm`/`markerHeightLimitCm`) и в Python (`marker_height.py`) порядок операций одинаковый.\n   - Отсутствие значения сохраняет прежнюю автоматическую геометрию. Толщина в этом случае по-прежнему равна `diameter*0.24` или `0.075`.\n   - Явная высота даёт эталонную толщину в сантиметрах, переведённую в единицы сцены тем же способом, что и стены (`GRID_PITCH/5*gridVisualScale`). Верхняя грань = высота + толщина, но не выше среза.\n2. Форма (`marker-dialog.ts`, `marker-form-state.ts`) отделяет «не трогали» (`originalHeightCm` сохраняется без пересчёта единиц) от введённого текста. Предел зависит от того, привязан ли маркер к активной ленте (`_markerHeightLimit`, включая `pendingBind`). Ошибка показывается под полем, сохранение блокируется. Маркер при сохранении собирается заново, поэтому очистка поля удаляет ключ, то есть возвращает авто, а не ноль.\n3. Сервер: `marker_height_number` в `MARKER_SCHEMA` отбрасывает bool, строки, NaN, inf и отрицательные значения; верхней границей служит предел ленты. `validate_marker_height_representations` в `CONFIG_SCHEMA` и в `validate_scoped_candidate` применяет предел значка ко всем маркерам без активной ленты, после `config_led_strip_links`.\n4. Копирование (`marker_copy.py`): высота берётся из исходного маркера на сервере. Активная лента того же плана переносится так, чтобы середина её длины попала в выбранную клиентом позицию (`ledAnchor` и `_translated_strip` устроены одинаково, обе работают в нормированных единицах). Новый id получается детерминированным хешем от id маркера.\n5. 3D:\n   - `iso-scene-geometry` передаёт `visualOffset = height.top` в размещение, в `localPlaneStyles` (локальная CSS-база для бейджа, LQI и области нажатия) и в `deviceHeight/Thickness/Level`;\n   - `card-plan-3d` и `plan-3d-markers` строят корпус по этой толщине и ставят его на эту высоту;\n   - `plan-3d-world` строит контуры и ленты по собственной высоте;\n   - LED-цели нажатия в перспективе разбиты на плоскости по высоте ленты, а нажатие отдаётся WebGL-picker, что даёт корректную окклюзию стеной.\n6. Контакты: `DeviceContactScene.component` идёт только по рёбрам между соседями одного уровня. Для A–B–C с высотами 0/60/0 получаются три компонента, 2D при этом не затронут: `elevations` передаются только при `plane`.\n7. Перспектива: `isoPerspectiveCamera` больше не ограничена прямыми ракурсами. Коэффициент 1,25, `heightDepth` учитывает высоту в делителе. Кэш проекции хранит объект камеры и переиспользует его identity, пока линза не изменилась.\n8. Меню: при hover и клавиатурном выделении меняется только фон. Добавлены 12 эталонов.\n\nЧто я разобрал по исходникам: пути сохранения из формы (`_saveMarker`, `_markerDraft`), открытие формы, LED-редактор (`write` → защита `icon_height_conflict`, `bindPending`/`linkMarker` в той же транзакции), копирование на клиенте (`device-copy-editor`, `deviceCopyPosition`) и на сервере, серверную схему и scoped-merge, построение размещений и контуров (DOM и WebGL), LED-рендер в перспективе и маршрутизацию нажатий `_nativeDeviceTarget`, математику проекции, а также backend-тесты 1608 (отказы и round-trip, история копирования ленты).\n\n## Разбор решения\n\n### Единый расчёт высоты и пределов\n\nХорошее решение, его стоит сохранить: один модуль задаёт и ограничения формы, и геометрию сцены, а числа не зашиты руками. При невалидном сохранённом значении `storedHeight` в геометрии откатывается к авто, а не ломает сцену. Из-за `Math.min(automaticTop, …)` верхняя грань физически не может выйти выше среза. Python-копия формулы оправдана: сервер не может импортировать TS. Синхронность двух копий фактически закреплена backend-тестом с 133.52 и 133.521, а также 137.975 в корпусе идемпотентности.\n\nОснование: src/marker-height.ts:9-67; custom_components/houseplan/core/marker_height.py:8-11; tests_backend/test_ha_marker_copy.py (test_issue_1608_config_rejects_invalid_marker_heights_without_losing_zero)\n\n### Форма: авто, 0, единицы, отсутствие округления\n\nЕсли поле не трогали, сохраняется исходное число без пересчёта через дюймы, поэтому переключение системы мер его не округляет. Ноль отличим от пустого значения: проверка `== null` и `strictNumber`. Пустой текст даёт `{}`, а маркер собирается заново, поэтому ключ исчезает. Предел в дюймах проверяется до умножения, затем идёт `Math.min(maxCm, …)`, так что введённый вручную показанный (округлённый вниз) максимум проходит. Отображаемый максимум округляется вниз (`roundingMode: 'floor'`) и потому всегда допустим.\n\nОснование: src/marker-height.ts:28-53; src/editors/marker-dialog.ts:177-186, 633-647; src/houseplan-editor-runtime.ts:8122, 8395-8400, 8525\n\n### Различие пределов значка и ленты, переход между представлениями\n\nОграничение соблюдается в трёх местах согласованно. Форма берёт предел по текущей активной ленте или `pendingBind`. LED-редактор не даёт отвязать или деактивировать ленту, если высота выше предела значка (toast `led.icon_height_conflict`). Сервер отклоняет такую конфигурацию целиком. Привязка новой ленты из формы идёт в той же транзакции (`linkMarker` → `bindPending`), поэтому промежуточного состояния «маркер с высотой ленты без ленты» нет. Клиентское `ledStripsByMarker` дополнительно требует `points.length > 1`, но сервер всё равно требует минимум две точки, так что расхождения нет.\n\nОснование: src/houseplan-editor-runtime.ts:8395-8400; src/led-strip-editor.ts:484-490, 609-635; custom_components/houseplan/core/marker_height.py:20-36; custom_components/houseplan/core/validation.py:3091, 3231\n\n### Копирование активной ленты\n\nПеренос корректен по единицам: точки ленты и позиция layout нормированы, клиент считает свободное место в единицах NORM_W и возвращает позицию в нормированном виде. Сервер берёт высоту из источника и не доверяет клиенту. Лента ищется только на плане копии, а это тот же план, что у источника: проверка «Copy must stay on its source plan». Тест истории подтверждает, что undo/redo восстанавливает конфигурацию побайтно. Слабое место: переполнение `MAX_LED_STRIPS` или выход сдвинутых точек за `CANVAS_LIMIT` закончится общей ошибкой схемы, и пользователь увидит общее `device.copy_failed`. Это редкие граничные случаи, не блокер.\n\nОснование: custom_components/houseplan/marker_copy.py:15-31, 70-89; src/device-copy-editor.ts:146-154; src/device-copy.ts:82-105; tests_backend/test_ha_marker_history.py (test_issue_1608_strip_copy_…)\n\n### Связность контуров по уровням\n\nОбход в ширину проверяет равенство уровней на каждом ребре, поэтому A и C не объединяются через B на другом уровне. Ветки `move` и `replace` по-прежнему возвращают компонент без учёта уровней, но это надмножество затронутых узлов: лишняя перерисовка, а не пропуск. Боковые стороны соединения учитываются только для участников той же группы (`members.has(id)`), поэтому разделённые соседи не получают «приплюснутую» сторону. Уровни в DOM-рендере (`elevations`) и в WebGL (`deviceHeightLevel`) берутся из одного вызова `markerHeightGeometry`. Авто консервативно выделено в отдельный уровень, как в прототипе.\n\nОснование: src/device-contact-scene.ts:70-80, 103-113; src/device-contact-render.ts:183-199, 559-598; src/device-contact-card.ts:90-96; src/card-plan-3d.ts:179-183\n\n### Перспектива и согласованность WebGL/DOM/нажатий\n\nФормулы согласованы. В `projectPlanPoint` делитель включает `heightDepth*lift`. У CSS-линзы w-компонента равна `1-rate*heightDepth*lift`. Обратное преобразование в `readIsoPerspectiveSvg` я вывел вручную: dy=(hb·py+lift)/(1+rate·py), что совпадает с кодом. Камера three.js теперь действительно наклонена, а кадрирование задаётся смещением главной точки. Для бейджей и подписей вычисляется локальная якобиан-база (`isoLocalPlaneCss`) в точке якоря и на его высоте, поэтому независимого CSS-масштаба поверх камеры нет. Нажатия по нативным 3D-целям и LED-целям в перспективе разрешает WebGL-picker, и окклюзия стеной работает естественно. Сравнение камер через `JSON.stringify` на каждом resolve дёшево и сохраняет identity камеры для кэшей мебели и устройств.\n\nОснование: src/iso-projection.ts:54-72, 112-135, 232-253; src/iso-perspective-floor.ts:4-8; src/svg-perspective-coordinates.ts:15-33; src/plan-3d-camera.ts:54-71; src/houseplan-card.ts:8068-8083, 14366-14375, 14462-14463; src/iso-scene-geometry.ts:565-588\n\n### LED-слой в перспективе\n\nЦели нажатия LED теперь строятся из `world.ribbons` по плоскостям высот, а не по одному срезу. Раньше это зависело от `leds.size`. Без готовой 3D-презентации целей нет, но и видимой ленты в 3D тогда тоже нет: iso-сцена без WebGL уходит в fallback. Ортографическая ветка `liftOf` сохранена для полноты.\n\nОснование: src/houseplan-card.ts:14366-14375, 14462-14463; src/led-strip-runtime.ts:272-291, 650-662\n\n### Контекстное меню\n\nУбраны изменение цвета и рамки. Акцентный разделитель `button + button` не тронут. Клавиатурное состояние делит то же правило, что соответствует контракту UI Kit «одно состояние для hover и клавиатуры». Эталоны idle/hover (первый и средний пункты, устройства и декор, светлая и тёмная темы) добавлены в индекс с происхождением 96131c8dd. Клавиатурного golden нет, а индикатор фокуса стал слабее (только 12% фона).\n\nОснование: src/editor-context-menu.styles.ts:18-22; demo/golden/baselines/baselines-index.json (panel-context-menu-*-1608); docs/DIALOG-UI-KIT.md:11-27\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Бюджет ленивого LED View: потолок поднят до 13 112 B при замере 13 101 B, запас 11 байт. Следующее изменение LED упрётся в лимит. `src/led-strip-runtime.ts` теперь импортирует `marker-height.ts`, а тот тянет `strictNumber` из `space-dialog`, `ISO_VIEW_PROFILE` и `device-marker-geometry`. Стоит разделить модуль на геометрию (константы и `markerHeightGeometry`) и логику формы (`MarkerHeightDraft`, `enteredHeight`). Это сократит граф, который загружает лента, и обособит UI-парсинг. Цена: один дополнительный файл. Если же этот рост ожидаем, стоит согласовать запас с правилом #898 о 10%.\n- Дюймы в форме: если поле не трогали, показывается `String(cm/2.54)`, например 23.62204724409449. Сохранённое значение при этом не меняется, это правильно, но такой текст плохо читается. Можно показывать отформатированное значение, например до 6 знаков, сохраняя текущую семантику «не трогали — пишем исходные сантиметры». Достаточно поменять `markerHeightDraftText`, `markerHeightFields` от этого не зависит.\n- Копирование ленты: для `MAX_LED_STRIPS` и для точек, ушедших за `CANVAS_LIMIT` после сдвига, стоит заранее проверить условия в `marker_copy.py` и вернуть отдельную ошибку (или ограничить позицию на клиенте). Иначе пользователь видит общее `device.copy_failed`, не понимая причины.\n- Клавиатурный фокус в контекстном меню сейчас обозначается только 12-процентным фоном. ТЗ просит «проверить также клавиатурное состояние», а golden есть только для idle и hover. Полезно добавить кадр состояния `hpf-keyboard-current` или хотя бы проверить контраст индикатора фокуса.\n- `docs/DIALOG-UI-KIT.md` по-прежнему описывает hover и клавиатурное состояние как «одну обычную рамку UI Kit». Для контекстного меню теперь действует исключение «только фон», и его стоит записать там, чтобы следующий исполнитель не вернул рамку ради единообразия.\n\n## Границы анализа\n\nСборку, тесты, браузерные сценарии и golden-сравнения я не запускал. Опираюсь на квитанцию S6 (run 46018292001, status passed, материал bb4b688cc) и на описание проверок исполнителем. Утверждения автора о 122 pytest, 70 фронтенд-проверках, 0,325 px RMS и подобном я не перепроверял. PNG-эталоны не открывал. Их принятие оформлено в `baselines-index.json` как решение владельца по кандидату 96131c8dd, и это принятие я не оспариваю.\n\nПо исходникам head/base изучены: `marker-height.ts` (TS и Python), форма и сохранение маркера, LED-редактор и привязка, копирование на клиенте и сервере, `validation.py` (схема и scoped-merge), `iso-scene-geometry`, `card-plan-3d`, `plan-3d-markers`, `plan-3d-world`, `device-contact-*`, `iso-projection`, `iso-perspective-floor`, `svg-perspective-coordinates`, `plan-3d-camera`, LED-runtime и рендер LED-целей в `houseplan-card.ts`, стили меню, backend-тесты 1608. Математику перспективы и обратного преобразования проверял вручную.\n\nДетально не разбирал: изменения в 20+ demo/smoke-файлах (кроме утверждений `smoke_plan_3d_marker_height.mjs`), `scripts/mutation-registry.mjs` и `config-schema.json`, документацию и CHANGELOG, тесты кэша worker. Поведение при недоступном WebGL (fallback) оценивал только по коду.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 0a917f294e0393c317f4a4fdeec9dc4640bb0695 → bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1608, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nКандидат [84e82d3ae](https://github.com/Matysh/houseplan-card/commit/84e82d3ae). Высота задаётся в сантиметрах от пола до нижней грани. Форма поддерживает см и дюймы, авто и ноль. Сервер различает пределы значка и активной LED-ленты. Копирование активной ленты переносит форму и высоту одной транзакцией с undo/redo. Восемь ракурсов используют общую наклонную перспективу для WebGL, DOM и попаданий. Контактные контуры в 3D соединяют соседей одного уровня.\n\nВладелец принял все 60 явно перечисленных кадров из подборки кандидата 96131c8dd. Эталоны и происхождение захватов сохранены в [c04f72d77](https://github.com/Matysh/houseplan-card/commit/c04f72d77). Плоский кадр с выключенными стенами побайтно совпал с фактическим кадром исходного dev. Расхождение этого кадра с прежним PNG уже было на dev.\n\nАдресно прошли 122 pytest по HA/JSON/ZIP, 70 проверок фронтенда, 24 проверки сохранения/конфликтов после корректировки, 50 проверок бандла и браузерные сценарии высоты, старого плоского вида, контуров и восьми ракурсов. Прежний лимит ленивого графа LED View поднят с 12 391 до 13 112 байт gzip при замере 13 101. Сборка загружает граф только при наличии лент. Полный S6 выполняется через штатный finish.\n\nВ [daa2029f4](https://github.com/Matysh/houseplan-card/commit/daa2029f49322f0a424c64aba7058ec613c3e545) проекция кэша получила переносимый ключ камеры. Кадры, подготовленные worker, переиспользуются при совпадающей линзе. Старый кэш и изменившаяся линза используют сохранённую физическую геометрию для перепроекции. Прошли 32 адресные проверки кэша, поворотов, доступности и браузерного контракта.\n\nАктуальная ветка заканчивается на [cd67b3215](https://github.com/Matysh/houseplan-card/commit/cd67b32157ffc69e3179f72da13f1bec2cb039d2). Сохранённый кэш теперь переносит объект камеры и сохраняет его identity при неизменной линзе, чтобы слои мебели и устройств переиспользовали свои данные. В старых тестах актуализированы явно устаревшие ожидания про рамку наведения, координаты края тени и перечень идемпотентных шагов схемы. Проверка тени измеряет 64 строки вдоль ожидаемой физической границы, в текущей перспективе получено 0,325 пикселя RMS при прежнем пределе 0,5. Пакетные результаты S6 собирает штатный исполнитель GitHub Actions.\n```\n\n</details>\n",
-        "createdAt": "2026-11-27T15:30:00.762Z",
-        "artifactId": 15211832658,
-        "runId": 46024456760,
-        "runAttempt": 1,
-        "completedAt": "2026-11-27T15:30:06Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46024456760",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1609": {
@@ -7678,19 +7393,7 @@
     1603,
     1609
   ],
-  "active": {
-    "issue": 1608,
-    "worker": "finish",
-    "token": "771:finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:1:admit",
-    "fence": 771,
-    "materialSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-    "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795790452600,
-    "expiresAt": 1795797032622,
-    "patchId": "8dfb521710a8a56412d83ebf38ccdb5245c573b3",
-    "reviewRequest": "review:1608:4:8dfb521710a8a56412d83ebf38ccdb5245c573b3:0a917f294e0393c317f4a4fdeec9dc4640bb0695"
-  },
+  "active": null,
   "events": {
     "finish:8199b101-c60f-4348-a965-0a33090b455e": {
       "digest": "2ca31d6a5822b4d7ef07205f0ae98c75e17cad424e4c5a26bdd0a96864b0de0e",
@@ -8296,202 +7999,6 @@
       "digest": "9d627fd61f310a3abdfde9542262c749391194f7421a6d3e5276be6006f1cf70",
       "issue": 1609
     },
-    "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:3:synchronized": {
-      "digest": "9cdc8b8b116d28a0766cb34e9a2b0da52a225aec1b83563da8df28aa9695c42c",
-      "issue": 1608
-    },
-    "finish:5e87d187-5f59-426d-b113-7c49d82295b1": {
-      "digest": "34fd2c0e208b3d805b2a5f6cee7fe6e15958db76ed9b778a34fd73efb7cfc092",
-      "issue": 1608
-    },
-    "github:46018085636:1:completions:message:72dc4a2eca0a7ccf2430f23bb834972a2b5156f8af83d3050e2b5a720accba9d": {
-      "digest": "15f1696b621a6fc4957e365c84e980a11f29f6ba2988fc0bffc3b3747547cfb1",
-      "issue": 1608
-    },
-    "finish:8cdda541-b8f6-445d-af9e-92a25bb43858": {
-      "digest": "b82b78e8e41a2e5fda7bb9464be62574b180765c1840fe2f7d2b019aabddd2a3",
-      "issue": 1608
-    },
-    "finish:acb61c7c-4037-4fbe-b8ea-9f9341e6ae8b": {
-      "digest": "a69cf61c0cc35419684c26bfd0f99a13733e879a0f1a1fcd85d0bad60ba6dc8f",
-      "issue": 1608
-    },
-    "finish:1d40f1ee-56fa-4a3d-9161-577090b09a60": {
-      "digest": "8a6e92683403b30173011e66ab6350ed3f0f8af46e6a48d5065d410785a21548",
-      "issue": 1608
-    },
-    "finish:5c9e4871-3175-4ac3-a4cb-b3120db8f479": {
-      "digest": "ce16abfe684b49403fa19e654c1b3402c28a905bc87a1a7c135df5f57a47141f",
-      "issue": 1608
-    },
-    "finish:4490fc6f-af70-45a6-b9b6-e63f2a463686": {
-      "digest": "ec939c4be8114d72db252521c8e7a9f87da87c45aac50d6ec789a09ba4b495f0",
-      "issue": 1608
-    },
-    "finish:bb69c9cc-b586-47ba-93f4-b3b373ec743e": {
-      "digest": "f2c2f64365bda0bbac26201007f5d6c547918018dab65186d2b31e3e8861ea83",
-      "issue": 1608
-    },
-    "finish:0e6ce743-3121-4d4a-8040-eb3febbe58f5": {
-      "digest": "5bfd9e2a40b4ffdf175eef844291cddc22fbc6d50adc6d17996fb2fd6d389f49",
-      "issue": 1608
-    },
-    "finish:87bfd66a-41a6-41df-ab3e-3536e22b9181": {
-      "digest": "206a17cfe33ac9d90c193dd7ac214c3f0447600f7b336c8354cafce94ec95875",
-      "issue": 1608
-    },
-    "finish:1be29af5-9ca0-4ce1-b3e6-0c7cbefdc909": {
-      "digest": "3a99442bd5ee63f8c90f7d192d4efcad1ed7a7d76c694d2550afcb2638e75d00",
-      "issue": 1608
-    },
-    "finish:a14c7e11-275e-4926-a96b-5ec0c995f41e": {
-      "digest": "d559a5359a6485bd0c8754e07396ea86f1f8ce8f9a1d3f32dbfa0a4d06b015db",
-      "issue": 1608
-    },
-    "finish:5d948af8-48c2-404c-a613-b19326e75b16": {
-      "digest": "d55d28b796f874f2d001db7cdd917ec7844b50690e1ed099735465d7848a1abc",
-      "issue": 1608
-    },
-    "finish:1a5f65cc-0dac-497d-808b-e086e57bc10f": {
-      "digest": "a914d6e9c874a8c0a4891590cd2fd58908a746b43609d03bbd625cceba243a33",
-      "issue": 1608
-    },
-    "finish:1717c0b7-31f4-465b-a1d3-d474eca58163": {
-      "digest": "12aab83f09a92be4e59d26cca8ac24d3631d60a8f3ec2dcf87960e82470ccbc8",
-      "issue": 1608
-    },
-    "finish:57194c7e-32b5-4ffb-aff4-f87c2df696eb": {
-      "digest": "a72267683018ee36b20bb3062134116f2cff988c75349cc190abd43a2c5e27bd",
-      "issue": 1608
-    },
-    "finish:05140e1d-5b18-47d0-a068-37198ce5ae3c": {
-      "digest": "f8ac51ca2f39955481cd6960b60184e29d559f29c3b9268a0c9eb22a47e35864",
-      "issue": 1608
-    },
-    "finish:24b8d405-dfd0-491f-9668-03365338ce83": {
-      "digest": "ad473c97bc2058483c3cb687666be15a0e5d7f7f1538eea3d6eabf78647ab8c3",
-      "issue": 1608
-    },
-    "finish:b7b9412c-6512-43f7-bd4c-33d6b2a0df64": {
-      "digest": "2ac47c81921d29109d3ee28524f8147d64decdd0cc13029c7839510438f40df1",
-      "issue": 1608
-    },
-    "finish:cc9b17f0-9109-407e-962b-1df4832930f3": {
-      "digest": "d9cc2b063bf7545b8b3a39e3063ff0c64aa24f63bc4edc0899819d53d56e7fa9",
-      "issue": 1608
-    },
-    "finish:603032ae-cdda-4fa3-bf7c-88d8c7b2a590": {
-      "digest": "553e5ddc2305975e4fb377308f2add804b3ae307049df7039bca2ca84d8952a4",
-      "issue": 1608
-    },
-    "finish:71843f90-f7f9-477f-97a6-5fff1bc90f6d": {
-      "digest": "b27d1600ed692d18d21c0a4e65132ba57cabfd233d80d7c195968978933e1fc9",
-      "issue": 1608
-    },
-    "finish:745f290e-a738-443e-972e-b587b7211e27": {
-      "digest": "7d0ed48642c1daf26021f2aeffe7e377665ad69b811612fee88975bd7d9af543",
-      "issue": 1608
-    },
-    "finish:c2c6d53e-3f0a-4148-ae5b-a18ae0dada1a": {
-      "digest": "9ba43e110e7b4ba78813bbe6dfaee6541b338d7da5ac49c793e3d645c6c11443",
-      "issue": 1608
-    },
-    "finish:c48ccd03-7845-46f7-b35b-1bf3c09a19ac": {
-      "digest": "59eb1136d618f864b5f23de7006129687bc0de960d26131a43b2faf8b9dc67f1",
-      "issue": 1608
-    },
-    "finish:037abaea-44a7-4914-8a0f-2cc8d969aa75": {
-      "digest": "dcde82beb7a4e76e0ceef9af681a3751f306502bf0cc98a8d5835e4b777f04ad",
-      "issue": 1608
-    },
-    "finish:543db1f8-1e20-46ef-850e-10ed0ecdcd3c": {
-      "digest": "284b31c1f4a7cd747597f1154472910e237429ab550b77723d400f4d0ab53f65",
-      "issue": 1608
-    },
-    "finish:1773c734-e55e-4991-af34-d1890da6fdf1": {
-      "digest": "bf50e2dd18de107764439549e3377fc0b1974ba07b99b946018d0a966911a633",
-      "issue": 1608
-    },
-    "finish:60935b23-0c99-4a77-92b1-b5ff425b778e": {
-      "digest": "12a09d67ace7dfd18043c2cca5d3b01835c9f3456961f8d14f80cfe2f00579d3",
-      "issue": 1608
-    },
-    "finish:f857748e-6ef6-448a-8683-0c67ca10111d": {
-      "digest": "0b1a4fefb1025121f32b47010e33be9c73b35dae790e38fc0fa8da3202630f81",
-      "issue": 1608
-    },
-    "finish:d4e6f127-71b6-4403-bd86-7ace643c92e6": {
-      "digest": "e7d2781785d46c9e7955b25a47560cc95380fba62ce32c1de1556060761f6ec4",
-      "issue": 1608
-    },
-    "finish:5b178a89-32db-4b2f-85a8-2952285d4e18": {
-      "digest": "c1a9ce14ac8f49122f94ea198a1f9ff4ee4aa44483d7087a2d72007ab6e254d3",
-      "issue": 1608
-    },
-    "finish:0896717f-b8b5-49f1-bd7f-d56f7f4ead75": {
-      "digest": "e2dc132df6976b4f190dbaaa2222b41566a739a69965a74da95a17d605bca39c",
-      "issue": 1608
-    },
-    "finish:4bc8c799-eae8-4aed-a465-989498f9efe8": {
-      "digest": "0111fb65d73b88fd9a5168d001880e317290545f0bcd4ca9e61b10d2e6da778a",
-      "issue": 1608
-    },
-    "finish:e40f535e-beda-4e05-9272-3bbec59ce60f": {
-      "digest": "910f8ecc344833a4ee2b4e7640d5260653158085a5e536212ec0ea305ab4c2f0",
-      "issue": 1608
-    },
-    "finish:848696d3-bc6f-4196-bbf1-05ebbc18bef5": {
-      "digest": "feec37ff6fbe63a7e5cbc68d4d95f82c5f5efcaff2584ebba44076185c5b82ca",
-      "issue": 1608
-    },
-    "finish:4cbcf59d-3753-49da-9309-324a4211ba38": {
-      "digest": "ebac10ee63f0cdb1b499fe74ef8ac6fb64a0c95f6f5c9d1e626f7844c0695b0b",
-      "issue": 1608
-    },
-    "finish:51c2205d-6e20-45b8-bb55-9116a3a922f9": {
-      "digest": "a3c7ba265e306ea30f33e93483270bf84fe166ffd2d7b97d89dc9a3bf9b3b8bc",
-      "issue": 1608
-    },
-    "finish:96942d63-129f-4c0a-87e1-db5b1846d090": {
-      "digest": "21585e2964e2b87ad19ce869adcc730a1f007a5c715f55d76b9da8d06fda3dc5",
-      "issue": 1608
-    },
-    "finish:9f06ff4f-ae8c-4c6d-b8e5-61c520c4ebd6": {
-      "digest": "e7f68d224a735ee64821a4ac9790799be7e3eae7bb64bd300416fe431c3e68fa",
-      "issue": 1608
-    },
-    "finish:33d68832-066a-43ce-baf7-61460ad51153": {
-      "digest": "a43517b3efa2e47785f983c68a2a67b82bee739449fa611f48beba30e8f76b65",
-      "issue": 1608
-    },
-    "finish:5972cd0d-ec44-4b27-aa85-4431b0591bee": {
-      "digest": "2ca0379bfd44bdffb45a7fd40e279f339cbc2e0d90273edb4e48fb8b15893aa3",
-      "issue": 1608
-    },
-    "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:4:s6-label": {
-      "digest": "6d728a4e838328f4d7fa424cceb392497f4a937d720ad4c6b1401fa9a9a376b5",
-      "issue": 1608
-    },
-    "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:5:review-requested": {
-      "digest": "a1a2aff5acf56894a407e1208c2ab1b48674079d703b6cceb049b7774246b615",
-      "issue": 1608
-    },
-    "github:46024398138:1:completions:message:016ad1313002d09a1875e59d448fe40d2e5415b540ba8cf0cfe8a842c725c595": {
-      "digest": "4844be6543d33fca6a72ba99da3d22ac8a0c6f3f6e1e86bee20a5ff41d041c20",
-      "issue": 1608
-    },
-    "github:46024398138:1:completions:message:38a37a2d38e574d1bd118cad41f90f2fa9cbb8d9e9a378ccf655870c3582fd61": {
-      "digest": "d4e05f073964fe5c4f33cce5613bfec7893fd91148f65250fc158572c583154e",
-      "issue": 1608
-    },
-    "github:46025464248:1:tick:0:review-presentation": {
-      "digest": "1dc8cfe800d67d4f9c8e75831c7697fa3f3cecb1dd025ec597abd69681455733",
-      "issue": 1608
-    },
-    "github:46025464248:1:tick:0:review-complete": {
-      "digest": "71dd9ba442d2a30c1fbcb1c54df89aff163ad1b3cfebf839f525aafd8ae95f0f",
-      "issue": 1608
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -8761,20 +8268,6 @@
         "delivered": true
       }
     },
-    "finish:ef909495-1616-4ac8-9da3-163b55a7a9f5": {
-      "digest": "33b4f0c3abeede6d6e2d1b75614621c67846ebe4005c8c31a8dfe6911aebf936",
-      "issue": 1608,
-      "message": {
-        "kind": "queued",
-        "issue": 1608,
-        "at": 1795774119991,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "84e82d3aefe4594d9de148a1fd3195ec42280c13",
-        "delivered": true
-      }
-    },
     "finish:36b83a93-20c5-469f-a81c-169212ba85c4:finish:3:return:return:1609": {
       "digest": "1604f2dea77428565c01be4f4fd6b7050d00200a153d2b7979a7cdaaff44272e",
       "issue": 1609,
@@ -8793,21 +8286,6 @@
           "detail": "Браузер: plan 3d resume: failed",
           "eventId": "finish:36b83a93-20c5-469f-a81c-169212ba85c4:finish:3:return:return:1609"
         },
-        "delivered": true
-      }
-    },
-    "github:45980967857:1:tick:1:admit": {
-      "digest": "6bb6bd1de25a207c007eaadbcd2bd40f2f8c1f0074a1852fe28c5925f6b7f5bb",
-      "issue": 1608,
-      "message": {
-        "kind": "admitted",
-        "issue": 1608,
-        "at": 1795774745084,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "84e82d3aefe4594d9de148a1fd3195ec42280c13",
-        "phase": "sync",
         "delivered": true
       }
     },
@@ -8831,40 +8309,6 @@
           "finishedAt": "2026-11-27T09:33:06.732Z",
           "failures": []
         },
-        "delivered": true
-      }
-    },
-    "recover-1608:df52f15b-73ee-4cb0-91e4-f1fbc12fd9b8:return:1608": {
-      "digest": "4bf9382a3e1ff4eee0850c7dd15749dfc518a15c0587b2f175339cecc7766cd9",
-      "issue": 1608,
-      "message": {
-        "kind": "return",
-        "issue": 1608,
-        "at": 1795775151260,
-        "entry": 1,
-        "notice": {
-          "key": "1:executor-admission-expired",
-          "reason": "executor-admission-expired",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795775151260,
-          "entry": 1,
-          "eventId": "recover-1608:df52f15b-73ee-4cb0-91e4-f1fbc12fd9b8:return:1608"
-        },
-        "delivered": true
-      }
-    },
-    "finish:41ee2471-bdee-4304-a669-4360675ac204": {
-      "digest": "6a1d4022de6770b12ae09fb0dcc957ecefce2b453a88a0b776ee7b5b72b3b28c",
-      "issue": 1608,
-      "message": {
-        "kind": "queued",
-        "issue": 1608,
-        "at": 1795775162382,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5ca28396c107f9f3eee0318ebc6dba67f7ecdcbf",
         "delivered": true
       }
     },
@@ -8912,21 +8356,6 @@
         "delivered": true
       }
     },
-    "finish:41ee2471-bdee-4304-a669-4360675ac204:finish:2:admit": {
-      "digest": "d4c0070732ec67cb965d0ed38665034d1d7068c4fb51ae58c67d3976999a86e4",
-      "issue": 1608,
-      "message": {
-        "kind": "admitted",
-        "issue": 1608,
-        "at": 1795775542306,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5ca28396c107f9f3eee0318ebc6dba67f7ecdcbf",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:fc8ec58c-dd65-4459-9156-5534f54aaed3": {
       "digest": "99d90fd49fdb141080d72aa51beefe629733cc053d0d899bcbdd1007f290c0b1",
       "issue": 1598,
@@ -8938,26 +8367,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "42657d49e5dec5b89ff9c9ab4c938ada4e0178b9",
-        "delivered": true
-      }
-    },
-    "finish:41ee2471-bdee-4304-a669-4360675ac204:finish:4:return:return:1608": {
-      "digest": "33cc0d8ce11f0f46c74a65e93a6b7ad7462bbb44bde719358e9c91a0c9e49a99",
-      "issue": 1608,
-      "message": {
-        "kind": "return",
-        "issue": 1608,
-        "at": 1795775625049,
-        "entry": 2,
-        "notice": {
-          "key": "2:Hosted run completed or was cancelled without a runner report",
-          "reason": "Hosted run completed or was cancelled without a runner report",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795775625049,
-          "entry": 2,
-          "eventId": "finish:41ee2471-bdee-4304-a669-4360675ac204:finish:4:return:return:1608"
-        },
         "delivered": true
       }
     },
@@ -8973,20 +8382,6 @@
         "layer": "product",
         "materialSha": "42657d49e5dec5b89ff9c9ab4c938ada4e0178b9",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:088af8fd-72fc-4af3-a98b-09d81bdf4548": {
-      "digest": "7935dafbd935cfbce788a32c11665cebcbb2dc33a5d81f19f19bd5210d0a0642",
-      "issue": 1608,
-      "message": {
-        "kind": "queued",
-        "issue": 1608,
-        "at": 1795775755443,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cd67b32157ffc69e3179f72da13f1bec2cb039d2",
         "delivered": true
       }
     },
@@ -9022,21 +8417,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "cc8b4ce4e518bef2c67fe4148415bd748d290c2e",
-        "delivered": true
-      }
-    },
-    "finish:d5b0dd3d-210f-4a96-9f6e-bfc6357ba780:finish:1:admit": {
-      "digest": "dfb04ff46766af2794c6b060ed76b5af33867827c163f6bfe214b7d8489ba51d",
-      "issue": 1608,
-      "message": {
-        "kind": "admitted",
-        "issue": 1608,
-        "at": 1795775799368,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cd67b32157ffc69e3179f72da13f1bec2cb039d2",
-        "phase": "sync",
         "delivered": true
       }
     },
@@ -9122,26 +8502,6 @@
         "delivered": true
       }
     },
-    "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return:return:1608": {
-      "digest": "fb8b0a6c58adaee42d00147136f06654bc0c1bf8c1c8eb356a37380a99fb9284",
-      "issue": 1608,
-      "message": {
-        "kind": "return",
-        "issue": 1608,
-        "at": 1795779821540,
-        "entry": 3,
-        "notice": {
-          "key": "3:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795779821540,
-          "entry": 3,
-          "eventId": "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return:return:1608"
-        },
-        "delivered": true
-      }
-    },
     "finish:ebfd23a8-6ad9-45a3-ab3d-84868c9b557a:finish:1:admit": {
       "digest": "19bce778620bae76401b060275121809d69d17c68ecb8b42e81dd5651acdafc0",
       "issue": 1598,
@@ -9154,20 +8514,6 @@
         "layer": "infra",
         "materialSha": "f2d72a1e43f69a33ddbd183d8362824f3e427602",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:fc6dd1d4-b19e-486e-991d-169973e1438b": {
-      "digest": "672f05dfd8d4d31787177bb73c280a1c8f97704b20b8af196d0c704fee65d678",
-      "issue": 1608,
-      "message": {
-        "kind": "queued",
-        "issue": 1608,
-        "at": 1795780026636,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e973f1e23192036214b987a935b4a951faa758bc",
         "delivered": true
       }
     },
@@ -9441,21 +8787,6 @@
         "delivered": true
       }
     },
-    "finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:1:admit": {
-      "digest": "05de5fae551a4c0d7b64a49c1a3c2afcd084ca96293d1132dc8c8e754da92ace",
-      "issue": 1608,
-      "message": {
-        "kind": "admitted",
-        "issue": 1608,
-        "at": 1795790452600,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e973f1e23192036214b987a935b4a951faa758bc",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:6f3048e8-0b4d-4333-a539-8a587f7616a1": {
       "digest": "f987ea0f1185648af713db6e35505c2d976e91e1629fbe8e6b9c250071b2ebe9",
       "issue": 1609,
@@ -9476,37 +8807,6 @@
           "finishedAt": "2026-11-27T14:34:01.256Z",
           "failures": []
         },
-        "delivered": true
-      }
-    },
-    "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:4:s6-complete": {
-      "digest": "9bed1b39edad0b38243e3abff3903b4e29bd1555ad97a2835870bbdb6cf6c6b1",
-      "issue": 1608,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1608,
-        "at": 1795792969746,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-        "phase": "review",
-        "evidence": {
-          "id": "20261127T144359421-1cb51d4a",
-          "requestId": "s6:1608:6fd76a8f200bff79e54d281307c33596",
-          "runId": 46018292001,
-          "materialSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-          "status": "passed",
-          "finishedAt": "2026-11-27T15:21:39.572Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46018292001",
-          "execution": "github"
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Кандидат [84e82d3ae](https://github.com/Matysh/houseplan-card/commit/84e82d3ae). Высота задаётся в сантиметрах от пола до нижней грани. Форма поддерживает см и дюймы, авто и ноль. Сервер различает пределы значка и активной LED-ленты. Копирование активной ленты переносит форму и высоту одной транзакцией с undo/redo. Восемь ракурсов используют общую наклонную перспективу для WebGL, DOM и попаданий. Контактные контуры в 3D соединяют соседей одного уровня.\n\nВладелец принял все 60 явно перечисленных кадров из подборки кандидата 96131c8dd. Эталоны и происхождение захватов сохранены в [c04f72d77](https://github.com/Matysh/houseplan-card/commit/c04f72d77). Плоский кадр с выключенными стенами побайтно совпал с фактическим кадром исходного dev. Расхождение этого кадра с прежним PNG уже было на dev.\n\nАдресно прошли 122 pytest по HA/JSON/ZIP, 70 проверок фронтенда, 24 проверки сохранения/конфликтов после корректировки, 50 проверок бандла и браузерные сценарии высоты, старого плоского вида, контуров и восьми ракурсов. Прежний лимит ленивого графа LED View поднят с 12 391 до 13 112 байт gzip при замере 13 101. Сборка загружает граф только при наличии лент. Полный S6 выполняется через штатный finish.\n\nВ [daa2029f4](https://github.com/Matysh/houseplan-card/commit/daa2029f49322f0a424c64aba7058ec613c3e545) проекция кэша получила переносимый ключ камеры. Кадры, подготовленные worker, переиспользуются при совпадающей линзе. Старый кэш и изменившаяся линза используют сохранённую физическую геометрию для перепроекции. Прошли 32 адресные проверки кэша, поворотов, доступности и браузерного контракта.\n\nАктуальная ветка заканчивается на [cd67b3215](https://github.com/Matysh/houseplan-card/commit/cd67b32157ffc69e3179f72da13f1bec2cb039d2). Сохранённый кэш теперь переносит объект камеры и сохраняет его identity при неизменной линзе, чтобы слои мебели и устройств переиспользовали свои данные. В старых тестах актуализированы явно устаревшие ожидания про рамку наведения, координаты края тени и перечень идемпотентных шагов схемы. Проверка тени измеряет 64 строки вдоль ожидаемой физической границы, в текущей перспективе получено 0,325 пикселя RMS при прежнем пределе 0,5. Пакетные результаты S6 собирает штатный исполнитель GitHub Actions.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
