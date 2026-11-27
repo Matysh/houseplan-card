@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27607,
+  "revision": 27608,
   "nextTicket": 751,
   "nextFence": 750,
   "tasks": {
@@ -6260,7 +6260,7 @@
       "ownerDecision": null,
       "ticket": 749,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795759090876,
       "reviewEntry": 3,
       "patchId": "197597975ef14e13f9356ae4e0acecb190a02e31",
@@ -6285,6 +6285,15 @@
         "entry": 2,
         "detail": "Поведение: test/editor-runtime-loader.test.mjs: failed",
         "eventId": "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6:finish:3:return:return:1604"
+      },
+      "s6": {
+        "id": "20261127T055833138-6d0d59e4",
+        "name": "Тесты для задачи #1604 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T055833138-6d0d59e4/report.json",
+        "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
+        "status": "passed",
+        "finishedAt": "2026-11-27T06:05:19.717Z",
+        "failures": []
       }
     },
     "1605": {
@@ -7021,9 +7030,9 @@
     "fence": 749,
     "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
     "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795759097897,
-    "expiresAt": 1795759820905,
+    "expiresAt": 1795763124110,
     "patchId": "197597975ef14e13f9356ae4e0acecb190a02e31"
   },
   "events": {
@@ -7430,6 +7439,34 @@
         "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:5bb6dba8-4a12-4ed6-8cbf-9437008af111:finish:3:s6-complete": {
+      "digest": "d0d3f1e11ecaa9148105863c32850edaa066fb4fbe51c873f30e913aabb9bdf7",
+      "issue": 1604,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1604,
+        "at": 1795759524110,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T055833138-6d0d59e4",
+          "name": "Тесты для задачи #1604 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T055833138-6d0d59e4/report.json",
+          "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
+          "status": "passed",
+          "finishedAt": "2026-11-27T06:05:19.717Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "В ветке `codex/1604-card-runtime-extraction` ([c803e0dd8](https://github.com/Matysh/houseplan-card/commit/c803e0dd846658c49420cf318ecfdd8c123204ff)) `CardPlan3d` владеет загрузчиком по требованию, канвасом, освобождением ресурсов и нейтральным кадром превью. `ModeTransitionPresentation` владеет измерением, отрисовкой и завершением визуальных кадров. Типизированные интерфейсы передают состояние и вызовы. Существующие хуки для редактора, смоков и диагностики сохранены.\n\nСборка, типы и 13 проверок контракта 3D прошли. Адресные golden-сценарии `panel-isometric-geometry-view-light`, `panel-wide-plan-editor-dark-en` и `panel-stairs-flat-normal-light` совпали с эталонами до пикселя. DOM шапки и сцены совпал в шести устойчивых состояниях с базой `8cdb00332` после нормализации случайных идентификаторов комментариев Lit. Живые проверки переходов, 3D-хоста и стартового превью использовали существующие смоки.\n\nПервый S6 нашёл два устаревших якоря мутаций, проверку использования версии в параметре повторной загрузки и ложное включение браузерного артефакта в тест инфраструктуры. Якоря перенесены к новому владельцу, формат параметра `hp_retry` сохранён, каталог распознаёт декларации смоков. Три затронутых файла тестов прошли 22 проверки.\n\nПовторный S6 прошёл 628 из 629 шагов, включая все браузерные сценарии. Тест контракта ленивых загрузчиков перенесён на обоих владельцев и прошёл 23 проверки. Он проверяет, что редактор, онбординг и PDF передают признак окончательного отказа в уведомление, а внутренний загрузчик 3D сохраняет свой обработчик без пользовательского уведомления.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
