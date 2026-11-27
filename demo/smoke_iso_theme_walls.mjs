@@ -67,18 +67,23 @@ try {
   assert.ok(solidColour(initial, opaqueCap) > 30, 'The caps are painted in the real frame');
 
   await zoomIsoPaint(page, 1.2);
-  assert.notEqual(await frame(), initial);
-  const during = await stage.evaluate(async element => {
+  const beforeWheel = await frame();
+  assert.notEqual(beforeWheel, initial);
+  const during = await stage.evaluate(element => {
     const card = window.__isoPaint;
+    const previous = element.querySelector('canvas[data-hp-plan-3d-ready]');
     const { x, y, width, height } = element.getBoundingClientRect();
     element.dispatchEvent(new WheelEvent('wheel', {
       clientX: x + width / 2, clientY: y + height / 2,
       deltaY: -80, bubbles: true, cancelable: true,
     }));
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    return { active: card._cameraTransition.active, image: element.querySelector('canvas[data-hp-plan-3d-ready]')?.toDataURL() };
+    // With reduced motion the first live camera sample is painted in this
+    // wheel task. A later rAF can run after the wheel lease on a loaded host.
+    const canvas = element.querySelector('canvas[data-hp-plan-3d-ready]');
+    return { active: card._cameraTransition.active, sameCanvas: !!canvas && canvas === previous, image: canvas?.toDataURL() };
   });
-  assert.ok(during.active && during.image, 'The live canvas stays mounted through wheel input');
+  assert.ok(during.active && during.sameCanvas && during.image, 'The live canvas stays mounted through wheel input');
+  assert.notEqual(during.image, beforeWheel, 'The live canvas presents the new wheel crop before the settled render');
   assert.ok(solidColour(during.image, opaqueCap) > 30, 'Opaque caps remain visible during motion');
   await settleIsoPaint(page);
   assert.ok(solidColour(await frame(), opaqueCap) > 30);
