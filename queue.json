@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28482,
+  "revision": 28483,
   "nextTicket": 776,
   "nextFence": 770,
   "tasks": {
@@ -6193,7 +6193,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1598-release-snapshot",
-      "materialSha": "4835a8ca65eda0e1d9eb315fff647d7a6fd12d08",
+      "materialSha": "95baaa6dad232e52b30c4e181506049324c8ef25",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 773,
@@ -7539,10 +7539,6 @@
     "patchId": "818c8853959c05cf32899ac9cbb786021a6d4e2d"
   },
   "events": {
-    "finish:33fbb724-eb9e-4c88-b529-bbd0273288d1": {
-      "digest": "1415608efcf47eb7fa10d678e703855a2932bd26af1ccc603f6c47388b9d42fa",
-      "issue": 1608
-    },
     "github:45984806474:1:spec:1595:spec-request": {
       "digest": "db6b62c3bf97d26ceeb5efbc318af0db70c208052396d728094a5d3a21c78d0a",
       "issue": 1595
@@ -8394,6 +8390,10 @@
     "finish:d7746c25-07bb-47f0-98cb-1d4c5815de1b": {
       "digest": "a71291d32a05b07d1a32036d6fca38c1edf34fcdcf51b00f557ea21a98f29669",
       "issue": 1603
+    },
+    "ready:1598:95baaa6dad232e52b30c4e181506049324c8ef25": {
+      "digest": "f612b2fe91c414ea4de775ae0fbe4943352bdd317ef80a1fa4c3ce0ed930c15b",
+      "issue": 1598
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
