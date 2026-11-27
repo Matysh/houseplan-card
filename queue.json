@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28196,
-  "nextTicket": 769,
+  "revision": 28197,
+  "nextTicket": 770,
   "nextFence": 765,
   "tasks": {
     "1001": {
@@ -6296,6 +6296,20 @@
       "readyAt": 1795776002686,
       "reviewEntry": 1
     },
+    "1603": {
+      "issue": 1603,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1603-implicit-any",
+      "materialSha": "135f5834e1d9b4b81288890561fa14630d75b438",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 769,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795776323620,
+      "reviewEntry": 1
+    },
     "1604": {
       "issue": 1604,
       "branch": "codex/1604-card-runtime-extraction",
@@ -7365,7 +7379,8 @@
     1598,
     1599,
     1594,
-    1600
+    1600,
+    1603
   ],
   "active": {
     "issue": 1608,
@@ -8720,6 +8735,19 @@
         "layer": "product",
         "materialSha": "e9898ecd437b30e59c8f48116cfd44a1bbba9f5e",
         "delivered": true
+      }
+    },
+    "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe": {
+      "digest": "adfef01c455d4ce29672db35b93a765b206f3397a9e8a605016537deeb6affe4",
+      "issue": 1603,
+      "message": {
+        "kind": "queued",
+        "issue": 1603,
+        "at": 1795776323620,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "135f5834e1d9b4b81288890561fa14630d75b438"
       }
     }
   },
