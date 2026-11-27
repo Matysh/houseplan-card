@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29746,
+  "revision": 29747,
   "nextTicket": 799,
   "nextFence": 798,
   "tasks": {
@@ -5594,7 +5594,7 @@
       "ownerDecision": null,
       "ticket": 797,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795818567080,
       "reviewEntry": 1,
       "patchId": "e1e9fdd4d47c091f9fda853c5d3d1527f572becd",
@@ -5607,7 +5607,16 @@
         "process-next/lib/metrics.mjs",
         "process-next/lib/zip.mjs",
         "process-next/test/metrics.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261127T223026026-c2335335",
+        "name": "Тесты для задачи #1593 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-957-spec-material-retention/.git/process-next/runs/20261127T223026026-c2335335/report.json",
+        "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
+        "status": "passed",
+        "finishedAt": "2026-11-27T22:31:10.162Z",
+        "failures": []
+      }
     },
     "1594": {
       "issue": 1594,
@@ -7030,9 +7039,9 @@
     "fence": 797,
     "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
     "expectedBase": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795818605285,
-    "expiresAt": 1795818963967,
+    "expiresAt": 1795822271599,
     "patchId": "e1e9fdd4d47c091f9fda853c5d3d1527f572becd"
   },
   "events": {
@@ -7126,6 +7135,34 @@
         "layer": "product",
         "materialSha": "95ee6baff90467430e77212d8fc039859f7677a6",
         "delivered": true
+      }
+    },
+    "finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:3:s6-complete": {
+      "digest": "c2a8ed129a6ce997caa6141f8023443da46bccc03ad1029bb8b304c9e5ac96e3",
+      "issue": 1593,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1593,
+        "at": 1795818671599,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T223026026-c2335335",
+          "name": "Тесты для задачи #1593 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-957-spec-material-retention/.git/process-next/runs/20261127T223026026-c2335335/report.json",
+          "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
+          "status": "passed",
+          "finishedAt": "2026-11-27T22:31:10.162Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Канонический `zip_bytes` считает физический ZIP за вычетом локальных и центральных записей предсжатых вариантов из манифеста. Бэкенд и остальные файлы входят в эту метрику. Доставляемый ZIP и объём предсжатых файлов показаны отдельно. Формат сохранённых замеров распознаётся по наличию `zip_delivered_bytes`, чтобы сравнение не смешивало два значения `zip_bytes`. Для перехода v1.86.1 пересчитан по опубликованному ZIP с проверкой SHA-256.\n\nВладелец одобрил в чате v2.0.0-beta.3 как справочный эталон после выноса MDI. ZIP выпуска на `4b71e606a0491c5b830885837c8c476e7e7e524d` дал 506 329 байт для начального View и 1 639 192 байта для всего frontend. Превышение на 5% теперь отмечается справочно. Решения по каноническому ZIP и времени по-прежнему привязаны к конкретному кандидату через `metricsAcceptedSha`.\n\nСверены SHA-256 пяти опубликованных ZIP с `process-release-state` и исходные размеры с прежними отчётами. Канонический ZIP для v1.85.2 изменился с 2 879 582 до 2 929 842 байт (+1,75%). Для v1.86.0 — с 2 929 842 до 3 180 143 байт (+8,54%). Пересчёт добавлен в диагностику обоих выпусков. [Запись v1.85.2](https://github.com/Matysh/houseplan-card/commit/7572c01bf954f9f3ce616cd27edf70971ef5528f) и [запись v1.86.0](https://github.com/Matysh/houseplan-card/commit/49df78138e18dbca2aa9fd3380725daa83c17a82). Локальная проверка событий подтвердила, что повтор не дублирует строку, а исходные отчёты и решения не переписываются. Адресные Node-проверки прошли, в том числе реальное чтение структуры ZIP с data descriptor и совместный отчёт с парным временем #1592. HA E2E не требуется, поскольку изменения относятся к отчёту релизного процесса.\n\n\nОтчёт CLI на фактическом ZIP снимка dev `2fa7171c` показал 2 588 987 канонических байт против 3 221 297 у v1.86.1. Полный ZIP в отчёте равен 4 226 743 байтам, предсжатые копии занимают 1 621 135 байт. Обе справочные gzip-строки сравниваются с зафиксированной v2.0.0-beta.3.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
