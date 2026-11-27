@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29527,
+  "revision": 29528,
   "nextTicket": 792,
   "nextFence": 792,
   "tasks": {
@@ -6195,7 +6195,7 @@
       "ownerDecision": null,
       "ticket": 791,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1795810334064,
       "reviewEntry": 3,
       "patchId": "4ba702dabedf7bc3d787ec6999537446aea7410c",
@@ -6217,14 +6217,13 @@
         "src/styles/devices.styles.ts"
       ],
       "notice": {
-        "key": "2:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795809575374,
-        "entry": 2,
-        "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed; Браузер: isometric live touch: cancelled; Браузер: lazy admin locale: cancelled; Браузер: modes: Подготовка не завершена успешно; Браузер: native card presentation: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan 3d card: Подготовка не завершена успешно; Браузер: plan 3d marker height: Подготовка не завершена успешно; Браузер: plan 3d resume: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: standalone room label layout: Подготовка не завершена успешно; Браузер: startup floor: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: vacuum: Подготовка не завершена успешно; Браузер: vacuum 3d floor: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
-        "eventId": "finish:3acd3d46-c1e5-48c7-bcc9-fd08fa2a0ba2:finish:2:return:return:1612"
+        "key": "3:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1795810598584,
+        "entry": 3,
+        "requestId": "review:1612:3:4ba702dabedf7bc3d787ec6999537446aea7410c:46ba17964dff6b655df64316d333383d0239dbef"
       },
       "s6": {
         "id": "20261127T200638153-432477e7",
@@ -6242,6 +6241,11 @@
         "materialSha": "6711c4f54424a3997133eb2a6eb36c027da0a1b1",
         "expectedBase": "46ba17964dff6b655df64316d333383d0239dbef",
         "patchId": "4ba702dabedf7bc3d787ec6999537446aea7410c"
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1612:3:4ba702dabedf7bc3d787ec6999537446aea7410c:46ba17964dff6b655df64316d333383d0239dbef",
+        "at": 1795810598584
       }
     },
     "1613": {
@@ -7088,19 +7092,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1612,
-    "worker": "finish",
-    "token": "791:finish:0bca6a7c-4f7d-4a00-9a3a-b0f6532e2414:finish:1:admit",
-    "fence": 791,
-    "materialSha": "6711c4f54424a3997133eb2a6eb36c027da0a1b1",
-    "expectedBase": "46ba17964dff6b655df64316d333383d0239dbef",
-    "phase": "review",
-    "admittedAt": 1795810338253,
-    "expiresAt": 1795813951475,
-    "patchId": "4ba702dabedf7bc3d787ec6999537446aea7410c",
-    "reviewRequest": "review:1612:3:4ba702dabedf7bc3d787ec6999537446aea7410c:46ba17964dff6b655df64316d333383d0239dbef"
-  },
+  "active": null,
   "events": {
     "finish:92b94c16-2920-4443-9b6c-b4a08c69ff68:finish:2:synchronized": {
       "digest": "700655c56d86b25e10ac67a1cd47e7a4c4885636c10a6cd2fffc29474233c878",
@@ -7220,6 +7212,10 @@
     },
     "finish:0bca6a7c-4f7d-4a00-9a3a-b0f6532e2414:finish:7:review-presentation": {
       "digest": "86f3c94ccbfb209e574969f8b325da09292780195fba3d5e7c5c932310c4bb21",
+      "issue": 1612
+    },
+    "finish:0bca6a7c-4f7d-4a00-9a3a-b0f6532e2414:finish:7:return": {
+      "digest": "ff570ced8347fbddff200c594a355aea8402202aa4ea409aad53165873e8204f",
       "issue": 1612
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
