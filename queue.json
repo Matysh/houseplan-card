@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 28811,
+  "revision": 28812,
   "nextTicket": 781,
-  "nextFence": 776,
+  "nextFence": 777,
   "tasks": {
     "1001": {
       "issue": 1001,
@@ -6006,7 +6006,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 775,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795787418639,
       "reviewEntry": 2,
@@ -7370,13 +7370,22 @@
     }
   },
   "waiting": [
-    1594,
     1603,
     1609,
     1595,
     1598
   ],
-  "active": null,
+  "active": {
+    "issue": 1594,
+    "worker": "finish",
+    "token": "776:finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:4:admit",
+    "fence": 776,
+    "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795797212713,
+    "expiresAt": 1795797512713
+  },
   "events": {
     "finish:ac66f1d0-0b1e-4271-a7c2-eabd11724380": {
       "digest": "bd7274ffd0cc6945653695fe5895ac29dbbf427ecca4e1d18752eaa3a1b2753f",
@@ -9102,6 +9111,20 @@
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
           "eventId": "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return:return:1611"
         }
+      }
+    },
+    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:4:admit": {
+      "digest": "dd7a8942ef5a37880827dbfd5bbe2798f3485713fa4675d3cebe9fd0b0532b97",
+      "issue": 1594,
+      "message": {
+        "kind": "admitted",
+        "issue": 1594,
+        "at": 1795797212713,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2",
+        "phase": "sync"
       }
     }
   },
