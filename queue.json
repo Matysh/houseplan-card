@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27542,
+  "revision": 27543,
   "nextTicket": 748,
   "nextFence": 748,
   "tasks": {
@@ -7070,6 +7070,10 @@
       "digest": "7fb16c05398bdac2cbdcc5d65d7d67ce7147929e83553c8fc5a9324d8dd74eb9",
       "issue": 1604
     },
+    "github:45946753506:1:completions:message:9bb832d8962bc60453d996670155b751aac7b80b40684cd8ebc28af9e3c3f633": {
+      "digest": "e4c8596567f476d30958186c8691fedcaf2efa76345f41d6f6bcf5130d7f3191",
+      "issue": 1604
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7141,7 +7145,8 @@
         "reviewChanges": "Стартовый SHA: `8cdb00332d689571a68afd8b775ead4003bae24a`. В коде есть общий `auth.may_write`, специализированные проверки admin, отдельная политика ядра и уже документированные строгие resource scopes. Первичная сверка находит больше регистраций, чем ориентир 40: итоговая таблица строится из фактического состава, а не ручного счётчика. До ревью ТЗ изменений продукта и тестовых прогонов нет; прошу отдельно проверить критерии полномочий, гарантии rollback и разделение внутреннего Python API от обязанностей внешнего адаптера.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд](https://github.com/Matysh/houseplan-card/actions/runs/45946087468): (1) AC1 теперь включает каждый WS/HTTP/service вход, compact-form, scoped credentials и отсутствие entry; (2) контракт и AC5 разделяют decoder с `geom_pending` и структурный переход графа; (3) AC4 проверяет все модули фактического wheel и явный список поддерживаемых точек входа. Материал реализации не менялся.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
