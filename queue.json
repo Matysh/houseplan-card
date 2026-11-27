@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29728,
-  "nextTicket": 798,
+  "revision": 29729,
+  "nextTicket": 799,
   "nextFence": 798,
   "tasks": {
     "1001": {
@@ -6256,6 +6256,20 @@
         "status": "published",
         "sourceSha": "2043bd45e892b725a6100876b595502de34a7a8b"
       }
+    },
+    "1617": {
+      "issue": 1617,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1617-height-aware-led-light",
+      "materialSha": "95ee6baff90467430e77212d8fc039859f7677a6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 798,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795818615064,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6995,7 +7009,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1617
+  ],
   "active": {
     "issue": 1593,
     "worker": "finish",
@@ -7062,6 +7078,19 @@
         "layer": "infra",
         "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
         "phase": "sync"
+      }
+    },
+    "finish:b6f532f4-8cba-41e4-afee-f2b7a0b414d2": {
+      "digest": "db8dd9624c6cb6936da67631227c81993123fc64f28184682e0ff50a9d365549",
+      "issue": 1617,
+      "message": {
+        "kind": "queued",
+        "issue": 1617,
+        "at": 1795818615064,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "95ee6baff90467430e77212d8fc039859f7677a6"
       }
     }
   },
