@@ -149,7 +149,9 @@ test('#1422 isolated presentation implementation and native witnesses inherit UI
 test('#1391 extracted core owners and its addressed readers have inherited domains', () => {
     for (const file of ['custom_components/houseplan/core/constants.py',
         'custom_components/houseplan/core/ports.py', 'custom_components/houseplan/core/file_usage.py',
-        'tests_backend/test_core_boundary.py', 'tests_backend/test_sh3d_import_preview.py'])
+        'tests_backend/test_core_boundary.py', 'tests_backend/test_sh3d_import_preview.py',
+        'custom_components/houseplan/core/archive_conformance.py',
+        'tests_backend/test_core_archive_compatibility.py'])
         assert.ok(domainsOf(file).includes('storage'), file);
     for (const file of ['test/core-source-readers.test.mjs', 'test/backend-test-hygiene.test.mjs',
         'tests_backend/test_backend_quality.py', 'pyproject.toml'])
