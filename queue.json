@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28231,
+  "revision": 28232,
   "nextTicket": 771,
   "nextFence": 765,
   "tasks": {
@@ -6285,9 +6285,9 @@
     "1600": {
       "issue": 1600,
       "track": "show",
-      "layer": "product",
+      "layer": "infra",
       "branch": "codex/1600-core-compatibility",
-      "materialSha": "e9898ecd437b30e59c8f48116cfd44a1bbba9f5e",
+      "materialSha": "ce0c6b6f22a55f7ed8c3dd0056ca96e9899eb33a",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 768,
@@ -8214,6 +8214,10 @@
     "github:45985697680:1:completions:message:f1552f8d6dfcabdb1dd0c4870428a2fa400892f1bf5bfea12571bccf208b5367": {
       "digest": "7c52765db8d16eef6025ef7affa5023a5f642eb083766d0e4ba450849790de38",
       "issue": 1608
+    },
+    "ready:1600:ce0c6b6f22a55f7ed8c3dd0056ca96e9899eb33a": {
+      "digest": "6d6a39d11be61b16e7132d0f1dfe62e204ca8551683c43c40edb2bb4667e611c",
+      "issue": 1600
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
