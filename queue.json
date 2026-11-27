@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27724,
+  "revision": 27725,
   "nextTicket": 754,
   "nextFence": 753,
   "tasks": {
@@ -6266,7 +6266,7 @@
       "ownerDecision": null,
       "ticket": 752,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795760329116,
       "reviewEntry": 2,
       "patchId": "2318065b9e17f8fcf43169f6bd037ba260408021",
@@ -6299,6 +6299,15 @@
         "entry": 1,
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
         "eventId": "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return:return:1605"
+      },
+      "s6": {
+        "id": "20261127T063728068-ae621932",
+        "name": "Тесты для задачи #1605 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T063728068-ae621932/report.json",
+        "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
+        "status": "passed",
+        "finishedAt": "2026-11-27T06:48:07.980Z",
+        "failures": []
       }
     },
     "1607": {
@@ -7035,9 +7044,9 @@
     "fence": 752,
     "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
     "expectedBase": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795761422732,
-    "expiresAt": 1795762373036,
+    "expiresAt": 1795765688771,
     "patchId": "2318065b9e17f8fcf43169f6bd037ba260408021"
   },
   "events": {
@@ -7362,6 +7371,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706"
+      }
+    },
+    "finish:a7ae50ca-55ee-424c-9c41-bf9f199f2070:finish:2:s6-complete": {
+      "digest": "d3d725c228e3067214b99d7233a92cad0e4dc2862903c653a28cd7b958e8920c",
+      "issue": 1605,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1605,
+        "at": 1795762088771,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T063728068-ae621932",
+          "name": "Тесты для задачи #1605 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T063728068-ae621932/report.json",
+          "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
+          "status": "passed",
+          "finishedAt": "2026-11-27T06:48:07.980Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Стартовый SHA: `8cdb00332d689571a68afd8b775ead4003bae24a`. В коде есть общий `auth.may_write`, специализированные проверки admin, отдельная политика ядра и уже документированные строгие resource scopes. Первичная сверка находит больше регистраций, чем ориентир 40: итоговая таблица строится из фактического состава, а не ручного счётчика. До ревью ТЗ изменений продукта и тестовых прогонов нет; прошу отдельно проверить критерии полномочий, гарантии rollback и разделение внутреннего Python API от обязанностей внешнего адаптера.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд](https://github.com/Matysh/houseplan-card/actions/runs/45946087468): (1) AC1 теперь включает каждый WS/HTTP/service вход, compact-form, scoped credentials и отсутствие entry; (2) контракт и AC5 разделяют decoder с `geom_pending` и структурный переход графа; (3) AC4 проверяет все модули фактического wheel и явный список поддерживаемых точек входа. Материал реализации не менялся.\n\n### Реализация и локальные доказательства S6\n\n- Материал: `fbcb44e752`, база `8cdb00332d`. [Отчёт аудита](https://github.com/Matysh/houseplan-card/blob/codex/1605-core-backend-audit/docs/security/1605-backend-core-audit.md) сопоставляет 48 WS, 11 HTTP и 2 HA-сервиса с фактической регистрацией и описывает два независимых пути миграции и границу автономного хоста.\n- Исправлены четыре Medium: повторная проверка прав и runtime на затронутых операциях, единый потолок layout, bounded multipart, публикация целых файлов и безопасная отмена. Подтверждённых High в охваченном объёме нет. Намеренно не меняли модель ролей, wire-схему, ограничения штатных файлов или гарантии HA Store.\n- Локально: 156 backend-файлов штатного каталога с HA, 3 621 тест прошёл, один существующий тест пропущен из-за отсутствия приватной фикстуры #280. Покрытие строк 91,5% при пороге 87,2%; branch-rate 83,68% (справочно, не вход порога). Wheel локально установлен без HA: 77 модулей и по 9+1 conformance-сценариев на обоих адаптерах. Статическая готовность всех мутаций зелёная, ночные мутации не запускались.\n- Особое внимание: порядок state → content, соответствие публикации и rollback владению одним запросом, потеря прав и повторная отмена до или после передачи работы в executor. Проверки используют только локальные синтетические данные; реальный HA владельца и релиз не затрагивались.\n\nПервый S6 выявил два отказа на одном контроле инвентаря совместимости: комментарий ошибочно распознавался как описание ветки миграции. Изменено только описание функции; адресный повтор двух файлов — 8/8. Повторная проверка wheel из fbcb44e752: SHA-256 e6e6b593c72f150fa9c26c296501057a632bcffa06cd0292ddce51b60914809b, 77 импортированных модулей и 20 сценариев conformance.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
