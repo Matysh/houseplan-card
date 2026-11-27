@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 29466,
+  "revision": 29467,
   "nextTicket": 790,
-  "nextFence": 789,
+  "nextFence": 790,
   "tasks": {
     "1001": {
       "issue": 1001,
@@ -6306,7 +6306,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 789,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795809540659,
       "reviewEntry": 1
@@ -7049,10 +7049,18 @@
       }
     }
   },
-  "waiting": [
-    1615
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1615,
+    "worker": "finish",
+    "token": "789:finish:77aee5fa-568e-44f3-8a8c-31e10253a9af:finish:1:admit",
+    "fence": 789,
+    "materialSha": "46ba17964dff6b655df64316d333383d0239dbef",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795809606474,
+    "expiresAt": 1795809906474
+  },
   "events": {
     "finish:92b94c16-2920-4443-9b6c-b4a08c69ff68:finish:2:synchronized": {
       "digest": "700655c56d86b25e10ac67a1cd47e7a4c4885636c10a6cd2fffc29474233c878",
@@ -7282,6 +7290,20 @@
           "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed; Браузер: isometric live touch: cancelled; Браузер: lazy admin locale: cancelled; Браузер: modes: Подготовка не завершена успешно; Браузер: native card presentation: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan 3d card: Подготовка не завершена успешно; Браузер: plan 3d marker height: Подготовка не завершена успешно; Браузер: plan 3d resume: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: standalone room label layout: Подготовка не завершена успешно; Браузер: startup floor: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: vacuum: Подготовка не завершена успешно; Браузер: vacuum 3d floor: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
           "eventId": "finish:3acd3d46-c1e5-48c7-bcc9-fd08fa2a0ba2:finish:2:return:return:1612"
         }
+      }
+    },
+    "finish:77aee5fa-568e-44f3-8a8c-31e10253a9af:finish:1:admit": {
+      "digest": "31edf973ae0780f0e979337c5b85d7f3cba1364a2f22901e373bba86f86906cb",
+      "issue": 1615,
+      "message": {
+        "kind": "admitted",
+        "issue": 1615,
+        "at": 1795809606474,
+        "entry": 1,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "46ba17964dff6b655df64316d333383d0239dbef",
+        "phase": "sync"
       }
     }
   },
