@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29829,
+  "revision": 29830,
   "nextTicket": 800,
   "nextFence": 800,
   "tasks": {
@@ -6313,7 +6313,7 @@
       "ownerDecision": null,
       "ticket": 799,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795819725017,
       "reviewEntry": 1,
       "patchId": "aa5be8d0e185ed8b431456348e912b1b3944b053",
@@ -6329,7 +6329,17 @@
         "src/plan-3d-floor-detail.ts",
         "src/plan-3d-host.ts",
         "src/plan-3d-world.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261127T224028605-41738edf",
+        "requestId": "s6:1618:cd2d455a952a660392fe8815ceae3a35",
+        "runId": 46077965021,
+        "materialSha": "5de5efc9693f5c203a13c12b03c89895a19f6551",
+        "status": "passed",
+        "finishedAt": "2026-11-27T22:47:49.501Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46077965021",
+        "execution": "github"
+      }
     }
   },
   "ownerDecisions": {},
@@ -7077,9 +7087,9 @@
     "fence": 799,
     "materialSha": "5de5efc9693f5c203a13c12b03c89895a19f6551",
     "expectedBase": "029bee4a997415765c278be12fd8334d82774e33",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795819733566,
-    "expiresAt": 1795820039702,
+    "expiresAt": 1795823347039,
     "patchId": "aa5be8d0e185ed8b431456348e912b1b3944b053"
   },
   "events": {
@@ -7252,6 +7262,35 @@
         "layer": "product",
         "materialSha": "5de5efc9693f5c203a13c12b03c89895a19f6551",
         "phase": "sync"
+      }
+    },
+    "finish:17678e07-049c-4350-ac6c-2cdcf4c5a304:finish:3:s6-complete": {
+      "digest": "d3b5237fd8e27f30aefe734bc4679ef8db4610fa00d71f1c0ec77c4aec5f7cc6",
+      "issue": 1618,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1618,
+        "at": 1795819747039,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "5de5efc9693f5c203a13c12b03c89895a19f6551",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T224028605-41738edf",
+          "requestId": "s6:1618:cd2d455a952a660392fe8815ceae3a35",
+          "runId": 46077965021,
+          "materialSha": "5de5efc9693f5c203a13c12b03c89895a19f6551",
+          "status": "passed",
+          "finishedAt": "2026-11-27T22:47:49.501Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46077965021",
+          "execution": "github"
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Причина подтверждена: при 800% весь этаж масштабировал растр исходной плотности. В WebGL сравнили один и тот же кадр до и после уточнения: контраст между 4-пиксельными полосами тестового PNG вырос с 10,2 до 82,6 при 0° и с 9,9 до 83,4 при 45° (разница канала G, шкала 0–255).\n\nЧерез 160 мс после остановки камеры загружаем только видимый участок (максимум 2048 px по длинной стороне), используя те же встроенные изображения, прозрачность, порядок и поворот. Базовый растр остаётся за пределами участка и виден до готовности. Поворот и зум не требуют пересборки общей текстуры; низкий зум освобождает область уточнения. Без сетевых запросов, записи плана, изменений 2D или стартового превью.\n\nЛокально: сборка и типы, новый `smoke_plan_3d_decor_detail.mjs` (реальные пиксели, PNG под 27°, 800%, прямой и диагональный ракурсы, перекрытие, прозрачность, лимит и переиспользование), существующий `smoke_decor_images.mjs` (2D, редактор и статичная карточка).",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
