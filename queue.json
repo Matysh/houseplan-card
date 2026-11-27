@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29928,
+  "revision": 29929,
   "nextTicket": 803,
   "nextFence": 803,
   "tasks": {
@@ -6248,7 +6248,7 @@
       "ownerDecision": null,
       "ticket": 802,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795820769698,
       "reviewEntry": 4,
       "patchId": "fe6330d0f2eb68680e72e2896ee51b840ee53b8c",
@@ -6269,12 +6269,12 @@
         "src/plan-3d-light-motion.ts"
       ],
       "s6": {
-        "id": "20261127T230110965-d3070782",
+        "id": "20261127T230629276-307d8b74",
         "name": "Тесты для задачи #1617 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T230110965-d3070782/report.json",
-        "materialSha": "8329e2f5609b4c64c314a90d57cd4d3194a19dc6",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T230629276-307d8b74/report.json",
+        "materialSha": "a998507d5e4b7c4d663ed9ae2979d55a58073142",
         "status": "passed",
-        "finishedAt": "2026-11-27T23:01:41.328Z",
+        "finishedAt": "2026-11-27T23:06:38.648Z",
         "failures": []
       },
       "reviewRound": 2,
@@ -6287,10 +6287,6 @@
         "entry": 3,
         "requestId": "review:1617:3:498cbc431fd03811228a5bc485b196a2b1007dde:5de5efc9693f5c203a13c12b03c89895a19f6551",
         "transitionConfirmed": true
-      },
-      "reviewCorrection": {
-        "requestId": "review:1617:3:498cbc431fd03811228a5bc485b196a2b1007dde:5de5efc9693f5c203a13c12b03c89895a19f6551",
-        "at": 1795820730822
       }
     },
     "1618": {
@@ -7077,9 +7073,9 @@
     "fence": 802,
     "materialSha": "a998507d5e4b7c4d663ed9ae2979d55a58073142",
     "expectedBase": "5de5efc9693f5c203a13c12b03c89895a19f6551",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795820773540,
-    "expiresAt": 1795821079682,
+    "expiresAt": 1795824399920,
     "patchId": "fe6330d0f2eb68680e72e2896ee51b840ee53b8c"
   },
   "events": {
@@ -7525,6 +7521,34 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:6885ab08-0578-4864-a90b-7da0f215d954:finish:3:s6-complete": {
+      "digest": "cc786749eb5ae4eafd189e776fa317e784c1fa920689257fd4d7847e1572c025",
+      "issue": 1617,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1617,
+        "at": 1795820799920,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a998507d5e4b7c4d663ed9ae2979d55a58073142",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T230629276-307d8b74",
+          "name": "Тесты для задачи #1617 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T230629276-307d8b74/report.json",
+          "materialSha": "a998507d5e4b7c4d663ed9ae2979d55a58073142",
+          "status": "passed",
+          "finishedAt": "2026-11-27T23:06:38.648Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "На первом кандидате воспроизвелось замечание ревью: у Auto-ленты с радиусом 30 см контрольные точки возле стены теряли свет (`smoke_webgl_door_lintel.mjs`: дельты 0/0/0). Пустое поле не задаёт реальную высоту излучателя, поэтому Auto сохраняет прежний источник у пола и прежний профиль затухания. Для явного значения, в том числе 0, свет и меш используют `ledHeight(...).top`; пространственная дистанция применяется и на полу, и на стенах. Лампы, солнце, плоские маски и пересечение проёмов не меняются.\n\nВ S6 есть три отдельных свидетеля: `smoke_plan_3d_marker_height.mjs` (явная светящаяся поверхность и прежний Auto в восьми ракурсах), `smoke_plan_3d_gpu.mjs` (пробы пола/стен и затенения) и `smoke_webgl_door_lintel.mjs` (в том числе прежняя засветка передней, но не задней грани от короткой Auto-ленты).",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
