@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Restore the 1.83.1 hotfix entry and document bundled frontend licenses. [#1597](https://github.com/Matysh/houseplan-card/issues/1597)
 - Document the WebGL 2 requirement for 3D view and the 2D fallback in both READMEs (#1591).
 - Extract the lazy 3D host lifecycle and mode transition presentation from the main card (#1604).
 - Recheck live write access before saving device positions or publishing attachments, and keep cancelled file operations from leaving partial copies (#1605).
@@ -663,6 +664,10 @@
 - Create rooms directly inside closed wall contours with storage-rounded T joints, without running Optimize first. Optimize preserves connected walls and openings, and existing physical walls can acquire another room owner safely. Real gaps and invalid opening-host changes remain rejected. [#1166](https://github.com/Matysh/houseplan-card/issues/1166)
 
 - Unify View and kiosk controls, notices, device issue details and onboarding with the shared UI Kit and reduced-motion behavior. Show the oversized-plan warning during first-space setup and retain the draft on cancellation. Keep device-card spacing independent of whether settings were opened first. [#1147](https://github.com/Matysh/houseplan-card/issues/1147)
+
+## v1.83.1 — 2026-10-31
+
+- After updating, create rooms directly inside existing closed wall contours with storage-rounded T joints, without running Optimize first. Optimize preserves connected walls and openings, and existing physical walls can acquire another room owner safely. Real gaps and invalid opening-host changes remain rejected. [#1166](https://github.com/Matysh/houseplan-card/issues/1166)
 
 ## v1.83.0 — 2026-10-30
 
