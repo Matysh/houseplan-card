@@ -304,7 +304,8 @@ export class CardPlan3d {
       const id = puck.dataset.mid, center = this.vacuumCenter(puck, frame);
       const face = this.runtime?.readPlan3dVacuumFace(puck, presentation.preset.rotDeg);
       return id && center && face ? [{ id: vacuumPickId(id), center, diameter, height: height.top,
-        thickness: height.thickness, opacity: puck.classList.contains('stale') ? .45 : 1, faces: [face] }] : [];
+        thickness: height.thickness, opacity: puck.classList.contains('stale') ? .45 : 1,
+        contactShadow: false, faces: [face] }] : [];
     });
   }
 

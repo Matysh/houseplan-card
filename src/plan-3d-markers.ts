@@ -27,6 +27,7 @@ export interface Plan3dMarker {
   height: number;
   thickness?: number;
   opacity?: number;
+  contactShadow?: false;
   faces: readonly Plan3dMarkerFace[];
 }
 

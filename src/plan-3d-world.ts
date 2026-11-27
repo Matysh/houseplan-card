@@ -343,7 +343,9 @@ export class Plan3dWorld {
    * It changes with world positions, not with the view or light intensity. */
   presentContacts(floor: unknown, box: ViewRect, markers: readonly Plan3dMarker[], labels: readonly Plan3dContactShadow[]): void {
     const dots: Plan3dContactShadow[] = [...labels];
-    for (const { center, diameter, faces } of markers) {
+    for (const { center, diameter, faces, contactShadow } of markers) {
+      // A floor-bound moving puck must not join this static floor texture.
+      if (contactShadow === false) continue;
       for (const face of faces) {
         const angle = face.angle ?? 0, c = Math.cos(angle), s = Math.sin(angle);
         const dx = (face.left + face.right) * diameter / 2, dy = (face.top + face.bottom) * diameter / 2;

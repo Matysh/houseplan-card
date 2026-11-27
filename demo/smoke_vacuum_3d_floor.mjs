@@ -57,6 +57,11 @@ const sample = () => page.evaluate(() => {
   dock.geometry.computeBoundingBox();
   const [x, z, y] = body.position.toArray(), hitPoint = screen(x, z, y), floorPoint = screen(x, 0, y);
   const floorProxy = node.getBoundingClientRect();
+  const texture = host.world.contacts.children[0]?.material.map, image = texture?.image;
+  const bounds = host.presentation.bounds;
+  const alpha = (px, py) => image?.getContext('2d').getImageData(
+    Math.floor((px - bounds.x) * image.width / bounds.w),
+    Math.floor((py - bounds.y) * image.height / bounds.h), 1, 1).data[3];
   return { x, y, hitPoint, hit: host.pick(...hitPoint), height: z / units,
     bottom: (z + body.geometry.boundingBox.min.y) / units,
     thickness: -body.geometry.boundingBox.min.y / units,
@@ -64,6 +69,7 @@ const sample = () => page.evaluate(() => {
     floorError: Math.hypot(floorProxy.left + floorProxy.width / 2 - floorPoint[0], floorProxy.top + floorProxy.height / 2 - floorPoint[1]),
     native: getComputedStyle(node).opacity === '0' && getComputedStyle(node).pointerEvents === 'none',
     trail: root.querySelector('[data-kind="current"][data-vacuum-owner="robot"]')?.getAttribute('d'),
+    contacts: { texture: texture?.uuid, dock: alpha(dock.position.x, dock.position.z), robot: alpha(x, y) },
     rotation: card._rotation };
 });
 const switchToFlat = () => page.evaluate(() => {
@@ -96,6 +102,8 @@ try {
   margin(before.x, 480); margin(before.y, 520); margin(before.bottom, 0, 1e-5);
   margin(before.dockBottom, 100, 1e-5); margin(before.floorError, 0);
   assert.ok(before.thickness > 0, '0 cm is the base of a solid puck');
+  assert.ok(before.contacts.dock > 0, 'the dock keeps its ordinary contact shadow');
+  assert.equal(before.contacts.robot, 0, 'the moving puck must not leave a static shadow on the floor');
 
   await page.evaluate(() => { window.__vacuumHits = [];
     window.__isoPaint.addEventListener('hass-more-info', event => window.__vacuumHits.push(event.detail.entityId)); });
@@ -115,6 +123,7 @@ try {
   margin(moved.x, 550); margin(moved.y, 540); margin(moved.bottom, 0, 1e-5);
   assert.deepEqual(moved.dock, before.dock);
   assert.equal(moved.trail, before.trail);
+  assert.deepEqual(moved.contacts, before.contacts, 'movement must not replace the floor contact texture');
 
   await page.locator('houseplan-card [data-hp="rotate-right"]').click();
   await page.waitForFunction(angle => window.__isoPaint._rotation !== angle, before.rotation);

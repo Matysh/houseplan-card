@@ -113,6 +113,7 @@ export class Plan3dHost {
     for (const marker of this.markers) {
       const center = centers.get(marker.id);
       if (!center || Math.hypot(center[0] - marker.center[0], center[1] - marker.center[1]) < .01) continue;
+      // Keep the next full draw in sync without invalidating the marker-list identity.
       marker.center = center;
       this.world.moveVacuumCore(marker.id, center);
       moved = true;
