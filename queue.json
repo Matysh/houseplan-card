@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28880,
+  "revision": 28881,
   "nextTicket": 783,
   "nextFence": 777,
   "tasks": {
@@ -6177,7 +6177,10 @@
         "runStatus": "completed",
         "publicationPending": true,
         "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1795798577254,
+      "automationDetail": "Independent accepted review required"
     },
     "1595": {
       "issue": 1595,
@@ -7578,10 +7581,6 @@
     "reviewRequest": "review:1594:2:b94f73bb2a99353d945245f727a2a24bb4b6e535:15caaf14ccad42a9f1df2f7cae4946dbbd67c766"
   },
   "events": {
-    "finish:b43e588d-5148-4ccd-a83b-4c3a81605635": {
-      "digest": "d9aa6953bcf8f2fb364df0efd50168c4cba36dbc4048d392bc1cba5d58de1e8c",
-      "issue": 1594
-    },
     "finish:1902a39e-b7a5-4b42-a4d0-587ec5b928b6": {
       "digest": "d61f26a42b2e5d514c19aa9283d97ab15f605d360f77c475c6f90011994fb43a",
       "issue": 1594
@@ -8384,6 +8383,10 @@
     },
     "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:11:review-complete": {
       "digest": "f9ba044b5a1fb891ac85d4ed92a405b03cbb64f71f4dca72b052d8ab1afd9e91",
+      "issue": 1594
+    },
+    "github:46037687498:1:tick:0:automation-pending": {
+      "digest": "acf762eac9ee6ec6f9b426c12e0e8fc9449f9a2182c689c3ab44714d794beded",
       "issue": 1594
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
