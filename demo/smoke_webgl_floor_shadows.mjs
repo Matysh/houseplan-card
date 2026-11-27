@@ -30,17 +30,30 @@ try {
   });
   await settled();
   const measure = () => page.evaluate(() => {
-    const card = window.__goldenCard, canvas = card._plan3dHost.canvas;
-    const ctx = canvas.getContext('2d'), rect = canvas.getBoundingClientRect();
-    const crop = (x, y) => {
-      const at = Math.round(y - rect.top) * canvas.width + x;
-      return [at * 4, at * 4 + 2];
-    };
+    const host = window.__goldenCard._plan3dHost;
+    const { canvas } = host, { camera } = host.viewport.painted;
+    const ctx = canvas.getContext('2d');
     const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    const warm = (x, y) => { const [r,b] = crop(x,y); return pixels[r] - pixels[b]; };
+    const warm = (x, y) => {
+      const at = (y * canvas.width + x) * 4;
+      return pixels[at] - pixels[at + 2];
+    };
+    // The edge runs from the lamp at (600, 540) through the upper jamb
+    // of the receiving face of a 25 cm wall centred on x=500. Sample a
+    // stretch of that floor edge through the camera which painted it.
+    const jambX = 500 - 25 / (2 * 5) * 1000 / 240, jambY = 465;
+    const projectEdge = x => {
+      const y = 540 + (x - 600) * (jambY - 540) / (jambX - 600);
+      const point = camera.position.clone().set(x, 0, y).project(camera);
+      return [(point.x + 1) * canvas.width / 2, (1 - point.y) * canvas.height / 2];
+    };
+    const [x0, y0] = projectEdge(366), [x1, y1] = projectEdge(450);
+    const firstRow = Math.ceil(y0);
+    if (!(y1 >= firstRow + 63)) throw Error('projected floor shadow does not span 64 rows');
     const edges = [];
-    for (let y = 244; y <= 307; y++) {
-      const mid = Math.round(376 + .68 * (y - 240)), left = mid - 19, right = mid + 19;
+    for (let y = firstRow; y < firstRow + 64; y++) {
+      const mid = Math.round(x0 + (x1 - x0) * (y - y0) / (y1 - y0));
+      const left = mid - 19, right = mid + 19;
       const high = warm(left, y), low = warm(right, y);
       if (high - low < 25) throw Error(`not a high-contrast floor shadow at y=${y}: ${high}, ${low}`);
       const level = low + (high - low) / 2;
