@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27821,
+  "revision": 27822,
   "nextTicket": 754,
   "nextFence": 754,
   "tasks": {
@@ -2751,45 +2751,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "68fb9d6ec311e669bd7a9299022173d6a551e599"
-      }
-    },
-    "1472": {
-      "issue": 1472,
-      "branch": "codex/1472-real-3d",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "3337227988d528e977cf8f978a112c7e8a730cfa",
-      "mergedSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5",
-      "mergedAt": 1795285513296,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1472:5:70994bd9238c3b210aef9c2cf7ec7a4b208a3bfa:3337227988d528e977cf8f978a112c7e8a730cfa",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 18,
-          "cycleMilestone": 18
-        },
-        "milestoneTitle": "2.0.0",
-        "commentCurrent": true,
-        "commentDigest": "b4a585966f4b15997bed",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 18
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "5fa8459ea722365e0d1c479a25dc21bd73c549e5"
       }
     },
     "1474": {
@@ -6244,10 +6205,25 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": 18,
+          "cycleMilestone": 18
+        },
+        "milestoneTitle": "2.0.0",
+        "commentCurrent": true,
+        "commentDigest": "b4a585966f4b15997bed",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": 18
+        }
       },
       "devBuild": {
         "status": "published",
