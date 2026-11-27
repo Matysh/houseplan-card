@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28096,
+  "revision": 28097,
   "nextTicket": 761,
   "nextFence": 760,
   "tasks": {
@@ -6374,7 +6374,17 @@
         "tests_backend/test_ha_backup_archive.py",
         "tests_backend/test_ha_marker_copy.py",
         "tests_backend/test_ha_marker_history.py"
-      ]
+      ],
+      "reason": "executor-admission-expired",
+      "notice": {
+        "key": "1:executor-admission-expired",
+        "reason": "executor-admission-expired",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795775151260,
+        "entry": 1,
+        "eventId": "recover-1608:df52f15b-73ee-4cb0-91e4-f1fbc12fd9b8:return:1608"
+      }
     },
     "1609": {
       "issue": 1609,
@@ -7150,18 +7160,7 @@
   "waiting": [
     1609
   ],
-  "active": {
-    "issue": 1608,
-    "worker": "github-coordinator",
-    "token": "759:github:45980967857:1:tick:1:admit",
-    "fence": 759,
-    "materialSha": "9623a6b23414933562dd54160ca360c5c73afed9",
-    "expectedBase": "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31",
-    "phase": "testing",
-    "admittedAt": 1795774745084,
-    "expiresAt": 1795775110605,
-    "patchId": "c28ffdddf1c710f3cd72615be99f04eef6077b86"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7743,6 +7742,10 @@
       "digest": "816af0083f0dabc98398845c6fc95ece865a64a68713ae8390f05ec7aed445c0",
       "issue": 1608
     },
+    "recover-1608:df52f15b-73ee-4cb0-91e4-f1fbc12fd9b8": {
+      "digest": "4bf9382a3e1ff4eee0850c7dd15749dfc518a15c0587b2f175339cecc7766cd9",
+      "issue": 1608
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -8083,6 +8086,25 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "recover-1608:df52f15b-73ee-4cb0-91e4-f1fbc12fd9b8:return:1608": {
+      "digest": "4bf9382a3e1ff4eee0850c7dd15749dfc518a15c0587b2f175339cecc7766cd9",
+      "issue": 1608,
+      "message": {
+        "kind": "return",
+        "issue": 1608,
+        "at": 1795775151260,
+        "entry": 1,
+        "notice": {
+          "key": "1:executor-admission-expired",
+          "reason": "executor-admission-expired",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795775151260,
+          "entry": 1,
+          "eventId": "recover-1608:df52f15b-73ee-4cb0-91e4-f1fbc12fd9b8:return:1608"
+        }
       }
     }
   },
