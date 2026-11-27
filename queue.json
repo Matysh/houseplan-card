@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 29532,
+  "revision": 29533,
   "nextTicket": 793,
-  "nextFence": 792,
+  "nextFence": 793,
   "tasks": {
     "1001": {
       "issue": 1001,
@@ -6194,7 +6194,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 792,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795811178284,
       "reviewEntry": 4,
@@ -7071,10 +7071,18 @@
       }
     }
   },
-  "waiting": [
-    1612
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1612,
+    "worker": "finish",
+    "token": "792:finish:3283960f-c99e-485f-b6c6-1efd158fbb63:finish:1:admit",
+    "fence": 792,
+    "materialSha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795811182864,
+    "expiresAt": 1795811482864
+  },
   "events": {
     "finish:92b94c16-2920-4443-9b6c-b4a08c69ff68:finish:2:synchronized": {
       "digest": "700655c56d86b25e10ac67a1cd47e7a4c4885636c10a6cd2fffc29474233c878",
@@ -7412,6 +7420,30 @@
         "track": "show",
         "layer": "product",
         "materialSha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+        "evidence": {
+          "id": "20261127T200638153-432477e7",
+          "requestId": "s6:1612:d93b501d12a2ceec6cf5923964cfc7a1",
+          "runId": 46061153186,
+          "materialSha": "6711c4f54424a3997133eb2a6eb36c027da0a1b1",
+          "status": "passed",
+          "finishedAt": "2026-11-27T20:11:37.789Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46061153186",
+          "execution": "github"
+        }
+      }
+    },
+    "finish:3283960f-c99e-485f-b6c6-1efd158fbb63:finish:1:admit": {
+      "digest": "aac740fef8b816a110cb2aa98fa26b455cc02701ee5f7cd27d45bd5bb59c0d40",
+      "issue": 1612,
+      "message": {
+        "kind": "admitted",
+        "issue": 1612,
+        "at": 1795811182864,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+        "phase": "sync",
         "evidence": {
           "id": "20261127T200638153-432477e7",
           "requestId": "s6:1612:d93b501d12a2ceec6cf5923964cfc7a1",
