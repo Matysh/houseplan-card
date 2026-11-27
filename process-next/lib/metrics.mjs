@@ -51,7 +51,7 @@ export function collectTiming({ performance, host, runnerHash, release, sourceSh
   if (!sourceSha) throw Error('Candidate measurement identity required');
   if (performance && performance.sourceSha !== sourceSha) throw Error('Performance report is from another candidate');
   if (!buildFingerprint || performance && buildFingerprint !== performance.buildFingerprint)
-    throw Error('Performance did not measure the identified frontend');
+    throw Error('Performance did not measure the packaged frontend');
   const timing_metrics = {}, diagnostics = [];
   for (const [key, policy] of Object.entries(POLICY)) if (policy.unit === 'ms') {
     const samples = performance?.rows?.map(row => row[key]);
