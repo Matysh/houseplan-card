@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28292,
+  "revision": 28293,
   "nextTicket": 771,
   "nextFence": 767,
   "tasks": {
@@ -6150,7 +6150,7 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1598-release-snapshot",
-      "materialSha": "f2d72a1e43f69a33ddbd183d8362824f3e427602",
+      "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 765,
@@ -6158,7 +6158,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795775794527,
       "reviewEntry": 2,
-      "patchId": "62a0d1fe0cc1a24c1411ea094b9ba4ff3f7e05f1",
+      "patchId": "f90c6b3bf362de031cc4c7aa133966ce1397c477",
       "changedFiles": [
         ".gitignore",
         "AGENTS.md",
@@ -6242,18 +6242,22 @@
         "custom_components/houseplan/frontend/houseplan-assets/zigbee-topology-runtime-D6S3rH2a.js",
         "custom_components/houseplan/frontend/houseplan-card.js",
         "custom_components/houseplan/frontend/houseplan-panel.js",
-        "demo/bundle-freshness.mjs",
         "demo/stand/update-dev-bundle.sh",
         "docs/ARCHITECTURE.md",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/DEVELOPMENT.md",
         "docs/FURNITURE-VOLUME-LAB.md",
-        "package.json",
         "process-next/AUTOMATION-PARITY.md",
+        "process-next/lib/coordinator.mjs",
+        "process-next/lib/review.mjs",
         "process-next/lib/task-selection.mjs",
+        "process-next/test/coordinator.test.mjs",
         "process-next/test/package.test.mjs",
+        "process-next/test/review.test.mjs",
+        "scripts/bundle-policy.mjs",
         "scripts/bundle-sync.mjs",
+        "test/bundle-policy.test.mjs",
         "test/bundle-sync.test.mjs",
         "test/dev-build.test.mjs"
       ],
@@ -7394,11 +7398,12 @@
     "worker": "finish",
     "token": "766:finish:ebfd23a8-6ad9-45a3-ab3d-84868c9b557a:finish:1:admit",
     "fence": 766,
-    "materialSha": "f2d72a1e43f69a33ddbd183d8362824f3e427602",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
+    "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
+    "phase": "testing",
     "admittedAt": 1795779945484,
-    "expiresAt": 1795780245484
+    "expiresAt": 1795780256969,
+    "patchId": "f90c6b3bf362de031cc4c7aa133966ce1397c477"
   },
   "events": {
     "finish:c80ecde5-2827-410d-93cb-6acdc3575124": {
@@ -8252,6 +8257,10 @@
     "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return": {
       "digest": "fb8b0a6c58adaee42d00147136f06654bc0c1bf8c1c8eb356a37380a99fb9284",
       "issue": 1608
+    },
+    "finish:ebfd23a8-6ad9-45a3-ab3d-84868c9b557a:finish:3:synchronized": {
+      "digest": "5132f58e7a56d40b3bb9667c1689b7af48d94e0a82be3b2fdb83c47be036803f",
+      "issue": 1598
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
