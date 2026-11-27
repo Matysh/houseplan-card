@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1581,
+  "revision": 1582,
   "active": "v2.0.0-beta.3-20261127",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -314760,14 +314760,14 @@
       "kind": "beta",
       "branch": "release/2.0.0-beta.3-20261127",
       "sourceSha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
-      "sha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+      "sha": "ead76ff411e1188f853fd47d42352b5eed79c003",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v2.0.0-beta.3",
-        "candidate": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+        "tag": null,
+        "candidate": "ead76ff411e1188f853fd47d42352b5eed79c003",
         "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
         "issues": [
           {
@@ -315167,7 +315167,14 @@
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+          "to": "ead76ff411e1188f853fd47d42352b5eed79c003",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": []
     }
   },
@@ -321670,7 +321677,8 @@
     "beta-200-2-20261126-publication:completion:a198b6be-321b-45c3-919a-d8c03b72b49d": "7c391916e807a1e17bb9bb0820a68b846e5d1f842f48a7e1cd09888639f4b638",
     "beta-200-2-20261126-publication:completion:39d4e6bf-8f97-466a-bd0d-eefb80c945eb": "9a3d991d6968b13f5199973a2a8c1a27972db493dd8cb0e3528a5851c7554157",
     "beta-200-2-20261126-publication:completion:574cffdd-9fe4-4316-8d23-fe4b1d390cb4": "dc340398bbd12935064de5b2bbc5b9cb969995d40d638238ca96d93ebb1afe25",
-    "beta-200-3-20261127-create": "9afcc445dbdc0bd96cb9d5ad7c8831f0c555c9e678db620fde38a7a7033b6438"
+    "beta-200-3-20261127-create": "9afcc445dbdc0bd96cb9d5ad7c8831f0c555c9e678db620fde38a7a7033b6438",
+    "beta-200-3-20261127-version": "fb2edc0751ec8abd4aa0d96bd5411bb1285d82e39adcfc9a61dbbd2a10359358"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
