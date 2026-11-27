@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28204,
+  "revision": 28205,
   "nextTicket": 770,
   "nextFence": 765,
   "tasks": {
@@ -6148,9 +6148,9 @@
     "1598": {
       "issue": 1598,
       "track": "show",
-      "layer": "product",
+      "layer": "infra",
       "branch": "codex/1598-release-snapshot",
-      "materialSha": "cc8b4ce4e518bef2c67fe4148415bd748d290c2e",
+      "materialSha": "90f739dd69fe0c3853d6efc392bfa73dfc7f3131",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 765,
@@ -8181,6 +8181,10 @@
     "finish:67e3709f-b49f-44f1-bc70-d46da6c2bd4c": {
       "digest": "88150905ba8c05f70cb97013d6d6e045448047f5b753cfa428455858cb519f42",
       "issue": 1608
+    },
+    "ready:1598:90f739dd69fe0c3853d6efc392bfa73dfc7f3131": {
+      "digest": "deefa028268704429fa6a9d4a32f764fe611b68cd212e5230ff9beddb9df0a72",
+      "issue": 1598
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
