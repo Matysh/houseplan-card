@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28100,
+  "revision": 28101,
   "nextTicket": 762,
   "nextFence": 761,
   "tasks": {
@@ -6422,14 +6422,13 @@
         "test/plan-3d-recovery.test.mjs"
       ],
       "notice": {
-        "key": "4:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
+        "key": "5:executor-admission-expired",
+        "reason": "executor-admission-expired",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795774711237,
-        "entry": 4,
-        "detail": "Браузер: plan 3d resume: failed",
-        "eventId": "finish:36b83a93-20c5-469f-a81c-169212ba85c4:finish:3:return:return:1609"
+        "at": 1795775515304,
+        "entry": 5,
+        "eventId": "finish:2e718c29-0d77-474c-b57e-f06e2228975a:track-observed:return:1609"
       },
       "s6": {
         "id": "20261127T091017259-853968fa",
@@ -6444,7 +6443,8 @@
       "reviewCorrection": {
         "requestId": "review:1609:3:0c40f66ed471e9b2eb60e59f3f44371e161434a7:1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
         "at": 1795772520026
-      }
+      },
+      "reason": "executor-admission-expired"
     }
   },
   "ownerDecisions": {},
@@ -7159,18 +7159,7 @@
   "waiting": [
     1608
   ],
-  "active": {
-    "issue": 1609,
-    "worker": "finish",
-    "token": "760:finish:41ee2471-bdee-4304-a669-4360675ac204:finish:1:admit",
-    "fence": 760,
-    "materialSha": "44454148a8099075afbd35fb76532ef00479b47d",
-    "expectedBase": "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31",
-    "phase": "testing",
-    "admittedAt": 1795775167967,
-    "expiresAt": 1795775494301,
-    "patchId": "6475a222d994cd24cbe541e932c28bf8537a30a6"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7760,6 +7749,10 @@
       "digest": "c26dce13b23b835e471139423ff1db1f63365e0f1016f02c1fd69a608d68f408",
       "issue": 1609
     },
+    "finish:2e718c29-0d77-474c-b57e-f06e2228975a:track-observed": {
+      "digest": "83afbed0c1c5f091e6515b504bfe122f4b229d622104c2d37e64a858989cb55a",
+      "issue": 1597
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -8154,6 +8147,25 @@
           "status": "passed",
           "finishedAt": "2026-11-27T09:33:06.732Z",
           "failures": []
+        }
+      }
+    },
+    "finish:2e718c29-0d77-474c-b57e-f06e2228975a:track-observed:return:1609": {
+      "digest": "83afbed0c1c5f091e6515b504bfe122f4b229d622104c2d37e64a858989cb55a",
+      "issue": 1609,
+      "message": {
+        "kind": "return",
+        "issue": 1609,
+        "at": 1795775515304,
+        "entry": 5,
+        "notice": {
+          "key": "5:executor-admission-expired",
+          "reason": "executor-admission-expired",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795775515304,
+          "entry": 5,
+          "eventId": "finish:2e718c29-0d77-474c-b57e-f06e2228975a:track-observed:return:1609"
         }
       }
     }
