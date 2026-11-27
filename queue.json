@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27590,
+  "revision": 27591,
   "nextTicket": 751,
   "nextFence": 750,
   "tasks": {
@@ -7195,6 +7195,10 @@
       "digest": "026a63b50d5a4a13c209cc518fd4b3daac445680b98a22e2c72a87a2b26fab88",
       "issue": 1604
     },
+    "github:45948910677:1:completions:message:b4c43af6697c1041b39946da123c719c7922f0c80c821e4c6d8228da08c8d15d": {
+      "digest": "5132343b671cb7dcd9e898da590068c2925dc8fc60e464230cfc3eeb0e867014",
+      "issue": 1604
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7287,7 +7291,8 @@
           "entry": 1,
           "detail": "Первый локальный S6 остановлен после отказов test/card-version.test.mjs, test/core-source-readers.test.mjs и process-next/test/catalog.test.mjs. Исправления опубликованы в cdc37cbb5, адресные проверки прошли.",
           "eventId": "1604-replace-s6-758d62ac-a2d6-4772-8200-3d2713faab40:return:1604"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6": {
