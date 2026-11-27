@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28798,
+  "revision": 28799,
   "nextTicket": 781,
   "nextFence": 776,
   "tasks": {
@@ -6616,7 +6616,7 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1611-space-opening-host",
-      "materialSha": "49487d86b7765c1bea1557578bdf0636197f22c4",
+      "materialSha": "e087372c85aec72a32bbc22faeb344447fcd5881",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 780,
@@ -6624,9 +6624,15 @@
       "status": "S6-in-progress",
       "readyAt": 1795796266885,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1795796369756,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      "patchId": "ccb58a624a91e2085b2d373476ec3c9822597f2d",
+      "changedFiles": [
+        "custom_components/houseplan/core/graph_write.py",
+        "custom_components/houseplan/core/plan_commands.py",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.86.1/1611.json",
+        "tests_backend/test_ha_plan_graph.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7364,11 +7370,12 @@
     "worker": "finish",
     "token": "775:finish:6f3048e8-0b4d-4333-a539-8a587f7616a1:finish:1:admit",
     "fence": 775,
-    "materialSha": "49487d86b7765c1bea1557578bdf0636197f22c4",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "e087372c85aec72a32bbc22faeb344447fcd5881",
+    "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+    "phase": "testing",
     "admittedAt": 1795796329831,
-    "expiresAt": 1795796812833
+    "expiresAt": 1795796820042,
+    "patchId": "ccb58a624a91e2085b2d373476ec3c9822597f2d"
   },
   "events": {
     "finish:ac66f1d0-0b1e-4271-a7c2-eabd11724380": {
@@ -8129,6 +8136,10 @@
     },
     "finish:b190316f-13b4-4d5a-9897-b6dd5e5403c8": {
       "digest": "ce79c4c73ec10308ca5581f3f441f2ae5c822810726ef186891307235bdc9ac3",
+      "issue": 1611
+    },
+    "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:4:synchronized": {
+      "digest": "466d5b10ead9952530241ee7a5591692b263c594f4da36f5557ec24ba064b4ee",
       "issue": 1611
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
