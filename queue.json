@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28118,
+  "revision": 28119,
   "nextTicket": 764,
   "nextFence": 763,
   "tasks": {
@@ -6128,7 +6128,8 @@
         "custom_components/houseplan/THIRD_PARTY_NOTICES.md",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": null
     },
     "1598": {
       "issue": 1598,
@@ -7205,9 +7206,9 @@
     "fence": 762,
     "materialSha": "502258741f1753f27b35ee15c7264d196c2521f6",
     "expectedBase": "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795775633498,
-    "expiresAt": 1795775939710,
+    "expiresAt": 1795779245466,
     "patchId": "1a6e13b03ac96f73bd8b7bdb9cbfcb416c2c2a87"
   },
   "events": {
@@ -7849,6 +7850,10 @@
     },
     "finish:2d57eb91-ec93-4f42-a929-a97dfbe629fe:finish:2:synchronized": {
       "digest": "56b5a43db477262b63d707b47d642ed95c655e9e883c45008782b6db83849bb6",
+      "issue": 1597
+    },
+    "finish:2d57eb91-ec93-4f42-a929-a97dfbe629fe:finish:3:s6-complete": {
+      "digest": "566fb119cba4f5041860914bd13acbcd921aea015a2888b983a1ca93926addfd",
       "issue": 1597
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
