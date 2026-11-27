@@ -6,7 +6,6 @@ import { prepareFloorGeometry, isFloorGeometryFrame } from '../test-build/floor-
 import { physicalFloorFingerprint, cleanFloorFingerprint } from '../test-build/floor-geometry-key.js';
 import { decodeGeometryText } from '../test-build/floor-cache-codec.js';
 import { restoreIsoCache, resolveIsoScene } from '../test-build/iso-scene-geometry.js';
-import { isoCameraFor } from '../test-build/iso-projection.js';
 
 test('#1451 worker preparation and main hydration share the accepted camera at all four stored quarter turns', async () => {
   const raw = makeLargeHouseFixture({floors:1,roomsPerFloor:1,devices:0,openings:2,
@@ -38,13 +37,19 @@ test('#1451 worker preparation and main hydration share the accepted camera at a
     const source = {key:restored.iso.key,build(){throw Error('hydration must not repeat physical geometry')}};
     for (const rotation of [0,90,180,270]) {
       const scene = resolveIsoScene({source,cache,cellCm:5,liveFrame:{x:0,y:0,w:1000,h:1000},rotation});
-      assert.equal(scene.camera,isoCameraFor(rotation));
       assert.equal(scene.camera.rotDeg,35+rotation);
       assert.equal(scene.camera.floorScaleY,Math.sin(40*Math.PI/180));
       assert.deepEqual(scene.openings,main.iso.value.physical.openings);
-      const expected = rotation ? restored.iso.value.projections.get(rotation) : restored.iso.value.entry;
+      assert.ok(scene.camera.perspective?.rate > 0, 'the worker warms the production lens');
+      const expected = restored.iso.value.projections.get(rotation);
+      assert.equal(expected.cameraKey, JSON.stringify(scene.camera));
       assert.equal(scene.geometry,expected.geometry,'the projected variant is reused, not rebuilt');
     }
+    const warmGeometry = restored.iso.value.projections.get(0).geometry;
+    const far = resolveIsoScene({source,cache,cellCm:5,liveFrame:{x:0,y:0,w:1000,h:1000},
+      contentFrame:{x:0,y:0,w:100000,h:100000},rotation:0});
+    assert.notEqual(far.geometry,warmGeometry);
+    assert.equal(far.physical,restored.iso.value.physical,'a changed lens reprojects the cached physical floor');
     assert.deepEqual(raw,before,'preparation and navigation never migrate saved geometry');
   } finally { await worker.terminate(); }
 });

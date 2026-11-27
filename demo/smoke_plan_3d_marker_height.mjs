@@ -93,7 +93,7 @@ try {
   await zoomIsoPaint(page, 1.3);
   assert.ok((await sample()).markers.every(marker => marker.domError < .8));
   assert.deepEqual(await page.evaluate(() => window.__isoPaintWrites), []);
-  reportPageErrors();
+  assert.equal(await reportPageErrors(), false);
   console.log('3D height, depth-tested hits, SVG LED targets and eight camera presets passed');
 } finally {
   await browser.close();

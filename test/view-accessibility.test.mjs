@@ -38,7 +38,7 @@ test('#565 keyboard tooltip has explicit focus ownership and room labels stay un
   assert.match(hover, /!target\?\.matches\(':focus-visible'\)/);
   assert.match(hover, /marker\?\.matches\(':focus-visible'\)/);
   assert.match(card, /const labelGeometry = .left:\$\{left\}%;top:\$\{top\}%;--rl-scale:/);
-  assert.match(card, /style="\$\{labelGeometry\};color:\$\{nameColor\.c\};opacity:\$\{op\}"/);
+  assert.match(card, /style="\$\{labelGeometry\};color:\$\{nameColor\.c\};opacity:\$\{op\};\$\{isoPlacement\?\.localPlaneStyles \?\? ''\}"/);
   assert.match(staticCard, /style="left:\$\{left\}%;top:\$\{top\}%;color:\$\{nameColor\.c\};opacity:\$\{op\}"/);
   assert.doesNotMatch(staticCard, /_showDeviceFocusTip|@focus=/);
 });

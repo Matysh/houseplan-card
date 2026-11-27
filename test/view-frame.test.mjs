@@ -5,7 +5,7 @@ import {
   stepPlanRotation, validPlanRotation, effectivePlanRotation, PlanRotationPreference,
   PLAN_ROTATION_STORAGE, presentationView, canonicalView, physicalPlanCamera, presentationViewport,
 } from '../test-build/view-frame.js';
-import { isoCameraFor, isoPlaneMatrix, projectPlanPoint, unprojectFloorPoint } from '../test-build/iso-projection.js';
+import { ISO_FLOOR_EDGE_HEIGHT, isoDisplayWallHeight, isoPlaneMatrix, projectPlanPoint, unprojectFloorPoint } from '../test-build/iso-projection.js';
 import { resolveIsoScene } from '../test-build/iso-scene-geometry.js';
 import { fitView } from '../test-build/logic.js';
 import { rotatePdfCommands, pdfCommandBounds } from '../test-build/pdf/pdf-layout.js';
@@ -140,22 +140,25 @@ test('#1070 AC9/AC11: four ISO camera sides expose front faces while one physica
   const cache = new Map(), sides = [];
   let initial;
   for (const rotation of [0, 90, 180, 270, 0]) {
-    const camera = isoCameraFor(rotation);
     const scene = resolveIsoScene({ source, cache, cellCm: 5,
       liveFrame: { x: 100, y: 200, w: 800, h: 400 }, rotation });
-    const floor = ring.map(point => projectPlanPoint(point, 0, camera));
+    const {camera} = scene;
+    assert.ok(camera.perspective?.rate > 0);
+    assert.equal(camera.rotDeg, 35 + rotation);
+    const extent = ring.flatMap(point => [-ISO_FLOOR_EDGE_HEIGHT, isoDisplayWallHeight()]
+      .map(height => projectPlanPoint(point, height, camera)));
     assert.equal(scene.geometry.sides.length, 2,'the angled camera exposes both facing rectangle edges');
     for(const face of scene.geometry.sides) {
       assert.deepEqual(face.points[0],projectPlanPoint(face.planEdge[0],0,camera));
       assert.deepEqual(face.points[1],projectPlanPoint(face.planEdge[1],0,camera));
       assert.ok(face.points[2][1]<face.points[1][1],'wall height rises screen-up');
     }
-    const projectedWidth = Math.max(...floor.map(point=>point[0]))-Math.min(...floor.map(point=>point[0]));
+    const projectedWidth = Math.max(...extent.map(point=>point[0]))-Math.min(...extent.map(point=>point[0]));
     assert.equal(scene.frame.w,projectedWidth);
     const matrix = isoPlaneMatrix(0, camera);
     assert.ok(Math.abs(matrix[0]*matrix[3]-matrix[1]*matrix[2]-Math.sin(40*Math.PI/180))<1e-12);
-    const restored = unprojectFloorPoint(projectPlanPoint([-1234.5, 2000.25], 0, camera), camera);
-    assert.ok(Math.abs(restored[0]+1234.5)<1e-9 && Math.abs(restored[1]-2000.25)<1e-9);
+    const restored = unprojectFloorPoint(projectPlanPoint([234.5, 500.25], 0, camera), camera);
+    assert.ok(Math.abs(restored[0]-234.5)<1e-9 && Math.abs(restored[1]-500.25)<1e-9);
     if (!initial) initial = scene;
     sides.push(scene.geometry.sides.map(face=>face.edge).sort().join(','));
     if (sides.length === 5) assert.equal(scene.geometry, initial.geometry);
