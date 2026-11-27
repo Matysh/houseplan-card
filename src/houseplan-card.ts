@@ -19,7 +19,7 @@ import { live } from 'lit/directives/live.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { renderModeSceneLayers, type ModeSceneLayer } from './mode-scene-layers';
 import { guard } from 'lit/directives/guard.js';
-import { ModePresentation } from './mode-presentation';
+import { ModeTransitionPresentation } from './mode-transition-presentation';
 import { liveRuntimeCode } from './view-runtime-code';
 import { callout, field, rangeLine, ensureFormKitStyles } from './editors/form-kit';
 import { sendHouseplanWrite } from './large-write-transport';
@@ -309,20 +309,20 @@ import {
 } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
 import {
-  ModeTransitionController, modeStageHeight, modeRasterExposureClip, modeRasterOriginBias,
+  ModeTransitionController, modeStageHeight,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
 import {
   CameraTransitionController, sameCameraState,
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
-} from './viewport-transition'; import { measuredCardHeaderHeight, rawCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
+} from './viewport-transition'; import { measuredCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
 import {
   PlanTapGestureController, roomFitPlanTarget, roomFitClampFrame,
   roomFitPlanBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
   type RoomFitGestureCandidate,
 } from './room-fit';
 import type { FurniturePlacementPress } from './furniture-placement-press';
-import { authoredHouseplanViewport, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, cancelHouseplanViewportPaint, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
+import { authoredHouseplanViewport, liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, cancelHouseplanViewportPaint } from './live-viewport';
 import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
@@ -362,10 +362,10 @@ import {
 } from './view-frame';
 import { renderHomeArrow, renderPlanRotationControls } from './view-frame-view';
 import { PlanRotationMotion } from './plan-rotation-motion';
-import { HeaderMotion } from './header-motion';
 import { controlMotion } from './ui-motion';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
+import { CardPlan3d, type Plan3dRuntime } from './card-plan-3d';
 import type {
   IsoOverlayRenderScene, IsoRenderScene, IsoSceneCacheEntry,
   IsoStructuralSource,
@@ -427,7 +427,6 @@ import { ConfigFingerprintPass } from './config-fingerprint-pass';
 const CARD_VERSION = '2.0.0-beta.2';
 const TOAST_DURATION_MS = 3500;
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
-const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
 const PDF_RETRY_ASSET = '__HOUSEPLAN_PDF_RETRY_ASSET__';
 type ResizeLiveLabel = {
   kind: 'length';
@@ -814,18 +813,46 @@ export class HouseplanCard extends LitElement {
     },
   });
 
-  /**
-   * 2.5D is opt-in (General settings, #649). Keep its renderer and geometry outside
-   * the ordinary View graph, but use the same exact-build, atomic installation
-   * contract as the editor runtimes so a stale chunk can never half-install.
-   */
-  private _isoSceneRuntime: typeof import('./plan-3d-runtime') | null = null;
-  private _plan3dHost: import('./plan-3d-host').Plan3dHost | undefined;
-  private _plan3dAuthority?: PlanHost['authorityKey'];
-  private _plan3dSubmittedFloor = '';
-  private _plan3dPaintedFloor = '';
-  private _plan3dPresentation: import('./plan-3d-host').Plan3dPresentation | undefined;
-  private _plan3dFailure: { key: string; space: string; load?: 'retry' | 'reload' } | undefined;
+  private readonly _spatial = new CardPlan3d({
+    root: () => this.renderRoot,
+    authority: () => this.planHost.authorityKey,
+    pitch: () => this._gridPitch,
+    switchPhase: () => this._floorSwitch?.phase,
+    floorKey: () => this._floorPaintKey(),
+    contacts: () => this._deviceContacts,
+    view: () => this._viewOr(this._baseVb()),
+    redraw: () => this.requestUpdate(),
+    connected: () => this.isConnected,
+    space: () => this._space,
+    nextRetry: () => CARD_VERSION + '-' + ++hpLazyRetrySeq,
+    loading: () => this._isoFirstFrame.runtimeLoading(),
+    install: (install) => {
+      const from = this._effectiveProjection();
+      this._isoFirstFrame.runtimeReady();
+      install();
+      this._floorPreparation?.rehydrate();
+      this._isoProjectionSnapshot = null;
+      this._convertProjectionView(from, this._effectiveProjection());
+    },
+    failedLoad: () => this._isoFirstFrame.runtimeFailure(),
+    failedPaint: () => {
+      this._latchIsoFallback(this._renderIsoScene?.key ?? this._isoInvalidKey(), '3d-render');
+      this._isoProjectionSnapshot = null;
+    },
+    retry: (key) => {
+      this._isoFallback.delete(key);
+      this._isoProjectionSnapshot = null;
+    },
+    reload: () => this.ownerDocument.defaultView?.location.reload(),
+  });
+  // Browser diagnostics and fault-injection smokes use these existing hooks.
+  private get _isoSceneRuntime(): Plan3dRuntime | null { return this._spatial.runtime; }
+  private set _isoSceneRuntime(runtime: Plan3dRuntime | null) { this._spatial.runtime = runtime; }
+  private get _plan3dHost() { return this._spatial.host; }
+  private get _plan3dFailure() { return this._spatial.failure; }
+  private get _plan3dPaintedFloor() { return this._spatial.paintedFloor; }
+  private get _plan3dPresentation() { return this._spatial.presentation; }
+
   private _planContrastMedia?: MediaQueryList;
   private _planContrastColors?: { paper: string; ink: string };
   private readonly _onPlanContrastChange = (): void => {
@@ -841,135 +868,9 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   };
   private _flatExportScene: ((view: FrameRect, rotation: PlanRotation) => TemplateResult) | undefined;
-  private _plan3dDevices?: ReadonlyMap<string, IsoOverlayPlacement>;
-
-  private _disposePlan3dHost(): void {
-    if (this._plan3dHost) for (const marker of this.renderRoot.querySelectorAll('[data-hp-3d-native],[data-hp-3d-native-outline]')) {
-      marker.removeAttribute('data-hp-3d-native');
-      marker.removeAttribute('data-hp-3d-native-outline');
-    }
-    this._plan3dHost?.canvas.removeAttribute('data-hp-plan-3d-ready');
-    this._plan3dHost?.dispose();
-    this._plan3dHost = undefined;
-    this._plan3dAuthority = undefined;
-    this._plan3dSubmittedFloor = this._plan3dPaintedFloor = '';
-  }
-
-  private _syncPlan3dHost(): void {
-    if (this._floorSwitch?.phase === 'leaving') return;
-    const runtime = this._isoSceneRuntime;
-    const presentation = this._plan3dPresentation;
-    const authority = this.planHost.authorityKey;
-    const canvas = this.renderRoot.querySelector<HTMLCanvasElement>('canvas[data-hp-plan-3d]');
-    const view = this.renderRoot.querySelector<SVGSVGElement>('svg[data-hp="stage"]');
-    if (!presentation || !runtime || !canvas || !view) {
-      this._disposePlan3dHost();
-      return;
-    }
-    const fail = () => {
-      const key = this._renderIsoScene?.key ?? this._isoInvalidKey();
-      this._latchIsoFallback(key, '3d-render');
-      this._isoProjectionSnapshot = null;
-      this._disposePlan3dHost();
-      if (this.isConnected) this.requestUpdate();
-    };
-    try {
-      if (this._plan3dHost?.canvas !== canvas || this._plan3dHost?.view !== view || this._plan3dAuthority !== authority) {
-        this._disposePlan3dHost();
-        this._plan3dAuthority = authority;
-        let paintedMarkers: ReadonlySet<string> | undefined;
-        this._plan3dHost = new runtime.Plan3dHost(canvas, view, this._gridPitch * .002, fail, (nativeMarkers, outlines, complete) => {
-          if (complete && this._plan3dPaintedFloor !== this._plan3dSubmittedFloor) {
-            this._plan3dPaintedFloor = this._plan3dSubmittedFloor;
-            if (this._floorSwitch?.phase === 'waiting') this.requestUpdate();
-          }
-          if (paintedMarkers === nativeMarkers) return;
-          paintedMarkers = nativeMarkers;
-          for (const element of this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-hp-3d-device]')) {
-            const id = element.dataset.id ?? '';
-            element.toggleAttribute('data-hp-3d-native', nativeMarkers.has(id));
-            element.toggleAttribute('data-hp-3d-native-outline', outlines.has(id));
-          }
-          if (canvas.hasAttribute('data-hp-plan-3d-ready')) return;
-          canvas.setAttribute('data-hp-plan-3d-ready', '');
-          this.requestUpdate();
-        });
-      }
-      const contacts = this._deviceContacts;
-      const markers = [...this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-hp-3d-device]')].flatMap(element => {
-        const id = element.dataset.id ?? '', placement = this._plan3dDevices?.get(id);
-        const geometry = contacts?.volumeFaces(id);
-        const diameter = placement?.deviceSize;
-        if (!placement || !diameter || !geometry) return [];
-        const faces = runtime.readPlan3dMarkerFaces(element, geometry, presentation.preset.rotDeg);
-        const opacity = element.matches('.unavail:not(.led-badge)')
-          ? Number.parseFloat(element.ownerDocument.defaultView?.getComputedStyle(element)
-            .getPropertyValue('--hp-device-offline-opacity') ?? '') || 1 : 1;
-        return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: presentation.sectionHeight,
-          faces, opacity }] : [];
-      });
-      const opacityByMarker = new Map(markers.map(marker => [marker.id, marker.opacity]));
-      const outlines = contacts?.volumeOutlines(new Set(opacityByMarker.keys())).map(group => ({
-        ...group, opacity: Math.max(...group.members.map(id => opacityByMarker.get(id) ?? 1)),
-      }));
-      this._plan3dSubmittedFloor = this._floorPaintKey();
-      this._plan3dHost.present(presentation, this._viewOr(this._baseVb()), markers, outlines);
-    } catch {
-      fail();
-    }
-  }
-
-  // Live viewport owns the DOM projection and supplies the same crop in
-  // the same animation frame. The SVG viewBox is only its retained anchor.
   private _paintPlan3dViewport(view: FrameRect): void {
-    if (this._renderProjection === 'iso' && this._plan3dPresentation)
-      this._plan3dHost?.paintCamera(view);
+    if (this._renderProjection === 'iso') this._spatial.paintCamera(view);
   }
-
-  private readonly _retryPlan3d = (): void => {
-    const failed = this._plan3dFailure;
-    if (!failed || failed.space !== this._space) return;
-    if (failed.load === 'reload') { this.ownerDocument.defaultView?.location.reload(); return; }
-    this._isoFallback.delete(failed.key);
-    this._plan3dFailure = undefined;
-    this._isoProjectionSnapshot = null;
-    if (failed.load === 'retry') void this._ensureIsoSceneRuntime();
-    this.requestUpdate();
-  };
-
-  private readonly _isoSceneRuntimeLoader = new EditorRuntimeLoader<
-    typeof import('./plan-3d-runtime')
-  >({
-    expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
-    load: async (attempt) => {
-      const module = attempt === 0
-        ? await import('./plan-3d-runtime')
-        : await import(/* @vite-ignore */ (() => {
-            const url = new URL(ISO_RETRY_ASSET, import.meta.url);
-            url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
-            return url.href;
-          })()) as typeof import('./plan-3d-runtime');
-      return {
-        fingerprint: module.ISO_SCENE_RUNTIME_FINGERPRINT,
-        create: () => module,
-      };
-    },
-    install: (runtime) => {
-      const from = this._effectiveProjection(); this._isoFirstFrame.runtimeReady();
-      this._isoSceneRuntime = runtime;
-      if (this._plan3dFailure?.load) this._plan3dFailure = undefined;
-      this._floorPreparation?.rehydrate();
-      this._isoProjectionSnapshot = null;
-      const to = this._effectiveProjection();
-      this._convertProjectionView(from, to);
-      if (this.isConnected) this.requestUpdate();
-    },
-    failed: (_ignored, info) => {
-      this._isoFirstFrame.runtimeFailure(); console.warn('[houseplan] hidden isometric runtime diagnostic', safeRuntimeDiagnostic('runtime-load', 'unverified', info.terminal));
-      if (this._space) this._plan3dFailure = { key: 'load', space: this._space, load: info.terminal ? 'reload' : 'retry' };
-      if (this.isConnected) this.requestUpdate();
-    },
-  });
 
   /** #53: the PDF writer, font and print geometry never enter ordinary View. */
   private _pdfRuntime: import('./pdf/pdf-export').PdfExportRuntime | null = null;
@@ -1021,7 +922,7 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Test/performance hook; product callers trigger it only while alpha is active. */
-  public async _ensureIsoSceneRuntime(): Promise<boolean> { if (this._isoSceneRuntimeLoader.state === 'idle') { this._isoFirstFrame.runtimeLoading(); this.requestUpdate(); } return this._isoSceneRuntimeLoader.ensure(); }
+  public async _ensureIsoSceneRuntime(): Promise<boolean> { return this._spatial.ensure(); }
 
   private readonly _preloadEditorIntent = (event: Event): void => {
     if (!this.isConnected || !this._canEdit || this._kiosk) return;
@@ -1766,13 +1667,9 @@ export class HouseplanCard extends LitElement {
   /** Last editor kept in the collapsing chrome so leaving it can animate out. */
   private _editorChromeMode: 'plan' | 'devices' | 'decor' = 'plan';
   private _modeTransitionVisual: ModeVisualState | null = null;
-  /** Fixed raster viewport, centred and clipped by the moving stage. Changing
-   * its clipping edges must not resize/repaint every SVG on every frame. */
-  private _modeSceneSize: [number, number] | null = null;
-  private _modeSceneOrigin: [number, number] | null = null;
+  private get _modeSceneSize() { return this._modePresenter.rasterSize; }
   private _modeProjectionSource: 'flat' | 'iso' | null = null;
   private _modeProjectionCrossing = false;
-  private _modeProjectionOpacity = 1;
   /** Retain the actual live Lit children until the projection commit. This
    * never duplicates DOM or builds an outgoing scene in the incoming mode. */
   private _modeProjectionScene: TemplateResult | null = null;
@@ -1781,8 +1678,7 @@ export class HouseplanCard extends LitElement {
     if (active) { const ink = render(); this._modeEditorInk.set(key, ink); return ink; }
     return this._modeTransitionBusy ? this._modeEditorInk.get(key) ?? nothing : nothing;
   }
-  private readonly _headerMotion = new HeaderMotion();
-  private _modeHeaderPositions = new Map<string, { x: number; y: number }>();
+  private readonly _modePresenter = this._createModePresenter();
   private _modeTransitionPreparing = false;
   /** A visibility/reduced-motion interruption during the measurement frame
    * must still publish the measured target atomically, without waiting for a
@@ -1792,7 +1688,7 @@ export class HouseplanCard extends LitElement {
   private _modeTransitionTargetZoom = 1;
   private readonly _modeTransition = new ModeTransitionController({
     frame: (state) => this._applyModeTransitionFrame(state),
-    settled: (state) => this._settleModeTransition(state),
+    settled: (state) => this._modePresenter.settle(state),
   });
   /** #82: one camera-only transition inside a settled mode. It never owns
    * chrome/background coordinates — those remain exclusive to #101. */
@@ -1934,71 +1830,83 @@ export class HouseplanCard extends LitElement {
     return resolved;
   }
 
-  private _currentModeVisual(mode = this._mode as HouseplanMode): ModeVisualState | null {
-    return this._cfgPass.run(() => { this._modeColors(); return this._readModeVisual(mode); });
-  }
-  private _readModeVisual(mode: HouseplanMode): ModeVisualState | null {
-    this._modeHeaderPositions = this._headerMotion.capture(this.renderRoot.querySelector('.head'));
-    if (mode === 'view' && !this._modeTransitionBusy) this._modeEditorInk.clear();
-    // During the one-frame target measurement the controller has not started
-    // yet, but `_modeTransitionVisual` is already the exact painted endpoint.
-    // A rapid second click must retarget from that frame instead of rebuilding
-    // an approximation from the newly committed logical mode.
-    const presented = this._modeTransition.presented || this._modeTransitionVisual;
-    if (presented) return { ...presented, viewport: {
-      ...presented.viewport, viewBox: this._physicalCamera(presented.viewport, presented.stageWidth, presented.stageHeight).viewBox,
-    } };
-    const stage = this._stageEl;
-    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return null;
-    const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
-    const view = this._cameraView(this._baseVb());
-    const paper = this.renderRoot.querySelector('.hp-paper') as SVGElement | null;
-    const backdrop = this.renderRoot.querySelector('.hp-backdrop') as SVGElement | null;
-    const zoomwrap = this.renderRoot.querySelector('.zoomwrap') as HTMLElement | null;
-    const filter = zoomwrap ? getComputedStyle(zoomwrap).filter : '';
-    const brightness = Number(/brightness\(([^)]+)\)/.exec(filter)?.[1]);
-    const headerHeight = this.renderRoot.querySelector('.hdr > .head')?.getBoundingClientRect().height || 0;
-    const chromeHeight = mode === 'view' ? 0 : chrome?.getBoundingClientRect().height || 0;
-    const rawBudget = rawCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight) ?? this._hdrH;
-    return {
-      presentedMode: mode,
-      headerHeight,
-      headerBudget: this._hdrH,
-      headerFixedBudget: rawBudget - headerHeight - chromeHeight,
-      editorChromeHeight: chromeHeight,
-      stageWidth: stage.clientWidth,
-      stageHeight: stage.clientHeight,
-      viewport: { ...physicalViewCamera(view, this._zoom,
-        {...(this._viewFrame ?? this._projectionViewFrame()),
-          size: [stage.clientWidth, stage.clientHeight]}), viewBox: {...view} },
-      stageColor: getComputedStyle(stage).backgroundColor || 'rgb(255, 255, 255)',
-      paperColor: paper ? getComputedStyle(paper).fill : 'rgb(255, 255, 255)',
-      sceneBrightness: Number.isFinite(brightness) ? brightness : 1,
-      architectureOpacity: mode === 'decor' ? 0.35 : 1,
-      backdropOpacity: backdrop && (this._spaceModel()?.bg?.opacity ?? 1) > 0
-        ? Number(getComputedStyle(backdrop).opacity) / (this._spaceModel()?.bg?.opacity ?? 1)
-        : mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
-      viewWeight: mode === 'view' ? 1 : 0,
-      glowWeight: mode === 'view' || mode === 'devices' ? 1 : 0,
-      editorWeight: mode === 'view' ? 0 : 1,
-      planWeight: mode === 'plan' ? 1 : 0,
-      toolbarContentOpacity: mode === 'view' ? 0 : 1,
-    };
+  private _createModePresenter(): ModeTransitionPresentation {
+    const card = this;
+    return new ModeTransitionPresentation({
+      owner: card,
+      get mode() { return card._mode; },
+      get stageEl() { return card._stageEl; },
+      get containerOwnedHeight() { return card._containerOwnedHeight; },
+      get decorTool() { return card._decorTool; },
+      get hdrH() { return card._hdrH; },
+      set hdrH(value) { card._hdrH = value; },
+      get zoom() { return card._zoom; },
+      set zoom(value) { card._zoom = value; },
+      get cfgPass() { return card._cfgPass; },
+      get modeEditorInk() { return card._modeEditorInk; },
+      get modeTransition() { return card._modeTransition; },
+      get modeTransitionBusy() { return card._modeTransitionBusy; },
+      get modeTransitionVisual() { return card._modeTransitionVisual; },
+      set modeTransitionVisual(value) { card._modeTransitionVisual = value; },
+      get viewFrame() { return card._viewFrame; },
+      get modeTransitionPreparing() { return card._modeTransitionPreparing; },
+      set modeTransitionPreparing(value) { card._modeTransitionPreparing = value; },
+      get isoProjectionSnapshot() { return card._isoProjectionSnapshot; },
+      set isoProjectionSnapshot(value) { card._isoProjectionSnapshot = value; },
+      get lastValidStageSize() { return card._lastValidStageSize; },
+      set lastValidStageSize(value) { card._lastValidStageSize = value; },
+      get liveRt() { return card._liveRt; },
+      get modeProjectionCrossing() { return card._modeProjectionCrossing; },
+      set modeProjectionCrossing(value) { card._modeProjectionCrossing = value; },
+      get modeProjectionSource() { return card._modeProjectionSource; },
+      set modeProjectionSource(value) { card._modeProjectionSource = value; },
+      get modeSceneFinishPending() { return card._modeSceneFinishPending; },
+      set modeSceneFinishPending(value) { card._modeSceneFinishPending = value; },
+      get modeTransitionRequest() { return card._modeTransitionRequest; },
+      get summary() { return card._summary; },
+      get view() { return card._view; },
+      set view(value) { card._view = value; },
+      get compactSpaces() { return card._compactSpaces; },
+      set compactSpaces(value) { card._compactSpaces = value; },
+      get editorRuntime() { return card._editorRuntime; },
+      get modeTransitionForceAtomic() { return card._modeTransitionForceAtomic; },
+      set modeTransitionForceAtomic(value) { card._modeTransitionForceAtomic = value; },
+      get modeTransitionTargetZoom() { return card._modeTransitionTargetZoom; },
+      set modeTransitionTargetZoom(value) { card._modeTransitionTargetZoom = value; },
+      get panelHeaderChoice() { return card._panelHeaderChoice; },
+      set panelHeaderChoice(value) { card._panelHeaderChoice = value; },
+      get reducedMotion() { return card._reducedMotion; },
+      get renderProjection() { return card._renderProjection; },
+      get rotation() { return card._rotation; },
+      get spaceSelectLoad() { return card._spaceSelectLoad; },
+      get modeSceneRevision() { return card._modeSceneRevision; },
+      get renderRoot() { return card.renderRoot; },
+      get isConnected() { return card.isConnected; },
+      get updateComplete() { return card.updateComplete; },
+      baseVb: () => card._baseVb(),
+      cameraView: (base) => card._cameraView(base),
+      physicalCamera: (camera, width, height) => card._physicalCamera(camera, width, height),
+      projectionViewFrame: () => card._projectionViewFrame(),
+      spaceModel: () => card._spaceModel(),
+      spaceDisplayForRender: () => card._spaceDisplayForRender(),
+      stageBg: (display) => card._stageBg(display),
+      cssColor: (value, fallback) => card._cssColor(value, fallback),
+      viewOr: (base) => card._viewOr(base),
+      requestModeSceneUpdate: () => card._requestModeSceneUpdate(),
+      saveZoom: () => card._saveZoom(),
+      warmPatch: (patch) => card._warmPatch(patch),
+      requestUpdate: () => card.requestUpdate(),
+      cancelModeTransition: (commitTarget) => card._cancelModeTransition(commitTarget),
+      settlePanelHeader: (preparing) => card._settlePanelHeader(preparing),
+    });
   }
 
-  private _modeThemeColors: { revision: number; stage: string; paper: string } | null = null;
-  private _modeColors(): { revision: number; stage: string; paper: string } {
-    if (this._modeThemeColors?.revision === this._modeSceneRevision) return this._modeThemeColors;
-    const paper = this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)');
-    return this._modeThemeColors = { revision: this._modeSceneRevision,
-      stage: this._cssColor(this._stageBg(this._spaceDisplayForRender()), paper), paper };
+  private _currentModeVisual(mode?: HouseplanMode): ModeVisualState | null {
+    return this._modePresenter.current(mode);
   }
-  /** Capture before target DOM/style changes, in the same source read batch. */
+
   public _captureModePresentationSource(_targetMode?: HouseplanMode): void {
-    this._modeColors();
-  }
-  private _targetStageColor(mode: HouseplanMode): string {
-    return mode === 'view' ? this._modeColors().stage : 'rgb(255, 255, 255)';
+    this._modePresenter.captureSource();
   }
 
   private _physicalCamera(camera: ModeVisualState['viewport'], width: number, height: number): CameraState {
@@ -2019,7 +1927,7 @@ export class HouseplanCard extends LitElement {
     return Math.round(scale * 1e6) / 1e6;
   }
 
-  private _modeSceneClip: string | null = null;
+  private get _modeSceneClip() { return this._modePresenter.clip; }
   private _modeSceneRevision = 0;
   private _modeSceneRefreshRequested = false;
   private _modeScenePhaseRequest = false;
@@ -2031,10 +1939,8 @@ export class HouseplanCard extends LitElement {
 
   private _modeGlowInputs: readonly unknown[] | null = null;
   private _modeSceneFinishPending = false;
-  private _modePreparingStageClass: string | null = null;
-  private _modePreparedStageClass = '';
 
-  private readonly _modePresentation = new ModePresentation();
+  private get _modePresentation() { return this._modePresenter.styles; }
   private _flatMarkerGeometryPending: { devices: readonly DevItem[]; view: ModeViewBox } | null = null;
   private readonly _flatMarkerPositions = new WeakMap<HTMLElement, {
     left: string; top: string; actualLeft: string; actualTop: string;
@@ -2068,7 +1974,7 @@ export class HouseplanCard extends LitElement {
     // Interactivity belongs to the mode, independently of memoized marker ink.
     // The stage remains inert throughout the visual transition.
     const markerInteractive = this._mode === 'view' || this._mode === 'devices';
-    for (const marker of this._modeNodes('.devlayer .dev:not(.iso-tile-shadow):not(.led-badge)')) {
+    for (const marker of this._modePresenter.nodes('.devlayer .dev:not(.iso-tile-shadow):not(.led-badge)')) {
       if ((marker as HTMLElement).inert !== !markerInteractive) (marker as HTMLElement).inert = !markerInteractive;
       if (markerInteractive) {
         if (marker.getAttribute('role') !== 'button') marker.setAttribute('role', 'button');
@@ -2120,263 +2026,10 @@ export class HouseplanCard extends LitElement {
       }
     }
   }
-  private readonly _modePresentationNodes = new Map<string, (HTMLElement | SVGElement)[]>();
-  private _modeNodes(selector: string): (HTMLElement | SVGElement)[] {
-    let nodes = this._modePresentationNodes.get(selector);
-    if (!nodes) {
-      nodes = [...this.renderRoot.querySelectorAll<HTMLElement | SVGElement>(selector)];
-      this._modePresentationNodes.set(selector, nodes);
-    }
-    return nodes;
-  }
-  private _paintModePresentation(visual: ModeVisualState): void {
-    const root = this.renderRoot;
-    const owner = this._modePresentation;
-    const planFade = this._mode === 'plan' || !!visual.planWeight || !!this._modeTransition.state?.from.planWeight;
-    const devices = planFade ? this._modeNodes('.devlayer .dev') : [];
-    const motion = this._modeTransition.state;
-    const moving = motion?.phase === 'running';
-    const varies = (weight: (value: ModeVisualState) => number): boolean => !!motion && weight(motion.from) !== weight(motion.to);
-    const set = (selector: string, name: string, value: string, important = false, animate = moving): void => {
-      for (const node of this._modeNodes(selector)) {
-        if (name === 'opacity') owner.opacity(node, value, animate, important ? 'important' : '');
-        else owner.set(node, name, value, important ? 'important' : '');
-      }
-    };
-    set('.hdr > .head', 'height', visual.headerHeight + 'px');
-    set('.editorchrome', 'height', visual.editorChromeHeight + 'px');
-    set('.editorchrome', 'opacity', String(visual.editorWeight));
-    set('.editorchrome-inner', 'opacity', String(visual.toolbarContentOpacity));
-    const stage = this._stageEl;
-    owner.set(stage, 'height', visual.stageHeight + 'px');
-    owner.set(stage, 'width', visual.stageWidth + 'px');
-    owner.set(stage, 'background', visual.stageColor);
-    owner.setInert(stage, true);
-    const plan = visual.planWeight ?? 0;
-    const surfaces = root.querySelector('.hp-mode-scene-svg');
-    if (surfaces) {
-      const layer = (id: string, weight: (value: ModeVisualState) => number): void => {
-        const animated = moving && varies(weight);
-        set('[data-hp-mode-layer="' + id + '"]', 'opacity', String(weight(visual)), false, animated);
-        if (animated) set('[data-hp-mode-layer="' + id + '"]', 'will-change', 'opacity');
-      };
-      // Opacity is on independent SVG surfaces, never on their internal ink.
-      set('.hp-mode-scene-svg :is(.room,.hp-mode-room), .hp-mode-scene-svg :is(.room-outline,.hp-mode-room-outline), .hp-mode-scene-svg .wallbodies, .hp-mode-scene-svg .opening, .hp-mode-scene-svg .zero-walls, .hp-mode-scene-svg .hp-stairs-layer', 'opacity', '1', false, false);
-      set('.hp-mode-scene-svg .hp-view-only-layer, .hp-mode-scene-svg .hp-editor-only-layer, .hp-mode-scene-svg .hp-plan-only-layer, .hp-mode-scene-svg .glow-pools-frame, .hp-mode-scene-svg .led-fields', 'opacity', '1', true, false);
-      layer('rooms', v => v.architectureOpacity * (1 - (v.planWeight ?? 0)));
-      layer('room-ink', v => v.architectureOpacity * (v.planWeight ?? 0));
-      if (!this._spaceDisplayForRender().showBorders)
-        set('[data-hp-mode-layer="rooms"] :is(.room,.hp-mode-room):not([data-area])', 'opacity', String(visual.viewWeight));
-      for (const id of ['walls', 'openings', 'stairs', 'room-hover'])
-        layer(id, v => v.architectureOpacity);
-      layer('zero-view', v => v.architectureOpacity * v.viewWeight);
-      layer('zero-editor', v => v.architectureOpacity * v.editorWeight);
-      layer('editor-guides', v => v.editorWeight);
-      layer('plan-base', v => v.planWeight ?? 0);
-      layer('plan-ink', v => v.planWeight ?? 0);
-      layer('glow', v => v.glowWeight ?? v.viewWeight);
-      layer('led', () => 1);
-      // Add premultiplied room endpoint coverage inside one temporary isolation.
-      const roomCrossfade = varies(v => v.planWeight ?? 0);
-      set('[data-hp-mode-pair="rooms"]', 'isolation', roomCrossfade ? 'isolate' : 'auto');
-      set('[data-hp-mode-pair="rooms"] > svg', 'mix-blend-mode', roomCrossfade ? 'plus-lighter' : 'normal');
-      const paperColor = this._targetPaperColor('view');
-      const sharedPaper = paperColor === 'rgb(255, 255, 255)';
-      // Identical opaque paper has one antialiased silhouette. Blending two
-      // identical full-viewport rasters adds GPU work without changing ink.
-      // Keep the paired path for genuinely different endpoint materials.
-      set('[data-hp-mode-pair="paper"]', 'isolation', sharedPaper ? 'auto' : 'isolate');
-      set('[data-hp-mode-pair="paper"] > svg', 'mix-blend-mode', sharedPaper ? 'normal' : 'plus-lighter');
-      layer('paper', v => sharedPaper ? 1 : v.viewWeight);
-      set('[data-hp-mode-layer="paper"] .hp-paper', 'fill', paperColor, true);
-      set('[data-hp-mode-layer="paper-ink"] .hp-paper', 'fill', 'rgb(255, 255, 255)', true);
-      layer('paper-ink', v => sharedPaper ? 0 : v.editorWeight);
-      set('.hp-backdrop', 'opacity', '1', false, false);
-      layer('backdrop', v => v.backdropOpacity);
-    } else {
-      // Projection crossing retains its existing one-scene fade/atomic path.
-      set('.room, .opening, .room-outline, .wallbodies, .zero-walls, .hp-stairs-layer',
-        'opacity', String(visual.architectureOpacity));
-      set('.hp-view-only-layer, .glow-pools-frame, .led-fields', 'opacity', String(visual.viewWeight), true);
-      set('.hp-plan-only-layer', 'opacity', String(plan), true);
-      set('.hp-editor-only-layer', 'opacity', String(visual.editorWeight), true);
-      set('.hp-paper', 'fill', visual.paperColor, true);
-      set('.hp-backdrop', 'opacity', String((this._spaceModel()?.bg?.opacity ?? 1) * visual.backdropOpacity));
-    }
-    set('.devlayer', 'opacity', String(visual.architectureOpacity), false, moving && varies(v => v.architectureOpacity));
-    set('.hp-day-cycle-env, .hp-moon-sky', 'opacity', String(visual.viewWeight), true);
-    for (const device of devices)
-      owner.filterOpacity(device, Math.max(0, 1 - .65 * plan / visual.architectureOpacity),
-        moving || this._modeTransitionPreparing);
-    const properties = root.querySelector<HTMLElement>('.hp-properties');
-    owner.setInert(properties, true);
-    owner.set(properties, 'transform', 'translateX(' + (1 - visual.editorWeight) * 100 + '%)');
-    owner.opacity(properties, String(visual.editorWeight), moving);
-    const terminal = this._modeTransition.state?.phase === 'settling';
-    const raster = this._modeSceneSize;
-    if (raster) {
-      const scene = root.querySelector<HTMLElement>('.zoomwrap');
-      owner.set(scene, 'translate', 'none');
-      const dx = (visual.stageWidth - raster[0]) / 2, dy = (visual.stageHeight - raster[1]) / 2;
-      const left = this._modeSceneOrigin ? dx - this._modeSceneOrigin[0] : Math.round(dx);
-      const top = this._modeSceneOrigin ? dy - this._modeSceneOrigin[1] : Math.round(dy);
-      // The target-snapped raster translates without changing its camera.
-      // Both endpoint coordinates are integers on the ordinary to path.
-      owner.set(scene, 'left', moving ? '0px' : Math.round(left) + 'px');
-      owner.set(scene, 'top', moving ? '0px' : Math.round(top) + 'px');
-      owner.set(scene, 'transform', moving ? `translate(${left}px,${top}px)` : 'none');
-      owner.set(scene, 'will-change', moving ? 'transform' : 'auto');
-    }
-    if (terminal) {
-      // Present the endpoint with the ordinary raster path, while the same
-      // controller still owns inert until its next RAF.
-      const from = paintedHouseplanViewBox(this);
-      const endpoint = this._viewOr(this._baseVb());
-      commitHouseplanViewport(this);
-      // The plan and the HTML layers both use display coordinates. The mode
-      // controller's canonical box is unrotated, including at settlement.
-      this._rebaseModeHtml(from ?? endpoint, endpoint, raster);
-      set('.hp-mode-scene-svg', 'clip-path', this._modeSceneClip || 'inset(-25%)');
-      set('.hp-mode-scene-svg', 'will-change', 'auto');
-      set('.hp-mode-crossfade', 'isolation', 'auto');
-      set('.hp-mode-crossfade > svg', 'mix-blend-mode', 'normal');
-    } else scheduleHouseplanViewport(this, true);
-  }
-
-  private _rebaseModeHtml(from: ModeViewBox, current: ModeViewBox, raster: readonly [number, number] | null): void {
-    const owner = this._modePresentation, projection = liveLayerProjection(from, current);
-    const reposition = !isIdentityLiveLayerProjection(projection);
-    for (const layer of this.renderRoot.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
-      if (layer.style.transform && layer.style.transform !== 'none') owner.set(layer, 'transform', 'none');
-      if (raster) { owner.set(layer, 'width', raster[0] + 'px'); owner.set(layer, 'height', raster[1] + 'px'); }
-      if (reposition) for (const node of layer.querySelectorAll<HTMLElement>(
-        ':scope > [style], :scope > .iso-room-label-plane > .roomlabel',
-      )) {
-        const left = node.style.left, top = node.style.top;
-        if (!left?.endsWith('%') || !top?.endsWith('%')) continue;
-        owner.set(node, 'left', (parseFloat(left) * projection.scaleX + projection.translateXPercent) + '%');
-        owner.set(node, 'top', (parseFloat(top) * projection.scaleY + projection.translateYPercent) + '%');
-      }
-      const text = `${current.x} ${current.y} ${current.w} ${current.h}`;
-      for (const svg of layer.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]')) {
-        if (svg.getAttribute('viewBox') !== text) svg.setAttribute('viewBox', text);
-      }
-      owner.set(layer, 'left', '0px'); owner.set(layer, 'top', '0px');
-    }
-  }
-
-  private _clearModePresentation(): void {
-    this._modeSceneOrigin = null;
-    this._modePreparingStageClass = null;
-    this._modePresentationNodes.clear();
-    this._modePresentation.clear();
-    // Projection crossing and the raster camera use these outside paint().
-    for (const [selector, names] of [
-      ['.zoomwrap', ['width', 'height', 'opacity']],
-      ['.stage', ['width']],
-    ] as const) for (const element of this.renderRoot.querySelectorAll<HTMLElement>(selector)) {
-      for (const name of names) element.style.removeProperty(name);
-    }
-  }
-
-  private _targetPaperColor(mode: HouseplanMode): string {
-    if (mode !== 'view' || !this._spaceModel()?.bg) return 'rgb(255, 255, 255)';
-    return this._modeColors().paper;
-  }
-
-  private _targetBrightness(_mode: HouseplanMode): number {
-    return 1;
-  }
-
-  private _applyModeTransitionFrame(state: ModeTransitionState): void {
-    this._cfgPass.run(() => this._paintTransitionFrame(state));
-  }
-  private _paintTransitionFrame(state: ModeTransitionState): void {
-    if (state.targetMode !== this._mode) return;
-    if (this._modeProjectionCrossing) {
-      const progress = state.duration > 0 ? Math.min(1, Math.max(0, (performance.now() - state.startedAt) / state.duration)) : 1;
-      if (progress >= .5 && this._modeProjectionSource) {
-        // One projection commit while the real scene is transparent. No
-        // overlaid scenes or copied DOM, and no per-frame scene construction.
-        this._modeProjectionSource = null; this._isoProjectionSnapshot = null;
-        this.requestUpdate();
-      }
-      this._modeProjectionOpacity = Math.abs(progress * 2 - 1);
-      const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
-      if (scene) scene.style.opacity = String(this._modeProjectionOpacity);
-    }
-    const size = this._modeSceneSize ?? [state.presented.stageWidth, state.presented.stageHeight];
-    const dx = (state.presented.stageWidth - size[0]) / 2;
-    const dy = (state.presented.stageHeight - size[1]) / 2;
-    const origin = this._modeSceneOrigin ?? [dx - Math.round(dx), dy - Math.round(dy)];
-    const viewport = { ...state.presented.viewport,
-      centerX: state.presented.viewport.centerX - origin[0] / state.presented.viewport.pixelsPerUnit,
-      centerY: state.presented.viewport.centerY - origin[1] / state.presented.viewport.pixelsPerUnit };
-    const camera = this._physicalCamera(viewport, size[0], size[1]);
-    state.presented.viewport.viewBox = { ...camera.viewBox };
-    this._modeTransitionVisual = state.presented;
-    this._view = { ...camera.viewBox };
-    this._zoom = camera.zoom;
-    this._paintModePresentation(state.presented);
-  }
-
-  private _settleModeTransition(state: ModeTransitionState): void {
-    this._cfgPass.run(() => this._finishModeTransition(state));
-  }
-  private _finishModeTransition(state: ModeTransitionState): void {
-    if (state.targetMode !== this._mode) return;
-    const settledRequest = this._modeTransitionRequest;
-    this._modeSceneFinishPending = true;
-    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._modeProjectionOpacity = 1; this._isoProjectionSnapshot = null;
-    // The controller has released busy, but the endpoint dimensions are still
-    // presented. Store summary's final box before the one terminal Lit update.
-    this._summary?.settleModeLayout();
-    this._liveRt?.prepareContacts();
-    this._clearModePresentation();
-    const targetCamera = this._physicalCamera(state.to.viewport, state.to.stageWidth, state.to.stageHeight);
-    this._view = targetCamera.viewBox;
-    this._zoom = targetCamera.zoom;
-    this._modeSceneSize = null;
-    this._modeSceneClip = null;
-    this._hdrH = Math.round(state.to.headerBudget);
-    this._modeTransitionVisual = null;
-    this._modeTransitionPreparing = false;
-    this._lastValidStageSize = [state.to.stageWidth, state.to.stageHeight];
-    if (this._mode === 'view') {
-      this._saveZoom();
-    }
-    this._requestModeSceneUpdate();
-    void this.updateComplete.then(() => {
-      if (!this.isConnected || settledRequest !== this._modeTransitionRequest
-          || this._modeTransitionBusy || state.targetMode !== this._mode) return;
-      // Natural responsive layout remains the final authority. A breakpoint,
-      // font load or outer resize may land while ResizeObserver is suppressed
-      // by the transition; reconcile it before the next visible interaction.
-      const stage = this._stageEl;
-      if (stage && stage.clientWidth > 0 && stage.clientHeight > 0
-          && (Math.abs(stage.clientWidth - state.to.stageWidth) > 0.5
-            || Math.abs(stage.clientHeight - state.to.stageHeight) > 0.5)) {
-        const camera = this._physicalCamera(state.to.viewport, stage.clientWidth, stage.clientHeight);
-        this._lastValidStageSize = [stage.clientWidth, stage.clientHeight];
-        this._view = camera.viewBox; this._zoom = camera.zoom;
-        this._saveZoom();
-        this.requestUpdate();
-      }
-      // ResizeObserver may have consumed the last size change while the
-      // controller was holding to. Publish the accepted pair here as well.
-      if (this._lastValidStageSize?.[0] === state.to.stageWidth
-          && this._lastValidStageSize[1] === state.to.stageHeight)
-        this._warmPatch({ hdrH: this._hdrH, stageH: state.to.stageHeight,
-          ownHdrH: state.to.headerHeight + state.to.editorChromeHeight });
-      const focused = (this.renderRoot as ShadowRoot).activeElement as HTMLElement | null;
-      const lostWithOutgoingUi = !focused || !focused.isConnected
-        || !!focused.closest?.('.editorchrome, .stage');
-      if (lostWithOutgoingUi) {
-        (this.renderRoot.querySelector('.modetab.active') as HTMLElement | null)
-          ?.focus?.({ preventScroll: true });
-      }
-    });
-  }
+  // Keep the existing browser smoke and frame-timing instrumentation hooks.
+  private get _headerMotion() { return this._modePresenter.headerMotion; }
+  private _applyModeTransitionFrame(state: ModeTransitionState): void { this._modePresenter.apply(state); }
+  private _clearModePresentation(): void { this._modePresenter.clear(); }
 
   private _cancelModeTransition(commitTarget = true): void {
     this._cancelCameraTransition(false);
@@ -2386,11 +2039,11 @@ export class HouseplanCard extends LitElement {
     this._modeTransitionRequest++;
     this._modeTransitionPreparing = false;
     this._modeTransitionForceAtomic = false;
-    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._modeProjectionOpacity = 1; this._isoProjectionSnapshot = null;
+    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._modePresenter.projectionOpacity = 1; this._isoProjectionSnapshot = null;
     this._modeTransition.cancel(commitTarget);
-    this._modeSceneSize = null;
-    this._modeSceneClip = null;
-    this._headerMotion.cancel();
+    this._modePresenter.rasterSize = null;
+    this._modePresenter.clip = null;
+    this._modePresenter.headerMotion.cancel();
     this._clearModePresentation();
     if (!commitTarget && retained && presented) {
       this._view = retained.viewBox; this._zoom = retained.zoom;
@@ -2452,117 +2105,8 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  private _prepareModeTransition(
-    request: number,
-    from: ModeVisualState,
-    targetMode: HouseplanMode,
-  ): void {
-    const layout=this._editorRuntime?.modeLayoutFor(targetMode);
-    if(layout){this._panelHeaderChoice=layout.header;this._compactSpaces=layout.header.phase>=3;}
-    this._modePreparingStageClass = this._modeProjectionCrossing ? null : this._stageEl?.className.replace(/\s+mode-transition\b/g, '') ?? null;
-    void this.updateComplete.then(async () => {
-      if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
-        // Only clean the generation that still owns the preparing flag. A
-        // stale callback must not cancel a newer transition, but a config or
-        // recovery mode adoption in the measurement window must never strand
-        // the scene in its inert/busy state.
-        if (request === this._modeTransitionRequest) {
-          this._cancelModeTransition(false);
-          this.requestUpdate();
-        }
-        return;
-      }
-      // The prepared Lit frame already owns source dimensions. Measure target
-      // chrome before presentation writes invalidate the scene layout.
-      if(!layout) {
-      const headerReady = this._settlePanelHeader(true);
-      if (this._spaceSelectLoad && !customElements.get('hp-settings-select')) {
-        if (this._stageEl) this._stageEl.inert = true;
-        this._paintModePresentation(from);
-      }
-      await headerReady;
-      }
-      if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
-        if (request === this._modeTransitionRequest) {
-          this._cancelModeTransition(false); this.requestUpdate();
-        }
-        return;
-      }
-      this._cfgPass.run(() => {
-      const inner = this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null;
-      const targetChromeHeight = targetMode === 'view' ? 0 : layout?.chromeHeight ?? inner?.scrollHeight ?? 0;
-      const headerHeight = layout?.header.height ?? (this._panelHeaderChoice?.height > 0 ? this._panelHeaderChoice.height
-        : this._editorRuntime?._modeHeaderHeight(targetMode) ?? from.headerHeight);
-      // The hidden frame preserves source sizes; keep the header + stage + chrome budget
-      // constant so every RAF moves both edges without a final layout jump.
-      const targetStageHeight = modeStageHeight(from, headerHeight, targetChromeHeight);
-      const card = this.renderRoot.querySelector<HTMLElement>('ha-card');
-      const properties = this.renderRoot.querySelector<HTMLElement>('.hp-properties');
-      const targetStageWidth = layout?.width ?? (card?.clientWidth
-        ? card.clientWidth - (this._editorRuntime?.properties.wide ? properties?.offsetWidth || 0 : 0)
-        : this._stageEl?.clientWidth || from.stageWidth);
-      const targetCamera = this._physicalCamera(from.viewport, targetStageWidth, targetStageHeight);
-      const targetView = targetCamera.viewBox;
-      this._modeTransitionTargetZoom = targetCamera.zoom;
-      const to: ModeVisualState = {
-        presentedMode: targetMode,
-        headerHeight,
-        headerBudget: from.headerBudget + from.stageHeight - targetStageHeight,
-        headerFixedBudget: from.headerFixedBudget,
-        editorChromeHeight: targetChromeHeight,
-        stageWidth: targetStageWidth,
-        stageHeight: targetStageHeight,
-        viewport: { ...from.viewport, viewBox: targetView },
-        stageColor: this._targetStageColor(targetMode),
-        paperColor: this._targetPaperColor(targetMode),
-        sceneBrightness: this._targetBrightness(targetMode),
-        architectureOpacity: targetMode === 'decor' ? 0.35 : 1,
-        backdropOpacity: targetMode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
-        viewWeight: targetMode === 'view' ? 1 : 0,
-        glowWeight: targetMode === 'view' || targetMode === 'devices' ? 1 : 0,
-        editorWeight: targetMode === 'view' ? 0 : 1,
-        planWeight: targetMode === 'plan' ? 1 : 0,
-        toolbarContentOpacity: targetMode === 'view' ? 0 : 1,
-      };
-      this._modeTransitionPreparing = false;
-      const forceAtomic = this._modeTransitionForceAtomic;
-      this._modeTransitionForceAtomic = false;
-      this._headerMotion.start(this.renderRoot.querySelector('.head'), this._modeHeaderPositions, this._reducedMotion || forceAtomic, layout?.header.positions);
-      // Source dimensions are already accepted. Publishing this basis must
-      // not query freshly invalidated scene client metrics.
-      // Take the marker basis before the viewport adopts measured editor
-      // chrome. The existing HTML percentages can still be in the View box.
-      const htmlFrom = paintedHouseplanViewBox(this);
-      this._modeSceneSize = [from.stageWidth, from.stageHeight];
-      if (!this._modeProjectionSource) commitHouseplanViewport(this);
-      // Publish the stage's phase-owned inert baseline after the read batch,
-      // before any motion or rendering opportunity. Presentation retains it
-      // until the final Lit commit, exactly like a prepared inert binding.
-      if (this._stageEl) this._stageEl.inert = true;
-      if (this._stageEl) this._stageEl.className = this._modePreparedStageClass + ' mode-transition';
-      this._modePreparingStageClass = null;
-      // Keep the already-rendered HTML and SVG raster coordinates fixed.
-      // Enlarging only their parent here would stretch marker faces on Y.
-      this._modeSceneOrigin = !this._reducedMotion && !forceAtomic && !this._modeProjectionCrossing
-        && this._renderProjection === 'flat' && this._rotation === 0 ? modeRasterOriginBias(from, to) : null;
-      this._modeSceneClip = modeRasterExposureClip(from, to);
-      const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
-      if (scene) {
-        scene.style.width = `${this._modeSceneSize[0]}px`; scene.style.height = `${this._modeSceneSize[1]}px`;
-      }
-      const origin = this._modeSceneOrigin ?? [0, 0];
-      const rasterCamera = this._physicalCamera({ ...from.viewport,
-        centerX: from.viewport.centerX - origin[0] / from.viewport.pixelsPerUnit,
-        centerY: from.viewport.centerY - origin[1] / from.viewport.pixelsPerUnit }, ...this._modeSceneSize);
-      this._view = rasterCamera.viewBox; this._zoom = rasterCamera.zoom;
-      if (this._modeSceneOrigin && htmlFrom) {
-        this._rebaseModeHtml(htmlFrom, this._viewOr(this._baseVb()), this._modeSceneSize);
-        commitHouseplanViewport(this, true);
-      } else scheduleHouseplanViewport(this, true, true);
-      this._modeTransition.start(from, to, targetMode,
-        this._reducedMotion || forceAtomic ? 0 : controlMotion.mode.duration);
-      });
-    });
+  private _prepareModeTransition(request: number, from: ModeVisualState, targetMode: HouseplanMode): void {
+    this._modePresenter.prepare(request, from, targetMode);
   }
 
   /** An own `floor` property is deliberate, including invalid/null YAML. */
@@ -3113,7 +2657,6 @@ export class HouseplanCard extends LitElement {
   private _startupFadeTimer?: number;
   private _startupAssetWait?: number | null; // null means the wait expired
   private _startupSource?: (view: FrameRect) => TemplateResult[];
-  private _startup3dSource?: () => import('./plan-3d-host').Plan3dPresentation;
   private _startupPresentation?: { inputs: unknown[]; selection: StartupSelection | null };
   private _startupReadProbe?: ReturnType<typeof setTimeout>;
   private _startupSourceProof?: { authority: object; revision: string; source: readonly [string, string] };
@@ -3461,7 +3004,7 @@ export class HouseplanCard extends LitElement {
     } else if (complete) store.publishedLive();
     // An incomplete backdrop can appear later, but must not seed a static image.
     if (!complete) return;
-    const selection = this._startupSelection(), source = this._startupSource, source3d = this._startup3dSource;
+    const selection = this._startupSelection(), source = this._startupSource, source3d = this._spatial.startupSource;
     const size = selection?.size;
     if (this._bootFading || !selection || !size || (!source && !source3d) || this._renderProjection !== this._desiredProjection) return;
     this._refreshStartupSource(selection);
@@ -3484,7 +3027,7 @@ export class HouseplanCard extends LitElement {
       projection: this._renderProjection, rotation: this._rotation };
     store.capture(selection, async (signal, portable) => {
       if (source3d) {
-        const snapshot = await this._plan3dHost?.snapshot(source3d(), presented, size, signal, portable);
+        const snapshot = await this._spatial.snapshot(source3d, presented, size, signal, portable);
         return { image: snapshot?.image ?? null, size, view, zoom, zoomHint: selection.zoomHint, fit,
           raster: snapshot?.full ? { version: 3, fit, ...snapshot.full } : undefined };
       }
@@ -4907,8 +4450,8 @@ export class HouseplanCard extends LitElement {
   private _buttonTabFocusRelease: (() => void) | null = null;
 
   public disconnectedCallback(): void {
-    this._disposePlan3dHost();
-    this._startup3dSource = undefined;
+    this._spatial.dispose();
+    this._spatial.startupSource = undefined;
     this._floorPreparation?.dispose(); this._floorPreparation = null; this._floorPendingMode = null;
     this._startupFloor?.dispose(); this._startupFloor = undefined; this._startupStyle = undefined;
     clearTimeout(this._startupReadProbe); this._startupReadProbe = undefined;
@@ -5024,12 +4567,12 @@ export class HouseplanCard extends LitElement {
     this._editorRuntimeLoadingTimer = undefined;
     this._editorRuntimeLoadingVisible = false;
     this._modeTransition.dispose();
-    this._clearModePresentation(); this._modePresentation.dispose(); this._modeSceneSize = null;
+    this._clearModePresentation(); this._modePresentation.dispose(); this._modePresenter.rasterSize = null;
     this._modeGlowInputs = null;
     this._modeProjectionSource = null; this._modeProjectionCrossing = false;
     this._modeEditorInk.clear();
     this._modeProjectionScene = null;
-    this._headerMotion.cancel();
+    this._modePresenter.headerMotion.cancel();
     this._cameraTransition.dispose();
     this._zoomScaleActivity.dispose();
     this._cameraTransitionFit = null;
@@ -6619,7 +6162,7 @@ export class HouseplanCard extends LitElement {
   }
   protected updated(changed: PropertyValues): void {
     this._cfgPass.run(() => this._updatedModeReadScope(changed));
-    this._syncPlan3dHost();
+    this._spatial.sync();
     this._syncFloorSwitch();
   }
   private _updatedModeReadScope(changed: PropertyValues): void {
@@ -6673,8 +6216,7 @@ export class HouseplanCard extends LitElement {
           if (this.isConnected && runtime === this._floorPreparation && token !== runtime?.paintToken) this.requestUpdate(); });
     }
     this._publishFloorCacheAfterPaint();
-    this._modePresentationNodes.clear();
-    this._modePresentation.adoptRenderedStyles();
+    this._modePresenter.adoptRenderedStyles();
     this._syncModeRoomHooks();
     this._syncModeMarkerInput();
     this._syncFlatMarkerGeometry();
@@ -6726,7 +6268,7 @@ export class HouseplanCard extends LitElement {
       }
     }
     if (this._modeTransition.state && this._modeTransitionVisual)
-      this._paintModePresentation(this._modeTransitionVisual);
+      this._modePresenter.paint(this._modeTransitionVisual);
     this._modeSceneFinishPending = false;
     this._editorRuntime?.scheduleModeLayouts();
   }
@@ -9049,7 +8591,7 @@ export class HouseplanCard extends LitElement {
   private _latchIsoFallback(key: string, _ignored: unknown): void {
     if (this._isoFallback.has(key)) return;
     this._isoFallback.add(key);
-    if (this._space) this._plan3dFailure = { key, space: this._space };
+    if (this._space) this._spatial.failure = { key, space: this._space };
     const fingerprint = key.includes('|invalid|') ? 'invalid' : key.split('|').pop() || 'invalid';
     console.warn('HOUSEPLAN ISO FALLBACK: #89/#160', safeRuntimeDiagnostic('structural', fingerprint, true));
   }
@@ -14291,10 +13833,8 @@ export class HouseplanCard extends LitElement {
     let view = this._authoredView(this._viewOr(this._baseVb(projection, isoScene)), projection);
     let isoFrame: ReturnType<typeof import('./plan-3d-runtime').preparePlan3dFrame> | null = null;
     const currentWallLights: PlanLightFieldSource[] = [];
-    this._plan3dPresentation = undefined;
-    this._startup3dSource = undefined;
+    this._spatial.resetPresentation();
     this._flatExportScene = undefined;
-    this._plan3dDevices = undefined;
     const scale = gridVisualScale(this._cellCm);
     let useFurnitureVolume = iso && disp.showBorders && ISO_LAB_FURNITURE && this._mode === 'view';
     let stairVolumes: ReturnType<StairViewRuntime['volumeItems']> | undefined;
@@ -14345,7 +13885,7 @@ export class HouseplanCard extends LitElement {
     const wallHatch = svg`<defs><pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
         width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)"><path d="M0 0 L0 ${hatchStep}" stroke="${disp.color || '#607d8b'}" stroke-width="${stripe}"></path></pattern></defs>`;
     if (isoScene && isoFrame?.layers.structural && isoRuntime) {
-      this._plan3dDevices = isoFrame.overlays?.devices;
+      this._spatial.devices = isoFrame.overlays?.devices;
       const content = this._frameOf();
       // Ground-level masonry is shared with the 2D plan. It includes window
       // aprons but not door thresholds. Only translucent 3D exposes this ink.
@@ -14397,7 +13937,7 @@ export class HouseplanCard extends LitElement {
         roomGlowOf(disp.glow, entry.room) ? [ [entry.poly, ...islandsOf(entry.poly,
           lightRooms.filter(other => other !== entry).map(other => other.poly))]
           .map(points => 'M ' + points.map(point => point.join(' ')).join(' L ') + ' Z').join(' ') ] : []);
-      this._plan3dPresentation = {
+      this._spatial.presentation = {
         preset: isoCameraFor(this._rotationForProjection('iso')),
         bounds: isoRuntime.isoWorldBounds(isoScene, content.rect), content: content.all,
         sectionHeight: gridVisualUnits(isoDisplayWallHeight(), this._cellCm),
@@ -14440,13 +13980,13 @@ export class HouseplanCard extends LitElement {
         },
       };
       if (this._mode === 'view' && projection === this._desiredProjection && !this._modeTransitionBusy) {
-        const live = this._plan3dPresentation, { layers } = isoFrame, scene = isoScene;
-        this._startup3dSource = () => ({ ...live, world: {
-          ...live.world, contrastColors: undefined, lights: [], ribbons: [], roomHover: undefined,
-          floorInk: floorInk(true), rooms: rooms3d(this._resolvedRoomFills(space, disp, true)),
-          panels: isoRuntime.resolveIsoOpeningPanels(layers, scene, this._openingsR, opening => resolvedOpeningAmount(opening, () => null),
+        const { layers } = isoFrame, scene = isoScene;
+        this._spatial.prepareStartupPreview({
+          floorInk: () => floorInk(true),
+          rooms: () => rooms3d(this._resolvedRoomFills(space, disp, true)),
+          panels: () => isoRuntime.resolveIsoOpeningPanels(layers, scene, this._openingsR, opening => resolvedOpeningAmount(opening, () => null),
             opening => resolveOpeningVisual(opening, () => null, resolvedOpeningAmount(opening, () => null))),
-        } });
+        });
       }
     }
     const floorCamera = this._isoFloorCamera;
@@ -14802,7 +14342,7 @@ export class HouseplanCard extends LitElement {
       };
     }
     const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${stageMode === 'plan' ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${stageMode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${stageMode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
-    this._modePreparedStageClass = stageClass;
+    this._modePresenter.preparedStageClass = stageClass;
     const ledTargets = () => svg`<g transform=${this._floorTransform} opacity="0">
       ${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view, 'body') ?? nothing}</g>`;
     const floorTargets = () => svg`<g class="iso-floor-scene" transform=${this._floorTransform} opacity="0">
@@ -14814,7 +14354,7 @@ export class HouseplanCard extends LitElement {
       ${this._stairsView.renderLayer(stairVolumes)}</g>`;
     const stage = html`
 
-        <div class=${this._modeTransitionPreparing && this._modePreparingStageClass ? this._modePreparingStageClass : stageClass}
+        <div class=${this._modeTransitionPreparing && this._modePresenter.preparingStageClass ? this._modePresenter.preparingStageClass : stageClass}
           data-hp-plan-rotation=${this._rotation}
           data-hp-iso-floor-markers=${markerCamera ? 'true' : nothing}
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
@@ -14860,11 +14400,11 @@ export class HouseplanCard extends LitElement {
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderStageEnvironment(dayCycle, dayCycleWeight)}
           ${this._floorSwitch ? nothing : this._renderStartupFloor(this._startupPending)}
-          ${this._plan3dFailure?.space === this._space && this._desiredProjection === 'iso' && !iso && !this._startupPending
+          ${this._spatial.failure?.space === this._space && this._desiredProjection === 'iso' && !iso && !this._startupPending
             ? html`<div class="plan-3d-fallback hpf-loading-pill" role="status">
                 <span>${this._t('plan.3d_fallback')}</span>
-                <button type="button" class="btn" @click=${this._retryPlan3d}>${this._t(
-                  this._plan3dFailure.load === 'reload' ? 'view.runtime_reload' : 'continuity.retry')}</button>
+                <button type="button" class="btn" @click=${this._spatial.retry}>${this._t(
+                  this._spatial.failure.load === 'reload' ? 'view.runtime_reload' : 'continuity.retry')}</button>
               </div>` : nothing}
           ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
           ${this._ledEditor?.chrome() ?? nothing}
@@ -14878,7 +14418,7 @@ export class HouseplanCard extends LitElement {
                 this.requestUpdate();
               }
             }}
-            style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}${this._modeProjectionCrossing ? `;opacity:${this._modeProjectionOpacity}` : ''}${modeVisual && !this._modeTransitionPreparing ? `;width:${this._modeSceneSize?.[0] ?? modeVisual.stageWidth}px;height:${this._modeSceneSize?.[1] ?? modeVisual.stageHeight}px` : ''}">
+            style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}${this._modeProjectionCrossing ? `;opacity:${this._modePresenter.projectionOpacity}` : ''}${modeVisual && !this._modeTransitionPreparing ? `;width:${this._modeSceneSize?.[0] ?? modeVisual.stageWidth}px;height:${this._modeSceneSize?.[1] ?? modeVisual.stageHeight}px` : ''}">
           ${this._modeProjectionSource && this._modeProjectionScene ? this._modeProjectionScene : this._modeProjectionScene = html`
           ${iso ? html`<div class="iso-scene-surface" data-hp-live-scene="camera">
           ${floorCamera?.perspective ? renderIsoPerspectiveFloor(floorCamera, floorTargets(), view, perspectiveSize) : nothing}

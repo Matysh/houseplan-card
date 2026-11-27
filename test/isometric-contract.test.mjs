@@ -14,6 +14,7 @@ const openings = readFileSync(new URL('../src/iso-openings.ts', import.meta.url)
 const overlays = readFileSync(new URL('../src/iso-overlays.ts', import.meta.url), 'utf8');
 const projection = readFileSync(new URL('../src/iso-projection.ts', import.meta.url), 'utf8');
 const sceneGeometry = readFileSync(new URL('../src/iso-scene-geometry.ts', import.meta.url), 'utf8');
+const cardPlan3d = readFileSync(new URL('../src/card-plan-3d.ts', import.meta.url), 'utf8');
 const spatialRuntime = readFileSync(new URL('../src/plan-3d-runtime.ts', import.meta.url), 'utf8');
 const editorRuntime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
 const packageJson = readFileSync(new URL('../package.json', import.meta.url), 'utf8');
@@ -54,10 +55,10 @@ test('#649/#1516 the full plan surfaces share the saved 3D preference and static
 test('3D uses the lazy runtime and the same geometry authority as the worker', () => {
   assert.match(spatialRuntime, /export \* from '\.\/iso-scene-geometry'/,
     'the lazy renderer must expose the same pure geometry implementation used by the worker');
-  assert.equal([...card.matchAll(/await import\('\.\/plan-3d-runtime'\)/g)].length, 1);
+  assert.equal([...cardPlan3d.matchAll(/await import\('\.\/plan-3d-runtime'\)/g)].length, 1);
   for (const module of ['plan-3d-runtime', 'iso-scene-geometry', 'iso-walls', 'iso-openings', 'iso-overlays']) {
     const valueImport = new RegExp(`import\\s+(?!type\\b)[^;]+from './${module}';`, 's');
-    assert.doesNotMatch(card, valueImport, `${module} leaked into the eager card graph`);
+    assert.doesNotMatch(card + cardPlan3d, valueImport, `${module} leaked into the eager card graph`);
     assert.doesNotMatch(editorRuntime, valueImport, `${module} leaked into the lazy editor graph`);
   }
   for (const module of ['iso-walls', 'iso-openings', 'iso-overlays'])
@@ -67,7 +68,7 @@ test('3D uses the lazy runtime and the same geometry authority as the worker', (
     'the lazy renderer consumes the shared geometry implementation, not duplicate producers');
   assert.doesNotMatch(sceneGeometry, /from ['"](?:lit|@mdi\/js)['"]/,
     'the worker-owned structural module must not import presentation assets');
-  assert.match(card, /const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__'/);
+  assert.match(cardPlan3d, /const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__'/);
   assert.match(spatialRuntime, /ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__'/);
   assert.doesNotMatch(spatialRuntime, /iso-scene-render|renderIsoSunWash|IsoLightTransition/);
   assert.match(card, /if \(this\._isoEnabled\) void this\._ensureIsoSceneRuntime\(\)/);
@@ -267,16 +268,18 @@ test('one frame resolves one structural source and latches late topology/project
   assert.match(diagnostic, /safeRuntimeDiagnostic\('structural', fingerprint, true\)/);
   assert.doesNotMatch(diagnostic.slice(diagnostic.indexOf('console.warn')), /this\._space|\$\{key\}|_error/,
     'structural diagnostics must never serialize identifiers or thrown errors');
-  assert.match(card, /failed: \(_ignored, info\) => \{[\s\S]*?safeRuntimeDiagnostic\('runtime-load', 'unverified', info\.terminal\)/);
-  assert.doesNotMatch(card, /unable to load hidden isometric runtime[\s\S]{0,160}\b(?:error|message|stack|url)\b/i);
+  assert.match(cardPlan3d, /failed: \(_ignored, info\) => \{[\s\S]*?safeRuntimeDiagnostic\('runtime-load', 'unverified', info\.terminal\)/);
+  assert.doesNotMatch(card + cardPlan3d, /unable to load hidden isometric runtime[\s\S]{0,160}\b(?:error|message|stack|url)\b/i);
   assert.match(effective, /const fallback = \(\) => \{[\s\S]*?_cancelCameraTransition\(false\); this\._view = null;[\s\S]*?catch \(error\)[\s\S]*?return fallback\(\)/,
     'a structural failure may not reuse an Iso camera as a Flat viewBox');
   assert.match(effective, /fallback = \(\) => \{ if \(this\._renderProjection === 'iso'\)/,
     'the persistent latch must not erase later Flat pan/zoom frames');
   const renderBody = section(card, 'private _renderBody()', 'private _renderSpaceDialog');
   assert.equal([...renderBody.matchAll(/preparePlan3dFrame\(/g)].length, 1);
-  assert.match(renderBody, /this\._startup3dSource = \(\) => \([\s\S]*?lights: \[\],[\s\S]*?opening => resolvedOpeningAmount\(opening, \(\) => null\)/,
-    'a deferred 3D snapshot reuses the geometry with neutral lights and opening state');
+  assert.match(renderBody, /this\._spatial\.prepareStartupPreview\([\s\S]*?opening => resolvedOpeningAmount\(opening, \(\) => null\)/,
+    'the card supplies neutral opening state for the deferred snapshot');
+  assert.match(cardPlan3d, /this\.startupSource = \(\) => \(\{ \.\.\.live, world: \{[\s\S]*?\.\.\.live\.world, contrastColors: undefined, lights: \[\], ribbons: \[\]/,
+    'a deferred 3D snapshot reuses the live geometry and clears light inputs');
   assert.doesNotMatch(renderBody, /this\._isoScene\(/);
   assert.match(renderBody, /catch \(error\)[\s\S]*?_latchIsoFallback[\s\S]*?_cancelCameraTransition\(false\)[\s\S]*?projection = 'flat'; iso = false/);
   assert.match(renderBody, /this\._view = null;[\s\S]*?_baseVb\('flat', null\)/);

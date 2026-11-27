@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1604,
+  "baseStable": "v1.86.1",
+  "category": "infra",
+  "rationale": "Separate browser runtime ownership while preserving the existing product behaviour.",
+  "summary": {
+    "en": "Extract the lazy 3D host lifecycle and mode transition presentation from the main card.",
+    "ru": "Жизненный цикл 3D-хоста и отрисовка переходов между режимами вынесены из основного модуля карточки."
+  }
+}
