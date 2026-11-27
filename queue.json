@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28945,
+  "revision": 28946,
   "nextTicket": 783,
   "nextFence": 778,
   "tasks": {
@@ -6594,46 +6594,24 @@
     },
     "1611": {
       "issue": 1611,
+      "branch": "codex/1611-space-opening-host",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1611-space-opening-host",
-      "materialSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 781,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795797319903,
-      "reviewEntry": 2,
-      "patchId": "8ff0e02798891675e14b4a155c14c57fe4dd7d75",
-      "changedFiles": [
-        "custom_components/houseplan/core/graph_write.py",
-        "custom_components/houseplan/core/plan_commands.py",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.86.1/1611.json",
-        "scripts/config-compatibility-inventory.json",
-        "scripts/mutation-registry.mjs",
-        "tests_backend/test_ha_plan_graph.py"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795797202591,
-        "entry": 1,
-        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
-        "eventId": "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return:return:1611"
+      "status": "S8-merged",
+      "expectedBase": "30dda61b229ead40f167565af6215a5eef87ecd8",
+      "mergedSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294",
+      "mergedAt": 1795799270185,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261127T165843177-f8cc6833",
-        "name": "Тесты для задачи #1611 (перед слиянием)",
-        "reportPath": "/tmp/hp-1611-s6.EfkUUo/.git/process-next/runs/20261127T165843177-f8cc6833/report.json",
-        "materialSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294",
-        "status": "passed",
-        "finishedAt": "2026-11-27T17:07:42.226Z",
-        "failures": []
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1614": {
@@ -7416,18 +7394,7 @@
     1598,
     1614
   ],
-  "active": {
-    "issue": 1611,
-    "worker": "finish",
-    "token": "777:finish:a8893a8c-bcf9-484c-8254-fe2981aa6999:finish:2:admit",
-    "fence": 777,
-    "materialSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294",
-    "expectedBase": "30dda61b229ead40f167565af6215a5eef87ecd8",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795798596398,
-    "expiresAt": 1795802863596,
-    "patchId": "8ff0e02798891675e14b4a155c14c57fe4dd7d75"
-  },
+  "active": null,
   "events": {
     "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:1:synchronized": {
       "digest": "c3331543de2dc2b03e432aca501edfa1d1718da59f58c562dc3814811c484a77",
@@ -7937,89 +7904,9 @@
       "digest": "0483600657efea9732e1c40d9b4f4cf66f1a94151d7316d5d3d7625283f23b9c",
       "issue": 1598
     },
-    "github:46032384185:1:completions:message:f1ef57a626fd6eea4d30c42b387c7fb214ec4ea79aa1964a02dc199f0e99a57d": {
-      "digest": "feae9e38fc27ef0809235839ea63f98a01831c88627063d39afd4b60e1737e0f",
-      "issue": 1611
-    },
-    "github:46032384185:1:completions:message:62fc2780e28880d08601f8a52ad49bd6ac4c6e88439a4234a42d6d89463b400f": {
-      "digest": "58fadefd8b3ab0dbe43984d1efec96fe77f6529fad759374ec2da6181922e727",
-      "issue": 1611
-    },
-    "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:2:automation-pending": {
-      "digest": "cf990d64c88bb752c7f21cd5e309e0400ad024a3372788d370d1392a96ac474f",
-      "issue": 1611
-    },
-    "finish:21d407fa-1bed-4085-bb30-96b795a16e0e": {
-      "digest": "1470117af7d847073f41f30554eaaaf3a6288abf39e0617509a1c7da43adc5fd",
-      "issue": 1611
-    },
-    "finish:ebac5cd9-21fb-4842-bd40-ab1d98a4f54f": {
-      "digest": "d3b917460fb90b689f5aad9ca9ec30b1bd7570e5f51e6722c2d56cb0f1d11134",
-      "issue": 1611
-    },
-    "finish:b190316f-13b4-4d5a-9897-b6dd5e5403c8": {
-      "digest": "ce79c4c73ec10308ca5581f3f441f2ae5c822810726ef186891307235bdc9ac3",
-      "issue": 1611
-    },
-    "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:4:synchronized": {
-      "digest": "466d5b10ead9952530241ee7a5591692b263c594f4da36f5557ec24ba064b4ee",
-      "issue": 1611
-    },
-    "finish:1600fac7-3a3e-4703-a19b-712977373a43": {
-      "digest": "682614da0a69b138184d8b4416af7875a35c495affa75cd4145e9aaa3d08eed6",
-      "issue": 1611
-    },
-    "finish:bb7bf61e-5322-46b1-9d78-d4e0ed1de1c7": {
-      "digest": "067613394002de31925123344031560e5b6573a1a732f89513c02ed3db3fcf84",
-      "issue": 1611
-    },
-    "finish:d544b5ac-f044-47c4-a5a4-c95bad010939": {
-      "digest": "db568186130cbb73bff3c8ba6aa464d805e326519b0dd16aeb16c8cd2fd48b2d",
-      "issue": 1611
-    },
-    "finish:7ef87d86-ff27-4384-8472-0dbe2e5d3b33": {
-      "digest": "83907cf9d84f8ef25745f58ad5ab80e49a042c2245ebad87f956fae68a73cc5d",
-      "issue": 1611
-    },
-    "finish:d7e6a65e-238d-483e-9a4d-78692171b9f0": {
-      "digest": "bdb89699ce1a3f6911f2ca430f1a8c460c927e958deed96e956837016b7e9e75",
-      "issue": 1611
-    },
-    "finish:a5e34cef-afc9-4d8a-b067-a2d78386edbf": {
-      "digest": "dffc35d4dc168361fb67748653d859624d6b45118380240f6642bfaf5b7a9a72",
-      "issue": 1611
-    },
-    "finish:ba9c36ef-e556-4a54-b050-1f24b7edd9b7": {
-      "digest": "a829af631164c6809cece0231d7c7d0c2e18f7cdfd46edd59ea11a4405074a18",
-      "issue": 1611
-    },
-    "finish:1db039c3-28a3-413d-9487-13b0b1255356": {
-      "digest": "c34159eb1f90528903e6ba49cbf59e6123e81233d586008a8f1aba808162cabe",
-      "issue": 1611
-    },
-    "finish:57ff507d-895f-403e-a169-9e18b10a6d7c": {
-      "digest": "dd147b36095c40596ef3536ac82b38144eeb2ae3ebfd020fbed79e18969a01d1",
-      "issue": 1611
-    },
-    "finish:824bd90c-af06-4e4b-aa9a-c062fdff6137": {
-      "digest": "7090025c7228f26ab68ea4157c581a587d37997cfd4f1cc9819283c95c8d7f5a",
-      "issue": 1611
-    },
-    "finish:1eb26824-97c3-4859-9521-bc7713a0fa5e": {
-      "digest": "2d53fbad2d927162f4b85c223515c41fd36f12348e4f1973ff7435a58e73f3ee",
-      "issue": 1611
-    },
-    "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return": {
-      "digest": "35fa73b4e90ca74f453a534f2ed0fca1ea8899a97f5c735920e661a23cd17f8f",
-      "issue": 1611
-    },
     "github:46035822142:1:label:spec-request": {
       "digest": "a4a1e1a5c5ffe776fb69a7b1e0ced1ca9aeae94d49fb81b176c7b157dd7aa8e9",
       "issue": 1613
-    },
-    "github:46035822142:1:completions:notice:b9ad0446518f7fdd7566ab2befe9a8d765c1baa9eec734cf0bdc6c5ee1ab610a": {
-      "digest": "1938a91de3477b9e491a28de0bba8b59708e892792db5522e702799b5d7dd8b8",
-      "issue": 1611
     },
     "github:46036605966:1:spec:1613:spec-presentation": {
       "digest": "9a0888a79c847d5292f76a703526a65eb6a30cfd6575dd6a37ed359712dcadd7",
@@ -8041,26 +7928,6 @@
       "digest": "83389abf511b6f1f6e5356cfd4e0ac141c80dabe7c386c97d17609392ca914ce",
       "issue": 1613
     },
-    "finish:75f60287-0c33-4bb0-821c-dfd30867e1c6": {
-      "digest": "97b2630c955a275b6b1ce51551047ad88ec506720c7b2173ed73b667dcc27346",
-      "issue": 1611
-    },
-    "finish:11b1b44c-9ae2-42c3-989c-e097c638aade:finish:1:automation-pending": {
-      "digest": "db72c830f148a059ae6dea5fbd52d47ef42df1223be40e6ee82a355a60ff5214",
-      "issue": 1611
-    },
-    "finish:4dfeadc5-dad3-4e47-a38b-a9d6c73bf8c3": {
-      "digest": "171574e814a78b03c3d90a5ff70efeb56849536c769ffce131725f5ef20a4111",
-      "issue": 1611
-    },
-    "finish:11b1b44c-9ae2-42c3-989c-e097c638aade:finish:2:synchronized": {
-      "digest": "32b803ce4b3ed669bcbe16e35c4e3f44652b0ddd4e87900e23b4d0b23352fcab",
-      "issue": 1611
-    },
-    "finish:38658a1c-4c8f-49e0-8103-06b4c1d67317": {
-      "digest": "8528db102564cae52445fbc2da643465fb8d163bc01c1482a23634256cd15493",
-      "issue": 1611
-    },
     "github:46038103169:1:spec:1613:spec-presentation": {
       "digest": "f1d4992b02b88bb7821d001a7ad3c25bd0cf348a7a55100fc8b0db68c5fb6f92",
       "issue": 1613
@@ -8077,53 +7944,9 @@
       "digest": "ee12b86d7c4c4d957fd4f87db30ece5bb2875cdae4907b5e5ae04af7ca7fa24e",
       "issue": 1613
     },
-    "dev-build:46037687498:1:webhook": {
-      "digest": "130dc7e3a2b124269af75710ae1ccc3681d90ead7f7a8feaf77d382add16b75d",
-      "issue": 1611
-    },
-    "github:46038103169:1:completions:message:7b8f10464efdf4852707fc3a9142ac81f44f558a5cf076736c4aab4ac3ccdc86": {
-      "digest": "ab61fc3e0b7215e852f93d542e73b70740eff7443b3388c0c47a88f113dae603",
-      "issue": 1611
-    },
-    "github:46038103169:1:dev-webhook:37877826-4459-49c4-be86-ccb711e1c516:delivered": {
-      "digest": "4634d378c8bb0f623e54a952a89c2db92377ac9ca2d9aab8561c4ad9c46b4edc",
-      "issue": 1611
-    },
-    "github:46038182054:1:completions:message:7f2a7c54071b5715ee8fd7116c9a7b9059fdfbffb7e24f270bda6a69cf7249f5": {
-      "digest": "e021c55e382ec5c37cb9e02931d29544fd483cb0fced9b7860f65dd214aaeadb",
-      "issue": 1611
-    },
-    "finish:5cbd9264-4986-49d1-a1e5-4a29d28bc864": {
-      "digest": "4213c5f3d158616af1d6a5a5f8fea8070617a987fb10f5976bd5a8b5f9f5066a",
-      "issue": 1611
-    },
     "github:46038434781:1:label:spec-request": {
       "digest": "d4a7bc479580b199dc15b83b7b9591e19b310d4f6dbc27b888d4b2f0e70cb63f",
       "issue": 1613
-    },
-    "github:46038434781:1:completions:message:234c2c8da1b1841a91b39bc4cd7ef3f62e729bd5c1244149d69059ce83258652": {
-      "digest": "b65cf0334cf57a45e7cee9b1cc50e1c1fd216cce6e9f80997f533f29aaec4e14",
-      "issue": 1611
-    },
-    "finish:745c649e-17e6-4475-8fac-a5c80ff29609": {
-      "digest": "a57e65897786bb70b2a4482a51f1be2107555ea269b9d35542c3d27f143baa67",
-      "issue": 1611
-    },
-    "finish:70d2476d-0ed8-4fc6-bc8e-e50f70717bac": {
-      "digest": "a9e81646053011f9d51a7df5303e9771b1fa8af32e1a76abdc38ff9b3f83f616",
-      "issue": 1611
-    },
-    "finish:201e6b08-b5ee-475d-8b68-f3c623af5bd0": {
-      "digest": "1d49e93f5d283e164d0aa88b06a8786f5616e2bc2a9dd9f8577da154a8c97bdf",
-      "issue": 1611
-    },
-    "finish:32f5665e-b1ee-4d63-b9be-a63a6d00fb2c": {
-      "digest": "ef4aa1e676a8b694097bcac6e06ba88112bd8fb1c80756187fb8ec8bbc675012",
-      "issue": 1611
-    },
-    "finish:6760e5f4-ffef-4596-9e5c-04b2f498d71e": {
-      "digest": "f8e93d68841a013efd367bc16a0f9fda74602d868d589d4f26f787898f679d06",
-      "issue": 1611
     },
     "github:46039098931:1:spec:1613:spec-presentation": {
       "digest": "b4bb40478f140ea077bbf3fe1b424549279d824a7e794f41e5741d08dbfd9613",
@@ -8144,14 +7967,6 @@
     "github:46039169978:1:label:spec-request": {
       "digest": "acc96ecd3f4bfb4e951cfd0cd82ce32ad6a38a8815b480b4843dcc614eb82837",
       "issue": 1613
-    },
-    "finish:0b342442-abb7-4391-b6c3-c754cf747aed": {
-      "digest": "e454047f0f4be076d1e3ef490895d82b1ecc464302883f05ccd5b2dc274cef30",
-      "issue": 1611
-    },
-    "finish:11b1b44c-9ae2-42c3-989c-e097c638aade:finish:3:s6-complete": {
-      "digest": "be6ca3edac23633aed3299171c534c34b319b7df1cf7c4c042394f2556edaeeb",
-      "issue": 1611
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -8955,70 +8770,6 @@
         "delivered": true
       }
     },
-    "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6": {
-      "digest": "a60a390e5a6b3612e6e9adf9f0b1f293b8f7c6e5336f40cc957528190fb88b33",
-      "issue": 1611,
-      "message": {
-        "kind": "queued",
-        "issue": 1611,
-        "at": 1795796266885,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "49487d86b7765c1bea1557578bdf0636197f22c4",
-        "delivered": true
-      }
-    },
-    "finish:6f3048e8-0b4d-4333-a539-8a587f7616a1:finish:1:admit": {
-      "digest": "9721f2f839f7751911c2017a575b9f701eb39a4b24dc044dfe7144ddafb3ed63",
-      "issue": 1611,
-      "message": {
-        "kind": "admitted",
-        "issue": 1611,
-        "at": 1795796329831,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "49487d86b7765c1bea1557578bdf0636197f22c4",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return:return:1611": {
-      "digest": "35fa73b4e90ca74f453a534f2ed0fca1ea8899a97f5c735920e661a23cd17f8f",
-      "issue": 1611,
-      "message": {
-        "kind": "return",
-        "issue": 1611,
-        "at": 1795797202591,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795797202591,
-          "entry": 1,
-          "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
-          "eventId": "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return:return:1611"
-        },
-        "delivered": true
-      }
-    },
-    "finish:11b1b44c-9ae2-42c3-989c-e097c638aade": {
-      "digest": "c8579f3f8492ba6b1c2e09bdcba03f0d4a448de51a7cbf3d1c7f12949b77f41f",
-      "issue": 1611,
-      "message": {
-        "kind": "queued",
-        "issue": 1611,
-        "at": 1795797319903,
-        "entry": 2,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "5119213b3d222c6366fe012a6c2cf733df7b492b",
-        "delivered": true
-      }
-    },
     "finish:97686555-92c4-48a4-a45f-ef6dc1f0cf05": {
       "digest": "f9374b5a726e2b9f2e42e67c60f0d8d84c9284c853290ccb4eb234ec1f966121",
       "issue": 1614,
@@ -9047,21 +8798,6 @@
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:a8893a8c-bcf9-484c-8254-fe2981aa6999:finish:2:admit": {
-      "digest": "33639a7d47613b67480d3e1618fc8489733e365209aa5156f6dc7501054ee3cb",
-      "issue": 1611,
-      "message": {
-        "kind": "admitted",
-        "issue": 1611,
-        "at": 1795798596398,
-        "entry": 2,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "5119213b3d222c6366fe012a6c2cf733df7b492b",
-        "phase": "sync",
         "delivered": true
       }
     },
