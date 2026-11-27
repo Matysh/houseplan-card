@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28097,
-  "nextTicket": 761,
+  "revision": 28098,
+  "nextTicket": 762,
   "nextFence": 760,
   "tasks": {
     "1001": {
@@ -6229,14 +6229,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1608-device-height-perspective",
-      "materialSha": "9623a6b23414933562dd54160ca360c5c73afed9",
+      "materialSha": "5ca28396c107f9f3eee0318ebc6dba67f7ecdcbf",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 759,
-      "queued": false,
+      "ticket": 761,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795774119991,
-      "reviewEntry": 1,
+      "readyAt": 1795775162382,
+      "reviewEntry": 2,
       "patchId": "c28ffdddf1c710f3cd72615be99f04eef6077b86",
       "changedFiles": [
         "custom_components/houseplan/core/marker_height.py",
@@ -6375,7 +6375,6 @@
         "tests_backend/test_ha_marker_copy.py",
         "tests_backend/test_ha_marker_history.py"
       ],
-      "reason": "executor-admission-expired",
       "notice": {
         "key": "1:executor-admission-expired",
         "reason": "executor-admission-expired",
@@ -7158,7 +7157,8 @@
     }
   },
   "waiting": [
-    1609
+    1609,
+    1608
   ],
   "active": null,
   "events": {
@@ -8105,6 +8105,19 @@
           "entry": 1,
           "eventId": "recover-1608:df52f15b-73ee-4cb0-91e4-f1fbc12fd9b8:return:1608"
         }
+      }
+    },
+    "finish:41ee2471-bdee-4304-a669-4360675ac204": {
+      "digest": "6a1d4022de6770b12ae09fb0dcc957ecefce2b453a88a0b776ee7b5b72b3b28c",
+      "issue": 1608,
+      "message": {
+        "kind": "queued",
+        "issue": 1608,
+        "at": 1795775162382,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "5ca28396c107f9f3eee0318ebc6dba67f7ecdcbf"
       }
     }
   },
