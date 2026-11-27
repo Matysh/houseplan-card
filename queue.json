@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28284,
+  "revision": 28285,
   "nextTicket": 771,
   "nextFence": 765,
   "tasks": {
@@ -6581,14 +6581,15 @@
         "tests_backend/test_validation.py"
       ],
       "notice": {
-        "key": "2:Hosted run completed or was cancelled without a runner report",
-        "reason": "Hosted run completed or was cancelled without a runner report",
-        "status": "delivered",
+        "key": "3:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795775625049,
-        "entry": 2,
-        "eventId": "finish:41ee2471-bdee-4304-a669-4360675ac204:finish:4:return:return:1608"
-      }
+        "at": 1795779821540,
+        "entry": 3,
+        "eventId": "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return:return:1608"
+      },
+      "reason": "checks-failed"
     },
     "1609": {
       "issue": 1609,
@@ -7382,23 +7383,8 @@
     1603,
     1609
   ],
-  "active": {
-    "issue": 1608,
-    "worker": "finish",
-    "token": "764:finish:d5b0dd3d-210f-4a96-9f6e-bfc6357ba780:finish:1:admit",
-    "fence": 764,
-    "materialSha": "f45fce10a098e704dc49b7b1e6e63361a893c5e4",
-    "expectedBase": "502258741f1753f27b35ee15c7264d196c2521f6",
-    "phase": "testing",
-    "admittedAt": 1795775799368,
-    "expiresAt": 1795780089326,
-    "patchId": "73e2e63a1cb6b2ace1e2cea6f75e5441b1012045"
-  },
+  "active": null,
   "events": {
-    "finish:23ff7bcb-2bff-4fc6-8928-b62995287fc5": {
-      "digest": "0b9eec75900388bc5390510183a56eb2808c0cf7338a6b4f97cc897c0f1a87df",
-      "issue": 1609
-    },
     "finish:799570b4-271e-4192-bb15-c8f903c49a51": {
       "digest": "18ac60e1b5b56a00e066c878362420221d21e56b876780132eac224b5bf181e2",
       "issue": 1609
@@ -8271,6 +8257,10 @@
       "digest": "096d28e7f9121f97b2882ec80476029ff9e03e241f9d11b066e61f9c28e3d7ba",
       "issue": 1598
     },
+    "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return": {
+      "digest": "fb8b0a6c58adaee42d00147136f06654bc0c1bf8c1c8eb356a37380a99fb9284",
+      "issue": 1608
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -8913,6 +8903,25 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return:return:1608": {
+      "digest": "fb8b0a6c58adaee42d00147136f06654bc0c1bf8c1c8eb356a37380a99fb9284",
+      "issue": 1608,
+      "message": {
+        "kind": "return",
+        "issue": 1608,
+        "at": 1795779821540,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795779821540,
+          "entry": 3,
+          "eventId": "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return:return:1608"
+        }
       }
     }
   },
