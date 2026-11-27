@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29643,
+  "revision": 29644,
   "nextTicket": 794,
   "nextFence": 794,
   "tasks": {
@@ -6255,53 +6255,24 @@
     "1616": {
       "issue": 1616,
       "branch": "issue/1616-release-return-4b71e606a049",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "4b71e606a0491c5b830885837c8c476e7e7e524d",
-      "releaseTag": "v2.0.0-beta.3",
-      "materialSha": "2043bd45e892b725a6100876b595502de34a7a8b",
-      "ownerDecision": null,
-      "ticket": 793,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1795817320192,
-      "reviewEntry": 1,
-      "patchId": "7d7270e9c84bb31593e0188e8ed9eda59950978c",
-      "review": {
-        "source": "published-release",
-        "sourceSha": "4b71e606a0491c5b830885837c8c476e7e7e524d",
-        "tag": "v2.0.0-beta.3",
-        "verdict": "accepted",
-        "expectedBase": "2fa7171c12e1df8c1ced9709c5358a54be825684",
-        "patchId": "7d7270e9c84bb31593e0188e8ed9eda59950978c",
-        "materialSha": "2043bd45e892b725a6100876b595502de34a7a8b"
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+      "mergedSha": "2043bd45e892b725a6100876b595502de34a7a8b",
+      "mergedAt": 1795817358738,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/panel-device-icon-picker-clear-hover-light-1376.png",
-        "demo/golden/baselines/panel-device-icon-picker-dark-1375.png",
-        "demo/golden/baselines/panel-device-icon-picker-open-dark-1376.png",
-        "demo/golden/baselines/panel-isometric-stage3-overlays-dark.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "package-lock.json",
-        "package.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "s6": {
-        "id": "20261127T220856042-db9336b9",
-        "name": "Короткий S6: возврат опубликованного тега · #1616",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T220856042-db9336b9/report.json",
-        "materialSha": "2043bd45e892b725a6100876b595502de34a7a8b",
-        "status": "passed",
-        "finishedAt": "2026-11-27T22:08:57.676Z",
-        "failures": []
+      "releaseTag": "v2.0.0-beta.3",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -7043,35 +7014,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1616,
-    "worker": "github-coordinator",
-    "token": "793:github:46074726875:1:tick:0:admit",
-    "fence": 793,
-    "materialSha": "2043bd45e892b725a6100876b595502de34a7a8b",
-    "expectedBase": "2fa7171c12e1df8c1ced9709c5358a54be825684",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795817323859,
-    "expiresAt": 1795820938841,
-    "patchId": "7d7270e9c84bb31593e0188e8ed9eda59950978c"
-  },
+  "active": null,
   "events": {
-    "release-return-finish:eaa04efc-dbc9-498b-98cc-25e4c6490418:finish:2:synchronized": {
-      "digest": "01aae31e3be8bec87e899ffb0d7437c54e77c0d9a8a00b40e436566835fd7400",
-      "issue": 1616
-    },
-    "release-return-finish:eaa04efc-dbc9-498b-98cc-25e4c6490418:finish:3:s6-complete": {
-      "digest": "133acf36144287cdd0c11d9a78431d7f85a4e91f7b03000a66b44fa42fa94858",
-      "issue": 1616
-    },
-    "github:46074726875:1:completions:message:aee7bacd9d42c7a792e2f4f6023698d43f19e864cea9f2ac6e3392dc37934524": {
-      "digest": "c9385e645c8d84562cf34b62f75cf1f212b3b8569f59857516dc142007f3b609",
-      "issue": 1616
-    },
-    "github:46074726875:1:completions:message:c41a4d33842c41e003aba0221a5897beb64c3f7f39dc0afa9883aff745dbd950": {
-      "digest": "0246ca2ce038d917758a0df725ee6b05425eb49b5a4423822430bd094b378181",
-      "issue": 1616
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7097,35 +7041,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-return:eaa04efc-dbc9-498b-98cc-25e4c6490418": {
-      "digest": "3473cdb7bc8f38ae5e252f373c7a117f215ddd8abf3c5523299745a1f34e73d4",
-      "issue": 1616,
-      "message": {
-        "kind": "queued",
-        "issue": 1616,
-        "at": 1795817320192,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2043bd45e892b725a6100876b595502de34a7a8b",
-        "delivered": true
-      }
-    },
-    "github:46074726875:1:tick:0:admit": {
-      "digest": "ecb0fe15111008cab249ae818778e713adfb779c844efbf146e4e5aec19798ba",
-      "issue": 1616,
-      "message": {
-        "kind": "admitted",
-        "issue": 1616,
-        "at": 1795817323859,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2043bd45e892b725a6100876b595502de34a7a8b",
         "phase": "sync",
         "delivered": true
       }
