@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28985,
+  "revision": 28986,
   "nextTicket": 783,
   "nextFence": 779,
   "tasks": {
@@ -3512,40 +3512,6 @@
         "sourceSha": "432662652229bf4bf58c2a4b94e954efa9f770c7"
       }
     },
-    "1524": {
-      "issue": 1524,
-      "branch": "issue/1524-release-return-2d338bb313cd",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "ec73fa6e474fe9e87021f1ead36817beffd89a8d",
-      "mergedSha": "e38612b43a41121dcd0f1e72c37176a95477e6e7",
-      "mergedAt": 1795381228714,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.86.1-beta.2",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "e38612b43a41121dcd0f1e72c37176a95477e6e7"
-      }
-    },
     "1525": {
       "issue": 1525,
       "branch": "codex/stable-audit-1861-beta2-fixes",
@@ -6602,7 +6568,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294"
       }
     },
     "1614": {
@@ -8858,6 +8825,18 @@
         "materialSha": "17a1ccb0a0544f019304bbec18882a76d4454c43",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:46039169978:1:1611": {
+      "digest": "0eb81b6a17697cab58bc7832e34e0e1187109ee991c005ed092c9d53553d2089",
+      "issue": 1611,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1611,
+        "at": 1795799461296,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294"
       }
     }
   },
