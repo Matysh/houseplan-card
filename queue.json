@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 28532,
+  "revision": 28533,
   "nextTicket": 776,
-  "nextFence": 770,
+  "nextFence": 771,
   "tasks": {
     "1001": {
       "issue": 1001,
@@ -6754,7 +6754,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 770,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795776730964,
       "reviewEntry": 6,
@@ -7530,14 +7530,23 @@
     }
   },
   "waiting": [
-    1609,
     1608,
     1595,
     1598,
     1600,
     1594
   ],
-  "active": null,
+  "active": {
+    "issue": 1609,
+    "worker": "finish",
+    "token": "770:finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:1:admit",
+    "fence": 770,
+    "materialSha": "44454148a8099075afbd35fb76532ef00479b47d",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795788840882,
+    "expiresAt": 1795789140882
+  },
   "events": {
     "finish:1f38451f-d68a-419f-81ca-122ce8b7a926": {
       "digest": "62575a40a04f22a93227348017116ae7504e014cb1e98b23d682bad0684a246e",
@@ -9244,6 +9253,29 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:2:return:return:1603"
+        }
+      }
+    },
+    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:1:admit": {
+      "digest": "ec35e9a178d2db2cc0f505fbc10e492b556a4510206004997f653ef8801bf487",
+      "issue": 1609,
+      "message": {
+        "kind": "admitted",
+        "issue": 1609,
+        "at": 1795788840882,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "44454148a8099075afbd35fb76532ef00479b47d",
+        "phase": "sync",
+        "evidence": {
+          "id": "20261127T091017259-853968fa",
+          "name": "Тесты для задачи #1609 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T091017259-853968fa/report.json",
+          "materialSha": "32cf10b8f4a243bde6ca82d7c4568ef08b40039a",
+          "status": "passed",
+          "finishedAt": "2026-11-27T09:33:06.732Z",
+          "failures": []
         }
       }
     }
