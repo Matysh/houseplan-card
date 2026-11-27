@@ -6,6 +6,22 @@ import { cpus, release, tmpdir } from 'node:os';
 import { digest, readJson, writeJson } from '../lib/storage.mjs';
 import { collectMeasurement, collectTiming, compareMeasurements, renderMetrics } from '../lib/metrics.mjs';
 
+export function previousStableTag({ root, version }) {
+  const stable = /^v(\d+)\.(\d+)\.(\d+)$/;
+  const target = stable.exec('v' + version.split('-', 1)[0])?.slice(1).map(Number);
+  if (!target) throw Error('Нужна полная версия пакета кандидата');
+  const refs = execFileSync('git', ['ls-remote', '--tags', '--refs', '--sort=-version:refname', 'origin', 'refs/tags/v*'],
+    { cwd: root, encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] });
+  for (const line of refs.trim().split('\n')) {
+    const tag = line.split('refs/tags/')[1]?.trim();
+    const parts = stable.exec(tag)?.slice(1).map(Number);
+    if (!parts) continue;
+    const order = parts[0] - target[0] || parts[1] - target[1] || parts[2] - target[2];
+    if (order < 0) return tag;
+  }
+  throw Error('Не найден stable-тег, предшествующий кандидату');
+}
+
 function prepareBaseline({ root, tag }) {
   if (!/^v\d+\.\d+\.\d+$/.test(tag)) throw Error('Последний stable должен быть указан точным тегом');
   const directory = mkdtempSync(join(tmpdir(), 'houseplan-stable-benchmark-'));
@@ -15,11 +31,9 @@ function prepareBaseline({ root, tag }) {
   const ref = 'refs/tags/' + tag;
   const clean = () => rmSync(directory, { recursive: true, force: true });
   try {
-    let repository = root;
-    try { run('git', ['rev-parse', '--verify', ref + '^{commit}'], root); }
-    catch { repository = run('git', ['remote', 'get-url', 'origin'], root); }
+    const repository = run('git', ['remote', 'get-url', 'origin'], root);
     run('git', ['init', '--quiet']);
-    run('git', ['fetch', '--quiet', '--no-tags', '--depth=1', repository, ref]);
+    run('git', ['--git-dir', join(directory, '.git'), 'fetch', '--quiet', '--no-tags', '--depth=1', '--', repository, ref], root);
     run('git', ['checkout', '--quiet', '--detach', 'FETCH_HEAD']);
     const sourceSha = run('git', ['rev-parse', 'HEAD']);
     if ('v' + readJson(join(directory, 'package.json')).version !== tag) throw Error('Версия исходников не совпадает с тегом stable');
@@ -71,21 +85,20 @@ function measureHost(supplied) {
  * Failure to rebuild the previous release does not discard candidate sizes.
  */
 export function runMeasurements({ root = process.cwd(), requestPath, executeBenchmark = benchmark,
-  buildBaseline = prepareBaseline, readHost = measureHost } = {}) {
+  buildBaseline = prepareBaseline, readHost = measureHost, selectBaseline = previousStableTag } = {}) {
   const request = requestPath ? readJson(resolve(root, requestPath), {}) : {}, output = join(root, 'artifacts', 'process-next');
   const latestPath = request.latestStable ? resolve(root, request.latestStable) : null;
   if (latestPath && (latestPath === output || latestPath.startsWith(output + sep))) throw Error('Keep the stable reference outside current candidate outputs');
   const latestStable = latestPath ? readJson(latestPath, null) : null;
   const packageInfo = readJson(join(output, 'package.json'));
   if (!packageInfo?.sourceSha) throw Error('Prepare the identified release package first');
-  const tag = readJson(join(root, 'docs', 'release-ledger', 'cycle.json'), {})?.baseStable;
   const performancePath = join(output, 'performance.json'), measurementPath = join(output, 'measurement.json');
   for (const file of [performancePath, measurementPath, join(output, 'metrics.json'), join(output, 'metrics.md')]) rmSync(file, { force: true });
   const runnerHash = digest(readFileSync(join(root, 'demo', 'benchmark_large_house.mjs')));
   const diagnostics = [];
-  let timingBaseline = null, baseline, performance = null, measurement = null, evidenceStatus;
+  let timingBaseline = null, tag, baseline, performance = null, measurement = null, evidenceStatus;
   try {
-    if (!tag) throw Error('В текущем цикле выпуска не указан тег предыдущего stable');
+    tag = selectBaseline({ root, version: packageInfo.version });
     baseline = buildBaseline({ root, tag });
     const stablePath = join(baseline.root, 'paired-performance.json');
     const host = readHost(request.host);

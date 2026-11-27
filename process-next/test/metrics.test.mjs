@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { gzipSync } from 'node:zlib';
 import { digest } from '../lib/storage.mjs';
 import { compareMeasurements, frozenBaseline, measureFrontend, POLICY, renderMetrics } from '../lib/metrics.mjs';
-import { runMeasurements } from '../catalog/measure.mjs';
+import { previousStableTag, runMeasurements } from '../catalog/measure.mjs';
 import { releaseReadiness } from '../lib/release.mjs';
 
 function records() { const base = frozenBaseline(); return { base, candidate: structuredClone(base) }; }
@@ -199,10 +199,7 @@ function measurementFixture(t) {
     runtime: { platform: process.platform }, rows: Array.from({ length: 7 }, () => ({ firstStableRenderMs: 100, spaceSwitchMs: 50, panZoomMs: 3, stateUpdateMs: 10 })) };
   const stableRoot = join(root, 'stable'), stableSha = 'b'.repeat(40), stableFingerprint = 'stable-build';
   const stablePerformance = { ...structuredClone(performance), sourceSha: stableSha, buildFingerprint: stableFingerprint };
-  const ledger = join(root, 'docs', 'release-ledger');
-  mkdirSync(ledger, { recursive: true });
   mkdirSync(stableRoot);
-  writeFileSync(join(ledger, 'cycle.json'), JSON.stringify({ baseStable: 'v1.86.1' }));
   const buildBaseline = ({ tag }) => {
     assert.equal(tag, 'v1.86.1');
     return { root: stableRoot, sourceSha: stableSha, buildFingerprint: stableFingerprint, clean() {} };
@@ -210,7 +207,8 @@ function measurementFixture(t) {
   const executeBenchmark = ({ targetRoot, performancePath }) => writeFileSync(
     performancePath, JSON.stringify(targetRoot === stableRoot ? stablePerformance : performance));
   const readHost = () => ({ cpu: 'fixture', linux: 'Linux 9.1.0', power_scheme: 'Balanced' });
-  return { root, output, sourceSha, stableSha, performance, executeBenchmark, buildBaseline, readHost };
+  return { root, output, sourceSha, stableSha, performance, executeBenchmark, buildBaseline, readHost,
+    selectBaseline: () => 'v1.86.1' };
 }
 
 test('failed benchmark produces a diagnostic report with actual sizes and no stale timing', t => {
@@ -264,6 +262,23 @@ test('complete collection still records all seven actual metrics', t => {
   assert.equal(Object.keys(before.timing_metrics).length, 4);
   assert.ok(result.comparison.primary.filter(row => row.unit === 'ms')
     .every(row => row.status === 'within-tolerance' && row.before === row.after));
+});
+
+test('the previous stable is selected from origin even when the cycle still names the pre-hotfix release', t => {
+  const f = measurementFixture(t);
+  const origin = join(f.root, 'origin');
+  mkdirSync(origin);
+  const git = (cwd, args) => execFileSync('git', args, { cwd, stdio: 'ignore' });
+  git(origin, ['init']);
+  git(origin, ['-c', 'user.email=tests@example.invalid', '-c', 'user.name=Test', 'commit', '--allow-empty', '-m', 'tag fixture']);
+  for (const tag of ['v1.86.1', 'v1.86.2', 'v1.86.10', 'v1.86.11-beta.1', 'v2.0.0']) git(origin, ['tag', tag]);
+  git(f.root, ['init']);
+  git(f.root, ['remote', 'add', 'origin', origin]);
+  const ledger = join(f.root, 'docs', 'release-ledger');
+  mkdirSync(ledger, { recursive: true });
+  writeFileSync(join(ledger, 'cycle.json'), JSON.stringify({ baseStable: 'v1.86.1' }));
+  assert.equal(previousStableTag({ root: f.root, version: '1.86.11-beta.2' }), 'v1.86.10');
+  assert.equal(previousStableTag({ root: f.root, version: '2.0.0' }), 'v1.86.10');
 });
 
 test('failed current stable build preserves both historical evidence and honest missing timing rows', t => {
