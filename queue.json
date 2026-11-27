@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29287,
+  "revision": 29288,
   "nextTicket": 784,
   "nextFence": 783,
   "tasks": {
@@ -6028,14 +6028,14 @@
         "tests_backend/test_ha_build_identity.py"
       ],
       "notice": {
-        "key": "3:checks-failed",
+        "key": "4:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795795956342,
-        "entry": 3,
-        "detail": "Backend: tests_backend/test_ha_vacuum_history.py: failed; Backend: tests_backend/test_ha_vacuum_paths.py: failed; Backend: tests_backend/test_ha_vacuum_source_first.py: failed",
-        "eventId": "finish:869ad6ca-c151-4ed6-abd4-8e7db02dc9e8:finish:3:return:return:1598"
+        "at": 1795807194629,
+        "entry": 4,
+        "detail": "Поведение: test/bundle-sync.test.mjs: failed",
+        "eventId": "finish:fb3d4f8a-90da-4663-95e3-a519d163587d:finish:2:return:return:1598"
       },
       "s6": {
         "id": "20261127T114809227-2427aab3",
@@ -6050,7 +6050,8 @@
       "reviewCorrection": {
         "requestId": "review:1598:2:f90c6b3bf362de031cc4c7aa133966ce1397c477:0a917f294e0393c317f4a4fdeec9dc4640bb0695",
         "at": 1795780424921
-      }
+      },
+      "reason": "checks-failed"
     },
     "1599": {
       "issue": 1599,
@@ -7195,18 +7196,7 @@
   "waiting": [
     1613
   ],
-  "active": {
-    "issue": 1598,
-    "worker": "github-coordinator",
-    "token": "782:github:46055385711:1:tick:2:admit",
-    "fence": 782,
-    "materialSha": "b35fb8e9e8f6bec26b2a0643c61028a37d3ba855",
-    "expectedBase": "379a1ee4f682c2735f0b96f5258166a23f3f923b",
-    "phase": "testing",
-    "admittedAt": 1795806951668,
-    "expiresAt": 1795807485649,
-    "patchId": "89c324bd321ae16b58e9b2ec836094ae4b4c2b22"
-  },
+  "active": null,
   "events": {
     "ready:1598:95baaa6dad232e52b30c4e181506049324c8ef25": {
       "digest": "f612b2fe91c414ea4de775ae0fbe4943352bdd317ef80a1fa4c3ce0ed930c15b",
@@ -7354,6 +7344,10 @@
     },
     "finish:0764d262-4a7e-4cb5-9821-5df084e80ef7": {
       "digest": "888c74e36e451465e1632bc0faf194f8636f41c243fdfdcff611613e580c69cd",
+      "issue": 1598
+    },
+    "finish:fb3d4f8a-90da-4663-95e3-a519d163587d:finish:2:return": {
+      "digest": "0f1482fbffd256bba88d08a96115e8a4913d2cc8cfd8c700233495c1efb4d6de",
       "issue": 1598
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -7684,6 +7678,26 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "379a1ee4f682c2735f0b96f5258166a23f3f923b"
+      }
+    },
+    "finish:fb3d4f8a-90da-4663-95e3-a519d163587d:finish:2:return:return:1598": {
+      "digest": "0f1482fbffd256bba88d08a96115e8a4913d2cc8cfd8c700233495c1efb4d6de",
+      "issue": 1598,
+      "message": {
+        "kind": "return",
+        "issue": 1598,
+        "at": 1795807194629,
+        "entry": 4,
+        "notice": {
+          "key": "4:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795807194629,
+          "entry": 4,
+          "detail": "Поведение: test/bundle-sync.test.mjs: failed",
+          "eventId": "finish:fb3d4f8a-90da-4663-95e3-a519d163587d:finish:2:return:return:1598"
+        }
       }
     }
   },
