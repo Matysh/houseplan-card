@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29677,
-  "nextTicket": 796,
+  "revision": 29678,
+  "nextTicket": 797,
   "nextFence": 796,
   "tasks": {
     "1001": {
@@ -5632,14 +5632,14 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1592-paired-release-timings",
-      "materialSha": "1a3c6f593816deff2c217daf34b354a79a322b55",
+      "materialSha": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 795,
-      "queued": false,
+      "ticket": 796,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795817988333,
-      "reviewEntry": 2,
+      "readyAt": 1795818154133,
+      "reviewEntry": 3,
       "patchId": "a8a9b725830d077a2d3da083502e0c964da799b0",
       "changedFiles": [
         "PROCESS.md",
@@ -5658,8 +5658,7 @@
         "at": 1795818138924,
         "entry": 2,
         "eventId": "finish:e90702cf-d6da-4e5d-9652-42a10b332dbc:finish:3:return:return:1592"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1594": {
       "issue": 1594,
@@ -7048,7 +7047,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1592
+  ],
   "active": null,
   "events": {
     "finish:6732b949-1080-4e00-8e3a-d3df5f0651b2:finish:2:synchronized": {
@@ -7212,6 +7213,19 @@
           "entry": 2,
           "eventId": "finish:e90702cf-d6da-4e5d-9652-42a10b332dbc:finish:3:return:return:1592"
         }
+      }
+    },
+    "finish:963d70ac-f381-4758-971f-1784242a0001": {
+      "digest": "f02605d915c63db5949078ac245a7ea924984eb336cce1a45e8b6ca1599f47b7",
+      "issue": 1592,
+      "message": {
+        "kind": "queued",
+        "issue": 1592,
+        "at": 1795818154133,
+        "entry": 3,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "29471508f54cda93c59ab5f07d9a5d2f895d1560"
       }
     }
   },
