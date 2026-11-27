@@ -1,9 +1,11 @@
 /** #871: native held-input frames, not a private camera write or settled-only check. */
+import { paintedSvgPoint } from './helpers/painted-svg-point.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchColdView, requirePinnedBrowser, checkAll, finish } from './serve.mjs';
 
 requirePinnedBrowser();
 const { page, browser } = await launchColdView({ width: 1800, height: 900 }, 1, [], { hasTouch: true });
+await page.addScriptTag({ content: 'window.__hpPaintedSvgPoint=' + paintedSvgPoint.toString() });
 const out = {}, evidence = [];
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 try {
@@ -90,28 +92,35 @@ try {
         const plan=r.querySelector('.plan-svg'), paths=[...r.querySelectorAll('.vactrail path.core')];
         const host=c._plan3dHost, camera=host?.viewport.painted?.camera, frame=host?.canvas.getBoundingClientRect();
         const pathErrors=paths.map(path=>{
-          const p=path.getPointAtLength(0), a=p.matrixTransform(path.getScreenCTM());
+          const p=path.getPointAtLength(0), a=window.__hpPaintedSvgPoint(path,p.x,p.y);
           const q=camera&&camera.position.clone().set(p.x,0,p.y).project(camera);
           const b=q?{x:frame.left+(q.x+1)*frame.width/2,y:frame.top+(1-q.y)*frame.height/2}
             :p.matrixTransform(plan.getScreenCTM());
-          return Math.hypot(a.x-b.x,a.y-b.y);
+          return a ? Math.hypot(a.x-b.x,a.y-b.y) : Infinity;
         });
         const tipErrors=[...r.querySelectorAll('.vactrail line.tip.core')].map(tip=>{
           const puck=[...r.querySelectorAll('.vacpuck')].find(p=>p.dataset.mid===tip.dataset.mid);
           if(!puck)return Infinity;
-          const p=new DOMPoint(+tip.getAttribute('x2'),+tip.getAttribute('y2')).matrixTransform(tip.getScreenCTM());
+          const p=window.__hpPaintedSvgPoint(tip,+tip.getAttribute('x2'),+tip.getAttribute('y2'));
           const box=puck.getBoundingClientRect();
-          return Math.hypot(p.x-box.left-box.width/2,p.y-box.top-box.height/2);
+          return p ? Math.hypot(p.x-box.left-box.width/2,p.y-box.top-box.height/2) : Infinity;
         });
-        const svg=r.querySelector('.vactrail'),box=svg?.getBoundingClientRect();
-        const clip=getComputedStyle(svg).clipPath;
+        const svg=r.querySelector('svg.vactrail, .vactrail > svg');
+        const parent=svg?.parentElement;
+        // Clip insets are defined in the unprojected raster window. Use the
+        // paired affine reference for these dimensions, and the painted
+        // projective SVG above for the landmarks and moving tip.
+        const clipBox=r.querySelector('[data-hp-perspective-reference]') ?? svg;
+        const box=clipBox?.getBoundingClientRect();
+        const viewParent=parent?.matches('[data-hp-iso-perspective-floor]') ? parent.parentElement : parent;
+        const clip=svg ? getComputedStyle(svg).clipPath : null;
         e.commits.add(c.updateComplete); // one Promise per scheduled Lit update, read-only.
         if(c._vacRaf)e.rafIds.add(c._vacRaf); // resource assertion only, never a private writer.
         e.samples.push({at:performance.now(),pathErrors,tipErrors,d:paths.map(p=>p.getAttribute('d')),
           matrix:svg?Array.from(['a','b','c','d','e','f'],k=>svg.getScreenCTM()[k]):null,
           viewBox:svg?.getAttribute('viewBox'),clip,box:box?{w:box.width,h:box.height}:null,
           stage:{w:r.querySelector('.stage').clientWidth,h:r.querySelector('.stage').clientHeight},
-          parentTransform:svg?.parentElement.style.transform,sceneTransform:svg?.style.transform});
+          parentTransform:viewParent?.style.transform,sceneTransform:svg?.style.transform});
         window.__vacCameraSampleRaf=requestAnimationFrame(sample);
       };
       window.__vacCameraSampleRaf=requestAnimationFrame(sample);
@@ -133,7 +142,7 @@ try {
     out[`${e.label}:noRenderPerMove`] = e.commits<e.samples.length/2;
     out[`${e.label}:boundedPaintWindow`] = e.samples.every(s=>{
       if(s.clip==='none')return !s.parentTransform;
-      const values=s.clip.match(/-?[\d.e+]+(?=%)/g)?.map(Number);
+      const values=s.clip?.match(/-?[\d.e+]+(?=%)/g)?.map(Number);
       if(!values||values.length<1||values.length>4)return false;
       // Computed CSS serializes the inset as 1–4 values, like margin shorthand.
       const v=[values[0],values[1]??values[0],values[2]??values[0],values[3]??values[1]??values[0]];

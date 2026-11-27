@@ -1,8 +1,10 @@
 // #122/#160/#570 Stage 4 + #649: settings lifecycle, visual handoff and flat editor boundary.
 import { launch, checkAll, finish } from './serve.mjs';
+import { raisedIsoOverlaysReady } from './helpers/test-surface-ready.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
 await page.exposeFunction('__isoClickOpeningLock', () => page.locator('houseplan-card .oplock[role="button"]').click());
+await page.addScriptTag({ content: 'window.__hpRaisedIsoOverlaysReady=' + raisedIsoOverlaysReady.toString() });
 const out = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.renderRoot;
@@ -163,25 +165,13 @@ const out = await page.evaluate(async () => {
     ['iso-centred-gate', 'jamb-reveal', 'reveal'],
   ].every(([id, kind, material]) => hasOpeningSurface(id, kind, material));
   // #1474: devices, locks and captions share the 140 cm wall cut.
-  const isoLift = 140 / card._cellCm * card._gridPitch * Math.cos(40 * Math.PI / 180);
-  const liftOf = (node) => {
-    const floorPoint = (node?.getAttribute('data-hp-iso-floor') || '').split(',').map(Number);
-    const visual = (node?.getAttribute('data-hp-iso-visual') || '').split(',').map(Number);
-    return floorPoint.length === 2 && visual.length === 2
-      ? [visual[0] - floorPoint[0], floorPoint[1] - visual[1]] : [NaN, NaN];
-  };
-  const liftMatches = (node) => {
-    const [dx, dy] = liftOf(node);
-    return Math.abs(dx) < 1e-6 && Math.abs(dy - isoLift) < 1e-6;
-  };
   const raisedRoot = (node, kind) => node?.getAttribute('data-hp-iso-overlay-kind') === kind
     && node.getAttribute('data-hp-iso-raised') === 'true'
     && node.getAttribute('data-hp-iso-floor')
-    && node.getAttribute('data-hp-iso-visual')
-    && liftMatches(node);
+    && node.getAttribute('data-hp-iso-visual');
   result.wallCutHeightOfInteractiveRoots = raisedRoot(device, 'device')
     && raisedRoot(roomLabel, 'room-label')
-    && raisedRoot(openingLock, 'opening-lock')
+    && raisedRoot(openingLock, 'opening-lock') && window.__hpRaisedIsoOverlaysReady(card)
     && !root().querySelector('.iso-overlay-tether, .iso-overlay-ground, #hp-iso-overlay-ground');
   result.raisedFootprintsStayInvisible = !root().querySelector(
     '.iso-overlay-plate, .iso-overlay-plate-texture, #hp-iso-overlay-texture',
@@ -198,8 +188,7 @@ const out = await page.evaluate(async () => {
     const floorPoint = (node.getAttribute('data-hp-iso-floor') || '').split(',').map(Number);
     if (visual.length !== 2 || floorPoint.length !== 2) return false;
     const expected = sceneToClient(visual), actual = center(node);
-    return Math.hypot(actual[0] - expected[0], actual[1] - expected[1]) <= 1
-      && liftMatches(node);
+    return Math.hypot(actual[0] - expected[0], actual[1] - expected[1]) <= 1;
   };
   result.globalFitContainsRaisedFootprints = raisedNodes.length >= 3
     && raisedNodes.every((node) => inside(root().querySelector('.stage'), node));

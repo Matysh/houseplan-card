@@ -1,8 +1,10 @@
 // #1049: delayed native geometry must not strand a moving puck after a turn.
+import { paintedSvgPoint } from './helpers/painted-svg-point.mjs';
 import {launchColdView, requirePinnedBrowser, checkAll, finish} from './serve.mjs';
 
 requirePinnedBrowser();
 const {page, browser} = await launchColdView({width:1200,height:900});
+await page.addScriptTag({ content: 'window.__hpPaintedSvgPoint=' + paintedSvgPoint.toString() });
 const out = {};
 try {
   await page.evaluate(async () => {
@@ -51,13 +53,12 @@ try {
       const root=c.renderRoot,svg=root.querySelector('.vactrail');
       const line=svg?.querySelector('line.tip[data-mid="e_live1049"]');
       const puck=root.querySelector('.vacpuck[data-mid="e_live1049"]');
-      // Trail and tip share a projected child group; the containing SVG is
-      // only the crop. The latter is not the plan-space transform in 3D.
-      const matrix=(line??svg?.querySelector('path.core'))?.getScreenCTM(),box=puck?.getBoundingClientRect();
-      if(!matrix||!box)return {ready:false,gap:null};
-      const point=(x,y)=>new DOMPoint(x,y).matrixTransform(matrix);
+      const ink=line??svg?.querySelector('path.core'),box=puck?.getBoundingClientRect();
+      if(!ink||!box)return {ready:false,gap:null};
+      const point=(x,y)=>window.__hpPaintedSvgPoint(ink,x,y);
       const end=line?point(Number(line.getAttribute('x2')),Number(line.getAttribute('y2'))):null;
       const turn=point(270,240);
+      if(!turn)return {ready:false,gap:null};
       return {ready:true,gap:end?Math.hypot(end.x-box.left-box.width/2,end.y-box.top-box.height/2):null,
         puck:[box.left+box.width/2,box.top+box.height/2],lastKey:c._vacRt.get('e_live1049')?.lastKey,
         turn:{x:turn.x,y:turn.y},native:c._vacSrvTrails.e_live1049.current.paths,

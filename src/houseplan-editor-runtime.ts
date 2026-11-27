@@ -8395,7 +8395,7 @@ public _markerToggleEntityFields(
 public _markerHeightLimit(draft: MarkerHeightDraft & { devId?: string }): number {
     const id = draft.devId;
     return markerHeightLimitCm(id
-      ? this.host._model.some(space => ledStripsByMarker(space).has(id))
+      ? (this.host._model?.some(space => ledStripsByMarker(space).has(id)) ?? false)
       : !!this.host._ledEditor?.pendingBind);
   }
 

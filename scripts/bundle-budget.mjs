@@ -973,7 +973,8 @@ export const LAZY_ONBOARDING_GZIP_CEILING = 32_359;
 // View (300 139 B), within the unchanged initial ceiling.
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up).
 // 11264 -> 12391 B for both LED graphs.
-export const LAZY_LED_GZIP_CEILING = 12_391;
+// #1608: physical ribbon heights raise the measured lazy View graph to 13,101 B.
+export const LAZY_LED_GZIP_CEILING = 13_112;
 export const LAZY_LED_EDITOR_GZIP_CEILING = 12_391;
 
 /**

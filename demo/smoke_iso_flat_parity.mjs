@@ -1,4 +1,4 @@
-// #1451 replaces #713's identity floor with the accepted orthographic profile.
+// #1451 and #1608: the accepted tilted 3D profile with a common perspective.
 // Real controls and DOM matrices prove one camera: saved plan coordinates never
 // change, editors/no-borders use Flat, and a late error restores every Flat
 // object in its FIRST failed frame, not merely after a compensating update.
@@ -113,9 +113,13 @@ const snapshot = page => page.evaluate(()=>{
   };
   let point = centre.matrixTransform(matrix.inverse());
   if (camera?.perspective) {
-    // Measure the actual pixels of two floor rows. A projective map cannot
-    // be inverted via getScreenCTM(), which reports only an affine matrix.
-    const projected = [probe(220,220),probe(780,220),probe(780,780),probe(220,780)].sort((a,b)=>a.y-b.y);
+    // Probe two equal-depth rows aligned with the camera at every yaw.
+    // getScreenCTM reports only the affine part of the painted floor.
+    const yaw = camera.rotDeg * Math.PI / 180;
+    const cos = Math.cos(yaw), sin = Math.sin(yaw);
+    const rotatedProbe = (x, y) => probe(500 + x * cos + y * sin, 500 - x * sin + y * cos);
+    const projected = [rotatedProbe(-280, -280), rotatedProbe(280, -280),
+      rotatedProbe(280, 280), rotatedProbe(-280, 280)].sort((a, b) => a.y - b.y);
     const [a,b] = projected.slice(0,2).sort((a,b)=>a.x-b.x);
     const [c,d] = projected.slice(2).sort((a,b)=>a.x-b.x);
     const farWidth = b.x-a.x, nearWidth = d.x-c.x;

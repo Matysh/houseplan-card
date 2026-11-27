@@ -1,4 +1,5 @@
 // #918: real recorder → public payload → cold View. All home data is synthetic.
+import { paintedSvgPoint } from './helpers/painted-svg-point.mjs';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +19,7 @@ const checks = { recorderIdentified: fixture.evidence.identified,
 for (const [screen, viewport] of [['desktop', { width: 1200, height: 900 }],
   ['mobile', { width: 390, height: 844 }]]) {
   const { page, browser } = await launchColdView(viewport, 1, [], { hasTouch: screen === 'mobile' });
+  await page.addScriptTag({ content: 'window.__hpPaintedSvgPoint=' + paintedSvgPoint.toString() });
   try {
     await page.evaluate(async (f) => {
       const old = window.__card, baseWS = old.hass.callWS.bind(old.hass);
@@ -59,7 +61,7 @@ for (const [screen, viewport] of [['desktop', { width: 1200, height: 900 }],
       }));
       witness.geometry = () => {
         const c = window.__card, root = c.renderRoot;
-        const path = root.querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core');
+        const path = root.querySelector('.vactrail [data-hp-plan-rotation-frame] > path.core');
         const tip = root.querySelector('.vactrail line.tip.core');
         const puck = root.querySelector('.vacpuck[data-mid="e_vacuum_route918"]');
         const plan = root.querySelector('.plan-svg');
@@ -69,8 +71,7 @@ for (const [screen, viewport] of [['desktop', { width: 1200, height: 900 }],
           :new DOMPoint(320, 420).matrixTransform(plan.getScreenCTM());
         const box = puck?.getBoundingClientRect();
         const centre = box ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : null;
-        const tipEnd = tip ? new DOMPoint(+tip.getAttribute('x2'), +tip.getAttribute('y2'))
-          .matrixTransform(tip.getScreenCTM()) : null;
+        const tipEnd = tip ? window.__hpPaintedSvgPoint(tip, +tip.getAttribute('x2'), +tip.getAttribute('y2')) : null;
         const start = path?.getPointAtLength(0), end = path?.getPointAtLength(path.getTotalLength());
         const visible = path ? getComputedStyle(path).visibility !== 'hidden'
           && getComputedStyle(path).display !== 'none' && path.getTotalLength() > 0 : false;

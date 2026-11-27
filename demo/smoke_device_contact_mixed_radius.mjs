@@ -75,7 +75,7 @@ try {
           const projection = card._deviceContacts.glassProjection;
           // Reconstruct each rim in the authored plane before measuring it.
           // In 2.5D the same outline is shared by the two depth-sorted SVGs,
-          // and the straight views also project it through the perspective lens.
+          // and the 3D camera projects it through the perspective lens.
           const reverseProjection = (point, dx, dy) => {
             if (!projection) return [point.x - dx, point.y - dy];
             const {camera, height} = projection;
@@ -87,7 +87,7 @@ try {
             if (camera.perspective) {
               const [cx, cy] = camera.perspective.center;
               const rate = camera.perspective.rate;
-              const divisor = (1 - rate * lift) / (1 + rate * (sy - cy));
+              const divisor = (1 - rate * (1 + (camera.perspective.heightDepth ?? 0)) * lift) / (1 + rate * (sy - cy));
               sx = cx + (sx - cx) * divisor;
               sy = cy + (sy - cy) * divisor;
             }

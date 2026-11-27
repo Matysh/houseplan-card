@@ -3,11 +3,13 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {launchPanelCold,requirePinnedBrowser,check,finish} from './serve.mjs';
 import {assertFreshDemoBundleUnlessAllowed} from './bundle-freshness.mjs';
 import {fixtureWallKey} from './fixtures/wall-key.mjs';
+import { paintedSvgPoint } from './helpers/painted-svg-point.mjs';
 requirePinnedBrowser('#1175 continuous native/live vacuum path');
 const folder='artifacts/1175-vacuum-tail';mkdirSync(folder,{recursive:true});
 const {page,browser}=await launchPanelCold({width:1200,height:900});
 const evidence={modes:[]};let controlWrites=0;
 try{
+ await page.addScriptTag({ content: 'window.__hpPaintedSvgPoint=' + paintedSvgPoint.toString() });
  const poly=[[.07,.08],[.88,.08],[.88,.73],[.07,.73]];
  const walls=poly.map((a,index)=>{
    const b=poly[(index+1)%poly.length];
@@ -55,19 +57,7 @@ try{
   f.measure=()=>{
    const c=window.__card,root=c.renderRoot,line=root.querySelector('line.tip[data-mid="e_tail1175"]');
    const puck=root.querySelector('.vacpuck[data-mid="e_tail1175"]'),box=puck?.getBoundingClientRect();
-   let end=null;
-   if (line?.closest('[data-hp-iso-perspective-floor]')) {
-     // Observe the painted endpoint. getScreenCTM misses the HTML lens.
-     const probe=document.createElementNS('http://www.w3.org/2000/svg','rect');
-     probe.setAttribute('x',line.getAttribute('x2'));
-     probe.setAttribute('y',line.getAttribute('y2'));
-     line.parentElement.append(probe);
-     end=probe.getBoundingClientRect();
-     probe.remove();
-   } else if (line) {
-     const matrix=line.getScreenCTM();
-     end=matrix ? new DOMPoint(+line.getAttribute('x2'),+line.getAttribute('y2')).matrixTransform(matrix) : null;
-   }
+   const end = line ? window.__hpPaintedSvgPoint(line, +line.getAttribute('x2'), +line.getAttribute('y2')) : null;
    return {gap:end&&box?Math.hypot(end.x-box.left-box.width/2,end.y-box.top-box.height/2):null,
     puck:box?[box.left+box.width/2,box.top+box.height/2]:null,
     d:root.querySelector('.vactrail path.core')?.getAttribute('d')||'',
