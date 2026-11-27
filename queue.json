@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 29324,
+  "revision": 29325,
   "nextTicket": 785,
-  "nextFence": 784,
+  "nextFence": 785,
   "tasks": {
     "1001": {
       "issue": 1001,
@@ -5917,7 +5917,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 784,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795807294999,
       "reviewEntry": 5,
@@ -7270,10 +7270,18 @@
       "runId": 46056086962
     }
   },
-  "waiting": [
-    1598
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1598,
+    "worker": "finish",
+    "token": "784:finish:72221a8c-e7f8-4d56-b910-eff512878e09:finish:1:admit",
+    "fence": 784,
+    "materialSha": "b1b9454c7272f863091ee96dc5bc896b7aa9821a",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795807793532,
+    "expiresAt": 1795808093532
+  },
   "events": {
     "ready:1598:95baaa6dad232e52b30c4e181506049324c8ef25": {
       "digest": "f612b2fe91c414ea4de775ae0fbe4943352bdd317ef80a1fa4c3ce0ed930c15b",
@@ -7884,6 +7892,29 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:72221a8c-e7f8-4d56-b910-eff512878e09:finish:1:admit": {
+      "digest": "1cf316a60abfe8c950f522049e58429b79779dccef4884b09387d6c1ac38dd0e",
+      "issue": 1598,
+      "message": {
+        "kind": "admitted",
+        "issue": 1598,
+        "at": 1795807793532,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b1b9454c7272f863091ee96dc5bc896b7aa9821a",
+        "phase": "sync",
+        "evidence": {
+          "id": "20261127T114809227-2427aab3",
+          "name": "Тесты для задачи #1598 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T114809227-2427aab3/report.json",
+          "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
+          "status": "passed",
+          "finishedAt": "2026-11-27T11:48:11.524Z",
+          "failures": []
+        }
       }
     }
   },
