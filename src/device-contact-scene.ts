@@ -67,13 +67,15 @@ export class DeviceContactScene {
       }
     }
   }
-  public component(id: string): string[] {
+  public component(id: string, levels?: ReadonlyMap<string, string>): string[] {
     const seen = new Set<string>(), queue = [id];
     while (queue.length) {
       const next = queue.pop()!;
       if (seen.has(next) || !this.shapes.has(next)) continue;
       seen.add(next);
-      queue.push(...(this.edges.get(next) || []));
+      for (const neighbor of this.edges.get(next) || []) {
+        if (!levels || (levels.get(neighbor) ?? 'auto') === (levels.get(next) ?? 'auto')) queue.push(neighbor);
+      }
     }
     return [...seen].sort();
   }
@@ -100,11 +102,11 @@ export class DeviceContactScene {
     for (const next of this.component(id)) affected.add(next);
     return affected;
   }
-  public components(ids: Iterable<string> = this.shapes.keys()): ContactShape[][] {
+  public components(ids: Iterable<string> = this.shapes.keys(), levels?: ReadonlyMap<string, string>): ContactShape[][] {
     const seen = new Set<string>(), out: ContactShape[][] = [];
     for (const id of ids) {
       if (seen.has(id)) continue;
-      const group = this.component(id); group.forEach((key) => seen.add(key));
+      const group = this.component(id, levels); group.forEach((key) => seen.add(key));
       if (group.length) out.push(group.map((key) => this.shapes.get(key)!));
     }
     return out;

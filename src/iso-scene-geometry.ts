@@ -2,6 +2,7 @@
  * Structural geometry and projected bounds shared by the 3D scene,
  * the geometry worker and the interactive controls.
  */
+import { markerHeightGeometry } from './marker-height';
 import { ISO_ICON_SCALE } from './iso-tiles';
 import { ISO_LAB_OPENINGS } from './iso-lab-camera';
 import { isoMarkerOccluded } from './iso-marker-context';
@@ -11,7 +12,7 @@ import { clampScale, fitView, islandsOf, roomPoly, type SpaceDisplay } from './l
 import {
   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
   ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT, isoDisplayWallHeight,
-  projectedFrame, isoCameraFor, isoPerspectiveCamera, isoFloorMatrix, type PlanPoint, type ScenePoint, type IsoCamera,
+  projectedFrame, isoCameraFor, isoPerspectiveCamera, isoFloorMatrix, isoLocalPlaneCss, type PlanPoint, type ScenePoint, type IsoCamera,
 } from './iso-projection';
 import { planRotation, type PlanRotation } from './view-frame';
 import {
@@ -562,17 +563,19 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
     isoPhysicalScenes.set(value, structural);
     lruWrite(input.cache, input.source.key, value, 8);
   }
-  if (rotation !== 0) {
+  {
     let projections = isoProjectedScenes.get(value);
     if (!projections) { projections = new Map(); isoProjectedScenes.set(value, projections); }
     const physical = structural;
     let projected = projections.get(rotation);
-    const bounds = camera.rotDeg % 90 === 0 ? lensBounds(physical) : null;
+    const bounds = lensBounds(physical) ?? input.liveFrame;
     if (bounds) {
       // Older serialized entries store orthographic points at the same angle.
       const previous = projected && isoPerspectiveCameras.get(projected);
       const next = isoPerspectiveCamera(camera,bounds,input.contentFrame,wallHeight);
-      const unchanged = previous?.perspective?.rate === next.perspective?.rate;
+      const beforeLens = previous?.perspective, nextLens = next.perspective;
+      const unchanged = beforeLens?.rate === nextLens?.rate
+        && beforeLens?.center[0] === nextLens?.center[0] && beforeLens?.center[1] === nextLens?.center[1];
       if (!previous || !unchanged) projected = undefined;
       camera = previous && unchanged ? previous : next;
     }
@@ -818,16 +821,17 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     preferredRoomId?: string | null,
     core?: number,
     signal?: {text: string; belowBadge: boolean},
+    height?: ReturnType<typeof markerHeightGeometry>,
   ): IsoOverlayPlacement => {
     // UI Lab: devices, room labels and door locks share the wall-cut plane.
-    const visualOffset = wallHeight;
+    const visualOffset = height?.top ?? wallHeight;
     const cacheKey = `${kind}\u0000${id}`;
     // Nothing here depends on zoom or stage size, so a pinch, wheel or resize
     // reuses the immutable placement and Lit keeps the raised SVG subtree.
     const signature = [floorAnchor[0], floorAnchor[1],
       footprintHalfSize[0], footprintHalfSize[1],
       preferredRoomId || '', wallHeight, visualOffset, cameraSignature,
-      core ?? '', signal?.text ?? '', !!signal?.belowBadge, !!input.floorAlignedMarkers,
+      height?.thickness ?? '', height?.level ?? '', core ?? '', signal?.text ?? '', !!signal?.belowBadge, !!input.floorAlignedMarkers,
     ].join('|');
     const cached = lruRead(placements!, cacheKey);
     if (cached.hit && cached.value.signature === signature) return cached.value.placement;
@@ -854,7 +858,19 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       visualOffset,
       camera: input.camera,
     });
-    if (kind === 'device') placement.deviceSize = core;
+    if (input.floorAlignedMarkers && input.camera?.perspective) {
+      const camera = input.camera;
+      placement.localPlaneStyles = [
+        `--hp-iso-marker-plane:${isoLocalPlaneCss(floorAnchor,visualOffset,camera)}`,
+        `--hp-iso-marker-hit-plane:${isoLocalPlaneCss(floorAnchor,visualOffset,camera,true)}`,
+        `--hp-iso-room-plane:${isoLocalPlaneCss(floorAnchor,visualOffset,camera,false,true)}`,
+        `--hp-iso-room-hit-plane:${isoLocalPlaneCss(floorAnchor,visualOffset,camera,true,true)}`,
+      ].join(';');
+    }
+    if (kind === 'device') {
+      placement.deviceSize = core; placement.deviceHeight = visualOffset;
+      placement.deviceThickness = height?.thickness; placement.deviceHeightLevel = height?.level;
+    }
     if(input.floorAlignedMarkers && kind === 'opening-lock') {
       const occlusionHalfSize: PlanPoint = core ? [core/2,core/2] : footprintHalfSize;
       const camera = input.camera ?? ISO_CAMERA;
@@ -897,6 +913,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       preferredRoomId,
       core,
       presentation.lqiText != null ? {text: String(presentation.lqiText), belowBadge: presentation.valueBadge?.position === 'bottom'} : undefined,
+      markerHeightGeometry(device.marker?.height_cm, input.cellCm, wallHeight, core),
     );
     devices.set(device.id, placement);
     entries.push({

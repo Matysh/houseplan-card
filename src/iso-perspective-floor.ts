@@ -1,9 +1,9 @@
 import { html, nothing, svg, type TemplateResult } from 'lit';
 import { applyIsoMatrix, isoFloorMatrix, isoHeightLift, projectPlanPoint, unprojectIsoAffine, type IsoCamera, type ViewRect } from './iso-projection';
 
-function lensStyle(view: ViewRect, height: number, x: number, y: number, rate: number, lift: number) {
+function lensStyle(view: ViewRect, height: number, x: number, y: number, rate: number, lift: number, heightDepth = 0) {
   const origin = ((x-view.x)/view.w*100) + '% ' + ((y-view.y)/view.h*100) + '%';
-  const matrix = 'matrix3d(1,0,0,0,0,1,0,' + (-rate*view.h/height) + ',0,0,1,0,0,' + (-lift*height/view.h) + ',0,1)';
+  const matrix = 'matrix3d(1,0,0,0,0,1,0,' + (-rate*view.h/height) + ',0,0,1,0,0,' + (-lift*height/view.h) + ',0,' + (1-rate*heightDepth*lift) + ')';
   return {origin,matrix};
 }
 
@@ -11,14 +11,14 @@ function lensStyle(view: ViewRect, height: number, x: number, y: number, rate: n
  * Chromium and WebKit. It shares the anchored view box of the scene. */
 export function renderIsoPerspectiveFloor(camera: IsoCamera, content: TemplateResult, view: ViewRect,
   size: readonly [number,number], height = 0, layer: 'floor' | 'led' | 'vacuum' = 'floor'): TemplateResult {
-  const {center:[x,y],rate} = camera.perspective!;
+  const {center:[x,y],rate,heightDepth=0} = camera.perspective!;
   const lift = isoHeightLift(camera,height);
-  const {origin,matrix} = lensStyle(view,size[1],x,y,rate,lift);
+  const {origin,matrix} = lensStyle(view,size[1],x,y,rate,lift,heightDepth);
   const viewBox = [view.x,view.y,view.w,view.h].join(' ');
   return html`${layer === 'vacuum' ? svg`<svg data-hp-perspective-reference aria-hidden="true"
     data-hp-live-inherited-scene="camera" viewBox=${viewBox} preserveAspectRatio="none"
     style="position:absolute;inset:0;width:100%;height:100%;visibility:hidden;pointer-events:none"></svg>` : nothing}
-    <div data-hp-iso-perspective-floor data-lens=${[x,y,rate,lift].join(' ')}
+    <div data-hp-iso-perspective-floor data-lens=${[x,y,rate,lift,heightDepth].join(' ')}
     class=${layer === 'vacuum' ? 'vactrail' : nothing} data-hp=${layer === 'vacuum' ? 'vacuum-trail' : nothing}
     style=${'position:absolute;inset:0;pointer-events:none;transform-origin:' + origin + ';transform:' + matrix
       + (layer === 'led' ? ';z-index:2' : '')}>
@@ -35,8 +35,8 @@ export function resizeIsoPerspectiveFloor(svg: SVGElement, viewBox: string, stag
   if (!plane || !lens || !stageHeight) return;
   const [vx,vy,w,h] = viewBox.split(/\s+/).map(Number);
   if (!(w > 0 && h > 0)) return;
-  const [x,y,rate,lift] = lens.split(' ').map(Number);
-  const {origin,matrix} = lensStyle({x:vx,y:vy,w,h},stageHeight,x,y,rate,lift);
+  const [x,y,rate,lift,heightDepth] = lens.split(' ').map(Number);
+  const {origin,matrix} = lensStyle({x:vx,y:vy,w,h},stageHeight,x,y,rate,lift,heightDepth);
   if (plane.style.transformOrigin !== origin) plane.style.transformOrigin = origin;
   if (plane.style.transform !== matrix) plane.style.transform = matrix;
 }
@@ -48,11 +48,13 @@ export function resizeIsoPerspectiveFloor(svg: SVGElement, viewBox: string, stag
 export function renderIsoPerspectiveSnapshot(camera: IsoCamera, bounds: ViewRect, content: TemplateResult[]): TemplateResult {
   const affine = isoFloorMatrix(camera);
   const ends = [applyIsoMatrix([bounds.x,bounds.y],affine),
+    applyIsoMatrix([bounds.x+bounds.w,bounds.y],affine),
+    applyIsoMatrix([bounds.x,bounds.y+bounds.h],affine),
     applyIsoMatrix([bounds.x+bounds.w,bounds.y+bounds.h],affine)];
-  const left = Math.min(ends[0][0],ends[1][0]), top = Math.min(ends[0][1],ends[1][1]);
+  const left = Math.min(...ends.map(p=>p[0])), top = Math.min(...ends.map(p=>p[1]));
   const columns = 2, rows = 16;
-  const width = Math.abs(ends[0][0]-ends[1][0])/columns;
-  const height = Math.abs(ends[0][1]-ends[1][1])/rows;
+  const width = (Math.max(...ends.map(p=>p[0]))-left)/columns;
+  const height = (Math.max(...ends.map(p=>p[1]))-top)/rows;
   if (!(width > 0 && height > 0)) return svg`${content}`;
   const project = (x: number, y: number) => projectPlanPoint(unprojectIsoAffine([x,y],camera),0,camera);
   const tiles = Array.from({length:rows*columns*2},(_,index) => {

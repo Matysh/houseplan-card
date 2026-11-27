@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { Mesh, MeshBasicMaterial, Plane, Raycaster, Vector2, Vector3 } from 'three';
+import { markerHeightGeometry, markerHeightLimitCm, markerHeightFields, markerHeightDraftText } from '../test-build/marker-height.js';
+import { gridVisualUnits } from '../test-build/grid-scale.js';
 import { plan3dCamera, planWorldPoint } from '../test-build/plan-3d-camera.js';
 import { planPrismMesh } from '../test-build/plan-3d-mesh.js';
 import { ISO_VIEW_PROFILE, ISO_LAB_CAMERA, isoLabYaw, isoLabCamera, isoLabOpeningAmount, isoLabOpeningPreview } from '../test-build/iso-lab-camera.js';
@@ -9,11 +11,38 @@ import {
   ISO_CAMERA, ISO_OVERLAY_VISUAL_OFFSET, ISO_RAISED_OVERLAY_HEIGHT,
   ISO_WALL_HEIGHT, applyIsoMatrix, clientToScenePoint, isoFloorMatrix,
   isoOverlayVisualHeight, isoPlaneMatrix, isoPlaneMatrixCss, projectPlanPoint,
-  projectedFrame, unprojectFloorPoint, isoFloorLinearCss, isoTileDepthStyles, isoCameraFor, isoDisplayWallHeight, isoCameraDepth, isoPerspectiveCamera,
+  projectedFrame, unprojectFloorPoint, isoFloorLinearCss, isoTileDepthStyles, isoCameraFor, isoDisplayWallHeight, isoCameraDepth, isoPerspectiveCamera, isoLocalPlaneCss,
 } from '../test-build/iso-projection.js';
 
 const close = (actual, expected, epsilon = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
+
+test('#1608 explicit heights hold independent of horizontal size and physical scale', () => {
+  const max = markerHeightLimitCm(false), maxLed = markerHeightLimitCm(true);
+  close(max, 133.52);
+  close(maxLed, 137.975);
+  for (const cell of [2.54, 5, 20]) {
+    const wall = gridVisualUnits(isoDisplayWallHeight(), cell);
+    for (const [isLed, limit, automaticRatio] of [[false, max, .24], [true, maxLed, .075]]) {
+      for (const diameter of [20, 40]) {
+        const zero = markerHeightGeometry(0, cell, wall, diameter, isLed);
+        const fitted = markerHeightGeometry(limit, cell, wall, diameter, isLed);
+        close(zero.top - zero.thickness, 0);
+        close(fitted.top, wall);
+        close(fitted.thickness, zero.thickness);
+        const automatic = markerHeightGeometry(undefined, cell, wall, diameter, isLed);
+        close(automatic.top, wall);
+        close(automatic.thickness, diameter * automaticRatio);
+      }
+    }
+  }
+  const originalHeightCm = 60.1234567;
+  assert.equal(markerHeightDraftText({}, false), '');
+  assert.equal(markerHeightDraftText({ originalHeightCm }, true), String(originalHeightCm / 2.54));
+  assert.deepEqual(markerHeightFields({ originalHeightCm }, true, max), { height_cm: originalHeightCm });
+  assert.deepEqual(markerHeightFields({ originalHeightCm, heightTouched: true, heightText: '' }, true, max), {});
+  assert.deepEqual(markerHeightFields({ heightTouched: true, heightText: '0' }, true, max), { height_cm: 0 });
+});
 
 test('#1514 the 3D presets match reference framing and floor hits at all eight turns', () => {
   const lens = { x: 840, y: -520, w: 650, h: 960 };
@@ -90,25 +119,38 @@ test('#1514 cutouts remain open in physical meshes and share the camera depth', 
   }
 });
 
-test('#1526 direct cameras widen a square by 16% and preserve upright edges', () => {
+test('#1608 the tilted lens foreshortens the floor and raised caps at every turn', () => {
   const rect = {x:1800,y:-270,w:560,h:560};
   const corners = [[1800,-270],[2360,-270],[2360,290],[1800,290]];
   for (const rotation of [0,45,90,135,180,225,270,315]) {
     const base = isoCameraFor(rotation);
     const camera = isoPerspectiveCamera(base,rect);
-    if (rotation % 90 === 0) {
-      assert.equal(camera,base);
-      continue;
-    }
-    const rows = corners.map(p => projectPlanPoint(p,0,camera)).sort((a,b) => a[1]-b[1]);
-    const width = (a,b) => Math.abs(a[0]-b[0]);
-    close(width(rows[2],rows[3])/width(rows[0],rows[1]),1.16);
+    assert.ok(camera.perspective);
+    const [a,b,c,d] = isoFloorMatrix(base);
+    const sorted = corners.map(p => applyIsoMatrix(p,[a,b,c,d,0,0])).sort((p,q) => p[1]-q[1]);
+    const depth = sorted.at(-1)[1] - sorted[0][1];
+    const rate = camera.perspective.rate;
+    close((1 + rate * depth / 2) / (1 - rate * depth / 2),1.25);
     for (const point of [...corners,[-80_000,90_000]]) {
       const floor = projectPlanPoint(point,0,camera);
-      close(floor[0],projectPlanPoint(point,140,camera)[0]);
       const recovered = unprojectFloorPoint(floor,camera);
       close(recovered[0],point[0],1e-8);
       close(recovered[1],point[1],1e-8);
+    }
+    const width = height => {
+      const left = projectPlanPoint([2050,20],height,camera), right = projectPlanPoint([2050 + a * 10,20 + c * 10],height,camera);
+      return Math.hypot(right[0]-left[0],right[1]-left[1]);
+    };
+    assert.ok(width(140) > width(0), 'elevation changes the onscreen scale');
+    for (const height of [0, 60, 140]) {
+      const origin = [2010,80], to = projectPlanPoint(origin,height,camera);
+      const css = isoLocalPlaneCss(origin,height,camera).slice(7,-1).split(',').map(Number);
+      const inv = isoLocalPlaneCss(origin,height,camera,true).slice(7,-1).split(',').map(Number);
+      const displacement = [0.00001,-0.00002];
+      const dot = projectPlanPoint([origin[0]+displacement[0],origin[1]+displacement[1]],height,camera);
+      const result = applyIsoMatrix(displacement,css);
+      close(result[0],dot[0]-to[0],1e-9); close(result[1],dot[1]-to[1],1e-9);
+      applyIsoMatrix(result,inv).forEach((component,index) => close(component,displacement[index]));
     }
   }
 });

@@ -233,6 +233,8 @@ export interface Marker {
   /** `ripple` is legacy read compatibility; UI maps it to icon_ripple. */
   display?: 'badge' | 'ripple' | 'icon_ripple' | 'value' | 'static_icon' | 'value_static_icon' | null; // how the device is drawn
   ripple_color?: string | null;
+  /** Floor to lower marker face, cm; absent means automatic height. */
+  height_cm?: number | null;
   ripple_size?: number | null; // max ring diameter, in icon diameters (default 1.5)
   size?: number | null;        // icon size multiplier (default 1)
   angle?: number | null;       // icon rotation, degrees

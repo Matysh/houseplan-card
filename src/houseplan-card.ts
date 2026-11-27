@@ -3580,6 +3580,10 @@ export class HouseplanCard extends LitElement {
     moreInfoOpen?: boolean;
     moreInfoFilter?: string;
     rippleColor: string; // '' = live/semantic automatic activity colour
+    heightText?: string;
+    originalHeightCm?: number | null;
+    heightTouched?: boolean;
+    heightBadInput?: boolean;
     rippleSize: number;  // in icon diameters; package default 1.5
     size: number;        // icon size multiplier
     angle: number;       // icon rotation, degrees
@@ -8063,10 +8067,17 @@ export class HouseplanCard extends LitElement {
     );
   }
 
+  private _nativeDeviceTarget(target: EventTarget | null): boolean {
+    return this._mode === 'view' && target instanceof Element
+      && (target.hasAttribute('data-hp-3d-native') || !!(
+        this._plan3dHost?.canvas.hasAttribute('data-hp-plan-3d-ready')
+        && target.matches('.led-hit') && target.closest('[data-hp-iso-perspective-floor]')
+      ));
+  }
+
   private _nativeDeviceForAction(ev: Event, fallback: DevItem): DevItem | undefined {
-    const target = ev.currentTarget as HTMLElement | null;
     if (!(ev instanceof MouseEvent) || ev.type === 'click' && ev.detail === 0
-      || !target?.hasAttribute('data-hp-3d-native') || this._mode !== 'view') return fallback;
+      || !this._nativeDeviceTarget(ev.currentTarget)) return fallback;
     const id = this._plan3dHost?.pick(ev.clientX, ev.clientY);
     return id ? this._renderDevices.find(device => device.id === id && device.space === this._space) : undefined;
   }
@@ -8088,7 +8099,7 @@ export class HouseplanCard extends LitElement {
   private _ctxDevice(ev: MouseEvent, d: DevItem): void {
     const picked = this._nativeDeviceForAction(ev, d);
     if (!picked) return;
-    d = (ev.currentTarget as Element | null)?.hasAttribute('data-hp-3d-native')
+    d = this._nativeDeviceTarget(ev.currentTarget)
       ? picked : this._deviceForPointerEvent(ev as PointerEvent, picked);
     if (this._mode === 'devices') { this._editorRuntime?.deviceCopy.open(ev, d); return; }
     if (this._mode !== 'view') return;
@@ -8118,7 +8129,7 @@ export class HouseplanCard extends LitElement {
     const picked = this._nativeDeviceForAction(ev, d);
     if (!picked) return;
     ev.stopPropagation();
-    d = (ev.currentTarget as Element | null)?.hasAttribute('data-hp-3d-native') ? picked : this._deviceForClickEvent(ev, picked);
+    d = this._nativeDeviceTarget(ev.currentTarget) ? picked : this._deviceForClickEvent(ev, picked);
     if (this._deviceDrag?.moved || this._suppressClick || this._holdFired) return;
     if (this._mode === 'devices') {
       const properties = this._editorRuntime?.properties;
@@ -9738,7 +9749,7 @@ export class HouseplanCard extends LitElement {
     }
     this._deviceDragRetirement.begin(ev.pointerId);
     if (this._mode === 'view' && ev.pointerType === 'touch' && this._touchSequenceMultitouch) return;
-    d = (ev.currentTarget as Element | null)?.hasAttribute('data-hp-3d-native') ? picked : this._deviceHits.begin(
+    d = this._nativeDeviceTarget(ev.currentTarget) ? picked : this._deviceHits.begin(
       this.renderRoot, this._renderDevices, this._space, ev, picked,
     );
     if (this._mode === 'view') {
@@ -14351,8 +14362,15 @@ export class HouseplanCard extends LitElement {
     }
     const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${stageMode === 'plan' ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${stageMode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${stageMode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
     this._modePresenter.preparedStageClass = stageClass;
-    const ledTargets = () => svg`<g transform=${this._floorTransform} opacity="0">
-      ${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view, 'body') ?? nothing}</g>`;
+    const ledTargets = (markerIds?: ReadonlySet<string>) => svg`<g transform=${this._floorTransform} opacity="0">
+      ${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view, 'body', false, markerIds) ?? nothing}</g>`;
+    const ledPlanes = new Map<number, Set<string>>();
+    for (const ribbon of this._plan3dPresentation?.world.ribbons ?? []) {
+      const height = ribbon.height ?? this._plan3dPresentation!.sectionHeight;
+      const owners = ledPlanes.get(height) ?? new Set<string>();
+      owners.add(ribbon.owner);
+      ledPlanes.set(height, owners);
+    }
     const floorTargets = () => svg`<g class="iso-floor-scene" transform=${this._floorTransform} opacity="0">
       ${space.bg && backdropHref && backdropPaint ? svg`<image data-hp="backdrop" href=${backdropHref}
         x=${backdropPaint.x} y=${backdropPaint.y} width=${backdropPaint.w} height=${backdropPaint.h}
@@ -14441,8 +14459,8 @@ export class HouseplanCard extends LitElement {
               ${this._stairsView.renderLayer(stairVolumes, 'volume')}</g>` : nothing}
             ${floorCamera?.perspective ? nothing : ledTargets()}
           </svg>
-          ${floorCamera?.perspective && leds.size ? renderIsoPerspectiveFloor(floorCamera, ledTargets(), view,
-            perspectiveSize, gridVisualUnits(isoDisplayWallHeight(), this._cellCm), 'led') : nothing}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
+          ${floorCamera?.perspective ? Array.from(ledPlanes, ([height, owners]) =>
+            renderIsoPerspectiveFloor(floorCamera, ledTargets(owners), view, perspectiveSize, height, 'led')) : nothing}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
           ${this._plan3dPresentation ? html`<canvas data-hp-plan-3d aria-hidden="true"></canvas>` : nothing}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always
@@ -15206,6 +15224,7 @@ export class HouseplanCard extends LitElement {
     const presentation = rotation && (flatRotation !== undefined || !(this._isoFloorCamera && ISO_LAB_FLOOR_MARKERS))
       && typeof d.marker?.angle === 'number' ? { ...resolved, angle: resolved.angle + rotation } : resolved;
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
+    if (isoPlacement?.localPlaneStyles) st.push(isoPlacement.localPlaneStyles);
     if (limitedSize !== null) st.push(`--dev-size:${limitedSize}cqw`);
     const wallMask = isoPlacement?.wallMask;
     // A warm remount can paint the same ids at a different size. Reference
@@ -15568,7 +15587,7 @@ export class HouseplanCard extends LitElement {
       role=${this._mode === 'view' && !separateAreaAction ? 'button' : nothing}
       tabindex=${this._mode === 'view' && !separateAreaAction ? '0' : nothing}
       aria-label=${this._mode === 'view' && !separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
-      style="${labelGeometry};color:${nameColor.c};opacity:${op}"
+      style="${labelGeometry};color:${nameColor.c};opacity:${op};${isoPlacement?.localPlaneStyles ?? ''}"
       @keydown=${this._mode === 'view' && !separateAreaAction && r.id
         ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
       @pointerdown=${this._markup
@@ -15940,7 +15959,7 @@ export class HouseplanCard extends LitElement {
         data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
         data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
         data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
-        style="left:${left}%;top:${top}%"
+        style="left:${left}%;top:${top}%;${isoPlacement?.localPlaneStyles ?? ''}"
         @click=${(e: MouseEvent) => {
           if (this._mode !== 'view') return;
           e.stopPropagation();

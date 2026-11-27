@@ -15049,8 +15049,8 @@ const MUTANT_DEFINITIONS = [
     because: '#1474 places room names and devices at the same wall-cut height while preserving their saved anchors.',
     patches: [{
       file: 'src/iso-scene-geometry.ts',
-      find: '    const visualOffset = wallHeight;',
-      replace: "    const visualOffset = kind === 'room-label' ? 0 : wallHeight;",
+      find: '    const visualOffset = height?.top ?? wallHeight;',
+      replace: "    const visualOffset = kind === 'room-label' ? 0 : height?.top ?? wallHeight;",
     }],
   },
   {

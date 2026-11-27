@@ -61,7 +61,11 @@ export interface IsoDeviceWallMask {
   glassMask: (faces: readonly IsoDeviceSurface[], origin?: PlanPoint) => IsoDeviceOcclusion;
 }
 export interface IsoOverlayPlacement {
+  localPlaneStyles?: string;
   deviceSize?: number;
+  deviceHeight?: number;
+  deviceThickness?: number;
+  deviceHeightLevel?: string;
   wallMask?: IsoDeviceWallMask;
   /** Local #1451 context, without moving the immutable floor anchor. */
   occluded?: boolean;

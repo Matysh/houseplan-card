@@ -172,12 +172,14 @@ export class CardPlan3d {
         const opacity = element.matches('.unavail:not(.led-badge)')
           ? Number.parseFloat(element.ownerDocument.defaultView?.getComputedStyle(element)
             .getPropertyValue('--hp-device-offline-opacity') ?? '') || 1 : 1;
-        return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: presentation.sectionHeight,
+        return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: placement.deviceHeight ?? presentation.sectionHeight, thickness: placement.deviceThickness,
           faces, opacity }] : [];
       });
       const opacityByMarker = new Map(markers.map(marker => [marker.id, marker.opacity]));
-      const outlines = contacts?.volumeOutlines(new Set(opacityByMarker.keys())).map(group => ({
-        ...group, opacity: Math.max(...group.members.map(id => opacityByMarker.get(id) ?? 1)),
+      const outlines = contacts?.volumeOutlines(new Set(opacityByMarker.keys()), new Map(markers.map(marker => [marker.id, this.devices?.get(marker.id)?.deviceHeightLevel ?? 'auto']))).map(group => ({
+        ...group, height: this.devices?.get(group.members[0])?.deviceHeight,
+        thickness: this.devices?.get(group.members[0])?.deviceHeightLevel === 'auto' ? undefined : this.devices?.get(group.members[0])?.deviceThickness,
+        opacity: Math.max(...group.members.map(id => opacityByMarker.get(id) ?? 1)),
       }));
       this.submittedFloor = this.port.floorKey();
       this.host.present(presentation, this.port.view(), markers, outlines);

@@ -13,7 +13,7 @@ export interface IsoCamera {
   origin: PlanPoint;
   /** Orthographic floor depth scale; omitted means an unsqueezed test camera. */
   floorScaleY?: number;
-  perspective?: Readonly<{ center: ScenePoint; rate: number }>;
+  perspective?: Readonly<{ center: ScenePoint; rate: number; heightDepth?: number }>;
 }
 
 export interface ViewRect { x: number; y: number; w: number; h: number; }
@@ -47,27 +47,28 @@ export function isoCameraFor(rotation: PlanRotation): Readonly<IsoCamera> {
   }
   return camera;
 }
-// The calibrated floor spans the far and near ends of this lens. The
-// height coordinate never participates in its scale, so wall edges stay vertical.
-const DIRECT_WIDTH_RATIO = 1.16;
+// UI Lab: one tilted perspective lens for all eight views. A fixed world
+// diameter gets smaller with distance, including the device's height.
+const PERSPECTIVE_WIDTH_RATIO = 1.25;
 
 export function isoPerspectiveCamera(camera: Readonly<IsoCamera>, frame: ViewRect,
   content = frame, structureHeight = ISO_WALL_HEIGHT): Readonly<IsoCamera> {
-  if (camera.rotDeg % 90 !== 0) return camera;
   const center = applyIsoMatrix([frame.x + frame.w / 2, frame.y + frame.h / 2], isoFloorMatrix(camera));
-  const depth = (camera.rotDeg % 180 ? frame.w : frame.h) * camera.xyScale * (camera.floorScaleY ?? 1);
-  if (!(depth > 0) || !Number.isFinite(depth)) return camera;
-  const rate = 2 * (DIRECT_WIDTH_RATIO - 1) / ((DIRECT_WIDTH_RATIO + 1) * depth);
   const projection = isoFloorMatrix(camera);
-  const low = applyIsoMatrix([content.x,content.y],projection)[1];
-  const high = applyIsoMatrix([content.x+content.w,content.y+content.h],projection)[1];
-  const extent = Math.max(Math.abs(low-center[1]),Math.abs(high-center[1]));
+  const corners = (rect: ViewRect) => ([[rect.x,rect.y],[rect.x+rect.w,rect.y],
+    [rect.x+rect.w,rect.y+rect.h],[rect.x,rect.y+rect.h]] as PlanPoint[]).map(p => applyIsoMatrix(p, projection)[1]);
+  const floor = corners(frame);
+  const depth = Math.max(...floor) - Math.min(...floor);
+  if (!(depth > 0) || !Number.isFinite(depth)) return camera;
+  const rate = 2 * (PERSPECTIVE_WIDTH_RATIO - 1) / ((PERSPECTIVE_WIDTH_RATIO + 1) * depth);
+  const extent = Math.max(...corners(content).map(y => Math.abs(y-center[1])));
+  const heightDepth = ((camera.floorScaleY ?? 1) / Math.sin(camera.tiltDeg * Math.PI / 180)) ** 2;
   // The plan can contain a detached object well beyond its tight fit. Keep
   // the entire committed domain in front of the lens, including Show Far.
   // The lens must also look down onto the highest cut plane. On a very
   // shallow plan floor bounds alone let the lens cross that plane.
-  return { ...camera, perspective: { center,
-    rate: Math.min(rate, .5 / extent, .5 / isoHeightLift(camera, structureHeight)) } };
+  return { ...camera, perspective: { center, heightDepth,
+    rate: Math.min(rate, .5 / (extent + heightDepth * isoHeightLift(camera, structureHeight))) } };
 }
 
 export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {
@@ -118,7 +119,7 @@ export function projectPlanPoint(
   if (!Number.isFinite(zUnits)) throw new Error('invalid isometric height');
   const [x, floorY] = applyIsoMatrix(point, isoFloorMatrix(camera));
   const [cx, cy] = lens.center;
-  const divisor = Math.min(4, Math.max(.25, 1 - lens.rate * (floorY - cy)));
+  const divisor = Math.min(4, Math.max(.25, 1 - lens.rate * (floorY - cy + (lens.heightDepth ?? 0) * isoHeightLift(camera,zUnits))));
   return [cx + (x - cx) / divisor, cy + (floorY - cy - isoHeightLift(camera, zUnits)) / divisor];
 }
 
@@ -129,7 +130,7 @@ export function isoProjectedDepth(point: ScenePoint, height: number, camera: Iso
   const lens = camera.perspective;
   if (!lens) return height;
   const inverseDivisor = (1 + lens.rate * (point[1] - lens.center[1]))
-    / (1 - lens.rate * isoHeightLift(camera, height));
+    / (1 - lens.rate * (1 + (lens.heightDepth ?? 0)) * isoHeightLift(camera, height));
   return height * inverseDivisor;
 }
 
@@ -226,6 +227,27 @@ export function isoFloorLinearCss(camera: IsoCamera = ISO_CAMERA, inverse = fals
   const det = a * d - b * c;
   const linear = inverse ? [d / det, -b / det, -c / det, a / det] : [a, b, c, d];
   return `matrix(${[...linear, 0, 0].join(',')})`;
+}
+
+/** Local screen basis for HTML captions and hit targets beside native 3D caps. */
+export function isoLocalPlaneCss(point: PlanPoint, height: number, camera: IsoCamera,
+  inverse = false, reading = false): string {
+  let [a,b,c,d] = isoFloorMatrix(camera);
+  const lens = camera.perspective;
+  if (lens) {
+    const [x,y] = applyIsoMatrix(point,isoFloorMatrix(camera));
+    const lift = isoHeightLift(camera,height), u = x-lens.center[0], v = y-lens.center[1]-lift;
+    const divisor = 1-lens.rate*(y-lens.center[1]+(lens.heightDepth ?? 0)*lift);
+    const q = lens.rate/(divisor*divisor);
+    [a,b,c,d] = [a/divisor+u*q*b,b/divisor+v*q*b,c/divisor+u*q*d,d/divisor+v*q*d];
+  }
+  if (reading) {
+    const angle = (isoReadingYaw(camera.rotDeg)-camera.rotDeg)*Math.PI/180;
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    [a,b,c,d] = [a*cos+c*sin,b*cos+d*sin,-a*sin+c*cos,-b*sin+d*cos];
+  }
+  const det = a*d-b*c;
+  return `matrix(${[...(inverse ? [d/det,-b/det,-c/det,a/det] : [a,b,c,d]),0,0].join(',')})`;
 }
 
 /** Tile extrusion and relative paint layers on the same raised camera plane. */

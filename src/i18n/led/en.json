@@ -1,4 +1,5 @@
 {
+  "led.icon_height_conflict": "Lower the height in Device settings before changing this LED strip to an icon.",
   "led.tool": "LED strip",
   "led.hint": "Draw the strip point by point along the wall faces or across the floor; it snaps to the grid and to wall faces. When you finish, pick the device it shows.",
   "led.start": "Click to start the strip",

@@ -1,3 +1,4 @@
+import { markerHeightFields, markerHeightLimitCm, type MarkerHeightDraft } from './marker-height';
 import type { PlanHost, HostPresentationContext } from './plan-host';
 import { workstationTarget, toggleWorkstation, removeWorkstationItems } from './iso-lab-workstation';
 import { tvCabinet, tvMountTarget, toggleTvMount } from './tv-mount';
@@ -739,7 +740,7 @@ export interface HouseplanEditorHostPort {
   _layout: DeviceLayout;
   readonly _layoutRev: number;
   _logicalViewCenter: () => { x: number; y: number; } | null;
-  _markerDialog: { alertSources?: Marker['alert_sources']; moreInfoEntity?: Marker['more_info_entity']; moreInfoTouched?: boolean; moreInfoOpen?: boolean; moreInfoFilter?: string; vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; glowRadiusBadInput?: boolean; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
+  _markerDialog: (MarkerHeightDraft & { alertSources?: Marker['alert_sources']; moreInfoEntity?: Marker['more_info_entity']; moreInfoTouched?: boolean; moreInfoOpen?: boolean; moreInfoFilter?: string; vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; glowRadiusBadInput?: boolean; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; }) | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
   _markers: Marker[];
@@ -8120,6 +8121,7 @@ public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): voi
         autoIcon: this.host._autoIconForBinding(d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef),
         display: normalizeDeviceDisplay(d.marker?.display),
         rippleColor: safeStoredColor(d.marker?.ripple_color, ''),
+        originalHeightCm: d.marker?.height_cm,
         rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 1.5,
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
         angle: Number(d.marker?.angle) || 0,
@@ -8390,13 +8392,21 @@ public _markerToggleEntityFields(
     });
   }
 
+public _markerHeightLimit(draft: MarkerHeightDraft & { devId?: string }): number {
+    const id = draft.devId;
+    return markerHeightLimitCm(id
+      ? this.host._model.some(space => ledStripsByMarker(space).has(id))
+      : !!this.host._ledEditor?.pendingBind);
+  }
+
 public async _saveMarker(): Promise<void> {
     const showToast = captureToast(this.host);
     const dlg = this.host._markerDialog;
     if (!dlg || dlg.busy) return;
     if (dlg.bindingMode === 'virtual' ? !this.host.planHost.capabilities.virtualDevices : !this.host.planHost.capabilities.devices) return;
     const problem = markerProblems(dlg, this._effectiveMarkerTapAction(dlg),
-      moreInfoDraftInvalid(dlg, this.host._planHass, this.host._fullRegistryHass), this.host._imperial)[0];
+      moreInfoDraftInvalid(dlg, this.host._planHass, this.host._fullRegistryHass), this.host._imperial,
+      this._markerHeightLimit(dlg))[0];
     if (problem) {
       showToast(settingsCopy(this.host).st(problem.message), problem.message);
       const field = this.host.renderRoot.querySelector<HTMLElement>(`#${problem.field}`);
@@ -8512,6 +8522,7 @@ public async _saveMarker(): Promise<void> {
         icon: dlg.icon || null,
         display: dlg.display !== 'badge' ? dlg.display : null,
         ripple_color: dlg.rippleColor || null,
+        ...markerHeightFields(dlg, this.host._imperial, this._markerHeightLimit(dlg)),
         ripple_size: dlg.rippleSize !== 1.5 ? dlg.rippleSize : null,
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
@@ -12215,6 +12226,7 @@ public _markerDraft(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): M
       icon: d.icon || null,
       display: d.display !== 'badge' ? d.display : null,
       ripple_color: d.rippleColor || null,
+      ...markerHeightFields(d, this.host._imperial, this._markerHeightLimit(d)),
       ripple_size: d.rippleSize !== 1.5 ? d.rippleSize : null,
       size: d.size !== 1 ? d.size : null,
       angle: d.angle || null,

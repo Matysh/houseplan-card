@@ -6,6 +6,7 @@
  * в отпечаток не входят. Флаги `*Touched` и `original*` входят: они меняются
  * только действием человека, и это тоже изменение.
  */
+import { markerHeightDraftValid, markerHeightLimitCm } from '../marker-height';
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
 import { dialogDirty, dialogSession, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
 import { strictNumber } from '../space-dialog';
@@ -67,8 +68,9 @@ export interface MarkerProblem {
 }
 
 /** Validate the complete draft, including fields in inactive settings sections. */
-export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction, moreInfoInvalid = false, imperial = false): MarkerProblem[] {
+export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction, moreInfoInvalid = false, imperial = false, heightMaxCm = markerHeightLimitCm(false)): MarkerProblem[] {
   const problems: MarkerProblem[] = [];
+  if (!markerHeightDraftValid(d, imperial, heightMaxCm)) problems.push({ field: 'marker-height', message: 'marker.error_numeric_range' });
   if (moreInfoInvalid) problems.push({ field: 'marker-more-info-entity', message: 'marker.more_info_invalid' });
   if (d.stateSourceTouched && d.stateSource != null && !normalizeMarkerStateSource(d.stateSource)) {
     problems.push({ field: 'marker-state-source-states', message: 'marker.state_source_states_invalid' });

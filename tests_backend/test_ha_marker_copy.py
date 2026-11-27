@@ -26,7 +26,7 @@ async def _pair(client):
     return result
 
 
-async def _seed(hass, hass_ws_client, *, real=False, cycle=False):
+async def _seed(hass, hass_ws_client, *, real=False, cycle=False, active_strip=True):
     entry = MockConfigEntry(domain=DOMAIN, title="House Plan", data={})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
@@ -37,7 +37,7 @@ async def _seed(hass, hass_ws_client, *, real=False, cycle=False):
               "controls": ["marker:controller"] if cycle else ["light.external"],
               "future": {"keep": [1, 2]}}
     config = {"spaces": [{"id": "f1", "title": "Floor", "rooms": [], "view_box": [0, 0, 1, 1],
-                          "led_strips": [{"id": "led", "marker": "source", "points": [[.1, .1], [.3, .1]]}]}],
+                          "led_strips": [{"id": "led", "marker": "source", "active": active_strip, "points": [[.1, .1], [.3, .1]]}]}],
               "markers": [source, {"id": "controller", "binding": "entity:switch.driver", "space": "f1",
                                      "is_light": True, "controls": ["switch.source" if real else "marker:source"]}],
               "settings": {}}
@@ -88,7 +88,7 @@ async def test_issue_1081_hidden_active_source_can_create_visible_virtual_copy(h
 
 @pytest.mark.parametrize("real", [False, True])
 async def test_issue_935_copy_appends_only_its_marker_position_and_incoming_edges(hass, hass_ws_client, real):
-    client, before = await _seed(hass, hass_ws_client, real=real)
+    client, before = await _seed(hass, hass_ws_client, real=real, active_strip=False)
     events = []
     hass.bus.async_listen("call_service", lambda event: events.append(event.data))
     answer = await _send(client, _request(before))
@@ -291,3 +291,26 @@ async def test_issue_935_concurrent_attachment_copies_respect_existing_store_quo
     assert await hass.async_add_executor_job(lambda: sum(path.is_file() for path in root.rglob("*"))) == MAX_FILES_COUNT
     assert await hass.async_add_executor_job((root / "source" / "manual.pdf").read_bytes) == b"original"
     assert await _pair(one) == before
+
+
+async def test_issue_1608_config_rejects_invalid_marker_heights_without_losing_zero(hass, hass_ws_client):
+    client, before = await _seed(hass, hass_ws_client, active_strip=False)
+    assert "height_cm" not in before[0]["config"]["markers"][0]
+    for bad in (-1, 133.521, 137.975, "12", True):
+        changed = copy.deepcopy(before[0]["config"])
+        changed["markers"][0]["height_cm"] = bad
+        refused = await _send(client, {"type": "houseplan/config/set", "config": changed, "expected_rev": before[0]["rev"]})
+        assert not refused["success"], bad
+        assert await _pair(client) == before
+    for good in (0, 73.031233, 133.52):
+        changed = copy.deepcopy(before[0]["config"])
+        changed["markers"][0]["height_cm"] = good
+        accepted = await _send(client, {"type": "houseplan/config/set", "config": changed, "expected_rev": before[0]["rev"]})
+        assert accepted["success"], accepted
+        before = await _pair(client)
+        assert before[0]["config"]["markers"][0]["height_cm"] == good
+    changed = copy.deepcopy(before[0]["config"])
+    del changed["markers"][0]["height_cm"]
+    accepted = await _send(client, {"type": "houseplan/config/set", "config": changed, "expected_rev": before[0]["rev"]})
+    assert accepted["success"], accepted
+    assert "height_cm" not in (await _pair(client))[0]["config"]["markers"][0]

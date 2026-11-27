@@ -1,3 +1,4 @@
+import { ICON_DEPTH_RATIO } from './marker-height';
 import {
   BufferAttribute, Color, DataTexture, Group, LinearFilter, Mesh,
   MeshBasicMaterial, SRGBColorSpace, Vector3, type BufferGeometry, type Camera,
@@ -24,6 +25,7 @@ export interface Plan3dMarker {
   center: PlanPoint;
   diameter: number;
   height: number;
+  thickness?: number;
   opacity?: number;
   faces: readonly Plan3dMarkerFace[];
 }
@@ -345,11 +347,12 @@ export class Plan3dMarkerLayer {
     const { center: [x, y], diameter, height } = marker;
     const { left, right, top, bottom, rx, ry, angle = 0 } = face;
     const w = (right - left) * diameter, h = (bottom - top) * diameter;
-    const geometryKey = [left, right, top, bottom, rx, ry, angle, diameter].join('|');
+    const thickness = marker.thickness ?? diameter * ICON_DEPTH_RATIO;
+    const geometryKey = [left, right, top, bottom, rx, ry, angle, diameter, thickness].join('|');
     let paint = this.markers.get(key);
     if (paint?.key !== geometryKey) {
       if (paint) this.retire(paint);
-      const prism = planPrismMesh([[ring(face, diameter)]], -diameter * .24, 0);
+      const prism = planPrismMesh([[ring(face, diameter)]], -thickness, 0);
       const body = new Mesh(prism, [face.color, face.edge, face.edge].map(color => new MeshBasicMaterial({ color, toneMapped: false })));
       body.userData.plan3dPick = { id: marker.id, geometryOnly: true };
       this.group.add(body);

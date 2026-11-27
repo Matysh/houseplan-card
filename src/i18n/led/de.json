@@ -1,4 +1,5 @@
 {
+  "led.icon_height_conflict": "Verringern Sie die Höhe in den Geräteeinstellungen, bevor Sie den LED-Streifen als Symbol anzeigen.",
   "led.tool": "LED-Streifen",
   "led.hint": "Zeichnen Sie den Streifen Punkt für Punkt entlang der Wandflächen oder über den Boden; er rastet am Raster und an Wandflächen ein. Danach wählen Sie das Gerät, das er darstellt.",
   "led.start": "Klicken, um den Streifen zu beginnen",

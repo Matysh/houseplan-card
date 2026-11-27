@@ -851,6 +851,10 @@ lovelace:
 
 &emsp;&emsp;The common dimension renderer shows both jamb offsets on the available wall faces during placement, movement and selection. Values describe the accepted snapped preview, not the raw pointer. See [wall dimensions](#dimensions-on-both-sides-of-a-wall).
 
+### Device height in 3D
+
+&emsp;&emsp;Open **Display on plan → Height above floor (3D only)**. Enter the distance to the bottom of the marker or LED strip. Zero places it on the floor. Leave the field empty to keep the top level with the walls. The field shows the allowed range in your selected units. The flat plan position and lighting stay in place.
+
 ### Independent leaves, shades and sliding openings (#1024)
 
 &emsp;&emsp;Window settings offer 1–4 equal leaves and one common opening side. Open a row to choose its sensor, manual position and left/right/top hinges. The preview follows plan orientation and highlights the selected leaf. In 2.5D, top opening is depicted as a tilted leaf with its lower edge fixed, up to 30°. This is a visual convention, not a measured angle; saved sensors and the Flat symbol stay unchanged.

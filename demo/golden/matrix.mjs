@@ -915,6 +915,16 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     mode:uiKit1051==='device'?'devices':'decor',uiKit1051,language:'ru',theme,
     viewport:{width:1180,height:900},capture:`ui-1051-${uiKit1051}`,threshold:page.threshold,
   }))),
+  ...['devices','decor'].flatMap(mode => ['light','dark'].flatMap(theme =>
+    ['idle', 'hover-first', 'hover-middle'].map(state => ({
+      id: `panel-context-menu-${mode}-${theme}-${state}-1608`,
+      fixture: 'visual', space: 'golden-context-menu-1608', panelHost: true,
+      mode, theme, language: 'en', menu1608: state,
+      uiKit1051: mode === 'devices' ? 'device' : 'color',
+      viewport: { width: 1180, height: 900 },
+      capture: 'ui-1051-menu', threshold: page.threshold,
+    })),
+  )),
   { id: 'tray-narrow-palette-en', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     editorTray: 'furniture-palette', furniturePalette: 'categories', language: 'en', theme: 'dark',
     viewport: { width: 390, height: 760 }, ...page },

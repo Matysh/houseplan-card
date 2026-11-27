@@ -42,6 +42,38 @@ async def test_real_copy_history_undo_redo_and_lost_reply_replay_keep_exact_id_a
     assert redone[1]["layout"] == after[1]["layout"]
 
 
+async def test_issue_1608_strip_copy_keeps_exact_height_and_independent_shape_through_history(hass, hass_ws_client):
+    client, before = await _seed(hass, hass_ws_client)
+    config = copy.deepcopy(before[0]["config"])
+    source = config["markers"][0]
+    source["height_cm"] = 137.975
+    strip = config["spaces"][0]["led_strips"][0]
+    strip["points"] = [[.1, .1], [.3, .1], [.3, .2]]
+    saved = await _send(client, {"type": "houseplan/config/set", "config": config, "expected_rev": before[0]["rev"]})
+    assert saved["success"], saved
+    before = await _pair(client)
+    request = _request(before, history_session=SESSION, operation_id="operation_1608_copy")
+    request["marker"].pop("height_cm")  # server keeps the authoritative source height
+    copied = await _send(client, request)
+    assert copied["success"], copied
+    after = await _pair(client)
+    markers = {marker["id"]: marker for marker in after[0]["config"]["markers"]}
+    assert markers["v_copy"]["height_cm"] == source["height_cm"]
+    original, replica = after[0]["config"]["spaces"][0]["led_strips"]
+    assert original["marker"] == "source"
+    assert replica["marker"] == "v_copy" and replica["id"] != original["id"]
+    for a, b in zip(original["points"], replica["points"], strict=True):
+        assert b == pytest.approx([a[0] + .85, a[1] - .2], abs=1e-6)
+    token = copied["result"]["history_token"]
+    undone = await _send(client, _action(after, "undo", "operation_1608_undo", token=token))
+    assert undone["success"], undone
+    restored = await _pair(client)
+    assert restored[0]["config"] == before[0]["config"]
+    redone = await _send(client, _action(restored, "redo", "operation_1608_redo", token=token))
+    assert redone["success"], redone
+    assert (await _pair(client))[0]["config"] == after[0]["config"]
+
+
 @pytest.mark.parametrize("binding", ["virtual", "entity:switch.source", "device:source"])
 async def test_delete_restores_marker_tombstone_layout_snapshot_and_led_as_one_pair(hass, hass_ws_client, binding):
     client, before = await _seed(hass, hass_ws_client)

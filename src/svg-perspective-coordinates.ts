@@ -12,19 +12,20 @@ export function readIsoPerspectiveSvg(node: SVGGraphicsElement) {
   if (!screen || !svgMatrix || !nodeMatrix) return null;
   const toScene = svgMatrix.inverse().multiply(nodeMatrix), toLocal = toScene.inverse();
   const fromScreen = screen.inverse();
-  const [cx, cy, rate, lift] = lens.split(' ').map(Number);
+  const [cx, cy, rate, lift, heightDepth = 0] = lens.split(' ').map(Number);
+  const heightBase = 1 - rate * heightDepth * lift;
   return {
     toScreen(x: number, y: number): [number,number] {
       const p = new DOMPoint(x, y).matrixTransform(toScene);
-      const w = 1 - rate * (p.y - cy);
+      const w = heightBase - rate * (p.y - cy);
       const q = new DOMPoint(cx + (p.x - cx) / w, cy + (p.y - cy - lift) / w).matrixTransform(screen);
       return [q.x, q.y];
     },
     fromScreen(x: number, y: number): [number,number] | null {
       const q = new DOMPoint(x, y).matrixTransform(fromScreen);
       const px = q.x - cx, py = q.y - cy;
-      const dy = (py + lift) / (1 + rate * py);
-      const w = 1 - rate * dy;
+      const dy = (heightBase * py + lift) / (1 + rate * py);
+      const w = heightBase - rate * dy;
       const p = new DOMPoint(cx + px * w, cy + dy).matrixTransform(toLocal);
       return Number.isFinite(p.x) && Number.isFinite(p.y) && w > 0 ? [p.x, p.y] : null;
     },

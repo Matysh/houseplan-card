@@ -1,4 +1,5 @@
 {
+  "led.icon_height_conflict": "Réduisez la hauteur dans les réglages de l’appareil avant de remplacer le ruban LED par une icône.",
   "led.tool": "Ruban LED",
   "led.hint": "Tracez le ruban point par point le long des faces des murs ou sur le sol ; il s’aimante à la grille et aux faces des murs. Ensuite, choisissez l’appareil qu’il représente.",
   "led.start": "Cliquez pour commencer le ruban",

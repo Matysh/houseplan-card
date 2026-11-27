@@ -1,4 +1,6 @@
 /** Existing Device settings regrouped into the shared settings shell (#947). */
+import { markerHeightDraftText } from '../marker-height';
+import { GRID_IMPERIAL_CELL_CM } from '../grid-scale';
 import { html, nothing, type TemplateResult } from 'lit';
 
 import {
@@ -174,7 +176,12 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
      * калибровка радара, привязка не выбрана или не подтверждена реестром)
      * остаются; привязка и радиус теперь ещё и названы словами под полем. */
     const edit = !!d.devId;
-    const problems = markerProblems(d, effectiveTapAction, moreInfoDraftInvalid(d, this.host._planHass, this.host._fullRegistryHass), this.host._imperial);
+    const heightMaxCm = this._markerHeightLimit(d);
+    const heightMax = heightMaxCm / (this.host._imperial ? GRID_IMPERIAL_CELL_CM : 1);
+    const heightUnit = st(this.host._imperial ? 'marker.height.in' : 'marker.height.cm');
+    const heightMaxText = new Intl.NumberFormat(lang, { maximumFractionDigits: 6, roundingMode: 'floor' } as Intl.NumberFormatOptions).format(heightMax);
+    const heightRange = { max: heightMaxText, unit: heightUnit };
+    const problems = markerProblems(d, effectiveTapAction, moreInfoDraftInvalid(d, this.host._planHass, this.host._fullRegistryHass), this.host._imperial, heightMaxCm);
     const problemFor = (fieldId: string) => problems.find((p) => p.field === fieldId);
     const dirty = markerDirty(this.host, d);
     const bindingUnverified = d.bindingMode === 'ha' && !d.devId && bindingStatus?.kind !== 'active';
@@ -623,6 +630,19 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           control: iconControl,
         }),
           this.host._ledSection(d.devId),
+          field({
+            label: st('marker.height.label'), htmlFor: 'marker-height', help: shelp('marker.height.help'),
+            hint: st('marker.height.hint', heightRange),
+            error: problemFor('marker-height') ? st('marker.height.error', heightRange) : undefined,
+            control: unitInput({ id: 'marker-height', unit: heightUnit,
+              value: markerHeightDraftText(d, this.host._imperial), min: 0, max: heightMax, step: 'any', wide: true,
+              placeholder: st('marker.height.auto'),
+              invalid: !!problemFor('marker-height'), preserveBadInput: d.heightBadInput,
+              onInput: (raw, input) => {
+                this.host._markerDialog = { ...d, heightText: raw, heightTouched: true, heightBadInput: input.validity.badInput };
+              },
+            }),
+          }),
           field({
           label: st('marker.display_method'), htmlFor: 'marker-display',
           help:html`<hp-help instant data-help-key="marker.display.help" .text=${`${st('marker.display.help')} ${t(DISPLAY_HINT_KEYS[d.display])}`} .ariaLabel=${st('marker.display.help.aria')}></hp-help>`,

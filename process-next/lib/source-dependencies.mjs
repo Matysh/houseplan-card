@@ -17,6 +17,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['demo/smoke_iso_device_signal.mjs', ['src/device-face.ts', 'src/styles/devices.styles.ts', 'src/styles/iso-lab-markers.styles.ts', 'src/plan-3d-viewport.ts']],
   ['demo/smoke_mode_transition.mjs', ['src/mode-transition-presentation.ts', 'src/mode-transition.ts']],
   ['demo/smoke_mode_endpoints.mjs', ['src/mode-transition-presentation.ts', 'src/mode-presentation.ts']],
+  ['demo/smoke_plan_3d_marker_height.mjs', ['src/marker-height.ts', 'src/card-plan-3d.ts', 'src/iso-projection.ts', 'src/plan-3d-world.ts', 'src/led-strip-runtime.ts']],
   ['demo/smoke_plan_3d_card.mjs', ['src/card-plan-3d.ts', 'src/plan-3d-host.ts']],
   ['demo/smoke_isometric_contract.mjs', ['src/card-plan-3d.ts', 'src/plan-3d-host.ts']],
   ['demo/smoke_startup_floor.mjs', ['src/card-plan-3d.ts', 'src/startup-floor.ts']],
@@ -24,7 +25,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['demo/smoke_iso_raster_parity.mjs', ['src/iso-projection.ts', 'src/iso-scene-geometry.ts', 'src/projection-view-camera.ts']],
   ['tests_backend/test_plan_graph_support.py', ['custom_components/houseplan/support_wire_schema.py', 'scripts/support-relay/hp_relay/support_wire_schema.py']],
   ['demo/smoke_native_card_presentation.mjs', ['src/houseplan-card.ts', 'src/card-rotation-preference.ts', 'src/external-screens.ts', 'src/panel-route-kiosk.ts']],
-  ['demo/smoke_device_save_placement.mjs', ['src/marker-placement.ts', 'src/coordinate-canonicalization.ts', 'src/houseplan-editor-runtime.ts', 'src/editors/marker-dialog.ts', 'src/editors/marker-form-state.ts']],
+  ['demo/smoke_device_save_placement.mjs', ['src/marker-placement.ts', 'src/coordinate-canonicalization.ts', 'src/houseplan-editor-runtime.ts', 'src/editors/marker-dialog.ts', 'src/editors/marker-form-state.ts', 'src/marker-height.ts']],
   // #1423: this HA comparison imports the synthetic dispatcher as a Python
   // namespace outside custom_components; its transitive core is still real.
   ['tests_backend/test_ha_standalone_core_transport.py', ['demo/standalone/core_process.py']],

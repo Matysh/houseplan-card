@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1608,
+  "baseStable": "v1.86.1",
+  "category": "major",
+  "rationale": "Add physical device height and a unified perspective to the 3D view.",
+  "summary": {
+    "en": "Set the height of devices and LED strips above the floor. All eight 3D views use the same tilted perspective.",
+    "ru": "Задавайте высоту устройств и LED-лент над полом. Все восемь ракурсов 3D используют единую наклонную перспективу."
+  }
+}

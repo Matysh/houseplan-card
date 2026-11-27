@@ -14,6 +14,7 @@ import type { HassRenderSnapshot } from './render-invalidation';
 import type { PlanRotation } from './view-frame';
 import { isoDisplayWallHeight, type IsoCamera } from './iso-projection';
 import { gridVisualUnits } from './grid-scale';
+import { markerHeightGeometry } from './marker-height';
 
 interface ContactCard extends FloorKeySource {
   renderRoot: ParentNode;
@@ -86,12 +87,19 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
   const surfaceBase = effectiveDeviceBaseSize(size > 8 ? 2.5 : size) * unit;
   const neutralBase = effectiveDeviceBaseSize(2.5) * unit;
   const iconScale = host._mode === 'view' ? host._effectiveKioskScale.icon : 1;
+  const icons = positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space));
+  const wallTop = camera ? gridVisualUnits(isoDisplayWallHeight(), host._cellCm) : 0;
+  const elevations = camera ? new Map(icons.flatMap(d => {
+    if (d.marker?.height_cm == null) return [];
+    const height = markerHeightGeometry(d.marker.height_cm, host._cellCm, wallTop, 0);
+    return height.level === 'auto' ? [] : [[d.id, height] as const];
+  })) : undefined;
   const wasReflowed=renderer.reflowed, previousStatus = renderer.resizeStatus;
   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
-    space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane,
-    glassProjection: camera ? {camera,height:gridVisualUnits(isoDisplayWallHeight(),host._cellCm)} : undefined,
+    space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane, elevations,
+    glassProjection: camera ? {camera,height:wallTop} : undefined,
     uprightHalfTurn: host._mode === 'view' && host._renderProjection === 'flat' && host._rotation === 180,invalidate:()=>host.requestUpdate(),
-    markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => {
+    markers: icons.map((d) => {
       const scale = host._devicePresentation(d).scale;
       return { id: d.id, ...host._pos(d,false), virtual: d.virtual === true || d.bindingKind === 'virtual',
         diameter: nominalDeviceCore(effectiveDeviceBaseSize(size > 8 ? 2.5 : size), iconUnit(space), scale, iconScale),

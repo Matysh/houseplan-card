@@ -36,6 +36,7 @@ export interface DeviceContactFrame {
   uprightHalfTurn?: boolean;
   /** A floor-aligned presentation; contact layout stays in canonical plan units. */
   plane?: readonly number[];
+  elevations?: ReadonlyMap<string, { top: number; thickness: number; level: string }>;
   glassProjection?: IsoMarkerGlassProjection;
 }
 interface MeasuredMarker { element: HTMLElement; ink: HTMLElement }
@@ -80,6 +81,9 @@ export class DeviceContactRenderer {
   private rotation: PlanRotation = 0;
   private uprightHalfTurn = false;
   private plane: readonly number[] | undefined;
+  private heightLevels: ReadonlyMap<string, string> | undefined;
+  private elevations: DeviceContactFrame['elevations'];
+  private heightKey = '';
   private glassProjection: IsoMarkerGlassProjection | undefined;
   private screen: { source: DeviceContactScene; rotation: PlanRotation; uprightHalfTurn: boolean; scene: DeviceContactScene } | null = null;
   private fontDocument: Document | null = null;
@@ -107,10 +111,10 @@ export class DeviceContactRenderer {
     return measured && measured.shell === shell ? measured.presentation.faces : this.faces.get(metricKey(shell));
   }
 
-  public volumeOutlines(native: ReadonlySet<string>) {
+  public volumeOutlines(native: ReadonlySet<string>, levels?: ReadonlyMap<string, string>) {
     const scene = this.scene;
     if (!this.plane || !scene) return [];
-    return [...scene.components(native)].flatMap(component => {
+    return scene.components(native, levels ?? this.heightLevels).flatMap(component => {
       if (!component.every(shape => native.has(shape.marker.id))) return [];
       const group = contactContourShapes(component.map(shape => this.present(shape, component.length > 1)));
       return [{ id: group[0].marker.id, members: group.map(shape => shape.marker.id), outline: contactOutline(group, true),
@@ -137,6 +141,9 @@ export class DeviceContactRenderer {
   public clear(): void {
     this.plane = undefined;
     this.glassProjection = undefined;
+    this.elevations = undefined;
+    this.heightLevels = undefined;
+    this.heightKey = '';
     this.preparedFont = null;
     this.observeStacking(null);
     this.reflowed=false;
@@ -174,13 +181,20 @@ export class DeviceContactRenderer {
     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
     const uprightHalfTurn = frame.uprightHalfTurn ?? false;
     const enteredRaisedView = !!frame.plane && !this.plane;
+    const elevations = frame.plane ? frame.elevations : undefined;
+    const heightKey = elevations?.size ? JSON.stringify([...elevations]) : '';
     const turned = this.rotation !== (frame.rotation ?? 0) || this.uprightHalfTurn !== uprightHalfTurn
+      || this.heightKey !== heightKey
       || String(this.plane) !== String(frame.plane)
       || this.glassProjection?.camera !== frame.glassProjection?.camera
       || this.glassProjection?.height !== frame.glassProjection?.height;
     this.rotation = frame.rotation ?? 0;
     this.uprightHalfTurn = uprightHalfTurn;
     this.plane = frame.plane;
+    if (this.heightKey !== heightKey)
+      this.heightLevels = elevations?.size ? new Map([...elevations].map(([id, value]) => [id, value.level])) : undefined;
+    this.elevations = elevations;
+    this.heightKey = heightKey;
     this.glassProjection = frame.glassProjection;
     this.observeStacking(this.plane && 'host' in root ? root as ShadowRoot : null);
     adoptDeviceContactStyles(root);
@@ -544,12 +558,13 @@ export class DeviceContactRenderer {
       }
     }
     const scene = this.screen.scene;
-    for (const rawGroup of scene.components(affected)) {
+    for (const rawGroup of scene.components(affected, this.heightLevels)) {
       // Build the projected envelope from live faces without changing the
       // authored contact graph or using the orientation in the reflow solver.
       const oriented = this.plane ? rawGroup.map(shape => this.present(shape, rawGroup.length > 1)) : rawGroup;
       const group = contactContourShapes(oriented);
       const joined = group.length > 1;
+      const members = new Set(group.map(shape => shape.marker.id));
       // Split the single group shell across the farthest and nearest member's
       // stacking contexts. Neither half is repainted per device.
       const [owner, frontOwner] = this.plane ? this.glassOwners(group) : [group[0], group[0]];
@@ -563,7 +578,11 @@ export class DeviceContactRenderer {
       }
       const active = joined || Object.keys(owner.walls).length > 0;
       const outline = active && !this.plane ? contactOutline(group,true) : '';
-      const glass = this.plane ? isoMarkerGlass(group,this.plane,true,this.glassProjection) : null;
+      const elevation = this.elevations?.get(owner.marker.id);
+      const projection = elevation && this.glassProjection
+        ? { ...this.glassProjection, height: elevation.top, thickness: elevation.thickness }
+        : this.glassProjection;
+      const glass = this.plane ? isoMarkerGlass(group,this.plane,true,projection) : null;
       const virtual=group.every(s=>s.marker.virtual===true);
       for (const s of group) {
         const item = this.elements.get(s.marker.id); if (!item) continue;
@@ -575,6 +594,7 @@ export class DeviceContactRenderer {
         if (!custom && !this.plane) { this.hitShapes.delete(item.element); render(nothing, item.ink); continue; }
         const sides: ContactShape['walls'] = { ...s.walls };
         for (const id of scene.edges.get(s.marker.id) || []) {
+          if (!members.has(id)) continue;
           const side = joinedContactSide(scene.shapes.get(s.marker.id)!, scene.shapes.get(id)!,false); if (side) sides[side] = 'device';
         }
         const own = { ...s, walls: sides };
@@ -585,7 +605,7 @@ export class DeviceContactRenderer {
           contains: (x, y) => contactContains(normalized, [x,y]) });
         const d = s.marker.diameter;
         const viewBox=`${s.marker.x - d / 2} ${s.marker.y - d / 2} ${d} ${d}`;
-        const glassAnchor=isoMarkerGlassAnchor([s.marker.x,s.marker.y],this.glassProjection);
+        const glassAnchor=isoMarkerGlassAnchor([s.marker.x,s.marker.y],projection);
         const [glassX,glassY]=glassAnchor;
         const glassBox=`${glassX-d/2} ${glassY-d/2} ${d} ${d}`;
         // One shell per component. Repainting pieces in each member's

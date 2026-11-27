@@ -53,19 +53,17 @@ export function plan3dCamera(
 
   if (calibrated.perspective) {
     const [screenX, screenY] = calibrated.perspective.center;
-    const distance = 1 / (calibrated.perspective.rate * ground);
-    const height = ground * distance / vertical;
+    const distance = vertical / (calibrated.perspective.rate * ground);
     const near = distance / 16;
     const far = distance + extent;
     const camera = new PerspectiveCamera(40, view.w / view.h, near, far);
-    camera.position.set(x + sin * distance, height, y + cos * distance);
-    camera.lookAt(planWorldPoint(x, y, height));
-    // Shift the principal point with a horizontal optical axis. Tilting the
-    // camera down would make apparent width depend on world height.
+    camera.position.set(x + sin * vertical * distance, ground * distance, y + cos * vertical * distance);
+    camera.lookAt(planWorldPoint(x, y, 0));
+    // Keep the existing crop controls, with a genuinely tilted optical axis.
     const left = (view.x - screenX) * near / distance;
     const right = left + view.w * near / distance;
-    const top = -(view.y - screenY + ground * distance) * near / (vertical * distance);
-    const bottom = top - view.h * near / (vertical * distance);
+    const top = -(view.y - screenY) * near / distance;
+    const bottom = top - view.h * near / distance;
     camera.projectionMatrix.makePerspective(left, right, top, bottom, near, far, WebGLCoordinateSystem);
     camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
     camera.updateMatrixWorld(true);

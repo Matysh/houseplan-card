@@ -1,3 +1,4 @@
+import { ICON_DEPTH_RATIO } from './marker-height';
 import { BufferGeometry, CanvasTexture, Color, DoubleSide, EdgesGeometry, Float32BufferAttribute,
   FrontSide, Group, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, PlaneGeometry, Scene, SRGBColorSpace, Texture, type Camera } from 'three';
 import { union, type Geom } from 'polyclip-ts';
@@ -49,6 +50,7 @@ export interface Plan3dImage {
 }
 
 export interface Plan3dLedRibbon {
+  height?: number;
   id: string;
   owner: string;
   path: { points: readonly PlanPoint[]; closed: boolean };
@@ -81,6 +83,8 @@ export interface Plan3dRoomHover {
 export type Plan3dContactShadow = readonly [x: number, y: number, w: number, h: number, alpha: number];
 
 export interface Plan3dOutline {
+  height?: number;
+  thickness?: number;
   id: string;
   members: readonly string[];
   outline: string;
@@ -392,15 +396,15 @@ export class Plan3dWorld {
 
   presentOutlines(outlines: readonly Plan3dOutline[], height: number): void {
     const live = new Set<string>();
-    for (const { id, outline, diameter, virtual, opacity = 1 } of outlines) {
+    for (const { id, outline, diameter, virtual, opacity = 1, height: ownHeight = height, thickness = diameter * ICON_DEPTH_RATIO } of outlines) {
       if (!outline || !Number.isFinite(diameter) || diameter <= 0) continue;
-      const key = [height, diameter, virtual, opacity, outline].join('|');
+      const key = [ownHeight, thickness, diameter, virtual, opacity, outline].join('|');
       live.add(id);
       const previous = this.glassMeshes.get(id);
       if (previous?.key === key) continue;
       if (previous) this.disposeGlass(previous.meshes);
       // The wall top owns its depth exactly where a rim touches the cut.
-      const top = height - diameter * .0001, low = top - diameter * .24;
+      const top = ownHeight - diameter * .0001, low = Math.max(0, top - thickness);
       const chains = markerContactChains(outline);
       const faces: Face[] = [], rims: Face[] = [];
       for (const chain of chains) {
@@ -607,17 +611,17 @@ export class Plan3dWorld {
   private updateRibbons(ribbons: readonly Plan3dLedRibbon[], height: number): void {
     const live = new Set<string>();
     for (const ribbon of ribbons) {
-      const { id, owner, path, width, depth, outline, color, opacity } = ribbon;
+      const { id, owner, path, width, depth, outline, color, opacity, height: top = height } = ribbon;
       live.add(id);
-      const key = [owner, path, width, height, depth, outline];
+      const key = [owner, path, width, top, depth, outline];
       let paint = this.ribbonMeshes.get(id);
       if (!paint || !same(paint.geometry, key)) {
         if (paint) this.disposeRibbon(paint);
         const edge = { color: '#808080', opacity: 1 };
-        const body = this.mesh(planPrismMesh(ribbonFloor(path, width), height - depth, height),
+        const body = this.mesh(planPrismMesh(ribbonFloor(path, width), top - depth, top),
           [{ color: outline, opacity: 1 }, edge, edge]);
         body.userData.plan3dPick = { id: owner };
-        const core = new Mesh(planFaceMesh(ribbonFloor(path, width / 2).map(polygon => horizontal(polygon, height))),
+        const core = new Mesh(planFaceMesh(ribbonFloor(path, width / 2).map(polygon => horizontal(polygon, top))),
           new MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true,
             polygonOffsetFactor: -1, polygonOffsetUnits: -1, toneMapped: false }));
         core.userData.plan3dPick = { occludes: false };

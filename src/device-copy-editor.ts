@@ -10,8 +10,9 @@ import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import { deviceEditorAllowed } from './device-editor-access';
 import { deviceCopyFileGroups, deviceCopyIncoming, deviceCopyPosition, deviceCopyRadius, nextDeviceCopyName, rewriteDeviceCopyFiles, virtualDeviceCopy } from './device-copy';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
-import { ledStripsByMarker } from './led-strip-gate';
+import { ledAnchor, ledStripsByMarker } from './led-strip-gate';
 import { iconUnit } from './space-geometry';
+import { NORM_W } from './canvas-constants';
 import { contentFingerprint } from './visual-continuity';
 import { langOf } from './i18n';
 import { toolsT, type ToolsI18nKey } from './i18n/tools';
@@ -143,8 +144,14 @@ export class DeviceCopyEditor {
       const footprint = (item: DevItem) => ({ ...h._pos(item), radius: deviceCopyRadius(
         radius * h._devicePresentation(item).scale, h._deviceContacts?.scene?.shapes.get(item.id)) });
       const strips = ledStripsByMarker(space);
-      const position = deviceCopyPosition(footprint(source), h._devices.filter(item => item.space === m.space && !item.hidden && !strips.has(item.id)).map(footprint),
-        h._gridPitch, [...strips.values()].map(strip => ({ points: strip.points.map(p => p.map(n => n * 1000)), radius: radius * .12 })));
+      const sourceStrip = strips.get(source.id);
+      const origin = sourceStrip ? ledAnchor(sourceStrip.points, NORM_W) : footprint(source);
+      const stripRadius = radius * .12;
+      const occupied = h._devices.filter(item => item.space === m.space && !item.hidden && !strips.has(item.id));
+      const sourceFootprint = sourceStrip ? { ...origin, radius: stripRadius + Math.max(...sourceStrip.points.map(
+        ([x, y]) => Math.hypot(x * NORM_W - origin.x, y * NORM_W - origin.y))) } : footprint(source);
+      const position = deviceCopyPosition(sourceFootprint, occupied.map(footprint), h._gridPitch,
+        [...strips.values()].map(strip => ({ points: strip.points.map(p => p.map(n => n * NORM_W)), radius: stripRadius })));
       if (!position) fail('device.copy_no_space');
       phase('preparation');
       let migrated = false;

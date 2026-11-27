@@ -31,6 +31,7 @@ import {
   isClosedStrip, pathD, validStripPoints, type PlacementBodies, type Pt,
 } from './led-strip-geometry';
 import { LED_LANGUAGE_RUNTIME, ledT, type LedI18nKey } from './i18n/led';
+import { markerHeightLimitCm } from './marker-height';
 import { langOf } from './i18n';
 import type { DevItem, LedStripModel, Marker, OpeningCfg, ServerConfig, SpaceModel } from './types';
 import type { EditorSecondaryModel } from './editor-secondary';
@@ -480,6 +481,13 @@ export class LedStripEditor {
     const before = index >= 0 ? clone(strips[index]) : null;
     const after = next(before ? clone(before) : null);
     if (same(before, after)) return true; // a no-op is no command
+    if (before?.marker && before.active !== false && (after?.marker !== before.marker || after.active === false)) {
+      const height = cfg.markers?.find(marker => marker.id === before.marker && !marker.removed)?.height_cm;
+      if (height != null && height > markerHeightLimitCm(false)) {
+        showToast(this.t('led.icon_height_conflict'), 'led.icon_height_conflict');
+        return false;
+      }
+    }
     if (after && !before && strips.length >= LED_MAX_STRIPS) {
       showToast(this.t('led.limit_strips'), 'led.limit_strips');
       return false;

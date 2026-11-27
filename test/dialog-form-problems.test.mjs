@@ -245,3 +245,16 @@ test('#1512 clearing a native bad-input flag does not create a phantom edit',asy
  const host={},draft=baseMarker({glowRadius:''});rememberMarkerBaseline(host,draft);
  assert.equal(markerDirty(host,{...draft,glowRadiusBadInput:false}),false);
 });
+
+
+test('#1608 height uses the representation limit and keeps invalid numeric input from clearing it', () => {
+  const valid = (draft, imperial = false, max = 133.52) =>
+    !markerProblems(baseMarker(draft), undefined, false, imperial, max).some(problem => problem.field === 'marker-height');
+  for (const heightText of ['', '0', '60.123456', '133.52'])
+    assert.equal(valid({ heightText, heightTouched: true }), true, heightText);
+  for (const heightText of ['abc', '-0.01', '133.521', 'Infinity'])
+    assert.equal(valid({ heightText, heightTouched: true }), false, heightText);
+  assert.equal(valid({ heightText: '', heightTouched: true, heightBadInput: true }), false);
+  assert.equal(valid({ heightText: '136', heightTouched: true }, false, 137.975), true);
+  assert.equal(valid({ heightText: String(133.52 / 2.54), heightTouched: true }, true), true);
+});

@@ -145,7 +145,6 @@ try {
   const labelByYaw = new Map([[0,0],[35,35],[90,0],[125,-55],[180,0],[215,35],[270,0],[305,-55]]);
   const readingAxes = () => stage.evaluate(stage => {
     const room = stage.querySelector('.iso-room-label-plane .roomlabel');
-    const markerPlane = new DOMMatrixReadOnly(getComputedStyle(stage).getPropertyValue('--hp-iso-marker-plane'));
     const axis = matrix => [matrix.a, matrix.b];
     const glyph = selector => {
       const element = stage.querySelector(selector);
@@ -153,7 +152,9 @@ try {
       const angle = node => parseFloat(getComputedStyle(node).rotate) || 0;
       const capsule = element.closest('.value-badge');
       const inherited = capsule && capsule !== element ? angle(capsule) : 0;
-      return axis(markerPlane.rotate(inherited + angle(element)));
+      const carrier = element.closest('.dev, .oplock');
+      const local = new DOMMatrixReadOnly(getComputedStyle(carrier).getPropertyValue('--hp-iso-marker-plane'));
+      return axis(local.rotate(inherited + angle(element)));
     };
     return [
       room ? axis(new DOMMatrixReadOnly(getComputedStyle(room).transform)) : null,
@@ -187,7 +188,7 @@ try {
         && Boolean(canvas.compareDocumentPosition(markers) & Node.DOCUMENT_POSITION_FOLLOWING);
       return {lens:!!camera.perspective,validPaintOrder,error:Math.hypot(at[0]-270,at[1]-445)};
     });
-    check('only direct ISO cameras use perspective at ' + logical, proof.lens === (logical % 90 === 45));
+    check('every 3D camera uses a perspective lens at ' + logical, proof.lens);
     check('perspective floor paint and pointer inverse agree at ' + logical, proof.error < .05);
     check('floor and architectural paint remain ordered at ' + logical, proof.validPaintOrder);
     check('ISO accepted physical camera ' + logical,
@@ -196,7 +197,12 @@ try {
     const baseline = [Math.cos(labelAngle), Math.sin(labelAngle) * Math.sin(40 * Math.PI / 180)];
     const axes = await readingAxes();
     check('room caption, device icon, badge with its text, and lock read along the expected axis at ' + logical,
-      axes.every(axis => axis && Math.hypot(axis[0] - baseline[0], axis[1] - baseline[1]) < 1e-5));
+      axes.every(axis => {
+        if (!axis) return false;
+        const dot = axis[0] * baseline[0] + axis[1] * baseline[1];
+        const cross = axis[0] * baseline[1] - axis[1] * baseline[0];
+        return dot > 0 && Math.abs(cross) < .4 * dot;
+      }));
     await frame('iso-' + logical);
     sides.push(await card.locator('canvas[data-hp-plan-3d-ready]').evaluate(canvas => canvas.toDataURL()));
     if (logical % 90) {

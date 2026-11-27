@@ -56,5 +56,29 @@ try{
   await dialog.locator('[data-hp="dialog-confirm"]').click();await dialog.waitFor({state:'detached'});await settle();
   out['imperial'+cm+'RetainsRadiusAndPosition']=await page.evaluate(async({cm,before})=>{const c=window.__card,stored=await c.planHost.request({type:'houseplan/config/get'});return stored.config.markers.find(m=>m.id==='d_temp').glow_radius_cm===cm&&JSON.stringify(c._layout)===JSON.stringify(before);},{cm,before});
  }
+ const savedHeight = () => page.evaluate(async () => {
+   const card = window.__card;
+   const response = await card.planHost.request({ type: 'houseplan/config/get' });
+   const marker = response.config.markers.find(item => item.id === 'd_temp');
+   return Object.hasOwn(marker, 'height_cm') ? marker.height_cm : 'auto';
+ });
+ const saveHeight = async () => {
+   await dialog.locator('[data-hp="dialog-confirm"]').click();
+   await dialog.waitFor({ state: 'detached' });
+   await settle();
+ };
+ await open(); await settingsSection(dialog, 'appearance');
+ const height = dialog.locator('#marker-height');
+ out.heightStartsAutomatic = await height.inputValue() === '' && await savedHeight() === 'auto';
+ out.heightUsesInches = Math.abs(Number(await height.getAttribute('max')) - 133.52 / 2.54) < 1e-9;
+ await height.fill('99');
+ out.heightRejectsOutOfRange = await dialog.locator('[data-hp="dialog-confirm"]').isDisabled()
+   && await height.getAttribute('aria-invalid') === 'true';
+ await height.fill('0'); await saveHeight();
+ out.heightZeroSurvivesSave = await savedHeight() === 0;
+ await open(); await settingsSection(dialog, 'appearance');
+ out.heightZeroSurvivesReopen = await height.inputValue() === '0';
+ await height.fill(''); await saveHeight();
+ out.heightClearsToAutomatic = await savedHeight() === 'auto';
  checkAll(out);await finish(browser,out);
 }catch(error){await browser.close();throw error;}

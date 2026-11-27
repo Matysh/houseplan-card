@@ -9,10 +9,9 @@ hidden borders use the flat representation. 3D uses the canonical plan model
 and its existing device bindings, controls, room settings and light sources.
 
 `plan-3d-runtime.ts` prepares physical walls, floor, opening poses, stairs,
-furniture, LED strips and device markers for one world-space scene. Four
-diagonal presets use an orthographic camera. Four direct presets use a
-perspective camera with an offset projection center. Pan and zoom crop that
-projection. The saved orientation remains compatible with existing profiles.
+furniture, LED strips and device markers for one world-space scene. All eight
+presets use the same tilted perspective. Pan and zoom crop its image. The saved
+orientation remains compatible with existing profiles.
 
 Each document shares one WebGL2 context. Each card retains its own displayed
 canvas and updates it when a frame is needed. Walls, surfaces and device
@@ -66,6 +65,22 @@ neutral opening poses. Live readings, devices, lights and device-driven art
 arrive with the live frame. SVG export builds a separate flat vector view
 while the current 3D view stays on screen.
 
+### Device height
+
+`height_cm` stores the distance from the finished floor to the underside of
+a marker or active LED strip. Leaving the field empty aligns the top with the
+wall cut and keeps the automatic body's usual proportions. A value of zero
+places the underside directly on the floor. Explicit heights use a reference
+vertical thickness derived from the standard device profile. The maximum is
+the wall cut minus that thickness. Flat, the editors, the floor shadows and
+the light calculations keep their existing coordinates.
+
+Contact components in 3D use only edges between neighbours on the same level.
+Automatic markers group with other automatic markers. Switching a raised
+strip back to an icon may require lowering it to fit the icon's thicker body.
+Copying an active strip preserves the height and creates a separate translated
+copy of its path in the same write.
+
 ## Prior 2.5D implementation
 
 The sections below record the preceding SVG renderer and the compatibility
@@ -117,7 +132,11 @@ wall/column cut   = 140 physical centimetres, converted by the space scale
 reference-scale constant. It is not the physical wall-cut height; call
 `isoDisplayWallHeight()` for that height before the usual grid conversion.
 
-The direct cameras use a depth-dependent scale. On a square room the near floor edge is 16% wider than the far edge. Scale depends on the plan depth of the point, so changing its height never moves it sideways. The four diagonal cameras keep the affine projection.
+Every camera uses depth-dependent scale. The near-to-far width ratio across the
+calibration floor is 1.25 before the safety clamp. Height also changes apparent
+size and position. Floor input uses the inverse of this lens. Device and room
+overlays use the local projection at their anchors, while WebGL draws physical
+bodies and resolves which surfaces receive pointer input.
 
 `projectPlanPoint()` projects each floor or height point and `unprojectFloorPoint()` maps a floor hit back to plan coordinates. Fit, room fit, SVG floor, volume faces, HTML device
 anchors, locks, LED geometry and vacuum placement use the same effective

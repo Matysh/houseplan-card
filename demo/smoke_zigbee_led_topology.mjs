@@ -263,7 +263,8 @@ try {
     }, { iso, theme });
     if (theme === 'light' && iso) {
       await root.locator(mode === 'direct' ? '[data-hp="rotate-right"]' : '[data-hp="rotate-left"]').click();
-      await page.waitForFunction(direct => !!window.__card._isoFloorCamera?.perspective === direct, mode === 'direct');
+      await page.waitForFunction(direct => window.__card._isoFloorCamera?.perspective
+        && (window.__card._isoFloorCamera.rotDeg % 90 === 0) === direct, mode === 'direct');
     }
     await hover('d_light1', true);
     const geometry = await inspect(), name = mode + '-' + theme;
@@ -271,7 +272,7 @@ try {
     check(`${name} LED-to-LED and LED-to-icon routes remain directed`, geometry.lines, 2);
     check(`${name} both real LED endpoints are aligned`, geometry.anchors.length === 2 && geometry.anchors.every(a => a.aligned));
     check(`${name} halo remains fourteen screen pixels`, geometry.anchors.every(a => Math.abs(a.width - 14) < .25 && Math.abs(a.height - 14) < .25));
-    check(name + ' visible LED paths are highlighted', geometry.anchors.every(a => mode === 'direct'
+    check(name + ' visible LED paths are highlighted', geometry.anchors.every(a => mode !== 'flat'
       ? a.nativeHighlight && !a.bodyBorrowed : a.realShape && a.inert && a.bodyBorrowed));
     check(`${name} line ends reach real LED anchors`, geometry.localEndpoints);
     check(`${name} incoming arrow stops at the fixed LED halo`, geometry.ledArrow);

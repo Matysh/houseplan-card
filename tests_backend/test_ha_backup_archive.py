@@ -54,7 +54,7 @@ def sample(root: Path):
                     "w": .25, "h": .35, "angle": 23, "opacity": .6, "flip_h": True}]},
         {"id": "b", "title": "Upper", "view_box": [0, 0, 1, 1], "rooms": [], "plan_aspect": 1,
          "plan_url": "/api/houseplan/content/plans/_/a.copy.png"}],
-        "markers": [{"id": "lamp", "binding": "virtual", "pdfs": [
+        "markers": [{"id": "lamp", "binding": "virtual", "height_cm": 0, "pdfs": [
             {"url": "/api/houseplan/content/files/lamp/picture.png?v=2", "name": "Picture"}]}],
         "settings": {"filter_seeded": True}}
     document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"), {"config": config},
@@ -75,6 +75,7 @@ def test_archive_contains_real_deduplicated_images_and_snapshot(tmp_path: Path):
     assert len(manifest["blobs"]) == 1
     result = read_archive(archive, target)
     assert result.topics == topics
+    assert document["payload"]["config"]["markers"][0]["height_cm"] == 0
     assert result.document["payload"] == document["payload"]
     assert [p.read_bytes() for p in result.blobs.values()] == [raw]
 
@@ -324,6 +325,7 @@ async def test_portable_cross_root_apply_and_one_undo_restore_cache_and_files(ha
     assert result.error is None, result.error
     current = await rt.config_store.async_load()
     assert current["config"]["spaces"][0]["title"] == "Ground"
+    assert current["config"]["markers"][0]["height_cm"] == 0
     assert len(list((root / "houseplan/plans").glob("*.png"))) == 2
     assert [p.read_bytes() for p in (root / "houseplan/plans").glob("*.png")] == [raw, raw]
     provider = rt.zigbee_coordinator.snapshot("mesh")["provider"]

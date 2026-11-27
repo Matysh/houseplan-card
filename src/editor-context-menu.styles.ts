@@ -18,8 +18,6 @@ export const editorContextMenuStyles = unsafeCSS(css`
   .hpf-context-menu > button + button { border-top: 2px solid var(--primary-color,#03a9f4); padding-block-start:6px; }
   :host([data-pointer-hover]) .hpf-context-menu > button:hover:not(:disabled),
   .hpf-context-menu > button:is(.hpf-tab-focus,.hpf-keyboard-current):focus:not(:disabled) {
-    color: var(--primary-color,#03a9f4);
-    border-color:var(--primary-color,#03a9f4);
     background: color-mix(in srgb,var(--primary-color,#03a9f4) 12%,transparent);
   }
   .hpf-context-menu > button:disabled { opacity: 1; color: color-mix(in srgb,var(--primary-text-color,#222) 40%,transparent); cursor: not-allowed; }

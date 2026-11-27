@@ -249,6 +249,12 @@ export function prepareGoldenFixture(scenario) {
       decor:[{id:'ui-rect',kind:'rect',x:.25,y:.35,w:.25,h:.15,color:'#718B82',opacity:.75,
         fill:true,fill_color:'#C4D5CF',fill_opacity:.65,width_cm:2}],
     });
+    if (scenario.menu1608 && scenario.mode === 'decor') {
+      const decor = fixture.config.spaces.at(-1).decor;
+      const sample = decor[0];
+      decor.unshift({ ...sample, id: 'before-rect', x: .12, y: .18 });
+      decor.push({ ...sample, id: 'after-rect', x: .62, y: .22 });
+    }
     fixture.config.markers.push({id:'ui1051-lamp',binding:'virtual',space:scenario.space,name:'Reading lamp',icon:'mdi:lightbulb'});
     fixture.layout['ui1051-lamp']={s:scenario.space,x:.6,y:.6};
   }
@@ -1129,6 +1135,56 @@ async function preparePlanKeyboardCapture(page, scenario) {
     await guard.evaluate(state => document.removeEventListener('keydown', state.listener, true));
     await guard.dispose();
   }
+}
+
+async function prepareContextMenu1608(page, scenario) {
+  const root = page.locator('houseplan-card');
+  const device = scenario.mode === 'devices';
+  const source = root.locator(device ? '.dev[data-id="ui1051-lamp"] .device-core'
+    : '.decorlayer [data-id="ui-rect"]').first();
+  await source.click({ button: 'right' });
+  const menu = root.locator(`[data-hp="${device ? 'device' : 'decor'}-context-menu"]:not([inert])`);
+  const rows = menu.locator('button');
+  await rows.first().waitFor();
+  const getRows = () => rows.evaluateAll(buttons => buttons.map(button => {
+    const style = getComputedStyle(button), bounds = button.getBoundingClientRect();
+    return { color: style.color, background: style.backgroundColor,
+      top: style.borderTop, shadow: style.boxShadow, width: bounds.width, height: bounds.height };
+  }));
+  const idle = await getRows();
+  if (idle.length < 3 || idle[0].top === idle[1].top) throw Error('Expected an accented menu separator');
+  const index = scenario.menu1608 === 'hover-middle' ? 1 : 0;
+  const row = rows.nth(index);
+  const active = await row.getAttribute('disabled') === null;
+  if (!active) throw Error('Expected an available context menu command');
+  await row.hover();
+  await page.waitForFunction(({ device, index, background }) => {
+    const button = window.__goldenCard.renderRoot.querySelector(
+      `[data-hp="${device ? 'device' : 'decor'}-context-menu"]:not([inert])`).querySelectorAll('button')[index];
+    return button.matches(':hover') && getComputedStyle(button).backgroundColor !== background;
+  }, { device, index, background: idle[index].background });
+  const hover = await getRows();
+  const geometry = row => JSON.stringify([row.width, row.height, row.top, row.color, row.shadow]);
+  if (!hover.every((item, i) => geometry(item) === geometry(idle[i])
+      && (item.background !== idle[i].background) === (i === index))) throw Error('Hover must change only the row background');
+  if (scenario.menu1608 === 'idle') {
+    await page.mouse.move(0, 0);
+    await page.keyboard.press('ArrowDown');
+    await page.waitForFunction(({ device, background }) => {
+      const r = window.__goldenCard.renderRoot;
+      const button = r.activeElement;
+      return button?.closest(`[data-hp="${device ? 'device' : 'decor'}-context-menu"]`)
+        && getComputedStyle(button).backgroundColor !== background;
+    }, { device, background: idle[1].background });
+    const focused = await getRows();
+    if (!focused.every((item, i) => geometry(item) === geometry(idle[i])))
+      throw Error('Keyboard focus must preserve menu geometry and text');
+    await page.keyboard.press('Escape');
+    await source.click({ button: 'right' });
+    await rows.first().waitFor();
+    await page.mouse.move(0, 0);
+  }
+  return { source: scenario.mode, state: scenario.menu1608, items: idle.length };
 }
 
 export async function prepareGoldenScenario(page, scenario, customizeFixture) {
@@ -3458,6 +3514,7 @@ export async function prepareGoldenScenario(page, scenario, customizeFixture) {
     if (result.nodeMenu.tool !== scenario.nodeMenuTool || result.nodeMenu.handles !== 0)
       throw Error('Node menu must retain the selected non-Select tool without enabling Move');
   }
+  if (scenario.menu1608) result.menu1608 = await prepareContextMenu1608(page, scenario);
   if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
   if (scenario.zigbeeLed) result.zigbeeLed = await prepareZigbeeLed(page);
   if (scenario.vacuumHistory) result.vacuumHistory = await prepareVacuumHistoryGolden(page,scenario);

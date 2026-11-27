@@ -35,6 +35,7 @@ from .led_strips import LED_STRIPS_SCHEMA as LED_STRIPS_SCHEMA
 from .led_strips import config_led_strip_links as config_led_strip_links
 from .led_strips import preserve_led_strips as preserve_led_strips
 from .marker_alerts import valid_marker_alerts as valid_marker_alerts
+from .marker_height import marker_height_number, validate_marker_height_representations
 from .opening_features import OPENING_FEATURES_SCHEMA as OPENING_FEATURES_SCHEMA
 from .opening_features import SWING_POSITION_SCHEMA
 from .opening_features import validate_opening_features as validate_opening_features
@@ -2459,6 +2460,7 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("ripple_color"): vol.Any(None, _COLOR),
         vol.Optional("ripple_size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=1, max=20)), None),
         vol.Optional("size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=0.2, max=6)), None),
+        vol.Optional("height_cm"): vol.Any(None, marker_height_number),
         vol.Optional("angle"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=-360, max=360)), None),
         vol.Optional("pdfs"): vol.All(
             [vol.Schema({vol.Required("name"): _TEXT, vol.Required("url"): _URL}, extra=vol.ALLOW_EXTRA)],
@@ -3086,6 +3088,7 @@ CONFIG_SCHEMA = vol.All(
     # #780: after canonicalisation — shape invariants judge stored numbers;
     # orphan links become unbound strips, foreign/duplicate links reject.
     config_led_strip_links,
+    validate_marker_height_representations,
     normalize_space_display,
 )
 
@@ -3225,4 +3228,5 @@ def validate_scoped_candidate(candidate: dict, stored: dict, scope: OrdinaryWrit
     merged["markers"] = [next(marker_iter) if touched else m for m, touched in zip(all_markers, is_touched_marker, strict=True)]
     # Whole-document steps, in CONFIG_SCHEMA order.
     merged = config_led_strip_links(merged)
+    validate_marker_height_representations(merged)
     return normalize_space_display(merged)

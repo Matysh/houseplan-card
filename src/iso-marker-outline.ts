@@ -150,6 +150,7 @@ export interface IsoMarkerGlass {
 export interface IsoMarkerGlassProjection {
   camera: IsoCamera;
   height: number;
+  thickness?: number;
 }
 
 /** Absolute position in the affine SVG embedding used by each device node. */
@@ -166,7 +167,7 @@ export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly num
   if(!shapes.length)return result;
   const [a,b,c,d]=plane,det=a*d-b*c;
   if(!Number.isFinite(det)||Math.abs(det)<1e-8)return result;
-  const half=Math.max(...shapes.map(s=>s.marker.diameter))*.12;
+  const half=projection?.thickness == null ? Math.max(...shapes.map(s=>s.marker.diameter))*.12 : projection.thickness / 2;
   const v:Point=[-c/det*half,a/det*half];
   // Raised device caps and their upper rim share one plane. An extra raised
   // lip shifts the projected ellipse off-centre even with identical XY.

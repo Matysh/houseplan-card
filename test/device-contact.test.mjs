@@ -13,6 +13,20 @@ const marker = (id, x = 0, y = 0, diameter = 80, box) => ({ id, x, y, diameter,
   box: box || { left: -diameter * .634375, right: diameter * .634375, top: -diameter * .634375, bottom: diameter * .634375 } });
 const canonical = (x, y) => ({ x: +((x / 1000).toFixed(9)) * 1000, y: +((y / 1000).toFixed(9)) * 1000 });
 const shape = (m) => freeContactShape(m);
+test('#1608 height changes split contact chains and reconnect only actual neighbours', () => {
+  const scene = new DeviceContactScene([marker('a'), marker('b', 90), marker('c', 180)], []);
+  const members = levels => scene.components(undefined, levels).map(group => group.map(s => s.marker.id));
+  assert.deepEqual(members(), [['a', 'b', 'c']]);
+  const heights = new Map([['a', '0'], ['b', '60'], ['c', '0']]);
+  assert.deepEqual(members(heights), [['a'], ['b'], ['c']]);
+  heights.set('a', '60');
+  assert.deepEqual(members(heights), [['a', 'b'], ['c']]);
+  heights.set('c', '60');
+  assert.deepEqual(members(heights), [['a', 'b', 'c']]);
+  heights.set('b', 'auto');
+  assert.deepEqual(members(heights), [['a'], ['b'], ['c']]);
+  assert.deepEqual(members(), [['a', 'b', 'c']], '2D contact graph stays intact');
+});
 const wall = (angle = 0, side = 1) => {
   const t = [Math.cos(angle), Math.sin(angle)];
   return { id: `face-${angle}-${side}`, a: [-300 * t[0], -300 * t[1]], b: [300 * t[0], 300 * t[1]], normal: [-t[1] * side, t[0] * side] };

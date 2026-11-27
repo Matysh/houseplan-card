@@ -10,6 +10,7 @@
  * visibility regions. Cache boundaries therefore never become visible seams,
  * while the same wall/door scene still clips the light.
  */
+import { markerHeightGeometry, LED_DEPTH_RATIO } from './marker-height';
 import { nothing, svg, type TemplateResult } from 'lit';
 import { readIsoPerspectiveSvg } from './svg-perspective-coordinates';
 import { turnVector, inversePlanRotation, type PlanRotation } from './view-frame';
@@ -212,6 +213,7 @@ export interface LedIsoStyle {
   perspective?: boolean;
   /** Screen-space lift to the common wall/device top plane. */
   lift: number;
+  liftOf?: (view: LedStripView) => number;
   /** Shallow vertical edge, matching the room-name extrusion. */
   depth: number;
   edge: string;
@@ -269,13 +271,19 @@ export function ledStripePath(strip: LedStripModel, faces: FaceContext | null, d
   return value;
 }
 
+function ledHeight(host: LedCardHost, device: DevItem, diameter: number) {
+  return markerHeightGeometry(device.marker?.height_cm, host._cellCm,
+    gridVisualUnits(isoDisplayWallHeight(), host._cellCm), diameter, true);
+}
+
 export function plan3dLedRibbons(host: LedCardHost, space: SpaceModel, spaceGlow: boolean) {
   const frame = ledFrameFor(host, space, spaceGlow);
   const diameter = frame.d * ISO_ICON_SCALE;
   return frame.views.flatMap(view => {
     const { t, path } = ledStripePath(view.strip, frame.faces, diameter);
     if (path.points.length < 2) return [];
-    return [{ id: view.strip.id, owner: view.device.id, path, width: t, depth: frame.d * .075,
+    const height = ledHeight(host, view.device, frame.d);
+    return [{ id: view.strip.id, owner: view.device.id, path, width: t, depth: height.thickness, height: height.top,
       outline: OUTLINE, color: view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE,
       opacity: view.state === 'off' ? .7 : 1 }];
   });
@@ -355,7 +363,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
         const [dx, dy] = turnVector([x, y], inversePlanRotation(iso?.rotation || 0));
         return `translate(${dx} ${dy})`;
       };
-      const lifted = iso ? shift(0, -iso.lift) : nothing;
+      const lifted = iso ? shift(0, -(iso.liftOf?.(view) ?? iso.lift)) : nothing;
       const shadow=iso && input.paint !== 'body' ? svg`<path class="led-iso-shadow" d=${d} fill="none" stroke="black"
         stroke-opacity=${iso.shadow.opacity} stroke-width=${t} stroke-linecap="round" stroke-linejoin="round"
         filter="url(#hp-led-iso-shadow)" pointer-events="none" transform=${shift(iso.shadow.dx,iso.shadow.dy)}></path>` : nothing;
@@ -629,6 +637,7 @@ export function renderLedLayerFor(
   host: LedCardHost, space: SpaceModel, spaceGlow: boolean, view: { w: number },
   paint: LedStripeInput['paint'] = 'all',
   flat = false,
+  markerIds?: ReadonlySet<string>,
 ): TemplateResult {
   const frame = ledFrameFor(host, space, spaceGlow);
   const width = host._renderPixelsPerUnit ? host._renderPixelsPerUnit(view) * view.w : host._stageEl?.clientWidth;
@@ -640,7 +649,7 @@ export function renderLedLayerFor(
   const shadow = isoTileShadow(theme, lightFloor);
   const camera=host._isoFloorCamera ?? isoCameraFor(host._rotation ?? 0);
   const stripes = renderLedStripes({
-    views: frame.views,
+    views: markerIds ? frame.views.filter(v => markerIds.has(v.device.id)) : frame.views,
     d,
     paint,
     iso: iso ? {
@@ -648,7 +657,8 @@ export function renderLedLayerFor(
       plane: isoFloorMatrix(camera),
       perspective: !!camera.perspective,
       lift: camera.perspective ? 0 : gridVisualUnits(isoDisplayWallHeight(),host._cellCm)*camera.zScale*Math.sin(camera.tiltDeg*Math.PI/180),
-      depth: frame.d * .075,
+      liftOf: view => camera.perspective ? 0 : ledHeight(host, view.device, frame.d).top * camera.zScale * Math.sin(camera.tiltDeg * Math.PI / 180),
+      depth: frame.d * LED_DEPTH_RATIO,
       edge: '#808080',
       shadow: { dx: 0, dy: 0, sigma: shadow.sigma * d, opacity: shadow.opacityWhite },
     } : null,

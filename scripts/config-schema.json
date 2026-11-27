@@ -99,6 +99,11 @@
       "required": false,
       "type": "float"
     },
+    "config.markers[].height_cm": {
+      "nullable": true,
+      "opaque": "<function marker_height_number>",
+      "required": false
+    },
     "config.markers[].hidden": {
       "required": false,
       "type": "bool"
