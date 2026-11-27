@@ -297,6 +297,7 @@ const rayInfo = () => page.evaluate(async () => {
 });
 
 // baseline: morning east sun, only wE glows, window sits at y = 600
+await page.evaluate(() => window.__hpTest.waitForWrites());
 await page.evaluate(async () => {
   const c = window.__card;
   // This section exercises a production structural write. Give it a compact
@@ -373,6 +374,22 @@ await page.evaluate(async () => {
   c.requestUpdate(); await c.updateComplete;
 });
 
+// Keep the server revision fixed until both pre-ack geometry assertions run.
+await page.evaluate(() => {
+  const c = window.__card;
+  const send = c.hass.callWS.bind(c.hass);
+  let release;
+  const held = new Promise(resolve => { release = resolve; });
+  c.hass = { ...c.hass, callWS: async message => {
+    if (message.type === 'houseplan/config/set') await held;
+    return send(message);
+  } };
+  window.__sunReleaseConfigWrite = () => {
+    c.hass = { ...c.hass, callWS: send };
+    release();
+  };
+});
+
 // the real drag: enter the opening editor and pull wE down the east wall
 await page.evaluate(async () => {
   const c = window.__card;
@@ -392,7 +409,7 @@ await page.mouse.move(dx, dty, { steps: 6 });
 await page.mouse.up();
 await settle();
 
-// leave the editor IMMEDIATELY — well inside the 500 ms debounce window
+// Leave the editor while the server write is held.
 const after = await page.evaluate(async () => {
   const c = window.__card;
   c._setMode('view');
@@ -425,8 +442,11 @@ const reclipped = await rayInfo();
 check('b701_room_rev_still_boot', reclipped.rev, base.rev);
 check('b701_room_reclips_ray', reclipped.minX >= 900 - 1, true);
 
-// let the debounced write land: the ray must survive the late server ack
-await page.waitForTimeout(800);
+// The ray must survive the late server acknowledgement.
+await page.evaluate(async () => {
+  window.__sunReleaseConfigWrite();
+  await window.__hpTest.waitForWrites();
+});
 const acked = await page.evaluate(async () => {
   const c = window.__card;
   c.requestUpdate(); await c.updateComplete;
@@ -438,8 +458,7 @@ check('b701_write_landed', final.rev !== base.rev, true);
 check('b701_ray_survives_ack', Math.abs(final.midY - final.wEy * 1000) < 1, true);
 
 // 15) the 3° threshold + the 2 s dissolve (owner 2026-08-03). Runs LAST and in
-// its own evaluate: it deliberately waits out a two-second fade, and the b701
-// regression above measures a debounced config write against wall-clock time.
+// its own evaluate: it deliberately waits out a two-second fade.
 const thr = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
