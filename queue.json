@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29082,
+  "revision": 29083,
   "nextTicket": 784,
   "nextFence": 780,
   "tasks": {
@@ -6260,200 +6260,26 @@
     },
     "1603": {
       "issue": 1603,
+      "branch": "codex/1603-implicit-any",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1603-implicit-any",
-      "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 776,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795789104578,
-      "reviewEntry": 2,
-      "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026",
-      "changedFiles": [
-        "PROCESS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/DEVELOPMENT.md",
-        "docs/release-ledger/v1.86.1/1599.json",
-        "docs/release-ledger/v1.86.1/1603.json",
-        "process-next/catalog/backend-quality.mjs",
-        "process-next/lib/catalog.mjs",
-        "process-next/test/catalog.test.mjs",
-        "pyproject.toml",
-        "scripts/mutation-registry.mjs",
-        "src/decor-history-restore.ts",
-        "src/demand-space-models.ts",
-        "src/device-hit-owner.ts",
-        "src/device-toggle.ts",
-        "src/editors/marker-dialog.ts",
-        "src/editors/room-save.ts",
-        "src/floor-cache-compute.ts",
-        "src/furniture-gallery-entry.ts",
-        "src/ha-plan-host.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/i18n.ts",
-        "src/live-editor.ts",
-        "src/opening-drag-preview.ts",
-        "src/optimize-feedback.ts",
-        "src/optimize-plans-dialog.ts",
-        "src/pdf/svg-path.ts",
-        "src/plan-optimizer.ts",
-        "src/room-device-discovery.ts",
-        "src/wall-face-graph.ts",
-        "src/wall-local-replacements.ts",
-        "src/wall-node-card-adapter.ts",
-        "tests_backend/requirements.txt",
-        "tests_backend/test_backend_quality.py",
-        "tsconfig.json"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795788823865,
-        "entry": 1,
-        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-        "eventId": "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:2:return:return:1603"
-      },
-      "s6": {
-        "id": "20261127T171722114-70dfdab8",
-        "name": "Тесты для задачи #1603 (перед ревью)",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T171722114-70dfdab8/report.json",
-        "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
-        "status": "passed",
-        "finishedAt": "2026-11-27T17:51:41.368Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "68b4268626b93e90825e34bb91842f5c730e9add",
+      "mergedSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
+      "mergedAt": 1795802192045,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": true,
       "reviewRequest": "review:1603:2:16a13a040b0aac4ee734d093dedf29b4c518c026:68b4268626b93e90825e34bb91842f5c730e9add",
-      "reviewMaterial": {
-        "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
-        "expectedBase": "68b4268626b93e90825e34bb91842f5c730e9add",
-        "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1603:2:16a13a040b0aac4ee734d093dedf29b4c518c026:68b4268626b93e90825e34bb91842f5c730e9add",
-        "eventId": "github:46045100234:1:tick:0:review-retry",
-        "at": 1795801935891,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1603,
-        "requestId": "review:1603:2:16a13a040b0aac4ee734d093dedf29b4c518c026:68b4268626b93e90825e34bb91842f5c730e9add",
-        "kind": "code",
-        "base": "68b4268626b93e90825e34bb91842f5c730e9add",
-        "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
-        "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1603,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1603",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принять, блокеров нет. Все три пункта задачи сделаны.\n1) `noImplicitAny: true` включён. Точечные аннотации не меняют исполняемый JS: исполнитель сравнил стёртое дерево, сборка и typecheck прошли в S6.\n2) Добавлен шаг S6 `backend-quality`. Планировщик добавляет его в task/hotfix только при изменённых существующих `.py` в `custom_components/houseplan/**` и передаёт точный список файлов. Чистые docs возвращают пустой план раньше, чем доходит до этого шага. Из-за того что id содержит `backend`, CI-резерв сам ставит Python и `requirements.txt`.\n3) Рейтчет удалён из `test_backend_quality.py`. Вместо него добавлены проверки, которые реально запускают CLI с ruff и mypy.\nОтдельно стоит отметить замену `strict = true` в override на явные флаги. Без неё адресный mypy делал бы строгим любой затронутый legacy-модуль. Это правильный стык, проверка в тестах его подтверждает.\nОстаточные риски не блокируют приёмку. Не проверялось, проходят ли ruff и mypy сейчас все существующие файлы бэкенда. Поэтому первая задача, которая тронет «грязный» legacy-файл, может получить отказ из-за старого долга этого файла. По замыслу задачи это ожидаемо, но об этом стоит знать.",
-          "understanding": "Проблема. С `noImplicitAny: false` неявные any появлялись сами собой: на dev уже 62 ошибки. ruff и mypy после #1105 не вызывались нигде, а `test_backend_quality.py` защищал рейтчет («allowlist strict-модулей может только расти») и ссылался на удалённый `validate.yml`.\n\nЧто сделано:\n- `tsconfig.json`: флаг включён. В 21 TS-модуле добавлены аннотации параметров колбэков. Большинство из них стоят там, где массив берётся из `ServerConfig.spaces: any[]` или из `config: any`: без контекстного типа параметр становится неявным any. Используются RoomCfg, OpeningCfg, `PlanGraph['nodes'][number]`, WallSegmentEntry. Отдельные случаи: TS7022 — циклический вывод в `wall-face-graph.ts` (liveTail/cm) и в `svg-path.ts` (qx/qy), а также `editor` и `scene` в `wall-node-card-adapter.ts`. Ещё есть индексирование по ключу (`floor-cache-compute`, `live-editor`, `i18n`) и обобщённый `select` в галерее. `opening-drag-preview.ts` теперь возвращает более точный тип `ReturnType<typeof union>`.\n- В `scripts/mutation-registry.mjs` обновлены два якоря `find` под новый текст. В `replace` сохранён `: number`, чтобы мутант оставался компилируемым.\n- `process-next/catalog/backend-quality.mjs`: `backendQualityFiles` фильтрует файлы регуляркой, убирает дубли, проверяет существование через `within` и `isFile`, затем сортирует. `runBackendQuality` по очереди запускает `python3 -m ruff check -- files` и `python3 -m mypy -- files` без shell. Ненулевой статус, сигнал или ошибка запуска означают отказ, так что отсутствие модуля ruff или mypy не может пройти как PASS.\n- В `planProfile` шаг ставится после `checkedPaths` и только для event task/hotfix, независимо от слоя product или infra. Release-профили его не получают: там уже есть `product-backend`. Чистые docs выходят на строке 201, раньше этого места.\n- `pyproject.toml`: в override `strict=true` заменён на 12 per-module флагов, глобально добавлен `warn_redundant_casts`.\n\nРазобранные пути:\n- `planRequirements` в `task-selection.mjs:229-233`: `/backend/` срабатывает на id, поэтому `needsBackend` и `needsPython` равны true.\n- `.github/workflows/process-next-fallback.yml:54-65`: устанавливаются setup-python и `requirements.txt`, где закреплены ruff 0.16.5 и mypy 2.3.1.\n- `finalize` и `dependencyReader`: Python-импорты выбранных файлов попадают во входы шага (`source-dependencies.mjs:107-124`), так что повторное использование учитывает изменения в модулях, которые mypy читает через `follow_imports=silent`.\n- `within` из `storage.mjs` защищает от выхода за корень и от symlink.",
-          "analysis": [
-            {
-              "topic": "Планировщик: когда шаг появляется, а когда нет",
-              "assessment": "Логика совпадает с критериями приёмки. Шаг ставится только при изменённом существующем `.py` в `custom_components/houseplan/**`. Удалённые файлы отсекаются через existsSync, дубли — через Set. Для docs план пустой, потому что ранний return стоит до вычисления шага. Задача без бэкенда шаг не получает. Хорошо, что команда передаёт точный список файлов, а не директорию: так «не обходить бэкенд целиком» выполняется по построению. Регулярка `[\\w-]+` не пропустит имена с точками вроде `a.b.py`. Для этого дерева это скорее теоретическое ограничение.",
-              "evidence": "`process-next/lib/catalog.mjs:201,221-229`; `process-next/catalog/backend-quality.mjs:8-12`; тест `process-next/test/catalog.test.mjs` для #1603: дубль, removed.py, docs, отсутствие бэкенда."
-            },
-            {
-              "topic": "CI-резерв и подготовка Python",
-              "assessment": "Отдельной ветки для нового шага не понадобилось. `planRequirements` распознаёт шаг по подстроке `backend` в id, после чего fallback ставит Python и устанавливает `tests_backend/requirements.txt`, где закреплены ruff и mypy. Минус: эта связь неявная. Если шаг переименуют без `backend` в id, CI перестанет готовить зависимости, а сам шаг честно упадёт. Тест на `needsBackend/needsPython` в catalog.test.mjs эту связь фиксирует.",
-              "evidence": "`process-next/lib/task-selection.mjs:231-232`; `.github/workflows/process-next-fallback.yml:54-65`; `catalog.test.mjs` assert `planRequirements(plan).needsBackend === true`."
-            },
-            {
-              "topic": "mypy: замена strict=true на явные per-module флаги",
-              "assessment": "Это главное неочевидное решение, и оно обосновано. В старом `validate.yml` mypy, судя по всему, запускался только на модулях из allowlist, поэтому глобальный эффект shortcut был незаметен. С адресным запуском на произвольном изменённом файле глобальный strict сделал бы строгим и любой legacy-модуль. В результате первая же правка такого файла вызвала бы массовую переписку, а это противоречит #42. Набор из 12 флагов совпадает с известным мне составом `--strict` за вычетом глобальных: `warn_unused_configs` и `warn_redundant_casts`. Второй вынесен глобально, как и работал раньше. Поведение именно mypy 2.3.1 я по исходникам не проверял. Опираюсь на комментарий исполнителя о `config_parser` и на тест, который это проверяет.",
-              "evidence": "`pyproject.toml:33-71`; `tests_backend/test_backend_quality.py`: `test_issue_1603_actual_mypy_strictness_stays_in_declared_modules` с реальным pyproject — probe проходит, core/constants падает с no-untyped-def; комментарий issue от 27.11 14:19."
-            },
-            {
-              "topic": "Замена рейтчета в test_backend_quality.py",
-              "assessment": "Рейтчет удалён, как требует решение владельца. Полезные проверки остались: коды ошибок, идентичность модулей, noqa. Новые тесты проверяют поведение, а не форму: CLI вызывает настоящие ruff и mypy, отказ распространяется наружу (F821, return-value), ошибка в соседнем `untouched.py` на результат не влияет. Цена: файл больше не «чистый». Теперь он требует node и закреплённых ruff/mypy в окружении pytest и входит в release-выборку backend. В CI оба условия выполнены (setup-node и requirements), а docstring это честно отражает.",
-              "evidence": "`tests_backend/test_backend_quality.py:1-4,105-156`; `catalog.mjs:44` (discoverReleaseTests подбирает `tests_backend/test_*.py`)."
-            },
-            {
-              "topic": "TypeScript: аннотации вместо неявного any",
-              "assessment": "Подход правильный: точечные предметные типы, явные `: any` массово не добавлялись. Нужно понимать, что почти все аннотации стоят на данных из `spaces: any[]` или `config: any`. Они не проверяются компилятором, а только заявляют форму. Например, в `demand-space-models.ts` `roomRecords.map((room: RoomCfg)...)` обрабатывает и объекты `{id}` из plan_graph. Хуже, чем было, не стало: раньше там был неявный any, а теперь тип хотя бы читается. Источник проблемы — `ServerConfig.spaces: any[]`, и он остаётся. Изменения стираются при компиляции; это подтверждено сравнением transpile-дерева (комментарий исполнителя) и зелёной сборкой в S6. Якоря мутаций обновлены корректно, `replace` остаётся компилируемым.",
-              "evidence": "`src/types.ts:376` (`spaces: any[]`); `src/demand-space-models.ts:32-41`; `src/wall-face-graph.ts:105-106`; `scripts/mutation-registry.mjs:7193-7194,10299`."
-            },
-            {
-              "topic": "Проверки S6",
-              "assessment": "Итоговый набор по 7a2d872 прошёл, отказов нет. Предыдущий возврат из-за якорей мутационного реестра закрыт правкой `find`. Сам шаг `backend-quality` в S6 этой задачи не исполнялся, потому что `.py` бэкенда не менялись. Его исполнимость подтверждают pytest-проверки, по словам исполнителя 14/14 PASS.",
-              "evidence": "receipt `20261127T171722114-70dfdab8` status passed, failures []; комментарии issue от 27.11 14:19 и 17:52."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Однократно прогнать `ruff check` и `mypy` по всему `custom_components/houseplan/**` и записать результат в issue как справку, без гейта. Так станет видно, какие legacy-файлы сейчас не проходят адресную проверку. Иначе первая задача, которая их тронет, неожиданно получит отказ из-за старого долга. Цена — один ручной прогон. Польза — предсказуемый объём S6 для будущих задач бэкенда.",
-            "Связь «шаг backend-quality → подготовка Python в CI» держится на подстроке `backend` в id (`task-selection.mjs:231`). Надёжнее объявить потребность явно, например полем `requiresPython: true` в шаге, и учитывать его в `planRequirements`. Это небольшая правка, и она убирает зависимость от именования.",
-            "В `src/device-toggle.ts:914` вместо встроенного литерального типа параметра лучше типизировать саму переменную: `const targets: ReadonlyArray<ToggleTarget | SkippedToggleTarget> = ...`. Тогда вместо самодельной структуры используются предметные типы модуля, а колбэк получает контекстный тип сам."
-          ],
-          "boundaries": "Изучено по исходникам на head: diff целиком; `process-next/lib/catalog.mjs` (planProfile, finalize, checkedPaths); `planRequirements` в `task-selection.mjs`; `within` в `storage.mjs`; обход Python-зависимостей в `source-dependencies.mjs`; `process-next-fallback.yml`; `tests_backend/requirements.txt`; `tsconfig.test.json`; тип `ServerConfig`; `SkippedToggleTarget` в `device-toggle.ts`.\nСам ничего не запускал: ни сборку, ни tsc, ни ruff, ни mypy, ни тесты. Опирался на успешный S6 (receipt `20261127T171722114-70dfdab8`, материал 7a2d872) и на сообщения исполнителя об адресных прогонах. Сообщения исполнителя доказательством прогона не считаю.\nЧто mypy 2.3.1 применяет `strict` из override глобально, я не проверял: исходник mypy недоступен, а эта версия, возможно, вышла позже моих знаний. Вывод опирается на тест с реальным pyproject и на описание исполнителя.\nНе проверялось, проходят ли текущие исходники бэкенда ruff и mypy пофайлово. Отдельный скрипт с доказательством стирания типов (`output/1603-erased-types-proof.*`) хранится локально, и я его не видел."
-        },
-        "usage": {
-          "input_tokens": 28,
-          "cache_creation_input_tokens": 86446,
-          "cache_read_input_tokens": 779906,
-          "output_tokens": 13411,
-          "output_tokens_details": {
-            "thinking_tokens": 6071
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 86446,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1095,
-              "cache_read_input_tokens": 75173,
-              "cache_creation_input_tokens": 15477,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 15477
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять, блокеров нет. Все три пункта задачи сделаны.\n1) `noImplicitAny: true` включён. Точечные аннотации не меняют исполняемый JS: исполнитель сравнил стёртое дерево, сборка и typecheck прошли в S6.\n2) Добавлен шаг S6 `backend-quality`. Планировщик добавляет его в task/hotfix только при изменённых существующих `.py` в `custom_components/houseplan/**` и передаёт точный список файлов. Чистые docs возвращают пустой план раньше, чем доходит до этого шага. Из-за того что id содержит `backend`, CI-резерв сам ставит Python и `requirements.txt`.\n3) Рейтчет удалён из `test_backend_quality.py`. Вместо него добавлены проверки, которые реально запускают CLI с ruff и mypy.\nОтдельно стоит отметить замену `strict = true` в override на явные флаги. Без неё адресный mypy делал бы строгим любой затронутый legacy-модуль. Это правильный стык, проверка в тестах его подтверждает.\nОстаточные риски не блокируют приёмку. Не проверялось, проходят ли ruff и mypy сейчас все существующие файлы бэкенда. Поэтому первая задача, которая тронет «грязный» legacy-файл, может получить отказ из-за старого долга этого файла. По замыслу задачи это ожидаемо, но об этом стоит знать.\n\n## Понимание решения\n\nПроблема. С `noImplicitAny: false` неявные any появлялись сами собой: на dev уже 62 ошибки. ruff и mypy после #1105 не вызывались нигде, а `test_backend_quality.py` защищал рейтчет («allowlist strict-модулей может только расти») и ссылался на удалённый `validate.yml`.\n\nЧто сделано:\n- `tsconfig.json`: флаг включён. В 21 TS-модуле добавлены аннотации параметров колбэков. Большинство из них стоят там, где массив берётся из `ServerConfig.spaces: any[]` или из `config: any`: без контекстного типа параметр становится неявным any. Используются RoomCfg, OpeningCfg, `PlanGraph['nodes'][number]`, WallSegmentEntry. Отдельные случаи: TS7022 — циклический вывод в `wall-face-graph.ts` (liveTail/cm) и в `svg-path.ts` (qx/qy), а также `editor` и `scene` в `wall-node-card-adapter.ts`. Ещё есть индексирование по ключу (`floor-cache-compute`, `live-editor`, `i18n`) и обобщённый `select` в галерее. `opening-drag-preview.ts` теперь возвращает более точный тип `ReturnType<typeof union>`.\n- В `scripts/mutation-registry.mjs` обновлены два якоря `find` под новый текст. В `replace` сохранён `: number`, чтобы мутант оставался компилируемым.\n- `process-next/catalog/backend-quality.mjs`: `backendQualityFiles` фильтрует файлы регуляркой, убирает дубли, проверяет существование через `within` и `isFile`, затем сортирует. `runBackendQuality` по очереди запускает `python3 -m ruff check -- files` и `python3 -m mypy -- files` без shell. Ненулевой статус, сигнал или ошибка запуска означают отказ, так что отсутствие модуля ruff или mypy не может пройти как PASS.\n- В `planProfile` шаг ставится после `checkedPaths` и только для event task/hotfix, независимо от слоя product или infra. Release-профили его не получают: там уже есть `product-backend`. Чистые docs выходят на строке 201, раньше этого места.\n- `pyproject.toml`: в override `strict=true` заменён на 12 per-module флагов, глобально добавлен `warn_redundant_casts`.\n\nРазобранные пути:\n- `planRequirements` в `task-selection.mjs:229-233`: `/backend/` срабатывает на id, поэтому `needsBackend` и `needsPython` равны true.\n- `.github/workflows/process-next-fallback.yml:54-65`: устанавливаются setup-python и `requirements.txt`, где закреплены ruff 0.16.5 и mypy 2.3.1.\n- `finalize` и `dependencyReader`: Python-импорты выбранных файлов попадают во входы шага (`source-dependencies.mjs:107-124`), так что повторное использование учитывает изменения в модулях, которые mypy читает через `follow_imports=silent`.\n- `within` из `storage.mjs` защищает от выхода за корень и от symlink.\n\n## Разбор решения\n\n### Планировщик: когда шаг появляется, а когда нет\n\nЛогика совпадает с критериями приёмки. Шаг ставится только при изменённом существующем `.py` в `custom_components/houseplan/**`. Удалённые файлы отсекаются через existsSync, дубли — через Set. Для docs план пустой, потому что ранний return стоит до вычисления шага. Задача без бэкенда шаг не получает. Хорошо, что команда передаёт точный список файлов, а не директорию: так «не обходить бэкенд целиком» выполняется по построению. Регулярка `[\\w-]+` не пропустит имена с точками вроде `a.b.py`. Для этого дерева это скорее теоретическое ограничение.\n\nОснование: `process-next/lib/catalog.mjs:201,221-229`; `process-next/catalog/backend-quality.mjs:8-12`; тест `process-next/test/catalog.test.mjs` для #1603: дубль, removed.py, docs, отсутствие бэкенда.\n\n### CI-резерв и подготовка Python\n\nОтдельной ветки для нового шага не понадобилось. `planRequirements` распознаёт шаг по подстроке `backend` в id, после чего fallback ставит Python и устанавливает `tests_backend/requirements.txt`, где закреплены ruff и mypy. Минус: эта связь неявная. Если шаг переименуют без `backend` в id, CI перестанет готовить зависимости, а сам шаг честно упадёт. Тест на `needsBackend/needsPython` в catalog.test.mjs эту связь фиксирует.\n\nОснование: `process-next/lib/task-selection.mjs:231-232`; `.github/workflows/process-next-fallback.yml:54-65`; `catalog.test.mjs` assert `planRequirements(plan).needsBackend === true`.\n\n### mypy: замена strict=true на явные per-module флаги\n\nЭто главное неочевидное решение, и оно обосновано. В старом `validate.yml` mypy, судя по всему, запускался только на модулях из allowlist, поэтому глобальный эффект shortcut был незаметен. С адресным запуском на произвольном изменённом файле глобальный strict сделал бы строгим и любой legacy-модуль. В результате первая же правка такого файла вызвала бы массовую переписку, а это противоречит #42. Набор из 12 флагов совпадает с известным мне составом `--strict` за вычетом глобальных: `warn_unused_configs` и `warn_redundant_casts`. Второй вынесен глобально, как и работал раньше. Поведение именно mypy 2.3.1 я по исходникам не проверял. Опираюсь на комментарий исполнителя о `config_parser` и на тест, который это проверяет.\n\nОснование: `pyproject.toml:33-71`; `tests_backend/test_backend_quality.py`: `test_issue_1603_actual_mypy_strictness_stays_in_declared_modules` с реальным pyproject — probe проходит, core/constants падает с no-untyped-def; комментарий issue от 27.11 14:19.\n\n### Замена рейтчета в test_backend_quality.py\n\nРейтчет удалён, как требует решение владельца. Полезные проверки остались: коды ошибок, идентичность модулей, noqa. Новые тесты проверяют поведение, а не форму: CLI вызывает настоящие ruff и mypy, отказ распространяется наружу (F821, return-value), ошибка в соседнем `untouched.py` на результат не влияет. Цена: файл больше не «чистый». Теперь он требует node и закреплённых ruff/mypy в окружении pytest и входит в release-выборку backend. В CI оба условия выполнены (setup-node и requirements), а docstring это честно отражает.\n\nОснование: `tests_backend/test_backend_quality.py:1-4,105-156`; `catalog.mjs:44` (discoverReleaseTests подбирает `tests_backend/test_*.py`).\n\n### TypeScript: аннотации вместо неявного any\n\nПодход правильный: точечные предметные типы, явные `: any` массово не добавлялись. Нужно понимать, что почти все аннотации стоят на данных из `spaces: any[]` или `config: any`. Они не проверяются компилятором, а только заявляют форму. Например, в `demand-space-models.ts` `roomRecords.map((room: RoomCfg)...)` обрабатывает и объекты `{id}` из plan_graph. Хуже, чем было, не стало: раньше там был неявный any, а теперь тип хотя бы читается. Источник проблемы — `ServerConfig.spaces: any[]`, и он остаётся. Изменения стираются при компиляции; это подтверждено сравнением transpile-дерева (комментарий исполнителя) и зелёной сборкой в S6. Якоря мутаций обновлены корректно, `replace` остаётся компилируемым.\n\nОснование: `src/types.ts:376` (`spaces: any[]`); `src/demand-space-models.ts:32-41`; `src/wall-face-graph.ts:105-106`; `scripts/mutation-registry.mjs:7193-7194,10299`.\n\n### Проверки S6\n\nИтоговый набор по 7a2d872 прошёл, отказов нет. Предыдущий возврат из-за якорей мутационного реестра закрыт правкой `find`. Сам шаг `backend-quality` в S6 этой задачи не исполнялся, потому что `.py` бэкенда не менялись. Его исполнимость подтверждают pytest-проверки, по словам исполнителя 14/14 PASS.\n\nОснование: receipt `20261127T171722114-70dfdab8` status passed, failures []; комментарии issue от 27.11 14:19 и 17:52.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Однократно прогнать `ruff check` и `mypy` по всему `custom_components/houseplan/**` и записать результат в issue как справку, без гейта. Так станет видно, какие legacy-файлы сейчас не проходят адресную проверку. Иначе первая задача, которая их тронет, неожиданно получит отказ из-за старого долга. Цена — один ручной прогон. Польза — предсказуемый объём S6 для будущих задач бэкенда.\n- Связь «шаг backend-quality → подготовка Python в CI» держится на подстроке `backend` в id (`task-selection.mjs:231`). Надёжнее объявить потребность явно, например полем `requiresPython: true` в шаге, и учитывать его в `planRequirements`. Это небольшая правка, и она убирает зависимость от именования.\n- В `src/device-toggle.ts:914` вместо встроенного литерального типа параметра лучше типизировать саму переменную: `const targets: ReadonlyArray<ToggleTarget | SkippedToggleTarget> = ...`. Тогда вместо самодельной структуры используются предметные типы модуля, а колбэк получает контекстный тип сам.\n\n## Границы анализа\n\nИзучено по исходникам на head: diff целиком; `process-next/lib/catalog.mjs` (planProfile, finalize, checkedPaths); `planRequirements` в `task-selection.mjs`; `within` в `storage.mjs`; обход Python-зависимостей в `source-dependencies.mjs`; `process-next-fallback.yml`; `tests_backend/requirements.txt`; `tsconfig.test.json`; тип `ServerConfig`; `SkippedToggleTarget` в `device-toggle.ts`.\nСам ничего не запускал: ни сборку, ни tsc, ни ruff, ни mypy, ни тесты. Опирался на успешный S6 (receipt `20261127T171722114-70dfdab8`, материал 7a2d872) и на сообщения исполнителя об адресных прогонах. Сообщения исполнителя доказательством прогона не считаю.\nЧто mypy 2.3.1 применяет `strict` из override глобально, я не проверял: исходник mypy недоступен, а эта версия, возможно, вышла позже моих знаний. Вывод опирается на тест с реальным pyproject и на описание исполнителя.\nНе проверялось, проходят ли текущие исходники бэкенда ruff и mypy пофайлово. Отдельный скрипт с доказательством стирания типов (`output/1603-erased-types-proof.*`) хранится локально, и я его не видел.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 68b4268626b93e90825e34bb91842f5c730e9add → 7a2d872ffc8058facb5ee14210be4b9e94a52f4f\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-27T17:55:43.621Z",
-        "artifactId": 15222090989,
-        "runId": 46045143988,
-        "runAttempt": 1,
-        "completedAt": "2026-11-27T17:52:14Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46045143988",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "68b4268626b93e90825e34bb91842f5c730e9add"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795802183503,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1604": {
       "issue": 1604,
@@ -7503,199 +7329,11 @@
     1598,
     1613
   ],
-  "active": {
-    "issue": 1603,
-    "worker": "github-coordinator",
-    "token": "779:github:46040545310:1:tick:0:admit",
-    "fence": 779,
-    "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
-    "expectedBase": "68b4268626b93e90825e34bb91842f5c730e9add",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795799820442,
-    "expiresAt": 1795805771801,
-    "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026",
-    "reviewRequest": "review:1603:2:16a13a040b0aac4ee734d093dedf29b4c518c026:68b4268626b93e90825e34bb91842f5c730e9add"
-  },
+  "active": null,
   "events": {
-    "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:1:synchronized": {
-      "digest": "c3331543de2dc2b03e432aca501edfa1d1718da59f58c562dc3814811c484a77",
-      "issue": 1603
-    },
-    "finish:9578a094-94bd-40e2-9926-0ef2e7d9d8ff": {
-      "digest": "7abc59175e76dfbb896d0cee5600c8a2d84526f4c05017087e57646f8bd3f6c1",
-      "issue": 1603
-    },
-    "finish:a2837d50-5033-43d3-87bd-2ddee863f5c8": {
-      "digest": "d8a6a318d71ff79e55d90ff423f214fae6ffd4bc933419d748d0ef632c97f29f",
-      "issue": 1603
-    },
-    "finish:9f7c5b57-572c-4a8e-9b23-d1aef66d468e": {
-      "digest": "39c6d811a5805541abc3400d55871e477dab1f76a9ca33fb12097a242cb8b4fe",
-      "issue": 1603
-    },
-    "finish:b0c10e6d-58cd-405a-8a3e-be9fd539ebb8": {
-      "digest": "fecd6419cfc8e27793f0927d551dc0b41c262c9d2d16ae7b1ceca3c4decd50dc",
-      "issue": 1603
-    },
-    "finish:69cec624-9640-45c9-b060-4ecdaf0d6c97": {
-      "digest": "003ada60a755a07ebcebf2cbf23b29ebc868d433210680c24f940b5d264e8448",
-      "issue": 1603
-    },
-    "finish:e028977d-2d1f-4e5b-9884-4f13a53ee434": {
-      "digest": "578dbdb4b8cd8771c9fabbfcb7027815c769cdb68aca5f53cdecc0d118b3e42b",
-      "issue": 1603
-    },
-    "finish:80c187e3-9b7b-4da8-a73b-ffcb37459461": {
-      "digest": "30744d187cdc9d6589f0f5e37d259a5fc9f2ade7c4404c4169e84d9024fb3d28",
-      "issue": 1603
-    },
-    "finish:2c4b860f-f019-422c-be4c-5831b6b4d596": {
-      "digest": "ad4abcc4b79abf0e65ccfc71e4b27c5de5b7927d2c9e39b6723736e704fc2545",
-      "issue": 1603
-    },
-    "finish:11a0aff5-1e97-448c-8b87-c8b9e26ae83c": {
-      "digest": "a5bae9647c881589ef71fe05a0ec49c05fbbdfa976b43434e47ef6d3884c0395",
-      "issue": 1603
-    },
-    "finish:77739f47-ded8-4bfe-8e73-036143278db9": {
-      "digest": "73db644bd86fc62f4d31705a6e05ff1946ee754b8be2c774b964424028bb74ab",
-      "issue": 1603
-    },
-    "finish:3c538729-4e06-4276-be11-86e310c6547e": {
-      "digest": "9a363c65ebcec8a61f0cfcf7de7f4b5bfcff86a940e1844e8e631d48a1cc74e8",
-      "issue": 1603
-    },
-    "finish:2b60bbaf-0b29-4576-bba2-bf6821185870": {
-      "digest": "b3426a88034754b067f8037360da3a546d40434af4b9fa63fcb2f4bb233ec1b2",
-      "issue": 1603
-    },
-    "finish:f55dca9b-05fa-4ba7-a93d-bd562bf019b6": {
-      "digest": "a9a1a9b1e191a71c2624d42f0bda34ee27072c27337d1e3dfbb239f276737a05",
-      "issue": 1603
-    },
-    "finish:8919622a-2e9a-40d1-8af8-118d372002bc": {
-      "digest": "5a86366cd783484ac972f27509dab0846fa117508411b12e72dbce6b078ef899",
-      "issue": 1603
-    },
-    "finish:d7746c25-07bb-47f0-98cb-1d4c5815de1b": {
-      "digest": "a71291d32a05b07d1a32036d6fca38c1edf34fcdcf51b00f557ea21a98f29669",
-      "issue": 1603
-    },
     "ready:1598:95baaa6dad232e52b30c4e181506049324c8ef25": {
       "digest": "f612b2fe91c414ea4de775ae0fbe4943352bdd317ef80a1fa4c3ce0ed930c15b",
       "issue": 1598
-    },
-    "finish:5c7073f7-758b-436c-a7e7-4b113b82d773": {
-      "digest": "b0f4792430b7bfb63c4c09c6a19a26667035ad87afe383ad5110e73d5ad6a8b3",
-      "issue": 1603
-    },
-    "finish:689a295b-9be6-4adf-90ee-e70bf53be5cf": {
-      "digest": "0e6306f8a4843d9484793cbc9886afedb02242c91dd78b167cd9ed3c7e1990d8",
-      "issue": 1603
-    },
-    "finish:118a5c15-dfbc-4eea-a766-af8c9c82b73f": {
-      "digest": "99b828ab9ca12ffebb7fa9457f0870c9e24c49deff7dbdb606ceee2e66bb8150",
-      "issue": 1603
-    },
-    "finish:43a63373-90a5-4736-9d99-4eb5eaa33bfe": {
-      "digest": "6e3e6ccd1845ab1e8fcbfe505f2c8ab93e922f0fcbb5074b1afa96ca2f5786a8",
-      "issue": 1603
-    },
-    "finish:7f3d03ce-4872-4bb1-81cf-7979fe767846": {
-      "digest": "a1405b428057dc74f5bba07b00fa3a20ddc865851135cacb6ce574bf6f140c30",
-      "issue": 1603
-    },
-    "finish:a60dbc75-ab93-4328-a975-c844cac92380": {
-      "digest": "496f60b322e5ea7946aa5f799254244ec0a616e1bd6d455426ddf93b7f345ebe",
-      "issue": 1603
-    },
-    "finish:2a1f87f0-96ce-481b-9a4e-a9d98ca00b00": {
-      "digest": "16a8bdb535e5302c575a26b0e49feae7beb18a4764a7a900d70fc056d1e25e48",
-      "issue": 1603
-    },
-    "github:46011824017:1:completions:message:86194b4053963df1e102e4e1310b9d993cbfdced7c9a5b5555bdeddc7674feaf": {
-      "digest": "595fd11bb97046b9cabb8a0218787eb7343d6b4235b071c059fa5a782ff2fd70",
-      "issue": 1603
-    },
-    "github:46011824017:1:completions:message:ca9eec7b48f56c4eff464b065f9579b7bf6430d4106bc6b0e976c0b264e11ac8": {
-      "digest": "b21dce6209675034a66eee611baa215a29190f18c2d9e1ab0cdc7e2ed1ac8975",
-      "issue": 1603
-    },
-    "github:46011824017:1:completions:message:065be8096b8bc5dc8817306405220acc28bb730f89bfa56a5acc2dfca6c8cb43": {
-      "digest": "dcf756f92e1cf7d77e3c8ff805f84391fc1f4986c54197ebddc3d3897f661e08",
-      "issue": 1603
-    },
-    "github:46011824017:1:completions:message:fefb7ccea40641ff2c26164f3af7a2cadedd808f0442fea9bfc1af901f4321f8": {
-      "digest": "bbe5915b367288b8e815c52d55d2e54cb737a00184faa064ac72dc4ed9c2dad8",
-      "issue": 1603
-    },
-    "github:46011824017:1:completions:message:e7715f9333d75663df998598167e84b659fc271dee7d5ee8c98961afe728aacf": {
-      "digest": "83e2549c9962377ecdc345b493b5de0c75bb64d58b2f8200ad72cda0955c305f",
-      "issue": 1603
-    },
-    "github:46011824017:1:completions:message:1830605f3162893fcc607a1b932c9c1fab68a8ebd10ffa09573006e3678db62b": {
-      "digest": "5e9a3b1248c21e51c91f635c33bfb0e16ef8c0c9a59fbbb7a7e4f45bc87731db",
-      "issue": 1603
-    },
-    "github:46011824017:1:completions:message:b62341dbc934515390142efbddfaadb24c608a1f3822badf964c212501d646dd": {
-      "digest": "53225a58d846de597b9877d106333de1ac7d074f730603ae0ef9080dd5c56148",
-      "issue": 1603
-    },
-    "finish:7277f4ec-bb72-4e72-bc5c-893068ae2569": {
-      "digest": "c208238c2da2cd219c5b969188879c842d565d04f4cc18a815ca539984d6479b",
-      "issue": 1603
-    },
-    "finish:0e368645-f11f-4617-86b9-d4b601b0da5c": {
-      "digest": "90cb7725a6bc43cc670c1d8592e4f05e6b125d22b515dc61c409adcac0fa406c",
-      "issue": 1603
-    },
-    "finish:fdc097c1-26f7-41a3-b822-753867eb9b74": {
-      "digest": "2f7a043051c1a14acd527dcc9ae9f6c9f2fa24f47897ed396dd509283fdada0c",
-      "issue": 1603
-    },
-    "finish:1af269cb-813e-4c2c-af85-d91f67e29c38": {
-      "digest": "9d166f486209c362f6c0d0208cdd983b6c7488c4c648921d1ed96530492bffa8",
-      "issue": 1603
-    },
-    "finish:b1df4898-871d-4987-a579-ec8eaae9e445": {
-      "digest": "57b072888971b1d0d11c8c34b3859addb782cf3b2126a67adac11fc3c2c82aef",
-      "issue": 1603
-    },
-    "finish:1216a917-1d7a-49c4-9874-f823e7cda582": {
-      "digest": "be9810d8e934ea973aeb3d2e8d145020d8f0a79dc9c82e6508d28b44d4601526",
-      "issue": 1603
-    },
-    "finish:f6799ffe-d3c6-47a1-8baf-44963911187b": {
-      "digest": "6e433350127d161c29b5d59a0f9d9852ff65325945d2e4e174d8061c341670c1",
-      "issue": 1603
-    },
-    "finish:337253ea-5a36-443d-9fc9-dfc524c18cad": {
-      "digest": "dd2cb572d08ee1719a05eed4cb944ffffa981421744b97e6cbdd343b5f87d914",
-      "issue": 1603
-    },
-    "finish:bb081a79-107f-41ef-b5af-39149a13da83": {
-      "digest": "dfaa33919398f648c5db35c7f7c70a58117e4af83bda7869e4e1d699cdb3667f",
-      "issue": 1603
-    },
-    "finish:05c07d76-1d0f-4835-99ac-a4f09cc3f3d7": {
-      "digest": "d13b81b91a70fa4126dbeddc9801295bb1642b6466fb5bfdb39301f2592b06bf",
-      "issue": 1603
-    },
-    "finish:95771e0b-ecc6-4988-b8d2-05aa539f5510": {
-      "digest": "95e39bf5ca56851483c6f600217e1fff78afe33263dfbfe05a5bac316ef1bd03",
-      "issue": 1603
-    },
-    "finish:a1353310-0933-4ff2-87f0-5d58f379ba10": {
-      "digest": "e0f0c9d02bb92c31a6c3c17d8dde3522741b03504a38ff919c77833215454d07",
-      "issue": 1603
-    },
-    "finish:a0b6512c-c170-49fd-b41f-6dab5d7547d6": {
-      "digest": "caf4040e6629230513d78faeb0ca223b3488117d83dfe7fb3211b9f326c3075f",
-      "issue": 1603
-    },
-    "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:2:return": {
-      "digest": "4cc96865ad656c9815d2d96059f760eb1efd7d3507d9f3e9fc443a8af2b8b7de",
-      "issue": 1603
     },
     "finish:a5aa5fd8-2738-492d-8195-883a54a82305:finish:2:synchronized": {
       "digest": "f169497734c0e2d5262d4b39907e3ea34e1d15df012ab1cba4886d77cbb20638",
@@ -7789,10 +7427,6 @@
       "digest": "559229db538a053b4d37ccba3337f02eaa96679a4514a5e90540636f6701d7f3",
       "issue": 1609
     },
-    "github:46017093396:1:completions:notice:f661bf00ccc0da4c7dc11633fd02744d8564b34a00dc6e9b6d4d1d3c60844f63": {
-      "digest": "75f4fa11ee639bf326a902862d442eb6bbd7e9de8c5df45d0b40317fb43d93ce",
-      "issue": 1603
-    },
     "github:46017093396:1:completions:message:f661bf00ccc0da4c7dc11633fd02744d8564b34a00dc6e9b6d4d1d3c60844f63": {
       "digest": "8b364cf826fb18e084255792e7970dfc36eca02c832cf660e088455ce7826d78",
       "issue": 1609
@@ -7848,10 +7482,6 @@
     "finish:6b550f49-e587-4c6b-8e10-9c3453e66e53": {
       "digest": "14ba248ac83b118f463d0621e7d2566fb29a2e45280bac6409915a7d4611e331",
       "issue": 1595
-    },
-    "ready:1603:3d7fde4e918a42a6a40416cb7d5e4803e59b2ed5": {
-      "digest": "2d28fac003bbda7ffccaf62d41e580f4b9f3c4edc5e6f72244b0a66823a36656",
-      "issue": 1603
     },
     "finish:5914287f-c588-4ac5-ba51-bfbc9940beb8": {
       "digest": "70b18f1b24bb6ad4f4e41a7c05ec407140e4b37b70c7e656c62a27220d8a8b62",
@@ -8104,194 +7734,6 @@
     "github:46039754538:1:completions:report:884f207b2f4ec0fc020f2fb13ebe6cf6f83b4ea9d8d9c7fbdf40d0acfe2f0522": {
       "digest": "4637d29553eade792f2f38dfd8697e983d2a6f43b4ae46309430e881e71dc3cf",
       "issue": 1613
-    },
-    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:4:synchronized": {
-      "digest": "1abb4eb3061263c7b590b1447c22797cb0e2e42ba8457180a93716dc1c659f04",
-      "issue": 1603
-    },
-    "github:46040545310:1:completions:message:f4884abd8a9666f67934e89621f42a359cd86bf542fe2edac2fee973de6b6df3": {
-      "digest": "0eafb48d01ef8ae3abb1abb7e50190964247ab373cd7aabaa2069efe0f65d344",
-      "issue": 1603
-    },
-    "finish:13848e17-174b-4d43-a77b-fec76638763b": {
-      "digest": "8b6dc8aff837c087e2db43751427dc729733dcebb86f47d1226a001c6759d47f",
-      "issue": 1603
-    },
-    "finish:661b6332-1409-4f78-88f9-27ac30370a65": {
-      "digest": "7d95b4ea15e49185c31bb7d7809ecb525b6116b6284740d259baa76f53cbce59",
-      "issue": 1603
-    },
-    "dev-build:46040545310:1:webhook": {
-      "digest": "c08622a4a40b451d5e96ed49fb35fcee977e7dc3989756b985477bf45e0c8a27",
-      "issue": 1603
-    },
-    "finish:152ccbab-1f4b-4567-b98d-80d75fd75508": {
-      "digest": "cda4ad3f0ae7d05c4c26e50966185251325154d06ef94d42c7015aa04218cb40",
-      "issue": 1603
-    },
-    "finish:a59a370e-c98f-4663-bdbc-a5467894c00c": {
-      "digest": "b7ed5f09211d162f7b9c2cc3b4f2ccd9db576b87c49ecb5b517340a6dc73b2d7",
-      "issue": 1603
-    },
-    "finish:9dd71370-360c-485a-a703-c62bfbdf06bc": {
-      "digest": "4a15e16c98e8109a609b850b80b68618f9fcae8b094981520c7d22568eb1efb9",
-      "issue": 1603
-    },
-    "dev-build:46040547553:1:webhook:83de5c95-02f1-4889-bb17-c655b1000a55:delivered": {
-      "digest": "9131ebe36ccc69b8ec4c6dc2c6a4c41f14db41306725a848d21965b425b62006",
-      "issue": 1603
-    },
-    "finish:9e1d2156-05ef-4381-ab16-1a5735358c77": {
-      "digest": "498a216f346e63984dd9a4572897c47bcd56a9edb2ef929408994c898471fa4a",
-      "issue": 1603
-    },
-    "finish:92f8a7ae-9d2a-41a9-8dfc-6ed0e64093a0": {
-      "digest": "8deed2439e1e26d258b49bea7c645775ff16276116f5eb0416cb7252dd9434cb",
-      "issue": 1603
-    },
-    "finish:ed13e19b-c65d-47d4-9a1e-55719c6b2b5e": {
-      "digest": "2555afa727e6222836d443c0d35bccc55d94058f754bf064a50f3b4047ea9796",
-      "issue": 1603
-    },
-    "finish:f02ef560-2c14-43f1-9e7a-fe741ecb56d6": {
-      "digest": "395cb3f269d1b8401fe8fc9cf9389907c844d18bceb046eac324288121cc7e02",
-      "issue": 1603
-    },
-    "finish:503b2b6b-51c1-4990-8d88-5032d2b80c6b": {
-      "digest": "cf14ad5b845334de8a001ba9429900bbd619b26d00c09280141b217dff4b352e",
-      "issue": 1603
-    },
-    "finish:bda1193a-91ca-452f-a3f4-cc7fc47f9f67": {
-      "digest": "2c29a98edefe45c631f77fab14f76cd0cfed8650478c9961df9e695d2c8f57e3",
-      "issue": 1603
-    },
-    "finish:65e71077-4b8e-47b1-a8e6-e492ead7f75a": {
-      "digest": "b585b3d9cfe8dcf3cde06354ad659436770aa004f5c9c15dfa7a0cb521576723",
-      "issue": 1603
-    },
-    "finish:8467816c-5eda-4d27-98ab-4770f38edd08": {
-      "digest": "cc269d978b9f5a97a000c399a8eed14429f6739c0d8bc317b98e90f6af36f646",
-      "issue": 1603
-    },
-    "finish:174771c2-3bce-4677-8b8d-815837acb03a": {
-      "digest": "2719152465e627d097bde57aa6cee2451ff9d6875af6f672f4119b73549d5c76",
-      "issue": 1603
-    },
-    "finish:de539aec-ec52-48a7-8118-4eaf7af87528": {
-      "digest": "45e594a79c74c42fdf58afbca9b2cdd317efbffa00db549902e97dcc5bcb5bba",
-      "issue": 1603
-    },
-    "finish:58d40dd8-cd17-4832-bd57-6cf57a651cbb": {
-      "digest": "bcb163db43ec057d4762e8920aa995df96f816ed0e56285c9035a3d31ea5373a",
-      "issue": 1603
-    },
-    "finish:54eefc3f-628f-48cb-8efa-c43418e99e9b": {
-      "digest": "0bbc3fd61c9e12e3cab39dff476deb3b5f38d41343a0934b101f58fdbddd8ba7",
-      "issue": 1603
-    },
-    "finish:0d331d72-ee2e-4c4b-be39-218678ef3750": {
-      "digest": "28575e9db3697b5937bba6c59d10bd8a654aea751d3a8f5e84d781c27d076741",
-      "issue": 1603
-    },
-    "finish:f35698b0-5534-4a07-9e1e-4dca22144369": {
-      "digest": "a21349a8583cee88724fd9e95a159945ce03bdee8c7e3b66e7aea921f6682a10",
-      "issue": 1603
-    },
-    "finish:ea1826d8-ad75-4dd3-8904-0cdefaf5a012": {
-      "digest": "cc826064521dd8c1ed17080627aec69807a0b1e6904c4d07ad2714b97fe116a9",
-      "issue": 1603
-    },
-    "finish:ea90d0de-2525-4701-8175-f002af04d626": {
-      "digest": "83d70b9c3f18b3a6c410e65f5c36d65080e0f8ed581bb16cf1b7620d146bc0d8",
-      "issue": 1603
-    },
-    "finish:efcdb78d-b79a-4437-8f7f-cf29f03e69f4": {
-      "digest": "526f4347cb9302c3f0ec3e86cd180638102c56cce594ca121b32a563bf5f1cf6",
-      "issue": 1603
-    },
-    "finish:940c1e20-5064-48fe-a3c3-610a853f6277": {
-      "digest": "b61d567c726f81b1c539c0271122f8c8a3d55f29c5a4f2c1096fe8fea9615a69",
-      "issue": 1603
-    },
-    "finish:0cb86795-ff67-42f5-b236-44c6b383b5e6": {
-      "digest": "c86e6ba151a84d487ea0cfb71ffc88cec7f54a0cf08e3a95a6915eaeda22bea7",
-      "issue": 1603
-    },
-    "finish:77ec65ba-96e0-48a6-af73-5074125d8f78": {
-      "digest": "7a8e5bc342f6d2eb18fcbe4e111638fc0850dcf11ccd055dd0b2e104e42d1550",
-      "issue": 1603
-    },
-    "finish:30c84d45-11d7-48aa-804b-7809689c72ea": {
-      "digest": "e7bcbdb22dc01fceaea9d846add0ea60707368bf9982b7a3e707c5e31e3a4d21",
-      "issue": 1603
-    },
-    "finish:9bd768e5-a0d1-4bdc-b62e-8310039f029e": {
-      "digest": "5c68281e195ac12202fb6007e72df5b5438029d5fcc9491af92f3ee7f5cd80d6",
-      "issue": 1603
-    },
-    "finish:3a2af1e7-a015-41c0-a942-e7ec371f8e4e": {
-      "digest": "a23db90e9c2a35793eb3107d34818b506cb8da647d9b46f2b04de1759f84df83",
-      "issue": 1603
-    },
-    "finish:1e3e03e5-dbaa-4c5c-a03c-62fc5a036301": {
-      "digest": "3a72024b265982ad569df8df0a38afaf8e199832999de6c429724974c54a3125",
-      "issue": 1603
-    },
-    "finish:dcf8bce3-ce31-4995-83f0-987aba0c3089": {
-      "digest": "dfd1fed74085f9884937fc6b80f4bf3d6f06512fac0556f65b9ba9d75a3e833c",
-      "issue": 1603
-    },
-    "finish:39b58163-3788-4bfb-bf19-058f064aae36": {
-      "digest": "a8f5dbfb2f06870677bec6820487a82fee115da900ba45975c32edc838292963",
-      "issue": 1603
-    },
-    "finish:4724ca1a-5469-470e-8be3-e7b4ffea940a": {
-      "digest": "3970fbd6b55781d63c7d75fd482f4f0bd3bb2b3d5371d661ef5609836cf4e5e9",
-      "issue": 1603
-    },
-    "finish:81d84d6a-8d7a-4db2-b2f6-035ec4ade91c": {
-      "digest": "f834b167ee73e0959bd5ff429c5ec7f6955ca9e5141a747c8236634e97fa95ff",
-      "issue": 1603
-    },
-    "finish:6f20ab33-fd39-4713-a698-14beef785dbd": {
-      "digest": "9e94433a9daaac07af13c84d7b15451a29450975ddf3a9164c8aed9d16ffd338",
-      "issue": 1603
-    },
-    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:5:s6-label": {
-      "digest": "fd2539ddb31c8d1f04028211c01bcd4269c5283bef36e5e03dfe64ace0be33a7",
-      "issue": 1603
-    },
-    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:6:review-requested": {
-      "digest": "2441ddef8af7dae6ace3c52f2e2ef3462862d6978a5c3fbcc6488631bbcabf98",
-      "issue": 1603
-    },
-    "github:46045100234:1:tick:0:review-retry": {
-      "digest": "2dd020b803d29111905661dac779a678c08e1355933f7fab2b50825cc9fbf39a",
-      "issue": 1603
-    },
-    "github:46045100234:1:completions:message:1d3e6a8dd713c2f85b350ebfeed25761a5d2684ee438c62a035c99b238fdc146": {
-      "digest": "470c4deb4ba53aba5093a4925c089b495c56d37ea307ffa3e6cd1aab981b25de",
-      "issue": 1603
-    },
-    "github:46045100234:1:completions:message:d80a166b41737a3b8dbb1418755d7fe36935bfa10e192b17fe21cc66330e53ab": {
-      "digest": "09e5062da9c2783f5db94f058b4b59da0aaaaeb310e7f8c6b8b85ade828fd11a",
-      "issue": 1603
-    },
-    "github:46045100234:1:completions:message:f1ca6f823d095a11638c5b3586fbcd581ab77cc17350d8364668c4f6049d5f68": {
-      "digest": "ad9c9e128ad0a58b208423b2d487524a40497f0b07cf7d108fe9e3a963228188",
-      "issue": 1603
-    },
-    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:9:review-presentation": {
-      "digest": "80e62e88d5242341bbacca5aa8df678a0c3c11491f562698e7b8831425ece667",
-      "issue": 1603
-    },
-    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:9:review-complete": {
-      "digest": "d8caf99745d66f517ffca25d283cd906dcd349dd114d89b94b58381625bfdbae",
-      "issue": 1603
-    },
-    "github:46045606491:1:tick:0:automation-pending": {
-      "digest": "cf7cefd9a7bee178f76229f1168c70a27ba7f6b0c4c0ffbbd52c023477608622",
-      "issue": 1603
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -8714,20 +8156,6 @@
         "delivered": true
       }
     },
-    "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe": {
-      "digest": "adfef01c455d4ce29672db35b93a765b206f3397a9e8a605016537deeb6affe4",
-      "issue": 1603,
-      "message": {
-        "kind": "queued",
-        "issue": 1603,
-        "at": 1795776323620,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "135f5834e1d9b4b81288890561fa14630d75b438",
-        "delivered": true
-      }
-    },
     "github:45984806474:1:spec:1595:spec-request:spec-resubmitted:1595": {
       "digest": "db6b62c3bf97d26ceeb5efbc318af0db70c208052396d728094a5d3a21c78d0a",
       "issue": 1595,
@@ -8850,42 +8278,6 @@
         "delivered": true
       }
     },
-    "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:1:admit": {
-      "digest": "1fd95557d4d5de99e232fa9986f2bc542f78f23658e8c36f4d9f578fc07e8538",
-      "issue": 1603,
-      "message": {
-        "kind": "admitted",
-        "issue": 1603,
-        "at": 1795786678156,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "41acf20c220bd49cf49a2c0550c9dee0fde57031",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:2:return:return:1603": {
-      "digest": "4cc96865ad656c9815d2d96059f760eb1efd7d3507d9f3e9fc443a8af2b8b7de",
-      "issue": 1603,
-      "message": {
-        "kind": "return",
-        "issue": 1603,
-        "at": 1795788823865,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795788823865,
-          "entry": 1,
-          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-          "eventId": "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:2:return:return:1603"
-        },
-        "delivered": true
-      }
-    },
     "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:1:admit": {
       "digest": "ec35e9a178d2db2cc0f505fbc10e492b556a4510206004997f653ef8801bf487",
       "issue": 1609,
@@ -8907,20 +8299,6 @@
           "finishedAt": "2026-11-27T09:33:06.732Z",
           "failures": []
         },
-        "delivered": true
-      }
-    },
-    "ready:1603:ee977ad7d3d24b0747a77a226c294eecd4200c5e": {
-      "digest": "8974fd4fdd61db3f88a71b6b37f1c2bcdde72b82f2fe333cc54db027819ab242",
-      "issue": 1603,
-      "message": {
-        "kind": "queued",
-        "issue": 1603,
-        "at": 1795789104578,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ee977ad7d3d24b0747a77a226c294eecd4200c5e",
         "delivered": true
       }
     },
@@ -9146,21 +8524,6 @@
         "delivered": true
       }
     },
-    "github:46040545310:1:tick:0:admit": {
-      "digest": "4e4615330dbc19862877bee72f1b8db8e6ce2713ace710e1f1c282ff65d80b71",
-      "issue": 1603,
-      "message": {
-        "kind": "admitted",
-        "issue": 1603,
-        "at": 1795799820442,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3d7fde4e918a42a6a40416cb7d5e4803e59b2ed5",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:7505b5b4-4d41-4592-9c2f-c7ee13451083": {
       "digest": "d7dfd149a15096a95384b5e57ef202c284df6ade917fd7584d2d759c1fa518e1",
       "issue": 1613,
@@ -9172,36 +8535,6 @@
         "track": "ask",
         "layer": "infra",
         "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32",
-        "delivered": true
-      }
-    },
-    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:5:s6-complete": {
-      "digest": "d3d2cf4ade1aebedbdfaad06fd772c6de9cb57bd5b467fd59d32563d0681a898",
-      "issue": 1603,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1603,
-        "at": 1795801902865,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
-        "phase": "review",
-        "evidence": {
-          "id": "20261127T171722114-70dfdab8",
-          "name": "Тесты для задачи #1603 (перед ревью)",
-          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T171722114-70dfdab8/report.json",
-          "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
-          "status": "passed",
-          "finishedAt": "2026-11-27T17:51:41.368Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
