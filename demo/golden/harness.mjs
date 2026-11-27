@@ -3139,6 +3139,35 @@ export async function prepareGoldenScenario(page, scenario, customizeFixture) {
         const origin = at(500, 400), along = at(600, 400), upright = at(500, 400, 100);
         if (!host.world.floorInk.children.length && !host.world.furniture.children.length)
           throw Error('rotation frame has no painted 3D decor');
+        const sceneCamera = card._renderIsoScene?.camera;
+        if (sceneCamera?.perspective?.heightDepth !== undefined) {
+          const yaw = expected % 90 === 45 ? (expected + 45) % 360 : expected + 35;
+          const angle = yaw * Math.PI / 180;
+          const cos = Math.cos(angle), sin = Math.sin(angle);
+          const floorScale = Math.sin(40 * Math.PI / 180);
+          const [cx, cy] = sceneCamera.perspective.center;
+          const [ox, oy] = sceneCamera.origin;
+          // At the lens centre, perspective preserves the directions of both
+          // floor axes. Away from the centre their screen slopes vary by depth.
+          const rx = (cx - ox) / sceneCamera.xyScale;
+          const ry = (cy - oy) / sceneCamera.xyScale / floorScale;
+          const centre = [ox + cos * rx + sin * ry, oy - sin * rx + cos * ry];
+          const base = at(...centre);
+          const raised = at(...centre, 100);
+          const direction = point => {
+            const dx = (point.x - base.x) * box.width, dy = (base.y - point.y) * box.height;
+            const length = Math.hypot(dx, dy);
+            if (!(length > 1)) throw Error('painted perspective axis has no length');
+            return [dx / length, dy / length];
+          };
+          const axes = [direction(at(centre[0] + 100, centre[1])), direction(at(centre[0], centre[1] + 100))];
+          const follows = (axis, x, y) => axis.every((v, i) => Math.abs(v - [x, y][i] / Math.hypot(x, y)) < .001);
+          if (!camera.isPerspectiveCamera || host.presentation.preset.rotDeg !== yaw ||
+              Math.abs(raised.x - base.x) > 1e-5 || !(raised.y > base.y) ||
+              !follows(axes[0], cos, sin * floorScale) || !follows(axes[1], -sin, cos * floorScale))
+            throw Error(`painted perspective axes do not follow ${expected}: ${axes}`);
+          return { expected, yaw, direction: axes[0], renderer: 'webgl' };
+        }
         if (expected % 90 === 45) {
           const yaw = (expected + 45) % 360;
           if (!camera.isPerspectiveCamera || host.presentation.preset.rotDeg !== yaw

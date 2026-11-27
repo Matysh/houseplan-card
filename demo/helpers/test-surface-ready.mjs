@@ -55,15 +55,25 @@ export function renderedIsoReady(card) {
 export function raisedIsoOverlaysReady(card) {
   const root=card?.renderRoot;
   if(root?.querySelector('.stage')?.getAttribute('data-hp-iso-floor-markers')!=='true')return false;
-  const rise = 140 * card._gridPitch / card._cellCm * Math.sin(50 * Math.PI / 180);
+  const camera = card._renderIsoScene?.camera;
+  const lens = camera?.perspective;
+  const tilt = (camera?.tiltDeg ?? 50) * Math.PI / 180;
+  const rise = 140 * card._gridPitch / card._cellCm * (camera?.zScale ?? 1) * Math.sin(tilt);
   if (!Number.isFinite(rise) || rise <= 0) return false;
-  const nodes=root.querySelectorAll('[data-hp-iso-overlay-kind][data-hp-iso-floor][data-hp-iso-visual]');
-  return nodes.length>0 && [...nodes].every(node=>{
-    const floor=node.getAttribute('data-hp-iso-floor')?.split(',').map(Number);
-    const visual=node.getAttribute('data-hp-iso-visual')?.split(',').map(Number);
-    return floor?.length===2 && visual?.length===2
-      && [...floor,...visual].every(Number.isFinite)
-      && Math.abs(floor[0]-visual[0])<=1e-6 && Math.abs(floor[1]-visual[1]-rise)<=1e-6
-      && node.getAttribute('data-hp-iso-nudged')==='false';
+  const nodes = root.querySelectorAll('[data-hp-iso-overlay-kind][data-hp-iso-floor][data-hp-iso-visual]');
+  return nodes.length > 0 && [...nodes].every(node => {
+    const floor = node.getAttribute('data-hp-iso-floor')?.split(',').map(Number);
+    const visual = node.getAttribute('data-hp-iso-visual')?.split(',').map(Number);
+    if (floor?.length !== 2 || visual?.length !== 2 || ![...floor, ...visual].every(Number.isFinite) ||
+      node.getAttribute('data-hp-iso-nudged') !== 'false') return false;
+    if (!lens) return Math.abs(floor[0] - visual[0]) <= 1e-6 && Math.abs(floor[1] - visual[1] - rise) <= 1e-6;
+    // Recover the affine floor point, then measure its screen position at the cut.
+    const [cx, cy] = lens.center;
+    const floorScale = 1 + lens.rate * (floor[1] - cy);
+    const dx = (floor[0] - cx) / floorScale;
+    const dy = (floor[1] - cy) / floorScale;
+    const cutDivisor = 1 - lens.rate * (dy + (lens.heightDepth ?? 0) * rise);
+    return Math.abs(cx + dx / cutDivisor - visual[0]) <= 1e-6 &&
+      Math.abs(cy + (dy - rise) / cutDivisor - visual[1]) <= 1e-6;
   });
 }
