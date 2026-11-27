@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 /**
- * Бандл в `dev` меняется только релизным кандидатом (#657, решение 2б).
+ * Legacy snapshot compatibility utility; process-next does not call this tool.
+ * Since #1598 source trees have no tracked frontend: --verify checks dist,
+ * --must-match is false, and --clean preserves ignored local build output.
+ * The rules below remain only for historical trees that carry a snapshot.
  *
  * До #657 каждая задача пересобирала и коммитила бандл (`dist/**`,
  * `custom_components/houseplan/frontend/**`, класс D): за неделю 23–25.09 —
@@ -151,10 +154,12 @@ function commitShape(ref, cwd) {
 }
 
 function main(argv, cwd = process.cwd()) {
+  const hasSnapshot = git(['ls-files', '--', COMMITTED_BUNDLE_ROOT], cwd).length > 0;
   const at = argv.indexOf('--must-match');
   if (at >= 0) {
     const ref = argv[at + 1] && !argv[at + 1].startsWith('--') ? argv[at + 1] : 'HEAD';
-    const must = committedBundleMustMatch(commitShape(ref, cwd));
+    const must = hasSnapshot && committedBundleMustMatch(commitShape(ref, cwd));
+    if (!hasSnapshot) { console.log('frontend is untracked build output; only dist integrity applies (#1598)'); return 1; }
     console.log(must
       ? `${ref}: коммит меняет бандл или это кандидат — закоммиченный HACS обязан совпасть со сборкой`
       : `${ref}: бандл не меняется — закоммиченная копия законно отстаёт, судится только свежая сборка (#657)`);
@@ -166,16 +171,22 @@ function main(argv, cwd = process.cwd()) {
     // быть целой всегда, а совпадать с закоммиченной копией — только там,
     // где коммит бандл меняет или объявлен кандидатом.
     const ref = argv[verifyAt + 1] && !argv[verifyAt + 1].startsWith('--') ? argv[verifyAt + 1] : 'HEAD';
-    if (committedBundleMustMatch(commitShape(ref, cwd))) {
+    if (hasSnapshot && committedBundleMustMatch(commitShape(ref, cwd))) {
       const manifest = compareBundleTrees(resolve(cwd, 'dist'), resolve(cwd, 'custom_components/houseplan/frontend'));
       console.log(`${ref}: релизный коммит — dist и custom_components/houseplan/frontend совпадают (${manifest.files.length} ассетов)`);
     } else {
       const manifest = verifyBundleTree(resolve(cwd, 'dist'));
-      console.log(`${ref}: свежая сборка dist цела (${manifest.files.length} ассетов); закоммиченная копия не сверяется — бандл меняет только кандидат (#657)`);
+      console.log(hasSnapshot
+        ? `${ref}: свежая сборка dist цела (${manifest.files.length} ассетов); закоммиченная копия не сверяется — бандл меняет только кандидат (#657)`
+        : `${ref}: dist verified (${manifest.files.length} assets); frontend is untracked build output (#1598)`);
     }
     return 0;
   }
   if (argv.includes('--clean')) {
+    if (!hasSnapshot) {
+      console.log('frontend is untracked build output; local files are preserved (#1598)');
+      return 0;
+    }
     // #1016: dist is ignored output. Preserve it for smokes/proof receipts;
     // restore only the release-only HACS snapshot, including new chunks.
     const roots = [COMMITTED_BUNDLE_ROOT];

@@ -137,3 +137,26 @@ test('#1016 CLI --clean restores only HACS; leaves ignored build and unrelated f
     assert.equal(readFileSync(join(root, 'notes.txt'), 'utf8'), 'keep me', 'вне корней бандла ничего не трогается');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+
+test('#1598 CLI supports source-only trees and preserves ignored local frontend output', () => {
+  const root = fixture();
+  try {
+    git(root, 'rm', '-qr', 'custom_components/houseplan/frontend');
+    writeFileSync(join(root, '.gitignore'), '/dist\n/custom_components/houseplan/frontend\n');
+    git(root, 'add', '.gitignore');
+    git(root, 'commit', '-qm', 'Release v1.99.0 candidate');
+    writeBundle(root, 'dist', 'current build');
+    writeBundle(root, 'custom_components/houseplan/frontend', 'local HA build');
+    assert.equal(cli(root, '--must-match').status, 1, 'there is no tracked snapshot to compare');
+    const verified = cli(root, '--verify', 'HEAD');
+    assert.equal(verified.status, 0, verified.stderr);
+    const cleaned = cli(root, '--clean');
+    assert.equal(cleaned.status, 0, cleaned.stderr);
+    assert.equal(readFileSync(join(root, 'custom_components/houseplan/frontend/houseplan-card.js'), 'utf8'), 'local HA build');
+    assert.equal(readFileSync(join(root, 'dist/houseplan-card.js'), 'utf8'), 'current build');
+    assert.equal(git(root, 'status', '--porcelain', '--untracked-files=all'), '');
+    writeFileSync(join(root, 'dist/houseplan-card.js'), 'corrupted build');
+    assert.notEqual(cli(root, '--verify', 'HEAD').status, 0, 'dist integrity is still required');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
