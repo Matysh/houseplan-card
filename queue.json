@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29475,
+  "revision": 29476,
   "nextTicket": 791,
   "nextFence": 791,
   "tasks": {
@@ -7277,7 +7277,8 @@
           "entry": 2,
           "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed; Браузер: isometric live touch: cancelled; Браузер: lazy admin locale: cancelled; Браузер: modes: Подготовка не завершена успешно; Браузер: native card presentation: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan 3d card: Подготовка не завершена успешно; Браузер: plan 3d marker height: Подготовка не завершена успешно; Браузер: plan 3d resume: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: standalone room label layout: Подготовка не завершена успешно; Браузер: startup floor: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: vacuum: Подготовка не завершена успешно; Браузер: vacuum 3d floor: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
           "eventId": "finish:3acd3d46-c1e5-48c7-bcc9-fd08fa2a0ba2:finish:2:return:return:1612"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:77aee5fa-568e-44f3-8a8c-31e10253a9af:finish:1:admit": {
