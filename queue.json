@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29080,
+  "revision": 29081,
   "nextTicket": 784,
   "nextFence": 780,
   "tasks": {
@@ -6341,6 +6341,115 @@
         "at": 1795801935891,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1603,
+        "requestId": "review:1603:2:16a13a040b0aac4ee734d093dedf29b4c518c026:68b4268626b93e90825e34bb91842f5c730e9add",
+        "kind": "code",
+        "base": "68b4268626b93e90825e34bb91842f5c730e9add",
+        "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
+        "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1603,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1603",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Работу можно принять, блокеров нет. Все три пункта задачи сделаны.\n1) `noImplicitAny: true` включён. Точечные аннотации не меняют исполняемый JS: исполнитель сравнил стёртое дерево, сборка и typecheck прошли в S6.\n2) Добавлен шаг S6 `backend-quality`. Планировщик добавляет его в task/hotfix только при изменённых существующих `.py` в `custom_components/houseplan/**` и передаёт точный список файлов. Чистые docs возвращают пустой план раньше, чем доходит до этого шага. Из-за того что id содержит `backend`, CI-резерв сам ставит Python и `requirements.txt`.\n3) Рейтчет удалён из `test_backend_quality.py`. Вместо него добавлены проверки, которые реально запускают CLI с ruff и mypy.\nОтдельно стоит отметить замену `strict = true` в override на явные флаги. Без неё адресный mypy делал бы строгим любой затронутый legacy-модуль. Это правильный стык, проверка в тестах его подтверждает.\nОстаточные риски не блокируют приёмку. Не проверялось, проходят ли ruff и mypy сейчас все существующие файлы бэкенда. Поэтому первая задача, которая тронет «грязный» legacy-файл, может получить отказ из-за старого долга этого файла. По замыслу задачи это ожидаемо, но об этом стоит знать.",
+          "understanding": "Проблема. С `noImplicitAny: false` неявные any появлялись сами собой: на dev уже 62 ошибки. ruff и mypy после #1105 не вызывались нигде, а `test_backend_quality.py` защищал рейтчет («allowlist strict-модулей может только расти») и ссылался на удалённый `validate.yml`.\n\nЧто сделано:\n- `tsconfig.json`: флаг включён. В 21 TS-модуле добавлены аннотации параметров колбэков. Большинство из них стоят там, где массив берётся из `ServerConfig.spaces: any[]` или из `config: any`: без контекстного типа параметр становится неявным any. Используются RoomCfg, OpeningCfg, `PlanGraph['nodes'][number]`, WallSegmentEntry. Отдельные случаи: TS7022 — циклический вывод в `wall-face-graph.ts` (liveTail/cm) и в `svg-path.ts` (qx/qy), а также `editor` и `scene` в `wall-node-card-adapter.ts`. Ещё есть индексирование по ключу (`floor-cache-compute`, `live-editor`, `i18n`) и обобщённый `select` в галерее. `opening-drag-preview.ts` теперь возвращает более точный тип `ReturnType<typeof union>`.\n- В `scripts/mutation-registry.mjs` обновлены два якоря `find` под новый текст. В `replace` сохранён `: number`, чтобы мутант оставался компилируемым.\n- `process-next/catalog/backend-quality.mjs`: `backendQualityFiles` фильтрует файлы регуляркой, убирает дубли, проверяет существование через `within` и `isFile`, затем сортирует. `runBackendQuality` по очереди запускает `python3 -m ruff check -- files` и `python3 -m mypy -- files` без shell. Ненулевой статус, сигнал или ошибка запуска означают отказ, так что отсутствие модуля ruff или mypy не может пройти как PASS.\n- В `planProfile` шаг ставится после `checkedPaths` и только для event task/hotfix, независимо от слоя product или infra. Release-профили его не получают: там уже есть `product-backend`. Чистые docs выходят на строке 201, раньше этого места.\n- `pyproject.toml`: в override `strict=true` заменён на 12 per-module флагов, глобально добавлен `warn_redundant_casts`.\n\nРазобранные пути:\n- `planRequirements` в `task-selection.mjs:229-233`: `/backend/` срабатывает на id, поэтому `needsBackend` и `needsPython` равны true.\n- `.github/workflows/process-next-fallback.yml:54-65`: устанавливаются setup-python и `requirements.txt`, где закреплены ruff 0.16.5 и mypy 2.3.1.\n- `finalize` и `dependencyReader`: Python-импорты выбранных файлов попадают во входы шага (`source-dependencies.mjs:107-124`), так что повторное использование учитывает изменения в модулях, которые mypy читает через `follow_imports=silent`.\n- `within` из `storage.mjs` защищает от выхода за корень и от symlink.",
+          "analysis": [
+            {
+              "topic": "Планировщик: когда шаг появляется, а когда нет",
+              "assessment": "Логика совпадает с критериями приёмки. Шаг ставится только при изменённом существующем `.py` в `custom_components/houseplan/**`. Удалённые файлы отсекаются через existsSync, дубли — через Set. Для docs план пустой, потому что ранний return стоит до вычисления шага. Задача без бэкенда шаг не получает. Хорошо, что команда передаёт точный список файлов, а не директорию: так «не обходить бэкенд целиком» выполняется по построению. Регулярка `[\\w-]+` не пропустит имена с точками вроде `a.b.py`. Для этого дерева это скорее теоретическое ограничение.",
+              "evidence": "`process-next/lib/catalog.mjs:201,221-229`; `process-next/catalog/backend-quality.mjs:8-12`; тест `process-next/test/catalog.test.mjs` для #1603: дубль, removed.py, docs, отсутствие бэкенда."
+            },
+            {
+              "topic": "CI-резерв и подготовка Python",
+              "assessment": "Отдельной ветки для нового шага не понадобилось. `planRequirements` распознаёт шаг по подстроке `backend` в id, после чего fallback ставит Python и устанавливает `tests_backend/requirements.txt`, где закреплены ruff и mypy. Минус: эта связь неявная. Если шаг переименуют без `backend` в id, CI перестанет готовить зависимости, а сам шаг честно упадёт. Тест на `needsBackend/needsPython` в catalog.test.mjs эту связь фиксирует.",
+              "evidence": "`process-next/lib/task-selection.mjs:231-232`; `.github/workflows/process-next-fallback.yml:54-65`; `catalog.test.mjs` assert `planRequirements(plan).needsBackend === true`."
+            },
+            {
+              "topic": "mypy: замена strict=true на явные per-module флаги",
+              "assessment": "Это главное неочевидное решение, и оно обосновано. В старом `validate.yml` mypy, судя по всему, запускался только на модулях из allowlist, поэтому глобальный эффект shortcut был незаметен. С адресным запуском на произвольном изменённом файле глобальный strict сделал бы строгим и любой legacy-модуль. В результате первая же правка такого файла вызвала бы массовую переписку, а это противоречит #42. Набор из 12 флагов совпадает с известным мне составом `--strict` за вычетом глобальных: `warn_unused_configs` и `warn_redundant_casts`. Второй вынесен глобально, как и работал раньше. Поведение именно mypy 2.3.1 я по исходникам не проверял. Опираюсь на комментарий исполнителя о `config_parser` и на тест, который это проверяет.",
+              "evidence": "`pyproject.toml:33-71`; `tests_backend/test_backend_quality.py`: `test_issue_1603_actual_mypy_strictness_stays_in_declared_modules` с реальным pyproject — probe проходит, core/constants падает с no-untyped-def; комментарий issue от 27.11 14:19."
+            },
+            {
+              "topic": "Замена рейтчета в test_backend_quality.py",
+              "assessment": "Рейтчет удалён, как требует решение владельца. Полезные проверки остались: коды ошибок, идентичность модулей, noqa. Новые тесты проверяют поведение, а не форму: CLI вызывает настоящие ruff и mypy, отказ распространяется наружу (F821, return-value), ошибка в соседнем `untouched.py` на результат не влияет. Цена: файл больше не «чистый». Теперь он требует node и закреплённых ruff/mypy в окружении pytest и входит в release-выборку backend. В CI оба условия выполнены (setup-node и requirements), а docstring это честно отражает.",
+              "evidence": "`tests_backend/test_backend_quality.py:1-4,105-156`; `catalog.mjs:44` (discoverReleaseTests подбирает `tests_backend/test_*.py`)."
+            },
+            {
+              "topic": "TypeScript: аннотации вместо неявного any",
+              "assessment": "Подход правильный: точечные предметные типы, явные `: any` массово не добавлялись. Нужно понимать, что почти все аннотации стоят на данных из `spaces: any[]` или `config: any`. Они не проверяются компилятором, а только заявляют форму. Например, в `demand-space-models.ts` `roomRecords.map((room: RoomCfg)...)` обрабатывает и объекты `{id}` из plan_graph. Хуже, чем было, не стало: раньше там был неявный any, а теперь тип хотя бы читается. Источник проблемы — `ServerConfig.spaces: any[]`, и он остаётся. Изменения стираются при компиляции; это подтверждено сравнением transpile-дерева (комментарий исполнителя) и зелёной сборкой в S6. Якоря мутаций обновлены корректно, `replace` остаётся компилируемым.",
+              "evidence": "`src/types.ts:376` (`spaces: any[]`); `src/demand-space-models.ts:32-41`; `src/wall-face-graph.ts:105-106`; `scripts/mutation-registry.mjs:7193-7194,10299`."
+            },
+            {
+              "topic": "Проверки S6",
+              "assessment": "Итоговый набор по 7a2d872 прошёл, отказов нет. Предыдущий возврат из-за якорей мутационного реестра закрыт правкой `find`. Сам шаг `backend-quality` в S6 этой задачи не исполнялся, потому что `.py` бэкенда не менялись. Его исполнимость подтверждают pytest-проверки, по словам исполнителя 14/14 PASS.",
+              "evidence": "receipt `20261127T171722114-70dfdab8` status passed, failures []; комментарии issue от 27.11 14:19 и 17:52."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Однократно прогнать `ruff check` и `mypy` по всему `custom_components/houseplan/**` и записать результат в issue как справку, без гейта. Так станет видно, какие legacy-файлы сейчас не проходят адресную проверку. Иначе первая задача, которая их тронет, неожиданно получит отказ из-за старого долга. Цена — один ручной прогон. Польза — предсказуемый объём S6 для будущих задач бэкенда.",
+            "Связь «шаг backend-quality → подготовка Python в CI» держится на подстроке `backend` в id (`task-selection.mjs:231`). Надёжнее объявить потребность явно, например полем `requiresPython: true` в шаге, и учитывать его в `planRequirements`. Это небольшая правка, и она убирает зависимость от именования.",
+            "В `src/device-toggle.ts:914` вместо встроенного литерального типа параметра лучше типизировать саму переменную: `const targets: ReadonlyArray<ToggleTarget | SkippedToggleTarget> = ...`. Тогда вместо самодельной структуры используются предметные типы модуля, а колбэк получает контекстный тип сам."
+          ],
+          "boundaries": "Изучено по исходникам на head: diff целиком; `process-next/lib/catalog.mjs` (planProfile, finalize, checkedPaths); `planRequirements` в `task-selection.mjs`; `within` в `storage.mjs`; обход Python-зависимостей в `source-dependencies.mjs`; `process-next-fallback.yml`; `tests_backend/requirements.txt`; `tsconfig.test.json`; тип `ServerConfig`; `SkippedToggleTarget` в `device-toggle.ts`.\nСам ничего не запускал: ни сборку, ни tsc, ни ruff, ни mypy, ни тесты. Опирался на успешный S6 (receipt `20261127T171722114-70dfdab8`, материал 7a2d872) и на сообщения исполнителя об адресных прогонах. Сообщения исполнителя доказательством прогона не считаю.\nЧто mypy 2.3.1 применяет `strict` из override глобально, я не проверял: исходник mypy недоступен, а эта версия, возможно, вышла позже моих знаний. Вывод опирается на тест с реальным pyproject и на описание исполнителя.\nНе проверялось, проходят ли текущие исходники бэкенда ruff и mypy пофайлово. Отдельный скрипт с доказательством стирания типов (`output/1603-erased-types-proof.*`) хранится локально, и я его не видел."
+        },
+        "usage": {
+          "input_tokens": 28,
+          "cache_creation_input_tokens": 86446,
+          "cache_read_input_tokens": 779906,
+          "output_tokens": 13411,
+          "output_tokens_details": {
+            "thinking_tokens": 6071
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 86446,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 1095,
+              "cache_read_input_tokens": 75173,
+              "cache_creation_input_tokens": 15477,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 15477
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять, блокеров нет. Все три пункта задачи сделаны.\n1) `noImplicitAny: true` включён. Точечные аннотации не меняют исполняемый JS: исполнитель сравнил стёртое дерево, сборка и typecheck прошли в S6.\n2) Добавлен шаг S6 `backend-quality`. Планировщик добавляет его в task/hotfix только при изменённых существующих `.py` в `custom_components/houseplan/**` и передаёт точный список файлов. Чистые docs возвращают пустой план раньше, чем доходит до этого шага. Из-за того что id содержит `backend`, CI-резерв сам ставит Python и `requirements.txt`.\n3) Рейтчет удалён из `test_backend_quality.py`. Вместо него добавлены проверки, которые реально запускают CLI с ruff и mypy.\nОтдельно стоит отметить замену `strict = true` в override на явные флаги. Без неё адресный mypy делал бы строгим любой затронутый legacy-модуль. Это правильный стык, проверка в тестах его подтверждает.\nОстаточные риски не блокируют приёмку. Не проверялось, проходят ли ruff и mypy сейчас все существующие файлы бэкенда. Поэтому первая задача, которая тронет «грязный» legacy-файл, может получить отказ из-за старого долга этого файла. По замыслу задачи это ожидаемо, но об этом стоит знать.\n\n## Понимание решения\n\nПроблема. С `noImplicitAny: false` неявные any появлялись сами собой: на dev уже 62 ошибки. ruff и mypy после #1105 не вызывались нигде, а `test_backend_quality.py` защищал рейтчет («allowlist strict-модулей может только расти») и ссылался на удалённый `validate.yml`.\n\nЧто сделано:\n- `tsconfig.json`: флаг включён. В 21 TS-модуле добавлены аннотации параметров колбэков. Большинство из них стоят там, где массив берётся из `ServerConfig.spaces: any[]` или из `config: any`: без контекстного типа параметр становится неявным any. Используются RoomCfg, OpeningCfg, `PlanGraph['nodes'][number]`, WallSegmentEntry. Отдельные случаи: TS7022 — циклический вывод в `wall-face-graph.ts` (liveTail/cm) и в `svg-path.ts` (qx/qy), а также `editor` и `scene` в `wall-node-card-adapter.ts`. Ещё есть индексирование по ключу (`floor-cache-compute`, `live-editor`, `i18n`) и обобщённый `select` в галерее. `opening-drag-preview.ts` теперь возвращает более точный тип `ReturnType<typeof union>`.\n- В `scripts/mutation-registry.mjs` обновлены два якоря `find` под новый текст. В `replace` сохранён `: number`, чтобы мутант оставался компилируемым.\n- `process-next/catalog/backend-quality.mjs`: `backendQualityFiles` фильтрует файлы регуляркой, убирает дубли, проверяет существование через `within` и `isFile`, затем сортирует. `runBackendQuality` по очереди запускает `python3 -m ruff check -- files` и `python3 -m mypy -- files` без shell. Ненулевой статус, сигнал или ошибка запуска означают отказ, так что отсутствие модуля ruff или mypy не может пройти как PASS.\n- В `planProfile` шаг ставится после `checkedPaths` и только для event task/hotfix, независимо от слоя product или infra. Release-профили его не получают: там уже есть `product-backend`. Чистые docs выходят на строке 201, раньше этого места.\n- `pyproject.toml`: в override `strict=true` заменён на 12 per-module флагов, глобально добавлен `warn_redundant_casts`.\n\nРазобранные пути:\n- `planRequirements` в `task-selection.mjs:229-233`: `/backend/` срабатывает на id, поэтому `needsBackend` и `needsPython` равны true.\n- `.github/workflows/process-next-fallback.yml:54-65`: устанавливаются setup-python и `requirements.txt`, где закреплены ruff 0.16.5 и mypy 2.3.1.\n- `finalize` и `dependencyReader`: Python-импорты выбранных файлов попадают во входы шага (`source-dependencies.mjs:107-124`), так что повторное использование учитывает изменения в модулях, которые mypy читает через `follow_imports=silent`.\n- `within` из `storage.mjs` защищает от выхода за корень и от symlink.\n\n## Разбор решения\n\n### Планировщик: когда шаг появляется, а когда нет\n\nЛогика совпадает с критериями приёмки. Шаг ставится только при изменённом существующем `.py` в `custom_components/houseplan/**`. Удалённые файлы отсекаются через existsSync, дубли — через Set. Для docs план пустой, потому что ранний return стоит до вычисления шага. Задача без бэкенда шаг не получает. Хорошо, что команда передаёт точный список файлов, а не директорию: так «не обходить бэкенд целиком» выполняется по построению. Регулярка `[\\w-]+` не пропустит имена с точками вроде `a.b.py`. Для этого дерева это скорее теоретическое ограничение.\n\nОснование: `process-next/lib/catalog.mjs:201,221-229`; `process-next/catalog/backend-quality.mjs:8-12`; тест `process-next/test/catalog.test.mjs` для #1603: дубль, removed.py, docs, отсутствие бэкенда.\n\n### CI-резерв и подготовка Python\n\nОтдельной ветки для нового шага не понадобилось. `planRequirements` распознаёт шаг по подстроке `backend` в id, после чего fallback ставит Python и устанавливает `tests_backend/requirements.txt`, где закреплены ruff и mypy. Минус: эта связь неявная. Если шаг переименуют без `backend` в id, CI перестанет готовить зависимости, а сам шаг честно упадёт. Тест на `needsBackend/needsPython` в catalog.test.mjs эту связь фиксирует.\n\nОснование: `process-next/lib/task-selection.mjs:231-232`; `.github/workflows/process-next-fallback.yml:54-65`; `catalog.test.mjs` assert `planRequirements(plan).needsBackend === true`.\n\n### mypy: замена strict=true на явные per-module флаги\n\nЭто главное неочевидное решение, и оно обосновано. В старом `validate.yml` mypy, судя по всему, запускался только на модулях из allowlist, поэтому глобальный эффект shortcut был незаметен. С адресным запуском на произвольном изменённом файле глобальный strict сделал бы строгим и любой legacy-модуль. В результате первая же правка такого файла вызвала бы массовую переписку, а это противоречит #42. Набор из 12 флагов совпадает с известным мне составом `--strict` за вычетом глобальных: `warn_unused_configs` и `warn_redundant_casts`. Второй вынесен глобально, как и работал раньше. Поведение именно mypy 2.3.1 я по исходникам не проверял. Опираюсь на комментарий исполнителя о `config_parser` и на тест, который это проверяет.\n\nОснование: `pyproject.toml:33-71`; `tests_backend/test_backend_quality.py`: `test_issue_1603_actual_mypy_strictness_stays_in_declared_modules` с реальным pyproject — probe проходит, core/constants падает с no-untyped-def; комментарий issue от 27.11 14:19.\n\n### Замена рейтчета в test_backend_quality.py\n\nРейтчет удалён, как требует решение владельца. Полезные проверки остались: коды ошибок, идентичность модулей, noqa. Новые тесты проверяют поведение, а не форму: CLI вызывает настоящие ruff и mypy, отказ распространяется наружу (F821, return-value), ошибка в соседнем `untouched.py` на результат не влияет. Цена: файл больше не «чистый». Теперь он требует node и закреплённых ruff/mypy в окружении pytest и входит в release-выборку backend. В CI оба условия выполнены (setup-node и requirements), а docstring это честно отражает.\n\nОснование: `tests_backend/test_backend_quality.py:1-4,105-156`; `catalog.mjs:44` (discoverReleaseTests подбирает `tests_backend/test_*.py`).\n\n### TypeScript: аннотации вместо неявного any\n\nПодход правильный: точечные предметные типы, явные `: any` массово не добавлялись. Нужно понимать, что почти все аннотации стоят на данных из `spaces: any[]` или `config: any`. Они не проверяются компилятором, а только заявляют форму. Например, в `demand-space-models.ts` `roomRecords.map((room: RoomCfg)...)` обрабатывает и объекты `{id}` из plan_graph. Хуже, чем было, не стало: раньше там был неявный any, а теперь тип хотя бы читается. Источник проблемы — `ServerConfig.spaces: any[]`, и он остаётся. Изменения стираются при компиляции; это подтверждено сравнением transpile-дерева (комментарий исполнителя) и зелёной сборкой в S6. Якоря мутаций обновлены корректно, `replace` остаётся компилируемым.\n\nОснование: `src/types.ts:376` (`spaces: any[]`); `src/demand-space-models.ts:32-41`; `src/wall-face-graph.ts:105-106`; `scripts/mutation-registry.mjs:7193-7194,10299`.\n\n### Проверки S6\n\nИтоговый набор по 7a2d872 прошёл, отказов нет. Предыдущий возврат из-за якорей мутационного реестра закрыт правкой `find`. Сам шаг `backend-quality` в S6 этой задачи не исполнялся, потому что `.py` бэкенда не менялись. Его исполнимость подтверждают pytest-проверки, по словам исполнителя 14/14 PASS.\n\nОснование: receipt `20261127T171722114-70dfdab8` status passed, failures []; комментарии issue от 27.11 14:19 и 17:52.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Однократно прогнать `ruff check` и `mypy` по всему `custom_components/houseplan/**` и записать результат в issue как справку, без гейта. Так станет видно, какие legacy-файлы сейчас не проходят адресную проверку. Иначе первая задача, которая их тронет, неожиданно получит отказ из-за старого долга. Цена — один ручной прогон. Польза — предсказуемый объём S6 для будущих задач бэкенда.\n- Связь «шаг backend-quality → подготовка Python в CI» держится на подстроке `backend` в id (`task-selection.mjs:231`). Надёжнее объявить потребность явно, например полем `requiresPython: true` в шаге, и учитывать его в `planRequirements`. Это небольшая правка, и она убирает зависимость от именования.\n- В `src/device-toggle.ts:914` вместо встроенного литерального типа параметра лучше типизировать саму переменную: `const targets: ReadonlyArray<ToggleTarget | SkippedToggleTarget> = ...`. Тогда вместо самодельной структуры используются предметные типы модуля, а колбэк получает контекстный тип сам.\n\n## Границы анализа\n\nИзучено по исходникам на head: diff целиком; `process-next/lib/catalog.mjs` (planProfile, finalize, checkedPaths); `planRequirements` в `task-selection.mjs`; `within` в `storage.mjs`; обход Python-зависимостей в `source-dependencies.mjs`; `process-next-fallback.yml`; `tests_backend/requirements.txt`; `tsconfig.test.json`; тип `ServerConfig`; `SkippedToggleTarget` в `device-toggle.ts`.\nСам ничего не запускал: ни сборку, ни tsc, ни ruff, ни mypy, ни тесты. Опирался на успешный S6 (receipt `20261127T171722114-70dfdab8`, материал 7a2d872) и на сообщения исполнителя об адресных прогонах. Сообщения исполнителя доказательством прогона не считаю.\nЧто mypy 2.3.1 применяет `strict` из override глобально, я не проверял: исходник mypy недоступен, а эта версия, возможно, вышла позже моих знаний. Вывод опирается на тест с реальным pyproject и на описание исполнителя.\nНе проверялось, проходят ли текущие исходники бэкенда ruff и mypy пофайлово. Отдельный скрипт с доказательством стирания типов (`output/1603-erased-types-proof.*`) хранится локально, и я его не видел.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 68b4268626b93e90825e34bb91842f5c730e9add → 7a2d872ffc8058facb5ee14210be4b9e94a52f4f\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-27T17:55:43.621Z",
+        "artifactId": 15222090989,
+        "runId": 46045143988,
+        "runAttempt": 1,
+        "completedAt": "2026-11-27T17:52:14Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46045143988",
+        "runStatus": "in_progress",
+        "publicationPending": true,
+        "expectedBase": "68b4268626b93e90825e34bb91842f5c730e9add"
       }
     },
     "1604": {
@@ -7398,9 +7507,9 @@
     "fence": 779,
     "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
     "expectedBase": "68b4268626b93e90825e34bb91842f5c730e9add",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1795799820442,
-    "expiresAt": 1795805502865,
+    "expiresAt": 1795805771801,
     "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026",
     "reviewRequest": "review:1603:2:16a13a040b0aac4ee734d093dedf29b4c518c026:68b4268626b93e90825e34bb91842f5c730e9add"
   },
@@ -8171,6 +8280,10 @@
     },
     "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:9:review-presentation": {
       "digest": "80e62e88d5242341bbacca5aa8df678a0c3c11491f562698e7b8831425ece667",
+      "issue": 1603
+    },
+    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:9:review-complete": {
+      "digest": "d8caf99745d66f517ffca25d283cd906dcd349dd114d89b94b58381625bfdbae",
       "issue": 1603
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
