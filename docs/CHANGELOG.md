@@ -4,6 +4,7 @@
 
 - Extract the lazy 3D host lifecycle and mode transition presentation from the main card (#1604).
 - Recheck live write access before saving device positions or publishing attachments, and keep cancelled file operations from leaving partial copies (#1605).
+- Device markers request light haptic feedback in the Home Assistant Companion App after a successful toggle or run action (#1607).
 - The floor stays in place while the summary loads the total room area. (#1590)
 - Let users save the suggested Home Assistant floor name without edits and return to normal space creation after skipping every floor (#1589).
 - Keep the wall footprint at its settled colour throughout a warm 3D floor switch with translucent walls (#1587).

@@ -7,6 +7,9 @@ const out = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const calls = [];
+  const haptics = [];
+  window.addEventListener('haptic', (event) => haptics.push(event.detail));
+  let reply;
   c.hass = { ...c.hass,
     entities: { ...c.hass.entities,
       'automation.evening': { entity_id: 'automation.evening', platform: 'automation', disabled_by: null },
@@ -16,7 +19,10 @@ const out = await page.evaluate(async () => {
       'automation.evening': { state: 'on', attributes: { friendly_name: 'Вечерний свет' } },
       'script.curtains': { state: 'off', attributes: { friendly_name: 'Шторы' } },
       'scene.movie': { state: '', attributes: { friendly_name: 'Кино' } } },
-    callService: async (dom, svc, data) => { calls.push([dom, svc, data]); return {}; } };
+    callService: (dom, svc, data) => {
+      calls.push([dom, svc, data]);
+      return new Promise((resolve, reject) => { reply = { resolve, reject }; });
+    } };
 
   // --- диалог: выбор run + пикер с поиском --------------------------------
   const d = c._devices.find((x) => x.space === 'f1' && x.bindingKind === 'device');
@@ -58,13 +64,17 @@ const out = await page.evaluate(async () => {
   await window.__hpUiCapture?.('tap-confirm-dialog', 'hp-dialog:has([data-hp="dialog-confirm"])');
   c._tapConfirm = null; await c.updateComplete;
   o.cancelNoCall = calls.length === 0;
+  o.cancelNoHaptic = haptics.length === 0;
 
   // --- тап: подтвердили → script.turn_on ----------------------------------
   c._clickDevice({ stopPropagation() {} }, dev); await c.updateComplete;
   const conf = c._tapConfirm; c._tapConfirm = null; conf.exec();
-  await new Promise((r) => setTimeout(r, 10));
+  o.runCommandWaitsForReply = haptics.length === 0;
+  reply.resolve();
+  await window.__hpTest.settled();
   o.runCalled = calls.length === 1 && calls[0][0] === 'script' && calls[0][1] === 'turn_on'
     && calls[0][2].entity_id === 'script.curtains';
+  o.runReplyRequestsLightHaptic = haptics.length === 1 && haptics[0] === 'light';
 
   // --- без подтверждения: сразу вызов; автоматизация → trigger ------------
   c._serverCfg.markers = c._serverCfg.markers.map((m) =>
@@ -73,9 +83,16 @@ const out = await page.evaluate(async () => {
   const dev2 = c._devices.find((x) => x.bindingRef === d.bindingRef);
   calls.length = 0;
   c._clickDevice({ stopPropagation() {} }, dev2); await c.updateComplete;
-  await new Promise((r) => setTimeout(r, 10));
+  reply.resolve();
+  await window.__hpTest.settled();
   o.automationTriggered = calls.length === 1 && calls[0][0] === 'automation' && calls[0][1] === 'trigger';
   o.noConfirmWhenOff = !c._tapConfirm;
+  o.automationReplyRequestsLightHaptic = haptics.length === 2 && haptics[1] === 'light';
+
+  c._clickDevice({ stopPropagation() {} }, dev2);
+  reply.reject(new Error('Fixture rejected the action'));
+  await window.__hpTest.settled();
+  o.rejectedActionHasNoHaptic = calls.length === 2 && haptics.length === 2;
 
   // --- цель удалена → тост, вызова нет ------------------------------------
   const states2 = { ...c.hass.states }; delete states2['automation.evening'];
@@ -83,6 +100,7 @@ const out = await page.evaluate(async () => {
   calls.length = 0;
   c._clickDevice({ stopPropagation() {} }, dev2); await c.updateComplete;
   o.missingTargetSafe = calls.length === 0 && !!c._toast;
+  o.missingTargetHasNoHaptic = haptics.length === 2;
   await window.__hpUiCapture?.('toasts', '[data-hp="toast"]');
 
   // очистка

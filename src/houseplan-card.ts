@@ -8175,6 +8175,7 @@ export class HouseplanCard extends LitElement {
             type: 'houseplan/virtual_light/toggle',
             marker_id: operation.markerId,
           }).then((result: any) => {
+            this._requestMarkerHaptic();
             const next = applyVirtualLightEvent(this._virtualLights, result);
             if (next === this._virtualLights) return;
             this._virtualLights = next;
@@ -8189,6 +8190,7 @@ export class HouseplanCard extends LitElement {
         const { command } = operation;
         this._startDevicePressFeedback(actionDevice.id);
         this.planHost.deviceServices?.call(command.domain, command.service, command.data)
+          .then(() => this._requestMarkerHaptic())
           .catch((e: unknown) => showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
       };
       const name = toggleIntentName(initial) || actionDevice.name;
@@ -8252,6 +8254,7 @@ export class HouseplanCard extends LitElement {
         this.planHost.deviceServices
           ?.call(svc.domain, svc.service, { entity_id: target })
           .then(() => {
+            this._requestMarkerHaptic();
             this._stampActivity(
               actionDevice.id, 'event', this._activitySourceKey(actionDevice),
             );
@@ -8267,6 +8270,10 @@ export class HouseplanCard extends LitElement {
       return;
     }
     this._infoCard = actionDevice;
+  }
+
+  private _requestMarkerHaptic(): void {
+    this.dispatchEvent(new CustomEvent('haptic', { detail: 'light', bubbles: true, composed: true }));
   }
 
   /** Explain a safe controls no-op through the card's standard local toast. */

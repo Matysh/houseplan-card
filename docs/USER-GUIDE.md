@@ -1285,6 +1285,8 @@ lovelace:
 
 &emsp;&emsp;When a short activation actually sends a device command, the marker gently shrinks by 5% and returns over 0.2 s. Merely opening information, an editor or a confirmation does not trigger feedback; with confirmation it starts only after approval and dispatch. Reduced motion replaces the scale with a brief steady accent.
 
+&emsp;&emsp;In the Home Assistant Companion App, a successful response to a toggle or run action from a marker gives light haptic feedback when the phone supports it and haptics are enabled.
+
 #### Actions
 
 | Action | Behaviour | Safety |

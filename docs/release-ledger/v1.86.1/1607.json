@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1607,
+  "baseStable": "v1.86.1",
+  "category": "major",
+  "rationale": "Add the Home Assistant Companion App's standard light haptic feedback for successful marker actions.",
+  "summary": {
+    "ru": "Значки дают лёгкую виброотдачу после успешного переключения или запуска действия.",
+    "en": "Markers give light haptic feedback after a successful toggle or run action."
+  }
+}

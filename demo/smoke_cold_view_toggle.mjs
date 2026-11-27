@@ -64,6 +64,10 @@ const out = await page.evaluate(async () => {
   const virtual = { rev: 0, config_rev: card._cfgRev, off: [] };
   const subscriptions = new Map();
   const serviceCalls = [];
+  const haptics = [];
+  window.addEventListener('haptic', (event) => haptics.push(event.detail));
+  let resolveSwitch;
+  const firstSwitchReply = new Promise((resolve) => { resolveSwitch = resolve; });
   let toggleCalls = 0;
   const emit = (event, data) => {
     for (const listener of [...(subscriptions.get(event) || [])]) listener({ data });
@@ -102,6 +106,7 @@ const out = await page.evaluate(async () => {
       hass = fresh;
       card.hass = fresh;
       await card.updateComplete;
+      if (serviceCalls.length === 1) await firstSwitchReply;
     },
     callWS: async (message) => {
       if (message.type === 'houseplan/config/get') return {
@@ -169,6 +174,9 @@ const out = await page.evaluate(async () => {
   out.controllerTapCallsSwitch = await waitFor(() => serviceCalls.length === 1
     && [].concat(serviceCalls[0].data?.entity_id || [])[0] === 'switch.kettle');
   out.controllerTapTurnsAllOff = await waitFor(() => !virtualIds.some(isOn));
+  out.hapticWaitsForSwitchReply = haptics.length === 0;
+  resolveSwitch();
+  out.switchReplyRequestsLightHaptic = await waitFor(() => haptics.length === 1 && haptics[0] === 'light');
   node(controllerId).dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
   out.controllerTapTurnsAllOn = await waitFor(() => serviceCalls.length === 2 && allVirtualOn());
 
@@ -177,6 +185,7 @@ const out = await page.evaluate(async () => {
   out.lampTapDrivesSwitch = await waitFor(() => serviceCalls.length === 3
     && [].concat(serviceCalls[2].data?.entity_id || [])[0] === 'switch.kettle');
   out.lampTapTurnsAllOff = await waitFor(() => !virtualIds.some(isOn));
+  out.oneHapticPerSwitchCommand = await waitFor(() => haptics.length === 3 && haptics.every((type) => type === 'light'));
 
   // An independent manual virtual lamp with tap_confirm: the dialog opens with
   // rendered state lines and the confirmation toggles it over the WS API.
@@ -184,8 +193,10 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   out.confirmDialogShown = !!card._tapConfirm
     && Array.isArray(card._tapConfirm.lines) && card._tapConfirm.lines.length > 0;
+  out.confirmationAloneDoesNotRequestHaptic = haptics.length === 3;
   card._tapConfirm?.exec?.();
   out.confirmExecTogglesVirtual = await waitFor(() => toggleCalls === 1);
+  out.virtualToggleReplyRequestsOneHaptic = await waitFor(() => haptics.length === 4 && haptics[3] === 'light');
   card._tapConfirm = null;
 
   out.runtimeColdAfter = !card._editorRuntime;
