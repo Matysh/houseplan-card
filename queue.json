@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 28463,
+  "revision": 28464,
   "nextTicket": 774,
-  "nextFence": 769,
+  "nextFence": 770,
   "tasks": {
     "1001": {
       "issue": 1001,
@@ -6414,7 +6414,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 769,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795776323620,
       "reviewEntry": 1
@@ -7484,13 +7484,22 @@
     }
   },
   "waiting": [
-    1603,
     1609,
     1608,
     1595,
     1598
   ],
-  "active": null,
+  "active": {
+    "issue": 1603,
+    "worker": "finish",
+    "token": "769:finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:1:admit",
+    "fence": 769,
+    "materialSha": "41acf20c220bd49cf49a2c0550c9dee0fde57031",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795786678156,
+    "expiresAt": 1795786978156
+  },
   "events": {
     "github:45983679597:1:completions:notice:1f62e8a9b565e2f61ce7c2a55e0d0c96ff8c4c10e3b06dd19812dbec4c2468d4": {
       "digest": "5b2907f1293dcec807d901b508468cc5c4d6bb70caeca2897e08cb785431d44e",
@@ -9159,6 +9168,20 @@
           "detail": "Поведение механизма: process-next/test/task-selection.test.mjs: failed; Поведение механизма: test/config-lifecycle.test.mjs: failed",
           "eventId": "finish:973fdb14-5c23-4a35-bbe7-df2a222a59a2:finish:2:return:return:1600"
         }
+      }
+    },
+    "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:1:admit": {
+      "digest": "1fd95557d4d5de99e232fa9986f2bc542f78f23658e8c36f4d9f578fc07e8538",
+      "issue": 1603,
+      "message": {
+        "kind": "admitted",
+        "issue": 1603,
+        "at": 1795786678156,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "41acf20c220bd49cf49a2c0550c9dee0fde57031",
+        "phase": "sync"
       }
     }
   },
