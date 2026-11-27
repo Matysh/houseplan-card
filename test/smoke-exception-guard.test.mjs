@@ -60,14 +60,13 @@ test('пробы остаются зарегистрированными browser
   );
 });
 
-test('#434 current runner and individual browser steps retain finite independent bounds', () => {
+test('#434 runner defaults and individual browser steps retain finite independent bounds', () => {
   const catalog = read('process-next/lib/catalog.mjs');
   const runner = read('process-next/lib/runner.mjs');
   const smoke = catalog.slice(catalog.indexOf('function smokeStep('),catalog.indexOf('export async function planProfile'));
   assert.match(smoke, /timeoutMs: 600000/, 'each native browser step has a finite timeout');
   assert.match(runner, /step\.timeoutMs \?\? 15 \* 60_000/, 'every executable unit has a finite default');
-  assert.match(runner, /timedOut = true; stop\(\)/, 'timeout requests child termination');
-  assert.match(runner, /SIGKILL/, 'a stuck child cannot ignore the final deadline');
+  // Actual termination and escalation are exercised by process-next/test/runner.test.mjs.
 });
 
 test('страницы, созданные вне launch(), подписаны общим гардом (#404, Medium-1)', () => {

@@ -155,6 +155,19 @@ test('timeout kills the actual process and cancellation never becomes passed', a
   const cancel = await runPlan(plan([step('a')]), { root, signal: controller.signal, execute: () => { throw Error('must not start'); } });
   assert.equal(cancel.results[0].status, 'cancelled'); assert.equal(cancel.status, 'failed');
 });
+test('a child that ignores SIGTERM is killed after the step timeout', { skip: process.platform === 'win32' }, async t => {
+  const root = fixture(t);
+  const script = [
+    'process.on("SIGTERM", () => console.log("ignored SIGTERM"));',
+    'console.log("armed");',
+    'setTimeout(() => {}, 8000);',
+  ].join('\n');
+  const logPath = join(root, 'stubborn.log');
+  const result = await executeStep(step('stubborn', { command: [process.execPath, '-e', script], timeoutMs: 1000 }), { cwd: root, logPath });
+  assert.match(readFileSync(logPath, 'utf8'), /^armed\r?\nignored SIGTERM\r?\n/);
+  assert.equal(result.status, 'timed-out');
+  assert.equal(result.signal, 'SIGKILL');
+});
 test('exit zero with failed TAP or an empty required selection is a failure', async t => {
   const root = fixture(t);
   for (const [id, text] of [['bad', '# tests 1\n# fail 1'], ['empty', '# tests 0\n# fail 0']]) {
