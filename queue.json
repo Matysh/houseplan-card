@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28777,
+  "revision": 28778,
   "nextTicket": 781,
   "nextFence": 776,
   "tasks": {
@@ -3551,40 +3551,6 @@
         "sourceSha": "ec73fa6e474fe9e87021f1ead36817beffd89a8d"
       }
     },
-    "1523": {
-      "issue": 1523,
-      "branch": "issue/1523-release-return-5de9e31fdfc4",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "4e93ea473e437aa12a506f96b37d8d2a8e79ca0c",
-      "mergedSha": "273a176054edeb81b9e36ad60d0265f3d88e0a71",
-      "mergedAt": 1795363890256,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.86.1-beta.1",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "273a176054edeb81b9e36ad60d0265f3d88e0a71"
-      }
-    },
     "1524": {
       "issue": 1524,
       "branch": "issue/1524-release-return-2d338bb313cd",
@@ -6350,10 +6316,20 @@
       "removedToRelease": true,
       "reviewRequest": "review:1600:2:b12ee743099f75fdaf914681d7c7d2688e8d89f7:bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": true,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
