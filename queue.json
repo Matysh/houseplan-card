@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29796,
+  "revision": 29797,
   "nextTicket": 799,
   "nextFence": 799,
   "tasks": {
@@ -6248,7 +6248,7 @@
       "ownerDecision": null,
       "ticket": 798,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795818615064,
       "reviewEntry": 1,
       "patchId": "db5da05dcaee2eabc232b419c104de0573aee178",
@@ -6263,7 +6263,16 @@
         "src/led-strip-field.ts",
         "src/led-strip-runtime.ts",
         "src/plan-3d-light-field.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261127T223640583-e7bebc9b",
+        "name": "Тесты для задачи #1617 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T223640583-e7bebc9b/report.json",
+        "materialSha": "153eccfdc5fc772a77d8d624649734ad82eae3be",
+        "status": "passed",
+        "finishedAt": "2026-11-27T22:39:59.273Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -7011,9 +7020,9 @@
     "fence": 798,
     "materialSha": "153eccfdc5fc772a77d8d624649734ad82eae3be",
     "expectedBase": "029bee4a997415765c278be12fd8334d82774e33",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795818975284,
-    "expiresAt": 1795819458307,
+    "expiresAt": 1795822800425,
     "patchId": "db5da05dcaee2eabc232b419c104de0573aee178"
   },
   "events": {
@@ -7089,6 +7098,34 @@
         "materialSha": "95ee6baff90467430e77212d8fc039859f7677a6",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:b6f532f4-8cba-41e4-afee-f2b7a0b414d2:finish:2:s6-complete": {
+      "digest": "446b21c34a16688c50b49c9158ea12fa0ed3431670b3ccc352e61af68a071359",
+      "issue": 1617,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1617,
+        "at": 1795819200425,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "153eccfdc5fc772a77d8d624649734ad82eae3be",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T223640583-e7bebc9b",
+          "name": "Тесты для задачи #1617 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T223640583-e7bebc9b/report.json",
+          "materialSha": "153eccfdc5fc772a77d8d624649734ad82eae3be",
+          "status": "passed",
+          "finishedAt": "2026-11-27T22:39:59.273Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Рендер ленты и источник свечения используют один расчёт `ledHeight` и высоту верхней светящейся поверхности, которую WebGL рисует на меше. Физическое расстояние до пола и стен применяется только к лентам; свет ламп, солнечное пятно, плоские маски, отсекающие стены и правила проёмов не менялись.\n\nЛокально: `npm run bundle:sync` с типами; `smoke_plan_3d_marker_height.mjs` — совпадение высоты источника и меша для 0, 100 см и Auto в восьми ракурсах; `smoke_plan_3d_gpu.mjs` — настоящий WebGL-пиксель при низкой/поднятой ленте на стене и полу, обратная сторона стены остаётся тёмной. Оба смоука выбраны штатным S6.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
