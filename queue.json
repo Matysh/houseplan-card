@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28592,
+  "revision": 28593,
   "nextTicket": 777,
   "nextFence": 772,
   "tasks": {
@@ -6568,7 +6568,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1608-device-height-perspective",
-      "materialSha": "e973f1e23192036214b987a935b4a951faa758bc",
+      "materialSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 771,
@@ -6576,7 +6576,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795780026636,
       "reviewEntry": 4,
-      "patchId": "73e2e63a1cb6b2ace1e2cea6f75e5441b1012045",
+      "patchId": "8dfb521710a8a56412d83ebf38ccdb5245c573b3",
       "changedFiles": [
         "custom_components/houseplan/core/marker_height.py",
         "custom_components/houseplan/core/validation.py",
@@ -6648,11 +6648,15 @@
         "demo/helpers/test-surface-ready.mjs",
         "demo/smoke_context_menu_geometry_1444.mjs",
         "demo/smoke_device_contact_mixed_radius.mjs",
+        "demo/smoke_device_copy.mjs",
         "demo/smoke_device_save_placement.mjs",
+        "demo/smoke_floor_persistent_cache.mjs",
         "demo/smoke_iso_flat_parity.mjs",
         "demo/smoke_isometric_contract.mjs",
+        "demo/smoke_plan_3d_card.mjs",
         "demo/smoke_plan_3d_marker_height.mjs",
         "demo/smoke_plan_rotation.mjs",
+        "demo/smoke_startup_floor.mjs",
         "demo/smoke_sun.mjs",
         "demo/smoke_vacuum_camera.mjs",
         "demo/smoke_vacuum_dock_restart.mjs",
@@ -6665,6 +6669,7 @@
         "demo/smoke_vacuum_tail_continuity.mjs",
         "demo/smoke_webgl_floor_shadows.mjs",
         "demo/smoke_zigbee_led_topology.mjs",
+        "demo/srv/fixture-state.js",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/ISOMETRIC.md",
@@ -7539,17 +7544,14 @@
     "worker": "finish",
     "token": "771:finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:1:admit",
     "fence": 771,
-    "materialSha": "e973f1e23192036214b987a935b4a951faa758bc",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+    "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
+    "phase": "testing",
     "admittedAt": 1795790452600,
-    "expiresAt": 1795790752600
+    "expiresAt": 1795790826974,
+    "patchId": "8dfb521710a8a56412d83ebf38ccdb5245c573b3"
   },
   "events": {
-    "dev-build:45993104380:1:webhook": {
-      "digest": "3b4d57dd650f8e40677ab9a9b630f78b67e0acff7cdd1db8e50934711bc58b9a",
-      "issue": 1598
-    },
     "github:45993442575:1:completions:message:4f3bf76584d9f81ea4fc0f095bfdb93d892a971cbdafcc36707eb7d3517d235b": {
       "digest": "7aa3c265dc772da0f0352a410bea7a2d8c311d420df26cfc6570cefe11c67878",
       "issue": 1598
@@ -8357,6 +8359,10 @@
     "github:46017992746:1:completions:metadata:dc545b4c-5f3a-4f2d-886b-78f13e65b117:task-notice:1609::": {
       "digest": "9d627fd61f310a3abdfde9542262c749391194f7421a6d3e5276be6006f1cf70",
       "issue": 1609
+    },
+    "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:3:synchronized": {
+      "digest": "9cdc8b8b116d28a0766cb34e9a2b0da52a225aec1b83563da8df28aa9695c42c",
+      "issue": 1608
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
