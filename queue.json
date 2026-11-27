@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28228,
-  "nextTicket": 770,
+  "revision": 28229,
+  "nextTicket": 771,
   "nextFence": 765,
   "tasks": {
     "1001": {
@@ -6598,11 +6598,11 @@
       "materialSha": "44454148a8099075afbd35fb76532ef00479b47d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 760,
-      "queued": false,
+      "ticket": 770,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795774756022,
-      "reviewEntry": 5,
+      "readyAt": 1795776730964,
+      "reviewEntry": 6,
       "patchId": "6475a222d994cd24cbe541e932c28bf8537a30a6",
       "changedFiles": [
         "demo/helpers/plan-3d-lifecycle-native.mjs",
@@ -6648,8 +6648,7 @@
       "reviewCorrection": {
         "requestId": "review:1609:3:0c40f66ed471e9b2eb60e59f3f44371e161434a7:1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
         "at": 1795772520026
-      },
-      "reason": "executor-admission-expired"
+      }
     }
   },
   "ownerDecisions": {},
@@ -7380,7 +7379,8 @@
     1599,
     1594,
     1600,
-    1603
+    1603,
+    1609
   ],
   "active": {
     "issue": 1608,
@@ -8826,6 +8826,28 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:a5aa5fd8-2738-492d-8195-883a54a82305": {
+      "digest": "8c1ad15121d85894c0a83eda5c763cc25008a88e20c38ec749123bf32270f502",
+      "issue": 1609,
+      "message": {
+        "kind": "queued",
+        "issue": 1609,
+        "at": 1795776730964,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "44454148a8099075afbd35fb76532ef00479b47d",
+        "evidence": {
+          "id": "20261127T091017259-853968fa",
+          "name": "Тесты для задачи #1609 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T091017259-853968fa/report.json",
+          "materialSha": "32cf10b8f4a243bde6ca82d7c4568ef08b40039a",
+          "status": "passed",
+          "finishedAt": "2026-11-27T09:33:06.732Z",
+          "failures": []
+        }
       }
     }
   },
