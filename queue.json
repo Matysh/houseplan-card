@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28823,
+  "revision": 28824,
   "nextTicket": 782,
   "nextFence": 777,
   "tasks": {
@@ -7340,6 +7340,14 @@
         "to": "S5-ready",
         "confirmed": true
       }
+    },
+    "1613": {
+      "requestId": "spec:1613:26f378cb7a4535f9d7e8178b6fd07d97c9a0fb6af2ddd2b21fe3b9bc18c73244",
+      "contextDigest": "26f378cb7a4535f9d7e8178b6fd07d97c9a0fb6af2ddd2b21fe3b9bc18c73244",
+      "base": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+      "round": 1,
+      "status": "pending",
+      "updatedAt": 1795797749020
     }
   },
   "reviewPublications": {
@@ -7368,6 +7376,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "spec:1613:spec:1613:26f378cb7a4535f9d7e8178b6fd07d97c9a0fb6af2ddd2b21fe3b9bc18c73244": {
+      "issue": 1613,
+      "kind": "spec",
+      "requestId": "spec:1613:26f378cb7a4535f9d7e8178b6fd07d97c9a0fb6af2ddd2b21fe3b9bc18c73244",
+      "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+      "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+      "patchId": "26f378cb7a4535f9d7e8178b6fd07d97c9a0fb6af2ddd2b21fe3b9bc18c73244",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-27T16:42:29.020Z"
+      }
     }
   },
   "waiting": [
@@ -7390,10 +7411,6 @@
     "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535"
   },
   "events": {
-    "finish:b5707ddc-f53e-44d7-b7b2-df2c8a6284c3": {
-      "digest": "c074affc74010007b5db0d60101500677872586d6d3f8d5b5fd9dcd0e3a44433",
-      "issue": 1594
-    },
     "finish:c63d2fc7-3e9f-49c4-ba19-45e3be4ce002": {
       "digest": "d5336092178a793e11ccf859429db553cf21d6bbd4fa4aa9b2b634e54d0ef36b",
       "issue": 1594
@@ -8221,6 +8238,10 @@
     "finish:0eef7e2e-e100-4b01-9123-a1eb4498964f": {
       "digest": "64852e61ee6c325d636555dd48fc6e8a95e14dff4085f1f4438fb0949a20041f",
       "issue": 1594
+    },
+    "github:46035822142:1:label:spec-request": {
+      "digest": "a4a1e1a5c5ffe776fb69a7b1e0ced1ca9aeae94d49fb81b176c7b157dd7aa8e9",
+      "issue": 1613
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
