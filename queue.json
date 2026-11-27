@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29671,
-  "nextTicket": 795,
+  "revision": 29672,
+  "nextTicket": 796,
   "nextFence": 795,
   "tasks": {
     "1001": {
@@ -5632,14 +5632,14 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1592-paired-release-timings",
-      "materialSha": "d00cff05b5b96cc603ec85b644eefa44e488a78a",
+      "materialSha": "1a3c6f593816deff2c217daf34b354a79a322b55",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 794,
-      "queued": false,
+      "ticket": 795,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795817849449,
-      "reviewEntry": 1,
+      "readyAt": 1795817988333,
+      "reviewEntry": 2,
       "patchId": "539d88ab893f1b909227fe6fe19b9d1d4ac210bc",
       "changedFiles": [
         "PROCESS.md",
@@ -5650,7 +5650,6 @@
         "process-next/test/catalog.test.mjs",
         "process-next/test/metrics.test.mjs"
       ],
-      "reason": "Уточнение выбора предыдущего stable: опубликованный hotfix может быть новее базы цикла. Нужен повтор S6 на обновлённом материале.",
       "notice": {
         "key": "1:Уточнение выбора предыдущего stable: опубликованный hotfix может быть новее базы цикла. Нужен повтор S6 на обновлённом материале.",
         "reason": "Уточнение выбора предыдущего stable: опубликованный hotfix может быть новее базы цикла. Нужен повтор S6 на обновлённом материале.",
@@ -7048,7 +7047,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1592
+  ],
   "active": null,
   "events": {
     "finish:6732b949-1080-4e00-8e3a-d3df5f0651b2:finish:2:synchronized": {
@@ -7150,6 +7151,19 @@
           "entry": 1,
           "eventId": "issue-1592:correct-stable-tag-after-hotfix:return:1592"
         }
+      }
+    },
+    "finish:e90702cf-d6da-4e5d-9652-42a10b332dbc": {
+      "digest": "1d3f56125c18f6bbd983a36da45c6f4e80e93c4c3630241a231ac4a7119198b1",
+      "issue": 1592,
+      "message": {
+        "kind": "queued",
+        "issue": 1592,
+        "at": 1795817988333,
+        "entry": 2,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "1a3c6f593816deff2c217daf34b354a79a322b55"
       }
     }
   },
