@@ -31,6 +31,9 @@ export const editorContextMenuStyles = unsafeCSS(css`
     border-radius:0; box-shadow:none; margin:0; padding:0;
   }
   .hpf-context-menu-disclosure > button { flex-shrink:0; }
+  .hpf-context-menu-disclosure > button:is(.hpf-tab-focus,.hpf-keyboard-current):focus:not(:disabled) {
+    border-color: var(--hpf-accent,var(--primary-color,#03a9f4));
+  }
   .hpf-context-menu-disclosure .header-menu-label { display:flex; align-items:center; gap:10px; min-width:0; line-height:20px; }
   .hpf-context-menu-disclosure .header-menu-label > :is(ha-icon,svg) { --mdc-icon-size:18px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 18px; width:18px; height:18px; pointer-events:none; }
   .hpf-context-menu-disclosure > button[data-action='summary-toggle'] { font-weight:inherit; color:var(--primary-text-color); }

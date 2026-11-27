@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1614,
+  "baseStable": "v1.86.1",
+  "category": "patch",
+  "rationale": "Restore the compact header menu keyboard focus border after the shared menu hover change.",
+  "summary": {
+    "en": "The compact header menu shows an accent border on the item reached by keyboard.",
+    "ru": "В компактном меню шапки у пункта, выбранного с клавиатуры, снова видна акцентная рамка."
+  }
+}
