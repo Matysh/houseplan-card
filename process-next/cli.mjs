@@ -11,7 +11,7 @@ import { readJson, writeJson, ResultStore, defaultStateDir } from './lib/storage
 import { LocalQueueStore, QueueController } from './lib/queue.mjs';
 import { initialReleaseState, reduceRelease, releaseReadiness } from './lib/release.mjs';
 import { buildReviewContext, runReview, previewReview, checkSpecFormat } from './lib/review.mjs';
-import { compareMeasurements, renderMetrics } from './lib/metrics.mjs';
+import { compareMeasurements, releaseSizeReferences, renderMetrics } from './lib/metrics.mjs';
 import { executeRemoteCommand, readReleaseMetrics } from './remote.mjs';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -217,8 +217,10 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === 'metrics') {
     const candidate = readJson(resolve(requireValue(o.candidate, '--candidate')));
     const latestStable = readJson(resolve(requireValue(o['latest-stable'], '--latest-stable')));
-    const report = compareMeasurements(candidate, latestStable, o.anchor ? readJson(resolve(o.anchor)) : undefined,
-      { timingReference: candidate?.timing_baseline ?? null });
+    const tag = latestStable?.release ? 'v' + latestStable.release.replace(/^v/, '') : null;
+    const references = releaseSizeReferences(tag, latestStable);
+    const report = compareMeasurements(candidate, references.stable, o.anchor ? readJson(resolve(o.anchor)) : undefined,
+      { timingReference: candidate?.timing_baseline ?? null, frontendReference: references.frontend });
     if (o.out) { writeJson(resolve(o.out), report); writeFileSync(resolve(o.out).replace(/\.json$/, '') + '.md', renderMetrics(report)); }
     o.json ? print(report) : process.stdout.write(renderMetrics(report)); return report.ready ? 0 : 2;
   }

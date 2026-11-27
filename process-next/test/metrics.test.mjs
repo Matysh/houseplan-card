@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { gzipSync } from 'node:zlib';
 import { digest } from '../lib/storage.mjs';
-import { compareMeasurements, frozenBaseline, measureFrontend, POLICY, renderMetrics } from '../lib/metrics.mjs';
+import { compareMeasurements, frozenBaseline, measureFrontend, measureZip, POLICY, releaseSizeReferences, renderMetrics } from '../lib/metrics.mjs';
 import { previousStableTag, runMeasurements } from '../catalog/measure.mjs';
 import { releaseReadiness } from '../lib/release.mjs';
 
@@ -17,14 +17,22 @@ test('frozen anchor stays byte-identical and is diagnostic only', () => {
   const recent = structuredClone(candidate), r = compareMeasurements(candidate, recent, base);
   assert.equal(r.requiresDecision, false); assert.equal(r.diagnostic[0].status, 'regression'); assert.equal(r.diagnostic[0].blocks, false);
 });
-test('a size stops publication only beyond both the relative and absolute tolerances', () => {
-  const { base, candidate } = records(); const key = 'initial_view_gzip_bytes'; base.size_metrics[key] = 10000;
-  for (const [delta, expected] of [[1000, false], [8192, false], [8193, true]]) {
+test('canonical ZIP retains both tolerances; 5% frontend observations cannot require a release decision', () => {
+  const { base, candidate } = records();
+  const key = 'zip_bytes';
+  base.size_metrics[key] = 300000;
+  for (const [delta, expected] of [[1000, false], [32768, false], [32769, true]]) {
     candidate.size_metrics[key] = base.size_metrics[key] + delta;
     assert.equal(compareMeasurements(candidate, base, base).requiresDecision, expected);
   }
   base.size_metrics[key] = 1e6; candidate.size_metrics[key] = 1050000;
-  assert.equal(compareMeasurements(candidate, base, base).requiresDecision, false);
+  candidate.size_metrics.initial_view_gzip_bytes *= 2;
+  candidate.size_metrics.frontend_all_files_gzip_bytes *= 2;
+  const report = compareMeasurements(candidate, base, base);
+  assert.equal(report.requiresDecision, false);
+  assert.ok(report.primary.filter(row => row.informational)
+    .every(row => row.status === 'above-reference' && row.threshold === row.before * .05 && !row.blocks));
+  assert.match(renderMetrics(report), /Начальная загрузка View, gzip \(справочно\)/);
 });
 test('equal conditions and repeated timing regression require an owner decision', () => {
   const { base, candidate } = records(); candidate.timing_metrics.firstStableRenderMs.samples = Array(7).fill(1200);
@@ -143,7 +151,29 @@ test('size measurement counts actual delivered files once and only initial closu
   entries.delete('frontend/main.js'); assert.throws(() => measureFrontend(entries, 1000));
 });
 
-test('#1387 transport variants are separate diagnostics while actual ZIP growth still requires a decision', () => {
+test('published ZIP migration distinguishes old physical sizes and keeps separate gzip reference', () => {
+  const references = releaseSizeReferences('v1.86.1', null);
+  const { stable, frontend } = references;
+  const archived = structuredClone(stable);
+  delete archived.size_metrics.zip_delivered_bytes;
+  archived.size_metrics.zip_bytes = stable.size_metrics.zip_delivered_bytes;
+  assert.deepEqual(releaseSizeReferences('v1.86.1', archived), references);
+  assert.equal(archived.size_metrics.zip_bytes, 5504322);
+  const foreign = { ...archived, artifactDigest: 'other' };
+  const rejected = releaseSizeReferences('v1.86.1', foreign);
+  assert.equal(rejected.stable, foreign);
+  assert.equal(compareMeasurements(frontend, rejected.stable).primary[0].status, 'missing');
+  assert.equal(releaseSizeReferences('v2.0.0', null).stable, null);
+  const report = compareMeasurements(frontend, stable, undefined, { frontendReference: frontend });
+  assert.equal(report.reference, 'v1.86.1');
+  assert.equal(report.frontendReference, 'v2.0.0-beta.3');
+  assert.equal(report.primary[0].before, 3221297);
+  assert.equal(report.primary[0].after, 2589403);
+  assert.ok(report.primary.filter(row => row.informational).every(row => row.before === row.after));
+  assert.match(renderMetrics(report), /Справочные размеры gzip относительно v2.0.0-beta.3/);
+});
+
+test('#1593 actual ZIP layout excludes only encoded entries and reports physical delivery separately', t => {
   const raw = Buffer.from('export const n=42;'), encoded = gzipSync(raw, { level: 9 });
   const manifest = { initialViewFiles: ['houseplan-assets/main-HASH.js'],
     files: [{ path: 'houseplan-assets/main-HASH.js' }],
@@ -159,16 +189,33 @@ test('#1387 transport variants are separate diagnostics while actual ZIP growth 
   assert.equal(measured.size_metrics.frontend_all_files_gzip_bytes, gzipSync(raw, {level:9}).length + gzipSync(metadata, {level:9}).length);
   assert.equal(measured.size_metrics.initial_view_gzip_bytes, encoded.length);
   assert.equal(measured.size_metrics.frontend_transport_bytes, encoded.length);
-  assert.equal(measured.size_metrics.zip_bytes, 2000000);
+  assert.equal(measured.size_metrics.zip_bytes, undefined);
+  assert.equal(measured.size_metrics.zip_delivered_bytes, 2000000);
+  const dir = mkdtempSync(join(tmpdir(), 'size-accounting-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const path = join(dir, 'houseplan.zip');
+  const fileEntries = [...entries, ['const.py', 'backend payload'], ['frontend/other.gz', 'canonical file']];
+  const full = zipFixture(fileEntries, { descriptors: true });
+  const withoutCopies = zipFixture(fileEntries.filter(([path]) => !path.includes('/houseplan-encoded/')), { descriptors: true });
+  writeFileSync(path, full);
+  const actual = measureZip(path);
+  assert.equal(actual.size_metrics.zip_bytes, withoutCopies.length);
+  assert.equal(actual.size_metrics.zip_delivered_bytes, full.length);
+  assert.equal(actual.size_metrics.frontend_transport_bytes, encoded.length);
   const { base, candidate } = records();
-  base.size_metrics.zip_bytes = 1000000; candidate.size_metrics.zip_bytes = measured.size_metrics.zip_bytes;
-  assert.equal(compareMeasurements(candidate, base, base).requiresDecision, true);
+  candidate.size_metrics = actual.size_metrics;
+  base.size_metrics.zip_bytes = withoutCopies.length;
+  const report = compareMeasurements(candidate, base, base);
+  assert.equal(report.primary[0].status, 'within-tolerance');
+  assert.equal(report.sizeDetails[0].after, full.length);
+  assert.equal(report.sizeDetails[1].after, encoded.length);
+  assert.match(renderMetrics(report), /Предсжатые транспортные копии/);
   entries.delete('frontend/houseplan-encoded/gzip/main-HASH.js');
   assert.throws(() => measureFrontend(entries, 2000000), /Incomplete encoded/);
 });
 
 // Tiny stored ZIP fixture: real bytes consumed by measureZip, without Python or product builds.
-function zipFixture(entries) {
+function zipFixture(entries, { descriptors = false } = {}) {
   const local = [], central = []; let offset = 0;
   for (const [name, text] of entries) {
     const nameBytes = Buffer.from(name), bytes = Buffer.from(text);
@@ -177,10 +224,20 @@ function zipFixture(entries) {
     crc = (crc ^ 0xffffffff) >>> 0;
     const h = Buffer.alloc(30); h.writeUInt32LE(0x04034b50); h.writeUInt16LE(20, 4); h.writeUInt32LE(crc, 14);
     h.writeUInt32LE(bytes.length, 18); h.writeUInt32LE(bytes.length, 22); h.writeUInt16LE(nameBytes.length, 26);
-    local.push(h, nameBytes, bytes);
+    const descriptor = Buffer.alloc(descriptors ? 16 : 0);
+    if (descriptors) {
+      h.writeUInt16LE(8, 6);
+      h.fill(0, 14, 26);
+      descriptor.writeUInt32LE(0x08074b50);
+      descriptor.writeUInt32LE(crc, 4);
+      descriptor.writeUInt32LE(bytes.length, 8);
+      descriptor.writeUInt32LE(bytes.length, 12);
+    }
+    local.push(h, nameBytes, bytes, descriptor);
     const c = Buffer.alloc(46); c.writeUInt32LE(0x02014b50); c.writeUInt16LE(20, 4); c.writeUInt16LE(20, 6); c.writeUInt32LE(crc, 16);
     c.writeUInt32LE(bytes.length, 20); c.writeUInt32LE(bytes.length, 24); c.writeUInt16LE(nameBytes.length, 28); c.writeUInt32LE(offset, 42);
-    central.push(c, nameBytes); offset += h.length + nameBytes.length + bytes.length;
+    if (descriptors) c.writeUInt16LE(8, 8);
+    central.push(c, nameBytes); offset += h.length + nameBytes.length + bytes.length + descriptor.length;
   }
   const directory = Buffer.concat(central), end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50);
   end.writeUInt16LE(entries.length, 8); end.writeUInt16LE(entries.length, 10); end.writeUInt32LE(directory.length, 12); end.writeUInt32LE(offset, 16);
@@ -305,7 +362,9 @@ test('metrics CLI uses the embedded timing pair and treats an archived-only timi
   const cli = fileURLToPath(new URL('../cli.mjs', import.meta.url));
   const report = () => JSON.parse(execFileSync(process.execPath,
     [cli, 'metrics', '--candidate', candidate, '--latest-stable', archived, '--json'], { encoding: 'utf8' }));
-  assert.equal(report().primary.find(row => row.key === 'firstStableRenderMs').before, 100);
+  const paired = report();
+  assert.equal(paired.primary.find(row => row.key === 'firstStableRenderMs').before, 100);
+  assert.equal(paired.frontendReference, 'v2.0.0-beta.3');
   writeFileSync(candidate, JSON.stringify({ ...result.measurement, timing_baseline: null }));
   const row = report().primary.find(row => row.key === 'firstStableRenderMs');
   assert.deepEqual({ status: row.status, before: row.before, after: row.after }, { status: 'missing', before: null, after: 100 });

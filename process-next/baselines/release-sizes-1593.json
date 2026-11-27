@@ -1,0 +1,40 @@
+{
+  "stable": {
+    "release": "v1.86.1",
+    "source_sha": "f175b7e00d8535149c61c2d28a922620a3a70928",
+    "artifactDigest": "3d781a1f1d9c02cec41f17c83b42b795746f44ebd0365f1732c8b1e361d582fa",
+    "buildFingerprint": "e3d2058f420b378e775c3f99e228285d1e485d9c28fc1a774c013b49993f8579",
+    "compression": {
+      "node": "v22.23.2",
+      "zlib": "1.3.1-e00f703",
+      "level": 9
+    },
+    "size_metrics": {
+      "zip_bytes": 3221297,
+      "zip_delivered_bytes": 5504322,
+      "frontend_all_files_raw_bytes": 7588964,
+      "frontend_all_files_gzip_bytes": 2283523,
+      "initial_view_gzip_bytes": 504678,
+      "frontend_transport_bytes": 2265859
+    }
+  },
+  "frontend": {
+    "release": "v2.0.0-beta.3",
+    "source_sha": "4b71e606a0491c5b830885837c8c476e7e7e524d",
+    "artifactDigest": "580c9d635ebf1a1e29e2c6f203e8b7ef90bfd947ff978adf3ccb72acc97c568e",
+    "buildFingerprint": "da9a9f87d00903902435e215771977f7542219bc0ad5b2b2768223bf23b3e777",
+    "compression": {
+      "node": "v22.23.2",
+      "zlib": "1.3.1-e00f703",
+      "level": 9
+    },
+    "size_metrics": {
+      "zip_bytes": 2589403,
+      "zip_delivered_bytes": 4227749,
+      "frontend_all_files_raw_bytes": 5411473,
+      "frontend_all_files_gzip_bytes": 1639192,
+      "initial_view_gzip_bytes": 506329,
+      "frontend_transport_bytes": 1621692
+    }
+  }
+}

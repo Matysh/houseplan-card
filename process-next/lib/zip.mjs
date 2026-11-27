@@ -5,7 +5,7 @@ const inspectZip = (zipPath, requiredNames) => {
   const archive = readFileSync(zipPath);
   if (!archive.length) throw new Error('houseplan.zip is empty');
   const required = new Set(requiredNames);
-  const found = new Map();
+  const found = new Map(), archiveBytes = new Map();
   const names = [];
   const eocdSignature = 0x06054b50;
   const centralSignature = 0x02014b50;
@@ -40,6 +40,7 @@ const inspectZip = (zipPath, requiredNames) => {
       throw new Error('houseplan.zip has a malformed central directory');
     const flags = archive.readUInt16LE(cursor + 8);
     const method = archive.readUInt16LE(cursor + 10);
+    const crc = archive.readUInt32LE(cursor + 16);
     const compressedSize = archive.readUInt32LE(cursor + 20);
     const uncompressedSize = archive.readUInt32LE(cursor + 24);
     const nameLength = archive.readUInt16LE(cursor + 28);
@@ -51,6 +52,7 @@ const inspectZip = (zipPath, requiredNames) => {
     const name = archive.subarray(cursor + 46, cursor + 46 + nameLength)
       .toString('utf8').replace(/^\.\//, '');
     names.push(name);
+    const centralRecordSize = next - cursor;
     cursor = next;
     if (!required.has(name)) continue;
     if (found.has(name)) throw new Error(`houseplan.zip contains duplicate ${name}`);
@@ -65,7 +67,17 @@ const inspectZip = (zipPath, requiredNames) => {
     const localExtraLength = archive.readUInt16LE(localOffset + 28);
     const dataStart = localOffset + 30 + localNameLength + localExtraLength;
     const dataEnd = dataStart + compressedSize;
-    if (dataEnd > archive.length) throw new Error(`houseplan.zip entry ${name} is truncated`);
+    if (dataEnd > centralOffset) throw new Error(`houseplan.zip entry ${name} is truncated`);
+    let localEnd = dataEnd;
+    if (flags & 0x8) {
+      const descriptorAt = offset => offset + 12 <= centralOffset && archive.readUInt32LE(offset) === crc
+        && archive.readUInt32LE(offset + 4) === compressedSize && archive.readUInt32LE(offset + 8) === uncompressedSize;
+      if (dataEnd + 4 <= centralOffset && archive.readUInt32LE(dataEnd) === 0x08074b50 && descriptorAt(dataEnd + 4))
+        localEnd += 16;
+      else if (descriptorAt(dataEnd)) localEnd += 12;
+      else throw new Error(`houseplan.zip entry ${name} has an invalid data descriptor`);
+    }
+    archiveBytes.set(name, localEnd - localOffset + centralRecordSize);
     const compressed = archive.subarray(dataStart, dataEnd);
     let contents;
     if (method === 0) contents = Buffer.from(compressed);
@@ -79,11 +91,15 @@ const inspectZip = (zipPath, requiredNames) => {
     throw new Error('houseplan.zip central directory size is inconsistent');
   const missing = [...required].filter((name) => !found.has(name));
   if (missing.length) throw new Error(`houseplan.zip is missing ${missing.join(', ')}`);
-  return { found, names };
+  return { found, names, archiveBytes, length: archive.length };
 };
 
+export function readZipInventory(zipPath, requiredNames) {
+  return inspectZip(zipPath, requiredNames);
+}
+
 export function readZipEntries(zipPath, requiredNames) {
-  return inspectZip(zipPath, requiredNames).found;
+  return readZipInventory(zipPath, requiredNames).found;
 }
 
 export function listZipEntries(zipPath) {

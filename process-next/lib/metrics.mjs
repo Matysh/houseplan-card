@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { digest } from './storage.mjs';
-import { listZipEntries, readZipEntries } from './zip.mjs';
+import { listZipEntries, readZipInventory } from './zip.mjs';
 import { bundlePayloadFiles } from '../../scripts/bundle-tree.mjs';
 
 export const POLICY = Object.freeze({
-  zip_bytes: { label: 'ZIP', fraction: .05, absolute: 32768, unit: 'B' },
-  frontend_all_files_gzip_bytes: { label: 'Весь frontend, gzip', fraction: .05, absolute: 16384, unit: 'B' },
-  initial_view_gzip_bytes: { label: 'Начальная загрузка View, gzip', fraction: .05, absolute: 8192, unit: 'B' },
+  zip_bytes: { label: 'ZIP без транспортных копий', fraction: .05, absolute: 32768, unit: 'B' },
+  frontend_all_files_gzip_bytes: { label: 'Весь frontend, gzip', fraction: .05, absolute: 0, unit: 'B', informational: true },
+  initial_view_gzip_bytes: { label: 'Начальная загрузка View, gzip', fraction: .05, absolute: 0, unit: 'B', informational: true },
   firstStableRenderMs: { label: 'Первый устойчивый кадр', fraction: .10, absolute: 50, unit: 'ms' },
   spaceSwitchMs: { label: 'Смена этажа', fraction: .10, absolute: 75, unit: 'ms' },
   panZoomMs: { label: 'Один шаг масштаба', fraction: .10, absolute: 5, unit: 'ms' },
@@ -19,12 +19,21 @@ export function frozenBaseline() {
   if (digest(bytes) !== FROZEN_HASH) throw Error('Frozen v1.83.1 diagnostic measurement changed');
   return JSON.parse(bytes);
 }
+/** The migration snapshot was recalculated from byte-verified published ZIPs. */
+export function releaseSizeReferences(stableTag, archivedStable) {
+  const { stable, frontend } = JSON.parse(readFileSync(new URL('../baselines/release-sizes-1593.json', import.meta.url)));
+  const matchesArchive = !archivedStable || archivedStable.source_sha === stable.source_sha
+    && archivedStable.artifactDigest === stable.artifactDigest;
+  return { stable: stableTag === stable.release && matchesArchive && !archivedStable?.size_metrics?.zip_delivered_bytes
+    ? { ...archivedStable, ...stable } : archivedStable, frontend };
+}
+
 export const median = values => {
   if (!values.length || values.some(x => !Number.isFinite(x))) throw Error('Finite samples required');
   const list = [...values].sort((a, b) => a - b), mid = Math.floor(list.length / 2);
   return list.length % 2 ? list[mid] : (list[mid - 1] + list[mid]) / 2;
 };
-export function measureFrontend(entries, zipBytes) {
+export function measureFrontend(entries, zipBytes, archiveBytes) {
   const manifestBytes = entries.get('frontend/houseplan-assets.json');
   if (!manifestBytes || !(zipBytes > 0)) throw Error('Release ZIP/frontend manifest required');
   const manifest = JSON.parse(manifestBytes), files = [], transportFiles = [];
@@ -39,13 +48,22 @@ export function measureFrontend(entries, zipBytes) {
   if (transportFiles.length !== encoded.size) throw Error('Incomplete encoded frontend inventory');
   const initial = new Set(manifest.initialViewFiles);
   if (!initial.size || initial.size !== manifest.initialViewFiles.length || [...initial].some(path => !files.some(f => f.path === path))) throw Error('Incomplete initial View dependency closure');
-  return { buildFingerprint: manifest.fingerprint, size_metrics: { zip_bytes: zipBytes, frontend_all_files_raw_bytes: files.reduce((n, f) => n + f.raw, 0),
+  const encodedZipBytes = archiveBytes ? transportFiles.reduce((total, file) => {
+    const size = archiveBytes.get('frontend/' + file.path);
+    if (!Number.isSafeInteger(size) || size <= 0) throw Error('Invalid encoded frontend ZIP entry');
+    return total + size;
+  }, 0) : 0;
+  if (encodedZipBytes >= zipBytes) throw Error('Invalid encoded frontend ZIP accounting');
+  const canonicalZip = !transportFiles.length || archiveBytes ? { zip_bytes: zipBytes - encodedZipBytes } : {};
+  return { buildFingerprint: manifest.fingerprint, size_metrics: { ...canonicalZip, zip_delivered_bytes: zipBytes, frontend_all_files_raw_bytes: files.reduce((n, f) => n + f.raw, 0),
     frontend_all_files_gzip_bytes: files.reduce((n, f) => n + f.gzip, 0), initial_view_gzip_bytes: files.filter(f => initial.has(f.path)).reduce((n, f) => n + f.gzip, 0),
     frontend_transport_bytes: transportFiles.reduce((n, f) => n + f.raw, 0) }, files, transportFiles };
 }
 export function measureZip(path) {
   const names = listZipEntries(path).filter(name => name.startsWith('frontend/') && !name.endsWith('/'));
-  return { ...measureFrontend(readZipEntries(path, names), readFileSync(path).length), artifactDigest: digest(readFileSync(path)), compression: { node: process.version, zlib: process.versions.zlib, level: 9 } };
+  const { found, archiveBytes, length } = readZipInventory(path, names);
+  return { ...measureFrontend(found, length, archiveBytes), artifactDigest: digest(readFileSync(path)),
+    compression: { node: process.version, zlib: process.versions.zlib, level: 9 } };
 }
 export function collectTiming({ performance, host, runnerHash, release, sourceSha, buildFingerprint }) {
   if (!sourceSha) throw Error('Candidate measurement identity required');
@@ -106,13 +124,18 @@ function comparable(left, right) {
     ...(differences.length ? { reason: `Подпись стенда изменилась: ${differences.join(', ')}` } : {}) };
 }
 function measurement(record, key, policy) {
+  if (key === 'zip_bytes') {
+    const sizes = record?.size_metrics;
+    return sizes?.zip_delivered_bytes !== undefined || sizes?.frontend_transport_bytes === 0
+      || record?.release === 'v1.83.1' ? sizes?.zip_bytes : undefined;
+  }
   if (policy.unit === 'B') return record?.size_metrics?.[key];
   const series = record?.timing_metrics?.[key]?.samples;
   return validSamples(series) ? median(series) : undefined;
 }
-function compareOne(candidate, reference, diagnostic, timingReference = reference) {
+function compareOne(candidate, reference, diagnostic, { timingReference = reference, frontendReference = reference } = {}) {
   return Object.entries(POLICY).map(([key, policy]) => {
-    const base = policy.unit === 'ms' ? timingReference : reference;
+    const base = policy.unit === 'ms' ? timingReference : policy.informational ? frontendReference : reference;
     const before = measurement(base, key, policy), after = measurement(candidate, key, policy);
     const available = Number.isFinite(before) && before >= 0 && Number.isFinite(after) && after >= 0;
     const { matched, reason } = policy.unit === 'B' ? { matched: true } : comparable(candidate, base);
@@ -123,32 +146,53 @@ function compareOne(candidate, reference, diagnostic, timingReference = referenc
     const repeatable = policy.unit === 'B' || available && matched && samples?.length >= 5
       && median(samples.slice(0, Math.floor(samples.length / 2))) - before > threshold
       && median(samples.slice(Math.floor(samples.length / 2))) - before > threshold;
+    const status = !available ? 'missing' : !matched ? 'incomparable' : !excessive ? 'within-tolerance'
+      : policy.informational ? 'above-reference' : repeatable ? 'regression' : 'noisy';
     return { key, ...policy, before: before ?? null, after: after ?? null, delta, percent: available && before ? delta / before * 100 : null,
-      threshold, comparable: matched, diagnostic, status: !available ? 'missing' : !matched ? 'incomparable' : excessive && repeatable ? 'regression' : excessive ? 'noisy' : 'within-tolerance',
+      threshold, comparable: matched, diagnostic, status,
       ...(available && reason ? { reason } : {}),
-      blocks: !diagnostic && excessive && repeatable && matched };
+      blocks: !diagnostic && status === 'regression' };
   });
 }
-export function compareMeasurements(candidate, latestStable, anchor = frozenBaseline(), { timingReference = latestStable } = {}) {
+function reportedSize(record, key) {
+  const sizes = record?.size_metrics;
+  // Older measurements used zip_bytes for the physical archive.
+  return sizes?.[key] ?? (key === 'zip_delivered_bytes' ? sizes?.zip_bytes : null) ?? null;
+}
+
+export function compareMeasurements(candidate, latestStable, anchor = frozenBaseline(), references) {
   if (!candidate?.source_sha) throw Error('Candidate measurement identity required');
-  const primary = compareOne(candidate, latestStable, false, timingReference), diagnostic = compareOne(candidate, anchor, true);
-  const needsMeasurement = primary.some(row => ['missing', 'incomparable', 'noisy'].includes(row.status));
+  const primary = compareOne(candidate, latestStable, false, references), diagnostic = compareOne(candidate, anchor, true);
+  const needsMeasurement = primary.some(row => !row.informational && ['missing', 'incomparable', 'noisy'].includes(row.status));
+  const sizeDetails = [
+    { key: 'zip_delivered_bytes', label: 'Доставляемый ZIP целиком' },
+    { key: 'frontend_transport_bytes', label: 'Предсжатые транспортные копии' },
+  ].map(row => ({
+    ...row, diagnostic: true, before: reportedSize(latestStable, row.key), after: reportedSize(candidate, row.key),
+  }));
+  const { timingReference = latestStable, frontendReference = latestStable } = references ?? {};
   return { schema: 1, sha: candidate.source_sha, reference: latestStable?.release ?? 'нет замера последнего stable', anchor: anchor.release,
-    timingReference: timingReference?.release ?? null,
-    requiresDecision: primary.some(row => row.blocks), needsMeasurement, primary, diagnostic,
+    timingReference: timingReference?.release ?? null, frontendReference: frontendReference?.release ?? null,
+    sizeDetails, requiresDecision: primary.some(row => row.blocks), needsMeasurement, primary, diagnostic,
     transitionDiagnostics: candidate.transition_diagnostics ?? null,
     webglDiagnostics: candidate.webgl_diagnostics ?? null,
     ready: !primary.some(row => row.blocks) };
 }
 export function renderMetrics(report) {
   const table = (title, rows) => [title, '', '| Метрика | База | Кандидат | Изменение | Итог |', '|---|---:|---:|---:|---|',
-    ...rows.map(r => `| ${r.label} | ${r.before ?? 'нет данных'} | ${r.after ?? 'нет данных'} | ${r.percent === null ? '—' : r.percent.toFixed(1) + '%'} | ${r.status}${r.reason ? ` (${r.reason})` : ''}${r.blocks ? ': решение владельца' : ''} |`)].join('\n');
+    ...rows.map(r => `| ${r.label}${r.informational ? ' (справочно)' : ''} | ${r.before ?? 'нет данных'} | ${r.after ?? 'нет данных'} | ${r.percent === null ? '—' : r.percent.toFixed(1) + '%'} | ${r.status}${r.reason ? ` (${r.reason})` : ''}${r.blocks ? ': решение владельца' : ''} |`)].join('\n');
   const notes = report.evidenceStatus && report.evidenceStatus !== 'complete'
     ? `Состояние замера: ${report.evidenceStatus}. Отсутствующие данные не означают успешную проверку.\n${(report.diagnostics ?? []).map(reason => `- ${reason}`).join('\n')}\n\n` : '';
+  const delivery = !report.sizeDetails?.length ? '' : ['',
+    '| Размеры доставки, байт | Последний stable | Кандидат |', '|---|---:|---:|',
+    ...report.sizeDetails.map(row => `| ${row.label} | ${row.before ?? 'нет данных'} | ${row.after ?? 'нет данных'} |`), '',
+  ].join('\n');
+  const frontend = report.frontendReference && report.frontendReference !== report.reference
+    ? `\n\nСправочные размеры gzip относительно ${report.frontendReference}.\n` : '';
   const heading = report.timingReference && report.timingReference !== report.reference
     ? `Размеры относительно ${report.reference}. Время относительно ${report.timingReference}.`
     : `Сравнение с ${report.reference}`;
-  return notes + table(heading, report.primary) + '\n\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n' + renderModeDiagnostics(report.transitionDiagnostics) + renderWebglDiagnostics(report.webglDiagnostics);
+  return notes + table(heading, report.primary) + frontend + '\n' + delivery + '\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n' + renderModeDiagnostics(report.transitionDiagnostics) + renderWebglDiagnostics(report.webglDiagnostics);
 }
 
 /** These observations never enter POLICY/primary or publication readiness. */

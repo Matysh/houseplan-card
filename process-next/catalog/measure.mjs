@@ -4,7 +4,7 @@ import { resolve, join, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { cpus, release, tmpdir } from 'node:os';
 import { digest, readJson, writeJson } from '../lib/storage.mjs';
-import { collectMeasurement, collectTiming, compareMeasurements, renderMetrics } from '../lib/metrics.mjs';
+import { collectMeasurement, collectTiming, compareMeasurements, releaseSizeReferences, renderMetrics } from '../lib/metrics.mjs';
 
 export function previousStableTag({ root, version }) {
   const stable = /^v(\d+)\.(\d+)\.(\d+)$/;
@@ -128,8 +128,9 @@ export function runMeasurements({ root = process.cwd(), requestPath, executeBenc
   }
   const sizeReference = !tag || ('v' + (latestStable?.release ?? '').replace(/^v/, '')) === tag
     ? latestStable : null;
-  const comparison = { ...compareMeasurements(measurement ?? { source_sha: packageInfo.sourceSha }, sizeReference,
-    undefined, { timingReference: timingBaseline }), evidenceStatus, diagnostics };
+  const references = releaseSizeReferences(tag, sizeReference);
+  const comparison = { ...compareMeasurements(measurement ?? { source_sha: packageInfo.sourceSha }, references.stable,
+    undefined, { timingReference: timingBaseline, frontendReference: references.frontend }), evidenceStatus, diagnostics };
   writeJson(join(output, 'metrics.json'), comparison);
   writeFileSync(join(output, 'metrics.md'), renderMetrics(comparison));
   return { measurement, comparison, evidenceStatus };
