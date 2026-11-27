@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27568,
+  "revision": 27569,
   "nextTicket": 748,
   "nextFence": 748,
   "tasks": {
@@ -6275,7 +6275,18 @@
         "test/isometric-contract.test.mjs"
       ],
       "automationError": "checks-unavailable",
-      "automationSince": 1795757997893
+      "automationSince": 1795757997893,
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795758073183,
+        "entry": 1,
+        "detail": "Первый локальный S6 остановлен после отказов test/card-version.test.mjs, test/core-source-readers.test.mjs и process-next/test/catalog.test.mjs. Исправления опубликованы в cdc37cbb5, адресные проверки прошли.",
+        "eventId": "1604-replace-s6-758d62ac-a2d6-4772-8200-3d2713faab40:return:1604"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6988,18 +6999,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1604,
-    "worker": "finish",
-    "token": "747:finish:2b0ca773-c8de-4080-99e7-eb92f18076b5:finish:1:admit",
-    "fence": 747,
-    "materialSha": "58efd2b4f7e7576ae351ab6b6419681d6c5bd287",
-    "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a",
-    "phase": "testing",
-    "admittedAt": 1795757669678,
-    "expiresAt": 1795758354991,
-    "patchId": "1f597fcd6506e8efca98b8bcc44c20fc223ef154"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7101,6 +7101,10 @@
       "digest": "82e47af46614387308a1bcaab7f0e33f67b182c5a5fa9caa3e9f973d06b0381a",
       "issue": 1604
     },
+    "1604-replace-s6-758d62ac-a2d6-4772-8200-3d2713faab40": {
+      "digest": "3329aaaaa14a8a0887c31cc8645d75e335d749be5883ea160bab5a7414e178cf",
+      "issue": 1604
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7174,6 +7178,26 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "1604-replace-s6-758d62ac-a2d6-4772-8200-3d2713faab40:return:1604": {
+      "digest": "3329aaaaa14a8a0887c31cc8645d75e335d749be5883ea160bab5a7414e178cf",
+      "issue": 1604,
+      "message": {
+        "kind": "return",
+        "issue": 1604,
+        "at": 1795758073183,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795758073183,
+          "entry": 1,
+          "detail": "Первый локальный S6 остановлен после отказов test/card-version.test.mjs, test/core-source-readers.test.mjs и process-next/test/catalog.test.mjs. Исправления опубликованы в cdc37cbb5, адресные проверки прошли.",
+          "eventId": "1604-replace-s6-758d62ac-a2d6-4772-8200-3d2713faab40:return:1604"
+        }
       }
     }
   },
