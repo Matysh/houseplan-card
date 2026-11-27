@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27907,
+  "revision": 27908,
   "nextTicket": 755,
   "nextFence": 755,
   "tasks": {
@@ -6263,7 +6263,18 @@
         "src/styles/plan.styles.ts",
         "src/visual-continuity.ts",
         "test/plan-3d-recovery.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795769031196,
+        "entry": 1,
+        "detail": "Поведение: test/config-audit.test.mjs: failed; Поведение: test/floor-cache-day-cycle.test.mjs: failed; Поведение: test/furniture-assets.test.mjs: failed; Поведение: test/furniture-volume-generator.test.mjs: failed; Браузер: floor persistent cache isometric: failed",
+        "eventId": "finish:9b38d4fe-2f32-4267-9a91-28bddf978b17:finish:3:return:return:1609"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6976,18 +6987,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1609,
-    "worker": "finish",
-    "token": "754:finish:9b38d4fe-2f32-4267-9a91-28bddf978b17:finish:1:admit",
-    "fence": 754,
-    "materialSha": "1f8baf6671ed42eb014ce9d7a17cc9dd9327eba8",
-    "expectedBase": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
-    "phase": "testing",
-    "admittedAt": 1795767503134,
-    "expiresAt": 1795769242357,
-    "patchId": "3f8b4e5fce6ce9486c0f1698ee961673a925ae3f"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7177,6 +7177,10 @@
       "digest": "6ce193922263764c9012e3b782827bc7b037f71f2f2b2d81ac1bb1239ab6edce",
       "issue": 1609
     },
+    "finish:9b38d4fe-2f32-4267-9a91-28bddf978b17:finish:3:return": {
+      "digest": "168f7c6ef6baafc3db34bb4b2d71b0c3949c1b3072c46d6d1b7f043721a3d4a5",
+      "issue": 1609
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7267,6 +7271,26 @@
         "materialSha": "1f8baf6671ed42eb014ce9d7a17cc9dd9327eba8",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:9b38d4fe-2f32-4267-9a91-28bddf978b17:finish:3:return:return:1609": {
+      "digest": "168f7c6ef6baafc3db34bb4b2d71b0c3949c1b3072c46d6d1b7f043721a3d4a5",
+      "issue": 1609,
+      "message": {
+        "kind": "return",
+        "issue": 1609,
+        "at": 1795769031196,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795769031196,
+          "entry": 1,
+          "detail": "Поведение: test/config-audit.test.mjs: failed; Поведение: test/floor-cache-day-cycle.test.mjs: failed; Поведение: test/furniture-assets.test.mjs: failed; Поведение: test/furniture-volume-generator.test.mjs: failed; Браузер: floor persistent cache isometric: failed",
+          "eventId": "finish:9b38d4fe-2f32-4267-9a91-28bddf978b17:finish:3:return:return:1609"
+        }
       }
     }
   },
