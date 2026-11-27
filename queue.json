@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27747,
+  "revision": 27748,
   "nextTicket": 754,
   "nextFence": 753,
   "tasks": {
@@ -6233,185 +6233,25 @@
     },
     "1605": {
       "issue": 1605,
+      "branch": "codex/1605-core-backend-audit",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1605-core-backend-audit",
-      "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 752,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795760329116,
-      "reviewEntry": 2,
-      "patchId": "2318065b9e17f8fcf43169f6bd037ba260408021",
-      "changedFiles": [
-        "custom_components/houseplan/auth.py",
-        "custom_components/houseplan/backup_files.py",
-        "custom_components/houseplan/command_adapter.py",
-        "custom_components/houseplan/core/content_files.py",
-        "custom_components/houseplan/core/plans.py",
-        "custom_components/houseplan/http_api.py",
-        "custom_components/houseplan/marker_history_websocket.py",
-        "custom_components/houseplan/trails.py",
-        "custom_components/houseplan/websocket_api.py",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CORE-HOST.md",
-        "docs/release-ledger/v1.86.1/1605.json",
-        "docs/security/1605-backend-core-audit.md",
-        "scripts/mutation-registry.mjs",
-        "tests_backend/test_core_distribution.py",
-        "tests_backend/test_ha_input_security_authority.py",
-        "tests_backend/test_ha_websocket.py"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795760270449,
-        "entry": 1,
-        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
-        "eventId": "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return:return:1605"
-      },
-      "s6": {
-        "id": "20261127T063728068-ae621932",
-        "name": "Тесты для задачи #1605 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T063728068-ae621932/report.json",
-        "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
-        "status": "passed",
-        "finishedAt": "2026-11-27T06:48:07.980Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
+      "mergedSha": "3d887a13c3dcf8bd1de633a98135941981307336",
+      "mergedAt": 1795762401248,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1605:2:2318065b9e17f8fcf43169f6bd037ba260408021:fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-      "reviewMaterial": {
-        "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
-        "expectedBase": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "patchId": "2318065b9e17f8fcf43169f6bd037ba260408021"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1605:2:2318065b9e17f8fcf43169f6bd037ba260408021:fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "eventId": "github:45954205704:1:tick:0:review-retry",
-        "at": 1795762122614,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1605,
-        "requestId": "review:1605:2:2318065b9e17f8fcf43169f6bd037ba260408021:fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "kind": "code",
-        "base": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
-        "patchId": "2318065b9e17f8fcf43169f6bd037ba260408021",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1605,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1605",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Стартовый SHA: `8cdb00332d689571a68afd8b775ead4003bae24a`. В коде есть общий `auth.may_write`, специализированные проверки admin, отдельная политика ядра и уже документированные строгие resource scopes. Первичная сверка находит больше регистраций, чем ориентир 40: итоговая таблица строится из фактического состава, а не ручного счётчика. До ревью ТЗ изменений продукта и тестовых прогонов нет; прошу отдельно проверить критерии полномочий, гарантии rollback и разделение внутреннего Python API от обязанностей внешнего адаптера.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд](https://github.com/Matysh/houseplan-card/actions/runs/45946087468): (1) AC1 теперь включает каждый WS/HTTP/service вход, compact-form, scoped credentials и отсутствие entry; (2) контракт и AC5 разделяют decoder с `geom_pending` и структурный переход графа; (3) AC4 проверяет все модули фактического wheel и явный список поддерживаемых точек входа. Материал реализации не менялся.\n\n### Реализация и локальные доказательства S6\n\n- Материал: `fbcb44e752`, база `8cdb00332d`. [Отчёт аудита](https://github.com/Matysh/houseplan-card/blob/codex/1605-core-backend-audit/docs/security/1605-backend-core-audit.md) сопоставляет 48 WS, 11 HTTP и 2 HA-сервиса с фактической регистрацией и описывает два независимых пути миграции и границу автономного хоста.\n- Исправлены четыре Medium: повторная проверка прав и runtime на затронутых операциях, единый потолок layout, bounded multipart, публикация целых файлов и безопасная отмена. Подтверждённых High в охваченном объёме нет. Намеренно не меняли модель ролей, wire-схему, ограничения штатных файлов или гарантии HA Store.\n- Локально: 156 backend-файлов штатного каталога с HA, 3 621 тест прошёл, один существующий тест пропущен из-за отсутствия приватной фикстуры #280. Покрытие строк 91,5% при пороге 87,2%; branch-rate 83,68% (справочно, не вход порога). Wheel локально установлен без HA: 77 модулей и по 9+1 conformance-сценариев на обоих адаптерах. Статическая готовность всех мутаций зелёная, ночные мутации не запускались.\n- Особое внимание: порядок state → content, соответствие публикации и rollback владению одним запросом, потеря прав и повторная отмена до или после передачи работы в executor. Проверки используют только локальные синтетические данные; реальный HA владельца и релиз не затрагивались.\n\nПервый S6 выявил два отказа на одном контроле инвентаря совместимости: комментарий ошибочно распознавался как описание ветки миграции. Изменено только описание функции; адресный повтор двух файлов — 8/8. Повторная проверка wheel из fbcb44e752: SHA-256 e6e6b593c72f150fa9c26c296501057a632bcffa06cd0292ddce51b60914809b, 77 импортированных модулей и 20 сценариев conformance.\n\nПосле актуализации в очереди текущий кандидат: 3d887a13c3, база fb2cc44ced. Проверено, что исходники backend, backend-тесты, CORE-HOST и отчёт не изменились относительно локально проверенного fbcb44e752."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принимать, блокеров нет. Задача выполнена в объёме принятого ТЗ. Отчёт `docs/security/1605-backend-core-audit.md` сверяется с фактической регистрацией тестом и описывает 48 WS-типов, 11 HTTP views и 2 HA-сервиса с ролями, чтением и записью. Обе миграции разведены и привязаны к существующим адресным тестам. В `CORE-HOST.md` появилась граница доверия ядра, а все модули staged-пакета импортируются без HA и побочных эффектов.\n\nЧетыре исправления Medium адресные и сделаны на той границе, которой принадлежит операция:\n- F1: повторная проверка пользователя и runtime после await;\n- F2: общий потолок layout;\n- F3: ограничения multipart;\n- F4: публикация только полных файлов и удержание lock до завершения worker при повторной отмене.\n\nУ каждой находки есть тест с наблюдаемым инвариантом. Разрешённые сценарии сохранены: фронтенд шлёт не больше двух частей формы, существующую точку layout можно править на пределе, а порядок блокировок write → upload совпадает с принятым в `backup_transaction`. Остались необязательные улучшения: два одинаковых цикла settle и новая зависимость вложений от hardlink.",
-          "understanding": "Проблема: бэкенд вырос, а системного ревью прав и хранения не было. Существовал только аудит ввода #1395. При этом ядро `houseplan_core` готовится стать внешним wheel, и нужна проверенная картина всех входов HA, файловых путей, миграций и того, за что отвечает хост.\n\nДо изменений у ряда «старых» WS-обработчиков право проверялось один раз на входе. Это `layout/update` и `layout/delete`, `files/migrate` и `files/cleanup`, `marker/history/retain` и `trail/delete`, а также HTTP-продвижение вложения. Если пользователя деактивировали, понизили или интеграцию перезагрузили, пока запрос ждал lock, запись всё равно проходила. Точечный `layout/update` мог добавлять ключи сверх `MAX_LAYOUT`. Части multipart, которые обработчик игнорирует, не ограничивались ни размером, ни числом. Вложение публиковалось через пустой placeholder с `O_EXCL` и последующий `os.replace`, так что пустой файл был виден до записи. Отказ на середине пакетного копирования оставлял частичные копии. `durable_file_job` при второй отмене выходил раньше, чем завершался worker.\n\nПосле изменений:\n- `auth.may_write` отклоняет `None` и неактивного пользователя;\n- `HaWriteAuthority.can_write` дополнительно требует, чтобы runtime и объект пользователя были теми же;\n- `_write_authority(runtime=...)` и `_continue_write` повторяют проверку под lock и после чтения пары, причём между последней проверкой и записью нет await;\n- `_bounded_parts` разрешает не больше 8 частей и до 1 КиБ на каждое поле и игнорируемую часть;\n- `publish_attachment` делает fsync стадии, затем `os.link` под эксклюзивное имя, затем удаляет стадию;\n- `attachment_directory` принимает только прямого потомка корня и не идёт по symlink;\n- `durable_file_job` и `FilesystemContent._settle` ждут worker при любом числе отмен и через `discard` убирают только собственный неподтверждённый результат.\n\nРазобранные пути:\n- `HouseplanUploadView.post`, от staging до `_check_and_promote` под `upload_lock` с `authority.ensure()`, включая finally-очистку;\n- `ws_files_migrate`: временный файл в `dst`, публикация, `_discard` при отказе или отмене;\n- `ws_files_cleanup` и `ws_marker_history_retain`: `write_lock` → `_resolved_write_pair` → `upload_lock`, затем сверка с `store.py:452` и `backup_transaction._commit`;\n- `ws_layout_update` и `ws_layout_delete`, `ws_trail_delete` → `TrailRecorder._async_delete_many`;\n- `ws_marker_history` (обработка `ImportFailure`);\n- `dispatch_plan_command` и все места создания `HaWriteAuthority`;\n- `HouseplanContentView` для kind=files;\n- фронтенд-формы `/api/houseplan/upload` и `/assets/upload`;\n- существование тестов миграций, на которые ссылается отчёт.",
-          "analysis": [
-            {
-              "topic": "Повторная авторизация после ожидания (F1)",
-              "assessment": "Решение корректное и ограничено затронутыми обработчиками. Проверка стоит в двух местах: сразу после получения lock и после `_resolved_write_pair`. После второй проверки до `async_save_layout_state` нет ни одного await, поэтому окна TOCTOU не остаётся. Условие `get_data(hass) is runtime` в `HaWriteAuthority.can_write` безопасно: все три места создания передают текущий `get_data`. Это `plan_commands` (новый объект на каждую команду), ветка optimize_undo и HTTP-загрузка. Побочный эффект: если reload случился во время уже идущего `config/get`, этот ответ временно вернёт `can_write=false`. Это fail-closed, и при перезагрузке такое допустимо.",
-              "evidence": "`websocket_api.py:734-744, 784-795`, `command_adapter.py:113-135, 234-249, 308`, `http_api.py:406-408, 544-546`, `marker_history_websocket.py:122-126, 218-226`, `trails.py` `_async_delete_many` (authorize под `_refresh_lock`). Тесты `test_revoked_queued_writer_keeps_storage` (6 обработчиков, отзыв во время ожидания lock), `test_writer_is_rechecked_after_layout_read`, `test_authority_does_not_follow_reloaded_runtime`, `test_attachment_checks_authority_before_publishing`."
-            },
-            {
-              "topic": "Порядок блокировок и отсутствие deadlock",
-              "assessment": "Новые вложенные захваты идут в порядке write_lock → upload_lock. Этот порядок уже зафиксирован в `backup_transaction._commit` и в recovery `store.py`. Важная деталь: `_resolved_write_pair` может сам взять `upload_lock` при восстановлении архивного intent (`store.py:452`), но вызывается до внешнего `upload_lock`, так что повторного входа в неreentrant lock нет. HTTP-загрузка и `files/migrate` берут только `upload_lock`.",
-              "evidence": "`websocket_api.py:1039-1058` (cleanup), `marker_history_websocket.py:220-232`, `store.py:448-454`, `backup_transaction.py:36-42`."
-            },
-            {
-              "topic": "Публикация вложений и отмена (F4, F5)",
-              "assessment": "Публикация через `os.link` из полностью записанной стадии убирает видимый пустой placeholder и сохраняет запрет перезаписи (FileExistsError → следующее имя). Пакетное копирование при отказе убирает только имена, созданные в этом запросе. Квота проверяется для каждого файла и учитывает уже опубликованные. `durable_file_job` при повторной отмене держит lock до завершения worker, а через `discard` удаляет собственную публикацию; такой контракт верен. Content view проверяет пути по компонентам (`is_relative_to`) вместо строкового префикса, а папку маркера — через `attachment_directory`. Поскольку `sanitize_marker_id` идемпотентна, существующие URL не ломаются. Хорошо, что клиент `files/migrate` больше не получает текст OSError.",
-              "evidence": "`core/plans.py:76-117`, `http_api.py:525-565`, `websocket_api.py:859-904`, `backup_files.py:127-151`, `core/content_files.py:43-65`, `core/validation.py:1448-1455`. Тесты `test_uncommitted_attachment_copy_rolls_back_its_own_publications`, `test_repeated_cancel_settles_private_worker_before_unlock`, `test_content_delete_cancellation_keeps_the_transaction`, `test_attachment_directory_does_not_follow_an_alias`, обновлённый `test_upload_leaves_no_temporary_behind`."
-            },
-            {
-              "topic": "Ограничение multipart и layout (F2, F3)",
-              "assessment": "Лимиты поставлены на границе HTTP и не затрагивают полезные потолки файлов. Совместимость с клиентом подтверждена по исходникам: редактор шлёт `marker_id` и `file`, декор-редактор — только `file`, загрузка плана — `file`, `space_id` и `ext`, то есть всё укладывается в 8 частей. Потолок layout применяется только к новому ключу. Существующие точки по-прежнему можно править и удалять, а legacy-данные сверх предела не становятся нечитаемыми. Удаление в `layout/delete` теперь строит новый словарь, а не мутирует загруженный объект, поэтому отказ сохранения больше не портит кэш.",
-              "evidence": "`http_api.py:68-88, 270-285, 346-365, 470-515`, `src/houseplan-editor-runtime.ts:8313-8316`, `src/decor-image-editor.ts:155-157`, `websocket_api.py:784-787, 1131`. Тесты `test_multipart_metadata_budget_applies_before_publication`, `test_multipart_part_count_is_bounded`, `test_point_layout_shares_capacity_but_existing_points_remain_editable`."
-            },
-            {
-              "topic": "Реестр входов и отчёт (AC1, AC2, AC6)",
-              "assessment": "Таблица проверяется тестом: тот исполняет `ha_integration.async_setup` с наблюдателями регистрации и сравнивает множества WS, HTTP и сервисов, а также `requires_auth` и методы HTTP. Это закрывает прошлое замечание ТЗ о регистрациях вне `websocket_api.async_register` и сравнивает с текущим head, а не с одним SHA. Шкала серьёзности теперь определена в самом отчёте. Классификация F1–F6 выглядит обоснованной: устаревшая авторизация требует отзыва прав во время ожидания lock, то есть дополнительного условия, и Medium здесь оправдан.",
-              "evidence": "`tests_backend/test_ha_input_security_authority.py:50-70`, `docs/security/1605-backend-core-audit.md` (таблица и раздел «Находки и решения»)."
-            },
-            {
-              "topic": "Миграции (AC5)",
-              "assessment": "Новых тестов на миграции нет. Отчёт ссылается на существующие адресные тесты обоих механизмов, и я проверил, что они существуют. Описание порядка backup/intent для decoder и для перехода графа согласуется с разбором `store.py` и `graph_write.py` на этапе ТЗ. Поведение миграций в diff не менялось, поэтому для ТЗ этого достаточно.",
-              "evidence": "`tests_backend/test_ha_config_migrations.py:60, 222`, `tests_backend/test_ha_plan_graph.py:136`, `tests_backend/test_plan_graph_source.py:39`."
-            },
-            {
-              "topic": "Граница ядра (AC4)",
-              "assessment": "Раздел «Trust boundary» в `CORE-HOST.md` отделяет поддерживаемые точки (`PlanCommands.execute`, бинарные входы, порты, `input_scope`, conformance, reference host) от внутренних helpers без гарантий. Он прямо возлагает на хост изоляцию, квоты, CPU, блокировки и долговечность и не обещает анонимный API. Импорт-пробник в отдельном интерпретаторе (`-I -B`, audit hook на запись, сеть, subprocess и импорт HA) проверяет все модули из манифеста staged-дерева, так что граница работает как регрессия.",
-              "evidence": "`docs/CORE-HOST.md` (новый раздел), `tests_backend/test_core_distribution.py:13-49, 68-81`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Два почти одинаковых цикла settle: `backup_files.durable_file_job` в HA и `FilesystemContent._settle` в core. Они уже расходятся: первый после отмены ловит `Exception`, второй — `BaseException`, а `job.cancelled()` проверяется в разном порядке. Можно оставить один helper в core, параметризованный способом запуска worker, и вызывать его из HA. Цена — небольшой рефакторинг. Выгода — одна точка правды для инварианта «lock не освобождается, пока жив worker».",
-            "Вложения теперь публикуются через `os.link`, раньше было `os.replace`. Планы и декор уже зависят от hardlink (`core/file_uploads.py:122`), так что это не новое требование продукта в целом. Но на файловой системе без hardlink (exFAT, часть SMB-монтирований) загрузка вложения теперь закончится `io_error` там, где раньше проходила. Стоит одной строкой отметить это требование в отчёте или CORE-HOST либо обрабатывать `EPERM`/`ENOTSUP` резервной публикацией с `O_EXCL`.",
-            "В `HouseplanUploadView` после успешной публикации `tmp_path` остаётся в `temps`, и finally удаляет это имя уже после освобождения `upload_lock`. Шанс, что `mkstemp` другого запроса выберет то же случайное имя, ничтожен. Но прежнее `temps.remove(tmp_path)` после публикации убирало саму возможность и явно выражало передачу владения.",
-            "Если worker в `durable_file_job` завершился исключением после отмены, исключение подменяется на `CancelledError` без записи в лог. Одна строка `_LOGGER.debug(..., exc_info=True)` сохранит диагностику отказа I/O на отменённом запросе."
-          ],
-          "boundaries": "Это S7: сборку, тесты, wheel и мутации я не запускал. Использованы результаты S6 из квитанции «Тесты для задачи #1605 (перед ревью)» (passed на `3d887a13c3`) и сведения автора. По ним полный backend прошёл: 3 621 тест, один существующий пропущен. Покрытие строк 91,5% при пороге 87,2%. Wheel установлен без HA: импортированы 77 модулей, conformance прошёл 9+1 сценариев на обоих адаптерах. Хэш wheel и полный прогон backend я самостоятельно не проверял.\n\nПо исходникам изучил: изменённые обработчики `websocket_api.py`, `http_api.py`, `marker_history_websocket.py`, `trails.py`, затем `command_adapter.py` (все создания `HaWriteAuthority`), `core/content_files.py`, `core/plans.py`, `core/file_uploads.py`, порядок блокировок в `store.py` и `backup_transaction.py`, `sanitize_marker_id`, фронтенд-формы загрузок и наличие тестов миграций, на которые ссылается отчёт.\n\nПострочно с кодом я не сверял: таблицу прав всех 48 WS-типов (сверил только затронутые diff и общую модель `may_write` и `dispatch_plan_command`), лимиты архивов и превью из раздела «Проход 2», которые не менялись, и `can_write` в карточке и панели.\n\nИмпорт-тест в репозитории проверяет staged-дерево, а не собранный wheel. Проверка самого wheel — ручное доказательство автора."
-        },
-        "usage": {
-          "input_tokens": 28,
-          "cache_creation_input_tokens": 126197,
-          "cache_read_input_tokens": 1240261,
-          "output_tokens": 18382,
-          "output_tokens_details": {
-            "thinking_tokens": 9311
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 126197,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1150,
-              "cache_read_input_tokens": 111476,
-              "cache_creation_input_tokens": 18925,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 18925
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принимать, блокеров нет. Задача выполнена в объёме принятого ТЗ. Отчёт `docs/security/1605-backend-core-audit.md` сверяется с фактической регистрацией тестом и описывает 48 WS-типов, 11 HTTP views и 2 HA-сервиса с ролями, чтением и записью. Обе миграции разведены и привязаны к существующим адресным тестам. В `CORE-HOST.md` появилась граница доверия ядра, а все модули staged-пакета импортируются без HA и побочных эффектов.\n\nЧетыре исправления Medium адресные и сделаны на той границе, которой принадлежит операция:\n- F1: повторная проверка пользователя и runtime после await;\n- F2: общий потолок layout;\n- F3: ограничения multipart;\n- F4: публикация только полных файлов и удержание lock до завершения worker при повторной отмене.\n\nУ каждой находки есть тест с наблюдаемым инвариантом. Разрешённые сценарии сохранены: фронтенд шлёт не больше двух частей формы, существующую точку layout можно править на пределе, а порядок блокировок write → upload совпадает с принятым в `backup_transaction`. Остались необязательные улучшения: два одинаковых цикла settle и новая зависимость вложений от hardlink.\n\n## Понимание решения\n\nПроблема: бэкенд вырос, а системного ревью прав и хранения не было. Существовал только аудит ввода #1395. При этом ядро `houseplan_core` готовится стать внешним wheel, и нужна проверенная картина всех входов HA, файловых путей, миграций и того, за что отвечает хост.\n\nДо изменений у ряда «старых» WS-обработчиков право проверялось один раз на входе. Это `layout/update` и `layout/delete`, `files/migrate` и `files/cleanup`, `marker/history/retain` и `trail/delete`, а также HTTP-продвижение вложения. Если пользователя деактивировали, понизили или интеграцию перезагрузили, пока запрос ждал lock, запись всё равно проходила. Точечный `layout/update` мог добавлять ключи сверх `MAX_LAYOUT`. Части multipart, которые обработчик игнорирует, не ограничивались ни размером, ни числом. Вложение публиковалось через пустой placeholder с `O_EXCL` и последующий `os.replace`, так что пустой файл был виден до записи. Отказ на середине пакетного копирования оставлял частичные копии. `durable_file_job` при второй отмене выходил раньше, чем завершался worker.\n\nПосле изменений:\n- `auth.may_write` отклоняет `None` и неактивного пользователя;\n- `HaWriteAuthority.can_write` дополнительно требует, чтобы runtime и объект пользователя были теми же;\n- `_write_authority(runtime=...)` и `_continue_write` повторяют проверку под lock и после чтения пары, причём между последней проверкой и записью нет await;\n- `_bounded_parts` разрешает не больше 8 частей и до 1 КиБ на каждое поле и игнорируемую часть;\n- `publish_attachment` делает fsync стадии, затем `os.link` под эксклюзивное имя, затем удаляет стадию;\n- `attachment_directory` принимает только прямого потомка корня и не идёт по symlink;\n- `durable_file_job` и `FilesystemContent._settle` ждут worker при любом числе отмен и через `discard` убирают только собственный неподтверждённый результат.\n\nРазобранные пути:\n- `HouseplanUploadView.post`, от staging до `_check_and_promote` под `upload_lock` с `authority.ensure()`, включая finally-очистку;\n- `ws_files_migrate`: временный файл в `dst`, публикация, `_discard` при отказе или отмене;\n- `ws_files_cleanup` и `ws_marker_history_retain`: `write_lock` → `_resolved_write_pair` → `upload_lock`, затем сверка с `store.py:452` и `backup_transaction._commit`;\n- `ws_layout_update` и `ws_layout_delete`, `ws_trail_delete` → `TrailRecorder._async_delete_many`;\n- `ws_marker_history` (обработка `ImportFailure`);\n- `dispatch_plan_command` и все места создания `HaWriteAuthority`;\n- `HouseplanContentView` для kind=files;\n- фронтенд-формы `/api/houseplan/upload` и `/assets/upload`;\n- существование тестов миграций, на которые ссылается отчёт.\n\n## Разбор решения\n\n### Повторная авторизация после ожидания (F1)\n\nРешение корректное и ограничено затронутыми обработчиками. Проверка стоит в двух местах: сразу после получения lock и после `_resolved_write_pair`. После второй проверки до `async_save_layout_state` нет ни одного await, поэтому окна TOCTOU не остаётся. Условие `get_data(hass) is runtime` в `HaWriteAuthority.can_write` безопасно: все три места создания передают текущий `get_data`. Это `plan_commands` (новый объект на каждую команду), ветка optimize_undo и HTTP-загрузка. Побочный эффект: если reload случился во время уже идущего `config/get`, этот ответ временно вернёт `can_write=false`. Это fail-closed, и при перезагрузке такое допустимо.\n\nОснование: `websocket_api.py:734-744, 784-795`, `command_adapter.py:113-135, 234-249, 308`, `http_api.py:406-408, 544-546`, `marker_history_websocket.py:122-126, 218-226`, `trails.py` `_async_delete_many` (authorize под `_refresh_lock`). Тесты `test_revoked_queued_writer_keeps_storage` (6 обработчиков, отзыв во время ожидания lock), `test_writer_is_rechecked_after_layout_read`, `test_authority_does_not_follow_reloaded_runtime`, `test_attachment_checks_authority_before_publishing`.\n\n### Порядок блокировок и отсутствие deadlock\n\nНовые вложенные захваты идут в порядке write_lock → upload_lock. Этот порядок уже зафиксирован в `backup_transaction._commit` и в recovery `store.py`. Важная деталь: `_resolved_write_pair` может сам взять `upload_lock` при восстановлении архивного intent (`store.py:452`), но вызывается до внешнего `upload_lock`, так что повторного входа в неreentrant lock нет. HTTP-загрузка и `files/migrate` берут только `upload_lock`.\n\nОснование: `websocket_api.py:1039-1058` (cleanup), `marker_history_websocket.py:220-232`, `store.py:448-454`, `backup_transaction.py:36-42`.\n\n### Публикация вложений и отмена (F4, F5)\n\nПубликация через `os.link` из полностью записанной стадии убирает видимый пустой placeholder и сохраняет запрет перезаписи (FileExistsError → следующее имя). Пакетное копирование при отказе убирает только имена, созданные в этом запросе. Квота проверяется для каждого файла и учитывает уже опубликованные. `durable_file_job` при повторной отмене держит lock до завершения worker, а через `discard` удаляет собственную публикацию; такой контракт верен. Content view проверяет пути по компонентам (`is_relative_to`) вместо строкового префикса, а папку маркера — через `attachment_directory`. Поскольку `sanitize_marker_id` идемпотентна, существующие URL не ломаются. Хорошо, что клиент `files/migrate` больше не получает текст OSError.\n\nОснование: `core/plans.py:76-117`, `http_api.py:525-565`, `websocket_api.py:859-904`, `backup_files.py:127-151`, `core/content_files.py:43-65`, `core/validation.py:1448-1455`. Тесты `test_uncommitted_attachment_copy_rolls_back_its_own_publications`, `test_repeated_cancel_settles_private_worker_before_unlock`, `test_content_delete_cancellation_keeps_the_transaction`, `test_attachment_directory_does_not_follow_an_alias`, обновлённый `test_upload_leaves_no_temporary_behind`.\n\n### Ограничение multipart и layout (F2, F3)\n\nЛимиты поставлены на границе HTTP и не затрагивают полезные потолки файлов. Совместимость с клиентом подтверждена по исходникам: редактор шлёт `marker_id` и `file`, декор-редактор — только `file`, загрузка плана — `file`, `space_id` и `ext`, то есть всё укладывается в 8 частей. Потолок layout применяется только к новому ключу. Существующие точки по-прежнему можно править и удалять, а legacy-данные сверх предела не становятся нечитаемыми. Удаление в `layout/delete` теперь строит новый словарь, а не мутирует загруженный объект, поэтому отказ сохранения больше не портит кэш.\n\nОснование: `http_api.py:68-88, 270-285, 346-365, 470-515`, `src/houseplan-editor-runtime.ts:8313-8316`, `src/decor-image-editor.ts:155-157`, `websocket_api.py:784-787, 1131`. Тесты `test_multipart_metadata_budget_applies_before_publication`, `test_multipart_part_count_is_bounded`, `test_point_layout_shares_capacity_but_existing_points_remain_editable`.\n\n### Реестр входов и отчёт (AC1, AC2, AC6)\n\nТаблица проверяется тестом: тот исполняет `ha_integration.async_setup` с наблюдателями регистрации и сравнивает множества WS, HTTP и сервисов, а также `requires_auth` и методы HTTP. Это закрывает прошлое замечание ТЗ о регистрациях вне `websocket_api.async_register` и сравнивает с текущим head, а не с одним SHA. Шкала серьёзности теперь определена в самом отчёте. Классификация F1–F6 выглядит обоснованной: устаревшая авторизация требует отзыва прав во время ожидания lock, то есть дополнительного условия, и Medium здесь оправдан.\n\nОснование: `tests_backend/test_ha_input_security_authority.py:50-70`, `docs/security/1605-backend-core-audit.md` (таблица и раздел «Находки и решения»).\n\n### Миграции (AC5)\n\nНовых тестов на миграции нет. Отчёт ссылается на существующие адресные тесты обоих механизмов, и я проверил, что они существуют. Описание порядка backup/intent для decoder и для перехода графа согласуется с разбором `store.py` и `graph_write.py` на этапе ТЗ. Поведение миграций в diff не менялось, поэтому для ТЗ этого достаточно.\n\nОснование: `tests_backend/test_ha_config_migrations.py:60, 222`, `tests_backend/test_ha_plan_graph.py:136`, `tests_backend/test_plan_graph_source.py:39`.\n\n### Граница ядра (AC4)\n\nРаздел «Trust boundary» в `CORE-HOST.md` отделяет поддерживаемые точки (`PlanCommands.execute`, бинарные входы, порты, `input_scope`, conformance, reference host) от внутренних helpers без гарантий. Он прямо возлагает на хост изоляцию, квоты, CPU, блокировки и долговечность и не обещает анонимный API. Импорт-пробник в отдельном интерпретаторе (`-I -B`, audit hook на запись, сеть, subprocess и импорт HA) проверяет все модули из манифеста staged-дерева, так что граница работает как регрессия.\n\nОснование: `docs/CORE-HOST.md` (новый раздел), `tests_backend/test_core_distribution.py:13-49, 68-81`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Два почти одинаковых цикла settle: `backup_files.durable_file_job` в HA и `FilesystemContent._settle` в core. Они уже расходятся: первый после отмены ловит `Exception`, второй — `BaseException`, а `job.cancelled()` проверяется в разном порядке. Можно оставить один helper в core, параметризованный способом запуска worker, и вызывать его из HA. Цена — небольшой рефакторинг. Выгода — одна точка правды для инварианта «lock не освобождается, пока жив worker».\n- Вложения теперь публикуются через `os.link`, раньше было `os.replace`. Планы и декор уже зависят от hardlink (`core/file_uploads.py:122`), так что это не новое требование продукта в целом. Но на файловой системе без hardlink (exFAT, часть SMB-монтирований) загрузка вложения теперь закончится `io_error` там, где раньше проходила. Стоит одной строкой отметить это требование в отчёте или CORE-HOST либо обрабатывать `EPERM`/`ENOTSUP` резервной публикацией с `O_EXCL`.\n- В `HouseplanUploadView` после успешной публикации `tmp_path` остаётся в `temps`, и finally удаляет это имя уже после освобождения `upload_lock`. Шанс, что `mkstemp` другого запроса выберет то же случайное имя, ничтожен. Но прежнее `temps.remove(tmp_path)` после публикации убирало саму возможность и явно выражало передачу владения.\n- Если worker в `durable_file_job` завершился исключением после отмены, исключение подменяется на `CancelledError` без записи в лог. Одна строка `_LOGGER.debug(..., exc_info=True)` сохранит диагностику отказа I/O на отменённом запросе.\n\n## Границы анализа\n\nЭто S7: сборку, тесты, wheel и мутации я не запускал. Использованы результаты S6 из квитанции «Тесты для задачи #1605 (перед ревью)» (passed на `3d887a13c3`) и сведения автора. По ним полный backend прошёл: 3 621 тест, один существующий пропущен. Покрытие строк 91,5% при пороге 87,2%. Wheel установлен без HA: импортированы 77 модулей, conformance прошёл 9+1 сценариев на обоих адаптерах. Хэш wheel и полный прогон backend я самостоятельно не проверял.\n\nПо исходникам изучил: изменённые обработчики `websocket_api.py`, `http_api.py`, `marker_history_websocket.py`, `trails.py`, затем `command_adapter.py` (все создания `HaWriteAuthority`), `core/content_files.py`, `core/plans.py`, `core/file_uploads.py`, порядок блокировок в `store.py` и `backup_transaction.py`, `sanitize_marker_id`, фронтенд-формы загрузок и наличие тестов миграций, на которые ссылается отчёт.\n\nПострочно с кодом я не сверял: таблицу прав всех 48 WS-типов (сверил только затронутые diff и общую модель `may_write` и `dispatch_plan_command`), лимиты архивов и превью из раздела «Проход 2», которые не менялись, и `can_write` в карточке и панели.\n\nИмпорт-тест в репозитории проверяет staged-дерево, а не собранный wheel. Проверка самого wheel — ручное доказательство автора.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: fb2cc44cedeef89eb28d06a83b607f55cc00d706 → 3d887a13c3dcf8bd1de633a98135941981307336\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1605, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nСтартовый SHA: `8cdb00332d689571a68afd8b775ead4003bae24a`. В коде есть общий `auth.may_write`, специализированные проверки admin, отдельная политика ядра и уже документированные строгие resource scopes. Первичная сверка находит больше регистраций, чем ориентир 40: итоговая таблица строится из фактического состава, а не ручного счётчика. До ревью ТЗ изменений продукта и тестовых прогонов нет; прошу отдельно проверить критерии полномочий, гарантии rollback и разделение внутреннего Python API от обязанностей внешнего адаптера.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд](https://github.com/Matysh/houseplan-card/actions/runs/45946087468): (1) AC1 теперь включает каждый WS/HTTP/service вход, compact-form, scoped credentials и отсутствие entry; (2) контракт и AC5 разделяют decoder с `geom_pending` и структурный переход графа; (3) AC4 проверяет все модули фактического wheel и явный список поддерживаемых точек входа. Материал реализации не менялся.\n\n### Реализация и локальные доказательства S6\n\n- Материал: `fbcb44e752`, база `8cdb00332d`. [Отчёт аудита](https://github.com/Matysh/houseplan-card/blob/codex/1605-core-backend-audit/docs/security/1605-backend-core-audit.md) сопоставляет 48 WS, 11 HTTP и 2 HA-сервиса с фактической регистрацией и описывает два независимых пути миграции и границу автономного хоста.\n- Исправлены четыре Medium: повторная проверка прав и runtime на затронутых операциях, единый потолок layout, bounded multipart, публикация целых файлов и безопасная отмена. Подтверждённых High в охваченном объёме нет. Намеренно не меняли модель ролей, wire-схему, ограничения штатных файлов или гарантии HA Store.\n- Локально: 156 backend-файлов штатного каталога с HA, 3 621 тест прошёл, один существующий тест пропущен из-за отсутствия приватной фикстуры #280. Покрытие строк 91,5% при пороге 87,2%; branch-rate 83,68% (справочно, не вход порога). Wheel локально установлен без HA: 77 модулей и по 9+1 conformance-сценариев на обоих адаптерах. Статическая готовность всех мутаций зелёная, ночные мутации не запускались.\n- Особое внимание: порядок state → content, соответствие публикации и rollback владению одним запросом, потеря прав и повторная отмена до или после передачи работы в executor. Проверки используют только локальные синтетические данные; реальный HA владельца и релиз не затрагивались.\n\nПервый S6 выявил два отказа на одном контроле инвентаря совместимости: комментарий ошибочно распознавался как описание ветки миграции. Изменено только описание функции; адресный повтор двух файлов — 8/8. Повторная проверка wheel из fbcb44e752: SHA-256 e6e6b593c72f150fa9c26c296501057a632bcffa06cd0292ddce51b60914809b, 77 импортированных модулей и 20 сценариев conformance.\n\nПосле актуализации в очереди текущий кандидат: 3d887a13c3, база fb2cc44ced. Проверено, что исходники backend, backend-тесты, CORE-HOST и отчёт не изменились относительно локально проверенного fbcb44e752.\n```\n\n</details>\n",
-        "createdAt": "2026-11-27T06:52:41.597Z",
-        "artifactId": 15177699741,
-        "runId": 45954240351,
-        "runAttempt": 1,
-        "completedAt": "2026-11-27T06:52:45Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45954240351",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "fb2cc44cedeef89eb28d06a83b607f55cc00d706"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1607": {
@@ -7141,19 +6981,7 @@
   "waiting": [
     1607
   ],
-  "active": {
-    "issue": 1605,
-    "worker": "github-coordinator",
-    "token": "752:github:45952944587:1:tick:2:admit",
-    "fence": 752,
-    "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
-    "expectedBase": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795761422732,
-    "expiresAt": 1795765997995,
-    "patchId": "2318065b9e17f8fcf43169f6bd037ba260408021",
-    "reviewRequest": "review:1605:2:2318065b9e17f8fcf43169f6bd037ba260408021:fb2cc44cedeef89eb28d06a83b607f55cc00d706"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7174,186 +7002,6 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
-    },
-    "local:spec1605:1ec412cd-87ea-4fe6-89be-b9a569cca590:spec-request": {
-      "digest": "36b839e1a4a3e6e51a6787590c31234e650a7fd964440db8d75353d4db938eb3",
-      "issue": 1605
-    },
-    "github:45946546072:1:spec:1605:spec-presentation": {
-      "digest": "9c703858b69b29a85e9ce35cd121fc0eea0c3cee9c3b0e985a11d1aad5c78f65",
-      "issue": 1605
-    },
-    "github:45946546072:1:spec:1605:spec-complete": {
-      "digest": "f78aa6a5b8b5e886fee5babd3917071810f2cdaf1394aae84b6b6c0ba4b7aa99",
-      "issue": 1605
-    },
-    "github:45946546072:1:spec:1605:spec-label": {
-      "digest": "37ba23c4b64381a403ce7eb5a0ffc8da9c253a46a08622847808bc7238107ad4",
-      "issue": 1605
-    },
-    "github:45946546072:1:completions:report:3fc45312a5ce73faee4d4ad783637fd179acd7168272e735d5e0df601736a724": {
-      "digest": "039e255ebec919260c313dd623f3113ca3905d2d079b67f777aa0de5983b606f",
-      "issue": 1605
-    },
-    "local:spec1605:edae0461-1fc1-400d-b899-708f49e564a2:spec-request": {
-      "digest": "2a39c6a1051a25869e0c2c00acfead7644fd9f00e7e952ed4ffa004f4aa74815",
-      "issue": 1605
-    },
-    "github:45946753506:1:label:spec-retry": {
-      "digest": "2f31a76bfbde5b2bcf2560dd3d5ff8fb0c234ff77258358593a7b32afaceaf57",
-      "issue": 1605
-    },
-    "github:45947041548:1:spec:1605:spec-presentation": {
-      "digest": "872762889e67231598a404b406f8c822319cf4c71b10fa62dac9e0088788f3ce",
-      "issue": 1605
-    },
-    "github:45947041548:1:spec:1605:spec-complete": {
-      "digest": "441ccc3d1e49c223e95a472a1f7b9b6456d6f27681ffd3db935ce1a52970952d",
-      "issue": 1605
-    },
-    "github:45947041548:1:spec:1605:spec-label": {
-      "digest": "e80cabd7934dc05681b00eabc5e1cbaff61b667d86db29a8d83c99e739b04139",
-      "issue": 1605
-    },
-    "github:45947041548:1:completions:report:9a8e2ca5da8ba614cfd7029c233e5e6b678912a2d8d2cc376989231c8fe774c4": {
-      "digest": "ac61fe26d92370bfbc0fe17e17ba3e3763e886ad3c7b69cd0d11419a7e02d460",
-      "issue": 1605
-    },
-    "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:3:synchronized": {
-      "digest": "42e30b3ef9489385edd899eb03903ddd5c8bc6e917dc8a31303de9d990bc9595",
-      "issue": 1605
-    },
-    "github:45950133910:1:completions:message:84a93b0a8ed69a38a8c898ecf85b84a9cb695fc4ccbf818d0d5f483243c1881b": {
-      "digest": "aa440ba70de20047aef707a77a87d490a25aace79f84cdff666eb0ce71540227",
-      "issue": 1605
-    },
-    "finish:adfe4529-d0bc-46d4-89f6-74efd6f0582e": {
-      "digest": "8e86916c1dc781becf82b38cb9c543fbc617c53c2db44d677168b097871dad3c",
-      "issue": 1605
-    },
-    "finish:c43c5ad5-b81d-4659-a529-1934a3ed60df": {
-      "digest": "a3a5469fe211366fae7a3d2112fe2e06154d04d951dd56535dbcf49a56f29fb2",
-      "issue": 1605
-    },
-    "finish:9b98c24d-cd2c-40f5-bb16-79e22af61954": {
-      "digest": "6a91e5b65085e6f16d048d211b4222efdac7b8721765d3ae1eb31914c054d25b",
-      "issue": 1605
-    },
-    "finish:1ba178b9-0c71-470b-98c6-287f7ab2bd5b": {
-      "digest": "f0880f3783b0b7625a3ac34105f24c99e3f4da31239a1f1554ee1a7dbbd7e078",
-      "issue": 1605
-    },
-    "finish:d0bdb23d-dfe8-4236-8950-46796e898929": {
-      "digest": "53edd6648d0d6084077bb755b44c5d358dc1dd5067692614b88ded9fa6c1e41c",
-      "issue": 1605
-    },
-    "finish:8ad99361-246b-4dc6-bd31-5329e82b44ae": {
-      "digest": "a8addffe3a7b9703351d58ed0a2294ff657f8e1481ff7570a92ae57e90690110",
-      "issue": 1605
-    },
-    "finish:6ea1a224-db67-4b00-afc4-afd4b79b5e72": {
-      "digest": "8b29b94eb93a8c08faf93d1972b7a9c5d4998191153912126cf71d149317ebc2",
-      "issue": 1605
-    },
-    "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return": {
-      "digest": "77f1061169c96cf867bce619ebfd7114ec4942b618e7074efe0ff4d626f21452",
-      "issue": 1605
-    },
-    "github:45952611506:1:completions:notice:bde5cb5bcee474545423af49d000ac3ace182a3ef3c763b1be24fb5025388f0e": {
-      "digest": "dd639de6f8e48e4850e76d21e799788c04157dffd1e01c8af0055cd7e3eb9654",
-      "issue": 1605
-    },
-    "finish:a7ae50ca-55ee-424c-9c41-bf9f199f2070:finish:1:synchronized": {
-      "digest": "cd59a4573568b7effd5489cb82e2f5527f1a92412c3b319970fadfcce1ee8fe3",
-      "issue": 1605
-    },
-    "github:45952944587:1:completions:message:1e6040100124c334680e5a113e4f7e48b7464c53f2587a0ac29204e540cad94b": {
-      "digest": "121e18b6785f5a9a3538050f703003cf8c28a4daf5bb1545f1feff8643b13b7e",
-      "issue": 1605
-    },
-    "finish:6073aa72-0991-4614-be7f-f7589dfdfa17": {
-      "digest": "c0eebe0dcf27c858ad6f415ebd13f6ff2b9ad543e74d1936f6b10188b156ae41",
-      "issue": 1605
-    },
-    "finish:49c23cd1-3486-4630-8a46-ad07570c85a7": {
-      "digest": "8be732f728d93e53e05f9ee1d3b6583c7f795e73c663e893bda827b80c461f19",
-      "issue": 1605
-    },
-    "finish:dc421b85-e3c1-4d5c-8a90-be7dcd7d7972": {
-      "digest": "9f368a6cc28a52cbf362a9b46906a35d505a9187c4b841e962f2718897ab71ff",
-      "issue": 1605
-    },
-    "dev-build:45952944587:1:webhook": {
-      "digest": "797534f2e321b6c4d3c379f6e5b4324de68ec93d4062e429413d79ae89dc164d",
-      "issue": 1605
-    },
-    "github:45953241731:1:completions:message:0cf53c35cc12823829eaa844287c0b62cdfd09e9ef8c3a666659026433408fff": {
-      "digest": "8d023668b1c419e4889c49a7472976b410217828da06624e8d5f317101a28278",
-      "issue": 1605
-    },
-    "dev-build:45952944587:1:webhook:f8d29b0a-3fe0-4eb7-b3df-c898858d14b5:delivered": {
-      "digest": "23893143c5952820cbbe199feb72f61fc1a0bdf7ee998455d677a62601967740",
-      "issue": 1605
-    },
-    "finish:69310a30-8401-4908-b2a9-daa592f5586f": {
-      "digest": "ea507cd5d7d2fbe540b3d72cf3a16f130c0ce8a867ccadb824e8600029b15d63",
-      "issue": 1605
-    },
-    "finish:965a3996-fd3a-4682-9e3b-3423df77dade": {
-      "digest": "8d88ff39578e83a9b1eeee67d39ee1d500319b23f1d5b4143430dc2fa13668a8",
-      "issue": 1605
-    },
-    "finish:bf83cf39-1c53-4dfd-a073-0ba631c02a44": {
-      "digest": "444dd15e77a79ae192a5e7ef5a751bacceb0204c02681836fd11ebce2efde6ec",
-      "issue": 1605
-    },
-    "finish:b840c4e0-a496-45e3-81de-dc46b0620dd2": {
-      "digest": "10a7080f2708609a56baa3f377f61c5245e59adff73c3a080383dcf1d564be7d",
-      "issue": 1605
-    },
-    "finish:b65d7227-a0b6-4b4f-a7c8-1d81f56a1c60": {
-      "digest": "e99140225fb87713039bf8af768158d759385b56354ed0e018d9303ef08212d3",
-      "issue": 1605
-    },
-    "finish:3d1e50d8-5f9d-45aa-816a-d05229528dbe": {
-      "digest": "1fef91210c719e7fe985000361d983672b65ec0f260c01d213770964982f5c79",
-      "issue": 1605
-    },
-    "finish:96a14094-1734-4645-bcb3-a94bc3594e3c": {
-      "digest": "79035c486c2bd5ece9ccda60c56789baacadedc64dea556bae8f8d30cf7dacf0",
-      "issue": 1605
-    },
-    "finish:2dde5e59-6849-45f4-9f5f-654a05cd5e6e": {
-      "digest": "ab3efa147a59c7ca8666f25b708a500aefe19ae9e9465f7510442714559d8351",
-      "issue": 1605
-    },
-    "finish:a7ae50ca-55ee-424c-9c41-bf9f199f2070:finish:2:s6-label": {
-      "digest": "831d12c40aa3b596312d6a76e426c4aec24312a1eb954ea6652cb0981fceb388",
-      "issue": 1605
-    },
-    "finish:a7ae50ca-55ee-424c-9c41-bf9f199f2070:finish:3:review-requested": {
-      "digest": "071a2d9cf0ce9146499eca93cd7edd251ba03c815d05b09d66652448bb7f6c56",
-      "issue": 1605
-    },
-    "github:45954205704:1:tick:0:review-retry": {
-      "digest": "d1613cbfeedb6e72830bfbf8e85dfec17e441c920adae2dcb2703c4d0306cc7d",
-      "issue": 1605
-    },
-    "github:45954205704:1:completions:message:9fcd76dac997a2e2a71c3da0d5915d78a7ac0643cd4a1ce4ba882b30bd2a642e": {
-      "digest": "8f003ae1c7f73583346471c267209ecfa0e20e53c66f616f1fefa7397f5a9610",
-      "issue": 1605
-    },
-    "github:45954205704:1:completions:message:92fd3bdb8880c7f2c64604d329372e04f29fa8aee0e72d3d1b602e75f97580ba": {
-      "digest": "b77ceacf91229e2e0b7a73d73dbd209cbfdb91ad495895a28fedcf14c89efd11",
-      "issue": 1605
-    },
-    "github:45954706790:1:tick:0:review-presentation": {
-      "digest": "9742ff08ed7c2be08d26a8705b5a129fe07563fdd83fdf142212e09f0847bcba",
-      "issue": 1605
-    },
-    "github:45954706790:1:tick:0:review-complete": {
-      "digest": "60aff9093df98c4fde6e1db425c2f3fa9b8490117a1e91da8eeb4faffe528432",
-      "issue": 1605
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7384,102 +7032,6 @@
         "delivered": true
       }
     },
-    "local:spec1605:edae0461-1fc1-400d-b899-708f49e564a2:spec-request:spec-resubmitted:1605": {
-      "digest": "2a39c6a1051a25869e0c2c00acfead7644fd9f00e7e952ed4ffa004f4aa74815",
-      "issue": 1605,
-      "message": {
-        "kind": "spec-resubmitted",
-        "issue": 1605,
-        "at": 1795757753761,
-        "previousRound": 1,
-        "round": 2,
-        "requestId": "spec:1605:2ece40c58e0b623a3727c9dcbf3717b234d60ea0570a577da2717ac9a68729a2",
-        "reviewChanges": "Стартовый SHA: `8cdb00332d689571a68afd8b775ead4003bae24a`. В коде есть общий `auth.may_write`, специализированные проверки admin, отдельная политика ядра и уже документированные строгие resource scopes. Первичная сверка находит больше регистраций, чем ориентир 40: итоговая таблица строится из фактического состава, а не ручного счётчика. До ревью ТЗ изменений продукта и тестовых прогонов нет; прошу отдельно проверить критерии полномочий, гарантии rollback и разделение внутреннего Python API от обязанностей внешнего адаптера.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд](https://github.com/Matysh/houseplan-card/actions/runs/45946087468): (1) AC1 теперь включает каждый WS/HTTP/service вход, compact-form, scoped credentials и отсутствие entry; (2) контракт и AC5 разделяют decoder с `geom_pending` и структурный переход графа; (3) AC4 проверяет все модули фактического wheel и явный список поддерживаемых точек входа. Материал реализации не менялся.",
-        "fromStatus": "S3-spec",
-        "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b": {
-      "digest": "a6f931357beecd4dc28ca1ca67b5c46d05fb1d9778245635836703ba764170ea",
-      "issue": 1605,
-      "message": {
-        "kind": "queued",
-        "issue": 1605,
-        "at": 1795759094913,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "034b5037f52e046651d8c10ccc891771675eecab",
-        "delivered": true
-      }
-    },
-    "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:2:admit": {
-      "digest": "d267b88ba0d5f4339090731e97b1cf98ffec0ead82d25337b59d53344ec7c6a3",
-      "issue": 1605,
-      "message": {
-        "kind": "admitted",
-        "issue": 1605,
-        "at": 1795759837077,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "034b5037f52e046651d8c10ccc891771675eecab",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return:return:1605": {
-      "digest": "77f1061169c96cf867bce619ebfd7114ec4942b618e7074efe0ff4d626f21452",
-      "issue": 1605,
-      "message": {
-        "kind": "return",
-        "issue": 1605,
-        "at": 1795760270449,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795760270449,
-          "entry": 1,
-          "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
-          "eventId": "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return:return:1605"
-        },
-        "delivered": true
-      }
-    },
-    "finish:a7ae50ca-55ee-424c-9c41-bf9f199f2070": {
-      "digest": "b342c780971712b06497a45c3553b8e5de0e6f966292ba5cfc105aa016f86446",
-      "issue": 1605,
-      "message": {
-        "kind": "queued",
-        "issue": 1605,
-        "at": 1795760329116,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "fbcb44e752c2b60af9e4f3c990431c03d6982ecf",
-        "delivered": true
-      }
-    },
-    "github:45952944587:1:tick:2:admit": {
-      "digest": "21b0069dbf96785779095987366bb01575528822115bc47a382f030e878a1eeb",
-      "issue": 1605,
-      "message": {
-        "kind": "admitted",
-        "issue": 1605,
-        "at": 1795761422732,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "fbcb44e752c2b60af9e4f3c990431c03d6982ecf",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:d52027cf-4647-44fc-bd62-02e014c42251": {
       "digest": "47c10a3278ebe6db816b65d9b219ebc4883b45cafc66d195b739e572497f2a2e",
       "issue": 1607,
@@ -7491,36 +7043,6 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "44dbb852ff380a9cbe3938c1ad71a606933868c6",
-        "delivered": true
-      }
-    },
-    "finish:a7ae50ca-55ee-424c-9c41-bf9f199f2070:finish:2:s6-complete": {
-      "digest": "d3d725c228e3067214b99d7233a92cad0e4dc2862903c653a28cd7b958e8920c",
-      "issue": 1605,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1605,
-        "at": 1795762088771,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
-        "phase": "review",
-        "evidence": {
-          "id": "20261127T063728068-ae621932",
-          "name": "Тесты для задачи #1605 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T063728068-ae621932/report.json",
-          "materialSha": "3d887a13c3dcf8bd1de633a98135941981307336",
-          "status": "passed",
-          "finishedAt": "2026-11-27T06:48:07.980Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Стартовый SHA: `8cdb00332d689571a68afd8b775ead4003bae24a`. В коде есть общий `auth.may_write`, специализированные проверки admin, отдельная политика ядра и уже документированные строгие resource scopes. Первичная сверка находит больше регистраций, чем ориентир 40: итоговая таблица строится из фактического состава, а не ручного счётчика. До ревью ТЗ изменений продукта и тестовых прогонов нет; прошу отдельно проверить критерии полномочий, гарантии rollback и разделение внутреннего Python API от обязанностей внешнего адаптера.\n\n### Исправления по предыдущему ревью\n\n[Первый раунд](https://github.com/Matysh/houseplan-card/actions/runs/45946087468): (1) AC1 теперь включает каждый WS/HTTP/service вход, compact-form, scoped credentials и отсутствие entry; (2) контракт и AC5 разделяют decoder с `geom_pending` и структурный переход графа; (3) AC4 проверяет все модули фактического wheel и явный список поддерживаемых точек входа. Материал реализации не менялся.\n\n### Реализация и локальные доказательства S6\n\n- Материал: `fbcb44e752`, база `8cdb00332d`. [Отчёт аудита](https://github.com/Matysh/houseplan-card/blob/codex/1605-core-backend-audit/docs/security/1605-backend-core-audit.md) сопоставляет 48 WS, 11 HTTP и 2 HA-сервиса с фактической регистрацией и описывает два независимых пути миграции и границу автономного хоста.\n- Исправлены четыре Medium: повторная проверка прав и runtime на затронутых операциях, единый потолок layout, bounded multipart, публикация целых файлов и безопасная отмена. Подтверждённых High в охваченном объёме нет. Намеренно не меняли модель ролей, wire-схему, ограничения штатных файлов или гарантии HA Store.\n- Локально: 156 backend-файлов штатного каталога с HA, 3 621 тест прошёл, один существующий тест пропущен из-за отсутствия приватной фикстуры #280. Покрытие строк 91,5% при пороге 87,2%; branch-rate 83,68% (справочно, не вход порога). Wheel локально установлен без HA: 77 модулей и по 9+1 conformance-сценариев на обоих адаптерах. Статическая готовность всех мутаций зелёная, ночные мутации не запускались.\n- Особое внимание: порядок state → content, соответствие публикации и rollback владению одним запросом, потеря прав и повторная отмена до или после передачи работы в executor. Проверки используют только локальные синтетические данные; реальный HA владельца и релиз не затрагивались.\n\nПервый S6 выявил два отказа на одном контроле инвентаря совместимости: комментарий ошибочно распознавался как описание ветки миграции. Изменено только описание функции; адресный повтор двух файлов — 8/8. Повторная проверка wheel из fbcb44e752: SHA-256 e6e6b593c72f150fa9c26c296501057a632bcffa06cd0292ddce51b60914809b, 77 импортированных модулей и 20 сценариев conformance.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
