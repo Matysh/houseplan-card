@@ -309,20 +309,35 @@ try {
   assert.equal(presentedFloor.scope, targetFloor);
   assert.notEqual(presentedFloor.ink, before.ink);
 
+  assert.equal(await page.evaluate(() => window.__tabResume.writes.length), 0);
   phase = 'authority change during WebGL loss';
-  const revoked = await page.evaluate(async () => {
-    const audit = window.__tabResume;
-    const gpu = window.__resumeGpu;
-    const lost = new Promise(resolve => gpu.canvas.addEventListener('webglcontextlost', resolve, { once: true }));
-    gpu.getExtension('WEBGL_lose_context').loseContext();
-    await lost;
-    const before = audit.sample();
-    audit.panel.hass = { ...audit.panel.hass, user: { id: 'other-fixture-user', is_admin: false } };
-    return { before, after: audit.sample() };
+  // Independent document: do not send another loss to the GPU of the just
+  // retired floor, whose headless renderer may still be completing a restore.
+  await open();
+  await loadFixture();
+  await mount();
+  await complete();
+  await page.evaluate(() => {
+    const audit = window.__tabResume, card = audit.card(), host = card._plan3dHost;
+    const gpu = host.viewport.output.renderer.getContext();
+    const extension = gpu.getExtension('WEBGL_lose_context');
+    if (!extension || gpu.isContextLost()) throw Error('Expected a live WebGL context for the current card');
+    const stage = card.renderRoot.querySelector('.stage');
+    const wrap = stage.querySelector('.zoomwrap');
+    const core = wrap.querySelector('.dev[data-hp-3d-native]').getBoundingClientRect();
+    const hidden = () => getComputedStyle(wrap).visibility === 'hidden';
+    gpu.canvas.addEventListener('webglcontextlost', event => {
+      const before = hidden();
+      audit.panel.hass = { ...audit.panel.hass, user: { id: 'other-fixture-user', is_admin: false } };
+      audit.authorityWitness = { trusted: event.isTrusted, before, after: hidden(),
+        blockedPick: !host.pick(core.x + core.width / 2, core.y + core.height / 2) };
+    }, { once: true });
+    extension.loseContext();
   });
-  assert.equal(revoked.before.hidden, false, 'a same-authority frame was eligible for keeping');
-  assert.equal(revoked.after.hidden, true, 'user change must synchronously hide retained pixels');
-  assert.equal(revoked.after.blockedPick, true);
+  await wait(() => !!window.__tabResume.authorityWitness);
+  assert.deepEqual(await page.evaluate(() => window.__tabResume.authorityWitness),
+    { trusted: true, before: false, after: true, blockedPick: true },
+    'a new HA authority must synchronously hide otherwise eligible pixels');
   assert.equal(await page.evaluate(() => window.__tabResume.writes.length), 0);
 
   phase = 'discard branch';
