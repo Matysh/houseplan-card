@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 29288,
+  "revision": 29289,
   "nextTicket": 784,
-  "nextFence": 783,
+  "nextFence": 784,
   "tasks": {
     "1001": {
       "issue": 1001,
@@ -6400,7 +6400,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 783,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795801023225,
       "reviewEntry": 1
@@ -7193,10 +7193,18 @@
       "runId": 46054483273
     }
   },
-  "waiting": [
-    1613
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1613,
+    "worker": "finish",
+    "token": "783:finish:7505b5b4-4d41-4592-9c2f-c7ee13451083:finish:2:admit",
+    "fence": 783,
+    "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795807205295,
+    "expiresAt": 1795807505295
+  },
   "events": {
     "ready:1598:95baaa6dad232e52b30c4e181506049324c8ef25": {
       "digest": "f612b2fe91c414ea4de775ae0fbe4943352bdd317ef80a1fa4c3ce0ed930c15b",
@@ -7698,6 +7706,20 @@
           "detail": "Поведение: test/bundle-sync.test.mjs: failed",
           "eventId": "finish:fb3d4f8a-90da-4663-95e3-a519d163587d:finish:2:return:return:1598"
         }
+      }
+    },
+    "finish:7505b5b4-4d41-4592-9c2f-c7ee13451083:finish:2:admit": {
+      "digest": "61884dc48ac2ee273f281d5a48b41f0c0df7ddb0bb24d30ef15a4efcb1a3d219",
+      "issue": 1613,
+      "message": {
+        "kind": "admitted",
+        "issue": 1613,
+        "at": 1795807205295,
+        "entry": 1,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32",
+        "phase": "sync"
       }
     }
   },
