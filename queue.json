@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27656,
+  "revision": 27657,
   "nextTicket": 753,
   "nextFence": 752,
   "tasks": {
@@ -6242,7 +6242,7 @@
       "ownerDecision": null,
       "ticket": 751,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795759968719,
       "reviewEntry": 4,
       "patchId": "a5a3068af446f8abb1d7b0cfc3440a5de91934dd",
@@ -6269,19 +6269,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261127T055833138-6d0d59e4",
+        "id": "20261127T061815385-a437643a",
         "name": "Тесты для задачи #1604 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T055833138-6d0d59e4/report.json",
-        "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
+        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T061815385-a437643a/report.json",
+        "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
         "status": "passed",
-        "finishedAt": "2026-11-27T06:05:19.717Z",
+        "finishedAt": "2026-11-27T06:33:16.398Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1604:3:197597975ef14e13f9356ae4e0acecb190a02e31:8cdb00332d689571a68afd8b775ead4003bae24a",
-        "at": 1795759808316
-      }
+      "reviewRound": null
     },
     "1605": {
       "issue": 1605,
@@ -7034,9 +7030,9 @@
     "fence": 751,
     "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
     "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795760279611,
-    "expiresAt": 1795761497807,
+    "expiresAt": 1795764800476,
     "patchId": "a5a3068af446f8abb1d7b0cfc3440a5de91934dd"
   },
   "events": {
@@ -7694,6 +7690,34 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "fbcb44e752c2b60af9e4f3c990431c03d6982ecf"
+      }
+    },
+    "finish:9bcfb5b8-c6ca-43f9-9afb-00f705081678:finish:3:s6-complete": {
+      "digest": "9c9f7443d4d6b76ffcc65f9da47c760464e51456e6b3af47ff11ddc5d0f1ccdc",
+      "issue": 1604,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1604,
+        "at": 1795761200476,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T061815385-a437643a",
+          "name": "Тесты для задачи #1604 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T061815385-a437643a/report.json",
+          "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
+          "status": "passed",
+          "finishedAt": "2026-11-27T06:33:16.398Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "В ветке `codex/1604-card-runtime-extraction` ([fb2cc44ce](https://github.com/Matysh/houseplan-card/commit/fb2cc44cedeef89eb28d06a83b607f55cc00d706)) `CardPlan3d` владеет загрузчиком по требованию, канвасом, освобождением ресурсов и нейтральным кадром превью. `ModeTransitionPresentation` владеет измерением, отрисовкой и завершением визуальных кадров. Типизированные интерфейсы передают состояние и вызовы. Существующие хуки для редактора, смоков и диагностики сохранены.\n\nСборка, типы и 13 проверок контракта 3D прошли. Адресные golden-сценарии `panel-isometric-geometry-view-light`, `panel-wide-plan-editor-dark-en` и `panel-stairs-flat-normal-light` совпали с эталонами до пикселя. DOM шапки и сцены совпал в шести устойчивых состояниях с базой `8cdb00332` после нормализации случайных идентификаторов комментариев Lit. Живые проверки переходов, 3D-хоста и стартового превью использовали существующие смоки.\n\nПервый S6 нашёл два устаревших якоря мутаций, проверку использования версии в параметре повторной загрузки и ложное включение браузерного артефакта в тест инфраструктуры. Якоря перенесены к новому владельцу, формат параметра `hp_retry` сохранён, каталог распознаёт декларации смоков. Три затронутых файла тестов прошли 22 проверки.\n\nПовторный S6 прошёл 628 из 629 шагов, включая все браузерные сценарии. Тест контракта ленивых загрузчиков перенесён на обоих владельцев и прошёл 23 проверки. Он проверяет, что редактор, онбординг и PDF передают признак окончательного отказа в уведомление, а внутренний загрузчик 3D сохраняет свой обработчик без пользовательского уведомления.\n\nПо [замечанию S7](https://github.com/Matysh/houseplan-card/issues/1604#issuecomment-7211284123) карточка снова предоставляет прежний хук `_isoSceneRuntimeLoader` как аксессор к единственному загрузчику в 3D-хосте. Живой `smoke_isometric_contract` прошёл целиком, включая редактирование диагностик, отказ позднего кадра и явный повтор загрузки. Каталог S6 теперь выбирает этот сценарий при изменении 3D-хоста. Сборка и 54 адресные проверки прошли. Предыдущий полный S6 зачёл 702 из 702 шагов.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
