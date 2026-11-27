@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27586,
-  "nextTicket": 749,
+  "revision": 27587,
+  "nextTicket": 750,
   "nextFence": 749,
   "tasks": {
     "1001": {
@@ -6255,14 +6255,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1604-card-runtime-extraction",
-      "materialSha": "cdc37cbb5e5e5f8cb86de33334c2df6dc4b39e63",
+      "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 748,
-      "queued": false,
+      "ticket": 749,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795758083054,
-      "reviewEntry": 2,
+      "readyAt": 1795759090876,
+      "reviewEntry": 3,
       "patchId": "873faa5fd6b7adbbdfa2b016d0866ff1d632dcaf",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -6284,8 +6284,7 @@
         "entry": 2,
         "detail": "Поведение: test/editor-runtime-loader.test.mjs: failed",
         "eventId": "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6:finish:3:return:return:1604"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6997,7 +6996,9 @@
       "runId": 45899949313
     }
   },
-  "waiting": [],
+  "waiting": [
+    1604
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7304,6 +7305,19 @@
           "detail": "Поведение: test/editor-runtime-loader.test.mjs: failed",
           "eventId": "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6:finish:3:return:return:1604"
         }
+      }
+    },
+    "finish:5bb6dba8-4a12-4ed6-8cbf-9437008af111": {
+      "digest": "575aa4a05c97290018db495ae5b364b5dab08d75156f688504eca975cbe1ec91",
+      "issue": 1604,
+      "message": {
+        "kind": "queued",
+        "issue": 1604,
+        "at": 1795759090876,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff"
       }
     }
   },
