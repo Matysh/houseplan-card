@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28102,
+  "revision": 28103,
   "nextTicket": 762,
   "nextFence": 762,
   "tasks": {
@@ -6229,7 +6229,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1608-device-height-perspective",
-      "materialSha": "5ca28396c107f9f3eee0318ebc6dba67f7ecdcbf",
+      "materialSha": "19efdceceabc8546568a51e4e867b15d4ed38b77",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 761,
@@ -6237,7 +6237,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795775162382,
       "reviewEntry": 2,
-      "patchId": "c28ffdddf1c710f3cd72615be99f04eef6077b86",
+      "patchId": "8d07ce2657cfac9b28c59290a3db0bdb27c71fcc",
       "changedFiles": [
         "custom_components/houseplan/core/marker_height.py",
         "custom_components/houseplan/core/validation.py",
@@ -6307,12 +6307,14 @@
         "demo/golden/matrix.mjs",
         "demo/helpers/painted-svg-point.mjs",
         "demo/helpers/test-surface-ready.mjs",
+        "demo/smoke_context_menu_geometry_1444.mjs",
         "demo/smoke_device_contact_mixed_radius.mjs",
         "demo/smoke_device_save_placement.mjs",
         "demo/smoke_iso_flat_parity.mjs",
         "demo/smoke_isometric_contract.mjs",
         "demo/smoke_plan_3d_marker_height.mjs",
         "demo/smoke_plan_rotation.mjs",
+        "demo/smoke_sun.mjs",
         "demo/smoke_vacuum_camera.mjs",
         "demo/smoke_vacuum_dock_restart.mjs",
         "demo/smoke_vacuum_ecovacs.mjs",
@@ -6373,7 +6375,8 @@
         "test/view-frame.test.mjs",
         "tests_backend/test_ha_backup_archive.py",
         "tests_backend/test_ha_marker_copy.py",
-        "tests_backend/test_ha_marker_history.py"
+        "tests_backend/test_ha_marker_history.py",
+        "tests_backend/test_validation.py"
       ],
       "notice": {
         "key": "1:executor-admission-expired",
@@ -7162,11 +7165,12 @@
     "worker": "finish",
     "token": "761:finish:41ee2471-bdee-4304-a669-4360675ac204:finish:2:admit",
     "fence": 761,
-    "materialSha": "5ca28396c107f9f3eee0318ebc6dba67f7ecdcbf",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "19efdceceabc8546568a51e4e867b15d4ed38b77",
+    "expectedBase": "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31",
+    "phase": "testing",
     "admittedAt": 1795775542306,
-    "expiresAt": 1795775842306
+    "expiresAt": 1795775851920,
+    "patchId": "8d07ce2657cfac9b28c59290a3db0bdb27c71fcc"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7760,6 +7764,10 @@
     "finish:2e718c29-0d77-474c-b57e-f06e2228975a:track-observed": {
       "digest": "83afbed0c1c5f091e6515b504bfe122f4b229d622104c2d37e64a858989cb55a",
       "issue": 1597
+    },
+    "finish:41ee2471-bdee-4304-a669-4360675ac204:finish:3:synchronized": {
+      "digest": "9c943c635218ee0319ddcddcd0ad7e35e0d467ae88c78c089c162bd9c0d35f9e",
+      "issue": 1608
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
