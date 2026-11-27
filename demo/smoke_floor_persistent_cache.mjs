@@ -36,7 +36,7 @@ try {
         await new Promise(resolve => setTimeout(resolve, 10));
       }
     };
-    let delay = 0, source = fixture, writes = 0, activeUser = 'cache-fixture';
+    let freshPairGate, delay = 0, source = fixture, writes = 0, activeUser = 'cache-fixture';
     const mount = async () => {
       window.__cacheCard?.remove();
       const card = document.createElement('houseplan-card'); window.__cacheCard = card;
@@ -46,6 +46,7 @@ try {
         connection: { connected: true, subscribeEvents: async () => () => {}, subscribeMessage: async () => () => {} },
         callWS: async message => {
           if (message.type === 'houseplan/config/get' || message.type === 'houseplan/layout/get') {
+            if (freshPairGate) await freshPairGate;
             if (delay) await new Promise(resolve => setTimeout(resolve, delay));
             return message.type === 'houseplan/config/get' ? { config: structuredClone(source.config), rev: 1, can_write: false, summary_panel_api: 1 }
               : { layout: structuredClone(source.layout), rev: 1 };
@@ -76,17 +77,38 @@ try {
     card.requestUpdate(); await until(() => card._floorPreparation.diagnostic.store.writes > 0, 'IDB publication');
     const firstFrame = { base: card._baseVb(), frame: card._frameOf(), builds: { ...card._floorCacheBuilds } };
     const savedWrites = writes;
-    delay = 2500; card = await mount();
-    await until(() => card._floorPreparation?.diagnostic.diskHits > 0 && !card._floorPreparation.pending
-      && card.renderRoot.querySelector('.dev'), 'cached full before fresh response');
-    const cachedBeforeFresh = !card._loadOk;
-    const disk = structuredClone(card._floorPreparation.diagnostic);
+    let disk, cachedBeforeFresh;
+    // Keep the fresh pair behind the real IndexedDB read. Try a new cold
+    // card only if the fixture hit the production storage deadline under load.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let releasePair;
+      freshPairGate = new Promise(resolve => { releasePair = resolve; });
+      try {
+        card = await mount();
+        await until(() => {
+          const runtime = card._floorPreparation;
+          if (!runtime || runtime.pending) return false;
+          const diagnostic = runtime.diagnostic;
+          if (diagnostic.diskHits > 0) return diagnostic.firstCachedFullFrame > 0 && !!card.renderRoot.querySelector('.dev');
+          return diagnostic.misses > 0 && diagnostic.store.timeouts > 0;
+        }, 'cached full before fresh response');
+        disk = structuredClone(card._floorPreparation.diagnostic);
+        cachedBeforeFresh = disk.diskHits > 0 && !card._loadOk;
+      } finally {
+        freshPairGate = null;
+        releasePair();
+      }
+      if (disk.diskHits > 0) break;
+    }
+    if (!disk?.diskHits) throw Error('IndexedDB geometry reads timed out: ' + JSON.stringify(disk.store));
     await settle(card);
     const sameFit = JSON.stringify(firstFrame.base) === JSON.stringify(card._baseVb());
-    const diskBuilds = { ...card._floorCacheBuilds };
-    const projection = card._renderProjection, isoBuilds = card._isoStructuralBuildCount;
-    const hasDiskWallBase = !!card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]')
+    const projection = card._renderProjection;
+    const paintedWallBase = () => !!card.renderRoot.querySelector('canvas[data-hp-plan-3d-ready]')
       && card._plan3dHost.world.structure.children.length > 1;
+    if (projection === 'iso') await until(paintedWallBase, 'painted cached ISO wall meshes');
+    const hasDiskWallBase = paintedWallBase();
+    const diskBuilds = { ...card._floorCacheBuilds }, isoBuilds = card._isoStructuralBuildCount;
     const quarterTurnBuilds = [];
     if (projection === 'iso') for (const rotation of [45, 90, 135, 180, 225, 270, 315, 0]) {
       card._rotatePlan(1);

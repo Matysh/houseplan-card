@@ -21,9 +21,9 @@ await page.evaluate(async () => {
       is_light: true, tap_action: 'toggle', icon: 'mdi:desk-lamp', controls: [auto.primary],
       description: 'Independent original', glow_color: { c: '#123456', bri: .5 } },
     { id: 'v_controller', binding: 'virtual', space: c._space, name: 'Controller', controls: ['marker:v_source', auto.primary] },
-    { id: 'v_led', binding: 'virtual', space: c._space, name: 'Strip', is_light: true, icon: 'mdi:led-strip-variant' },
+    { id: 'v_led', binding: 'virtual', space: c._space, name: 'Strip', is_light: true, icon: 'mdi:led-strip-variant', height_cm: 136 },
     { id: 'v_taken', binding: 'virtual', space: c._space, name: 'Copy lamp 2', hidden: true });
-    cfg.spaces.find(s => s.id === c._space).led_strips = [{ id: 'copy-led', marker: 'v_led', points: [[.25,.65],[.55,.65]] }];
+    cfg.spaces.find(s => s.id === c._space).led_strips = [{ id: 'copy-led', marker: 'v_led', points: [[.25,.65],[.55,.65],[.55,.75]] }];
     return cfg;
   });
   await window.__hpTest.setLayout(layout => ({ ...layout,
@@ -107,10 +107,25 @@ checkAll({ autoSourceHadNoMarker:!before.cfg.markers.some(m=>m.id===auto.id), au
 
 const ledBefore = await snapshot(); await copy('v_led'); const ledAfter = await snapshot();
 const ledCopy = ledAfter.cfg.markers.at(-1);
-checkAll({ ledGeometryUnchanged:JSON.stringify(ledBefore.cfg.spaces)===JSON.stringify(ledAfter.cfg.spaces),
-  ledCopyOrdinaryIcon:await card.locator(`.dev[data-hp="device"][data-id="${ledCopy.id}"]`).count()===1,
-  ledOriginalStillStrip:await card.locator('.led-select-hit[data-id="v_led"]').count()===1,
-  ledCopyNearVisibleAnchor:Math.hypot(ledAfter.layout[ledCopy.id].x-.4,ledAfter.layout[ledCopy.id].y-.65)<.2 });
+const ledOriginal = ledBefore.cfg.spaces.find(space => space.id === ledCopy.space).led_strips[0];
+const savedStrips = ledAfter.cfg.spaces.find(space => space.id === ledCopy.space).led_strips;
+const copiedStrip = savedStrips.find(strip => strip.marker === ledCopy.id);
+const near = (a, b) => Math.abs(a - b) < 1e-9;
+const position = ledAfter.layout[ledCopy.id];
+checkAll({
+  ledOriginalUnchanged: JSON.stringify(savedStrips.find(strip => strip.marker === 'v_led')) === JSON.stringify(ledOriginal),
+  ledCopyHasSeparateShape: !!copiedStrip && copiedStrip.id !== ledOriginal.id,
+  ledCopyShapeTranslated: copiedStrip?.points.length === ledOriginal.points.length
+    && copiedStrip.points.every((point, i) => point.every((value, axis) =>
+      near(value - copiedStrip.points[0][axis], ledOriginal.points[i][axis] - ledOriginal.points[0][axis]))),
+  ledCopySameHeight: ledCopy.height_cm === 136,
+  ledCopyRendersAsStrip: await card.locator(`.led-select-hit[data-id="${ledCopy.id}"]`).count() === 1,
+  ledOriginalStillStrip: await card.locator('.led-select-hit[data-id="v_led"]').count() === 1,
+  // Half the original length (.30 + .10) lies .20 from the first point on the horizontal leg.
+  ledCopyAtSavedPosition: !!copiedStrip && near(copiedStrip.points[0][0] + .20, position.x)
+    && near(copiedStrip.points[0][1], position.y),
+  ledCopyOffsetFromOriginal: !near(position.x, .45) || !near(position.y, .65),
+});
 
 // A Linux context-menu sequence may finish without a scene pointerup. The
 // completed LED command must leave no pan owner for a later buttons=0 move.
@@ -174,6 +189,9 @@ await page.evaluate(()=>window.__hpTest.setMode('devices'));await settled();
 check('cold-reader-retains-independent-virtual-copy',await page.evaluate(id=>{
   const c=window.__card,d=c._devices.find(d=>d.id===id);return d?.bindingKind==='virtual'&&d.name==='Copy lamp 3'&&!!c._layout[id];
 },newMarker.id),true);
+await card.locator(`.led-select-hit[data-id="${ledCopy.id}"]`).waitFor({ state: 'attached' });
+check('cold-reader-retains-strip-height', await page.evaluate(id =>
+  window.__card._devices.find(device => device.id === id)?.marker.height_cm, ledCopy.id), 136);
 await card.locator(`[data-hp="device"][data-id="${newMarker.id}"]`).click();
 await card.locator('[data-field="properties-settings"]').click();
 await card.locator('#marker-name').fill('Changed copy only');

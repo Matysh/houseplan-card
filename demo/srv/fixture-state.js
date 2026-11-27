@@ -1,5 +1,26 @@
 // A small wire fixture, not a second backend validator. Payloads are cloned at
 // the boundary so an optimistic client cannot mutate the saved server document.
+function copyStripAtPosition(strip, markerId, position) {
+  const lengths = strip.points.slice(1).map(([x, y], index) => {
+    const [previousX, previousY] = strip.points[index];
+    return Math.hypot(x - previousX, y - previousY);
+  });
+  let remaining = lengths.reduce((sum, length) => sum + length, 0) / 2;
+  for (const [index, length] of lengths.entries()) {
+    if (length && remaining <= length) {
+      const [startX, startY] = strip.points[index];
+      const [endX, endY] = strip.points[index + 1];
+      const t = remaining / length;
+      const dx = position.x - (startX + (endX - startX) * t);
+      const dy = position.y - (startY + (endY - startY) * t);
+      return { ...strip, id: `led-copy-${markerId}`, marker: markerId,
+        points: strip.points.map(([x, y]) => [x + dx, y + dy]) };
+    }
+    remaining -= length;
+  }
+  throw new Error('LED strip needs distinct points');
+}
+
 export function createFixtureStore(config, layout, emit = () => {}, {
   markerHistory = false, externalScreens = false, tvMount = false, configRevision = 1, layoutRevision = 1,
 } = {}) {
@@ -71,6 +92,11 @@ export function createFixtureStore(config, layout, emit = () => {}, {
             && controller.controls?.some(id => id === `marker:${m.source_id}` || own.includes(id))) {
             controller.controls = [...controller.controls, `marker:${marker.id}`];
           }
+          const source = target.markers.find(row => row.id === m.source_id);
+          if (source && Object.hasOwn(source, 'height_cm')) marker.height_cm = source.height_cm;
+          const strips = target.spaces?.find(space => space.id === marker.space)?.led_strips;
+          const sourceStrip = strips?.find(strip => strip.marker === m.source_id && strip.active !== false);
+          if (sourceStrip) strips.push(copyStripAtPosition(sourceStrip, marker.id, m.position));
           target.markers.push(marker);
           cfg = target; positions = { ...positions, [marker.id]: structuredClone(m.position) };
           configRev++; layoutRev++; changed('config'); changed('layout');

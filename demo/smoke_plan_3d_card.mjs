@@ -97,7 +97,9 @@ try {
   assert.equal(await cards.count(), 6);
   const images = new Set();
   for (const card of await cards.all()) {
-    await card.locator('.stage').scrollIntoViewIfNeeded();
+    // The shared GPU can spend a long frame painting the other visible cards.
+    // Bring this stage on-screen without waiting for Playwright's stable-box check.
+    await card.locator('.stage').evaluate(stage => stage.scrollIntoView({ block: 'center', behavior: 'instant' }));
     const canvas = card.locator('canvas[data-hp-plan-3d-ready]');
     try {
       await canvas.waitFor({ state: 'attached' });

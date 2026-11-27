@@ -143,25 +143,43 @@ try {
       if (trace) {
         window.__startupTrace = [];
         const start = performance.now();
-        let firstImage;
+        let firstImage, observer;
+        const record = (stage, wrap) => {
+          const img = stage.querySelector('img.hp-startup-view');
+          const style = wrap && getComputedStyle(wrap);
+          if (img) firstImage ??= img;
+          window.__startupTrace.push({ t:performance.now()-start,
+            source:img?.dataset.hpStartupSource ?? null, sameImage:!img || img === firstImage,
+            previewOpacity:img ? +getComputedStyle(img).opacity : 0,
+            interactive:!stage.inert && !!wrap && !wrap.inert && stage.querySelector('.dev') !== null,
+            opacity:style?.visibility === 'visible' ? +style.opacity : 0,
+            status:stage.querySelectorAll('.floor-preparation-status').length,
+            fade:stage.hasAttribute('data-hp-startup-finish'),
+            view:wrap?.querySelector('svg.plan-svg')?.getAttribute('viewBox') ?? null });
+        };
         const sample = () => {
-          const card = window.__startupFixture();
-          const stage = card?.renderRoot.querySelector('.stage');
-          if (stage) {
-            const img = stage.querySelector('img.hp-startup-view');
-            const wrap = stage.querySelector(':scope > .zoomwrap');
-            const style = wrap && getComputedStyle(wrap);
-            if (img) firstImage ??= img;
-            window.__startupTrace.push({ t:performance.now()-start,
-              source:img?.dataset.hpStartupSource ?? null, sameImage:!img || img === firstImage,
-              previewOpacity:img ? +getComputedStyle(img).opacity : 0,
-              interactive:!stage.inert && !!wrap && !wrap.inert && stage.querySelector('.dev') !== null,
-              opacity:style?.visibility === 'visible' ? +style.opacity : 0,
-              status:stage.querySelectorAll('.floor-preparation-status').length,
-              fade:stage.hasAttribute('data-hp-startup-finish'),
-              view:wrap?.querySelector('svg.plan-svg')?.getAttribute('viewBox') ?? null });
+          const root = window.__startupFixture()?.renderRoot;
+          const stage = root?.querySelector('.stage');
+          if (stage) record(stage, stage.querySelector(':scope > .zoomwrap'));
+          if (root && server && browserMiss && hold && !observer) {
+            // A software-rendered ISO frame can take longer than the fade.
+            // Sample the real animation at its midpoint as soon as it starts.
+            const sampleFade = () => {
+              const active = root.querySelector('.stage[data-hp-startup-finish]');
+              const wrap = active?.querySelector(':scope > .zoomwrap');
+              const animation = wrap?.getAnimations().find(item => item.animationName === 'hp-startup-live-in');
+              if (!animation || !active.querySelector('img[data-hp-startup-source="server"]')) return;
+              const previousTime = animation.currentTime;
+              animation.currentTime = animation.effect.getComputedTiming().duration / 2;
+              try { record(active, wrap); } finally { animation.currentTime = previousTime; }
+              observer.disconnect();
+            };
+            observer = new MutationObserver(sampleFade);
+            observer.observe(root, { subtree:true, childList:true, attributes:true, attributeFilter:['data-hp-startup-finish'] });
+            sampleFade();
           }
           if (performance.now()-start < 18_000) requestAnimationFrame(sample);
+          else observer?.disconnect();
         };
         requestAnimationFrame(sample);
       }
