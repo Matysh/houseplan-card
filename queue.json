@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28194,
+  "revision": 28195,
   "nextTicket": 769,
   "nextFence": 765,
   "tasks": {
@@ -6273,7 +6273,7 @@
       "track": "ship",
       "layer": "infra",
       "branch": "codex/1599-webgl-benchmark",
-      "materialSha": "5f3ceceffcf70015a8ccd2ee86fcf4c1e6a3f80d",
+      "materialSha": "e093e60d3158bc1a90f965b4b0ca56ca6a07fe26",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 766,
@@ -8123,6 +8123,10 @@
     "finish:b4ba74f0-353c-4824-81d7-403141560793": {
       "digest": "c6964d35dc096aa385cbb788d4fac9276b85da2acc805e548156e474b54d4a0a",
       "issue": 1608
+    },
+    "1599-ready-cli-1795776240812": {
+      "digest": "488384564d2b1fad21b2ad7774c65f1023199ceee7cfd08638d6392d4c032df3",
+      "issue": 1599
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
