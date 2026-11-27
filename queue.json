@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28814,
-  "nextTicket": 781,
+  "revision": 28815,
+  "nextTicket": 782,
   "nextFence": 777,
   "tasks": {
     "1001": {
@@ -6618,14 +6618,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1611-space-opening-host",
-      "materialSha": "e087372c85aec72a32bbc22faeb344447fcd5881",
+      "materialSha": "5119213b3d222c6366fe012a6c2cf733df7b492b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 780,
-      "queued": false,
+      "ticket": 781,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795796266885,
-      "reviewEntry": 1,
+      "readyAt": 1795797319903,
+      "reviewEntry": 2,
       "patchId": "ccb58a624a91e2085b2d373476ec3c9822597f2d",
       "changedFiles": [
         "custom_components/houseplan/core/graph_write.py",
@@ -6635,7 +6635,6 @@
         "docs/release-ledger/v1.86.1/1611.json",
         "tests_backend/test_ha_plan_graph.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7375,7 +7374,8 @@
     1603,
     1609,
     1595,
-    1598
+    1598,
+    1611
   ],
   "active": {
     "issue": 1594,
@@ -9136,6 +9136,19 @@
         "layer": "product",
         "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2",
         "phase": "sync"
+      }
+    },
+    "finish:11b1b44c-9ae2-42c3-989c-e097c638aade": {
+      "digest": "c8579f3f8492ba6b1c2e09bdcba03f0d4a448de51a7cbf3d1c7f12949b77f41f",
+      "issue": 1611,
+      "message": {
+        "kind": "queued",
+        "issue": 1611,
+        "at": 1795797319903,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "5119213b3d222c6366fe012a6c2cf733df7b492b"
       }
     }
   },
