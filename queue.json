@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27630,
+  "revision": 27631,
   "nextTicket": 751,
   "nextFence": 751,
   "tasks": {
@@ -6309,7 +6309,28 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795759094913,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "8725aa50dd29d1749e87a5aba802dcf2b18998fe",
+      "changedFiles": [
+        "custom_components/houseplan/auth.py",
+        "custom_components/houseplan/backup_files.py",
+        "custom_components/houseplan/command_adapter.py",
+        "custom_components/houseplan/core/content_files.py",
+        "custom_components/houseplan/core/plans.py",
+        "custom_components/houseplan/http_api.py",
+        "custom_components/houseplan/marker_history_websocket.py",
+        "custom_components/houseplan/trails.py",
+        "custom_components/houseplan/websocket_api.py",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CORE-HOST.md",
+        "docs/release-ledger/v1.86.1/1605.json",
+        "docs/security/1605-backend-core-audit.md",
+        "scripts/mutation-registry.mjs",
+        "tests_backend/test_core_distribution.py",
+        "tests_backend/test_ha_input_security_authority.py",
+        "tests_backend/test_ha_websocket.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -7014,10 +7035,11 @@
     "token": "750:finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:2:admit",
     "fence": 750,
     "materialSha": "034b5037f52e046651d8c10ccc891771675eecab",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a",
+    "phase": "testing",
     "admittedAt": 1795759837077,
-    "expiresAt": 1795760137077
+    "expiresAt": 1795760143408,
+    "patchId": "8725aa50dd29d1749e87a5aba802dcf2b18998fe"
   },
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7271,6 +7293,10 @@
     "github:45950076162:1:completions:metadata:1612e725-2e47-4ac5-8c34-0a92b4effc7a:task-notice:1604::": {
       "digest": "79651a97d57127c864c49637235a51d7d70a0968e765d344365625e9a6ca8ee8",
       "issue": 1604
+    },
+    "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:3:synchronized": {
+      "digest": "42e30b3ef9489385edd899eb03903ddd5c8bc6e917dc8a31303de9d990bc9595",
+      "issue": 1605
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
