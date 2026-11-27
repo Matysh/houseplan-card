@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "e111022edd2189c9deb8be922735962ddd52a70153b3a083971872dfdfb1435c",
+  "matchesSha256": "9b2263f682d3f1cb856776af7119d4f01b222ed7543a352df40dce169b2b4fa0",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -6397,6 +6397,26 @@
       "kind": "exclusion",
       "owner": "current-feature",
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
+    },
+    {
+      "id": "a372e5d288803cae7547c19e",
+      "path": "src/plan-3d-light-field.ts",
+      "line": 38,
+      "text": "/** Compatibility for a strip without an authored height. */",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "#1617: absent height is a current supported presentation default, not a legacy stored shape or migration."
+    },
+    {
+      "id": "d99826943bcac94461590028",
+      "path": "src/plan-3d-light-field.ts",
+      "line": 242,
+      "text": "// retains the legacy floor envelope and still tests wall distance in 3D.",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "#1617: Auto keeps the current calibrated optical envelope without converting persisted configuration."
     },
     {
       "id": "02c350f30e404588fc314224",
