@@ -43,6 +43,14 @@
   },
   "entries": [
     {
+      "path": "demo/fixtures/core-compatibility/README.md",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 provenance instructions accompanying frozen conformance data; no runtime product input.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
       "path": "custom_components/houseplan/core/conformance.py",
       "kind": "infrastructure",
       "decision": "addressed",

@@ -420,6 +420,7 @@ test('core conformance and frozen producer data are infrastructure while archive
     'tests_backend/test_core_archive_compatibility.py',
     'tests_backend/test_core_distribution.py',
     'demo/fixtures/core-compatibility/provenance.json',
+    'demo/fixtures/core-compatibility/README.md',
     ...['v1.86.0','v1.86.1'].flatMap(tag=>['plan-transfer.zip','full-backup.zip'].map(name=>
       'demo/fixtures/core-compatibility/'+tag+'/'+name)),
   ];
