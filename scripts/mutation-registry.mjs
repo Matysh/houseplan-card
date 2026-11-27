@@ -348,8 +348,8 @@ const MUTANT_DEFINITIONS = [
     id: 'plan-rotation-reduced-terminal-keeps-stale-height-1070',
     guard: 'node demo/smoke_plan_rotation_mobile.mjs',
     because: '#1070 AC12: a zero-duration terminal must publish the target header budget before removing inline presentation, without a delayed ResizeObserver refit jump. Requires actual painted browser frames. Registered only; nightly execution.',
-    patches: [{ file: 'src/houseplan-card.ts',
-      find: 'this._hdrH = Math.round(state.to.headerBudget);', replace: '/* stale header budget */' }],
+    patches: [{ file: 'src/mode-transition-presentation.ts',
+      find: 'this.host.hdrH = Math.round(state.to.headerBudget);', replace: '/* stale header budget */' }],
   },
   {
     id: 'lovelace-rotation-pending-locale-allows-save-1070',
@@ -6067,7 +6067,7 @@ const MUTANT_DEFINITIONS = [
     because: 'editor chrome must borrow space inside the selected Sections row slot; using '
       + 'window.innerHeight makes the animated stage escape the card at minimum height (#648 AC5)',
     patches: [{
-      file: 'src/houseplan-card.ts',
+      file: 'src/mode-transition-presentation.ts',
       find: 'const targetStageHeight = modeStageHeight(from, headerHeight, targetChromeHeight);',
       replace: 'const targetStageHeight = Math.max(1, innerHeight - targetChromeHeight - headerHeight); /* mutant: ignore the fixed card budget */',
     }],

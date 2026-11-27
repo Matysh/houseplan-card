@@ -824,7 +824,7 @@ export class HouseplanCard extends LitElement {
     redraw: () => this.requestUpdate(),
     connected: () => this.isConnected,
     space: () => this._space,
-    nextRetry: () => CARD_VERSION + '-' + ++hpLazyRetrySeq,
+    setRetryNonce: (url) => url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`),
     loading: () => this._isoFirstFrame.runtimeLoading(),
     install: (install) => {
       const from = this._effectiveProjection();

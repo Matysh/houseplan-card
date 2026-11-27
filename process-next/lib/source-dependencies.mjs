@@ -49,7 +49,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['test/smoke-exception-guard.test.mjs', ['demo/smoke_*.mjs']],
   ['test/smoke-harness-contract.test.mjs', ['demo/smoke_*.mjs']],
 ]);
-const COMMAND_DECLARATIONS = new Set(['process-next/lib/catalog.mjs', 'process-next/lib/task-selection.mjs', 'process-next/catalog/selections.mjs', 'process-next/lib/background.mjs', 'process-next/lib/e2e.mjs', 'process-next/lib/converters.mjs', 'scripts/mutation-registry.mjs']);
+const COMMAND_DECLARATIONS = new Set(['process-next/lib/catalog.mjs', 'process-next/lib/task-selection.mjs', 'process-next/lib/source-dependencies.mjs', 'process-next/catalog/selections.mjs', 'process-next/lib/background.mjs', 'process-next/lib/e2e.mjs', 'process-next/lib/converters.mjs', 'scripts/mutation-registry.mjs']);
 export function dependencyReader(root) {
     const cache = new Map();
     function direct(file) {

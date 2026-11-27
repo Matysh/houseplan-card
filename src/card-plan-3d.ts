@@ -19,7 +19,7 @@ interface CardPlan3dPort {
   redraw(): void;
   connected(): boolean;
   space(): string;
-  nextRetry(): string;
+  setRetryNonce(url: URL): void;
   loading(): void;
   install(installRuntime: () => void): void;
   failedLoad(): void;
@@ -53,7 +53,7 @@ export class CardPlan3d {
         ? await import('./plan-3d-runtime')
         : await import(/* @vite-ignore */ (() => {
             const url = new URL(ISO_RETRY_ASSET, import.meta.url);
-            url.searchParams.set('hp_retry', this.port.nextRetry());
+            this.port.setRetryNonce(url);
             return url.href;
           })()) as Plan3dRuntime;
       return { fingerprint: module.ISO_SCENE_RUNTIME_FINGERPRINT, create: () => module };
