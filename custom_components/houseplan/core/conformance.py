@@ -20,6 +20,7 @@ import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from .archive_conformance import run_archives as run_archives
 from .command_ports import PairCommitFailure
 from .reference_host import ReferencePlanHost
 
@@ -309,6 +310,7 @@ def main():
     factory = getattr(importlib.import_module(module), name)
     with tempfile.TemporaryDirectory(prefix="houseplan-conformance-") as directory:
         completed = asyncio.run(run(factory, Path(directory)))
+        completed.extend(run_archives())
     print(json.dumps({"passed": len(completed), "scenarios": completed}, indent=2))
 
 

@@ -6,6 +6,84 @@ it does not download a separate package at runtime. Python 3.14+, voluptuous and
 Pillow are required. Ordinary stable releases supply a checked wheel alongside
 the standalone editor; see [Standalone frontend](STANDALONE-FRONTEND.md#consume-an-ordinary-stable-release).
 
+## Compatibility and versioning
+
+The wheel keeps the product version. Ordinary stable `1.86.1` is wheel
+`1.86.1`; prereleases use the equivalent PEP 440 spelling (for example
+`2.0.0-beta.2` becomes `2.0.0b2`), with the original product spelling retained
+in `distribution.json`. There is no independent core release counter.
+A breaking change to the public core contract requires a product major release.
+
+The public core contract consists of `PlanCommands` and its documented binary
+entry points, the request/reply and failure semantics they expose, the host
+protocols/types in `command_ports.py`, and the documented portable document
+and archive readers/writers, including `PLAN_MODEL_VERSION`. Other importable
+helpers are implementation details unless explicitly documented as host APIs.
+New optional capabilities can be additive; a host advertises them only when
+implemented. A passing old version string never substitutes for a required API.
+
+There are two distinct compatibility checks:
+
+- **Running one editor:** pin wheel/core adapter and standalone frontend from
+  the same product release and source commit. The existing exact product
+  version, real frontend fingerprint and required-API handshake remains
+  mandatory, including after reconnect. Mixing a newer SDK with an older core
+  is unsupported even within one minor line. HA embeds the same canonical
+  core, rather than installing the wheel at runtime.
+- **Transferring data between installations:** HA and an external site may
+  update independently. The destination validates the archive container,
+  embedded document/export version, model version and all declared required
+  APIs. Product major/minor equality alone neither accepts nor rejects a file.
+  A later stable in the same major must preserve reading previously supported
+  stable documents through explicit readers/migrations and frozen producer
+  fixtures. Removing that backward support is a breaking product major change.
+  Cross-major support is only what is explicitly documented and tested.
+
+The current reader contract is:
+
+| Container | Container version | Embedded document | Model acceptance |
+|---|---|---|---|
+| `houseplan-plan-transfer` (whole-house plan-only ZIP) | `archive_version: 1` and canonical mimetype v1 | `houseplan-export`, `kind: house`, `export_version: 4`; `house_transfer_api: 1` plus any per-file requirements | Exactly model 11 today; older models need an explicit house migration before they can be promised. |
+| `houseplan-full-backup` (HA installation ZIP) | `version: 1` | `houseplan-export`, `kind: full`; export versions 1–5 accepted subject to extension validation | Nonnegative models through 11, through the existing JSON validation/migration path. |
+| Portable space/full JSON | No ZIP container | `houseplan-export`, `kind: space/full`; export versions 1–5 accepted subject to extension validation | Nonnegative models through 11, through the existing JSON validation/migration path. |
+
+Container schema, document export version and plan model version are independent
+counters. Increasing one does not by itself require a major release if old
+supported data remains readable; losing that support does. A new writer's
+higher model/export/API is not promised readable by an older installation.
+There is no downgrade or arbitrary future-model guarantee. Unsupported files
+are refused before applying state; a host must not relabel a future file as
+an older model to force acceptance. Normal validation, repair confirmation,
+resource bounds and authorization still apply to historical data. Full-backup
+reading in a conformance test does not grant PLAN_ONLY full-backup operations.
+
+The current 2.x core explicitly retains both ZIP kinds produced by stable
+1.86.0 and 1.86.1 (model 11, house export 4, full export 3), despite that major
+boundary. `demo/fixtures/core-compatibility/` contains real synthetic output
+from each pinned stable commit, provenance and hashes. They cover two floors,
+stairs between them, image content, labels and the full-backup marker boundary.
+The installed wheel/sdist ships those exact bytes; the default
+`python -m houseplan_core.conformance` also runs `run_archives()` on them.
+This proves historical archive decoding/projection, not HA restore durability
+or a deployed site's database. Continue to run host and HA restore tests for
+those separate guarantees.
+
+To extend support, retain the previous stable fixtures and add producer
+fixtures before changing readers. To reproduce the initial set, fetch the
+two tags and run `python tools/generate_core_compatibility_fixtures.py --out
+/path/to/fresh-directory`; the generator extracts pinned tag sources and uses
+their real exporters and readers with synthetic inputs and a fixed clock.
+Compare the resulting archives and provenance byte-for-byte. Never regenerate
+old fixtures with the current exporter.
+
+Ordinary stable publication rereads the checked wheel's METADATA and
+`distribution.json`, the HACS ZIP's `manifest.json`, and the standalone
+ZIP's manifest. Their versions must match the candidate (with PEP 440
+normalization performed at package build); source fingerprint/commit must
+also match. A mismatch fails before release creation/upload, even if asset
+hashes and filenames were updated. Release notes link to this contract at
+the pinned source commit.
+
 ## Trust boundary
 
 Use `PlanCommands.execute` for structured requests and the documented binary

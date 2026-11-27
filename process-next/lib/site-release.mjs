@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { digest, outputIdentity, within } from './storage.mjs';
+import { verifySiteArtifactVersions } from './site-artifact-versions.mjs';
 
 const hash = /^[a-f0-9]{64}$/;
 export const SITE_RELEASE_STEP = 'site-release';
@@ -40,6 +41,8 @@ function checkedFacts(root, identity, paths, hacs) {
       throw Error('Standalone release asset differs from its verified bytes: ' + name);
     return { name, path: file, expectedDigest: fact.sha256 };
   });
+  verifySiteArtifactVersions({ wheel: assets[0].path, editor: assets[1].path, hacs: hacs.path,
+    version: identity.version, sha: identity.sha, fingerprint: manifest.sourceFingerprint });
   return { manifest, assets: [...assets.slice(0,2), { name: paths.manifest, path, expectedDigest: digest(content) }] };
 }
 
@@ -64,9 +67,11 @@ export function appendSiteReleaseNotes(body, manifest) {
     + '**RU.** Модель плана: ' + c.modelVersion + '; JSON пространства: ' + c.spaceExportVersion
     + '; ZIP дома: ' + c.houseExportVersion + '; Python: ' + c.python + '. '
     + 'Импорт ZIP дома требует совпадения модели, формата и API из манифеста. Первый stable с импортом: '
-    + c.firstStableWithHouseImport + '; это не гарантия совместимости со всеми следующими версиями.\n\n'
+    + c.firstStableWithHouseImport + '. Правило совместимости и ограничения: [CORE-HOST](https://github.com/Matysh/houseplan-card/blob/'
+    + manifest.sourceSha + '/docs/CORE-HOST.md#compatibility-and-versioning).\n\n'
     + '**EN.** Plan model: ' + c.modelVersion + '; space JSON: ' + c.spaceExportVersion
     + '; house ZIP: ' + c.houseExportVersion + '; Python: ' + c.python + '. '
     + 'House import requires the model, format and API in the manifest. First stable with house import: '
-    + c.firstStableWithHouseImport + '; later versions must be checked for compatibility.\n';
+    + c.firstStableWithHouseImport + '. Compatibility rules and limits: [CORE-HOST](https://github.com/Matysh/houseplan-card/blob/'
+    + manifest.sourceSha + '/docs/CORE-HOST.md#compatibility-and-versioning).\n';
 }

@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "synthetic": true,
+  "clock": "2026-11-27T00:00:00+00:00",
+  "generator": "tools/generate_core_compatibility_fixtures.py",
+  "archives": [
+    {
+      "path": "v1.86.0/plan-transfer.zip",
+      "producerTag": "v1.86.0",
+      "producerCommit": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
+      "sha256": "1cb84ae46ea87bf6f0d83d3620cadd98a6f2c0b723cf2335d872e72ac6aece3c"
+    },
+    {
+      "path": "v1.86.0/full-backup.zip",
+      "producerTag": "v1.86.0",
+      "producerCommit": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
+      "sha256": "334d3c6a77003778baa258f0d8158588a86c678bbce53551af8d57d3e9d274b7"
+    },
+    {
+      "path": "v1.86.1/plan-transfer.zip",
+      "producerTag": "v1.86.1",
+      "producerCommit": "f175b7e00d8535149c61c2d28a922620a3a70928",
+      "sha256": "95f7542f64f939fb8c39a774bad55c03cddfb25fbd8dfaf9d089836108d48471"
+    },
+    {
+      "path": "v1.86.1/full-backup.zip",
+      "producerTag": "v1.86.1",
+      "producerCommit": "f175b7e00d8535149c61c2d28a922620a3a70928",
+      "sha256": "fe4d882c8ac3ef8c90dc2e63114b135e445a3f33ff30a4c8f763ee062b34617b"
+    }
+  ]
+}

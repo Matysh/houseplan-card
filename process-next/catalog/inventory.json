@@ -43,6 +43,14 @@
   },
   "entries": [
     {
+      "path": "tests_backend/test_core_archive_compatibility.py",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 historical native producer archive conformance and corruption control; addressed core packaging contract, also executed by installed stable wheel/sdist smoke.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
       "path": "test/ifc-convert.test.mjs",
       "kind": "converter",
       "decision": "addressed",

@@ -64,6 +64,13 @@ def test_distribution_stages_the_canonical_tree_and_real_version(tmp_path):
     assert version == metadata["version"] == str(builder.Version(metadata["product_version"]))
     assert "requires-python = \">=3.14\"" in (tmp_path / "pyproject.toml").read_text()
     assert (tmp_path / "LICENSE").read_bytes() == (ROOT / "LICENSE").read_bytes()
+    # Frozen producer bytes are required by default installed conformance,
+    # and must survive both the wheel and sdist staging paths.
+    fixtures = ROOT / "demo/fixtures/core-compatibility"
+    assert (package / "compatibility_fixtures/provenance.json").read_bytes() == (
+        fixtures / "provenance.json").read_bytes()
+    for archive in fixtures.glob("*/*.zip"):
+        assert (package / "compatibility_fixtures" / archive.relative_to(fixtures)).read_bytes() == archive.read_bytes()
 
 
 def test_distribution_imports_all_modules_without_ha_or_external_effects(tmp_path):

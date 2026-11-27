@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -18,14 +19,23 @@ function fixture(t) {
     return { name: name.split('/').at(-1), bytes: Buffer.byteLength(bytes), sha256:digest(bytes) };
   };
   const zip = 'artifacts/houseplan.zip', standalone = 'artifacts/houseplan-card.js';
-  const hacs = write(zip, 'unchanged HACS');
+  const zipBytes = files => execFileSync('python3', ['-c',
+    'import io,json,sys,zipfile; b=io.BytesIO(); z=zipfile.ZipFile(b,"w"); [z.writestr(n,v) for n,v in json.load(sys.stdin).items()]; z.close(); sys.stdout.buffer.write(b.getvalue())'],
+    { input: JSON.stringify(files) });
+  const hacsFiles = { 'manifest.json': JSON.stringify({version}),
+    'frontend/houseplan-assets.json': JSON.stringify({fingerprint:'f'.repeat(64)}) };
+  const wheelFiles = { 'houseplan_core/distribution.json': JSON.stringify({version,product_version:version}),
+    ['houseplan_core-'+version+'.dist-info/METADATA']: 'Name: houseplan-core\nVersion: '+version+'\n' };
+  const editorFiles = { 'houseplan-standalone-manifest.json': JSON.stringify({
+    version, product:'houseplan-standalone',schema:1,source:{commit:sha,fingerprint:'f'.repeat(64),dirty:false}}) };
+  const hacs = write(zip, zipBytes(hacsFiles));
   const packageResult = { version, sourceSha:sha, zip, standalone, artifactDigest:hacs.sha256,
     standaloneDigest:write(standalone, 'checked HACS entry').sha256 };
   const manifest = { schema:1, version, tag, sourceSha:sha, sourceFingerprint:'f'.repeat(64),
     compatibility:{ modelVersion:11, spaceExportVersion:3, houseExportVersion:4,
       houseRequiredApi:{house_transfer_api:1}, houseOptionalApi:{furniture_workstation_api:1},
       python:'>=3.14', firstStableWithHouseImport:'1.86.0' },
-    assets:[write(paths.outputs[0], 'checked wheel'), write(paths.outputs[1], 'checked zipped tree'), hacs] };
+    assets:[write(paths.outputs[0], zipBytes(wheelFiles)), write(paths.outputs[1], zipBytes(editorFiles)), hacs] };
   const candidate = { kind:'stable', sha, tag, membership:{schema:1, candidate:sha, base:null,
     issues:[{number:1465, commits:[sha]}]}, runner:{} };
   const bind = () => {
@@ -34,6 +44,15 @@ function fixture(t) {
   };
   bind();
   return { root, paths, manifest, candidate, packageResult, write, bind,
+    hacsBytes:zipBytes(hacsFiles),
+    replaceArtifact(index, member, change) {
+      const files = [wheelFiles,editorFiles,hacsFiles][index];
+      files[member] = change(files[member]);
+      const path = index === 2 ? zip : paths.outputs[index];
+      manifest.assets[index] = write(path,zipBytes(files));
+      if(index===2)packageResult.artifactDigest=manifest.assets[index].sha256;
+      bind();
+    },
     read: () => siteReleasePublication(root,candidate,packageResult) };
 }
 
@@ -45,7 +64,7 @@ test('ordinary stable publishes its exact checked pair and metadata without chan
   const published = appendSiteReleaseNotes(body,f.manifest);
   assert.ok(published.startsWith(body + '\n\n' + SITE_RELEASE_NOTES));
   assert.match(published, /house ZIP: 4/);
-  assert.match(published, /later versions must be checked/);
+  assert.match(published, new RegExp('/blob/'+sha+'/docs/CORE-HOST.md#compatibility-and-versioning'));
   const publish = () => preparePublicationArtifacts(f);
   const original = readFileSync(join(f.root,f.packageResult.zip));
   const a = publish(), b = publish();
@@ -68,7 +87,7 @@ test('a wrong version, source, hash, HACS stamp, or missing output cannot publis
   f.manifest.sourceSha = sha; f.bind();
   f.write(f.packageResult.zip, 'different HACS');
   assert.throws(f.read,/verified bytes: houseplan.zip/);
-  f.write(f.packageResult.zip, 'unchanged HACS');
+  f.write(f.packageResult.zip, f.hacsBytes);
   f.write(f.paths.outputs[0], 'different wheel');
   assert.throws(f.read,/missing or changed/);
   rmSync(join(f.root,f.paths.outputs[1]));
@@ -83,4 +102,27 @@ test('beta and hotfix do not consume a site pair', t => {
     const names = preparePublicationArtifacts(f).map(asset=>asset.name);
     assert.deepEqual(names,['houseplan.zip','houseplan-card.js','RELEASE-MEMBERSHIP.json','SHA256SUMS']);
   }
+});
+
+test('publish rereads internal wheel, HA and standalone versions even with refreshed hashes', t => {
+  const cases = [
+    [0,'houseplan_core/distribution.json', raw=>JSON.stringify({...JSON.parse(raw),product_version:'1.86.1'})],
+    [0,'houseplan_core/distribution.json', raw=>JSON.stringify({...JSON.parse(raw),version:'1.86.1'})],
+    [0,'houseplan_core-'+version+'.dist-info/METADATA',raw=>raw.replace('Version: '+version,'Version: 1.86.1')],
+    [2,'manifest.json',()=>JSON.stringify({version:'1.86.1'})],
+    [1,'houseplan-standalone-manifest.json',raw=>JSON.stringify({...JSON.parse(raw),version:'1.86.1'})],
+  ];
+  for(const [index,member,change] of cases) {
+    const f=fixture(t);
+    f.replaceArtifact(index,member,change);
+    assert.throws(f.read,/versions must match/);
+  }
+});
+
+test('publish refuses a standalone build identity inconsistent with its release receipt', t => {
+  const f=fixture(t);
+  f.replaceArtifact(1,'houseplan-standalone-manifest.json',raw=>{
+    const value=JSON.parse(raw);value.source.commit='b'.repeat(40);return JSON.stringify(value);
+  });
+  assert.throws(f.read,/source identity must match/);
 });

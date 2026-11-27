@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -900,10 +901,19 @@ test('published stable completes only missing bookkeeping and Telegram on retry,
     await writeFile(join(root, path), bytes);
     return { name:path.split('/').at(-1), bytes:Buffer.byteLength(bytes), sha256:digest(bytes) };
   };
-  const hacs = await evidenceAsset('houseplan.zip', 'checked HACS archive');
+  const zipBytes = files => execFileSync('python3', ['-c',
+    'import io,json,sys,zipfile; b=io.BytesIO(); z=zipfile.ZipFile(b,"w"); [z.writestr(n,v) for n,v in json.load(sys.stdin).items()]; z.close(); sys.stdout.buffer.write(b.getvalue())'],
+    { input: JSON.stringify(files) });
+  const hacs = await evidenceAsset('houseplan.zip', zipBytes({
+    'manifest.json': JSON.stringify({version:'1.0.0'}),
+    'frontend/houseplan-assets.json': JSON.stringify({fingerprint:D}) }));
   const js = await evidenceAsset('houseplan-card.js', 'checked HACS entry');
-  const wheel = await evidenceAsset(site.outputs[0], 'checked wheel');
-  const editor = await evidenceAsset(site.outputs[1], 'checked archive');
+  const wheel = await evidenceAsset(site.outputs[0], zipBytes({
+    'houseplan_core/distribution.json': JSON.stringify({version:'1.0.0',product_version:'1.0.0'}),
+    'houseplan_core-1.0.0.dist-info/METADATA': 'Name: houseplan-core\nVersion: 1.0.0\n' }));
+  const editor = await evidenceAsset(site.outputs[1], zipBytes({
+    'houseplan-standalone-manifest.json': JSON.stringify({version:'1.0.0',product:'houseplan-standalone',
+      schema:1,source:{commit:B,fingerprint:D,dirty:false}}) }));
   await writeFile(join(root, 'package.json'), JSON.stringify({ version:'1.0.0', sourceSha:B, zip:hacs.name,
     artifactDigest:hacs.sha256, standalone:js.name, standaloneDigest:js.sha256 }));
   await writeFile(join(root, site.outputs[2]), JSON.stringify({ schema:1, version:'1.0.0', tag:'v1.0.0',

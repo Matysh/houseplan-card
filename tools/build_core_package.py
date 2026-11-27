@@ -36,6 +36,7 @@ def stage(destination: Path) -> tuple[str, dict[str, str]]:
     (package / "distribution.json").write_text(json.dumps({
         "product_version": product_version, "version": version, "sources_sha256": manifest,
     }, indent=2) + "\n")
+    shutil.copytree(ROOT / "demo/fixtures/core-compatibility", package / "compatibility_fixtures")
     shutil.copyfile(ROOT / "LICENSE", destination / "LICENSE")
     shutil.copyfile(ROOT / "docs/CORE-HOST.md", destination / "README.md")
     (destination / "pyproject.toml").write_text(f'''[build-system]
@@ -59,7 +60,7 @@ Repository = "https://github.com/Matysh/houseplan-card"
 where = ["src"]
 
 [tool.setuptools.package-data]
-houseplan_core = ["distribution.json"]
+houseplan_core = ["distribution.json", "compatibility_fixtures/provenance.json", "compatibility_fixtures/*/*.zip"]
 ''')
     return version, manifest
 

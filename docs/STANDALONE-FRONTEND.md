@@ -12,6 +12,21 @@ retire only hash-proven generated files from their own preceding manifest;
 unowned/linked output is refused. Keep all files named by the standalone
 manifest together, not just the facade JS.
 
+## Compatibility rule
+
+Keep the running standalone frontend and wheel/core adapter pinned to the same
+release and source commit; the exact version/fingerprint/API handshake remains
+required. HA and a site can update independently when exchanging archives, but
+the destination must support the actual container, export, model and required
+APIs in that file. Same-major stable readers retain previously supported data
+through explicit readers/migrations; breaking that public support requires a
+product major release. There is no older-reader or arbitrary future-model
+guarantee. The wheel version remains the product version (PEP 440 normalized).
+
+See the complete [core compatibility contract](CORE-HOST.md#compatibility-and-versioning),
+including the model/archive table, tested 1.86.0/1.86.1 producer fixtures and
+separate full-backup authority boundary.
+
 ## Embedding API
 
 Provide a dedicated document and a real `PlanHost` implementation. A PlanHost
@@ -193,8 +208,9 @@ Keep one pinned version for both halves. The JSON records accepted plan model
 and export versions. To import a whole-house file, the destination importer
 must support its exact model and archive format, and every required API in
 the document (including additional API requirements of individual files).
-The first stable with the importer was 1.86.0; this is not a promise that all
-later versions accept the same formats. Beta and hotfix do not promise these
+The first stable with the importer was 1.86.0. Historical reading follows the
+[core compatibility contract](CORE-HOST.md#compatibility-and-versioning);
+this does not promise that an older reader accepts a newer model or API. Beta and hotfix do not promise these
 assets. The website pins ordinary stable, not a floating release URL.
 
 ### Verify an external test host
