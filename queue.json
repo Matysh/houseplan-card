@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27822,
+  "revision": 27823,
   "nextTicket": 754,
   "nextFence": 754,
   "tasks": {
@@ -6896,6 +6896,14 @@
         "to": "S5-ready",
         "confirmed": true
       }
+    },
+    "1609": {
+      "requestId": "spec:1609:4135e46b89cef1d92acf27357d6fc5acb6a2a98264d57e85ad34dab225dfbf23",
+      "contextDigest": "4135e46b89cef1d92acf27357d6fc5acb6a2a98264d57e85ad34dab225dfbf23",
+      "base": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
+      "round": 1,
+      "status": "pending",
+      "updatedAt": 1795764329947
     }
   },
   "reviewPublications": {
@@ -6924,6 +6932,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "spec:1609:spec:1609:4135e46b89cef1d92acf27357d6fc5acb6a2a98264d57e85ad34dab225dfbf23": {
+      "issue": 1609,
+      "kind": "spec",
+      "requestId": "spec:1609:4135e46b89cef1d92acf27357d6fc5acb6a2a98264d57e85ad34dab225dfbf23",
+      "materialSha": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
+      "expectedBase": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
+      "patchId": "4135e46b89cef1d92acf27357d6fc5acb6a2a98264d57e85ad34dab225dfbf23",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-27T07:25:29.947Z"
+      }
     }
   },
   "waiting": [],
@@ -6948,6 +6969,10 @@
     "owner-stopped-beta3-return-1479-586f70394": {
       "digest": "c36770e68c29921baed6d54c0ba2bccae1a3f013204d12f41ba0cea3afa843de",
       "issue": 1479
+    },
+    "github:45958290306:1:label:spec-request": {
+      "digest": "0f9de38ec09a566cc017a8d6d4b8f72cc1fbeeae60e5c63ced9a19d3bdc73a5e",
+      "issue": 1609
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
