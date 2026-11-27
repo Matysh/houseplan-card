@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29711,
+  "revision": 29712,
   "nextTicket": 797,
   "nextFence": 797,
   "tasks": {
@@ -3660,44 +3660,6 @@
         "sourceSha": "3aa45b00ca8755c1a515fc17e29f2eeaf026aff8"
       }
     },
-    "1537": {
-      "issue": 1537,
-      "branch": "codex/1537-vertical-outline-ends",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "b76fbfac8794d97f4dffabecaf1c19a6bdc3f861",
-      "mergedSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5",
-      "mergedAt": 1795443259829,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1537:1:04d7e1eeec682a86d7929a54de8076d2ed8a3405:b76fbfac8794d97f4dffabecaf1c19a6bdc3f861",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 18
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "c5f6bd491a81aa7febcf48f395d6272f9c6754b5"
-      }
-    },
     "1538": {
       "issue": 1538,
       "branch": "codex/1538-iso-device-presentation",
@@ -5641,10 +5603,20 @@
       "removedToRelease": false,
       "reviewRequest": "review:1592:3:c5ec914f9474a83d5ccf9bb851df15ed9127dbd4:2043bd45e892b725a6100876b595502de34a7a8b",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
