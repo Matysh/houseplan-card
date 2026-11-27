@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 29259,
+  "revision": 29260,
   "nextTicket": 784,
-  "nextFence": 782,
+  "nextFence": 783,
   "tasks": {
     "1001": {
       "issue": 1001,
@@ -5916,7 +5916,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 779,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795795986726,
       "reviewEntry": 4,
@@ -7192,10 +7192,19 @@
     }
   },
   "waiting": [
-    1598,
     1613
   ],
-  "active": null,
+  "active": {
+    "issue": 1598,
+    "worker": "github-coordinator",
+    "token": "782:github:46055385711:1:tick:2:admit",
+    "fence": 782,
+    "materialSha": "446a5d9c83fbc100fb1b76009289e2547487a6ee",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795806951668,
+    "expiresAt": 1795807251668
+  },
   "events": {
     "ready:1598:95baaa6dad232e52b30c4e181506049324c8ef25": {
       "digest": "f612b2fe91c414ea4de775ae0fbe4943352bdd317ef80a1fa4c3ce0ed930c15b",
@@ -7609,6 +7618,29 @@
         "layer": "infra",
         "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32",
         "delivered": true
+      }
+    },
+    "github:46055385711:1:tick:2:admit": {
+      "digest": "2a63a57ff4c05cef68587cd3e4b48dbb8e896e64511418b3138f0354624dc4e5",
+      "issue": 1598,
+      "message": {
+        "kind": "admitted",
+        "issue": 1598,
+        "at": 1795806951668,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "446a5d9c83fbc100fb1b76009289e2547487a6ee",
+        "phase": "sync",
+        "evidence": {
+          "id": "20261127T114809227-2427aab3",
+          "name": "Тесты для задачи #1598 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T114809227-2427aab3/report.json",
+          "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
+          "status": "passed",
+          "finishedAt": "2026-11-27T11:48:11.524Z",
+          "failures": []
+        }
       }
     }
   },
