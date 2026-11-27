@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28494,
+  "revision": 28495,
   "nextTicket": 776,
   "nextFence": 770,
   "tasks": {
@@ -7539,14 +7539,6 @@
     "patchId": "818c8853959c05cf32899ac9cbb786021a6d4e2d"
   },
   "events": {
-    "ready:1600:ce0c6b6f22a55f7ed8c3dd0056ca96e9899eb33a": {
-      "digest": "6d6a39d11be61b16e7132d0f1dfe62e204ca8551683c43c40edb2bb4667e611c",
-      "issue": 1600
-    },
-    "finish:73223ac7-679a-4b00-9077-09bd9b987d8f": {
-      "digest": "8d6d4007ade359342733705e7ce6529d1dc1a5178bd4180e2fd61329b06bda4c",
-      "issue": 1608
-    },
     "finish:9563ff37-5581-40d8-9fa2-79608ca604e5": {
       "digest": "0fe4977ca3218128469d7626e24b975a93e0423bde7d498cc674b33bfe61aa68",
       "issue": 1608
@@ -8377,6 +8369,10 @@
     },
     "github:46011824017:1:completions:message:fefb7ccea40641ff2c26164f3af7a2cadedd808f0442fea9bfc1af901f4321f8": {
       "digest": "bbe5915b367288b8e815c52d55d2e54cb737a00184faa064ac72dc4ed9c2dad8",
+      "issue": 1603
+    },
+    "github:46011824017:1:completions:message:e7715f9333d75663df998598167e84b659fc271dee7d5ee8c98961afe728aacf": {
+      "digest": "83e2549c9962377ecdc345b493b5de0c75bb64d58b2f8200ad72cda0955c305f",
       "issue": 1603
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -9233,7 +9229,8 @@
         "entry": 2,
         "track": "show",
         "layer": "product",
-        "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2"
+        "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2",
+        "delivered": true
       }
     }
   },
