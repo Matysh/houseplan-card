@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28903,
+  "revision": 28904,
   "nextTicket": 783,
   "nextFence": 778,
   "tasks": {
@@ -6622,7 +6622,10 @@
         "entry": 1,
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
         "eventId": "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return:return:1611"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1795798648706,
+      "automationDetail": "Queue remained busy; retry the same event ID"
     },
     "1614": {
       "issue": 1614,
@@ -8030,6 +8033,10 @@
     },
     "finish:75f60287-0c33-4bb0-821c-dfd30867e1c6": {
       "digest": "97b2630c955a275b6b1ce51551047ad88ec506720c7b2173ed73b667dcc27346",
+      "issue": 1611
+    },
+    "finish:11b1b44c-9ae2-42c3-989c-e097c638aade:finish:1:automation-pending": {
+      "digest": "db72c830f148a059ae6dea5fbd52d47ef42df1223be40e6ee82a355a60ff5214",
       "issue": 1611
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
