@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28321,
+  "revision": 28322,
   "nextTicket": 772,
   "nextFence": 767,
   "tasks": {
@@ -7436,10 +7436,6 @@
     "reviewRequest": "review:1598:2:f90c6b3bf362de031cc4c7aa133966ce1397c477:0a917f294e0393c317f4a4fdeec9dc4640bb0695"
   },
   "events": {
-    "finish:9b38d4fe-2f32-4267-9a91-28bddf978b17:finish:3:return": {
-      "digest": "168f7c6ef6baafc3db34bb4b2d71b0c3949c1b3072c46d6d1b7f043721a3d4a5",
-      "issue": 1609
-    },
     "finish:c7868b5e-45a0-43e0-986d-46d60f7bd7ae:finish:2:synchronized": {
       "digest": "a8bb78015e0ddec5cbc6a350fa93ec3d0e2abdf0253f2601f0bdf5bccbe8b16e",
       "issue": 1609
@@ -8304,6 +8300,10 @@
       "digest": "0672153d27d800e397a4706dc8fd97520bc79a0cdce818d54647941d1efc9ced",
       "issue": 1598
     },
+    "dev-build:45993104380:1:webhook": {
+      "digest": "3b4d57dd650f8e40677ab9a9b630f78b67e0acff7cdd1db8e50934711bc58b9a",
+      "issue": 1598
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -9014,8 +9014,8 @@
     }
   },
   "devWebhook": {
-    "sourceSha": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
-    "status": "delivered",
-    "integrationTree": "6de7d4b31e1496e8a965f4df983f2ec4d1074c61"
+    "sourceSha": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
+    "status": "pending",
+    "integrationTree": "c3c11b3824075afdaf4c2ed7e77ad412d1acee65"
   }
 }
