@@ -81,8 +81,10 @@ its link on the device.
 ![House Plan on a tablet](docs/images/readme/tablet.webp)
 
 > Drawing and setting up the plan is easier on a computer: the editors are built
-> for a mouse and keyboard. Viewing and control work on anything. More in
-> [touch support](docs/TOUCH-SUPPORT.md).
+> for a mouse and keyboard. You can view the plan and control devices on a
+> touchscreen. For 3D view, the browser on your tablet, phone or other screen
+> must support **WebGL 2**. If WebGL 2 is unavailable, House Plan shows the 2D
+> plan. More in [touch support](docs/TOUCH-SUPPORT.md).
 
 <!-- docs-section: features -->
 
