@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28715,
+  "revision": 28716,
   "nextTicket": 778,
   "nextFence": 774,
   "tasks": {
@@ -6162,7 +6162,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1598-release-snapshot",
-      "materialSha": "95baaa6dad232e52b30c4e181506049324c8ef25",
+      "materialSha": "446a5d9c83fbc100fb1b76009289e2547487a6ee",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 773,
@@ -6170,7 +6170,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795780942836,
       "reviewEntry": 3,
-      "patchId": "f90c6b3bf362de031cc4c7aa133966ce1397c477",
+      "patchId": "dc156c84ce7c0847ad338204a8f65f08249445a3",
       "changedFiles": [
         ".gitignore",
         "AGENTS.md",
@@ -6260,6 +6260,7 @@
         "docs/CHANGELOG.ru.md",
         "docs/DEVELOPMENT.md",
         "docs/FURNITURE-VOLUME-LAB.md",
+        "docs/release-ledger/v1.86.1/1598.json",
         "process-next/AUTOMATION-PARITY.md",
         "process-next/lib/coordinator.mjs",
         "process-next/lib/review.mjs",
@@ -6267,11 +6268,13 @@
         "process-next/test/coordinator.test.mjs",
         "process-next/test/package.test.mjs",
         "process-next/test/review.test.mjs",
+        "process-next/test/task-selection.test.mjs",
         "scripts/bundle-policy.mjs",
         "scripts/bundle-sync.mjs",
         "test/bundle-policy.test.mjs",
         "test/bundle-sync.test.mjs",
-        "test/dev-build.test.mjs"
+        "test/dev-build.test.mjs",
+        "tests_backend/test_ha_build_identity.py"
       ],
       "notice": {
         "key": "2:review-findings",
@@ -7396,11 +7399,12 @@
     "worker": "finish",
     "token": "773:finish:869ad6ca-c151-4ed6-abd4-8e7db02dc9e8:finish:1:admit",
     "fence": 773,
-    "materialSha": "95baaa6dad232e52b30c4e181506049324c8ef25",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "446a5d9c83fbc100fb1b76009289e2547487a6ee",
+    "expectedBase": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+    "phase": "testing",
     "admittedAt": 1795795599910,
-    "expiresAt": 1795795899910
+    "expiresAt": 1795795910159,
+    "patchId": "dc156c84ce7c0847ad338204a8f65f08249445a3"
   },
   "events": {
     "finish:8199b101-c60f-4348-a965-0a33090b455e": {
@@ -8162,6 +8166,10 @@
     "finish:3aeb46a7-e3fe-4d18-85f5-13c80734601b:finish:2:return": {
       "digest": "bf5ebae65b2489da06e9559cb60ef2b7b5c12087a035342df888d815732516f9",
       "issue": 1595
+    },
+    "finish:869ad6ca-c151-4ed6-abd4-8e7db02dc9e8:finish:2:synchronized": {
+      "digest": "d2640abab0309ad249e6e9f43e0c1fff9c6e7f36868bd1c0a7e9976558a07ec7",
+      "issue": 1598
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
