@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1647,
+  "revision": 1648,
   "active": "v2.0.0-beta.4-20261128",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -328688,7 +328688,14 @@
           "status": "pending"
         }
       ],
-      "diagnostics": []
+      "diagnostics": [],
+      "shipReview": {
+        "sha": "d8d9ea51e050360760f09825e708d4029c2f87a8",
+        "requestId": "ship-review:cc294d910cf5cabe5613e483a4dbfa88c60cc0665b82d7e11487f26166e361b7",
+        "selectionDigest": "777924df3c48caccb4c75cb417afc5a65be884fd0cad4c1255db18184d71a7c2",
+        "status": "pending",
+        "inventoryComplete": true
+      }
     }
   },
   "published": {
@@ -335256,7 +335263,8 @@
     "issue-1593:size-recalculation:v1-85-2": "33031d80dba6a9f1cee5d87cd463b2d9ae14f5595eb9276e77c6069c87b9c1ff",
     "issue-1593:size-recalculation:v1-86-0": "2b961eb68aa4be1119fb8efde0b4862cd3a4077baed62187bd40f4ad374c774d",
     "beta-200-4-20261128-create": "280346f3861ebffd3b8ec2d7d25511c1fe93bf69ff3f27b86476df491d7cfeef",
-    "beta-200-4-20261128-prepared": "6570834abb1a37fdac12c872f420c86f4333a625c9439630db209b123beb85fa"
+    "beta-200-4-20261128-prepared": "6570834abb1a37fdac12c872f420c86f4333a625c9439630db209b123beb85fa",
+    "ship-review:prepare:cbbe77ac-010a-4cdb-a5a7-234ff59c244b": "03bf176ad552b99a8112fb8fad68880fdc9dac8c2c7a25de50c8955bd7a56b23"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -358049,6 +358057,267 @@
         "createdAt": "2026-11-27T21:50:07.019Z",
         "markdown": "Пакетное ревью ship перед v2.0.0-beta.3: новых непросмотренных изменений нет.\n\nЗадач ship в кандидате: 14; засчитано прежних принятых результатов: 14."
       }
+    },
+    "ship-review:cc294d910cf5cabe5613e483a4dbfa88c60cc0665b82d7e11487f26166e361b7": {
+      "packet": {
+        "schema": 1,
+        "candidateId": "v2.0.0-beta.4-20261128",
+        "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
+        "head": "d8d9ea51e050360760f09825e708d4029c2f87a8",
+        "version": "v2.0.0-beta.4",
+        "selectionDigest": "777924df3c48caccb4c75cb417afc5a65be884fd0cad4c1255db18184d71a7c2",
+        "requestId": "ship-review:cc294d910cf5cabe5613e483a4dbfa88c60cc0665b82d7e11487f26166e361b7",
+        "tasks": [
+          {
+            "issue": 1564,
+            "title": "[mutation-gate] отказ прогона по расписанию: 2026-11-25",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1564",
+            "body": "<!-- process-next-background:mutations:45583145938 -->\n<!-- process-next-background-cause:v1:00292a7b6db251afb0087731313366044736cc8aac3d0817bb220a20cc47a6bf -->\n\n## Фоновая проверка тестов — найдена проблема\n\n2026-11-25, часть 7/7, запуск 45583145938. Материал: `7e85eee9281283120d82f6fb9b9c12017136401d`.\n\nФоновая часть 7/7 мутационного набора по расписанию не прошёл: 2026-11-25, `dev` @ `7e85eee92812`.\nПрогон: https://github.com/Matysh/houseplan-card/actions/runs/45583145938\n\n| шард | результат |\n|---|---|\n| 7/7 | **красный** |\n\n## Свидетели без доказательства (1)\n\nЗаявленный тест не дал вердикт: такой исход не записывается в ledger и не переиспользуется.\n\n- шард 7/7 — чистая подготовка: python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity\n\nПричина отказа или незавершённого запуска: Фоновые мутации: часть 7/7: failed\n\n**Статусы продуктовых задач и выпусков не меняются.** Это отдельная диагностика чувствительности тестов; требуется разобрать указанный отказ. Остальные части выполняются в следующие ночи.",
+            "commits": [
+              "547cea142f3a4fbec5781ea346534ed763e85026",
+              "fa12cdeaa569df911954b4f3621515d645cba54d"
+            ],
+            "fingerprint": "5b27aeb96c0dac721031d914244d5be5ad227486eabb084f06fa628ddab0239c",
+            "track": "ship"
+          },
+          {
+            "issue": 1565,
+            "title": "Скрывать по таймеру уведомление об ограничении размера значков",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1565",
+            "body": "В режиме просмотра сообщение «Размер значков ограничен, чтобы сохранить привязки» остаётся видимым, пока действует ограничение размера. Оно появилось в рамках #1517.\n\n## Ожидаемое поведение\n\n- Показать уведомление при обнаружении ограничения и автоматически скрыть его по таймеру. Для длительности использовать обычное время показа уведомлений Houseplan.\n- При обновлении страницы показать уведомление снова, если ограничение по-прежнему действует.\n- Обычная перерисовка плана при том же ограничении не должна заново показывать скрытое уведомление или продлевать его показ.\n\nТаймер управляет только видимостью уведомления. Ограничение размеров и привязки устройств продолжают рассчитываться по правилам #1517.\n\n## Проверка\n\nОткрыть план с ограничением, дождаться исчезновения сообщения, затем обновить страницу. Сообщение должно появиться и снова автоматически скрыться. Если ограничение снято, при обновлении страницы сообщения быть не должно.",
+            "commits": [
+              "4aebd7d64bf688073a224e985402863948f667b6"
+            ],
+            "fingerprint": "9878f0a1d6fffde5c0d44287dabd67d859cfaba2dcba687d3e006b8676ae11af",
+            "track": "ship"
+          },
+          {
+            "issue": 1576,
+            "title": "WebGL 3D: убрать лишние диагонали под ступеньками лестницы",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1576",
+            "body": "### Проблема\nВ кадре `panel-stairs-isometric-dark` из галереи stable-аудита на dev `751db20d` у большой прямой лестницы видны лишние диагональные линии под ступеньками. На прежнем эталоне этих линий нет.\n\n### Диагностика\nНа той же синтетической сцене временно отключили только слой обводки прямой лестницы: диагонали исчезли, геометрия и заливка ступеней и боковин остались. Обводка извлекается из треугольной сетки лестницы (`updateStairs` → `faceInk`); у лестницы с углом 0° в ней обнаружено 18 наклонных сегментов, которых нет в физических рёбрах прямой лестницы.\n\n### Ожидаемый результат и проверка\n- Убрать технические диагонали на боковинах под ступеньками. Сохранить видимые рёбра самих ступеней и внешний контур лестницы.\n- Проверить `panel-stairs-isometric-dark` и ту же прямую лестницу при смене ракурса и приближения: диагонали не появляются, ступени читаются. Добавить проверку, что внутренние рёбра разбиения плоской боковины не попадают в обводку.\n- Убедиться, что обводка винтовой лестницы и плоский вид не пострадали. Приложить кадр «до/после»; новый эталон применять только после утверждения.",
+            "commits": [
+              "d1419a1c50a6c05de40065f2af66e72728ecf570"
+            ],
+            "fingerprint": "1ccdc7961912e63d1937d92958b755687a382fb3f705d6b39921a6fe5349b9ed",
+            "track": "ship"
+          },
+          {
+            "issue": 1581,
+            "title": "[mutation-gate] отказ прогона по расписанию: 2026-11-26",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1581",
+            "body": "<!-- process-next-background:mutations:45787202438 -->\n<!-- process-next-background-cause:v1:c8ce85f29c83814cfbdd9de315345aefa3c2ed2828a0ea2914a08d11f04095b0 -->\n\n## Фоновая проверка тестов — найдена проблема\n\n2026-11-26, часть 1/7, запуск 45787202438. Материал: `8efe705401730d83e9ffbfa4a6053fe2752ed90c`.\n\nФоновая часть 1/7 мутационного набора по расписанию не прошёл: 2026-11-26, `dev` @ `8efe70540173`.\nПрогон: https://github.com/Matysh/houseplan-card/actions/runs/45787202438\n\n| шард | результат |\n|---|---|\n| 1/7 | **красный** |\n\n## Сбежавшие мутанты (1)\n\nТест остался зелёным на сломанном коде — свидетель разучился краснеть. Воспроизведение:\n\n- `dialog-return-focus-ring-flashes-976` — `node scripts/mutation-gate.mjs --id=dialog-return-focus-ring-flashes-976`\n  guard: `node demo/smoke_ui_polish_976.mjs`\n\nПричина отказа или незавершённого запуска: Фоновые мутации: часть 1/7: failed\n\n**Статусы продуктовых задач и выпусков не меняются.** Это отдельная диагностика чувствительности тестов; требуется разобрать указанный отказ. Остальные части выполняются в следующие ночи.\n\n## Результат разбора\n\nПосле #1428 кнопка справки подсвечивает обычную рамку при навигации по Tab. Старая подмена снимала класс подавления внешнего контура. Для кнопки справки это больше не меняло вид, и проверка `outline-style` проходила.\n\nТест теперь сравнивает отрисовку кнопки до открытия справки и после возврата фокуса через Escape, затем проверяет подсветку обычной рамки при возврате через Shift+Tab. Подмена включает эту подсветку при автоматическом возврате фокуса. Изменения затрагивают тест и реестр мутаций.\n\nВ Ubuntu WSL старый прогон на `8efe70540173` пропустил мутацию (0 из 1). На исправлении чистый прогон прошёл, обновлённая подмена обнаружена (1 из 1).\n\n`node scripts/mutation-gate.mjs --execute-nightly --id=dialog-return-focus-ring-flashes-976`\n",
+            "commits": [
+              "55d6b21782f947114e40fcbfadcca1771a2869ed"
+            ],
+            "fingerprint": "9ff81507366e0f91c2cb668764e330ecec71f15ce3292ea783683b6219381c47",
+            "track": "ship"
+          },
+          {
+            "issue": 1584,
+            "title": "Исправить путь релизной записи #1001",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1584",
+            "body": "Сигналы автоматизаций из #1001 уже слиты в `dev` и имеют статус S8. Координатор ищет классификацию по базовой версии цикла (`v1.86.1`), а запись попала в каталог целевой версии (`v2.0.0`).\n\nПеренести неизменную запись `1001.json` в каталог `docs/release-ledger/v1.86.1`. После слияния координатор должен обработать исходную запись #1001 и назначить milestone 2.0.0. Правка касается только метаданных выпуска.",
+            "commits": [
+              "f909f3f291ce762864187623d77cb0f8bfaa42f4"
+            ],
+            "fingerprint": "cd440d6749e0f29e8dcfece5df3047b9d54e4744f4f4538d65f3acb1534d1f2f",
+            "track": "ship"
+          },
+          {
+            "issue": 1585,
+            "title": "Восстановить релизный учёт записей, разложенных по целевой версии 2.0.0",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1585",
+            "body": "Пакетное [код-ревью v2.0.0-beta.2](https://github.com/Matysh/houseplan-card/actions/runs/45837796740) нашло неблокирующую проблему релизного учёта. Координатор читает `docs/release-ledger/<cycle.baseStable>/<issue>.json`. В `docs/release-ledger/v2.0.0/` остались записи с `baseStable: v1.86.1`, поэтому их классификация может оставаться необработанной.\n\nПроверить записи и фактические milestone/статусы задач. Перенести записи этого цикла в `docs/release-ledger/v1.86.1/`, сохранив исходную классификацию и ручные назначения. Пример исправления отдельной записи — #1584. Проверить, что координатор считывает перенесённые записи. В памятке исполнителя указать, как брать каталог из `cycle.baseStable`.",
+            "commits": [
+              "ea3cfd012af67df72bab8a9ffadc86b2cd9c66af"
+            ],
+            "fingerprint": "5d1e83a0b1bc91345a1cc3b26b73a386b66a0f75ae19e4a9ae9d64af704c0f3c",
+            "track": "ship"
+          },
+          {
+            "issue": 1590,
+            "title": "Сводка смещает стартовое превью при загрузке площади на телефоне",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1590",
+            "body": "Найдено в реальном HA 2026.11.3 при проверке Matysh/houseplan-e2e#126 на `dev` 828dafd96. Внешний профиль показывает 3D под 45° и центрирует план с учётом сводки. Пока площадь комнат рассчитывается, в строке видна плашка ожидания. Её базовая линия меняет высоту сводки на 3 CSS px. Камера стартового WebP и живого кадра получает разные границы свободной области, и план чуть сдвигается при подмене кадра.\n\nУ ожидающей строки и строки с однострочным готовым значением должна быть одинаковая высота и базовая линия. Плашка ожидания сохраняет внешний вид. При одинаковой геометрии сводки стартовый WebP и живой кадр совпадают на телефоне и на настольном экране.",
+            "commits": [
+              "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7"
+            ],
+            "fingerprint": "56974f92c21eca781b2fc7c84bce9ca1bc735ef16e0d1504bb697c57aad09332",
+            "track": "ship"
+          },
+          {
+            "issue": 1591,
+            "title": "2.0.0: матрица устройств без WebGL2 для киосков и решение о резерве для объёмного вида",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1591",
+            "body": "## Согласованный объём\n\nПо решению владельца в русской и английской версиях README нужно указать, что для полноценного 3D-вида браузеру на планшете, телефоне и других экранах требуется WebGL 2. При недоступности WebGL 2 House Plan показывает плоский план.\n\nРешение о закрытии принято по текущей приблизительной оценке совместимости. Матрица устройств, дополнительное исследование и реализация отдельного резерва 2.5D сняты с задачи.\n\n<details>\n<summary>Исходное предложение из аудита</summary>\n\n## Наблюдение\n\nОбъёмный вид 2.0.0 требует WebGL2: `src/plan-3d-viewport.ts:38-39` бросает `Plan 3D requires WebGL2`, `docs/ISOMETRIC.md:21` фиксирует «GPU or runtime failure switches the card to interactive 2D». README продаёт киоск для планшета, телефона и телевизора (`README.md:68`). SVG-2.5D остался в коде как «prior implementation», но не как выбираемый режим. Долю устройств пользователей без WebGL2 (старые планшеты, браузеры телевизоров, iPad в Safari с отключённым WebGL) сейчас не знает никто — а именно на них стоят киоски.\n\nИз аудита 27.11 (`audit-2026-11-27/AUDIT.md`, §3.3, §8 п. 1).\n\n## Что нужно\n\n1. Проверить 2.0.0-beta на том наборе, что рекламирует README для киоска: планшет 3–5 лет (Android WebView/Chrome), Android TV / встроенный браузер телевизора, iPad в Safari, старый ноутбук с программным рендером. Записать, что на каждом из них получает пользователь: 3D, плоский план по fallback, пустой кадр, ошибка.\n2. Зафиксировать fallback как контракт: без WebGL2 карточка и киоск обязаны показывать рабочий плоский план с понятным сообщением в настройках экрана («объёмный вид недоступен на этом устройстве»), без пустого кадра и без бесконечного «Обновляем план».\n3. Принять решение владельца: остаётся ли SVG-2.5D выбираемым резервом хотя бы на один минорный выпуск для устройств без WebGL2, или резерв — только Flat. Записать решение в `docs/ISOMETRIC.md` и в пользовательский changelog 2.0.0.\n\n## Критерии приёмки\n\n- Таблица «устройство → что видит пользователь» в issue, минимум четыре класса устройств из README.\n- Smoke с эмуляцией отсутствия WebGL2 (`getContext('webgl2')` → null) проверяет: Flat-кадр отрисован, киоск-экран не пустой, сообщение показано, ошибок в консоли нет.\n- Решение по резерву записано в документации; пользовательский changelog 2.0.0 говорит, что требуется WebGL2 и что происходит без него.\n\n</details>",
+            "commits": [
+              "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31"
+            ],
+            "fingerprint": "160ac907c187fa719c07db88f7692f3de295b53f158fb54607a9700fa92bed30",
+            "track": "ship"
+          },
+          {
+            "issue": 1597,
+            "title": "Документы релиза: вернуть запись 1.83.1 в changelog, добавить three.js и Lit в THIRD_PARTY_NOTICES",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1597",
+            "body": "## Наблюдение\n\n1. Запись о hotfix 1.83.1 (31.10, регрессия создания комнаты #1166) есть на теге `v1.83.1`, но потеряна в `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` на `dev` и `main` при переключении обвязки 01.11. Отмечено аудитами 06.11 и 27.11, не восстановлено.\n2. `THIRD_PARTY_NOTICES.md` перечисляет Clarity, Tabler и MDI; three.js (`three` 0.187, MIT — новая зависимость 2.0) и Lit (BSD-3) в нём нет. Перед публикацией 2.0.0 stable и автономного ZIP (`houseplan-standalone-*.zip`, `houseplan_core-*.whl`) список обязан быть полным.\n\nИз аудита 27.11 (§3.4, §6.3, §8 п. 6).\n\n## Что нужно\n\n- Вернуть блок `v1.83.1 — 2026-10-31` в оба технических changelog в том виде, в каком он есть на теге `v1.83.1` (`git show v1.83.1:docs/CHANGELOG.md`).\n- Добавить в `THIRD_PARTY_NOTICES.md` three.js и Lit с версиями, лицензиями и ссылками; проверить `package.json` на прочие runtime-зависимости бандла, которых в файле нет.\n\n## Критерии приёмки\n\n- `grep -n \"1.83.1\" docs/CHANGELOG.md docs/CHANGELOG.ru.md` находит заголовок записи на `dev`.\n- `THIRD_PARTY_NOTICES.md` содержит все пакеты из runtime-зависимостей `package.json`, попадающие в бандл; проверка — список импортов `node_modules/*` в `dist/houseplan-assets/*.js` против файла.\n- Чистая документация: прогонов не требуется.",
+            "commits": [
+              "502258741f1753f27b35ee15c7264d196c2521f6"
+            ],
+            "fingerprint": "4c98a72238d815887beab1c186fe45e5d94cceed870af8733667c68bdc0b46e1",
+            "track": "ship"
+          },
+          {
+            "issue": 1599,
+            "title": "Бенчмарк-профиль для объёмного вида на WebGL вместо упавшего large-house-isometric-v1",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1599",
+            "body": "## Наблюдение\n\nПрофиль `demo/benchmark_large_house.mjs --profile=large-house-isometric-v1` на `dev` 2.0.0-beta.2 падает: `no rendered Iso geometry fingerprint` — контракт профиля ждёт SVG-очередь граней старой изометрии, которой больше нет. Профили `isometric-stage3-dense-v1` и `large-house-isometric-backdrop-v1` построены на той же проверке. В итоге скорость объёмного вида в релизном учёте не фиксируется: единственный источник — наблюдение владельца на живой инсталляции (реальное 3D быстрее старой изометрии на порядок по всем метрикам), и регресс в будущих выпусках автоматика не увидит.\n\nGolden и smoke уже переведены на готовый WebGL-кадр (#1570); бенчмарк — нет.\n\nИз аудита 27.11 (§3.3, §6.2, §8 п. 8).\n\n## Что нужно\n\n1. Перевести профиль на WebGL: готовность — первый представленный 3D-кадр (`plan-3d` canvas с реальной геометрией), а не fingerprint SVG-граней; контракт кандидата (`demo/performance/card-contract.mjs`) — объекты three.js (меши стен/проёмов/мебели/устройств), число draw calls, материалы.\n2. Метрики: первый устойчивый 3D-кадр, смена этажа в 3D, шаг зума/панорамы (с GPU-таймингом там, где он доступен в headless), обновление состояния (переключение света с fade), размер heap.\n3. Числа идут в `performance.json`/`measurement.json` как диагностические строки (не в блокирующий `primary`); сравнение «до/после» — по парному прогону из задачи про сравнимость замера.\n4. В headless без GPU профиль должен честно отчитываться «программный рендер» и не засчитываться как сравнимый с ноутбуком владельца.\n\n## Критерии приёмки\n\n- `npm run benchmark:large-house-isometric` на `dev` проходит и печатает 3D-метрики; упавшие SVG-ориентированные профили либо переведены, либо помечены `retire` в `process-next/catalog/inventory.json` с объяснением.\n- `metrics.md` беты содержит диагностический блок «Объёмный вид».\n- Контракт кандидата отклоняет Flat-fallback как «3D не отрисовано», а не засчитывает его.",
+            "commits": [
+              "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
+              "181caa9489490cce3d6a978fda10fe6752e0c259",
+              "2acc0c9b544f15b7af1e160acd100e71928ee2b8",
+              "75c35cadccf5f130e84c675729b39ffd6f54d9f7"
+            ],
+            "fingerprint": "d6393213bcc1759b058138a9df26dbd7cfae5be932e07d6b43fba4b0784ca453",
+            "track": "ship"
+          },
+          {
+            "issue": 1607,
+            "title": "Feature request: haptic feedback on marker tap (Companion App)",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1607",
+            "body": "### What problem would this solve?\n\nWhen a marker is tapped (toggle / run action), Houseplan does not send\nhaptic feedback, so the HA Companion App on Android does not vibrate.\nBuilt-in HA cards and Bubble Card do vibrate in the same app.\n\n\n\n### How do you imagine it working?\n\nSuggestion: fire the standard HA frontend \"haptic\" event right after a\nsuccessful toggle/run in src/device-toggle.ts, e.g.\n\n  window.dispatchEvent(new CustomEvent('haptic', { detail: 'light' }));\n\n(the same thing core HA does via forwardHaptic('light')). An option in\ndevice or plan settings to turn it off, or to choose the type\n(light / medium / selection), would be a nice bonus.\n\nVersion: 1.86.1, Android Companion App.",
+            "commits": [
+              "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd"
+            ],
+            "fingerprint": "eadcb7f4ceced91fa5640609cbd46e357a2394bb2308bd510bb2557f7b1757ce",
+            "track": "ship"
+          },
+          {
+            "issue": 1611,
+            "title": "Creating new space fails",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1611",
+            "body": "### House Plan version\n\nv1.86.1\n\n### Home Assistant version\n\n2026.9.2\n\n### What happened / what did you expect?\n\nProblem creating new space.  When trying to create new space with default settings except name, I get \"The opening must keep it's partition host\"when I save.\n\nTried optimizing House Plan plans. Failed. Diagnostic context:\n{\n  \"kind\": \"houseplan-optimize\",\n  \"stage\": \"before-dispatch\",\n  \"reason\": \"unknown\",\n  \"outcome\": \"prepare\",\n  \"versions\": {\n    \"card\": \"1.86.1\",\n    \"integration\": \"1.86.1\"\n  },\n  \"configRev\": 330,\n  \"layoutRev\": 28,\n  \"configFingerprint\": \"a5b8090d5dabea8c\",\n  \"layoutFingerprint\": \"a37457bdb7227d20\"\n}\n\n\n\n### Logs / browser console errors\n\n```text\n\n```\n\n### Diagnostics\n\nNot enough space to paste diagnostics here",
+            "commits": [
+              "849179780b8a5bf0898c0381aa1cb0c5383077a8",
+              "b4c609c71730ecc63e84ae6a6248ea6eb951f294"
+            ],
+            "fingerprint": "a6c74c78437833bf8826e97c794968d448c9144b9904bf4a86ff2c9a4db89424",
+            "track": "ship"
+          },
+          {
+            "issue": 1614,
+            "title": "В компактном меню шапки пропала акцентная рамка клавиатурного фокуса",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1614",
+            "body": "После #1608 в компактном меню действий шапки клавиатурный фокус больше не окрашивает рамку пункта. Прогон houseplan-e2e #132 воспроизводит это на стабильном Home Assistant, в том числе при повторе. [Выпавший сценарий #1428](https://github.com/Matysh/houseplan-e2e/actions/runs/46031289860/job/140615898520).\n\nУ общего компонента меню #1608 убрала окраску рамки одновременно при наведении и клавиатурном фокусе. Вернуть цвет обычной рамке сфокусированного пункта компактного меню шапки при навигации с клавиатуры. Толщина рамки остаётся 1 px. Наведение по-прежнему меняет только фон, включая меню устройств и декора.\n\nПроверка — пройти пункты компактного меню стрелками в светлой и тёмной теме через существующий сценарий #1428. Запустить полный E2E на итоговом dev для houseplan-e2e #132.\n",
+            "commits": [
+              "68b4268626b93e90825e34bb91842f5c730e9add"
+            ],
+            "fingerprint": "fbe113d74dd54951ca7660fb512603cac34a8c8c230b104fa1022589ec5a5558",
+            "track": "ship"
+          },
+          {
+            "issue": 1615,
+            "title": "S6: проверять реальное завершение процесса по таймауту после #1613",
+            "url": "https://github.com/Matysh/houseplan-card/issues/1615",
+            "body": "После слияния #1613 на чистом dev `2e90c90014` ломается `#434 current runner and individual browser steps retain finite independent bounds` из `test/smoke-exception-guard.test.mjs`: тест жёстко требует `timedOut = true; stop()`, тогда как таймер теперь вызывает общий `terminate()`, который запускает SIGTERM и эскалацию SIGKILL. На допредыдущем dev `b1b9454c72` тот же адресный тест проходит. Обнаружено в обязательных проверках #1612, к её работе с пылесосом не относится и блокирует текущее слияние.\n\nСохранить проверку времени для обычных и браузерных шагов. Заменить проверку текста вызова поведенческой: раннер по таймауту посылает SIGTERM, а если дочерний процесс его игнорирует, завершает его SIGKILL и возвращает timed-out. Раннер, продукт, эталоны и релизы не менять.",
+            "commits": [
+              "46ba17964dff6b655df64316d333383d0239dbef"
+            ],
+            "fingerprint": "cb36f693bc4aff4b3f001cdbc89ae4c4238a7cf4fd774290c34b17456758d064",
+            "track": "ship"
+          }
+        ],
+        "pending": [],
+        "reused": [
+          {
+            "issue": 1564,
+            "fingerprint": "5b27aeb96c0dac721031d914244d5be5ad227486eabb084f06fa628ddab0239c",
+            "requestId": "ship-review:5f5e7f01ce4292536ca7f9507e7a4f60c7b4122a13a9c3feb3d28910a90444f3",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45806191468"
+          },
+          {
+            "issue": 1565,
+            "fingerprint": "9878f0a1d6fffde5c0d44287dabd67d859cfaba2dcba687d3e006b8676ae11af",
+            "requestId": "ship-review:5f5e7f01ce4292536ca7f9507e7a4f60c7b4122a13a9c3feb3d28910a90444f3",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45806191468"
+          },
+          {
+            "issue": 1576,
+            "fingerprint": "1ccdc7961912e63d1937d92958b755687a382fb3f705d6b39921a6fe5349b9ed",
+            "requestId": "ship-review:5f5e7f01ce4292536ca7f9507e7a4f60c7b4122a13a9c3feb3d28910a90444f3",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45806191468"
+          },
+          {
+            "issue": 1581,
+            "fingerprint": "9ff81507366e0f91c2cb668764e330ecec71f15ce3292ea783683b6219381c47",
+            "requestId": "ship-review:f5446194570787793bdfb37c77bfc3ddffcacdeff83b2a840490b9da47a05300",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45837796740"
+          },
+          {
+            "issue": 1584,
+            "fingerprint": "cd440d6749e0f29e8dcfece5df3047b9d54e4744f4f4538d65f3acb1534d1f2f",
+            "requestId": "ship-review:f5446194570787793bdfb37c77bfc3ddffcacdeff83b2a840490b9da47a05300",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45837796740"
+          },
+          {
+            "issue": 1585,
+            "fingerprint": "5d1e83a0b1bc91345a1cc3b26b73a386b66a0f75ae19e4a9ae9d64af704c0f3c",
+            "requestId": "ship-review:be7db1eb28ce5c9bdf43a7b2fd2fbe69a6dd4db5f91045c3b8266d2173223c61",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46064744499"
+          },
+          {
+            "issue": 1590,
+            "fingerprint": "56974f92c21eca781b2fc7c84bce9ca1bc735ef16e0d1504bb697c57aad09332",
+            "requestId": "ship-review:be7db1eb28ce5c9bdf43a7b2fd2fbe69a6dd4db5f91045c3b8266d2173223c61",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46064744499"
+          },
+          {
+            "issue": 1591,
+            "fingerprint": "160ac907c187fa719c07db88f7692f3de295b53f158fb54607a9700fa92bed30",
+            "requestId": "ship-review:be7db1eb28ce5c9bdf43a7b2fd2fbe69a6dd4db5f91045c3b8266d2173223c61",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46064744499"
+          },
+          {
+            "issue": 1597,
+            "fingerprint": "4c98a72238d815887beab1c186fe45e5d94cceed870af8733667c68bdc0b46e1",
+            "requestId": "ship-review:be7db1eb28ce5c9bdf43a7b2fd2fbe69a6dd4db5f91045c3b8266d2173223c61",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46064744499"
+          },
+          {
+            "issue": 1599,
+            "fingerprint": "d6393213bcc1759b058138a9df26dbd7cfae5be932e07d6b43fba4b0784ca453",
+            "requestId": "ship-review:be7db1eb28ce5c9bdf43a7b2fd2fbe69a6dd4db5f91045c3b8266d2173223c61",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46064744499"
+          },
+          {
+            "issue": 1607,
+            "fingerprint": "eadcb7f4ceced91fa5640609cbd46e357a2394bb2308bd510bb2557f7b1757ce",
+            "requestId": "ship-review:be7db1eb28ce5c9bdf43a7b2fd2fbe69a6dd4db5f91045c3b8266d2173223c61",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46064744499"
+          },
+          {
+            "issue": 1611,
+            "fingerprint": "a6c74c78437833bf8826e97c794968d448c9144b9904bf4a86ff2c9a4db89424",
+            "requestId": "ship-review:be7db1eb28ce5c9bdf43a7b2fd2fbe69a6dd4db5f91045c3b8266d2173223c61",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46064744499"
+          },
+          {
+            "issue": 1614,
+            "fingerprint": "fbe113d74dd54951ca7660fb512603cac34a8c8c230b104fa1022589ec5a5558",
+            "requestId": "ship-review:be7db1eb28ce5c9bdf43a7b2fd2fbe69a6dd4db5f91045c3b8266d2173223c61",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46064744499"
+          },
+          {
+            "issue": 1615,
+            "fingerprint": "cb36f693bc4aff4b3f001cdbc89ae4c4238a7cf4fd774290c34b17456758d064",
+            "requestId": "ship-review:be7db1eb28ce5c9bdf43a7b2fd2fbe69a6dd4db5f91045c3b8266d2173223c61",
+            "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46064744499"
+          }
+        ],
+        "unclassified": []
+      },
+      "result": null
     }
   }
 }
