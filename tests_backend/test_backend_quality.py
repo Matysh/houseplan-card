@@ -134,6 +134,27 @@ def test_issue_1603_addressed_backend_tools_execute_only_selected_files(tmp_path
     assert "untouched.py" not in output
 
 
+@pytest.mark.parametrize(("module", "strict"), [("probe", False), ("core/constants", True)])
+def test_issue_1603_actual_mypy_strictness_stays_in_declared_modules(tmp_path, module, strict):
+    """An override must not turn a touched legacy sibling into global strict mode."""
+    target = tmp_path / "custom_components" / "houseplan" / (module + ".py")
+    target.parent.mkdir(parents=True)
+    target.write_text("def value():\n    return 1\n")
+    (tmp_path / "pyproject.toml").write_text((REPO / "pyproject.toml").read_text())
+    run = subprocess.run(
+        ["node", str(REPO / "process-next/catalog/backend-quality.mjs"),
+         target.relative_to(tmp_path).as_posix()],
+        cwd=tmp_path, capture_output=True, text=True, check=False,
+        env={**os.environ, "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", "")},
+    )
+    output = run.stdout + run.stderr
+    if strict:
+        assert run.returncode != 0 and "no-untyped-def" in output, output
+    else:
+        assert run.returncode == 0, output
+        assert "ruff + mypy" in output
+
+
 def test_issue_42_every_noqa_carries_a_reason():
     for path in sorted(BACKEND.rglob("*.py")):
         for index, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):

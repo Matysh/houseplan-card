@@ -7190,8 +7190,8 @@ const MUTANT_DEFINITIONS = [
       + 'the preceding segment (#234)',
     patches: [{
       file: 'src/wall-face-graph.ts',
-      find: '    const liveTail = active ?? previous ?? fallback;',
-      replace: '    const liveTail = previous ?? active ?? fallback;',
+      find: '    const liveTail: number = active ?? previous ?? fallback;',
+      replace: '    const liveTail: number = previous ?? active ?? fallback;',
     }],
   },
   {
@@ -10296,7 +10296,7 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/houseplan-editor-runtime.ts",
-    "find": "if (this._commitPhysicalGeometry(this.host._t('history.wall_thickness'), before, [], true,\n      { kind: 'thickness', edges: wallTargets.map(segment => ({ kind: 'wall', id: segment.id })),\n        ...(allRoom && d.roomId ? { rooms: [d.roomId] } : {}),\n        ...(!wallTargets.length && !allRoom && d.roomId ? { selection: {room:d.roomId,\n          a:d.a.map(n=>n/NORM_W),b:d.b.map(n=>n/NORM_W)} } : {}), cm: cmRaw }))",
+    "find": "if (this._commitPhysicalGeometry(this.host._t('history.wall_thickness'), before, [], true,\n      { kind: 'thickness', edges: wallTargets.map((segment: WallSegmentEntry) => ({ kind: 'wall', id: segment.id })),\n        ...(allRoom && d.roomId ? { rooms: [d.roomId] } : {}),\n        ...(!wallTargets.length && !allRoom && d.roomId ? { selection: {room:d.roomId,\n          a:d.a.map(n=>n/NORM_W),b:d.b.map(n=>n/NORM_W)} } : {}), cm: cmRaw }))",
     "replace": "if ((this._recordGeometry(this.host._t('history.wall_thickness'), before), true))"
   },
   {

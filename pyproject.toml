@@ -32,6 +32,8 @@ mypy_path = "."
 ignore_missing_imports = true
 follow_imports = "silent"
 no_site_packages = false
+# This global-only diagnostic was enabled by the old strict shortcut too.
+warn_redundant_casts = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -53,4 +55,17 @@ module = [
     "custom_components.houseplan.marker_copy",
     "custom_components.houseplan.opening_repair",
 ]
-strict = true
+# mypy 2.3.1 applies the strict shortcut globally even inside an override.
+# Spell out its per-module flags to preserve the declared opt-in scope.
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+extra_checks = true
+implicit_reexport = false
+strict_equality = true
+warn_return_any = true
+warn_unused_ignores = true
