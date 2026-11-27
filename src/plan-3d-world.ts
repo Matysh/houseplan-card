@@ -20,6 +20,7 @@ import { plan3dCladWallSides, plan3dWallInk, plan3dWallShell } from './plan-3d-w
 import { Plan3dTransparency } from './plan-3d-transparency';
 import { Plan3dMarkerLayer, type MarkerRaster, type Plan3dMarker } from './plan-3d-markers';
 import { markerContactChains } from './iso-marker-outline';
+import { PAINT_BARRIER_MAX_MS } from './visual-continuity';
 
 type Polygon = readonly (readonly PlanPoint[])[];
 type Paint = Readonly<{ color: string; opacity: number; lit?: boolean; shadeSides?: boolean; floorPaint?: boolean; front?: boolean }>;
@@ -298,6 +299,7 @@ export class Plan3dWorld {
   private backdropKey: string | undefined;
   private backdropTexture: Texture | undefined;
   private backdropReady: Promise<void> | undefined;
+  private endBackdropWait: (() => void) | undefined;
   private backdropFailed = false;
   private backdropLoading = false;
   private imageGeneration = 0;
@@ -685,6 +687,8 @@ export class Plan3dWorld {
     if (this.backdropKey === key) return;
     this.backdropKey = key;
     const generation = ++this.imageGeneration;
+    this.endBackdropWait?.();
+    this.endBackdropWait = undefined;
     this.replace(this.backdrop, []);
     this.backdropTexture?.dispose();
     this.backdropTexture = this.backdropReady = undefined;
@@ -698,20 +702,33 @@ export class Plan3dWorld {
     const image = this.document.createElement('img');
     image.src = input.url;
     this.backdropLoading = true;
-    this.backdropReady = image.decode().then(() => {
+    const deadline = new Promise<void>(resolve => {
+      const timer = setTimeout(resolve, PAINT_BARRIER_MAX_MS);
+      this.endBackdropWait = () => { clearTimeout(timer); resolve(); };
+    });
+    const load = image.decode().then(() => {
       if (this.imageGeneration !== generation) return;
       const texture = new Texture(image);
       texture.colorSpace = SRGBColorSpace;
       texture.needsUpdate = true;
       this.backdropTexture = texture;
+      this.backdropFailed = false;
       this.replace(this.backdrop, [this.planarInk(texture, input, input.angle, input.opacity, -3)]);
     }, () => {
       if (this.imageGeneration === generation) this.backdropFailed = true;
     }).finally(() => {
       if (this.imageGeneration === generation) {
-        this.backdropLoading = false;
-        this.changed?.();
+        const wasLoading = this.backdropLoading;
+        this.endBackdropWait?.();
+        if (!wasLoading) this.changed?.(); // A late image can still enter the current scene.
       }
+    });
+    this.backdropReady = Promise.race([load, deadline]).then(() => {
+      if (this.imageGeneration !== generation) return;
+      this.endBackdropWait = undefined;
+      this.backdropFailed = !this.backdropTexture;
+      this.backdropLoading = false;
+      this.changed?.();
     });
   }
 

@@ -223,6 +223,7 @@ test('#543: a request superseded inside prepareImage adopts no body, revision or
   const olderResult = adoptAuthoritativeGated(host, {
     cfgResp: { config: older, rev: 3 }, reason: 'config-reload', profile: 'reload',
     isCurrent: () => olderCurrent,
+    canAdoptWithoutBackdrop: () => assert.fail('a superseded response may not ask to waive its backdrop'),
   });
   await entered;
   olderCurrent = false;
@@ -327,6 +328,22 @@ test('gated adoption: the continuity candidate needs a complete steady frame', a
   assert.ok(!host.calls.some((c) => c.startsWith('continuity:')));
 });
 
+test('#1609 a covered 3D reload accepts its current response despite an unavailable backdrop', async () => {
+  const adoption = adoptedWith(cfg('Ground floor'), 3);
+  const host = hostStub(adoption, { assetReady: false });
+  const config = cfg('Recovered');
+  const layout = { device: { x: 1, y: 0 } };
+  const result = await adoptAuthoritativeGated(host, {
+    cfgResp: { config, rev: 4 }, layResp: { layout, rev: 2 }, reason: 'config-reload', profile: 'reload',
+    canAdoptWithoutBackdrop: () => true,
+  });
+  assert.equal(result.status, 'adopted');
+  assert.ok(host.calls.includes('note:asset-failed'));
+  assert.ok(!host.calls.includes('scheduleLoadRetry'));
+  assert.equal(adoption.config, config);
+  assert.deepEqual(adoption.layout, layout);
+});
+
 test('post-write profile ends at adoption: no reload tail, the caller keeps its own (§6.3, r3)', async () => {
   const adoption = adoptedWith(cfg('Ground floor'), 3);
   const host = hostStub(adoption);
@@ -350,6 +367,7 @@ test('post-write profile: a refused gate adopts nothing and reports asset-wait, 
   const result = await adoptAuthoritativeGated(host, {
     cfgResp: { config: cfg('Deleted on server'), rev: 4 }, layResp: { layout: { d: {} }, rev: 1 },
     reason: 'space-delete', profile: 'post-write',
+    canAdoptWithoutBackdrop: () => assert.fail('the opt-out belongs only to reloads'),
   });
   assert.deepEqual(result, { status: 'asset-wait' });
   assert.equal(adoption.config, body);

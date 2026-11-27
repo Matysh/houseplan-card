@@ -38,9 +38,9 @@ try {
       window.__mountResumeFixture = (new Function('return (' + source + ')'))();
     }, { source: mountResumeFixture.toString() });
   };
-  const mount = (deferGpu = false) => page.evaluate(
+  const mount = (deferGpu = false, data = fixture) => page.evaluate(
     ({ data, deferGpu }) => window.__mountResumeFixture({ data, deferGpu, Host: window.__ResumeHost }),
-    { data: fixture, deferGpu },
+    { data, deferGpu },
   );
   await open();
   await loadFixture();
@@ -398,8 +398,100 @@ try {
   await retry.click();
   await complete();
 
+  phase = 'discard with permanently missing protected backdrop';
+  const missingPlan = structuredClone(fixture);
+  const protectedBackdrop = '/api/houseplan/content/plans/_/resume-missing.svg';
+  for (const floor of missingPlan.config.spaces) floor.plan_url = protectedBackdrop;
+  const missingUrl = new RegExp(protectedBackdrop + '(?:\\?|$)');
+  const backdropRequests = [];
+  await page.route(missingUrl, async route => {
+    backdropRequests.push(new URL(route.request().url()).searchParams.get('authSig'));
+    await route.fulfill({ status: 404, contentType: 'text/plain', body: 'fixture image removed' });
+  });
+  await open();
+  await loadFixture();
+  await mount(false, missingPlan);
+  await wait(() => {
+    const card = window.__tabResume.card(), stage = card?.renderRoot.querySelector('.stage');
+    return card?._spatial.hasCurrentPaint() && stage?.inert && stage.hasAttribute('data-hp-3d-recovery-waiting')
+      && card.houseplanContinuityTrace().some(item => item.event === '3d-discard');
+  }).catch(async error => {
+    const witness = await page.evaluate(() => {
+      const card = window.__tabResume.card(), stage = card?.renderRoot.querySelector('.stage');
+      return { currentPaint: card?._spatial.hasCurrentPaint(), inert: stage?.inert, projection: card?._renderProjection,
+        readyAssets: card?._continuityAssetsReady(), floorPending: card?._floorPreparation?.pending,
+        events: card?.houseplanContinuityTrace().slice(-15).map(item => item.event) };
+    });
+    throw new Error('Expected a complete 3D copy behind the recovery mask: ' + JSON.stringify(witness)
+      + '; signed backdrop requests: ' + JSON.stringify(backdropRequests), { cause: error });
+  });
+  await wait(() => {
+    const card = window.__tabResume.card(), stage = card?.renderRoot.querySelector('.stage');
+    const wrap = stage?.querySelector('.zoomwrap');
+    return !!wrap && !stage.inert && !stage.hasAttribute('data-hp-3d-recovery-waiting')
+      && getComputedStyle(wrap).visibility === 'visible' && card._spatial.hasCurrentPaint()
+      && wrap.querySelector('.dev[data-hp-3d-native]');
+  }).catch(async error => {
+    const remaining = await page.evaluate(() => {
+      const card = window.__tabResume.card(), stage = card?.renderRoot.querySelector('.stage');
+      return { paint: card._spatial.hasCurrentPaint(), assetReady: card._continuityAssetsReady(),
+        sceneReady: card._spatial.port.recoverySceneReady?.(), recovery: card._spatial.recovery,
+        stageValid: card._continuityStageValid(), loadOk: card._loadOk, floorPending: card._floorPreparation?.pending,
+        floorPassive: card._floorPassive, booting: card._booting, bootFading: card._bootFading,
+        inert: stage?.inert, waiting: stage?.hasAttribute('data-hp-3d-recovery-waiting'),
+        stageClass: stage?.className, wrapVisibility: stage?.querySelector('.zoomwrap') && getComputedStyle(stage.querySelector('.zoomwrap')).visibility,
+        native: stage?.querySelectorAll('.dev[data-hp-3d-native]').length,
+        events: card.houseplanContinuityTrace().slice(-20).map(x => x.event) };
+    });
+    throw new Error('Backdrop wait did not release the current 3D frame: ' + JSON.stringify(remaining), { cause: error });
+  });
+  assert.ok(backdropRequests.length > 0 && backdropRequests.every(sig => sig === 'resume-fixture'),
+    'the missing image was requested with its signature');
+  assert.deepEqual(await page.evaluate(() => {
+    const card = window.__tabResume.card();
+    return [...card.houseplanContinuityTrace().filter(item => item.event === '3d-recovery-assets-timeout'
+      || item.event === '3d-recovery-complete').map(item => item.event), card._continuityAssetsReady()];
+  }), ['3d-recovery-assets-timeout', '3d-recovery-complete', false],
+  'publish the current scene on the optional-asset deadline without blessing the missing backdrop');
+
+  phase = 'discard with stalled backdrop, then late image';
+  const stalledPlan = structuredClone(fixture);
+  const stalledBackdrop = protectedBackdrop.replace('missing', 'stalled');
+  for (const floor of stalledPlan.config.spaces) floor.plan_url = stalledBackdrop;
+  let releaseImage, stalledRequests = 0;
+  const networkHold = new Promise(resolve => { releaseImage = resolve; });
+  await page.route(new RegExp(stalledBackdrop + '(?:\\?|$)'), async route => {
+    stalledRequests++;
+    await networkHold;
+    await route.fulfill({ contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="300" height="200" fill="#e0704c"/></svg>' });
+  });
+  try {
+    await open();
+    await loadFixture();
+    await mount(false, stalledPlan);
+    await wait(() => {
+      const card = window.__tabResume.card(), stage = card?.renderRoot.querySelector('.stage');
+      return card?._plan3dHost?.world.backdropLoading && stage?.inert;
+    });
+    await wait(() => {
+      const card = window.__tabResume.card(), stage = card?.renderRoot.querySelector('.stage');
+      return card?._spatial.hasCurrentPaint() && !stage?.inert && !card._plan3dHost?.world.backdropTexture
+        && stage?.querySelector('.dev[data-hp-3d-native]');
+    });
+    assert.ok(stalledRequests > 0, 'the 3D copy must not wait for a hung image forever');
+    releaseImage();
+    await wait(() => {
+      const card = window.__tabResume.card(), stage = card?.renderRoot.querySelector('.stage');
+      return card?._plan3dHost?.world.backdropTexture?.image?.complete === true
+        && card._spatial.hasCurrentPaint() && !stage?.inert;
+    });
+  } finally {
+    releaseImage();
+  }
+
   assert.equal(await reportPageErrors(), false);
-  console.log('OK: full panel resize, WebGL and Canvas2D recovery, delayed reconnect, floor and authority fences, discard and runtime retry');
+  console.log('OK: full panel resize, WebGL and Canvas2D recovery, delayed reconnect, floor and authority fences, discard, runtime retry and missing or stalled backdrop');
 } finally {
   clearTimeout(deadline);
   await browser.close();

@@ -4,7 +4,7 @@ import type { LiveRuntime } from './live-interaction-runtime';
 import type { PlanHost } from './plan-host';
 import type { Plan3dHost, Plan3dPresentation } from './plan-3d-host';
 import type { FrameRect } from './view-frame';
-import { RECOVERY_OVERLAY_DELAY_MS } from './visual-continuity';
+import { PAINT_BARRIER_MAX_MS, RECOVERY_OVERLAY_DELAY_MS } from './visual-continuity';
 import type { Plan3dOutputEvent } from './plan-3d-viewport';
 
 export type Plan3dRuntime = typeof import('./plan-3d-runtime');
@@ -20,6 +20,7 @@ interface CardPlan3dPort {
   frameScope(): string | undefined;
   continuityToken(): number;
   needsPaintProof(): boolean;
+  recoverySceneReady(): boolean;
   recoveryAssetsReady(): boolean;
   protectScene(hold: boolean): void;
   report(event: string, generation: number): void;
@@ -40,6 +41,7 @@ interface CardPlan3dPort {
 
 type PreviewWorld = Pick<Plan3dPresentation['world'], 'floorInk' | 'rooms' | 'panels'>;
 type PreviewSources = { [K in keyof PreviewWorld]-?: () => PreviewWorld[K] };
+type Recovery = { retained?: string; showStatus: boolean; timer?: number; assetsTimer?: number; assetsTimedOut?: boolean };
 
 /** Owns the optional renderer and its canvas. Imports of the renderer are
  * deferred until the card asks for an isometric View. */
@@ -57,7 +59,7 @@ export class CardPlan3d {
   private lastStructure?: string;
   private paintedStamp?: string;
   private generation = 0;
-  private recovery?: { retained?: string; showStatus: boolean; timer?: number };
+  private recovery?: Recovery;
   entering = false;
 
   constructor(private readonly port: CardPlan3dPort) {}
@@ -83,7 +85,7 @@ export class CardPlan3d {
     this.entering = false;
     if (!this.recovery) {
       this.generation++;
-      const recovery = this.recovery = { retained, showStatus: false } as NonNullable<CardPlan3d['recovery']>;
+      const recovery: Recovery = this.recovery = { retained, showStatus: false };
       recovery.timer = window.setTimeout(() => {
         if (this.recovery !== recovery) return;
         recovery.showStatus = true;
@@ -126,7 +128,32 @@ export class CardPlan3d {
     if (!recovery) return;
     this.entering = reveal && !this.holding && !this.port.reducedMotion();
     window.clearTimeout(recovery.timer);
+    window.clearTimeout(recovery.assetsTimer);
     this.recovery = undefined;
+  }
+
+  private revealRecovery(): boolean {
+    const recovery = this.recovery;
+    if (!recovery || !this.hasCurrentPaint()) return false;
+    if (!this.holding) {
+      if (!this.port.recoverySceneReady()) return false;
+      if (!this.port.recoveryAssetsReady()) {
+        if (!recovery.assetsTimedOut) {
+          // Only optional assets get a deadline, after the current geometry
+          // has actually been copied. Never reveal an old or blocked canvas.
+          recovery.assetsTimer ??= window.setTimeout(() => {
+            if (this.recovery !== recovery) return;
+            recovery.assetsTimedOut = true;
+            if (this.port.connected() && this.revealRecovery()) this.port.redraw();
+          }, PAINT_BARRIER_MAX_MS);
+          return false;
+        }
+        this.port.report('3d-recovery-assets-timeout', this.generation);
+      }
+    }
+    this.port.report('3d-recovery-complete', this.generation);
+    this.finishRecovery(true);
+    return true;
   }
 
   private prepareScope(): CardPlan3d['submitted'] {
@@ -276,11 +303,7 @@ export class CardPlan3d {
             this.lastScope = submitted.scope;
             this.lastStructure = submitted.structure;
             this.paintedStamp = stamp;
-            const reveal = this.recovery && (this.holding || this.port.recoveryAssetsReady());
-            if (reveal) {
-              this.port.report('3d-recovery-complete', this.generation);
-              this.finishRecovery(true);
-            }
+            const reveal = this.revealRecovery();
             if (reveal || frameChanged && this.port.needsPaintProof()
                 || floorChanged && this.port.switchPhase() === 'waiting') this.port.redraw();
           }

@@ -68,6 +68,14 @@ scene is prepared. A copy belonging to the current full submission—not the
 old canvas-ready flag—allows the scene to reappear. Context recovery stops
 after four seconds of visible time without a complete copy and uses the
 existing 2D fallback and explicit retry. Hidden tabs do not spend the budget.
+Once the current geometry has been copied and the floor is ready, optional
+assets have up to two seconds to arrive. An unavailable backdrop must not
+leave the stage inert: reveal the live plan without it while preserving
+the existing authority and frame checks. The missing asset does not count
+as loaded for the startup cache or the generic continuity controller.
+The texture loader also bounds the wait before publishing a copy without
+a stalled backdrop. A late decode can update the current scene normally
+but cannot install a texture into a superseded floor or renderer.
 
 After Chromium discards the document, the main 3D panel suppresses neutral
 preview paint once, only when its initial navigation URL proves that it was

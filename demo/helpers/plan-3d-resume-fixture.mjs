@@ -43,6 +43,9 @@ export function mountResumeFixture({ data, deferGpu, Host }) {
       if (request.type === 'houseplan/config/get') return { config: structuredClone(data.config), rev: 1,
         can_write: true, device_contact_api: 1, plan_graph_api: 1 };
       if (request.type === 'houseplan/layout/get') return { layout: structuredClone(data.layout), rev: 1 };
+      if (request.type === 'houseplan/content/sign') return {
+        urls: Object.fromEntries(request.paths.map(path => [path, path + '?authSig=resume-fixture'])),
+      };
       if (request.type === 'config/device_registry/list') return Object.values(data.devices);
       if (request.type === 'config/entity_registry/list') return Object.values(data.entities);
       return base.callWS(request);

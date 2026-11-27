@@ -526,6 +526,8 @@ export interface GatedAdoptionInput {
    * never reach structural adoption or the reload tail.
    */
   isCurrent?: () => boolean;
+  /** A covered 3D reload with no usable frame may adopt without optional ink. */
+  canAdoptWithoutBackdrop?: () => boolean;
 }
 
 export type GatedAdoptionResult =
@@ -571,8 +573,10 @@ export async function adoptAuthoritativeGated(
       if (!isCurrent()) return { status: 'superseded' };
       if (!assetReady) {
         host._continuity.note('asset-failed');
-        host._scheduleLoadRetry(true);
-        return { status: 'asset-wait' };
+        if (input.profile !== 'reload' || !input.canAdoptWithoutBackdrop?.()) {
+          host._scheduleLoadRetry(true);
+          return { status: 'asset-wait' };
+        }
       }
     }
   }

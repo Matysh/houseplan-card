@@ -824,9 +824,10 @@ export class HouseplanCard extends LitElement {
     frameScope: () => this._plan3dFrameScope(),
     continuityToken: () => this._continuity.token,
     needsPaintProof: () => !this._continuity.hasCompleteFrame || this._continuity.state !== 'steady',
-    recoveryAssetsReady: () => this._loadOk && this._continuityStageValid() && this._continuityAssetsReady()
+    recoverySceneReady: () => this._loadOk && this._model.length > 0 && this._continuityStageValid()
       && !this._floorPreparation?.pending && !this._floorPreparation?.failed && !this._floorPassive
       && (!this._usesScreenCamera || !this._screenReferencePending),
+    recoveryAssetsReady: () => this._continuityAssetsReady(),
     protectScene: (hold) => {
       this._stageEl?.setAttribute('inert', '');
       this._stageEl?.toggleAttribute('data-hp-3d-recovery-waiting', !hold);
@@ -6492,7 +6493,11 @@ export class HouseplanCard extends LitElement {
    * continuity candidate → adopt → profile tail; see `adoptAuthoritativeGated`.
    */
   public _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult> {
-    return adoptAuthoritativeGated(this as unknown as ConfigAdoptionHostPort, input);
+    return adoptAuthoritativeGated(this as unknown as ConfigAdoptionHostPort, { ...input,
+      canAdoptWithoutBackdrop: () => this.panelHost && this._mode === 'view'
+        && this._desiredProjection === 'iso' && this.planHost.environment.permissions.read
+        && this._spatial.recovering && !this._spatial.holding,
+    });
   }
 
   /** #314 via #500: undo only the exact failed candidate, then repaint. */
