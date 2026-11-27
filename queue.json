@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27967,
+  "revision": 27968,
   "nextTicket": 757,
   "nextFence": 757,
   "tasks": {
@@ -7446,6 +7446,10 @@
       "digest": "7c3e1caca38cd6241cbc35a356e225494415235054203c60a127dad273b7fcd4",
       "issue": 1609
     },
+    "github:45974662272:1:completions:message:4d5dc4cc2760c48a1960fa87c6936aed6346c921feab032057d488063ef9f121": {
+      "digest": "9daa01f08c80450c238f9053d1e1161e6190224930b12f03ca7372cb89fd0f3b",
+      "issue": 1609
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7605,7 +7609,8 @@
           "entry": 2,
           "detail": "Браузер: iso theme walls: failed",
           "eventId": "finish:c7868b5e-45a0-43e0-986d-46d60f7bd7ae:finish:3:return:return:1609"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:5a8d3b32-0204-42fd-bcfa-3a27ebb72312": {
