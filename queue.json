@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28751,
-  "nextTicket": 780,
+  "revision": 28752,
+  "nextTicket": 781,
   "nextFence": 775,
   "tasks": {
     "1001": {
@@ -6682,6 +6682,20 @@
         "requestId": "review:1609:6:891cf429603e71fe3c1c11a3510e06ddbe4536cb:0a917f294e0393c317f4a4fdeec9dc4640bb0695",
         "at": 1795790445293
       }
+    },
+    "1611": {
+      "issue": 1611,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1611-space-opening-host",
+      "materialSha": "49487d86b7765c1bea1557578bdf0636197f22c4",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 780,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795796266885,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7425,7 +7439,8 @@
     1603,
     1609,
     1595,
-    1598
+    1598,
+    1611
   ],
   "active": {
     "issue": 1600,
@@ -9229,6 +9244,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6": {
+      "digest": "a60a390e5a6b3612e6e9adf9f0b1f293b8f7c6e5336f40cc957528190fb88b33",
+      "issue": 1611,
+      "message": {
+        "kind": "queued",
+        "issue": 1611,
+        "at": 1795796266885,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "49487d86b7765c1bea1557578bdf0636197f22c4"
       }
     }
   },
