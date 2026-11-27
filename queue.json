@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28905,
+  "revision": 28906,
   "nextTicket": 783,
   "nextFence": 778,
   "tasks": {
@@ -6596,7 +6596,7 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1611-space-opening-host",
-      "materialSha": "5119213b3d222c6366fe012a6c2cf733df7b492b",
+      "materialSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 781,
@@ -6604,13 +6604,15 @@
       "status": "S6-in-progress",
       "readyAt": 1795797319903,
       "reviewEntry": 2,
-      "patchId": "ccb58a624a91e2085b2d373476ec3c9822597f2d",
+      "patchId": "8ff0e02798891675e14b4a155c14c57fe4dd7d75",
       "changedFiles": [
         "custom_components/houseplan/core/graph_write.py",
         "custom_components/houseplan/core/plan_commands.py",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.86.1/1611.json",
+        "scripts/config-compatibility-inventory.json",
+        "scripts/mutation-registry.mjs",
         "tests_backend/test_ha_plan_graph.py"
       ],
       "notice": {
@@ -6622,10 +6624,7 @@
         "entry": 1,
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
         "eventId": "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return:return:1611"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795798648706,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      }
     },
     "1614": {
       "issue": 1614,
@@ -7412,11 +7411,12 @@
     "worker": "finish",
     "token": "777:finish:a8893a8c-bcf9-484c-8254-fe2981aa6999:finish:2:admit",
     "fence": 777,
-    "materialSha": "5119213b3d222c6366fe012a6c2cf733df7b492b",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294",
+    "expectedBase": "30dda61b229ead40f167565af6215a5eef87ecd8",
+    "phase": "testing",
     "admittedAt": 1795798596398,
-    "expiresAt": 1795799004119
+    "expiresAt": 1795799016489,
+    "patchId": "8ff0e02798891675e14b4a155c14c57fe4dd7d75"
   },
   "events": {
     "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:1:synchronized": {
@@ -8041,6 +8041,10 @@
     },
     "finish:4dfeadc5-dad3-4e47-a38b-a9d6c73bf8c3": {
       "digest": "171574e814a78b03c3d90a5ff70efeb56849536c769ffce131725f5ef20a4111",
+      "issue": 1611
+    },
+    "finish:11b1b44c-9ae2-42c3-989c-e097c638aade:finish:2:synchronized": {
+      "digest": "32b803ce4b3ed669bcbe16e35c4e3f44652b0ddd4e87900e23b4d0b23352fcab",
       "issue": 1611
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
