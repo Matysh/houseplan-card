@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29497,
-  "nextTicket": 791,
+  "revision": 29498,
+  "nextTicket": 792,
   "nextFence": 791,
   "tasks": {
     "1001": {
@@ -6190,14 +6190,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1612-vacuum-3d-floor",
-      "materialSha": "8a1dfc00dad58c806e036a6beed179942bff67a4",
+      "materialSha": "6711c4f54424a3997133eb2a6eb36c027da0a1b1",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 788,
-      "queued": false,
+      "ticket": 791,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795808750442,
-      "reviewEntry": 2,
+      "readyAt": 1795810334064,
+      "reviewEntry": 3,
       "patchId": "4ba702dabedf7bc3d787ec6999537446aea7410c",
       "changedFiles": [
         "demo/smoke_vacuum_3d_floor.mjs",
@@ -6225,8 +6225,7 @@
         "entry": 2,
         "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed; Браузер: isometric live touch: cancelled; Браузер: lazy admin locale: cancelled; Браузер: modes: Подготовка не завершена успешно; Браузер: native card presentation: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan 3d card: Подготовка не завершена успешно; Браузер: plan 3d marker height: Подготовка не завершена успешно; Браузер: plan 3d resume: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: standalone room label layout: Подготовка не завершена успешно; Браузер: startup floor: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: vacuum: Подготовка не завершена успешно; Браузер: vacuum 3d floor: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
         "eventId": "finish:3acd3d46-c1e5-48c7-bcc9-fd08fa2a0ba2:finish:2:return:return:1612"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1613": {
       "issue": 1613,
@@ -7057,7 +7056,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1612
+  ],
   "active": null,
   "events": {
     "finish:92b94c16-2920-4443-9b6c-b4a08c69ff68:finish:2:synchronized": {
@@ -7279,6 +7280,19 @@
           "eventId": "finish:3acd3d46-c1e5-48c7-bcc9-fd08fa2a0ba2:finish:2:return:return:1612"
         },
         "delivered": true
+      }
+    },
+    "finish:0bca6a7c-4f7d-4a00-9a3a-b0f6532e2414": {
+      "digest": "5076767fb0d8e97849999c117c7a909fc15605c4c6ecccb6ad6fdada56b62be9",
+      "issue": 1612,
+      "message": {
+        "kind": "queued",
+        "issue": 1612,
+        "at": 1795810334064,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6711c4f54424a3997133eb2a6eb36c027da0a1b1"
       }
     }
   },
