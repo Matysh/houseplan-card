@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28824,
+  "revision": 28825,
   "nextTicket": 782,
   "nextFence": 777,
   "tasks": {
@@ -6638,7 +6638,7 @@
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1795797202591,
         "entry": 1,
@@ -7411,10 +7411,6 @@
     "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535"
   },
   "events": {
-    "finish:c63d2fc7-3e9f-49c4-ba19-45e3be4ce002": {
-      "digest": "d5336092178a793e11ccf859429db553cf21d6bbd4fa4aa9b2b634e54d0ef36b",
-      "issue": 1594
-    },
     "finish:8d0da68d-5cc0-4050-ac03-1b7e99ffe282": {
       "digest": "447df2ea57093e68ae94e150916b1bab0ebe74572ee3a37fa6a2e5ad16efc939",
       "issue": 1594
@@ -8242,6 +8238,10 @@
     "github:46035822142:1:label:spec-request": {
       "digest": "a4a1e1a5c5ffe776fb69a7b1e0ced1ca9aeae94d49fb81b176c7b157dd7aa8e9",
       "issue": 1613
+    },
+    "github:46035822142:1:completions:notice:b9ad0446518f7fdd7566ab2befe9a8d765c1baa9eec734cf0bdc6c5ee1ab610a": {
+      "digest": "1938a91de3477b9e491a28de0bba8b59708e892792db5522e702799b5d7dd8b8",
+      "issue": 1611
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
