@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "72b6c7fb859f4f76f2282c83884071743228190293ea9f8d73f9ff9110bea801",
+  "matchesSha256": "e111022edd2189c9deb8be922735962ddd52a70153b3a083971872dfdfb1435c",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -6459,6 +6459,36 @@
       "reason": "Retained versioned structural decode, explicit-write migration or old/current geometry boundary; the existing model-chain lifecycle and independent ownership proof remain required."
     },
     {
+      "id": "3e0aa9ef765d62fdeb05796d",
+      "path": "src/plan-graph.ts",
+      "line": 712,
+      "text": "const LEGACY_CONTACT_DENOMINATOR_LIMIT = 1n << 80n;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "#1595 bounds the exact contact search during versioned wall-model decoding. High-precision inputs retain the original exact check."
+    },
+    {
+      "id": "8f713aa4cb7939b383146fc5",
+      "path": "src/plan-graph.ts",
+      "line": 713,
+      "text": "const legacyContactBoundsSafe = (...points: ExactPoint[]): boolean =>",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "#1595 bounds the exact contact search during versioned wall-model decoding. High-precision inputs retain the original exact check."
+    },
+    {
+      "id": "61e2ff824fd5148bf7de7b94",
+      "path": "src/plan-graph.ts",
+      "line": 714,
+      "text": "points.every(point => point.every(coordinate => coordinate.d <= LEGACY_CONTACT_DENOMINATOR_LIMIT));",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "#1595 bounds the exact contact search during versioned wall-model decoding. High-precision inputs retain the original exact check."
+    },
+    {
       "id": "fd51ab3e59ac65aa0475f2a4",
       "path": "src/plan-graph.ts",
       "line": 788,
@@ -6477,6 +6507,26 @@
       "kind": "branch",
       "owner": "wall-model-chain",
       "reason": "Retained versioned structural decode, explicit-write migration or old/current geometry boundary; the existing model-chain lifecycle and independent ownership proof remain required."
+    },
+    {
+      "id": "f407a41d7d277f93e8ef708b",
+      "path": "src/plan-graph.ts",
+      "line": 842,
+      "text": "const boundedRadius = radius.d <= LEGACY_CONTACT_DENOMINATOR_LIMIT;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "#1595 bounds the exact contact search during versioned wall-model decoding. High-precision inputs retain the original exact check."
+    },
+    {
+      "id": "bf3825bdd9ad6a4d01d52f30",
+      "path": "src/plan-graph.ts",
+      "line": 844,
+      "text": "s.kind !== 'wall' || legacyContactBoundsSafe(s.a, s.b));",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "#1595 bounds the exact contact search during versioned wall-model decoding. High-precision inputs retain the original exact check."
     },
     {
       "id": "75fdd270fb492ff36122e0fb",
@@ -6539,6 +6589,16 @@
       "reason": "Retained versioned structural decode, explicit-write migration or old/current geometry boundary; the existing model-chain lifecycle and independent ownership proof remain required."
     },
     {
+      "id": "e0729e2c57b4dae0b491af3b",
+      "path": "src/plan-graph.ts",
+      "line": 943,
+      "text": "const wallBounds = boundedRadius && legacyContactBoundsSafe(s.a,s.b) ? boxPoints(s.a,s.b) : null;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "#1595 bounds the exact contact search during versioned wall-model decoding. High-precision inputs retain the original exact check."
+    },
+    {
       "id": "57077a5c3a73ff2ef55e68b5",
       "path": "src/plan-graph.ts",
       "line": 930,
@@ -6547,6 +6607,16 @@
       "kind": "branch",
       "owner": "zero-wall-boundaries",
       "reason": "Retained versioned structural decode, explicit-write migration or old/current geometry boundary; the existing model-chain lifecycle and independent ownership proof remain required."
+    },
+    {
+      "id": "09237ee6ed5f01cac40c92a1",
+      "path": "src/plan-graph.ts",
+      "line": 953,
+      "text": "const bounds = boundedRadius && legacyContactBoundsSafe(a,b) ? contactBounds(boxPoints(a,b)) : null;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "#1595 bounds the exact contact search during versioned wall-model decoding. High-precision inputs retain the original exact check."
     },
     {
       "id": "18119a90521f86c4f46b0371",
@@ -6567,6 +6637,16 @@
       "kind": "branch",
       "owner": "wall-model-chain",
       "reason": "Retained versioned structural decode, explicit-write migration or old/current geometry boundary; the existing model-chain lifecycle and independent ownership proof remain required."
+    },
+    {
+      "id": "bf088aeb751f0c4a2a77e2b8",
+      "path": "src/plan-graph.ts",
+      "line": 1225,
+      "text": "const candidates=boundableOpeningHosts && legacyContactBoundsSafe(p) ? contactCandidates(p) : source.sources;",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "#1595 bounds the exact contact search during versioned wall-model decoding. High-precision inputs retain the original exact check."
     },
     {
       "id": "b2fc29e6d5d6a9d322c0eefc",

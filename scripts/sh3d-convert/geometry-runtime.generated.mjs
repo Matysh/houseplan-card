@@ -5341,6 +5341,12 @@ const graphSplitId = (kind, id, index, lo, hi) => {
     const plain = id + '~' + index;
     return plain.length <= 64 ? plain : 's:' + base32$1(sha256$1(JSON.stringify([kind, id, index, lo, hi]))).slice(0, 52);
 };
+// With six coordinates at most 80 bits each, the common denominator of
+// a segment and a test point leaves their projected squared distance below
+// the exact arithmetic limit. Unusually fine rationals keep the original
+// path, including any resource error caused by their projection.
+const LEGACY_CONTACT_DENOMINATOR_LIMIT = 1n << 80n;
+const legacyContactBoundsSafe = (...points) => points.every(point => point.every(coordinate => coordinate.d <= LEGACY_CONTACT_DENOMINATOR_LIMIT));
 const boxPoints = (a, b) => ({
     lo: [min(a[0], b[0]), min(a[1], b[1])], hi: [max(a[0], b[0]), max(a[1], b[1])],
 });
@@ -5505,6 +5511,8 @@ function migrateGraphSpace(space, options = {}) {
     const latticeNoise = div(parseDecimal(LATTICE_NOISE_STEPS), exact$1(240n));
     if (source.sources.length > limits.edges || (space.rooms || []).length > limits.rooms)
         fail('resource');
+    const boundedRadius = radius.d <= LEGACY_CONTACT_DENOMINATOR_LIMIT;
+    const boundableOpeningHosts = boundedRadius && source.sources.every(s => s.kind !== 'wall' || legacyContactBoundsSafe(s.a, s.b));
     const run = (optional, terminal = false) => {
         const graph = { version: 1, nodes: [], edges: [], rooms: [], dependencies: [] };
         const nodes = new Map(), origins = new Map(), pointNode = new Map();
@@ -5614,7 +5622,9 @@ function migrateGraphSpace(space, options = {}) {
             if (!cuts.some(c => eq(c.t, t) && c.node === id))
                 cuts.push({ t, node: id });
         };
-        const contactCandidates = (p) => queryTree(tree, { lo: pointSub(p, [radius, radius]), hi: pointAdd(p, [radius, radius]) }, [])
+        const padding = [radius, radius];
+        const contactBounds = (box) => ({ lo: pointSub(box.lo, padding), hi: pointAdd(box.hi, padding) });
+        const contactCandidates = (p) => queryTree(tree, contactBounds({ lo: p, hi: p }), [])
             .sort((a, b) => order(edgeKey(a), edgeKey(b)));
         const cutPoint = (host, t, tag) => {
             if (cmp(t, ZERO) <= 0 || cmp(t, ONE) >= 0)
@@ -5634,9 +5644,11 @@ function migrateGraphSpace(space, options = {}) {
             const lo = max(ZERO, min(ta, tb)), hi = min(ONE, max(ta, tb));
             return cmp(lo, hi) < 0 ? [lo, hi] : null;
         };
+        const overlayPoints = new Map();
         for (const s of source.sources)
             if (s.kind === 'wall') {
                 const zeros = [], openingRuns = [];
+                const wallBounds = boundedRadius && legacyContactBoundsSafe(s.a, s.b) ? boxPoints(s.a, s.b) : null;
                 for (const cut of legacyCuts) {
                     const run = interval(s, readSourcePoint(cut.slice(0, 2)), readSourcePoint(cut.slice(2, 4)));
                     if (run) {
@@ -5648,7 +5660,18 @@ function migrateGraphSpace(space, options = {}) {
                 zeroIntervals.set(edgeKey(s), zeros);
                 for (const overlay of space.walls || [])
                     if (Array.isArray(overlay.a) && Array.isArray(overlay.b)) {
-                        const run = interval(s, readSourcePoint(overlay.a), readSourcePoint(overlay.b));
+                        let points = overlayPoints.get(overlay);
+                        if (!points) {
+                            const a = readSourcePoint(overlay.a), b = readSourcePoint(overlay.b);
+                            const bounds = boundedRadius && legacyContactBoundsSafe(a, b) ? contactBounds(boxPoints(a, b)) : null;
+                            points = { a, b, bounds };
+                            overlayPoints.set(overlay, points);
+                        }
+                        // An accepted interval has a point on the wall whose corresponding
+                        // point on the overlay is within the exact contact radius.
+                        if (wallBounds && points.bounds && !boxesOverlap(wallBounds, points.bounds))
+                            continue;
+                        const run = interval(s, points.a, points.b);
                         if (run)
                             for (const t of run)
                                 cutPoint(s, t);
@@ -5973,10 +5996,10 @@ function migrateGraphSpace(space, options = {}) {
         const occupied = [];
         const positive = (s, t) => (mapping.edges[edgeKey(s)] || []).some(r => cmp(t, decodeRational(r.sourceInterval[0])) >= 0 && cmp(t, decodeRational(r.sourceInterval[1])) <= 0
             && graph.edges.find(e => edgeKey(e) === edgeKey(r.ref)).cm > 0);
-        const eligible = (s, opening) => {
+        const eligible = (s, opening, point) => {
             if (s.kind !== 'wall')
                 return null;
-            const p = readSourcePoint([opening.x, opening.y]), t = projectParameter(p, s.a, s.b);
+            const p = point ?? readSourcePoint([opening.x, opening.y]), t = projectParameter(p, s.a, s.b);
             const length = Math.sqrt(toNumber(squaredDistance(s.a, s.b))), along = toNumber(t) * length, half = Number(opening.length) / 2;
             if (!between(t) || !withinRadius(p, pointAt(s.a, s.b, t), radius)
                 || !wallAngleMatches(pointToNumbers(s.a), pointToNumbers(s.b), Number(opening.angle))
@@ -6012,7 +6035,10 @@ function migrateGraphSpace(space, options = {}) {
                 opening.host = canonicalHost(opening.host, currentSource.reversed ? sub(ONE, staying) : staying);
             if (!opening.host || !currentSource || currentSource.kind === 'wall' && !staying) {
                 const p = readSourcePoint([opening.x, opening.y]);
-                const choices = source.sources.map(s => ({ s, t: eligible(s, opening) })).filter((v) => v.t !== null)
+                // Eligibility requires the projected point to lie on the segment
+                // and within the radius; the query preserves canonical source order.
+                const candidates = boundableOpeningHosts && legacyContactBoundsSafe(p) ? contactCandidates(p) : source.sources;
+                const choices = candidates.map(s => ({ s, t: eligible(s, opening, p) })).filter((v) => v.t !== null)
                     .sort((a, b) => cmp(squaredDistance(p, pointAt(a.s.a, a.s.b, a.t)), squaredDistance(p, pointAt(b.s.a, b.s.b, b.t))) || b.s.cm - a.s.cm || order(a.s.id, b.s.id));
                 const selected = choices.find(({ s, t }) => positive(s, t) && free(s, t, opening));
                 if (selected)

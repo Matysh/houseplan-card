@@ -17012,8 +17012,8 @@ const MUTANT_DEFINITIONS = [
       + 'notice every few seconds — only the production card render shows this',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (editorRuntimeRequested && !this._editorRuntime) void this._editorRuntimeLoader.ensure('reconcile');",
-      replace: '    if (editorRuntimeRequested && !this._editorRuntime) void this._editorRuntimeLoader.ensure(); // mutant: a render is an intent',
+      find: "      void this._editorRuntimeLoader.ensure('reconcile').then(ready => {",
+      replace: '      void this._editorRuntimeLoader.ensure().then(ready => { // mutant: a render is an intent',
     }],
   },
   {
