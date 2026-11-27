@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29670,
+  "revision": 29671,
   "nextTicket": 795,
   "nextFence": 795,
   "tasks": {
@@ -5649,7 +5649,17 @@
         "process-next/lib/metrics.mjs",
         "process-next/test/catalog.test.mjs",
         "process-next/test/metrics.test.mjs"
-      ]
+      ],
+      "reason": "Уточнение выбора предыдущего stable: опубликованный hotfix может быть новее базы цикла. Нужен повтор S6 на обновлённом материале.",
+      "notice": {
+        "key": "1:Уточнение выбора предыдущего stable: опубликованный hotfix может быть новее базы цикла. Нужен повтор S6 на обновлённом материале.",
+        "reason": "Уточнение выбора предыдущего stable: опубликованный hotfix может быть новее базы цикла. Нужен повтор S6 на обновлённом материале.",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795817956744,
+        "entry": 1,
+        "eventId": "issue-1592:correct-stable-tag-after-hotfix:return:1592"
+      }
     },
     "1594": {
       "issue": 1594,
@@ -7039,18 +7049,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1592,
-    "worker": "finish",
-    "token": "794:finish:6732b949-1080-4e00-8e3a-d3df5f0651b2:finish:1:admit",
-    "fence": 794,
-    "materialSha": "d00cff05b5b96cc603ec85b644eefa44e488a78a",
-    "expectedBase": "2043bd45e892b725a6100876b595502de34a7a8b",
-    "phase": "testing",
-    "admittedAt": 1795817855682,
-    "expiresAt": 1795818212937,
-    "patchId": "539d88ab893f1b909227fe6fe19b9d1d4ac210bc"
-  },
+  "active": null,
   "events": {
     "finish:6732b949-1080-4e00-8e3a-d3df5f0651b2:finish:2:synchronized": {
       "digest": "085a7f86bdda1e1046681b3f61e9a7db0aaedf7b234845a5f4979ab571d062fc",
@@ -7070,6 +7069,10 @@
     },
     "finish:5c44d15f-24d8-4acd-bf05-98a134a038a5": {
       "digest": "fb74a75677aac80b8ab80171ff5423ef8685a1aa301d2d4de1db5c4b37d0cb22",
+      "issue": 1592
+    },
+    "issue-1592:correct-stable-tag-after-hotfix": {
+      "digest": "bd3d79f8382f3a2f944085faf6e86d9c427fb01f107c605590bdf39047bb9b99",
       "issue": 1592
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -7128,6 +7131,25 @@
         "materialSha": "e53310a23a3c622558f15ebda13927062d62f645",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "issue-1592:correct-stable-tag-after-hotfix:return:1592": {
+      "digest": "bd3d79f8382f3a2f944085faf6e86d9c427fb01f107c605590bdf39047bb9b99",
+      "issue": 1592,
+      "message": {
+        "kind": "return",
+        "issue": 1592,
+        "at": 1795817956744,
+        "entry": 1,
+        "notice": {
+          "key": "1:Уточнение выбора предыдущего stable: опубликованный hotfix может быть новее базы цикла. Нужен повтор S6 на обновлённом материале.",
+          "reason": "Уточнение выбора предыдущего stable: опубликованный hotfix может быть новее базы цикла. Нужен повтор S6 на обновлённом материале.",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795817956744,
+          "entry": 1,
+          "eventId": "issue-1592:correct-stable-tag-after-hotfix:return:1592"
+        }
       }
     }
   },
