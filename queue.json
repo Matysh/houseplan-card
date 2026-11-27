@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28458,
+  "revision": 28459,
   "nextTicket": 774,
   "nextFence": 768,
   "tasks": {
@@ -6141,7 +6141,17 @@
         "src/standalone-icon-catalog.ts",
         "src/standalone-presentation.ts",
         "test/bundle-assets.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795786582944,
+        "entry": 1,
+        "eventId": "finish:043e84e2-84f2-4cd6-8a10-c1ee8787a2b2:finish:1:return:return:1594"
+      }
     },
     "1595": {
       "issue": 1595,
@@ -7443,23 +7453,8 @@
     1595,
     1598
   ],
-  "active": {
-    "issue": 1594,
-    "worker": "finish",
-    "token": "767:finish:ebfd23a8-6ad9-45a3-ab3d-84868c9b557a:finish:10:admit",
-    "fence": 767,
-    "materialSha": "a08bd93306db31c5962217226318a051dd8b6a05",
-    "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-    "phase": "testing",
-    "admittedAt": 1795780430375,
-    "expiresAt": 1795786835879,
-    "patchId": "eb8420682ef5cffe9c401ac6a0a9299ec8bf2518"
-  },
+  "active": null,
   "events": {
-    "finish:520e0c16-7c00-4c2e-99f4-2832f15001c1": {
-      "digest": "f05c926d6e3c5e2497ef40149b116d0088a36562d1d7f46ca3cba5ca70fd20d1",
-      "issue": 1608
-    },
     "github:45983679597:1:completions:message:31a5c4950e161b675d45dfc714e222d1ec171289510eaeb68f5ce937d70f5a54": {
       "digest": "9abc6ef3c199230322a74e8d0517bf0d15aae6ebcaa7377e202406746785eea9",
       "issue": 1608
@@ -8312,6 +8307,10 @@
       "digest": "de319b8073b3803deb41db49c4f68778048636f53123100ea21ccf3df61d8def",
       "issue": 1594
     },
+    "finish:043e84e2-84f2-4cd6-8a10-c1ee8787a2b2:finish:1:return": {
+      "digest": "261ef629e8f4862da3bd33cba66bd34e6c405ceb72ec9f1cb48dc80d94b87cd9",
+      "issue": 1594
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -9069,6 +9068,25 @@
           "status": "passed",
           "finishedAt": "2026-11-27T11:48:11.524Z",
           "failures": []
+        }
+      }
+    },
+    "finish:043e84e2-84f2-4cd6-8a10-c1ee8787a2b2:finish:1:return:return:1594": {
+      "digest": "261ef629e8f4862da3bd33cba66bd34e6c405ceb72ec9f1cb48dc80d94b87cd9",
+      "issue": 1594,
+      "message": {
+        "kind": "return",
+        "issue": 1594,
+        "at": 1795786582944,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795786582944,
+          "entry": 1,
+          "eventId": "finish:043e84e2-84f2-4cd6-8a10-c1ee8787a2b2:finish:1:return:return:1594"
         }
       }
     }
