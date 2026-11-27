@@ -183,7 +183,12 @@ const res = await page.evaluate(async () => {
   const permission = gate();
   await remount({ permission, admin: false });
   const other = c._model.find((sp) => sp.id !== c._space).id;
-  await window.__hpTest.switchSpace(other);
+  const floorTab = () => root(c).querySelector('[data-hp="space-tab"][data-id="' + CSS.escape(other) + '"]');
+  await wait(() => !!floorTab()?.getClientRects().length, 'desktop floor tab is not visible');
+  floorTab().click();
+  // The shared switchSpace helper waits for input readiness. This witness
+  // must observe the navigation request before releasing the config reply.
+  await wait(() => c._space === other, 'floor navigation did not start before permission delivery');
   permission.resolve(); await sleep(700); await stable(c);
   out.ac5SpaceWins = c._space === other && c._mode === 'view' && !c._markerDialog;
 
