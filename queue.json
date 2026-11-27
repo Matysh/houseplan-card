@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28146,
-  "nextTicket": 764,
+  "revision": 28147,
+  "nextTicket": 765,
   "nextFence": 764,
   "tasks": {
     "1001": {
@@ -6364,14 +6364,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1608-device-height-perspective",
-      "materialSha": "19efdceceabc8546568a51e4e867b15d4ed38b77",
+      "materialSha": "cd67b32157ffc69e3179f72da13f1bec2cb039d2",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 761,
-      "queued": false,
+      "ticket": 764,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795775162382,
-      "reviewEntry": 2,
+      "readyAt": 1795775755443,
+      "reviewEntry": 3,
       "patchId": "8d07ce2657cfac9b28c59290a3db0bdb27c71fcc",
       "changedFiles": [
         "custom_components/houseplan/core/marker_height.py",
@@ -6521,8 +6521,7 @@
         "at": 1795775625049,
         "entry": 2,
         "eventId": "finish:41ee2471-bdee-4304-a669-4360675ac204:finish:4:return:return:1608"
-      },
-      "reason": "Hosted run completed or was cancelled without a runner report"
+      }
     },
     "1609": {
       "issue": 1609,
@@ -7295,7 +7294,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1608
+  ],
   "active": {
     "issue": 1598,
     "worker": "finish",
@@ -8447,6 +8448,19 @@
         "materialSha": "42657d49e5dec5b89ff9c9ab4c938ada4e0178b9",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:088af8fd-72fc-4af3-a98b-09d81bdf4548": {
+      "digest": "7935dafbd935cfbce788a32c11665cebcbb2dc33a5d81f19f19bd5210d0a0642",
+      "issue": 1608,
+      "message": {
+        "kind": "queued",
+        "issue": 1608,
+        "at": 1795775755443,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "cd67b32157ffc69e3179f72da13f1bec2cb039d2"
       }
     }
   },
