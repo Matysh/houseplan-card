@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28729,
+  "revision": 28730,
   "nextTicket": 780,
   "nextFence": 775,
   "tasks": {
@@ -8220,6 +8220,10 @@
       "digest": "b6385a536ad521ae95f1338ce3735c3121bf020a69f454fabbc57e595a6e6617",
       "issue": 1600
     },
+    "finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:3:s6-label": {
+      "digest": "2d2719ef7e6535a602455eb003b9be3f0026f365ad309e47e7f51b14d8c5e83c",
+      "issue": 1600
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -9195,7 +9199,8 @@
         "resubmission": false,
         "reviewChanges": "Задача выполняется по track:show как инфраструктурный контракт ядра/поставки; пользовательские сценарии и модели не меняются.\n\nВыбран двухуровневый контракт: запущенные wheel/core adapter и standalone editor берутся из одной версии/commit с существующей точной проверкой version/fingerprint/API. HA и сайт могут обновляться независимо при переносе архивов: принимающий parser проверяет контейнер, export/model и required API. Stable в одной major-линии сохраняет ранее поддержанное чтение через явные readers/migrations; ломающее изменение публичного core API или удаление этой поддержки требует major продукта. Счётчики model/export/archive независимы: их увеличение с сохранением старого чтения само по себе не требует major. Нет гарантии downgrade или чтения произвольной будущей модели. Текущий 2.x явно проверяет архивы 1.86.0/1.86.1; это поддерживаемый переход через major, а не обещание любых комбинаций версий.\n\nРеализация: docs/CORE-HOST.md содержит публичную границу и таблицу текущих parser-правил (house ZIP точно model11; full JSON/backup допускают прежние модели по имеющейся миграции). docs/STANDALONE-FRONTEND.md и release notes ссылаются на контракт. Колесо сохраняет версию продукта с PEP440 spelling для prerelease. Четыре synthetic ZIP созданы настоящими exporters pinned stable commits 2725feedd276c5c1c19d9223c99b1adcdefefaa1 и f175b7e00d8535149c61c2d28a922620a3a70928, прочитаны их собственными readers, имеют provenance/hash и воспроизводятся побайтно с фиксированными тестовыми часами. Те же bytes входят в wheel/sdist; default core conformance дополнительно читает их текущими readers без HA. В pure full-backup conformance нет restore и нет выдачи PLAN_ONLY новых полномочий.\n\nПри publish готовые wheel METADATA/distribution.json, HACS manifest.json и standalone manifest повторно читаются до создания/загрузки GitHub release. Внутренние версии сравниваются канонически: product 2.0.0-beta.2 и PEP440 2.0.0b2 принимаются как одна версия; 2.0.0b3 отклоняется отдельным behavioral case. Источник должен соответствовать кандидату. Отрицательные тесты обновляют все внешние хеши и показывают, что внутреннее расхождение всё равно отклоняется. Ретрай опубликованного выпуска проверен прежним remote behavioral test на настоящих synthetic ZIP.\n\nДо очереди: 7 pytest addressed cases, 51 Node site-release/remote cases; wheel+sdist build и clean install smoke каждого (18 base, 2 house, 4 historical scenarios, без HA imports) прошли. Генератор воспроизвёл provenance и четыре ZIP побайтно. Финальный S6 выполнит native finish на допущенной базе; реальные итоги будут переданы процессом. HA E2E не расширяется: endpoint/restore/writable product path не меняются; чистое чтение архивов не доказывает HA restore durability или production DB.\n\n\n### Исправления после фактического S6\n\nПервый native S6 на базе 0a917f294e0393c317f4a4fdeec9dc4640bb0695 и материале 2d5559b03f1241702049a2a5a284435536b32018: 26/28 шагов PASS, два FAIL в инфраструктурных свидетелях. task-selection.test требовал сохранить выборку test_core_distribution.py для изменений PlanCommands после классификации теста как infra: теперь dynamic source scope честно объявляет чтение полного canonical core, builder и frozen fixtures, участвуя и в selection, и в reuse fingerprint. config-lifecycle.test обнаружил два новых fixture-path literals со словом compatibility: оба зарегистрированы как word-only exclusions с причиной, digest обновлён; существующие decoder/migration branches не удалялись. Адресный повтор этих двух файлов: 44/44 Node cases PASS. Материал исправления 29c2bd1b0; следующий native finish повторит актуальный S6 с применимым reuse, затем передаст на S7.\n\n\nДополнительная адресная подготовка до повторного допуска: typed archive helper проходит pinned Ruff 0.16.5 и mypy 2.3.1 даже при прежнем global-strict эффекте; оба изменённых conformance-модуля проходят mypy с исправленным allowlist scope конфигом #1603 (свой pyproject в #1600 не менялся). Повторный wheel+sdist build и clean-install smoke после типизации проходят с pinned runtime constraints: по 18 base, 2 house, 4 historical сценария и запрет HA imports. Новые helper/reader явно отнесены к storage, infra-layer сохранён; существующий domain regression 40/40 PASS. Текущий подготовленный material ac8b2a316e0240995776ef14e75671772ee48e68; финальный native S6 и S7 ещё ожидаются.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
