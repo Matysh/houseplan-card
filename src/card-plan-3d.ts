@@ -46,7 +46,7 @@ export class CardPlan3d {
 
   constructor(private readonly port: CardPlan3dPort) {}
 
-  private readonly loader = new EditorRuntimeLoader<Plan3dRuntime>({
+  readonly loader = new EditorRuntimeLoader<Plan3dRuntime>({
     expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
     load: async (attempt) => {
       const module = attempt === 0

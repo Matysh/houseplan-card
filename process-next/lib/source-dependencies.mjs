@@ -18,6 +18,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['demo/smoke_mode_transition.mjs', ['src/mode-transition-presentation.ts', 'src/mode-transition.ts']],
   ['demo/smoke_mode_endpoints.mjs', ['src/mode-transition-presentation.ts', 'src/mode-presentation.ts']],
   ['demo/smoke_plan_3d_card.mjs', ['src/card-plan-3d.ts', 'src/plan-3d-host.ts']],
+  ['demo/smoke_isometric_contract.mjs', ['src/card-plan-3d.ts', 'src/plan-3d-host.ts']],
   ['demo/smoke_startup_floor.mjs', ['src/card-plan-3d.ts', 'src/startup-floor.ts']],
   ['demo/smoke_iso_flat_parity.mjs', ['src/card-plan-3d.ts', 'src/mode-transition-presentation.ts', 'src/iso-projection.ts', 'src/projection-view-camera.ts', 'src/screen-camera.ts']],
   ['demo/smoke_iso_raster_parity.mjs', ['src/iso-projection.ts', 'src/iso-scene-geometry.ts', 'src/projection-view-camera.ts']],

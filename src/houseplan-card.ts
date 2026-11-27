@@ -846,6 +846,7 @@ export class HouseplanCard extends LitElement {
     reload: () => this.ownerDocument.defaultView?.location.reload(),
   });
   // Browser diagnostics and fault-injection smokes use these existing hooks.
+  private get _isoSceneRuntimeLoader() { return this._spatial.loader; }
   private get _isoSceneRuntime(): Plan3dRuntime | null { return this._spatial.runtime; }
   private set _isoSceneRuntime(runtime: Plan3dRuntime | null) { this._spatial.runtime = runtime; }
   private get _plan3dHost() { return this._spatial.host; }
