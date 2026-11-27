@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "d53e11b65e956168ecd7afff46049bf66a5c061ae8c21de574d7c9e8bc4dd872",
+  "matchesSha256": "b1d94e66bba14f1bc8d84daf03e5206c1706ffb97edfcbd8d2f322ce16824f9c",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -137,6 +137,26 @@
       "kind": "exclusion",
       "owner": "word-only",
       "reason": "#1391 import-identity facade for a relocated canonical implementation; no persisted compatibility decoder or copied algorithm."
+    },
+    {
+      "id": "a31b5dcbe8ce9ed928db2270",
+      "path": "custom_components/houseplan/core/archive_conformance.py",
+      "line": 27,
+      "text": "fixtures = Path(__file__).with_name(\"compatibility_fixtures\")",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "word-only",
+      "reason": "#1600 frozen conformance fixture resource path; no saved-config compatibility selector, decoder or migration branch."
+    },
+    {
+      "id": "031936045877502efa6d6956",
+      "path": "custom_components/houseplan/core/archive_conformance.py",
+      "line": 29,
+      "text": "fixtures = Path(__file__).resolve().parents[3] / \"demo/fixtures/core-compatibility\"",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "word-only",
+      "reason": "#1600 frozen conformance fixture resource path; no saved-config compatibility selector, decoder or migration branch."
     },
     {
       "id": "b87b62d58720dadb10043758",

@@ -6,6 +6,14 @@ const safeRelative = value => typeof value === 'string' && value && !value.start
 // repository paths conservative for both selection and result fingerprints.
 // Runtime witnesses name their owner; dynamic scanners name the text trees they read.
 const DECLARED_SOURCE_SCOPES = new Map([
+  // #1600: package staging enumerates the canonical core tree; the historical
+  // conformance dynamically opens frozen producer ZIPs. These are real reads
+  // for both selection and cached-result invalidation, not product UI builds.
+  ['tests_backend/test_core_distribution.py', ['custom_components/houseplan/core/**/*.py',
+    'tools/build_core_package.py', 'demo/fixtures/core-compatibility/**/*']],
+  ['tests_backend/test_core_archive_compatibility.py', ['demo/fixtures/core-compatibility/**/*']],
+  ['tools/build_core_package.py', ['custom_components/houseplan/core/**/*.py',
+    'demo/fixtures/core-compatibility/**/*', 'docs/CORE-HOST.md', 'LICENSE', 'package.json']],
   ['demo/smoke_device_contact_badges_1517.mjs', ['src/device-contact-card.ts', 'src/device-contact-layout.ts', 'src/device-contact-screen.ts', 'src/device-contact-render.ts', 'src/houseplan-card.ts', 'src/render-snapshot-capture.ts', 'src/device-face.ts', 'src/styles/devices.styles.ts']],
   ['demo/smoke_device_contact_profile_1517.mjs', ['src/device-contact-card.ts', 'src/device-contact-layout.ts', 'src/device-contact-render.ts', 'src/houseplan-card.ts', 'src/external-screens.ts']],
   ['demo/smoke_device_contact_resize_1517.mjs', ['src/device-contact-card.ts', 'src/device-contact-layout.ts', 'src/device-contact-render.ts', 'src/houseplan-card.ts', 'src/iso-scene-geometry.ts']],
