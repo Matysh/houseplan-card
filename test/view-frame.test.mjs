@@ -161,7 +161,10 @@ test('#1070 AC9/AC11: four ISO camera sides expose front faces while one physica
     assert.ok(Math.abs(restored[0]-234.5)<1e-9 && Math.abs(restored[1]-500.25)<1e-9);
     if (!initial) initial = scene;
     sides.push(scene.geometry.sides.map(face=>face.edge).sort().join(','));
-    if (sides.length === 5) assert.equal(scene.geometry, initial.geometry);
+    if (sides.length === 5) {
+      assert.equal(scene.geometry, initial.geometry);
+      assert.equal(scene.camera, initial.camera, 'furniture and marker ink keep the same lens object');
+    }
   }
   assert.equal(new Set(sides.slice(0, 4)).size, 4, 'each quarter turn sees a different pair of physical sides');
   assert.equal(builds, 1, 'no floor booleans or physical bodies are rebuilt by rotation');

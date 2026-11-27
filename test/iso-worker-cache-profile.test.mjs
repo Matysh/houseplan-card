@@ -42,7 +42,7 @@ test('#1451 worker preparation and main hydration share the accepted camera at a
       assert.deepEqual(scene.openings,main.iso.value.physical.openings);
       assert.ok(scene.camera.perspective?.rate > 0, 'the worker warms the production lens');
       const expected = restored.iso.value.projections.get(rotation);
-      assert.equal(expected.cameraKey, JSON.stringify(scene.camera));
+      assert.equal(scene.camera, expected.camera, 'the hydrated camera object is shared with overlay caches');
       assert.equal(scene.geometry,expected.geometry,'the projected variant is reused, not rebuilt');
     }
     const warmGeometry = restored.iso.value.projections.get(0).geometry;

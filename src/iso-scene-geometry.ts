@@ -271,7 +271,7 @@ export function isoRaisedOverlayHalfSize(input: IsoRaisedFootprintInput): PlanPo
 }
 
 export type IsoSceneCacheEntry = {
-  cameraKey?: string;
+  camera?: Readonly<IsoCamera>;
   geometry: IsoWallGeometry;
   floor: IsoFloorGeometry;
   openings: readonly IsoOpeningBasis[];
@@ -562,28 +562,29 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
     isoPhysicalScenes.set(value, structural);
     lruWrite(input.cache, input.source.key, value, 8);
   }
-  const camera = isoPerspectiveCamera(isoCameraFor(rotation), lensBounds(structural) ?? input.liveFrame,
+  const nextCamera = isoPerspectiveCamera(isoCameraFor(rotation), lensBounds(structural) ?? input.liveFrame,
     input.contentFrame, wallHeight);
-  // This identity travels with worker projections. Older entries lack it and
-  // can still supply the physical floor for an exact reprojection.
-  const cameraKey = JSON.stringify(camera);
+  // Carry the camera with the worker projection, then reuse that same object
+  // while the lens is unchanged. Furniture and device ink cache by identity.
+  // Older entries still supply the physical floor for an exact reprojection.
   let projections = isoProjectedScenes.get(value);
   if (!projections) { projections = new Map(); isoProjectedScenes.set(value, projections); }
   let projected = projections.get(rotation);
-  if (projected?.cameraKey !== cameraKey) {
+  if (!projected?.camera || JSON.stringify(projected.camera) !== JSON.stringify(nextCamera)) {
     const physical = structural;
     projected = {
-      cameraKey,
-      geometry: buildIsoWallGeometry(physical.walls, camera, wallHeight, physical.roundColumnRings),
-      floor: buildIsoFloorGeometry(physical.floor, floorEdgeHeight, camera),
+      camera: nextCamera,
+      geometry: buildIsoWallGeometry(physical.walls, nextCamera, wallHeight, physical.roundColumnRings),
+      floor: buildIsoFloorGeometry(physical.floor, floorEdgeHeight, nextCamera),
       openings: physical.openings,
       openingSurfaces: Object.freeze(physical.openings.flatMap(basis =>
-        projectIsoOpeningStructure(basis, camera, ISO_LAB_OPENINGS).map(surface => Object.freeze({
+        projectIsoOpeningStructure(basis, nextCamera, ISO_LAB_OPENINGS).map(surface => Object.freeze({
           ...surface, id: basis.id, sourceIndex: basis.sourceIndex, type: basis.type,
         })))),
     };
     projections.set(rotation, projected);
   }
+  const camera = projected.camera ?? nextCamera;
   value = projected;
   const openingFrame = isoOpeningBounds(value.openings, ISO_LAB_OPENINGS);
   const structuralFrame = openingFrame ? unionRect(input.liveFrame, openingFrame) : input.liveFrame;
