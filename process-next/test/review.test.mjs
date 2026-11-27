@@ -72,6 +72,41 @@ test('large real Git diffs keep bounded review output and named-file access', t 
   assert.equal(readFileSync(path.join(repoRoot, 'code.mjs'), 'utf8'), 'uncommitted\n');
 });
 
+test('#1598 aggregate review omits only deleted compiled frontend, retaining names and explicit reads', t => {
+  const { repoRoot, git } = fixture(t);
+  const generated = 'custom_components/houseplan/frontend';
+  mkdirSync(path.join(repoRoot, generated), { recursive: true });
+  const removed = `${generated}/old.js`, modified = `${generated}/current.js`, added = `${generated}/new.js`;
+  writeFileSync(path.join(repoRoot, removed), 'removed compiled payload ' + 'x'.repeat(120_000));
+  writeFileSync(path.join(repoRoot, modified), 'old current bytes');
+  git('add', generated); git('commit', '-qm', 'old snapshot');
+  const base = git('rev-parse', 'HEAD');
+  rmSync(path.join(repoRoot, removed));
+  writeFileSync(path.join(repoRoot, modified), 'modified frontend must remain visible');
+  writeFileSync(path.join(repoRoot, added), 'added frontend must remain visible');
+  for (const name of ['policy.mjs', 'scripts.mjs', 'docs.md']) writeFileSync(path.join(repoRoot, name), `real ${name} change`);
+  git('add', generated, 'policy.mjs', 'scripts.mjs', 'docs.md'); git('commit', '-qm', 'remove stale compiled output');
+  const head = git('rev-parse', 'HEAD');
+  const code = buildReviewContext({ repoRoot, base, head, task: { issue: 1598 } });
+  const ship = buildShipReviewContext({ repoRoot, packet: { schema: 1, base, head, pending: [1598],
+    tasks: [{ issue: 1598, track: 'ship', body: 'Remove old snapshot', commits: [head] }] } });
+  for (const context of [code, ship]) {
+    assert.ok(context.changedFiles.includes(removed), 'full changed-file inventory is retained');
+    for (const diff of [context.diff, executeReadTool(context, 'git_diff', {})]) {
+      assert.deepEqual(diff.excludedDeletedGeneratedFiles, [removed]);
+      assert.equal(diff.truncated, false, 'compiled deletion cannot displace real source changes');
+      assert.doesNotMatch(diff.text, /removed compiled payload/);
+      assert.match(diff.text, /modified frontend must remain visible/);
+      assert.match(diff.text, /added frontend must remain visible/);
+      for (const name of ['policy.mjs', 'scripts.mjs', 'docs.md']) assert.ok(diff.text.includes(`real ${name} change`));
+    }
+    const named = executeReadTool(context, 'git_diff', { path: removed });
+    assert.ok(named.totalCharacters > 100_000, 'explicit generated-file patch is still available');
+    assert.match(named.text, /removed compiled payload/);
+    assert.match(executeReadTool(context, 'git_show', { commit: base, path: removed }).text, /removed compiled payload/);
+  }
+});
+
 test('non-diff Git reads keep their buffer ceiling and report empty-stderr failures', t => {
   const { repoRoot, context, git } = fixture(t);
   writeFileSync(path.join(repoRoot, 'oversize.txt'), 'x'.repeat(3 * 1024 * 1024));

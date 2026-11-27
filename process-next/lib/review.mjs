@@ -125,6 +125,23 @@ export function extractAuthorContext(task) {
     url: task?.url ?? null, heading: AUTHOR_CONTEXT_HEADING }, text };
 }
 
+// Retired compiled frontend can dwarf the real change (#1598). Suppress only
+// confirmed deletions in aggregate patches; every name and explicit file read
+// remains available, and added/modified frontend bytes are still reviewed.
+function deletedGeneratedFiles(root, base, head) {
+  if (!base) return [];
+  return git(root, ['diff', '--no-renames', '--diff-filter=D', '--name-only', '-z', base, head,
+    '--', 'custom_components/houseplan/frontend/']).split('\0')
+    .filter(file => file.startsWith('custom_components/houseplan/frontend/'));
+}
+function diffPaths(excluded, file) {
+  if (file) return [repoPath(file)];
+  return excluded.length ? ['.', ...excluded.map(file => `:(exclude,literal)${file}`)] : [];
+}
+function boundedDiff(text, excluded = []) {
+  return { ...bounded(text), ...(excluded.length ? { excludedDeletedGeneratedFiles: excluded } : {}) };
+}
+
 export function buildReviewContext({ repoRoot, base, head = 'HEAD', task, track = 'show', ownerAssigned = false, kind = 'code', receipts = [], previousReview = null }) {
   if (kind === 'ship-batch') throw new Error('Use the frozen ship batch packet to build this review');
   const root = realpathSync(repoRoot);
@@ -133,8 +150,10 @@ export function buildReviewContext({ repoRoot, base, head = 'HEAD', task, track 
   const context = { version: 1, repoRoot: root, base: baseSha, head: headSha, kind, track, ownerAssigned, task,
     authorContext: extractAuthorContext(task), receipts, previousReview };
   context.required = reviewRequired(context);
-  context.changedFiles = git(root, ['diff', '--no-ext-diff', '--no-textconv', '--name-only', '-z', baseSha, headSha, '--']).split('\0').filter(Boolean);
-  context.diff = bounded(git(root, ['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--unified=4', baseSha, headSha, '--']));
+  context.changedFiles = git(root, ['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', baseSha, headSha, '--']).split('\0').filter(Boolean);
+  context.excludedDeletedGeneratedFiles = deletedGeneratedFiles(root, baseSha, headSha);
+  context.diff = boundedDiff(git(root, ['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--unified=4', baseSha, headSha, '--',
+    ...diffPaths(context.excludedDeletedGeneratedFiles)]), context.excludedDeletedGeneratedFiles);
   // Both snapshots remain available through read_file; no uncommitted work is included.
   context.material = { requirements: 'task', decisions: 'task.ownerDecisions when supplied', base: baseSha, head: headSha, sources: 'all regular tracked files via read_file', history: 'git_diff / git_show / git_log / git_blame' };
   return context;
@@ -147,7 +166,7 @@ function selectedDiff(context, file) {
     const options = ['--no-ext-diff', '--no-textconv', '--no-renames', '--unified=5'];
     const args = change.parent ? ['diff', ...options, change.parent, change.commit, '--']
       : ['diff-tree', '--root', '--no-commit-id', '-r', '-p', ...options, change.commit, '--'];
-    if (selectedPath) args.push(selectedPath);
+    args.push(...diffPaths(change.excludedDeletedGeneratedFiles ?? [], selectedPath));
     return `Задачи: ${change.issues.map(issue => `#${issue}`).join(', ')}\nКоммит: ${change.commit}\nРодитель: ${change.parent ?? 'нет (корневой коммит)'}\n${git(context.repoRoot, args)}`;
   }).filter(Boolean).join('\n\n');
 }
@@ -181,15 +200,17 @@ export function buildShipReviewContext({ repoRoot, packet }) {
   const changes = range.filter(commit => selected.has(commit)).map(commit => {
     const [, parent] = git(root, ['rev-list', '--parents', '-n', '1', commit]).trim().split(/\s+/);
     if (parent !== undefined && !sha(parent)) throw new Error('Ship implementation commit has an invalid parent');
-    const args = parent ? ['diff', '--no-ext-diff', '--no-textconv', '--name-only', '-z', parent, commit, '--']
-      : ['diff-tree', '--root', '--no-commit-id', '-r', '--name-only', '-z', commit, '--'];
+    const args = parent ? ['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', parent, commit, '--']
+      : ['diff-tree', '--root', '--no-commit-id', '--no-renames', '-r', '--name-only', '-z', commit, '--'];
     const changedFiles = git(root, args).split('\0').filter(Boolean);
-    return { commit, parent: parent ?? null, issues: selected.get(commit), changedFiles };
+    return { commit, parent: parent ?? null, issues: selected.get(commit), changedFiles,
+      excludedDeletedGeneratedFiles: deletedGeneratedFiles(root, parent, commit) };
   });
   const context = { version: 1, repoRoot: root, base, head, kind: 'ship-batch', track: 'ship', ownerAssigned: false, required: true,
     batch: { ...packet, tasks: packet.tasks.map(task => ({ ...task, authorContext: extractAuthorContext(task) })), changes },
     changedFiles: [...new Set(changes.flatMap(change => change.changedFiles))], receipts: [], previousReview: null };
-  context.diff = bounded(selectedDiff(context));
+  context.excludedDeletedGeneratedFiles = [...new Set(changes.flatMap(change => change.excludedDeletedGeneratedFiles))];
+  context.diff = boundedDiff(selectedDiff(context), context.excludedDeletedGeneratedFiles);
   context.material = { requirements: 'batch.tasks: frozen issue bodies and executor context',
     scope: 'Only batch.pending tasks and their exact implementation commits; reused tasks are context, not a fresh review',
     base, head, sources: 'Candidate sources via read_file; original commit/parent snapshots via git_show',
@@ -249,10 +270,11 @@ export function executeReadTool(context, name, input = {}) {
       return bounded(git(root, args, { acceptNoMatch: true }));
     }
     case 'git_diff': {
-      if (context.kind === 'ship-batch') return bounded(selectedDiff(context, input.path));
+      const excluded = input.path ? [] : context.excludedDeletedGeneratedFiles ?? [];
+      if (context.kind === 'ship-batch') return boundedDiff(selectedDiff(context, input.path), excluded);
       const args = ['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--unified=5', context.base, context.head, '--'];
-      if (input.path) args.push(repoPath(input.path));
-      return bounded(git(root, args));
+      args.push(...diffPaths(excluded, input.path));
+      return boundedDiff(git(root, args), excluded);
     }
     case 'git_show': return bounded(blob(context, revision(context, input.commit), input.path));
     case 'git_log': {
