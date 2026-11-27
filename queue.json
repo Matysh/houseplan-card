@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 29083,
+  "revision": 29084,
   "nextTicket": 784,
-  "nextFence": 780,
+  "nextFence": 781,
   "tasks": {
     "1001": {
       "issue": 1001,
@@ -6444,7 +6444,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 777,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795791122132,
       "reviewEntry": 7,
@@ -7324,12 +7324,21 @@
     }
   },
   "waiting": [
-    1609,
     1595,
     1598,
     1613
   ],
-  "active": null,
+  "active": {
+    "issue": 1609,
+    "worker": "finish",
+    "token": "780:finish:7505b5b4-4d41-4592-9c2f-c7ee13451083:finish:1:admit",
+    "fence": 780,
+    "materialSha": "0f36b5c0f11bd9947ccae133e12dad1b0bd5eb68",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795802205567,
+    "expiresAt": 1795802505567
+  },
   "events": {
     "ready:1598:95baaa6dad232e52b30c4e181506049324c8ef25": {
       "digest": "f612b2fe91c414ea4de775ae0fbe4943352bdd317ef80a1fa4c3ce0ed930c15b",
@@ -8536,6 +8545,29 @@
         "layer": "infra",
         "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32",
         "delivered": true
+      }
+    },
+    "finish:7505b5b4-4d41-4592-9c2f-c7ee13451083:finish:1:admit": {
+      "digest": "abe6bb5e181ea2d3a147752f6e30e1ae82fe3c8683db1dcb65e66834ba7fad5d",
+      "issue": 1609,
+      "message": {
+        "kind": "admitted",
+        "issue": 1609,
+        "at": 1795802205567,
+        "entry": 7,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "0f36b5c0f11bd9947ccae133e12dad1b0bd5eb68",
+        "phase": "sync",
+        "evidence": {
+          "id": "20261127T141439994-f67f7711",
+          "name": "Тесты для задачи #1609 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T141439994-f67f7711/report.json",
+          "materialSha": "2abb6ae7afe9ecb08457341fb496a10f3f4d9481",
+          "status": "passed",
+          "finishedAt": "2026-11-27T14:34:01.256Z",
+          "failures": []
+        }
       }
     }
   },
