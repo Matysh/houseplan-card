@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28539,
-  "nextTicket": 776,
+  "revision": 28540,
+  "nextTicket": 777,
   "nextFence": 771,
   "tasks": {
     "1001": {
@@ -6408,14 +6408,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1603-implicit-any",
-      "materialSha": "9ae05ba26c2c5022b588a9fb42070108357a5e5a",
+      "materialSha": "ee977ad7d3d24b0747a77a226c294eecd4200c5e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 769,
-      "queued": false,
+      "ticket": 776,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795776323620,
-      "reviewEntry": 1,
+      "readyAt": 1795789104578,
+      "reviewEntry": 2,
       "patchId": "818c8853959c05cf32899ac9cbb786021a6d4e2d",
       "changedFiles": [
         "PROCESS.md",
@@ -6453,7 +6453,6 @@
         "tests_backend/test_backend_quality.py",
         "tsconfig.json"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7534,7 +7533,8 @@
     1595,
     1598,
     1600,
-    1594
+    1594,
+    1603
   ],
   "active": {
     "issue": 1609,
@@ -9278,6 +9278,19 @@
           "finishedAt": "2026-11-27T09:33:06.732Z",
           "failures": []
         }
+      }
+    },
+    "ready:1603:ee977ad7d3d24b0747a77a226c294eecd4200c5e": {
+      "digest": "8974fd4fdd61db3f88a71b6b37f1c2bcdde72b82f2fe333cc54db027819ab242",
+      "issue": 1603,
+      "message": {
+        "kind": "queued",
+        "issue": 1603,
+        "at": 1795789104578,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ee977ad7d3d24b0747a77a226c294eecd4200c5e"
       }
     }
   },
