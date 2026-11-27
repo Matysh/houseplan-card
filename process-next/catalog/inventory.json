@@ -43,6 +43,70 @@
   },
   "entries": [
     {
+      "path": "custom_components/houseplan/core/conformance.py",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 installed core conformance or its frozen synthetic producer data; packaging/test contract only, not a runtime parser/host implementation.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
+      "path": "custom_components/houseplan/core/archive_conformance.py",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 installed core conformance or its frozen synthetic producer data; packaging/test contract only, not a runtime parser/host implementation.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
+      "path": "tests_backend/test_core_distribution.py",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 installed core conformance or its frozen synthetic producer data; packaging/test contract only, not a runtime parser/host implementation.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
+      "path": "demo/fixtures/core-compatibility/provenance.json",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 installed core conformance or its frozen synthetic producer data; packaging/test contract only, not a runtime parser/host implementation.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
+      "path": "demo/fixtures/core-compatibility/v1.86.0/plan-transfer.zip",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 installed core conformance or its frozen synthetic producer data; packaging/test contract only, not a runtime parser/host implementation.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
+      "path": "demo/fixtures/core-compatibility/v1.86.0/full-backup.zip",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 installed core conformance or its frozen synthetic producer data; packaging/test contract only, not a runtime parser/host implementation.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
+      "path": "demo/fixtures/core-compatibility/v1.86.1/plan-transfer.zip",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 installed core conformance or its frozen synthetic producer data; packaging/test contract only, not a runtime parser/host implementation.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
+      "path": "demo/fixtures/core-compatibility/v1.86.1/full-backup.zip",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1600 installed core conformance or its frozen synthetic producer data; packaging/test contract only, not a runtime parser/host implementation.",
+      "mechanism": "core-distribution",
+      "automaticReleaseRun": false
+    },
+    {
       "path": "tests_backend/test_core_archive_compatibility.py",
       "kind": "infrastructure",
       "decision": "addressed",

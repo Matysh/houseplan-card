@@ -412,3 +412,18 @@ test('reconciliation observes show assigned to a ready ship and requests review 
   assert.equal((await h.store.read()).state.active.phase, 'review'); assert.ok(h.issue.labels.includes('S7-code-review'));
   assert.equal(h.tests, 1); assert.equal(h.reviews, 1);
 });
+
+test('core conformance and frozen producer data are infrastructure while archive readers stay product', () => {
+  const conformance = [
+    'custom_components/houseplan/core/conformance.py',
+    'custom_components/houseplan/core/archive_conformance.py',
+    'tests_backend/test_core_archive_compatibility.py',
+    'tests_backend/test_core_distribution.py',
+    'demo/fixtures/core-compatibility/provenance.json',
+    ...['v1.86.0','v1.86.1'].flatMap(tag=>['plan-transfer.zip','full-backup.zip'].map(name=>
+      'demo/fixtures/core-compatibility/'+tag+'/'+name)),
+  ];
+  assert.equal(taskLayerFromDiff(conformance), 'infra');
+  for (const file of ['house_archive.py','backup_archive.py','house_document.py','plan_commands.py'])
+    assert.equal(taskLayerFromDiff([...conformance,'custom_components/houseplan/core/'+file]),'product');
+});
