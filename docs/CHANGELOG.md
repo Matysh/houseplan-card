@@ -5,6 +5,7 @@
 - Preserve partition openings when adding a space triggers migration to plan model 11 (#1611).
 - The compact header menu shows an accent border on the item reached by keyboard. (#1614)
 - Speed up first editor entry and repeated floor switches in View with the editor loaded. (#1595)
+- Bound routine S6 by track, choose contract-specific witnesses, and verify expanded checks against the current candidate (#1613).
 
 - Restore the 1.83.1 hotfix entry and document bundled frontend licenses. [#1597](https://github.com/Matysh/houseplan-card/issues/1597)
 - Replace legacy SVG isometric benchmarks with diagnostic WebGL canvas/mesh, camera, light fade, GPU timer and heap measurements; report software rendering explicitly (#1599).

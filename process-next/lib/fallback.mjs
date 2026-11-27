@@ -3,6 +3,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { listZipEntries, readZipEntries } from './zip.mjs';
+import { s6StepIdentity } from './s6-budget.mjs';
 import { normalizeFallbackRequest } from '../templates/prepare-fallback.mjs';
 
 const canonical = value => Array.isArray(value) ? value.map(canonical)
@@ -17,7 +18,7 @@ const sleep = (ms, signal) => new Promise(resolve => {
 });
 
 export function fallbackRequest({ active, task, request = {} }) {
-  if (!Number.isSafeInteger(active?.issue) || active.issue < 1 || !/^[a-f0-9]{40}$/.test(active.materialSha ?? '')) throw Error('Hosted S6 requires the admitted issue and immutable SHA');
+  if (!Number.isSafeInteger(active?.issue) || active.issue < 1 || !/^[a-f0-9]{40}$/.test(active.materialSha ?? '')) throw Error('Hosted S6 requires the issue and immutable candidate SHA');
   const profile = { ...request, event: 'task', issue: active.issue, track: task.track ?? 'show', layer: task.layer,
     changedFiles: task.changedFiles ?? [], areaTests: request.areaTests ?? [] };
   // The same profile is materialized in CI; local roots and authority flags never cross over.
@@ -67,9 +68,11 @@ export class WorkflowFallbackAdapter {
       return JSON.parse(readZipEntries(archive, names).get(names[0]).toString('utf8'));
     } finally { await rm(directory, { recursive: true, force: true }); }
   }
-  result(report, run, active, requestId) {
+  result(report, run, active, requestId, expectedPlan, expectedSteps) {
     if (report.schema !== 1 || !report.id || report.materialSha !== active.materialSha || report.materialClean !== true
-      || report.issue !== active.issue || report.event !== 'task' || !report.finishedAt || !Array.isArray(report.results))
+      || report.issue !== active.issue || report.event !== 'task' || !report.finishedAt || !Array.isArray(report.results)
+      || expectedPlan && report.s6Plan !== expectedPlan
+      || expectedSteps && s6StepIdentity(report.results) !== expectedSteps)
       return terminal('Hosted report does not identify this completed, clean S6 candidate');
     const required = report.results.filter(row => !row.diagnostic);
     const passed = report.status === 'passed' && required.length > 0 && required.every(row => ['passed', 'reused', 'not-required'].includes(row.status));
@@ -77,16 +80,18 @@ export class WorkflowFallbackAdapter {
       finishedAt: report.finishedAt, reportUrl: run.html_url, execution: 'github' };
     return { outcome: passed ? 'passed' : 'failed', receipt, evidence: receipt };
   }
-  async runS6({ active, task, request, signal, onProgress = () => {} }) {
+  async runS6({ active, task, request, signal, maxWaitMs = this.maxWaitMs, existingOnly = false, onProgress = () => {} }) {
     if (['docs', 'documentation'].includes(task.layer)) return { outcome: 'not-required' };
+    if (!Number.isFinite(maxWaitMs) || maxWaitMs <= 0) return terminal('Hosted wait must be finite');
     let selected;
     try { selected = fallbackRequest({ active, task, request }); }
     catch (error) { return terminal(`Hosted S6 request is invalid: ${error.message}`); }
     const { requestId, title, profile } = selected, started = this.clock();
     let run, dispatched = false, dispatchUncertain = false, failures = 0, retryRequested = false, retryRequestedAt;
-    while (!signal?.aborted && this.clock() - started < this.maxWaitMs) {
+    while (!signal?.aborted && this.clock() - started < maxWaitMs) {
       try {
         run = run ? await this.api.request('GET', `${this.api.root}/actions/runs/${run.id}`) : await this.findRun(requestId);
+        if (existingOnly && run?.status !== 'completed') return terminal('Previously selected hosted S6 result is unavailable');
         if (!run && !dispatched) {
           dispatched = true;
           try {
@@ -100,8 +105,8 @@ export class WorkflowFallbackAdapter {
         } else if (!run && dispatchUncertain) return terminal('Hosted dispatch response was lost and no matching run appeared; inspect Actions before retrying');
         if (run?.status === 'completed') {
           const report = await this.readReport(run);
-          if (report) return this.result(report, run, active, requestId); // A failed test is never retried as transport.
-          if (['success', 'skipped', 'cancelled'].includes(run.conclusion)) return terminal('Hosted run completed or was cancelled without a runner report');
+          if (report) return this.result(report, run, active, requestId, profile.s6Plan, profile.s6Steps); // A failed test is never retried as transport.
+          if (existingOnly || ['success', 'skipped', 'cancelled'].includes(run.conclusion)) return terminal('Hosted run completed or was cancelled without a runner report');
           // The rerun can be accepted while the API still exposes the completed first attempt.
           const awaitingVisibility = retryRequested && Number(run.run_attempt ?? 1) < 2 && this.clock() - retryRequestedAt < 120000;
           if (!awaitingVisibility) {
@@ -117,7 +122,7 @@ export class WorkflowFallbackAdapter {
         if (!transient(error) || ++failures > 1) return terminal(`Hosted S6 unavailable: ${error.message}${[401,403,404].includes(error.status) ? '; check Actions write permission and workflow activation' : ''}`);
         onProgress({ kind: 'checks', run: title, status: 'transport-retry', reason: error.message, requestId });
       }
-      await this.sleep(Math.min(this.pollMs, this.maxWaitMs - (this.clock() - started)), signal);
+      await this.sleep(Math.min(this.pollMs, maxWaitMs - (this.clock() - started)), signal);
     }
     return { ...terminal(signal?.aborted ? 'Hosted S6 wait interrupted; its existing run remains discoverable' : 'Hosted S6 wait limit reached; inspect the existing run before continuing'), requestId, reportUrl: run?.html_url };
   }

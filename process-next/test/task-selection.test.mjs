@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { testCatalog, selectTaskTests, planRequirements, selectionText, chooseOptionalChecks, domainsOf } from '../lib/task-selection.mjs';
+import { testCatalog, selectTaskTests, planRequirements, selectionText, domainsOf } from '../lib/task-selection.mjs';
 import { planProfile, inventory, CRITICAL_NODE } from '../lib/catalog.mjs';
 import { runPlan } from '../lib/runner.mjs';
 import { normalizeFallbackRequest } from '../templates/prepare-fallback.mjs';
@@ -71,7 +71,7 @@ test('#1482 isometry changes select the shared-glass pixel contract without area
     assert.ok(row.domains.includes('isometry'));assert.equal(row.lifecycle,'task-release');
     const result=await select(dir,{track:'ask',changedFiles:['src/styles/iso-lab-markers.styles.ts']});
     assert.ok(result.files.includes(path));
-    assert.ok(result.explanation.reasons[path].includes('Сквозной native-контракт области isometry'));
+    assert.ok(result.explanation.reasons[path].some(reason=>reason.includes('src/styles/iso-lab-markers.styles.ts')));
 }));
 test('#1474 paint sources select the classified raised label contract without areaTests', async () => fixture({
     'src/iso-overlays.ts': '',
@@ -85,7 +85,7 @@ test('#1474 paint sources select the classified raised label contract without ar
     assert.equal(row.layer,'product'); assert.equal(row.importance,'regression');
     assert.ok(row.domains.includes('isometry')); assert.ok(row.domains.includes('presentation'));
     assert.ok(selected.files.includes(path));
-    assert.ok(selected.explanation.reasons[path].includes('Сквозной native-контракт области isometry'));
+    assert.ok(selected.explanation.reasons[path].some(reason=>reason.includes('src/iso-overlays.ts')));
     assert.ok(selected.files.includes('test/iso-overlays.test.mjs'));
 }));
 test('#1451 workstation storage and product projection select their addressed witnesses', async () => fixture({
@@ -223,21 +223,23 @@ test('catalog covers current active files/scenes/lifecycles and preserves explic
     for (const row of c.rows)
         assert.ok(row.domains.length || c.gaps.some(g => g.id === row.id), 'unclassified is visible');
 });
-test('track depth follows components and relations; core geometry is broad even on Ship', async () => fixture({
-    'src/wall-fixture.ts': 'export const x=1;',
-    'test/wall-main.test.mjs': "import '../test-build/wall-fixture.js';",
-    'test/history-case.test.mjs': '', 'test/pdf-example.test.mjs': '', 'test/render-view.test.mjs': '',
-    'test/isometric-example.test.mjs': '', 'test/config-storage.test.mjs': '',
-    'demo/smoke_direct_wall_geometry.mjs': '',
-}, async (dir) => {
-    const ship = await select(dir, { changedFiles: ['src/wall-fixture.ts'] }), show = await select(dir, { changedFiles: ['src/wall-fixture.ts'], track: 'show' }), ask = await select(dir, { changedFiles: ['src/wall-fixture.ts'], track: 'ask' });
-    assert.ok(ship.files.includes('test/wall-main.test.mjs'));
-    assert.ok(ship.files.includes('demo/smoke_direct_wall_geometry.mjs'));
-    assert.ok(show.files.includes('test/history-case.test.mjs'));
-    assert.ok(ask.files.includes('test/pdf-example.test.mjs'));
-    assert.ok(ship.files.length < show.files.length);
-    assert.ok(show.files.length <= ask.files.length);
-    assert.ok(ask.explanation.reasons['test/pdf-example.test.mjs'].some(r => r.includes('ask')));
+test('geometry retains named critical behavior, without all tests in its domain', async () => fixture({
+    'src/plan-graph.ts':'', 'test/plan-graph-core.test.mjs':'', 'test/geometry-corpus.test.mjs':'',
+    'demo/smoke_direct_wall_geometry.mjs':'','demo/smoke_wall_node_move.mjs':'',
+    'test/plan-graph-optimize.test.mjs':'','test/wall-unrelated.test.mjs':'','test/pdf-unrelated.test.mjs':'',
+}, async dir=>{
+    const data={changedFiles:['src/plan-graph.ts']};
+    const ship=await select(dir,data), show=await select(dir,{...data,track:'show'}), ask=await select(dir,{...data,track:'ask'});
+    for(const item of [ship,show,ask]) {
+        assert.ok(item.files.includes('test/plan-graph-core.test.mjs'));
+        assert.ok(item.files.includes('test/geometry-corpus.test.mjs'));
+        assert.ok(item.files.includes('demo/smoke_direct_wall_geometry.mjs'));
+        assert.ok(!item.files.includes('test/wall-unrelated.test.mjs'));
+        assert.ok(!item.files.includes('test/pdf-unrelated.test.mjs'));
+    }
+    assert.ok(!ship.files.includes('test/plan-graph-optimize.test.mjs'));
+    assert.ok(show.files.includes('test/plan-graph-optimize.test.mjs'));
+    assert.ok(ask.files.includes('demo/smoke_wall_node_move.mjs'));
 }));
 test('unknown new product sources select all fast Node, flag the gap and never schedule release sets', async () => fixture({
     'src/unmapped-new-feature.ts': '', 'test/one.test.mjs': '', 'test/two.test.mjs': '', 'demo/smoke_one.mjs': '',
@@ -246,20 +248,19 @@ test('unknown new product sources select all fast Node, flag the gap and never s
     assert.deepEqual(result.files, ['test/one.test.mjs', 'test/two.test.mjs']);
     assert.ok(result.explanation.gaps.some(g => g.path === 'src/unmapped-new-feature.ts'));
     assert.equal(result.explanation.executedCases, null);
-    assert.equal(result.explanation.cost.expectedTotalMs, null);
+    assert.deepEqual(result.explanation.uncovered, ['src/unmapped-new-feature.ts']);
     const plan = await planProfile({ root: dir, changedFiles: ['src/unmapped-new-feature.ts'] });
     assert.equal(plan.steps.some(s => /golden|e2e|mutation|converter/.test(s.id)), false);
 }));
-test('static readers include both sides of import cycles and actual directory scopes', async () => fixture({
+test('addressed selection distinguishes direct behavior from transitive and broad readers', async () => fixture({
     'src/light-a.ts': "import './light-b'; export const a=1;", 'src/light-b.ts': "import './light-a.js'; export const b=2;",
     'test/plain-a.test.mjs': "import '../test-build/light-a.js';", 'test/plain-b.test.mjs': "import '../test-build/light-b.js';",
     'test/tree-reader.test.mjs': "import {readdirSync} from 'node:fs'; readdirSync('src');",
 }, async (dir) => {
     const result = await select(dir, { changedFiles: ['src/light-a.ts'] });
     assert.ok(result.files.includes('test/plain-a.test.mjs'));
-    assert.ok(result.files.includes('test/plain-b.test.mjs'));
-    assert.ok(result.files.includes('test/tree-reader.test.mjs'), 'a real source-directory reader is affected by every changed source in that scope');
-    assert.ok(result.explanation.reasons['test/plain-b.test.mjs'].some(r => r.includes('Читает')));
+    assert.ok(!result.files.includes('test/plain-b.test.mjs'), 'a transitive input does not prove behavior coverage');
+    assert.ok(!result.files.includes('test/tree-reader.test.mjs'), 'generic directory readers are not automatic witnesses');
 }));
 test('deleted and renamed source paths still contribute their old domain', async () => fixture({
     'src/decor-new.ts': '', 'test/wall-existing.test.mjs': '', 'test/decor-new.test.mjs': '',
@@ -267,21 +268,22 @@ test('deleted and renamed source paths still contribute their old domain', async
     const plan = await planProfile({ root: dir, track: 'show', changedFiles: ['src/wall-deleted.ts', 'src/decor-new.ts'] });
     assert.ok(plan.selection.domains.includes('geometry'));
     assert.ok(plan.selection.domains.includes('decor'));
-    assert.ok(plan.steps.some(s => s.command?.includes('test/wall-existing.test.mjs')));
+    assert.ok(!plan.steps.some(s => s.command?.includes('test/wall-existing.test.mjs')));
+    assert.ok(plan.selection.uncovered.includes('src/wall-deleted.ts'));
     await assert.rejects(planProfile({ root: dir, areaTests: ['test/missing.test.mjs'] }), /ENOENT/);
 }));
 test('changed tests are automatically included even when no product source changed', async () => fixture({
     'test/decor-new.test.mjs': '',
 }, async (dir) => assert.ok((await select(dir, { changedFiles: ['test/decor-new.test.mjs'] })).files.includes('test/decor-new.test.mjs'))));
 test('automatically selected backend controls fallback preparation from the actual plan', async () => fixture({
-    'src/config-change.ts': '', 'tests_backend/test_storage.py': 'def test_x(): pass',
+    'custom_components/houseplan/config_write.py': '', 'tests_backend/test_ha_config_set_scoped.py': 'def test_x(): pass',
 }, async (dir) => {
-    const plan = await planProfile({ root: dir, changedFiles: ['src/config-change.ts'] });
+    const plan = await planProfile({ root: dir, changedFiles: ['custom_components/houseplan/config_write.py'] });
     assert.ok(plan.steps.some(s => s.id.startsWith('affected-backend:')));
     const local = planRequirements(plan);
     assert.equal(local.needsBackend, true);
     assert.equal(local.needsPython, true);
-    const hosted = normalizeFallbackRequest({ event: 'task', changedFiles: ['src/config-change.ts'] }, { workspace: dir, candidate: 'a'.repeat(40), plan });
+    const hosted = normalizeFallbackRequest({ event: 'task', changedFiles: ['custom_components/houseplan/config_write.py'] }, { workspace: dir, candidate: 'a'.repeat(40), plan });
     assert.equal(hosted.needsBackend, local.needsBackend);
     assert.equal(hosted.needsBrowser, local.needsBrowser);
 }));
@@ -358,12 +360,6 @@ test('#1448 metrics infra retains its actual package reader without preparing pr
             changedFiles: ['scripts/real-reader.mjs'] }), /prepared product artifacts/);
     });
 });
-test('optional budgets respect relevance priority and uncertainty, never trim mandatory units', () => {
-    const candidates = [{ path: 'b', priority: 2, durationMs: 10 }, { path: 'a', priority: 1, durationMs: 20 }, { path: 'unknown', priority: 3 }];
-    assert.deepEqual(chooseOptionalChecks(candidates, { budgetMs: 40, mandatoryMs: 20, mandatoryUnknown: 0 }).selected, ['a']);
-    assert.deepEqual(chooseOptionalChecks(candidates, { budgetMs: 1000, mandatoryMs: 20, mandatoryUnknown: 1 }).selected, []);
-    assert.deepEqual(chooseOptionalChecks([{ path: 'a', priority: 1, durationMs: 10 }, { path: 'a', priority: 2, durationMs: 10 }], { budgetMs: 100, mandatoryMs: 0, mandatoryUnknown: 0 }).selected, ['a'], 'one optional unit cannot consume the budget twice');
-});
 test('external inventory exposes new sources and ignores archived companion legacy', async () => fixture({
     'tests/brand-new.admin.spec.mjs': '', 'tests/legacy/ignored.admin.spec.mjs': '',
 }, async (dir) => {
@@ -374,22 +370,27 @@ test('external inventory exposes new sources and ignores archived companion lega
     assert.ok(c.rows.some(r => r.type === 'ha-setup'));
     assert.equal(c.rows.filter(r => r.type === 'ha-e2e').length, 93);
 }));
-test('recognized sources with incomplete static links receive the full nearest fast component', async () => fixture({
-    'src/vacuum-new.ts': '', 'test/vacuum-unreferenced.test.mjs': '',
-}, async (dir) => {
-    const p = await select(dir, { changedFiles: ['src/vacuum-new.ts'] });
-    assert.ok(p.files.includes('test/vacuum-unreferenced.test.mjs'));
-    assert.ok(p.explanation.gaps.some(g => g.path === 'src/vacuum-new.ts' && g.reason.includes('ближайших')));
+test('recognized sources without readers use one named witness instead of a full domain', async () => fixture({
+    'src/vacuum-new.ts':'','test/vacuum-unreferenced.test.mjs':'','demo/smoke_vacuum.mjs':'',
+},async dir=>{
+    const p=await select(dir,{changedFiles:['src/vacuum-new.ts']});
+    assert.ok(p.files.includes('demo/smoke_vacuum.mjs'));
+    assert.ok(!p.files.includes('test/vacuum-unreferenced.test.mjs'));
+    assert.ok(p.explanation.gaps.some(g=>g.path==='src/vacuum-new.ts'));
 }));
-test('Show checks every immediate relation contract; Ask adds full related fast sets', async () => fixture({
-    'src/device-options.ts': '', 'test/device-options.test.mjs': "import '../test-build/device-options.js';",
-    'test/climate-refusal.test.mjs': '', 'test/climate-normal.test.mjs': '', 'demo/smoke_room_co2.mjs': '',
-}, async (dir) => {
-    const show = await select(dir, { track: 'show', changedFiles: ['src/device-options.ts'] }), ask = await select(dir, { track: 'ask', changedFiles: ['src/device-options.ts'] });
+test('Show adds directly affected boundaries and Ask adds an independent boundary contract',async()=>fixture({
+    'src/device-options.ts':'',
+    'test/device-options.test.mjs':"import '../test-build/device-options.js';",
+    'test/climate-refusal.test.mjs':"import '../test-build/device-options.js';",
+    'test/device-boundary.test.mjs':"import '../test-build/device-options.js';",
+    'test/climate-normal.test.mjs':'',
+},async dir=>{
+    const data={changedFiles:['src/device-options.ts']};
+    const show=await select(dir,{...data,track:'show'}), ask=await select(dir,{...data,track:'ask'});
     assert.ok(show.files.includes('test/climate-refusal.test.mjs'));
-    assert.ok(show.files.includes('demo/smoke_room_co2.mjs'));
     assert.ok(!show.files.includes('test/climate-normal.test.mjs'));
-    assert.ok(ask.files.includes('test/climate-normal.test.mjs'));
+    assert.ok(ask.files.includes('test/device-boundary.test.mjs'));
+    assert.ok(!ask.files.includes('test/climate-normal.test.mjs'));
 }));
 test('one parameterized Node file reports five executed cases, not one file or declaration', async () => fixture({
     'test/parameters.test.mjs': "import test from 'node:test'; import assert from 'node:assert/strict'; for(let i=0;i<5;i++)test('variant '+i,()=>assert.ok(i>=0));",
@@ -416,9 +417,8 @@ test('shared application/stand aggregation does not make every scenario a reader
     assert.ok(!changed.files.includes('test/plain-shell.test.mjs'));
     const shell = await select(dir, {changedFiles: ['src/houseplan-card.ts']});
     assert.ok(shell.files.includes('test/plain-shell.test.mjs'));
-    // Application changes retain the broad fallback; shell barriers narrow only
-    // transitive scenario relevance, never execution fingerprints in finalize.
-    assert.ok(shell.files.includes('test/tooltip-reader.test.mjs'));
+    assert.ok(!shell.files.includes('test/tooltip-reader.test.mjs'));
+    assert.ok(!shell.files.includes('demo/smoke_vacuum_unrelated.mjs'));
 }));
 test('shared test inputs and product-contract readers participate in product changes', async () => fixture({
     'test/helpers/geometry-commit.mjs': 'export const x=1;',
@@ -471,12 +471,13 @@ test('release hotfix retains the addressed profile without automatic task expans
 }));
 test('build-input tools inherit product scope from the existing preparation inputs', async () => fixture({
     'scripts/coverage-maps.mjs':'export const x=1;',
-    'test/unrelated-fast.test.mjs':'',
+    'test/unrelated-fast.test.mjs':'','test/bundle-assets.test.mjs':'',
 },async dir=>{
     const p=await planProfile({root:dir,layer:'product',changedFiles:['scripts/coverage-maps.mjs']});
     assert.ok(p.steps.some(s=>s.id==='product-build'));
-    assert.ok(p.steps.some(s=>s.command?.includes('test/unrelated-fast.test.mjs')),'unmapped build tool uses the conservative quick fallback');
-    assert.ok(p.selection.gaps.some(g=>g.path==='scripts/coverage-maps.mjs'));
+    assert.ok(!p.steps.some(s=>s.command?.includes('test/unrelated-fast.test.mjs')));
+    assert.ok(p.steps.some(s=>s.command?.includes('test/bundle-assets.test.mjs')));
+    assert.deepEqual(p.selection.uncovered,[]);
 }));
 test('coordinator module graph loads within its deployed sparse checkout', async () => fixture({}, async dir=>{
     // Cone-mode checkout includes the chosen directories and root-level files.
@@ -547,12 +548,12 @@ test('a source-scanner success is invalidated by changed frontend or backend dir
   await writeFile(resolve(dir,file),'good');
  }
 }));
-test('header retirement native witness is selected for its actual runtime owner', async()=>fixture({
+test('an explicitly addressed header contract remains mandatory for the runtime shell', async()=>fixture({
  'src/houseplan-card.ts':'','demo/smoke_header_observer_retirement.mjs':'',
 },async dir=>{
- const result=await select(dir,{changedFiles:['src/houseplan-card.ts']});
+ const result=await select(dir,{changedFiles:['src/houseplan-card.ts'], areaTests:['demo/smoke_header_observer_retirement.mjs']});
  assert.ok(result.files.includes('demo/smoke_header_observer_retirement.mjs'));
- assert.ok(result.explanation.reasons['demo/smoke_header_observer_retirement.mjs'].some(x=>x.includes('Читает')));
+ assert.ok(result.explanation.reasons['demo/smoke_header_observer_retirement.mjs'].includes('Дополнение исполнителя'));
  const catalog=await testCatalog(dir,inventory),row=catalog.rows.find(r=>r.path==='demo/smoke_header_observer_retirement.mjs');
  assert.equal(row.layer,'product');assert.ok(row.domains.includes('presentation'));assert.equal(row.lifecycle,'task-release');
 }));

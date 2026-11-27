@@ -196,6 +196,15 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       clearAutomation(task);
       break;
     }
+    case 's6-final-started': {
+      const active = admitted(), task = state.tasks[active.issue]; material(active);
+      if (active.phase !== 'testing' || task.layer !== 'product' || event.patchId !== active.patchId || !event.patchId)
+        throw Error('Expanded final S6 needs the admitted product material');
+      if (task.s6FinalAttempt?.patchId !== active.patchId) task.s6FinalAttempt = {
+        patchId:active.patchId, materialSha:active.materialSha, eventId:event.id,
+      };
+      break;
+    }
     case 's6-complete': {
       const active = admitted(), task = state.tasks[active.issue]; material(active);
       if (active.phase !== 'testing' || (task.layer === 'docs' ? event.outcome !== 'not-required' : event.outcome !== 'passed'))

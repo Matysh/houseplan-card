@@ -5,7 +5,8 @@ import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { planProfile,inventory } from './lib/catalog.mjs';
-import { runPlan } from './lib/runner.mjs';
+import { runPlan, reusableS6Steps } from './lib/runner.mjs';
+import { budgetForS6, EXPANDED_S6_WAIT, s6PlanIdentity } from './lib/s6-budget.mjs';
 import { readJson, writeJson, ResultStore, defaultStateDir } from './lib/storage.mjs';
 import { LocalQueueStore, QueueController } from './lib/queue.mjs';
 import { initialReleaseState, reduceRelease, releaseReadiness } from './lib/release.mjs';
@@ -135,9 +136,21 @@ export async function main(argv = process.argv.slice(2)) {
   }
   if(command==='catalog'){const catalog=await testCatalog(root,inventory,{e2eRoot:o['e2e-root']});if(o.json)print(catalog);else{process.stdout.write(`Каталог: ${catalog.counts.files} исполняемых файлов, ${catalog.counts.scenes} сцен; кейсы определяются только запуском.\n`);for(const row of catalog.rows)process.stdout.write(`${row.type} · ${row.lifecycle} · ${row.path} · ${row.domains.join(', ')||'НЕ РАЗМЕЧЕНО'} · ${row.scenario}\n`);}return 0;}
   if (command === 'plan' || command === 'run') {
+    const s6Started = performance.now();
     const options = { ...optionsForPlan(o), root }, plan = await planProfile(options);
     if(command==='plan'){if(o.json)print(plan);else process.stdout.write(plan.name+'\n'+(selectionText(plan.selection)||'Проверки: '+plan.steps.length)+'\n'+plan.steps.map(s=>'  '+s.name).join('\n')+'\n');return 0;}
+    if(options.s6Plan && options.s6Plan !== s6PlanIdentity(plan)) throw Error('Hosted S6 plan differs from requested identity');
+    const jobs = Number(o.jobs ?? 2);
+    const mode = plan.s6?.host;
+    const estimate = plan.s6 && budgetForS6(plan, { mode, jobs, reused: mode === 'wsl' && !o['no-reuse']
+      && plan.s6.mode === 'standard' ? reusableS6Steps(plan,{root,stateDir,environment:options.environment}) : new Set() });
+    if (estimate) plan.selection.budget = estimate;
     if(!o.json&&plan.selection)process.stdout.write(selectionText(plan.selection)+'\n');
+    if (plan.selection?.uncovered?.length) throw Error('Отсутствуют адресные проверки: ' + plan.selection.uncovered.join(', '));
+    if (estimate?.reasons.length && plan.s6.mode === 'standard') throw Error('Требуется расширенный S6: ' + estimate.reasons.join(', '));
+    const budget = !estimate ? undefined : plan.s6.mode === 'expanded'
+      ? mode === 'wsl' ? {ms:EXPANDED_S6_WAIT,deadline:s6Started+EXPANDED_S6_WAIT} : undefined
+      : {steps:estimate.limit.steps, ...(mode==='wsl' ? {ms:estimate.limit.ms, deadline:s6Started+estimate.limit.ms} : {})};
     const controller = new AbortController(), abort = () => controller.abort(); process.once('SIGINT', abort); process.once('SIGTERM', abort);
     let last = null, lastPrint = 0;
     const progress = event => {
@@ -161,7 +174,7 @@ export async function main(argv = process.argv.slice(2)) {
       await releaseStore.compareAndSwap(version, next);
     };
     if (releaseStore) await recordRelease({ type: 'run-started', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim() });
-    try { report = await runPlan(plan, { root, e2eRoot: options.e2eRoot, stateDir, jobs: Number(o.jobs ?? 2), reuse: !o['no-reuse'], signal: controller.signal, onProgress: progress, environment: options.environment ?? {} }); }
+    try { report = await runPlan(plan, { root, e2eRoot: options.e2eRoot, stateDir, jobs, budget, reuse: !o['no-reuse'], signal: controller.signal, onProgress: progress, environment: options.environment ?? {} }); }
     finally { clearInterval(timer); process.removeListener('SIGINT', abort); process.removeListener('SIGTERM', abort); }
     if (releaseStore) {
       await recordRelease({ type: 'runner-report', report });

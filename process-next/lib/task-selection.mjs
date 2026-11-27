@@ -3,7 +3,7 @@ import { CONVERTER_CASES } from '../converters/cases.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import { walk, matchesInputs } from './storage.mjs';
-import { dependencyReader } from './source-dependencies.mjs';
+import { dependencyReader, declaredSourceInputs } from './source-dependencies.mjs';
 import { BETA_E2E, CRITICAL_NODE } from '../catalog/selections.mjs';
 /** Behaviour taxonomy shared by inventory, task selection and its explanation.
  * Labels inherit from files; no per-test quota or title filtering is applied. */
@@ -37,17 +37,73 @@ export const DOMAINS = [
     ['performance', 'Производительность и кеши', /(?:performance|benchmark|latency|cache|invalidation|memory|warm|measurement|budget|demand|identity|epoch|deferred|frame)/, ['presentation', 'navigation'], ['selective_invalidation']],
 ];
 const companionInventory = JSON.parse(readFileSync(new URL('../catalog/companion-inventory.json', import.meta.url), 'utf8'));
-const observedCosts = JSON.parse(readFileSync(new URL('../catalog/costs.json', import.meta.url), 'utf8'));
 const ids = new Map(DOMAINS.map(row => [row[0], row]));
 const isInfra = p => p === '.gitignore' || /^(?:process-next\/|scripts\/|\.github\/|demo\/stand\/|docs\/release-ledger\/)/.test(p);
-export function domainsOf(path) { return DOMAINS.filter(row => row[2].test(path.toLowerCase().replaceAll('_', '-'))).map(row => row[0]); }
+export function domainsOf(path) { return AGGREGATION_BOUNDARIES.get(path)?.domains ?? DOMAINS.filter(row => row[2].test(path.toLowerCase().replace('/helpers/', '/').replaceAll('_', '-'))).map(row => row[0]); }
 const fast = row => ['node', 'backend', 'browser'].includes(row.type);
 const unique = xs => [...new Set(xs)];
 // Runtime shell/stand loaders intentionally aggregate the whole product. That
 // build dependency remains in execution fingerprints, but is not evidence that
 // every consumer tests each nested behaviour. Dedicated readers and domain
 // witnesses still select the component's actual contracts.
-const AGGREGATION_BOUNDARIES = new Set(['demo/serve.mjs', 'demo/bundle-freshness.mjs', 'scripts/source-fingerprint.mjs', 'src/houseplan-card.ts', 'src/houseplan-panel.ts']);
+// Coverage witnesses are narrower than invalidation inputs. The latter still
+// include complete runtime shells; a wrapper import cannot prove a scenario.
+const AGGREGATION_BOUNDARIES = new Map([
+    ['demo/serve.mjs', { domains: ['toolchain'], ship: ['test/smoke-harness-contract.test.mjs','demo/smoke_readonly_cold_start.mjs'],
+        show: ['demo/smoke_standalone_entry.mjs'], ask: ['demo/smoke_view_recovery.mjs'] }],
+    ['demo/bundle-freshness.mjs', { domains: ['toolchain'], ship: ['test/bundle-assets.test.mjs'], show: ['demo/smoke_readonly_cold_start.mjs'] }],
+    ['scripts/coverage-maps.mjs', { domains: ['toolchain'], ship: ['test/bundle-assets.test.mjs'] }],
+    ['scripts/source-fingerprint.mjs', { domains: ['toolchain'], ship: ['test/bundle-assets.test.mjs'] }],
+    ['src/houseplan-card.ts', { domains: ['runtime','presentation'], ship: ['demo/smoke_readonly_cold_start.mjs','demo/smoke_view_edit_permissions.mjs','test/unified-wall-tool-source.test.mjs'],
+        show: ['demo/smoke_lazy_editor_chunk.mjs','test/bundle-assets.test.mjs'], ask: ['demo/smoke_view_recovery.mjs'] }],
+    ['src/houseplan-panel.ts', { domains: ['navigation'], ship: ['demo/smoke_kiosk_space_navigation.mjs'],
+        show: ['demo/smoke_native_card_presentation.mjs'], ask: ['demo/smoke_space_switch_transitions.mjs'] }],
+]);
+const ADDRESS = [
+    [/^custom_components\/houseplan\/core\/furniture_workstation\.py$/, ['tests_backend/test_furniture_workstation.py','test/furniture-workstation.test.mjs'], ['test/furniture-volume-generator.test.mjs']],
+    [/^src\/editors\/hp-icon-picker\.ts$/, ['demo/smoke_device_icon_picker.mjs'], ['demo/smoke_standalone_entry.mjs']],
+    [/^src\/editors\/space-dialog-draft\.ts$/, ['test/space-settings-945.test.mjs'], ['demo/smoke_space_settings_form.mjs']],
+    [/^src\/standalone-icon-catalog\.ts$/, ['test/bundle-assets.test.mjs','demo/smoke_standalone_entry.mjs']],
+    [/^src\/standalone-presentation\.ts$/, ['test/standalone-presentation-boundary.test.mjs'], ['demo/smoke_standalone_presentation.mjs']],
+    [/^src\/plan-graph\.ts$/, ['test/plan-graph-core.test.mjs','test/geometry-corpus.test.mjs','demo/smoke_direct_wall_geometry.mjs'],
+        ['test/plan-graph-optimize.test.mjs'], ['demo/smoke_wall_node_move.mjs']],
+    [/^src\/(?:custom_)?(?:space-settings|room-utilities|layout-write|config-write)(?:[-\/][\w\/]+)?\.ts$/,
+        ['test/layout-write-reload.test.mjs','test/config-write-conflict.test.mjs']],
+    [/^src\/.*(?:room[-_]write|room[-_]commit|room[-_]save)[^\/]*\.ts$/,
+        ['test/config-write-context.test.mjs','demo/smoke_room_save_retry_946.mjs']],
+    [/^src\/.*(?:history|undo|command-stack|geometry-transaction)[^\/]*\.ts$/,
+        ['test/geometry-history-refusal.test.mjs','test/geometry-history-restore.test.mjs','demo/smoke_geometry_history_refusal.mjs']],
+    [/^src\/.*(?:editor-runtime|lazy-editor)[^\/]*\.ts$/, ['test/editor-runtime-loader.test.mjs','test/bundle-assets.test.mjs','demo/smoke_lazy_editor_chunk.mjs']],
+    [/^src\/.*(?:permission|plan-capabilit|device-editor-access)[^\/]*\.ts$/, ['test/plan-capability-permissions.test.mjs','demo/smoke_view_edit_permissions.mjs']],
+    [/^custom_components\/houseplan\/(?:.*(?:config|storage|permissions?|authorit|scope|handler|revision|write)[^\/]*|__init__|websocket)\.py$/,
+        ['tests_backend/test_ha_config_set_scoped.py']],
+    [/^(?:src\/.*|custom_components\/houseplan\/.*)(?:graph[-_]write|graph[-_]node|wall[-_]node|geometry[-_]write)[^\/]*\.(?:py|ts)$/,
+        ['tests_backend/test_graph_write.py','tests_backend/test_graph_node_write.py','demo/smoke_geometry_history_refusal.mjs']],
+    [/^src\/(?:styles\/)?iso-(?:overlays|lab-markers\.styles)\.ts$/,
+        ['test/iso-overlays.test.mjs','demo/smoke_iso_device_contours.mjs','demo/smoke_iso_label_bounds.mjs'], ['demo/smoke_isometric_live_touch.mjs']],
+    [/^src\/projection-view-camera\.ts$/, ['test/projection-view-camera.test.mjs'], ['test/iso-worker-cache-profile.test.mjs']],
+    [/^src\/pdf\/pdf-scene\.ts$/, ['test/pdf-workstation.test.mjs']],
+    [/^src\/iso-lab-workstation\.ts$/, ['test/furniture-workstation.test.mjs'], ['test/furniture-volume-generator.test.mjs']],
+    [/^src\/opening-features\.ts$/, ['test/opening-features.test.mjs','tests_backend/test_opening_orientation.py'], ['test/opening-optics.test.mjs']],
+    [/^custom_components\/houseplan\/core\/input_policy\.py$/,
+        ['tests_backend/test_input_policy.py','tests_backend/test_input_archive_security.py','tests_backend/test_ha_input_security.py']],
+    [/^custom_components\/houseplan\/core\/house_commands\.py$/, ['tests_backend/test_house_commands.py','tests_backend/test_house_document.py'],
+        ['tests_backend/test_house_files.py','tests_backend/test_ha_house_transfer.py'],
+        ['tests_backend/test_house_prefix.py','tests_backend/test_house_archive.py','test/house-transfer-prefix.test.mjs']],
+    [/^custom_components\/houseplan\/core\/plan_commands\.py$/, ['tests_backend/test_plan_commands.py'],
+        ['tests_backend/test_content_commands.py'], ['tests_backend/test_core_conformance.py','tests_backend/test_core_distribution.py']],
+];
+const installedOutput = path => path.startsWith('custom_components/houseplan/frontend/') || path === 'custom_components/houseplan/BUILD.json';
+const productMetadata = path => path === '.gitignore' || /^docs\/release-ledger\//.test(path);
+const mixedSourceScanner = 'process-next/lib/source-dependencies.mjs';
+const scannerWitnesses = ['process-next/test/task-selection.test.mjs','process-next/test/catalog.test.mjs','process-next/test/standalone-source-scope.test.mjs'];
+const isTestCase = path => /\.test\.mjs$|\/test_[^\/]+\.py$|^demo\/smoke[^\/]*\.mjs$/.test(path);
+const typeRank = { node: 0, backend: 0, browser: 1 };
+const importanceRank = { critical: 0, boundary: 1, regression: 2 };
+const orderWitnesses = (a,b) => a.proof - b.proof || typeRank[a.row.type] - typeRank[b.row.type]
+    || importanceRank[a.row.importance] - importanceRank[b.row.importance] || a.row.path.localeCompare(b.row.path);
+const depth = { ship: 0, show: 1, ask: 2 };
+
 const originalSourceFile = p => /^(?:src\/|custom_components\/houseplan\/|assets\/)/.test(p) || /^(?:package(?:-lock)?\.json|tsconfig.*\.json|rollup\.config\.mjs)$/.test(p);
 const isDocument = p => /\.md$/i.test(p) || /^(?:LICENSE|NOTICE)(?:\.[^/]+)?$/.test(p) || /^docs\/.*\.(?:png|jpe?g|webp|svg|gif|pdf)$/i.test(p);
 // Shared helpers, fixtures and contracts are real selection inputs as well as
@@ -104,27 +160,6 @@ export async function testCatalog(root, inventory, { e2eRoot } = {}) {
         rows.push({ id, path, type: 'background', layer: 'infra', domains: ['toolchain'], scenario: id, importance: 'diagnostic', lifecycle: 'background', classified: true, executedCases: null });
     return { schema: 1, rows, excluded, external, gaps: rows.filter(row => !row.classified).map(row => ({ id: row.id, reason: row.gapReason || 'Не размечено: добавить наследуемую область в центральную taxonomy.' })), components: DOMAINS.map(([id, label, , links]) => ({ id, label, links })), counts: { files: rows.filter(fast).length, scenes: rows.filter(row => row.type === 'golden').length, checks: rows.length, executedCases: null } };
 }
-/** Static import/data reachability; wildcard source readers remain classified
- * by their behaviour rather than turning every change into every meta-test. */
-/** Budget governs optional related witnesses only. Unknown mandatory cost
- * never masquerades as spare time; mandatory units are never removed. */
-export function chooseOptionalChecks(candidates, { budgetMs, mandatoryMs, mandatoryUnknown }) {
-    const selected = [], deferred = [], seen = new Set();
-    let used = mandatoryMs;
-    for (const candidate of [...candidates].sort((a, b) => a.priority - b.priority || a.path.localeCompare(b.path))) {
-        if (seen.has(candidate.path))
-            continue;
-        seen.add(candidate.path);
-        const reason = mandatoryUnknown ? 'Неизвестна стоимость обязательной части' : !Number.isFinite(candidate.durationMs) ? 'Неизвестна стоимость дополнения' : used + candidate.durationMs > budgetMs ? 'Не помещается в гипотезу бюджета' : null;
-        if (reason)
-            deferred.push({ path: candidate.path, reason });
-        else {
-            selected.push(candidate.path);
-            used += candidate.durationMs;
-        }
-    }
-    return { selected, deferred };
-}
 export async function selectTaskTests({ root, inventory, track, layer, changedFiles = [], areaTests = [], productSourceInputs = [] }) {
     const catalog = await testCatalog(root, inventory), rows = catalog.rows.filter(fast);
     const selected = new Map(), add = (path, reason) => {
@@ -139,103 +174,146 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
         add(path, 'Дополнение исполнителя');
     // These are runtime file reads, not import edges. Keep the backend witnesses
     // when packaging output disappears, including infrastructure-only tasks.
-    if (changedFiles.some(path => path.startsWith('custom_components/houseplan/frontend/')
-        || path === 'custom_components/houseplan/BUILD.json')) {
+    if (changedFiles.some(installedOutput)) {
         for (const file of ['tests_backend/test_ha_build_identity.py', 'tests_backend/test_frontend_assets.py',
             'tests_backend/test_ha_frontend_assets.py', 'tests_backend/test_ha_frontend_registration.py'])
             add(file, 'Читает установочные frontend/BUILD.json');
     }
-    const infraTests = new Set(rows.filter(row => row.layer === 'infra').map(row => row.path));
-    const product = layer === 'product', productChanges = product ? changedFiles.filter(p => !isDocument(p)
-        && (!infraTests.has(p) && sourceFile(p) || productSourceInputs.includes(p))) : [],
-        infraChanges = changedFiles.filter(p => !isDocument(p) && (!product || isInfra(p) || infraTests.has(p)));
-    if (product)
-        for (const file of CRITICAL_NODE)
-            add(file, 'Общее критичное ядро');
-    const own = unique(productChanges.flatMap(domainsOf)), unknown = productChanges.filter(path => !domainsOf(path).length);
+    const product = layer === 'product';
+    const productChanges = product ? changedFiles.filter(path => !productMetadata(path) && !isDocument(path)
+        && !isTestCase(path) && !installedOutput(path) && (sourceFile(path) || productSourceInputs.includes(path))) : [];
+    const infraChanges = changedFiles.filter(path => !isDocument(path) && (!product || isInfra(path) || productMetadata(path) || isTestCase(path)));
+    const own = unique(productChanges.flatMap(domainsOf));
     const related = unique(own.flatMap(id => ids.get(id)[3]));
-    const wide = own.includes('shared') ? DOMAINS.filter(row => !['process', 'toolchain'].includes(row[0])).map(row => row[0]) : track === 'ask' ? unique([...own, ...related]) : track === 'show' ? unique([...own, ...related.filter(id => ['storage', 'history', 'geometry'].includes(id))]) : own.filter(id => ['geometry', 'storage', 'history'].includes(id));
-    const direct = dependencyReader(root), memo = new Map(), readerMatches = new Set(), mappingGaps = [];
+    const unknown = productChanges.filter(path => !domainsOf(path).length);
+    const gaps = [], uncovered = [], alternatives = [], direct = dependencyReader(root);
+    const rowsByPath = new Map(rows.map(row => [row.path, row]));
+    const traversed = new Map();
+
     async function closure(path) {
-        if (memo.has(path))
-            return memo.get(path);
-        const result = new Set(), pending = [path], visited = new Set();
+        if (traversed.has(path)) return traversed.get(path);
+        const result = new Set(), pending = [path];
         while (pending.length) {
             const file = pending.pop();
-            if (visited.has(file) || /^(?:dist|artifacts|demo\/srv\/assets)\//.test(file))
-                continue;
-            visited.add(file);
+            if (result.has(file) || /^(?:dist|artifacts|demo\/srv\/assets)\//.test(file)) continue;
             if (/[?*]/.test(file)) { result.add(file); continue; }
             const refs = await direct(file);
-            if (refs === null)
-                continue;
+            if (refs === null) continue;
             result.add(file);
-            if (AGGREGATION_BOUNDARIES.has(file))
-                continue;
-            pending.push(...refs);
+            if (!AGGREGATION_BOUNDARIES.has(file)) pending.push(...refs);
         }
-        memo.set(path, result);
+        traversed.set(path, result);
         return result;
     }
+
+    const reads = (set, file) => set.has(file) || [...set].some(pattern => /[?*]/.test(pattern) && matchesInputs(file, [pattern]));
+    const branchRows = rows.filter(row => row.layer === 'product');
     for (const row of rows) {
-        const eligible = product || row.layer === 'infra';
-        if (!eligible)
-            continue;
-        const relevant = row.layer === 'infra' ? unique([...infraChanges, ...(product ? productChanges : [])]) : productChanges;
-        if (changedFiles.includes(row.path))
-            add(row.path, 'Изменён сам исполняемый файл');
-        if (relevant.length) {
-            const inputs = await closure(row.path);
-            for (const file of relevant)
-                if (inputs.has(file) || [...inputs].some(pattern => /[?*]/.test(pattern) && matchesInputs(file, [pattern]))) {
-                    add(row.path, `Читает изменённый модуль/данные: ${file}`);
-                    readerMatches.add(file);
+        if (changedFiles.includes(row.path) && (product || row.layer === 'infra')) add(row.path, 'Изменён сам исполняемый файл');
+        if (!infraChanges.length || row.layer !== 'infra') continue;
+        const inputs = await closure(row.path);
+        for (const file of infraChanges) {
+            if (product && file === mixedSourceScanner) {
+                if (scannerWitnesses.includes(row.path)) add(row.path, 'Адресная проверка карты зависимостей: ' + file);
+            } else if (reads(inputs, file)) add(row.path, 'Читает изменённый модуль/данные: ' + file);
+        }
+    }
+
+    if (product) {
+        for (const file of CRITICAL_NODE) add(file, 'Общее критичное ядро');
+        const exact = new Map();
+        if (productChanges.length) for (const row of branchRows) {
+            const links = new Set(await direct(row.path) ?? []);
+            for (const path of productChanges) if (reads(links, path)) {
+                const declared = declaredSourceInputs(row.path).includes(path);
+                const witnesses = exact.get(path) ?? [];
+                witnesses.push({ row, proof: declared ? 0 : links.has(path) ? 1 : 2 });
+                exact.set(path, witnesses);
+            }
+        }
+        for (const file of productChanges) {
+            const domains = domainsOf(file), directWitnesses = (exact.get(file) ?? []).sort(orderWitnesses);
+            const boundary = AGGREGATION_BOUNDARIES.get(file);
+            const mapped = boundary ? [[boundary.ship, boundary.show, boundary.ask]]
+                : ADDRESS.filter(([match]) => match.test(file)).map(([, ...byTrack]) => byTrack);
+            const explicit = mapped.flatMap(byTrack => byTrack.slice(0, depth[track]+1).flatMap(paths => paths ?? []));
+            const named = unique(explicit).filter(path => rowsByPath.has(path));
+            for (const path of named) add(path, 'Адресный контракт: ' + file);
+
+            if (unknown.includes(file)) {
+                for (const row of branchRows)
+                    if (row.type === 'node' || row.type === 'backend' && file.startsWith('custom_components/'))
+                        add(row.path, 'Безопасный fallback: неразмеченный исходник');
+                gaps.push({ path: file, reason: 'Неизвестная область: сохранён полный быстрый fallback.' });
+            }
+            // Whole-tree readers are relevant to fingerprints. They only select
+            // a check when it is the actual repository-data contract.
+            const witnesses = directWitnesses.filter(({ row, proof }) => proof < 2
+                && (!boundary || row.type !== 'browser' && proof === 1));
+            const primary = witnesses[0];
+            if (file.startsWith('custom_components/') && primary?.row.type !== 'backend') {
+                const backend = witnesses.find(({row}) => row.type === 'backend');
+                if (backend) add(backend.row.path, 'Адресная серверная граница: ' + file);
+            }
+            if (!named.length && primary)
+                add(primary.row.path, 'Адресный читатель изменённого поведения: ' + file);
+            if (!boundary && !mapped.length && track !== 'ship') {
+                const seen = new Set(primary?.row.domains ?? []);
+                const independent = new Set();
+                for (const { row } of witnesses.slice(1)) {
+                    const relation = row.domains.find(domain => related.includes(domain) && !seen.has(domain));
+                    if (relation) {
+                        seen.add(relation);
+                        add(row.path, 'Адресная смежная граница (' + relation + '): ' + file);
+                    } else if (track === 'ask' && row.importance !== 'regression') {
+                        const domain = row.domains.find(id => domains.includes(id) && !independent.has(id));
+                        if (!domain) continue;
+                        independent.add(domain);
+                        add(row.path, 'Независимый пограничный контракт (' + domain + '): ' + file);
+                    }
                 }
+            }
+            if (!named.length && !primary && !unknown.includes(file)) {
+                const namedDomain = domains.flatMap(id => (ids.get(id)?.[4] ?? []).map(name => 'demo/smoke_' + name + '.mjs'))
+                    .find(path => rowsByPath.has(path));
+                if (namedDomain) add(namedDomain, 'Именованный свидетель ближайшего контракта: ' + file);
+                else if (!areaTests.length && originalSourceFile(file)) uncovered.push(file);
+                gaps.push({ path: file, reason: 'Нет прямого читателя. Используется именованный или явно заданный адресный свидетель.' });
+            }
+            if (unknown.includes(file) && originalSourceFile(file) && !primary && !named.length && !areaTests.length) uncovered.push(file);
+            if (unknown.includes(file) && primary) add(primary.row.path, 'Адресное дополнение к консервативному fallback: ' + file);
+            for (const { row, proof } of witnesses) if (proof === 0 && row.type === 'browser' && !boundary && !mapped.length && !selected.has(row.path)) {
+                alternatives.push(row.path);
+            }
         }
-        if (row.layer === 'product' && productChanges.length) {
-            if (track === 'show' && row.type !== 'browser' && ['critical', 'boundary'].includes(row.importance) && row.domains.some(id => related.includes(id)))
-                add(row.path, 'Контракт непосредственной связи компонента (show)');
-            if (row.type !== 'browser' && ['critical', 'boundary'].includes(row.importance) && row.domains.some(id => own.includes(id)))
-                add(row.path, 'Критичный/пограничный контракт изменённого поведения');
-            if (unknown.length && (row.type === 'node' || unknown.some(p => p.startsWith('custom_components/')) && row.type === 'backend'))
-                add(row.path, 'Безопасный fallback: неразмеченный исходник');
-            if (row.domains.some(id => wide.includes(id)) && row.type !== 'browser')
-                add(row.path, `Обязательная область/связь (${track}): ${row.domains.filter(id => wide.includes(id)).join(', ')}`);
+        // The compatibility scanner validates the actual source inventory. Its
+        // declared dynamic scope is the contract itself, not a proxy import.
+        if (rowsByPath.has('test/config-lifecycle.test.mjs')) for (const file of productChanges) {
+            if (declaredSourceInputs('scripts/config-compatibility-inventory.mjs').some(pattern => matchesInputs(file,[pattern])))
+                add('test/config-lifecycle.test.mjs','Читает область совместимости: ' + file);
+        }
+        // Shared build/data contracts have their own explicit readers, including
+        // mechanics outside the ordinary product behavior taxonomy.
+        for (const row of rows.filter(row => row.layer === 'infra' && row.type !== 'browser')) {
+            if (!productChanges.length) break;
+            const links = new Set(await direct(row.path) ?? []);
+            for (const file of productChanges)
+                if (!AGGREGATION_BOUNDARIES.has(file) && ((!row.path.startsWith('process-next/test/') && links.has(file))
+                    || declaredSourceInputs(row.path).some(pattern => matchesInputs(file, [pattern]))))
+                    add(row.path, 'Адресный контракт обвязки: ' + file);
         }
     }
-    for (const path of productChanges.filter(path => domainsOf(path).length && !readerMatches.has(path))) {
-        const domains = domainsOf(path);
-        mappingGaps.push({ path, reason: 'Нет статически подтверждённого читателя: выбран полный быстрый набор ближайших областей.' });
-        const nearest = rows.filter(row => row.layer === 'product' && row.type !== 'browser' && row.domains.some(id => domains.includes(id)));
-        const fallback = nearest.length ? nearest : rows.filter(row => row.layer === 'product' && row.type === 'node');
-        for (const row of fallback)
-            add(row.path, nearest.length ? 'Полный быстрый набор области при неполной карте связей' : 'Нет набора ближайшей области: полный быстрый Node fallback');
-    }
-    if (product && productChanges.length) {
-        const smokeDomains = track === 'ship' ? own : unique([...own, ...related]);
-        for (const domain of smokeDomains)
-            for (const name of (own.includes(domain) || track === 'ask' ? ids.get(domain)?.[4] || [] : (ids.get(domain)?.[4] || []).slice(0, 1)))
-                add(`demo/smoke_${name}.mjs`, `Сквозной native-контракт области ${domain}`);
-    }
-    // An unclassified infra mechanism still gets all statically related tests.
-    // If it has no reader, keep the gap visible instead of inventing a passing test.
-    const files = [...selected.keys()].sort(), gaps = [...unknown.map(path => ({ path, reason: 'Неизвестная область: выбран полный быстрый Node fallback.' })), ...mappingGaps, ...catalog.gaps.filter(row => selected.has(row.id))];
     for (const path of infraChanges)
-        if (!files.some(file => selected.get(file).some(reason => reason.includes(path))))
+        if (!productMetadata(path) && ![...selected.values()].some(reasons => reasons.some(reason => reason.includes(path))))
             gaps.push({ path, reason: 'Нет статически подтверждённого теста механизма; проверить дополнение исполнителя.' });
-    const measured = files.filter(file => !CRITICAL_NODE.includes(file)).map(file => observedCosts.units[file]);
-    const preparation = product ? ['product-build', 'test-build', 'demo-assets'].map(id => observedCosts.units[id]) : [];
-    const cost = { knownMs: [...preparation, ...measured].reduce((sum, row) => sum + (row?.durationMs || 0), 0), unknownUnits: measured.filter(row => !row).length, expectedTotalMs: null, sourceRun: observedCosts.sourceRun, environment: observedCosts.environment, wholeS6BaselineMs: product ? observedCosts.baseline.totalMs : null, hypothesisSeconds: observedCosts.hypothesisSeconds[track], note: 'Исторические наблюдения подготовленной WSL, не норматив. Сумма последовательных затрат, без обещания параллельного времени; неизвестное не заменено квотой.' };
-    const candidates = related.flatMap((id, priority) => (ids.get(id)?.[4] || []).map(name => ({ path: `demo/smoke_${name}.mjs`, priority, durationMs: observedCosts.units[`demo/smoke_${name}.mjs`]?.durationMs })))
-        .filter(row => existsSync(resolve(root, row.path)) && !selected.has(row.path));
-    const optional = chooseOptionalChecks(candidates, { budgetMs: observedCosts.hypothesisSeconds[track] * 1000, mandatoryMs: cost.knownMs, mandatoryUnknown: cost.unknownUnits + (product && !observedCosts.units['startup-view'] ? 1 : 0) });
-    for (const path of unique(optional.selected)) {
-        add(path, 'Дополнительный связанный native-контракт по приоритету и известной стоимости');
-        files.push(path);
-        cost.knownMs += observedCosts.units[path].durationMs;
-    }
-    files.sort();
-    return { files, explanation: { track, layer, domains: own, relatedDomains: related, cost, optional, reasons: Object.fromEntries(selected), gaps, files: files.length, executedCases: null, catalog: { ...catalog.counts, unclassified: catalog.gaps.length }, baseline: product ? 'Критичные данные/права и стартовый View' : 'Адресные проверки механизма', excludedLifecycles: ['golden', 'ha-e2e', 'converter', 'background'] } };
+    for (const row of catalog.gaps) if (selected.has(row.id)) gaps.push(row);
+    const files = [...selected.keys()].sort();
+    return { files, explanation: { track, layer, domains: own, relatedDomains: related,
+        candidateOptional: unique(alternatives).sort(), uncovered: unique(uncovered),
+        optional: { selected: [], deferred: [] }, reasons: Object.fromEntries(selected), gaps,
+        files: files.length, executedCases: null, catalog: { ...catalog.counts, unclassified: catalog.gaps.length },
+        baseline: product ? 'Критичные данные/права и стартовый View' : 'Адресные проверки механизма',
+        excludedLifecycles: ['golden', 'ha-e2e', 'converter', 'background'] } };
 }
 export function planRequirements(plan) {
     const steps = plan.steps || [], commands = steps.flatMap(s => s.command || []);
@@ -250,16 +328,27 @@ export function selectionText(selection, report) {
         lines.push(`Дополнения: ${selection.optional.selected.length}; отложено ${selection.optional.deferred.length} (обязательные проверки не сокращаются).`);
     if (selection.optional?.deferred.length)
         lines.push('Причины отсрочки: ' + unique(selection.optional.deferred.map(row => row.reason)).join('; '));
-    if (selection.cost)
-        lines.push(`Оценка всего S6: неизвестна; исторический минимум ${selection.cost.wholeS6BaselineMs === null ? 'не применим' : (selection.cost.wholeS6BaselineMs / 1000) + ' с'}; гипотеза ${selection.cost.hypothesisSeconds} с, без нижней границы и гейта.`);
-    if (selection.cost)
-        lines.push(`Стоимость: известная часть ${Math.round(selection.cost.knownMs / 1000)} с; неизвестных единиц ${selection.cost.unknownUnits}. ${selection.cost.note}`);
+    if (selection.budget) {
+        const { limit, estimate, reasons, mode } = selection.budget;
+        const groups = Object.entries(estimate.groups).map(([name,n]) => name + ' ' + n).join(', ');
+        lines.push('План S6 ' + mode + ': ' + estimate.steps + '/' + limit.steps + ' новых шагов (' + groups + '), '
+            + estimate.reused + ' зачтено.' + (mode === 'wsl' ? ' Прогноз ' + Math.ceil(estimate.ms / 1000) + ' с, '
+            + estimate.unknown + ' шагов оценено по типу. Предел ' + limit.ms / 1000 + ' с.' : ' Таймер WSL не применяется.'));
+        if (reasons.length) lines.push('Требуется расширение: ' + reasons.join(', '));
+    }
+    if (selection.uncovered?.length) lines.push('Нужно адресное покрытие: ' + selection.uncovered.join(', '));
     for (const [file, reasons] of Object.entries(selection.reasons))
         lines.push(`  ${file}: ${reasons.join('; ')}`);
     for (const gap of selection.gaps)
         lines.push(`  Пробел ${gap.path || gap.id}: ${gap.reason}`);
     if (report) {
         const counted = report.results.filter(r => r.counts?.tests !== undefined), cases = counted.reduce((sum, r) => sum + r.counts.tests, 0);
+        if (report.s6Timing) {
+            const t=report.s6Timing, seconds=ms=>Math.round(ms/1000)+' с';
+            lines.push('Ожидание слота: '+(t.queueWaitMs===null?'вне замера':seconds(t.queueWaitMs))
+                +'; подготовка: '+seconds(t.preparationMs)+'; исполнение: '+seconds(t.executionMs)
+                +'; отчёт прогона: '+seconds(report.durationMs)+'. Подготовка и исполнение могут пересекаться.');
+        }
         lines.push(`Итог: ${report.status}; известные кейсы ${cases}; зачтено шагов ${report.results.filter(r => r.status === 'reused').length}; шагов без счётчика ${report.results.length - counted.length}.`);
     }
     return lines.join('\n');

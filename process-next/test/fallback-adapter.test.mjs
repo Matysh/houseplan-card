@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { s6StepIdentity } from '../lib/s6-budget.mjs';
 import { WorkflowFallbackAdapter, fallbackRequest } from '../lib/fallback.mjs';
 
 const SHA = 'a'.repeat(40);
@@ -145,4 +146,25 @@ test('actual ZIP report is read without extracting artifact files into the check
   const f = fixture({ archive: readFileSync(archive) }); f.complete(null); f.adapter.readArtifact = null;
   assert.equal((await f.adapter.runS6(input)).outcome, 'passed');
   assert.equal(f.reads.filter(path => path.endsWith('/zip')).length, 1);
+});
+
+test('a selected hosted plan requires all its step identities on the exact candidate', () => {
+  const f=fixture(), selectedPlan='1'.repeat(64), run={id:101,html_url:'https://example.invalid/run/101'};
+  const expected=s6StepIdentity([{id:'area'},{id:'required-geometry'}]);
+  const partial={...successful(),s6Plan:selectedPlan};
+  assert.equal(f.adapter.result(partial,run,input.active,'req',selectedPlan,expected).terminal,true);
+  const complete={...partial,results:[...partial.results,{id:'required-geometry',status:'passed'}]};
+  assert.equal(f.adapter.result(complete,run,input.active,'req',selectedPlan,expected).outcome,'passed');
+  assert.equal(f.adapter.result({...complete,materialSha:'b'.repeat(40)},run,input.active,'req',selectedPlan,expected).terminal,true);
+  assert.equal(f.adapter.result({...complete,s6Plan:'2'.repeat(64)},run,input.active,'req',selectedPlan,expected).terminal,true);
+});
+
+test('recovering a hosted S6 receipt does not dispatch while a slot is held', async () => {
+  const f=fixture();
+  const missing=await f.adapter.runS6({...input,existingOnly:true});
+  assert.equal(missing.terminal,true);
+  assert.equal(f.writes.length,0);
+  f.complete(successful());
+  assert.equal((await f.adapter.runS6({...input,existingOnly:true})).outcome,'passed');
+  assert.equal(f.writes.length,0);
 });

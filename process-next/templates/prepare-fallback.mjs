@@ -9,7 +9,7 @@ const fullSha = value => typeof value === 'string' && /^[a-f0-9]{40}$/.test(valu
 const object = value => value && typeof value === 'object' && !Array.isArray(value);
 const fields = new Set(['event', 'issue', 'track', 'layer', 'areaTests', 'changedFiles', 'version', 'phase', 'e2eRoot', 'workRoot',
   'e2eWorkRoot', 'candidateRoot', 'expectedVersion', 'targetRef', 'upgradeFrom', 'haVersion', 'metricsRequest', 'mutationShard',
-  'e2eCommit', 'measurementsCommit', 'port']);
+  'e2eCommit', 'measurementsCommit', 'port', 's6Mode', 's6Host', 's6Plan', 's6Steps']);
 
 function relativeFile(value, name) {
   if (typeof value !== 'string' || !value || /[\x00-\x1f\\:*?]/.test(value) || value.startsWith('/')
@@ -31,6 +31,12 @@ export function normalizeFallbackRequest(input, { workspace, candidate, plan }) 
   for (const key of ['areaTests', 'changedFiles']) if (request[key] !== undefined) {
     if (!Array.isArray(request[key])) throw Error(`${key} must be an array`);
     request[key].forEach(file => relativeFile(file, key));
+  }
+  if (request.s6Mode !== undefined || request.s6Host !== undefined || request.s6Plan !== undefined || request.s6Steps !== undefined) {
+    if (request.event !== 'task' || request.layer !== 'product' || request.s6Host !== 'github'
+        || !['standard', 'expanded'].includes(request.s6Mode) || !/^[a-f0-9]{64}$/.test(request.s6Plan ?? '')
+        || !/^[a-f0-9]{64}$/.test(request.s6Steps ?? ''))
+      throw Error('Invalid hosted product S6 plan identity');
   }
   const releaseEvent = ['beta', 'stable'].includes(request.event);
   const docsOnly = ['docs', 'documentation'].includes(request.layer) && !releaseEvent;

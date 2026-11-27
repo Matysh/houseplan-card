@@ -7,6 +7,7 @@ import {existsSync} from 'node:fs';
 import { resolve, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { budgetForS6, optionalFitsS6 } from './s6-budget.mjs';
 import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
 import { makeE2ESteps } from './e2e.mjs';
 import { makeConverterStep } from './converters.mjs';
@@ -183,7 +184,7 @@ function smokeStep(smoke) {
 }
 /** Pure planning: never installs dependencies, starts HA, builds, or executes a test. */
 export async function planProfile({ root, event = 'task', issue, track = 'show', layer = 'product', areaTests = [], changedFiles = [], version, e2eRoot, phase, mutationShard,
-  metricsRequest, candidateRoot, expectedVersion, upgradeFrom, haVersion, e2eWorkRoot, workRoot = e2eWorkRoot, targetRef } = {}) {
+  metricsRequest, candidateRoot, expectedVersion, upgradeFrom, haVersion, e2eWorkRoot, workRoot = e2eWorkRoot, targetRef, s6Mode = 'standard', s6Host = 'wsl' } = {}) {
   if (!root) throw Error('root is required');
   if (event === 'fix') { event = 'task'; phase = 'after-review'; }
   if (!['task', 'hotfix', 'beta', 'stable', 'mutation', 'converters'].includes(event)) throw Error(`Unknown event: ${event}`);
@@ -252,7 +253,22 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     const extraPy = affected.filter(path => path.endsWith('.py'));
     for(const file of extraPy)steps.push(step(fileStepId('affected-backend',file),'Backend: '+file,helper('backend','--no-coverage',file),[...pythonInputs.filter(p=>p!=='tests_backend/**/*.py'),file,'tests_backend/conftest.py','tests_backend/pure_imports.py','tests_backend/fixtures/**']));
     for (const file of affected.filter(path => path.startsWith('demo/'))) steps.push(smokeStep({ file, args: [] }));
-    return finalize(root, result);
+    if (event === 'task') {
+      const mandatoryIds = steps.map(step => step.id);
+      for (const file of result.selection.candidateOptional) {
+        const extra = {...smokeStep({file,args:[]}),s6Optional:true,after:mandatoryIds};
+        if (s6Mode === 'standard' && s6Host === 'wsl' && optionalFitsS6(steps, extra, {track})) {
+          steps.push(extra);
+          result.selection.optional.selected.push(file);
+          result.selection.reasons[file] = ['Дополнение с известной стоимостью в остатке бюджета'];
+          result.selection.files++;
+        } else result.selection.optional.deferred.push({path:file, reason:'Ограничение профиля, бюджета или неизвестная стоимость'});
+      }
+      result.s6 = { mode: s6Mode, host: s6Host };
+    }
+    const finalized = await finalize(root, result);
+    if (result.s6) result.selection.budget = budgetForS6(finalized,{mode:s6Host});
+    return finalized;
   }
   const discovered = discoverReleaseTests(root), retained = kind => discovered.filter(row => row.kind === kind).map(row => row.path);
   for (const group of [...new Set(discovered.filter(row => row.kind === 'product').map(row => row.group))]) {

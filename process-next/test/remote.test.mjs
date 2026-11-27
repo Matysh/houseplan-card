@@ -478,7 +478,7 @@ test('finish selects one Git check for a proven return, never from caller option
       request: { proof, profile: 'published-return' } }, queue: h.queue, api: h.dependencies.api, git: h.dependencies.git,
       review: h.dependencies.review, dependencies, maxWaitMs: 1000 });
     assert.equal(result.action, 'merged');
-    assert.deepEqual(calls, short ? ['published-return:git'] : s6 === 'github' ? ['fallback'] : ['prepare', 'plan', 'ordinary']);
+    assert.deepEqual(calls, short ? ['published-return:git'] : s6 === 'github' ? ['plan','fallback'] : ['prepare', 'plan', 'ordinary']);
     assert.equal(h.actions.includes('review'), !short);
   }
 });
@@ -488,6 +488,7 @@ test('finish uses hosted S6 on the admitted SHA and frees the slot on terminal t
     const h = queueHarness(); let calls = 0;
     h.dependencies.git.git = async () => A;
     h.dependencies.synchronize = async () => ({ expectedBase: A, materialSha: B, patchId: 'same', layer: 'product' });
+    h.dependencies.planProfile = async () => ({name:'hosted',steps:[]});
     h.dependencies.runPlan = () => { throw Error('Local tests must not run in fallback'); };
     h.dependencies.sleep = async () => {};
     h.dependencies.fallback = { runS6: async ({ active }) => {
@@ -501,6 +502,83 @@ test('finish uses hosted S6 on the admitted SHA and frees the slot on terminal t
     assert.equal(result.action, terminal ? 'returned' : 'merged'); assert.equal(calls, 1);
     assert.equal((await h.store.read()).state.active, null);
   }
+});
+
+for (const scenario of ['same-sha','dev-advanced','task-changed']) {
+  test('expanded S6 proves the correct candidate and converges: '+scenario, async t => {
+    const root=await mkdtemp(join(tmpdir(),'hp-s6-expanded-'));
+    t.after(()=>rm(root,{recursive:true,force:true}));
+    const h=queueHarness(), progress=[];
+    let synced=0, hosted=0, local=0;
+    h.dependencies.git.git=async()=>A;
+    h.dependencies.git.remoteHead=async ref=>ref==='dev' ? A : synced>=2&&scenario!=='same-sha' ? C : B;
+    h.dependencies.review.readReviewResult=async ({requestId,active})=>({requestId,materialSha:active.materialSha,verdict:'accepted'});
+    h.dependencies.synchronize=async()=>{
+      synced++;
+      const update=synced===2 && scenario!=='same-sha';
+      return {expectedBase:A, materialSha:update?C:B, patchId:update&&scenario==='task-changed'?'another-patch':'patch',
+        layer:'product',changedFiles:['src/logic.ts']};
+    };
+    h.dependencies.planProfile=async ({layer,track,s6Mode,s6Host})=>({
+      event:'task',layer,scope:{track},s6:{mode:s6Mode,host:s6Host},
+      steps:Array.from({length:40},(_,i)=>({id:'node:'+i,command:['node','-e',''],inputs:[]})),
+    });
+    h.dependencies.fallback={runS6:async({active,maxWaitMs,request})=>{
+      hosted++;
+      assert.equal((await h.store.read()).state.active,null,'expanded preliminary run has no slot');
+      assert.equal(active.materialSha,B);
+      assert.equal(request.s6Mode,'expanded');
+      assert.match(request.s6Plan,/^[a-f0-9]{64}$/);
+      assert.equal(maxWaitMs,120*60_000);
+      return {outcome:'passed',receipt:{runId:123,materialSha:B,status:'passed'}};
+    }};
+    h.dependencies.runPlan=async (plan,options)=>{
+      local++;
+      assert.equal(scenario,'dev-advanced');
+      assert.equal(plan.s6.mode,'expanded');
+      assert.equal(options.budget.ms,120*60_000);
+      assert.equal((await h.store.read()).state.active.materialSha,C);
+      return {id:'fresh',materialSha:C,materialClean:true,status:'passed'};
+    };
+    h.dependencies.sleep=async()=>{};
+    const result=await finishTask({config:{...config,workspace:root},event:{id:'expanded-'+scenario,issue:1,branch:'issue/1'},
+      queue:h.queue,api:h.dependencies.api,git:h.dependencies.git,review:h.dependencies.review,
+      dependencies:h.dependencies,onProgress:x=>progress.push(x),maxWaitMs:1000});
+    assert.equal(hosted,1);
+    assert.equal(synced,2);
+    assert.equal(local,scenario==='dev-advanced'?1:0);
+    assert.equal(result.action,scenario==='task-changed'?'returned':'merged');
+    if(scenario==='task-changed') assert.equal(result.reason,'s6-budget-expansion');
+    assert.equal((await h.store.read()).state.active,null);
+    assert.equal(progress.filter(x=>x.action==='s6-expanded-final').length,scenario==='dev-advanced'?1:0);
+  });
+}
+
+test('an actual S6 deadline releases the slot, retains mandatory coverage, and routes the same diff to expansion', async t => {
+  const root=await mkdtemp(join(tmpdir(),'hp-s6-overflow-'));
+  t.after(()=>rm(root,{recursive:true,force:true}));
+  const h=queueHarness();
+  let local=0, hosted=0;
+  h.dependencies.git.git=async()=>A;
+  h.dependencies.synchronize=async()=>({expectedBase:A,materialSha:B,patchId:'patch',layer:'product',changedFiles:['src/logic.ts']});
+  h.dependencies.planProfile=async ({layer,track,s6Mode,s6Host})=>({
+    event:'task',layer,scope:{track},s6:{mode:s6Mode,host:s6Host},steps:[{id:'check',command:['node','-e',''],inputs:[]}],
+  });
+  h.dependencies.runPlan=async()=>{local++;return {id:'actual-stop',status:'budget-exceeded'};};
+  h.dependencies.fallback={runS6:async({active,request})=>{
+    hosted++;
+    assert.equal((await h.store.read()).state.active,null);
+    assert.equal(request.s6Mode,'expanded');
+    return {outcome:'passed',receipt:{materialSha:active.materialSha,status:'passed'}};
+  }};
+  h.dependencies.sleep=async()=>{};
+  const run=id=>finishTask({config:{...config,workspace:root},event:{id,issue:1,branch:'issue/1'},
+    queue:h.queue,api:h.dependencies.api,git:h.dependencies.git,review:h.dependencies.review,dependencies:h.dependencies,maxWaitMs:1000});
+  assert.equal((await run('over-budget')).reason,'s6-budget-expansion');
+  assert.equal((await h.store.read()).state.active,null);
+  assert.equal((await run('next-finish')).action,'merged');
+  assert.equal(local,1);
+  assert.equal(hosted,1);
 });
 
 test('waiting finish observes once per minute without reconciling another admitted task', async () => {

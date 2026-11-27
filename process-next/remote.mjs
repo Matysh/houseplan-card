@@ -9,7 +9,9 @@ import { GitHubClient, GitHubQueueStore } from './lib/github.mjs';
 import { QueueController, StateConflict, ownerShip, queueSummary, pendingReviewPublications, matchingPublishedReturnReview } from './lib/queue.mjs';
 import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileReviewReturnLabel, reconcileSpecReview, inspectTaskMaterial } from './lib/coordinator.mjs';
 import { planProfile, planPublishedReturnS6 } from './lib/catalog.mjs';
-import { runPlan } from './lib/runner.mjs';
+import { runPlan, reusableS6Steps } from './lib/runner.mjs';
+import { defaultStateDir, readJson, writeJson } from './lib/storage.mjs';
+import { budgetForS6, EXPANDED_S6_WAIT, s6PlanIdentity, s6StepIdentity } from './lib/s6-budget.mjs';
 import { WorkflowFallbackAdapter } from './lib/fallback.mjs';
 import { initialReleaseState, reduceRelease, ReleaseGitAdapter, ReleasePublisher,
   HacsClient, HacsDeliveryVerifier, ReleaseDiscoveryVerifier, readRunnerReport, readPublishedMeasurement } from './lib/release.mjs';
@@ -357,16 +359,37 @@ export async function finishTask({ config, event, queue, api, git, review, depen
   if (!['local', 'github'].includes(event.s6 ?? 'local')) throw Error('S6 executor must be local or github');
   const branch = event.branch ?? await git.git(['symbolic-ref', '--short', 'HEAD']);
   if ([git.dev, 'main', queue.store.branch].includes(branch)) throw Error('Finish requires a separate task branch');
-  let current = (await queue.store.read()).state;
-  if (!current.tasks[event.issue]?.queued && current.active?.issue !== event.issue && current.tasks[event.issue]?.status !== 'S8-merged') {
-    const materialSha = await git.remoteHead(branch), dev = await git.remoteHead(git.dev);
-    await git.ensureCommit(dev); await git.ensureCommit(materialSha);
-    const base = await git.git(['merge-base', dev, materialSha]);
-    const material = await inspect(git, base, materialSha);
-    const issue = await initializeMissingTrack(api, await api.getIssue(event.issue), event.track ?? event.request?.track);
-    await handleGithubEvent({ queue, api, activated: true, issue,
-      event: { ...event, ...material, branch, kind: 'ready' } });
-  }
+  const workspace = resolve(config.workspace ?? '.');
+  const areaTests = event.areaTests ?? event.request?.areaTests ?? [];
+  const host = event.s6 === 'github' ? 'github' : 'wsl';
+  const stateDir = config.localStateDir ?? defaultStateDir(workspace);
+  const routeFile = join(stateDir, 's6-routing', String(event.issue) + '.json');
+  const savedRoute = readJson(routeFile);
+  let expanded = savedRoute?.proof ? {...savedRoute.proof,recovered:true} : null;
+  const makePlan = (task, s6Mode = 'standard', s6Host = host) => (dependencies.planProfile ?? planProfile)({
+    ...(event.request ?? {}), root: workspace, event: 'task', issue: task.issue, track: task.track,
+    ownerAssigned: ownerShip(task), layer: task.layer, changedFiles: task.changedFiles ?? [], areaTests, s6Mode, s6Host,
+  });
+  const preflight = (plan, s6Host = host) => plan.s6 && budgetForS6(plan, { mode: s6Host,
+    reused: s6Host === 'wsl' ? reusableS6Steps(plan, { root: workspace, stateDir }) : new Set() });
+  const showPlan = (plan, budget) => {
+    if (!plan.selection) return;
+    if (budget) plan.selection.budget = budget;
+    onProgress({ kind:'selection', text:selectionText(plan.selection) });
+  };
+  const hosted = async ({ active, task, plan, mode = 'standard', outsideSlot = false, existingOnly = false, identity }) => {
+    const fallback = dependencies.fallback ?? new WorkflowFallbackAdapter({ api, ...config.fallback });
+    const proof = identity ?? (plan?.s6 ? { plan:s6PlanIdentity(plan), steps:s6StepIdentity(plan.steps) } : null);
+    const budgetRequest = proof ? {s6Mode:mode,s6Host:'github',s6Plan:proof.plan,s6Steps:proof.steps} : {};
+    const result = await fallback.runS6({ active, task, request: { ...(event.request ?? {}), areaTests, ...budgetRequest },
+      signal, existingOnly, maxWaitMs:mode === 'expanded' ? EXPANDED_S6_WAIT : undefined,
+      onProgress: progress => onProgress({ kind:'checks', ...progress, outsideSlot }) });
+    return { ...result, evidence: result.receipt };
+  };
+  const missingCoverage = plan => plan.selection?.uncovered?.length ? {
+    outcome:'unavailable', terminal:true, reason:'s6-address-required',
+    detail:'Нужны адресные проверки: ' + plan.selection.uncovered.join(', '),
+  } : null;
   const synchronize = async ({ task }) => {
     if (dependencies.synchronize) return dependencies.synchronize({ task });
     if (await git.git(['status', '--porcelain', '--untracked-files=no'])) throw Error('Commit tracked task changes before finish');
@@ -396,29 +419,103 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     const material = await inspect(git, expectedBase, materialSha);
     return { ...material, review: task.releaseTag ? await git.publishedReturnReview({ task, ...material }) : null };
   };
-  const runS6 = async ({ active, task }) => {
-    // Both executors already have Node/Git for synchronization. This single
-    // check needs no product runtime, even on a host using the Actions fallback.
-    const short = matchingPublishedReturnReview(task, active);
-    if (!short && event.s6 === 'github') {
-      const fallback = dependencies.fallback ?? new WorkflowFallbackAdapter({ api, ...config.fallback });
-      const result = await fallback.runS6({ active, task, request: { ...(event.request ?? {}),
-        areaTests: event.areaTests ?? event.request?.areaTests ?? [] }, signal,
-        onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
-      return { ...result, evidence: result.receipt };
+  let current = (await queue.store.read()).state;
+  if (!current.tasks[event.issue]?.queued && current.active?.issue !== event.issue && current.tasks[event.issue]?.status !== 'S8-merged') {
+    const materialSha = await git.remoteHead(branch), dev = await git.remoteHead(git.dev);
+    await git.ensureCommit(dev); await git.ensureCommit(materialSha);
+    const base = await git.git(['merge-base', dev, materialSha]);
+    let material = await inspect(git, base, materialSha);
+    const issue = await initializeMissingTrack(api, await api.getIssue(event.issue), event.track ?? event.request?.track);
+    const labels = (issue.labels ?? []).map(label => typeof label === 'string' ? label : label.name);
+    if (issue.state === 'closed' || labels.includes('blocked')) return {action:'returned',reason:'owner-stopped'};
+    if (!labels.includes('S6-in-progress')) throw Error('Ready intent needs current S6');
+    const track = labels.find(label => /^track:(ship|show|ask)$/.test(label))?.split(':')[1] ?? 'show';
+    if (material.layer === 'product') {
+      let task = { ...material, branch, issue:event.issue, track };
+      const plan = await makePlan(task), forecast = preflight(plan);
+      showPlan(plan, forecast);
+      const coverage = missingCoverage(plan);
+      if (coverage) return { action:'returned', ...coverage };
+      const routing = savedRoute;
+      const previouslyExceeded = routing?.patchId === material.patchId && routing.track === track && routing.expanded === true;
+      if (forecast?.reasons.length || previouslyExceeded) {
+        const reasons = forecast?.reasons.length ? forecast.reasons.join(', ') : 'предыдущая попытка исчерпала штатный бюджет';
+        onProgress({ kind:'transition', action:'s6-expanded-outside-slot', reason:reasons });
+        const prepared = await synchronize({ task });
+        if (prepared.conflict) return { action:'returned', reason:'rebase-conflict' };
+        if (prepared.patchId !== material.patchId) return { action:'returned', reason:'s6-material-changed' };
+        material = prepared;
+        task = { ...task, ...material };
+        const expandedPlan = await makePlan(task, 'expanded', 'github');
+        const missing = missingCoverage(expandedPlan);
+        if (missing) return { action:'returned', ...missing };
+        const receipt = await hosted({ active:{issue:event.issue, materialSha:task.materialSha}, task,
+          plan:expandedPlan, mode:'expanded', outsideSlot:true });
+        if (receipt.outcome !== 'passed') return { action:'returned', reason:receipt.reason ?? 's6-expanded-failed', evidence:receipt.evidence };
+        expanded = { patchId:material.patchId, track, sha:material.materialSha, plan:s6PlanIdentity(expandedPlan),
+          steps:s6StepIdentity(expandedPlan.steps), changedFiles:task.changedFiles, evidence:receipt.evidence };
+        writeJson(routeFile, { patchId:material.patchId, track, expanded:true, proof:expanded });
+      }
     }
-    if (!short && dependencies.prepareEnvironment) await dependencies.prepareEnvironment();
-    const plan = short ? planPublishedReturnS6({ issue: task.issue, layer: task.layer, remote: git.remote ?? 'origin', proof: task.review })
-      : await (dependencies.planProfile ?? planProfile)({ ...(event.request ?? {}), root: config.workspace, event: 'task', issue: task.issue,
-      track: task.track, ownerAssigned: ownerShip(task), layer: task.layer, changedFiles: task.changedFiles ?? [], areaTests: event.areaTests ?? event.request?.areaTests ?? [] });
-    if(plan.selection)onProgress({kind:'selection',text:selectionText(plan.selection)});
-    const report = await (dependencies.runPlan ?? runPlan)(plan, { root: config.workspace, stateDir: config.localStateDir,
-      reuse: !short, signal, onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
-    if(plan.selection)onProgress({kind:'selection',text:selectionText({...plan.selection,reasons:{}},report)});
-    return { outcome: report.status, evidence: { id: report.id, name: report.name, reportPath: report.reportPath, materialSha: active.materialSha,
-      status: report.status, finishedAt: report.finishedAt,
-      failures: (report.results ?? []).filter(row => ['failed', 'unavailable', 'cancelled', 'blocked'].includes(row.status))
-        .map(row => `${row.name ?? row.id}: ${row.reason ?? row.error ?? row.status}`) } };
+    await handleGithubEvent({ queue, api, activated: true, issue,
+      event: { ...event, ...material, branch, kind: 'ready' } });
+  }
+  const runS6 = async ({ active, task }) => {
+    const startedS6 = performance.now();
+    const short = matchingPublishedReturnReview(task, active);
+    let mode = 'standard';
+    if (!short && expanded && task.patchId === expanded.patchId && task.track === expanded.track) {
+      if (expanded.recovered) {
+        const previous = await hosted({active:{issue:task.issue,materialSha:expanded.sha},
+          task:{...task,changedFiles:expanded.changedFiles},mode:'expanded',existingOnly:true,identity:expanded});
+        if (previous.outcome !== 'passed') return {outcome:'unavailable',terminal:true,
+          reason:'s6-budget-expansion',detail:previous.reason};
+        expanded.evidence = previous.evidence;
+      }
+      const hostedPlan = await makePlan(task, 'expanded', 'github');
+      if (active.materialSha === expanded.sha && expanded.plan === s6PlanIdentity(hostedPlan)
+          && expanded.evidence?.status === 'passed' && expanded.evidence.materialSha === active.materialSha)
+        return { outcome:'passed', evidence:expanded.evidence };
+      const attemptId = event.id + ':expanded-final';
+      const attempt = await queue.dispatch({id:attemptId,type:'s6-final-started',issue:task.issue,
+        token:active.token,materialSha:active.materialSha,patchId:active.patchId});
+      if (attempt.tasks[task.issue]?.s6FinalAttempt?.eventId !== attemptId)
+        return {outcome:'unavailable',terminal:true,reason:'s6-expanded-attempt-used'};
+      mode = 'expanded';
+      onProgress({ kind:'transition', action:'s6-expanded-final', reason:'dev изменился после предварительного прогона. Одна финальная проверка в слоте, до 120 мин.' });
+    }
+    // Infrastructure, release returns and docs retain their existing routes.
+    if (!short && task.layer !== 'product' && event.s6 === 'github') return hosted({ active, task });
+    if (!short && dependencies.prepareEnvironment && host === 'wsl') await dependencies.prepareEnvironment();
+    const plan = short ? planPublishedReturnS6({issue:task.issue,layer:task.layer,remote:git.remote ?? 'origin',proof:task.review})
+      : await makePlan(task,mode);
+    const estimate = preflight(plan);
+    showPlan(plan, estimate);
+    const coverage = missingCoverage(plan);
+    if (coverage) return coverage;
+    const overflow = detail => {
+      writeJson(routeFile, { patchId:task.patchId, track:task.track, expanded:true });
+      return { outcome:'budget-exceeded', terminal:true, reason:'s6-budget-expansion', detail };
+    };
+    if (mode === 'standard' && estimate?.reasons.length) return overflow(estimate.reasons.join(', '));
+    if (!short && host === 'github') return hosted({ active, task, plan, mode });
+    const budget = !estimate ? undefined : mode === 'expanded'
+      ? { deadline:startedS6 + EXPANDED_S6_WAIT, ms:EXPANDED_S6_WAIT }
+      : { deadline:startedS6 + estimate.limit.ms, ms:estimate.limit.ms, steps:estimate.limit.steps };
+    const report = await (dependencies.runPlan ?? runPlan)(plan, { root:workspace, stateDir:config.localStateDir,
+      reuse:!short, signal, budget, queueWaitMs: Math.max(0, active.admittedAt - task.readyAt), onProgress:progress => onProgress({ kind:'checks', ...progress }) });
+    if (plan.selection) onProgress({ kind:'selection', text:selectionText({...plan.selection,reasons:{}},report) });
+    if (report.status === 'budget-exceeded') {
+      const detail = 'Исчерпан бюджет S6. Отчёт: ' + (report.reportPath ?? report.id);
+      return mode === 'standard' ? overflow(detail) : { outcome:report.status, terminal:true, reason:'s6-expanded-timeout', detail };
+    }
+    if (mode === 'expanded' && report.status === 'passed'
+        && (report.materialSha !== active.materialSha || report.materialClean !== true))
+      return { outcome:'unavailable', terminal:true, reason:'s6-material-changed' };
+    return { outcome:report.status, evidence:{id:report.id, name:report.name, reportPath:report.reportPath, materialSha:active.materialSha,
+      status:report.status, finishedAt:report.finishedAt,
+      failures:(report.results ?? []).filter(row => ['failed','unavailable','cancelled','blocked','timed-out'].includes(row.status))
+        .map(row => (row.name ?? row.id) + ': ' + (row.reason ?? row.error ?? row.status))} };
   };
   let ownedAdmission = null;
   const heartbeat = setInterval(() => {
@@ -432,7 +529,9 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     while (!signal?.aborted && clock() - started < maxWaitMs) {
       current = (await queue.store.read()).state;
       ownedAdmission = current.active?.issue === event.issue ? current.active : null;
-      onProgress({ kind: 'queue', issue: event.issue, ...queueSummary(current), elapsedMs: clock() - started });
+      const admittedAt = ownedAdmission?.admittedAt ?? clock();
+      const readyAt = current.tasks[event.issue]?.readyAt ?? admittedAt;
+      onProgress({ kind: 'queue', issue: event.issue, ...queueSummary(current), elapsedMs:Math.max(0,admittedAt-readyAt) });
       if (current.tasks[event.issue]?.status === 'S8-merged') return completeTask(current.tasks[event.issue]);
       if (!current.tasks[event.issue]?.queued && current.active?.issue !== event.issue) return { action: 'returned', task: current.tasks[event.issue] };
       const own = current.active?.issue === event.issue;
