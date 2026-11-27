@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28725,
-  "nextTicket": 779,
+  "revision": 28726,
+  "nextTicket": 780,
   "nextFence": 775,
   "tasks": {
     "1001": {
@@ -6164,11 +6164,11 @@
       "materialSha": "446a5d9c83fbc100fb1b76009289e2547487a6ee",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 773,
-      "queued": false,
+      "ticket": 779,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795780942836,
-      "reviewEntry": 3,
+      "readyAt": 1795795986726,
+      "reviewEntry": 4,
       "patchId": "dc156c84ce7c0847ad338204a8f65f08249445a3",
       "changedFiles": [
         ".gitignore",
@@ -6298,8 +6298,7 @@
       "reviewCorrection": {
         "requestId": "review:1598:2:f90c6b3bf362de031cc4c7aa133966ce1397c477:0a917f294e0393c317f4a4fdeec9dc4640bb0695",
         "at": 1795780424921
-      },
-      "reason": "checks-failed"
+      }
     },
     "1599": {
       "issue": 1599,
@@ -7392,7 +7391,8 @@
     1594,
     1603,
     1609,
-    1595
+    1595,
+    1598
   ],
   "active": {
     "issue": 1600,
@@ -9124,6 +9124,28 @@
         "layer": "infra",
         "materialSha": "ac8b2a316e0240995776ef14e75671772ee48e68",
         "phase": "sync"
+      }
+    },
+    "finish:e3bb72e7-dbf0-45e1-89f1-3e03e75c2122": {
+      "digest": "363a97aa7636cc75cb57808d7136578a751e98bb6f55f28cacaac9d26561f49d",
+      "issue": 1598,
+      "message": {
+        "kind": "queued",
+        "issue": 1598,
+        "at": 1795795986726,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "446a5d9c83fbc100fb1b76009289e2547487a6ee",
+        "evidence": {
+          "id": "20261127T114809227-2427aab3",
+          "name": "Тесты для задачи #1598 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T114809227-2427aab3/report.json",
+          "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
+          "status": "passed",
+          "finishedAt": "2026-11-27T11:48:11.524Z",
+          "failures": []
+        }
       }
     }
   },
