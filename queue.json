@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28533,
+  "revision": 28534,
   "nextTicket": 776,
   "nextFence": 771,
   "tasks": {
@@ -6750,7 +6750,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1609-3d-tab-resume",
-      "materialSha": "44454148a8099075afbd35fb76532ef00479b47d",
+      "materialSha": "2abb6ae7afe9ecb08457341fb496a10f3f4d9481",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 770,
@@ -6758,7 +6758,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795776730964,
       "reviewEntry": 6,
-      "patchId": "6475a222d994cd24cbe541e932c28bf8537a30a6",
+      "patchId": "891cf429603e71fe3c1c11a3510e06ddbe4536cb",
       "changedFiles": [
         "demo/helpers/plan-3d-lifecycle-native.mjs",
         "demo/helpers/plan-3d-resume-fixture.mjs",
@@ -7541,17 +7541,14 @@
     "worker": "finish",
     "token": "770:finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:1:admit",
     "fence": 770,
-    "materialSha": "44454148a8099075afbd35fb76532ef00479b47d",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "2abb6ae7afe9ecb08457341fb496a10f3f4d9481",
+    "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
+    "phase": "testing",
     "admittedAt": 1795788840882,
-    "expiresAt": 1795789140882
+    "expiresAt": 1795789171738,
+    "patchId": "891cf429603e71fe3c1c11a3510e06ddbe4536cb"
   },
   "events": {
-    "finish:1f38451f-d68a-419f-81ca-122ce8b7a926": {
-      "digest": "62575a40a04f22a93227348017116ae7504e014cb1e98b23d682bad0684a246e",
-      "issue": 1608
-    },
     "finish:65f9d9c9-3fdf-43ba-ae1f-c7e2815cdbbf": {
       "digest": "043af645aaeb502901cb729f337ddc802190db12966c775c5695c79c5e1d5767",
       "issue": 1608
@@ -8375,6 +8372,10 @@
     "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:2:return": {
       "digest": "4cc96865ad656c9815d2d96059f760eb1efd7d3507d9f3e9fc443a8af2b8b7de",
       "issue": 1603
+    },
+    "finish:a5aa5fd8-2738-492d-8195-883a54a82305:finish:2:synchronized": {
+      "digest": "f169497734c0e2d5262d4b39907e3ea34e1d15df012ab1cba4886d77cbb20638",
+      "issue": 1609
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
