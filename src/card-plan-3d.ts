@@ -16,7 +16,7 @@ const vacuumSelector = '.vacpuck[data-hp-3d-vacuum]';
 // Internal pick IDs must not resolve to the placed dock or any other device.
 const vacuumPickId = (mid: string) => '\0vacuum:' + mid;
 
-export interface Plan3dVacuumFrame {
+interface Plan3dVacuumFrame {
   camera: IsoCamera;
   view: FrameRect;
   diameter: number;

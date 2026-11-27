@@ -365,7 +365,7 @@ import { PlanRotationMotion } from './plan-rotation-motion';
 import { controlMotion } from './ui-motion';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
-import { CardPlan3d, type Plan3dRuntime, type Plan3dVacuumFrame } from './card-plan-3d';
+import { CardPlan3d, type Plan3dRuntime } from './card-plan-3d';
 import { takeDiscardedPanel } from './plan-3d-discard';
 import type {
   IsoOverlayRenderScene, IsoRenderScene, IsoSceneCacheEntry,
@@ -14432,6 +14432,8 @@ export class HouseplanCard extends LitElement {
       return !!marker && radarMarkerLiveInSpace(marker, this._space);
     });
     const perspectiveSize = this._modeSceneSize ?? this._lastValidStageSize ?? [view.w, view.h] as const;
+    if (this._plan3dPresentation && floorCamera)
+      this._spatial.vacuumFrame = { view, camera: floorCamera, diameter: contactBaseDiameter * .8, cellCm: this._cellCm };
     if (this._plan3dPresentation) {
       this._flatExportScene = (flatView, rotation) => {
         const keep = (id: string, render: ModeSceneLayer['render']): ModeSceneLayer => ({ id, inputs: [], render });
@@ -14625,8 +14627,7 @@ export class HouseplanCard extends LitElement {
               d, view, contactBaseDiameter, showLqi, isoOverlays?.devices.get(d.id),
             )))}
             ${ledDevs.map((d) => this._ledBadge(d, view, isoOverlays?.devices.get(d.id)))}
-            ${this._renderVacuums(this._renderVacuumDevices, view, space.id, perspectiveSize, undefined,
-              this._plan3dPresentation && floorCamera ? { view, camera: floorCamera, diameter: contactBaseDiameter * .8, cellCm: this._cellCm } : undefined)}
+            ${this._renderVacuums(this._renderVacuumDevices, view, space.id, perspectiveSize)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view, isoOverlays?.locks)}
             ${raiseRoomLabels
@@ -15229,14 +15230,13 @@ export class HouseplanCard extends LitElement {
    * of the active route, which is the whole point of #162.
    */
   private _renderVacuums(devs: readonly DevItem[], view: FrameRect, spaceId: string,
-    perspectiveSize: readonly [number, number], flatRotation?: PlanRotation,
-    nativeFrame?: Plan3dVacuumFrame): TemplateResult | typeof nothing {
+    perspectiveSize: readonly [number, number], flatRotation?: PlanRotation): TemplateResult | typeof nothing {
     if (this._markup || this._mode === 'decor') return nothing;
     const exportFrame = flatRotation !== undefined;
+    const nativeFrame = exportFrame ? undefined : this._spatial.vacuumFrame;
     const viewKey = this._space + '|' + view.x + '|' + view.y + '|' + view.w + '|' + view.h;
     const jumpAll = this._vacJumpOnce || viewKey !== this._vacViewKey;
     if (!exportFrame) {
-      this._spatial.vacuumFrame = nativeFrame;
       this._vacViewKey = viewKey;
       this._vacJumpOnce = false;
     }
