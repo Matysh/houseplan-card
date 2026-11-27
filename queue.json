@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28103,
-  "nextTicket": 762,
+  "revision": 28104,
+  "nextTicket": 763,
   "nextFence": 762,
   "tasks": {
     "1001": {
@@ -6109,6 +6109,20 @@
         "status": "not-required"
       }
     },
+    "1597": {
+      "issue": 1597,
+      "track": "ship",
+      "layer": "docs",
+      "branch": "codex/1597-release-notices",
+      "materialSha": "502258741f1753f27b35ee15c7264d196c2521f6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 762,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795775566937,
+      "reviewEntry": 1
+    },
     "1604": {
       "issue": 1604,
       "branch": "codex/1604-card-runtime-extraction",
@@ -7159,7 +7173,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1597
+  ],
   "active": {
     "issue": 1608,
     "worker": "finish",
@@ -8197,6 +8213,19 @@
         "layer": "product",
         "materialSha": "5ca28396c107f9f3eee0318ebc6dba67f7ecdcbf",
         "phase": "sync"
+      }
+    },
+    "finish:2d57eb91-ec93-4f42-a929-a97dfbe629fe": {
+      "digest": "85a0d46abc1dcd45ade4949587dc79b06149bec09ef907046cbb719b8f7b7961",
+      "issue": 1597,
+      "message": {
+        "kind": "queued",
+        "issue": 1597,
+        "at": 1795775566937,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "502258741f1753f27b35ee15c7264d196c2521f6"
       }
     }
   },
