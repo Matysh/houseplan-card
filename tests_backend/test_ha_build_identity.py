@@ -153,7 +153,11 @@ async def _setup(hass: HomeAssistant) -> MockConfigEntry:
 async def test_issue_836_setup_reads_identity_once_off_the_loop_and_registers_urls(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, tmp_path: Path, monkeypatch,
 ) -> None:
-    monkeypatch.setattr(build_identity, "INTEGRATION_ROOT", _tree(tmp_path))
+    root = _tree(tmp_path)
+    for entry in ("houseplan-card.js", "houseplan-panel.js"):
+        (root / "frontend" / entry).write_text("// installed frontend fixture", encoding="utf-8")
+    monkeypatch.setattr(build_identity, "INTEGRATION_ROOT", root)
+    monkeypatch.setattr(ha_integration, "__file__", str(root / "ha_integration.py"))
     reads: list[int] = []
 
     def counted(root=None):
