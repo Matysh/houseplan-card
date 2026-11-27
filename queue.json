@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29932,
+  "revision": 29933,
   "nextTicket": 803,
   "nextFence": 803,
   "tasks": {
@@ -7282,6 +7282,10 @@
       "digest": "e46a381bfb453ab065107e85f6780d33595525c8fc295e85f71aef3100e940a8",
       "issue": 1617
     },
+    "github:46080608005:1:completions:message:2bc8c43a7cf224f651415554de1bcb98440a0386f7ce649229a0945ac00fe03f": {
+      "digest": "4b87369bbaa69f092677a1d339b14989536a6bf79132f51ded31439b9bfd0e58",
+      "issue": 1617
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7588,7 +7592,8 @@
         "reviewChanges": "На первом кандидате воспроизвелось замечание ревью: у Auto-ленты с радиусом 30 см контрольные точки возле стены теряли свет (`smoke_webgl_door_lintel.mjs`: дельты 0/0/0). Пустое поле не задаёт реальную высоту излучателя, поэтому Auto сохраняет прежний источник у пола и прежний профиль затухания. Для явного значения, в том числе 0, свет и меш используют `ledHeight(...).top`; пространственная дистанция применяется и на полу, и на стенах. Лампы, солнце, плоские маски и пересечение проёмов не меняются.\n\nВ S6 есть три отдельных свидетеля: `smoke_plan_3d_marker_height.mjs` (явная светящаяся поверхность и прежний Auto в восьми ракурсах), `smoke_plan_3d_gpu.mjs` (пробы пола/стен и затенения) и `smoke_webgl_door_lintel.mjs` (в том числе прежняя засветка передней, но не задней грани от короткой Auto-ленты).",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
