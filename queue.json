@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28862,
+  "revision": 28863,
   "nextTicket": 783,
   "nextFence": 777,
   "tasks": {
@@ -6007,7 +6007,7 @@
       "ownerDecision": null,
       "ticket": 775,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795787418639,
       "reviewEntry": 2,
       "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535",
@@ -6040,6 +6040,15 @@
         "at": 1795786582944,
         "entry": 1,
         "eventId": "finish:043e84e2-84f2-4cd6-8a10-c1ee8787a2b2:finish:1:return:return:1594"
+      },
+      "s6": {
+        "id": "20261127T163347018-da85c73b",
+        "name": "Тесты для задачи #1594 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261127T163347018-da85c73b/report.json",
+        "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
+        "status": "passed",
+        "finishedAt": "2026-11-27T16:50:41.778Z",
+        "failures": []
       }
     },
     "1595": {
@@ -7413,9 +7422,9 @@
     "fence": 776,
     "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
     "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795797212713,
-    "expiresAt": 1795798526210,
+    "expiresAt": 1795801843195,
     "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535"
   },
   "events": {
@@ -9191,6 +9200,34 @@
         "layer": "product",
         "materialSha": "17a1ccb0a0544f019304bbec18882a76d4454c43",
         "delivered": true
+      }
+    },
+    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:6:s6-complete": {
+      "digest": "8928c30a1405bd99dc32baf50ca24465e39e1862bc80f1c29e7263c8021957a3",
+      "issue": 1594,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1594,
+        "at": 1795798243195,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T163347018-da85c73b",
+          "name": "Тесты для задачи #1594 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261127T163347018-da85c73b/report.json",
+          "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
+          "status": "passed",
+          "finishedAt": "2026-11-27T16:50:41.778Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
