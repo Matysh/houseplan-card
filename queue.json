@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28717,
-  "nextTicket": 778,
+  "revision": 28718,
+  "nextTicket": 779,
   "nextFence": 774,
   "tasks": {
     "1001": {
@@ -6079,14 +6079,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1595-editor-first-open",
-      "materialSha": "83c5310c774774c51abdac835597092b6b84abd0",
+      "materialSha": "0b967539d1be240e968683135bdd198ead4f04c0",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 772,
-      "queued": false,
+      "ticket": 778,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795780689632,
-      "reviewEntry": 1,
+      "readyAt": 1795795662425,
+      "reviewEntry": 2,
       "patchId": "9e270975b2efeca1d907562bec451d55ff904d66",
       "changedFiles": [
         "demo/benchmark_large_house.mjs",
@@ -6113,7 +6113,6 @@
         "test/floor-cache-publication.test.mjs",
         "test/plan-graph-core.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7392,7 +7391,8 @@
     1600,
     1594,
     1603,
-    1609
+    1609,
+    1595
   ],
   "active": {
     "issue": 1598,
@@ -9054,6 +9054,19 @@
           "finishedAt": "2026-11-27T11:48:11.524Z",
           "failures": []
         }
+      }
+    },
+    "finish:a8893a8c-bcf9-484c-8254-fe2981aa6999": {
+      "digest": "75953fbfb99a877c08e827de567c6d054748515410bb4c9bb3635cee4630d49f",
+      "issue": 1595,
+      "message": {
+        "kind": "queued",
+        "issue": 1595,
+        "at": 1795795662425,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "0b967539d1be240e968683135bdd198ead4f04c0"
       }
     }
   },
