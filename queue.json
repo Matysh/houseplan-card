@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29372,
-  "nextTicket": 786,
+  "revision": 29373,
+  "nextTicket": 787,
   "nextFence": 786,
   "tasks": {
     "1001": {
@@ -6269,6 +6269,20 @@
         "sourceSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294"
       }
     },
+    "1612": {
+      "issue": 1612,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1612-vacuum-3d-floor",
+      "materialSha": "448e1ac0d0932ed9b3a788d27a8a092e15f573e3",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 786,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795808379293,
+      "reviewEntry": 1
+    },
     "1613": {
       "issue": 1613,
       "track": "ask",
@@ -7130,7 +7144,9 @@
       "runId": 46057459397
     }
   },
-  "waiting": [],
+  "waiting": [
+    1612
+  ],
   "active": null,
   "events": {
     "github:46035822142:1:label:spec-request": {
@@ -7474,6 +7490,19 @@
           "entry": 2,
           "eventId": "finish:89f21d5c-4860-4826-addd-57848c9fb12e:finish:2:return:return:1613"
         }
+      }
+    },
+    "finish:92b94c16-2920-4443-9b6c-b4a08c69ff68": {
+      "digest": "d74e6af686ec6072a4fd689ba133ce7f876c938ddc9090d833861adde804ff9b",
+      "issue": 1612,
+      "message": {
+        "kind": "queued",
+        "issue": 1612,
+        "at": 1795808379293,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "448e1ac0d0932ed9b3a788d27a8a092e15f573e3"
       }
     }
   },
