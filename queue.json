@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29891,
+  "revision": 29892,
   "nextTicket": 802,
   "nextFence": 802,
   "tasks": {
@@ -6251,15 +6251,17 @@
       "status": "S6-in-progress",
       "readyAt": 1795820452572,
       "reviewEntry": 3,
-      "patchId": "265581c0d087d930761db9d7874670c34ddb8570",
+      "patchId": "498cbc431fd03811228a5bc485b196a2b1007dde",
       "changedFiles": [
         "demo/smoke_plan_3d_gpu.mjs",
         "demo/smoke_plan_3d_marker_height.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY-INVENTORY.md",
         "docs/LIGHT.md",
         "docs/release-ledger/v1.86.1/1617.json",
         "process-next/lib/source-dependencies.mjs",
+        "scripts/config-compatibility-inventory.json",
         "src/houseplan-card.ts",
         "src/led-strip-field.ts",
         "src/led-strip-runtime.ts",
@@ -7074,10 +7076,11 @@
     "token": "801:finish:0e19e332-63e7-49e4-a8b2-89aa43e6d5dc:finish:1:admit",
     "fence": 801,
     "materialSha": "8329e2f5609b4c64c314a90d57cd4d3194a19dc6",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5de5efc9693f5c203a13c12b03c89895a19f6551",
+    "phase": "testing",
     "admittedAt": 1795820456067,
-    "expiresAt": 1795820756067
+    "expiresAt": 1795820762065,
+    "patchId": "498cbc431fd03811228a5bc485b196a2b1007dde"
   },
   "events": {
     "finish:b6f532f4-8cba-41e4-afee-f2b7a0b414d2:finish:1:synchronized": {
@@ -7170,6 +7173,10 @@
     },
     "finish:064f0112-916f-450d-801c-30ae9b945c93:finish:3:return": {
       "digest": "3e39bd06fb4e6ecb04a145cc3ff178f494c4080127ab6433bbf406be45620125",
+      "issue": 1617
+    },
+    "finish:0e19e332-63e7-49e4-a8b2-89aa43e6d5dc:finish:2:synchronized": {
+      "digest": "0e6ddae722861c49692fbe45a879f2a8897732d818807d9a614d9ec605655c44",
       "issue": 1617
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
