@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28881,
+  "revision": 28882,
   "nextTicket": 783,
   "nextFence": 777,
   "tasks": {
@@ -5999,188 +5999,26 @@
     },
     "1594": {
       "issue": 1594,
+      "branch": "codex/1594-mdi-packaging",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1594-mdi-packaging",
-      "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 775,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795787418639,
-      "reviewEntry": 2,
-      "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535",
-      "changedFiles": [
-        ".gitignore",
-        "demo/helpers/mdi-assets.mjs",
-        "demo/smoke_device_icon_picker.mjs",
-        "demo/smoke_standalone_entry.mjs",
-        "demo/standalone/mdi-picker-probe.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/STANDALONE-PRESENTATION.md",
-        "docs/release-ledger/v1.86.1/1594.json",
-        "process-next/catalog/site-release-browser.mjs",
-        "process-next/lib/catalog.mjs",
-        "process-next/lib/source-dependencies.mjs",
-        "scripts/bundle-sync.mjs",
-        "src/editors/hp-icon-picker.ts",
-        "src/icon-catalog.ts",
-        "src/standalone-icon-catalog.ts",
-        "src/standalone-presentation.ts",
-        "test/bundle-assets.test.mjs",
-        "test/bundle-sync.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795786582944,
-        "entry": 1,
-        "eventId": "finish:043e84e2-84f2-4cd6-8a10-c1ee8787a2b2:finish:1:return:return:1594"
-      },
-      "s6": {
-        "id": "20261127T163347018-da85c73b",
-        "name": "Тесты для задачи #1594 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261127T163347018-da85c73b/report.json",
-        "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
-        "status": "passed",
-        "finishedAt": "2026-11-27T16:50:41.778Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+      "mergedSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
+      "mergedAt": 1795798584439,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": true,
       "reviewRequest": "review:1594:2:b94f73bb2a99353d945245f727a2a24bb4b6e535:15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-      "reviewMaterial": {
-        "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
-        "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-        "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1594:2:b94f73bb2a99353d945245f727a2a24bb4b6e535:15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-        "eventId": "github:46037013200:1:tick:0:review-retry",
-        "at": 1795798275206,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1594,
-        "requestId": "review:1594:2:b94f73bb2a99353d945245f727a2a24bb4b6e535:15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-        "kind": "code",
-        "base": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-        "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
-        "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1594,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1594",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Решение подходит для задачи. Полный каталог MDI (`mdi-icon-catalog`) больше не попадает в HA-сборку: `hp-icon-picker` не импортирует его напрямую и берёт каталог через новый модуль `src/icon-catalog.ts`. Он работает в двух режимах. В HA модуль читает `iconList.json`/`iconMetadata.json` из `/static/mdi/` фронтенда HA и подгружает только нужные чанки с глифами. В автономном редакторе модуль берёт полный каталог, который регистрирует адаптер презентации (#1422). Поиск, превью и ручной ввод `mdi:` работают как раньше. Главный внешний риск — формат `static/mdi` настоящего HA. Его покрывает authentic-кейс smoke: он раздаёт `/static/` из закреплённого wheel `home-assistant-frontend` 20260729.7. Кроме того, имя чанка из реального замера #1393 совпадает с принятой проверкой имени чанка — 40 hex-символов. Блокеров нет. Ниже — несколько необязательных улучшений устойчивости.",
-          "understanding": "До изменения пикер иконок лениво импортировал `src/mdi-icon-catalog.ts` вместе с `mdi-icon-data.json` (около 2,76 МБ raw). Rollup выносил этот чанк в HA-бандл, и в `houseplan.zip` он лежал вместе с предсжатой копией, хотя у HA есть своя база MDI.\n\nПосле изменения:\n- `src/icon-catalog.ts` задаёт интерфейс `IconCatalog` (часть API Map и необязательный `loadGlyphs`). Реестр автономных каталогов хранится в WeakMap с ключом Document. Если документ не автономный, используется загрузчик HA: параллельно запрашиваются `iconList.json` и `iconMetadata.json` с `cache:'no-cache'`, проверяются имена и порядок `parts[].start`. Чанк выбирается так же, как в `findIconChunk` из HA (`bare < start` → break), загрузки одного чанка объединяются. Промис каталога HA кэшируется на модуль и сбрасывается при ошибке, поэтому повторная попытка работает.\n- `src/standalone-icon-catalog.ts` переносит прежнюю ленивую загрузку с повтором через `__HOUSEPLAN_MDI_CATALOG_RETRY_ASSET__`. Регистрацию выполняет `registerStandalonePresentation()`, а HA-точки входа этот модуль не импортируют (комментарий в строке 1 файла и `standalone-entry.ts`). Поэтому чанк остаётся только в автономной сборке. Плагин `bundle-manifest.mjs:465-487` при отсутствии владельца токена пропускает подстановку (`continue`), так что HA-сборка не ломается.\n- `hp-icon-picker.load()` получает каталог и догружает глифы для выбранной иконки, а при открытом меню — ещё и для 60 найденных вариантов. Номер запроса `previewRequest` отсекает устаревшие ответы. `updated()` вызывает `load()` при смене `_catalog/_open/_query/value/autoIcon`, если у каталога есть `loadGlyphs`.\n- Демо-стенд генерирует HA-подобные файлы в `demo/srv/static/mdi`. Smoke перешёл на `/static/mdi/` и в authentic-режиме обслуживает `/static/` из реального wheel HA (`ha-dialog-fixture.mjs:94`, разрешённые файлы `static/.+\\.json` в `ha-dialog-assets.mjs:24`). Новая проверка `mdi-picker-probe` открывает пикер в автономном демо и в собранном автономном архиве (`site-release-browser.mjs`) и проверяет, что запрашивается собственный чанк, а не `/static/mdi/`.\n\nРазобранные пути: холодная загрузка (connectedCallback → load), открытие и поиск (updated → load), отказ и повтор (`_failed` → retry/open), гонки при быстром вводе, автономный и HA-документы, подстановка retry-токена в сборке, раздача статики в authentic-фикстуре.",
-          "analysis": [
-            {
-              "topic": "Разделение HA и автономной сборки",
-              "assessment": "Каталог уходит из HA-бандла естественным путём: в HA-графе модулей больше нет импорта `mdi-icon-catalog`. Внедрение через реестр документа сохраняет единственный пикер без ветвлений по сборке. Решение простое и соответствует пункту 2 ТЗ: адаптер презентации, а не флаг сборки. Тест `bundle-assets` фиксирует отсутствие чанка в манифесте и в `dist`.",
-              "evidence": "src/editors/hp-icon-picker.ts:11, src/standalone-presentation.ts:1,9-10,59, src/standalone-icon-catalog.ts, scripts/bundle-manifest.mjs:468-473, test/bundle-assets.test.mjs:46-51"
-            },
-            {
-              "topic": "Совместимость с форматом static/mdi в HA",
-              "assessment": "Выбор чанка совпадает с алгоритмом HA: первая часть без `start`, сравнение `bare < start`. Строгая проверка `CHUNK_FILE /^[a-f0-9]{40,64}$/` согласуется с реальным именем чанка HA в замере #1393 (40 hex). Самое важное: authentic-кейс smoke (`{theme:'dark',width:1280,authentic:true}`) раздаёт `/static/` из закреплённого официального wheel. Если он прошёл, это проверяет и наличие `iconList.json`/`iconMetadata.json` в реальной статике, и сам формат: для `mdi:fan` проверяется путь длиной больше 80 символов. Синтетическая фикстура `demo/helpers/mdi-assets.mjs` повторяет этот формат, но сама по себе ничего не доказывает. Опору даёт authentic-кейс.",
-              "evidence": "src/icon-catalog.ts:15,38-52,64-73; docs/design/1393-ha-components-measurement.json:1272 (`/static/mdi/70d08c50…ee2.json`); demo/helpers/ha-dialog-fixture.mjs:94; demo/helpers/ha-dialog-assets.mjs:23-24; demo/smoke_device_icon_picker.mjs:15,50-53"
-            },
-            {
-              "topic": "Жизненный цикл загрузки и гонки в пикере",
-              "assessment": "Механизм корректен. При быстром вводе устаревший запрос не вызывает перерисовку, но актуальный запрос, который начался до готовности общего чанка, считает его ожидающим (`pending`), получает `loaded=true` и вызывает `requestUpdate`. Если чанк был готов ещё до начала запроса, перерисовка после этого уже прошла. Цикла нет: `requestUpdate()` без ключа не попадает в список отслеживаемых свойств, а повторное присваивание того же `_catalog` не считается изменением. Первый `load` до установки `_catalog` берёт только выбранную иконку, а полный список подтягивается следующим вызовом из `updated`. Слабое место — ошибка одного чанка глифов переводит весь пикер в `_failed`, хотя список имён уже доступен (см. improvements).",
-              "evidence": "src/editors/hp-icon-picker.ts:77-90,130-134; src/icon-catalog.ts:75-90,96-101"
-            },
-            {
-              "topic": "Отказ сети и повтор",
-              "assessment": "Промис каталога HA сбрасывается при ошибке, кнопка «повторить» и повторное открытие перезапускают `load`. Smoke дважды обрывает `iconList.json` и проверяет третий запрос и размер 7447. В автономной сборке сохранён прежний повтор через новый URL модуля, его подстановку проверяет плагин манифеста. Сам повтор в автономном архиве проверкой не покрыт, но код перенесён без изменений.",
-              "evidence": "src/icon-catalog.ts:105-113; demo/smoke_device_icon_picker.mjs:115-136; src/standalone-icon-catalog.ts"
-            },
-            {
-              "topic": "Автономный редактор",
-              "assessment": "Новая проверка выполняется и в демо, и в собранном архиве релиза. Она проверяет, что холодный View не запрашивает чанк каталога, что поиск по словам `alarm light` находит иконку и рисует глиф, что выбор работает и что к `/static/mdi/` обращений нет. Это прямо покрывает критерий «автономный ZIP открывает пикер с иконками».",
-              "evidence": "demo/standalone/mdi-picker-probe.mjs; demo/smoke_standalone_entry.mjs:75-78; process-next/catalog/site-release-browser.mjs:57-58"
-            },
-            {
-              "topic": "Поведение поиска и объём трафика",
-              "assessment": "Поиск, как и раньше, ищет только по именам: ключевые слова HA из `iconList` не используются, так что поведение не изменилось. При широком запросе 60 результатов могут попасть во многие чанки по ~54 КБ. На один поиск трафика может быть больше прежнего, но это кэшируемая статика HA, которую загружает и сам `ha-icon`. Для задачи это приемлемо.",
-              "evidence": "src/editors/hp-icon-picker.ts:92-102; docs/design/1393-ha-components-measurement.json:1273 (54525 байт на чанк)"
-            },
-            {
-              "topic": "Резерв для HA без static/mdi (п.3 ТЗ)",
-              "assessment": "Резерв не сделан, и это допустимо: в ТЗ пункт условный. Без `static/mdi` не работают и собственные иконки HA. Пикер в таком случае показывает ошибку, а ручной ввод `mdi:…` продолжает работать, что подтверждает smoke.",
-              "evidence": "demo/smoke_device_icon_picker.mjs:126-129"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Разделить отказ списка и отказ чанка глифов. Сейчас любая ошибка в `loadGlyphs` ставит `_failed=true`: пикер показывает «недоступно» и перестаёт сам догружать глифы, хотя имена уже есть и выбор возможен. Можно оставлять `_catalog` рабочим, а для иконки без пути показывать запасной глиф или повторять загрузку чанка при следующем изменении запроса. Это недорого и убирает ложное «каталог недоступен» при одном неудачном чанке.",
-            "Сделать проверку в `test/bundle-assets.test.mjs` независимой от имени файла: проверять, что ни один модуль HA-манифеста не содержит `src/mdi-icon-data.json` (как это делает `mdi-picker-probe` для автономной сборки). Иначе случайный импорт JSON из другого модуля даст чанк с другим именем, и проверка по префиксу `mdi-icon-catalog-` его не заметит.",
-            "В `bundle-manifest.mjs` правило «нет владельца токена → continue» для `/src/mdi-icon-catalog.ts` теперь тихо срабатывает и в HA-сборке. Если автономная сборка когда-нибудь потеряет импорт с токеном, повтор пропадёт без ошибки. Можно требовать ровно одного владельца в той сборке, где есть точка входа `standalone-entry`."
-          ],
-          "boundaries": "Сборку, тесты и smoke я не запускал. Для S6 опираюсь на квитанцию «Тесты для задачи #1594 (перед ревью)» (passed, материал 30dda61b) без чтения отчёта. Поэтому прохождение authentic-кейса `smoke_device_icon_picker` на реальной статике HA и фактические изменения `zip_bytes`/`frontend_all_files_gzip_bytes` я принимаю по квитанции и не сверял поимённо. Совместимость с форматом HA выведена из исходников: из того, что authentic-фикстура раздаёт `/static/` из закреплённого wheel, и из реального пути чанка в замере #1393. Исходники фронтенда HA вне репозитория не проверял. Автономную сборку и состав `houseplan-standalone-*.zip` оценивал по проверке в `site-release-browser.mjs` и по графу импортов, конфигурацию автономной сборки целиком не читал."
-        },
-        "usage": {
-          "input_tokens": 28,
-          "cache_creation_input_tokens": 71861,
-          "cache_read_input_tokens": 574300,
-          "output_tokens": 17960,
-          "output_tokens_details": {
-            "thinking_tokens": 11158
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 71861,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 872,
-              "cache_read_input_tokens": 59966,
-              "cache_creation_input_tokens": 16099,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 16099
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРешение подходит для задачи. Полный каталог MDI (`mdi-icon-catalog`) больше не попадает в HA-сборку: `hp-icon-picker` не импортирует его напрямую и берёт каталог через новый модуль `src/icon-catalog.ts`. Он работает в двух режимах. В HA модуль читает `iconList.json`/`iconMetadata.json` из `/static/mdi/` фронтенда HA и подгружает только нужные чанки с глифами. В автономном редакторе модуль берёт полный каталог, который регистрирует адаптер презентации (#1422). Поиск, превью и ручной ввод `mdi:` работают как раньше. Главный внешний риск — формат `static/mdi` настоящего HA. Его покрывает authentic-кейс smoke: он раздаёт `/static/` из закреплённого wheel `home-assistant-frontend` 20260729.7. Кроме того, имя чанка из реального замера #1393 совпадает с принятой проверкой имени чанка — 40 hex-символов. Блокеров нет. Ниже — несколько необязательных улучшений устойчивости.\n\n## Понимание решения\n\nДо изменения пикер иконок лениво импортировал `src/mdi-icon-catalog.ts` вместе с `mdi-icon-data.json` (около 2,76 МБ raw). Rollup выносил этот чанк в HA-бандл, и в `houseplan.zip` он лежал вместе с предсжатой копией, хотя у HA есть своя база MDI.\n\nПосле изменения:\n- `src/icon-catalog.ts` задаёт интерфейс `IconCatalog` (часть API Map и необязательный `loadGlyphs`). Реестр автономных каталогов хранится в WeakMap с ключом Document. Если документ не автономный, используется загрузчик HA: параллельно запрашиваются `iconList.json` и `iconMetadata.json` с `cache:'no-cache'`, проверяются имена и порядок `parts[].start`. Чанк выбирается так же, как в `findIconChunk` из HA (`bare < start` → break), загрузки одного чанка объединяются. Промис каталога HA кэшируется на модуль и сбрасывается при ошибке, поэтому повторная попытка работает.\n- `src/standalone-icon-catalog.ts` переносит прежнюю ленивую загрузку с повтором через `__HOUSEPLAN_MDI_CATALOG_RETRY_ASSET__`. Регистрацию выполняет `registerStandalonePresentation()`, а HA-точки входа этот модуль не импортируют (комментарий в строке 1 файла и `standalone-entry.ts`). Поэтому чанк остаётся только в автономной сборке. Плагин `bundle-manifest.mjs:465-487` при отсутствии владельца токена пропускает подстановку (`continue`), так что HA-сборка не ломается.\n- `hp-icon-picker.load()` получает каталог и догружает глифы для выбранной иконки, а при открытом меню — ещё и для 60 найденных вариантов. Номер запроса `previewRequest` отсекает устаревшие ответы. `updated()` вызывает `load()` при смене `_catalog/_open/_query/value/autoIcon`, если у каталога есть `loadGlyphs`.\n- Демо-стенд генерирует HA-подобные файлы в `demo/srv/static/mdi`. Smoke перешёл на `/static/mdi/` и в authentic-режиме обслуживает `/static/` из реального wheel HA (`ha-dialog-fixture.mjs:94`, разрешённые файлы `static/.+\\.json` в `ha-dialog-assets.mjs:24`). Новая проверка `mdi-picker-probe` открывает пикер в автономном демо и в собранном автономном архиве (`site-release-browser.mjs`) и проверяет, что запрашивается собственный чанк, а не `/static/mdi/`.\n\nРазобранные пути: холодная загрузка (connectedCallback → load), открытие и поиск (updated → load), отказ и повтор (`_failed` → retry/open), гонки при быстром вводе, автономный и HA-документы, подстановка retry-токена в сборке, раздача статики в authentic-фикстуре.\n\n## Разбор решения\n\n### Разделение HA и автономной сборки\n\nКаталог уходит из HA-бандла естественным путём: в HA-графе модулей больше нет импорта `mdi-icon-catalog`. Внедрение через реестр документа сохраняет единственный пикер без ветвлений по сборке. Решение простое и соответствует пункту 2 ТЗ: адаптер презентации, а не флаг сборки. Тест `bundle-assets` фиксирует отсутствие чанка в манифесте и в `dist`.\n\nОснование: src/editors/hp-icon-picker.ts:11, src/standalone-presentation.ts:1,9-10,59, src/standalone-icon-catalog.ts, scripts/bundle-manifest.mjs:468-473, test/bundle-assets.test.mjs:46-51\n\n### Совместимость с форматом static/mdi в HA\n\nВыбор чанка совпадает с алгоритмом HA: первая часть без `start`, сравнение `bare < start`. Строгая проверка `CHUNK_FILE /^[a-f0-9]{40,64}$/` согласуется с реальным именем чанка HA в замере #1393 (40 hex). Самое важное: authentic-кейс smoke (`{theme:'dark',width:1280,authentic:true}`) раздаёт `/static/` из закреплённого официального wheel. Если он прошёл, это проверяет и наличие `iconList.json`/`iconMetadata.json` в реальной статике, и сам формат: для `mdi:fan` проверяется путь длиной больше 80 символов. Синтетическая фикстура `demo/helpers/mdi-assets.mjs` повторяет этот формат, но сама по себе ничего не доказывает. Опору даёт authentic-кейс.\n\nОснование: src/icon-catalog.ts:15,38-52,64-73; docs/design/1393-ha-components-measurement.json:1272 (`/static/mdi/70d08c50…ee2.json`); demo/helpers/ha-dialog-fixture.mjs:94; demo/helpers/ha-dialog-assets.mjs:23-24; demo/smoke_device_icon_picker.mjs:15,50-53\n\n### Жизненный цикл загрузки и гонки в пикере\n\nМеханизм корректен. При быстром вводе устаревший запрос не вызывает перерисовку, но актуальный запрос, который начался до готовности общего чанка, считает его ожидающим (`pending`), получает `loaded=true` и вызывает `requestUpdate`. Если чанк был готов ещё до начала запроса, перерисовка после этого уже прошла. Цикла нет: `requestUpdate()` без ключа не попадает в список отслеживаемых свойств, а повторное присваивание того же `_catalog` не считается изменением. Первый `load` до установки `_catalog` берёт только выбранную иконку, а полный список подтягивается следующим вызовом из `updated`. Слабое место — ошибка одного чанка глифов переводит весь пикер в `_failed`, хотя список имён уже доступен (см. improvements).\n\nОснование: src/editors/hp-icon-picker.ts:77-90,130-134; src/icon-catalog.ts:75-90,96-101\n\n### Отказ сети и повтор\n\nПромис каталога HA сбрасывается при ошибке, кнопка «повторить» и повторное открытие перезапускают `load`. Smoke дважды обрывает `iconList.json` и проверяет третий запрос и размер 7447. В автономной сборке сохранён прежний повтор через новый URL модуля, его подстановку проверяет плагин манифеста. Сам повтор в автономном архиве проверкой не покрыт, но код перенесён без изменений.\n\nОснование: src/icon-catalog.ts:105-113; demo/smoke_device_icon_picker.mjs:115-136; src/standalone-icon-catalog.ts\n\n### Автономный редактор\n\nНовая проверка выполняется и в демо, и в собранном архиве релиза. Она проверяет, что холодный View не запрашивает чанк каталога, что поиск по словам `alarm light` находит иконку и рисует глиф, что выбор работает и что к `/static/mdi/` обращений нет. Это прямо покрывает критерий «автономный ZIP открывает пикер с иконками».\n\nОснование: demo/standalone/mdi-picker-probe.mjs; demo/smoke_standalone_entry.mjs:75-78; process-next/catalog/site-release-browser.mjs:57-58\n\n### Поведение поиска и объём трафика\n\nПоиск, как и раньше, ищет только по именам: ключевые слова HA из `iconList` не используются, так что поведение не изменилось. При широком запросе 60 результатов могут попасть во многие чанки по ~54 КБ. На один поиск трафика может быть больше прежнего, но это кэшируемая статика HA, которую загружает и сам `ha-icon`. Для задачи это приемлемо.\n\nОснование: src/editors/hp-icon-picker.ts:92-102; docs/design/1393-ha-components-measurement.json:1273 (54525 байт на чанк)\n\n### Резерв для HA без static/mdi (п.3 ТЗ)\n\nРезерв не сделан, и это допустимо: в ТЗ пункт условный. Без `static/mdi` не работают и собственные иконки HA. Пикер в таком случае показывает ошибку, а ручной ввод `mdi:…` продолжает работать, что подтверждает smoke.\n\nОснование: demo/smoke_device_icon_picker.mjs:126-129\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Разделить отказ списка и отказ чанка глифов. Сейчас любая ошибка в `loadGlyphs` ставит `_failed=true`: пикер показывает «недоступно» и перестаёт сам догружать глифы, хотя имена уже есть и выбор возможен. Можно оставлять `_catalog` рабочим, а для иконки без пути показывать запасной глиф или повторять загрузку чанка при следующем изменении запроса. Это недорого и убирает ложное «каталог недоступен» при одном неудачном чанке.\n- Сделать проверку в `test/bundle-assets.test.mjs` независимой от имени файла: проверять, что ни один модуль HA-манифеста не содержит `src/mdi-icon-data.json` (как это делает `mdi-picker-probe` для автономной сборки). Иначе случайный импорт JSON из другого модуля даст чанк с другим именем, и проверка по префиксу `mdi-icon-catalog-` его не заметит.\n- В `bundle-manifest.mjs` правило «нет владельца токена → continue» для `/src/mdi-icon-catalog.ts` теперь тихо срабатывает и в HA-сборке. Если автономная сборка когда-нибудь потеряет импорт с токеном, повтор пропадёт без ошибки. Можно требовать ровно одного владельца в той сборке, где есть точка входа `standalone-entry`.\n\n## Границы анализа\n\nСборку, тесты и smoke я не запускал. Для S6 опираюсь на квитанцию «Тесты для задачи #1594 (перед ревью)» (passed, материал 30dda61b) без чтения отчёта. Поэтому прохождение authentic-кейса `smoke_device_icon_picker` на реальной статике HA и фактические изменения `zip_bytes`/`frontend_all_files_gzip_bytes` я принимаю по квитанции и не сверял поимённо. Совместимость с форматом HA выведена из исходников: из того, что authentic-фикстура раздаёт `/static/` из закреплённого wheel, и из реального пути чанка в замере #1393. Исходники фронтенда HA вне репозитория не проверял. Автономную сборку и состав `houseplan-standalone-*.zip` оценивал по проверке в `site-release-browser.mjs` и по графу импортов, конфигурацию автономной сборки целиком не читал.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 15caaf14ccad42a9f1df2f7cae4946dbbd67c766 → 30dda61b229ead40f167565af6215a5eef87ecd8\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-27T16:55:38.327Z",
-        "artifactId": 15219260858,
-        "runId": 46037058551,
-        "runAttempt": 1,
-        "completedAt": "2026-11-27T16:55:43Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46037058551",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795798577254,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1595": {
       "issue": 1595,
@@ -7567,92 +7405,8 @@
     1611,
     1614
   ],
-  "active": {
-    "issue": 1594,
-    "worker": "finish",
-    "token": "776:finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:4:admit",
-    "fence": 776,
-    "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
-    "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795797212713,
-    "expiresAt": 1795802166457,
-    "patchId": "b94f73bb2a99353d945245f727a2a24bb4b6e535",
-    "reviewRequest": "review:1594:2:b94f73bb2a99353d945245f727a2a24bb4b6e535:15caaf14ccad42a9f1df2f7cae4946dbbd67c766"
-  },
+  "active": null,
   "events": {
-    "finish:1902a39e-b7a5-4b42-a4d0-587ec5b928b6": {
-      "digest": "d61f26a42b2e5d514c19aa9283d97ab15f605d360f77c475c6f90011994fb43a",
-      "issue": 1594
-    },
-    "finish:c796b124-2674-4542-a99e-0face8a43768": {
-      "digest": "3fead19880659e7c0d6b78e401b75b5c81b6d6775ee468540da28f74e5d7d7e0",
-      "issue": 1594
-    },
-    "finish:71494002-9898-4ad2-9ac6-4ce9910df384": {
-      "digest": "a4bca24df6cdca8d79197bfa39fdcfe3f429a75d0c7f7da85426db15ea925ef9",
-      "issue": 1594
-    },
-    "finish:5046ff24-3622-4685-9249-586e7795bd09": {
-      "digest": "b58bd2d1938ba231bedbfd349682d6a455d7e21059300e33f5d6d69093f2619f",
-      "issue": 1594
-    },
-    "finish:48086498-518c-4c86-a5e9-7945728e5760": {
-      "digest": "22c3fd13fa9166074bbcd3477b71ce4ceb6566f9b50c6972224643624de7fda1",
-      "issue": 1594
-    },
-    "finish:b364d221-3b42-4f02-accd-93aa07515fa0": {
-      "digest": "f66e18544be93d0f0dd74b797c22005def6dd19345c982d6f56fa980d08c9947",
-      "issue": 1594
-    },
-    "finish:007e821b-ad1e-41c0-8720-2ae7fa954849": {
-      "digest": "9a559e6784321b64a167c9f34685f87c486bad3b3e10adf93bd946e37287c207",
-      "issue": 1594
-    },
-    "finish:5a65b5a2-db67-4b94-a9a1-531d67ce4774": {
-      "digest": "a0d2c8db198c607ba6d0c9fe1dc85a17362d29e4fcd1da992c5321149982cd21",
-      "issue": 1594
-    },
-    "finish:33cd6598-c4f5-4b3e-81da-025a11415cc3": {
-      "digest": "3f021de99884a4247e667c49e47ec155120c21c5926736216e4afd122bc62722",
-      "issue": 1594
-    },
-    "finish:c83f8f6e-2270-45fe-9bc4-517f62201c2d": {
-      "digest": "d4e9b86e1531883a5f2d068dedec28c3a01f8c467469f7532c2c8d9e6ed1574a",
-      "issue": 1594
-    },
-    "finish:54d99ff5-724e-44eb-a1de-185e00c6e99d": {
-      "digest": "6b9a5929922851a1acf15fa6e7628a817a550f4ecd0ef9b03b9ba48b9849b257",
-      "issue": 1594
-    },
-    "finish:3d28df49-7c73-43ef-8c87-23d32f0d9097": {
-      "digest": "d00dc0b4bfa4ea2c8f611cfce2bb41be6f5460bf4c9d29a02e2effa5df8cc0fb",
-      "issue": 1594
-    },
-    "finish:f1a0d872-99a7-4179-840b-4852b6f3a4cc": {
-      "digest": "eee5a0281d0a0a4b911ac8b55d1589d6703b1d09e61eac354e2b06536b8ceffc",
-      "issue": 1594
-    },
-    "finish:694ed3d0-a111-4b88-9a60-7dd3b6149d27": {
-      "digest": "2cb3c773d5f3af4e2929c13d2851dc06515f7c368d83fe99378b586e60c75b65",
-      "issue": 1594
-    },
-    "finish:4d995838-95b7-448d-a050-ca0d95c3939a": {
-      "digest": "69fa311cab6f53dc7a23ca416d7f781f8d505b7a592f89549c3db46745f8109e",
-      "issue": 1594
-    },
-    "finish:74233561-805b-42a2-ab1f-6083e8fe093c": {
-      "digest": "667f9b1ce65ea079bb282113cf79fe68bb5f490053934dbb75c3f3707d0950f1",
-      "issue": 1594
-    },
-    "finish:2ae2a267-8fc8-4b02-87c6-84b0cddcf0b6": {
-      "digest": "de319b8073b3803deb41db49c4f68778048636f53123100ea21ccf3df61d8def",
-      "issue": 1594
-    },
-    "finish:043e84e2-84f2-4cd6-8a10-c1ee8787a2b2:finish:1:return": {
-      "digest": "261ef629e8f4862da3bd33cba66bd34e6c405ceb72ec9f1cb48dc80d94b87cd9",
-      "issue": 1594
-    },
     "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:1:synchronized": {
       "digest": "c3331543de2dc2b03e432aca501edfa1d1718da59f58c562dc3814811c484a77",
       "issue": 1603
@@ -7768,10 +7522,6 @@
     "github:46011824017:1:completions:message:e7715f9333d75663df998598167e84b659fc271dee7d5ee8c98961afe728aacf": {
       "digest": "83e2549c9962377ecdc345b493b5de0c75bb64d58b2f8200ad72cda0955c305f",
       "issue": 1603
-    },
-    "github:46011824017:1:completions:notice:1830605f3162893fcc607a1b932c9c1fab68a8ebd10ffa09573006e3678db62b": {
-      "digest": "1da9db95583a6c555e22ca2dc96b7cbc3c5d0c17f7f4986865a6edb71ea468c9",
-      "issue": 1594
     },
     "github:46011824017:1:completions:message:1830605f3162893fcc607a1b932c9c1fab68a8ebd10ffa09573006e3678db62b": {
       "digest": "5e9a3b1248c21e51c91f635c33bfb0e16ef8c0c9a59fbbb7a7e4f45bc87731db",
@@ -8241,46 +7991,6 @@
       "digest": "35fa73b4e90ca74f453a534f2ed0fca1ea8899a97f5c735920e661a23cd17f8f",
       "issue": 1611
     },
-    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:5:synchronized": {
-      "digest": "9279b5d45807efc28bebefa928934f70ca858e919fb3cd6dfe628fd371f80ebb",
-      "issue": 1594
-    },
-    "finish:2f6e46ba-d123-44ed-b009-190bbb2d6cb0": {
-      "digest": "aeb053161b6dc17ea1aac4eb430f535be84d6060439668088574dae76f6e39bc",
-      "issue": 1594
-    },
-    "finish:c4b5c34b-a4f1-4aee-88f4-f086b5a4d0e2": {
-      "digest": "4c9f487efbe6c11b2c4e7ded3e0fbaa65f37bbf2355681077cfb0f4b35b9fbeb",
-      "issue": 1594
-    },
-    "finish:27907192-8b41-431e-8e1c-80035ba854d2": {
-      "digest": "9a830fb50742bb868d09a37e88ca558792a48f8dc35ab837b6690443747ad557",
-      "issue": 1594
-    },
-    "finish:77a20a52-a462-4e56-8809-3d4f3985547c": {
-      "digest": "9c21e7191390fc313723623ec1fd784e6f0378ab0db53ca1eccadda9fd55b6b4",
-      "issue": 1594
-    },
-    "finish:930bd411-e769-44e6-98e8-3fcc9cfbc34e": {
-      "digest": "fdfd171289e8ebfa14643ac22a1f30d21bcfd9471bd84e45d0e86a8ec3c71134",
-      "issue": 1594
-    },
-    "finish:4e0a1d1e-ea0f-4502-b782-f42721a33328": {
-      "digest": "9f26f52d5b9160c5e408611585115e2a7c45cf39c7e4523058f216a0499be83b",
-      "issue": 1594
-    },
-    "finish:292aa530-833a-46f3-b2aa-3a7ddfa30ba9": {
-      "digest": "fd22ba2870170fea601055ec6579ac16cc56c79c71aac267c35081839fec28ac",
-      "issue": 1594
-    },
-    "finish:f3d3ed9b-c841-4dc8-9216-033e7526ce65": {
-      "digest": "39a6d8dec860cc147ca27147808f31e687c7a28c2d3b463ad932c29f8468657b",
-      "issue": 1594
-    },
-    "finish:0eef7e2e-e100-4b01-9123-a1eb4498964f": {
-      "digest": "64852e61ee6c325d636555dd48fc6e8a95e14dff4085f1f4438fb0949a20041f",
-      "issue": 1594
-    },
     "github:46035822142:1:label:spec-request": {
       "digest": "a4a1e1a5c5ffe776fb69a7b1e0ced1ca9aeae94d49fb81b176c7b157dd7aa8e9",
       "issue": 1613
@@ -8288,38 +7998,6 @@
     "github:46035822142:1:completions:notice:b9ad0446518f7fdd7566ab2befe9a8d765c1baa9eec734cf0bdc6c5ee1ab610a": {
       "digest": "1938a91de3477b9e491a28de0bba8b59708e892792db5522e702799b5d7dd8b8",
       "issue": 1611
-    },
-    "github:46035822142:1:completions:message:b9ad0446518f7fdd7566ab2befe9a8d765c1baa9eec734cf0bdc6c5ee1ab610a": {
-      "digest": "d15d82ba5c758a5129038b2514c1695c1df9035950c3ffe7df792dfdd5b7ca7c",
-      "issue": 1594
-    },
-    "github:46035822142:1:completions:message:69127073d2c46d2f1e44d4e3761b4b6aefe72f9c6518a5e45ec247448ed681c6": {
-      "digest": "bd8d7a520e8be83e1bc14e4cf8e934c81a46897edfc6321154c6a56766a91958",
-      "issue": 1594
-    },
-    "github:46035822142:1:completions:message:0ae90c38800a7cc588ca1acdff2d86563874c8a30f9af12d2b0814407de409cc": {
-      "digest": "dc0ee12ee44197032570bc13a00bc7f3782436323bc5a108c6a8045cfa1b1094",
-      "issue": 1594
-    },
-    "finish:69f21347-6c27-49fc-99a2-1f636a3105cb": {
-      "digest": "22bbf3ac2c762169a6dcc89d36b82c3fda59260dde44fb783ea1eed8871d33e5",
-      "issue": 1594
-    },
-    "finish:23c9a153-32b8-4a63-8310-c4dda1d1df6d": {
-      "digest": "decd78aa9d84fc32660dc53a3a3dca2ea8e199633be1a7f21ffe73a7a61ebeca",
-      "issue": 1594
-    },
-    "finish:2931d5ef-211f-4cbe-9904-563ded0a4363": {
-      "digest": "cab88cb8b13ce4b71d306ef852aa01423784506cd0744c82e788e3550b82eb52",
-      "issue": 1594
-    },
-    "finish:b19409c9-38fa-4827-8fb1-287ca374dba9": {
-      "digest": "f1d6656ce27d45a14db754f0c0c85407e435a151909abef21b2a0208c11a9dd8",
-      "issue": 1594
-    },
-    "finish:a43b7b1e-5372-4416-9d7c-e124f73c370d": {
-      "digest": "079e39c758d0acc790ac1b012512dcfc3d1f68eca5f171133c88650a53d75b67",
-      "issue": 1594
     },
     "github:46036605966:1:spec:1613:spec-presentation": {
       "digest": "9a0888a79c847d5292f76a703526a65eb6a30cfd6575dd6a37ed359712dcadd7",
@@ -8333,61 +8011,13 @@
       "digest": "73fccff7cddf6bde17566c485d0346932e348021b3310301f1d5135be1b6f553",
       "issue": 1613
     },
-    "finish:2758e87f-2b5d-4c9b-b85e-30bd0713adb2": {
-      "digest": "c6fcc68b8deaa51bbe495aec12dac26cecd500f8924d315cec31d05320074b48",
-      "issue": 1594
-    },
     "github:46036605966:1:completions:report:e2ee5548ce1d3887da3cf735ae1277436d55a049880960418f2a14ba069f345f": {
       "digest": "695e341354b38a4b8932d73286b49ac165d0f2fd61fe9c2f7246706ca338eeaf",
       "issue": 1613
     },
-    "github:46036605966:1:completions:message:7b1607647d50b4b3833462e5aded0b1a084037b2000c54ce845f159e0dc658ac": {
-      "digest": "a7ce2f3a7786b37ba5e67477f8cecd9b52a603d450bbe89ec169b6a2a499a104",
-      "issue": 1594
-    },
-    "finish:9a0fb321-17cb-4dd9-a140-9cf82df1f4f5": {
-      "digest": "3b9af58a3d2132974639602cef33b6febd509a1deb835a34438342b8483ac93d",
-      "issue": 1594
-    },
-    "finish:4c8123ff-4ce2-4b36-9346-04735677e7ea": {
-      "digest": "17d9fce013478a849fd69428e1a740c1f4f1ac7b2a77e1822943920b7c308b70",
-      "issue": 1594
-    },
-    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:6:s6-label": {
-      "digest": "3207b0092224e41db2a2a1a7984ff3225c143ba08066243dc13a219f85ad2384",
-      "issue": 1594
-    },
-    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:7:review-requested": {
-      "digest": "9258c130eff20c664d8a70774ac2fced7151ca28be88562e06dfb4059b8bf1c5",
-      "issue": 1594
-    },
-    "github:46037013200:1:tick:0:review-retry": {
-      "digest": "cc8e49ebf56fea61123dcc9b5c11a26f0023548f311d219e9e8d31a95e9e17e3",
-      "issue": 1594
-    },
-    "github:46037013200:1:completions:message:d8455de7a8ac9a17dd846ab32fb9be6688557610a87f6a44e43fe991b0723f32": {
-      "digest": "4a66a1e8b44222e0341d2ad0b907bd006e37b7ebeee5263c34490984c8a5a627",
-      "issue": 1594
-    },
     "github:46037322393:1:label:spec-request": {
       "digest": "83389abf511b6f1f6e5356cfd4e0ac141c80dabe7c386c97d17609392ca914ce",
       "issue": 1613
-    },
-    "github:46037322393:1:completions:message:84064d9b3fee3eef12c5105b1d2211dfb3b42df0dac3020c8b6a23d71e33f24e": {
-      "digest": "6cf5d1baf54a58492afab91822e56526c4e34656983eb715707dd4399ea227f3",
-      "issue": 1594
-    },
-    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:11:review-presentation": {
-      "digest": "76b074340f8360073174fc0133f7a9d952c798333987a805dc51bf7a435e84e7",
-      "issue": 1594
-    },
-    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:11:review-complete": {
-      "digest": "f9ba044b5a1fb891ac85d4ed92a405b03cbb64f71f4dca72b052d8ab1afd9e91",
-      "issue": 1594
-    },
-    "github:46037687498:1:tick:0:automation-pending": {
-      "digest": "acf762eac9ee6ec6f9b426c12e0e8fc9449f9a2182c689c3ab44714d794beded",
-      "issue": 1594
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -8810,20 +8440,6 @@
         "delivered": true
       }
     },
-    "finish:d317f452-0e81-408a-8826-31764c8c56c5": {
-      "digest": "89be008f4e83eec3e5b860400b159d6259ec0e58d750b0e63c60cf0db09fbb05",
-      "issue": 1594,
-      "message": {
-        "kind": "queued",
-        "issue": 1594,
-        "at": 1795775996057,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5a5d56d0467cb26e31de655b0e19b0f80a8c589f",
-        "delivered": true
-      }
-    },
     "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe": {
       "digest": "adfef01c455d4ce29672db35b93a765b206f3397a9e8a605016537deeb6affe4",
       "issue": 1603,
@@ -8923,21 +8539,6 @@
         "delivered": true
       }
     },
-    "finish:ebfd23a8-6ad9-45a3-ab3d-84868c9b557a:finish:10:admit": {
-      "digest": "50c60710b8da3ea2c9c76ba412e931eeaa1c148974358080ad331b1c8d78ab7e",
-      "issue": 1594,
-      "message": {
-        "kind": "admitted",
-        "issue": 1594,
-        "at": 1795780430375,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5a5d56d0467cb26e31de655b0e19b0f80a8c589f",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:13f50a0c-7652-4eda-86e4-6f4895f47800": {
       "digest": "5504b55504cde9fd57e8c10d935aee00edf3f9c56fa5bc51649be1971412dd8e",
       "issue": 1595,
@@ -8975,26 +8576,6 @@
         "delivered": true
       }
     },
-    "finish:043e84e2-84f2-4cd6-8a10-c1ee8787a2b2:finish:1:return:return:1594": {
-      "digest": "261ef629e8f4862da3bd33cba66bd34e6c405ceb72ec9f1cb48dc80d94b87cd9",
-      "issue": 1594,
-      "message": {
-        "kind": "return",
-        "issue": 1594,
-        "at": 1795786582944,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795786582944,
-          "entry": 1,
-          "eventId": "finish:043e84e2-84f2-4cd6-8a10-c1ee8787a2b2:finish:1:return:return:1594"
-        },
-        "delivered": true
-      }
-    },
     "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:1:admit": {
       "digest": "1fd95557d4d5de99e232fa9986f2bc542f78f23658e8c36f4d9f578fc07e8538",
       "issue": 1603,
@@ -9007,20 +8588,6 @@
         "layer": "product",
         "materialSha": "41acf20c220bd49cf49a2c0550c9dee0fde57031",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:d3e37faa-ad07-4995-b425-f96b155041b3": {
-      "digest": "4d6b9b4dbb84248895df10188ba26887077897667f4c3322e652aa2035a43fd1",
-      "issue": 1594,
-      "message": {
-        "kind": "queued",
-        "issue": 1594,
-        "at": 1795787418639,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2",
         "delivered": true
       }
     },
@@ -9304,21 +8871,6 @@
         "delivered": true
       }
     },
-    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:4:admit": {
-      "digest": "dd7a8942ef5a37880827dbfd5bbe2798f3485713fa4675d3cebe9fd0b0532b97",
-      "issue": 1594,
-      "message": {
-        "kind": "admitted",
-        "issue": 1594,
-        "at": 1795797212713,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:11b1b44c-9ae2-42c3-989c-e097c638aade": {
       "digest": "c8579f3f8492ba6b1c2e09bdcba03f0d4a448de51a7cbf3d1c7f12949b77f41f",
       "issue": 1611,
@@ -9344,36 +8896,6 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "17a1ccb0a0544f019304bbec18882a76d4454c43",
-        "delivered": true
-      }
-    },
-    "finish:d3e37faa-ad07-4995-b425-f96b155041b3:finish:6:s6-complete": {
-      "digest": "8928c30a1405bd99dc32baf50ca24465e39e1862bc80f1c29e7263c8021957a3",
-      "issue": 1594,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1594,
-        "at": 1795798243195,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
-        "phase": "review",
-        "evidence": {
-          "id": "20261127T163347018-da85c73b",
-          "name": "Тесты для задачи #1594 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261127T163347018-da85c73b/report.json",
-          "materialSha": "30dda61b229ead40f167565af6215a5eef87ecd8",
-          "status": "passed",
-          "finishedAt": "2026-11-27T16:50:41.778Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
