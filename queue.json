@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29299,
+  "revision": 29300,
   "nextTicket": 785,
   "nextFence": 784,
   "tasks": {
@@ -7450,6 +7450,10 @@
       "digest": "4ce7f9c72ff71b5f7cdfd46060777a9736bae47977efb6fb55e630f784de3003",
       "issue": 1598
     },
+    "github:46056052234:1:completions:message:a910c275d82aaee3c18ea9f1dfb9789f5baa1cc12e2600dc4393fd86d5957f86": {
+      "digest": "52646b5f028ee36b559bb65dcb222ed85a346b181fe683b0756abdcb53cd745e",
+      "issue": 1613
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7785,7 +7789,8 @@
           "entry": 4,
           "detail": "Поведение: test/bundle-sync.test.mjs: failed",
           "eventId": "finish:fb3d4f8a-90da-4663-95e3-a519d163587d:finish:2:return:return:1598"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:7505b5b4-4d41-4592-9c2f-c7ee13451083:finish:2:admit": {
