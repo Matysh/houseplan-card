@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28315,
-  "nextTicket": 771,
+  "revision": 28316,
+  "nextTicket": 772,
   "nextFence": 767,
   "tasks": {
     "1001": {
@@ -6445,14 +6445,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1608-device-height-perspective",
-      "materialSha": "f45fce10a098e704dc49b7b1e6e63361a893c5e4",
+      "materialSha": "e973f1e23192036214b987a935b4a951faa758bc",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 764,
-      "queued": false,
+      "ticket": 771,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795775755443,
-      "reviewEntry": 3,
+      "readyAt": 1795780026636,
+      "reviewEntry": 4,
       "patchId": "73e2e63a1cb6b2ace1e2cea6f75e5441b1012045",
       "changedFiles": [
         "custom_components/houseplan/core/marker_height.py",
@@ -6603,8 +6603,7 @@
         "at": 1795779821540,
         "entry": 3,
         "eventId": "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return:return:1608"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1609": {
       "issue": 1609,
@@ -7394,7 +7393,8 @@
     1594,
     1600,
     1603,
-    1609
+    1609,
+    1608
   ],
   "active": {
     "issue": 1598,
@@ -8944,6 +8944,19 @@
         "materialSha": "f2d72a1e43f69a33ddbd183d8362824f3e427602",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:fc6dd1d4-b19e-486e-991d-169973e1438b": {
+      "digest": "672f05dfd8d4d31787177bb73c280a1c8f97704b20b8af196d0c704fee65d678",
+      "issue": 1608,
+      "message": {
+        "kind": "queued",
+        "issue": 1608,
+        "at": 1795780026636,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e973f1e23192036214b987a935b4a951faa758bc"
       }
     }
   },
