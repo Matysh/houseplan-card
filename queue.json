@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29800,
+  "revision": 29801,
   "nextTicket": 799,
   "nextFence": 799,
   "tasks": {
@@ -7082,6 +7082,10 @@
       "digest": "e723f04026fd06bf41f35558af579c22c54ff718b22fb18421bbe0f66719ffea",
       "issue": 1617
     },
+    "github:46078018048:1:completions:message:bb762b36bb5e18f6ef31f321dc80bfdcd2f97d38920055c5af50ae81cee4374d": {
+      "digest": "466a49ec7143c3412f512689537389239ad4d7f780a5e37647ee130479fae65c",
+      "issue": 1617
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7166,7 +7170,8 @@
         "reviewChanges": "Рендер ленты и источник свечения используют один расчёт `ledHeight` и высоту верхней светящейся поверхности, которую WebGL рисует на меше. Физическое расстояние до пола и стен применяется только к лентам; свет ламп, солнечное пятно, плоские маски, отсекающие стены и правила проёмов не менялись.\n\nЛокально: `npm run bundle:sync` с типами; `smoke_plan_3d_marker_height.mjs` — совпадение высоты источника и меша для 0, 100 см и Auto в восьми ракурсах; `smoke_plan_3d_gpu.mjs` — настоящий WebGL-пиксель при низкой/поднятой ленте на стене и полу, обратная сторона стены остаётся тёмной. Оба смоука выбраны штатным S6.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
