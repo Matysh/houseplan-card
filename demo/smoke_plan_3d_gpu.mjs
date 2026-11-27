@@ -567,19 +567,24 @@ try {
     world.dispose();
 
     gpu.getExtension('WEBGL_lose_context').loseContext();
-    const deadline = performance.now() + 2000;
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const held = cards.map(card => pixel(card.canvas, 150, 100));
+    const recoveringFailures = cards.map(card => card.failures());
+    const deadline = performance.now() + 6500;
     while (cards.some(card => !card.failures()) && performance.now() < deadline)
       await new Promise(resolve => requestAnimationFrame(resolve));
     return { contexts, pixels, picking, frames, roomHover, paperHeight, windowJamb, transparentIntersection, largeRadius, wallLighting, windowLight, restoredLight, staticSize, backdropReady, backdropPixel,
       invalidBackdropReady, stairPixel, stairWithoutBackdrop, stairHit, worldBlending, markerIcon, markerBody, markerHit, markerChanged, unshadowed, shadowed,
       fullPixels, motionPixels, motionHit, settledPixels, hollowIcon, valueInk, coincident, atlas, steppedAtlas,
       roomColor, ribbonColor, ribbonHit, solidRim, dashedRim, fading, settled, belowThreshold, withLamp, darkSun, risingSun, disabledSun,
-      failures: cards.map(card => card.failures()) };
+      failures: cards.map(card => card.failures()), held, recoveringFailures };
   });
   assert.deepEqual(errors, []);
   assert.equal(evidence.contexts, 1);
   assert.deepEqual(evidence.picking, Array.from({ length: 6 }, (_, i) => [null, 'card-' + i]));
   assert.deepEqual(evidence.pixels, [[255, 0, 0, 255], ...Array.from({ length: 5 }, () => [0, 255, 0, 255])]);
+  assert.deepEqual(evidence.held, evidence.pixels);
+  assert.deepEqual(evidence.recoveringFailures, [0, 0, 0, 0, 0, 0]);
   assert.deepEqual(evidence.failures, [1, 1, 1, 1, 1, 1]);
   assert.deepEqual(evidence.staticSize, [200, 200]);
   assert.equal(evidence.backdropReady, true);

@@ -12,6 +12,7 @@
 - Reduce the Home Assistant installer size by using its built-in MDI catalog (#1594).
 - Document the WebGL 2 requirement for 3D view and the 2D fallback in both READMEs (#1591).
 - Set device and LED strip height in 3D, use tilted perspective in all eight views, and highlight context menu rows with background only (#1608).
+- Keep the last complete 3D floor on screen through a temporary graphics interruption, and show a new frame only once its layers are ready (#1609).
 - Extract the lazy 3D host lifecycle and mode transition presentation from the main card (#1604).
 - Recheck live write access before saving device positions or publishing attachments, and keep cancelled file operations from leaving partial copies (#1605).
 - Device markers request light haptic feedback in the Home Assistant Companion App after a successful toggle or run action (#1607).

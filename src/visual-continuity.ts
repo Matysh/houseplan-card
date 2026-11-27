@@ -38,6 +38,9 @@ export interface ContinuityTraceEvent {
   configRev?: number;
   layoutRev?: number;
   assetPending?: number;
+  hiddenFor?: number;
+  persisted?: boolean;
+  spatialGeneration?: number;
 }
 
 export interface PageVisibilitySignal {

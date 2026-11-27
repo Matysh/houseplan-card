@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1609,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "The confirmed context-loss and split-frame failure is in the native WebGL 3D renderer introduced in the 2.0.0 line, not the stable SVG-based 2.5D view.",
+  "summary": {
+    "ru": "Возвращение к 3D-плану после паузы или сбоя графики не показывает недорисованные слои.",
+    "en": "Return to a complete 3D floor after a pause or temporary graphics interruption."
+  }
+}

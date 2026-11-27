@@ -1,7 +1,7 @@
 import { Box3, Mesh, type Scene } from 'three';
 import { plan3dCamera, plan3dPaintBounds } from './plan-3d-camera';
 import { Plan3dWorld, type Plan3dContactShadow, type Plan3dOutline, type Plan3dWorldInput } from './plan-3d-world';
-import { Plan3dViewport, type Plan3dFrame } from './plan-3d-viewport';
+import { Plan3dViewport, type Plan3dFrame, type Plan3dOutputEvent } from './plan-3d-viewport';
 import { readPlan3dMarkerFaces, type Plan3dMarker } from './plan-3d-markers';
 import { Plan3dLightMotion } from './plan-3d-light-motion';
 import type { IsoCamera, ViewRect } from './iso-projection';
@@ -45,24 +45,40 @@ export class Plan3dHost {
   private markerFrame = '';
   private paintedMarkers?: readonly Plan3dMarker[];
   private disposed = false;
+  private stamp?: string;
 
   constructor(readonly canvas: HTMLCanvasElement, readonly view: SVGSVGElement,
     normalOffset: number, private readonly onFailure: () => void,
-    onPaint: (markers: ReadonlySet<string>, outlines: ReadonlySet<string>, complete: boolean) => void) {
+    onPaint: (markers: ReadonlySet<string>, outlines: ReadonlySet<string>, complete: boolean, stamp?: string) => void,
+    onOutput?: (event: Plan3dOutputEvent) => void) {
     const document = canvas.ownerDocument;
     this.world = new Plan3dWorld(document, normalOffset, () => this.draw());
     try {
-      this.viewport = new Plan3dViewport(canvas, () => this.fail(), () => {
-        if (canvas.hasAttribute('data-hp-plan-3d-ready') || !this.world.loading)
-          onPaint(this.markerIds, this.outlineMembers, !this.world.loading);
-      }, () => this.draw());
+      this.viewport = new Plan3dViewport(canvas, () => this.fail(), (frame) => {
+        if (canvas.hasAttribute('data-hp-plan-3d-ready') || frame.complete)
+          onPaint(this.markerIds, this.outlineMembers, !!frame.complete, frame.stamp);
+      }, () => this.draw(), (event) => {
+        if (event === 'webgl-lost' || event === 'canvas-lost') {
+          document.defaultView?.cancelAnimationFrame(this.animate);
+          this.animate = 0;
+        }
+        onOutput?.(event);
+      });
     } catch (error) {
       this.world.dispose();
       throw error;
     }
   }
 
-  present(presentation: Plan3dPresentation, crop: ViewRect, markers: readonly Plan3dMarker[] = [], outlines: readonly Plan3dOutline[] = []): void {
+  get keepsFullPixels(): boolean { return this.viewport.keepsFullPixels; }
+  get outputBlocked(): boolean { return this.viewport.blocked; }
+
+  /** Replaying an unchanged, retained DOM scene can prove the new recovery
+   * generation after an actual copy, without replacing the on-screen DOM. */
+  retagRetained(stamp: string): void { this.stamp = stamp; }
+
+  present(presentation: Plan3dPresentation, crop: ViewRect, markers: readonly Plan3dMarker[] = [],
+    outlines: readonly Plan3dOutline[] = [], stamp?: string): void {
     if (this.disposed) return;
     try {
       this.light.set(presentation.world.lights, presentation.lightScope ?? '', this.now(), presentation.animateLights === true);
@@ -76,6 +92,7 @@ export class Plan3dHost {
       this.markers = markers;
       this.markerIds = new Set(markers.map(marker => marker.id));
       this.crop = crop;
+      this.stamp = stamp;
       this.draw(true);
     } catch {
       this.fail();
@@ -128,7 +145,10 @@ export class Plan3dHost {
         }
         this.updateLights();
       }
-      this.frame = { scene: this.world.scene, camera, motion: cameraOnly };
+      this.frame = {
+        scene: this.world.scene, camera, motion: cameraOnly,
+        complete: !this.world.loading, stamp: cameraOnly ? undefined : this.stamp,
+      };
       this.viewport.present(this.frame, immediate);
     } catch {
       this.fail();
@@ -140,7 +160,7 @@ export class Plan3dHost {
   private updateLights(): void {
     const state = this.light.frame(this.now());
     this.world.presentLights(state.sources);
-    if (state.active && !this.animate && !this.canvas.ownerDocument.hidden) {
+    if (state.active && !this.animate && !this.canvas.ownerDocument.hidden && !this.viewport.blocked) {
       this.animate = this.canvas.ownerDocument.defaultView?.requestAnimationFrame(() => {
         this.animate = 0;
         if (this.disposed || !this.frame) return;

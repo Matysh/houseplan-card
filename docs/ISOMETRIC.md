@@ -59,6 +59,27 @@ the current light transitions before repainting. An unfinished transition
 continues from its current intensity, and an elapsed one shows the final
 intensity on the first frame.
 
+On a temporary WebGL interruption (#1609), the last complete Canvas2D output
+and its matching DOM can stay on screen. The scene is inert while held.
+Retention requires the same readable authority, floor, structure, camera,
+CSS dimensions, and DPR, as well as intact pixels. If the display canvas
+itself is lost or that scope changes, show the plan background while the new
+scene is prepared. A copy belonging to the current full submission—not the
+old canvas-ready flag—allows the scene to reappear. Context recovery stops
+after four seconds of visible time without a complete copy and uses the
+existing 2D fallback and explicit retry. Hidden tabs do not spend the budget.
+
+After Chromium discards the document, the main 3D panel suppresses neutral
+preview paint once, only when its initial navigation URL proves that it was
+the original route. It waits for a complete live frame, using the existing
+camera and floor restoration hints. BFCache keeps the live-document path.
+Remounts, navigation from another panel, and ambiguous rewrites from the HA
+root retain ordinary startup behavior. No extra full-frame cache is saved.
+The normal Chromium smoke is `node demo/smoke_plan_3d_resume.mjs`. After
+`npm run bundle:sync`, run
+`xvfb-run -a node demo/helpers/plan-3d-lifecycle-native.mjs` on Linux for the
+separate headed discard/BFCache witness with a disposable browser profile.
+
 Warm startup can show a neutral WebP from the browser or server cache for
 the same camera and viewport. It contains the physical plan and decor with
 neutral opening poses. Live readings, devices, lights and device-driven art

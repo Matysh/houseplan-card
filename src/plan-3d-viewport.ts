@@ -1,13 +1,17 @@
 import { Camera, Color, Frustum, Matrix4, Mesh, MeshBasicMaterial, NoColorSpace, Scene, SRGBColorSpace,
   WebGLRenderer, WebGLRenderTarget, type Material, type Object3D } from 'three';
 import { startupWebpFromCanvas } from './startup-floor-wire';
+import { Plan3dRestoreBudget } from './plan-3d-recovery-budget';
 
 export interface Plan3dFrame {
   scene: Scene;
   camera: Camera;
   motion?: boolean;
+  complete?: boolean;
+  stamp?: string;
 }
 
+export type Plan3dOutputEvent = 'webgl-lost' | 'webgl-restored' | 'canvas-lost' | 'canvas-restored' | 'display-geometry';
 export interface Plan3dPickSurface {
   id?: string;
   occludes?: boolean;
@@ -32,6 +36,7 @@ class Plan3dOutput {
   private readonly pending = new Set<Plan3dViewport>();
   private request = 0;
   private lost = false;
+  private readonly restoreBudget: Plan3dRestoreBudget;
 
   constructor(private readonly document: Document) {
     const canvas = document.createElement('canvas');
@@ -46,17 +51,42 @@ class Plan3dOutput {
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.setClearColor(0, 0);
     this.pickTarget.texture.colorSpace = NoColorSpace;
+    this.restoreBudget = new Plan3dRestoreBudget({
+      now: () => document.defaultView!.performance.now(),
+      setTimeout: (callback, delay) => document.defaultView!.setTimeout(callback, delay),
+      clearTimeout: (id) => document.defaultView!.clearTimeout(id),
+    }, () => { for (const view of [...this.views]) view.fail(); });
     canvas.addEventListener('webglcontextlost', this.contextLost);
+    canvas.addEventListener('webglcontextrestored', this.contextRestored);
     document.addEventListener('visibilitychange', this.visibility);
   }
 
   private readonly contextLost = (event: Event) => {
     event.preventDefault();
+    if (this.lost) return;
     this.lost = true;
-    for (const view of [...this.views]) view.fail();
+    this.document.defaultView?.cancelAnimationFrame(this.request);
+    this.request = 0;
+    this.pending.clear();
+    this.restoreBudget.begin(!this.document.hidden);
+    for (const view of this.views) view.gpuLost();
   };
 
+  private readonly contextRestored = () => {
+    if (!this.lost || !this.views.size) return;
+    // Three's own listener was registered first; it has rebuilt the GL state.
+    // Existing scenes own the CPU objects used to refill GPU resources.
+    this.renderer.setClearColor(0, 0);
+    this.lost = false;
+    for (const view of this.views) view.gpuRestored();
+  };
+
+  get unavailable(): boolean { return this.lost || this.renderer.getContext().isContextLost(); }
+  completePaint(): void { this.restoreBudget.finish(); }
+
   private readonly visibility = () => {
+    this.restoreBudget.visibility(!this.document.hidden);
+    for (const view of this.views) view.visibilityChanged();
     if (this.document.hidden) {
       this.document.defaultView?.cancelAnimationFrame(this.request);
       this.request = 0;
@@ -65,10 +95,13 @@ class Plan3dOutput {
     for (const view of this.views) view.resume();
   };
 
-  attach(view: Plan3dViewport): void { this.views.add(view); }
+  attach(view: Plan3dViewport): void {
+    this.views.add(view);
+    if (this.unavailable) view.gpuLost();
+  }
 
   queue(view: Plan3dViewport): void {
-    if (this.lost || !this.views.has(view)) return;
+    if (this.unavailable || !this.views.has(view)) return;
     this.pending.add(view);
     if (!this.request && !this.document.hidden) {
       this.request = this.document.defaultView?.requestAnimationFrame(() => {
@@ -81,7 +114,7 @@ class Plan3dOutput {
   }
 
   paintNow(view: Plan3dViewport): void {
-    if (this.lost || !this.views.has(view)) return;
+    if (this.unavailable || !this.views.has(view)) return;
     this.pending.delete(view);
     if (!this.pending.size && this.request) {
       this.document.defaultView?.cancelAnimationFrame(this.request);
@@ -90,18 +123,25 @@ class Plan3dOutput {
     if (!this.document.hidden) view.paint();
   }
 
-  draw(frame: Plan3dFrame, context: CanvasRenderingContext2D, size: Size): void {
+  draw(frame: Plan3dFrame, context: CanvasRenderingContext2D, size: Size): boolean {
+    if (this.unavailable || context.isContextLost?.()) return false;
     const source = this.renderer.domElement;
     if (source.width !== size.width || source.height !== size.height) {
       this.renderer.setSize(size.width, size.height, false);
     }
     this.renderer.render(frame.scene, frame.camera);
+    if (this.unavailable || context.isContextLost?.()) return false;
 
     const target = context.canvas;
     if (target.width !== size.width) target.width = size.width;
     if (target.height !== size.height) target.height = size.height;
-    context.clearRect(0, 0, size.width, size.height);
-    context.drawImage(source, 0, 0);
+    // Replace even transparent pixels in the same operation; don't clear
+    // a still-usable display while the detached GPU is being restored.
+    const compositing = context.globalCompositeOperation;
+    context.globalCompositeOperation = 'copy';
+    try { context.drawImage(source, 0, 0); }
+    finally { context.globalCompositeOperation = compositing; }
+    return !context.isContextLost?.();
   }
 
   pick(frame: Plan3dFrame, x: number, y: number, size: Size): string | undefined {
@@ -190,6 +230,8 @@ class Plan3dOutput {
     this.document.defaultView?.cancelAnimationFrame(this.request);
     this.document.removeEventListener('visibilitychange', this.visibility);
     this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost);
+    this.renderer.domElement.removeEventListener('webglcontextrestored', this.contextRestored);
+    this.restoreBudget.finish();
     this.pickTarget.dispose();
     this.renderer.dispose();
     if (!this.lost) this.renderer.forceContextLoss();
@@ -209,9 +251,14 @@ export class Plan3dViewport {
   private disposed = false;
   private drawMs = 0;
   private motionScale = 1;
+  private displayLost = false;
+  private recoveryPending = false;
+  private fullCopy = false;
+  private readonly displayBudget: Plan3dRestoreBudget;
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly failure: () => void,
-    private readonly onPaint: () => void, private readonly onResume?: () => void) {
+    private readonly onPaint: (frame: Plan3dFrame) => void, private readonly onResume?: () => void,
+    private readonly onOutput?: (event: Plan3dOutputEvent) => void) {
     const document = canvas.ownerDocument;
     const window = document.defaultView;
     const context = canvas.getContext('2d');
@@ -223,10 +270,18 @@ export class Plan3dViewport {
       sharedByDocument.set(document, output);
     }
     this.output = output;
-    output.attach(this);
+    this.displayBudget = new Plan3dRestoreBudget({
+      now: () => window.performance.now(),
+      setTimeout: (callback, delay) => window.setTimeout(callback, delay),
+      clearTimeout: (id) => window.clearTimeout(id),
+    }, () => this.fail());
+    canvas.addEventListener('contextlost', this.canvasLost);
+    canvas.addEventListener('contextrestored', this.canvasRestored);
     this.resize = new window.ResizeObserver(([entry]) => {
       if (!entry) return;
+      const resized = entry.contentRect.width !== this.cssSize.width || entry.contentRect.height !== this.cssSize.height;
       this.cssSize = { width: entry.contentRect.width, height: entry.contentRect.height };
+      if (resized && this.recoveryPending) this.onOutput?.('display-geometry');
       this.painted = undefined;
       if (!this.frame?.motion) this.onResume?.();
       this.output.queue(this);
@@ -239,7 +294,38 @@ export class Plan3dViewport {
       });
       this.intersection.observe(canvas);
     }
+    output.attach(this);
   }
+
+  get blocked(): boolean { return this.output.unavailable || this.displayLost || !!this.context.isContextLost?.(); }
+  get keepsFullPixels(): boolean { return this.fullCopy && !this.displayLost && !this.context.isContextLost?.(); }
+
+  gpuLost(): void { this.recoveryPending = true; this.onOutput?.('webgl-lost'); }
+
+  gpuRestored(): void {
+    this.painted = undefined;
+    this.onOutput?.('webgl-restored');
+    this.resume();
+  }
+
+  visibilityChanged(): void { this.displayBudget.visibility(!this.canvas.ownerDocument.hidden); }
+
+  private readonly canvasLost = () => {
+    if (this.displayLost || this.disposed) return;
+    this.displayLost = this.recoveryPending = true;
+    this.fullCopy = false;
+    this.painted = undefined;
+    // Unlike WebGL, cancelling the Canvas2D event prevents its restoration.
+    this.displayBudget.begin(!this.canvas.ownerDocument.hidden);
+    this.onOutput?.('canvas-lost');
+  };
+
+  private readonly canvasRestored = () => {
+    if (!this.displayLost || this.disposed) return;
+    this.displayLost = false;
+    this.onOutput?.('canvas-restored');
+    this.resume();
+  };
 
   present(frame: Plan3dFrame, immediate = false): void {
     if (this.disposed || this.frame === frame) return;
@@ -266,6 +352,8 @@ export class Plan3dViewport {
     const frame = this.frame;
     const { width, height } = this.cssSize;
     if (!frame || frame === this.painted || !this.visible || width <= 0 || height <= 0 || this.disposed) return;
+    if (this.context.isContextLost?.()) this.canvasLost();
+    if (this.blocked || this.recoveryPending && frame.complete === false) return;
     const window = this.canvas.ownerDocument.defaultView;
     // Copying the shared WebGL backing store is synchronous. On a slow
     // device reduce only raster resolution during motion, never the camera.
@@ -275,10 +363,19 @@ export class Plan3dViewport {
     else if (this.drawMs > 36) this.motionScale = .5;
     try {
       const start = window?.performance.now() ?? 0;
-      this.output.draw(frame, this.context, this.pixelSize(this.motionScale));
+      if (!this.output.draw(frame, this.context, this.pixelSize(this.motionScale))) {
+        if (this.context.isContextLost?.()) this.canvasLost();
+        return;
+      }
       this.drawMs = (window?.performance.now() ?? 0) - start;
       this.painted = frame;
-      this.onPaint();
+      this.fullCopy = frame.complete !== false;
+      if (this.fullCopy) {
+        this.recoveryPending = false;
+        this.output.completePaint();
+        this.displayBudget.finish();
+      }
+      this.onPaint(frame);
     } catch {
       this.fail();
     }
@@ -286,7 +383,7 @@ export class Plan3dViewport {
 
   /** Coordinates are fractions of the visible canvas, from its top left. */
   pick(x: number, y: number): string | undefined {
-    if (this.disposed || !this.visible || !this.painted || this.canvas.ownerDocument.hidden
+    if (this.disposed || !this.visible || !this.painted || this.recoveryPending || this.blocked || this.canvas.ownerDocument.hidden
       || !(x >= 0 && x < 1 && y >= 0 && y < 1)) return undefined;
     try {
       return this.output.pick(this.painted, x, y, this.canvas);
@@ -297,13 +394,13 @@ export class Plan3dViewport {
   }
 
   snapshot(frame: Plan3dFrame, size: Size): Promise<Blob | null> {
-    if (this.disposed) return Promise.resolve(null);
+    if (this.disposed || this.blocked || this.recoveryPending) return Promise.resolve(null);
     const canvas = this.canvas.ownerDocument.createElement('canvas');
     const context = canvas.getContext('2d');
     if (!context) return Promise.resolve(null);
     const scale = Math.min(1, Math.sqrt(2_000_000 / size.width / size.height));
-    this.output.draw(frame, context, { width: Math.max(1, Math.floor(size.width * scale)),
-      height: Math.max(1, Math.floor(size.height * scale)) });
+    if (!this.output.draw(frame, context, { width: Math.max(1, Math.floor(size.width * scale)),
+      height: Math.max(1, Math.floor(size.height * scale)) })) return Promise.resolve(null);
     return new Promise<Blob | null>(resolve => canvas.toBlob(blob => {
       canvas.width = canvas.height = 0;
       resolve(blob);
@@ -319,6 +416,9 @@ export class Plan3dViewport {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.displayBudget.finish();
+    this.canvas.removeEventListener('contextlost', this.canvasLost);
+    this.canvas.removeEventListener('contextrestored', this.canvasRestored);
     this.resize.disconnect();
     this.intersection?.disconnect();
     this.frame = undefined;

@@ -366,6 +366,7 @@ import { controlMotion } from './ui-motion';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
 import { CardPlan3d, type Plan3dRuntime } from './card-plan-3d';
+import { takeDiscardedPanel } from './plan-3d-discard';
 import type {
   IsoOverlayRenderScene, IsoRenderScene, IsoSceneCacheEntry,
   IsoStructuralSource,
@@ -819,6 +820,18 @@ export class HouseplanCard extends LitElement {
     pitch: () => this._gridPitch,
     switchPhase: () => this._floorSwitch?.phase,
     floorKey: () => this._floorPaintKey(),
+    frameScope: () => this._plan3dFrameScope(),
+    continuityToken: () => this._continuity.token,
+    needsPaintProof: () => !this._continuity.hasCompleteFrame || this._continuity.state !== 'steady',
+    recoveryAssetsReady: () => this._loadOk && this._continuityStageValid() && this._continuityAssetsReady()
+      && !this._floorPreparation?.pending && !this._floorPreparation?.failed && !this._floorPassive
+      && (!this._usesScreenCamera || !this._screenReferencePending),
+    protectScene: (hold) => {
+      this._stageEl?.setAttribute('inert', '');
+      this._stageEl?.toggleAttribute('data-hp-3d-recovery-waiting', !hold);
+    },
+    report: (event, spatialGeneration) => this._continuity.note(event, { spatialGeneration }),
+    reducedMotion: () => this._reducedMotion,
     contacts: () => this._deviceContacts,
     view: () => this._viewOr(this._baseVb()),
     redraw: () => this.requestUpdate(),
@@ -1112,6 +1125,9 @@ export class HouseplanCard extends LitElement {
     this._pendingPlanEnvironment = environment;
     const revoked = this._configWriteContext.observe(host);
     const authorityChanged = !!this._driverAuthority && this._driverAuthority !== host.authorityKey;
+    if (authorityChanged || before && (before.permissions.read !== environment.permissions.read
+        || before.permissions.write !== environment.permissions.write || before.permissions.admin !== environment.permissions.admin))
+      this._spatial?.invalidateHeldFrame();
     this._driverAuthority = host.authorityKey;
     if (revoked) {
       // Every revoked write generation owns fresh pending accounting, even
@@ -2226,6 +2242,19 @@ export class HouseplanCard extends LitElement {
     return `${this._space}|${this._floorPreparation?.paintToken ?? ''}`;
   }
 
+  private _plan3dFrameScope(): string | undefined {
+    const { permissions } = this.planHost.environment;
+    if (!permissions.read || this._desiredProjection !== 'iso' || this._routeDepartureHandled) return;
+    const size = this._stageEl;
+    const view = this._view;
+    return JSON.stringify([
+      this._space, this._rotation, view?.x, view?.y, view?.w, view?.h,
+      this._adoption.currentConfigFingerprint(), this._adoption.currentLayoutFingerprint(),
+      size?.clientWidth, size?.clientHeight, this.ownerDocument.defaultView?.devicePixelRatio,
+      permissions.write, permissions.admin,
+    ]);
+  }
+
   private _syncPresentedFloorScope(): void {
     const { authorityKey, environment } = this.planHost;
     const connection = environment.connectionRevision || 0;
@@ -2997,7 +3026,8 @@ export class HouseplanCard extends LitElement {
       this._clearStartupAssetWait();
       // Retain a displayed, aligned image while the ready scene fades in.
       // End optional reads as soon as the live view can accept input.
-      const fade = !this._reducedMotion && (!shown || this._startupAtPreviewCamera(value));
+      const fade = !this._reducedMotion && !this._spatial.recovering && !this._spatial.entering
+        && (!shown || this._startupAtPreviewCamera(value));
       store.publishedLive(fade && shown);
       this._startupStyle = fade ? { value: shown ? value : undefined, finishing: true } : undefined;
       if (fade) this._startupFadeTimer = window.setTimeout(() => this._finishStartupFade(), STARTUP_FADE_FALLBACK_MS);
@@ -3893,6 +3923,8 @@ export class HouseplanCard extends LitElement {
 
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
     if (this._routeDepartureHandled && signal.kind !== 'hidden') return;
+    if (this._desiredProjection === 'iso' && signal.kind !== 'hidden')
+      this._continuity.note(`3d-${signal.kind}`, { hiddenFor: signal.hiddenFor, persisted: signal.persisted });
     this._continuity.visibility(signal);
     this._viewRuntimes.visibility(signal.kind === 'hidden');
     this._dayCycleVisibility(signal); this._summary?.visibility(signal.kind);
@@ -5612,6 +5644,11 @@ export class HouseplanCard extends LitElement {
     return !space?.bg?.href || this._signer.isReady(this.planHost, space.bg.href);
   }
 
+  private _continuityPaintReady(): boolean {
+    return this._continuityAssetsReady()
+      && (this._renderProjection !== 'iso' || this._spatial.hasCurrentPaint());
+  }
+
   private _initialSpaceSelection(
     models: SpaceModel[], authoritative = this._loadOk,
   ): InitialSpaceSelection {
@@ -5693,7 +5730,7 @@ export class HouseplanCard extends LitElement {
     if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       // Until its protected assets arrive the scene cannot be cached or
       // serve as the complete-frame fallback for a later recovery.
-      if (this._continuityAssetsReady()) {
+      if (this._continuityPaintReady()) {
         this._renderSnapshotAt = Date.now();
         this._continuity.markCompleteFrame(this._visualFrameFingerprint());
       }
@@ -5710,12 +5747,12 @@ export class HouseplanCard extends LitElement {
       this.requestUpdate();
       return;
     }
-    if (!this._continuity.canAttemptPaint(externalUpdate, this._continuityAssetsReady())) return;
+    if (!this._continuity.canAttemptPaint(externalUpdate, this._continuityPaintReady())) return;
     if (!this._continuity.candidateReady(token)) return;
     void this._continuity.commitAfterPaint(token, {
       updateComplete: () => this.updateComplete,
       stageValid: () => this.isConnected && this._continuityStageValid(),
-      assetsReady: () => this._continuityAssetsReady(),
+      assetsReady: () => this._continuityPaintReady(),
       frameFingerprint: () => this._visualFrameFingerprint(),
     }).then((committed) => {
       if (!committed || token !== this._continuity.token) {
@@ -6166,6 +6203,7 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(changed: PropertyValues): void {
+    if (this._spatial.holding) return;
     this._cfgPass.run(() => this._updatedModeReadScope(changed));
     this._spatial.sync();
     this._syncFloorSwitch();
@@ -6974,6 +7012,7 @@ export class HouseplanCard extends LitElement {
     if (!this.isConnected) {
       this._connectionWasLost = true; this._read.defer(); return;
     }
+    if (this._desiredProjection === 'iso') this._continuity.note('3d-ha-reconnect');
     if (this._externalConfigStreamRecovery.blocked) {
       this._externalConfigStreamRecovery.reset(); this._liveSyncConnection = null; this._liveSyncGeneration++;
     }
@@ -7003,6 +7042,7 @@ export class HouseplanCard extends LitElement {
   private _onConnLost = (): void => {
     if (!this.isConnected) { this._connectionWasLost = true; this._read.defer(); return; }
     if (this._booting && !this._continuity.hasCompleteFrame) return;
+    if (this._desiredProjection === 'iso') this._continuity.note('3d-ha-disconnect');
     this._connectionWasLost = true;
     this._continuityDataReady = false;
     this._continuity.connectionLost();
@@ -13665,7 +13705,9 @@ export class HouseplanCard extends LitElement {
         data-hp-floor-cache=${failed ? 'error' : visiblePreview ? 'preview' : 'preparing'}
         style=${styleMap({ height: this._floorStageHeight(), background: this._stageBg(disp) || undefined, '--wall-fill': disp.wallFill.c })}>
         ${this._renderStageEnvironment(dayCycle)}
-        ${failed || this._floorSwitch ? nothing : this._renderStartupFloor(true)}
+        ${failed || this._floorSwitch ? nothing
+          : this._spatial.recovering ? this._spatial.statusVisible ? this._startupStatus() : nothing
+          : this._renderStartupFloor(true)}
         ${visiblePreview ? html`<div class="zoomwrap" inert style="pointer-events:none">
           <svg class="plan-svg" data-hp-cache-preview data-hp-live-viewbox="camera" aria-hidden="true" viewBox="${view.x} ${view.y} ${view.w} ${view.h}">
             ${renderFloorPreview(visiblePreview)}
@@ -13683,8 +13725,19 @@ export class HouseplanCard extends LitElement {
       </div>
     `);
   }
+  private _discardedPanel?: boolean;
+
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     this._floorHolding = false; this._floorPassive = false;
+    if (this._discardedPanel === undefined && this.panelHost && this.panelRoutePrefix)
+      this._discardedPanel = takeDiscardedPanel(this.ownerDocument, this.panelRoutePrefix);
+    if (this._discardedPanel && this._desiredProjection === 'iso') {
+      this._discardedPanel = false;
+      this._spatial.startDiscard();
+    } else if (this._discardedPanel && this._loadOk) this._discardedPanel = false;
+    if (!this._floorSwitch && this._continuity.state !== 'steady' && this._continuityDataReady)
+      this._spatial.coverChangedCandidate();
+    if (this._spatial.holding) return this._renderPreparedFloorFrame(noChange);
     if (this._floorSwitch && (this._floorSwitch.floor !== this._space || this._mode !== 'view'
       || this._floorSwitch.authority !== this.planHost.authorityKey || !this.planHost.environment.permissions.read))
       this._cancelFloorSwitch();
@@ -14386,7 +14439,9 @@ export class HouseplanCard extends LitElement {
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
           ?inert=${live(this._rotationMotion.blocksInput || this._modeTransition.active || this._startupPending
-            || this._floorSwitch?.phase === 'waiting')}
+            || this._floorSwitch?.phase === 'waiting' || this._spatial.recovering)}
+          ?data-hp-3d-recovery-waiting=${this._spatial.recovering}
+          ?data-hp-3d-recovery-entering=${this._spatial.entering}
           ?data-hp-startup-pending=${this._startupPending}
           ?data-hp-floor-switch-waiting=${this._floorSwitch?.phase === 'waiting'}
           ?data-hp-floor-switch-entering=${this._floorSwitch?.phase === 'entering'}
@@ -14425,7 +14480,9 @@ export class HouseplanCard extends LitElement {
           }}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderStageEnvironment(dayCycle, dayCycleWeight)}
-          ${this._floorSwitch ? nothing : this._renderStartupFloor(this._startupPending)}
+          ${this._floorSwitch ? nothing
+            : this._spatial.recovering ? this._spatial.statusVisible ? this._startupStatus() : nothing
+            : this._renderStartupFloor(this._startupPending)}
           ${this._spatial.failure?.space === this._space && this._desiredProjection === 'iso' && !iso && !this._startupPending
             ? html`<div class="plan-3d-fallback hpf-loading-pill" role="status">
                 <span>${this._t('plan.3d_fallback')}</span>
@@ -14439,6 +14496,10 @@ export class HouseplanCard extends LitElement {
             @animationend=${(event: AnimationEvent) => {
               if (event.target !== event.currentTarget) return;
               if (event.animationName === 'hp-startup-live-in') this._finishStartupFade();
+              if (event.animationName === 'hp-floor-switch-in' && this._spatial.entering) {
+                this._spatial.finishEntrance();
+                this.requestUpdate();
+              }
               if (event.animationName === 'hp-floor-switch-in' && this._floorSwitch?.phase === 'entering') {
                 this._cancelFloorSwitch();
                 this.requestUpdate();
