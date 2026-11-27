@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27983,
+  "revision": 27984,
   "nextTicket": 757,
   "nextFence": 757,
   "tasks": {
@@ -6240,7 +6240,7 @@
       "ownerDecision": null,
       "ticket": 756,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1795770599227,
       "reviewEntry": 3,
       "patchId": "0c40f66ed471e9b2eb60e59f3f44371e161434a7",
@@ -6267,14 +6267,13 @@
         "test/plan-3d-recovery.test.mjs"
       ],
       "notice": {
-        "key": "2:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795770580781,
-        "entry": 2,
-        "detail": "Браузер: iso theme walls: failed",
-        "eventId": "finish:c7868b5e-45a0-43e0-986d-46d60f7bd7ae:finish:3:return:return:1609"
+        "key": "3:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1795772520026,
+        "entry": 3,
+        "requestId": "review:1609:3:0c40f66ed471e9b2eb60e59f3f44371e161434a7:1a6660aec8bbd8012b4ad26f76982f0fa15d09dd"
       },
       "s6": {
         "id": "20261127T091017259-853968fa",
@@ -6298,6 +6297,11 @@
         "at": 1795772022110,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1609:3:0c40f66ed471e9b2eb60e59f3f44371e161434a7:1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
+        "at": 1795772520026
       }
     }
   },
@@ -7025,19 +7029,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1609,
-    "worker": "finish",
-    "token": "756:finish:5a8d3b32-0204-42fd-bcfa-3a27ebb72312:finish:1:admit",
-    "fence": 756,
-    "materialSha": "32cf10b8f4a243bde6ca82d7c4568ef08b40039a",
-    "expectedBase": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
-    "phase": "review",
-    "admittedAt": 1795770603677,
-    "expiresAt": 1795775591114,
-    "patchId": "0c40f66ed471e9b2eb60e59f3f44371e161434a7",
-    "reviewRequest": "review:1609:3:0c40f66ed471e9b2eb60e59f3f44371e161434a7:1a6660aec8bbd8012b4ad26f76982f0fa15d09dd"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7457,6 +7449,10 @@
     },
     "github:45975825222:1:tick:0:review-presentation": {
       "digest": "51effc6cfe25e85eba92c229f79cd59cad8a419ce8cb3e7520288d1eb8692551",
+      "issue": 1609
+    },
+    "github:45975825222:1:tick:0:return": {
+      "digest": "1382f2b56c9a768f58dc6cf24d85b4c9462449d26c6a4c78be45f60f721d2425",
       "issue": 1609
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
