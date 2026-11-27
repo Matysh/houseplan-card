@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28754,
+  "revision": 28755,
   "nextTicket": 781,
   "nextFence": 775,
   "tasks": {
@@ -6338,179 +6338,25 @@
     },
     "1600": {
       "issue": 1600,
+      "branch": "codex/1600-core-compatibility",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/1600-core-compatibility",
-      "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 774,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795786858885,
-      "reviewEntry": 2,
-      "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7",
-      "changedFiles": [
-        "custom_components/houseplan/core/archive_conformance.py",
-        "custom_components/houseplan/core/conformance.py",
-        "demo/fixtures/core-compatibility/README.md",
-        "demo/fixtures/core-compatibility/provenance.json",
-        "demo/fixtures/core-compatibility/v1.86.0/full-backup.zip",
-        "demo/fixtures/core-compatibility/v1.86.0/plan-transfer.zip",
-        "demo/fixtures/core-compatibility/v1.86.1/full-backup.zip",
-        "demo/fixtures/core-compatibility/v1.86.1/plan-transfer.zip",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CORE-HOST.md",
-        "docs/STANDALONE-FRONTEND.md",
-        "docs/release-ledger/v1.86.1/1600.json",
-        "process-next/catalog/inventory.json",
-        "process-next/lib/site-artifact-versions.mjs",
-        "process-next/lib/site-release.mjs",
-        "process-next/lib/source-dependencies.mjs",
-        "process-next/lib/task-selection.mjs",
-        "process-next/test/coordinator.test.mjs",
-        "process-next/test/remote.test.mjs",
-        "process-next/test/site-release.test.mjs",
-        "process-next/test/task-selection.test.mjs",
-        "scripts/config-compatibility-inventory.json",
-        "tests_backend/test_core_archive_compatibility.py",
-        "tests_backend/test_core_distribution.py",
-        "tools/build_core_package.py",
-        "tools/generate_core_compatibility_fixtures.py",
-        "tools/smoke_core_package.py"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795786667883,
-        "entry": 1,
-        "detail": "Поведение механизма: process-next/test/task-selection.test.mjs: failed; Поведение механизма: test/config-lifecycle.test.mjs: failed",
-        "eventId": "finish:973fdb14-5c23-4a35-bbe7-df2a222a59a2:finish:2:return:return:1600"
-      },
-      "s6": {
-        "id": "20261127T161337212-889a00ed",
-        "name": "Тесты для задачи #1600 (перед ревью)",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T161337212-889a00ed/report.json",
-        "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-        "status": "passed",
-        "finishedAt": "2026-11-27T16:14:02.547Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+      "mergedSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+      "mergedAt": 1795796312043,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": true,
       "reviewRequest": "review:1600:2:b12ee743099f75fdaf914681d7c7d2688e8d89f7:bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-      "reviewMaterial": {
-        "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-        "expectedBase": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-        "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1600,
-        "requestId": "review:1600:2:b12ee743099f75fdaf914681d7c7d2688e8d89f7:bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-        "kind": "code",
-        "base": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-        "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-        "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1600,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1600",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Задача выполняется по track:show как инфраструктурный контракт ядра/поставки; пользовательские сценарии и модели не меняются.\n\nВыбран двухуровневый контракт: запущенные wheel/core adapter и standalone editor берутся из одной версии/commit с существующей точной проверкой version/fingerprint/API. HA и сайт могут обновляться независимо при переносе архивов: принимающий parser проверяет контейнер, export/model и required API. Stable в одной major-линии сохраняет ранее поддержанное чтение через явные readers/migrations; ломающее изменение публичного core API или удаление этой поддержки требует major продукта. Счётчики model/export/archive независимы: их увеличение с сохранением старого чтения само по себе не требует major. Нет гарантии downgrade или чтения произвольной будущей модели. Текущий 2.x явно проверяет архивы 1.86.0/1.86.1; это поддерживаемый переход через major, а не обещание любых комбинаций версий.\n\nРеализация: docs/CORE-HOST.md содержит публичную границу и таблицу текущих parser-правил (house ZIP точно model11; full JSON/backup допускают прежние модели по имеющейся миграции). docs/STANDALONE-FRONTEND.md и release notes ссылаются на контракт. Колесо сохраняет версию продукта с PEP440 spelling для prerelease. Четыре synthetic ZIP созданы настоящими exporters pinned stable commits 2725feedd276c5c1c19d9223c99b1adcdefefaa1 и f175b7e00d8535149c61c2d28a922620a3a70928, прочитаны их собственными readers, имеют provenance/hash и воспроизводятся побайтно с фиксированными тестовыми часами. Те же bytes входят в wheel/sdist; default core conformance дополнительно читает их текущими readers без HA. В pure full-backup conformance нет restore и нет выдачи PLAN_ONLY новых полномочий.\n\nПри publish готовые wheel METADATA/distribution.json, HACS manifest.json и standalone manifest повторно читаются до создания/загрузки GitHub release. Внутренние версии сравниваются канонически: product 2.0.0-beta.2 и PEP440 2.0.0b2 принимаются как одна версия; 2.0.0b3 отклоняется отдельным behavioral case. Источник должен соответствовать кандидату. Отрицательные тесты обновляют все внешние хеши и показывают, что внутреннее расхождение всё равно отклоняется. Ретрай опубликованного выпуска проверен прежним remote behavioral test на настоящих synthetic ZIP.\n\nДо очереди: 7 pytest addressed cases, 51 Node site-release/remote cases; wheel+sdist build и clean install smoke каждого (18 base, 2 house, 4 historical scenarios, без HA imports) прошли. Генератор воспроизвёл provenance и четыре ZIP побайтно. Финальный S6 выполнит native finish на допущенной базе; реальные итоги будут переданы процессом. HA E2E не расширяется: endpoint/restore/writable product path не меняются; чистое чтение архивов не доказывает HA restore durability или production DB.\n\n\n### Исправления после фактического S6\n\nПервый native S6 на базе 0a917f294e0393c317f4a4fdeec9dc4640bb0695 и материале 2d5559b03f1241702049a2a5a284435536b32018: 26/28 шагов PASS, два FAIL в инфраструктурных свидетелях. task-selection.test требовал сохранить выборку test_core_distribution.py для изменений PlanCommands после классификации теста как infra: теперь dynamic source scope честно объявляет чтение полного canonical core, builder и frozen fixtures, участвуя и в selection, и в reuse fingerprint. config-lifecycle.test обнаружил два новых fixture-path literals со словом compatibility: оба зарегистрированы как word-only exclusions с причиной, digest обновлён; существующие decoder/migration branches не удалялись. Адресный повтор этих двух файлов: 44/44 Node cases PASS. Материал исправления 29c2bd1b0; следующий native finish повторит актуальный S6 с применимым reuse, затем передаст на S7.\n\n\nДополнительная адресная подготовка до повторного допуска: typed archive helper проходит pinned Ruff 0.16.5 и mypy 2.3.1 даже при прежнем global-strict эффекте; оба изменённых conformance-модуля проходят mypy с исправленным allowlist scope конфигом #1603 (свой pyproject в #1600 не менялся). Повторный wheel+sdist build и clean-install smoke после типизации проходят с pinned runtime constraints: по 18 base, 2 house, 4 historical сценария и запрет HA imports. Новые helper/reader явно отнесены к storage, infra-layer сохранён; существующий domain regression 40/40 PASS. Текущий подготовленный material ac8b2a316e0240995776ef14e75671772ee48e68; финальный native S6 и S7 ещё ожидаются."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принять, блокеров нет. Все четыре пункта задачи выполнены, и контракт подкреплён проверками.\n\n1. В `docs/CORE-HOST.md` описан двухуровневый контракт. Он отделяет запуск одного редактора (точное совпадение версии, отпечатка и API) от переноса данных между установками: решение принимает парсер на стороне получателя. Таблица правил чтения в документе совпадает с кодом: `house_document.parse_document` принимает только `export_version == 4` и `model == 11`, `import_export.parse_document` — `0..11` и экспорт 1–5.\n2. Версия wheel остаётся версией продукта. Для пререлизов используется написание по PEP 440.\n3. Добавлены четыре исторических ZIP, созданных настоящими экспортёрами v1.86.0 и v1.86.1. Они входят в wheel и sdist, их читает `python -m houseplan_core.conformance` по умолчанию, а также pytest и smoke-проверка установленного пакета. Если будущее повышение `PLAN_MODEL_VERSION` выйдет без миграции для house ZIP, проверка упадёт. Значит, правило из документа действительно проверяется, а не только записано.\n4. Перед публикацией stable заново читаются METADATA и `distribution.json` из wheel, `manifest.json` из HACS ZIP и манифест автономного редактора. Это происходит в `checkedFacts`, то есть до `publication-started` и загрузки файлов.\n\nОстались необязательные улучшения: устойчивее разбирать METADATA, прогонять исторические архивы через адаптер стороннего хоста.",
-          "understanding": "Проблема: после выделения ядра в отдельный wheel не было записанного правила, какие сочетания версий wheel, HA-интеграции и автономного редактора обязаны работать вместе. Сайт и HA будут обновляться в разное время и обмениваться архивами.\n\nДо изменения: в `docs/CORE-HOST.md` не было правила совместимости, в заметках к релизу стояла оговорка «later versions must be checked». Чтение архивов прошлых stable не проверялось. При публикации сравнивались только хеши и размеры готовых файлов, а версии внутри них — нет.\n\nПосле изменения:\n- `docs/CORE-HOST.md#compatibility-and-versioning` описывает публичную границу (`PlanCommands`, `command_ports.py`, переносимые reader/writer, `PLAN_MODEL_VERSION`) и два вида совместимости. Для запуска одного редактора нужна точная пара из одного релиза. Для переноса данных решает парсер получателя, а равенство major/minor само по себе ничего не разрешает и не запрещает. Чтение ранее поддержанных stable сохраняется внутри major, отказ от него требует major продукта. Счётчики контейнера, экспорта и модели независимы. Даунгрейд не обещается.\n- `STANDALONE-FRONTEND.md` и автоматический блок заметок к релизу ссылаются на документ, причём ссылка закреплена на `sourceSha`.\n- `tools/generate_core_compatibility_fixtures.py` распаковывает ядро нужного тега через `git archive`, импортирует его как `fixture_core` с подменой часов и создаёт оба ZIP. Затем их проверяет reader того же stable. Даты записей ZIP фиксированы (`ZipInfo` по умолчанию на 1980 год), поэтому результат воспроизводим.\n- `archive_conformance.run_archives` проверяет provenance и sha256, читает архивы текущими `house_archive`/`backup_archive.read_archive`, проверяет геометрию, лестницы, позиции подписей, PNG и маркер. Для house ZIP дополнительно проверяется аддитивное слияние через `build_merge`.\n- `build_core_package.stage` копирует фикстуры в `houseplan_core/compatibility_fixtures` и указывает их в package-data. Smoke установленного пакета вызывает `run_archives()`.\n- `site-artifact-versions.mjs` из `checkedFacts` (`release-preparation.mjs:114` → `remote.mjs:681`, до `publication-started`) сверяет версии в `distribution.json` (`product_version` и `version`), в METADATA (`Version`, `Name`), в HACS `manifest.json` и в манифесте редактора. Сравнение каноническое: beta.N и bN считаются одной версией. Также сверяются commit, fingerprint и признак dirty редактора и fingerprint фронтенда из HACS.\n\nПути, которые я разобрал: публикация stable (remote → preparePublicationArtifacts → siteReleasePublication → checkedFacts → verifySiteArtifactVersions); сборка сайта (`tools/build_site_release.py`: verify_wheel, validate_hacs, frontend_files, smoke); парсеры house и full. Ещё проверил, что HA во время работы `conformance`/`archive_conformance` не импортирует.",
-          "analysis": [
-            {
-              "topic": "Содержание контракта и его соответствие коду",
-              "assessment": "Контракт сформулирован точнее, чем пример в задаче («смена PLAN_MODEL_VERSION — мажор»). Повышать счётчик можно и без major, если сохраняется чтение старых данных. Правило честное, потому что таблица прямо говорит: house ZIP сейчас принимает только модель 11, а для старых моделей нужна явная миграция. Фактически любое повышение модели без house-миграции требует major, и исторические фикстуры это поймают. Ограничения (нет гарантии даунгрейда, нет обещания всех сочетаний через major, чтение не равно доказательству восстановления в HA) названы явно. Выбранный подход стоит сохранить.",
-              "evidence": "`house_document.py:192-197`: `export_version != EXPORT_VERSION` и `model != PLAN_MODEL_VERSION` → fail. `import_export.py:818-826`: экспорт 1, 2, EXPORT_VERSION и версии мебели; модель от 0 до `PLAN_MODEL_VERSION`. Таблица в `docs/CORE-HOST.md` им соответствует."
-            },
-            {
-              "topic": "Исторические фикстуры: происхождение и сила проверки",
-              "assessment": "Архивы созданы кодом закреплённых тегов, а не текущим writer. Генератор сверяет tag → commit и `package.json`, а reader того же stable принимает результат. Байтовая воспроизводимость правдоподобна: подменяются часы в `house_document`/`import_export`, `ZipInfo(name)` даёт фиксированную дату, сортировка детерминирована. Assert на `document[\"model_version\"] == 11` относится к исходной модели в envelope, а не к результату миграции (`parse_document` не переписывает это поле), поэтому будущая модель 12 с миграцией не сломает проверку зря. Отрицательный тест на изменённый байт ловит только сверку хеша, а не отказ reader. Этого достаточно: reader на повреждения проверяется в существующих тестах.",
-              "evidence": "`tools/generate_core_compatibility_fixtures.py:88-110`. `backup_archive.py@f175b7e:310-321`. `archive_conformance.py:39-87`. `tests_backend/test_core_archive_compatibility.py`."
-            },
-            {
-              "topic": "Упаковка фикстур в wheel и sdist",
-              "assessment": "Фикстуры не попадают в `sources_sha256`, поэтому `verify_wheel` (сравнение набора `.py` с tracked) и smoke-проверка хешей источников не меняются. Целостность фикстур в установленном пакете обеспечивает их собственный provenance. `verify_source` запрещает неотслеживаемые файлы в `demo/fixtures`, а значит, подложить чужие байты в выпускной wheel нельзя. `pkgutil.walk_packages` не пытается импортировать каталоги без `__init__` и с точками в имени.",
-              "evidence": "`tools/build_core_package.py:36-39,63`. `tools/build_site_release.py:76-96,157-163`. `tools/smoke_core_package.py:30-35`. `tests_backend/test_core_distribution.py`: побайтное сравнение staged-фикстур."
-            },
-            {
-              "topic": "Проверка версий при публикации",
-              "assessment": "Проверка стоит в правильном месте: внутри `checkedFacts` после сверки хешей и до любых действий в GitHub. Повтор публикации проходит тот же путь, и remote-тест обновлён на настоящие ZIP. Структура полей совпадает с тем, что создаёт `build_site_release.py`: `sourceFingerprint` берётся из `frontend/houseplan-assets.json` HACS, `source.commit/fingerprint/dirty` — из манифеста редактора. Каноническое сравнение beta/b для site pair сейчас лишнее: пара публикуется только для `X.Y.Z` (`siteReleasePaths`). Но код небольшой и сделан на будущее. Отрицательные тесты меняют внутренности и пересчитывают внешние хеши — это правильный способ показать, что проверка не держится на хешах.",
-              "evidence": "`process-next/lib/site-release.mjs:44-45`. `release-preparation.mjs:114`. `remote.mjs:681-690`. `site-artifact-versions.mjs`. `site-release.test.mjs`: случаи с `replaceArtifact`, beta.2 и b2."
-            },
-            {
-              "topic": "Классификация как infra и границы для HA",
-              "assessment": "`conformance.py` и `archive_conformance.py` лежат в каноническом ядре и попадают в HACS ZIP, но HA во время работы их не импортирует. Поэтому слой infra допустим. Тест в coordinator закрепляет, что изменения в `house_archive.py`/`backup_archive.py`/`house_document.py`/`plan_commands.py` по-прежнему относят задачу к product. Объявленные области чтения в `source-dependencies.mjs` честно учитывают обход ядра и фикстур при сборке, это важно для инвалидации кэша результатов.",
-              "evidence": "Поиск: `archive_conformance` импортируется только из `conformance.py` и теста. `process-next/test/coordinator.test.mjs:415-430`. `source-dependencies.mjs:9-17`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Разбор METADATA в `site-artifact-versions.mjs` сейчас ищет `^Version:`/`^Name:` по всему файлу, включая тело с long description, которое собирается из `docs/CORE-HOST.md`. Если когда-нибудь строка в документе начнётся с `Version: ` или `Name: `, публикация stable откажет. Отказ безопасный, но причина будет непонятна. Лучше ограничить поиск заголовками, то есть текстом до первой пустой строки, как это делает `email.message_from_bytes` в `build_site_release.verify_wheel`. Цена — одна строка.",
-            "Сейчас исторические архивы читаются чистым reader, а `run_house` проверяет адаптер хоста только на свежем экспорте. Главный внешний потребитель — сайт со своим адаптером. Если необязательно передать `v1.86.x/plan-transfer.zip` через `adapter.house_preview` и `import/apply` в `run_house`, контракт будет проверяться на реальном пути импорта стороннего хоста: лимиты загрузки, хранение, HTTP. Цена — ещё один сценарий в conformance и требование к адаптеру принимать внешние байты.",
-            "Сообщения об ошибках в `process-next/lib/zip.mjs` всегда упоминают `houseplan.zip`, хотя теперь функция читает и wheel, и ZIP редактора. Если в сообщение подставлять фактическое имя файла, разбор отказов при публикации станет быстрее.",
-            "`run_archives`, как и существующий `run`, проверяет всё через `assert`. Под `python -O` команда `python -m houseplan_core.conformance` сообщит об успехе без проверок. Это давний паттерн, но поскольку conformance заявлен как способ проверять контракт, стоит перейти на явный `raise AssertionError`/`require` или отказываться запускаться при `sys.flags.optimize`."
-          ],
-          "boundaries": "Сам я ничего не запускал: ни сборку, ни тесты, ни генератор. Опираюсь на квитанцию S6 `20261127T161337212-889a00ed` (passed, материал `15caaf14…`). Цифры автора про адресные прогоны (pytest, Node, smoke wheel и sdist, байтовое воспроизведение генератора) принимаю как его заявления, а не как проверенный мной результат.\n\nБинарные ZIP-фикстуры не открывал. Их происхождение оценивал по коду генератора, исходникам экспортёров на `f175b7e` и проверкам в `run_archives`. Хеши в provenance сверяет сам тест.\n\nИзучил по исходникам: `archive_conformance.py`, `conformance.py` (main), `house_document.parse_document`/`build_merge`, `import_export.parse_document`/`create_export`, `backup_archive.read_archive`/`build_archive` (включая версию на теге), `house_archive.read_archive`, `build_core_package.py`, `smoke_core_package.py`, `build_site_release.py`, `site-release.mjs`, `release-preparation.mjs`, `remote.mjs` (publish), `zip.mjs` и изменённые тесты.\n\nВосстановление full backup в HA, работу продакшн-базы сайта и реальную публикацию в GitHub не проверял. Это совпадает с границами, которые заявил автор.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 40,
-          "cache_creation_input_tokens": 108390,
-          "cache_read_input_tokens": 1393697,
-          "output_tokens": 15348,
-          "output_tokens_details": {
-            "thinking_tokens": 6779
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 108390,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 968,
-              "cache_read_input_tokens": 96080,
-              "cache_creation_input_tokens": 16514,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 16514
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять, блокеров нет. Все четыре пункта задачи выполнены, и контракт подкреплён проверками.\n\n1. В `docs/CORE-HOST.md` описан двухуровневый контракт. Он отделяет запуск одного редактора (точное совпадение версии, отпечатка и API) от переноса данных между установками: решение принимает парсер на стороне получателя. Таблица правил чтения в документе совпадает с кодом: `house_document.parse_document` принимает только `export_version == 4` и `model == 11`, `import_export.parse_document` — `0..11` и экспорт 1–5.\n2. Версия wheel остаётся версией продукта. Для пререлизов используется написание по PEP 440.\n3. Добавлены четыре исторических ZIP, созданных настоящими экспортёрами v1.86.0 и v1.86.1. Они входят в wheel и sdist, их читает `python -m houseplan_core.conformance` по умолчанию, а также pytest и smoke-проверка установленного пакета. Если будущее повышение `PLAN_MODEL_VERSION` выйдет без миграции для house ZIP, проверка упадёт. Значит, правило из документа действительно проверяется, а не только записано.\n4. Перед публикацией stable заново читаются METADATA и `distribution.json` из wheel, `manifest.json` из HACS ZIP и манифест автономного редактора. Это происходит в `checkedFacts`, то есть до `publication-started` и загрузки файлов.\n\nОстались необязательные улучшения: устойчивее разбирать METADATA, прогонять исторические архивы через адаптер стороннего хоста.\n\n## Понимание решения\n\nПроблема: после выделения ядра в отдельный wheel не было записанного правила, какие сочетания версий wheel, HA-интеграции и автономного редактора обязаны работать вместе. Сайт и HA будут обновляться в разное время и обмениваться архивами.\n\nДо изменения: в `docs/CORE-HOST.md` не было правила совместимости, в заметках к релизу стояла оговорка «later versions must be checked». Чтение архивов прошлых stable не проверялось. При публикации сравнивались только хеши и размеры готовых файлов, а версии внутри них — нет.\n\nПосле изменения:\n- `docs/CORE-HOST.md#compatibility-and-versioning` описывает публичную границу (`PlanCommands`, `command_ports.py`, переносимые reader/writer, `PLAN_MODEL_VERSION`) и два вида совместимости. Для запуска одного редактора нужна точная пара из одного релиза. Для переноса данных решает парсер получателя, а равенство major/minor само по себе ничего не разрешает и не запрещает. Чтение ранее поддержанных stable сохраняется внутри major, отказ от него требует major продукта. Счётчики контейнера, экспорта и модели независимы. Даунгрейд не обещается.\n- `STANDALONE-FRONTEND.md` и автоматический блок заметок к релизу ссылаются на документ, причём ссылка закреплена на `sourceSha`.\n- `tools/generate_core_compatibility_fixtures.py` распаковывает ядро нужного тега через `git archive`, импортирует его как `fixture_core` с подменой часов и создаёт оба ZIP. Затем их проверяет reader того же stable. Даты записей ZIP фиксированы (`ZipInfo` по умолчанию на 1980 год), поэтому результат воспроизводим.\n- `archive_conformance.run_archives` проверяет provenance и sha256, читает архивы текущими `house_archive`/`backup_archive.read_archive`, проверяет геометрию, лестницы, позиции подписей, PNG и маркер. Для house ZIP дополнительно проверяется аддитивное слияние через `build_merge`.\n- `build_core_package.stage` копирует фикстуры в `houseplan_core/compatibility_fixtures` и указывает их в package-data. Smoke установленного пакета вызывает `run_archives()`.\n- `site-artifact-versions.mjs` из `checkedFacts` (`release-preparation.mjs:114` → `remote.mjs:681`, до `publication-started`) сверяет версии в `distribution.json` (`product_version` и `version`), в METADATA (`Version`, `Name`), в HACS `manifest.json` и в манифесте редактора. Сравнение каноническое: beta.N и bN считаются одной версией. Также сверяются commit, fingerprint и признак dirty редактора и fingerprint фронтенда из HACS.\n\nПути, которые я разобрал: публикация stable (remote → preparePublicationArtifacts → siteReleasePublication → checkedFacts → verifySiteArtifactVersions); сборка сайта (`tools/build_site_release.py`: verify_wheel, validate_hacs, frontend_files, smoke); парсеры house и full. Ещё проверил, что HA во время работы `conformance`/`archive_conformance` не импортирует.\n\n## Разбор решения\n\n### Содержание контракта и его соответствие коду\n\nКонтракт сформулирован точнее, чем пример в задаче («смена PLAN_MODEL_VERSION — мажор»). Повышать счётчик можно и без major, если сохраняется чтение старых данных. Правило честное, потому что таблица прямо говорит: house ZIP сейчас принимает только модель 11, а для старых моделей нужна явная миграция. Фактически любое повышение модели без house-миграции требует major, и исторические фикстуры это поймают. Ограничения (нет гарантии даунгрейда, нет обещания всех сочетаний через major, чтение не равно доказательству восстановления в HA) названы явно. Выбранный подход стоит сохранить.\n\nОснование: `house_document.py:192-197`: `export_version != EXPORT_VERSION` и `model != PLAN_MODEL_VERSION` → fail. `import_export.py:818-826`: экспорт 1, 2, EXPORT_VERSION и версии мебели; модель от 0 до `PLAN_MODEL_VERSION`. Таблица в `docs/CORE-HOST.md` им соответствует.\n\n### Исторические фикстуры: происхождение и сила проверки\n\nАрхивы созданы кодом закреплённых тегов, а не текущим writer. Генератор сверяет tag → commit и `package.json`, а reader того же stable принимает результат. Байтовая воспроизводимость правдоподобна: подменяются часы в `house_document`/`import_export`, `ZipInfo(name)` даёт фиксированную дату, сортировка детерминирована. Assert на `document[\"model_version\"] == 11` относится к исходной модели в envelope, а не к результату миграции (`parse_document` не переписывает это поле), поэтому будущая модель 12 с миграцией не сломает проверку зря. Отрицательный тест на изменённый байт ловит только сверку хеша, а не отказ reader. Этого достаточно: reader на повреждения проверяется в существующих тестах.\n\nОснование: `tools/generate_core_compatibility_fixtures.py:88-110`. `backup_archive.py@f175b7e:310-321`. `archive_conformance.py:39-87`. `tests_backend/test_core_archive_compatibility.py`.\n\n### Упаковка фикстур в wheel и sdist\n\nФикстуры не попадают в `sources_sha256`, поэтому `verify_wheel` (сравнение набора `.py` с tracked) и smoke-проверка хешей источников не меняются. Целостность фикстур в установленном пакете обеспечивает их собственный provenance. `verify_source` запрещает неотслеживаемые файлы в `demo/fixtures`, а значит, подложить чужие байты в выпускной wheel нельзя. `pkgutil.walk_packages` не пытается импортировать каталоги без `__init__` и с точками в имени.\n\nОснование: `tools/build_core_package.py:36-39,63`. `tools/build_site_release.py:76-96,157-163`. `tools/smoke_core_package.py:30-35`. `tests_backend/test_core_distribution.py`: побайтное сравнение staged-фикстур.\n\n### Проверка версий при публикации\n\nПроверка стоит в правильном месте: внутри `checkedFacts` после сверки хешей и до любых действий в GitHub. Повтор публикации проходит тот же путь, и remote-тест обновлён на настоящие ZIP. Структура полей совпадает с тем, что создаёт `build_site_release.py`: `sourceFingerprint` берётся из `frontend/houseplan-assets.json` HACS, `source.commit/fingerprint/dirty` — из манифеста редактора. Каноническое сравнение beta/b для site pair сейчас лишнее: пара публикуется только для `X.Y.Z` (`siteReleasePaths`). Но код небольшой и сделан на будущее. Отрицательные тесты меняют внутренности и пересчитывают внешние хеши — это правильный способ показать, что проверка не держится на хешах.\n\nОснование: `process-next/lib/site-release.mjs:44-45`. `release-preparation.mjs:114`. `remote.mjs:681-690`. `site-artifact-versions.mjs`. `site-release.test.mjs`: случаи с `replaceArtifact`, beta.2 и b2.\n\n### Классификация как infra и границы для HA\n\n`conformance.py` и `archive_conformance.py` лежат в каноническом ядре и попадают в HACS ZIP, но HA во время работы их не импортирует. Поэтому слой infra допустим. Тест в coordinator закрепляет, что изменения в `house_archive.py`/`backup_archive.py`/`house_document.py`/`plan_commands.py` по-прежнему относят задачу к product. Объявленные области чтения в `source-dependencies.mjs` честно учитывают обход ядра и фикстур при сборке, это важно для инвалидации кэша результатов.\n\nОснование: Поиск: `archive_conformance` импортируется только из `conformance.py` и теста. `process-next/test/coordinator.test.mjs:415-430`. `source-dependencies.mjs:9-17`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Разбор METADATA в `site-artifact-versions.mjs` сейчас ищет `^Version:`/`^Name:` по всему файлу, включая тело с long description, которое собирается из `docs/CORE-HOST.md`. Если когда-нибудь строка в документе начнётся с `Version: ` или `Name: `, публикация stable откажет. Отказ безопасный, но причина будет непонятна. Лучше ограничить поиск заголовками, то есть текстом до первой пустой строки, как это делает `email.message_from_bytes` в `build_site_release.verify_wheel`. Цена — одна строка.\n- Сейчас исторические архивы читаются чистым reader, а `run_house` проверяет адаптер хоста только на свежем экспорте. Главный внешний потребитель — сайт со своим адаптером. Если необязательно передать `v1.86.x/plan-transfer.zip` через `adapter.house_preview` и `import/apply` в `run_house`, контракт будет проверяться на реальном пути импорта стороннего хоста: лимиты загрузки, хранение, HTTP. Цена — ещё один сценарий в conformance и требование к адаптеру принимать внешние байты.\n- Сообщения об ошибках в `process-next/lib/zip.mjs` всегда упоминают `houseplan.zip`, хотя теперь функция читает и wheel, и ZIP редактора. Если в сообщение подставлять фактическое имя файла, разбор отказов при публикации станет быстрее.\n- `run_archives`, как и существующий `run`, проверяет всё через `assert`. Под `python -O` команда `python -m houseplan_core.conformance` сообщит об успехе без проверок. Это давний паттерн, но поскольку conformance заявлен как способ проверять контракт, стоит перейти на явный `raise AssertionError`/`require` или отказываться запускаться при `sys.flags.optimize`.\n\n## Границы анализа\n\nСам я ничего не запускал: ни сборку, ни тесты, ни генератор. Опираюсь на квитанцию S6 `20261127T161337212-889a00ed` (passed, материал `15caaf14…`). Цифры автора про адресные прогоны (pytest, Node, smoke wheel и sdist, байтовое воспроизведение генератора) принимаю как его заявления, а не как проверенный мной результат.\n\nБинарные ZIP-фикстуры не открывал. Их происхождение оценивал по коду генератора, исходникам экспортёров на `f175b7e` и проверкам в `run_archives`. Хеши в provenance сверяет сам тест.\n\nИзучил по исходникам: `archive_conformance.py`, `conformance.py` (main), `house_document.parse_document`/`build_merge`, `import_export.parse_document`/`create_export`, `backup_archive.read_archive`/`build_archive` (включая версию на теге), `house_archive.read_archive`, `build_core_package.py`, `smoke_core_package.py`, `build_site_release.py`, `site-release.mjs`, `release-preparation.mjs`, `remote.mjs` (publish), `zip.mjs` и изменённые тесты.\n\nВосстановление full backup в HA, работу продакшн-базы сайта и реальную публикацию в GitHub не проверял. Это совпадает с границами, которые заявил автор.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89 → 15caaf14ccad42a9f1df2f7cae4946dbbd67c766\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1600, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nЗадача выполняется по track:show как инфраструктурный контракт ядра/поставки; пользовательские сценарии и модели не меняются.\n\nВыбран двухуровневый контракт: запущенные wheel/core adapter и standalone editor берутся из одной версии/commit с существующей точной проверкой version/fingerprint/API. HA и сайт могут обновляться независимо при переносе архивов: принимающий parser проверяет контейнер, export/model и required API. Stable в одной major-линии сохраняет ранее поддержанное чтение через явные readers/migrations; ломающее изменение публичного core API или удаление этой поддержки требует major продукта. Счётчики model/export/archive независимы: их увеличение с сохранением старого чтения само по себе не требует major. Нет гарантии downgrade или чтения произвольной будущей модели. Текущий 2.x явно проверяет архивы 1.86.0/1.86.1; это поддерживаемый переход через major, а не обещание любых комбинаций версий.\n\nРеализация: docs/CORE-HOST.md содержит публичную границу и таблицу текущих parser-правил (house ZIP точно model11; full JSON/backup допускают прежние модели по имеющейся миграции). docs/STANDALONE-FRONTEND.md и release notes ссылаются на контракт. Колесо сохраняет версию продукта с PEP440 spelling для prerelease. Четыре synthetic ZIP созданы настоящими exporters pinned stable commits 2725feedd276c5c1c19d9223c99b1adcdefefaa1 и f175b7e00d8535149c61c2d28a922620a3a70928, прочитаны их собственными readers, имеют provenance/hash и воспроизводятся побайтно с фиксированными тестовыми часами. Те же bytes входят в wheel/sdist; default core conformance дополнительно читает их текущими readers без HA. В pure full-backup conformance нет restore и нет выдачи PLAN_ONLY новых полномочий.\n\nПри publish готовые wheel METADATA/distribution.json, HACS manifest.json и standalone manifest повторно читаются до создания/загрузки GitHub release. Внутренние версии сравниваются канонически: product 2.0.0-beta.2 и PEP440 2.0.0b2 принимаются как одна версия; 2.0.0b3 отклоняется отдельным behavioral case. Источник должен соответствовать кандидату. Отрицательные тесты обновляют все внешние хеши и показывают, что внутреннее расхождение всё равно отклоняется. Ретрай опубликованного выпуска проверен прежним remote behavioral test на настоящих synthetic ZIP.\n\nДо очереди: 7 pytest addressed cases, 51 Node site-release/remote cases; wheel+sdist build и clean install smoke каждого (18 base, 2 house, 4 historical scenarios, без HA imports) прошли. Генератор воспроизвёл provenance и четыре ZIP побайтно. Финальный S6 выполнит native finish на допущенной базе; реальные итоги будут переданы процессом. HA E2E не расширяется: endpoint/restore/writable product path не меняются; чистое чтение архивов не доказывает HA restore durability или production DB.\n\n\n### Исправления после фактического S6\n\nПервый native S6 на базе 0a917f294e0393c317f4a4fdeec9dc4640bb0695 и материале 2d5559b03f1241702049a2a5a284435536b32018: 26/28 шагов PASS, два FAIL в инфраструктурных свидетелях. task-selection.test требовал сохранить выборку test_core_distribution.py для изменений PlanCommands после классификации теста как infra: теперь dynamic source scope честно объявляет чтение полного canonical core, builder и frozen fixtures, участвуя и в selection, и в reuse fingerprint. config-lifecycle.test обнаружил два новых fixture-path literals со словом compatibility: оба зарегистрированы как word-only exclusions с причиной, digest обновлён; существующие decoder/migration branches не удалялись. Адресный повтор этих двух файлов: 44/44 Node cases PASS. Материал исправления 29c2bd1b0; следующий native finish повторит актуальный S6 с применимым reuse, затем передаст на S7.\n\n\nДополнительная адресная подготовка до повторного допуска: typed archive helper проходит pinned Ruff 0.16.5 и mypy 2.3.1 даже при прежнем global-strict эффекте; оба изменённых conformance-модуля проходят mypy с исправленным allowlist scope конфигом #1603 (свой pyproject в #1600 не менялся). Повторный wheel+sdist build и clean-install smoke после типизации проходят с pinned runtime constraints: по 18 base, 2 house, 4 historical сценария и запрет HA imports. Новые helper/reader явно отнесены к storage, infra-layer сохранён; существующий domain regression 40/40 PASS. Текущий подготовленный material ac8b2a316e0240995776ef14e75671772ee48e68; финальный native S6 и S7 ещё ожидаются.\n```\n\n</details>\n",
-        "createdAt": "2026-11-27T16:18:16.495Z",
-        "artifactId": 15215425868,
-        "runId": 46031904458,
-        "runAttempt": 1,
-        "completedAt": "2026-11-27T16:14:34Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46031904458",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89"
+      "devBuild": {
+        "status": "not-required"
       }
     },
     "1603": {
@@ -7549,19 +7395,7 @@
     1598,
     1611
   ],
-  "active": {
-    "issue": 1600,
-    "worker": "finish",
-    "token": "774:finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:1:admit",
-    "fence": 774,
-    "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-    "expectedBase": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795795983357,
-    "expiresAt": 1795799906177,
-    "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7",
-    "reviewRequest": "review:1600:2:b12ee743099f75fdaf914681d7c7d2688e8d89f7:bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89"
-  },
+  "active": null,
   "events": {
     "finish:ac66f1d0-0b1e-4271-a7c2-eabd11724380": {
       "digest": "bd7274ffd0cc6945653695fe5895ac29dbbf427ecca4e1d18752eaa3a1b2753f",
@@ -7787,18 +7621,6 @@
       "digest": "261ef629e8f4862da3bd33cba66bd34e6c405ceb72ec9f1cb48dc80d94b87cd9",
       "issue": 1594
     },
-    "finish:973fdb14-5c23-4a35-bbe7-df2a222a59a2:finish:1:synchronized": {
-      "digest": "a3e8656505842113b56f3680183fb173b7775f573d818e0e108c84bc17dbe350",
-      "issue": 1600
-    },
-    "finish:911e733e-da29-49b5-ab81-d0d3a2719820": {
-      "digest": "ddee8a84b9f433b159110f8275ae4307120d82216d45c39efd2f73474b5c83cc",
-      "issue": 1600
-    },
-    "finish:973fdb14-5c23-4a35-bbe7-df2a222a59a2:finish:2:return": {
-      "digest": "a320f7b8ffcb3c5a98a29f6d1c95550fce2e68eb019fe9f40b448a2b8762f309",
-      "issue": 1600
-    },
     "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:1:synchronized": {
       "digest": "c3331543de2dc2b03e432aca501edfa1d1718da59f58c562dc3814811c484a77",
       "issue": 1603
@@ -7923,10 +7745,6 @@
       "digest": "5e9a3b1248c21e51c91f635c33bfb0e16ef8c0c9a59fbbb7a7e4f45bc87731db",
       "issue": 1603
     },
-    "github:46011824017:1:completions:notice:b62341dbc934515390142efbddfaadb24c608a1f3822badf964c212501d646dd": {
-      "digest": "c8139473fdcc10155f75f086b581c7eb1370fd3365d569490d7935d6b185e328",
-      "issue": 1600
-    },
     "github:46011824017:1:completions:message:b62341dbc934515390142efbddfaadb24c608a1f3822badf964c212501d646dd": {
       "digest": "53225a58d846de597b9877d106333de1ac7d074f730603ae0ef9080dd5c56148",
       "issue": 1603
@@ -7999,10 +7817,6 @@
       "digest": "cdbc81d30c7335113c42970091a73fc3d2813fa50a6ac25a50d1c3026eba6415",
       "issue": 1609
     },
-    "ready:1600:83e1b1f311874a3d833a21a182c289473762b35e": {
-      "digest": "6cc0d2abf230f0b1a8625cda234779c3e14a24eb1e1e68c2ddb6613e38954ec9",
-      "issue": 1600
-    },
     "finish:417239fd-a314-444f-8844-df534ea768ab": {
       "digest": "ea0bff45c7db61b1d31205bae15e6224c0c1066fe70ada1534ac78da27f79a9f",
       "issue": 1609
@@ -8014,10 +7828,6 @@
     "finish:72507cec-22f8-4fd3-a126-1ea4bd8c724c": {
       "digest": "ef333057ff63e7efbe264d531caff50b0c2ede6aab99594177596c13d6fe9f44",
       "issue": 1609
-    },
-    "ready:1600:ac8b2a316e0240995776ef14e75671772ee48e68": {
-      "digest": "a462c01df1fad85b0352dd620395010cc09dbe0c39a980fd31ea4ec36ae913d9",
-      "issue": 1600
     },
     "finish:ff72f7e1-1801-4522-966f-96b11ea4f050": {
       "digest": "b74ae6a6d70c61d82a63504afcbfea6b307baa02dcba5171c9358aec4889d868",
@@ -8315,69 +8125,13 @@
       "digest": "1a0a40d7aaddbdccef4299987c918fa5fc1e5df5db950ce60146ff10f858dba0",
       "issue": 1598
     },
-    "finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:2:synchronized": {
-      "digest": "aa60a5f755163df36c4335b2898293b09fa1189adb06c51154662d86f678e38c",
-      "issue": 1600
-    },
-    "finish:15fc4b13-c1b9-4a04-ab29-e5cd9545beb0": {
-      "digest": "b6385a536ad521ae95f1338ce3735c3121bf020a69f454fabbc57e595a6e6617",
-      "issue": 1600
-    },
-    "finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:3:s6-label": {
-      "digest": "2d2719ef7e6535a602455eb003b9be3f0026f365ad309e47e7f51b14d8c5e83c",
-      "issue": 1600
-    },
-    "github:46031853954:1:tick:0:review-requested": {
-      "digest": "d248eb704809280e9a2e4f8db515d573cba3337da00291c84d5b5fa239c761ef",
-      "issue": 1600
-    },
-    "github:46031853954:1:completions:message:0dd2aacd19cdf2c564bfe92870455e3801ffe4cd2c17d672974b1c6b9fdc8e87": {
-      "digest": "d7c72585ecf652a40b2ec2417ba2b004902faaffa150cd455d935c2edf00a073",
-      "issue": 1600
-    },
-    "github:46031853954:1:completions:message:6a73adbf69193f3bd6de08fa4018175f95230c0dcd61b29544ca50c3d516d5a0": {
-      "digest": "49fc10b029862d6c566efff6deaa5b5cfb56b1399e52429605e62c91e352d80a",
-      "issue": 1600
-    },
-    "github:46031853954:1:completions:message:1e178ec073a8947d0081cae5845231b41394a45213c2e6bd963721319aabfcb9": {
-      "digest": "67dd3dfee7979170f9a178dbc73872ab75bcecdc33519f66bb18affb25eece20",
-      "issue": 1600
-    },
-    "github:46031853954:1:completions:message:95b4e81b73719eb13a7433a72af02ccc01044e35326731c78a54e196062c48a9": {
-      "digest": "0ac7900b2140a49d5a6582fa201fbdb6017b83d82cb22bd2cc374b7e8eeb8aac",
-      "issue": 1600
-    },
-    "github:46031853954:1:completions:message:6cf013ac03b94a66ee3413a0a4214bb2dde56840f8c8f8efa9645a5985a6342c": {
-      "digest": "07f78a57c8783004b8ff35c17605257986e67b94ec2970af943b48b86a661a0a",
-      "issue": 1600
-    },
     "github:46031853954:1:completions:notice:9ed3944b2d873c2cee93dff563c332890b3e090998627fda374b8a840b7350f5": {
       "digest": "72dee40bd8ea8bc60a4a37c9dc72c1a77f0adf310952cb6373f9aebbe251604f",
       "issue": 1595
     },
-    "github:46031853954:1:completions:message:9ed3944b2d873c2cee93dff563c332890b3e090998627fda374b8a840b7350f5": {
-      "digest": "8b070082f7db3a99cbf1da8496869e27e6371ae4463011b4016c5339445b9991",
-      "issue": 1600
-    },
     "github:46031853954:1:completions:notice:7276f7d786efa7dabf0ab963062de9aa1dc8c176947671854ed2edad77d29459": {
       "digest": "0483600657efea9732e1c40d9b4f4cf66f1a94151d7316d5d3d7625283f23b9c",
       "issue": 1598
-    },
-    "github:46031853954:1:completions:message:7276f7d786efa7dabf0ab963062de9aa1dc8c176947671854ed2edad77d29459": {
-      "digest": "9a515bed0de39f8193f07990a2a72209f950768c878f59f673709df1aa477a4c",
-      "issue": 1600
-    },
-    "github:46031853954:1:completions:message:6591db3ad4b2830c9c024292cefdff4f34bd4b2210319d7f9b9ebcef08f8a323": {
-      "digest": "67af945326fc8be49ff08a60403c0ef818e31dd45de8499ce5c35d759a38356e",
-      "issue": 1600
-    },
-    "finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:7:review-presentation": {
-      "digest": "6c6ba29f3bed2e4bf3d65b6bdb903b023df2366bcc21aeaae4f019fa2f8eae54",
-      "issue": 1600
-    },
-    "finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:7:review-complete": {
-      "digest": "dbdceeb08511dd21dacf1086e7f5a8898a7977ba7c9d85b81ea8f7823e48a398",
-      "issue": 1600
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -8814,20 +8568,6 @@
         "delivered": true
       }
     },
-    "finish:a83f6f99-da1c-43de-8a04-2bef1dae71e4": {
-      "digest": "748e0a18a2bfcccc490cdea426280d3d7065d0a93e9be59629af47eb31c7f259",
-      "issue": 1600,
-      "message": {
-        "kind": "queued",
-        "issue": 1600,
-        "at": 1795776002686,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e9898ecd437b30e59c8f48116cfd44a1bbba9f5e",
-        "delivered": true
-      }
-    },
     "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe": {
       "digest": "adfef01c455d4ce29672db35b93a765b206f3397a9e8a605016537deeb6affe4",
       "issue": 1603,
@@ -8999,42 +8739,6 @@
         "delivered": true
       }
     },
-    "finish:a5aa5fd8-2738-492d-8195-883a54a82305:finish:1:admit": {
-      "digest": "f5b4976d714c17f1b858c3039f60bf76efdc966a695ec718ae446f7ed1750245",
-      "issue": 1600,
-      "message": {
-        "kind": "admitted",
-        "issue": 1600,
-        "at": 1795786595185,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "3c889a22410a979b6833de5049857c3f03d1937c",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:973fdb14-5c23-4a35-bbe7-df2a222a59a2:finish:2:return:return:1600": {
-      "digest": "a320f7b8ffcb3c5a98a29f6d1c95550fce2e68eb019fe9f40b448a2b8762f309",
-      "issue": 1600,
-      "message": {
-        "kind": "return",
-        "issue": 1600,
-        "at": 1795786667883,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795786667883,
-          "entry": 1,
-          "detail": "Поведение механизма: process-next/test/task-selection.test.mjs: failed; Поведение механизма: test/config-lifecycle.test.mjs: failed",
-          "eventId": "finish:973fdb14-5c23-4a35-bbe7-df2a222a59a2:finish:2:return:return:1600"
-        },
-        "delivered": true
-      }
-    },
     "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:1:admit": {
       "digest": "1fd95557d4d5de99e232fa9986f2bc542f78f23658e8c36f4d9f578fc07e8538",
       "issue": 1603,
@@ -9047,20 +8751,6 @@
         "layer": "product",
         "materialSha": "41acf20c220bd49cf49a2c0550c9dee0fde57031",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "ready:1600:29c2bd1b0bc3edeaab705250d49916b95524d003": {
-      "digest": "c252c919375a6e375e314b01d5ef7b450fcf7ca65c8a7bf8c32d4bb11416f191",
-      "issue": 1600,
-      "message": {
-        "kind": "queued",
-        "issue": 1600,
-        "at": 1795786858885,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "29c2bd1b0bc3edeaab705250d49916b95524d003",
         "delivered": true
       }
     },
@@ -9285,21 +8975,6 @@
         "delivered": true
       }
     },
-    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:1:admit": {
-      "digest": "1a6129a16cea96d89714e44c973ef89ca666c6fde549f16f37b7bc1106c5092d",
-      "issue": 1600,
-      "message": {
-        "kind": "admitted",
-        "issue": 1600,
-        "at": 1795795983357,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "ac8b2a316e0240995776ef14e75671772ee48e68",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:e3bb72e7-dbf0-45e1-89f1-3e03e75c2122": {
       "digest": "363a97aa7636cc75cb57808d7136578a751e98bb6f55f28cacaac9d26561f49d",
       "issue": 1598,
@@ -9320,36 +8995,6 @@
           "finishedAt": "2026-11-27T11:48:11.524Z",
           "failures": []
         },
-        "delivered": true
-      }
-    },
-    "finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:3:s6-complete": {
-      "digest": "1ce23798bda145f9c70d3040635d2f7e69cde2335c46004f7349ef8539d7734b",
-      "issue": 1600,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1600,
-        "at": 1795796043874,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-        "phase": "review",
-        "evidence": {
-          "id": "20261127T161337212-889a00ed",
-          "name": "Тесты для задачи #1600 (перед ревью)",
-          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T161337212-889a00ed/report.json",
-          "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-          "status": "passed",
-          "finishedAt": "2026-11-27T16:14:02.547Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Задача выполняется по track:show как инфраструктурный контракт ядра/поставки; пользовательские сценарии и модели не меняются.\n\nВыбран двухуровневый контракт: запущенные wheel/core adapter и standalone editor берутся из одной версии/commit с существующей точной проверкой version/fingerprint/API. HA и сайт могут обновляться независимо при переносе архивов: принимающий parser проверяет контейнер, export/model и required API. Stable в одной major-линии сохраняет ранее поддержанное чтение через явные readers/migrations; ломающее изменение публичного core API или удаление этой поддержки требует major продукта. Счётчики model/export/archive независимы: их увеличение с сохранением старого чтения само по себе не требует major. Нет гарантии downgrade или чтения произвольной будущей модели. Текущий 2.x явно проверяет архивы 1.86.0/1.86.1; это поддерживаемый переход через major, а не обещание любых комбинаций версий.\n\nРеализация: docs/CORE-HOST.md содержит публичную границу и таблицу текущих parser-правил (house ZIP точно model11; full JSON/backup допускают прежние модели по имеющейся миграции). docs/STANDALONE-FRONTEND.md и release notes ссылаются на контракт. Колесо сохраняет версию продукта с PEP440 spelling для prerelease. Четыре synthetic ZIP созданы настоящими exporters pinned stable commits 2725feedd276c5c1c19d9223c99b1adcdefefaa1 и f175b7e00d8535149c61c2d28a922620a3a70928, прочитаны их собственными readers, имеют provenance/hash и воспроизводятся побайтно с фиксированными тестовыми часами. Те же bytes входят в wheel/sdist; default core conformance дополнительно читает их текущими readers без HA. В pure full-backup conformance нет restore и нет выдачи PLAN_ONLY новых полномочий.\n\nПри publish готовые wheel METADATA/distribution.json, HACS manifest.json и standalone manifest повторно читаются до создания/загрузки GitHub release. Внутренние версии сравниваются канонически: product 2.0.0-beta.2 и PEP440 2.0.0b2 принимаются как одна версия; 2.0.0b3 отклоняется отдельным behavioral case. Источник должен соответствовать кандидату. Отрицательные тесты обновляют все внешние хеши и показывают, что внутреннее расхождение всё равно отклоняется. Ретрай опубликованного выпуска проверен прежним remote behavioral test на настоящих synthetic ZIP.\n\nДо очереди: 7 pytest addressed cases, 51 Node site-release/remote cases; wheel+sdist build и clean install smoke каждого (18 base, 2 house, 4 historical scenarios, без HA imports) прошли. Генератор воспроизвёл provenance и четыре ZIP побайтно. Финальный S6 выполнит native finish на допущенной базе; реальные итоги будут переданы процессом. HA E2E не расширяется: endpoint/restore/writable product path не меняются; чистое чтение архивов не доказывает HA restore durability или production DB.\n\n\n### Исправления после фактического S6\n\nПервый native S6 на базе 0a917f294e0393c317f4a4fdeec9dc4640bb0695 и материале 2d5559b03f1241702049a2a5a284435536b32018: 26/28 шагов PASS, два FAIL в инфраструктурных свидетелях. task-selection.test требовал сохранить выборку test_core_distribution.py для изменений PlanCommands после классификации теста как infra: теперь dynamic source scope честно объявляет чтение полного canonical core, builder и frozen fixtures, участвуя и в selection, и в reuse fingerprint. config-lifecycle.test обнаружил два новых fixture-path literals со словом compatibility: оба зарегистрированы как word-only exclusions с причиной, digest обновлён; существующие decoder/migration branches не удалялись. Адресный повтор этих двух файлов: 44/44 Node cases PASS. Материал исправления 29c2bd1b0; следующий native finish повторит актуальный S6 с применимым reuse, затем передаст на S7.\n\n\nДополнительная адресная подготовка до повторного допуска: typed archive helper проходит pinned Ruff 0.16.5 и mypy 2.3.1 даже при прежнем global-strict эффекте; оба изменённых conformance-модуля проходят mypy с исправленным allowlist scope конфигом #1603 (свой pyproject в #1600 не менялся). Повторный wheel+sdist build и clean-install smoke после типизации проходят с pinned runtime constraints: по 18 base, 2 house, 4 historical сценария и запрет HA imports. Новые helper/reader явно отнесены к storage, infra-layer сохранён; существующий domain regression 40/40 PASS. Текущий подготовленный material ac8b2a316e0240995776ef14e75671772ee48e68; финальный native S6 и S7 ещё ожидаются.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
