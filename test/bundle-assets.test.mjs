@@ -1289,6 +1289,48 @@ test('#438 предупреждение о запасе можно погаси�
   );
 });
 
+const budgetManifest = initialViewGzipBytes => ({
+  schema: 1,
+  fingerprint: 'f'.repeat(64),
+  entry: 'houseplan-card.js',
+  panelEntry: 'houseplan-panel.js',
+  files: [
+    {
+      path: 'houseplan-card.js', gzipBytes: initialViewGzipBytes, isEntry: true,
+    },
+    { path: 'houseplan-panel.js', gzipBytes: 1, isEntry: true },
+  ],
+  initialViewFiles: ['houseplan-card.js'],
+  initialViewGzipBytes,
+  initialPanelFiles: ['houseplan-panel.js'],
+  initialPanelGzipBytes: 1,
+  initialPanelOnlyFiles: ['houseplan-panel.js'],
+  initialPanelOnlyGzipBytes: 1,
+  lazyEditorFiles: ['editor.js'],
+  lazyLedEditorFiles: ['led-editor.js'],
+  lazyLedEditorGzipBytes: 100,
+  lazyLedFiles: ['led.js'],
+  lazyLedGzipBytes: 100,
+  // #593: у ленивых графов теперь свои потолки, и фикстура обязана лежать
+  // внутри полосы — иначе CLI краснеет не на том, что проверяет тест.
+  lazyEditorGzipBytes: LAZY_EDITOR_GZIP_CEILING - 1_000,
+  lazyLocaleFiles: ['locale.js'],
+  lazyLocaleGzipBytes: 100,
+  lazyIsometricFiles: ['isometric.js'],
+  lazyIsometricGzipBytes: 100,
+  lazyFurnitureArtFiles: ['furniture-art.js'],
+  lazyFurnitureArtGzipBytes: LAZY_FURNITURE_ART_GZIP_CEILING - 1_000,
+  lazyPdfFiles: ['pdf.js'],
+  lazyPdfGzipBytes: 100,
+  lazyMoonFiles: ['moon.js'],
+  lazyMoonGzipBytes: 100,
+  lazyOnboardingFiles: ['onboarding.js'],
+  lazyOnboardingGzipBytes: LAZY_ONBOARDING_GZIP_CEILING - 1_000,
+  lazyNamespaceLocaleFiles: NAMESPACE_LOCALE_CHUNKS
+    .map((entry) => `${entry.namespace}-${entry.language}.js`),
+  lazyNamespaceLocaleGzipBytes: 900,
+});
+
 /**
  * Прогон настоящего CLI бюджета в подставном дереве (#438).
  *
@@ -1330,47 +1372,7 @@ const runBudgetCli = (initialViewGzipBytes) => {
     writeFileSync(join(dir, 'dist/furniture-art.js'), 'lazy furniture artwork');
     writeFileSync(join(dir, 'dist/pdf.js'), 'lazy pdf writer');
     writeFileSync(join(dir, 'dist/moon.js'), 'lazy moon runtime');
-    writeFileSync(join(dir, 'dist/houseplan-assets.json'), JSON.stringify({
-      schema: 1,
-      fingerprint: 'f'.repeat(64),
-      entry: 'houseplan-card.js',
-      panelEntry: 'houseplan-panel.js',
-      files: [
-        {
-          path: 'houseplan-card.js', gzipBytes: initialViewGzipBytes, isEntry: true,
-        },
-        { path: 'houseplan-panel.js', gzipBytes: 1, isEntry: true },
-      ],
-      initialViewFiles: ['houseplan-card.js'],
-      initialViewGzipBytes,
-      initialPanelFiles: ['houseplan-panel.js'],
-      initialPanelGzipBytes: 1,
-      initialPanelOnlyFiles: ['houseplan-panel.js'],
-      initialPanelOnlyGzipBytes: 1,
-      lazyEditorFiles: ['editor.js'],
-      lazyLedEditorFiles: ['led-editor.js'],
-      lazyLedEditorGzipBytes: 100,
-      lazyLedFiles: ['led.js'],
-      lazyLedGzipBytes: 100,
-      // #593: у ленивых графов теперь свои потолки, и фикстура обязана лежать
-      // внутри полосы — иначе CLI краснеет не на том, что проверяет тест.
-      lazyEditorGzipBytes: LAZY_EDITOR_GZIP_CEILING - 1_000,
-      lazyLocaleFiles: ['locale.js'],
-      lazyLocaleGzipBytes: 100,
-      lazyIsometricFiles: ['isometric.js'],
-      lazyIsometricGzipBytes: 100,
-      lazyFurnitureArtFiles: ['furniture-art.js'],
-      lazyFurnitureArtGzipBytes: LAZY_FURNITURE_ART_GZIP_CEILING - 1_000,
-      lazyPdfFiles: ['pdf.js'],
-      lazyPdfGzipBytes: 100,
-      lazyMoonFiles: ['moon.js'],
-      lazyMoonGzipBytes: 100,
-      lazyOnboardingFiles: ['onboarding.js'],
-      lazyOnboardingGzipBytes: LAZY_ONBOARDING_GZIP_CEILING - 1_000,
-      lazyNamespaceLocaleFiles: NAMESPACE_LOCALE_CHUNKS
-        .map((entry) => `${entry.namespace}-${entry.language}.js`),
-      lazyNamespaceLocaleGzipBytes: 900,
-    }));
+    writeFileSync(join(dir, 'dist/houseplan-assets.json'), JSON.stringify(budgetManifest(initialViewGzipBytes)));
     const script = fileURLToPath(new URL('../scripts/bundle-budget.mjs', import.meta.url));
     const run = spawnSync(process.execPath, [script], { cwd: dir, encoding: 'utf8' });
     return { status: run.status, output: `${run.stdout || ''}${run.stderr || ''}` };
@@ -1405,28 +1407,12 @@ test('#438 historical manual budget CLI applies its synthetic fixture limits', (
 });
 
 test('#792 absolute initial View wall accepts equality and rejects the next byte independently of the ratchet', () => {
-  const base = shippedManifest();
-  // The entry may be only a tiny loader after splitting. Adjust a real sizeable
-  // initial chunk, not a loader which the synthetic delta could make negative.
-  const adjustable = base.files.filter(file => base.initialViewFiles.includes(file.path))
-    .sort((a,b) => b.gzipBytes-a.gzipBytes)[0];
-  const withBytes = (bytes) => {
-    const delta = bytes - base.initialViewGzipBytes;
-    assert.ok(adjustable.gzipBytes + delta > 0, 'boundary fixture retains a valid positive gzip size');
-    return {
-      ...base,
-      initialViewGzipBytes: bytes,
-      initialPanelGzipBytes: base.initialPanelGzipBytes
-        + (base.initialPanelFiles.includes(adjustable.path) ? delta : 0),
-      files: base.files.map(file => file.path === adjustable.path
-        ? { ...file, gzipBytes: file.gzipBytes + delta } : file),
-    };
+  const judge = bytes => {
+    const manifest = budgetManifest(bytes);
+    return assertBundleBudget(manifest, INITIAL_VIEW_GZIP_BUDGET,
+      manifest.initialPanelOnlyGzipBytes, manifest.lazyFurnitureArtGzipBytes,
+      manifest.lazyEditorGzipBytes, manifest.lazyOnboardingGzipBytes);
   };
-  // Other graph limits use their own fixture facts: this witness judges only
-  // the absolute View boundary, even when the committed bundle is older.
-  const judge = bytes => assertBundleBudget(withBytes(bytes), INITIAL_VIEW_GZIP_BUDGET,
-    base.initialPanelOnlyGzipBytes, base.lazyFurnitureArtGzipBytes,
-    base.lazyEditorGzipBytes, base.lazyOnboardingGzipBytes);
   assert.doesNotThrow(() => judge(INITIAL_VIEW_GZIP_BUDGET));
   assert.throws(() => judge(INITIAL_VIEW_GZIP_BUDGET + 1),
     new RegExp(`initial View graph ${INITIAL_VIEW_GZIP_BUDGET + 1} B gzip exceeds ${INITIAL_VIEW_GZIP_BUDGET} B budget`));
@@ -1451,7 +1437,7 @@ test('#593 historical lazy-graph helper enforces its explicit synthetic band', (
 });
 
 test('#896 all three valid lazy graphs use the inclusive band, with no extra 500 B reserve', () => {
-  const manifest = shippedManifest();
+  const manifest = budgetManifest(INITIAL_VIEW_GZIP_CEILING - 500);
   const graphs = [
     ['lazyFurnitureArtGzipBytes', 'lazy furniture art graph'],
     ['lazyEditorGzipBytes', 'lazy editor graph'],
@@ -1482,12 +1468,12 @@ test('#896 all three valid lazy graphs use the inclusive band, with no extra 500
 });
 
 test('#627 historical onboarding helper keeps explicit inclusive boundaries', () => {
-  const manifest = shippedManifest();
+  const manifest = budgetManifest(INITIAL_VIEW_GZIP_CEILING - 500);
   const ceilings = (onboarding) => [
     manifest.lazyFurnitureArtGzipBytes, manifest.lazyEditorGzipBytes, onboarding,
   ];
   const bytes = manifest.lazyOnboardingGzipBytes;
-  assert.ok(Number.isFinite(bytes) && bytes > 0, 'манифест обязан измерять граф онбординга');
+  assert.ok(Number.isFinite(bytes) && bytes > 0, 'фикстура содержит размер графа онбординга');
   assert.doesNotThrow(() => assertBundleBudget(manifest, manifest.initialViewGzipBytes, manifest.initialPanelOnlyGzipBytes, ...ceilings(bytes)));
   const over = bytes - LAZY_GRAPH_CEILING_BAND - 1;
   assert.throws(
