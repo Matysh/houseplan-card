@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28468,
-  "nextTicket": 774,
+  "revision": 28469,
+  "nextTicket": 775,
   "nextFence": 770,
   "tasks": {
     "1001": {
@@ -6358,14 +6358,14 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1600-core-compatibility",
-      "materialSha": "2d5559b03f1241702049a2a5a284435536b32018",
+      "materialSha": "29c2bd1b0bc3edeaab705250d49916b95524d003",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 768,
-      "queued": false,
+      "ticket": 774,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795776002686,
-      "reviewEntry": 1,
+      "readyAt": 1795786858885,
+      "reviewEntry": 2,
       "patchId": "b170235171d863a3ee43e53ff0d3eb08d28a6495",
       "changedFiles": [
         "custom_components/houseplan/core/archive_conformance.py",
@@ -6393,7 +6393,6 @@
         "tools/generate_core_compatibility_fixtures.py",
         "tools/smoke_core_package.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7524,7 +7523,8 @@
     1609,
     1608,
     1595,
-    1598
+    1598,
+    1600
   ],
   "active": {
     "issue": 1603,
@@ -9220,6 +9220,19 @@
         "layer": "product",
         "materialSha": "41acf20c220bd49cf49a2c0550c9dee0fde57031",
         "phase": "sync"
+      }
+    },
+    "ready:1600:29c2bd1b0bc3edeaab705250d49916b95524d003": {
+      "digest": "c252c919375a6e375e314b01d5ef7b450fcf7ca65c8a7bf8c32d4bb11416f191",
+      "issue": 1600,
+      "message": {
+        "kind": "queued",
+        "issue": 1600,
+        "at": 1795786858885,
+        "entry": 2,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "29c2bd1b0bc3edeaab705250d49916b95524d003"
       }
     }
   },
