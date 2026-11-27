@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29531,
-  "nextTicket": 792,
+  "revision": 29532,
+  "nextTicket": 793,
   "nextFence": 792,
   "tasks": {
     "1001": {
@@ -6190,14 +6190,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1612-vacuum-3d-floor",
-      "materialSha": "6711c4f54424a3997133eb2a6eb36c027da0a1b1",
+      "materialSha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 791,
-      "queued": false,
+      "ticket": 792,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795810334064,
-      "reviewEntry": 3,
+      "readyAt": 1795811178284,
+      "reviewEntry": 4,
       "patchId": "4ba702dabedf7bc3d787ec6999537446aea7410c",
       "changedFiles": [
         "demo/smoke_vacuum_3d_floor.mjs",
@@ -6237,13 +6237,6 @@
         "execution": "github"
       },
       "reviewRound": null,
-      "reviewRequest": "review:1612:3:4ba702dabedf7bc3d787ec6999537446aea7410c:46ba17964dff6b655df64316d333383d0239dbef",
-      "reviewMaterial": {
-        "materialSha": "6711c4f54424a3997133eb2a6eb36c027da0a1b1",
-        "expectedBase": "46ba17964dff6b655df64316d333383d0239dbef",
-        "patchId": "4ba702dabedf7bc3d787ec6999537446aea7410c"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1612:3:4ba702dabedf7bc3d787ec6999537446aea7410c:46ba17964dff6b655df64316d333383d0239dbef",
         "at": 1795810598584
@@ -7078,7 +7071,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1612
+  ],
   "active": null,
   "events": {
     "finish:92b94c16-2920-4443-9b6c-b4a08c69ff68:finish:2:synchronized": {
@@ -7404,6 +7399,29 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:3283960f-c99e-485f-b6c6-1efd158fbb63": {
+      "digest": "029841e25e5bf90bb850980d5f430f97832982a6c14eec5c6018421b1d2d16e3",
+      "issue": 1612,
+      "message": {
+        "kind": "queued",
+        "issue": 1612,
+        "at": 1795811178284,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
+        "evidence": {
+          "id": "20261127T200638153-432477e7",
+          "requestId": "s6:1612:d93b501d12a2ceec6cf5923964cfc7a1",
+          "runId": 46061153186,
+          "materialSha": "6711c4f54424a3997133eb2a6eb36c027da0a1b1",
+          "status": "passed",
+          "finishedAt": "2026-11-27T20:11:37.789Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46061153186",
+          "execution": "github"
+        }
       }
     }
   },
