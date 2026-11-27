@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28726,
+  "revision": 28727,
   "nextTicket": 780,
   "nextFence": 775,
   "tasks": {
@@ -6341,7 +6341,7 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1600-core-compatibility",
-      "materialSha": "ac8b2a316e0240995776ef14e75671772ee48e68",
+      "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 774,
@@ -6349,7 +6349,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795786858885,
       "reviewEntry": 2,
-      "patchId": "b170235171d863a3ee43e53ff0d3eb08d28a6495",
+      "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7",
       "changedFiles": [
         "custom_components/houseplan/core/archive_conformance.py",
         "custom_components/houseplan/core/conformance.py",
@@ -6367,9 +6367,13 @@
         "process-next/catalog/inventory.json",
         "process-next/lib/site-artifact-versions.mjs",
         "process-next/lib/site-release.mjs",
+        "process-next/lib/source-dependencies.mjs",
+        "process-next/lib/task-selection.mjs",
         "process-next/test/coordinator.test.mjs",
         "process-next/test/remote.test.mjs",
         "process-next/test/site-release.test.mjs",
+        "process-next/test/task-selection.test.mjs",
+        "scripts/config-compatibility-inventory.json",
         "tests_backend/test_core_archive_compatibility.py",
         "tests_backend/test_core_distribution.py",
         "tools/build_core_package.py",
@@ -7399,11 +7403,12 @@
     "worker": "finish",
     "token": "774:finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:1:admit",
     "fence": 774,
-    "materialSha": "ac8b2a316e0240995776ef14e75671772ee48e68",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+    "expectedBase": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+    "phase": "testing",
     "admittedAt": 1795795983357,
-    "expiresAt": 1795796283357
+    "expiresAt": 1795796311713,
+    "patchId": "b12ee743099f75fdaf914681d7c7d2688e8d89f7"
   },
   "events": {
     "finish:8199b101-c60f-4348-a965-0a33090b455e": {
@@ -8197,6 +8202,10 @@
     "finish:869ad6ca-c151-4ed6-abd4-8e7db02dc9e8:finish:3:return": {
       "digest": "1a0a40d7aaddbdccef4299987c918fa5fc1e5df5db950ce60146ff10f858dba0",
       "issue": 1598
+    },
+    "finish:0d14247c-9ec3-4cc4-89c6-28336f7fbe88:finish:2:synchronized": {
+      "digest": "aa60a5f755163df36c4335b2898293b09fa1189adb06c51154662d86f678e38c",
+      "issue": 1600
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
