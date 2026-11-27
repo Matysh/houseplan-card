@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29685,
+  "revision": 29686,
   "nextTicket": 797,
   "nextFence": 797,
   "tasks": {
@@ -7158,6 +7158,10 @@
       "digest": "95494113a2dba83a2c4ce62e653aca86ae8cea15800b18af6796afb88c9f526c",
       "issue": 1592
     },
+    "github:46076378935:1:completions:message:39eb2f6253971c9e5e34f7e6e1cbb78b724e256fe21dbc2bb2ecdd69060214f3": {
+      "digest": "7734612796a7c914110d5f98ac513a0f24046ace4555f15121f726024e0d0f65",
+      "issue": 1592
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7232,7 +7236,8 @@
           "at": 1795817956744,
           "entry": 1,
           "eventId": "issue-1592:correct-stable-tag-after-hotfix:return:1592"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:e90702cf-d6da-4e5d-9652-42a10b332dbc": {
