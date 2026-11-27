@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28643,
+  "revision": 28644,
   "nextTicket": 778,
   "nextFence": 772,
   "tasks": {
@@ -7570,14 +7570,6 @@
     "reviewRequest": "review:1608:4:8dfb521710a8a56412d83ebf38ccdb5245c573b3:0a917f294e0393c317f4a4fdeec9dc4640bb0695"
   },
   "events": {
-    "finish:e97e771d-9c20-46c0-b1aa-e7faabe128a0": {
-      "digest": "ca3f56ad6b0d7482b99f5d74ed87425d5d3f5f15ca036380da0bb243e4cc554c",
-      "issue": 1594
-    },
-    "finish:79021484-3289-4f51-8d42-1c2602b379b3": {
-      "digest": "2d67e06fac608dc6b5691044075188fbe22f7f59e5534cdd62db64b54a598e84",
-      "issue": 1594
-    },
     "finish:3fbdc315-dfb7-4999-b2d1-b1071f8eef0b": {
       "digest": "f28eecc2e7f616cc24d140991b659026cc5de5f5e523e175f2c46cfc5d99ab06",
       "issue": 1594
@@ -8376,6 +8368,10 @@
     },
     "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:5:review-requested": {
       "digest": "a1a2aff5acf56894a407e1208c2ab1b48674079d703b6cceb049b7774246b615",
+      "issue": 1608
+    },
+    "github:46024398138:1:completions:message:016ad1313002d09a1875e59d448fe40d2e5415b540ba8cf0cfe8a842c725c595": {
+      "digest": "4844be6543d33fca6a72ba99da3d22ac8a0c6f3f6e1e86bee20a5ff41d041c20",
       "issue": 1608
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -9361,7 +9357,8 @@
           "status": "passed",
           "finishedAt": "2026-11-27T14:34:01.256Z",
           "failures": []
-        }
+        },
+        "delivered": true
       }
     },
     "finish:fc6dd1d4-b19e-486e-991d-169973e1438b:finish:4:s6-complete": {
