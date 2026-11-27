@@ -309,9 +309,9 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     if (request.latestStable && !safeRelative(request.latestStable)) throw Error('metricsRequest.latestStable must be a repository-relative measurement file');
     measurementInputs = [metricsRequest, ...(request.latestStable ? [request.latestStable] : [])];
   }
-  steps.push(step('release-measurements', event === 'stable' ? 'Сохранение замера stable для следующей беты' : 'Размеры и время относительно последнего stable', helper('measure', ...metricsRequest ? [metricsRequest] : []),
-    [...browserInputs, ...measurementInputs, 'process-next/baselines/v1.83.1.json'], ['release-package', 'demo-assets'],
-    { diagnostic: true, alwaysRun: true, outputs: ['artifacts/process-next/measurement.json', 'artifacts/process-next/metrics.json', 'artifacts/process-next/metrics.md'], timeoutMs: 3600000 }));
+  steps.push(step('release-measurements', 'Размеры пакета и парный замер времени относительно последнего stable', helper('measure', ...metricsRequest ? [metricsRequest] : []),
+    [...browserInputs, ...measurementInputs, 'docs/release-ledger/cycle.json', 'process-next/baselines/v1.83.1.json'], ['release-package', 'demo-assets'],
+    { diagnostic: true, alwaysRun: true, exclusive: true, outputs: ['artifacts/process-next/measurement.json', 'artifacts/process-next/metrics.json', 'artifacts/process-next/metrics.md'], timeoutMs: 3600000 }));
   for (const smoke of BETA_SMOKES) steps.push(smokeStep(smoke));
   steps.push(step('golden-beta', `${BETA_GOLDEN.length} визуальных кадров: панель ${BETA_PANEL_GOLDEN.length}, Lovelace ${BETA_LOVELACE_GOLDEN.length}, Static ${BETA_STATIC_GOLDEN.length}`, helper('golden-runner', '--selection=beta'),
     [...browserInputs, ...BETA_GOLDEN.map(id => `demo/golden/baselines/${id}.png`), 'demo/golden/baselines/baselines-index.json'],

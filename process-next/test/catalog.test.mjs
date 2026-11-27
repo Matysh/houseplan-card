@@ -218,7 +218,9 @@ test('new product/backend/browser tests are discovered without regenerating the 
   assert.ok(!rows.some(row => row.path.includes('action-pins')));
   const stable = await planProfile({ root, event: 'stable' });
   const metric = stable.steps.find(step => step.id === 'release-measurements');
-  assert.ok(metric.command && metric.diagnostic && metric.alwaysRun);
+  assert.ok(metric.command && metric.diagnostic && metric.alwaysRun && metric.exclusive);
+  assert.ok(metric.inputs.includes('docs/release-ledger/cycle.json'));
+  assert.ok(metric.requires.includes('release-package') && metric.requires.includes('demo-assets'));
   const ship = await planProfile({ root, track: 'ship', issue: 1105 });
   assert.match(ship.name, /перед слиянием/);
 });

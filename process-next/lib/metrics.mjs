@@ -47,23 +47,29 @@ export function measureZip(path) {
   const names = listZipEntries(path).filter(name => name.startsWith('frontend/') && !name.endsWith('/'));
   return { ...measureFrontend(readZipEntries(path, names), readFileSync(path).length), artifactDigest: digest(readFileSync(path)), compression: { node: process.version, zlib: process.versions.zlib, level: 9 } };
 }
-export function collectMeasurement({ zip, performance, host, runnerHash, release, sourceSha }) {
+export function collectTiming({ performance, host, runnerHash, release, sourceSha, buildFingerprint }) {
   if (!sourceSha) throw Error('Candidate measurement identity required');
   if (performance && performance.sourceSha !== sourceSha) throw Error('Performance report is from another candidate');
-  const sizes = measureZip(zip);
-  if (!sizes.buildFingerprint || performance && sizes.buildFingerprint !== performance.buildFingerprint) throw Error('Performance did not measure the packaged frontend');
+  if (!buildFingerprint || performance && buildFingerprint !== performance.buildFingerprint)
+    throw Error('Performance did not measure the identified frontend');
   const timing_metrics = {}, diagnostics = [];
   for (const [key, policy] of Object.entries(POLICY)) if (policy.unit === 'ms') {
     const samples = performance?.rows?.map(row => row[key]);
     if (!validSamples(samples)) { diagnostics.push(`Нет достоверной серии замеров: ${policy.label}`); continue; }
     timing_metrics[key] = { median: median(samples), samples };
   }
-  if (!host?.cpu || !host?.power_scheme || !runnerHash) diagnostics.push('Условия замера записаны не полностью; сравнение времени недоступно');
-  return { schema: 1, release, source_sha: sourceSha, recorded_at_utc: new Date().toISOString(), ...sizes, timing_metrics, host,
+  if (!host?.cpu || !powerSchemeIdentity(host?.power_scheme) || !runnerHash)
+    diagnostics.push('Условия замера записаны не полностью; сравнение времени недоступно');
+  return { schema: 1, release, source_sha: sourceSha, recorded_at_utc: new Date().toISOString(), buildFingerprint, timing_metrics, host,
     measurement_status: diagnostics.length ? 'incomplete' : 'complete', diagnostics,
     ...(performance?.webglDiagnostics ? { webgl_diagnostics: performance.webglDiagnostics } : {}),
     ...(performance?.modeTransitionDiagnostics ? { transition_diagnostics: performance.modeTransitionDiagnostics } : {}),
     timing_protocol: { profile: performance?.profile, fixture: performance?.fixture, warmups: performance?.warmups, samples: performance?.samples, runtime: performance?.runtime, runner_sha256: runnerHash } };
+}
+
+export function collectMeasurement({ zip, ...input }) {
+  const sizes = measureZip(zip);
+  return { ...sizes, ...collectTiming({ ...input, buildFingerprint: sizes.buildFingerprint }) };
 }
 const validSamples = samples => Array.isArray(samples) && samples.length >= 5 && samples.every(value => Number.isFinite(value) && value >= 0);
 function powerSchemeIdentity(value) {
@@ -83,24 +89,33 @@ function comparable(left, right) {
   const canonical = value => value && typeof value === 'object' ? Array.isArray(value) ? value.map(canonical)
     : Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
   const signature = record => {
-    const p = record?.timing_protocol, h = record?.host;
-    const power = powerSchemeIdentity(h?.power_scheme);
-    if (!p?.runner_sha256 || !p.runtime || typeof h?.cpu !== 'string' || !h.cpu || power === null) return null;
-    return JSON.stringify(canonical({ profile: p.profile, fixture: p.fixture, warmups: p.warmups, samples: p.samples, runtime: p.runtime,
-      runner: p.runner_sha256, cpu: cpu(h.cpu), power, linux: kernel(h.linux) }));
+    const protocol = record?.timing_protocol, host = record?.host;
+    const power = powerSchemeIdentity(host?.power_scheme);
+    if (!protocol?.runtime || typeof host?.cpu !== 'string' || !host.cpu.trim() || !host.linux || power === null) return null;
+    // The paired runner and its Node instance are shared. Keep the facts in
+    // the records, but compare the remaining browser protocol and host.
+    const { node, ...runtime } = protocol.runtime;
+    return { CPU: cpu(host.cpu), 'схема питания': power, ядро: kernel(host.linux),
+      профиль: protocol.profile, сценарий: canonical(protocol.fixture), прогрев: protocol.warmups,
+      повторы: protocol.samples, 'браузер и режим запуска': canonical(runtime) };
   };
-  const a = signature(left), b = signature(right); return a !== null && a === b;
+  const a = signature(left), b = signature(right);
+  if (!a || !b) return { matched: false, reason: 'Не полностью записана подпись стенда или протокол замера' };
+  const differences = Object.keys(a).filter(key => JSON.stringify(a[key]) !== JSON.stringify(b[key]));
+  return { matched: !differences.length,
+    ...(differences.length ? { reason: `Подпись стенда изменилась: ${differences.join(', ')}` } : {}) };
 }
 function measurement(record, key, policy) {
   if (policy.unit === 'B') return record?.size_metrics?.[key];
   const series = record?.timing_metrics?.[key]?.samples;
   return validSamples(series) ? median(series) : undefined;
 }
-function compareOne(candidate, reference, diagnostic) {
+function compareOne(candidate, reference, diagnostic, timingReference = reference) {
   return Object.entries(POLICY).map(([key, policy]) => {
-    const before = measurement(reference, key, policy), after = measurement(candidate, key, policy);
+    const base = policy.unit === 'ms' ? timingReference : reference;
+    const before = measurement(base, key, policy), after = measurement(candidate, key, policy);
     const available = Number.isFinite(before) && before >= 0 && Number.isFinite(after) && after >= 0;
-    const matched = policy.unit === 'B' || comparable(candidate, reference);
+    const { matched, reason } = policy.unit === 'B' ? { matched: true } : comparable(candidate, base);
     const delta = available ? after - before : null, threshold = available ? Math.max(before * policy.fraction, policy.absolute) : null;
     const excessive = available && delta > threshold;
     // Two halves must independently exceed the same policy before random timing noise can stop a beta.
@@ -110,14 +125,16 @@ function compareOne(candidate, reference, diagnostic) {
       && median(samples.slice(Math.floor(samples.length / 2))) - before > threshold;
     return { key, ...policy, before: before ?? null, after: after ?? null, delta, percent: available && before ? delta / before * 100 : null,
       threshold, comparable: matched, diagnostic, status: !available ? 'missing' : !matched ? 'incomparable' : excessive && repeatable ? 'regression' : excessive ? 'noisy' : 'within-tolerance',
+      ...(available && reason ? { reason } : {}),
       blocks: !diagnostic && excessive && repeatable && matched };
   });
 }
-export function compareMeasurements(candidate, latestStable, anchor = frozenBaseline()) {
+export function compareMeasurements(candidate, latestStable, anchor = frozenBaseline(), { timingReference = latestStable } = {}) {
   if (!candidate?.source_sha) throw Error('Candidate measurement identity required');
-  const primary = compareOne(candidate, latestStable, false), diagnostic = compareOne(candidate, anchor, true);
+  const primary = compareOne(candidate, latestStable, false, timingReference), diagnostic = compareOne(candidate, anchor, true);
   const needsMeasurement = primary.some(row => ['missing', 'incomparable', 'noisy'].includes(row.status));
   return { schema: 1, sha: candidate.source_sha, reference: latestStable?.release ?? 'нет замера последнего stable', anchor: anchor.release,
+    timingReference: timingReference?.release ?? null,
     requiresDecision: primary.some(row => row.blocks), needsMeasurement, primary, diagnostic,
     transitionDiagnostics: candidate.transition_diagnostics ?? null,
     webglDiagnostics: candidate.webgl_diagnostics ?? null,
@@ -125,10 +142,13 @@ export function compareMeasurements(candidate, latestStable, anchor = frozenBase
 }
 export function renderMetrics(report) {
   const table = (title, rows) => [title, '', '| Метрика | База | Кандидат | Изменение | Итог |', '|---|---:|---:|---:|---|',
-    ...rows.map(r => `| ${r.label} | ${r.before ?? 'нет данных'} | ${r.after ?? 'нет данных'} | ${r.percent === null ? '—' : r.percent.toFixed(1) + '%'} | ${r.status}${r.blocks ? ': решение владельца' : ''} |`)].join('\n');
+    ...rows.map(r => `| ${r.label} | ${r.before ?? 'нет данных'} | ${r.after ?? 'нет данных'} | ${r.percent === null ? '—' : r.percent.toFixed(1) + '%'} | ${r.status}${r.reason ? ` (${r.reason})` : ''}${r.blocks ? ': решение владельца' : ''} |`)].join('\n');
   const notes = report.evidenceStatus && report.evidenceStatus !== 'complete'
     ? `Состояние замера: ${report.evidenceStatus}. Отсутствующие данные не означают успешную проверку.\n${(report.diagnostics ?? []).map(reason => `- ${reason}`).join('\n')}\n\n` : '';
-  return notes + table(`Сравнение с ${report.reference}`, report.primary) + '\n\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n' + renderModeDiagnostics(report.transitionDiagnostics) + renderWebglDiagnostics(report.webglDiagnostics);
+  const heading = report.timingReference && report.timingReference !== report.reference
+    ? `Размеры относительно ${report.reference}. Время относительно ${report.timingReference}.`
+    : `Сравнение с ${report.reference}`;
+  return notes + table(heading, report.primary) + '\n\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n' + renderModeDiagnostics(report.transitionDiagnostics) + renderWebglDiagnostics(report.webglDiagnostics);
 }
 
 /** These observations never enter POLICY/primary or publication readiness. */

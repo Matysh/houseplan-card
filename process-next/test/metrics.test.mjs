@@ -95,12 +95,10 @@ test('#1448 legacy name-only conditions keep strict equality instead of guessed 
 
 test('#1448 GUID equality never masks genuinely different runtime, CPU, kernel or protocol conditions', () => {
   const differences = [
-    candidate => { candidate.timing_protocol.runtime.node = 'v22.23.4'; },
     candidate => { candidate.timing_protocol.runtime.chromium = '151.0.7922.35'; },
     candidate => { candidate.timing_protocol.runtime.viewport.width++; },
     candidate => { candidate.host.cpu = 'another CPU'; },
     candidate => { candidate.host.linux = 'Linux 9.1.0'; },
-    candidate => { candidate.timing_protocol.runner_sha256 = 'another-runner'; },
     candidate => { candidate.timing_protocol.profile = 'another-profile'; },
     candidate => { candidate.timing_protocol.fixture.rooms++; },
     candidate => { candidate.timing_protocol.warmups++; },
@@ -110,6 +108,18 @@ test('#1448 GUID equality never masks genuinely different runtime, CPU, kernel o
     const { base, candidate } = powerRecords(); change(candidate);
     assert.ok(timingRows(candidate, base).every(row => !row.comparable && row.status === 'incomparable'), String(change));
   }
+});
+
+test('runner and Node versions remain provenance; changed CPU includes the reason and both measured values', () => {
+  const { base, candidate } = powerRecords();
+  candidate.timing_protocol.runtime.node = 'v22.23.4';
+  candidate.timing_protocol.runner_sha256 = 'another-runner';
+  assert.ok(timingRows(candidate, base).every(row => row.comparable));
+  candidate.host.cpu = 'another CPU';
+  const report = compareMeasurements(candidate, base, base);
+  assert.ok(timingRows(candidate, base).every(row => row.status === 'incomparable'
+    && Number.isFinite(row.before) && Number.isFinite(row.after) && row.reason.includes('CPU')));
+  assert.match(renderMetrics(report), /Подпись стенда изменилась: CPU/);
 });
 
 test('#1448 comparable GUID annotations retain regression decisions and the two-halves noise rule', () => {
@@ -185,8 +195,20 @@ function measurementFixture(t) {
   writeFileSync(join(output, 'package.json'), JSON.stringify({ zip, sourceSha, version: '1.99.0-beta.1' }));
   const performance = { sourceSha, buildFingerprint: 'fixture-build', profile: 'fixture', fixture: 'fixture', samples: 7, warmups: 1,
     runtime: { platform: process.platform }, rows: Array.from({ length: 7 }, () => ({ firstStableRenderMs: 100, spaceSwitchMs: 50, panZoomMs: 3, stateUpdateMs: 10 })) };
-  const executeBenchmark = ({ performancePath }) => writeFileSync(performancePath, JSON.stringify(performance));
-  return { root, output, sourceSha, performance, executeBenchmark };
+  const stableRoot = join(root, 'stable'), stableSha = 'b'.repeat(40), stableFingerprint = 'stable-build';
+  const stablePerformance = { ...structuredClone(performance), sourceSha: stableSha, buildFingerprint: stableFingerprint };
+  const ledger = join(root, 'docs', 'release-ledger');
+  mkdirSync(ledger, { recursive: true });
+  mkdirSync(stableRoot);
+  writeFileSync(join(ledger, 'cycle.json'), JSON.stringify({ baseStable: 'v1.86.1' }));
+  const buildBaseline = ({ tag }) => {
+    assert.equal(tag, 'v1.86.1');
+    return { root: stableRoot, sourceSha: stableSha, buildFingerprint: stableFingerprint, clean() {} };
+  };
+  const executeBenchmark = ({ targetRoot, performancePath }) => writeFileSync(
+    performancePath, JSON.stringify(targetRoot === stableRoot ? stablePerformance : performance));
+  const readHost = () => ({ cpu: 'fixture', linux: 'Linux 9.1.0', power_scheme: 'Balanced' });
+  return { root, output, sourceSha, stableSha, performance, executeBenchmark, buildBaseline, readHost };
 }
 
 test('failed benchmark produces a diagnostic report with actual sizes and no stale timing', t => {
@@ -220,7 +242,7 @@ test('foreign SHA or build fingerprint stays invalid evidence and never becomes 
     assert.equal(result.evidenceStatus, 'invalid');
     assert.equal(result.measurement, null);
     assert.equal(existsSync(join(f.output, 'measurement.json')), false);
-    assert.ok(result.comparison.primary.every(row => row.status === 'missing'));
+    assert.ok(result.comparison.primary.every(row => row.status === 'missing' && row.after === null));
     assert.match(renderMetrics(result.comparison), /invalid/);
     assert.equal(result.comparison.requiresDecision, false);
     assert.equal(JSON.parse(readFileSync(join(f.output, 'metrics.json'))).evidenceStatus, 'invalid');
@@ -233,6 +255,29 @@ test('complete collection still records all seven actual metrics', t => {
   assert.equal(result.measurement.measurement_status, 'complete');
   assert.equal(Object.keys(result.measurement.timing_metrics).length, 4);
   assert.equal(result.comparison.primary.length, 7);
+  const { timing_baseline: before, timing_protocol: after } = result.measurement;
+  assert.equal(before.source_sha, f.stableSha);
+  assert.equal(before.buildFingerprint, 'stable-build');
+  assert.equal(before.timing_protocol.runner_sha256, after.runner_sha256);
+  assert.equal(Object.keys(before.timing_metrics).length, 4);
+  assert.ok(result.comparison.primary.filter(row => row.unit === 'ms')
+    .every(row => row.status === 'within-tolerance' && row.before === row.after));
+});
+
+test('failed current stable build preserves both historical evidence and honest missing timing rows', t => {
+  const f = measurementFixture(t);
+  const latest = { ...frozenBaseline(), release: '1.86.1' };
+  const stablePath = join(f.root, 'latest.json'), requestPath = join(f.root, 'request.json');
+  writeFileSync(stablePath, JSON.stringify(latest));
+  writeFileSync(requestPath, JSON.stringify({ latestStable: stablePath }));
+  const result = runMeasurements({ ...f, requestPath, buildBaseline: () => { throw Error('stable build failed'); } });
+  assert.equal(result.evidenceStatus, 'incomplete');
+  assert.equal(result.measurement.timing_baseline, null);
+  assert.equal(result.comparison.reference, '1.86.1');
+  assert.ok(result.comparison.primary.filter(row => row.unit === 'ms')
+    .every(row => row.status === 'missing' && row.before === null && Number.isFinite(row.after)));
+  assert.deepEqual(JSON.parse(readFileSync(stablePath)), latest);
+  assert.match(renderMetrics(result.comparison), /stable build failed/);
 });
 
 test('#1344 slow transition diagnostics are visible and cannot become release gates', () => {
