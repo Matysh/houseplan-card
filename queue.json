@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29533,
+  "revision": 29534,
   "nextTicket": 793,
   "nextFence": 793,
   "tasks": {
@@ -6198,7 +6198,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795811178284,
       "reviewEntry": 4,
-      "patchId": "4ba702dabedf7bc3d787ec6999537446aea7410c",
+      "patchId": "a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29",
       "changedFiles": [
         "demo/smoke_vacuum_3d_floor.mjs",
         "docs/CHANGELOG.md",
@@ -7078,10 +7078,11 @@
     "token": "792:finish:3283960f-c99e-485f-b6c6-1efd158fbb63:finish:1:admit",
     "fence": 792,
     "materialSha": "2fa7171c12e1df8c1ced9709c5358a54be825684",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "46ba17964dff6b655df64316d333383d0239dbef",
+    "phase": "testing",
     "admittedAt": 1795811182864,
-    "expiresAt": 1795811482864
+    "expiresAt": 1795811489583,
+    "patchId": "a2378d7ea589e9d5b2bcb4fa13af1e6b8b406f29"
   },
   "events": {
     "finish:92b94c16-2920-4443-9b6c-b4a08c69ff68:finish:2:synchronized": {
@@ -7218,6 +7219,10 @@
     },
     "github:46062490794:1:completions:metadata:cb97f857-e46b-423d-9ed9-62ed0654f37b:task-notice:1612::": {
       "digest": "0e946ada698ba0997d51db36dfb3d410a67a9edebc218204881f47ebb245a37e",
+      "issue": 1612
+    },
+    "finish:3283960f-c99e-485f-b6c6-1efd158fbb63:finish:2:synchronized": {
+      "digest": "26bd803a9acd65c8abf12bf001d974679642510e4b2635ebe7c1529c7a92c790",
       "issue": 1612
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
