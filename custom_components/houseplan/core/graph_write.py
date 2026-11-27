@@ -89,6 +89,43 @@ def normalize_graph_config(config: dict) -> dict:
     return out
 
 
+def partition_opening_migration_baseline(previous: dict | None, candidate: dict) -> dict | None:
+    """Express stored hosts in the same graph as a first structural write."""
+    if not previous or candidate.get("model_version") != 11:
+        return previous
+    model = int(previous.get("model_version", 0) or 0)
+    if model >= 11:
+        return previous
+
+    surviving_openings = {
+        space["id"]: {opening["id"] for opening in space.get("openings", [])}
+        for space in candidate["spaces"]
+    }
+    baseline = []
+    for space in previous.get("spaces", []):
+        kept = surviving_openings.get(space["id"], ())
+        hosted = {
+            opening["id"] for opening in space.get("openings") or []
+            if opening["id"] in kept and (opening.get("host") or {}).get("kind") == "partition"
+        }
+        if hosted:
+            # Derive segment identities from the stored floor. A legacy
+            # floor that cannot be migrated independently keeps its old proof.
+            try:
+                migrated = normalize_graph_config({
+                    "model_version": model, "settings": previous.get("settings", {}), "spaces": [space],
+                })["spaces"][0]
+            except GraphError:
+                migrated = None
+            if migrated is not None and hosted <= {
+                opening["id"] for opening in migrated.get("openings", [])
+                if (opening.get("host") or {}).get("kind") == "partition"
+            }:
+                space = migrated
+        baseline.append(space)
+    return {**previous, "spaces": baseline}
+
+
 
 
 def prepare_graph_candidate(candidate: dict, previous: dict | None, change: Any = None, *, force=False, schema_will_validate=False) -> dict:

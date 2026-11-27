@@ -5,10 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from custom_components.houseplan.store import get_data
+from custom_components.houseplan.core.graph_digest import graph_digest
+from custom_components.houseplan.graph_write import normalize_graph_config
 from custom_components.houseplan.plan_graph_source import BACKUP_KEY, PASSPORT_KEY, load_source
+from custom_components.houseplan.store import get_data
 from tests_backend.test_ha_structural_upload import _setup, TYPE
-from tests_backend.test_graph_write import legacy
+from tests_backend.test_graph_write import empty_patch, legacy
 from tests_backend.test_graph_node_write import config as graph_config, node_at
 
 
@@ -111,6 +113,64 @@ async def test_first_write_keeps_coincident_legacy_zero_and_positive_carriers(
     stored = await runtime.store.async_load()
     assert (await load_source(hass, stored[BACKUP_KEY]))["config"] == source
     assert await socket.pair() == accepted
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("current_writer", [False, True], ids=["legacy-writer", "current-writer"])
+async def test_add_empty_space_preserves_opening_on_migrated_partition(
+    hass, hass_client, hass_access_token, current_writer,
+):
+    _, socket, _ = await _setup(hass, hass_client, hass_access_token)
+    runtime = get_data(hass)
+    source = legacy()
+    floor = source["spaces"][0]
+    floor["partitions"][1]["a"] = [0.5, 0]
+    floor["openings"] = [{
+        "id": "window", "type": "window", "x": 0.75, "y": 0, "angle": 0, "length": 0.12,
+        "host": {"kind": "partition", "id": "a", "t": 0.75},
+    }]
+    await runtime.config_store.async_save({"config": source, "rev": 9})
+    await runtime.store.async_save({"layout": {}, "rev": 3})
+    before = await socket.pair()
+    read_config = before[0]["config"]
+    assert read_config["model_version"] == 10
+    migrated = normalize_graph_config(read_config)
+    expected_opening = migrated["spaces"][0]["openings"][0]
+    assert expected_opening["host"]["id"] != floor["openings"][0]["host"]["id"]
+
+    request = {"type": TYPE, "expected_rev": before[0]["rev"]}
+    edit = copy.deepcopy(migrated if current_writer else read_config)
+    empty_space = {"id": "new", "title": "Empty", "view_box": [0, 0, 1, 1],
+                   "plan_url": None, "rooms": [], "wall_segments": []}
+    if current_writer:
+        request["graph_change"] = {"version": 2, "spaces": [{
+            "space_id": floor["id"], "base_digest": graph_digest(edit["spaces"][0]["plan_graph"]),
+            "patch": empty_patch(),
+        }]}
+        empty_space.update(walls=[], partitions=[],
+                           plan_graph={"version": 1, "nodes": [], "edges": [], "rooms": [], "dependencies": []})
+    edit["spaces"].append(empty_space)
+
+    detached = copy.deepcopy(edit)
+    del detached["spaces"][0]["openings"][0]["host"]
+    refused = await socket.send({**request, "config": detached})
+    assert not refused["success"] and refused["error"]["code"] == "invalid_partition_opening_host", refused
+    assert await socket.pair() == before
+    assert BACKUP_KEY not in await runtime.store.async_load()
+
+    saved = await socket.send({**request, "config": edit})
+    assert saved["success"], saved
+    accepted = await socket.pair()
+    config = accepted[0]["config"]
+    assert config["model_version"] == 11
+    assert config == saved["result"]["config"]
+    existing, added = config["spaces"]
+    assert existing["plan_graph"] == migrated["spaces"][0]["plan_graph"]
+    assert existing["openings"] == [expected_opening]
+    assert (expected_opening["x"], expected_opening["y"], expected_opening["length"]) == (0.75, 0, 0.12)
+    assert added["id"] == "new" and added["rooms"] == [] and added["plan_graph"]["edges"] == []
+    backup = (await runtime.store.async_load())[BACKUP_KEY]
+    assert (await load_source(hass, backup))["config"] == source
 
 
 @pytest.mark.asyncio

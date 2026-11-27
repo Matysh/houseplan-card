@@ -52,7 +52,11 @@ from .deletion_layout import deletion_layout_candidate
 from .furniture_workstation import guard_workstation_write
 from .geometry_migration import migrate_layout
 from .graph_validation_scope import graph_validation_scope
-from .graph_write import prepare_graph_candidate, preserve_legacy_structure
+from .graph_write import (
+    partition_opening_migration_baseline,
+    prepare_graph_candidate,
+    preserve_legacy_structure,
+)
 from .import_export import live_layout
 from .input_policy import HA_INPUT_POLICY, STRICT_INPUT_POLICY, InputLimit
 from .junction_limits import JunctionLimitError, validate_junction_limits
@@ -550,7 +554,8 @@ class PlanCommands:
                 validate_marker_value_badges(checked, previous)
                 validate_marker_vacuum_routes(checked, previous)
                 validate_opening_passages(checked, previous)
-                validate_partition_opening_hosts(checked, geometry_previous, allow_room_wall_promotion=True)
+                host_baseline = partition_opening_migration_baseline(geometry_previous, checked)
+                validate_partition_opening_hosts(checked, host_baseline, allow_room_wall_promotion=True)
                 counts = validate_junction_limits(checked, geometry_previous,
                     baseline_counts=None if copied else baseline_counts,
                     touched_spaces=touched if baseline_counts is not None and not copied else None)

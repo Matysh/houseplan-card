@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1611,
+  "baseStable": "v1.86.1",
+  "category": "stable-fix",
+  "rationale": "Adding an empty space with an opening on a split legacy partition reproduces the save rejection in v1.86.1.",
+  "summary": {
+    "ru": "Новое пространство можно сохранить, когда существующий план с проёмами в перегородках впервые переходит на модель 11.",
+    "en": "Save a new space when an existing plan with partition openings first migrates to model 11."
+  }
+}
