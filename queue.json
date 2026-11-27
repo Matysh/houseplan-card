@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29681,
+  "revision": 29682,
   "nextTicket": 797,
   "nextFence": 797,
   "tasks": {
@@ -5637,7 +5637,7 @@
       "ownerDecision": null,
       "ticket": 796,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795818154133,
       "reviewEntry": 3,
       "patchId": "c5ec914f9474a83d5ccf9bb851df15ed9127dbd4",
@@ -5658,6 +5658,15 @@
         "at": 1795818138924,
         "entry": 2,
         "eventId": "finish:e90702cf-d6da-4e5d-9652-42a10b332dbc:finish:3:return:return:1592"
+      },
+      "s6": {
+        "id": "20261127T222259863-21d4151a",
+        "name": "Тесты для задачи #1592 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-957-spec-material-retention/.git/process-next/runs/20261127T222259863-21d4151a/report.json",
+        "materialSha": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
+        "status": "passed",
+        "finishedAt": "2026-11-27T22:23:39.890Z",
+        "failures": []
       }
     },
     "1594": {
@@ -7055,9 +7064,9 @@
     "fence": 796,
     "materialSha": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
     "expectedBase": "2043bd45e892b725a6100876b595502de34a7a8b",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795818160390,
-    "expiresAt": 1795818517651,
+    "expiresAt": 1795821821198,
     "patchId": "c5ec914f9474a83d5ccf9bb851df15ed9127dbd4"
   },
   "events": {
@@ -7257,6 +7266,34 @@
         "layer": "infra",
         "materialSha": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
         "phase": "sync"
+      }
+    },
+    "finish:963d70ac-f381-4758-971f-1784242a0001:finish:3:s6-complete": {
+      "digest": "ab190ad423cf1678d381a9a496c0c0e96457c15ea0e059bc5f93bcd3f6fdbe64",
+      "issue": 1592,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1592,
+        "at": 1795818221198,
+        "entry": 3,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
+        "phase": "review",
+        "evidence": {
+          "id": "20261127T222259863-21d4151a",
+          "name": "Тесты для задачи #1592 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-957-spec-material-retention/.git/process-next/runs/20261127T222259863-21d4151a/report.json",
+          "materialSha": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
+          "status": "passed",
+          "finishedAt": "2026-11-27T22:23:39.890Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "`release-measurements` выбирает последний предшествующий stable по тегам origin, собирает его в отдельном каталоге и запускает текущий benchmark кандидата на обеих сборках последовательно. Шаг выполняется без конкурирующих проверок внутри релизного плана. `measurement.json` содержит SHA и fingerprint обеих сборок, версии Node, Chromium и общий `runner_sha256`. Сравниваются фактические CPU, ядро, схема питания и настройки браузера и сценария. При несовпадении показываем обе медианы и причину. Сбой парного замера оставляет историческую запись нетронутой. CLI повторного построения отчёта также использует только пару времени, вложенную в замер кандидата.\n\nВыбор тега учитывает hotfix после stable, даже если база цикла осталась прежней. Реальный запрос origin и сценарий с локальным Git-репозиторием подтвердили выбор тега. В плане beta проверены название, зависимости, exclusive и выходы `release-measurements`. Адресные Node-тесты покрывают несопоставимость с числами и причиной, ошибку сборки эталона, проверку SHA и fingerprint, происхождение парных серий и повторное чтение CLI. Прошли тесты каталога и WebGL-диагностики. Зафиксированный v1.83.1 проверяется прежним хешем. HA E2E не требуется, поскольку меняется механизм отчёта.\n\nФактический парный прогон на dev `2fa7171c12e1df8c1ced9709c5358a54be825684` и v1.86.1 `f175b7e00d8535149c61c2d28a922620a3a70928` завершился со статусом `complete`. Обе серии содержат семь образцов, один и тот же `runner_sha256` и Chromium 151.0.7922.34. Текущий запрос к origin подтвердил тот же тег после уточнения выбора stable.\n\n| Метрика | v1.86.1, мс | dev, мс | Итог |\n|---|---:|---:|---|\n| Первый устойчивый кадр | 986,0 | 932,2 | within-tolerance |\n| Смена этажа | 412,9 | 371,5 | within-tolerance |\n| Шаг масштаба | 33,3 | 32,6 | within-tolerance |\n| Обновление состояния | 24,3 | 20,6 | within-tolerance |\n\nGitHub S6 обнаружил изменение текста диагностической ошибки упаковки. Восстановил прежний текст и проверил связанные тесты `metrics`, `package` и `webgl-performance` (28 прошли). Теперь повторяю S6 на исправленном материале.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
