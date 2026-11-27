@@ -5,6 +5,7 @@ import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { HA_DIALOG_PIN, prepareHaDialogAssets } from './ha-dialog-assets.mjs';
+import { mdiFixtureAsset } from './mdi-assets.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript',
@@ -88,6 +89,8 @@ export async function launchHaDialogFixture({
       }
       else if (pathname === '/ha505-module-index.json' && ha) {
         body = JSON.stringify(ha.manifest.modules); type = 'application/json';
+      } else if (!ha && (body = mdiFixtureAsset(pathname))) {
+        type = MIME['.json'];
       } else {
         let base = join(repoRoot, 'demo/srv'), relative = pathname;
         if (pathname === '/product.html') relative = '/demo.html';

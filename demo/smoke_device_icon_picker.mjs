@@ -19,7 +19,7 @@ for(const {theme,width,fallback=false,authentic=false,engine='chromium',reduced=
   ...(engine==='webkit'?{browserType:webkit}:{}),hasTouch:width===390,isMobile:width===390,reducedMotion:reduced?'reduce':'no-preference'});
  try{
   const page=f.page;if(engine==='chromium')await enforcePinnedBrowser(f.browser);await assertFreshDemoBundle(page);
-  assert.equal(await page.evaluate(()=>performance.getEntriesByType('resource').some(e=>e.name.includes('mdi-icon-catalog'))),false,'MDI catalog stays out of cold View');
+  assert.equal(await page.evaluate(()=>performance.getEntriesByType('resource').some(e=>e.name.includes('/static/mdi/'))),false,'MDI catalog stays out of cold View');
   if(fallback)await page.evaluate(()=>{HTMLElement.prototype.showPopover=undefined;});
   await page.evaluate(()=>window.__card._ensureEditorRuntime());await installHpTestOnPage(page);await installSettingsDeviceFixture(page);
   await page.evaluate(async()=>{
@@ -47,6 +47,10 @@ for(const {theme,width,fallback=false,authentic=false,engine='chromium',reduced=
   await trigger().focus();await page.keyboard.press('Shift+Tab');await page.keyboard.press('Tab');await expect(trigger()).toBeFocused();
   const field=picker().locator('.field');const fieldWidth=await field.evaluate(el=>el.clientWidth);
   await field.click({position:{x:fieldWidth-16,y:22}});const search=dialog.locator('input[type=search]');await expect(search).toBeVisible();await assertPickerOpenPolish(page,dialog,picker(),{reduced});await search.fill('mdi:fan');
+  await expect.poll(async () => {
+    const shape = await dialog.locator('[role=option][data-icon="mdi:fan"] path').getAttribute('d');
+    return !!shape && shape.length > 80 && shape === await picker().evaluate(p => p._catalog?.get('mdi:fan'));
+  }).toBe(true);
   await expect(search.locator('..').locator('[role=option].active')).toHaveCount(0);await expect(search).not.toHaveAttribute('aria-activedescendant');
   await dialog.locator('[role=option][data-icon="mdi:fan"]').click();
   await expect(picker()).toHaveJSProperty('value','mdi:fan');
@@ -112,7 +116,7 @@ for(const {theme,width,fallback=false,authentic=false,engine='chromium',reduced=
  const f=await launchDeviceIconPickerFixture({viewport:{width:1280,height:1000},colorScheme:'dark'});
  try {
   const page=f.page;let requests=0;
-  await page.route(/\/mdi-icon-catalog-[^/]+\.js(?:\?.*)?$/,async route=>{
+  await page.route('**/static/mdi/iconList.json',async route=>{
     if(++requests<=2)await route.abort();else await route.continue();
   });
   await page.evaluate(()=>window.__card._ensureEditorRuntime());await installHpTestOnPage(page);await installSettingsDeviceFixture(page);
@@ -125,7 +129,7 @@ for(const {theme,width,fallback=false,authentic=false,engine='chromium',reduced=
   await expect(picker).toHaveJSProperty('value','phu:offline-lamp');
   await picker.locator('.trigger').click();
   await expect.poll(()=>picker.evaluate(p=>p._catalog?.size||0)).toBe(7447);
-  assert.equal(requests,3,'retry uses a fresh module URL after the failed import');
+  assert.equal(requests,3,'retry re-requests the HA list after the failed load');
   await search.fill('mdi:fan');await page.keyboard.press('Enter');await expect(picker).toHaveJSProperty('value','mdi:fan');
   await f.assertClean();assert.equal(await reportPageErrors(),false,'no card error before closing the page');passed++;console.log('PASS lazy catalog failure, manual entry and retry');
  } finally {await f.close();}

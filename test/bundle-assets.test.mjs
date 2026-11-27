@@ -43,6 +43,12 @@ const SHIPPED_MANIFEST_URL = new URL('../dist/houseplan-assets.json', import.met
 const shippedManifest = () => JSON.parse(readFileSync(SHIPPED_MANIFEST_URL, 'utf8'));
 const shippedDist = fileURLToPath(new URL('../dist/', import.meta.url));
 
+test('#1594 the Home Assistant bundle omits the standalone MDI catalog', () => {
+  const manifest = shippedManifest();
+  assert.equal(manifest.files.some(asset => /mdi-icon-catalog-/.test(asset.path)), false);
+  assert.equal(readdirSync(join(shippedDist, 'houseplan-assets')).some(file => file.startsWith('mdi-icon-catalog-')), false);
+});
+
 /** #627: the nine namespace × language chunks, each a dynamic import of a lazy chunk. */
 const namespaceLocaleChunkPath = (entry) => `houseplan-assets/${entry.namespace}-${entry.language}-HASH.js`;
 const namespaceLocaleBundleChunks = (code = (entry) => `${entry.namespace} ${entry.language}`) => Object.fromEntries(

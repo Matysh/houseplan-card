@@ -6,6 +6,8 @@ import { controlMotionStyles } from './styles/ui-motion.styles';
 import { assertStandaloneRegistry, STANDALONE_ELEMENTS } from './standalone-presentation-policy';
 import { standaloneTheme } from './standalone-theme';
 import { STANDALONE_ICON_PATHS } from './standalone-icons.generated';
+import { registerStandaloneIconCatalog } from './icon-catalog';
+import { loadStandaloneIconCatalog } from './standalone-icon-catalog';
 
 class StandaloneIcon extends LitElement {
   static properties = { icon: { type: String } };
@@ -54,6 +56,7 @@ export function registerStandalonePresentation(): void {
   // All names were checked before the first synchronous define.
   for (const name of STANDALONE_ELEMENTS) registry.define(name, definitions.get(name)!);
   registered.set(registry, definitions);
+  registerStandaloneIconCatalog(document, loadStandaloneIconCatalog);
 }
 
 export interface StandalonePresentationOptions { language: string; darkMode: boolean }

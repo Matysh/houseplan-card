@@ -53,7 +53,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['demo/smoke_first_space_floor_import.mjs', ['src/floor-import-dialog.ts', 'src/houseplan-onboarding-runtime.ts', 'src/houseplan-editor-runtime.ts', 'src/editors/space-form.ts']],
   ['demo/smoke_iso_warm_wall_base.mjs', ['src/houseplan-card.ts', 'src/plan-3d-world.ts', 'src/styles/base.styles.ts']],
   ['demo/smoke_iso_sun.mjs', ['src/iso-sun.ts', 'src/plan-3d-light-motion.ts', 'src/sun.ts', 'src/styles/plan.styles.ts']],
-  ['demo/smoke_device_icon_picker.mjs', ['src/editors/hp-icon-picker.ts', 'src/mdi-icon-catalog.ts', 'src/mdi-icon-data.json', 'src/editors/marker-dialog.ts', 'src/houseplan-editor-runtime.ts', 'src/styles/form-kit.styles.ts', 'src/styles/floating-surface.styles.ts', 'src/styles/settings-action.styles.ts', 'src/hp-settings-select.ts']],
+  ['demo/smoke_device_icon_picker.mjs', ['src/editors/hp-icon-picker.ts', 'src/icon-catalog.ts', 'demo/helpers/mdi-assets.mjs', 'src/mdi-icon-catalog.ts', 'src/mdi-icon-data.json', 'src/editors/marker-dialog.ts', 'src/houseplan-editor-runtime.ts', 'src/styles/form-kit.styles.ts', 'src/styles/floating-surface.styles.ts', 'src/styles/settings-action.styles.ts', 'src/hp-settings-select.ts']],
   ['scripts/config-compatibility-inventory.mjs', ['src/**/*.ts', 'custom_components/houseplan/**/*.py']],
   ['test/isometric-contract.test.mjs', ['demo/smoke_*.mjs']],
   ['test/smoke-exception-guard.test.mjs', ['demo/smoke_*.mjs']],

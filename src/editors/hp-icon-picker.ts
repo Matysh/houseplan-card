@@ -8,19 +8,9 @@ import { textFieldsCss, CARD_DIALOG_FORM_KIT } from '../styles/form-kit.styles';
 import { settingsActionTransition, settingsChoiceHover } from '../styles/settings-action.styles';
 import { controlMotion, controlMotionReduced, controlSurfaceFrames } from '../ui-motion';
 import { controlReducedMotionCss } from '../styles/ui-motion.styles';
+import { iconCatalogFor, type IconCatalog } from '../icon-catalog';
 
 interface PickerLabels { search:string; clear:string; use:string; loading:string; error:string; retry:string; }
-let catalogRetry = 0;
-let catalogPromise: Promise<ReadonlyMap<string,string>> | undefined;
-function loadCatalog(): Promise<ReadonlyMap<string,string>> {
-  if (catalogPromise) return catalogPromise;
-  const attempt = catalogRetry++;
-  return catalogPromise ||= (attempt === 0 ? import('../mdi-icon-catalog')
-    : import(new URL('__HOUSEPLAN_MDI_CATALOG_RETRY_ASSET__?retry=' + attempt, import.meta.url).href))
-    .then(m => m.mdiCatalog as ReadonlyMap<string,string>).catch(error => {
-    catalogPromise = undefined; throw error;
-  });
-}
 let sequence = 0;
 export class HpIconPicker extends LitElement {
   static properties = {
@@ -34,7 +24,8 @@ export class HpIconPicker extends LitElement {
   private _open = false;
   private _query = '';
   private _active = -1;
-  private _catalog?: ReadonlyMap<string,string>;
+  private _catalog?: IconCatalog;
+  private previewRequest = 0;
   private _failed = false;
   private readonly uid = 'hp-icons-' + ++sequence;
   private readonly floating = new FloatingSurfaceController(this, 'icon-picker', e => this.keydown(e));
@@ -84,9 +75,18 @@ export class HpIconPicker extends LitElement {
   connectedCallback(): void { super.connectedCallback(); void this.load(); }
   disconnectedCallback(): void { this.close(false,true); super.disconnectedCallback(); }
   private async load(): Promise<void> {
+    const request = ++this.previewRequest;
     this._failed = false;
-    try { const catalog = await loadCatalog(); if (this.isConnected) this._catalog = catalog; }
-    catch { if (this.isConnected) this._failed = true; }
+    try {
+      const catalog = this._catalog ?? await iconCatalogFor(this.ownerDocument);
+      const names = this._open ? [this.effective, ...this.options] : [this.effective];
+      const loaded = await catalog.loadGlyphs?.(names);
+      if (!this.isConnected || request !== this.previewRequest) return;
+      this._catalog = catalog;
+      if (loaded) this.requestUpdate();
+    } catch {
+      if (this.isConnected && request === this.previewRequest) this._failed = true;
+    }
   }
   private get effective(): string { return this.value || this.autoIcon; }
   private get options(): string[] {
@@ -127,7 +127,11 @@ export class HpIconPicker extends LitElement {
       ${this._failed?html`<button class="retry" type="button" @click=${()=>void this.load()}>${this.labels.retry}</button>`:nothing}
     </div>`;
   }
-  protected updated(_changed:PropertyValues): void {
+  protected updated(changed:PropertyValues): void {
+    if (this._catalog?.loadGlyphs && !this._failed
+      && ['_catalog', '_open', '_query', 'value', 'autoIcon'].some(key => changed.has(key))) {
+      void this.load();
+    }
     if (this._open && this.fallback) { this.floating.renderFallback(this.menu(false),HpIconPicker.styles.cssText); this.surface()?.classList.add('visible'); }
     if (this._open) this.position();
   }

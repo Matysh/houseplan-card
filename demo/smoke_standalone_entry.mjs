@@ -13,6 +13,7 @@ import { standaloneFixture } from './standalone/fixture.mjs';
 import { createCoreProcess } from './standalone/core-process.mjs';
 import { resourceProbes } from './standalone/resource-probes.mjs';
 import { measureStandalone } from './standalone/measure.mjs';
+import { verifyStandaloneMdiPicker } from './standalone/mdi-picker-probe.mjs';
 
 requirePinnedBrowser('smoke_standalone_entry');
 const dir=resolve('artifacts/standalone-entry');mkdirSync(dir,{recursive:true});
@@ -73,6 +74,8 @@ try{
   assert.equal(evidence.requests.some(url=>/houseplan-editor-runtime-/.test(url)),false,'cold View does not request the editor');
   await page.screenshot({path:resolve(dir,'cold-light.png')});
   await clickHeaderAction(card,'mode-plan');
+  await verifyStandaloneMdiPicker(page,manifest,evidence.requests);
+  evidence.checks.push('standalone-mdi-catalog-search-and-paint');
   await card.locator('[data-hp="tool"][data-tool="select"]').click();
   await card.locator('[data-hp="zoom-fit"]').click();
   await waitForUiKitPaint(page);

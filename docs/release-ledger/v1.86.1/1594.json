@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1594,
+  "baseStable": "v1.86.1",
+  "category": "stable-fix",
+  "rationale": "Remove the redundant full MDI catalog from the Home Assistant installer while preserving the standalone catalog.",
+  "summary": {
+    "ru": "Уменьшить установщик, используя встроенный каталог иконок MDI Home Assistant.",
+    "en": "Reduce installer size by using the MDI catalog shipped with Home Assistant."
+  }
+}

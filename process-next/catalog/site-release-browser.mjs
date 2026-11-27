@@ -10,6 +10,7 @@ const [source, archiveRoot] = process.argv.slice(2).map(path => resolve(path));
 const fromSource = path => import(pathToFileURL(resolve(source, path)));
 const { standaloneFixture } = await fromSource('demo/standalone/fixture.mjs');
 const { createCoreProcess } = await fromSource('demo/standalone/core-process.mjs');
+const { verifyStandaloneMdiPicker } = await fromSource('demo/standalone/mdi-picker-probe.mjs');
 const { PLAN_ONLY_CAPABILITIES } = await fromSource('test-build/plan-capabilities.js');
 const manifest = JSON.parse(readFileSync(resolve(archiveRoot, 'houseplan-standalone-manifest.json'), 'utf8'));
 const contents = new Map(manifest.files.map(({ path }) => ['/editor/'+path, readFileSync(resolve(archiveRoot, path))]));
@@ -21,7 +22,8 @@ try {
   browser = await chromium.launch({ args: ['--no-sandbox'] });
   await enforcePinnedBrowser(browser);
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  const errors = [], unexpected = [];
+  const errors = [], unexpected = [], requests = [];
+  page.on('request', request => requests.push(request.url()));
   page.on('pageerror', error => errors.push(error.message));
   await page.route('**/*', async route => {
     const url = new URL(route.request().url());
@@ -53,9 +55,11 @@ try {
   assert.equal(state.result.haImported, false);
   assert.equal(await page.evaluate(() => window.__standaloneReleaseCard.hass === undefined &&
     !document.querySelector('home-assistant') && !customElements.get('ha-dialog')), true);
+  await page.evaluate(() => window.__standaloneReleaseCard._ensureEditorRuntime());
+  await verifyStandaloneMdiPicker(page, manifest, requests);
   assert.deepEqual(errors, []);
   assert.deepEqual(unexpected, []);
-  console.log('Standalone archive mount and no-HA handshake passed');
+  console.log('Standalone archive mount, no-HA handshake and MDI picker passed');
 } finally {
   try { await browser?.close(); }
   finally { await core.close(); }
