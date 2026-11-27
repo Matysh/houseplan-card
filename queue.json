@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28866,
+  "revision": 28867,
   "nextTicket": 783,
   "nextFence": 777,
   "tasks": {
@@ -7456,14 +7456,6 @@
     "reviewRequest": "review:1594:2:b94f73bb2a99353d945245f727a2a24bb4b6e535:15caaf14ccad42a9f1df2f7cae4946dbbd67c766"
   },
   "events": {
-    "finish:afc25890-fe41-4185-aa5d-bdd5727a6456": {
-      "digest": "e91fb7ec9d482299df1861c92664f19f2ca2a0314ea44f6193be23d06b95f3e4",
-      "issue": 1594
-    },
-    "finish:e0b44b79-84b6-4008-8d6f-86d1613109de": {
-      "digest": "5d98565b9c226abeccc6be37b1efa95cb5f2ce6dc4b4f389a33b8281ad27450c",
-      "issue": 1594
-    },
     "finish:1b2d7012-a869-4f84-8684-829edc8ec196": {
       "digest": "c65b5e02901a5bce795866002ac3d7e2cd33355d578264b3e90945667b35fe37",
       "issue": 1594
@@ -8270,6 +8262,10 @@
     },
     "github:46037013200:1:tick:0:review-retry": {
       "digest": "cc8e49ebf56fea61123dcc9b5c11a26f0023548f311d219e9e8d31a95e9e17e3",
+      "issue": 1594
+    },
+    "github:46037013200:1:completions:message:d8455de7a8ac9a17dd846ab32fb9be6688557610a87f6a44e43fe991b0723f32": {
+      "digest": "4a66a1e8b44222e0341d2ad0b907bd006e37b7ebeee5263c34490984c8a5a627",
       "issue": 1594
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -9256,7 +9252,8 @@
         "reviewChanges": "",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
