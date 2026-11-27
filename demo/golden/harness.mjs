@@ -2916,8 +2916,8 @@ export async function prepareGoldenScenario(page, scenario, customizeFixture) {
         || !card.renderRoot.querySelector('.vactrail .hybrid line.tip'))
         throw new Error(`golden live-tail contract is incomplete: ${scenario.id}`);
     } else if (scenario.vacuumTrail) {
-      await until(() => !!card.renderRoot.querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core'));
-      const currentCore = card.renderRoot.querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core');
+      await until(() => !!card.renderRoot.querySelector('.vactrail [data-hp-plan-rotation-frame] > path.core'));
+      const currentCore = card.renderRoot.querySelector('.vactrail [data-hp-plan-rotation-frame] > path.core');
       const previousCore = card.renderRoot.querySelector('.vactrail .prev path.core');
       const currentD = currentCore?.getAttribute('d') || '';
       const previousD = previousCore?.getAttribute('d') || '';
