@@ -43,6 +43,7 @@ export function taskLayerFromDiff(files) {
   if (source.some(file => matchesInputs(file, PRODUCT_PREPARATION_INPUTS))) return 'product';
   if (source.some(file => {
     if (['infrastructure', 'converter', 'product-meta'].includes(knownKinds.get(file))) return false;
+    if (file.startsWith('demo/stand/')) return false; // Deployment operators, not product runtime.
     return /^(?:src|custom_components|assets|demo|test|tests_backend)\//.test(file) || file === 'docs/data-hp-contract.json'
       || /^(?:package(?:-lock)?\.json|rollup\.config\.[cm]?js|tsconfig(?:\.[\w-]+)?\.json)$/.test(file);
   })) return 'product';
