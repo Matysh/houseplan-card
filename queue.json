@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29294,
-  "nextTicket": 784,
+  "revision": 29295,
+  "nextTicket": 785,
   "nextFence": 784,
   "tasks": {
     "1001": {
@@ -5913,14 +5913,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1598-release-snapshot",
-      "materialSha": "b35fb8e9e8f6bec26b2a0643c61028a37d3ba855",
+      "materialSha": "b1b9454c7272f863091ee96dc5bc896b7aa9821a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 779,
-      "queued": false,
+      "ticket": 784,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795795986726,
-      "reviewEntry": 4,
+      "readyAt": 1795807294999,
+      "reviewEntry": 5,
       "patchId": "89c324bd321ae16b58e9b2ec836094ae4b4c2b22",
       "changedFiles": [
         ".gitignore",
@@ -6050,8 +6050,7 @@
       "reviewCorrection": {
         "requestId": "review:1598:2:f90c6b3bf362de031cc4c7aa133966ce1397c477:0a917f294e0393c317f4a4fdeec9dc4640bb0695",
         "at": 1795780424921
-      },
-      "reason": "checks-failed"
+      }
     },
     "1599": {
       "issue": 1599,
@@ -7250,7 +7249,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1598
+  ],
   "active": {
     "issue": 1613,
     "worker": "finish",
@@ -7824,6 +7825,28 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
+      }
+    },
+    "finish:72221a8c-e7f8-4d56-b910-eff512878e09": {
+      "digest": "0de7f5ba20363e1979738e8b71733d1177df3df3faf4658ac8800d5b807da562",
+      "issue": 1598,
+      "message": {
+        "kind": "queued",
+        "issue": 1598,
+        "at": 1795807294999,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b1b9454c7272f863091ee96dc5bc896b7aa9821a",
+        "evidence": {
+          "id": "20261127T114809227-2427aab3",
+          "name": "Тесты для задачи #1598 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T114809227-2427aab3/report.json",
+          "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
+          "status": "passed",
+          "finishedAt": "2026-11-27T11:48:11.524Z",
+          "failures": []
+        }
       }
     }
   },
