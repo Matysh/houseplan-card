@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27852,
+  "revision": 27853,
   "nextTicket": 754,
   "nextFence": 754,
   "tasks": {
@@ -6898,18 +6898,12 @@
       }
     },
     "1609": {
-      "requestId": "spec:1609:d8e865b25d0f31f572c7d27bec21a307711c8f0edc4ea24ec4ee5890eccf3890",
-      "contextDigest": "d8e865b25d0f31f572c7d27bec21a307711c8f0edc4ea24ec4ee5890eccf3890",
+      "requestId": "spec:1609:024e2e5daa75a6ea9bd3b9c04c622be56e7d571c544a6f8960328a181b46751e",
+      "contextDigest": "024e2e5daa75a6ea9bd3b9c04c622be56e7d571c544a6f8960328a181b46751e",
       "base": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
-      "round": 2,
-      "status": "changes_requested",
-      "updatedAt": 1795765036535,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45959203626",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 3,
+      "status": "pending",
+      "updatedAt": 1795765124442
     }
   },
   "reviewPublications": {
@@ -6937,6 +6931,19 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
+      }
+    },
+    "spec:1609:spec:1609:024e2e5daa75a6ea9bd3b9c04c622be56e7d571c544a6f8960328a181b46751e": {
+      "issue": 1609,
+      "kind": "spec",
+      "requestId": "spec:1609:024e2e5daa75a6ea9bd3b9c04c622be56e7d571c544a6f8960328a181b46751e",
+      "materialSha": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
+      "expectedBase": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
+      "patchId": "024e2e5daa75a6ea9bd3b9c04c622be56e7d571c544a6f8960328a181b46751e",
+      "status": "pending",
+      "presentation": {
+        "round": 3,
+        "occurredAt": "2026-11-27T07:38:44.442Z"
       }
     }
   },
@@ -7003,6 +7010,10 @@
       "digest": "da4abb50680232f1cbef98e1c149b54509907b60d15e93cff92be1aa4203c169",
       "issue": 1609
     },
+    "github:45959850001:1:label:spec-request": {
+      "digest": "7407f1e967ff9d4d67a184ab8b0db8287e1cbf3269919a6dc66f96886eb09a64",
+      "issue": 1609
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7047,6 +7058,22 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "github:45959850001:1:label:spec-request:spec-resubmitted:1609": {
+      "digest": "7407f1e967ff9d4d67a184ab8b0db8287e1cbf3269919a6dc66f96886eb09a64",
+      "issue": 1609,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1609,
+        "at": 1795765124442,
+        "previousRound": 2,
+        "round": 3,
+        "requestId": "spec:1609:024e2e5daa75a6ea9bd3b9c04c622be56e7d571c544a6f8960328a181b46751e",
+        "reviewChanges": "Источник — подтверждённый путь `Plan3dOutput.contextLost → viewport.fail/dispose` из аналитики и отсутствие canvas-подтверждения в общем `_settleContinuityFrame`. Рекомендация: переиспользовать уже имеющийся видимый буфер на живом документе и gate §1579, дополнить его конкретным proof полного свежего кадра. Не делать отдельный постоянный snapshot, не заставлять рендер работать в фоне и не имитировать ручное GPU-восстановление вызовом тестового расширения. До ревью продукт не менялся; обсуждаем жизненный цикл ресурсов, разграничение кадра по authority и воспроизводимую проверку реального discard/BFCache.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/actions/runs/45958391988):\n\n1. Неоднозначность старта → отдельная ветка только для основной панели при достоверном discard в 3D, без видимого нейтрального превью, с обычным холодным запуском для всех остальных случаев. Это сохраняет исходное требование о фоне после discard и не меняет существующее первое открытие.\n2. Возможная потеря видимого 2D-буфера → независимая проверка/сигнал Canvas2D, немедленное скрытие старой сцены и повторный полный вывод. AC2 различает потери, инъекцию Canvas2D и опциональный аппаратный сценарий.\n3. Уточнены таймер накопленного видимого времени, единая политика общего GPU, блокировка жестов удержанного кадра, ограниченная диагностика и допустимый blit на обычном возвращении. Без изменения продуктового кода и без прогонов продукта.\n\n[Раунд 2](https://github.com/Matysh/houseplan-card/actions/runs/45959203626): единственный блокер — повторное срабатывание `wasDiscarded` внутри SPA. П. 5 теперь требует однократную ветку первого холодного монтирования на исходном маршруте документа, исключает тёплый ре-маунт и поздний приход с другой панели. AC5 проверяет оба исключения. Также прямо заданы CSS-размер/DPR и способ отложить live-состояния, условие нового бюджета и доказательство настоящего BFCache. Продукт не менялся.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
