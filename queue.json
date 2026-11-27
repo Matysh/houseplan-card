@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27935,
-  "nextTicket": 756,
+  "revision": 27936,
+  "nextTicket": 757,
   "nextFence": 756,
   "tasks": {
     "1001": {
@@ -6235,14 +6235,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1609-3d-tab-resume",
-      "materialSha": "db76345c14f2c6874411c10e96131e31b289cc38",
+      "materialSha": "32cf10b8f4a243bde6ca82d7c4568ef08b40039a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 755,
-      "queued": false,
+      "ticket": 756,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795769055169,
-      "reviewEntry": 2,
+      "readyAt": 1795770599227,
+      "reviewEntry": 3,
       "patchId": "9054eeac9b20b643df599241f432a60eb5596aba",
       "changedFiles": [
         "demo/helpers/plan-3d-lifecycle-native.mjs",
@@ -6274,8 +6274,7 @@
         "entry": 2,
         "detail": "Браузер: iso theme walls: failed",
         "eventId": "finish:c7868b5e-45a0-43e0-986d-46d60f7bd7ae:finish:3:return:return:1609"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -6987,7 +6986,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1609
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7439,6 +7440,19 @@
           "detail": "Браузер: iso theme walls: failed",
           "eventId": "finish:c7868b5e-45a0-43e0-986d-46d60f7bd7ae:finish:3:return:return:1609"
         }
+      }
+    },
+    "finish:5a8d3b32-0204-42fd-bcfa-3a27ebb72312": {
+      "digest": "59639bc77c424cd3e60ae146edb3ca3aa732eba464d4b24694892996aad9c08b",
+      "issue": 1609,
+      "message": {
+        "kind": "queued",
+        "issue": 1609,
+        "at": 1795770599227,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "32cf10b8f4a243bde6ca82d7c4568ef08b40039a"
       }
     }
   },
