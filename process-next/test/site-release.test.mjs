@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 import { preparePublicationArtifacts } from '../lib/release-preparation.mjs';
 import { appendSiteReleaseNotes, SITE_RELEASE_NOTES, siteReleasePaths, siteReleasePublication } from '../lib/site-release.mjs';
 import { digest, outputIdentity } from '../lib/storage.mjs';
+import { verifySiteArtifactVersions } from '../lib/site-artifact-versions.mjs';
 
 const sha = 'a'.repeat(40), version = '1.86.0', tag = 'v'+version;
 function fixture(t) {
@@ -44,7 +45,7 @@ function fixture(t) {
   };
   bind();
   return { root, paths, manifest, candidate, packageResult, write, bind,
-    hacsBytes:zipBytes(hacsFiles),
+    hacsBytes:zipBytes(hacsFiles), zipBytes,
     replaceArtifact(index, member, change) {
       const files = [wheelFiles,editorFiles,hacsFiles][index];
       files[member] = change(files[member]);
@@ -125,4 +126,24 @@ test('publish refuses a standalone build identity inconsistent with its release 
     const value=JSON.parse(raw);value.source.commit='b'.repeat(40);return JSON.stringify(value);
   });
   assert.throws(f.read,/source identity must match/);
+});
+
+test('artifact versions accept product beta.2 and PEP 440 b2 but reject a different beta', t => {
+  const f=fixture(t), productVersion='2.0.0-beta.2', wheelVersion='2.0.0b2';
+  const files = {
+    'houseplan_core/distribution.json': JSON.stringify({product_version:productVersion,version:wheelVersion}),
+    'houseplan_core-2.0.0b2.dist-info/METADATA': 'Name: houseplan-core\nVersion: '+wheelVersion+'\n',
+  };
+  const wheel=join(f.root,'beta.whl'), editor=join(f.root,'beta.zip'), hacs=join(f.root,'hacs.zip');
+  f.write('beta.whl',f.zipBytes(files));
+  f.write('hacs.zip',f.zipBytes({'manifest.json':JSON.stringify({version:productVersion}),
+    'frontend/houseplan-assets.json':JSON.stringify({fingerprint:'f'.repeat(64)})}));
+  f.write('beta.zip',f.zipBytes({'houseplan-standalone-manifest.json':JSON.stringify({
+    version:productVersion,product:'houseplan-standalone',schema:1,
+    source:{commit:sha,fingerprint:'f'.repeat(64),dirty:false}})}));
+  const check=()=>verifySiteArtifactVersions({wheel,editor,hacs,version:productVersion,sha,fingerprint:'f'.repeat(64)});
+  assert.doesNotThrow(check);
+  files['houseplan_core-2.0.0b2.dist-info/METADATA']='Name: houseplan-core\nVersion: 2.0.0b3\n';
+  f.write('beta.whl',f.zipBytes(files));
+  assert.throws(check,/versions must match/);
 });
