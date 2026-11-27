@@ -19,6 +19,7 @@ function harness(projection,dayCycle,hasPreview=true){
   const card=new exports.Fixture();
   Object.assign(card,{_desiredProjection:projection,_mode:'view',_modeTransitionVisual:null,_containerOwnedHeight:false,_kiosk:false,_hdrH:80,
     _floorPreparation:{preview:hasPreview?{fit:{base:[0,0,1000,1000],projection}}:null},
+    _spatial:{recovering:false,statusVisible:false},
     _presentedViewPlane:p=>p,_adoptViewPlane(){},_viewOr:()=>({x:0,y:0,w:1000,h:1000}),
     _spaceModel:()=>({bg:null}),_spaceDisplayForRender:()=>({wallFill:{c:'#fff'}}),_stageBg:()=>'#1b2d50',
     _dayCycleState:()=>dayCycle,_sunGlobal:()=>global,_moonSkyState:()=>null,_t:x=>x,_renderPreparedFloorFrame:x=>x,
@@ -54,4 +55,21 @@ test('#1520 cold SVG and numeric silhouette never compete for the same pending s
   const startup=result.values.find(template=>template?.values?.includes(element));
   assert.ok(startup,'the verified image is carried as the same decoded element');
   assert.equal(startup.values.filter(value=>value?.strings?.join('').includes('floor-preparation-status')).length,1);
+});
+test('#1609 pending 3D restoration paints the background, not the neutral preview; the status is delayed',()=>{
+  const h=harness('iso',{phase:'night'});
+  const neutral={className:'hp-startup-view'};
+  h.card._startupFloor={awaitsLive:true};
+  h.card._startupStyle={value:{element:neutral}};
+  h.card._spatial.recovering=true;
+  const status=result=>result.values.some(value=>value?.strings?.join('').includes('floor-preparation-status'));
+  const before=h.card._renderPendingFloor();
+  assert.equal(status(before),false);
+  assert.ok(!before.values.some(value=>value?.values?.includes(neutral)));
+  h.card._spatial.statusVisible=true;
+  const after=h.card._renderPendingFloor();
+  assert.equal(status(after),true);
+  assert.ok(!after.values.some(value=>value?.values?.includes(neutral)));
+  assert.equal(h.calls.preview,0);
+  assert.equal(h.calls.environment.length,2);
 });

@@ -5747,6 +5747,11 @@ export class HouseplanCard extends LitElement {
       this.requestUpdate();
       return;
     }
+    // Geometry workers, the native overlay and WebGL can settle in different
+    // frames. Do not spend the generic DOM paint window before the current
+    // 3D frame has actually been copied. The viewport reports that edge, and
+    // still owns its separate bounded graphics-failure fallback.
+    if (this._renderProjection === 'iso' && !this._spatial.hasCurrentPaint()) return;
     if (!this._continuity.canAttemptPaint(externalUpdate, this._continuityPaintReady())) return;
     if (!this._continuity.candidateReady(token)) return;
     void this._continuity.commitAfterPaint(token, {
@@ -13971,8 +13976,11 @@ export class HouseplanCard extends LitElement {
         if (!strokes && !zeroWalls.lines.length && !stairs?.length) return;
         const authority = this.planHost.authorityKey;
         const scope = space.id;
+        // The resolver creates fresh arrays on every call, including a no-op
+        // redraw. Key the captured ink by value so a frame-settle update
+        // cannot repeatedly cancel the same in-flight decode.
         const key = [scope, neutral, bounds.x, bounds.y, bounds.w, bounds.h, this._cellCm, decor, disp.hideDecor,
-          useFurnitureVolume, disp.color, zeroWalls, stairs,
+          useFurnitureVolume, disp.color, disp.showBorders, zeroWalls.style, contentFingerprint(zeroWalls.lines), stairs,
           ...decor.flatMap(shape => shape.kind === 'text' && !neutral ? [this._renderDeviceSnapshot?.facts.get(`decor:${space.id}:${shape.id}`)]
             : shape.kind === 'image' ? [this._display(this._decorAssets.get(shape.asset_id)?.url)] : [])];
         return { scope, key, bounds, capture: signal => {
