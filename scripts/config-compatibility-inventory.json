@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "b1d94e66bba14f1bc8d84daf03e5206c1706ffb97edfcbd8d2f322ce16824f9c",
+  "matchesSha256": "72b6c7fb859f4f76f2282c83884071743228190293ea9f8d73f9ff9110bea801",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -349,6 +349,16 @@
       "reason": "Retained versioned structural decode, explicit-write migration or old/current geometry boundary; the existing model-chain lifecycle and independent ownership proof remain required."
     },
     {
+      "id": "e2b9b1c96114fc08a962e890",
+      "path": "custom_components/houseplan/core/graph_write.py",
+      "line": 112,
+      "text": "# Derive segment identities from the stored floor. A legacy",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "First structural writes derive a migration baseline for surviving partition hosts from the stored geometry (#1611)."
+    },
+    {
       "id": "0ae457248f62877868fda1c8",
       "path": "custom_components/houseplan/core/import_export.py",
       "line": 477,
@@ -549,10 +559,10 @@
       "reason": "Retained versioned structural decode, explicit-write migration or old/current geometry boundary; the existing model-chain lifecycle and independent ownership proof remain required."
     },
     {
-      "id": "c2d02da712d5adf2c5af86b5",
+      "id": "19ba53bb4c2273674194fad7",
       "path": "custom_components/houseplan/core/plan_commands.py",
-      "line": 53,
-      "text": "from .graph_write import prepare_graph_candidate, preserve_legacy_structure",
+      "line": 58,
+      "text": "preserve_legacy_structure,",
       "occurrence": 1,
       "kind": "exclusion",
       "owner": "word-only",

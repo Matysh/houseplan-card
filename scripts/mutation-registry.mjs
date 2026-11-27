@@ -16061,8 +16061,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "custom_components/houseplan/core/plan_commands.py",
-    "find": "validate_active_marker_ids(checked, previous)\n                validate_marker_controls(checked, previous)\n                validate_marker_light_entities(checked, previous)\n                validate_marker_radars(checked, previous, registry=radar)\n                validate_marker_value_badges(checked, previous)\n                validate_marker_vacuum_routes(checked, previous)\n                validate_opening_passages(checked, previous)\n                validate_partition_opening_hosts(checked, geometry_previous",
-    "replace": "validate_marker_controls(checked, previous)\n                validate_marker_light_entities(checked, previous)\n                validate_marker_radars(checked, previous, registry=radar)\n                validate_marker_value_badges(checked, previous)\n                validate_marker_vacuum_routes(checked, previous)\n                validate_opening_passages(checked, previous)\n                validate_partition_opening_hosts(checked, geometry_previous"
+    "find": "geometry_previous = checked if copied else previous\n                validate_active_marker_ids(checked, previous)",
+    "replace": "geometry_previous = checked if copied else previous"
   }
 ],
   },
