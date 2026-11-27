@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28675,
+  "revision": 28676,
   "nextTicket": 778,
   "nextFence": 773,
   "tasks": {
@@ -6118,14 +6118,40 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1595-editor-first-open",
-      "materialSha": "298d0fa26f6cb5f4251765d58751e59f5c9ca61c",
+      "materialSha": "83c5310c774774c51abdac835597092b6b84abd0",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 772,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795780689632,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "9e270975b2efeca1d907562bec451d55ff904d66",
+      "changedFiles": [
+        "demo/benchmark_large_house.mjs",
+        "demo/performance/mode-transition.mjs",
+        "demo/smoke_lazy_editor_chunk.mjs",
+        "demo/smoke_mode_transition.mjs",
+        "demo/smoke_room_fill_transitions.mjs",
+        "demo/smoke_warm_mode_adoption.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.86.1/1595.json",
+        "process-next/lib/metrics.mjs",
+        "process-next/test/metrics.test.mjs",
+        "scripts/config-compatibility-inventory.json",
+        "scripts/mutation-registry.mjs",
+        "scripts/sh3d-convert/dist/index.html",
+        "scripts/sh3d-convert/geometry-runtime.generated.mjs",
+        "scripts/sh3d-convert/page/ifc-worker.generated.mjs",
+        "src/device-contact-card.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/plan-graph.ts",
+        "src/wall-node-editor.ts",
+        "test/floor-cache-publication.test.mjs",
+        "test/plan-graph-core.test.mjs"
+      ]
     },
     "1597": {
       "issue": 1597,
@@ -7398,11 +7424,12 @@
     "worker": "github-coordinator",
     "token": "772:github:46025464248:1:tick:2:admit",
     "fence": 772,
-    "materialSha": "298d0fa26f6cb5f4251765d58751e59f5c9ca61c",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "83c5310c774774c51abdac835597092b6b84abd0",
+    "expectedBase": "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+    "phase": "testing",
     "admittedAt": 1795793444790,
-    "expiresAt": 1795793744790
+    "expiresAt": 1795793880544,
+    "patchId": "9e270975b2efeca1d907562bec451d55ff904d66"
   },
   "events": {
     "finish:8199b101-c60f-4348-a965-0a33090b455e": {
@@ -8011,6 +8038,10 @@
     },
     "github:46025464248:1:completions:message:4380a62948ddaf9bc8e9d2351e8e07985cb13091c7239bb1c73895a95283e258": {
       "digest": "a3acb06f2539f7b62b68ecbdfa48fb45d6147bc30676eb31f9a9a624fd756e2f",
+      "issue": 1595
+    },
+    "finish:3aeb46a7-e3fe-4d18-85f5-13c80734601b:finish:1:synchronized": {
+      "digest": "c1f60cbb26277ce0d177db79d1484cc4db750789e13383fb5c1eec62bf2f129e",
       "issue": 1595
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
