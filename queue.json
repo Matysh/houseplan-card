@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29040,
-  "nextTicket": 783,
+  "revision": 29041,
+  "nextTicket": 784,
   "nextFence": 780,
   "tasks": {
     "1001": {
@@ -6573,6 +6573,20 @@
         "sourceSha": "b4c609c71730ecc63e84ae6a6248ea6eb951f294"
       }
     },
+    "1613": {
+      "issue": 1613,
+      "track": "ask",
+      "layer": "infra",
+      "branch": "codex/1613-s6-budget",
+      "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 783,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795801023225,
+      "reviewEntry": 1
+    },
     "1614": {
       "issue": 1614,
       "branch": "codex/1614-header-menu-keyboard-focus",
@@ -7337,7 +7351,8 @@
   "waiting": [
     1609,
     1595,
-    1598
+    1598,
+    1613
   ],
   "active": {
     "issue": 1603,
@@ -8910,6 +8925,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "68b4268626b93e90825e34bb91842f5c730e9add"
+      }
+    },
+    "finish:7505b5b4-4d41-4592-9c2f-c7ee13451083": {
+      "digest": "d7dfd149a15096a95384b5e57ef202c284df6ade917fd7584d2d759c1fa518e1",
+      "issue": 1613,
+      "message": {
+        "kind": "queued",
+        "issue": 1613,
+        "at": 1795801023225,
+        "entry": 1,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32"
       }
     }
   },
