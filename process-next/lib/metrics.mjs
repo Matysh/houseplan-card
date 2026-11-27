@@ -61,6 +61,7 @@ export function collectMeasurement({ zip, performance, host, runnerHash, release
   if (!host?.cpu || !host?.power_scheme || !runnerHash) diagnostics.push('Условия замера записаны не полностью; сравнение времени недоступно');
   return { schema: 1, release, source_sha: sourceSha, recorded_at_utc: new Date().toISOString(), ...sizes, timing_metrics, host,
     measurement_status: diagnostics.length ? 'incomplete' : 'complete', diagnostics,
+    ...(performance?.webglDiagnostics ? { webgl_diagnostics: performance.webglDiagnostics } : {}),
     ...(performance?.modeTransitionDiagnostics ? { transition_diagnostics: performance.modeTransitionDiagnostics } : {}),
     timing_protocol: { profile: performance?.profile, fixture: performance?.fixture, warmups: performance?.warmups, samples: performance?.samples, runtime: performance?.runtime, runner_sha256: runnerHash } };
 }
@@ -119,6 +120,7 @@ export function compareMeasurements(candidate, latestStable, anchor = frozenBase
   return { schema: 1, sha: candidate.source_sha, reference: latestStable?.release ?? 'нет замера последнего stable', anchor: anchor.release,
     requiresDecision: primary.some(row => row.blocks), needsMeasurement, primary, diagnostic,
     transitionDiagnostics: candidate.transition_diagnostics ?? null,
+    webglDiagnostics: candidate.webgl_diagnostics ?? null,
     ready: !primary.some(row => row.blocks) };
 }
 export function renderMetrics(report) {
@@ -126,7 +128,7 @@ export function renderMetrics(report) {
     ...rows.map(r => `| ${r.label} | ${r.before ?? 'нет данных'} | ${r.after ?? 'нет данных'} | ${r.percent === null ? '—' : r.percent.toFixed(1) + '%'} | ${r.status}${r.blocks ? ': решение владельца' : ''} |`)].join('\n');
   const notes = report.evidenceStatus && report.evidenceStatus !== 'complete'
     ? `Состояние замера: ${report.evidenceStatus}. Отсутствующие данные не означают успешную проверку.\n${(report.diagnostics ?? []).map(reason => `- ${reason}`).join('\n')}\n\n` : '';
-  return notes + table(`Сравнение с ${report.reference}`, report.primary) + '\n\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n' + renderModeDiagnostics(report.transitionDiagnostics);
+  return notes + table(`Сравнение с ${report.reference}`, report.primary) + '\n\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n' + renderModeDiagnostics(report.transitionDiagnostics) + renderWebglDiagnostics(report.webglDiagnostics);
 }
 
 /** These observations never enter POLICY/primary or publication readiness. */
@@ -152,4 +154,28 @@ export function renderModeDiagnostics(record) {
     + '|---|---:|---:|---:|---:|\n'
     + [...groups].map(([key, rows]) => '| ' + key + ' | '
       + ['firstMotionMs', 'rafSamples', 'maxFrameGapMs', 'afterToInteractiveMs'].map(name => value(rows, name)).join(' | ') + ' |').join('\n') + '\n';
+}
+
+/** 3D never enters POLICY, primary, or readiness. No inferred laptop baseline. */
+export function renderWebglDiagnostics(record) {
+  const heading = '\n## Объёмный вид — диагностика, не блокирует\n\n';
+  if (!record || record.status !== 'measured') return heading + 'Замер недоступен: ' + (record?.reason ?? 'нет данных') + '\n';
+  const names = { firstStable3dMs: 'Первый устойчивый 3D-кадр, мс', spaceSwitch3dMs: 'Смена этажа в 3D, мс',
+    zoom3dMs: 'Один шаг масштаба в 3D, мс', pan3dMs: 'Панорама в 3D, мс', stateUpdate3dMs: 'Обновление света, мс',
+    lightFade3dMs: 'Свет с завершением fade, мс', heapBytes: 'Heap после GC, байт' };
+  const rows = Object.entries(names).map(([key, label]) => {
+    const values = (record.rows ?? []).map(row => row[key]);
+    return `| ${label} | ${values.length && values.every(Number.isFinite) ? median(values).toFixed(2) : 'нет данных'} |`;
+  });
+  const geometry = record.rows?.[0]?.geometry;
+  const gpu = (record.rows ?? []).flatMap(row => row.gpu?.supported ? row.gpu.samplesMs : []);
+  const gpuReasons = [...new Set((record.rows ?? []).map(row => row.gpu?.reason).filter(Boolean))];
+  return heading + (record.runtime?.rendering === 'software' ? 'Программный рендер' : record.runtime?.rendering ?? 'Рендер неизвестен')
+    + ': ' + (record.runtime?.renderer ?? 'нет данных') + '. С ноутбуком владельца не сравнивается. '
+    + 'Время до скопированного WebGL-кадра в canvas и следующего RAF; аппаратное предъявление дисплеем не измерено. '
+    + 'Для сравнения нужен парный прогон с тем же renderer, протоколом и условиями.\n\n'
+    + '| Метрика | Медиана |\n|---|---:|\n' + rows.join('\n') + '\n\n'
+    + 'Меши стен/проёмов/мебели/устройств: ' + (geometry ? Object.values(geometry.meshes).join('/') : 'нет данных')
+    + '; draw calls: ' + (geometry?.drawCalls ?? 'нет данных') + '; материалы: ' + (geometry?.materials ?? 'нет данных')
+    + '. GPU render, мс: ' + (gpu.length ? median(gpu).toFixed(2) : 'нет данных (' + gpuReasons.join('; ') + ')') + '.\n';
 }

@@ -6,8 +6,20 @@ import { cpus, release } from 'node:os';
 import { digest, readJson, writeJson } from '../lib/storage.mjs';
 import { collectMeasurement, compareMeasurements, renderMetrics } from '../lib/metrics.mjs';
 
-const benchmark = ({ root, performancePath }) => execFileSync(process.execPath,
-  ['demo/benchmark_large_house.mjs', '--profile=large-house-v1', '--warmups=1', '--samples=7', `--output=${performancePath}`], { cwd: root, stdio: 'inherit' });
+const benchmark = ({ root, performancePath }) => {
+  execFileSync(process.execPath, ['demo/benchmark_large_house.mjs', '--profile=large-house-v1', '--warmups=1', '--samples=7', `--output=${performancePath}`], { cwd: root, stdio: 'inherit' });
+  const performance = readJson(performancePath), webglPath = performancePath + '.webgl.json';
+  try {
+    rmSync(webglPath, { force: true });
+    execFileSync(process.execPath, ['demo/benchmark_large_house.mjs', '--profile=large-house-isometric-v1', '--warmups=1', '--samples=7', `--output=${webglPath}`], { cwd: root, stdio: 'inherit' });
+    const webgl = readJson(webglPath);
+    if (!webgl || webgl.sourceSha !== performance.sourceSha || webgl.buildFingerprint !== performance.buildFingerprint) throw Error('WebGL report is from another candidate');
+    performance.webglDiagnostics = { ...webgl, status: 'measured', diagnostic: true };
+  } catch (error) {
+    performance.webglDiagnostics = { status: 'unavailable', diagnostic: true, reason: error.message };
+  }
+  writeJson(performancePath, performance);
+};
 
 /** A measurement problem remains a diagnostic result, not a missing beta report.
  * Invalid candidate evidence never becomes a stored reference measurement.

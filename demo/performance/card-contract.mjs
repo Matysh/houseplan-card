@@ -285,3 +285,45 @@ export function installEpochDiagnostics(card, captureStack) {
     },
   });
 }
+
+/** Actual painted Three.js world, serialized unchanged into the benchmark page.
+ * The display canvas is 2D: its pixels are copied from the shared WebGL output.
+ * A Flat stage, unpainted submission, or empty scene can never pass this oracle. */
+export function readWebglCandidate(card, profile = 'plan3d-webgl-v1') {
+  const fail = reason => { throw Error(`${profile}: 3D не отрисовано: ${reason}`); };
+  const host = card?._plan3dHost;
+  const canvas = host?.canvas;
+  const viewport = host?.viewport;
+  const renderer = viewport?.output?.renderer;
+  const world = host?.world;
+  if (card?._effectiveProjection?.() !== 'iso' || !canvas?.hasAttribute('data-hp-plan-3d-ready')) fail('Flat fallback or no ready canvas');
+  if (!canvas.width || !canvas.height || viewport?.painted !== viewport?.frame || !world?.scene?.isScene || !renderer?.isWebGLRenderer) fail('no presented WebGL frame');
+  const meshCount = group => {
+    let count = 0;
+    group?.traverseVisible(object => { if (object.isMesh && object.geometry?.getAttribute('position')?.count > 0) count++; });
+    return count;
+  };
+  const meshes = { walls: meshCount(world.structure) + meshCount(world.architecture), openings: meshCount(world.openings),
+    furniture: meshCount(world.furniture), devices: meshCount(world.markers?.group) };
+  if (Object.values(meshes).some(count => count < 1)) fail('missing wall/opening/furniture/device meshes: ' + JSON.stringify(meshes));
+  const materials = new Set();
+  world.scene.traverseVisible(object => {
+    if (object.isMesh) for (const material of Array.isArray(object.material) ? object.material : [object.material]) if (material?.isMaterial) materials.add(material.uuid);
+  });
+  const info = renderer.info;
+  if (!(info?.render?.calls > 0) || !materials.size) fail('no draw calls/materials');
+  const tiny = canvas.ownerDocument.createElement('canvas'); tiny.width = tiny.height = 32;
+  const context = tiny.getContext('2d'); if (!context) fail('no pixel readback');
+  context.drawImage(canvas, 0, 0, 32, 32);
+  const pixels = context.getImageData(0, 0, 32, 32).data;
+  let painted = 0;
+  for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 48) painted++;
+  if (painted < 4) fail('empty presented canvas');
+  const gl = renderer.getContext(), debug = gl.getExtension('WEBGL_debug_renderer_info');
+  const rendererName = String(gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
+  const software = /swiftshader|llvmpipe|softpipe|software|lavapipe/i.test(rendererName);
+  return { meshes, materials: materials.size, drawCalls: info.render.calls, triangles: info.render.triangles,
+    geometries: info.memory.geometries, textures: info.memory.textures, paintedPixels: painted,
+    renderer: rendererName, rendering: software ? 'software' : debug ? 'hardware' : 'unknown',
+    comparableToOwnerLaptop: false, comparison: 'Only paired runs with matching renderer/host/protocol are comparable; owner laptop is not measured here.' };
+}

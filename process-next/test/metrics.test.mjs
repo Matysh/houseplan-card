@@ -254,3 +254,16 @@ test('#1344 slow transition diagnostics are visible and cannot become release ga
   assert.equal(missing.ready, previous.ready);
   assert.match(renderMetrics(missing), /Замер недоступен: browser did not settle/);
 });
+
+test('#1599 WebGL report travels through performance.json and measurement.json as diagnostic evidence', t => {
+  const f = measurementFixture(t);
+  const baseline = runMeasurements(f);
+  f.performance.webglDiagnostics = { status: 'measured', diagnostic: true, sourceSha: f.sourceSha,
+    runtime: { rendering: 'software', renderer: 'SwiftShader' }, rows: [{ firstStable3dMs: 999999 }] };
+  const result = runMeasurements(f);
+  assert.deepEqual(result.measurement.webgl_diagnostics, f.performance.webglDiagnostics);
+  assert.deepEqual(result.comparison.primary, baseline.comparison.primary);
+  assert.deepEqual(JSON.parse(readFileSync(join(f.output, 'measurement.json'))).webgl_diagnostics, f.performance.webglDiagnostics);
+  assert.match(readFileSync(join(f.output, 'metrics.md'), 'utf8'), /Объёмный вид/);
+  assert.match(readFileSync(join(f.output, 'metrics.md'), 'utf8'), /Программный рендер/);
+});

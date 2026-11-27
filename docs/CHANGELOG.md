@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Restore the 1.83.1 hotfix entry and document bundled frontend licenses. [#1597](https://github.com/Matysh/houseplan-card/issues/1597)
+- Replace legacy SVG isometric benchmarks with diagnostic WebGL canvas/mesh, camera, light fade, GPU timer and heap measurements; report software rendering explicitly (#1599).
+
 - Document the WebGL 2 requirement for 3D view and the 2D fallback in both READMEs (#1591).
 - Extract the lazy 3D host lifecycle and mode transition presentation from the main card (#1604).
 - Recheck live write access before saving device positions or publishing attachments, and keep cancelled file operations from leaving partial copies (#1605).

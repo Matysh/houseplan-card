@@ -52,9 +52,9 @@ Long Tasks, heap change and cache size.
 | Profile | Workload |
 |---|---|
 | `large-house-v1` | Base View, navigation and state updates |
-| `large-house-isometric-v1` | Isometric View and geometry cache |
-| `isometric-stage3-dense-v1` | Dense devices near walls/corners, raised overlays and state updates |
-| `large-house-isometric-backdrop-v1` | Isometric rendering with the backdrop |
+| `large-house-isometric-v1` | Presented WebGL 3D world, camera and light fade diagnostics |
+| `isometric-stage3-dense-v1` | The same WebGL protocol with dense devices near walls/corners |
+| `large-house-isometric-backdrop-v1` | The same WebGL protocol with a backdrop |
 | `large-house-plan-snap-v1` | Saved open outlines and 120 native pointer positions over endpoint, line and miss targets |
 | `large-house-interaction-v1` | Hover, pan/zoom, editor drags and related/unrelated HA snapshots |
 
@@ -176,3 +176,28 @@ incomparability report. They do not justify changing visual references:
 Past measurements and policy revisions remain in Git history and their
 issues. This guide does not reinstate former Validate/Full Performance
 release requirements or per-task hard limits.
+
+### WebGL diagnostics (#1599)
+
+The three legacy isometric command names now run `plan3d-webgl-v1`, never the
+retired SVG fingerprint oracle. Their derived fixture adds a sofa and fridge
+on each floor, leaving the historical large-house fixture unchanged. A passing
+candidate needs a nonempty painted display canvas, the matching presented
+Three.js frame, real wall/opening/furniture/device meshes, materials and draw
+calls. Flat fallback is a failure: `3D не отрисовано`.
+
+`npm run benchmark:large-house-isometric` measures the first stable 3D canvas,
+a floor switch, a wheel zoom step, pointer pan, a light state update and its
+complete fade, and used JS heap after GC when exposed. GPU timer queries wrap
+the actual zoom/pan render calls only; unavailable/disjoint queries report a
+reason and no synthetic zero. CPU times end after the copied canvas and next
+RAF; this is not a hardware display presentation trace or FPS measurement.
+
+The release measurement runner retains the 3D report in `performance.json`
+(`webglDiagnostics`), `measurement.json` (`webgl_diagnostics`) and the
+“Объёмный вид” section of `metrics.md`. These rows never enter `primary` or
+release budgets. A diagnostic failure leaves the ordinary View measurement
+intact. Software renderer identity is explicit; these numbers cannot establish
+performance on the owner's laptop. Compare only paired runs of this protocol
+with matching fixture, renderer and host conditions. Historical SVG budgets
+and results are not a WebGL baseline.
