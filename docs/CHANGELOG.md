@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## v2.0.0-beta.3 — 2026-11-27
+## v2.0.0-beta.3 — 2026-11-28
 
 - Preserve partition openings when adding a space triggers migration to plan model 11 (#1611).
 - The compact header menu shows an accent border on the item reached by keyboard. (#1614)
