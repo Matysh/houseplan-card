@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28348,
+  "revision": 28349,
   "nextTicket": 772,
   "nextFence": 768,
   "tasks": {
@@ -6114,14 +6114,34 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1594-mdi-packaging",
-      "materialSha": "5a5d56d0467cb26e31de655b0e19b0f80a8c589f",
+      "materialSha": "a08bd93306db31c5962217226318a051dd8b6a05",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 767,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795775996057,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "eb8420682ef5cffe9c401ac6a0a9299ec8bf2518",
+      "changedFiles": [
+        "demo/helpers/ha-dialog-fixture.mjs",
+        "demo/helpers/mdi-assets.mjs",
+        "demo/serve.mjs",
+        "demo/smoke_device_icon_picker.mjs",
+        "demo/smoke_standalone_entry.mjs",
+        "demo/standalone/mdi-picker-probe.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/STANDALONE-PRESENTATION.md",
+        "docs/release-ledger/v1.86.1/1594.json",
+        "process-next/catalog/site-release-browser.mjs",
+        "process-next/lib/source-dependencies.mjs",
+        "src/editors/hp-icon-picker.ts",
+        "src/icon-catalog.ts",
+        "src/standalone-icon-catalog.ts",
+        "src/standalone-presentation.ts",
+        "test/bundle-assets.test.mjs"
+      ]
     },
     "1597": {
       "issue": 1597,
@@ -7438,17 +7458,14 @@
     "worker": "finish",
     "token": "767:finish:ebfd23a8-6ad9-45a3-ab3d-84868c9b557a:finish:10:admit",
     "fence": 767,
-    "materialSha": "5a5d56d0467cb26e31de655b0e19b0f80a8c589f",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "a08bd93306db31c5962217226318a051dd8b6a05",
+    "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
+    "phase": "testing",
     "admittedAt": 1795780430375,
-    "expiresAt": 1795780730375
+    "expiresAt": 1795780738975,
+    "patchId": "eb8420682ef5cffe9c401ac6a0a9299ec8bf2518"
   },
   "events": {
-    "finish:2775840e-f8d0-46c2-9619-ebbb3b9e6999": {
-      "digest": "d550893b642ee6ed5ea943b128badf0b87002607a1f259f1cb22a8913bac4e70",
-      "issue": 1609
-    },
     "finish:9142f4c9-9250-4a3d-a2ca-6d0e6be60d92": {
       "digest": "b3923aa522de39d5847aa2d6db0aacc7327c4ba1c05b57bc6ab50bf335af42e4",
       "issue": 1609
@@ -8308,6 +8325,10 @@
     "github:45994107355:1:tick:0:return-label": {
       "digest": "de97c85b68ac5369f113a10e4da1323d0eb8d74f3826de4eb83f0402101233f2",
       "issue": 1598
+    },
+    "finish:d317f452-0e81-408a-8826-31764c8c56c5:finish:2:synchronized": {
+      "digest": "3eea4f9b821da4a79f930612861b9e0696db684004da4e87094af96650cdec9e",
+      "issue": 1594
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
