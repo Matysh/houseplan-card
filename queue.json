@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29753,
+  "revision": 29754,
   "nextTicket": 799,
   "nextFence": 798,
   "tasks": {
@@ -5586,146 +5586,26 @@
     },
     "1593": {
       "issue": 1593,
+      "branch": "codex/1593-canonical-release-sizes",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/1593-canonical-release-sizes",
-      "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 797,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795818567080,
-      "reviewEntry": 1,
-      "patchId": "e1e9fdd4d47c091f9fda853c5d3d1527f572becd",
-      "changedFiles": [
-        "PROCESS.md",
-        "process-next/baselines/release-sizes-1593.json",
-        "process-next/catalog/measure.mjs",
-        "process-next/cli.mjs",
-        "process-next/lib/catalog.mjs",
-        "process-next/lib/metrics.mjs",
-        "process-next/lib/zip.mjs",
-        "process-next/test/metrics.test.mjs"
-      ],
-      "s6": {
-        "id": "20261127T223026026-c2335335",
-        "name": "Тесты для задачи #1593 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-957-spec-material-retention/.git/process-next/runs/20261127T223026026-c2335335/report.json",
-        "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-        "status": "passed",
-        "finishedAt": "2026-11-27T22:31:10.162Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
+      "mergedSha": "029bee4a997415765c278be12fd8334d82774e33",
+      "mergedAt": 1795818938924,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1593:1:e1e9fdd4d47c091f9fda853c5d3d1527f572becd:29471508f54cda93c59ab5f07d9a5d2f895d1560",
-      "reviewMaterial": {
-        "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-        "expectedBase": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
-        "patchId": "e1e9fdd4d47c091f9fda853c5d3d1527f572becd"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1593,
-        "requestId": "review:1593:1:e1e9fdd4d47c091f9fda853c5d3d1527f572becd:29471508f54cda93c59ab5f07d9a5d2f895d1560",
-        "kind": "code",
-        "base": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
-        "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-        "patchId": "e1e9fdd4d47c091f9fda853c5d3d1527f572becd",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1593,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1593",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Канонический `zip_bytes` считает физический ZIP за вычетом локальных и центральных записей предсжатых вариантов из манифеста. Бэкенд и остальные файлы входят в эту метрику. Доставляемый ZIP и объём предсжатых файлов показаны отдельно. Формат сохранённых замеров распознаётся по наличию `zip_delivered_bytes`, чтобы сравнение не смешивало два значения `zip_bytes`. Для перехода v1.86.1 пересчитан по опубликованному ZIP с проверкой SHA-256.\n\nВладелец одобрил в чате v2.0.0-beta.3 как справочный эталон после выноса MDI. ZIP выпуска на `4b71e606a0491c5b830885837c8c476e7e7e524d` дал 506 329 байт для начального View и 1 639 192 байта для всего frontend. Превышение на 5% теперь отмечается справочно. Решения по каноническому ZIP и времени по-прежнему привязаны к конкретному кандидату через `metricsAcceptedSha`.\n\nСверены SHA-256 пяти опубликованных ZIP с `process-release-state` и исходные размеры с прежними отчётами. Канонический ZIP для v1.85.2 изменился с 2 879 582 до 2 929 842 байт (+1,75%). Для v1.86.0 — с 2 929 842 до 3 180 143 байт (+8,54%). Пересчёт добавлен в диагностику обоих выпусков. [Запись v1.85.2](https://github.com/Matysh/houseplan-card/commit/7572c01bf954f9f3ce616cd27edf70971ef5528f) и [запись v1.86.0](https://github.com/Matysh/houseplan-card/commit/49df78138e18dbca2aa9fd3380725daa83c17a82). Локальная проверка событий подтвердила, что повтор не дублирует строку, а исходные отчёты и решения не переписываются. Адресные Node-проверки прошли, в том числе реальное чтение структуры ZIP с data descriptor и совместный отчёт с парным временем #1592. HA E2E не требуется, поскольку изменения относятся к отчёту релизного процесса.\n\n\nОтчёт CLI на фактическом ZIP снимка dev `2fa7171c` показал 2 588 987 канонических байт против 3 221 297 у v1.86.1. Полный ZIP в отчёте равен 4 226 743 байтам, предсжатые копии занимают 1 621 135 байт. Обе справочные gzip-строки сравниваются с зафиксированной v2.0.0-beta.3."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принимать: задача решена, блокеров нет. Строка `zip_bytes` теперь считает размер ZIP без предсжатых копий. Поэтому на следующей бете #1387 больше не даёт `regression`. Сравнение пойдёт с пересчитанным каноническим размером v1.86.1 (3 221 297 байт); на снимке dev кандидат даёт около 2 588 987 байт, то есть результат `within-tolerance`. Полный ZIP и объём предсжатых копий показаны отдельной таблицей и на публикацию не влияют. Обе gzip-строки стали справочными (`above-reference`, `blocks` всегда false) и сравниваются с зафиксированной v2.0.0-beta.3. `metricsAcceptedSha` и `releaseReadiness` не менялись, новых ограничителей нет. Пересчёт v1.85.2 и v1.86.0 записан в `process-release-state`, вне этого репозитория. Его я по ссылкам не проверял.",
-          "understanding": "Проблема. Раньше `zip_bytes` был физическим размером `houseplan.zip`. После #1387 в архив попали gzip-копии чанков, а после 3D — three.js. Каждый stable выходил за допуск 5 % / 32 КиБ и показывался как `regression`, требуя решения владельца, хотя рост был запланирован. gzip-строки тоже могли блокировать публикацию через `requiresDecision`.\n\nКак стало:\n1) `zip.mjs/inspectZip` для каждой нужной записи считает её полный след в архиве: локальный заголовок, данные, data descriptor с сигнатурой или без неё и запись центрального каталога (`archiveBytes`), а также возвращает `length`.\n2) `measureFrontend` вычитает из физического размера след записей, которые манифест помечает как `encodings`. Результат — канонический `zip_bytes`. Физический размер теперь в `zip_delivered_bytes`, предсжатые копии — по-прежнему в `frontend_transport_bytes`. Если `archiveBytes` не передан, а копии есть, `zip_bytes` не выдаётся, чтобы не записать в него физический размер.\n3) Старый и новый формат различаются по наличию `zip_delivered_bytes`. Функция `measurement()` для `zip_bytes` принимает значение только у новых записей, у старых без транспортных копий (`frontend_transport_bytes === 0`) и у якоря v1.83.1. Иначе строка получает `missing`, а не ложную регрессию.\n4) `releaseSizeReferences` подменяет архивный замер v1.86.1 пересчитанным снимком из `baselines/release-sizes-1593.json`, только если совпадают тег, `source_sha` и `artifactDigest` и замер ещё в старом формате. Справочная база gzip-строк всегда v2.0.0-beta.3.\n5) В `POLICY` gzip-строки помечены `informational`: статус `above-reference`, в `needsMeasurement` они не входят, `blocks` вычисляется только из `status === 'regression'`.\n\nКакие пути я разобрал: `measure.mjs/runMeasurements` (выбор тега, `sizeReference`, `releaseSizeReferences`, `compareMeasurements`); CLI `metrics`; `remote.mjs/readReleaseMetrics` и `measurement-baseline`/`readPublishedMeasurement`, откуда берётся архивный stable; `prepare-fallback.mjs` (передача `latestStable` в CI); `release.mjs/releaseReadiness` (блокирует только `requiresDecision` без `metricsAcceptedSha`, а `needsMeasurement` не блокирует); добавление файла эталона во входы шага `release-measurements` в `catalog.mjs`. Других потребителей `size_metrics` в `process-next/lib` и `scripts` поиск не нашёл.",
-          "analysis": [
-            {
-              "topic": "Подсчёт канонического ZIP по фактической структуре архива",
-              "assessment": "Подход надёжнее, чем вычитать размер сжатых данных или пересобирать архив. Вычитаются ровно байты, которых не было бы без этих записей. EOCD при этом не меняется, поэтому результат совпадает с архивом, собранным без копий. Тест строит именно такой архив и сравнивает длины. Отдельно учтён data descriptor с сигнатурой и без неё, сверка идёт по CRC и размерам из центрального каталога. Проверка усечения стала строже (`dataEnd > centralOffset`), для корректных архивов это безопасно. ZIP64-дескрипторы не поддерживаются, но тогда замер падает с ошибкой и получает статус `invalid`, а не выдаёт ложное число. Шаг диагностический, публикацию это не останавливает.",
-              "evidence": "process-next/lib/zip.mjs:43-81 (crc, centralRecordSize, localEnd, archiveBytes); process-next/lib/metrics.mjs:51-57; test/metrics.test.mjs:196-203 (`withoutCopies.length` против `measureZip`)."
-            },
-            {
-              "topic": "Совместимость со старыми замерами и миграция v1.86.1",
-              "assessment": "Это главный риск смены смысла `zip_bytes`: старый stable несёт в том же поле физический размер. Решение распознаёт формат по `zip_delivered_bytes`. Подмена на пересчитанный снимок привязана к `source_sha` и `artifactDigest`. При несовпадении строка становится `missing`, а не ложным `regression` или ложным успехом. Это не блокирует: `needsMeasurement` в `releaseReadiness` не используется. Если файл stable не передан, при теге v1.86.1 берётся снимок, что тоже разумно. Пересчитанное значение задаётся тегом в коде и перестаёт действовать, как только последним stable станет выпуск с замером нового формата.",
-              "evidence": "metrics.mjs:23-29, 126-131, 157-161; measure.mjs:129-133; release.mjs:55-69; test/metrics.test.mjs:153-175 (подмена, отказ при чужом digest → `missing`)."
-            },
-            {
-              "topic": "Справочные gzip-строки и отсутствие новых блокировок",
-              "assessment": "Требования 2 и последний критерий приёмки выполнены. Для informational-строк `blocks` не может стать true: статус `above-reference` отделён от `regression`. Они исключены из `needsMeasurement`, а в отчёте помечены «(справочно)» с примечанием о базе. В ТЗ сказано зафиксировать эталон «через существующий `metricsAcceptedSha`». Однако это поле — одноразовое принятие отчёта конкретного кандидата, а не постоянная база. Поэтому файл эталона в репозитории с явной привязкой к SHA и digest выпуска — оправданное и проверяемое воплощение замысла. Принятие отдельных превышений через `metricsAcceptedSha` не изменилось.",
-              "evidence": "metrics.mjs:9-10, 136-155, 166; release.mjs:67, 184-187; PROCESS.md:358-371; test/metrics.test.mjs:20-37."
-            },
-            {
-              "topic": "Отчёт и CLI",
-              "assessment": "Таблица «Размеры доставки» показывает полный ZIP и предсжатые копии для stable и кандидата. Для старых записей `reportedSize` берёт старый `zip_bytes` как физический размер, так что историческое сравнение видно честно. CLI `metrics` использует ту же логику эталона, что и `runMeasurements`, и это покрыто тестом через реальный запуск `cli.mjs`. Файл эталона добавлен во входы шага `release-measurements`, значит его правка сбросит кеш результата.",
-              "evidence": "metrics.mjs:167-195; cli.mjs:217-224; catalog.mjs:313; test/metrics.test.mjs:361-368."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Правило `record?.release === 'v1.83.1'` в `measurement()` — скрытое исключение для якоря. Надёжнее явно пометить формат: например, поле `size_schema`, которое получат якорь и новые замеры, либо добавить в `v1.83.1.json`… но этот файл заморожен по хешу. Тогда достаточно комментария у условия, зачем нужен якорь. Цена — одна строка комментария, выгода — следующий разработчик не удалит условие как лишнее.",
-            "Справочная база gzip всегда v2.0.0-beta.3, в том числе для возможного hotfix на линии 1.86.x: там строки покажут расхождение из-за выноса MDI. На публикацию это не влияет, но вводит в заблуждение. Можно не показывать справочное сравнение, если `release` кандидата ниже 2.0.0, или написать в примечании, к какой линии относится база.",
-            "Путь `runMeasurements` с тегом v1.86.1 и архивным замером старого формата проверен только косвенно: через CLI и прямой вызов `releaseSizeReferences`. Короткий тест на `runMeasurements` с подставленным `selectBaseline` (v1.86.1) защитил бы основной путь беты от регрессий."
-          ],
-          "boundaries": "Код я изучил по исходникам head и диффу, тесты не запускал. Из результатов S6 использован прогон `20261127T223026026-c2335335` «Тесты для задачи #1593 (перед ревью)» со статусом passed на `029bee4a`. Пересчёт эталона по опубликованным ZIP и сверку SHA-256 выполнил исполнитель. Я сверил только согласованность чисел в `release-sizes-1593.json` с контекстом автора, сами ZIP не открывал. Совпадение `artifactDigest` в опубликованном `measurement.json` v1.86.1 со значением в файле эталона не проверено. Если они разойдутся, строка ZIP на бете станет `missing`, а не `regression` и не заблокирует публикацию. Записи пересчёта v1.85.2 и v1.86.0 в `process-release-state` (коммиты 7572c01b, 49df7813) лежат вне этого снимка и не проверялись. Одобрение владельцем v2.0.0-beta.3 как эталона в снимке задачи не зафиксировано, оно известно только со слов исполнителя."
-        },
-        "usage": {
-          "input_tokens": 30,
-          "cache_creation_input_tokens": 77280,
-          "cache_read_input_tokens": 721240,
-          "output_tokens": 12220,
-          "output_tokens_details": {
-            "thinking_tokens": 5998
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 77280,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1029,
-              "cache_read_input_tokens": 67502,
-              "cache_creation_input_tokens": 13982,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 13982
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принимать: задача решена, блокеров нет. Строка `zip_bytes` теперь считает размер ZIP без предсжатых копий. Поэтому на следующей бете #1387 больше не даёт `regression`. Сравнение пойдёт с пересчитанным каноническим размером v1.86.1 (3 221 297 байт); на снимке dev кандидат даёт около 2 588 987 байт, то есть результат `within-tolerance`. Полный ZIP и объём предсжатых копий показаны отдельной таблицей и на публикацию не влияют. Обе gzip-строки стали справочными (`above-reference`, `blocks` всегда false) и сравниваются с зафиксированной v2.0.0-beta.3. `metricsAcceptedSha` и `releaseReadiness` не менялись, новых ограничителей нет. Пересчёт v1.85.2 и v1.86.0 записан в `process-release-state`, вне этого репозитория. Его я по ссылкам не проверял.\n\n## Понимание решения\n\nПроблема. Раньше `zip_bytes` был физическим размером `houseplan.zip`. После #1387 в архив попали gzip-копии чанков, а после 3D — three.js. Каждый stable выходил за допуск 5 % / 32 КиБ и показывался как `regression`, требуя решения владельца, хотя рост был запланирован. gzip-строки тоже могли блокировать публикацию через `requiresDecision`.\n\nКак стало:\n1) `zip.mjs/inspectZip` для каждой нужной записи считает её полный след в архиве: локальный заголовок, данные, data descriptor с сигнатурой или без неё и запись центрального каталога (`archiveBytes`), а также возвращает `length`.\n2) `measureFrontend` вычитает из физического размера след записей, которые манифест помечает как `encodings`. Результат — канонический `zip_bytes`. Физический размер теперь в `zip_delivered_bytes`, предсжатые копии — по-прежнему в `frontend_transport_bytes`. Если `archiveBytes` не передан, а копии есть, `zip_bytes` не выдаётся, чтобы не записать в него физический размер.\n3) Старый и новый формат различаются по наличию `zip_delivered_bytes`. Функция `measurement()` для `zip_bytes` принимает значение только у новых записей, у старых без транспортных копий (`frontend_transport_bytes === 0`) и у якоря v1.83.1. Иначе строка получает `missing`, а не ложную регрессию.\n4) `releaseSizeReferences` подменяет архивный замер v1.86.1 пересчитанным снимком из `baselines/release-sizes-1593.json`, только если совпадают тег, `source_sha` и `artifactDigest` и замер ещё в старом формате. Справочная база gzip-строк всегда v2.0.0-beta.3.\n5) В `POLICY` gzip-строки помечены `informational`: статус `above-reference`, в `needsMeasurement` они не входят, `blocks` вычисляется только из `status === 'regression'`.\n\nКакие пути я разобрал: `measure.mjs/runMeasurements` (выбор тега, `sizeReference`, `releaseSizeReferences`, `compareMeasurements`); CLI `metrics`; `remote.mjs/readReleaseMetrics` и `measurement-baseline`/`readPublishedMeasurement`, откуда берётся архивный stable; `prepare-fallback.mjs` (передача `latestStable` в CI); `release.mjs/releaseReadiness` (блокирует только `requiresDecision` без `metricsAcceptedSha`, а `needsMeasurement` не блокирует); добавление файла эталона во входы шага `release-measurements` в `catalog.mjs`. Других потребителей `size_metrics` в `process-next/lib` и `scripts` поиск не нашёл.\n\n## Разбор решения\n\n### Подсчёт канонического ZIP по фактической структуре архива\n\nПодход надёжнее, чем вычитать размер сжатых данных или пересобирать архив. Вычитаются ровно байты, которых не было бы без этих записей. EOCD при этом не меняется, поэтому результат совпадает с архивом, собранным без копий. Тест строит именно такой архив и сравнивает длины. Отдельно учтён data descriptor с сигнатурой и без неё, сверка идёт по CRC и размерам из центрального каталога. Проверка усечения стала строже (`dataEnd > centralOffset`), для корректных архивов это безопасно. ZIP64-дескрипторы не поддерживаются, но тогда замер падает с ошибкой и получает статус `invalid`, а не выдаёт ложное число. Шаг диагностический, публикацию это не останавливает.\n\nОснование: process-next/lib/zip.mjs:43-81 (crc, centralRecordSize, localEnd, archiveBytes); process-next/lib/metrics.mjs:51-57; test/metrics.test.mjs:196-203 (`withoutCopies.length` против `measureZip`).\n\n### Совместимость со старыми замерами и миграция v1.86.1\n\nЭто главный риск смены смысла `zip_bytes`: старый stable несёт в том же поле физический размер. Решение распознаёт формат по `zip_delivered_bytes`. Подмена на пересчитанный снимок привязана к `source_sha` и `artifactDigest`. При несовпадении строка становится `missing`, а не ложным `regression` или ложным успехом. Это не блокирует: `needsMeasurement` в `releaseReadiness` не используется. Если файл stable не передан, при теге v1.86.1 берётся снимок, что тоже разумно. Пересчитанное значение задаётся тегом в коде и перестаёт действовать, как только последним stable станет выпуск с замером нового формата.\n\nОснование: metrics.mjs:23-29, 126-131, 157-161; measure.mjs:129-133; release.mjs:55-69; test/metrics.test.mjs:153-175 (подмена, отказ при чужом digest → `missing`).\n\n### Справочные gzip-строки и отсутствие новых блокировок\n\nТребования 2 и последний критерий приёмки выполнены. Для informational-строк `blocks` не может стать true: статус `above-reference` отделён от `regression`. Они исключены из `needsMeasurement`, а в отчёте помечены «(справочно)» с примечанием о базе. В ТЗ сказано зафиксировать эталон «через существующий `metricsAcceptedSha`». Однако это поле — одноразовое принятие отчёта конкретного кандидата, а не постоянная база. Поэтому файл эталона в репозитории с явной привязкой к SHA и digest выпуска — оправданное и проверяемое воплощение замысла. Принятие отдельных превышений через `metricsAcceptedSha` не изменилось.\n\nОснование: metrics.mjs:9-10, 136-155, 166; release.mjs:67, 184-187; PROCESS.md:358-371; test/metrics.test.mjs:20-37.\n\n### Отчёт и CLI\n\nТаблица «Размеры доставки» показывает полный ZIP и предсжатые копии для stable и кандидата. Для старых записей `reportedSize` берёт старый `zip_bytes` как физический размер, так что историческое сравнение видно честно. CLI `metrics` использует ту же логику эталона, что и `runMeasurements`, и это покрыто тестом через реальный запуск `cli.mjs`. Файл эталона добавлен во входы шага `release-measurements`, значит его правка сбросит кеш результата.\n\nОснование: metrics.mjs:167-195; cli.mjs:217-224; catalog.mjs:313; test/metrics.test.mjs:361-368.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Правило `record?.release === 'v1.83.1'` в `measurement()` — скрытое исключение для якоря. Надёжнее явно пометить формат: например, поле `size_schema`, которое получат якорь и новые замеры, либо добавить в `v1.83.1.json`… но этот файл заморожен по хешу. Тогда достаточно комментария у условия, зачем нужен якорь. Цена — одна строка комментария, выгода — следующий разработчик не удалит условие как лишнее.\n- Справочная база gzip всегда v2.0.0-beta.3, в том числе для возможного hotfix на линии 1.86.x: там строки покажут расхождение из-за выноса MDI. На публикацию это не влияет, но вводит в заблуждение. Можно не показывать справочное сравнение, если `release` кандидата ниже 2.0.0, или написать в примечании, к какой линии относится база.\n- Путь `runMeasurements` с тегом v1.86.1 и архивным замером старого формата проверен только косвенно: через CLI и прямой вызов `releaseSizeReferences`. Короткий тест на `runMeasurements` с подставленным `selectBaseline` (v1.86.1) защитил бы основной путь беты от регрессий.\n\n## Границы анализа\n\nКод я изучил по исходникам head и диффу, тесты не запускал. Из результатов S6 использован прогон `20261127T223026026-c2335335` «Тесты для задачи #1593 (перед ревью)» со статусом passed на `029bee4a`. Пересчёт эталона по опубликованным ZIP и сверку SHA-256 выполнил исполнитель. Я сверил только согласованность чисел в `release-sizes-1593.json` с контекстом автора, сами ZIP не открывал. Совпадение `artifactDigest` в опубликованном `measurement.json` v1.86.1 со значением в файле эталона не проверено. Если они разойдутся, строка ZIP на бете станет `missing`, а не `regression` и не заблокирует публикацию. Записи пересчёта v1.85.2 и v1.86.0 в `process-release-state` (коммиты 7572c01b, 49df7813) лежат вне этого снимка и не проверялись. Одобрение владельцем v2.0.0-beta.3 как эталона в снимке задачи не зафиксировано, оно известно только со слов исполнителя.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 29471508f54cda93c59ab5f07d9a5d2f895d1560 → 029bee4a997415765c278be12fd8334d82774e33\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1593, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nКанонический `zip_bytes` считает физический ZIP за вычетом локальных и центральных записей предсжатых вариантов из манифеста. Бэкенд и остальные файлы входят в эту метрику. Доставляемый ZIP и объём предсжатых файлов показаны отдельно. Формат сохранённых замеров распознаётся по наличию `zip_delivered_bytes`, чтобы сравнение не смешивало два значения `zip_bytes`. Для перехода v1.86.1 пересчитан по опубликованному ZIP с проверкой SHA-256.\n\nВладелец одобрил в чате v2.0.0-beta.3 как справочный эталон после выноса MDI. ZIP выпуска на `4b71e606a0491c5b830885837c8c476e7e7e524d` дал 506 329 байт для начального View и 1 639 192 байта для всего frontend. Превышение на 5% теперь отмечается справочно. Решения по каноническому ZIP и времени по-прежнему привязаны к конкретному кандидату через `metricsAcceptedSha`.\n\nСверены SHA-256 пяти опубликованных ZIP с `process-release-state` и исходные размеры с прежними отчётами. Канонический ZIP для v1.85.2 изменился с 2 879 582 до 2 929 842 байт (+1,75%). Для v1.86.0 — с 2 929 842 до 3 180 143 байт (+8,54%). Пересчёт добавлен в диагностику обоих выпусков. [Запись v1.85.2](https://github.com/Matysh/houseplan-card/commit/7572c01bf954f9f3ce616cd27edf70971ef5528f) и [запись v1.86.0](https://github.com/Matysh/houseplan-card/commit/49df78138e18dbca2aa9fd3380725daa83c17a82). Локальная проверка событий подтвердила, что повтор не дублирует строку, а исходные отчёты и решения не переписываются. Адресные Node-проверки прошли, в том числе реальное чтение структуры ZIP с data descriptor и совместный отчёт с парным временем #1592. HA E2E не требуется, поскольку изменения относятся к отчёту релизного процесса.\n\n\nОтчёт CLI на фактическом ZIP снимка dev `2fa7171c` показал 2 588 987 канонических байт против 3 221 297 у v1.86.1. Полный ZIP в отчёте равен 4 226 743 байтам, предсжатые копии занимают 1 621 135 байт. Обе справочные gzip-строки сравниваются с зафиксированной v2.0.0-beta.3.\n```\n\n</details>\n",
-        "createdAt": "2026-11-27T22:34:57.242Z",
-        "artifactId": 15236041121,
-        "runId": 46077159849,
-        "runAttempt": 1,
-        "completedAt": "2026-11-27T22:35:02Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46077159849",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "29471508f54cda93c59ab5f07d9a5d2f895d1560"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795818933636,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "not-required"
+      }
     },
     "1594": {
       "issue": 1594,
@@ -7155,64 +7035,8 @@
   "waiting": [
     1617
   ],
-  "active": {
-    "issue": 1593,
-    "worker": "finish",
-    "token": "797:finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:1:admit",
-    "fence": 797,
-    "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-    "expectedBase": "29471508f54cda93c59ab5f07d9a5d2f895d1560",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795818605285,
-    "expiresAt": 1795822529873,
-    "patchId": "e1e9fdd4d47c091f9fda853c5d3d1527f572becd",
-    "reviewRequest": "review:1593:1:e1e9fdd4d47c091f9fda853c5d3d1527f572becd:29471508f54cda93c59ab5f07d9a5d2f895d1560"
-  },
+  "active": null,
   "events": {
-    "finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:2:synchronized": {
-      "digest": "bb6c8b05e7d1c5404b29ace5e261f0ffaf40b7d8bc028cdb5d5d1bbe9c900a16",
-      "issue": 1593
-    },
-    "github:46076969911:1:completions:message:a83101567c72da2465ce4ad451c9c84143ac4b78b46444c05883e643cf72ffc7": {
-      "digest": "78eb2de8a269460454e661ff63296507593f0582a18a9dfc82a69036006b0fe9",
-      "issue": 1593
-    },
-    "github:46076969911:1:completions:message:98b17cf471a2b01ace61d673819f742689c83d43da36171bf67a0699ae1faccf": {
-      "digest": "21e0b786cc22d298752fb28ea3c19c5f774d0c2d6f65ee331be6121737f005c8",
-      "issue": 1593
-    },
-    "github:46076969911:1:completions:message:87d22d4eda3f0d0321bd8a732ef3b5f0ec0d0364b0a25f3ef347d5a98a6e987b": {
-      "digest": "934851adf039b46d8d51c705a8407c7a185da3fa9daf18b8a25a0f0fbbddef61",
-      "issue": 1593
-    },
-    "finish:5f2d750a-1fd1-4d2d-bfaa-03da107ddee2": {
-      "digest": "7a176596623f6b90976f4797b8364dd7424a9bdf703b22f06638fd5e340da172",
-      "issue": 1593
-    },
-    "finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:3:s6-label": {
-      "digest": "bd82d2ebb5da14dda4c5759f54f76bd87dddc101c7d6122bd4d2f3a2ecb0df27",
-      "issue": 1593
-    },
-    "github:46077009774:1:tick:0:review-requested": {
-      "digest": "66035ce50810b4f2b00e140e34241588b05d5b9e30bbcc96709a67510a5198d3",
-      "issue": 1593
-    },
-    "github:46077009774:1:completions:message:dbc6b878f8faec69a864f2c980b756126c78f2e8abb631c36d64549e3eec1e0a": {
-      "digest": "ccc9d59d5b46f2fdd2e4a6138c70bedf208bc852a79d8c55e8c445942be47a10",
-      "issue": 1593
-    },
-    "finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:7:review-presentation": {
-      "digest": "f02332589dde5b9aa8d0a5662b61d3193b4a0f3c6fcbcbac5f340bd1062c509c",
-      "issue": 1593
-    },
-    "finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:7:review-complete": {
-      "digest": "9bd03f2e583928e7759c33ce124c7093b9228d10f97f7c2d45f3fd1e4abd6b83",
-      "issue": 1593
-    },
-    "github:46077535827:1:tick:0:automation-pending": {
-      "digest": "6c3d1cbfdcedb4a0101b45473f554b7dbda2b072008d7de8a44f2d1c607be171",
-      "issue": 1593
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7242,35 +7066,6 @@
         "delivered": true
       }
     },
-    "finish:481e9880-6230-4bff-b8b0-2cb7a2e87e55": {
-      "digest": "cd4f28f92980ae28de12d09b77d17fc0a453055672e63a1dce40b1f92ad884b4",
-      "issue": 1593,
-      "message": {
-        "kind": "queued",
-        "issue": 1593,
-        "at": 1795818567080,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-        "delivered": true
-      }
-    },
-    "finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:1:admit": {
-      "digest": "7978a694967e2e36da13aa1e6362cb6a30d9e1bbd55e2092b82d20571d29710e",
-      "issue": 1593,
-      "message": {
-        "kind": "admitted",
-        "issue": 1593,
-        "at": 1795818605285,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:b6f532f4-8cba-41e4-afee-f2b7a0b414d2": {
       "digest": "db8dd9624c6cb6936da67631227c81993123fc64f28184682e0ff50a9d365549",
       "issue": 1617,
@@ -7282,36 +7077,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "95ee6baff90467430e77212d8fc039859f7677a6",
-        "delivered": true
-      }
-    },
-    "finish:8dc516b7-bfab-4c21-8d66-40d6b1ed165d:finish:3:s6-complete": {
-      "digest": "c2a8ed129a6ce997caa6141f8023443da46bccc03ad1029bb8b304c9e5ac96e3",
-      "issue": 1593,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1593,
-        "at": 1795818671599,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-        "phase": "review",
-        "evidence": {
-          "id": "20261127T223026026-c2335335",
-          "name": "Тесты для задачи #1593 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-957-spec-material-retention/.git/process-next/runs/20261127T223026026-c2335335/report.json",
-          "materialSha": "029bee4a997415765c278be12fd8334d82774e33",
-          "status": "passed",
-          "finishedAt": "2026-11-27T22:31:10.162Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Канонический `zip_bytes` считает физический ZIP за вычетом локальных и центральных записей предсжатых вариантов из манифеста. Бэкенд и остальные файлы входят в эту метрику. Доставляемый ZIP и объём предсжатых файлов показаны отдельно. Формат сохранённых замеров распознаётся по наличию `zip_delivered_bytes`, чтобы сравнение не смешивало два значения `zip_bytes`. Для перехода v1.86.1 пересчитан по опубликованному ZIP с проверкой SHA-256.\n\nВладелец одобрил в чате v2.0.0-beta.3 как справочный эталон после выноса MDI. ZIP выпуска на `4b71e606a0491c5b830885837c8c476e7e7e524d` дал 506 329 байт для начального View и 1 639 192 байта для всего frontend. Превышение на 5% теперь отмечается справочно. Решения по каноническому ZIP и времени по-прежнему привязаны к конкретному кандидату через `metricsAcceptedSha`.\n\nСверены SHA-256 пяти опубликованных ZIP с `process-release-state` и исходные размеры с прежними отчётами. Канонический ZIP для v1.85.2 изменился с 2 879 582 до 2 929 842 байт (+1,75%). Для v1.86.0 — с 2 929 842 до 3 180 143 байт (+8,54%). Пересчёт добавлен в диагностику обоих выпусков. [Запись v1.85.2](https://github.com/Matysh/houseplan-card/commit/7572c01bf954f9f3ce616cd27edf70971ef5528f) и [запись v1.86.0](https://github.com/Matysh/houseplan-card/commit/49df78138e18dbca2aa9fd3380725daa83c17a82). Локальная проверка событий подтвердила, что повтор не дублирует строку, а исходные отчёты и решения не переписываются. Адресные Node-проверки прошли, в том числе реальное чтение структуры ZIP с data descriptor и совместный отчёт с парным временем #1592. HA E2E не требуется, поскольку изменения относятся к отчёту релизного процесса.\n\n\nОтчёт CLI на фактическом ZIP снимка dev `2fa7171c` показал 2 588 987 канонических байт против 3 221 297 у v1.86.1. Полный ZIP в отчёте равен 4 226 743 байтам, предсжатые копии занимают 1 621 135 байт. Обе справочные gzip-строки сравниваются с зафиксированной v2.0.0-beta.3.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
