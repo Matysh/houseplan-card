@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1592,
+  "revision": 1593,
   "active": "v2.0.0-beta.3-20261127",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -315117,7 +315117,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v2.0.0-beta.3",
@@ -327530,7 +327530,8 @@
           "en": "## v2.0.0-beta.3 — 2026-11-28\n\n- Preserve partition openings when adding a space triggers migration to plan model 11 (#1611).\n- The compact header menu shows an accent border on the item reached by keyboard. (#1614)\n- Speed up first editor entry and repeated floor switches in View with the editor loaded. (#1595)\n- Bound routine S6 by track, choose contract-specific witnesses, and verify expanded checks against the current candidate (#1613).\n\n- Restore the 1.83.1 hotfix entry and document bundled frontend licenses. [#1597](https://github.com/Matysh/houseplan-card/issues/1597)\n- Replace legacy SVG isometric benchmarks with diagnostic WebGL canvas/mesh, camera, light fade, GPU timer and heap measurements; report software rendering explicitly (#1599).\n- Define shared-core and archive compatibility, test native 1.86.0/1.86.1 archives in installed packages, and reject mismatched wheel/HA/standalone versions at publication (#1600).\n- Enabled TypeScript noImplicitAny and restored addressed Ruff/mypy checks for changed backend sources, without count ratchets or checks on documentation-only tasks (#1603).\n- Remove the stale tracked frontend snapshot; installable HACS/release ZIPs keep using the verified build, and local frontend output stays ignored (#1598).\n\n- Reduce the Home Assistant installer size by using its built-in MDI catalog (#1594).\n- Document the WebGL 2 requirement for 3D view and the 2D fallback in both READMEs (#1591).\n- Set device and LED strip height in 3D, use tilted perspective in all eight views, and highlight context menu rows with background only (#1608).\n- Keep the moving robot vacuum marker on the floor in 3D, independently of the dock's height (#1612).\n- Keep the last complete 3D floor on screen through a temporary graphics interruption, and show a new frame only once its layers are ready (#1609).\n- Extract the lazy 3D host lifecycle and mode transition presentation from the main card (#1604).\n- Recheck live write access before saving device positions or publishing attachments, and keep cancelled file operations from leaving partial copies (#1605).\n- Device markers request light haptic feedback in the Home Assistant Companion App after a successful toggle or run action (#1607).\n- The floor stays in place while the summary loads the total room area. (#1590)\n- Let users save the suggested Home Assistant floor name without edits and return to normal space creation after skipping every floor (#1589).\n- Keep the wall footprint at its settled colour throughout a warm 3D floor switch with translucent walls (#1587).\n- Verify browser-test timeout escalation with a real child process rather than checking the runner's source text (#1615)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v2.0.0-beta.3"
     }
   },
   "published": {
@@ -334043,7 +334044,8 @@
     "ship-review:result:01a70ad3-3cdd-4f2e-8cf7-417c492405d4": "2b2dd9e5ce43ff657304847ac56bb632158805a6f866fc9b860bd7cd5594e138",
     "beta-200-3-20261128-publication:runner-report": "6b4482de36a2f402a73e54cb434f74e0d7e0d2b7dafc050d53ad22ca7f239798",
     "beta-200-3-20261128-publication:metrics": "9f601094861c2cc41f2ec9f85fb15c18125ff12e17214659c1c782b9e0d9e85b",
-    "beta-200-3-20261128-publication:prepared:45dcb9c7-bcba-44c2-9417-7f27d296e4da": "dfb760a71d7b775804db80ca508f75b8886dfc5cdd436c17d0d7def1cb307f05"
+    "beta-200-3-20261128-publication:prepared:45dcb9c7-bcba-44c2-9417-7f27d296e4da": "dfb760a71d7b775804db80ca508f75b8886dfc5cdd436c17d0d7def1cb307f05",
+    "beta-200-3-20261128-publication:started:1592": "bd8b4fb4a10632b81a725d8c18039fc682af4464b1af30fd0f9e09eccdada280"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
