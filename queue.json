@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28040,
+  "revision": 28041,
   "nextTicket": 760,
   "nextFence": 759,
   "tasks": {
@@ -6134,7 +6134,8 @@
         "README.ru.md",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": null
     },
     "1604": {
       "issue": 1604,
@@ -7047,9 +7048,9 @@
     "fence": 758,
     "materialSha": "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31",
     "expectedBase": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795774716867,
-    "expiresAt": 1795775027200,
+    "expiresAt": 1795778333487,
     "patchId": "0fb371d5c9b4a732a32444d481abde47db476676"
   },
   "events": {
@@ -7611,6 +7612,10 @@
     },
     "finish:5d443a1a-7409-474f-b4e3-09c41c29970f:finish:2:synchronized": {
       "digest": "4f6b6a4c950401b3f3a1db6bcbcaca52f3586739df5da38aa8b09a77c9d0da2e",
+      "issue": 1591
+    },
+    "finish:5d443a1a-7409-474f-b4e3-09c41c29970f:finish:3:s6-complete": {
+      "digest": "e79f24ebfe93f3987a25e0b9cf89fe8ffcaa48b0dc641f9124869e4d9373ad0e",
       "issue": 1591
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
