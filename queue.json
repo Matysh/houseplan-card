@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28289,
+  "revision": 28290,
   "nextTicket": 771,
   "nextFence": 766,
   "tasks": {
@@ -6293,7 +6293,16 @@
         "process-next/lib/metrics.mjs",
         "process-next/test/metrics.test.mjs",
         "process-next/test/webgl-performance.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261127T114405030-6bff11cf",
+        "name": "Тесты для задачи #1599 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T114405030-6bff11cf/report.json",
+        "materialSha": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
+        "status": "passed",
+        "finishedAt": "2026-11-27T11:45:26.123Z",
+        "failures": []
+      }
     },
     "1600": {
       "issue": 1600,
@@ -7402,16 +7411,12 @@
     "fence": 765,
     "materialSha": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
     "expectedBase": "502258741f1753f27b35ee15c7264d196c2521f6",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795779827970,
-    "expiresAt": 1795780212336,
+    "expiresAt": 1795783527428,
     "patchId": "d037d3bac63ccfd67414b076485feceeccbce407"
   },
   "events": {
-    "finish:541b9ada-ec44-442b-9324-e093c1ff1d9c": {
-      "digest": "86e4c18406cc2298034d4e5892982e9ee33f624985b0e842657fe71f4c420eb8",
-      "issue": 1609
-    },
     "finish:c80ecde5-2827-410d-93cb-6acdc3575124": {
       "digest": "ee9745b702bd93b2f15eccbe5f4ce6814e6f8cbd0b989595bdd9348ab09045df",
       "issue": 1609
@@ -8282,6 +8287,10 @@
     },
     "finish:494ad744-f217-40c0-b4bb-9bb6fdc21f98": {
       "digest": "b1a26c22e6448d0fbc56d738ff1d0428b81edf2928ca3beb2499080e27627c75",
+      "issue": 1599
+    },
+    "finish:ce8e1cac-f05b-4d41-a5e8-f749b4f89cac:finish:3:s6-complete": {
+      "digest": "538c248c8ffc0f644832275e3fa37b0b088028ecfde68fbbcd6ba589a8dc593b",
       "issue": 1599
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
