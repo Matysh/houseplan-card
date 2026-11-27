@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28426,
+  "revision": 28427,
   "nextTicket": 774,
   "nextFence": 768,
   "tasks": {
@@ -7452,14 +7452,10 @@
     "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
     "phase": "testing",
     "admittedAt": 1795780430375,
-    "expiresAt": 1795784914786,
+    "expiresAt": 1795784974891,
     "patchId": "eb8420682ef5cffe9c401ac6a0a9299ec8bf2518"
   },
   "events": {
-    "finish:2d7fee37-512e-4532-81ad-d9de615396d1": {
-      "digest": "e69f7cb251155d115f8d431ffdd7f6256363377f4a5cd5363a21834ac8c2a277",
-      "issue": 1609
-    },
     "finish:0ea69ae0-7eb1-41cb-b3cb-d0663b9bbd53": {
       "digest": "09ac515344e7cb5a0f83f98a0a5591efe9608348fb06424935b7b69f23c4a4f4",
       "issue": 1609
@@ -8310,6 +8306,10 @@
     },
     "finish:aaa63623-8dfc-456c-a449-07badfdf47aa": {
       "digest": "baad4f08836e2f91a13620072d9e4f5b2999126130613e49cf147dbe4e37c66b",
+      "issue": 1594
+    },
+    "finish:6e9eb16a-cffa-4c0e-a4b0-6b4005419739": {
+      "digest": "1a0a0a4ad7923692f2fd3ff0a54dc0b0612ca8f619ea8dc9ae0fdf151c684136",
       "issue": 1594
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
