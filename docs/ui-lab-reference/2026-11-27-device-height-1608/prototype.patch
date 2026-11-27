@@ -1,0 +1,843 @@
+diff --git a/src/card-plan-3d.ts b/src/card-plan-3d.ts
+index 8a0a7c5811..2d282703b4 100644
+--- a/src/card-plan-3d.ts
++++ b/src/card-plan-3d.ts
+@@ -172,12 +172,14 @@ export class CardPlan3d {
+         const opacity = element.matches('.unavail:not(.led-badge)')
+           ? Number.parseFloat(element.ownerDocument.defaultView?.getComputedStyle(element)
+             .getPropertyValue('--hp-device-offline-opacity') ?? '') || 1 : 1;
+-        return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: presentation.sectionHeight,
++        return faces?.length ? [{ id, center: placement.floorAnchor, diameter, height: placement.deviceHeight ?? presentation.sectionHeight, thickness: placement.deviceThickness,
+           faces, opacity }] : [];
+       });
+       const opacityByMarker = new Map(markers.map(marker => [marker.id, marker.opacity]));
+-      const outlines = contacts?.volumeOutlines(new Set(opacityByMarker.keys())).map(group => ({
+-        ...group, opacity: Math.max(...group.members.map(id => opacityByMarker.get(id) ?? 1)),
++      const outlines = contacts?.volumeOutlines(new Set(opacityByMarker.keys()), new Map(markers.map(marker => [marker.id, this.devices?.get(marker.id)?.deviceHeightLevel ?? 'auto']))).map(group => ({
++        ...group, height: this.devices?.get(group.members[0])?.deviceHeight,
++        thickness: this.devices?.get(group.members[0])?.deviceHeightLevel === 'auto' ? undefined : this.devices?.get(group.members[0])?.deviceThickness,
++        opacity: Math.max(...group.members.map(id => opacityByMarker.get(id) ?? 1)),
+       }));
+       this.submittedFloor = this.port.floorKey();
+       this.host.present(presentation, this.port.view(), markers, outlines);
+diff --git a/src/device-contact-card.ts b/src/device-contact-card.ts
+index 0fa12a89b3..d0adb73b18 100644
+--- a/src/device-contact-card.ts
++++ b/src/device-contact-card.ts
+@@ -14,6 +14,7 @@ import type { HassRenderSnapshot } from './render-invalidation';
+ import type { PlanRotation } from './view-frame';
+ import { isoDisplayWallHeight, type IsoCamera } from './iso-projection';
+ import { gridVisualUnits } from './grid-scale';
++import { markerHeightLevel } from './marker-height';
+ 
+ interface ContactCard extends FloorKeySource {
+   renderRoot: ParentNode;
+@@ -89,6 +90,7 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
+   const wasReflowed=renderer.reflowed, previousStatus = renderer.resizeStatus;
+   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
+     space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane,
++    heightLevels: plane ? new Map(host._renderDevices.map(d => [d.id, markerHeightLevel(d.marker?.height_cm)])) : undefined,
+     glassProjection: camera ? {camera,height:gridVisualUnits(isoDisplayWallHeight(),host._cellCm)} : undefined,
+     uprightHalfTurn: host._mode === 'view' && host._renderProjection === 'flat' && host._rotation === 180,invalidate:()=>host.requestUpdate(),
+     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => {
+diff --git a/src/device-contact-render.ts b/src/device-contact-render.ts
+index 11a42e6d4e..9e15626bba 100644
+--- a/src/device-contact-render.ts
++++ b/src/device-contact-render.ts
+@@ -36,6 +36,7 @@ export interface DeviceContactFrame {
+   uprightHalfTurn?: boolean;
+   /** A floor-aligned presentation; contact layout stays in canonical plan units. */
+   plane?: readonly number[];
++  heightLevels?: ReadonlyMap<string, string>;
+   glassProjection?: IsoMarkerGlassProjection;
+ }
+ interface MeasuredMarker { element: HTMLElement; ink: HTMLElement }
+@@ -80,6 +81,8 @@ export class DeviceContactRenderer {
+   private rotation: PlanRotation = 0;
+   private uprightHalfTurn = false;
+   private plane: readonly number[] | undefined;
++  private heightLevels: ReadonlyMap<string, string> | undefined;
++  private heightKey = '';
+   private glassProjection: IsoMarkerGlassProjection | undefined;
+   private screen: { source: DeviceContactScene; rotation: PlanRotation; uprightHalfTurn: boolean; scene: DeviceContactScene } | null = null;
+   private fontDocument: Document | null = null;
+@@ -107,10 +110,10 @@ export class DeviceContactRenderer {
+     return measured && measured.shell === shell ? measured.presentation.faces : this.faces.get(metricKey(shell));
+   }
+ 
+-  public volumeOutlines(native: ReadonlySet<string>) {
++  public volumeOutlines(native: ReadonlySet<string>, levels?: ReadonlyMap<string, string>) {
+     const scene = this.scene;
+     if (!this.plane || !scene) return [];
+-    return [...scene.components(native)].flatMap(component => {
++    return scene.components(native, levels ?? this.heightLevels).flatMap(component => {
+       if (!component.every(shape => native.has(shape.marker.id))) return [];
+       const group = contactContourShapes(component.map(shape => this.present(shape, component.length > 1)));
+       return [{ id: group[0].marker.id, members: group.map(shape => shape.marker.id), outline: contactOutline(group, true),
+@@ -174,13 +177,18 @@ export class DeviceContactRenderer {
+     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
+     const uprightHalfTurn = frame.uprightHalfTurn ?? false;
+     const enteredRaisedView = !!frame.plane && !this.plane;
++    const heightLevels = frame.plane ? frame.heightLevels : undefined;
++    const heightKey = heightLevels ? JSON.stringify([...heightLevels]) : '';
+     const turned = this.rotation !== (frame.rotation ?? 0) || this.uprightHalfTurn !== uprightHalfTurn
++      || this.heightKey !== heightKey
+       || String(this.plane) !== String(frame.plane)
+       || this.glassProjection?.camera !== frame.glassProjection?.camera
+       || this.glassProjection?.height !== frame.glassProjection?.height;
+     this.rotation = frame.rotation ?? 0;
+     this.uprightHalfTurn = uprightHalfTurn;
+     this.plane = frame.plane;
++    this.heightLevels = heightLevels;
++    this.heightKey = heightKey;
+     this.glassProjection = frame.glassProjection;
+     this.observeStacking(this.plane && 'host' in root ? root as ShadowRoot : null);
+     adoptDeviceContactStyles(root);
+@@ -544,12 +552,13 @@ export class DeviceContactRenderer {
+       }
+     }
+     const scene = this.screen.scene;
+-    for (const rawGroup of scene.components(affected)) {
++    for (const rawGroup of scene.components(affected, this.heightLevels)) {
+       // Build the projected envelope from live faces without changing the
+       // authored contact graph or using the orientation in the reflow solver.
+       const oriented = this.plane ? rawGroup.map(shape => this.present(shape, rawGroup.length > 1)) : rawGroup;
+       const group = contactContourShapes(oriented);
+       const joined = group.length > 1;
++      const members = new Set(group.map(shape => shape.marker.id));
+       // Split the single group shell across the farthest and nearest member's
+       // stacking contexts. Neither half is repainted per device.
+       const [owner, frontOwner] = this.plane ? this.glassOwners(group) : [group[0], group[0]];
+@@ -575,6 +584,7 @@ export class DeviceContactRenderer {
+         if (!custom && !this.plane) { this.hitShapes.delete(item.element); render(nothing, item.ink); continue; }
+         const sides: ContactShape['walls'] = { ...s.walls };
+         for (const id of scene.edges.get(s.marker.id) || []) {
++          if (!members.has(id)) continue;
+           const side = joinedContactSide(scene.shapes.get(s.marker.id)!, scene.shapes.get(id)!,false); if (side) sides[side] = 'device';
+         }
+         const own = { ...s, walls: sides };
+diff --git a/src/device-contact-scene.ts b/src/device-contact-scene.ts
+index a329c545a2..11e9522e65 100644
+--- a/src/device-contact-scene.ts
++++ b/src/device-contact-scene.ts
+@@ -67,13 +67,15 @@ export class DeviceContactScene {
+       }
+     }
+   }
+-  public component(id: string): string[] {
++  public component(id: string, levels?: ReadonlyMap<string, string>): string[] {
+     const seen = new Set<string>(), queue = [id];
+     while (queue.length) {
+       const next = queue.pop()!;
+       if (seen.has(next) || !this.shapes.has(next)) continue;
+       seen.add(next);
+-      queue.push(...(this.edges.get(next) || []));
++      for (const neighbor of this.edges.get(next) || []) {
++        if (!levels || (levels.get(neighbor) ?? 'auto') === (levels.get(next) ?? 'auto')) queue.push(neighbor);
++      }
+     }
+     return [...seen].sort();
+   }
+@@ -100,11 +102,11 @@ export class DeviceContactScene {
+     for (const next of this.component(id)) affected.add(next);
+     return affected;
+   }
+-  public components(ids: Iterable<string> = this.shapes.keys()): ContactShape[][] {
++  public components(ids: Iterable<string> = this.shapes.keys(), levels?: ReadonlyMap<string, string>): ContactShape[][] {
+     const seen = new Set<string>(), out: ContactShape[][] = [];
+     for (const id of ids) {
+       if (seen.has(id)) continue;
+-      const group = this.component(id); group.forEach((key) => seen.add(key));
++      const group = this.component(id, levels); group.forEach((key) => seen.add(key));
+       if (group.length) out.push(group.map((key) => this.shapes.get(key)!));
+     }
+     return out;
+diff --git a/src/editor-context-menu.styles.ts b/src/editor-context-menu.styles.ts
+index 80e39a9474..a952d5c8c6 100644
+--- a/src/editor-context-menu.styles.ts
++++ b/src/editor-context-menu.styles.ts
+@@ -18,8 +18,6 @@ export const editorContextMenuStyles = unsafeCSS(css`
+   .hpf-context-menu > button + button { border-top: 2px solid var(--primary-color,#03a9f4); padding-block-start:6px; }
+   :host([data-pointer-hover]) .hpf-context-menu > button:hover:not(:disabled),
+   .hpf-context-menu > button:is(.hpf-tab-focus,.hpf-keyboard-current):focus:not(:disabled) {
+-    color: var(--primary-color,#03a9f4);
+-    border-color:var(--primary-color,#03a9f4);
+     background: color-mix(in srgb,var(--primary-color,#03a9f4) 12%,transparent);
+   }
+   .hpf-context-menu > button:disabled { opacity: 1; color: color-mix(in srgb,var(--primary-text-color,#222) 40%,transparent); cursor: not-allowed; }
+diff --git a/src/editors/marker-dialog.ts b/src/editors/marker-dialog.ts
+index 157f4c54cc..33600ec0a6 100644
+--- a/src/editors/marker-dialog.ts
++++ b/src/editors/marker-dialog.ts
+@@ -1,4 +1,5 @@
+ /** Existing Device settings regrouped into the shared settings shell (#947). */
++import { LED_BODY_HEIGHT_CM, markerHeightMaxCm } from '../marker-height';
+ import { html, nothing, type TemplateResult } from 'lit';
+ 
+ import {
+@@ -174,7 +175,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
+      * калибровка радара, привязка не выбрана или не подтверждена реестром)
+      * остаются; привязка и радиус теперь ещё и названы словами под полем. */
+     const edit = !!d.devId;
+-    const problems = markerProblems(d, effectiveTapAction, moreInfoDraftInvalid(d, this.host._planHass, this.host._fullRegistryHass), this.host._imperial);
++    const heightMaxCm = markerHeightMaxCm(this.host._model.some(space => ledStripsByMarker(space).has(d.devId ?? '')) ? LED_BODY_HEIGHT_CM : undefined);
++    const heightMax = heightMaxCm / (this.host._imperial ? 2.54 : 1);
++    const heightUnit = this.host._imperial ? 'in' : (lang === 'ru' ? 'см' : 'cm');
++    const heightMaxText = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits: 6 }).format(Math.floor(heightMax * 1e6) / 1e6);
++    const problems = markerProblems(d, effectiveTapAction, moreInfoDraftInvalid(d, this.host._planHass, this.host._fullRegistryHass), this.host._imperial, heightMaxCm);
+     const problemFor = (fieldId: string) => problems.find((p) => p.field === fieldId);
+     const dirty = markerDirty(this.host, d);
+     const bindingUnverified = d.bindingMode === 'ha' && !d.devId && bindingStatus?.kind !== 'active';
+@@ -623,6 +628,20 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
+           control: iconControl,
+         }),
+           this.host._ledSection(d.devId),
++          field({
++            label: lang === 'ru' ? 'Высота над полом (только в 3D)' : 'Height above floor (3D only)', htmlFor: 'marker-height',
++            help: html`<hp-help instant .ariaLabel=${lang === 'ru' ? 'Подсказка: высота над полом' : 'Help: height above floor'} .text=${lang === 'ru'
++              ? 'Высота от пола до нижней грани значка или LED-ленты. Оставьте пустым, чтобы верхняя грань оставалась на уровне верхнего среза стен. 0 — на полу. На 2D-план и источник света не влияет.'
++              : 'Floor to the lower face of the marker or LED strip. Leave empty to keep the top face at the wall cut. 0 places it on the floor. Does not affect 2D or the light source.'}></hp-help>`,
++            hint: lang === 'ru' ? `Допустимый диапазон: 0–${heightMaxText} ${heightUnit}. Пусто — автоматически, на уровне стен` : `Allowed range: 0–${heightMaxText} ${heightUnit}. Empty — automatic, at wall height`,
++            error: problemFor('marker-height') ? `${lang === 'ru' ? 'Введите число от 0 до' : 'Enter a number from 0 to'} ${heightMaxText} ${heightUnit}` : undefined,
++            control: unitInput({ id: 'marker-height', unit: heightUnit,
++              value: d.heightText ?? '', min: 0, max: heightMax, step: 'any', wide: true,
++              placeholder: lang === 'ru' ? 'Авто' : 'Auto', ariaLabel: lang === 'ru' ? 'Высота над полом' : 'Height above floor',
++              invalid: !!problemFor('marker-height'), preserveBadInput: d.heightBadInput,
++              onInput: (raw, input) => { this.host._markerDialog = { ...d, heightText: raw, heightTouched: true, heightBadInput: input.validity.badInput }; },
++            }),
++          }),
+           field({
+           label: st('marker.display_method'), htmlFor: 'marker-display',
+           help:html`<hp-help instant data-help-key="marker.display.help" .text=${`${st('marker.display.help')} ${t(DISPLAY_HINT_KEYS[d.display])}`} .ariaLabel=${st('marker.display.help.aria')}></hp-help>`,
+diff --git a/src/editors/marker-form-state.ts b/src/editors/marker-form-state.ts
+index 9b5588439d..c1a0cfe5c3 100644
+--- a/src/editors/marker-form-state.ts
++++ b/src/editors/marker-form-state.ts
+@@ -6,6 +6,7 @@
+  * в отпечаток не входят. Флаги `*Touched` и `original*` входят: они меняются
+  * только действием человека, и это тоже изменение.
+  */
++import { markerHeightValid } from '../marker-height';
+ import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
+ import { dialogDirty, dialogSession, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
+ import { strictNumber } from '../space-dialog';
+@@ -67,8 +68,9 @@ export interface MarkerProblem {
+ }
+ 
+ /** Validate the complete draft, including fields in inactive settings sections. */
+-export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction, moreInfoInvalid = false, imperial = false): MarkerProblem[] {
++export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction, moreInfoInvalid = false, imperial = false, heightMaxCm?: number): MarkerProblem[] {
+   const problems: MarkerProblem[] = [];
++  if (d.heightBadInput || !markerHeightValid(d.heightText, imperial, heightMaxCm)) problems.push({ field: 'marker-height', message: 'marker.error_numeric_range' });
+   if (moreInfoInvalid) problems.push({ field: 'marker-more-info-entity', message: 'marker.more_info_invalid' });
+   if (d.stateSourceTouched && d.stateSource != null && !normalizeMarkerStateSource(d.stateSource)) {
+     problems.push({ field: 'marker-state-source-states', message: 'marker.state_source_states_invalid' });
+diff --git a/src/houseplan-card.ts b/src/houseplan-card.ts
+index 8e27ac07b5..b0ecd20e09 100644
+--- a/src/houseplan-card.ts
++++ b/src/houseplan-card.ts
+@@ -3580,7 +3580,7 @@ export class HouseplanCard extends LitElement {
+     moreInfoOpen?: boolean;
+     moreInfoFilter?: string;
+     rippleColor: string; // '' = live/semantic automatic activity colour
+-    rippleSize: number;  // in icon diameters; package default 1.5
++    heightText?: string; originalHeightCm?: number | null; heightTouched?: boolean; heightBadInput?: boolean; rippleSize: number;  // in icon diameters; package default 1.5
+     size: number;        // icon size multiplier
+     angle: number;       // icon rotation, degrees
+     /** UI projection. A legacy persisted `cover` is shown as `toggle`. */
+@@ -14351,8 +14351,8 @@ export class HouseplanCard extends LitElement {
+     }
+     const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${stageMode === 'plan' ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${stageMode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${stageMode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
+     this._modePresenter.preparedStageClass = stageClass;
+-    const ledTargets = () => svg`<g transform=${this._floorTransform} opacity="0">
+-      ${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view, 'body') ?? nothing}</g>`;
++    const ledTargets = (markerId?: string) => svg`<g transform=${this._floorTransform} opacity="0">
++      ${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view, 'body', false, markerId) ?? nothing}</g>`;
+     const floorTargets = () => svg`<g class="iso-floor-scene" transform=${this._floorTransform} opacity="0">
+       ${space.bg && backdropHref && backdropPaint ? svg`<image data-hp="backdrop" href=${backdropHref}
+         x=${backdropPaint.x} y=${backdropPaint.y} width=${backdropPaint.w} height=${backdropPaint.h}
+@@ -14441,8 +14441,8 @@ export class HouseplanCard extends LitElement {
+               ${this._stairsView.renderLayer(stairVolumes, 'volume')}</g>` : nothing}
+             ${floorCamera?.perspective ? nothing : ledTargets()}
+           </svg>
+-          ${floorCamera?.perspective && leds.size ? renderIsoPerspectiveFloor(floorCamera, ledTargets(), view,
+-            perspectiveSize, gridVisualUnits(isoDisplayWallHeight(), this._cellCm), 'led') : nothing}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
++          ${floorCamera?.perspective && leds.size ? this._ledRt(space)?.plan3dLedRibbons(this as never, space, disp.glow).map(ribbon => renderIsoPerspectiveFloor(floorCamera, ledTargets(ribbon.owner), view,
++            perspectiveSize, ribbon.height, 'led')) : nothing}</div>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
+           ${this._plan3dPresentation ? html`<canvas data-hp-plan-3d aria-hidden="true"></canvas>` : nothing}
+           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
+                  scales with it when you zoom — the behaviour the card always
+@@ -15206,6 +15206,7 @@ export class HouseplanCard extends LitElement {
+     const presentation = rotation && (flatRotation !== undefined || !(this._isoFloorCamera && ISO_LAB_FLOOR_MARKERS))
+       && typeof d.marker?.angle === 'number' ? { ...resolved, angle: resolved.angle + rotation } : resolved;
+     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
++    if (isoPlacement?.localPlaneStyles) st.push(isoPlacement.localPlaneStyles);
+     if (limitedSize !== null) st.push(`--dev-size:${limitedSize}cqw`);
+     const wallMask = isoPlacement?.wallMask;
+     // A warm remount can paint the same ids at a different size. Reference
+@@ -15568,7 +15569,7 @@ export class HouseplanCard extends LitElement {
+       role=${this._mode === 'view' && !separateAreaAction ? 'button' : nothing}
+       tabindex=${this._mode === 'view' && !separateAreaAction ? '0' : nothing}
+       aria-label=${this._mode === 'view' && !separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
+-      style="${labelGeometry};color:${nameColor.c};opacity:${op}"
++      style="${labelGeometry};color:${nameColor.c};opacity:${op};${isoPlacement?.localPlaneStyles ?? ''}"
+       @keydown=${this._mode === 'view' && !separateAreaAction && r.id
+         ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
+       @pointerdown=${this._markup
+@@ -15940,7 +15941,7 @@ export class HouseplanCard extends LitElement {
+         data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
+         data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
+         data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
+-        style="left:${left}%;top:${top}%"
++        style="left:${left}%;top:${top}%;${isoPlacement?.localPlaneStyles ?? ''}"
+         @click=${(e: MouseEvent) => {
+           if (this._mode !== 'view') return;
+           e.stopPropagation();
+diff --git a/src/houseplan-editor-runtime.ts b/src/houseplan-editor-runtime.ts
+index c2df2658e3..a7592649c2 100644
+--- a/src/houseplan-editor-runtime.ts
++++ b/src/houseplan-editor-runtime.ts
+@@ -1,3 +1,4 @@
++import { markerHeightFields, markerHeightMaxCm, LED_BODY_HEIGHT_CM } from './marker-height';
+ import type { PlanHost, HostPresentationContext } from './plan-host';
+ import { workstationTarget, toggleWorkstation, removeWorkstationItems } from './iso-lab-workstation';
+ import { tvCabinet, tvMountTarget, toggleTvMount } from './tv-mount';
+@@ -739,7 +740,7 @@ export interface HouseplanEditorHostPort {
+   _layout: DeviceLayout;
+   readonly _layoutRev: number;
+   _logicalViewCenter: () => { x: number; y: number; } | null;
+-  _markerDialog: { alertSources?: Marker['alert_sources']; moreInfoEntity?: Marker['more_info_entity']; moreInfoTouched?: boolean; moreInfoOpen?: boolean; moreInfoFilter?: string; vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; glowRadiusBadInput?: boolean; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
++  _markerDialog: { alertSources?: Marker['alert_sources']; moreInfoEntity?: Marker['more_info_entity']; moreInfoTouched?: boolean; moreInfoOpen?: boolean; moreInfoFilter?: string; vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; heightText?: string; originalHeightCm?: number | null; heightTouched?: boolean; heightBadInput?: boolean; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; glowRadiusBadInput?: boolean; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
+   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
+   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
+   _markers: Marker[];
+@@ -8120,6 +8121,8 @@ public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): voi
+         autoIcon: this.host._autoIconForBinding(d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef),
+         display: normalizeDeviceDisplay(d.marker?.display),
+         rippleColor: safeStoredColor(d.marker?.ripple_color, ''),
++        originalHeightCm: d.marker?.height_cm,
++        heightText: d.marker?.height_cm == null ? '' : String(d.marker.height_cm / (this.host._imperial ? 2.54 : 1)),
+         rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 1.5,
+         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
+         angle: Number(d.marker?.angle) || 0,
+@@ -8396,7 +8399,8 @@ public async _saveMarker(): Promise<void> {
+     if (!dlg || dlg.busy) return;
+     if (dlg.bindingMode === 'virtual' ? !this.host.planHost.capabilities.virtualDevices : !this.host.planHost.capabilities.devices) return;
+     const problem = markerProblems(dlg, this._effectiveMarkerTapAction(dlg),
+-      moreInfoDraftInvalid(dlg, this.host._planHass, this.host._fullRegistryHass), this.host._imperial)[0];
++      moreInfoDraftInvalid(dlg, this.host._planHass, this.host._fullRegistryHass), this.host._imperial,
++      markerHeightMaxCm(this.host._model.some(space => ledStripsByMarker(space).has(dlg.devId ?? '')) ? LED_BODY_HEIGHT_CM : undefined))[0];
+     if (problem) {
+       showToast(settingsCopy(this.host).st(problem.message), problem.message);
+       const field = this.host.renderRoot.querySelector<HTMLElement>(`#${problem.field}`);
+@@ -8512,6 +8516,7 @@ public async _saveMarker(): Promise<void> {
+         icon: dlg.icon || null,
+         display: dlg.display !== 'badge' ? dlg.display : null,
+         ripple_color: dlg.rippleColor || null,
++        ...markerHeightFields(dlg, this.host._imperial),
+         ripple_size: dlg.rippleSize !== 1.5 ? dlg.rippleSize : null,
+         size: dlg.size !== 1 ? dlg.size : null,
+         angle: dlg.angle ? dlg.angle : null,
+@@ -12215,6 +12220,7 @@ public _markerDraft(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): M
+       icon: d.icon || null,
+       display: d.display !== 'badge' ? d.display : null,
+       ripple_color: d.rippleColor || null,
++      ...markerHeightFields(d, this.host._imperial),
+       ripple_size: d.rippleSize !== 1.5 ? d.rippleSize : null,
+       size: d.size !== 1 ? d.size : null,
+       angle: d.angle || null,
+diff --git a/src/iso-overlays.ts b/src/iso-overlays.ts
+index 3dc577f5cd..6befce14a4 100644
+--- a/src/iso-overlays.ts
++++ b/src/iso-overlays.ts
+@@ -61,7 +61,11 @@ export interface IsoDeviceWallMask {
+   glassMask: (faces: readonly IsoDeviceSurface[], origin?: PlanPoint) => IsoDeviceOcclusion;
+ }
+ export interface IsoOverlayPlacement {
++  localPlaneStyles?: string;
+   deviceSize?: number;
++  deviceHeight?: number;
++  deviceThickness?: number;
++  deviceHeightLevel?: string;
+   wallMask?: IsoDeviceWallMask;
+   /** Local #1451 context, without moving the immutable floor anchor. */
+   occluded?: boolean;
+diff --git a/src/iso-perspective-floor.ts b/src/iso-perspective-floor.ts
+index 538c657cf8..3fe0c6c6f4 100644
+--- a/src/iso-perspective-floor.ts
++++ b/src/iso-perspective-floor.ts
+@@ -1,9 +1,9 @@
+ import { html, nothing, svg, type TemplateResult } from 'lit';
+ import { applyIsoMatrix, isoFloorMatrix, isoHeightLift, projectPlanPoint, unprojectIsoAffine, type IsoCamera, type ViewRect } from './iso-projection';
+ 
+-function lensStyle(view: ViewRect, height: number, x: number, y: number, rate: number, lift: number) {
++function lensStyle(view: ViewRect, height: number, x: number, y: number, rate: number, lift: number, heightDepth = 0) {
+   const origin = ((x-view.x)/view.w*100) + '% ' + ((y-view.y)/view.h*100) + '%';
+-  const matrix = 'matrix3d(1,0,0,0,0,1,0,' + (-rate*view.h/height) + ',0,0,1,0,0,' + (-lift*height/view.h) + ',0,1)';
++  const matrix = 'matrix3d(1,0,0,0,0,1,0,' + (-rate*view.h/height) + ',0,0,1,0,0,' + (-lift*height/view.h) + ',0,' + (1-rate*heightDepth*lift) + ')';
+   return {origin,matrix};
+ }
+ 
+@@ -11,14 +11,14 @@ function lensStyle(view: ViewRect, height: number, x: number, y: number, rate: n
+  * Chromium and WebKit. It shares the anchored view box of the scene. */
+ export function renderIsoPerspectiveFloor(camera: IsoCamera, content: TemplateResult, view: ViewRect,
+   size: readonly [number,number], height = 0, layer: 'floor' | 'led' | 'vacuum' = 'floor'): TemplateResult {
+-  const {center:[x,y],rate} = camera.perspective!;
++  const {center:[x,y],rate,heightDepth=0} = camera.perspective!;
+   const lift = isoHeightLift(camera,height);
+-  const {origin,matrix} = lensStyle(view,size[1],x,y,rate,lift);
++  const {origin,matrix} = lensStyle(view,size[1],x,y,rate,lift,heightDepth);
+   const viewBox = [view.x,view.y,view.w,view.h].join(' ');
+   return html`${layer === 'vacuum' ? svg`<svg data-hp-perspective-reference aria-hidden="true"
+     data-hp-live-inherited-scene="camera" viewBox=${viewBox} preserveAspectRatio="none"
+     style="position:absolute;inset:0;width:100%;height:100%;visibility:hidden;pointer-events:none"></svg>` : nothing}
+-    <div data-hp-iso-perspective-floor data-lens=${[x,y,rate,lift].join(' ')}
++    <div data-hp-iso-perspective-floor data-lens=${[x,y,rate,lift,heightDepth].join(' ')}
+     class=${layer === 'vacuum' ? 'vactrail' : nothing} data-hp=${layer === 'vacuum' ? 'vacuum-trail' : nothing}
+     style=${'position:absolute;inset:0;pointer-events:none;transform-origin:' + origin + ';transform:' + matrix
+       + (layer === 'led' ? ';z-index:2' : '')}>
+@@ -35,8 +35,8 @@ export function resizeIsoPerspectiveFloor(svg: SVGElement, viewBox: string, stag
+   if (!plane || !lens || !stageHeight) return;
+   const [vx,vy,w,h] = viewBox.split(/\s+/).map(Number);
+   if (!(w > 0 && h > 0)) return;
+-  const [x,y,rate,lift] = lens.split(' ').map(Number);
+-  const {origin,matrix} = lensStyle({x:vx,y:vy,w,h},stageHeight,x,y,rate,lift);
++  const [x,y,rate,lift,heightDepth] = lens.split(' ').map(Number);
++  const {origin,matrix} = lensStyle({x:vx,y:vy,w,h},stageHeight,x,y,rate,lift,heightDepth);
+   if (plane.style.transformOrigin !== origin) plane.style.transformOrigin = origin;
+   if (plane.style.transform !== matrix) plane.style.transform = matrix;
+ }
+@@ -48,11 +48,13 @@ export function resizeIsoPerspectiveFloor(svg: SVGElement, viewBox: string, stag
+ export function renderIsoPerspectiveSnapshot(camera: IsoCamera, bounds: ViewRect, content: TemplateResult[]): TemplateResult {
+   const affine = isoFloorMatrix(camera);
+   const ends = [applyIsoMatrix([bounds.x,bounds.y],affine),
++    applyIsoMatrix([bounds.x+bounds.w,bounds.y],affine),
++    applyIsoMatrix([bounds.x,bounds.y+bounds.h],affine),
+     applyIsoMatrix([bounds.x+bounds.w,bounds.y+bounds.h],affine)];
+-  const left = Math.min(ends[0][0],ends[1][0]), top = Math.min(ends[0][1],ends[1][1]);
++  const left = Math.min(...ends.map(p=>p[0])), top = Math.min(...ends.map(p=>p[1]));
+   const columns = 2, rows = 16;
+-  const width = Math.abs(ends[0][0]-ends[1][0])/columns;
+-  const height = Math.abs(ends[0][1]-ends[1][1])/rows;
++  const width = (Math.max(...ends.map(p=>p[0]))-left)/columns;
++  const height = (Math.max(...ends.map(p=>p[1]))-top)/rows;
+   if (!(width > 0 && height > 0)) return svg`${content}`;
+   const project = (x: number, y: number) => projectPlanPoint(unprojectIsoAffine([x,y],camera),0,camera);
+   const tiles = Array.from({length:rows*columns*2},(_,index) => {
+diff --git a/src/iso-projection.ts b/src/iso-projection.ts
+index b8d7c311fa..91c00dad5c 100644
+--- a/src/iso-projection.ts
++++ b/src/iso-projection.ts
+@@ -13,7 +13,7 @@ export interface IsoCamera {
+   origin: PlanPoint;
+   /** Orthographic floor depth scale; omitted means an unsqueezed test camera. */
+   floorScaleY?: number;
+-  perspective?: Readonly<{ center: ScenePoint; rate: number }>;
++  perspective?: Readonly<{ center: ScenePoint; rate: number; heightDepth?: number }>;
+ }
+ 
+ export interface ViewRect { x: number; y: number; w: number; h: number; }
+@@ -47,27 +47,28 @@ export function isoCameraFor(rotation: PlanRotation): Readonly<IsoCamera> {
+   }
+   return camera;
+ }
+-// The calibrated floor spans the far and near ends of this lens. The
+-// height coordinate never participates in its scale, so wall edges stay vertical.
+-const DIRECT_WIDTH_RATIO = 1.16;
++// UI Lab: one tilted perspective lens for all eight views. A fixed world
++// diameter gets smaller with distance, including the device's height.
++const DIRECT_WIDTH_RATIO = 1.25;
+ 
+ export function isoPerspectiveCamera(camera: Readonly<IsoCamera>, frame: ViewRect,
+   content = frame, structureHeight = ISO_WALL_HEIGHT): Readonly<IsoCamera> {
+-  if (camera.rotDeg % 90 !== 0) return camera;
+   const center = applyIsoMatrix([frame.x + frame.w / 2, frame.y + frame.h / 2], isoFloorMatrix(camera));
+-  const depth = (camera.rotDeg % 180 ? frame.w : frame.h) * camera.xyScale * (camera.floorScaleY ?? 1);
++  const projection = isoFloorMatrix(camera);
++  const corners = (rect: ViewRect) => ([[rect.x,rect.y],[rect.x+rect.w,rect.y],
++    [rect.x+rect.w,rect.y+rect.h],[rect.x,rect.y+rect.h]] as PlanPoint[]).map(p => applyIsoMatrix(p, projection)[1]);
++  const floor = corners(frame);
++  const depth = Math.max(...floor) - Math.min(...floor);
+   if (!(depth > 0) || !Number.isFinite(depth)) return camera;
+   const rate = 2 * (DIRECT_WIDTH_RATIO - 1) / ((DIRECT_WIDTH_RATIO + 1) * depth);
+-  const projection = isoFloorMatrix(camera);
+-  const low = applyIsoMatrix([content.x,content.y],projection)[1];
+-  const high = applyIsoMatrix([content.x+content.w,content.y+content.h],projection)[1];
+-  const extent = Math.max(Math.abs(low-center[1]),Math.abs(high-center[1]));
++  const extent = Math.max(...corners(content).map(y => Math.abs(y-center[1])));
++  const heightDepth = ((camera.floorScaleY ?? 1) / Math.sin(camera.tiltDeg * Math.PI / 180)) ** 2;
+   // The plan can contain a detached object well beyond its tight fit. Keep
+   // the entire committed domain in front of the lens, including Show Far.
+   // The lens must also look down onto the highest cut plane. On a very
+   // shallow plan floor bounds alone let the lens cross that plane.
+-  return { ...camera, perspective: { center,
+-    rate: Math.min(rate, .5 / extent, .5 / isoHeightLift(camera, structureHeight)) } };
++  return { ...camera, perspective: { center, heightDepth,
++    rate: Math.min(rate, .5 / (extent + heightDepth * isoHeightLift(camera, structureHeight))) } };
+ }
+ 
+ export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {
+@@ -118,7 +119,7 @@ export function projectPlanPoint(
+   if (!Number.isFinite(zUnits)) throw new Error('invalid isometric height');
+   const [x, floorY] = applyIsoMatrix(point, isoFloorMatrix(camera));
+   const [cx, cy] = lens.center;
+-  const divisor = Math.min(4, Math.max(.25, 1 - lens.rate * (floorY - cy)));
++  const divisor = Math.min(4, Math.max(.25, 1 - lens.rate * (floorY - cy + (lens.heightDepth ?? 0) * isoHeightLift(camera,zUnits))));
+   return [cx + (x - cx) / divisor, cy + (floorY - cy - isoHeightLift(camera, zUnits)) / divisor];
+ }
+ 
+@@ -129,7 +130,7 @@ export function isoProjectedDepth(point: ScenePoint, height: number, camera: Iso
+   const lens = camera.perspective;
+   if (!lens) return height;
+   const inverseDivisor = (1 + lens.rate * (point[1] - lens.center[1]))
+-    / (1 - lens.rate * isoHeightLift(camera, height));
++    / (1 - lens.rate * (1 + (lens.heightDepth ?? 0)) * isoHeightLift(camera, height));
+   return height * inverseDivisor;
+ }
+ 
+@@ -228,6 +229,27 @@ export function isoFloorLinearCss(camera: IsoCamera = ISO_CAMERA, inverse = fals
+   return `matrix(${[...linear, 0, 0].join(',')})`;
+ }
+ 
++/** Local screen basis for HTML captions and hit targets beside native 3D caps. */
++export function isoLocalPlaneCss(point: PlanPoint, height: number, camera: IsoCamera,
++  inverse = false, reading = false): string {
++  let [a,b,c,d] = isoFloorMatrix(camera);
++  const lens = camera.perspective;
++  if (lens) {
++    const [x,y] = applyIsoMatrix(point,isoFloorMatrix(camera));
++    const lift = isoHeightLift(camera,height), u = x-lens.center[0], v = y-lens.center[1]-lift;
++    const divisor = 1-lens.rate*(y-lens.center[1]+(lens.heightDepth ?? 0)*lift);
++    const q = lens.rate/(divisor*divisor);
++    [a,b,c,d] = [a/divisor+u*q*b,b/divisor+v*q*b,c/divisor+u*q*d,d/divisor+v*q*d];
++  }
++  if (reading) {
++    const angle = (isoReadingYaw(camera.rotDeg)-camera.rotDeg)*Math.PI/180;
++    const cos = Math.cos(angle), sin = Math.sin(angle);
++    [a,b,c,d] = [a*cos+c*sin,b*cos+d*sin,-a*sin+c*cos,-b*sin+d*cos];
++  }
++  const det = a*d-b*c;
++  return `matrix(${[...(inverse ? [d/det,-b/det,-c/det,a/det] : [a,b,c,d]),0,0].join(',')})`;
++}
++
+ /** Tile extrusion and relative paint layers on the same raised camera plane. */
+ export function isoTileDepthStyles(camera: IsoCamera): Record<string,string> {
+   const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c;
+diff --git a/src/iso-scene-geometry.ts b/src/iso-scene-geometry.ts
+index c6cb0c5c2d..012ea904ed 100644
+--- a/src/iso-scene-geometry.ts
++++ b/src/iso-scene-geometry.ts
+@@ -2,6 +2,7 @@
+  * Structural geometry and projected bounds shared by the 3D scene,
+  * the geometry worker and the interactive controls.
+  */
++import { markerHeightGeometry } from './marker-height';
+ import { ISO_ICON_SCALE } from './iso-tiles';
+ import { ISO_LAB_OPENINGS } from './iso-lab-camera';
+ import { isoMarkerOccluded } from './iso-marker-context';
+@@ -11,7 +12,7 @@ import { clampScale, fitView, islandsOf, roomPoly, type SpaceDisplay } from './l
+ import {
+   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
+   ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT, isoDisplayWallHeight,
+-  projectedFrame, isoCameraFor, isoPerspectiveCamera, isoFloorMatrix, type PlanPoint, type ScenePoint, type IsoCamera,
++  projectedFrame, isoCameraFor, isoPerspectiveCamera, isoFloorMatrix, isoLocalPlaneCss, type PlanPoint, type ScenePoint, type IsoCamera,
+ } from './iso-projection';
+ import { planRotation, type PlanRotation } from './view-frame';
+ import {
+@@ -562,12 +563,12 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
+     isoPhysicalScenes.set(value, structural);
+     lruWrite(input.cache, input.source.key, value, 8);
+   }
+-  if (rotation !== 0) {
++  {
+     let projections = isoProjectedScenes.get(value);
+     if (!projections) { projections = new Map(); isoProjectedScenes.set(value, projections); }
+     const physical = structural;
+     let projected = projections.get(rotation);
+-    const bounds = camera.rotDeg % 90 === 0 ? lensBounds(physical) : null;
++    const bounds = lensBounds(physical);
+     if (bounds) {
+       // Older serialized entries store orthographic points at the same angle.
+       const previous = projected && isoPerspectiveCameras.get(projected);
+@@ -818,16 +819,17 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
+     preferredRoomId?: string | null,
+     core?: number,
+     signal?: {text: string; belowBadge: boolean},
++    height?: ReturnType<typeof markerHeightGeometry>,
+   ): IsoOverlayPlacement => {
+     // UI Lab: devices, room labels and door locks share the wall-cut plane.
+-    const visualOffset = wallHeight;
++    const visualOffset = height?.top ?? wallHeight;
+     const cacheKey = `${kind}\u0000${id}`;
+     // Nothing here depends on zoom or stage size, so a pinch, wheel or resize
+     // reuses the immutable placement and Lit keeps the raised SVG subtree.
+     const signature = [floorAnchor[0], floorAnchor[1],
+       footprintHalfSize[0], footprintHalfSize[1],
+       preferredRoomId || '', wallHeight, visualOffset, cameraSignature,
+-      core ?? '', signal?.text ?? '', !!signal?.belowBadge, !!input.floorAlignedMarkers,
++      height?.thickness ?? '', height?.level ?? '', core ?? '', signal?.text ?? '', !!signal?.belowBadge, !!input.floorAlignedMarkers,
+     ].join('|');
+     const cached = lruRead(placements!, cacheKey);
+     if (cached.hit && cached.value.signature === signature) return cached.value.placement;
+@@ -854,7 +856,19 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
+       visualOffset,
+       camera: input.camera,
+     });
+-    if (kind === 'device') placement.deviceSize = core;
++    if (input.floorAlignedMarkers && input.camera?.perspective) {
++      const camera = input.camera;
++      placement.localPlaneStyles = [
++        `--hp-iso-marker-plane:${isoLocalPlaneCss(floorAnchor,visualOffset,camera)}`,
++        `--hp-iso-marker-hit-plane:${isoLocalPlaneCss(floorAnchor,visualOffset,camera,true)}`,
++        `--hp-iso-room-plane:${isoLocalPlaneCss(floorAnchor,visualOffset,camera,false,true)}`,
++        `--hp-iso-room-hit-plane:${isoLocalPlaneCss(floorAnchor,visualOffset,camera,true,true)}`,
++      ].join(';');
++    }
++    if (kind === 'device') {
++      placement.deviceSize = core; placement.deviceHeight = visualOffset;
++      placement.deviceThickness = height?.thickness; placement.deviceHeightLevel = height?.level;
++    }
+     if(input.floorAlignedMarkers && kind === 'opening-lock') {
+       const occlusionHalfSize: PlanPoint = core ? [core/2,core/2] : footprintHalfSize;
+       const camera = input.camera ?? ISO_CAMERA;
+@@ -897,6 +911,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
+       preferredRoomId,
+       core,
+       presentation.lqiText != null ? {text: String(presentation.lqiText), belowBadge: presentation.valueBadge?.position === 'bottom'} : undefined,
++      markerHeightGeometry(device.marker?.height_cm, input.cellCm, wallHeight, core),
+     );
+     devices.set(device.id, placement);
+     entries.push({
+diff --git a/src/led-strip-runtime.ts b/src/led-strip-runtime.ts
+index b0d1f47c08..9063627ba0 100755
+--- a/src/led-strip-runtime.ts
++++ b/src/led-strip-runtime.ts
+@@ -10,6 +10,7 @@
+  * visibility regions. Cache boundaries therefore never become visible seams,
+  * while the same wall/door scene still clips the light.
+  */
++import { markerHeightGeometry, LED_BODY_HEIGHT_CM } from './marker-height';
+ import { nothing, svg, type TemplateResult } from 'lit';
+ import { readIsoPerspectiveSvg } from './svg-perspective-coordinates';
+ import { turnVector, inversePlanRotation, type PlanRotation } from './view-frame';
+@@ -212,6 +213,7 @@ export interface LedIsoStyle {
+   perspective?: boolean;
+   /** Screen-space lift to the common wall/device top plane. */
+   lift: number;
++  liftOf?: (view: LedStripView) => number;
+   /** Shallow vertical edge, matching the room-name extrusion. */
+   depth: number;
+   edge: string;
+@@ -269,13 +271,20 @@ export function ledStripePath(strip: LedStripModel, faces: FaceContext | null, d
+   return value;
+ }
+ 
++function ledHeight(host: LedCardHost, device: DevItem, diameter: number) {
++  return markerHeightGeometry(device.marker?.height_cm, host._cellCm,
++    gridVisualUnits(isoDisplayWallHeight(), host._cellCm), diameter * .075 / .24,
++    LED_BODY_HEIGHT_CM);
++}
++
+ export function plan3dLedRibbons(host: LedCardHost, space: SpaceModel, spaceGlow: boolean) {
+   const frame = ledFrameFor(host, space, spaceGlow);
+   const diameter = frame.d * ISO_ICON_SCALE;
+   return frame.views.flatMap(view => {
+     const { t, path } = ledStripePath(view.strip, frame.faces, diameter);
+     if (path.points.length < 2) return [];
+-    return [{ id: view.strip.id, owner: view.device.id, path, width: t, depth: frame.d * .075,
++    const height = ledHeight(host, view.device, frame.d);
++    return [{ id: view.strip.id, owner: view.device.id, path, width: t, depth: height.thickness, height: height.top,
+       outline: OUTLINE, color: view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE,
+       opacity: view.state === 'off' ? .7 : 1 }];
+   });
+@@ -355,7 +364,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
+         const [dx, dy] = turnVector([x, y], inversePlanRotation(iso?.rotation || 0));
+         return `translate(${dx} ${dy})`;
+       };
+-      const lifted = iso ? shift(0, -iso.lift) : nothing;
++      const lifted = iso ? shift(0, -(iso.liftOf?.(view) ?? iso.lift)) : nothing;
+       const shadow=iso && input.paint !== 'body' ? svg`<path class="led-iso-shadow" d=${d} fill="none" stroke="black"
+         stroke-opacity=${iso.shadow.opacity} stroke-width=${t} stroke-linecap="round" stroke-linejoin="round"
+         filter="url(#hp-led-iso-shadow)" pointer-events="none" transform=${shift(iso.shadow.dx,iso.shadow.dy)}></path>` : nothing;
+@@ -629,6 +638,7 @@ export function renderLedLayerFor(
+   host: LedCardHost, space: SpaceModel, spaceGlow: boolean, view: { w: number },
+   paint: LedStripeInput['paint'] = 'all',
+   flat = false,
++  markerId?: string,
+ ): TemplateResult {
+   const frame = ledFrameFor(host, space, spaceGlow);
+   const width = host._renderPixelsPerUnit ? host._renderPixelsPerUnit(view) * view.w : host._stageEl?.clientWidth;
+@@ -640,7 +650,7 @@ export function renderLedLayerFor(
+   const shadow = isoTileShadow(theme, lightFloor);
+   const camera=host._isoFloorCamera ?? isoCameraFor(host._rotation ?? 0);
+   const stripes = renderLedStripes({
+-    views: frame.views,
++    views: markerId ? frame.views.filter(v => v.device.id === markerId) : frame.views,
+     d,
+     paint,
+     iso: iso ? {
+@@ -648,6 +658,7 @@ export function renderLedLayerFor(
+       plane: isoFloorMatrix(camera),
+       perspective: !!camera.perspective,
+       lift: camera.perspective ? 0 : gridVisualUnits(isoDisplayWallHeight(),host._cellCm)*camera.zScale*Math.sin(camera.tiltDeg*Math.PI/180),
++      liftOf: view => camera.perspective ? 0 : ledHeight(host, view.device, frame.d).top * camera.zScale * Math.sin(camera.tiltDeg * Math.PI / 180),
+       depth: frame.d * .075,
+       edge: '#808080',
+       shadow: { dx: 0, dy: 0, sigma: shadow.sigma * d, opacity: shadow.opacityWhite },
+diff --git a/src/plan-3d-camera.ts b/src/plan-3d-camera.ts
+index 8f2c961e2a..1d6cac71e0 100644
+--- a/src/plan-3d-camera.ts
++++ b/src/plan-3d-camera.ts
+@@ -53,19 +53,17 @@ export function plan3dCamera(
+ 
+   if (calibrated.perspective) {
+     const [screenX, screenY] = calibrated.perspective.center;
+-    const distance = 1 / (calibrated.perspective.rate * ground);
+-    const height = ground * distance / vertical;
++    const distance = vertical / (calibrated.perspective.rate * ground);
+     const near = distance / 16;
+     const far = distance + extent;
+     const camera = new PerspectiveCamera(40, view.w / view.h, near, far);
+-    camera.position.set(x + sin * distance, height, y + cos * distance);
+-    camera.lookAt(planWorldPoint(x, y, height));
+-    // Shift the principal point with a horizontal optical axis. Tilting the
+-    // camera down would make apparent width depend on world height.
++    camera.position.set(x + sin * vertical * distance, ground * distance, y + cos * vertical * distance);
++    camera.lookAt(planWorldPoint(x, y, 0));
++    // Keep the existing crop controls, with a genuinely tilted optical axis.
+     const left = (view.x - screenX) * near / distance;
+     const right = left + view.w * near / distance;
+-    const top = -(view.y - screenY + ground * distance) * near / (vertical * distance);
+-    const bottom = top - view.h * near / (vertical * distance);
++    const top = -(view.y - screenY) * near / distance;
++    const bottom = top - view.h * near / distance;
+     camera.projectionMatrix.makePerspective(left, right, top, bottom, near, far, WebGLCoordinateSystem);
+     camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+     camera.updateMatrixWorld(true);
+diff --git a/src/plan-3d-markers.ts b/src/plan-3d-markers.ts
+index fff95b560a..05b9439971 100644
+--- a/src/plan-3d-markers.ts
++++ b/src/plan-3d-markers.ts
+@@ -24,6 +24,7 @@ export interface Plan3dMarker {
+   center: PlanPoint;
+   diameter: number;
+   height: number;
++  thickness?: number;
+   opacity?: number;
+   faces: readonly Plan3dMarkerFace[];
+ }
+@@ -345,11 +346,12 @@ export class Plan3dMarkerLayer {
+     const { center: [x, y], diameter, height } = marker;
+     const { left, right, top, bottom, rx, ry, angle = 0 } = face;
+     const w = (right - left) * diameter, h = (bottom - top) * diameter;
+-    const geometryKey = [left, right, top, bottom, rx, ry, angle, diameter].join('|');
++    const thickness = marker.thickness ?? diameter * .24;
++    const geometryKey = [left, right, top, bottom, rx, ry, angle, diameter, thickness].join('|');
+     let paint = this.markers.get(key);
+     if (paint?.key !== geometryKey) {
+       if (paint) this.retire(paint);
+-      const prism = planPrismMesh([[ring(face, diameter)]], -diameter * .24, 0);
++      const prism = planPrismMesh([[ring(face, diameter)]], -thickness, 0);
+       const body = new Mesh(prism, [face.color, face.edge, face.edge].map(color => new MeshBasicMaterial({ color, toneMapped: false })));
+       body.userData.plan3dPick = { id: marker.id, geometryOnly: true };
+       this.group.add(body);
+diff --git a/src/plan-3d-world.ts b/src/plan-3d-world.ts
+index 1695067a7f..67b7fe4c12 100644
+--- a/src/plan-3d-world.ts
++++ b/src/plan-3d-world.ts
+@@ -49,6 +49,7 @@ export interface Plan3dImage {
+ }
+ 
+ export interface Plan3dLedRibbon {
++  height?: number;
+   id: string;
+   owner: string;
+   path: { points: readonly PlanPoint[]; closed: boolean };
+@@ -81,6 +82,8 @@ export interface Plan3dRoomHover {
+ export type Plan3dContactShadow = readonly [x: number, y: number, w: number, h: number, alpha: number];
+ 
+ export interface Plan3dOutline {
++  height?: number;
++  thickness?: number;
+   id: string;
+   members: readonly string[];
+   outline: string;
+@@ -392,15 +395,15 @@ export class Plan3dWorld {
+ 
+   presentOutlines(outlines: readonly Plan3dOutline[], height: number): void {
+     const live = new Set<string>();
+-    for (const { id, outline, diameter, virtual, opacity = 1 } of outlines) {
++    for (const { id, outline, diameter, virtual, opacity = 1, height: ownHeight = height, thickness = diameter * .24 } of outlines) {
+       if (!outline || !Number.isFinite(diameter) || diameter <= 0) continue;
+-      const key = [height, diameter, virtual, opacity, outline].join('|');
++      const key = [ownHeight, thickness, diameter, virtual, opacity, outline].join('|');
+       live.add(id);
+       const previous = this.glassMeshes.get(id);
+       if (previous?.key === key) continue;
+       if (previous) this.disposeGlass(previous.meshes);
+       // The wall top owns its depth exactly where a rim touches the cut.
+-      const top = height - diameter * .0001, low = top - diameter * .24;
++      const top = ownHeight - diameter * .0001, low = Math.max(0, top - thickness);
+       const chains = markerContactChains(outline);
+       const faces: Face[] = [], rims: Face[] = [];
+       for (const chain of chains) {
+@@ -607,17 +610,17 @@ export class Plan3dWorld {
+   private updateRibbons(ribbons: readonly Plan3dLedRibbon[], height: number): void {
+     const live = new Set<string>();
+     for (const ribbon of ribbons) {
+-      const { id, owner, path, width, depth, outline, color, opacity } = ribbon;
++      const { id, owner, path, width, depth, outline, color, opacity, height: top = height } = ribbon;
+       live.add(id);
+-      const key = [owner, path, width, height, depth, outline];
++      const key = [owner, path, width, top, depth, outline];
+       let paint = this.ribbonMeshes.get(id);
+       if (!paint || !same(paint.geometry, key)) {
+         if (paint) this.disposeRibbon(paint);
+         const edge = { color: '#808080', opacity: 1 };
+-        const body = this.mesh(planPrismMesh(ribbonFloor(path, width), height - depth, height),
++        const body = this.mesh(planPrismMesh(ribbonFloor(path, width), top - depth, top),
+           [{ color: outline, opacity: 1 }, edge, edge]);
+         body.userData.plan3dPick = { id: owner };
+-        const core = new Mesh(planFaceMesh(ribbonFloor(path, width / 2).map(polygon => horizontal(polygon, height))),
++        const core = new Mesh(planFaceMesh(ribbonFloor(path, width / 2).map(polygon => horizontal(polygon, top))),
+           new MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true,
+             polygonOffsetFactor: -1, polygonOffsetUnits: -1, toneMapped: false }));
+         core.userData.plan3dPick = { occludes: false };
+diff --git a/src/types.ts b/src/types.ts
+index de8133de7e..53f7903a11 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -233,6 +233,8 @@ export interface Marker {
+   /** `ripple` is legacy read compatibility; UI maps it to icon_ripple. */
+   display?: 'badge' | 'ripple' | 'icon_ripple' | 'value' | 'static_icon' | 'value_static_icon' | null; // how the device is drawn
+   ripple_color?: string | null;
++  /** Floor to lower marker face, cm; absent means automatic height. */
++  height_cm?: number | null;
+   ripple_size?: number | null; // max ring diameter, in icon diameters (default 1.5)
+   size?: number | null;        // icon size multiplier (default 1)
+   angle?: number | null;       // icon rotation, degrees
+diff --git a/test/device-contact.test.mjs b/test/device-contact.test.mjs
+index 02f0a6a58a..f32fdc1157 100644
+--- a/test/device-contact.test.mjs
++++ b/test/device-contact.test.mjs
+@@ -13,6 +13,20 @@ const marker = (id, x = 0, y = 0, diameter = 80, box) => ({ id, x, y, diameter,
+   box: box || { left: -diameter * .634375, right: diameter * .634375, top: -diameter * .634375, bottom: diameter * .634375 } });
+ const canonical = (x, y) => ({ x: +((x / 1000).toFixed(9)) * 1000, y: +((y / 1000).toFixed(9)) * 1000 });
+ const shape = (m) => freeContactShape(m);
++test('#1608 height changes split contact chains and reconnect only actual neighbours', () => {
++  const scene = new DeviceContactScene([marker('a'), marker('b', 90), marker('c', 180)], []);
++  const members = levels => scene.components(undefined, levels).map(group => group.map(s => s.marker.id));
++  assert.deepEqual(members(), [['a', 'b', 'c']]);
++  const heights = new Map([['a', '0'], ['b', '60'], ['c', '0']]);
++  assert.deepEqual(members(heights), [['a'], ['b'], ['c']]);
++  heights.set('a', '60');
++  assert.deepEqual(members(heights), [['a', 'b'], ['c']]);
++  heights.set('c', '60');
++  assert.deepEqual(members(heights), [['a', 'b', 'c']]);
++  heights.set('b', 'auto');
++  assert.deepEqual(members(heights), [['a'], ['b'], ['c']]);
++  assert.deepEqual(members(), [['a', 'b', 'c']], '2D contact graph stays intact');
++});
+ const wall = (angle = 0, side = 1) => {
+   const t = [Math.cos(angle), Math.sin(angle)];
+   return { id: `face-${angle}-${side}`, a: [-300 * t[0], -300 * t[1]], b: [300 * t[0], 300 * t[1]], normal: [-t[1] * side, t[0] * side] };

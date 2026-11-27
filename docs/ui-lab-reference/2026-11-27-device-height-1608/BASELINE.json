@@ -1,0 +1,40 @@
+{
+  "issue": 1608,
+  "approvedOn": "2026-11-27",
+  "ownerDecision": "выглядит отлично, фиксируй всё в 1608",
+  "status": "owner-approved-ui-prototype",
+  "productImplemented": false,
+  "baseCommit": "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd",
+  "baseRef": "dev",
+  "packageVersion": "2.0.0-beta.2",
+  "fingerprint": "896cb6a5773045b827ff3bc0c7b6376aca9b9e653f0654ec2ddbaead48ae3ec5",
+  "capture": {
+    "browser": "in-app",
+    "cssViewport": [
+      849,
+      892
+    ]
+  },
+  "sourceFiles": [
+    "src/card-plan-3d.ts",
+    "src/device-contact-card.ts",
+    "src/device-contact-render.ts",
+    "src/device-contact-scene.ts",
+    "src/editor-context-menu.styles.ts",
+    "src/editors/marker-dialog.ts",
+    "src/editors/marker-form-state.ts",
+    "src/houseplan-card.ts",
+    "src/houseplan-editor-runtime.ts",
+    "src/iso-overlays.ts",
+    "src/iso-perspective-floor.ts",
+    "src/iso-projection.ts",
+    "src/iso-scene-geometry.ts",
+    "src/led-strip-runtime.ts",
+    "src/plan-3d-camera.ts",
+    "src/plan-3d-markers.ts",
+    "src/plan-3d-world.ts",
+    "src/types.ts",
+    "test/device-contact.test.mjs",
+    "src/marker-height.ts"
+  ]
+}

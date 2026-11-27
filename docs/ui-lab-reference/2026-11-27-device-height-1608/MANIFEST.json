@@ -1,0 +1,53 @@
+{
+  "issue": 1608,
+  "files": {
+    "added/marker-height.ts": {
+      "sha256": "fa0f9a7afd2853db1484f7c2b94f6dfe81b15c7ec9d9f2feeae612cf43a9f4e7",
+      "bytes": 2147
+    },
+    "BASELINE.json": {
+      "sha256": "0877d5b1683e0ea9d488330f2aa64e77298773ae9e2b3eb86c9bd5bd1959cf73",
+      "bytes": 1213
+    },
+    "fixture.json": {
+      "sha256": "87fcdf0ce3ebe3f29ff05f8aa6ac05a88ae7261e1c62324369a338838ff60f06",
+      "bytes": 1746700
+    },
+    "JOURNAL.md": {
+      "sha256": "715d30873e9674b5bd2c2a977927cfff5a2e7295aefa53d5cc32764bcf4d3254",
+      "bytes": 10043
+    },
+    "prototype.patch": {
+      "sha256": "570db7c7e8061a7e8bb4c50cd59d5d5f9701f37ed7e2f0bb53c7915bf1feb834",
+      "bytes": 58609
+    },
+    "README.md": {
+      "sha256": "a992fe6340eaf21540685c44b4beeeac7bf65e52549d1be844c0b59a0018916c",
+      "bytes": 3619
+    },
+    "screenshots/context-menu-hover.png": {
+      "sha256": "6461537394148c1c32626dc424b5bfa1725f03d3edabe4b94b5c515dc607bfd2",
+      "bytes": 110382
+    },
+    "screenshots/context-menu-idle.png": {
+      "sha256": "ad271322bfe4fe6650a62663157478836cc965931b3fe03be4ef804d80edb224",
+      "bytes": 110421
+    },
+    "screenshots/height-field.png": {
+      "sha256": "0c0ea571260e578b67a23248eccf62032c8a8055e6e9e84c6602bfb73cbef525",
+      "bytes": 69328
+    },
+    "screenshots/perspective-diagonal.png": {
+      "sha256": "56352931a50cdf8c5388432e3e57cf943003d3da39b029209d2aafe4249f1d43",
+      "bytes": 82985
+    },
+    "screenshots/perspective-direct.png": {
+      "sha256": "e873d4c47da6269fadcfe76bfd7661ec5fa4c6276c219ccbf109fc08547e57fb",
+      "bytes": 82230
+    },
+    "serve-reference.mjs": {
+      "sha256": "5c01dcf76ac5de7ab0806847147916b3a09dcdb8e599583695923cbfc703f4cb",
+      "bytes": 1378
+    }
+  }
+}
