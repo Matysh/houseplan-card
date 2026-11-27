@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1600,
+  "baseStable": "v1.86.1",
+  "category": "infra",
+  "rationale": "Document and verify the shared-core/package compatibility contract without changing product models, runtime import or HA user journeys.",
+  "summary": {
+    "en": "Define core/archive compatibility, read frozen stable producer archives in installed conformance and verify release artifact versions.",
+    "ru": "Зафиксировать совместимость ядра и архивов, проверить исторические stable-архивы установленным пакетом и версии артефактов перед публикацией."
+  }
+}
