@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27640,
+  "revision": 27641,
   "nextTicket": 752,
   "nextFence": 751,
   "tasks": {
@@ -6316,7 +6316,18 @@
         "tests_backend/test_core_distribution.py",
         "tests_backend/test_ha_input_security_authority.py",
         "tests_backend/test_ha_websocket.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795760270449,
+        "entry": 1,
+        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
+        "eventId": "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return:return:1605"
+      }
     }
   },
   "ownerDecisions": {},
@@ -7017,18 +7028,7 @@
   "waiting": [
     1604
   ],
-  "active": {
-    "issue": 1605,
-    "worker": "finish",
-    "token": "750:finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:2:admit",
-    "fence": 750,
-    "materialSha": "034b5037f52e046651d8c10ccc891771675eecab",
-    "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a",
-    "phase": "testing",
-    "admittedAt": 1795759837077,
-    "expiresAt": 1795760538247,
-    "patchId": "8725aa50dd29d1749e87a5aba802dcf2b18998fe"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7318,6 +7318,10 @@
       "digest": "8b29b94eb93a8c08faf93d1972b7a9c5d4998191153912126cf71d149317ebc2",
       "issue": 1605
     },
+    "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return": {
+      "digest": "77f1061169c96cf867bce619ebfd7114ec4942b618e7074efe0ff4d626f21452",
+      "issue": 1605
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7571,6 +7575,26 @@
           "status": "passed",
           "finishedAt": "2026-11-27T06:05:19.717Z",
           "failures": []
+        }
+      }
+    },
+    "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return:return:1605": {
+      "digest": "77f1061169c96cf867bce619ebfd7114ec4942b618e7074efe0ff4d626f21452",
+      "issue": 1605,
+      "message": {
+        "kind": "return",
+        "issue": 1605,
+        "at": 1795760270449,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795760270449,
+          "entry": 1,
+          "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
+          "eventId": "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return:return:1605"
         }
       }
     }
