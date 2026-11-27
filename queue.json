@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29289,
+  "revision": 29290,
   "nextTicket": 784,
   "nextFence": 784,
   "tasks": {
@@ -6396,14 +6396,35 @@
       "track": "ask",
       "layer": "infra",
       "branch": "codex/1613-s6-budget",
-      "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32",
+      "materialSha": "37be774ce13f7ecb14705051b18b35c3a616a8d1",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 783,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795801023225,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "aeab367a38b12af0b403051daf6b5f4ab6397773",
+      "changedFiles": [
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/cli.mjs",
+        "process-next/lib/catalog.mjs",
+        "process-next/lib/fallback.mjs",
+        "process-next/lib/queue.mjs",
+        "process-next/lib/runner.mjs",
+        "process-next/lib/s6-budget.mjs",
+        "process-next/lib/service-messages.mjs",
+        "process-next/lib/source-dependencies.mjs",
+        "process-next/lib/task-selection.mjs",
+        "process-next/remote.mjs",
+        "process-next/templates/prepare-fallback.mjs",
+        "process-next/test/fallback-adapter.test.mjs",
+        "process-next/test/remote.test.mjs",
+        "process-next/test/s6-budget.test.mjs",
+        "process-next/test/task-selection.test.mjs"
+      ]
     },
     "1614": {
       "issue": 1614,
@@ -7199,11 +7220,12 @@
     "worker": "finish",
     "token": "783:finish:7505b5b4-4d41-4592-9c2f-c7ee13451083:finish:2:admit",
     "fence": 783,
-    "materialSha": "ae652543c7f1d066a7802daf2baba6fb44dc1f32",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "37be774ce13f7ecb14705051b18b35c3a616a8d1",
+    "expectedBase": "379a1ee4f682c2735f0b96f5258166a23f3f923b",
+    "phase": "testing",
     "admittedAt": 1795807205295,
-    "expiresAt": 1795807505295
+    "expiresAt": 1795807514833,
+    "patchId": "aeab367a38b12af0b403051daf6b5f4ab6397773"
   },
   "events": {
     "ready:1598:95baaa6dad232e52b30c4e181506049324c8ef25": {
@@ -7357,6 +7379,10 @@
     "finish:fb3d4f8a-90da-4663-95e3-a519d163587d:finish:2:return": {
       "digest": "0f1482fbffd256bba88d08a96115e8a4913d2cc8cfd8c700233495c1efb4d6de",
       "issue": 1598
+    },
+    "finish:7505b5b4-4d41-4592-9c2f-c7ee13451083:finish:3:synchronized": {
+      "digest": "dca0f35c3ea88cf108e42ce19a28a023ec9f2a4f023df535ca69e010cc883a81",
+      "issue": 1613
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
