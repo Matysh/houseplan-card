@@ -7,6 +7,7 @@
 - Restore the 1.83.1 hotfix entry and document bundled frontend licenses. [#1597](https://github.com/Matysh/houseplan-card/issues/1597)
 - Replace legacy SVG isometric benchmarks with diagnostic WebGL canvas/mesh, camera, light fade, GPU timer and heap measurements; report software rendering explicitly (#1599).
 - Define shared-core and archive compatibility, test native 1.86.0/1.86.1 archives in installed packages, and reject mismatched wheel/HA/standalone versions at publication (#1600).
+- Enabled TypeScript noImplicitAny and restored addressed Ruff/mypy checks for changed backend sources, without count ratchets or checks on documentation-only tasks (#1603).
 
 - Reduce the Home Assistant installer size by using its built-in MDI catalog (#1594).
 - Document the WebGL 2 requirement for 3D view and the 2D fallback in both READMEs (#1591).

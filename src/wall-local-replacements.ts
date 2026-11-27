@@ -17,7 +17,7 @@ export function applyWallLocalReplacements(subject: Geom,
     if (additions && replacement.cuts.length)
       additions = difference(additions, ...replacement.cuts);
     cuts.push(...replacement.cuts);
-    const pieces = [...(additions ? [additions] : []), ...replacement.pieces];
+    const pieces: Geom[] = [...(additions ? [additions] : []), ...replacement.pieces];
     additions = pieces.length > 1 ? union(pieces[0], ...pieces.slice(1)) : pieces[0] || null;
   }
   const remainder = cuts.length ? difference(subject, ...cuts) : subject;

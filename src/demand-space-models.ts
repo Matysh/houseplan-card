@@ -1,3 +1,4 @@
+import type { PlanGraph } from './plan-graph';
 import { NORM_W, planRect, spaceModels } from './space-geometry';
 import { stairList } from './stairs';
 import { physicalFloorFingerprint } from './floor-geometry-key';
@@ -29,14 +30,14 @@ export class DemandSpaceModels {
         return resolved;
       };
       const fullRoom = (id: string | undefined): RoomCfg => {
-        roomIndex ??= new Map(full().rooms.map(room => [room.id,room]));
+        roomIndex ??= new Map(full().rooms.map((room: RoomCfg) => [room.id,room]));
         return roomIndex.get(id) || { id, name: '', area: null };
       };
-      const metadata = new Map((raw.rooms || []).map(room => [room.id,room]));
+      const metadata = new Map((raw.rooms || []).map((room: RoomCfg) => [room.id,room]));
       const roomRecords = raw.plan_graph
-        ? raw.plan_graph.rooms.map(owner => metadata.get(owner.room) || {id:owner.room})
+        ? raw.plan_graph.rooms.map((owner: PlanGraph['rooms'][number]) => metadata.get(owner.room) || {id:owner.room})
         : raw.rooms || [];
-      const rooms = roomRecords.map((room): RoomCfg => ({
+      const rooms = roomRecords.map((room: RoomCfg): RoomCfg => ({
         id: room.id, name: room.name, area: room.area ?? null,
         open_to: room.open_to || undefined, settings: room.settings || undefined,
         get x() { return fullRoom(room.id).x; }, get y() { return fullRoom(room.id).y; },

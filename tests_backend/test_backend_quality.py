@@ -1,14 +1,19 @@
-"""#42: backend quality contracts — error codes, mypy allowlist, noqa hygiene.
+"""#42: backend quality contracts — error codes, addressed tools, noqa hygiene.
 
-Pure tests: no homeassistant import, runnable in any environment.
+Tool witnesses require the pinned backend Python environment.
 """
 from __future__ import annotations
 
 import importlib
 import importlib.util
 import json
+import os
 import re
+import subprocess
+import sys
 from pathlib import Path
+
+import pytest
 
 REPO = Path(__file__).resolve().parent.parent
 BACKEND = REPO / "custom_components" / "houseplan"
@@ -98,29 +103,35 @@ def test_issue_42_every_emitted_code_is_registered_and_localized():
     assert not missing, f"ERROR_CODES without an en message: {sorted(missing)}"
 
 
-def test_issue_42_mypy_strict_allowlist_only_grows():
-    committed = {
-        "custom_components.houseplan.const",
-        "custom_components.houseplan.projection",
-        "custom_components.houseplan.coordinate_canonicalization",
-        "custom_components.houseplan.frontend_asset_manifest",
-        "custom_components.houseplan.junction_limits",
-        "custom_components.houseplan.plans",
-        "custom_components.houseplan.core.constants",
-        "custom_components.houseplan.core.coordinate_canonicalization",
-        "custom_components.houseplan.core.contact_basis",
-        "custom_components.houseplan.core.junction_limits",
-        "custom_components.houseplan.core.file_usage",
-        "custom_components.houseplan.core.led_strips",
-        "custom_components.houseplan.core.opening_repair",
-    }
-    pyproject = (REPO / "pyproject.toml").read_text(encoding="utf-8")
-    section = pyproject.split("[[tool.mypy.overrides]]", 1)[1]
-    listed = set(re.findall(r'"(custom_components\.houseplan\.[a-z_.]+)"', section))
-    removed = committed - listed
-    assert not removed, (
-        f"strict modules were REMOVED from the mypy allowlist: {sorted(removed)} — "
-        "the list only ever grows (#42)")
+@pytest.mark.parametrize(("source", "error"), [
+    ("def value(number: int) -> int:\n    return number\n", None),
+    ("def value() -> int:\n    return missing\n", "F821"),
+    ("def value() -> int:\n    return 'wrong type'\n", "return-value"),
+])
+def test_issue_1603_addressed_backend_tools_execute_only_selected_files(tmp_path, source, error):
+    """The native S6 command really invokes both tools and propagates defects."""
+    directory = tmp_path / "custom_components" / "houseplan"
+    directory.mkdir(parents=True)
+    (directory / "selected.py").write_text(source)
+    (directory / "untouched.py").write_text("value = missing\n")
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.ruff.lint]\nselect = ["E", "F"]\n'
+        '[tool.mypy]\npython_version = "3.14"\nignore_missing_imports = true\n'
+    )
+    run = subprocess.run(
+        ["node", str(REPO / "process-next/catalog/backend-quality.mjs"),
+         "custom_components/houseplan/selected.py"],
+        cwd=tmp_path, capture_output=True, text=True, check=False,
+        env={**os.environ, "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", "")},
+    )
+    output = run.stdout + run.stderr
+    if error is None:
+        assert run.returncode == 0, output
+        assert "ruff + mypy" in output
+    else:
+        assert run.returncode != 0, output
+        assert error in output
+    assert "untouched.py" not in output
 
 
 def test_issue_42_every_noqa_carries_a_reason():

@@ -1,3 +1,5 @@
+import type { PlanGraph } from './plan-graph';
+import type { RoomCfg, OpeningCfg } from './types';
 /** Optimize-only presentation evidence. Never infer persistence from an error message. */
 import type { ServerConfig } from './types';
 import type { DeviceLayout } from './device-position-history';
@@ -83,15 +85,15 @@ export function optimizeFailure(error: unknown, config: ServerConfig | null,
     || typeof item.subject !== 'string' || !item.subject) return result;
   const subject = item.subject;
   const matches = (config?.spaces || []).filter(space => space.id === subject
-    || space.rooms?.some(room => room.id === subject)
-    || space.openings?.some(opening => opening.id === subject)
-    || space.plan_graph?.nodes.some(node => node.id === subject)
-    || space.plan_graph?.edges.some(edge => edge.id === subject || `${edge.kind}:${edge.id}` === subject));
+    || space.rooms?.some((room: RoomCfg) => room.id === subject)
+    || space.openings?.some((opening: OpeningCfg) => opening.id === subject)
+    || space.plan_graph?.nodes.some((node: PlanGraph['nodes'][number]) => node.id === subject)
+    || space.plan_graph?.edges.some((edge: PlanGraph['edges'][number]) => edge.id === subject || `${edge.kind}:${edge.id}` === subject));
   if (matches.length !== 1) return result;
   const space = matches[0];
   result.spaceId = space.id;
   result.spaceName = space.title || undefined;
-  result.roomName = space.rooms?.find(room => room.id === subject)?.name || undefined;
+  result.roomName = space.rooms?.find((room: RoomCfg) => room.id === subject)?.name || undefined;
   result.subject = subject;
   return result;
 }

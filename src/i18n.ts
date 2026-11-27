@@ -36,7 +36,7 @@ export function t(lang: Lang, key: Key, vars?: Record<string, string | number>):
 
 /** Whether a localized value exists and contains useful text after fallback. */
 export function hasTranslation(lang: Lang, key: string): boolean {
-  const value = dictionaryFor(lang)[key] ?? FALLBACK_DICTIONARY[key];
+  const value = dictionaryFor(lang)[key] ?? (FALLBACK_DICTIONARY as Readonly<Record<string, string | undefined>>)[key];
   return typeof value === 'string' && value.trim().length > 0;
 }
 

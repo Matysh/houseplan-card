@@ -115,8 +115,8 @@ export function parseSvgPath(d: string): PdfVectorOp[] {
       x = px(values[2]); y = py(values[3]); cubic = [x2, y2]; quadratic = null;
       out.push({ op: 'C', x1, y1, x2, y2, x, y });
     } else if (upper === 'Q' || upper === 'T') {
-      const qx = upper === 'Q' ? px(values[0]) : quadratic ? 2 * x - quadratic[0] : x;
-      const qy = upper === 'Q' ? py(values[1]) : quadratic ? 2 * y - quadratic[1] : y;
+      const qx: number = upper === 'Q' ? px(values[0]) : quadratic ? 2 * x - quadratic[0] : x;
+      const qy: number = upper === 'Q' ? py(values[1]) : quadratic ? 2 * y - quadratic[1] : y;
       const ex = upper === 'Q' ? px(values[2]) : px(values[0]);
       const ey = upper === 'Q' ? py(values[3]) : py(values[1]);
       out.push({ op: 'C', x1: x + 2 / 3 * (qx - x), y1: y + 2 / 3 * (qy - y),

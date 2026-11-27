@@ -1,3 +1,4 @@
+import type { RoomCfg, Marker } from './types';
 /**
  * Диалог «Оптимизировать планы» (Общие настройки → Сетка), #642.
  *
@@ -119,7 +120,7 @@ export function preflightDiagnostics(
   // space export would reproduce, and the block promises what the export
   // does not carry.
   const spacesById = new Map(((candidate as any)?.spaces || []) // any-ok: кандидат приходит из untyped optimizePlans, форма spaces не гарантирована
-    .map((space) => [String(space?.id || ''), space]));
+    .map((space: { id?: unknown }) => [String(space?.id || ''), space]));
   return {
     kind: 'houseplan-optimize-preflight',
     origin: 'runtime',
@@ -347,12 +348,12 @@ export class OptimizePlansDialog {
     const cm = Math.ceil(r.report.maxShiftCm * 10) / 10;
     const sp = spaces.find((x) => x?.id != null && String(x.id) === r.report.maxSpace);
     const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
-    const rooms = new Set((r.config.spaces || []).flatMap((space) =>
-      (space.rooms || []).map((room) => room.id)));
-    const vacuumNames = (r.config.markers || []).filter((marker) =>
+    const rooms = new Set((r.config.spaces || []).flatMap((space: { rooms?: RoomCfg[] }) =>
+      (space.rooms || []).map(room => room.id)));
+    const vacuumNames = (r.config.markers || []).filter((marker: Marker) =>
       Object.values(marker.vacuum?.segment_map || {}).some((room) =>
         typeof room === 'string' && !!room && !rooms.has(room)))
-      .map((marker) => String(marker.name || marker.id));
+      .map((marker: Marker) => String(marker.name || marker.id));
     // A new dialog object also starts without an inline clipboard fallback.
     return {
       report: r.report, config: r.config, layout: r.layout, cm, where,

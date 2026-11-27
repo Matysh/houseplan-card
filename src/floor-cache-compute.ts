@@ -56,5 +56,5 @@ export async function computeFloorJob(job: FloorJob, signal?: AbortSignal): Prom
   const before = geometryWorkSnapshot();
   const result = await computeFloorJobImpl(job, signal), after = geometryWorkSnapshot();
   return { ...result, producer: { owner: typeof document === 'undefined' ? 'worker' : 'main',
-    counts: Object.fromEntries(Object.entries(after).map(([name, count]) => [name, count - before[name]])) } };
+    counts: Object.fromEntries(Object.entries(after).map(([name, count]) => [name, count - before[name as keyof typeof before]])) } };
 }

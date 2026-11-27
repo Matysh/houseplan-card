@@ -103,8 +103,8 @@ export function chainSegmentCms(
   for (let i = 0; i < count; i++) {
     const own = valid(recorded?.[i]);
     const inherited = previous ?? active ?? fallback;
-    const liveTail = active ?? previous ?? fallback;
-    const cm = own ?? (i === count - 1 ? liveTail : inherited);
+    const liveTail: number = active ?? previous ?? fallback;
+    const cm: number = own ?? (i === count - 1 ? liveTail : inherited);
     out.push(cm);
     previous = cm;
   }

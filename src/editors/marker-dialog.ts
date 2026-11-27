@@ -1,3 +1,4 @@
+import type { RoomCfg } from '../types';
 /** Existing Device settings regrouped into the shared settings shell (#947). */
 import { markerHeightDraftText } from '../marker-height';
 import { GRID_IMPERIAL_CELL_CM } from '../grid-scale';
@@ -912,7 +913,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const hidden = d.hideFromPlan || bindingStatus?.kind === 'ha_disabled';
     const roomRef = parseRoomRef(d.room);
     const contextSpace = this.host._serverCfg?.spaces.find(space => space.id === (roomRef?.space || previewDevice?.space || this.host._space));
-    const contextRoom = contextSpace?.rooms.find(room => roomRef?.roomId
+    const contextRoom = contextSpace?.rooms.find((room: RoomCfg) => roomRef?.roomId
       ? room.id === roomRef.roomId : roomRef?.area ? room.area === roomRef.area
         : previewDevice?.marker?.room_id ? room.id === previewDevice.marker.room_id
           : !!previewDevice?.area && room.area === previewDevice.area);

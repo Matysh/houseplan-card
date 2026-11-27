@@ -399,7 +399,7 @@ export class HaPlanHost implements PlanHost {
     resolveAssets: ids => this.request({ type: 'houseplan/assets/resolve', asset_ids: [...ids] }),
     resolve: async paths => {
       const result = await this.request<{ urls?: unknown }>({ type: 'houseplan/content/sign', paths: [...paths] });
-      const urls = row(result?.urls) ? result.urls : EMPTY;
+      const urls: Readonly<Record<string, unknown>> = row(result?.urls) ? result.urls : EMPTY;
       return Object.fromEntries(paths.flatMap(path => typeof urls[path] === 'string' && urls[path] ? [[path, urls[path] as string]] : []));
     },
   };

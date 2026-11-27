@@ -911,5 +911,5 @@ export function formatToggleIntent(
 
 export function toggleIntentName(intent: ResolvedToggleIntent): string {
   const targets = intent.targets.length ? intent.targets : intent.skippedTargets;
-  return targets.map((target) => target.name || target.entityId || target.ref).join(', ');
+  return targets.map((target: { name: string | null; entityId: string | null; ref?: string }) => target.name || target.entityId || target.ref).join(', ');
 }

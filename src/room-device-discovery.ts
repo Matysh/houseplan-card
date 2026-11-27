@@ -1,3 +1,4 @@
+import type { RoomCfg } from './types';
 import type { DevItem, ServerConfig } from './types';
 
 /** An explicit room Save, not a standing exemption for its HA Area (#879). */
@@ -28,7 +29,7 @@ export class RoomDeviceDiscovery {
   private valid(placement: Placement, config: ServerConfig): boolean {
     if (!placement.area) return false;
     const matches = config.spaces.flatMap(space => (space.rooms || [])
-      .filter(room => room.area === placement.area).map(room => ({ space: space.id, roomId: room.id })));
+      .filter((room: RoomCfg) => room.area === placement.area).map((room: RoomCfg) => ({ space: space.id, roomId: room.id })));
     return matches.length === 1 && matches[0].space === placement.space
       && matches[0].roomId === placement.roomId;
   }

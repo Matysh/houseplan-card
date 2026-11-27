@@ -22,7 +22,7 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
   const contextCurrent = host._configWriteGuard?.() ?? (() => true);
   const spaceId = host._space, roomId = host._roomEditId;
   const candidate = JSON.parse(JSON.stringify(cfg)) as ServerConfig;
-  const room = candidate.spaces.find(space => space.id === spaceId)?.rooms.find(room => room.id === roomId);
+  const room = candidate.spaces.find(space => space.id === spaceId)?.rooms.find((room: RoomCfg) => room.id === roomId);
   if (!room) { showToast(host._t('toast.conflict'), 'toast.conflict'); return; }
   room.name = host._nameSel.trim() || room.name;
   room.area = host._areaSel || null;

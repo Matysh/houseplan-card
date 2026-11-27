@@ -767,7 +767,7 @@ function optimizePlanDraft(
   // Canonicalise the complete pair before both the diff and the return so the
   // preview, durable intent, live stores and next preview all see one target.
   for (const space of config.spaces || []) {
-    const before = (configIn.spaces || []).find(item => item.id === space.id);
+    const before = (configIn.spaces || []).find((item: { id: string }) => item.id === space.id);
     if (before) transportOpeningOrientations(before, space);
   }
   const persistedConfig = canonicalizeConfigGeometryInPlace(config);

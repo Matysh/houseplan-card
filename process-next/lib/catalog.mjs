@@ -1,3 +1,4 @@
+import { backendQualityFiles } from '../catalog/backend-quality.mjs';
 import {createHash} from 'node:crypto';
 import {dependencyReader} from './source-dependencies.mjs';
 import {selectTaskTests,FIXTURE_ARTIFACTS} from './task-selection.mjs';
@@ -217,6 +218,15 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
   }
   const requested = await checkedPaths(root, areaTests, true);
   const changed = await checkedPaths(root, changedFiles);
+  if (event === 'task' || event === 'hotfix') {
+    const files = backendQualityFiles(root, changed);
+    if (files.length) {
+      steps.push(step('backend-quality', 'Ruff + mypy: изменённые исходники бэкенда',
+        helper('backend-quality', ...files),
+        [...files, 'pyproject.toml', 'tests_backend/requirements.txt', '.python-version']));
+      result.prerequisites.push('Python environment with pinned ruff + mypy from tests_backend/requirements.txt.');
+    }
+  }
   const selection=!release&&event!=='hotfix'?await selectTaskTests({root,inventory,track,layer:infra?'infra':'product',changedFiles:changed,areaTests:requested,productSourceInputs:changed.filter(file=>matchesInputs(file,PRODUCT_PREPARATION_INPUTS))}):null;
   const affected=selection?.files??requested;if(selection)result.selection=selection.explanation;
   if (infra && !release) {

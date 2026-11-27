@@ -27,9 +27,8 @@ ignore = ["E501"]
 python_version = "3.14"
 explicit_package_bases = true
 mypy_path = "."
-# Strict is opt-in per module (#42): the allowlist below only ever GROWS —
-# test/config-schema-parity guards live elsewhere; the backend guard is
-# tests_backend/test_backend_quality.py which fails when a module leaves.
+# Strict is opt-in per module (#42). Addressed S6 uses this same configuration
+# for the changed files; there is no ratchet on the module list.
 ignore_missing_imports = true
 follow_imports = "silent"
 no_site_packages = false

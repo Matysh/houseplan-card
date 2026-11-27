@@ -10,6 +10,7 @@ import { cutPartitionBody, geometryOuterRings, type PhysicalBodyParts, type Part
 import { geometryOpenings, geometryPartitionOpeningCuts } from './plan-geometry-preflight';
 import { directOpeningDrag, type DirectOpening } from './direct-wall-geometry';
 import { NORM_W } from './space-geometry';
+type Multi = ReturnType<typeof union>;
 type WallUnion = NonNullable<ReturnType<typeof wallBodiesUnionPath>>;
 type RecutBase = Parameters<typeof recutWallBodiesGeometry>[0];
 type OpeningInput = {
@@ -24,14 +25,14 @@ type Bounds = [
     number,
     number
 ];
-const polygon = (points: number[][]): Geom => [[[...points.map(p => [p[0], p[1]] as [
+const polygon = (points: number[][]): Multi => [[[...points.map(p => [p[0], p[1]] as [
             number,
             number
         ]), [points[0][0], points[0][1]]]]];
-const box = ([x0, y0, x1, y1]: Bounds): Geom => polygon([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]);
+const box = ([x0, y0, x1, y1]: Bounds): Multi => polygon([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]);
 const expanded = (b: Bounds, n: number): Bounds => [b[0] - n, b[1] - n, b[2] + n, b[3] + n];
-const combine = (pieces: Geom[]): Geom => pieces.length > 1 ? union(pieces[0], ...pieces.slice(1)) : pieces[0] || [];
-const cropBodies = (bodies: number[][][], region: Geom): Geom[] => bodies.flatMap(body => {
+const combine = (pieces: Multi[]): Multi => pieces.length > 1 ? union(pieces[0], ...pieces.slice(1)) : pieces[0] || [];
+const cropBodies = (bodies: number[][][], region: Geom): Multi[] => bodies.flatMap(body => {
     const clipped = intersection(polygon(body), region);
     return clipped.length ? [clipped] : [];
 });
@@ -42,7 +43,7 @@ const cropBodies = (bodies: number[][][], region: Geom): Geom[] => bodies.flatMa
 export interface OpeningDragViewport {
     a: number; b: number; c: number; d: number; e: number; f: number; dpr: number;
 }
-export function openingDragClip(bounds: readonly Bounds[], view: OpeningDragViewport): Geom | null {
+export function openingDragClip(bounds: readonly Bounds[], view: OpeningDragViewport): Multi | null {
     const { a, b, c, d, e, f, dpr } = view, det = a * d - b * c;
     if (![a, b, c, d, e, f, dpr, det].every(Number.isFinite) || !(dpr > 0) || Math.abs(det) < 1e-12)
         return null;

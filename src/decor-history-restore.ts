@@ -1,3 +1,4 @@
+import type { RoomCfg } from './types';
 /** A presentation-only history step cannot rewrite or retire physical carriers. */
 import type { SpaceGeometryState } from './geometry-history-state';
 import type { ServerConfig } from './types';
@@ -27,7 +28,7 @@ function restorableSpace(config: ServerConfig, before: SpaceGeometryState, targe
   }
   if (config.spaces.some(item => !Array.isArray(item.wall_segments)
       || 'room_drafts' in item || 'open_spans' in item
-      || item.rooms.some(room => 'open_to' in room || !Array.isArray(room.wall_ids)))) return;
+      || item.rooms.some((room: RoomCfg) => 'open_to' in room || !Array.isArray(room.wall_ids)))) return;
   return space;
 }
 

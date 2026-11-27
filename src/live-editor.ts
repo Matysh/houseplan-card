@@ -129,7 +129,7 @@ export function routeHouseplanEditorUpdate(
     // Pointerdown may change selection/chrome once. Subsequent moves stay live.
     return false;
   }
-  if (name !== undefined && gestureProperties.has(name) && host[name] == null) return false;
+  if (name !== undefined && gestureProperties.has(name) && host[name as keyof LiveEditorHost] == null) return false;
   if (name !== undefined && hoverProperties.has(name)
       && (host as unknown as Record<PropertyKey, unknown>)[name] == null) return false;
   const route = (namedLive && (hoverProperties.has(name!) || activeEditorGesture(host)))

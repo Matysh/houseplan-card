@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1603,
+  "baseStable": "v1.86.1",
+  "category": "infra",
+  "rationale": "Compiler type hardening and addressed backend tooling, without a user behavior or data format change.",
+  "summary": {
+    "ru": "Неявные типы TypeScript запрещены, качество изменённого бэкенда проверяется адресно.",
+    "en": "Reject implicit TypeScript any and check changed backend sources with addressed Ruff/mypy."
+  }
+}

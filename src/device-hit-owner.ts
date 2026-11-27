@@ -42,7 +42,7 @@ export function deviceHitScrollSources(host: Node): EventTarget[] {
   let current: Node | null = host;
   while (current) {
     if (current.nodeType === 1 || current.nodeType === 9) add(current);
-    const assignedSlot = current.nodeType === 1
+    const assignedSlot: HTMLSlotElement | null = current.nodeType === 1
       ? (current as Element).assignedSlot : null;
     if (assignedSlot) {
       current = assignedSlot;
@@ -52,14 +52,14 @@ export function deviceHitScrollSources(host: Node): EventTarget[] {
       current = current.parentElement;
       continue;
     }
-    const root = current.getRootNode();
-    const shadowHost = root.nodeType === 11 && 'host' in root
+    const root: Node = current.getRootNode();
+    const shadowHost: Element | null = root.nodeType === 11 && 'host' in root
       ? (root as ShadowRoot).host : null;
     if (shadowHost) {
       current = shadowHost;
       continue;
     }
-    const document = current.ownerDocument;
+    const document: Document | null = current.ownerDocument;
     current = document && current !== document ? document : null;
   }
 

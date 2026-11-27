@@ -1,4 +1,5 @@
 import { markerHeightFields, markerHeightLimitCm, type MarkerHeightDraft } from './marker-height';
+import type { WallSegmentEntry } from './types';
 import type { PlanHost, HostPresentationContext } from './plan-host';
 import { workstationTarget, toggleWorkstation, removeWorkstationItems } from './iso-lab-workstation';
 import { tvCabinet, tvMountTarget, toggleTvMount } from './tv-mount';
@@ -1959,7 +1960,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, cand
         // A layout-only refresh can still contain the last position of a room
         // removed by this pending gesture. Its topology intent owns null even
         // then; otherwise the server would refuse an attempted dead-label restore.
-        const liveLabels = new Set(candidate.spaces.flatMap(space => (space.rooms || []).map(room => 'rl_' + room.id)));
+        const liveLabels = new Set(candidate.spaces.flatMap(space => (space.rooms || []).map((room: RoomCfg) => 'rl_' + room.id)));
         for (const key of roomLabelKeys) if (!liveLabels.has(key)) roomLabels[key] = null;
       }
       for (const [spaceId, accepted] of strictEntries) {
@@ -2106,10 +2107,10 @@ public _recordGeometry(name: string, before: SpaceGeometryState | null, decorLin
 public _restoreGeometryStateInConfig(
     config: any, state: SpaceGeometryState, preserveIdentityHints = false,
   ): boolean {
-    const sp = config?.spaces?.find((space) => space.id === state.spaceId);
+    const sp = config?.spaces?.find((space: { id: string }) => space.id === state.spaceId);
     if (!sp) return false;
     const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
-    const oldRooms = new Map((sp.rooms || []).map((room) => [room.id, room]));
+    const oldRooms = new Map((sp.rooms || []).map((room: RoomCfg) => [room.id, room]));
     sp.rooms = copy(state.rooms);
     if (preserveIdentityHints) {
       for (const room of sp.rooms) {
@@ -2158,7 +2159,7 @@ public _canonicalWallChainHistoryState(state: SpaceGeometryState): SpaceGeometry
       catch (error) { if (error instanceof WallSegmentModelError) return null; throw error; }
     };
     const committed = commit(candidate);
-    const raw = committed?.spaces?.find((space) => space.id === state.spaceId);
+    const raw = committed?.spaces?.find((space: { id: string }) => space.id === state.spaceId);
     const model = committed && selectSpaceModelById(spaceModels(committed), state.spaceId);
     if (!committed || !raw || !model) return 'state';
     const result = finalizeWallChainSpace(
@@ -2206,9 +2207,9 @@ public _wallModelBlockerLabel(error: unknown): string {
   }
 
 public _hasLegacyZeroWallFields(config: any = this.host._serverCfg): boolean {
-    return (config?.spaces || []).some((space) => (
+    return (config?.spaces || []).some((space: { open_spans?: unknown[]; rooms?: RoomCfg[] }) => (
       (Array.isArray(space?.open_spans) && space.open_spans.length > 0)
-      || (space?.rooms || []).some((room) => (
+      || (space?.rooms || []).some((room: RoomCfg) => (
         Array.isArray(room?.open_to) && room.open_to.length > 0
       ))
     ));
@@ -2883,10 +2884,10 @@ public _markupClick(ev: MouseEvent): void {
     const graph = this.host._curSpaceCfg?.plan_graph;
     const previous = this._drawEdgeNodes.get(beforeIds[beforeIds.length - 1]);
     const first = this._drawEdgeNodes.get(beforeIds[0]);
-    const from: TargetPointRef | undefined = previous && graph?.nodes.some(n => n.id === previous.to)
+    const from: TargetPointRef | undefined = previous && graph?.nodes.some((n: PlanGraph['nodes'][number]) => n.id === previous.to)
       ? { kind: 'existing-node', node: previous.to } : this._chainStartTarget;
     const closes = beforePath.length >= 3 && this._samePt(pt, beforePath[0]);
-    const target: TargetPointRef | undefined = closes && first && graph?.nodes.some(n => n.id === first.from)
+    const target: TargetPointRef | undefined = closes && first && graph?.nodes.some((n: PlanGraph['nodes'][number]) => n.id === first.from)
       ? { kind: 'existing-node', node: first.from } : clickedTarget;
     const beforeGraphSources = this._wallGraphSources([]);
     const before = this._geometrySnapshot();
@@ -2916,9 +2917,9 @@ public _markupClick(ev: MouseEvent): void {
     if (created?.kind === 'create-edge') {
       const { from, to } = created.edge;
       const nodes = this.host._curSpaceCfg?.plan_graph?.nodes || [];
-      this._drawEdgeNodes.set(id, { from, to, toPoint: nodes.find(n=>n.id===to)?.p });
+      this._drawEdgeNodes.set(id, { from, to, toPoint: nodes.find((n: PlanGraph['nodes'][number])=>n.id===to)?.p });
       const point = (node: string) => {
-        const found = nodes.find(n => n.id === node);
+        const found = nodes.find((n: PlanGraph['nodes'][number]) => n.id === node);
         return found ? pointToNumbers(decodePoint(found.p)).map(v => v * NORM_W) : undefined;
       };
       const a = point(from), b = point(to);
@@ -5982,7 +5983,7 @@ public _wallThickApply(allRoom: boolean): void {
     if (cmRaw === 0) {
       const eps = this.host._gridPitch * 0.02;
       const target = [d.a[0], d.a[1], d.b[0], d.b[1]];
-      const room = (sp.rooms || []).find((item) => item.id === d.roomId);
+      const room = (sp.rooms || []).find((item: RoomCfg) => item.id === d.roomId);
       const ids = new Set<string>(allRoom && room && Array.isArray(room.wall_ids)
         ? room.wall_ids
         : (sp.wall_segments || []).filter((segment: any) => {
@@ -6010,7 +6011,7 @@ public _wallThickApply(allRoom: boolean): void {
       // if the segment were still a zero interval (#306).
       const targets: number[][] = [];
       if (allRoom && d.roomId) {
-        const room = (sp.rooms || []).find((item) => item.id === d.roomId);
+        const room = (sp.rooms || []).find((item: RoomCfg) => item.id === d.roomId);
         const ids = new Set<string>(Array.isArray(room?.wall_ids) ? room.wall_ids : []);
         for (const segment of sp.wall_segments || []) {
           if (!ids.has(segment.id)) continue;
@@ -6061,15 +6062,15 @@ public _wallThickApply(allRoom: boolean): void {
     if (next.length) sp.walls = next;
     else delete sp.walls;
     this.host._wallDialog = null;
-    const wallTargets = allRoom ? (sp.wall_segments || []).filter(segment =>
-      sp.rooms.find(room => room.id === d.roomId)?.wall_ids?.includes(segment.id))
-      : (sp.wall_segments || []).filter(segment => {
+    const wallTargets = allRoom ? (sp.wall_segments || []).filter((segment: WallSegmentEntry) =>
+      sp.rooms.find((room: RoomCfg) => room.id === d.roomId)?.wall_ids?.includes(segment.id))
+      : (sp.wall_segments || []).filter((segment: WallSegmentEntry) => {
         const target = [d.a[0], d.a[1], d.b[0], d.b[1]];
-        return distToSegment(segment.a.map(n => n * NORM_W), target) <= this.host._gridPitch * .02
-          && distToSegment(segment.b.map(n => n * NORM_W), target) <= this.host._gridPitch * .02;
+        return distToSegment(segment.a.map((n: number) => n * NORM_W), target) <= this.host._gridPitch * .02
+          && distToSegment(segment.b.map((n: number) => n * NORM_W), target) <= this.host._gridPitch * .02;
       });
     if (this._commitPhysicalGeometry(this.host._t('history.wall_thickness'), before, [], true,
-      { kind: 'thickness', edges: wallTargets.map(segment => ({ kind: 'wall', id: segment.id })),
+      { kind: 'thickness', edges: wallTargets.map((segment: WallSegmentEntry) => ({ kind: 'wall', id: segment.id })),
         ...(allRoom && d.roomId ? { rooms: [d.roomId] } : {}),
         ...(!wallTargets.length && !allRoom && d.roomId ? { selection: {room:d.roomId,
           a:d.a.map(n=>n/NORM_W),b:d.b.map(n=>n/NORM_W)} } : {}), cm: cmRaw }))
@@ -6469,7 +6470,7 @@ public _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
     } catch {
       /* an inactive pointerId (synthetic events, some browsers) must not kill the drag */
     }
-    const source = this.host._curSpaceCfg?.openings?.find(item => item.id === o.id);
+    const source = this.host._curSpaceCfg?.openings?.find((item: OpeningCfg) => item.id === o.id);
     if (!source) return;
     this._openingDragWalls = null;
     this.host._opDrag = {
@@ -6663,7 +6664,7 @@ public _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
     // only write when the geometry actually changed (audit L4)
     if (moved && drag.dirty && drag.preview && drag.spaceId === this.host._space
         && drag.epoch === this.host._cfgEpoch
-        && this.host._curSpaceCfg?.openings?.find(item => item.id === o.id) === drag.source) {
+        && this.host._curSpaceCfg?.openings?.find((item: OpeningCfg) => item.id === o.id) === drag.source) {
       const preview = drag.preview;
       drag.preview = null;
       Object.assign(drag.source, preview);
@@ -7287,7 +7288,7 @@ public _applyWallFaceBatch(): void {
       return;
     }
     if (accepted.some((decision) => decision.candidate.split
-        && !sp.rooms.some((room) => room.id === decision.candidate.split!.roomId))) {
+        && !sp.rooms.some((room: RoomCfg) => room.id === decision.candidate.split!.roomId))) {
       abort('toast.contour_cannot_close');
       return;
     }
@@ -7351,7 +7352,7 @@ public _applyWallFaceBatch(): void {
     for (const decision of accepted) {
       const split = decision.candidate.split;
       if (!split) continue;
-      const main = sp.rooms.find((room) => room.id === split.roomId);
+      const main = sp.rooms.find((room: RoomCfg) => room.id === split.roomId);
       if (!main) {
         abortMutation();
         return;
@@ -10134,7 +10135,7 @@ public _renderBackupImportDialog(): TemplateResult {
               ${reportRows.map(([key, value]) => html`<span>${this.host._t(
                 `backup.import_detail.${key}`, { n: String(value) },
               )}</span>`)}
-              ${(report.examples || []).slice(0, 8).map((item) => html`
+              ${(report.examples || []).slice(0, 8).map((item: { owner: unknown; reference: unknown }) => html`
                 <code>${item.owner} → ${item.reference}</code>
               `)}
             </div>` })}` : nothing}

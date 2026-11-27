@@ -158,7 +158,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     const px = host._renderPixelsPerUnit?.(view) ?? Math.max(1, host._stageEl?.clientWidth || 1) / view.w;
     return 1 / Math.max(Number.EPSILON, px) / NORM_W;
   };
-  const editor = new WallNodeEditor({
+  const editor: WallNodeEditor = new WallNodeEditor({
     document: host.renderRoot.ownerDocument,
     context,
     dispose: retire,
@@ -179,7 +179,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     callbacks.afterPaint?.(); },
     validate: (space, before) => validate(space, before, api()),
     refusal: () => refusal,
-    scene: (space, before) => {
+    scene: (space, before): ReturnType<typeof nodePreviewScene> | null => {
       if (!geometry || geometry.candidate !== space || geometry.source !== before) return null;
       if (geometry.next.geometry.status === 'failed-core' || geometry.next.geometry.status === 'degraded-extra') return null;
       const display = spaceDisplayOf(before, host._serverCfg?.settings);

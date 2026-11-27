@@ -39,7 +39,7 @@ homeassistant==2026.8.3
 # optional integration requirements: this exact pin comes from the camera
 # manifest of the same HA 2026.8.3, not from an unrelated latest codec.
 PyTurboJPEG==1.8.3
-# #42: линт бэкенда (шаг «Линт бэкенда» в validate.yml ставится отсюда же).
+# #1603: адресный ruff в S6 (process-next/catalog/backend-quality.mjs).
 ruff==0.16.5
 # #42: строгая типизация allowlist-модулей (шаг «Типы бэкенда»). Без пина
 # гейт типизации был бы не воспроизводим по SHA — ровно то, от чего этот

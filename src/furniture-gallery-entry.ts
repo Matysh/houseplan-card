@@ -34,8 +34,9 @@ function views(s:Symbol){
    <figure class="volume"><figcaption>${mesh?'Объём':'Плоский в проекции'}</figcaption><svg role="img" aria-label=${s.name_ru+' — проекция'} viewBox=${fit(bounds)}><g transform=${`matrix(${isoFloorMatrix(camera).join(' ')})`}>${mesh?renderIsoLabFurniture(mesh,'gallery-'+s.id,s.id,state.color,1):drawing}</g></svg></figure>
  </div>`;
 }
-function select(label:string,key:string,options:[string,string][]){
- return html`<label>${label}<select aria-label=${label} @change=${(e:Event)=>{const v=(e.target as HTMLSelectElement).value;state[key]=typeof state[key]==='number'?Number(v):v;draw();}}>${options.map(([v,t])=>html`<option value=${v} .selected=${String(state[key])===v}>${t}</option>`)}</select></label>`;
+type SelectStateKey = 'group'|'size'|'status'|'yaw'|'elevation'|'angle'|'width'|'depth'|'opacity';
+function select<K extends SelectStateKey>(label:string,key:K,options:[string,string][]){
+ return html`<label>${label}<select aria-label=${label} @change=${(e:Event)=>{const v=(e.target as HTMLSelectElement).value;state[key]=(typeof state[key]==='number'?Number(v):v) as typeof state[K];draw();}}>${options.map(([v,t])=>html`<option value=${v} .selected=${String(state[key])===v}>${t}</option>`)}</select></label>`;
 }
 function card(s:Symbol){
  const parts=furnitureParts(s.id);

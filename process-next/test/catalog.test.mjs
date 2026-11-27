@@ -1,3 +1,4 @@
+import { planRequirements } from '../lib/task-selection.mjs';
 import test from 'node:test';
 import { inputIdentity } from '../lib/storage.mjs';
 import { GOLDEN_CAPTURE_INPUTS } from '../../scripts/source-fingerprint.mjs';
@@ -260,5 +261,29 @@ test('capture source changes invalidate build/demo preparation, including local 
       await writeFile(resolve(temp, 'process-next/catalog/unrelated-note.mjs'), 'export const note = 3;');
       assert.equal(inputIdentity(temp, step.inputs).hash, before, 'unrelated process sources do not invalidate preparation');
     }
+  } finally { await rm(temp, { recursive: true, force: true }); }
+});
+
+
+test('#1603 task S6 adds backend quality for exactly changed existing backend sources', async () => {
+  const temp = await mkdtemp(resolve(tmpdir(), 'hp-quality-1603-'));
+  try {
+    const directory = resolve(temp, 'custom_components/houseplan');
+    await mkdir(directory, { recursive: true });
+    for (const name of ['changed.py', 'untouched.py']) await writeFile(resolve(directory, name), 'value = 1;\n');
+    const changed = 'custom_components/houseplan/changed.py';
+    const plan = await planProfile({ root: temp, event: 'task', layer: 'infra', changedFiles: [changed, changed, 'custom_components/houseplan/removed.py'] });
+    const quality = plan.steps.filter(item => item.id === 'backend-quality');
+    assert.equal(quality.length, 1);
+    assert.equal(planRequirements(plan).needsBackend, true);
+    assert.equal(planRequirements(plan).needsPython, true);
+    assert.deepEqual(quality[0].command, ['node', 'process-next/catalog/backend-quality.mjs', changed]);
+    assert.ok(quality[0].inputs.includes('pyproject.toml'));
+    assert.ok(!quality[0].inputs.some(file => file.endsWith('untouched.py')));
+    assert.ok(!quality[0].inputs.some(file => file.endsWith('removed.py')));
+    const docs = await planProfile({ root: temp, layer: 'docs', changedFiles: [changed] });
+    assert.deepEqual(docs.steps, []);
+    const noBackend = await planProfile({ root: temp, layer: 'infra' });
+    assert.equal(noBackend.steps.some(item => item.id === 'backend-quality'), false);
   } finally { await rm(temp, { recursive: true, force: true }); }
 });
