@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v2.0.0-beta.3 — 2026-11-28
+
 - Preserve partition openings when adding a space triggers migration to plan model 11 (#1611).
 - The compact header menu shows an accent border on the item reached by keyboard. (#1614)
 - Speed up first editor entry and repeated floor switches in View with the editor loaded. (#1595)
@@ -24,11 +26,7 @@
 - The floor stays in place while the summary loads the total room area. (#1590)
 - Let users save the suggested Home Assistant floor name without edits and return to normal space creation after skipping every floor (#1589).
 - Keep the wall footprint at its settled colour throughout a warm 3D floor switch with translucent walls (#1587).
-- Show and clear visual signals on Houseplan device icons from a Home Assistant automation (#1001).
-- Test maintenance: verify that closing Help with Escape leaves the button unhighlighted and that Tab navigation highlights its ordinary border (#1581).
-
-- Use one Git-only S6 check for a proven clean return of an exact published tag to dev; keep normal checks and review for manual or conflicted returns (#1583).
-- Keep window sunlight on the floor in WebGL 3D and soften the edge of the light patch at high zoom (#1580).
+- Verify browser-test timeout escalation with a real child process rather than checking the runner's source text (#1615).
 
 ## v2.0.0-beta.2 — 2026-11-26
 
