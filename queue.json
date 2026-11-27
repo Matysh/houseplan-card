@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27569,
-  "nextTicket": 748,
+  "revision": 27570,
+  "nextTicket": 749,
   "nextFence": 748,
   "tasks": {
     "1001": {
@@ -6255,14 +6255,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1604-card-runtime-extraction",
-      "materialSha": "58efd2b4f7e7576ae351ab6b6419681d6c5bd287",
+      "materialSha": "cdc37cbb5e5e5f8cb86de33334c2df6dc4b39e63",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 747,
-      "queued": false,
+      "ticket": 748,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795757665946,
-      "reviewEntry": 1,
+      "readyAt": 1795758083054,
+      "reviewEntry": 2,
       "patchId": "1f597fcd6506e8efca98b8bcc44c20fc223ef154",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -6274,9 +6274,6 @@
         "src/mode-transition-presentation.ts",
         "test/isometric-contract.test.mjs"
       ],
-      "automationError": "checks-unavailable",
-      "automationSince": 1795757997893,
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -6998,7 +6995,9 @@
       "runId": 45899949313
     }
   },
-  "waiting": [],
+  "waiting": [
+    1604
+  ],
   "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
@@ -7198,6 +7197,19 @@
           "detail": "Первый локальный S6 остановлен после отказов test/card-version.test.mjs, test/core-source-readers.test.mjs и process-next/test/catalog.test.mjs. Исправления опубликованы в cdc37cbb5, адресные проверки прошли.",
           "eventId": "1604-replace-s6-758d62ac-a2d6-4772-8200-3d2713faab40:return:1604"
         }
+      }
+    },
+    "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6": {
+      "digest": "70057ee7ea04421f90af4de2287746e8a32c3565fda28c6a8c876b441bde6191",
+      "issue": 1604,
+      "message": {
+        "kind": "queued",
+        "issue": 1604,
+        "at": 1795758083054,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "cdc37cbb5e5e5f8cb86de33334c2df6dc4b39e63"
       }
     }
   },
