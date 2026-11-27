@@ -37,8 +37,11 @@ test('package uses prepared bytes, includes delivered licenses and keeps the sou
   assert.equal(readFileSync(result.standalone, 'utf8'), 'new frontend');
   // Read the actual staged package with the actual backend identity reader.
   // This keeps the installed 64-hex requirement separate from source-only trees.
-  const identity = JSON.parse(execFileSync('python3', ['-c',
-    'from custom_components.houseplan.build_identity import read_build_identity; import json; i=read_build_identity(); print(json.dumps({"fingerprint": i.fingerprint, "build": i.build}))'],
+  const identity = JSON.parse(execFileSync('python3', ['-I', '-B', '-S', '-c',
+    'import sys,json; from pathlib import Path; sys.path.insert(0,sys.argv[1]); '
+      + 'from custom_components.houseplan import build_identity as m; '
+      + 'assert Path(m.__file__).resolve().is_relative_to(Path(sys.argv[1]).resolve()); '
+      + 'i=m.read_build_identity(); print(json.dumps({"fingerprint": i.fingerprint, "build": i.build}))', result.candidateRoot],
     { cwd: result.candidateRoot, encoding: 'utf8' }));
   assert.deepEqual(identity, { fingerprint: FINGERPRINT, build: null });
   const sizes = measureZip(result.zip); assert.equal(sizes.files.length, 2); assert.equal(sizes.buildFingerprint, FINGERPRINT);
