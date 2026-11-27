@@ -7,7 +7,7 @@ import type { IsoDecorationLayers } from './iso-openings';
 export * from './iso-scene-geometry';
 export { computeIsoSunBeams } from './iso-sun';
 export { Plan3dHost } from './plan-3d-host';
-export { readPlan3dMarkerFaces } from './plan-3d-markers';
+export { readPlan3dMarkerFaces, readPlan3dVacuumFace } from './plan-3d-markers';
 export const ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 export function preparePlan3dFrame(input: {

@@ -3,12 +3,25 @@ import type { IsoOverlayPlacement } from './iso-overlays';
 import type { LiveRuntime } from './live-interaction-runtime';
 import type { PlanHost } from './plan-host';
 import type { Plan3dHost, Plan3dPresentation } from './plan-3d-host';
+import type { Plan3dMarker } from './plan-3d-markers';
+import { unprojectFloorPoint, type IsoCamera, type PlanPoint } from './iso-projection';
+import { markerHeightGeometry } from './marker-height';
 import type { FrameRect } from './view-frame';
 import { PAINT_BARRIER_MAX_MS, RECOVERY_OVERLAY_DELAY_MS } from './visual-continuity';
 import type { Plan3dOutputEvent } from './plan-3d-viewport';
 
 export type Plan3dRuntime = typeof import('./plan-3d-runtime');
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
+const vacuumSelector = '.vacpuck[data-hp-3d-vacuum]';
+// Internal pick IDs must not resolve to the placed dock or any other device.
+const vacuumPickId = (mid: string) => '\0vacuum:' + mid;
+
+export interface Plan3dVacuumFrame {
+  camera: IsoCamera;
+  view: FrameRect;
+  diameter: number;
+  cellCm: number;
+}
 
 interface CardPlan3dPort {
   root(): ParentNode;
@@ -52,6 +65,7 @@ export class CardPlan3d {
   presentation?: Plan3dPresentation;
   failure?: { key: string; space: string; load?: 'retry' | 'reload' };
   devices?: ReadonlyMap<string, IsoOverlayPlacement>;
+  vacuumFrame?: Plan3dVacuumFrame;
   startupSource?: () => Plan3dPresentation;
   private authority?: PlanHost['authorityKey'];
   private submitted?: { stamp: string; scope: string; structure: string; floor: string };
@@ -235,6 +249,7 @@ export class CardPlan3d {
     this.presentation = undefined;
     this.startupSource = undefined;
     this.devices = undefined;
+    this.vacuumFrame = undefined;
   }
 
   prepareStartupPreview(sources: PreviewSources): void {
@@ -267,6 +282,66 @@ export class CardPlan3d {
     this.paintedFloor = '';
     this.submitted = undefined;
     this.lastScope = this.lastStructure = this.paintedStamp = undefined;
+  }
+
+  private vacuumCenter(puck: HTMLElement, frame: Plan3dVacuumFrame): PlanPoint | undefined {
+    const layer = puck.offsetParent, win = puck.ownerDocument.defaultView;
+    if (!(layer instanceof HTMLElement) || !win || !layer.clientWidth || !layer.clientHeight) return;
+    const { left, top } = win.getComputedStyle(puck), x = parseFloat(left), y = parseFloat(top);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    // Read the existing CSS transition in its authored camera plane, not a
+    // raised pixel or the temporary screen transform of a pan/zoom gesture.
+    const { view, camera } = frame;
+    return unprojectFloorPoint([view.x + x / layer.clientWidth * view.w, view.y + y / layer.clientHeight * view.h], camera);
+  }
+
+  private vacuumMarkers(root: ParentNode, presentation: Plan3dPresentation): Plan3dMarker[] {
+    const frame = this.vacuumFrame;
+    if (!frame || !this.runtime) return [];
+    const { diameter, cellCm } = frame;
+    const height = markerHeightGeometry(0, cellCm, presentation.sectionHeight, diameter);
+    return Array.from(root.querySelectorAll<HTMLElement>(vacuumSelector)).flatMap(puck => {
+      const id = puck.dataset.mid, center = this.vacuumCenter(puck, frame);
+      const face = this.runtime?.readPlan3dVacuumFace(puck, presentation.preset.rotDeg);
+      return id && center && face ? [{ id: vacuumPickId(id), center, diameter, height: height.top,
+        thickness: height.thickness, opacity: puck.classList.contains('stale') ? .45 : 1, faces: [face] }] : [];
+    });
+  }
+
+  /** The old floor anchor still owns interpolation and the SVG trail tip. */
+  followVacuumPucks(): boolean {
+    const frame = this.vacuumFrame;
+    if (!frame || !this.host || this.recovering || this.port.switchPhase() === 'leaving') return false;
+    const centers = new Map<string, PlanPoint>();
+    let transitioning = false;
+    for (const puck of this.port.root().querySelectorAll<HTMLElement>(vacuumSelector)) {
+      const mid = puck.dataset.mid;
+      const center = mid && this.vacuumCenter(puck, frame);
+      if (!mid || !center) continue;
+      centers.set(vacuumPickId(mid), center);
+      transitioning ||= puck.getAnimations().some(animation =>
+        'transitionProperty' in animation && (animation.pending || animation.playState === 'running'));
+    }
+    this.host.moveVacuumPucks(centers);
+    return transitioning;
+  }
+
+  vacuumAt(x: number, y: number): string | undefined {
+    if (!this.vacuumFrame || !this.host || this.recovering) return;
+    const entities = new Map<string, string>();
+    for (const puck of this.port.root().querySelectorAll<HTMLElement>(vacuumSelector + '[data-hp-3d-native]')) {
+      const { mid, entity } = puck.dataset;
+      if (mid && entity) entities.set(vacuumPickId(mid), entity);
+    }
+    if (!entities.size) return;
+    // Most presses are on the plan or other controls. Only a possible
+    // puck hit needs the depth-tested GPU pick.
+    const near = this.host.screenCoreSilhouettes(new Set(entities.keys())).some(hull => {
+      const xs = hull.map(point => point[0]), ys = hull.map(point => point[1]);
+      return x >= Math.min(...xs) && x <= Math.max(...xs)
+        && y >= Math.min(...ys) && y <= Math.max(...ys);
+    });
+    return near ? entities.get(this.host.pick(x, y) ?? '') : undefined;
   }
 
   sync(): void {
@@ -314,6 +389,8 @@ export class CardPlan3d {
             element.toggleAttribute('data-hp-3d-native', nativeMarkers.has(id));
             element.toggleAttribute('data-hp-3d-native-outline', outlines.has(id));
           }
+          for (const puck of this.port.root().querySelectorAll<HTMLElement>(vacuumSelector))
+            puck.toggleAttribute('data-hp-3d-native', !!puck.dataset.mid && nativeMarkers.has(vacuumPickId(puck.dataset.mid)));
           if (canvas.hasAttribute('data-hp-plan-3d-ready')) return;
           canvas.setAttribute('data-hp-plan-3d-ready', '');
           this.port.redraw();
@@ -344,7 +421,7 @@ export class CardPlan3d {
         opacity: Math.max(...group.members.map(id => opacityByMarker.get(id) ?? 1)),
       }));
       this.submitted = this.prepareScope();
-      this.host.present(presentation, this.port.view(), markers, outlines, this.submitted?.stamp);
+      this.host.present(presentation, this.port.view(), [...markers, ...this.vacuumMarkers(root, presentation)], outlines, this.submitted?.stamp);
     } catch {
       fail();
     }

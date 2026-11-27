@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1612,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "The issue is specific to WebGL device heights introduced on the 2.0.0 line; Flat and stable 2.5D keep their existing vacuum overlays.",
+  "summary": {
+    "ru": "В 3D подвижный значок пылесоса едет по полу независимо от высоты док-станции.",
+    "en": "The moving robot vacuum marker stays on the floor in 3D regardless of the dock height."
+  }
+}

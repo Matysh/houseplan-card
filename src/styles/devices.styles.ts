@@ -582,6 +582,8 @@ export const devicesStyles = css`
     .vacpuck.theme-dark { --vac-core-bg: #252525; --vac-core-fg: #fff; }
     .vacpuck.jump { transition: none; }
     .vacpuck.stale { opacity: 0.45; animation: none; }
+    /* Keep the animated floor anchor for the SVG tip; WebGL owns ink and hit. */
+    .vacpuck[data-hp-3d-native] { opacity: 0; animation: none; pointer-events: none; }
     .vacpuck ha-icon {
       --mdc-icon-size: calc(var(--puck-size) * 0.68);
       color: var(--vac-core-fg);

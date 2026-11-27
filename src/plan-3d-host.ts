@@ -4,7 +4,7 @@ import { Plan3dWorld, type Plan3dContactShadow, type Plan3dOutline, type Plan3dW
 import { Plan3dViewport, type Plan3dFrame, type Plan3dOutputEvent } from './plan-3d-viewport';
 import { readPlan3dMarkerFaces, type Plan3dMarker } from './plan-3d-markers';
 import { Plan3dLightMotion } from './plan-3d-light-motion';
-import type { IsoCamera, ViewRect } from './iso-projection';
+import type { IsoCamera, PlanPoint, ViewRect } from './iso-projection';
 
 export interface Plan3dPresentation {
   world: Plan3dWorldInput;
@@ -104,6 +104,20 @@ export class Plan3dHost {
     if (previous && crop.x === previous.x && crop.y === previous.y && crop.w === previous.w && crop.h === previous.h) return;
     this.crop = crop;
     this.draw(true, true);
+  }
+
+  /** Move existing prisms (and their pick geometry), without rebuilding the atlas or the floor. */
+  moveVacuumPucks(centers: ReadonlyMap<string, PlanPoint>): void {
+    if (!this.frame || this.disposed || this.viewport.blocked) return;
+    let moved = false;
+    for (const marker of this.markers) {
+      const center = centers.get(marker.id);
+      if (!center || Math.hypot(center[0] - marker.center[0], center[1] - marker.center[1]) < .01) continue;
+      marker.center = center;
+      this.world.moveVacuumCore(marker.id, center);
+      moved = true;
+    }
+    if (moved) this.viewport.present({ ...this.frame }, true);
   }
 
   /** DOM hit ownership is live, not a Lit update. Refresh only the two

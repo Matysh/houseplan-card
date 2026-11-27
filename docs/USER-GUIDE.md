@@ -2184,6 +2184,7 @@ cycle: 30
 
 - Position appears for cleaning/returning/on with valid data; a moving puck
   opens the vacuum's HA more-info, while the dock marker remains separate.
+- In 3D the moving puck stays on the floor even if the dock is set at a different height.
 - The server path survives card reloads and is shared across clients. Current
   and previous runs are kept, with up to 100,000 raw points and 1,024 segments
   without blind thinning. All robots in the selected space share a limit of

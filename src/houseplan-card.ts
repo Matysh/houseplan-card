@@ -365,7 +365,7 @@ import { PlanRotationMotion } from './plan-rotation-motion';
 import { controlMotion } from './ui-motion';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
-import { CardPlan3d, type Plan3dRuntime } from './card-plan-3d';
+import { CardPlan3d, type Plan3dRuntime, type Plan3dVacuumFrame } from './card-plan-3d';
 import { takeDiscardedPanel } from './plan-3d-discard';
 import type {
   IsoOverlayRenderScene, IsoRenderScene, IsoSceneCacheEntry,
@@ -9513,12 +9513,14 @@ export class HouseplanCard extends LitElement {
     this._editorRuntime?._clearRoomFaceHover();
     if ((this._mode === 'decor' || this._mode === 'plan') && ev.button === 2) return;
     this._bootSoftCancel();
-    const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view'
+    const nativeVacuum = ev.isPrimary && ev.button === 0 && this._mode === 'view'
+      && this._spatial.vacuumAt(ev.clientX, ev.clientY);
+    const roomId = !nativeVacuum && ev.isPrimary && ev.button === 0 && this._mode === 'view'
       ? roomFitOwnerFromPath(ev.composedPath()) : null;
     this._roomPointer = roomId
       ? { pointerId: ev.pointerId, spaceId: this._space, roomId }
       : null;
-    this._planTaps.pointerDown(ev, this._space, this._doubleFitEnabled);
+    this._planTaps.pointerDown(ev, this._space, !nativeVacuum && this._doubleFitEnabled);
     // The gesture that starts here freezes the animated frame and keeps it on
     // screen — so the shown zoom becomes the saved one (#396 AC1).
     this._cancelCameraTransition(false, true);
@@ -9536,7 +9538,7 @@ export class HouseplanCard extends LitElement {
           this._model.map((space) => space.id), this._space,
         ) : null;
         // long-press on EMPTY stage opens the per-screen size popover
-        if (!(ev.target as HTMLElement).closest?.('.dev, .roomlabel, .oplock')) {
+        if (!nativeVacuum && !(ev.target as HTMLElement).closest?.('.dev, .roomlabel, .oplock')) {
           this._kioskHold.arm(ev.pointerId);
         }
       } else {
@@ -14569,6 +14571,7 @@ export class HouseplanCard extends LitElement {
           ${this._ledEditor?.chrome() ?? nothing}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction}
+            @click=${{ capture: true, handleEvent: (event: MouseEvent) => this._clickNativeVacuum(event) }}
             @animationend=${(event: AnimationEvent) => {
               if (event.target !== event.currentTarget) return;
               if (event.animationName === 'hp-startup-live-in') this._finishStartupFade();
@@ -14622,7 +14625,8 @@ export class HouseplanCard extends LitElement {
               d, view, contactBaseDiameter, showLqi, isoOverlays?.devices.get(d.id),
             )))}
             ${ledDevs.map((d) => this._ledBadge(d, view, isoOverlays?.devices.get(d.id)))}
-            ${this._renderVacuums(this._renderVacuumDevices, view, space.id, perspectiveSize)}
+            ${this._renderVacuums(this._renderVacuumDevices, view, space.id, perspectiveSize, undefined,
+              this._plan3dPresentation && floorCamera ? { view, camera: floorCamera, diameter: contactBaseDiameter * .8, cellCm: this._cellCm } : undefined)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view, isoOverlays?.locks)}
             ${raiseRoomLabels
@@ -15186,13 +15190,24 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderVacFit(view);
   }
 
-  /** Every frame: glue the growing tip segment to the animated puck centre. */
+  private _clickNativeVacuum(event: MouseEvent): void {
+    if (this._mode !== 'view' || !event.detail || this._suppressClick || this._holdFired
+      || event.composedPath().some(node => node instanceof Element && node.matches('button,input,select,textarea,a[href]'))
+      || !this.planHost.environment.permissions.read) return;
+    const entity = this._spatial.vacuumAt(event.clientX, event.clientY);
+    if (!entity) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this._openMoreInfo(entity);
+  }
+
+  /** Use the same physical floor anchor for the growing tip and the native puck. */
   private _vacRafLoop(): void {
     this._vacRaf = requestAnimationFrame(() => {
       this._vacRaf = 0;
-      if (!this.isConnected || this.ownerDocument.visibilityState === 'hidden'
-        || !syncVacuumTips(this.renderRoot)) return;
-      this._vacRafLoop();
+      if (!this.isConnected || this.ownerDocument.visibilityState === 'hidden') return;
+      const moving3d = this._spatial.followVacuumPucks();
+      if (syncVacuumTips(this.renderRoot) || moving3d) this._vacRafLoop();
     });
   }
 
@@ -15214,12 +15229,14 @@ export class HouseplanCard extends LitElement {
    * of the active route, which is the whole point of #162.
    */
   private _renderVacuums(devs: readonly DevItem[], view: FrameRect, spaceId: string,
-    perspectiveSize: readonly [number, number], flatRotation?: PlanRotation): TemplateResult | typeof nothing {
+    perspectiveSize: readonly [number, number], flatRotation?: PlanRotation,
+    nativeFrame?: Plan3dVacuumFrame): TemplateResult | typeof nothing {
     if (this._markup || this._mode === 'decor') return nothing;
     const exportFrame = flatRotation !== undefined;
     const viewKey = this._space + '|' + view.x + '|' + view.y + '|' + view.w + '|' + view.h;
     const jumpAll = this._vacJumpOnce || viewKey !== this._vacViewKey;
     if (!exportFrame) {
+      this._spatial.vacuumFrame = nativeFrame;
       this._vacViewKey = viewKey;
       this._vacJumpOnce = false;
     }
@@ -15302,6 +15319,7 @@ export class HouseplanCard extends LitElement {
       const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
       pucks.push(html`<div
         data-hp="vacuum-puck" data-entity=${this._vacEntity(d)} data-mid="${d.id}"
+        ?data-hp-3d-vacuum=${!!nativeFrame}
         class="vacpuck ${deviceThemeClass(this._renderPlanHass)} ${rt?.jump || jumpAll ? 'jump' : ''} ${stale ? 'stale' : ''}"
         style="left:${left}%;top:${top}%"
         title=${d.name}
@@ -15315,7 +15333,7 @@ export class HouseplanCard extends LitElement {
       if (frame.d) trails.unshift(svg`<g class="prev" data-hp="vacuum-trail-segment" data-entity=${previous.entity} data-kind="previous" data-vacuum-owner=${previous.id} style=${previous.style}><path class="core" d="${frame.d}"></path></g>`);
     }
     if (!exportFrame) {
-      if (pucks.length && hasTips && this.isConnected && this.ownerDocument.visibilityState !== 'hidden') {
+      if (pucks.length && (hasTips || nativeFrame) && this.isConnected && this.ownerDocument.visibilityState !== 'hidden') {
         if (!this._vacRaf) this._vacRafLoop();
       } else if (this._vacRaf) {
         cancelAnimationFrame(this._vacRaf); this._vacRaf = 0;

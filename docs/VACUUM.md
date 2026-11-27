@@ -9,6 +9,9 @@ The placed vacuum marker is the dock and never moves. While the vacuum is in
 `cleaning`, `returning` or `on`, a second round puck follows the live position.
 Clicking the puck opens the vacuum's HA more-info dialog. A hidden, deleted,
 HA-disabled or `static_icon` marker has no puck, trail or room overlay.
+In WebGL 3D the moving puck is a solid marker with its bottom at floor level
+(0 cm), regardless of the dock's configured height. Its visible body owns
+the click; the existing animated floor anchor still drives the trail tip.
 
 ### Camera attachment (#871)
 

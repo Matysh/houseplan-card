@@ -333,6 +333,8 @@ export class Plan3dWorld {
     this.markers.present(markers, density, raster);
   }
 
+  moveVacuumCore(id: string, center: PlanPoint): void { this.markers.moveCore(id, center); }
+
   screenCoreSilhouettes(ids: ReadonlySet<string>, camera: Camera, box: DOMRectReadOnly) {
     return this.markers.screenCoreSilhouettes(ids, camera, box);
   }

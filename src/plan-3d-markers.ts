@@ -83,6 +83,18 @@ export function readPlan3dMarkerFaces(
   return faces;
 }
 
+/** Reuse the actual HA glyph and theme of the moving robot's floor anchor. */
+export function readPlan3dVacuumFace(element: HTMLElement, sceneYawDegrees: number): Plan3dMarkerFace | undefined {
+  const window = element.ownerDocument.defaultView, icon = element.querySelector('ha-icon');
+  if (!window || !icon) return;
+  const glyph = iconGlyph(icon, (isoReadingYaw(sceneYawDegrees) - sceneYawDegrees) * Math.PI / 180);
+  if (!glyph) return;
+  const style = window.getComputedStyle(element);
+  return { left: -.5, top: -.5, right: .5, bottom: .5, rx: .5, ry: .5,
+    color: style.backgroundColor, foreground: window.getComputedStyle(icon).color,
+    edge: '#808080', glyph: { ...glyph, fraction: .68 } };
+}
+
 interface AtlasPage {
   texture: DataTexture;
   bytes: Uint8Array;
@@ -341,6 +353,10 @@ export class Plan3dMarkerLayer {
     const update = ({ key, marker, face, size, order }: typeof work[number]) => this.update(key, marker, face, size, order);
     for (const row of nearest) if (row.size > BASE_CELL_LIMIT) update(row);
     for (const row of work) if (row.size <= BASE_CELL_LIMIT || !row.face.glyph) update(row);
+  }
+
+  moveCore(id: string, [x, y]: PlanPoint): void {
+    this.markers.get(id + ':0')?.body.position.setX(x).setZ(y);
   }
 
   private update(key: string, marker: Plan3dMarker, face: Plan3dMarkerFace, size: number, order: number): void {
