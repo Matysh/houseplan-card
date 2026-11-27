@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27671,
+  "revision": 27672,
   "nextTicket": 753,
   "nextFence": 752,
   "tasks": {
@@ -6234,170 +6234,25 @@
     },
     "1604": {
       "issue": 1604,
+      "branch": "codex/1604-card-runtime-extraction",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1604-card-runtime-extraction",
-      "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 751,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795759968719,
-      "reviewEntry": 4,
-      "patchId": "a5a3068af446f8abb1d7b0cfc3440a5de91934dd",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.86.1/1604.json",
-        "process-next/lib/source-dependencies.mjs",
-        "scripts/mutation-registry.mjs",
-        "src/card-plan-3d.ts",
-        "src/houseplan-card.ts",
-        "src/mode-transition-presentation.ts",
-        "test/editor-runtime-loader.test.mjs",
-        "test/isometric-contract.test.mjs"
-      ],
-      "notice": {
-        "key": "3:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795759808316,
-        "entry": 3,
-        "requestId": "review:1604:3:197597975ef14e13f9356ae4e0acecb190a02e31:8cdb00332d689571a68afd8b775ead4003bae24a",
-        "transitionConfirmed": true
-      },
-      "s6": {
-        "id": "20261127T061815385-a437643a",
-        "name": "Тесты для задачи #1604 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T061815385-a437643a/report.json",
-        "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "status": "passed",
-        "finishedAt": "2026-11-27T06:33:16.398Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a",
+      "mergedSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
+      "mergedAt": 1795761416134,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1604:4:a5a3068af446f8abb1d7b0cfc3440a5de91934dd:8cdb00332d689571a68afd8b775ead4003bae24a",
-      "reviewMaterial": {
-        "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a",
-        "patchId": "a5a3068af446f8abb1d7b0cfc3440a5de91934dd"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1604:4:a5a3068af446f8abb1d7b0cfc3440a5de91934dd:8cdb00332d689571a68afd8b775ead4003bae24a",
-        "eventId": "github:45952611506:1:tick:0:review-retry",
-        "at": 1795761231302,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1604,
-        "requestId": "review:1604:4:a5a3068af446f8abb1d7b0cfc3440a5de91934dd:8cdb00332d689571a68afd8b775ead4003bae24a",
-        "kind": "code",
-        "base": "8cdb00332d689571a68afd8b775ead4003bae24a",
-        "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "patchId": "a5a3068af446f8abb1d7b0cfc3440a5de91934dd",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1604,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1604",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "В ветке `codex/1604-card-runtime-extraction` ([fb2cc44ce](https://github.com/Matysh/houseplan-card/commit/fb2cc44cedeef89eb28d06a83b607f55cc00d706)) `CardPlan3d` владеет загрузчиком по требованию, канвасом, освобождением ресурсов и нейтральным кадром превью. `ModeTransitionPresentation` владеет измерением, отрисовкой и завершением визуальных кадров. Типизированные интерфейсы передают состояние и вызовы. Существующие хуки для редактора, смоков и диагностики сохранены.\n\nСборка, типы и 13 проверок контракта 3D прошли. Адресные golden-сценарии `panel-isometric-geometry-view-light`, `panel-wide-plan-editor-dark-en` и `panel-stairs-flat-normal-light` совпали с эталонами до пикселя. DOM шапки и сцены совпал в шести устойчивых состояниях с базой `8cdb00332` после нормализации случайных идентификаторов комментариев Lit. Живые проверки переходов, 3D-хоста и стартового превью использовали существующие смоки.\n\nПервый S6 нашёл два устаревших якоря мутаций, проверку использования версии в параметре повторной загрузки и ложное включение браузерного артефакта в тест инфраструктуры. Якоря перенесены к новому владельцу, формат параметра `hp_retry` сохранён, каталог распознаёт декларации смоков. Три затронутых файла тестов прошли 22 проверки.\n\nПовторный S6 прошёл 628 из 629 шагов, включая все браузерные сценарии. Тест контракта ленивых загрузчиков перенесён на обоих владельцев и прошёл 23 проверки. Он проверяет, что редактор, онбординг и PDF передают признак окончательного отказа в уведомление, а внутренний загрузчик 3D сохраняет свой обработчик без пользовательского уведомления.\n\nПо [замечанию S7](https://github.com/Matysh/houseplan-card/issues/1604#issuecomment-7211284123) карточка снова предоставляет прежний хук `_isoSceneRuntimeLoader` как аксессор к единственному загрузчику в 3D-хосте. Живой `smoke_isometric_contract` прошёл целиком, включая редактирование диагностик, отказ позднего кадра и явный повтор загрузки. Каталог S6 теперь выбирает этот сценарий при изменении 3D-хоста. Сборка и 54 адресные проверки прошли. Предыдущий полный S6 зачёл 702 из 702 шагов."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Единственный блокер прошлого раунда устранён. У карточки снова есть хук `_isoSceneRuntimeLoader`: это аксессор к `readonly loader` внутри `CardPlan3d`. Поэтому `demo/smoke_isometric_contract.mjs:539` (`card._isoSceneRuntimeLoader.options.failed(...)`) снова обращается к тому же загрузчику, который реально загружает 3D-рантайм. Других смоков, тестов или якорей мутаций, которые обращались бы к удалённым приватным членам (`_syncPlan3dHost`, `_disposePlan3dHost`, `_retryPlan3d`, `_paintModePresentation`, `_finishModeTransition`, `_settleModeTransition`, `_modeSceneOrigin`, `_modeProjectionOpacity`, `_plan3dDevices`, `_modeNodes` и других), в репозитории нет. Перенос в `CardPlan3d` и `ModeTransitionPresentation` по-прежнему повторяет исходную логику почти построчно, 3D-рантайм загружается по требованию, исследование следующих вынесений записано. Блокеров нет, работу можно принять. Необязательные замечания об узости интерфейсов остаются на следующий разбор монолита.",
-          "understanding": "Задача выносит из `src/houseplan-card.ts` две области без изменения поведения.\n1) `src/card-plan-3d.ts` (`CardPlan3d`). Модуль владеет загрузчиком по требованию (`EditorRuntimeLoader`, `import('./plan-3d-runtime')`, повторная загрузка с `hp_retry`), рантаймом, `Plan3dHost`, отправкой кадров (`sync`), освобождением (`dispose`), состоянием отказа и повтором (`failure`, `retry`), а также нейтральным источником стартового превью (`prepareStartupPreview`, `startupSource`, `snapshot`). Карточка передаёт ему порт из узких функций. Сборка `presentation` и `devices` и выбор камеры остались в `_renderBody`.\n2) `src/mode-transition-presentation.ts` (`ModeTransitionPresentation`). Модуль измеряет исходный кадр (`current`/`readVisual`), рисует кадры (`paint`/`paintFrame`), перестраивает HTML-слои (`rebaseHtml`), подготавливает (`prepare`), завершает (`settle`/`finish`) и очищает переход (`clear`). Хост собран в `_createModePresenter` из геттеров и сеттеров. `ModeTransitionController` и общая камера остались в карточке.\n3) Порядок следующих вынесений записан в issue.\n\nВ этом раунде проверено:\n- исправление блокера. Аксессор `_isoSceneRuntimeLoader` в houseplan-card.ts возвращает `this._spatial.loader`; `options` у `EditorRuntimeLoader` — TS-private поле конструктора (src/editor-runtime-loader.ts:90), во время выполнения оно доступно, как и раньше. Колбэк `failed` в `CardPlan3d` берёт пространство через `port.space()`, то есть из `card._space`, поэтому сценарий смока на строках 531–546 работает так же, как на базе;\n- сеттер `_isoSceneRuntime`, через который смок подменяет рантайм на строках 551 и 570;\n- повторное чтение `paintFrame`, `finish` и `prepare` в новом модуле и сравнение с удалёнными методами;\n- поиск обращений к удалённым приватным членам по demo/, test/ и scripts/;\n- правки тестов `editor-runtime-loader.test.mjs` и `isometric-contract.test.mjs`;\n- добавление смоков в `DECLARED_SOURCE_SCOPES`.",
-          "analysis": [
-            {
-              "topic": "Устранение прежнего блокера: хук `_isoSceneRuntimeLoader`",
-              "assessment": "Устранён способом (а) из прошлого отчёта: загрузчик открыт в `CardPlan3d` как `readonly loader`, а карточка возвращает его через приватный геттер рядом с остальными диагностическими хуками. Загрузчик остался один, у него нет копии или обёртки, поэтому вызов `options.failed` из смока проходит через тот же колбэк, что и настоящий отказ загрузки: `failedLoad` → `console.warn` с `safeRuntimeDiagnostic` → `failure` → redraw. Диагностика в `smoke_daycycle_outline_removed.mjs:71` (`c._isoSceneRuntimeLoader?.state`) снова получает состояние. Исполнитель сообщает, что `smoke_isometric_contract` целиком прошёл на S6. Сам я его не запускал.",
-              "evidence": "src/houseplan-card.ts (блок `_spatial` и аксессоры после него: `private get _isoSceneRuntimeLoader() { return this._spatial.loader; }`); src/card-plan-3d.ts:49-77; demo/smoke_isometric_contract.mjs:531-546, 551, 570; src/editor-runtime-loader.ts:90, 171."
-            },
-            {
-              "topic": "Отсутствие других потерянных хуков",
-              "assessment": "Поиск по demo/, test/ и scripts/ не нашёл обращений к удалённым приватным членам карточки. Действующие хуки сохранены аксессорами: `_plan3dHost`, `_plan3dFailure`, `_plan3dPaintedFloor`, `_plan3dPresentation`, `_isoSceneRuntime` с сеттером, `_modePresentation`, `_modeSceneSize`, `_modeSceneClip`, `_headerMotion`, `_applyModeTransitionFrame`. Публичный `_ensureIsoSceneRuntime` остался, теперь он делегирует вызов в `_spatial.ensure()`. Смоки его не подменяют, только вызывают (`smoke_iso_room_label_metrics.mjs:68`), поэтому переход `retry` на внутренний `this.ensure()` поведения не меняет.",
-              "evidence": "Поиск `_syncPlan3dHost`, `_disposePlan3dHost`, `_retryPlan3d`, `_paintModePresentation`, `_finishModeTransition`, `_settleModeTransition`, `_modeSceneOrigin`, `_modeProjectionOpacity`, `_plan3dDevices`, `_modeNodes`, `_modeHeaderPositions`, `_modePresentationNodes`, `_startup3dSource` дал пустой результат вне собранного бандла."
-            },
-            {
-              "topic": "Эквивалентность презентации перехода",
-              "assessment": "Подтверждаю вывод прошлого раунда. `paintFrame`, `finish` и `prepare` дословно повторяют удалённые `_paintTransitionFrame`, `_finishModeTransition` и `_prepareModeTransition`: `this._x` заменено на `this.host.x`, `_targetBrightness()` заменено константой 1, а `this` в вызовах live-viewport — на `this.host.owner`, то есть на ту же карточку. Порядок записей в общую камеру (`view`, `zoom`, `hdrH`, `lastValidStageSize`) и отложенная сверка размеров после `updateComplete` не изменились.",
-              "evidence": "src/mode-transition-presentation.ts:325-530 в сравнении с удалёнными методами в diff src/houseplan-card.ts."
-            },
-            {
-              "topic": "Ленивая загрузка и стартовое превью 3D",
-              "assessment": "Без изменений относительно прошлого раунда, всё корректно. В `card-plan-3d.ts` значение рантайма подключается только через динамический `import`, тест проверяет `card + cardPlan3d` на отсутствие value-импортов. В `snapshot` опциональная цепочка `this.host?.snapshot(source(), …)` вызывает `source()` только при наличии хоста, как и раньше. Нейтрализация света в превью перенесена в `prepareStartupPreview`, и тест теперь проверяет её в новом модуле.",
-              "evidence": "src/card-plan-3d.ts:1-8, 51-58, 103-114; test/isometric-contract.test.mjs (блоки «3D uses the lazy runtime» и проверка `prepareStartupPreview`)."
-            },
-            {
-              "topic": "Каталог проверок S6",
-              "assessment": "Рекомендация прошлого отчёта выполнена: `smoke_isometric_contract.mjs` и соседние смоки (`smoke_plan_3d_card`, `smoke_startup_floor`, `smoke_mode_transition`, `smoke_mode_endpoints`, `smoke_iso_flat_parity`) объявлены зависимыми от новых модулей. Значит, следующие правки `card-plan-3d.ts` и `mode-transition-presentation.ts` будут выбирать эти сценарии.",
-              "evidence": "process-next/lib/source-dependencies.mjs, изменённый блок `DECLARED_SOURCE_SCOPES`."
-            },
-            {
-              "topic": "Связность интерфейса `ModeTransitionPresentationHost`",
-              "assessment": "Замечание прошлого раунда остаётся в силе, блокером оно не является. Хост почти зеркалит приватное состояние карточки, презентер через сеттеры пишет общую камеру и навигационное состояние. Для первого шага с требованием побайтной эквивалентности это допустимо.",
-              "evidence": "src/mode-transition-presentation.ts:22-74; `_createModePresenter` в src/houseplan-card.ts."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "При следующем разборе сузить `ModeTransitionPresentationHost`. Пусть `paintFrame`, `finish` и `prepare` возвращают итоговую камеру, `headerBudget` и `lastValidStageSize`, а применяет их карточка. Тогда станет видно, кто владеет общей камерой, и пропадёт около десятка сеттеров. Цена — переписать три места, поэтому это лучше делать не в задаче на эквивалентный перенос.",
-            "В `CardPlan3d` заменить публичные изменяемые `presentation`, `devices` и `failure` на методы вроде `present({ presentation, devices })` и `fail(key, space)`. Инварианты (`resetPresentation` → `prepareStartupPreview`, сброс отказа при установке) тогда будут храниться в модуле, а следующему вынесению стартового превью (приоритет 1 в issue) хватит более узкого интерфейса."
-          ],
-          "boundaries": "Сборку, тесты, смоки и golden-сценарии я не запускал. Опирался на квитанцию S6 `20261127T061815385-a437643a` (passed, материал fb2cc44ce) и на заявление исполнителя о том, что `smoke_isometric_contract` прошёл целиком и 54 адресные проверки прошли. Перечня шагов в квитанции нет. Заявления о совпадении golden-сценариев и DOM в шести состояниях принимаю как результат S6. По исходникам изучил: исправление хука и его вызывающие места в смоке, `EditorRuntimeLoader.options`, оставшуюся часть `mode-transition-presentation.ts` (paint, frame, finish, prepare), изменённые тесты, каталог зависимостей смоков. Также искал по demo/, test/ и scripts/ обращения к удалённым приватным членам. Покадровое поведение переходов в браузере не проверял."
-        },
-        "usage": {
-          "input_tokens": 22,
-          "cache_creation_input_tokens": 102816,
-          "cache_read_input_tokens": 887205,
-          "output_tokens": 8081,
-          "output_tokens_details": {
-            "thinking_tokens": 1454
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 102816,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 716,
-              "cache_read_input_tokens": 95412,
-              "cache_creation_input_tokens": 11608,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 11608
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nЕдинственный блокер прошлого раунда устранён. У карточки снова есть хук `_isoSceneRuntimeLoader`: это аксессор к `readonly loader` внутри `CardPlan3d`. Поэтому `demo/smoke_isometric_contract.mjs:539` (`card._isoSceneRuntimeLoader.options.failed(...)`) снова обращается к тому же загрузчику, который реально загружает 3D-рантайм. Других смоков, тестов или якорей мутаций, которые обращались бы к удалённым приватным членам (`_syncPlan3dHost`, `_disposePlan3dHost`, `_retryPlan3d`, `_paintModePresentation`, `_finishModeTransition`, `_settleModeTransition`, `_modeSceneOrigin`, `_modeProjectionOpacity`, `_plan3dDevices`, `_modeNodes` и других), в репозитории нет. Перенос в `CardPlan3d` и `ModeTransitionPresentation` по-прежнему повторяет исходную логику почти построчно, 3D-рантайм загружается по требованию, исследование следующих вынесений записано. Блокеров нет, работу можно принять. Необязательные замечания об узости интерфейсов остаются на следующий разбор монолита.\n\n## Понимание решения\n\nЗадача выносит из `src/houseplan-card.ts` две области без изменения поведения.\n1) `src/card-plan-3d.ts` (`CardPlan3d`). Модуль владеет загрузчиком по требованию (`EditorRuntimeLoader`, `import('./plan-3d-runtime')`, повторная загрузка с `hp_retry`), рантаймом, `Plan3dHost`, отправкой кадров (`sync`), освобождением (`dispose`), состоянием отказа и повтором (`failure`, `retry`), а также нейтральным источником стартового превью (`prepareStartupPreview`, `startupSource`, `snapshot`). Карточка передаёт ему порт из узких функций. Сборка `presentation` и `devices` и выбор камеры остались в `_renderBody`.\n2) `src/mode-transition-presentation.ts` (`ModeTransitionPresentation`). Модуль измеряет исходный кадр (`current`/`readVisual`), рисует кадры (`paint`/`paintFrame`), перестраивает HTML-слои (`rebaseHtml`), подготавливает (`prepare`), завершает (`settle`/`finish`) и очищает переход (`clear`). Хост собран в `_createModePresenter` из геттеров и сеттеров. `ModeTransitionController` и общая камера остались в карточке.\n3) Порядок следующих вынесений записан в issue.\n\nВ этом раунде проверено:\n- исправление блокера. Аксессор `_isoSceneRuntimeLoader` в houseplan-card.ts возвращает `this._spatial.loader`; `options` у `EditorRuntimeLoader` — TS-private поле конструктора (src/editor-runtime-loader.ts:90), во время выполнения оно доступно, как и раньше. Колбэк `failed` в `CardPlan3d` берёт пространство через `port.space()`, то есть из `card._space`, поэтому сценарий смока на строках 531–546 работает так же, как на базе;\n- сеттер `_isoSceneRuntime`, через который смок подменяет рантайм на строках 551 и 570;\n- повторное чтение `paintFrame`, `finish` и `prepare` в новом модуле и сравнение с удалёнными методами;\n- поиск обращений к удалённым приватным членам по demo/, test/ и scripts/;\n- правки тестов `editor-runtime-loader.test.mjs` и `isometric-contract.test.mjs`;\n- добавление смоков в `DECLARED_SOURCE_SCOPES`.\n\n## Разбор решения\n\n### Устранение прежнего блокера: хук `_isoSceneRuntimeLoader`\n\nУстранён способом (а) из прошлого отчёта: загрузчик открыт в `CardPlan3d` как `readonly loader`, а карточка возвращает его через приватный геттер рядом с остальными диагностическими хуками. Загрузчик остался один, у него нет копии или обёртки, поэтому вызов `options.failed` из смока проходит через тот же колбэк, что и настоящий отказ загрузки: `failedLoad` → `console.warn` с `safeRuntimeDiagnostic` → `failure` → redraw. Диагностика в `smoke_daycycle_outline_removed.mjs:71` (`c._isoSceneRuntimeLoader?.state`) снова получает состояние. Исполнитель сообщает, что `smoke_isometric_contract` целиком прошёл на S6. Сам я его не запускал.\n\nОснование: src/houseplan-card.ts (блок `_spatial` и аксессоры после него: `private get _isoSceneRuntimeLoader() { return this._spatial.loader; }`); src/card-plan-3d.ts:49-77; demo/smoke_isometric_contract.mjs:531-546, 551, 570; src/editor-runtime-loader.ts:90, 171.\n\n### Отсутствие других потерянных хуков\n\nПоиск по demo/, test/ и scripts/ не нашёл обращений к удалённым приватным членам карточки. Действующие хуки сохранены аксессорами: `_plan3dHost`, `_plan3dFailure`, `_plan3dPaintedFloor`, `_plan3dPresentation`, `_isoSceneRuntime` с сеттером, `_modePresentation`, `_modeSceneSize`, `_modeSceneClip`, `_headerMotion`, `_applyModeTransitionFrame`. Публичный `_ensureIsoSceneRuntime` остался, теперь он делегирует вызов в `_spatial.ensure()`. Смоки его не подменяют, только вызывают (`smoke_iso_room_label_metrics.mjs:68`), поэтому переход `retry` на внутренний `this.ensure()` поведения не меняет.\n\nОснование: Поиск `_syncPlan3dHost`, `_disposePlan3dHost`, `_retryPlan3d`, `_paintModePresentation`, `_finishModeTransition`, `_settleModeTransition`, `_modeSceneOrigin`, `_modeProjectionOpacity`, `_plan3dDevices`, `_modeNodes`, `_modeHeaderPositions`, `_modePresentationNodes`, `_startup3dSource` дал пустой результат вне собранного бандла.\n\n### Эквивалентность презентации перехода\n\nПодтверждаю вывод прошлого раунда. `paintFrame`, `finish` и `prepare` дословно повторяют удалённые `_paintTransitionFrame`, `_finishModeTransition` и `_prepareModeTransition`: `this._x` заменено на `this.host.x`, `_targetBrightness()` заменено константой 1, а `this` в вызовах live-viewport — на `this.host.owner`, то есть на ту же карточку. Порядок записей в общую камеру (`view`, `zoom`, `hdrH`, `lastValidStageSize`) и отложенная сверка размеров после `updateComplete` не изменились.\n\nОснование: src/mode-transition-presentation.ts:325-530 в сравнении с удалёнными методами в diff src/houseplan-card.ts.\n\n### Ленивая загрузка и стартовое превью 3D\n\nБез изменений относительно прошлого раунда, всё корректно. В `card-plan-3d.ts` значение рантайма подключается только через динамический `import`, тест проверяет `card + cardPlan3d` на отсутствие value-импортов. В `snapshot` опциональная цепочка `this.host?.snapshot(source(), …)` вызывает `source()` только при наличии хоста, как и раньше. Нейтрализация света в превью перенесена в `prepareStartupPreview`, и тест теперь проверяет её в новом модуле.\n\nОснование: src/card-plan-3d.ts:1-8, 51-58, 103-114; test/isometric-contract.test.mjs (блоки «3D uses the lazy runtime» и проверка `prepareStartupPreview`).\n\n### Каталог проверок S6\n\nРекомендация прошлого отчёта выполнена: `smoke_isometric_contract.mjs` и соседние смоки (`smoke_plan_3d_card`, `smoke_startup_floor`, `smoke_mode_transition`, `smoke_mode_endpoints`, `smoke_iso_flat_parity`) объявлены зависимыми от новых модулей. Значит, следующие правки `card-plan-3d.ts` и `mode-transition-presentation.ts` будут выбирать эти сценарии.\n\nОснование: process-next/lib/source-dependencies.mjs, изменённый блок `DECLARED_SOURCE_SCOPES`.\n\n### Связность интерфейса `ModeTransitionPresentationHost`\n\nЗамечание прошлого раунда остаётся в силе, блокером оно не является. Хост почти зеркалит приватное состояние карточки, презентер через сеттеры пишет общую камеру и навигационное состояние. Для первого шага с требованием побайтной эквивалентности это допустимо.\n\nОснование: src/mode-transition-presentation.ts:22-74; `_createModePresenter` в src/houseplan-card.ts.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- При следующем разборе сузить `ModeTransitionPresentationHost`. Пусть `paintFrame`, `finish` и `prepare` возвращают итоговую камеру, `headerBudget` и `lastValidStageSize`, а применяет их карточка. Тогда станет видно, кто владеет общей камерой, и пропадёт около десятка сеттеров. Цена — переписать три места, поэтому это лучше делать не в задаче на эквивалентный перенос.\n- В `CardPlan3d` заменить публичные изменяемые `presentation`, `devices` и `failure` на методы вроде `present({ presentation, devices })` и `fail(key, space)`. Инварианты (`resetPresentation` → `prepareStartupPreview`, сброс отказа при установке) тогда будут храниться в модуле, а следующему вынесению стартового превью (приоритет 1 в issue) хватит более узкого интерфейса.\n\n## Границы анализа\n\nСборку, тесты, смоки и golden-сценарии я не запускал. Опирался на квитанцию S6 `20261127T061815385-a437643a` (passed, материал fb2cc44ce) и на заявление исполнителя о том, что `smoke_isometric_contract` прошёл целиком и 54 адресные проверки прошли. Перечня шагов в квитанции нет. Заявления о совпадении golden-сценариев и DOM в шести состояниях принимаю как результат S6. По исходникам изучил: исправление хука и его вызывающие места в смоке, `EditorRuntimeLoader.options`, оставшуюся часть `mode-transition-presentation.ts` (paint, frame, finish, prepare), изменённые тесты, каталог зависимостей смоков. Также искал по demo/, test/ и scripts/ обращения к удалённым приватным членам. Покадровое поведение переходов в браузере не проверял.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 8cdb00332d689571a68afd8b775ead4003bae24a → fb2cc44cedeef89eb28d06a83b607f55cc00d706\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1604, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nВ ветке `codex/1604-card-runtime-extraction` ([fb2cc44ce](https://github.com/Matysh/houseplan-card/commit/fb2cc44cedeef89eb28d06a83b607f55cc00d706)) `CardPlan3d` владеет загрузчиком по требованию, канвасом, освобождением ресурсов и нейтральным кадром превью. `ModeTransitionPresentation` владеет измерением, отрисовкой и завершением визуальных кадров. Типизированные интерфейсы передают состояние и вызовы. Существующие хуки для редактора, смоков и диагностики сохранены.\n\nСборка, типы и 13 проверок контракта 3D прошли. Адресные golden-сценарии `panel-isometric-geometry-view-light`, `panel-wide-plan-editor-dark-en` и `panel-stairs-flat-normal-light` совпали с эталонами до пикселя. DOM шапки и сцены совпал в шести устойчивых состояниях с базой `8cdb00332` после нормализации случайных идентификаторов комментариев Lit. Живые проверки переходов, 3D-хоста и стартового превью использовали существующие смоки.\n\nПервый S6 нашёл два устаревших якоря мутаций, проверку использования версии в параметре повторной загрузки и ложное включение браузерного артефакта в тест инфраструктуры. Якоря перенесены к новому владельцу, формат параметра `hp_retry` сохранён, каталог распознаёт декларации смоков. Три затронутых файла тестов прошли 22 проверки.\n\nПовторный S6 прошёл 628 из 629 шагов, включая все браузерные сценарии. Тест контракта ленивых загрузчиков перенесён на обоих владельцев и прошёл 23 проверки. Он проверяет, что редактор, онбординг и PDF передают признак окончательного отказа в уведомление, а внутренний загрузчик 3D сохраняет свой обработчик без пользовательского уведомления.\n\nПо [замечанию S7](https://github.com/Matysh/houseplan-card/issues/1604#issuecomment-7211284123) карточка снова предоставляет прежний хук `_isoSceneRuntimeLoader` как аксессор к единственному загрузчику в 3D-хосте. Живой `smoke_isometric_contract` прошёл целиком, включая редактирование диагностик, отказ позднего кадра и явный повтор загрузки. Каталог S6 теперь выбирает этот сценарий при изменении 3D-хоста. Сборка и 54 адресные проверки прошли. Предыдущий полный S6 зачёл 702 из 702 шагов.\n```\n\n</details>\n",
-        "createdAt": "2026-11-27T06:36:22.398Z",
-        "artifactId": 15177796095,
-        "runId": 45952639978,
-        "runAttempt": 1,
-        "completedAt": "2026-11-27T06:36:27Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45952639978",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1605": {
@@ -7158,19 +7013,7 @@
   "waiting": [
     1605
   ],
-  "active": {
-    "issue": 1604,
-    "worker": "finish",
-    "token": "751:finish:9bcfb5b8-c6ca-43f9-9afb-00f705081678:finish:1:admit",
-    "fence": 751,
-    "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-    "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795760279611,
-    "expiresAt": 1795765013469,
-    "patchId": "a5a3068af446f8abb1d7b0cfc3440a5de91934dd",
-    "reviewRequest": "review:1604:4:a5a3068af446f8abb1d7b0cfc3440a5de91934dd:8cdb00332d689571a68afd8b775ead4003bae24a"
-  },
+  "active": null,
   "events": {
     "release-return-finish:255ff30b-e695-4827-86df-e33fb65e873a:finish:2:synchronized": {
       "digest": "ef36dfd98572283305467d6118171de53af97fc7afd56825f095c2ae481a7311",
@@ -7208,21 +7051,9 @@
       "digest": "37ba23c4b64381a403ce7eb5a0ffc8da9c253a46a08622847808bc7238107ad4",
       "issue": 1605
     },
-    "finish:2b0ca773-c8de-4080-99e7-eb92f18076b5:finish:2:synchronized": {
-      "digest": "dda98131a1b3559c47a87b4475ed63a1f29463c3e6a8c4614996bc7707aa9fc7",
-      "issue": 1604
-    },
     "github:45946546072:1:completions:report:3fc45312a5ce73faee4d4ad783637fd179acd7168272e735d5e0df601736a724": {
       "digest": "039e255ebec919260c313dd623f3113ca3905d2d079b67f777aa0de5983b606f",
       "issue": 1605
-    },
-    "github:45946600874:1:completions:message:6eefa5d341f3d4934af6ecd842df0c9cd88c2b3d74e323df8918603b6fade925": {
-      "digest": "c60fe053fc9cbc78881a8129ac7613f7a7535b789dd72358fd4ca98025784b62",
-      "issue": 1604
-    },
-    "github:45946600874:1:completions:message:01d4c92c7a04736da2e06bbd0c82e1260997c63d31e2c6ee24c9357b4edf5d06": {
-      "digest": "3fca1523edd109326b7c51a5bb961746263072734bb08166ffe09bfd1792fb99",
-      "issue": 1604
     },
     "local:spec1605:edae0461-1fc1-400d-b899-708f49e564a2:spec-request": {
       "digest": "2a39c6a1051a25869e0c2c00acfead7644fd9f00e7e952ed4ffa004f4aa74815",
@@ -7231,18 +7062,6 @@
     "github:45946753506:1:label:spec-retry": {
       "digest": "2f31a76bfbde5b2bcf2560dd3d5ff8fb0c234ff77258358593a7b32afaceaf57",
       "issue": 1605
-    },
-    "finish:3be7be16-4200-4888-9a34-e8720c0dc103": {
-      "digest": "7fb16c05398bdac2cbdcc5d65d7d67ce7147929e83553c8fc5a9324d8dd74eb9",
-      "issue": 1604
-    },
-    "github:45946753506:1:completions:message:9bb832d8962bc60453d996670155b751aac7b80b40684cd8ebc28af9e3c3f633": {
-      "digest": "e4c8596567f476d30958186c8691fedcaf2efa76345f41d6f6bcf5130d7f3191",
-      "issue": 1604
-    },
-    "finish:150014ea-6b6c-4e30-aa23-1ff0406b353b": {
-      "digest": "6406c32b35318fc2513d6fe3778edf5944b5113647a7f24bec2461db20780466",
-      "issue": 1604
     },
     "github:45947041548:1:spec:1605:spec-presentation": {
       "digest": "872762889e67231598a404b406f8c822319cf4c71b10fa62dac9e0088788f3ce",
@@ -7259,170 +7078,6 @@
     "github:45947041548:1:completions:report:9a8e2ca5da8ba614cfd7029c233e5e6b678912a2d8d2cc376989231c8fe774c4": {
       "digest": "ac61fe26d92370bfbc0fe17e17ba3e3763e886ad3c7b69cd0d11419a7e02d460",
       "issue": 1605
-    },
-    "finish:81c782c2-c077-4042-a9ef-2524ae8c3dd3": {
-      "digest": "0ba05d1307bfbe958ebfc393e8b5cbaa2bfd678d3fe41313c88738e1f01e79f4",
-      "issue": 1604
-    },
-    "finish:2b0ca773-c8de-4080-99e7-eb92f18076b5:finish:3:automation-pending": {
-      "digest": "a635e835b7e924a2d1b35df633f5f367e6d64f1ba8d5a72c8ed2ab89b68f4282",
-      "issue": 1604
-    },
-    "finish:8d9b6af2-3c0b-4572-ba26-345e9f5b990e": {
-      "digest": "82e47af46614387308a1bcaab7f0e33f67b182c5a5fa9caa3e9f973d06b0381a",
-      "issue": 1604
-    },
-    "1604-replace-s6-758d62ac-a2d6-4772-8200-3d2713faab40": {
-      "digest": "3329aaaaa14a8a0887c31cc8645d75e335d749be5883ea160bab5a7414e178cf",
-      "issue": 1604
-    },
-    "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6:finish:2:synchronized": {
-      "digest": "9410b16fc30116deb1977d8bf210a1deb7c4cdddd138076645cf0a19e4efd46b",
-      "issue": 1604
-    },
-    "finish:d5e58762-99f9-40e7-b05a-2ba27a0d7175": {
-      "digest": "816f9c35f8d5d356207895b921b2d85301bbb75f0a247de66ffd2fe899c97139",
-      "issue": 1604
-    },
-    "finish:16ace05e-607d-4884-9056-f0bef0c08ce3": {
-      "digest": "aaf7afdbf7782ca119f22972f10c9275c16586d779d4cd0ffafbc161d2619953",
-      "issue": 1604
-    },
-    "finish:55271196-ea51-4ff3-9e9e-7123455576fe": {
-      "digest": "d428e9fe5316c9039c6297dade53764cfea4c87718eba6a6c48973d2bf07acd4",
-      "issue": 1604
-    },
-    "finish:48e41712-0838-43fb-b94d-7dbf8fa86488": {
-      "digest": "440bee9f57c1f68a3a06e59d91ad42f81eb5a0aeff83c5bdda618313acb1f75a",
-      "issue": 1604
-    },
-    "finish:248affea-ea53-4ca6-b118-409c76357016": {
-      "digest": "e8bd64c22a40f497e22f4467031115c00bef212977973a69e3c577dedcc1a2be",
-      "issue": 1604
-    },
-    "finish:63e64b42-bb24-4594-9e92-b22ceeb957ba": {
-      "digest": "996ae874a79fe304090b71a59aab6e12cf68c7813f7cfe4d44bf6cc9fe8f6ac4",
-      "issue": 1604
-    },
-    "finish:b8c1e344-3814-471c-88e6-5044e01641f3": {
-      "digest": "9088d4370dd80215f3075a59143252bcd36c88abcacb1820637196c94dc64bad",
-      "issue": 1604
-    },
-    "finish:4a7c74d6-babc-4267-9c25-d003c56f942a": {
-      "digest": "7d9d8ff1159832a6255c141542bf62f6510fb3b75252b2bd94e37dcaedec9600",
-      "issue": 1604
-    },
-    "finish:c3dca903-8a13-4233-a1fe-ff742f3a60c9": {
-      "digest": "c6b9ef69716c5e0a7d773cb10f33ffef65cdcddf7fa1ee506690729c84eab219",
-      "issue": 1604
-    },
-    "finish:573ca1fd-dbb5-4ef9-adb3-2aa8543257ae": {
-      "digest": "7ce655f0443f50fe52eea1bd87a491c5b6a93757ef8b646566cd208d57438e10",
-      "issue": 1604
-    },
-    "finish:c29ece53-9cd5-4f6f-94d8-20272b1b1afc": {
-      "digest": "deb5992e8f4c54de639fdc769b179d1fdbf867d9b2d87d0db7632aae11e03de2",
-      "issue": 1604
-    },
-    "finish:4236da4a-64c5-4c31-891a-094cccbdd879": {
-      "digest": "970fbb75e8d31581b1a4b07b6b0165dbdad825e253681593012d369bdc8252bf",
-      "issue": 1604
-    },
-    "finish:abd6bafa-105e-45cf-abc3-4cf401e7be4e": {
-      "digest": "e351c7e62d0d6aec9ee5b219c06bc676811c821eee942d8108af2b6213fc8738",
-      "issue": 1604
-    },
-    "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6:finish:3:return": {
-      "digest": "7b724de9de290457089a55c949734814d456cb305b42ab0a9df1cef0718d3dc9",
-      "issue": 1604
-    },
-    "finish:5bb6dba8-4a12-4ed6-8cbf-9437008af111:finish:2:synchronized": {
-      "digest": "026a63b50d5a4a13c209cc518fd4b3daac445680b98a22e2c72a87a2b26fab88",
-      "issue": 1604
-    },
-    "github:45948910677:1:completions:message:b4c43af6697c1041b39946da123c719c7922f0c80c821e4c6d8228da08c8d15d": {
-      "digest": "5132343b671cb7dcd9e898da590068c2925dc8fc60e464230cfc3eeb0e867014",
-      "issue": 1604
-    },
-    "github:45948910677:1:completions:message:d663130a72e2fb05cc7ef18adedb8d7ff497c186d873ad091ce1a8bc4678aad7": {
-      "digest": "aedc6c9280148aedec37e9bba9997b9a74fff7e3cc7d7f165e7e426d3819bdbb",
-      "issue": 1604
-    },
-    "github:45948910677:1:completions:message:24cff0f81a2cd7a8f10534faaf316a1491383e536d32ff791dd3871da205baf2": {
-      "digest": "47d7036e5fd8dbca499b65800becee264d834bab11dd99831de7b44ec5517445",
-      "issue": 1604
-    },
-    "github:45948910677:1:completions:message:1ad655d4060ec70438dc2bb8337e28a453d6850a485fc4c86a16c4b49765dd59": {
-      "digest": "8c90b26053a5b862373dcc73cf04d7dfef64feed490e3a8cb40c40436a9dfdce",
-      "issue": 1604
-    },
-    "github:45948910677:1:completions:message:e31c9524ad63cf4884609df88f7000f085968f885ef70395c1e3dd3098f5e296": {
-      "digest": "c2e99f8fd716e84482e734e5c3f3c79eb269a6fa01e45a9f4d94e8f40ea495d3",
-      "issue": 1604
-    },
-    "github:45948910677:1:completions:message:5e1c8592d0abde5b4921ed98d6e48d1deda24caa417be9c9428f164e8e514202": {
-      "digest": "edec5709be620144ad9a6562292c9d473e2155d9600fe51cae21cc753aaa4d56",
-      "issue": 1604
-    },
-    "github:45948910677:1:completions:notice:0631d919b487814c1c3899ed86d02be11c855ba3353ca9e28c11585243dd8d6f": {
-      "digest": "ffd998d682bd9c28c15de93e383e627edc508dd755165eea80ea3de59b5bf32f",
-      "issue": 1604
-    },
-    "github:45948910677:1:completions:message:0631d919b487814c1c3899ed86d02be11c855ba3353ca9e28c11585243dd8d6f": {
-      "digest": "56e4dac8be9d71d83b95e6c905acfb93070a0cfe50a9080c056edead7cfa1e17",
-      "issue": 1604
-    },
-    "finish:36a5851e-d650-4d8f-b1ff-a313a84d8c78": {
-      "digest": "75fd68414ada2bbd7a9a29e65a8c06cb5824af8f272284558550dd19c4413b39",
-      "issue": 1604
-    },
-    "finish:43dc4dab-9fd6-40b5-8c66-74644eb13dcd": {
-      "digest": "581611f29d9bc5e1221b19d6ca81491731de39262b3d7bff5e591135360ad620",
-      "issue": 1604
-    },
-    "finish:c3aefad9-7fac-460b-a1ea-285d469909c6": {
-      "digest": "50f197d4536550aecf7515208c8abb963fd5670d65e1ffe5ccb217dfeb745b37",
-      "issue": 1604
-    },
-    "finish:c2d134f0-3e57-4e71-8248-958d0c446aa7": {
-      "digest": "0fbd9744ff6f8b1f40ebce12e1190d815e8a9f392753b013232d902184c0614a",
-      "issue": 1604
-    },
-    "finish:5bb6dba8-4a12-4ed6-8cbf-9437008af111:finish:3:s6-label": {
-      "digest": "aa5e7c85f6ed57ffd4d6d2aca1a4fc5fd1fd9805f1dd73033619b35453d6f295",
-      "issue": 1604
-    },
-    "finish:5bb6dba8-4a12-4ed6-8cbf-9437008af111:finish:4:review-requested": {
-      "digest": "a456be8e168e14c54bd86c65c8ea40ae425c1f62bd88956be75ce7eb7ee9c197",
-      "issue": 1604
-    },
-    "github:45949641875:1:tick:0:review-retry": {
-      "digest": "a63cb48762db1e39a83734a1949b70c16672862bc7229ea6cf62a6be3f3e2efe",
-      "issue": 1604
-    },
-    "github:45949641875:1:completions:message:f46933682d752fdd194c09672893b5995b41f7ce7c8ce7714c963ac953ddc9ca": {
-      "digest": "8da04e43839c6b2fea130569aa8fdc85f85890e47101e12adff46f543de1ae34",
-      "issue": 1604
-    },
-    "github:45950076162:1:tick:0:review-presentation": {
-      "digest": "5eb7bb76eeb8adacfe3de9176acc2953b9b1a86d9c9f36a59933036d4a9e2881",
-      "issue": 1604
-    },
-    "github:45950076162:1:tick:0:return": {
-      "digest": "12fda32fb37de943614f9d376bc0e7bf375c89cc6d7a912653812300d2cebff3",
-      "issue": 1604
-    },
-    "github:45950076162:1:tick:0:return-label": {
-      "digest": "ec53028d0c5274a789186989d7b77a4f3fbdad92b9a2b9a3267df68e939fa21b",
-      "issue": 1604
-    },
-    "github:45950076162:1:completions:report:37adcf5422f640997b969b585999a260353c155cfa948c4c5182e07b559656a0": {
-      "digest": "5531cb38c6b5e4e77135bef5ba29ff94eed6786951ccd32f61570f5d2d65f0dc",
-      "issue": 1604
-    },
-    "github:45950076162:1:completions:metadata:1612e725-2e47-4ac5-8c34-0a92b4effc7a:task-notice:1604::": {
-      "digest": "79651a97d57127c864c49637235a51d7d70a0968e765d344365625e9a6ca8ee8",
-      "issue": 1604
     },
     "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:3:synchronized": {
       "digest": "42e30b3ef9489385edd899eb03903ddd5c8bc6e917dc8a31303de9d990bc9595",
@@ -7464,101 +7119,9 @@
       "digest": "77f1061169c96cf867bce619ebfd7114ec4942b618e7074efe0ff4d626f21452",
       "issue": 1605
     },
-    "finish:9bcfb5b8-c6ca-43f9-9afb-00f705081678:finish:2:synchronized": {
-      "digest": "3edd2df428046067ce8929b4c3a6ea3a0177866d8dfcaee7c580129c1827bde1",
-      "issue": 1604
-    },
-    "finish:72cbac86-ab04-4b79-81cb-275b75f3172c": {
-      "digest": "cba74fecb5765f2830536f194f7c534df5753876f0f32aea7249eed3aadb7750",
-      "issue": 1604
-    },
-    "finish:9aa111d6-14df-49ae-ba36-fced8d287a53": {
-      "digest": "555466274823f49d88a2334304bde1e70b927319a72cccf54a48cdb2893b45f6",
-      "issue": 1604
-    },
-    "finish:6a359977-4e51-46e6-a1a6-8a43381ef74c": {
-      "digest": "878ee82801381eec2252ca279b5169bb8230a547c9ca41aa7f3a7fe141c0fd9f",
-      "issue": 1604
-    },
-    "finish:7926527f-f3bf-4fdb-b29a-f25b4d304920": {
-      "digest": "c4f352d4988898f2ae5cf76c8442646fb728145e5ce01150a0de28c2850f75da",
-      "issue": 1604
-    },
-    "finish:9e5a4b45-8d2d-4d18-aea7-d4cc59677eae": {
-      "digest": "dd4e80c875fa712e22359d49544d9b891ec4738306bcb9ae8e33a97be5633a98",
-      "issue": 1604
-    },
-    "finish:43638216-b46d-4ad0-be1a-2ab67cca9815": {
-      "digest": "2d728aac462db32d8cae9d6976ce79c55fc73909b7ea4f3894c09b6df257154c",
-      "issue": 1604
-    },
-    "finish:b50d718e-ccd5-4f65-bdf9-9ff51e96ab2f": {
-      "digest": "b304281b8a7c878d3e566aa2f8fb767457deaab0f53384e457d2f30f40b690be",
-      "issue": 1604
-    },
-    "finish:2342ba4e-e8bb-4ff8-9fd1-d5c31cbecb26": {
-      "digest": "80b3ecad4e625bc190bc43e7ddc42c441115c92e596132554f196fffe9aa0d23",
-      "issue": 1604
-    },
-    "finish:b6cba361-10c6-4e01-a0d4-eb8480ca22b3": {
-      "digest": "b727c7d8584cf21f860a0bd34ef4367910a3988bf7015489a2d0bf200bf11b44",
-      "issue": 1604
-    },
-    "finish:267ccc2a-db1d-47c3-a256-3e9ecc46a4b3": {
-      "digest": "8b0988db14573cba831564717bb3b459c7753f6a7e212afb8f272dc4e8e6dac5",
-      "issue": 1604
-    },
-    "finish:8addb16a-b8a1-4a03-a13b-1e7ef3621009": {
-      "digest": "6735a49fe8cab673bf9a83a739549a904d09a39aa0eec8a8750ce84e0a054d75",
-      "issue": 1604
-    },
-    "finish:67de9958-b9c4-4175-9c3a-a0f99eb14452": {
-      "digest": "d09a630320a21895a0c34295d622774c9fb24bb9581d1c530bac593a55db6814",
-      "issue": 1604
-    },
-    "finish:9bcfb5b8-c6ca-43f9-9afb-00f705081678:finish:3:s6-label": {
-      "digest": "e73a195dfd43d8e5fe7d939e66ebb482eb56f57658faead12c9d9043f69d4bab",
-      "issue": 1604
-    },
-    "finish:9bcfb5b8-c6ca-43f9-9afb-00f705081678:finish:4:review-requested": {
-      "digest": "d570ca4395d6f3a72acff7aa1a3cf348f8c8e2aae561d99f94dcc9c85d031804",
-      "issue": 1604
-    },
-    "github:45952611506:1:tick:0:review-retry": {
-      "digest": "0540ad9d9a5ff9c19caa735305b098dfd1187647f4ebaa9d7f19ea8d59a52552",
-      "issue": 1604
-    },
-    "github:45952611506:1:completions:message:2154d2dead671af007f8f746557490f946f9d081aaa873280b8d69e80b4792c8": {
-      "digest": "2ec8f72bd7100b4091a09524c36ab399cce31367893eedcdc9d75029ece9f3c4",
-      "issue": 1604
-    },
-    "github:45952611506:1:completions:message:676753b1f6816aa4c12b2a2205d18ad70bb5708959b48175271d95052f2f962f": {
-      "digest": "35be1337a5dda9abc78610b0bbb034ac69dca72ac22add79bd90625ceb1d3c13",
-      "issue": 1604
-    },
-    "github:45952611506:1:completions:message:b67148e217170839910c98da00bcb985ebf9591e5d1d387614ba968105fea021": {
-      "digest": "afa1b97ed22395539c1a2fc42860491e6c5d9c991302bf27876150ce8b90756b",
-      "issue": 1604
-    },
     "github:45952611506:1:completions:notice:bde5cb5bcee474545423af49d000ac3ace182a3ef3c763b1be24fb5025388f0e": {
       "digest": "dd639de6f8e48e4850e76d21e799788c04157dffd1e01c8af0055cd7e3eb9654",
       "issue": 1605
-    },
-    "github:45952611506:1:completions:message:bde5cb5bcee474545423af49d000ac3ace182a3ef3c763b1be24fb5025388f0e": {
-      "digest": "5d1b5d9f8b9f991fa748e0ceb532b431efb09423bdc3611d058e14baa3c2586c",
-      "issue": 1604
-    },
-    "github:45952611506:1:completions:message:0566819fee8537d9561eb42082a51c356b23a57a33c50f65b5e1ee2962f68571": {
-      "digest": "2ffab9f7cecc7b33cbcb0bcfabd83e8c797ab942342a1478b559a1549eca2822",
-      "issue": 1604
-    },
-    "github:45952944587:1:tick:0:review-presentation": {
-      "digest": "85395ab266d0d6d104f537908deb3e9ff404b02930025ec190024346f0507063",
-      "issue": 1604
-    },
-    "github:45952944587:1:tick:0:review-complete": {
-      "digest": "b4d8cc85dc3fcaa78c0ea63cf365cd8f224e95d25fa370bdd32455866aca3ed7",
-      "issue": 1604
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7589,35 +7152,6 @@
         "delivered": true
       }
     },
-    "finish:2b0ca773-c8de-4080-99e7-eb92f18076b5": {
-      "digest": "31533c8c9fd42cc2063945b31a26d698cce5da9a9f593e45bb71f5cef3bd2fb5",
-      "issue": 1604,
-      "message": {
-        "kind": "queued",
-        "issue": 1604,
-        "at": 1795757665946,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "58efd2b4f7e7576ae351ab6b6419681d6c5bd287",
-        "delivered": true
-      }
-    },
-    "finish:2b0ca773-c8de-4080-99e7-eb92f18076b5:finish:1:admit": {
-      "digest": "0a3297e60057eac0cb6e2b0f01e42e509224e458a4e63cc8079a16e43beef0ff",
-      "issue": 1604,
-      "message": {
-        "kind": "admitted",
-        "issue": 1604,
-        "at": 1795757669678,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "58efd2b4f7e7576ae351ab6b6419681d6c5bd287",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "local:spec1605:edae0461-1fc1-400d-b899-708f49e564a2:spec-request:spec-resubmitted:1605": {
       "digest": "2a39c6a1051a25869e0c2c00acfead7644fd9f00e7e952ed4ffa004f4aa74815",
       "issue": 1605,
@@ -7635,91 +7169,6 @@
         "delivered": true
       }
     },
-    "1604-replace-s6-758d62ac-a2d6-4772-8200-3d2713faab40:return:1604": {
-      "digest": "3329aaaaa14a8a0887c31cc8645d75e335d749be5883ea160bab5a7414e178cf",
-      "issue": 1604,
-      "message": {
-        "kind": "return",
-        "issue": 1604,
-        "at": 1795758073183,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795758073183,
-          "entry": 1,
-          "detail": "Первый локальный S6 остановлен после отказов test/card-version.test.mjs, test/core-source-readers.test.mjs и process-next/test/catalog.test.mjs. Исправления опубликованы в cdc37cbb5, адресные проверки прошли.",
-          "eventId": "1604-replace-s6-758d62ac-a2d6-4772-8200-3d2713faab40:return:1604"
-        },
-        "delivered": true
-      }
-    },
-    "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6": {
-      "digest": "70057ee7ea04421f90af4de2287746e8a32c3565fda28c6a8c876b441bde6191",
-      "issue": 1604,
-      "message": {
-        "kind": "queued",
-        "issue": 1604,
-        "at": 1795758083054,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cdc37cbb5e5e5f8cb86de33334c2df6dc4b39e63",
-        "delivered": true
-      }
-    },
-    "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6:finish:1:admit": {
-      "digest": "8a48961138d418988c8c7e2f32de328085eccd5559d68b040ca1771bbd00eb11",
-      "issue": 1604,
-      "message": {
-        "kind": "admitted",
-        "issue": 1604,
-        "at": 1795758086976,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cdc37cbb5e5e5f8cb86de33334c2df6dc4b39e63",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6:finish:3:return:return:1604": {
-      "digest": "7b724de9de290457089a55c949734814d456cb305b42ab0a9df1cef0718d3dc9",
-      "issue": 1604,
-      "message": {
-        "kind": "return",
-        "issue": 1604,
-        "at": 1795759060656,
-        "entry": 2,
-        "notice": {
-          "key": "2:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795759060656,
-          "entry": 2,
-          "detail": "Поведение: test/editor-runtime-loader.test.mjs: failed",
-          "eventId": "finish:47c0eea0-e8df-4f04-b1c6-63258883ecb6:finish:3:return:return:1604"
-        },
-        "delivered": true
-      }
-    },
-    "finish:5bb6dba8-4a12-4ed6-8cbf-9437008af111": {
-      "digest": "575aa4a05c97290018db495ae5b364b5dab08d75156f688504eca975cbe1ec91",
-      "issue": 1604,
-      "message": {
-        "kind": "queued",
-        "issue": 1604,
-        "at": 1795759090876,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
-        "delivered": true
-      }
-    },
     "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b": {
       "digest": "a6f931357beecd4dc28ca1ca67b5c46d05fb1d9778245635836703ba764170ea",
       "issue": 1605,
@@ -7731,51 +7180,6 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "034b5037f52e046651d8c10ccc891771675eecab",
-        "delivered": true
-      }
-    },
-    "finish:5bb6dba8-4a12-4ed6-8cbf-9437008af111:finish:1:admit": {
-      "digest": "9dee1a14cc354344ebda9e4405c2b9d653ab452a98af7ca109e8b12895605ca4",
-      "issue": 1604,
-      "message": {
-        "kind": "admitted",
-        "issue": 1604,
-        "at": 1795759097897,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:5bb6dba8-4a12-4ed6-8cbf-9437008af111:finish:3:s6-complete": {
-      "digest": "d0d3f1e11ecaa9148105863c32850edaa066fb4fbe51c873f30e913aabb9bdf7",
-      "issue": 1604,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1604,
-        "at": 1795759524110,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
-        "phase": "review",
-        "evidence": {
-          "id": "20261127T055833138-6d0d59e4",
-          "name": "Тесты для задачи #1604 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T055833138-6d0d59e4/report.json",
-          "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
-          "status": "passed",
-          "finishedAt": "2026-11-27T06:05:19.717Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "В ветке `codex/1604-card-runtime-extraction` ([c803e0dd8](https://github.com/Matysh/houseplan-card/commit/c803e0dd846658c49420cf318ecfdd8c123204ff)) `CardPlan3d` владеет загрузчиком по требованию, канвасом, освобождением ресурсов и нейтральным кадром превью. `ModeTransitionPresentation` владеет измерением, отрисовкой и завершением визуальных кадров. Типизированные интерфейсы передают состояние и вызовы. Существующие хуки для редактора, смоков и диагностики сохранены.\n\nСборка, типы и 13 проверок контракта 3D прошли. Адресные golden-сценарии `panel-isometric-geometry-view-light`, `panel-wide-plan-editor-dark-en` и `panel-stairs-flat-normal-light` совпали с эталонами до пикселя. DOM шапки и сцены совпал в шести устойчивых состояниях с базой `8cdb00332` после нормализации случайных идентификаторов комментариев Lit. Живые проверки переходов, 3D-хоста и стартового превью использовали существующие смоки.\n\nПервый S6 нашёл два устаревших якоря мутаций, проверку использования версии в параметре повторной загрузки и ложное включение браузерного артефакта в тест инфраструктуры. Якоря перенесены к новому владельцу, формат параметра `hp_retry` сохранён, каталог распознаёт декларации смоков. Три затронутых файла тестов прошли 22 проверки.\n\nПовторный S6 прошёл 628 из 629 шагов, включая все браузерные сценарии. Тест контракта ленивых загрузчиков перенесён на обоих владельцев и прошёл 23 проверки. Он проверяет, что редактор, онбординг и PDF передают признак окончательного отказа в уведомление, а внутренний загрузчик 3D сохраняет свой обработчик без пользовательского уведомления.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
@@ -7791,29 +7195,6 @@
         "layer": "product",
         "materialSha": "034b5037f52e046651d8c10ccc891771675eecab",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:9bcfb5b8-c6ca-43f9-9afb-00f705081678": {
-      "digest": "b36be73619f07b2c814b41aade919acdd29a947d1c45d8c05ae2e86e3e0369ac",
-      "issue": 1604,
-      "message": {
-        "kind": "queued",
-        "issue": 1604,
-        "at": 1795759968719,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "evidence": {
-          "id": "20261127T055833138-6d0d59e4",
-          "name": "Тесты для задачи #1604 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T055833138-6d0d59e4/report.json",
-          "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
-          "status": "passed",
-          "finishedAt": "2026-11-27T06:05:19.717Z",
-          "failures": []
-        },
         "delivered": true
       }
     },
@@ -7838,30 +7219,6 @@
         "delivered": true
       }
     },
-    "finish:9bcfb5b8-c6ca-43f9-9afb-00f705081678:finish:1:admit": {
-      "digest": "dcb35cf9e17e52c155a3f520d4899bf319e84dc1feee299cdade545f16b801fe",
-      "issue": 1604,
-      "message": {
-        "kind": "admitted",
-        "issue": 1604,
-        "at": 1795760279611,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261127T055833138-6d0d59e4",
-          "name": "Тесты для задачи #1604 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T055833138-6d0d59e4/report.json",
-          "materialSha": "c803e0dd846658c49420cf318ecfdd8c123204ff",
-          "status": "passed",
-          "finishedAt": "2026-11-27T06:05:19.717Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
     "finish:a7ae50ca-55ee-424c-9c41-bf9f199f2070": {
       "digest": "b342c780971712b06497a45c3553b8e5de0e6f966292ba5cfc105aa016f86446",
       "issue": 1605,
@@ -7873,36 +7230,6 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "fbcb44e752c2b60af9e4f3c990431c03d6982ecf",
-        "delivered": true
-      }
-    },
-    "finish:9bcfb5b8-c6ca-43f9-9afb-00f705081678:finish:3:s6-complete": {
-      "digest": "9c9f7443d4d6b76ffcc65f9da47c760464e51456e6b3af47ff11ddc5d0f1ccdc",
-      "issue": 1604,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1604,
-        "at": 1795761200476,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-        "phase": "review",
-        "evidence": {
-          "id": "20261127T061815385-a437643a",
-          "name": "Тесты для задачи #1604 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261127T061815385-a437643a/report.json",
-          "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
-          "status": "passed",
-          "finishedAt": "2026-11-27T06:33:16.398Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "В ветке `codex/1604-card-runtime-extraction` ([fb2cc44ce](https://github.com/Matysh/houseplan-card/commit/fb2cc44cedeef89eb28d06a83b607f55cc00d706)) `CardPlan3d` владеет загрузчиком по требованию, канвасом, освобождением ресурсов и нейтральным кадром превью. `ModeTransitionPresentation` владеет измерением, отрисовкой и завершением визуальных кадров. Типизированные интерфейсы передают состояние и вызовы. Существующие хуки для редактора, смоков и диагностики сохранены.\n\nСборка, типы и 13 проверок контракта 3D прошли. Адресные golden-сценарии `panel-isometric-geometry-view-light`, `panel-wide-plan-editor-dark-en` и `panel-stairs-flat-normal-light` совпали с эталонами до пикселя. DOM шапки и сцены совпал в шести устойчивых состояниях с базой `8cdb00332` после нормализации случайных идентификаторов комментариев Lit. Живые проверки переходов, 3D-хоста и стартового превью использовали существующие смоки.\n\nПервый S6 нашёл два устаревших якоря мутаций, проверку использования версии в параметре повторной загрузки и ложное включение браузерного артефакта в тест инфраструктуры. Якоря перенесены к новому владельцу, формат параметра `hp_retry` сохранён, каталог распознаёт декларации смоков. Три затронутых файла тестов прошли 22 проверки.\n\nПовторный S6 прошёл 628 из 629 шагов, включая все браузерные сценарии. Тест контракта ленивых загрузчиков перенесён на обоих владельцев и прошёл 23 проверки. Он проверяет, что редактор, онбординг и PDF передают признак окончательного отказа в уведомление, а внутренний загрузчик 3D сохраняет свой обработчик без пользовательского уведомления.\n\nПо [замечанию S7](https://github.com/Matysh/houseplan-card/issues/1604#issuecomment-7211284123) карточка снова предоставляет прежний хук `_isoSceneRuntimeLoader` как аксессор к единственному загрузчику в 3D-хосте. Живой `smoke_isometric_contract` прошёл целиком, включая редактирование диагностик, отказ позднего кадра и явный повтор загрузки. Каталог S6 теперь выбирает этот сценарий при изменении 3D-хоста. Сборка и 54 адресные проверки прошли. Предыдущий полный S6 зачёл 702 из 702 шагов.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
