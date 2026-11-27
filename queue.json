@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28363,
-  "nextTicket": 773,
+  "revision": 28364,
+  "nextTicket": 774,
   "nextFence": 768,
   "tasks": {
     "1001": {
@@ -6182,16 +6182,16 @@
     "1598": {
       "issue": 1598,
       "track": "show",
-      "layer": "infra",
+      "layer": "product",
       "branch": "codex/1598-release-snapshot",
-      "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
+      "materialSha": "c541cec0baac87ea812c1be20deba7822700b562",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 765,
-      "queued": false,
+      "ticket": 773,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795775794527,
-      "reviewEntry": 2,
+      "readyAt": 1795780942836,
+      "reviewEntry": 3,
       "patchId": "f90c6b3bf362de031cc4c7aa133966ce1397c477",
       "changedFiles": [
         ".gitignore",
@@ -6315,13 +6315,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1598:2:f90c6b3bf362de031cc4c7aa133966ce1397c477:0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-      "reviewMaterial": {
-        "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
-        "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
-        "patchId": "f90c6b3bf362de031cc4c7aa133966ce1397c477"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1598:2:f90c6b3bf362de031cc4c7aa133966ce1397c477:0a917f294e0393c317f4a4fdeec9dc4640bb0695",
         "at": 1795780424921
@@ -7447,7 +7440,8 @@
     1603,
     1609,
     1608,
-    1595
+    1595,
+    1598
   ],
   "active": {
     "issue": 1594,
@@ -9054,6 +9048,28 @@
         "layer": "product",
         "materialSha": "298d0fa26f6cb5f4251765d58751e59f5c9ca61c",
         "delivered": true
+      }
+    },
+    "finish:daf685c8-74e2-49df-88fd-7995d025e50d": {
+      "digest": "ceb8ad48408cea796ab2017f381f2a7eec5ab679d0841cdfe363e472f6b15b2a",
+      "issue": 1598,
+      "message": {
+        "kind": "queued",
+        "issue": 1598,
+        "at": 1795780942836,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c541cec0baac87ea812c1be20deba7822700b562",
+        "evidence": {
+          "id": "20261127T114809227-2427aab3",
+          "name": "Тесты для задачи #1598 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261127T114809227-2427aab3/report.json",
+          "materialSha": "3fdfa4739d60f1d5be408b26d1d05df14975a9bf",
+          "status": "passed",
+          "finishedAt": "2026-11-27T11:48:11.524Z",
+          "failures": []
+        }
       }
     }
   },
