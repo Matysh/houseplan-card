@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -278,6 +280,20 @@ test('failed current stable build preserves both historical evidence and honest 
     .every(row => row.status === 'missing' && row.before === null && Number.isFinite(row.after)));
   assert.deepEqual(JSON.parse(readFileSync(stablePath)), latest);
   assert.match(renderMetrics(result.comparison), /stable build failed/);
+});
+
+test('metrics CLI uses the embedded timing pair and treats an archived-only timing as missing', t => {
+  const f = measurementFixture(t), result = runMeasurements(f);
+  const candidate = join(f.output, 'measurement.json'), archived = join(f.root, 'archived.json');
+  const old = frozenBaseline();
+  writeFileSync(archived, JSON.stringify(old));
+  const cli = fileURLToPath(new URL('../cli.mjs', import.meta.url));
+  const report = () => JSON.parse(execFileSync(process.execPath,
+    [cli, 'metrics', '--candidate', candidate, '--latest-stable', archived, '--json'], { encoding: 'utf8' }));
+  assert.equal(report().primary.find(row => row.key === 'firstStableRenderMs').before, 100);
+  writeFileSync(candidate, JSON.stringify({ ...result.measurement, timing_baseline: null }));
+  const row = report().primary.find(row => row.key === 'firstStableRenderMs');
+  assert.deepEqual({ status: row.status, before: row.before, after: row.after }, { status: 'missing', before: null, after: 100 });
 });
 
 test('#1344 slow transition diagnostics are visible and cannot become release gates', () => {

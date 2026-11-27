@@ -215,7 +215,10 @@ export async function main(argv = process.argv.slice(2)) {
     print(result); return ['accept','not-required'].includes(result.status) ? 0 : 1;
   }
   if (command === 'metrics') {
-    const report = compareMeasurements(readJson(resolve(requireValue(o.candidate, '--candidate'))), readJson(resolve(requireValue(o['latest-stable'], '--latest-stable'))), o.anchor ? readJson(resolve(o.anchor)) : undefined);
+    const candidate = readJson(resolve(requireValue(o.candidate, '--candidate')));
+    const latestStable = readJson(resolve(requireValue(o['latest-stable'], '--latest-stable')));
+    const report = compareMeasurements(candidate, latestStable, o.anchor ? readJson(resolve(o.anchor)) : undefined,
+      { timingReference: candidate?.timing_baseline ?? null });
     if (o.out) { writeJson(resolve(o.out), report); writeFileSync(resolve(o.out).replace(/\.json$/, '') + '.md', renderMetrics(report)); }
     o.json ? print(report) : process.stdout.write(renderMetrics(report)); return report.ready ? 0 : 2;
   }
