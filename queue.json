@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28018,
-  "nextTicket": 758,
+  "revision": 28019,
+  "nextTicket": 759,
   "nextFence": 758,
   "tasks": {
     "1001": {
@@ -6115,6 +6115,20 @@
         "sourceSha": "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7"
       }
     },
+    "1591": {
+      "issue": 1591,
+      "track": "ship",
+      "layer": "docs",
+      "branch": "codex/1591-webgl-readme",
+      "materialSha": "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 758,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795773550919,
+      "reviewEntry": 1
+    },
     "1604": {
       "issue": 1604,
       "branch": "codex/1604-card-runtime-extraction",
@@ -7001,7 +7015,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1591
+  ],
   "active": {
     "issue": 1609,
     "worker": "finish",
@@ -7766,6 +7782,19 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:5d443a1a-7409-474f-b4e3-09c41c29970f": {
+      "digest": "0967b2d982563242df618bdf689a4cb592c80f71d7f8f3479aa6e0db4ef06ceb",
+      "issue": 1591,
+      "message": {
+        "kind": "queued",
+        "issue": 1591,
+        "at": 1795773550919,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31"
       }
     }
   },
