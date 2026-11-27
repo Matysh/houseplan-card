@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29876,
-  "nextTicket": 800,
+  "revision": 29877,
+  "nextTicket": 801,
   "nextFence": 800,
   "tasks": {
     "1001": {
@@ -6243,14 +6243,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1617-height-aware-led-light",
-      "materialSha": "153eccfdc5fc772a77d8d624649734ad82eae3be",
+      "materialSha": "b108551beca75f85602c9bde4e8ef492ab46c037",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 798,
-      "queued": false,
+      "ticket": 800,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795818615064,
-      "reviewEntry": 1,
+      "readyAt": 1795820158939,
+      "reviewEntry": 2,
       "patchId": "db5da05dcaee2eabc232b419c104de0573aee178",
       "changedFiles": [
         "demo/smoke_plan_3d_gpu.mjs",
@@ -6274,20 +6274,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1617:1:db5da05dcaee2eabc232b419c104de0573aee178:029bee4a997415765c278be12fd8334d82774e33",
-      "reviewMaterial": {
-        "materialSha": "153eccfdc5fc772a77d8d624649734ad82eae3be",
-        "expectedBase": "029bee4a997415765c278be12fd8334d82774e33",
-        "patchId": "db5da05dcaee2eabc232b419c104de0573aee178"
-      },
-      "reviewRetry": {
-        "requestId": "review:1617:1:db5da05dcaee2eabc232b419c104de0573aee178:029bee4a997415765c278be12fd8334d82774e33",
-        "eventId": "github:46078018048:1:tick:0:review-retry",
-        "at": 1795819224297,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1617:1:db5da05dcaee2eabc232b419c104de0573aee178:029bee4a997415765c278be12fd8334d82774e33",
         "at": 1795819568072
@@ -7078,7 +7064,9 @@
       "runId": 46078951618
     }
   },
-  "waiting": [],
+  "waiting": [
+    1617
+  ],
   "active": null,
   "events": {
     "finish:b6f532f4-8cba-41e4-afee-f2b7a0b414d2:finish:1:synchronized": {
@@ -7219,6 +7207,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:064f0112-916f-450d-801c-30ae9b945c93": {
+      "digest": "876fd5dc047d4a5f4723154ee01ca7b95a7dbf922e9d94e3736916692a574abd",
+      "issue": 1617,
+      "message": {
+        "kind": "queued",
+        "issue": 1617,
+        "at": 1795820158939,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b108551beca75f85602c9bde4e8ef492ab46c037",
+        "evidence": {
+          "id": "20261127T223640583-e7bebc9b",
+          "name": "Тесты для задачи #1617 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261127T223640583-e7bebc9b/report.json",
+          "materialSha": "153eccfdc5fc772a77d8d624649734ad82eae3be",
+          "status": "passed",
+          "finishedAt": "2026-11-27T22:39:59.273Z",
+          "failures": []
+        }
       }
     }
   },
