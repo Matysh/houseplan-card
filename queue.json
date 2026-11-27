@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27694,
-  "nextTicket": 753,
+  "revision": 27695,
+  "nextTicket": 754,
   "nextFence": 753,
   "tasks": {
     "1001": {
@@ -6299,6 +6299,20 @@
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
         "eventId": "finish:262b38ba-cb7c-4aa4-b445-f25aa67ae58b:finish:4:return:return:1605"
       }
+    },
+    "1607": {
+      "issue": 1607,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1607-marker-haptic",
+      "materialSha": "44dbb852ff380a9cbe3938c1ad71a606933868c6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 753,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795761564748,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7010,7 +7024,9 @@
       "runId": 45952639978
     }
   },
-  "waiting": [],
+  "waiting": [
+    1607
+  ],
   "active": {
     "issue": 1605,
     "worker": "github-coordinator",
@@ -7271,6 +7287,19 @@
         "materialSha": "fbcb44e752c2b60af9e4f3c990431c03d6982ecf",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:d52027cf-4647-44fc-bd62-02e014c42251": {
+      "digest": "47c10a3278ebe6db816b65d9b219ebc4883b45cafc66d195b739e572497f2a2e",
+      "issue": 1607,
+      "message": {
+        "kind": "queued",
+        "issue": 1607,
+        "at": 1795761564748,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "44dbb852ff380a9cbe3938c1ad71a606933868c6"
       }
     }
   },
