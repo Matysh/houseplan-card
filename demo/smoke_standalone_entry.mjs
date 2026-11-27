@@ -73,9 +73,10 @@ try{
   assert.ok(evidence.requests.some(url=>url.includes('/fonts/Roboto-Regular-')),'real locally served font requested');
   assert.equal(evidence.requests.some(url=>/houseplan-editor-runtime-/.test(url)),false,'cold View does not request the editor');
   await page.screenshot({path:resolve(dir,'cold-light.png')});
-  await clickHeaderAction(card,'mode-plan');
+  await page.evaluate(() => window.__card._ensureEditorRuntime());
   await verifyStandaloneMdiPicker(page,manifest,evidence.requests);
   evidence.checks.push('standalone-mdi-catalog-search-and-paint');
+  await clickHeaderAction(card,'mode-plan');
   await card.locator('[data-hp="tool"][data-tool="select"]').click();
   await card.locator('[data-hp="zoom-fit"]').click();
   await waitForUiKitPaint(page);

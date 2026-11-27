@@ -19,11 +19,12 @@ export async function verifyStandaloneMdiPicker(page, manifest, requests) {
   try {
     await page.waitForFunction(() => document.querySelector('#standalone-mdi-probe')._catalog?.size > 7000);
     await picker.locator('.trigger').click();
-    await picker.locator('input[type=search]').fill('alarm light');
+    const search = picker.locator('input[type=search]');
+    await search.fill('alarm light');
     const option = picker.locator('[role="option"][data-icon="mdi:alarm-light"]');
     const shape = await option.locator('path').getAttribute('d');
     assert.ok(shape?.length > 80, 'standalone search results paint the bundled glyph');
-    await option.click();
+    await search.press('Enter');
     assert.equal(await picker.evaluate(element => element.value), 'mdi:alarm-light');
     assert.ok(usedCatalog(), 'the standalone picker requests its packaged MDI chunk');
     assert.equal(requests.some(url => url.includes('/static/mdi/')), false, 'standalone uses its own catalog');
