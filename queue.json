@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29380,
-  "nextTicket": 787,
+  "revision": 29381,
+  "nextTicket": 788,
   "nextFence": 787,
   "tasks": {
     "1001": {
@@ -6307,14 +6307,14 @@
       "track": "ask",
       "layer": "infra",
       "branch": "codex/1613-s6-budget",
-      "materialSha": "8317d77318d52fd66e851bc02cad90b2ca7de291",
+      "materialSha": "2e90c90014d944e1dd4e6e630694df459a8c45dc",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 785,
-      "queued": false,
+      "ticket": 787,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795808298626,
-      "reviewEntry": 2,
+      "readyAt": 1795808418363,
+      "reviewEntry": 3,
       "patchId": "aeab367a38b12af0b403051daf6b5f4ab6397773",
       "changedFiles": [
         "PROCESS.md",
@@ -6358,8 +6358,7 @@
         "at": 1795808309101,
         "entry": 2,
         "eventId": "finish:89f21d5c-4860-4826-addd-57848c9fb12e:finish:2:return:return:1613"
-      },
-      "reason": "rebase-conflict"
+      }
     },
     "1614": {
       "issue": 1614,
@@ -7163,7 +7162,9 @@
       "runId": 46057459397
     }
   },
-  "waiting": [],
+  "waiting": [
+    1613
+  ],
   "active": {
     "issue": 1612,
     "worker": "finish",
@@ -7581,6 +7582,28 @@
         "track": "show",
         "layer": "product",
         "materialSha": "b1b9454c7272f863091ee96dc5bc896b7aa9821a"
+      }
+    },
+    "finish:f8986a3b-b1c2-4345-b206-71db80d4c206": {
+      "digest": "bcab3b9a7282c95fbfa3c28e5edd651a33b8c8c99c863acdbd17105b4021e772",
+      "issue": 1613,
+      "message": {
+        "kind": "queued",
+        "issue": 1613,
+        "at": 1795808418363,
+        "entry": 3,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "2e90c90014d944e1dd4e6e630694df459a8c45dc",
+        "evidence": {
+          "id": "20261127T192020807-2573f038",
+          "name": "Тесты для задачи #1613 (перед ревью)",
+          "reportPath": "/tmp/hp-1613-s6.Fm8W9p/final-unit/.git/process-next/runs/20261127T192020807-2573f038/report.json",
+          "materialSha": "37be774ce13f7ecb14705051b18b35c3a616a8d1",
+          "status": "passed",
+          "finishedAt": "2026-11-27T19:20:47.924Z",
+          "failures": []
+        }
       }
     }
   },
