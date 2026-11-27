@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28850,
-  "nextTicket": 782,
+  "revision": 28851,
+  "nextTicket": 783,
   "nextFence": 777,
   "tasks": {
     "1001": {
@@ -6645,6 +6645,20 @@
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed",
         "eventId": "finish:1cfb8b27-e7ca-46c3-8da5-00fbb600e3e6:finish:5:return:return:1611"
       }
+    },
+    "1614": {
+      "issue": 1614,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1614-header-menu-keyboard-focus",
+      "materialSha": "17a1ccb0a0544f019304bbec18882a76d4454c43",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 782,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795797878102,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7396,7 +7410,8 @@
     1609,
     1595,
     1598,
-    1611
+    1611,
+    1614
   ],
   "active": {
     "issue": 1594,
@@ -9173,6 +9188,19 @@
         "layer": "product",
         "materialSha": "5119213b3d222c6366fe012a6c2cf733df7b492b",
         "delivered": true
+      }
+    },
+    "finish:97686555-92c4-48a4-a45f-ef6dc1f0cf05": {
+      "digest": "f9374b5a726e2b9f2e42e67c60f0d8d84c9284c853290ccb4eb234ec1f966121",
+      "issue": 1614,
+      "message": {
+        "kind": "queued",
+        "issue": 1614,
+        "at": 1795797878102,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "17a1ccb0a0544f019304bbec18882a76d4454c43"
       }
     }
   },
