@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 27643,
-  "nextTicket": 752,
+  "revision": 27644,
+  "nextTicket": 753,
   "nextFence": 752,
   "tasks": {
     "1001": {
@@ -6288,14 +6288,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1605-core-backend-audit",
-      "materialSha": "034b5037f52e046651d8c10ccc891771675eecab",
+      "materialSha": "fbcb44e752c2b60af9e4f3c990431c03d6982ecf",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 750,
-      "queued": false,
+      "ticket": 752,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795759094913,
-      "reviewEntry": 1,
+      "readyAt": 1795760329116,
+      "reviewEntry": 2,
       "patchId": "8725aa50dd29d1749e87a5aba802dcf2b18998fe",
       "changedFiles": [
         "custom_components/houseplan/auth.py",
@@ -6317,7 +6317,6 @@
         "tests_backend/test_ha_input_security_authority.py",
         "tests_backend/test_ha_websocket.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7025,7 +7024,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1605
+  ],
   "active": {
     "issue": 1604,
     "worker": "finish",
@@ -7632,6 +7633,19 @@
           "finishedAt": "2026-11-27T06:05:19.717Z",
           "failures": []
         }
+      }
+    },
+    "finish:a7ae50ca-55ee-424c-9c41-bf9f199f2070": {
+      "digest": "b342c780971712b06497a45c3553b8e5de0e6f966292ba5cfc105aa016f86446",
+      "issue": 1605,
+      "message": {
+        "kind": "queued",
+        "issue": 1605,
+        "at": 1795760329116,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "fbcb44e752c2b60af9e4f3c990431c03d6982ecf"
       }
     }
   },
