@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28122,
+  "revision": 28123,
   "nextTicket": 764,
   "nextFence": 764,
   "tasks": {
@@ -6516,7 +6516,7 @@
       "notice": {
         "key": "2:Hosted run completed or was cancelled without a runner report",
         "reason": "Hosted run completed or was cancelled without a runner report",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1795775625049,
         "entry": 2,
@@ -7944,6 +7944,10 @@
     "finish:fc8ec58c-dd65-4459-9156-5534f54aaed3:finish:2:synchronized": {
       "digest": "9eb50227a3587000626f7181f3baf24c310b4ed8b1e02e482c0a3d23d1598b64",
       "issue": 1598
+    },
+    "github:45983234156:1:completions:notice:3358a4ba560e9f005827b94de7d073984b270b178ac446ed2fd4385fccf711ab": {
+      "digest": "ab43fc38103c387a7ee6c53b3e16ad8801901424819d1729de29764094ae60da",
+      "issue": 1608
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
