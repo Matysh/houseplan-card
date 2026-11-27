@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27961,
+  "revision": 27962,
   "nextTicket": 757,
   "nextFence": 757,
   "tasks": {
@@ -7422,6 +7422,10 @@
       "digest": "ea8602327ace552ea016944ee08ad2a86e2c263ed54f32bf914d8fb7108e851b",
       "issue": 1609
     },
+    "github:45974662272:1:completions:message:15fa53c9d83716f2e7486259e4d56ad4dbea3582fa0ce647a6e1ad3bfece62b3": {
+      "digest": "9970a1761d4b67525b81dc83407f7026d3f39179cc81ab144034953a485f6b49",
+      "issue": 1609
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7531,7 +7535,8 @@
           "entry": 1,
           "detail": "Поведение: test/config-audit.test.mjs: failed; Поведение: test/floor-cache-day-cycle.test.mjs: failed; Поведение: test/furniture-assets.test.mjs: failed; Поведение: test/furniture-volume-generator.test.mjs: failed; Браузер: floor persistent cache isometric: failed",
           "eventId": "finish:9b38d4fe-2f32-4267-9a91-28bddf978b17:finish:3:return:return:1609"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:c7868b5e-45a0-43e0-986d-46d60f7bd7ae": {
