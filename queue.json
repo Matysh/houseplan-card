@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 27670,
+  "revision": 27671,
   "nextTicket": 753,
   "nextFence": 752,
   "tasks": {
@@ -6290,6 +6290,114 @@
         "at": 1795761231302,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1604,
+        "requestId": "review:1604:4:a5a3068af446f8abb1d7b0cfc3440a5de91934dd:8cdb00332d689571a68afd8b775ead4003bae24a",
+        "kind": "code",
+        "base": "8cdb00332d689571a68afd8b775ead4003bae24a",
+        "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
+        "patchId": "a5a3068af446f8abb1d7b0cfc3440a5de91934dd",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1604,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1604",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "В ветке `codex/1604-card-runtime-extraction` ([fb2cc44ce](https://github.com/Matysh/houseplan-card/commit/fb2cc44cedeef89eb28d06a83b607f55cc00d706)) `CardPlan3d` владеет загрузчиком по требованию, канвасом, освобождением ресурсов и нейтральным кадром превью. `ModeTransitionPresentation` владеет измерением, отрисовкой и завершением визуальных кадров. Типизированные интерфейсы передают состояние и вызовы. Существующие хуки для редактора, смоков и диагностики сохранены.\n\nСборка, типы и 13 проверок контракта 3D прошли. Адресные golden-сценарии `panel-isometric-geometry-view-light`, `panel-wide-plan-editor-dark-en` и `panel-stairs-flat-normal-light` совпали с эталонами до пикселя. DOM шапки и сцены совпал в шести устойчивых состояниях с базой `8cdb00332` после нормализации случайных идентификаторов комментариев Lit. Живые проверки переходов, 3D-хоста и стартового превью использовали существующие смоки.\n\nПервый S6 нашёл два устаревших якоря мутаций, проверку использования версии в параметре повторной загрузки и ложное включение браузерного артефакта в тест инфраструктуры. Якоря перенесены к новому владельцу, формат параметра `hp_retry` сохранён, каталог распознаёт декларации смоков. Три затронутых файла тестов прошли 22 проверки.\n\nПовторный S6 прошёл 628 из 629 шагов, включая все браузерные сценарии. Тест контракта ленивых загрузчиков перенесён на обоих владельцев и прошёл 23 проверки. Он проверяет, что редактор, онбординг и PDF передают признак окончательного отказа в уведомление, а внутренний загрузчик 3D сохраняет свой обработчик без пользовательского уведомления.\n\nПо [замечанию S7](https://github.com/Matysh/houseplan-card/issues/1604#issuecomment-7211284123) карточка снова предоставляет прежний хук `_isoSceneRuntimeLoader` как аксессор к единственному загрузчику в 3D-хосте. Живой `smoke_isometric_contract` прошёл целиком, включая редактирование диагностик, отказ позднего кадра и явный повтор загрузки. Каталог S6 теперь выбирает этот сценарий при изменении 3D-хоста. Сборка и 54 адресные проверки прошли. Предыдущий полный S6 зачёл 702 из 702 шагов."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Единственный блокер прошлого раунда устранён. У карточки снова есть хук `_isoSceneRuntimeLoader`: это аксессор к `readonly loader` внутри `CardPlan3d`. Поэтому `demo/smoke_isometric_contract.mjs:539` (`card._isoSceneRuntimeLoader.options.failed(...)`) снова обращается к тому же загрузчику, который реально загружает 3D-рантайм. Других смоков, тестов или якорей мутаций, которые обращались бы к удалённым приватным членам (`_syncPlan3dHost`, `_disposePlan3dHost`, `_retryPlan3d`, `_paintModePresentation`, `_finishModeTransition`, `_settleModeTransition`, `_modeSceneOrigin`, `_modeProjectionOpacity`, `_plan3dDevices`, `_modeNodes` и других), в репозитории нет. Перенос в `CardPlan3d` и `ModeTransitionPresentation` по-прежнему повторяет исходную логику почти построчно, 3D-рантайм загружается по требованию, исследование следующих вынесений записано. Блокеров нет, работу можно принять. Необязательные замечания об узости интерфейсов остаются на следующий разбор монолита.",
+          "understanding": "Задача выносит из `src/houseplan-card.ts` две области без изменения поведения.\n1) `src/card-plan-3d.ts` (`CardPlan3d`). Модуль владеет загрузчиком по требованию (`EditorRuntimeLoader`, `import('./plan-3d-runtime')`, повторная загрузка с `hp_retry`), рантаймом, `Plan3dHost`, отправкой кадров (`sync`), освобождением (`dispose`), состоянием отказа и повтором (`failure`, `retry`), а также нейтральным источником стартового превью (`prepareStartupPreview`, `startupSource`, `snapshot`). Карточка передаёт ему порт из узких функций. Сборка `presentation` и `devices` и выбор камеры остались в `_renderBody`.\n2) `src/mode-transition-presentation.ts` (`ModeTransitionPresentation`). Модуль измеряет исходный кадр (`current`/`readVisual`), рисует кадры (`paint`/`paintFrame`), перестраивает HTML-слои (`rebaseHtml`), подготавливает (`prepare`), завершает (`settle`/`finish`) и очищает переход (`clear`). Хост собран в `_createModePresenter` из геттеров и сеттеров. `ModeTransitionController` и общая камера остались в карточке.\n3) Порядок следующих вынесений записан в issue.\n\nВ этом раунде проверено:\n- исправление блокера. Аксессор `_isoSceneRuntimeLoader` в houseplan-card.ts возвращает `this._spatial.loader`; `options` у `EditorRuntimeLoader` — TS-private поле конструктора (src/editor-runtime-loader.ts:90), во время выполнения оно доступно, как и раньше. Колбэк `failed` в `CardPlan3d` берёт пространство через `port.space()`, то есть из `card._space`, поэтому сценарий смока на строках 531–546 работает так же, как на базе;\n- сеттер `_isoSceneRuntime`, через который смок подменяет рантайм на строках 551 и 570;\n- повторное чтение `paintFrame`, `finish` и `prepare` в новом модуле и сравнение с удалёнными методами;\n- поиск обращений к удалённым приватным членам по demo/, test/ и scripts/;\n- правки тестов `editor-runtime-loader.test.mjs` и `isometric-contract.test.mjs`;\n- добавление смоков в `DECLARED_SOURCE_SCOPES`.",
+          "analysis": [
+            {
+              "topic": "Устранение прежнего блокера: хук `_isoSceneRuntimeLoader`",
+              "assessment": "Устранён способом (а) из прошлого отчёта: загрузчик открыт в `CardPlan3d` как `readonly loader`, а карточка возвращает его через приватный геттер рядом с остальными диагностическими хуками. Загрузчик остался один, у него нет копии или обёртки, поэтому вызов `options.failed` из смока проходит через тот же колбэк, что и настоящий отказ загрузки: `failedLoad` → `console.warn` с `safeRuntimeDiagnostic` → `failure` → redraw. Диагностика в `smoke_daycycle_outline_removed.mjs:71` (`c._isoSceneRuntimeLoader?.state`) снова получает состояние. Исполнитель сообщает, что `smoke_isometric_contract` целиком прошёл на S6. Сам я его не запускал.",
+              "evidence": "src/houseplan-card.ts (блок `_spatial` и аксессоры после него: `private get _isoSceneRuntimeLoader() { return this._spatial.loader; }`); src/card-plan-3d.ts:49-77; demo/smoke_isometric_contract.mjs:531-546, 551, 570; src/editor-runtime-loader.ts:90, 171."
+            },
+            {
+              "topic": "Отсутствие других потерянных хуков",
+              "assessment": "Поиск по demo/, test/ и scripts/ не нашёл обращений к удалённым приватным членам карточки. Действующие хуки сохранены аксессорами: `_plan3dHost`, `_plan3dFailure`, `_plan3dPaintedFloor`, `_plan3dPresentation`, `_isoSceneRuntime` с сеттером, `_modePresentation`, `_modeSceneSize`, `_modeSceneClip`, `_headerMotion`, `_applyModeTransitionFrame`. Публичный `_ensureIsoSceneRuntime` остался, теперь он делегирует вызов в `_spatial.ensure()`. Смоки его не подменяют, только вызывают (`smoke_iso_room_label_metrics.mjs:68`), поэтому переход `retry` на внутренний `this.ensure()` поведения не меняет.",
+              "evidence": "Поиск `_syncPlan3dHost`, `_disposePlan3dHost`, `_retryPlan3d`, `_paintModePresentation`, `_finishModeTransition`, `_settleModeTransition`, `_modeSceneOrigin`, `_modeProjectionOpacity`, `_plan3dDevices`, `_modeNodes`, `_modeHeaderPositions`, `_modePresentationNodes`, `_startup3dSource` дал пустой результат вне собранного бандла."
+            },
+            {
+              "topic": "Эквивалентность презентации перехода",
+              "assessment": "Подтверждаю вывод прошлого раунда. `paintFrame`, `finish` и `prepare` дословно повторяют удалённые `_paintTransitionFrame`, `_finishModeTransition` и `_prepareModeTransition`: `this._x` заменено на `this.host.x`, `_targetBrightness()` заменено константой 1, а `this` в вызовах live-viewport — на `this.host.owner`, то есть на ту же карточку. Порядок записей в общую камеру (`view`, `zoom`, `hdrH`, `lastValidStageSize`) и отложенная сверка размеров после `updateComplete` не изменились.",
+              "evidence": "src/mode-transition-presentation.ts:325-530 в сравнении с удалёнными методами в diff src/houseplan-card.ts."
+            },
+            {
+              "topic": "Ленивая загрузка и стартовое превью 3D",
+              "assessment": "Без изменений относительно прошлого раунда, всё корректно. В `card-plan-3d.ts` значение рантайма подключается только через динамический `import`, тест проверяет `card + cardPlan3d` на отсутствие value-импортов. В `snapshot` опциональная цепочка `this.host?.snapshot(source(), …)` вызывает `source()` только при наличии хоста, как и раньше. Нейтрализация света в превью перенесена в `prepareStartupPreview`, и тест теперь проверяет её в новом модуле.",
+              "evidence": "src/card-plan-3d.ts:1-8, 51-58, 103-114; test/isometric-contract.test.mjs (блоки «3D uses the lazy runtime» и проверка `prepareStartupPreview`)."
+            },
+            {
+              "topic": "Каталог проверок S6",
+              "assessment": "Рекомендация прошлого отчёта выполнена: `smoke_isometric_contract.mjs` и соседние смоки (`smoke_plan_3d_card`, `smoke_startup_floor`, `smoke_mode_transition`, `smoke_mode_endpoints`, `smoke_iso_flat_parity`) объявлены зависимыми от новых модулей. Значит, следующие правки `card-plan-3d.ts` и `mode-transition-presentation.ts` будут выбирать эти сценарии.",
+              "evidence": "process-next/lib/source-dependencies.mjs, изменённый блок `DECLARED_SOURCE_SCOPES`."
+            },
+            {
+              "topic": "Связность интерфейса `ModeTransitionPresentationHost`",
+              "assessment": "Замечание прошлого раунда остаётся в силе, блокером оно не является. Хост почти зеркалит приватное состояние карточки, презентер через сеттеры пишет общую камеру и навигационное состояние. Для первого шага с требованием побайтной эквивалентности это допустимо.",
+              "evidence": "src/mode-transition-presentation.ts:22-74; `_createModePresenter` в src/houseplan-card.ts."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "При следующем разборе сузить `ModeTransitionPresentationHost`. Пусть `paintFrame`, `finish` и `prepare` возвращают итоговую камеру, `headerBudget` и `lastValidStageSize`, а применяет их карточка. Тогда станет видно, кто владеет общей камерой, и пропадёт около десятка сеттеров. Цена — переписать три места, поэтому это лучше делать не в задаче на эквивалентный перенос.",
+            "В `CardPlan3d` заменить публичные изменяемые `presentation`, `devices` и `failure` на методы вроде `present({ presentation, devices })` и `fail(key, space)`. Инварианты (`resetPresentation` → `prepareStartupPreview`, сброс отказа при установке) тогда будут храниться в модуле, а следующему вынесению стартового превью (приоритет 1 в issue) хватит более узкого интерфейса."
+          ],
+          "boundaries": "Сборку, тесты, смоки и golden-сценарии я не запускал. Опирался на квитанцию S6 `20261127T061815385-a437643a` (passed, материал fb2cc44ce) и на заявление исполнителя о том, что `smoke_isometric_contract` прошёл целиком и 54 адресные проверки прошли. Перечня шагов в квитанции нет. Заявления о совпадении golden-сценариев и DOM в шести состояниях принимаю как результат S6. По исходникам изучил: исправление хука и его вызывающие места в смоке, `EditorRuntimeLoader.options`, оставшуюся часть `mode-transition-presentation.ts` (paint, frame, finish, prepare), изменённые тесты, каталог зависимостей смоков. Также искал по demo/, test/ и scripts/ обращения к удалённым приватным членам. Покадровое поведение переходов в браузере не проверял."
+        },
+        "usage": {
+          "input_tokens": 22,
+          "cache_creation_input_tokens": 102816,
+          "cache_read_input_tokens": 887205,
+          "output_tokens": 8081,
+          "output_tokens_details": {
+            "thinking_tokens": 1454
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 102816,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 716,
+              "cache_read_input_tokens": 95412,
+              "cache_creation_input_tokens": 11608,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 11608
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nЕдинственный блокер прошлого раунда устранён. У карточки снова есть хук `_isoSceneRuntimeLoader`: это аксессор к `readonly loader` внутри `CardPlan3d`. Поэтому `demo/smoke_isometric_contract.mjs:539` (`card._isoSceneRuntimeLoader.options.failed(...)`) снова обращается к тому же загрузчику, который реально загружает 3D-рантайм. Других смоков, тестов или якорей мутаций, которые обращались бы к удалённым приватным членам (`_syncPlan3dHost`, `_disposePlan3dHost`, `_retryPlan3d`, `_paintModePresentation`, `_finishModeTransition`, `_settleModeTransition`, `_modeSceneOrigin`, `_modeProjectionOpacity`, `_plan3dDevices`, `_modeNodes` и других), в репозитории нет. Перенос в `CardPlan3d` и `ModeTransitionPresentation` по-прежнему повторяет исходную логику почти построчно, 3D-рантайм загружается по требованию, исследование следующих вынесений записано. Блокеров нет, работу можно принять. Необязательные замечания об узости интерфейсов остаются на следующий разбор монолита.\n\n## Понимание решения\n\nЗадача выносит из `src/houseplan-card.ts` две области без изменения поведения.\n1) `src/card-plan-3d.ts` (`CardPlan3d`). Модуль владеет загрузчиком по требованию (`EditorRuntimeLoader`, `import('./plan-3d-runtime')`, повторная загрузка с `hp_retry`), рантаймом, `Plan3dHost`, отправкой кадров (`sync`), освобождением (`dispose`), состоянием отказа и повтором (`failure`, `retry`), а также нейтральным источником стартового превью (`prepareStartupPreview`, `startupSource`, `snapshot`). Карточка передаёт ему порт из узких функций. Сборка `presentation` и `devices` и выбор камеры остались в `_renderBody`.\n2) `src/mode-transition-presentation.ts` (`ModeTransitionPresentation`). Модуль измеряет исходный кадр (`current`/`readVisual`), рисует кадры (`paint`/`paintFrame`), перестраивает HTML-слои (`rebaseHtml`), подготавливает (`prepare`), завершает (`settle`/`finish`) и очищает переход (`clear`). Хост собран в `_createModePresenter` из геттеров и сеттеров. `ModeTransitionController` и общая камера остались в карточке.\n3) Порядок следующих вынесений записан в issue.\n\nВ этом раунде проверено:\n- исправление блокера. Аксессор `_isoSceneRuntimeLoader` в houseplan-card.ts возвращает `this._spatial.loader`; `options` у `EditorRuntimeLoader` — TS-private поле конструктора (src/editor-runtime-loader.ts:90), во время выполнения оно доступно, как и раньше. Колбэк `failed` в `CardPlan3d` берёт пространство через `port.space()`, то есть из `card._space`, поэтому сценарий смока на строках 531–546 работает так же, как на базе;\n- сеттер `_isoSceneRuntime`, через который смок подменяет рантайм на строках 551 и 570;\n- повторное чтение `paintFrame`, `finish` и `prepare` в новом модуле и сравнение с удалёнными методами;\n- поиск обращений к удалённым приватным членам по demo/, test/ и scripts/;\n- правки тестов `editor-runtime-loader.test.mjs` и `isometric-contract.test.mjs`;\n- добавление смоков в `DECLARED_SOURCE_SCOPES`.\n\n## Разбор решения\n\n### Устранение прежнего блокера: хук `_isoSceneRuntimeLoader`\n\nУстранён способом (а) из прошлого отчёта: загрузчик открыт в `CardPlan3d` как `readonly loader`, а карточка возвращает его через приватный геттер рядом с остальными диагностическими хуками. Загрузчик остался один, у него нет копии или обёртки, поэтому вызов `options.failed` из смока проходит через тот же колбэк, что и настоящий отказ загрузки: `failedLoad` → `console.warn` с `safeRuntimeDiagnostic` → `failure` → redraw. Диагностика в `smoke_daycycle_outline_removed.mjs:71` (`c._isoSceneRuntimeLoader?.state`) снова получает состояние. Исполнитель сообщает, что `smoke_isometric_contract` целиком прошёл на S6. Сам я его не запускал.\n\nОснование: src/houseplan-card.ts (блок `_spatial` и аксессоры после него: `private get _isoSceneRuntimeLoader() { return this._spatial.loader; }`); src/card-plan-3d.ts:49-77; demo/smoke_isometric_contract.mjs:531-546, 551, 570; src/editor-runtime-loader.ts:90, 171.\n\n### Отсутствие других потерянных хуков\n\nПоиск по demo/, test/ и scripts/ не нашёл обращений к удалённым приватным членам карточки. Действующие хуки сохранены аксессорами: `_plan3dHost`, `_plan3dFailure`, `_plan3dPaintedFloor`, `_plan3dPresentation`, `_isoSceneRuntime` с сеттером, `_modePresentation`, `_modeSceneSize`, `_modeSceneClip`, `_headerMotion`, `_applyModeTransitionFrame`. Публичный `_ensureIsoSceneRuntime` остался, теперь он делегирует вызов в `_spatial.ensure()`. Смоки его не подменяют, только вызывают (`smoke_iso_room_label_metrics.mjs:68`), поэтому переход `retry` на внутренний `this.ensure()` поведения не меняет.\n\nОснование: Поиск `_syncPlan3dHost`, `_disposePlan3dHost`, `_retryPlan3d`, `_paintModePresentation`, `_finishModeTransition`, `_settleModeTransition`, `_modeSceneOrigin`, `_modeProjectionOpacity`, `_plan3dDevices`, `_modeNodes`, `_modeHeaderPositions`, `_modePresentationNodes`, `_startup3dSource` дал пустой результат вне собранного бандла.\n\n### Эквивалентность презентации перехода\n\nПодтверждаю вывод прошлого раунда. `paintFrame`, `finish` и `prepare` дословно повторяют удалённые `_paintTransitionFrame`, `_finishModeTransition` и `_prepareModeTransition`: `this._x` заменено на `this.host.x`, `_targetBrightness()` заменено константой 1, а `this` в вызовах live-viewport — на `this.host.owner`, то есть на ту же карточку. Порядок записей в общую камеру (`view`, `zoom`, `hdrH`, `lastValidStageSize`) и отложенная сверка размеров после `updateComplete` не изменились.\n\nОснование: src/mode-transition-presentation.ts:325-530 в сравнении с удалёнными методами в diff src/houseplan-card.ts.\n\n### Ленивая загрузка и стартовое превью 3D\n\nБез изменений относительно прошлого раунда, всё корректно. В `card-plan-3d.ts` значение рантайма подключается только через динамический `import`, тест проверяет `card + cardPlan3d` на отсутствие value-импортов. В `snapshot` опциональная цепочка `this.host?.snapshot(source(), …)` вызывает `source()` только при наличии хоста, как и раньше. Нейтрализация света в превью перенесена в `prepareStartupPreview`, и тест теперь проверяет её в новом модуле.\n\nОснование: src/card-plan-3d.ts:1-8, 51-58, 103-114; test/isometric-contract.test.mjs (блоки «3D uses the lazy runtime» и проверка `prepareStartupPreview`).\n\n### Каталог проверок S6\n\nРекомендация прошлого отчёта выполнена: `smoke_isometric_contract.mjs` и соседние смоки (`smoke_plan_3d_card`, `smoke_startup_floor`, `smoke_mode_transition`, `smoke_mode_endpoints`, `smoke_iso_flat_parity`) объявлены зависимыми от новых модулей. Значит, следующие правки `card-plan-3d.ts` и `mode-transition-presentation.ts` будут выбирать эти сценарии.\n\nОснование: process-next/lib/source-dependencies.mjs, изменённый блок `DECLARED_SOURCE_SCOPES`.\n\n### Связность интерфейса `ModeTransitionPresentationHost`\n\nЗамечание прошлого раунда остаётся в силе, блокером оно не является. Хост почти зеркалит приватное состояние карточки, презентер через сеттеры пишет общую камеру и навигационное состояние. Для первого шага с требованием побайтной эквивалентности это допустимо.\n\nОснование: src/mode-transition-presentation.ts:22-74; `_createModePresenter` в src/houseplan-card.ts.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- При следующем разборе сузить `ModeTransitionPresentationHost`. Пусть `paintFrame`, `finish` и `prepare` возвращают итоговую камеру, `headerBudget` и `lastValidStageSize`, а применяет их карточка. Тогда станет видно, кто владеет общей камерой, и пропадёт около десятка сеттеров. Цена — переписать три места, поэтому это лучше делать не в задаче на эквивалентный перенос.\n- В `CardPlan3d` заменить публичные изменяемые `presentation`, `devices` и `failure` на методы вроде `present({ presentation, devices })` и `fail(key, space)`. Инварианты (`resetPresentation` → `prepareStartupPreview`, сброс отказа при установке) тогда будут храниться в модуле, а следующему вынесению стартового превью (приоритет 1 в issue) хватит более узкого интерфейса.\n\n## Границы анализа\n\nСборку, тесты, смоки и golden-сценарии я не запускал. Опирался на квитанцию S6 `20261127T061815385-a437643a` (passed, материал fb2cc44ce) и на заявление исполнителя о том, что `smoke_isometric_contract` прошёл целиком и 54 адресные проверки прошли. Перечня шагов в квитанции нет. Заявления о совпадении golden-сценариев и DOM в шести состояниях принимаю как результат S6. По исходникам изучил: исправление хука и его вызывающие места в смоке, `EditorRuntimeLoader.options`, оставшуюся часть `mode-transition-presentation.ts` (paint, frame, finish, prepare), изменённые тесты, каталог зависимостей смоков. Также искал по demo/, test/ и scripts/ обращения к удалённым приватным членам. Покадровое поведение переходов в браузере не проверял.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 8cdb00332d689571a68afd8b775ead4003bae24a → fb2cc44cedeef89eb28d06a83b607f55cc00d706\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1604, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nВ ветке `codex/1604-card-runtime-extraction` ([fb2cc44ce](https://github.com/Matysh/houseplan-card/commit/fb2cc44cedeef89eb28d06a83b607f55cc00d706)) `CardPlan3d` владеет загрузчиком по требованию, канвасом, освобождением ресурсов и нейтральным кадром превью. `ModeTransitionPresentation` владеет измерением, отрисовкой и завершением визуальных кадров. Типизированные интерфейсы передают состояние и вызовы. Существующие хуки для редактора, смоков и диагностики сохранены.\n\nСборка, типы и 13 проверок контракта 3D прошли. Адресные golden-сценарии `panel-isometric-geometry-view-light`, `panel-wide-plan-editor-dark-en` и `panel-stairs-flat-normal-light` совпали с эталонами до пикселя. DOM шапки и сцены совпал в шести устойчивых состояниях с базой `8cdb00332` после нормализации случайных идентификаторов комментариев Lit. Живые проверки переходов, 3D-хоста и стартового превью использовали существующие смоки.\n\nПервый S6 нашёл два устаревших якоря мутаций, проверку использования версии в параметре повторной загрузки и ложное включение браузерного артефакта в тест инфраструктуры. Якоря перенесены к новому владельцу, формат параметра `hp_retry` сохранён, каталог распознаёт декларации смоков. Три затронутых файла тестов прошли 22 проверки.\n\nПовторный S6 прошёл 628 из 629 шагов, включая все браузерные сценарии. Тест контракта ленивых загрузчиков перенесён на обоих владельцев и прошёл 23 проверки. Он проверяет, что редактор, онбординг и PDF передают признак окончательного отказа в уведомление, а внутренний загрузчик 3D сохраняет свой обработчик без пользовательского уведомления.\n\nПо [замечанию S7](https://github.com/Matysh/houseplan-card/issues/1604#issuecomment-7211284123) карточка снова предоставляет прежний хук `_isoSceneRuntimeLoader` как аксессор к единственному загрузчику в 3D-хосте. Живой `smoke_isometric_contract` прошёл целиком, включая редактирование диагностик, отказ позднего кадра и явный повтор загрузки. Каталог S6 теперь выбирает этот сценарий при изменении 3D-хоста. Сборка и 54 адресные проверки прошли. Предыдущий полный S6 зачёл 702 из 702 шагов.\n```\n\n</details>\n",
+        "createdAt": "2026-11-27T06:36:22.398Z",
+        "artifactId": 15177796095,
+        "runId": 45952639978,
+        "runAttempt": 1,
+        "completedAt": "2026-11-27T06:36:27Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/45952639978",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a"
       }
     },
     "1605": {
@@ -7057,9 +7165,9 @@
     "fence": 751,
     "materialSha": "fb2cc44cedeef89eb28d06a83b607f55cc00d706",
     "expectedBase": "8cdb00332d689571a68afd8b775ead4003bae24a",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1795760279611,
-    "expiresAt": 1795764800476,
+    "expiresAt": 1795765013469,
     "patchId": "a5a3068af446f8abb1d7b0cfc3440a5de91934dd",
     "reviewRequest": "review:1604:4:a5a3068af446f8abb1d7b0cfc3440a5de91934dd:8cdb00332d689571a68afd8b775ead4003bae24a"
   },
@@ -7446,6 +7554,10 @@
     },
     "github:45952944587:1:tick:0:review-presentation": {
       "digest": "85395ab266d0d6d104f537908deb3e9ff404b02930025ec190024346f0507063",
+      "issue": 1604
+    },
+    "github:45952944587:1:tick:0:review-complete": {
+      "digest": "b4d8cc85dc3fcaa78c0ea63cf365cd8f224e95d25fa370bdd32455866aca3ed7",
       "issue": 1604
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
