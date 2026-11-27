@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29001,
+  "revision": 29002,
   "nextTicket": 783,
   "nextFence": 780,
   "tasks": {
@@ -6263,7 +6263,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1603-implicit-any",
-      "materialSha": "3d7fde4e918a42a6a40416cb7d5e4803e59b2ed5",
+      "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 776,
@@ -6271,7 +6271,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795789104578,
       "reviewEntry": 2,
-      "patchId": "818c8853959c05cf32899ac9cbb786021a6d4e2d",
+      "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026",
       "changedFiles": [
         "PROCESS.md",
         "docs/CHANGELOG.md",
@@ -6283,6 +6283,7 @@
         "process-next/lib/catalog.mjs",
         "process-next/test/catalog.test.mjs",
         "pyproject.toml",
+        "scripts/mutation-registry.mjs",
         "src/decor-history-restore.ts",
         "src/demand-space-models.ts",
         "src/device-hit-owner.ts",
@@ -7342,11 +7343,12 @@
     "worker": "github-coordinator",
     "token": "779:github:46040545310:1:tick:0:admit",
     "fence": 779,
-    "materialSha": "3d7fde4e918a42a6a40416cb7d5e4803e59b2ed5",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
+    "expectedBase": "68b4268626b93e90825e34bb91842f5c730e9add",
+    "phase": "testing",
     "admittedAt": 1795799820442,
-    "expiresAt": 1795800120442
+    "expiresAt": 1795800133088,
+    "patchId": "16a13a040b0aac4ee734d093dedf29b4c518c026"
   },
   "events": {
     "finish:e646d9a9-d21e-49d4-b0d5-d666a95cdfbe:finish:1:synchronized": {
@@ -7936,6 +7938,10 @@
     "github:46039754538:1:completions:report:884f207b2f4ec0fc020f2fb13ebe6cf6f83b4ea9d8d9c7fbdf40d0acfe2f0522": {
       "digest": "4637d29553eade792f2f38dfd8697e983d2a6f43b4ae46309430e881e71dc3cf",
       "issue": 1613
+    },
+    "finish:013a084d-233b-42d8-9081-904131ed1ec8:finish:4:synchronized": {
+      "digest": "1abb4eb3061263c7b590b1447c22797cb0e2e42ba8457180a93716dc1c659f04",
+      "issue": 1603
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
