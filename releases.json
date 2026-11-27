@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1644,
+  "revision": 1645,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -190692,7 +190692,120 @@
           "devSha": "6b8ef512d27636767389a906461d64c096d8a1a6"
         }
       ],
-      "diagnostics": [],
+      "diagnostics": [
+        {
+          "kind": "size-recalculation",
+          "issue": 1593,
+          "schema": 1,
+          "semantics": "canonical-zip-without-manifest-encoded-entries",
+          "target": {
+            "release": "v1.86.0",
+            "source_sha": "2725feedd276c5c1c19d9223c99b1adcdefefaa1",
+            "artifactDigest": "6226fa3975115e1d4c88a1ca703043f9b3c90451a42d7953b39c33aefdeec91d",
+            "buildFingerprint": "b87041a11cc59fafef0df1a2d54a6bc55b92641e9385c87e2c9ebab921af16e7",
+            "compression": {
+              "node": "v22.23.2",
+              "zlib": "1.3.1-e00f703",
+              "level": 9
+            },
+            "size_metrics": {
+              "zip_bytes": 3180143,
+              "zip_delivered_bytes": 5428998,
+              "frontend_all_files_raw_bytes": 7483770,
+              "frontend_all_files_gzip_bytes": 2249330,
+              "initial_view_gzip_bytes": 484246,
+              "frontend_transport_bytes": 2231707
+            }
+          },
+          "reference": {
+            "release": "v1.85.2",
+            "source_sha": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+            "artifactDigest": "be45235991e0b7cf05357b8223ab0684df6fdf78f08228fe6a7d5854a32ead46",
+            "buildFingerprint": "bbee73dadb3dc8f9729e1dc548e88c57379358e47d45a599d28182c009365e2c",
+            "compression": {
+              "node": "v22.23.2",
+              "zlib": "1.3.1-e00f703",
+              "level": 9
+            },
+            "size_metrics": {
+              "zip_bytes": 2929842,
+              "zip_delivered_bytes": 5016768,
+              "frontend_all_files_raw_bytes": 6940860,
+              "frontend_all_files_gzip_bytes": 2087437,
+              "initial_view_gzip_bytes": 428611,
+              "frontend_transport_bytes": 2070360
+            }
+          },
+          "rows": [
+            {
+              "key": "zip_bytes",
+              "label": "ZIP без транспортных копий",
+              "fraction": 0.05,
+              "absolute": 32768,
+              "unit": "B",
+              "before": 2929842,
+              "after": 3180143,
+              "delta": 250301,
+              "percent": 8.543156934742555,
+              "threshold": 146492.1,
+              "comparable": true,
+              "diagnostic": true,
+              "status": "regression",
+              "blocks": false
+            },
+            {
+              "key": "frontend_all_files_gzip_bytes",
+              "label": "Весь frontend, gzip",
+              "fraction": 0.05,
+              "absolute": 0,
+              "unit": "B",
+              "informational": true,
+              "before": 2087437,
+              "after": 2249330,
+              "delta": 161893,
+              "percent": 7.755587354253087,
+              "threshold": 104371.85,
+              "comparable": true,
+              "diagnostic": true,
+              "status": "above-reference",
+              "blocks": false
+            },
+            {
+              "key": "initial_view_gzip_bytes",
+              "label": "Начальная загрузка View, gzip",
+              "fraction": 0.05,
+              "absolute": 0,
+              "unit": "B",
+              "informational": true,
+              "before": 428611,
+              "after": 484246,
+              "delta": 55635,
+              "percent": 12.980301485496174,
+              "threshold": 21430.550000000003,
+              "comparable": true,
+              "diagnostic": true,
+              "status": "above-reference",
+              "blocks": false
+            }
+          ],
+          "delivery": [
+            {
+              "key": "zip_delivered_bytes",
+              "label": "Доставляемый ZIP целиком",
+              "diagnostic": true,
+              "before": 5016768,
+              "after": 5428998
+            },
+            {
+              "key": "frontend_transport_bytes",
+              "label": "Предсжатые транспортные копии",
+              "diagnostic": true,
+              "before": 2070360,
+              "after": 2231707
+            }
+          ]
+        }
+      ],
       "shipReview": {
         "sha": "0ce2161adfb8fe0448a676f4a5b9528cb4ae0e89",
         "requestId": "ship-review:208b117cb0bfa7b0a09d16f47a15294d1e05ef754dfe166fa6edf6c8382ce6dd",
@@ -334686,7 +334799,8 @@
     "beta-200-3-20261128-publication:completion:f5f2a680-cf10-4185-a1f8-2887717b886c": "52d4551fe1b43a6ef17627a5d456c787f993ec46c89bd7454f70f616361eb258",
     "beta-200-3-20261128-publication:completion:8a6953cb-e6d3-4b5f-824f-56d098649bd8": "c1b763e36b6064122a8b57f1fe23b773052e39924a58203953baf1d2a24a2c80",
     "beta-200-3-20261128-publication:completion:dff3cee4-87c7-40f6-9621-5dfd5a66901a": "ea5950d2b7d506e1381a4202a00dd14255f8a3ed51c3f20e6a34b1e9e7f60614",
-    "issue-1593:size-recalculation:v1-85-2": "33031d80dba6a9f1cee5d87cd463b2d9ae14f5595eb9276e77c6069c87b9c1ff"
+    "issue-1593:size-recalculation:v1-85-2": "33031d80dba6a9f1cee5d87cd463b2d9ae14f5595eb9276e77c6069c87b9c1ff",
+    "issue-1593:size-recalculation:v1-86-0": "2b961eb68aa4be1119fb8efde0b4862cd3a4077baed62187bd40f4ad374c774d"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
