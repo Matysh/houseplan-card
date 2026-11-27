@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28475,
+  "revision": 28476,
   "nextTicket": 775,
   "nextFence": 770,
   "tasks": {
@@ -7535,14 +7535,10 @@
     "expectedBase": "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
     "phase": "testing",
     "admittedAt": 1795786678156,
-    "expiresAt": 1795787501347,
+    "expiresAt": 1795787561485,
     "patchId": "818c8853959c05cf32899ac9cbb786021a6d4e2d"
   },
   "events": {
-    "github:45984384633:1:spec:1595:spec-complete": {
-      "digest": "b3636c1370e81a8dd3f5754f91d215e805e1274f1bae6d6c0e6949a366796802",
-      "issue": 1595
-    },
     "github:45984384633:1:spec:1595:spec-label": {
       "digest": "b9f99b176089ec241e6eaed43d8a35c0337f102c91da316f6751734069ccea47",
       "issue": 1595
@@ -8393,6 +8389,10 @@
     },
     "finish:11a0aff5-1e97-448c-8b87-c8b9e26ae83c": {
       "digest": "a5bae9647c881589ef71fe05a0ec49c05fbbdfa976b43434e47ef6d3884c0395",
+      "issue": 1603
+    },
+    "finish:77739f47-ded8-4bfe-8e73-036143278db9": {
+      "digest": "73db644bd86fc62f4d31705a6e05ff1946ee754b8be2c774b964424028bb74ab",
       "issue": 1603
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
