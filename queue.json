@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28342,
+  "revision": 28343,
   "nextTicket": 772,
   "nextFence": 767,
   "tasks": {
@@ -6316,7 +6316,7 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1600-core-compatibility",
-      "materialSha": "ce0c6b6f22a55f7ed8c3dd0056ca96e9899eb33a",
+      "materialSha": "3c889a22410a979b6833de5049857c3f03d1937c",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 768,
@@ -7437,10 +7437,6 @@
     "reviewRequest": "review:1598:2:f90c6b3bf362de031cc4c7aa133966ce1397c477:0a917f294e0393c317f4a4fdeec9dc4640bb0695"
   },
   "events": {
-    "finish:30f2160c-8822-4d87-ae3e-9cb7713f597b": {
-      "digest": "9be95af3daf6e70a56638180bb365cf3e7c87d3f454b8dc56c4e52976788971a",
-      "issue": 1609
-    },
     "finish:61779cef-118e-43c7-870b-36ece53b82c4": {
       "digest": "08e15a6ca2168d8215d4704bd64bc4fa5fd738cdea0dab2cea2e61f8cddc0b3f",
       "issue": 1609
@@ -8300,6 +8296,10 @@
     "github:45993444157:1:completions:message:c54fb9e40e5bf84229543edd572d86566a01a891b5047895e948b29d9fb315f1": {
       "digest": "d9f58e4b8859e534ec8cec7c7f44c61f0ad81c6aafb45746907c4bf6173de3f1",
       "issue": 1598
+    },
+    "ready:1600:3c889a22410a979b6833de5049857c3f03d1937c": {
+      "digest": "611d9b7c93e1943c5d2e7c698bf2e341386ca0c45d693a35c7a08ed5b94768cf",
+      "issue": 1600
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
