@@ -3,6 +3,7 @@
  * Legacy snapshot compatibility utility; process-next does not call this tool.
  * Since #1598 source trees have no tracked frontend: --verify checks dist,
  * --must-match is false, and --clean preserves ignored local build output.
+ * Snapshot presence is read from the current checkout index, not the optional ref.
  * The rules below remain only for historical trees that carry a snapshot.
  *
  * До #657 каждая задача пересобирала и коммитила бандл (`dist/**`,
@@ -158,8 +159,8 @@ function main(argv, cwd = process.cwd()) {
   const at = argv.indexOf('--must-match');
   if (at >= 0) {
     const ref = argv[at + 1] && !argv[at + 1].startsWith('--') ? argv[at + 1] : 'HEAD';
-    const must = hasSnapshot && committedBundleMustMatch(commitShape(ref, cwd));
     if (!hasSnapshot) { console.log('frontend is untracked build output; only dist integrity applies (#1598)'); return 1; }
+    const must = committedBundleMustMatch(commitShape(ref, cwd));
     console.log(must
       ? `${ref}: коммит меняет бандл или это кандидат — закоммиченный HACS обязан совпасть со сборкой`
       : `${ref}: бандл не меняется — закоммиченная копия законно отстаёт, судится только свежая сборка (#657)`);

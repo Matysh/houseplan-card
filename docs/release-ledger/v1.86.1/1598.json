@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1598,
+  "baseStable": "v1.86.1",
+  "category": "infra",
+  "rationale": "Remove stale generated source artifacts and preserve packaging, install and review tooling without changing shipped product behaviour.",
+  "summary": {
+    "en": "Keep generated frontend out of Git and install verified HACS/release ZIP bytes.",
+    "ru": "Frontend исключён из Git; установка использует проверенные байты ZIP релиза/HACS."
+  }
+}

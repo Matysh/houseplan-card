@@ -8,6 +8,7 @@ import { packageCandidate } from '../lib/package.mjs';
 import { collectMeasurement, measureZip } from '../lib/metrics.mjs';
 import { digest } from '../lib/storage.mjs';
 import { gzipSync } from 'node:zlib';
+const FINGERPRINT = 'f'.repeat(64);
 function fixture(t, { legacySnapshot = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'hp-package-')); t.after(() => rmSync(root, { recursive: true, force: true }));
   const write = (path, value) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), value); };
@@ -16,13 +17,14 @@ function fixture(t, { legacySnapshot = false } = {}) {
   write('custom_components/houseplan/const.py', "VERSION = '1.99.0-beta.1'\n");
   write('src/houseplan-card.ts', "const CARD_VERSION = '1.99.0-beta.1';\n");
   write('src/houseplan-editor-runtime.ts', "const CARD_VERSION = '1.99.0-beta.1';\n");
+  write('custom_components/houseplan/build_identity.py', readFileSync(new URL('../../custom_components/houseplan/build_identity.py', import.meta.url)));
   write('custom_components/houseplan/__init__.py', 'value = 1\n'); write('custom_components/houseplan/THIRD_PARTY_NOTICES.md', 'license');
   if (legacySnapshot) write('custom_components/houseplan/frontend/old.js', 'old must not ship');
   write('docs/data-hp-contract.json', '{}'); write('.gitignore', 'dist/\nartifacts/\n');
   const git = args => execFileSync('git', ['-c', 'core.hooksPath=/dev/null', ...args], { cwd: root, stdio: ['ignore','pipe','pipe'], encoding: 'utf8' });
   git(['init','-q']); git(['add','.']); git(['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','candidate']);
   const main = Buffer.from('new frontend'); write('dist/houseplan-card.js', main);
-  write('dist/houseplan-assets.json', JSON.stringify({ fingerprint: 'same-build', initialViewFiles: ['houseplan-card.js'], files: [{ path: 'houseplan-card.js', sha256: digest(main) }] }));
+  write('dist/houseplan-assets.json', JSON.stringify({ schema: 1, fingerprint: FINGERPRINT, initialViewFiles: ['houseplan-card.js'], files: [{ path: 'houseplan-card.js', sha256: digest(main) }] }));
   return { root, write, git };
 }
 test('package uses prepared bytes, includes delivered licenses and keeps the source tree untouched', { skip: process.platform === 'win32' ? 'ZIP construction verified in prepared WSL/Python' : false }, t => {
@@ -33,9 +35,15 @@ test('package uses prepared bytes, includes delivered licenses and keeps the sou
     readFileSync(join(root, 'dist/houseplan-assets.json')), 'package keeps the prepared manifest and fingerprint');
   assert.equal(readFileSync(join(result.candidateRoot, 'custom_components/houseplan/THIRD_PARTY_NOTICES.md'), 'utf8'), 'license');
   assert.equal(readFileSync(result.standalone, 'utf8'), 'new frontend');
-  const sizes = measureZip(result.zip); assert.equal(sizes.files.length, 2); assert.equal(sizes.buildFingerprint, 'same-build');
+  // Read the actual staged package with the actual backend identity reader.
+  // This keeps the installed 64-hex requirement separate from source-only trees.
+  const identity = JSON.parse(execFileSync('python3', ['-c',
+    'from custom_components.houseplan.build_identity import read_build_identity; import json; i=read_build_identity(); print(json.dumps({"fingerprint": i.fingerprint, "build": i.build}))'],
+    { cwd: result.candidateRoot, encoding: 'utf8' }));
+  assert.deepEqual(identity, { fingerprint: FINGERPRINT, build: null });
+  const sizes = measureZip(result.zip); assert.equal(sizes.files.length, 2); assert.equal(sizes.buildFingerprint, FINGERPRINT);
   const second = packageCandidate({ root }); assert.equal(second.artifactDigest, result.artifactDigest);
-  const performance = { sourceSha: result.sourceSha, buildFingerprint: 'same-build', rows: Array.from({ length: 7 }, () => ({ firstStableRenderMs: 1, spaceSwitchMs: 2, panZoomMs: 3, stateUpdateMs: 4 })), samples: 7, warmups: 1, runtime: {} };
+  const performance = { sourceSha: result.sourceSha, buildFingerprint: FINGERPRINT, rows: Array.from({ length: 7 }, () => ({ firstStableRenderMs: 1, spaceSwitchMs: 2, panZoomMs: 3, stateUpdateMs: 4 })), samples: 7, warmups: 1, runtime: {} };
   const args = { zip: result.zip, performance, sourceSha: result.sourceSha, host: { cpu:'fixture', power_scheme:'fixture' }, runnerHash:'fixture', release:result.version };
   assert.equal(collectMeasurement(args).timing_metrics.panZoomMs.median, 3);
   performance.buildFingerprint = 'wrong-build'; assert.throws(() => collectMeasurement(args), /packaged frontend/);

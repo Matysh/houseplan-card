@@ -25,6 +25,42 @@ async function fixture(files, run) {
     }
 }
 const select = (root, options = {}) => selectTaskTests({ root, inventory, track: 'ship', layer: 'product', ...options });
+test('#1598 generated frontend and BUILD.json changes retain backend runtime readers on infra', async () => fixture({
+    'tests_backend/test_ha_build_identity.py': '',
+    'tests_backend/test_frontend_assets.py': '',
+    'tests_backend/test_ha_frontend_assets.py': '',
+    'tests_backend/test_ha_frontend_registration.py': '',
+    'test/dev-build.test.mjs': '',
+    'test/independent-unmapped.test.mjs': '',
+    'src/unmapped.ts': 'export const value = 1;',
+    'custom_components/houseplan/unmapped_xyz.py': 'value = 1',
+}, async dir => {
+    for (const changed of ['custom_components/houseplan/frontend/houseplan-assets.json', 'custom_components/houseplan/BUILD.json']) {
+        const selection = await select(dir, { layer: 'infra', changedFiles: [changed] });
+        for (const file of ['tests_backend/test_ha_build_identity.py', 'tests_backend/test_frontend_assets.py',
+            'tests_backend/test_ha_frontend_assets.py', 'tests_backend/test_ha_frontend_registration.py']) {
+            assert.ok(selection.files.includes(file), file);
+            assert.ok(selection.explanation.reasons[file].includes('Читает установочные frontend/BUILD.json'));
+        }
+    }
+    const mixed = await select(dir, { layer: 'product', changedFiles: ['custom_components/houseplan/frontend/houseplan-assets.json',
+        'tests_backend/test_ha_build_identity.py', '.gitignore', 'demo/stand/update-dev-bundle.sh', 'docs/release-ledger/v1.86.1/1598.json', 'test/dev-build.test.mjs'] });
+    assert.ok(mixed.files.includes('tests_backend/test_ha_build_identity.py'));
+    assert.ok(mixed.files.includes('test/dev-build.test.mjs'), 'changed infrastructure test is still selected');
+    assert.equal(mixed.explanation.gaps.some(gap => gap.reason.startsWith('Неизвестная область:')), false,
+        'known infrastructure inputs in a mixed diff cannot trigger an unmapped product-source fallback');
+    assert.equal(mixed.explanation.gaps.some(gap => gap.path?.startsWith('custom_components/houseplan/frontend/')), false,
+        'generated output cannot become an unmapped product-source fallback in a mixed diff');
+    assert.equal(mixed.files.includes('test/independent-unmapped.test.mjs'), false, 'mixed infra inputs do not select the whole product');
+    for (const actualSource of ['src/unmapped.ts', 'custom_components/houseplan/unmapped_xyz.py']) {
+        const fallback = await select(dir, { layer: 'product', changedFiles: [actualSource] });
+        assert.ok(fallback.files.includes('test/independent-unmapped.test.mjs'));
+        assert.ok(fallback.explanation.reasons['test/independent-unmapped.test.mjs'].includes('Безопасный fallback: неразмеченный исходник'));
+        if (actualSource.endsWith('.py')) assert.ok(fallback.explanation.reasons['tests_backend/test_ha_build_identity.py'].includes('Безопасный fallback: неразмеченный исходник'));
+    }
+    const unrelated = await select(dir, { layer: 'infra', changedFiles: ['scripts/unrelated.mjs'] });
+    assert.equal(unrelated.files.length, 0, 'runtime checks are addressed, not a new global gate');
+}));
 test('#1482 isometry changes select the shared-glass pixel contract without areaTests', async () => fixture({
     'src/styles/iso-lab-markers.styles.ts':'',
     'demo/smoke_iso_device_contours.mjs':'',

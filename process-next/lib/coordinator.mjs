@@ -39,6 +39,7 @@ export function taskLayerFromDiff(files) {
   const source = files.filter(file => file && !file.startsWith('custom_components/houseplan/frontend/'));
   const doc = file => /\.md$/i.test(file) || /^(?:LICENSE|NOTICE)(?:\.[^/]+)?$/.test(file)
     || /^docs\/.*\.(?:png|jpe?g|webp|svg|gif|pdf)$/i.test(file);
+  if (source.length === 0 && files.some(Boolean)) return 'infra';
   if (source.every(doc)) return 'docs';
   if (source.some(file => matchesInputs(file, PRODUCT_PREPARATION_INPUTS))) return 'product';
   if (source.some(file => {

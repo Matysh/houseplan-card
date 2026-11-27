@@ -39,7 +39,7 @@ export const DOMAINS = [
 const companionInventory = JSON.parse(readFileSync(new URL('../catalog/companion-inventory.json', import.meta.url), 'utf8'));
 const observedCosts = JSON.parse(readFileSync(new URL('../catalog/costs.json', import.meta.url), 'utf8'));
 const ids = new Map(DOMAINS.map(row => [row[0], row]));
-const isInfra = p => /^(?:process-next\/|scripts\/|\.github\/)/.test(p);
+const isInfra = p => p === '.gitignore' || /^(?:process-next\/|scripts\/|\.github\/|demo\/stand\/|docs\/release-ledger\/)/.test(p);
 export function domainsOf(path) { return DOMAINS.filter(row => row[2].test(path.toLowerCase().replaceAll('_', '-'))).map(row => row[0]); }
 const fast = row => ['node', 'backend', 'browser'].includes(row.type);
 const unique = xs => [...new Set(xs)];
@@ -52,7 +52,8 @@ const originalSourceFile = p => /^(?:src\/|custom_components\/houseplan\/|assets
 const isDocument = p => /\.md$/i.test(p) || /^(?:LICENSE|NOTICE)(?:\.[^/]+)?$/.test(p) || /^docs\/.*\.(?:png|jpe?g|webp|svg|gif|pdf)$/i.test(p);
 // Shared helpers, fixtures and contracts are real selection inputs as well as
 // production modules. A new unrecognised input must remain visibly conservative.
-const sourceFile = p => originalSourceFile(p) || !isInfra(p) && !isDocument(p);
+const sourceFile = p => !p.startsWith('custom_components/houseplan/frontend/')
+    && (originalSourceFile(p) || !isInfra(p) && !isDocument(p));
 export async function testCatalog(root, inventory, { e2eRoot } = {}) {
     // Queue and public-CI workers import this module from their sparse checkout.
     // Only actual catalog/task planning requires the full golden fixture tree.
@@ -136,8 +137,18 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
     };
     for (const path of areaTests)
         add(path, 'Дополнение исполнителя');
-    const product = layer === 'product', productChanges = product ? changedFiles.filter(p => !isDocument(p) && (sourceFile(p) || productSourceInputs.includes(p))) : [],
-        infraChanges = changedFiles.filter(p => !isDocument(p) && (!product || isInfra(p)));
+    // These are runtime file reads, not import edges. Keep the backend witnesses
+    // when packaging output disappears, including infrastructure-only tasks.
+    if (changedFiles.some(path => path.startsWith('custom_components/houseplan/frontend/')
+        || path === 'custom_components/houseplan/BUILD.json')) {
+        for (const file of ['tests_backend/test_ha_build_identity.py', 'tests_backend/test_frontend_assets.py',
+            'tests_backend/test_ha_frontend_assets.py', 'tests_backend/test_ha_frontend_registration.py'])
+            add(file, 'Читает установочные frontend/BUILD.json');
+    }
+    const infraTests = new Set(rows.filter(row => row.layer === 'infra').map(row => row.path));
+    const product = layer === 'product', productChanges = product ? changedFiles.filter(p => !isDocument(p)
+        && (!infraTests.has(p) && sourceFile(p) || productSourceInputs.includes(p))) : [],
+        infraChanges = changedFiles.filter(p => !isDocument(p) && (!product || isInfra(p) || infraTests.has(p)));
     if (product)
         for (const file of CRITICAL_NODE)
             add(file, 'Общее критичное ядро');

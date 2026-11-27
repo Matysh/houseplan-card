@@ -191,6 +191,7 @@ test('task layer follows significant diff, not an agent docs declaration or test
   for (const file of ['src/logic.ts', 'package.json', 'package-lock.json', 'rollup.config.mjs', 'tsconfig.test.json', 'scripts/fix-test-build.mjs', 'scripts/coverage-maps.mjs', 'scripts/css-template-minifier.mjs']) assert.equal(taskLayerFromDiff([file]), 'product');
   assert.equal(taskLayerFromDiff(['test/dev-build.test.mjs', 'process-next/lib/queue.mjs']), 'infra');
   assert.equal(taskLayerFromDiff(['demo/stand/update-dev-bundle.sh']), 'infra', 'stand deployment helper is infrastructure');
+  assert.equal(taskLayerFromDiff(['custom_components/houseplan/frontend/houseplan-card.js']), 'infra', 'generated-only changes are not pure documentation');
   assert.equal(taskLayerFromDiff(['custom_components/houseplan/frontend/houseplan-card.js', 'scripts/bundle-sync.mjs']), 'infra', 'generated frontend output is not a product source');
   assert.equal(taskLayerFromDiff(['custom_components/houseplan/frontend/houseplan-card.js', 'custom_components/houseplan/frontend_assets.py']), 'product', 'runtime frontend serving code still selects product checks');
   assert.equal(taskLayerFromDiff(['test/device-toggle.test.mjs']), 'product');

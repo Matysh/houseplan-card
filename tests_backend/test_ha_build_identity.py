@@ -128,11 +128,18 @@ def test_issue_836_unreadable_files_never_raise(tmp_path: Path, monkeypatch) -> 
     assert read_build_identity(tmp_path / "absent") == UNKNOWN_BUILD
 
 
-def test_issue_836_shipped_tree_has_no_label_and_a_fingerprint() -> None:
-    """The dev tree, betas and releases carry no BUILD.json (К1)."""
-    identity = read_build_identity()
+def test_issue_1598_source_only_tree_has_no_label_or_fingerprint(tmp_path: Path, monkeypatch) -> None:
+    """A source checkout without generated frontend is not an installed build."""
+    monkeypatch.setattr(build_identity, "INTEGRATION_ROOT", tmp_path)
+    assert not (tmp_path / "frontend").exists()
+    assert read_build_identity() == UNKNOWN_BUILD
+
+
+def test_issue_836_unlabelled_installed_tree_keeps_its_fingerprint(tmp_path: Path) -> None:
+    """Installed beta/release bytes have a fingerprint without a dev label (К1)."""
+    identity = read_build_identity(_tree(tmp_path, label=None))
     assert identity.build is None
-    assert identity.fingerprint is not None and len(identity.fingerprint) == 64
+    assert identity.fingerprint == FINGERPRINT
 
 
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:
