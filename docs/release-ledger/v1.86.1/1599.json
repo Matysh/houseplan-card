@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1599,
+  "baseStable": "v1.86.1",
+  "category": "infra",
+  "rationale": "Synthetic WebGL benchmark and release measurement tooling only; diagnostic rows do not change product behavior, data formats, primary budgets, or user milestones. Repairs bookkeeping after native demo-path inspection classified this tooling task as product.",
+  "summary": {
+    "ru": "Бенчмарки объёмного вида измеряют настоящий WebGL-кадр, геометрию, камеру и свет; результаты остаются диагностикой с явной отметкой программного рендера.",
+    "en": "Measure presented WebGL 3D frames, geometry, camera and lighting as diagnostics, with explicit software-renderer reporting."
+  }
+}
