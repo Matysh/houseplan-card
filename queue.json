@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28876,
+  "revision": 28877,
   "nextTicket": 783,
   "nextFence": 777,
   "tasks": {
@@ -7379,18 +7379,12 @@
       }
     },
     "1613": {
-      "requestId": "spec:1613:26f378cb7a4535f9d7e8178b6fd07d97c9a0fb6af2ddd2b21fe3b9bc18c73244",
-      "contextDigest": "26f378cb7a4535f9d7e8178b6fd07d97c9a0fb6af2ddd2b21fe3b9bc18c73244",
+      "requestId": "spec:1613:a5815f1a299ae59409b2d04484f774a87cdd10b443333ff1c8a97466eefa76f9",
+      "contextDigest": "a5815f1a299ae59409b2d04484f774a87cdd10b443333ff1c8a97466eefa76f9",
       "base": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795798099750,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46035908209",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795798413490
     }
   },
   "reviewPublications": {
@@ -7432,6 +7426,19 @@
         "round": null,
         "occurredAt": "2026-11-27T16:50:53.887Z"
       }
+    },
+    "spec:1613:spec:1613:a5815f1a299ae59409b2d04484f774a87cdd10b443333ff1c8a97466eefa76f9": {
+      "issue": 1613,
+      "kind": "spec",
+      "requestId": "spec:1613:a5815f1a299ae59409b2d04484f774a87cdd10b443333ff1c8a97466eefa76f9",
+      "materialSha": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+      "expectedBase": "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+      "patchId": "a5815f1a299ae59409b2d04484f774a87cdd10b443333ff1c8a97466eefa76f9",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-27T16:53:33.490Z"
+      }
     }
   },
   "waiting": [
@@ -7456,10 +7463,6 @@
     "reviewRequest": "review:1594:2:b94f73bb2a99353d945245f727a2a24bb4b6e535:15caaf14ccad42a9f1df2f7cae4946dbbd67c766"
   },
   "events": {
-    "finish:1b2d7012-a869-4f84-8684-829edc8ec196": {
-      "digest": "c65b5e02901a5bce795866002ac3d7e2cd33355d578264b3e90945667b35fe37",
-      "issue": 1594
-    },
     "finish:78c9e4db-c21b-4602-bac2-7025b2e5ed7d": {
       "digest": "b293525c59b6816cc756485b29a67706740f73dccc8a9c6f3f5b3d816c6263c6",
       "issue": 1594
@@ -8267,6 +8270,10 @@
     "github:46037013200:1:completions:message:d8455de7a8ac9a17dd846ab32fb9be6688557610a87f6a44e43fe991b0723f32": {
       "digest": "4a66a1e8b44222e0341d2ad0b907bd006e37b7ebeee5263c34490984c8a5a627",
       "issue": 1594
+    },
+    "github:46037322393:1:label:spec-request": {
+      "digest": "83389abf511b6f1f6e5356cfd4e0ac141c80dabe7c386c97d17609392ca914ce",
+      "issue": 1613
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -9254,6 +9261,22 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "github:46037322393:1:label:spec-request:spec-resubmitted:1613": {
+      "digest": "83389abf511b6f1f6e5356cfd4e0ac141c80dabe7c386c97d17609392ca914ce",
+      "issue": 1613,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1613,
+        "at": 1795798413490,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1613:a5815f1a299ae59409b2d04484f774a87cdd10b443333ff1c8a97466eefa76f9",
+        "reviewChanges": "Пересмотреть в первую очередь разделение доказанной зависимости и общего импорта, сохранение обязательного покрытия при превышении бюджета и границу зачёта после rebase. Предлагается уменьшать штатный набор через адресные связи и выбирать дополнительное по бюджету. Ограничение только количества оставило бы дорогие браузерные шаги в слоте, а один таймер систематически прерывал бы заведомо слишком широкие наборы. Контрольные прогоны и результаты действующего раннера приведены выше. На S4 направляются требования и измерения для калибровки.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1613#issuecomment-7223697987)\n\n- Сходимость после изменения dev. Разрешена одна явно отмеченная финальная проверка расширенного набора в слоте после доказанного внешнего успеха для того же diff. Гарантия подтверждения актуального кандидата сохраняется. В AC4 добавлено слияние другой продуктовой задачи между двумя фазами.\n- Среда и пределы. Расширение использует отдельный GitHub runner. Для штатного резерва остаётся предел ожидания 60 мин, для расширенного прогона и разовой финальной попытки — 120 мин на попытку. WSL не разделяет CPU с расширением. Перенос пошаговых результатов между средами исключён. Целый отчёт действителен только для точного кандидата и запроса.\n- Уточнения. Планирование начинается до занятия слота. В прогнозе учтены exclusive-шаги и сопоставимые замеры. Используется существующая центральная карта. Неизвестные исходники сохраняют консервативный fallback с явным подтверждением адресного покрытия. Адресное сужение ключей кеша браузера остаётся отдельной работой.\n- Измерения WSL сохранились из первого раунда. В этой редакции изменён контракт. Перед повторной передачей выполнена проверка формы ТЗ.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
