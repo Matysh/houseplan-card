@@ -148,6 +148,12 @@ export class Plan3dHost {
       if (!(crop.w > 0 && crop.h > 0)) return;
       const { bounds, content, preset, sectionHeight } = presentation;
       const camera = plan3dCamera(preset, bounds, content, sectionHeight, crop);
+      if (presentation.world.floorInk?.detail && !this.viewport.blocked) {
+        const pixels = this.viewport.pixelSize();
+        this.world.scheduleFloorDetail(camera, pixels, [pixels.width, pixels.height, crop.x, crop.y, crop.w, crop.h,
+          preset.rotDeg, preset.tiltDeg, sectionHeight, bounds.x, bounds.y, bounds.w, bounds.h,
+          content.x, content.y, content.w, content.h].join('|'));
+      }
       // The gesture moves existing meshes. Reconcile glyph raster density on
       // the next authored frame instead of touching every marker each tick.
       if (!cameraOnly) {

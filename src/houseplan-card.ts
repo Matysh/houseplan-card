@@ -14042,7 +14042,8 @@ export class HouseplanCard extends LitElement {
           useFurnitureVolume, disp.color, disp.showBorders, zeroWalls.style, contentFingerprint(zeroWalls.lines), stairs,
           ...decor.flatMap(shape => shape.kind === 'text' && !neutral ? [this._renderDeviceSnapshot?.facts.get(`decor:${space.id}:${shape.id}`)]
             : shape.kind === 'image' ? [this._display(this._decorAssets.get(shape.asset_id)?.url)] : [])];
-        return { scope, key, bounds, capture: signal => {
+        const detail = !neutral && !disp.hideDecor && decor.some(shape => shape.kind === 'image');
+        return { scope, key, bounds, detail, capture: signal => {
           const stage = this._stageEl;
           if (!stage || this.planHost.authorityKey !== authority || this._space !== scope) return Promise.resolve(null);
           return this._captureStartupSvg(stage, () => [

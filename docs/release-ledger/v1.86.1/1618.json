@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1618,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "The decor image sampling issue is specific to the live WebGL renderer on the 2.0.0 line.",
+  "summary": {
+    "ru": "Декор с загруженными изображениями сохраняет чёткость при приближении 3D-плана.",
+    "en": "Uploaded decor images stay sharp when zooming in on the 3D plan."
+  }
+}

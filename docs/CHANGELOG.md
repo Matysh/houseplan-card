@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep uploaded decor images sharp when zooming in on the 3D plan (#1618).
+
 ## v2.0.0-beta.3 — 2026-11-28
 
 - Preserve partition openings when adding a space triggers migration to plan model 11 (#1611).

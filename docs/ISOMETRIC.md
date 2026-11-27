@@ -46,6 +46,13 @@ High zoom can refine the glyph raster on each visible device cap without
 moving any scene objects. The soft device and label shadows are
 non-interactive floor paint and do not enter neutral previews.
 
+For floors with uploaded decor images, the live host also refines the visible
+portion of the floor paint after the camera settles. It reuses the already
+loaded images, their transforms and the full decor draw order. The crop is
+limited to a 2048-pixel edge and replaces, rather than covers, the corresponding
+part of the base texture. Motion, neutral previews and unavailable images
+continue to use the base paint; 2D decor is unchanged.
+
 The optional server startup preview (#1522) captures a bounded neutral WebP of
 the full projected 3D scene, including furniture, plus its rectangle in
 projection units. It carries no device icons, live lighting, hover paint or

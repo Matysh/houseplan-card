@@ -21,6 +21,7 @@ import { Plan3dTransparency } from './plan-3d-transparency';
 import { Plan3dMarkerLayer, type MarkerRaster, type Plan3dMarker } from './plan-3d-markers';
 import { markerContactChains } from './iso-marker-outline';
 import { PAINT_BARRIER_MAX_MS } from './visual-continuity';
+import { floorDetailSvg, floorOutsideDetail, plan3dFloorDetail, FLOOR_DETAIL_DELAY_MS, type FloorDetail } from './plan-3d-floor-detail';
 
 type Polygon = readonly (readonly PlanPoint[])[];
 type Paint = Readonly<{ color: string; opacity: number; lit?: boolean; shadeSides?: boolean; floorPaint?: boolean; front?: boolean }>;
@@ -66,6 +67,7 @@ export interface Plan3dFloorInk {
   scope: string;
   key: readonly unknown[];
   bounds: ViewRect;
+  detail?: boolean;
   capture(signal: AbortSignal): Promise<Blob | null>;
 }
 
@@ -308,6 +310,11 @@ export class Plan3dWorld {
   private floorInkTexture?: Texture;
   private floorInkLoading = false;
   private floorInkWork?: { controller: AbortController; ready: Promise<boolean> };
+  private floorDetailSource?: { svg: Blob; bounds: ViewRect; density: number };
+  private floorDetail?: { area: FloorDetail; texture: Texture };
+  private floorDetailKey?: string;
+  private floorDetailTimer?: ReturnType<typeof setTimeout>;
+  private floorDetailWork?: AbortController;
   private readonly light: Plan3dLightField;
   private readonly transparency = new Plan3dTransparency();
   private transparencyEnabled = false;
@@ -845,10 +852,89 @@ export class Plan3dWorld {
     this.replace(this.wallBase, [this.planarInk(paint.texture, bounds, 0, 1, -.75)]);
   }
 
+  private cancelFloorDetail(): void {
+    clearTimeout(this.floorDetailTimer);
+    this.floorDetailTimer = undefined;
+    this.floorDetailWork?.abort();
+    this.floorDetailWork = undefined;
+    this.floorDetailKey = undefined;
+    this.floorDetailSource = undefined;
+  }
+
+  private renderFloorInk(bounds: ViewRect): void {
+    const base = this.floorInkTexture;
+    if (!base) return;
+    const detail = this.floorDetail;
+    const meshes = (detail ? floorOutsideDetail(bounds, detail.area) : [bounds]).map(part => {
+      const mesh = this.planarInk(base, part, 0, 1, -1);
+      if (part !== bounds) {
+        const uv = mesh.geometry.getAttribute('uv');
+        const u = (part.x - bounds.x) / bounds.w, v = 1 - (part.y + part.h - bounds.y) / bounds.h;
+        for (let i = 0; i < uv.count; i++)
+          uv.setXY(i, u + uv.getX(i) * part.w / bounds.w, v + uv.getY(i) * part.h / bounds.h);
+      }
+      return mesh;
+    });
+    if (detail) meshes.push(this.planarInk(detail.texture, detail.area, 0, 1, -1));
+    this.replace(this.floorInk, meshes);
+  }
+
+  scheduleFloorDetail(camera: Camera, pixels: { width: number; height: number }, key: string): void {
+    const source = this.floorDetailSource;
+    if (!source || this.floorDetailKey === key) return;
+    this.floorDetailKey = key;
+    clearTimeout(this.floorDetailTimer);
+    this.floorDetailWork?.abort();
+    this.floorDetailWork = undefined;
+    this.floorDetailTimer = setTimeout(() => {
+      this.floorDetailTimer = undefined;
+      if (this.floorDetailSource !== source || this.document.hidden) {
+        this.floorDetailKey = undefined;
+        return;
+      }
+      const tile = plan3dFloorDetail(camera, source.bounds, pixels, source.density);
+      if (!tile) {
+        if (this.floorDetail) {
+          this.floorDetail.texture.dispose();
+          this.floorDetail = undefined;
+          this.renderFloorInk(source.bounds);
+          this.changed?.();
+        }
+        return;
+      }
+      const old = this.floorDetail?.area;
+      if (old && old.width === tile.width && old.height === tile.height
+        && same([old.x, old.y, old.w, old.h], [tile.x, tile.y, tile.w, tile.h])) return;
+      const controller = this.floorDetailWork = new AbortController();
+      const { signal } = controller;
+      // Optional sharpening never participates in first-frame/recovery readiness.
+      void floorDetailSvg(source.svg, tile).then(async blob => {
+        if (!blob || signal.aborted) return;
+        const image = this.document.createElement('img'), url = URL.createObjectURL(blob);
+        const revoke = () => URL.revokeObjectURL(url);
+        signal.addEventListener('abort', revoke, { once: true });
+        try {
+          image.src = url;
+          await image.decode();
+          if (signal.aborted || this.floorDetailSource !== source) return;
+          const texture = new Texture(image);
+          texture.colorSpace = SRGBColorSpace;
+          texture.needsUpdate = true;
+          this.floorDetail?.texture.dispose();
+          this.floorDetail = { area: tile, texture };
+          this.renderFloorInk(source.bounds);
+          this.changed?.();
+        } finally { signal.removeEventListener('abort', revoke); revoke(); }
+      }).catch(() => { /* Keep the already-painted base if sharpening is unavailable. */ })
+        .finally(() => { if (this.floorDetailWork === controller) this.floorDetailWork = undefined; });
+    }, FLOOR_DETAIL_DELAY_MS);
+  }
+
   private updateFloorInk(input: Plan3dFloorInk | undefined): void {
     const key = input?.key ?? [];
     if (same(key, this.floorInkKey)) return;
     this.floorInkKey = key;
+    this.cancelFloorDetail();
     this.floorInkWork?.controller.abort();
     this.floorInkWork = undefined;
     this.floorInkLoading = false;
@@ -856,6 +942,8 @@ export class Plan3dWorld {
       this.replace(this.floorInk, []);
       this.floorInkTexture?.dispose();
       this.floorInkTexture = undefined;
+      this.floorDetail?.texture.dispose();
+      this.floorDetail = undefined;
     }
     this.floorInkScope = input?.scope;
     if (!input) return;
@@ -871,9 +959,13 @@ export class Plan3dWorld {
         const texture = new Texture(image);
         texture.colorSpace = SRGBColorSpace;
         texture.needsUpdate = true;
-        this.replace(this.floorInk, [this.planarInk(texture, input.bounds, 0, 1, -1)]);
         this.floorInkTexture?.dispose();
         this.floorInkTexture = texture;
+        this.floorDetail?.texture.dispose();
+        this.floorDetail = undefined;
+        if (input.detail) this.floorDetailSource = { svg: blob, bounds: input.bounds,
+          density: Math.max(image.naturalWidth / input.bounds.w, image.naturalHeight / input.bounds.h) };
+        this.renderFloorInk(input.bounds);
         return true;
       } finally { URL.revokeObjectURL(url); }
     }).catch(() => false).finally(() => {

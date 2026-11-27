@@ -34,12 +34,15 @@ export async function startIsoPaintScene({width=1480,height=1080,referenceRoot,b
         callService:async()=>{window.__isoPaintWrites.push('service');throw Error('No device control is permitted in the paint fixture');},
         callWS:async message=>{
           window.__isoPaintCalls.push(message.type);
+          if(fixture.decorAssets && message.type==='houseplan/assets/resolve') return {assets:fixture.decorAssets};
+          if(fixture.decorAssets && message.type==='houseplan/content/sign') return {urls:Object.fromEntries(
+            message.paths.map(path=>[path, window.__isoPaintAssetUrls?.[path] ?? path]))};
           if(!readTypes.has(message.type)){
             window.__isoPaintWrites.push(message.type);
             throw Error('Unexpected mutating or unsupported WS call: '+message.type);
           }
           if(message.type==='houseplan/config/get')return{config:structuredClone(fixture.config),rev:1,can_write:true,
-            device_contact_api:1,plan_graph_api:1};
+            device_contact_api:1,plan_graph_api:1,...(fixture.decorAssets?{decor_assets_api:1}:{})};
           if(message.type==='houseplan/layout/get')return{layout:structuredClone(fixture.layout),rev:1};
           if(message.type==='config/device_registry/list')return Object.values(fixture.devices);
           if(message.type==='config/entity_registry/list')return Object.values(fixture.entities);
