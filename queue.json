@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 28295,
+  "revision": 28296,
   "nextTicket": 771,
   "nextFence": 767,
   "tasks": {
@@ -8270,6 +8270,10 @@
       "digest": "30d43c8a16df65c023f802c0bd0a5052f784a8eca8d9ab475d6e4ec7ddcaab14",
       "issue": 1598
     },
+    "github:45993104380:1:completions:message:92f89795a1f338502fce6682195a8e8727d46c4e28dc8392b84ec31c4c66f585": {
+      "digest": "38b77c6e8b4b822553928b9d6d63b60ff20e3254facbfc49a8a49cedb1697bbf",
+      "issue": 1598
+    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -8918,20 +8922,6 @@
           "eventId": "finish:5a69bda6-98cd-42f8-8038-d5921aa47337:finish:1:return:return:1608"
         },
         "delivered": true
-      }
-    },
-    "finish:ce8e1cac-f05b-4d41-a5e8-f749b4f89cac:finish:1:admit": {
-      "digest": "8744112d631c2ded2d8ceafe5f37aea812af2a07b494dabcb9fb26f76d6c056a",
-      "issue": 1599,
-      "message": {
-        "kind": "admitted",
-        "issue": 1599,
-        "at": 1795779827970,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "e093e60d3158bc1a90f965b4b0ca56ca6a07fe26",
-        "phase": "sync"
       }
     },
     "finish:ebfd23a8-6ad9-45a3-ab3d-84868c9b557a:finish:1:admit": {
