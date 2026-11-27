@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1591,
+  "revision": 1592,
   "active": "v2.0.0-beta.3-20261127",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -315120,7 +315120,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v2.0.0-beta.3",
         "candidate": "4b71e606a0491c5b830885837c8c476e7e7e524d",
         "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
         "issues": [
@@ -327122,6 +327122,414 @@
         "selectionDigest": "777924df3c48caccb4c75cb417afc5a65be884fd0cad4c1255db18184d71a7c2",
         "status": "not-required",
         "inventoryComplete": true
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v2.0.0-beta.3",
+          "candidate": "4b71e606a0491c5b830885837c8c476e7e7e524d",
+          "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
+          "issues": [
+            {
+              "number": 1001,
+              "commits": [
+                "1af123618b77fe71e860941605dedd41b279069d",
+                "27a5b77e61749989c85cf6f5d7780e333f62b52d"
+              ]
+            },
+            {
+              "number": 1514,
+              "commits": [
+                "34d47ac990c27213aee5428a6f145641d4159e60",
+                "781dc2745dae59b72819e9808cebdcd64b21a290",
+                "7efb1a8312277c04f1d9087f8d0604870189df74",
+                "85b7a0f4eb33c2386069c93fe4fce5b24fe28b62",
+                "863b706d1a60db865e8ac55538b247576dcf586e",
+                "9cd21207a8bafc58addd7c2766ea139416b7c4ac",
+                "b0cff1b5198c3a907325a0945e1c2f82b987903f"
+              ]
+            },
+            {
+              "number": 1563,
+              "commits": [
+                "655e5df2ac40384fdd1f3602acaa6572d2dc7dd5",
+                "7682d15ee497097b71c5b9ab07c36ddc015f5da1",
+                "e45be50fb6c472591b17fba25dec4b75fb604d27"
+              ]
+            },
+            {
+              "number": 1564,
+              "commits": [
+                "547cea142f3a4fbec5781ea346534ed763e85026",
+                "fa12cdeaa569df911954b4f3621515d645cba54d"
+              ]
+            },
+            {
+              "number": 1565,
+              "commits": [
+                "4aebd7d64bf688073a224e985402863948f667b6"
+              ]
+            },
+            {
+              "number": 1566,
+              "commits": [
+                "09d08d749909298ace9e0c8e5fe2717ea9c30ae2",
+                "70869031b696df4931eb2eb6bde083ded7ffbea8",
+                "b679c34918304587f1521cffb03c7cedaebba514",
+                "b9e82e034013cf7ad8cfae72ad36600169ec0649",
+                "cee8e1e6695c8ee5db0ac2f2be3b23cde9822679",
+                "eed47ebadeaa3887144062fbf09e2ae2ef7720e0"
+              ]
+            },
+            {
+              "number": 1567,
+              "commits": [
+                "85a281821fb02031c8b18f8eb2b5254d48c71918",
+                "9870b3e5b064d80ab72771c84f7c20b533c8a4a6",
+                "ec0582978408f0af1bab5eff9bfca4084373d3ba"
+              ]
+            },
+            {
+              "number": 1568,
+              "commits": [
+                "14468186a748bce76eed9390083fedc460df51d1",
+                "b3b73024918c2ef9daa99bc98b0265c78836ff74",
+                "c51890ba23ee72961e346f71bef950a01c2480e4"
+              ]
+            },
+            {
+              "number": 1569,
+              "commits": [
+                "4e517619beacabcbbc912d92c7c821a135991031",
+                "5b45209452ed59329ca3d2054bf53f7336144172"
+              ]
+            },
+            {
+              "number": 1570,
+              "commits": [
+                "0540bcf097fb08aabe739e88c38883ab439b0c0b",
+                "2ee70ca1e172c8fcb5c18940d8519d1603d9c752",
+                "a1ac0219ab2b4f8702cc1799393e6a2197208dd7",
+                "bc8e04cb194d15c2febe20eee1a13dbe8d34e49a",
+                "dba345bf0f07b1b676e34667ec167d4ac57fbc07"
+              ]
+            },
+            {
+              "number": 1571,
+              "commits": [
+                "cb77645a5a916d1d38cfed2f35cbe67a382a1e7d"
+              ]
+            },
+            {
+              "number": 1572,
+              "commits": [
+                "0f696c05c529bff05b89325e8f00c329e9e00b48",
+                "9cf397ca66435c5fbcad73e7d292ad5e839bb810",
+                "bc2c6ac45be56ab45b5c321cb8d70c3f3db96647"
+              ]
+            },
+            {
+              "number": 1573,
+              "commits": [
+                "af48a3bb57b013879d80c70d7fd1c66d12b177bb"
+              ]
+            },
+            {
+              "number": 1574,
+              "commits": [
+                "751db20d7e3ab8b1b047536f34e4946b24aa5b8c"
+              ]
+            },
+            {
+              "number": 1575,
+              "commits": [
+                "6560b865829e17fcc46247d422c7ec2dc1752945",
+                "b1b099b885c772eebb216382c482ed9d96064447"
+              ]
+            },
+            {
+              "number": 1576,
+              "commits": [
+                "d1419a1c50a6c05de40065f2af66e72728ecf570"
+              ]
+            },
+            {
+              "number": 1577,
+              "commits": [
+                "87440fd83d17bb144b2bbfcc320c2ab9b2ffba5c",
+                "8efe705401730d83e9ffbfa4a6053fe2752ed90c"
+              ]
+            },
+            {
+              "number": 1578,
+              "commits": [
+                "f1cbf09ed5611deb66507c8e2cfbba50b07bbad9"
+              ]
+            },
+            {
+              "number": 1579,
+              "commits": [
+                "d4ecd453eda7dfaf4e71d405e14c17a10fc8c8e5"
+              ]
+            },
+            {
+              "number": 1580,
+              "commits": [
+                "71ac7f2af842e1d9764da2be000e4156ae9fcc3b"
+              ]
+            },
+            {
+              "number": 1581,
+              "commits": [
+                "55d6b21782f947114e40fcbfadcca1771a2869ed"
+              ]
+            },
+            {
+              "number": 1583,
+              "commits": [
+                "9a0691f613399b8415f7ee528a932d0338deab50"
+              ]
+            },
+            {
+              "number": 1584,
+              "commits": [
+                "f909f3f291ce762864187623d77cb0f8bfaa42f4"
+              ]
+            },
+            {
+              "number": 1585,
+              "commits": [
+                "ea3cfd012af67df72bab8a9ffadc86b2cd9c66af"
+              ]
+            },
+            {
+              "number": 1587,
+              "commits": [
+                "828dafd96f4764c090bd07558a13f921c239bf4f"
+              ]
+            },
+            {
+              "number": 1589,
+              "commits": [
+                "8cdb00332d689571a68afd8b775ead4003bae24a",
+                "b2dcdde92731c5e9a2d49a326c15739436b43c6b"
+              ]
+            },
+            {
+              "number": 1590,
+              "commits": [
+                "9614fc9b14ddc2c8c7a79486e3c835d2b29a7be7"
+              ]
+            },
+            {
+              "number": 1591,
+              "commits": [
+                "e292b0c63a73c78a7841e5b16d292ef9b4b0ff31"
+              ]
+            },
+            {
+              "number": 1594,
+              "commits": [
+                "0627a8c1f5d0f1321b4544f9a5ef6f331ab642c8",
+                "30dda61b229ead40f167565af6215a5eef87ecd8",
+                "8a5525aac0fcf303055752ec0f820026948e95aa"
+              ]
+            },
+            {
+              "number": 1595,
+              "commits": [
+                "379a1ee4f682c2735f0b96f5258166a23f3f923b",
+                "4f9b201d33f536a54f53e7b61640620e252d934d",
+                "c57e71759997c2e17bc6e0fec9fce82a10eb2502",
+                "eeeac2866acbf455d84ad1713b56d677431d151e"
+              ]
+            },
+            {
+              "number": 1597,
+              "commits": [
+                "502258741f1753f27b35ee15c7264d196c2521f6"
+              ]
+            },
+            {
+              "number": 1598,
+              "commits": [
+                "49b64232325677e6ee18d72eeb4987b247e6794c",
+                "69861c16fba8d07f124dd29c176184714da0d5b5",
+                "6ded1f5c0db02d8d5aa18d452ae5f51d73945000",
+                "838149929ebdd4edf5d6822a8e117501fda44d1e",
+                "b1b9454c7272f863091ee96dc5bc896b7aa9821a",
+                "b35fb8e9e8f6bec26b2a0643c61028a37d3ba855",
+                "ca2cb17e976fe3b01451b10e941c5e7059a4105d",
+                "f98407da069ddc991ca3fe05c1507d4bf05d2e30",
+                "fe995d3e64f4d542a406035009302a56531d11d2"
+              ]
+            },
+            {
+              "number": 1599,
+              "commits": [
+                "0a917f294e0393c317f4a4fdeec9dc4640bb0695",
+                "181caa9489490cce3d6a978fda10fe6752e0c259",
+                "2acc0c9b544f15b7af1e160acd100e71928ee2b8",
+                "75c35cadccf5f130e84c675729b39ffd6f54d9f7"
+              ]
+            },
+            {
+              "number": 1600,
+              "commits": [
+                "0457a2e688360059967822c278013458b3ebd20f",
+                "050c3f9aa0f8eac9f1da8d4c4cd576452bd3a383",
+                "15caaf14ccad42a9f1df2f7cae4946dbbd67c766",
+                "33b6ec6d4bbdd5e4d52eb7e3d9532d32ed3850ce",
+                "59788ef5d04b51c2a39c2df6d408384a29848cac",
+                "8d57913e3cd5753f5b7b8e254ed16c85fd671281",
+                "e9da30fee518729c0fbb04ef0ad285ea17f92072",
+                "f0630f66ccea40ecf67d61b55c6e312efabb6ef2"
+              ]
+            },
+            {
+              "number": 1603,
+              "commits": [
+                "19ec0d8dde0b0b07d30af28be8a6661eb462ecf7",
+                "7a2d872ffc8058facb5ee14210be4b9e94a52f4f",
+                "cd6d81ae1444bd5b10ce1c4c42fb5e75cd9f8cbb",
+                "de9332696d298f6103dfd8d16be209c267b7a148"
+              ]
+            },
+            {
+              "number": 1604,
+              "commits": [
+                "58efd2b4f7e7576ae351ab6b6419681d6c5bd287",
+                "fb2cc44cedeef89eb28d06a83b607f55cc00d706"
+              ]
+            },
+            {
+              "number": 1605,
+              "commits": [
+                "3d887a13c3dcf8bd1de633a98135941981307336",
+                "e98df56dd91588ec28423a94d3e49d4f033541ed"
+              ]
+            },
+            {
+              "number": 1607,
+              "commits": [
+                "1a6660aec8bbd8012b4ad26f76982f0fa15d09dd"
+              ]
+            },
+            {
+              "number": 1608,
+              "commits": [
+                "12999220525c7957df6c9042148bddad2db91b0b",
+                "4cf6864818a1473c2ac1c565445c55d4dc54f3c6",
+                "5beaf5d8ff263173470827c10c701bd21dbf97bf",
+                "7faf81f9f0ce7287e598541178faaa04eff8431f",
+                "9d9842374fc4f8635eaa034f28872cb90907c7a9",
+                "bb4b688cc39b3a8103a3cbfc22c15dc2661c4f89",
+                "bd8c063d7324fcaa96b3604741e9cf71c94b5fa9",
+                "ccb9d64961bf24cd3a38c4fd747a2a30cd4a7c84"
+              ]
+            },
+            {
+              "number": 1609,
+              "commits": [
+                "05ec5452be866cd59429390e548430f3e7dcbdc4",
+                "408afe24ea710b32c256726c423a1a5e41abf258",
+                "7d5f7e9d2652a40a0276d1c80ac21fa4ec1de476",
+                "800d5b688f874ee39e11b44b53b9cf4a7e74044e",
+                "b99f7d7231f55bd5564d3e1b2fa9a145da17a2cd",
+                "fa7cf133bafa6cd36da35cc22c6cb77ddbe083b9"
+              ]
+            },
+            {
+              "number": 1611,
+              "commits": [
+                "849179780b8a5bf0898c0381aa1cb0c5383077a8",
+                "b4c609c71730ecc63e84ae6a6248ea6eb951f294"
+              ]
+            },
+            {
+              "number": 1612,
+              "commits": [
+                "2fa7171c12e1df8c1ced9709c5358a54be825684",
+                "6711c4f54424a3997133eb2a6eb36c027da0a1b1",
+                "7b0167d66d099cb134d2f1d8d3f7d3da20bfe7a2"
+              ]
+            },
+            {
+              "number": 1613,
+              "commits": [
+                "2e90c90014d944e1dd4e6e630694df459a8c45dc",
+                "4b08f4903d6a566b034981457eba77f443b715be",
+                "7e73e58797eca36fa17cba40ce5fb8863798e2b0"
+              ]
+            },
+            {
+              "number": 1614,
+              "commits": [
+                "68b4268626b93e90825e34bb91842f5c730e9add"
+              ]
+            },
+            {
+              "number": 1615,
+              "commits": [
+                "46ba17964dff6b655df64316d333383d0239dbef"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1001,
+          1514,
+          1563,
+          1564,
+          1565,
+          1566,
+          1567,
+          1568,
+          1569,
+          1570,
+          1571,
+          1572,
+          1573,
+          1574,
+          1575,
+          1576,
+          1577,
+          1578,
+          1579,
+          1580,
+          1581,
+          1583,
+          1584,
+          1585,
+          1587,
+          1589,
+          1590,
+          1591,
+          1594,
+          1595,
+          1597,
+          1598,
+          1599,
+          1600,
+          1603,
+          1604,
+          1605,
+          1607,
+          1608,
+          1609,
+          1611,
+          1612,
+          1613,
+          1614,
+          1615
+        ],
+        "version": "2.0.0-beta.3",
+        "body": "<!-- release: v2.0.0-beta.3 -->\n<!-- base: v1.86.1 -->\n<!-- language: ru -->\n## Houseplan 2.0.0-beta.3\n\nВ настройках устройства или LED-ленты можно задать высоту над полом для 3D. Все восемь 3D-ракурсов используют наклонную перспективу. Подвижный значок робота-пылесоса едет по полу независимо от высоты док-станции. Плоский вид не учитывает высоту. [#1608](https://github.com/Matysh/houseplan-card/issues/1608), [#1612](https://github.com/Matysh/houseplan-card/issues/1612)\n\nПри восстановлении 3D после графического сбоя план не показывает недорисованный этаж. Ускорены первый вход в редактор и повторное переключение этажей. В приложении Home Assistant Companion успешные действия со значками дают лёгкую виброотдачу. Исправлено создание пространств с сохранением проёмов. [#1609](https://github.com/Matysh/houseplan-card/issues/1609), [#1595](https://github.com/Matysh/houseplan-card/issues/1595), [#1607](https://github.com/Matysh/houseplan-card/issues/1607), [#1611](https://github.com/Matysh/houseplan-card/issues/1611)\n\n<!-- language: en -->\n## Houseplan 2.0.0-beta.3\n\nSet the height above the floor for devices and LED strips in 3D. All eight 3D views now use a tilted perspective. The moving robot vacuum marker travels along the floor regardless of the dock's height. The flat view ignores height. [#1608](https://github.com/Matysh/houseplan-card/issues/1608), [#1612](https://github.com/Matysh/houseplan-card/issues/1612)\n\nWhen 3D recovers from a graphics interruption, the plan no longer shows a partially drawn floor. Opening an editor for the first time and revisiting floors are faster. Successful marker actions give light haptic feedback in the Home Assistant Companion App. Creating a space now preserves partition openings. [#1609](https://github.com/Matysh/houseplan-card/issues/1609), [#1595](https://github.com/Matysh/houseplan-card/issues/1595), [#1607](https://github.com/Matysh/houseplan-card/issues/1607), [#1611](https://github.com/Matysh/houseplan-card/issues/1611)\n",
+        "technical": {
+          "ru": "## v2.0.0-beta.3 — 2026-11-28\n\n- Проёмы в перегородках сохраняют привязку, когда добавление пространства запускает переход плана на модель 11 (#1611).\n- В компактном меню шапки у пункта, выбранного с клавиатуры, снова видна акцентная рамка. (#1614)\n- Ускорен первый вход в редакторы и цикл смены этажей в «Просмотре» с загруженным редактором. (#1595)\n- Ограничен штатный S6 по трекам. Проверки выбираются по изменённым контрактам, расширенный набор подтверждается на актуальном кандидате (#1613).\n\n- Восстановлена запись об исправлении 1.83.1 и дополнены сведения о лицензиях компонентов frontend. [#1597](https://github.com/Matysh/houseplan-card/issues/1597)\n- Переведены старые SVG-бенчмарки объёмного вида на диагностические замеры WebGL canvas/мешей, камеры, fade света, GPU и heap; программный рендер отмечается явно (#1599).\n- Зафиксирован контракт совместимости ядра и архивов. Установленный пакет читает настоящие синтетические архивы stable 1.86.0/1.86.1; публикация отклоняет разные версии wheel, HA и автономного редактора (#1600).\n- Включён TypeScript noImplicitAny и возвращены адресные Ruff/mypy для изменённых исходников бэкенда, без рейтчетов и проверок чистых документационных задач (#1603).\n- Удалён устаревший снимок frontend из Git: установочные ZIP/HACS по-прежнему получают проверенную сборку, локальные файлы frontend игнорируются (#1598).\n\n- Установщик для Home Assistant стал меньше за счёт использования встроенного каталога иконок MDI (#1594).\n- В обоих README указано, что для 3D-вида нужен WebGL 2. При его отсутствии открывается план в 2D (#1591).\n- В 3D можно задать высоту устройств и LED-лент. Все восемь ракурсов используют наклонную перспективу, а при наведении на пункт контекстного меню меняется только фон (#1608).\n- Подвижный значок робота-пылесоса едет по полу в 3D независимо от высоты док-станции (#1612).\n- При краткой потере графического контекста 3D сохраняет последний полный кадр этажа, а обновлённый план показывает целиком после готовности всех слоёв (#1609).\n- Жизненный цикл 3D-хоста и отрисовка переходов между режимами вынесены из основного модуля карточки (#1604).\n- Повторно проверяем право записи перед сохранением позиций устройств и публикацией вложений. Отмена файловой операции не оставляет частичных копий (#1605).\n- В приложении Home Assistant Companion значки устройств дают лёгкую виброотдачу после успешного переключения или запуска действия (#1607).\n- План сохраняет положение при загрузке площади комнат в сводке. (#1590)\n- Мастер этажей Home Assistant сохраняет предложенное имя без правок, а после пропуска всех этажей открывается обычная форма создания пространства (#1589).\n- При переключении между уже открытыми этажами в 3D основание полупрозрачных стен сохраняет свой цвет с первого кадра (#1587).\n- Завершение зависшего теста по таймауту проверяется на реальном дочернем процессе, без привязки к тексту раннера (#1615).",
+          "en": "## v2.0.0-beta.3 — 2026-11-28\n\n- Preserve partition openings when adding a space triggers migration to plan model 11 (#1611).\n- The compact header menu shows an accent border on the item reached by keyboard. (#1614)\n- Speed up first editor entry and repeated floor switches in View with the editor loaded. (#1595)\n- Bound routine S6 by track, choose contract-specific witnesses, and verify expanded checks against the current candidate (#1613).\n\n- Restore the 1.83.1 hotfix entry and document bundled frontend licenses. [#1597](https://github.com/Matysh/houseplan-card/issues/1597)\n- Replace legacy SVG isometric benchmarks with diagnostic WebGL canvas/mesh, camera, light fade, GPU timer and heap measurements; report software rendering explicitly (#1599).\n- Define shared-core and archive compatibility, test native 1.86.0/1.86.1 archives in installed packages, and reject mismatched wheel/HA/standalone versions at publication (#1600).\n- Enabled TypeScript noImplicitAny and restored addressed Ruff/mypy checks for changed backend sources, without count ratchets or checks on documentation-only tasks (#1603).\n- Remove the stale tracked frontend snapshot; installable HACS/release ZIPs keep using the verified build, and local frontend output stays ignored (#1598).\n\n- Reduce the Home Assistant installer size by using its built-in MDI catalog (#1594).\n- Document the WebGL 2 requirement for 3D view and the 2D fallback in both READMEs (#1591).\n- Set device and LED strip height in 3D, use tilted perspective in all eight views, and highlight context menu rows with background only (#1608).\n- Keep the moving robot vacuum marker on the floor in 3D, independently of the dock's height (#1612).\n- Keep the last complete 3D floor on screen through a temporary graphics interruption, and show a new frame only once its layers are ready (#1609).\n- Extract the lazy 3D host lifecycle and mode transition presentation from the main card (#1604).\n- Recheck live write access before saving device positions or publishing attachments, and keep cancelled file operations from leaving partial copies (#1605).\n- Device markers request light haptic feedback in the Home Assistant Companion App after a successful toggle or run action (#1607).\n- The floor stays in place while the summary loads the total room area. (#1590)\n- Let users save the suggested Home Assistant floor name without edits and return to normal space creation after skipping every floor (#1589).\n- Keep the wall footprint at its settled colour throughout a warm 3D floor switch with translucent walls (#1587).\n- Verify browser-test timeout escalation with a real child process rather than checking the runner's source text (#1615)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -333634,7 +334042,8 @@
     "ship-review:prepare:cece24f9-32b1-4738-b849-10da2835996b": "c1e5903f07a65da963129fe685cb052cf1cdd50d6b96fce053821f8ab3af5c02",
     "ship-review:result:01a70ad3-3cdd-4f2e-8cf7-417c492405d4": "2b2dd9e5ce43ff657304847ac56bb632158805a6f866fc9b860bd7cd5594e138",
     "beta-200-3-20261128-publication:runner-report": "6b4482de36a2f402a73e54cb434f74e0d7e0d2b7dafc050d53ad22ca7f239798",
-    "beta-200-3-20261128-publication:metrics": "9f601094861c2cc41f2ec9f85fb15c18125ff12e17214659c1c782b9e0d9e85b"
+    "beta-200-3-20261128-publication:metrics": "9f601094861c2cc41f2ec9f85fb15c18125ff12e17214659c1c782b9e0d9e85b",
+    "beta-200-3-20261128-publication:prepared:45dcb9c7-bcba-44c2-9417-7f27d296e4da": "dfb760a71d7b775804db80ca508f75b8886dfc5cdd436c17d0d7def1cb307f05"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
