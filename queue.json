@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 29663,
-  "nextTicket": 794,
+  "revision": 29664,
+  "nextTicket": 795,
   "nextFence": 794,
   "tasks": {
     "1001": {
@@ -5627,6 +5627,20 @@
         "status": "not-required"
       }
     },
+    "1592": {
+      "issue": 1592,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/1592-paired-release-timings",
+      "materialSha": "e53310a23a3c622558f15ebda13927062d62f645",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 794,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795817849449,
+      "reviewEntry": 1
+    },
     "1594": {
       "issue": 1594,
       "branch": "codex/1594-mdi-packaging",
@@ -7014,7 +7028,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1592
+  ],
   "active": null,
   "events": {
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -7056,6 +7072,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "2043bd45e892b725a6100876b595502de34a7a8b"
+      }
+    },
+    "finish:6732b949-1080-4e00-8e3a-d3df5f0651b2": {
+      "digest": "ebba67e1de899e8d66fb4ee462a54fc77dc80a48de2f21f9333f264bba83ea25",
+      "issue": 1592,
+      "message": {
+        "kind": "queued",
+        "issue": 1592,
+        "at": 1795817849449,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "e53310a23a3c622558f15ebda13927062d62f645"
       }
     }
   },
