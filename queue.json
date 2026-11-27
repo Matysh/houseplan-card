@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28478,
-  "nextTicket": 775,
+  "revision": 28479,
+  "nextTicket": 776,
   "nextFence": 770,
   "tasks": {
     "1001": {
@@ -6114,14 +6114,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1594-mdi-packaging",
-      "materialSha": "a08bd93306db31c5962217226318a051dd8b6a05",
+      "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 767,
-      "queued": false,
+      "ticket": 775,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795775996057,
-      "reviewEntry": 1,
+      "readyAt": 1795787418639,
+      "reviewEntry": 2,
       "patchId": "eb8420682ef5cffe9c401ac6a0a9299ec8bf2518",
       "changedFiles": [
         "demo/helpers/ha-dialog-fixture.mjs",
@@ -6142,7 +6142,6 @@
         "src/standalone-presentation.ts",
         "test/bundle-assets.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -7524,7 +7523,8 @@
     1608,
     1595,
     1598,
-    1600
+    1600,
+    1594
   ],
   "active": {
     "issue": 1603,
@@ -9233,6 +9233,19 @@
         "track": "show",
         "layer": "infra",
         "materialSha": "29c2bd1b0bc3edeaab705250d49916b95524d003"
+      }
+    },
+    "finish:d3e37faa-ad07-4995-b425-f96b155041b3": {
+      "digest": "4d6b9b4dbb84248895df10188ba26887077897667f4c3322e652aa2035a43fd1",
+      "issue": 1594,
+      "message": {
+        "kind": "queued",
+        "issue": 1594,
+        "at": 1795787418639,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3775fe2dab6288889d3e6ebc481a74b70fee16f2"
       }
     }
   },
