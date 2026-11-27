@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 29479,
+  "revision": 29480,
   "nextTicket": 791,
   "nextFence": 791,
   "tasks": {
@@ -7279,26 +7279,6 @@
           "eventId": "finish:3acd3d46-c1e5-48c7-bcc9-fd08fa2a0ba2:finish:2:return:return:1612"
         },
         "delivered": true
-      }
-    },
-    "finish:77aee5fa-568e-44f3-8a8c-31e10253a9af:finish:3:return:return:1615": {
-      "digest": "ddc8f2f7fefc92ba399aba505763b3f3a962a514222d7318e0025afc3252fb43",
-      "issue": 1615,
-      "message": {
-        "kind": "return",
-        "issue": 1615,
-        "at": 1795809625430,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795809625430,
-          "entry": 1,
-          "detail": "Синтаксис и типы изменённых инструментов: failed",
-          "eventId": "finish:77aee5fa-568e-44f3-8a8c-31e10253a9af:finish:3:return:return:1615"
-        }
       }
     }
   },
