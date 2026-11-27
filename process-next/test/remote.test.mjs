@@ -1082,3 +1082,34 @@ test('dev wakeup survives a lost publication response even when resumed publishe
     execute: true, dependencies: h.dependencies, event: { id: 'wakeup' } });
   await call(); await call(); assert.equal(wakeups, 1);
 });
+
+for (const s6 of ['local','github']) {
+  test('published return without a clean proof retains ordinary verification over the task budget: '+s6,async()=>{
+    const h=queueHarness(), calls=[];
+    await h.queue.dispatch({id:'released',type:'enqueue',task:{issue:1,branch:'issue/1',materialSha:B,layer:'product',track:'show',
+      syncMode:'merge',mergeSourceSha:C,releaseTag:'v1.0.1'}});
+    const dependencies={sleep:async()=>{},
+      synchronize:async({task})=>{
+        assert.equal(task.syncMode,'merge');assert.equal(task.mergeSourceSha,C);
+        return {expectedBase:A,materialSha:B,patchId:'return-patch',layer:'product',changedFiles:['src/logic.ts']};
+      },
+      planProfile:async ({layer,track,s6Mode,s6Host})=>({
+        event:'task',layer,scope:{track},s6:{mode:s6Mode,host:s6Host},
+        steps:Array.from({length:80},(_,i)=>({id:'node:'+i,command:['node','-e',''],inputs:[]})),
+      }),
+      runPlan:async (plan,options)=>{
+        calls.push('local');assert.equal(plan.steps.length,80);assert.equal(options.budget,undefined);
+        return {id:'ordinary-return',status:'passed',results:[]};
+      },
+      fallback:{runS6:async({request,maxWaitMs})=>{
+        calls.push('github');assert.equal(maxWaitMs,undefined);assert.equal(request.s6Mode,'expanded');
+        assert.match(request.s6Steps,/^[a-f0-9]{64}$/);
+        return {outcome:'passed',receipt:{status:'passed',materialSha:B}};
+      }},
+    };
+    const result=await finishTask({config,event:{id:'verify-release-return',issue:1,branch:'issue/1',s6},
+      queue:h.queue,api:h.dependencies.api,git:h.dependencies.git,review:h.dependencies.review,dependencies,maxWaitMs:1000});
+    assert.equal(result.action,'merged');
+    assert.deepEqual(calls,[s6]);
+  });
+}

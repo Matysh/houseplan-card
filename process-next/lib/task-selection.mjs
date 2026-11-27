@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { CONVERTER_CASES } from '../converters/cases.mjs';
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve, basename } from 'node:path';
+import { resolve, basename, extname } from 'node:path';
 import { walk, matchesInputs } from './storage.mjs';
 import { dependencyReader, declaredSourceInputs } from './source-dependencies.mjs';
 import { BETA_E2E, CRITICAL_NODE } from '../catalog/selections.mjs';
@@ -54,12 +54,13 @@ const AGGREGATION_BOUNDARIES = new Map([
     ['demo/bundle-freshness.mjs', { domains: ['toolchain'], ship: ['test/bundle-assets.test.mjs'], show: ['demo/smoke_readonly_cold_start.mjs'] }],
     ['scripts/coverage-maps.mjs', { domains: ['toolchain'], ship: ['test/bundle-assets.test.mjs'] }],
     ['scripts/source-fingerprint.mjs', { domains: ['toolchain'], ship: ['test/bundle-assets.test.mjs'] }],
-    ['src/houseplan-card.ts', { domains: ['runtime','presentation'], ship: ['demo/smoke_readonly_cold_start.mjs','demo/smoke_view_edit_permissions.mjs','test/unified-wall-tool-source.test.mjs'],
+    ['src/houseplan-card.ts', { domains: ['runtime','presentation'], ship: ['demo/smoke_readonly_cold_start.mjs','demo/smoke_view_edit_permissions.mjs','test/unified-wall-tool-source.test.mjs','test/write-authority-snapshot.test.mjs'],
         show: ['demo/smoke_lazy_editor_chunk.mjs','test/bundle-assets.test.mjs'], ask: ['demo/smoke_view_recovery.mjs'] }],
     ['src/houseplan-panel.ts', { domains: ['navigation'], ship: ['demo/smoke_kiosk_space_navigation.mjs'],
         show: ['demo/smoke_native_card_presentation.mjs'], ask: ['demo/smoke_space_switch_transitions.mjs'] }],
 ]);
 const ADDRESS = [
+    [/^custom_components\/houseplan\/websocket_api\.py$/, ['tests_backend/test_ha_websocket.py']],
     [/^custom_components\/houseplan\/core\/furniture_workstation\.py$/, ['tests_backend/test_furniture_workstation.py','test/furniture-workstation.test.mjs'], ['test/furniture-volume-generator.test.mjs']],
     [/^src\/editors\/hp-icon-picker\.ts$/, ['demo/smoke_device_icon_picker.mjs'], ['demo/smoke_standalone_entry.mjs']],
     [/^src\/editors\/space-dialog-draft\.ts$/, ['test/space-settings-945.test.mjs'], ['demo/smoke_space_settings_form.mjs']],
@@ -71,11 +72,11 @@ const ADDRESS = [
         ['test/layout-write-reload.test.mjs','test/config-write-conflict.test.mjs']],
     [/^src\/.*(?:room[-_]write|room[-_]commit|room[-_]save)[^\/]*\.ts$/,
         ['test/config-write-context.test.mjs','demo/smoke_room_save_retry_946.mjs']],
-    [/^src\/.*(?:history|undo|command-stack|geometry-transaction)[^\/]*\.ts$/,
+    [/^src\/(?:geometry-history-(?:state|step)|physical-write-history|wall-node-history|geometry-transaction)\.ts$/,
         ['test/geometry-history-refusal.test.mjs','test/geometry-history-restore.test.mjs','demo/smoke_geometry_history_refusal.mjs']],
     [/^src\/.*(?:editor-runtime|lazy-editor)[^\/]*\.ts$/, ['test/editor-runtime-loader.test.mjs','test/bundle-assets.test.mjs','demo/smoke_lazy_editor_chunk.mjs']],
     [/^src\/.*(?:permission|plan-capabilit|device-editor-access)[^\/]*\.ts$/, ['test/plan-capability-permissions.test.mjs','demo/smoke_view_edit_permissions.mjs']],
-    [/^custom_components\/houseplan\/(?:.*(?:config|storage|permissions?|authorit|scope|handler|revision|write)[^\/]*|__init__|websocket)\.py$/,
+    [/^custom_components\/houseplan\/(?:config_write|__init__|websocket_api|(?:core\/)?storage|core\/plan_commands)\.py$/,
         ['tests_backend/test_ha_config_set_scoped.py']],
     [/^(?:src\/.*|custom_components\/houseplan\/.*)(?:graph[-_]write|graph[-_]node|wall[-_]node|geometry[-_]write)[^\/]*\.(?:py|ts)$/,
         ['tests_backend/test_graph_write.py','tests_backend/test_graph_node_write.py','demo/smoke_geometry_history_refusal.mjs']],
@@ -103,6 +104,8 @@ const importanceRank = { critical: 0, boundary: 1, regression: 2 };
 const orderWitnesses = (a,b) => a.proof - b.proof || typeRank[a.row.type] - typeRank[b.row.type]
     || importanceRank[a.row.importance] - importanceRank[b.row.importance] || a.row.path.localeCompare(b.row.path);
 const depth = { ship: 0, show: 1, ask: 2 };
+const moduleName = path => basename(path,extname(path)).replace(/.test$/,'').replace(/^test_(ha_)?/,'').replaceAll('_','-');
+const sameModule = (row, source) => row.type !== 'browser' && moduleName(row.path) === moduleName(source);
 
 const originalSourceFile = p => /^(?:src\/|custom_components\/houseplan\/|assets\/)/.test(p) || /^(?:package(?:-lock)?\.json|tsconfig.*\.json|rollup\.config\.mjs)$/.test(p);
 const isDocument = p => /\.md$/i.test(p) || /^(?:LICENSE|NOTICE)(?:\.[^/]+)?$/.test(p) || /^docs\/.*\.(?:png|jpe?g|webp|svg|gif|pdf)$/i.test(p);
@@ -250,13 +253,21 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
             // a check when it is the actual repository-data contract.
             const witnesses = directWitnesses.filter(({ row, proof }) => proof < 2
                 && (!boundary || row.type !== 'browser' && proof === 1));
-            const primary = witnesses[0];
+            const peers = witnesses.filter(({row}) => sameModule(row,file));
+            for (const {row} of peers) add(row.path,'Прямой тест изменённого модуля: ' + file);
+            const primary = (mapped.length
+                ? witnesses.find(({row,proof}) => proof === 1 && row.type !== 'browser')
+                : witnesses[0]);
+            const addressedByArea = async () => {
+                for (const path of areaTests)
+                    if ((await closure(path)).has(file)) return true;
+                return false;
+            };
             if (file.startsWith('custom_components/') && primary?.row.type !== 'backend') {
                 const backend = witnesses.find(({row}) => row.type === 'backend');
                 if (backend) add(backend.row.path, 'Адресная серверная граница: ' + file);
             }
-            if (!named.length && primary)
-                add(primary.row.path, 'Адресный читатель изменённого поведения: ' + file);
+            if (primary) add(primary.row.path, 'Адресный читатель изменённого поведения: ' + file);
             if (!boundary && !mapped.length && track !== 'ship') {
                 const seen = new Set(primary?.row.domains ?? []);
                 const independent = new Set();
@@ -277,10 +288,10 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
                 const namedDomain = domains.flatMap(id => (ids.get(id)?.[4] ?? []).map(name => 'demo/smoke_' + name + '.mjs'))
                     .find(path => rowsByPath.has(path));
                 if (namedDomain) add(namedDomain, 'Именованный свидетель ближайшего контракта: ' + file);
-                else if (!areaTests.length && originalSourceFile(file)) uncovered.push(file);
+                else if (originalSourceFile(file) && !await addressedByArea()) uncovered.push(file);
                 gaps.push({ path: file, reason: 'Нет прямого читателя. Используется именованный или явно заданный адресный свидетель.' });
             }
-            if (unknown.includes(file) && originalSourceFile(file) && !primary && !named.length && !areaTests.length) uncovered.push(file);
+            if (unknown.includes(file) && originalSourceFile(file) && !primary && !named.length && !await addressedByArea()) uncovered.push(file);
             if (unknown.includes(file) && primary) add(primary.row.path, 'Адресное дополнение к консервативному fallback: ' + file);
             for (const { row, proof } of witnesses) if (proof === 0 && row.type === 'browser' && !boundary && !mapped.length && !selected.has(row.path)) {
                 alternatives.push(row.path);
@@ -304,7 +315,7 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
         }
     }
     for (const path of infraChanges)
-        if (!productMetadata(path) && ![...selected.values()].some(reasons => reasons.some(reason => reason.includes(path))))
+        if (!productMetadata(path) && !selected.has(path) && ![...selected.values()].some(reasons => reasons.some(reason => reason.includes(path))))
             gaps.push({ path, reason: 'Нет статически подтверждённого теста механизма; проверить дополнение исполнителя.' });
     for (const row of catalog.gaps) if (selected.has(row.id)) gaps.push(row);
     const files = [...selected.keys()].sort();

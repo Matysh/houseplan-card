@@ -377,12 +377,12 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     if (budget) plan.selection.budget = budget;
     onProgress({ kind:'selection', text:selectionText(plan.selection) });
   };
-  const hosted = async ({ active, task, plan, mode = 'standard', outsideSlot = false, existingOnly = false, identity }) => {
+  const hosted = async ({ active, task, plan, mode = 'standard', outsideSlot = false, existingOnly = false, identity, limitWait = mode === 'expanded' }) => {
     const fallback = dependencies.fallback ?? new WorkflowFallbackAdapter({ api, ...config.fallback });
     const proof = identity ?? (plan?.s6 ? { plan:s6PlanIdentity(plan), steps:s6StepIdentity(plan.steps) } : null);
     const budgetRequest = proof ? {s6Mode:mode,s6Host:'github',s6Plan:proof.plan,s6Steps:proof.steps} : {};
     const result = await fallback.runS6({ active, task, request: { ...(event.request ?? {}), areaTests, ...budgetRequest },
-      signal, existingOnly, maxWaitMs:mode === 'expanded' ? EXPANDED_S6_WAIT : undefined,
+      signal, existingOnly, maxWaitMs:limitWait ? EXPANDED_S6_WAIT : undefined,
       onProgress: progress => onProgress({ kind:'checks', ...progress, outsideSlot }) });
     return { ...result, evidence: result.receipt };
   };
@@ -430,7 +430,9 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     if (issue.state === 'closed' || labels.includes('blocked')) return {action:'returned',reason:'owner-stopped'};
     if (!labels.includes('S6-in-progress')) throw Error('Ready intent needs current S6');
     const track = labels.find(label => /^track:(ship|show|ask)$/.test(label))?.split(':')[1] ?? 'show';
-    if (material.layer === 'product') {
+    const previous = current.tasks[event.issue];
+    const releaseReturn = previous?.syncMode === 'merge' && previous.releaseTag;
+    if (material.layer === 'product' && !releaseReturn) {
       let task = { ...material, branch, issue:event.issue, track };
       const plan = await makePlan(task), forecast = preflight(plan);
       showPlan(plan, forecast);
@@ -458,13 +460,14 @@ export async function finishTask({ config, event, queue, api, git, review, depen
       }
     }
     await handleGithubEvent({ queue, api, activated: true, issue,
-      event: { ...event, ...material, branch, kind: 'ready' } });
+      event: { ...event, ...material, branch, kind:'ready', ...(releaseReturn ? {syncMode:'merge',mergeSourceSha:previous.mergeSourceSha} : {}) } });
   }
   const runS6 = async ({ active, task }) => {
     const startedS6 = performance.now();
     const short = matchingPublishedReturnReview(task, active);
-    let mode = 'standard';
-    if (!short && expanded && task.patchId === expanded.patchId && task.track === expanded.track) {
+    const releaseReturn = task.syncMode === 'merge' && task.releaseTag;
+    let mode = releaseReturn ? 'expanded' : 'standard';
+    if (!short && !releaseReturn && expanded && task.patchId === expanded.patchId && task.track === expanded.track) {
       if (expanded.recovered) {
         const previous = await hosted({active:{issue:task.issue,materialSha:expanded.sha},
           task:{...task,changedFiles:expanded.changedFiles},mode:'expanded',existingOnly:true,identity:expanded});
@@ -489,16 +492,17 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     if (!short && dependencies.prepareEnvironment && host === 'wsl') await dependencies.prepareEnvironment();
     const plan = short ? planPublishedReturnS6({issue:task.issue,layer:task.layer,remote:git.remote ?? 'origin',proof:task.review})
       : await makePlan(task,mode);
-    const estimate = preflight(plan);
+    const estimate = releaseReturn ? null : preflight(plan);
+    if (releaseReturn && plan.selection) delete plan.selection.budget;
     showPlan(plan, estimate);
-    const coverage = missingCoverage(plan);
+    const coverage = releaseReturn ? null : missingCoverage(plan);
     if (coverage) return coverage;
     const overflow = detail => {
       writeJson(routeFile, { patchId:task.patchId, track:task.track, expanded:true });
       return { outcome:'budget-exceeded', terminal:true, reason:'s6-budget-expansion', detail };
     };
     if (mode === 'standard' && estimate?.reasons.length) return overflow(estimate.reasons.join(', '));
-    if (!short && host === 'github') return hosted({ active, task, plan, mode });
+    if (!short && host === 'github') return hosted({active,task,plan,mode,limitWait:!releaseReturn && mode==='expanded'});
     const budget = !estimate ? undefined : mode === 'expanded'
       ? { deadline:startedS6 + EXPANDED_S6_WAIT, ms:EXPANDED_S6_WAIT }
       : { deadline:startedS6 + estimate.limit.ms, ms:estimate.limit.ms, steps:estimate.limit.steps };
@@ -509,7 +513,7 @@ export async function finishTask({ config, event, queue, api, git, review, depen
       const detail = 'Исчерпан бюджет S6. Отчёт: ' + (report.reportPath ?? report.id);
       return mode === 'standard' ? overflow(detail) : { outcome:report.status, terminal:true, reason:'s6-expanded-timeout', detail };
     }
-    if (mode === 'expanded' && report.status === 'passed'
+    if (!releaseReturn && mode === 'expanded' && report.status === 'passed'
         && (report.materialSha !== active.materialSha || report.materialClean !== true))
       return { outcome:'unavailable', terminal:true, reason:'s6-material-changed' };
     return { outcome:report.status, evidence:{id:report.id, name:report.name, reportPath:report.reportPath, materialSha:active.materialSha,

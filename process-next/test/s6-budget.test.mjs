@@ -127,3 +127,66 @@ test('optional work skipped at the deadline leaves verified mandatory coverage i
   assert.equal(result.status,'passed');
   assert.deepEqual(result.results.map(x=>x.status),['passed','not-required']);
 });
+
+test('named witnesses preserve the changed module on Ship',async()=>{
+  for(const [file,witness] of [
+    ['src/vacuum-history.ts','test/vacuum-history.test.mjs'],
+    ['src/device-structure-history.ts','test/device-structure-history.test.mjs'],
+    ['src/device-position-history.ts','test/device-position-history.test.mjs'],
+    ['custom_components/houseplan/config_flow.py','tests_backend/test_ha_config_flow.py'],
+    ['custom_components/houseplan/websocket_api.py','tests_backend/test_ha_websocket.py'],
+    ['src/houseplan-card.ts','test/write-authority-snapshot.test.mjs'],
+  ]){
+    const p=await planProfile({root,track:'ship',changedFiles:[file]});
+    assert.ok(p.selection.reasons[witness]?.some(reason=>reason.includes(file)),file+' → '+witness);
+    if(file.includes('vacuum-history')) assert.ok(!p.selection.reasons['demo/smoke_geometry_history_refusal.mjs']);
+  }
+});
+
+test('addressed additions do not cover a different unmapped source',async t=>{
+  const dir=mkdtempSync(join(tmpdir(),'hp-s6-addressed-'));
+  t.after(()=>rmSync(dir,{recursive:true,force:true}));
+  mkdirSync(join(dir,'src'));
+  mkdirSync(join(dir,'test'));
+  for(const name of ['unmapped-a.ts','unmapped-b.ts'])writeFileSync(join(dir,'src',name),'export{};');
+  writeFileSync(join(dir,'test/proof.test.mjs'),'import "../src/unmapped-a.ts";');
+  const p=await planProfile({root:dir,track:'ship',
+    changedFiles:['src/unmapped-a.ts','src/unmapped-b.ts'],areaTests:['test/proof.test.mjs']});
+  assert.deepEqual(p.selection.uncovered,['src/unmapped-b.ts']);
+  assert.ok(p.selection.reasons['test/proof.test.mjs']);
+});
+
+test('recorded #1594 and #1595 diffs keep real targeted witnesses within their step caps',async()=>{
+  const cases=[
+    {issue:1594,track:'show',changedFiles:[
+      'demo/helpers/ha-dialog-fixture.mjs','demo/helpers/mdi-assets.mjs','demo/serve.mjs',
+      'demo/smoke_device_icon_picker.mjs','demo/smoke_standalone_entry.mjs','demo/standalone/mdi-picker-probe.mjs',
+      'docs/CHANGELOG.md','docs/CHANGELOG.ru.md','docs/STANDALONE-PRESENTATION.md','docs/release-ledger/v1.86.1/1594.json',
+      'process-next/catalog/site-release-browser.mjs','process-next/lib/source-dependencies.mjs',
+      'src/editors/hp-icon-picker.ts','src/icon-catalog.ts','src/standalone-icon-catalog.ts',
+      'src/standalone-presentation.ts','test/bundle-assets.test.mjs',
+    ],areaTests:['demo/smoke_device_icon_picker.mjs','demo/smoke_binding_picker.mjs','demo/smoke_standalone_entry.mjs'],
+    retained:['demo/smoke_device_icon_picker.mjs','demo/smoke_standalone_entry.mjs','test/bundle-assets.test.mjs']},
+    {issue:1595,track:'ask',changedFiles:[
+      'demo/benchmark_large_house.mjs','demo/performance/mode-transition.mjs',
+      'demo/smoke_lazy_editor_chunk.mjs','demo/smoke_mode_transition.mjs',
+      'demo/smoke_room_fill_transitions.mjs','demo/smoke_warm_mode_adoption.mjs',
+      'docs/CHANGELOG.md','docs/CHANGELOG.ru.md','docs/release-ledger/v1.86.1/1595.json',
+      'process-next/lib/metrics.mjs','process-next/test/metrics.test.mjs',
+      'scripts/config-compatibility-inventory.json','scripts/mutation-registry.mjs',
+      'scripts/sh3d-convert/dist/index.html','scripts/sh3d-convert/geometry-runtime.generated.mjs',
+      'scripts/sh3d-convert/page/ifc-worker.generated.mjs','src/device-contact-card.ts',
+      'src/houseplan-card.ts','src/houseplan-editor-runtime.ts','src/plan-graph.ts',
+      'src/wall-node-editor.ts','test/floor-cache-publication.test.mjs','test/plan-graph-core.test.mjs',
+    ],areaTests:['demo/smoke_mode_transition.mjs','demo/smoke_editor_preload.mjs','demo/smoke_lazy_editor_chunk.mjs',
+      'demo/smoke_room_fill_transitions.mjs','demo/smoke_warm_mode_adoption.mjs'],
+    retained:['test/plan-graph-core.test.mjs','test/bundle-assets.test.mjs','demo/smoke_warm_mode_adoption.mjs',
+      'test/write-authority-snapshot.test.mjs']},
+  ];
+  for(const {retained,...input} of cases){
+    const p=await planProfile({root,...input});
+    assert.ok(p.steps.length<=S6_LIMITS[input.track].steps,'#'+input.issue+': '+p.steps.length);
+    for(const test of retained) assert.ok(p.selection.reasons[test],'#'+input.issue+' needs '+test);
+    assert.ok(p.steps.filter(s=>s.id.startsWith('smoke:')).length<20);
+  }
+});
