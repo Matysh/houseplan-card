@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28162,
-  "nextTicket": 768,
+  "revision": 28163,
+  "nextTicket": 769,
   "nextFence": 765,
   "tasks": {
     "1001": {
@@ -6282,6 +6282,20 @@
       "readyAt": 1795775952066,
       "reviewEntry": 1
     },
+    "1600": {
+      "issue": 1600,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1600-core-compatibility",
+      "materialSha": "e9898ecd437b30e59c8f48116cfd44a1bbba9f5e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 768,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795776002686,
+      "reviewEntry": 1
+    },
     "1604": {
       "issue": 1604,
       "branch": "codex/1604-card-runtime-extraction",
@@ -7357,7 +7371,8 @@
   "waiting": [
     1598,
     1599,
-    1594
+    1594,
+    1600
   ],
   "active": {
     "issue": 1608,
@@ -8644,6 +8659,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "5a5d56d0467cb26e31de655b0e19b0f80a8c589f"
+      }
+    },
+    "finish:a83f6f99-da1c-43de-8a04-2bef1dae71e4": {
+      "digest": "748e0a18a2bfcccc490cdea426280d3d7065d0a93e9be59629af47eb31c7f259",
+      "issue": 1600,
+      "message": {
+        "kind": "queued",
+        "issue": 1600,
+        "at": 1795776002686,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e9898ecd437b30e59c8f48116cfd44a1bbba9f5e"
       }
     }
   },
