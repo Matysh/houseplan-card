@@ -14029,6 +14029,7 @@ export class HouseplanCard extends LitElement {
         && (disp.opacity < 1 || disp.wallFill.a < 1) ? this._isoWallBaseGeometry() : null;
       const floorInk = (neutral: boolean): import('./plan-3d-world').Plan3dFloorInk | undefined => {
         const bounds = content.all, decor = this._decorList;
+        const volumeCatalog = useFurnitureVolume && !disp.hideDecor && decor.some(shape => shape.kind === 'furniture');
         const strokes = !disp.hideDecor && decor.some(shape => shape.kind !== 'furniture' || !useFurnitureVolume || !furnitureParts(shape.symbol));
         const zeroWalls = this._zeroWalls();
         const stairs = this._curSpaceCfg?.stairs;
@@ -14043,9 +14044,14 @@ export class HouseplanCard extends LitElement {
           ...decor.flatMap(shape => shape.kind === 'text' && !neutral ? [this._renderDeviceSnapshot?.facts.get(`decor:${space.id}:${shape.id}`)]
             : shape.kind === 'image' ? [this._display(this._decorAssets.get(shape.asset_id)?.url)] : [])];
         const detail = !neutral && !disp.hideDecor && decor.some(shape => shape.kind === 'image');
-        return { scope, key, bounds, detail, capture: signal => {
+        return { scope, key, bounds, detail, capture: async signal => {
+          // The same catalogue decides which furniture belongs to the
+          // volume pass and which stays SVG. Capturing during the load
+          // would bake a flat copy into a texture that outlives the load.
+          if (volumeCatalog && FURNITURE_VOLUME_RUNTIME.state() === 'pending')
+            await FURNITURE_VOLUME_RUNTIME.ensure(this._furnitureVolumeObserver);
           const stage = this._stageEl;
-          if (!stage || this.planHost.authorityKey !== authority || this._space !== scope) return Promise.resolve(null);
+          if (!stage || signal.aborted || this.planHost.authorityKey !== authority || this._space !== scope) return null;
           return this._captureStartupSvg(stage, () => [
             svg`${this._renderZeroWalls(disp)}${this._stairsView.renderLayer(stairVolumes)}`,
             strokes ? this._renderDecorLayer(undefined, bounds, useFurnitureVolume ? 'floor' : 'all', neutral) : svg``,

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1620,
+  "baseStable": "v1.86.1",
+  "category": "line-fix",
+  "rationale": "The duplicate on the floor texture is specific to the new WebGL furniture path of 2.0.0.",
+  "summary": {
+    "ru": "При загрузке 3D-плана под объёмной мебелью больше не остаётся её плоский контур.",
+    "en": "Loading the 3D plan no longer leaves a flat outline underneath 3D furniture."
+  }
+}

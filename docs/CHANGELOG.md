@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Do not render a second flat outline under 3D furniture while loading the plan (#1620).
+
 ## v2.0.0-beta.4 — 2026-11-28
 
 - Keep uploaded decor images sharp when zooming in on the 3D plan (#1618).

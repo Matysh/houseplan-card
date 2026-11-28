@@ -424,6 +424,9 @@ physical walls. #1454 worker snapshots/codecs preserve the same camera and
 round-column bases; persistent keys also include the build identity.
 
 The volume registry is requested only when visible volume furniture needs it.
+The WebGL floor-ink capture also waits for this registry before splitting
+volume furniture from flat decor. A temporary 2D furniture symbol must not
+end up in a cached floor texture underneath its 3D model.
 The initial loading window/continuity waits for applicable assets but retains
 its existing finite cap. A failed/mismatched registry yields the full Flat
 presentation, not missing objects or an endless retry. A scene/furniture build

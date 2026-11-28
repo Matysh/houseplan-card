@@ -32,6 +32,8 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['demo/smoke_plan_3d_card.mjs', ['src/card-plan-3d.ts', 'src/plan-3d-host.ts']],
   ['demo/smoke_plan_3d_decor_detail.mjs', ['src/plan-3d-floor-detail.ts', 'src/plan-3d-host.ts',
     'src/plan-3d-world.ts', 'src/houseplan-card.ts', 'src/decor-assets.ts']],
+  ['demo/smoke_plan_3d_furniture_ink.mjs', ['src/furniture-volume-runtime.ts', 'src/plan-3d-world.ts',
+    'src/houseplan-card.ts', 'demo/helpers/iso-paint-scene.mjs']],
   ['demo/smoke_plan_3d_resume.mjs', ['src/card-plan-3d.ts', 'src/plan-3d-host.ts', 'src/plan-3d-viewport.ts',
     'src/plan-3d-recovery-budget.ts', 'src/plan-3d-discard.ts', 'src/visual-continuity.ts', 'src/styles/plan.styles.ts']],
   ['demo/smoke_isometric_contract.mjs', ['src/card-plan-3d.ts', 'src/plan-3d-host.ts']],
