@@ -292,6 +292,9 @@ const farIcon = await page.evaluate(async () => {
 Object.assign(out, farIcon.o);
 
 // ---- an OLD plan (small, with a view_box) opens exactly as before ---------
+page.on('console', message => {
+  if (message.text().startsWith('legacy canvas bounds:')) console.log(message.text());
+});
 Object.assign(out, await page.evaluate(async () => {
   const c = window.__card;
   const o = {};
@@ -303,17 +306,17 @@ Object.assign(out, await page.evaluate(async () => {
         poly: [[0.55, 0.14], [0.96, 0.14], [0.96, 0.46], [0.55, 0.46]] }] }],
     markers: [], settings: {},
   };
-  c._serverCfg = cfg; c._layout = { d_light1: { s: 'f1', x: 0.22, y: 0.22 } };
-  c._modelCache = null; c._frame = null; c._showFar = false; c._view = null;
-  c._maybeRebuildDevices?.();
-  c._defPos = c._defaultPositions(); // the auto grid follows the new rooms
-  c.requestUpdate(); await c.updateComplete;
+  const hp = window.__hpTest;
+  await hp.setServerConfig(cfg);
+  await hp.setLayout({ d_light1: { s: 'f1', x: 0.22, y: 0.22 } });
+  await hp.settled();
   c._resetZoom(); await window.__waitForCamera(c);
   const b = c._baseVb();
   // identical to what contentBounds produced before: the content bbox
   // (40..960 x 140..580) plus 5% of the longer side (920 -> 46)
   o.legacyFrameUnchanged = Math.abs(b[0] - -6) < 1 && Math.abs(b[1] - 94) < 1
     && Math.abs(b[2] - 1012) < 1 && Math.abs(b[3] - 532) < 1;
+  if (!o.legacyFrameUnchanged) console.log('legacy canvas bounds:', JSON.stringify(b));
   o.legacyNoHint = c._outliers === 0;
   // an EMPTY space falls back to the stored view_box hint (§4)
   c._serverCfg = { spaces: [{ id: 'f1', title: 'E', view_box: [0.1, 0.2, 0.5, 0.4], rooms: [] }],
