@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 30355,
-  "nextTicket": 809,
+  "revision": 30356,
+  "nextTicket": 810,
   "nextFence": 809,
   "tasks": {
     "1001": {
@@ -6241,14 +6241,14 @@
       "track": "show",
       "layer": "docs",
       "branch": "codex/1628-docs-v2",
-      "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3",
+      "materialSha": "84206bbce58724957c459b3ca332ac97af4d63d2",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 808,
-      "queued": false,
+      "ticket": 809,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795849026072,
-      "reviewEntry": 2,
+      "readyAt": 1795849313740,
+      "reviewEntry": 3,
       "patchId": "b48a8cef15d26514a98665bdb5c1e0551a5f4078",
       "changedFiles": [
         "README.md",
@@ -6345,20 +6345,6 @@
         "requestId": "review:1628:2:b48a8cef15d26514a98665bdb5c1e0551a5f4078:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
         "transitionConfirmed": true
       },
-      "reviewRequest": "review:1628:2:b48a8cef15d26514a98665bdb5c1e0551a5f4078:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-      "reviewMaterial": {
-        "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3",
-        "expectedBase": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "patchId": "b48a8cef15d26514a98665bdb5c1e0551a5f4078"
-      },
-      "reviewRetry": {
-        "requestId": "review:1628:2:b48a8cef15d26514a98665bdb5c1e0551a5f4078:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "eventId": "github:46118975603:1:tick:0:review-retry",
-        "at": 1795849081565,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1628:2:b48a8cef15d26514a98665bdb5c1e0551a5f4078:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
         "at": 1795849262838
@@ -7116,7 +7102,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1628
+  ],
   "active": null,
   "events": {
     "github:46116303186:1:label:spec-request": {
@@ -7420,6 +7408,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:f896fe1a-a780-4c50-bf24-47eda18b7ea2": {
+      "digest": "1f75fde0055ca4a4c1e33b20d9cd129e1bdc37892c5b89a21b1b395c7e64860e",
+      "issue": 1628,
+      "message": {
+        "kind": "queued",
+        "issue": 1628,
+        "at": 1795849313740,
+        "entry": 3,
+        "track": "show",
+        "layer": "docs",
+        "materialSha": "84206bbce58724957c459b3ca332ac97af4d63d2"
       }
     }
   },
