@@ -76,10 +76,9 @@ A finer grid changes precision only. Raw SVG constants inherited from the
 historical 5 cm renderer are **visual units** and use
 `gridVisualScale(cell_cm) = 5 / cell_cm`. Physical sizes already converted from
 centimetres, screen-fixed strokes/handles, plan-relative icon sizes and the
-grid pitch must not receive that factor again. Full, static and 2.5D
-renderers share this classification. Full and static roots expose the factor as
-`--hp-cell-visual-scale`; 2.5D heights and user-space shadows include it in
-their structural cache inputs.
+grid pitch must not receive that factor again. Full and static SVG roots expose
+`--hp-cell-visual-scale`. The WebGL scene consumes physical geometry and uses
+the same centimetre-to-plan scale for elevation.
 
 Backdrop images and their editor frame use the same normalized local SVG paint
 basis (#1400). Their world-space rectangles remain unchanged: rotation is around
@@ -360,7 +359,7 @@ produce a zero-sized SVG `viewBox`.
 
 ## §5 Zoom and pan
 
-* **2.5D raster joins (#1555).** Detail and overview use one mask and its
+* **Historic SVG 2.5D raster joins (#1555, through v1.86.1).** Detail and overview use one mask and its
   inverse on the same untransformed stage. The shared edge stays inside decodable
   pixels and is aligned to the device pixel grid; neither bitmap changes the
   camera transform or the SVG hit surface. If split composition is unavailable,
@@ -368,10 +367,9 @@ produce a zero-sized SVG `viewBox`.
   views. See [ISOMETRIC](ISOMETRIC.md) for the hold and handoff contract.
 * **Vacuum path attachment (#871).** The SVG path inside the HTML device
   layer inherits that layer's camera once. Its `viewBox` and clip follow the
-  marker layer's authored basis on a 2.5D rebase. Its animated tip uses the
-  current composed SVG screen inverse,
-  not a cached camera rectangle. Route/calibration/source coordinates and
-  Flat/2.5D stacking do not change; [VACUUM](VACUUM.md) owns this contract.
+  marker layer’s authored basis. In WebGL 3D the floor camera projects the trail.
+  The animated tip uses the current composed SVG screen inverse. Both views use
+  the same saved physical path and calibration. See [VACUUM](VACUUM.md).
 * **Zoom in** — unchanged, `ZOOM_MAX = 8`.
 * **Zoom out** — `MIN_ZOOM = 1/3`: you can see three times the content
   frame and no further. Empty space beyond that is not information.
@@ -935,9 +933,8 @@ serialized. The normal header/viewport measuring controller also runs during
 passive preparation. Matching fit inputs use the same camera; preview is not
 marked complete or editable. A same-floor coherent complete frame has priority
 over replacing it with L1 while a new current-state candidate is prepared.
-In 2.5D, L1 supplies only the fit/camera hint: its simplified silhouette is
-not painted while the current full scene is preparing (#1490). Flat retains
-its passive preview. Both loading surfaces use the same day/night environment
+In WebGL 3D, L1 supplies the fit/camera hint. A matching neutral 3D startup
+preview may be painted separately (#1520, #1522). Flat retains its passive preview. Both loading surfaces use the same day/night environment
 as the ready View; a static background retains the configured colour.
 
 The local IndexedDB generation is optional and separate from canonical data,

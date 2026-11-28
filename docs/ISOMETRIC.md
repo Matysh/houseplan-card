@@ -108,8 +108,10 @@ a marker or active LED strip. Leaving the field empty aligns the top with the
 wall cut and keeps the automatic body's usual proportions. A value of zero
 places the underside directly on the floor. Explicit heights use a reference
 vertical thickness derived from the standard device profile. The maximum is
-the wall cut minus that thickness. Flat, the editors, the floor shadows and
-the light calculations keep their existing coordinates.
+the wall cut minus that thickness. The flat view and editors retain their plan
+coordinates. An explicit LED strip height changes the position of its light
+source in 3D. Auto retains the established near-floor lighting envelope. See
+[Light](LIGHT.md) for the separate floor and wall falloff.
 
 Contact components in 3D use only edges between neighbours on the same level.
 Automatic markers group with other automatic markers. Switching a raised
@@ -122,7 +124,7 @@ copy of its path in the same write.
 The sections below record the preceding SVG renderer and the compatibility
 rules carried over from it.
 
-The current presentation integrates the accepted #1451 UI Lab handoff dated
+The SVG renderer integrated the accepted #1451 UI Lab handoff dated
 18 November 2026. It replaces #713's vertical oblique, uncompressed floor.
 The previous numeric camera and marker-placement policies are historical;
 their rationale remains in the #89/#160/#570/#649/#713 ADRs and issues.
@@ -130,14 +132,14 @@ their rationale remains in the #89/#160/#570/#649/#713 ADRs and issues.
 This is a deterministic presentation of the same canonical 2D plan, not a
 second saved model, an interior editor or a free 3D camera.
 
-## Activation and surfaces
+### Activation and surfaces
 
 The existing `settings.volumetric_view` enables the mode in ordinary View,
 the Home Assistant panel and kiosk. Missing/false keeps Flat. All three
 editors and the static space card remain Flat; static still has its existing
 limited decor support. No URL, DOM dataset, alpha toggle or laboratory opening
-amount enables the production presentation. Existing wording marking the mode
-as in development remains until a separate owner decision.
+amount enabled the released SVG presentation. Since v2.0.0 the public switch
+selects the WebGL 3D presentation.
 
 With `show_borders:false`, there is no volume: floor, furniture, fitting and
 hits use Flat's quarter turns. The saved preference is not cleared.
@@ -148,7 +150,7 @@ The canonical settings, dimensions, positions, bindings and leaf states are
 read-only inputs. Turning, viewing and entering/leaving an editor do not write
 config/layout or substitute the dimensions of the demonstration house.
 
-## One camera and one inverse
+### One camera and one inverse
 
 `iso-projection.ts` and the pure profile in `iso-lab-camera.ts` are shared by
 main and geometry worker. The module's historical name is not an opt-in.
@@ -246,7 +248,7 @@ The short light crossfade uses the live SVG layers. If bitmap preparation or
 the bitmap canvas API fails, View falls back to the vector camera with its
 coverage reserve. Flat and the editors use their existing camera paths.
 
-## Physical construction and openings
+### Physical construction and openings
 
 The canonical wall footprint, physical junctions and opening hosts remain the
 only source of geometry. `iso-walls`, `iso-openings` and `iso-scene-*` derive
@@ -292,7 +294,7 @@ physical face from #1449. Transparent/open leaves and each shade section keep
 their existing optical meaning. Floor sunlight lies below furniture; furniture
 adds no light source or HA service action.
 
-## Furniture and live overlays
+### Furniture and live overlays
 
 The 60 inert companion SVGs in the furniture pack carry accepted part heights
 and profiles. One generated, fingerprinted lazy registry supplies both the
@@ -377,7 +379,7 @@ Its alpha controls tint strength. White and zero strength reproduce the
 original material. Glass, shades, hardware and garage gates retain their own
 materials.
 
-## Caches and safe failure
+### Caches and safe failure
 
 The floor shadow clip reuses the same cut across equivalent projected
 silhouettes and frame bounds. Device masks reuse identical measured geometry
@@ -439,7 +441,7 @@ Changed physical input or an explicit retry follows the existing lifecycle.
 There is no public fault-injection flag; tests inject failures only in isolated
 synthetic fixtures.
 
-## Acceptance and limits
+### Acceptance and limits
 
 The original handoff is `DEV-HANDOFF-ff45c3ef.zip`, SHA-256
 `25849fcbf0652186f93143844fd7255d0a905aabfdd4fb05087d428b0605fe00`.

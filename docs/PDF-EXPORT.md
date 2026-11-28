@@ -9,8 +9,9 @@ and devices, with independent values and reduced-motion support. PDF browser
 preferences remain compatible. SVG starts afresh each opening with devices off,
 decor/names/backdrop on and transparent background.
 
-SVG captures the displayed View area, including its camera, Flat/2.5D projection,
-colours, alpha and visible layers. It neither fits nor changes the live plan.
+SVG captures the View area, colours, alpha and visible layers. If the live
+view is 3D, the exporter renders a separate flat vector scene for the area under
+the camera, using the corresponding flat rotation. The live 3D view stays on screen.
 Devices include their badges, locks, LED representations, radar and vacuum trails;
 room labels remain independent. Light effects are part of plan appearance. Hidden
 View layers are never restored by export. Editor mode must be closed before SVG
@@ -46,7 +47,7 @@ The effective per-space quarter-turn orientation also applies to PDF (#1070).
 The print scene is rotated before sheet/scale fitting; architecture, rasters and
 decor text follow the plan while room captions remain horizontal. Page chrome
 and the page-anchored hatch stay readable; the compass includes the plan turn.
-The export remains flat and read-only even when the source View is 2.5D.
+The export remains flat and read-only even when the source View is 3D.
 
 The compact560px settings shell (#976) shares action/header styling, a single
 body scroller and accepted-close animation/focus behavior. Busy generation

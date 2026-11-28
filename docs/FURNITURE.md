@@ -159,11 +159,11 @@ binding to later wall edits, and already saved coordinates are never migrated.
 
 ## Desk-mounted computer (#1451)
 
-The accepted 2.5D presentation uses the 60 accompanying volume SVGs as derived
-art, not another stored model. The scene and developer gallery share one
-validated, lazily loaded registry. The ordinary plan artwork above remains
-the source of the Flat editor and PDF. See [ISOMETRIC](ISOMETRIC.md) for the
-camera, materials, layer order and complete Flat failure boundary.
+The WebGL 3D presentation builds volume surfaces from the furniture profiles
+for the same saved plan objects. The developer gallery uses the same profiles
+for SVG previews. The ordinary plan artwork above remains
+the source of the Flat editor and PDF. See [3D rendering](ISOMETRIC.md#current-renderer)
+for the camera, materials and layer order.
 
 In the desktop Background editor, a writer can explicitly **Place on desk**
 when an existing free `computer` lies over the usable surface of a straight
@@ -223,7 +223,7 @@ ordinary print options.
 
 The `tv` shape can carry an explicit `tv_cabinet_id` reference to one
 `cabinet_tv` on the same floor. Flat and architectural PDF center the TV over
-the cabinet and apply its rotation and reflections. The 2.5D stand rests at
+the cabinet and apply its rotation and reflections. In 3D the stand rests at
 the height of the cabinet model's `console-top` part. The TV retains its own
 dimensions and style. An overlapping TV with no link still stands on the
 floor.
@@ -257,10 +257,11 @@ artwork only up to the card's `BOOT_MAX_MS` cap. Touch View/kiosk support is
 blocking; editor ergonomics on touch remain best effort under
 `docs/TOUCH-SUPPORT.md`.
 
-The #1451 volume registry is a separate optional lazy resource. Its load,
-fingerprint or construction failure uses the complete Flat scene and the
-ordinary plan artwork, without clearing the saved 2.5D preference or dropping
-part of a workstation. The older plan-artwork-load failure described above is
-not a reason to leave the scene empty merely because volume art failed.
+In v2.0.0 WebGL builds furniture bodies from the #1451 volume profiles. The
+lazy registry is generated from annotated SVGs and shared by the plan and the
+developer gallery. If the registry fails to load, has a different build
+fingerprint or fails validation, the card shows the complete Flat scene with
+ordinary plan artwork and retains the saved 3D preference. The same fallback
+applies if the 3D scene fails to initialize.
 New workstation data, portable version selection and the old-client write
 barrier are documented in [CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md#desk-computer-workstation-1451).

@@ -337,7 +337,7 @@ share `test/fixtures/282-wall-identity-parity.json`. Writer-bypass mutants in
 atom or partition keeps its structural axis and stable identity but contributes
 no masonry body, floor subtraction, paper, opening tunnel or opening host; one
 resolver, `src/zero-walls.ts`, applies `space.zero_wall_style` to flat, static,
-2.5D and light.
+3D and light.
 
 Per space: `walls: [{ key, cm, a?, b? }]`. `key` remains the quantised midpoint
 and direction (modulo 180°) compatibility lookup; new or rewritten entries also
@@ -708,8 +708,8 @@ invoke it.
   The room alone owns its color/alpha and live transitions. A geometry-only
   coverage mask fades its extension by the existing Plan weight; the base floor
   and original hit region remain unchanged. There is no separately colored
-  tunnel, hard-stop gradient or substitute paper patch. Flat, 2.5D and Static
-  share the same projection; cached geometry excludes paint/state/mode/camera.
+  tunnel, hard-stop gradient or substitute paper patch. 2D, 3D and Static share the room-floor and opening geometry. Each presentation
+  projects it with its own camera. Cached geometry excludes paint/state/mode/camera.
 - A fully nested room is legal (`polyContainsPoly`): the parent's floor and data
   fill are evenodd paths with the island rings as holes
   (`islandsOf`).

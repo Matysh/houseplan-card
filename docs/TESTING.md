@@ -165,7 +165,7 @@ the target paper, room fill and Plan-only layers.
 
 For #1484, `demo/smoke_mode_marker_camera.mjs` holds the first and settling
 frames from native panel controls. It checks marker alignment on a cold Flat
-entry and a rotated plan, and keeps the 2.5D marker silhouette until the
+entry and a rotated plan, and keeps the raised marker silhouette until the
 projection swap. A side summary and the wide editors exercise the stage resize.
 
 The room/opening transition witnesses inspect the effective alpha of both
@@ -180,7 +180,21 @@ and actual endpoint captures provide presentation evidence; the smoke does not
 add a cadence gate. Compare timings on the same browser/machine without another
 benchmark or a test-build preparation running concurrently.
 
-### Кадры колеса 2.5D (#1485)
+### WebGL 3D
+
+Текущие адресные сценарии находятся в `demo/smoke_plan_3d_*.mjs`. В частности,
+`smoke_plan_3d_live_camera.mjs` проверяет движение камеры живой сцены,
+`smoke_plan_3d_marker_height.mjs` — высоту маркеров, а
+`smoke_plan_3d_resume.mjs` — восстановление 3D. Для замеров см.
+[справочник бенчмарков](../demo/performance/README.md).
+
+<a id="кадры-колеса-25d-1485"></a>
+
+### Исторические кадры колеса SVG 2.5D (#1485)
+
+Ниже параметры прогона на SVG-рендерере до v2.0.0. Их результаты описывают
+ту сборку. Имена нескольких диагностических файлов с `iso` по-прежнему есть
+в дереве, но этот протокол не проверяет живую сцену WebGL.
 
 `node demo/benchmark_iso_wheel_series.mjs` записывает три серии колеса с шагом
 140 мс и отличает принятые события от попыток ввода. В отчёте есть записи
@@ -197,7 +211,7 @@ benchmark or a test-build preparation running concurrently.
 счётчик остаётся `null`. Трасса влияет на время кадра, поэтому проценты
 сравнения берите из прогона без неё.
 
-`node demo/smoke_iso_raster_session.mjs underlay` задерживает подготовку
+[Сценарий `smoke_iso_raster_session.mjs underlay` в v1.86.1](https://github.com/Matysh/houseplan-card/blob/v1.86.1/demo/smoke_iso_raster_session.mjs) задерживал подготовку
 кадра на секунду и проверяет комплементарные маски на пикселях. Варианты
 `backdrop` и `fallback` проверяют план с изображением и доступность
 векторного пути без createImageBitmap; `composition-fallback` — работу
@@ -224,7 +238,9 @@ light меняет свет посреди колеса и проверяет в
 фиксированным гауссовым размытием. Параметры и исходные замеры описаны в
 [отчёте #1485](evidence/1485-camera-performance.md).
 
-### Длинный зум 2.5D у края (#1478)
+<a id="длинный-зум-25d-у-края-1478"></a>
+
+### Исторический длинный зум SVG 2.5D у края (#1478)
 
 `node demo/benchmark_iso_edge_zoom.mjs` использует синтетический этаж iso-paint.
 Оба направления используют 14 нативных шагов колеса у края, номинально через

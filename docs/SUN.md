@@ -52,7 +52,7 @@ soft wedges from exterior windows. Neither creates entities nor calls services.
   (`sunGeometryKey`, `src/floor-geometry-key.ts`, #814): the opening wall
   index key (floor, rooms, walls, open cuts, scale), the physical bodies key
   of the floor record, the exterior windows, azimuth, elevation, north, the
-  ray origin and the zero walls; the 2.5D wash adds the cell size and the lit
+  ray origin and the zero walls; the projected sun wash adds the cell size and the lit
   floors. Not the config revision (it moves only after the WS ack,
   DEV-B701-01) and not the global config epoch: an own edit moves the key
   synchronously, an edit of another floor or of a shared setting does not.
@@ -101,7 +101,7 @@ The public setting remains a two-value selector. `static` uses `bg_color`.
 - Four constant environment layers cross-fade for exactly 1100 ms with
   `cubic-bezier(.22,.61,.36,1)`. Reduced motion disables the transition.
 - The decorative paper outline and its three drop-shadows are removed (#1092),
-  in full Flat/2.5D View, kiosk and the static space card, both before and after
+  in full 2D and 3D View, kiosk and the static space card, both before and after
   camera movement. This supersedes the outline clauses of the original
   background specification. The opaque room paper remains unchanged.
 - The main plan keeps its independent explicit compositor layer after the
@@ -157,7 +157,7 @@ connect it. A wholly internal isolated group creates no artificial exterior.
 Nested islands use their innermost room ownership. Exterior seeds are determined
 from the full original room plan, before excluding anything.
 
-This is a sunlight-only classification shared by Flat and 2.5D, retaining the
+This is a sunlight-only classification shared by 2D and 3D, retaining the
 normal compass, horizon, aperture and receiving-contour rules. Only contour
 zero-wall barriers owned solely by the excluded area lose their solar shadows;
 independent walls and columns keep theirs. Artificial-light barriers, masonry,
@@ -393,7 +393,12 @@ obstacles. The floor texture stores the edge as a signed distance and fades
 sunlight inward over a four-texel band. The atlas stays at 128 pixels per
 tile and follows plan coordinates while the camera zooms or pans.
 
-## 2.5D: the soft sun wash (#649)
+<a id="25d-the-soft-sun-wash-649"></a>
+
+## Historical SVG 2.5D sun wash (#649, through v1.86.1)
+
+The following formulas document the previous SVG renderer. For the live
+3D view, see [Window sunlight in WebGL 3D](#window-sunlight-in-webgl-3d-1580).
 
 In the 2.5D View (General settings › Display › Show the plan in 2.5D) the Flat
 wedges above give way to a soft wash along the real sun (`src/iso-sun.ts`). Flat
