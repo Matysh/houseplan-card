@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30053,
+  "revision": 30054,
   "nextTicket": 805,
   "nextFence": 805,
   "tasks": {
@@ -6276,7 +6276,7 @@
       "ownerDecision": null,
       "ticket": 804,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795824447721,
       "reviewEntry": 1,
       "patchId": "3daf3a5f820f2ed37169f6ae35e3eea8c73a370b",
@@ -6289,7 +6289,16 @@
         "docs/release-ledger/v1.86.1/1620.json",
         "process-next/lib/source-dependencies.mjs",
         "src/houseplan-card.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261128T000746946-047b38f9",
+        "name": "Тесты для задачи #1620 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261128T000746946-047b38f9/report.json",
+        "materialSha": "d51726a1ac94d354bf8ec9e528c9b46e948650a4",
+        "status": "passed",
+        "finishedAt": "2026-11-28T00:11:05.434Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -7037,9 +7046,9 @@
     "fence": 804,
     "materialSha": "d51726a1ac94d354bf8ec9e528c9b46e948650a4",
     "expectedBase": "c43539d196a5e6ca573edf3612557c1f9cfd27e7",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795824452119,
-    "expiresAt": 1795824931172,
+    "expiresAt": 1795828266586,
     "patchId": "3daf3a5f820f2ed37169f6ae35e3eea8c73a370b"
   },
   "events": {
@@ -7123,6 +7132,34 @@
         "materialSha": "d51726a1ac94d354bf8ec9e528c9b46e948650a4",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:382b24f8-5beb-4cdd-a3ca-39f2bf94f4ac:finish:3:s6-complete": {
+      "digest": "16cb28c69ac4c5ea9b4e2e98d5f06e2fbc55ec63cd66322116403774406cc96d",
+      "issue": 1620,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1620,
+        "at": 1795824666586,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d51726a1ac94d354bf8ec9e528c9b46e948650a4",
+        "phase": "review",
+        "evidence": {
+          "id": "20261128T000746946-047b38f9",
+          "name": "Тесты для задачи #1620 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261128T000746946-047b38f9/report.json",
+          "materialSha": "d51726a1ac94d354bf8ec9e528c9b46e948650a4",
+          "status": "passed",
+          "finishedAt": "2026-11-28T00:11:05.434Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
