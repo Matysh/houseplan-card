@@ -1,11 +1,11 @@
-<!-- release: v2.0.0-beta.4 -->
+<!-- release: v2.0.0-beta.5 -->
 <!-- base: v1.86.1 -->
 <!-- language: ru -->
-## Houseplan 2.0.0-beta.4
+## Houseplan 2.0.0-beta.5
 
-В 3D свет LED-ленты на полу и стенах учитывает заданную высоту. Если высота не задана, освещение остаётся прежним. Загруженные изображения декора остаются чёткими при сильном приближении. [#1617](https://github.com/Matysh/houseplan-card/issues/1617), [#1618](https://github.com/Matysh/houseplan-card/issues/1618)
+При первой загрузке 3D-плана под объёмной мебелью больше не остаётся её плоский контур. Обычные линии и остальной декор продолжают отображаться. [#1620](https://github.com/Matysh/houseplan-card/issues/1620)
 
 <!-- language: en -->
-## Houseplan 2.0.0-beta.4
+## Houseplan 2.0.0-beta.5
 
-In 3D, LED strip light on the floor and walls follows the configured height. If height is left blank, the existing lighting is preserved. Uploaded decor images stay sharp when zooming in closely. [#1617](https://github.com/Matysh/houseplan-card/issues/1617), [#1618](https://github.com/Matysh/houseplan-card/issues/1618)
+On first load of the 3D plan, a flat outline no longer remains under 3D furniture. Ordinary strokes and other decor still appear on the plan. [#1620](https://github.com/Matysh/houseplan-card/issues/1620)
