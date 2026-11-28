@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1701,
+  "revision": 1702,
   "active": "v2.0.0-20261128",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -359040,7 +359040,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v2.0.0",
@@ -371698,7 +371698,8 @@
           "ru": "<!-- release: v2.0.0 -->\n<!-- base: v1.86.1 -->\n## Релиз Houseplan 2.0.0\n\n🏠 **Настоящий 3D-план.** Новый режим 3D на WebGL показывает объём стен, проёмов, мебели и устройств в восьми ракурсах. Источники света и LED-ленты освещают пол и стены. Загруженные изображения декора остаются чёткими при приближении. Если браузер не поддерживает WebGL 2, Houseplan открывает плоский план; редакторы и плоский SVG по-прежнему доступны. [#1514](https://github.com/Matysh/houseplan-card/issues/1514), [#1567](https://github.com/Matysh/houseplan-card/issues/1567), [#1618](https://github.com/Matysh/houseplan-card/issues/1618)\n\n📐 **Высота устройств и LED-лент.** В 3D можно задать высоту над полом: низкие устройства будут у пола, а настенные — на нужном уровне. Для LED-лент высота влияет и на свет. В плоском виде настройка ни на что не влияет. [#1608](https://github.com/Matysh/houseplan-card/issues/1608), [#1617](https://github.com/Matysh/houseplan-card/issues/1617)\n\n🚨 **Сигналы на плане из автоматизаций.** Home Assistant может показать или снять сигнал «Внимание» или «Тревога» у устройства или сущности на плане. Активные сигналы восстанавливаются после переподключения и перезапуска Home Assistant. [#1001](https://github.com/Matysh/houseplan-card/issues/1001)\n\n⚡ **Быстрее вход в редактор.** Первый переход в редактор и повторное переключение этажей после работы в редакторе занимают меньше времени. В мобильном приложении Home Assistant успешное действие со значком подтверждается лёгкой вибрацией. [#1595](https://github.com/Matysh/houseplan-card/issues/1595), [#1607](https://github.com/Matysh/houseplan-card/issues/1607)\n\n[Полный список изменений](https://github.com/Matysh/houseplan-card/milestone/18?closed=1)\n",
           "en": "<!-- release: v2.0.0 -->\n<!-- base: v1.86.1 -->\n## Houseplan 2.0.0 release\n\n🏠 **A true 3D floor plan.** The new WebGL view shows the depth of walls, openings, furniture, and devices from eight angles. Lights and LED strips illuminate both floors and walls. Uploaded decor images stay sharp when zooming in. Browsers without WebGL 2 open the flat plan; the editors and flat SVG export are still available. [#1514](https://github.com/Matysh/houseplan-card/issues/1514), [#1567](https://github.com/Matysh/houseplan-card/issues/1567), [#1618](https://github.com/Matysh/houseplan-card/issues/1618)\n\n📐 **Height for devices and LED strips.** Set their height above the floor to place low devices at floor level and wall-mounted devices where they belong. The height also affects how LED strips light the room. The flat view is unchanged. [#1608](https://github.com/Matysh/houseplan-card/issues/1608), [#1617](https://github.com/Matysh/houseplan-card/issues/1617)\n\n🚨 **Signals from Home Assistant automations.** Automations can show or clear Attention and Alarm signals for a device or entity on the plan. Active signals are restored after reconnecting or restarting Home Assistant. [#1001](https://github.com/Matysh/houseplan-card/issues/1001)\n\n⚡ **Open the editor sooner.** The first editor entry and repeated floor switches after editing are faster. On Home Assistant Companion, a successful marker action gives light haptic feedback. [#1595](https://github.com/Matysh/houseplan-card/issues/1595), [#1607](https://github.com/Matysh/houseplan-card/issues/1607)\n\n[Full list of changes](https://github.com/Matysh/houseplan-card/milestone/18?closed=1)\n"
         }
-      }
+      },
+      "tag": "v2.0.0"
     }
   },
   "published": {
@@ -378320,7 +378321,8 @@
     "stable-200-20261128-final-witnesses": "81c5251d8802ecc733ed3844393c3248b9eb60d2b8aefaa3d75cbf294f7f7bbe",
     "stable-200-20261128-final-publication:runner-report": "973bf8c8f0da8fa1e151019e4800b7422dd89a028853beb9f19bc068b35f82a7",
     "stable-200-20261128-final-publication:metrics": "c2a3a63e9abbb732b512a8e871cae3bf2edce4a0766b132cf6741209df37547f",
-    "stable-200-20261128-final-publication:prepared:c078a316-e96e-4109-8971-f489312e8f7a": "76ba3b95cab89e1dcbd25cce878fd78d591e254d4273f1a5df5183d90e527c55"
+    "stable-200-20261128-final-publication:prepared:c078a316-e96e-4109-8971-f489312e8f7a": "76ba3b95cab89e1dcbd25cce878fd78d591e254d4273f1a5df5183d90e527c55",
+    "stable-200-20261128-final-publication:started:1701": "07ddd28b569e78dfce8257706e40e3257cbc225f95727f48a6bb1c2d06d37623"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
