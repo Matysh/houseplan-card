@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30076,
+  "revision": 30077,
   "nextTicket": 805,
   "nextFence": 805,
   "tasks": {
@@ -6285,6 +6285,110 @@
         "at": 1795824687775,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1620,
+        "requestId": "review:1620:1:3daf3a5f820f2ed37169f6ae35e3eea8c73a370b:c43539d196a5e6ca573edf3612557c1f9cfd27e7",
+        "kind": "code",
+        "base": "c43539d196a5e6ca573edf3612557c1f9cfd27e7",
+        "materialSha": "d51726a1ac94d354bf8ec9e528c9b46e948650a4",
+        "patchId": "3daf3a5f820f2ed37169f6ae35e3eea8c73a370b",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1620,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1620",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исправление решает именно ту гонку, которую описывает issue. Теперь захват floor-ink ждёт, пока загрузится каталог объёмной мебели, и только после этого решает, какую мебель отдать объёмному проходу, а какую оставить в SVG пола. Плоская копия дивана больше не попадает в текстуру, которая затем жила бы с тем же ключом и после загрузки. Остальной плоский декор (линия) сохраняется. Если каталог недоступен, вся проекция переходит во Flat. Если для символа нет модели, он остаётся в текстуре пола. Блокеров нет. Остаётся одна граница надёжности: если динамический import каталога вообще не завершится, 3D-кадр будет считаться неполным до его завершения. Код рядом при этом уже ждёт этот каталог, так что новой задержки эта правка не вносит.",
+          "understanding": "До правки. `floorInk()` в `src/houseplan-card.ts` формирует для `Plan3dWorld` ключ и функцию `capture`. В ключе нет состояния `FURNITURE_VOLUME_RUNTIME`. При холодном запуске каталог ещё `pending`, поэтому `furnitureParts()` возвращает null, а фильтр `_renderDecorLayer(..., 'floor')` (стр. 11329) оставляет диван в SVG. Текстура запекается с плоским контуром. После загрузки каталога observer запрашивает перерисовку, сцена добавляет объёмный диван, но ключ floor-ink не меняется. `updateFloorInk` (`plan-3d-world.ts:933-935`) видит тот же ключ и сохраняет старую текстуру, отсюда двойной контур.\n\nПосле правки. `capture` стал async. Если видима мебель для объёмного прохода (`volumeCatalog`) и каталог в состоянии `pending`, захват сначала ждёт `FURNITURE_VOLUME_RUNTIME.ensure(...)`. Затем проверяет `signal.aborted`, authority и scope, а потом рендерит SVG пола уже по итоговому каталогу. `ensure` никогда не отклоняется: `loadOnce` ловит ошибку и переводит runtime в `fallback`. Значит, `capture` не превращается в rejected-промис из-за каталога.\n\nЧто я проследил:\n- `updateFloorInk` → `capture(signal)` → `ready`/`floorInkLoading`;\n- `Plan3dHost.present` (`complete: !world.loading`) и `snapshot` (`await world.ready()`);\n- `_continuityAssetsReady` и boot-путь (стр. 5696, 9206): они уже ждут `_furnitureVolumePending()`;\n- `_effectiveProjection` (стр. 8720-8722): при `fallback` вся проекция становится flat;\n- фильтр `paint === 'floor'` в `_renderDecorLayer`;\n- smoke-тест с перехватом настоящего чанка каталога через `page.route`.",
+          "analysis": [
+            {
+              "topic": "Корректность выбранного механизма (ожидание вместо смены ключа)",
+              "assessment": "Решение «не захватывать, пока не известно разделение» точнее, чем добавить состояние runtime в ключ. Смена ключа дала бы промежуточный кадр с плоским контуром и лишний повторный захват и декодирование. Ожидание согласовано с тем, что continuity и boot уже ждут каталог, поэтому новой задержки старта нет. При повторной перерисовке после загрузки ключ тот же (`decor`, `useFurnitureVolume` и прочее не меняются), и идущий захват не отменяется. Если ключ меняется во время ожидания, `updateFloorInk` прерывает controller, и после `await` захват вернёт null благодаря проверке `signal.aborted`.",
+              "evidence": "src/houseplan-card.ts:14047-14058; src/plan-3d-world.ts:933-978; src/furniture-volume-runtime.ts:17-41; src/houseplan-card.ts:5696, 9206"
+            },
+            {
+              "topic": "Расчёт `strokes` до загрузки каталога",
+              "assessment": "`strokes` вычисляется синхронно, пока каталог ещё pending. Поэтому для мебели он равен true даже тогда, когда после загрузки вся мебель окажется объёмной. Это безопасно: после `await` фильтр `'floor'` уберёт объёмную мебель, и в текстуру попадут только стены нулевой толщины и лестницы, либо получится пустой слой. На следующей перерисовке после загрузки `floorInk()` пересчитается. Если штрихов, стен нулевой толщины и лестниц нет, вернётся undefined, и `updateFloorInk` очистит пустую текстуру. Дефекта нет, лишь один холостой захват.",
+              "evidence": "src/houseplan-card.ts:14033-14036, 11329; src/plan-3d-world.ts:941-949"
+            },
+            {
+              "topic": "Flat и недоступная модель",
+              "assessment": "Если каталог недоступен или fingerprint не совпадает, `ensure` завершается и runtime переходит в `fallback`. `_effectiveProjection` после requestUpdate через observer уводит проекцию во flat, поэтому floor-ink для iso больше не нужен. Символ без модели в готовом каталоге даёт `furnitureParts` = null, остаётся в фильтре `'floor'` и корректно запекается в пол. Во Flat-проекции ветка `floorInk` не выполняется. Отдельных прогонов для fallback и отсутствующего символа в новом тесте нет, вывод сделан по исходникам.",
+              "evidence": "src/houseplan-card.ts:8720-8722, 11329; src/furniture-volume-runtime.ts:34-40"
+            },
+            {
+              "topic": "Регрессионный тест",
+              "assessment": "Тест полезный и честный. Он задерживает настоящий запрос production-чанка `furniture-volume.generated`, отпускает его только после того, как world начал захват floor-ink, а затем считает красные пиксели в области дивана и вне её. Ассерты проверяют, что объёмные части дивана есть (`meshCount > 1`), что обычная линия сохранилась (`otherInk > 50`) и что `sofaInk === 0`. По комментарию владельца, на beta.4 тест находит 1 149 лишних пикселей. Слабое место: если `waitForFunction` упадёт по таймауту 4 с, ошибка проглатывается и каталог отпускается. Тогда тест прошёл бы и без моделирования гонки, хотя `sawCatalogue` проверяется.",
+              "evidence": "demo/smoke_plan_3d_furniture_ink.mjs:12-29, 53-84; demo/helpers/iso-paint-scene.mjs (новый хук beforeFixture)"
+            },
+            {
+              "topic": "Граница надёжности: незавершающийся import",
+              "assessment": "Теперь `world.loading` остаётся true, пока каталог pending, поэтому кадр не отмечается `complete`, а `snapshot` ждёт `world.ready()`. Если динамический import вообще не завершится (зависший запрос без сетевой ошибки), 3D-кадр не получит data-hp-plan-3d-ready, хотя раньше показывался бы с плоской мебелью. Это гипотеза, а не установленный дефект: браузер обычно завершает такой import ошибкой, после чего runtime уходит в `fallback`. К тому же continuity уже блокируется тем же `_furnitureVolumePending()`, и boot ограничен `BOOT_MAX_MS`. Подтвердить или опровергнуть можно прогоном с route, который никогда не вызывает fallback/abort.",
+              "evidence": "src/plan-3d-host.ts:58-59, 171, 213; src/plan-3d-world.ts:455, 980-983"
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "В smoke-тесте имеет смысл сохранить результат ожидания в `gate` и после сцены проверить, что ворота открылись по признаку захвата, а не по таймауту. Сейчас ошибка `waitForFunction` проглатывается, и при изменении внутренних полей (`floorInkLoading`/`floorInkTexture`) тест молча перестанет моделировать гонку. Цена — одна дополнительная проверка.",
+            "Можно добавить в тот же фикстур символ мебели без объёмной модели и проверить, что его пиксели остаются в текстуре. Это прямо закрыло бы пункт ТЗ про «недоступную модель» на уровне сущности, а не всего каталога. Сейчас это следует только из чтения фильтра в `_renderDecorLayer`."
+          ],
+          "boundaries": "Сборку, тесты и браузерные прогоны я не запускал. Использовал результат S6: прогон «Тесты для задачи #1620 (перед ревью)» на материале d51726a1 завершился со статусом passed, без failures. Цифры из комментария владельца (1 149 пикселей на beta.4 → 0, 868 пикселей линии, diff=0px для plan-rotation-iso-0-1070) я не воспроизводил. По исходникам на head изучил: `furniture-volume-runtime.ts`, ветку floorInk в `houseplan-card.ts`, фильтр `'floor'` в `_renderDecorLayer`, `_effectiveProjection`, continuity и boot-ожидание каталога, `updateFloorInk`/`ready` в `plan-3d-world.ts`, `present`/`snapshot` в `plan-3d-host.ts`. Записи CHANGELOG и release-ledger прочитал как тексты, механически их не проверял. Поведение при зависшем import (без ошибки) остаётся непроверенной гипотезой.",
+          "outsideFindings": []
+        },
+        "usage": {
+          "input_tokens": 26,
+          "cache_creation_input_tokens": 49156,
+          "cache_read_input_tokens": 329378,
+          "output_tokens": 9128,
+          "output_tokens_details": {
+            "thinking_tokens": 3183
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 49156,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 915,
+              "cache_read_input_tokens": 36439,
+              "cache_creation_input_tokens": 12717,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 12717
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление решает именно ту гонку, которую описывает issue. Теперь захват floor-ink ждёт, пока загрузится каталог объёмной мебели, и только после этого решает, какую мебель отдать объёмному проходу, а какую оставить в SVG пола. Плоская копия дивана больше не попадает в текстуру, которая затем жила бы с тем же ключом и после загрузки. Остальной плоский декор (линия) сохраняется. Если каталог недоступен, вся проекция переходит во Flat. Если для символа нет модели, он остаётся в текстуре пола. Блокеров нет. Остаётся одна граница надёжности: если динамический import каталога вообще не завершится, 3D-кадр будет считаться неполным до его завершения. Код рядом при этом уже ждёт этот каталог, так что новой задержки эта правка не вносит.\n\n## Понимание решения\n\nДо правки. `floorInk()` в `src/houseplan-card.ts` формирует для `Plan3dWorld` ключ и функцию `capture`. В ключе нет состояния `FURNITURE_VOLUME_RUNTIME`. При холодном запуске каталог ещё `pending`, поэтому `furnitureParts()` возвращает null, а фильтр `_renderDecorLayer(..., 'floor')` (стр. 11329) оставляет диван в SVG. Текстура запекается с плоским контуром. После загрузки каталога observer запрашивает перерисовку, сцена добавляет объёмный диван, но ключ floor-ink не меняется. `updateFloorInk` (`plan-3d-world.ts:933-935`) видит тот же ключ и сохраняет старую текстуру, отсюда двойной контур.\n\nПосле правки. `capture` стал async. Если видима мебель для объёмного прохода (`volumeCatalog`) и каталог в состоянии `pending`, захват сначала ждёт `FURNITURE_VOLUME_RUNTIME.ensure(...)`. Затем проверяет `signal.aborted`, authority и scope, а потом рендерит SVG пола уже по итоговому каталогу. `ensure` никогда не отклоняется: `loadOnce` ловит ошибку и переводит runtime в `fallback`. Значит, `capture` не превращается в rejected-промис из-за каталога.\n\nЧто я проследил:\n- `updateFloorInk` → `capture(signal)` → `ready`/`floorInkLoading`;\n- `Plan3dHost.present` (`complete: !world.loading`) и `snapshot` (`await world.ready()`);\n- `_continuityAssetsReady` и boot-путь (стр. 5696, 9206): они уже ждут `_furnitureVolumePending()`;\n- `_effectiveProjection` (стр. 8720-8722): при `fallback` вся проекция становится flat;\n- фильтр `paint === 'floor'` в `_renderDecorLayer`;\n- smoke-тест с перехватом настоящего чанка каталога через `page.route`.\n\n## Разбор решения\n\n### Корректность выбранного механизма (ожидание вместо смены ключа)\n\nРешение «не захватывать, пока не известно разделение» точнее, чем добавить состояние runtime в ключ. Смена ключа дала бы промежуточный кадр с плоским контуром и лишний повторный захват и декодирование. Ожидание согласовано с тем, что continuity и boot уже ждут каталог, поэтому новой задержки старта нет. При повторной перерисовке после загрузки ключ тот же (`decor`, `useFurnitureVolume` и прочее не меняются), и идущий захват не отменяется. Если ключ меняется во время ожидания, `updateFloorInk` прерывает controller, и после `await` захват вернёт null благодаря проверке `signal.aborted`.\n\nОснование: src/houseplan-card.ts:14047-14058; src/plan-3d-world.ts:933-978; src/furniture-volume-runtime.ts:17-41; src/houseplan-card.ts:5696, 9206\n\n### Расчёт `strokes` до загрузки каталога\n\n`strokes` вычисляется синхронно, пока каталог ещё pending. Поэтому для мебели он равен true даже тогда, когда после загрузки вся мебель окажется объёмной. Это безопасно: после `await` фильтр `'floor'` уберёт объёмную мебель, и в текстуру попадут только стены нулевой толщины и лестницы, либо получится пустой слой. На следующей перерисовке после загрузки `floorInk()` пересчитается. Если штрихов, стен нулевой толщины и лестниц нет, вернётся undefined, и `updateFloorInk` очистит пустую текстуру. Дефекта нет, лишь один холостой захват.\n\nОснование: src/houseplan-card.ts:14033-14036, 11329; src/plan-3d-world.ts:941-949\n\n### Flat и недоступная модель\n\nЕсли каталог недоступен или fingerprint не совпадает, `ensure` завершается и runtime переходит в `fallback`. `_effectiveProjection` после requestUpdate через observer уводит проекцию во flat, поэтому floor-ink для iso больше не нужен. Символ без модели в готовом каталоге даёт `furnitureParts` = null, остаётся в фильтре `'floor'` и корректно запекается в пол. Во Flat-проекции ветка `floorInk` не выполняется. Отдельных прогонов для fallback и отсутствующего символа в новом тесте нет, вывод сделан по исходникам.\n\nОснование: src/houseplan-card.ts:8720-8722, 11329; src/furniture-volume-runtime.ts:34-40\n\n### Регрессионный тест\n\nТест полезный и честный. Он задерживает настоящий запрос production-чанка `furniture-volume.generated`, отпускает его только после того, как world начал захват floor-ink, а затем считает красные пиксели в области дивана и вне её. Ассерты проверяют, что объёмные части дивана есть (`meshCount > 1`), что обычная линия сохранилась (`otherInk > 50`) и что `sofaInk === 0`. По комментарию владельца, на beta.4 тест находит 1 149 лишних пикселей. Слабое место: если `waitForFunction` упадёт по таймауту 4 с, ошибка проглатывается и каталог отпускается. Тогда тест прошёл бы и без моделирования гонки, хотя `sawCatalogue` проверяется.\n\nОснование: demo/smoke_plan_3d_furniture_ink.mjs:12-29, 53-84; demo/helpers/iso-paint-scene.mjs (новый хук beforeFixture)\n\n### Граница надёжности: незавершающийся import\n\nТеперь `world.loading` остаётся true, пока каталог pending, поэтому кадр не отмечается `complete`, а `snapshot` ждёт `world.ready()`. Если динамический import вообще не завершится (зависший запрос без сетевой ошибки), 3D-кадр не получит data-hp-plan-3d-ready, хотя раньше показывался бы с плоской мебелью. Это гипотеза, а не установленный дефект: браузер обычно завершает такой import ошибкой, после чего runtime уходит в `fallback`. К тому же continuity уже блокируется тем же `_furnitureVolumePending()`, и boot ограничен `BOOT_MAX_MS`. Подтвердить или опровергнуть можно прогоном с route, который никогда не вызывает fallback/abort.\n\nОснование: src/plan-3d-host.ts:58-59, 171, 213; src/plan-3d-world.ts:455, 980-983\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В smoke-тесте имеет смысл сохранить результат ожидания в `gate` и после сцены проверить, что ворота открылись по признаку захвата, а не по таймауту. Сейчас ошибка `waitForFunction` проглатывается, и при изменении внутренних полей (`floorInkLoading`/`floorInkTexture`) тест молча перестанет моделировать гонку. Цена — одна дополнительная проверка.\n- Можно добавить в тот же фикстур символ мебели без объёмной модели и проверить, что его пиксели остаются в текстуре. Это прямо закрыло бы пункт ТЗ про «недоступную модель» на уровне сущности, а не всего каталога. Сейчас это следует только из чтения фильтра в `_renderDecorLayer`.\n\n## Границы анализа\n\nСборку, тесты и браузерные прогоны я не запускал. Использовал результат S6: прогон «Тесты для задачи #1620 (перед ревью)» на материале d51726a1 завершился со статусом passed, без failures. Цифры из комментария владельца (1 149 пикселей на beta.4 → 0, 868 пикселей линии, diff=0px для plan-rotation-iso-0-1070) я не воспроизводил. По исходникам на head изучил: `furniture-volume-runtime.ts`, ветку floorInk в `houseplan-card.ts`, фильтр `'floor'` в `_renderDecorLayer`, `_effectiveProjection`, continuity и boot-ожидание каталога, `updateFloorInk`/`ready` в `plan-3d-world.ts`, `present`/`snapshot` в `plan-3d-host.ts`. Записи CHANGELOG и release-ledger прочитал как тексты, механически их не проверял. Поведение при зависшем import (без ошибки) остаётся непроверенной гипотезой.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: c43539d196a5e6ca573edf3612557c1f9cfd27e7 → d51726a1ac94d354bf8ec9e528c9b46e948650a4\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-28T00:14:25.477Z",
+        "artifactId": 15239377206,
+        "runId": 46086548043,
+        "runAttempt": 1,
+        "completedAt": "2026-11-28T00:14:32Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46086548043",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "c43539d196a5e6ca573edf3612557c1f9cfd27e7"
       }
     }
   },
@@ -7047,9 +7151,9 @@
     "fence": 804,
     "materialSha": "d51726a1ac94d354bf8ec9e528c9b46e948650a4",
     "expectedBase": "c43539d196a5e6ca573edf3612557c1f9cfd27e7",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1795824452119,
-    "expiresAt": 1795828266586,
+    "expiresAt": 1795828499031,
     "patchId": "3daf3a5f820f2ed37169f6ae35e3eea8c73a370b",
     "reviewRequest": "review:1620:1:3daf3a5f820f2ed37169f6ae35e3eea8c73a370b:c43539d196a5e6ca573edf3612557c1f9cfd27e7"
   },
@@ -7096,6 +7200,10 @@
     },
     "github:46086832867:1:tick:0:review-presentation": {
       "digest": "37609c54842795f2bfb82cc9961d9c3308e271e47b94b6a9fd20ab742842b70d",
+      "issue": 1620
+    },
+    "github:46086832867:1:tick:0:review-complete": {
+      "digest": "4d5f16aca7393b5995ad241439dfee70fc0f052eda5882d4cef279245a681a1e",
       "issue": 1620
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
