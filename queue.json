@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30393,
+  "revision": 30394,
   "nextTicket": 810,
   "nextFence": 810,
   "tasks": {
@@ -3660,44 +3660,6 @@
         "sourceSha": "f01f24eebfac9e6964d9865530368b9cddcf1f6e"
       }
     },
-    "1546": {
-      "issue": 1546,
-      "branch": "codex/1546-2-5d-mask-cache",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "ea307da3741c870b90ca0ed3cb0f6d52554aebab",
-      "mergedSha": "e6a072121bc6f57efb6ab85a8e9fd3044a407c30",
-      "mergedAt": 1795510125070,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1546:1:660bb2158142717e7f69737f2a316075352a5235:ea307da3741c870b90ca0ed3cb0f6d52554aebab",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 18
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "e6a072121bc6f57efb6ab85a8e9fd3044a407c30"
-      }
-    },
     "1547": {
       "issue": 1547,
       "branch": "codex/1547-stable-cycle-1861",
@@ -6250,10 +6212,20 @@
       "removedToRelease": false,
       "reviewRequest": "review:1628:3:ebdcc4686b321ad94ffee64397527ab7683764cf:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
