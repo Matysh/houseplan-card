@@ -162,8 +162,8 @@ binding to later wall edits, and already saved coordinates are never migrated.
 The WebGL 3D presentation builds volume surfaces from the furniture profiles
 for the same saved plan objects. The developer gallery uses the same profiles
 for SVG previews. The ordinary plan artwork above remains
-the source of the Flat editor and PDF. See [ISOMETRIC](ISOMETRIC.md) for the
-camera, materials, layer order and complete Flat failure boundary.
+the source of the Flat editor and PDF. See [3D rendering](ISOMETRIC.md#current-renderer)
+for the camera, materials and layer order.
 
 In the desktop Background editor, a writer can explicitly **Place on desk**
 when an existing free `computer` lies over the usable surface of a straight
@@ -258,10 +258,10 @@ blocking; editor ergonomics on touch remain best effort under
 `docs/TOUCH-SUPPORT.md`.
 
 In v2.0.0 WebGL builds furniture bodies from the #1451 volume profiles. The
-lazy registry provides those profiles to the plan and to the developer
-gallery, where SVG draws the volume preview. If the registry fails to load,
-belongs to a different build or the 3D scene fails to initialize, the card
-shows the complete Flat scene with ordinary plan artwork and retains the
-saved 3D preference.
+lazy registry is generated from annotated SVGs and shared by the plan and the
+developer gallery. If the registry fails to load, has a different build
+fingerprint or fails validation, the card shows the complete Flat scene with
+ordinary plan artwork and retains the saved 3D preference. The same fallback
+applies if the 3D scene fails to initialize.
 New workstation data, portable version selection and the old-client write
 barrier are documented in [CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md#desk-computer-workstation-1451).
