@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 30330,
-  "nextTicket": 808,
+  "revision": 30331,
+  "nextTicket": 809,
   "nextFence": 808,
   "tasks": {
     "1001": {
@@ -6241,14 +6241,14 @@
       "track": "show",
       "layer": "docs",
       "branch": "codex/1628-docs-v2",
-      "materialSha": "fb87187d53f08e89d70fa3755f982e6463c8166c",
+      "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 807,
-      "queued": false,
+      "ticket": 808,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795848597004,
-      "reviewEntry": 1,
+      "readyAt": 1795849026072,
+      "reviewEntry": 2,
       "patchId": "5f33b82033904beb83d5722ca44c74734626f24e",
       "changedFiles": [
         "README.md",
@@ -6335,20 +6335,6 @@
       ],
       "s6": null,
       "reviewRound": 1,
-      "reviewRequest": "review:1628:1:5f33b82033904beb83d5722ca44c74734626f24e:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-      "reviewMaterial": {
-        "materialSha": "fb87187d53f08e89d70fa3755f982e6463c8166c",
-        "expectedBase": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "patchId": "5f33b82033904beb83d5722ca44c74734626f24e"
-      },
-      "reviewRetry": {
-        "requestId": "review:1628:1:5f33b82033904beb83d5722ca44c74734626f24e:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "eventId": "github:46118460697:1:tick:0:review-retry",
-        "at": 1795848661241,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1628:1:5f33b82033904beb83d5722ca44c74734626f24e:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
         "at": 1795848966461
@@ -7116,7 +7102,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1628
+  ],
   "active": null,
   "events": {
     "github:46116303186:1:label:spec-request": {
@@ -7322,6 +7310,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:2be2276f-0f01-484e-98c7-d7b7fcb315fc": {
+      "digest": "b62d265526955b92d338891ce6c9461cca084312e3913791bd837691d0f9343f",
+      "issue": 1628,
+      "message": {
+        "kind": "queued",
+        "issue": 1628,
+        "at": 1795849026072,
+        "entry": 2,
+        "track": "show",
+        "layer": "docs",
+        "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3"
       }
     }
   },
