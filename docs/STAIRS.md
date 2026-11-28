@@ -13,12 +13,12 @@ without writing any opacity into saved stairs. Selection keeps frames/handles
 but adds no object-name/dimension plate. Square columns share the stair rotation
 stem and bead, with the larger transparent native rotation hit target retained.
 
-On wide Plan cards (≥960 px), Properties exposes centre, continuous dimensions
+On wide Plan cards (≥1024 px), Properties exposes centre, continuous dimensions
 (30…10000 cm), angle, colours and direction. The rendered 3.6 px stroke stays
 fixed and its field is disabled. Native gestures, full-dialog entry, routing,
 landing geometry and existing history remain unchanged (#931).
 
-In 2.5D View, ascending stairs have treads at heights derived from the existing
+In WebGL 3D, ascending stairs have treads at heights derived from the existing
 straight or spiral symbol. The last tread reaches the 140 cm wall cut.
 Furniture and ascending stairs share the same material and .65 opacity
 multiplier. Descending stairs retain the flat symbol. Both use the existing
@@ -142,9 +142,9 @@ changing that physical symbol or persisted data.
 
 The footprint overlap is removed from clean room floor area exactly once. It
 does not cut the visible floor, change room or wall geometry, create a light
-occluder, affect Glow/sun/vacuum, or participate in Optimize. In 2.5D View,
+occluder, affect Glow/sun/vacuum, or participate in Optimize. In WebGL 3D,
 the ascending staircase also contributes its volume and floor shadow to the
-display, using the furniture depth order and masonry occlusion.
+display. WebGL depth testing handles its visibility alongside furniture and masonry.
 
 ## Persisted model
 

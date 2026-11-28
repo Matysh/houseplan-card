@@ -495,6 +495,11 @@ to distinguish them from omissions, but do **not** make them stable. Current
 families include `iso-*`, `zigbee-topology-*`, `resize-*`, `plan-snap-*` and
 `hidden-wall-*`. Do not use them from card-mod or an external E2E repository.
 
+The `data-hp-furniture-volume="glass"` entry describes the SVG furniture
+laboratory fixture used by the former 2.5D renderer. Current 3D furniture is
+drawn as WebGL meshes. Tests for the live 3D view should use its canvas and
+scene witnesses in [Testing](TESTING.md#webgl-3d).
+
 `room-draft` is listed separately as retired metadata: #478 removed the object
 type itself by making every unfinished chain ordinary partitions. There is no
 current DOM state in which that legacy hook can appear; new tests use

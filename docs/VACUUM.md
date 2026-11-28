@@ -16,10 +16,9 @@ the click; the existing animated floor anchor still drives the trail tip.
 ### Camera attachment (#871)
 
 Current/previous paths and every subpath keep their world coordinates during
-pan, pinch, wheel and Fit in Flat/2.5D View or kiosk, including held-pointer
-pauses and HA updates. The trail SVG is passive inside `.devlayer`: its HTML
-parent is the sole live camera owner. It does not also receive a scene transform
-or a budgeted `viewBox`. This preserves the existing marker/Zigbee stacking.
+pan, pinch, wheel and Fit in 2D or 3D View and kiosk, including held-pointer
+pauses and HA updates. The trail remains a passive SVG overlay. In 3D its floor
+projection follows the WebGL camera, while the moving solid puck owns device input.
 `live-viewport.ts` moves its bounded paint window on the shared 100 ms / 15%
 anchor budget; the window exposes 25% around that anchor, not the entire plan.
 
@@ -566,7 +565,7 @@ debounced persistence and live-update path as a later state event.
   through `resolveHaBindingStatus()`.
 - `smoothVacPath()` takes calibrated flat plan coordinates and returns typed
   `move|line|quadratic` commands for a caller-supplied physical radius; the card
-  then projects (flat/2.5D) and serializes. Each corner is a quadratic inside the
+  then projects to the current 2D or 3D floor and serializes. Each corner is a quadratic inside the
   adjacent-segment convex hull, bounded by half of both segment lengths, which
   makes the 17.5 cm limit, exact endpoints and subpath gaps structural.
 - Auto-calibration uses the same shoelace `areaCentroid()` for plan polygons and
@@ -598,7 +597,7 @@ button, returns the latest ordinary live material without Save or robot actions.
 History can temporarily replace this robot's paths even when trail mode is Never;
 other robots, its dock and current live puck retain their ordinary behaviour.
 No historical tip connects to the current puck. View and Devices share the
-canonical Flat/2.5D projection, geometry cache, physical smoothing contract and
+canonical 2D/3D floor projection, geometry cache, physical smoothing contract and
 20,000-point space budget; Plan/Background remain excluded surfaces.
 
 There is no timeout or persistent preview. Closing the dialog preserves an

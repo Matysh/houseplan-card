@@ -11,11 +11,15 @@ Operational setup is recorded in the
 ## Measurements in the process
 
 Normal tasks do not automatically measure size or timing budgets. Before beta,
-the common profile records the selected size and interaction metrics, compares
-them with the last stable in comparable conditions, and shows the fixed
-v1.83.1 measurement as a diagnostic reference. Each stable saves a measurement
-for the following beta. A missing, noisy or incomparable measurement is
-reported honestly rather than converted into a confirmed regression.
+the common profile builds the preceding stable tag and measures it with the
+prepared candidate, using the same benchmark and host. The report keeps both
+series, their shared runner hash and any reason the two medians cannot be
+compared. Stable releases publish the measurement for history and future size
+comparisons. The fixed v1.83.1 snapshot remains a diagnostic reference.
+
+The canonical ZIP size subtracts manifest-listed transport copies. The delivered
+ZIP and transport sizes appear separately. The two gzip frontend rows use the
+pinned v2.0.0-beta.3 reference and display the 5% threshold for information.
 
 The profile runs measurement after the other required work, so parallel
 browser/Node/HA activity does not distort it. The adapter is
@@ -30,8 +34,8 @@ Inspect the common profile without executing it:
 node process-next/cli.mjs plan --event beta --version "1.99.0 beta 1" --request release.json
 ```
 
-The release request can name the previous stable measurement and observed
-machine conditions. Request fields and the execution route are described in
+The release request can supply the previous stable archive measurements
+and observed host data. Primary timing comes from the new pair. Request fields and the execution route are described in
 [DEVELOPMENT.md](../../docs/DEVELOPMENT.md). Reports are written to
 `artifacts/process-next/measurement.json`, `metrics.json` and `metrics.md`.
 The fixed `process-next/baselines/v1.83.1.json` is not automatically remeasured.

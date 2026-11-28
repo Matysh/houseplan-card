@@ -221,7 +221,7 @@ existing context fade. Zero is a real transparent image, not a missing image.
 Resetting the transform preserves this opacity; copy, full/space/plan-only
 export/import and geometry history preserve presence/value without a load rewrite.
 
-Wide editor cards (≥960 px) expose the shared numeric Properties column. Decor
+Wide editor cards (≥1024 px) expose the shared numeric Properties column. Decor
 X/Y are the selection-frame centre. Width/height resizing preserves that centre;
 line length/angle use the native grid, stairs remain continuous. Text dimensions
 are measured, not editable. Image ratio lock is local to the selection and starts

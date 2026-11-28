@@ -6,7 +6,7 @@
 
 [Project overview and quick installation](../README.md).
 
-&emsp;&emsp;The screenshots below show this version with a fictional plan. This guide uses the English interface; the [Russian guide](USER-GUIDE.ru.md) uses Russian. Your Home Assistant theme, window width and data may change the layout and appearance. [Capture details](images/guide-2026-11/README.md).
+&emsp;&emsp;The screenshots below use a fictional home in House Plan v2.0.0. This guide uses the English interface; the [Russian guide](USER-GUIDE.ru.md) uses Russian. Your Home Assistant theme, window width and data may change the layout and appearance. [Capture details](images/guide-v2.0.0/README.md).
 
 &emsp;&emsp;You can view the plan and control your home from a phone, tablet or touch screen. For drawing and editing, use a computer with a mouse and keyboard: touch editors work where possible, but full support is not guaranteed. Plans stay in HA. Diagnostics are sent through Help only when you choose to send them.
 
@@ -81,7 +81,7 @@
 
 &emsp;&emsp;Draw architecture in **Plan**, arrange live markers in **Devices**, add furniture and annotations in **Background**, then return to **View**. These are three editors of one plan, not separate files. Leaving an editor is not a substitute for saving an open settings dialog; accepted canvas operations normally save as you finish them.
 
-![Main screen: spaces, editors and live devices.](images/guide-2026-11/en/view.png)
+![Main screen: spaces, editors and live devices.](images/guide-v2.0.0/en/view.png)
 
 *Main screen: spaces, editors and live devices.*
 
@@ -94,7 +94,7 @@
 | Level | Meaning | Stored data |
 |---|---|---|
 | Panel/card | Primary sidebar page or one optional dashboard instance | Last/initial space; dashboard cards may additionally set language, icon size, value/LQI display, kiosk and cycle |
-| Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, room-hover information, 2.5D view and icon rules |
+| Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, room-hover information, 3D view and icon rules |
 | Space | Floor, yard, garage or building | Plan image, scale, rooms, walls, openings, decor and display settings |
 | Room | A closed outline | Name, optional HA area, temperature/humidity source and local fill |
 | Wall | A room-contour or independent segment | Stable identity and thickness from 0 to 100 cm; zero-thickness appearance is selected per space |
@@ -163,7 +163,7 @@ lovelace:
 
 #### Manual installation
 
-&emsp;&emsp;Copy the release folder to `config/custom_components/houseplan`, restart Home Assistant, and add the integration. If the card is still unavailable, follow the Storage or YAML resource instructions above for your Home Assistant version and resource mode. Always copy the complete integration folder: the stable resource URL remains one file, but that entry loads internal content-hashed modules.
+&emsp;&emsp;Download [houseplan.zip](https://github.com/Matysh/houseplan-card/releases/latest/download/houseplan.zip), create `config/custom_components/houseplan` and extract the contents of the ZIP into that folder. The integration manifest and `frontend/` should be directly inside it. Restart Home Assistant and add the integration. If the card is still unavailable, follow the Storage or YAML resource instructions above.
 
 &emsp;&emsp;A lone `houseplan-card.js` is not a supported install.
 
@@ -227,9 +227,9 @@ lovelace:
 8. In Background, align the plan image and add labels, lines or furniture.
 9. Return to View and confirm live values and actions.
 
-![Creating the first space with synthetic data](images/guide-2026-11/en/space-create.png)
+![Creating the first space with synthetic data](images/guide-v2.0.0/en/space-create.png)
 
-![Closing a new wall chain on its first point](images/guide-2026-11/en/room-contour.png)
+![Closing a new wall chain on its first point](images/guide-v2.0.0/en/room-contour.png)
 
 &emsp;&emsp;Create the plan on a computer. Once it is ready, a phone, tablet or wall panel supports everyday viewing and home control.
 
@@ -268,7 +268,7 @@ lovelace:
 | No image | You will draw directly in House Plan | The paper follows room contours; borders and names start enabled |
 | Import HA floors | Home Assistant already has a floor registry | A wizard creates spaces in order and lets you skip any floor |
 
-![The plan source and scale belong to the selected space.](images/guide-2026-11/en/space-settings.png)
+![The plan source and scale belong to the selected space.](images/guide-v2.0.0/en/space-settings.png)
 
 *The plan source and scale belong to the selected space.*
 
@@ -357,7 +357,7 @@ lovelace:
 | Kiosk | Actionable as in View | Read-only | Read-only; no editors |
 | Static card | Live states, values and alarms as in View (`live_states`), no tooltips or more-info | Render only | Render only; not interactive |
 
-&emsp;&emsp;Dialog choices share the same fields and menus, including the device icon picker. Search for an icon or enter a custom value in Search. On narrow or short screens, Home Assistant opens its native bottom sheet. Escape closes the open list first and returns focus to the field; the surrounding settings stay open. Long entity names and IDs wrap inside source lists.
+&emsp;&emsp;In the House Plan icon picker, search by name or enter an icon identifier. The picker loads the MDI catalog from your Home Assistant frontend. Use the arrow keys and Enter to choose an icon. Escape closes the list and returns focus to the field while keeping device settings open. Long entity names and IDs wrap inside source lists.
 
 <a id="consistent-editor-actions"></a>
 
@@ -365,7 +365,7 @@ lovelace:
 
 &emsp;&emsp;The Hue, Saturation and Brightness thumbs show the same selected colour. Saturation runs from gray to saturated; Brightness runs from black to bright. Use the colour field or HEX as well; opacity stays separate. Save changes with the settings dialog's Save action.
 
-![All three thumbs show the selected colour; opacity is adjusted separately.](images/guide-2026-11/en/colour-picker.png)
+![All three thumbs show the selected colour; opacity is adjusted separately.](images/guide-v2.0.0/en/colour-picker.png)
 
 *All three thumbs show the selected colour; opacity is adjusted separately.*
 
@@ -492,14 +492,14 @@ lovelace:
 
 &emsp;&emsp;The wide dialog has section navigation on the left; a narrow dialog uses a selector at the top. Changing section keeps the same unsaved draft. Save applies ordinary settings; Cancel/close uses the discard confirmation. Explicit maintenance and data-loading buttons retain their own confirmations and save boundaries.
 
-![General settings: choose a section on the left and adjust its options on the right.](images/guide-2026-11/en/general-settings.png)
+![General settings: choose a section on the left and adjust its options on the right.](images/guide-v2.0.0/en/general-settings.png)
 
 *General settings: choose a section on the left and adjust its options on the right.*
 
 | Section | Purpose and dependencies |
 |---|---|
 | Information on the plan | Room hover information, live radar visibility, battery and Zigbee indicators. Hiding a reading does not delete its source or disable its device. Space battery/LQI choices and marker hide options can override these defaults; see [device indicators](#battery-charge). |
-| Appearance and background | 2.5D View, centering with Summary and the shared background. Editors stay flat. A space can use its own background. A backdrop image and room fill are unaffected; see [appearance](#appearance). |
+| Appearance and background | 3D View, centering with Summary and the shared background. Editors stay flat. A space can use its own background. A backdrop image and room fill are unaffected; see [appearance](#appearance). |
 | Room fills | Shared on/off/no-light, temperature and LQI colour palettes with opacity. These are colour scales, not the choice of fill mode; choose that in [Space](#space) or [Room](#room). Wall-body and caption colours belong to the space. |
 | Light, Sun and Moon | Default light colour/intensity and Glow radius, north, sunlight switch and ray origin, Moon visibility. The device may override Glow; the space may override north/rays. The Moon uses HA location and the clock, not a mirrored plan drawing. |
 | Zigbee diagnostics | Provider topics, explicit cached-data reads/scans and snapshot explanations. Signal numbers work independently; turning links on does not itself start a scan. See [Zigbee links](#zigbee-links). |
@@ -596,7 +596,7 @@ lovelace:
 
 &emsp;&emsp;The sole remaining space can still be deleted after confirmation: affected devices keep their bindings, icons, actions and settings but become unplaced. Its plan image and their attachments are not deleted automatically.
 
-![Room card with temperature, LQI and light state](images/guide-2026-11/en/room-card.png)
+![Room card with temperature, LQI and light state](images/guide-v2.0.0/en/room-card.png)
 
 <a id="plan"></a>
 
@@ -745,9 +745,9 @@ lovelace:
 
 &emsp;&emsp;In View, hovering a stair with a valid target shows "Go to floor …", and a clean activation switches to that target and restores its saved view; gesture tails, broken links and fixed-floor cards do nothing. The target floor is never changed automatically. After stair navigation in View or kiosk, every stair leading back pulses twice in the theme accent over two seconds; reduced motion shows a static highlight.
 
-&emsp;&emsp;There is no extra camera movement, and pan and pinch remain available. Missing or off-screen return stairs produce no extra indicator. In 2.5D the symbol is flat on the floor. See [Stairs](STAIRS.md).
+&emsp;&emsp;There is no extra camera movement, and pan and pinch remain available. Missing or off-screen return stairs produce no extra indicator. In 3D the symbol is flat on the floor. See [Stairs](STAIRS.md).
 
-![Selected partition and its Plan context tray](images/guide-2026-11/en/plan-properties.png)
+![Selected partition and its Plan context tray](images/guide-v2.0.0/en/plan-properties.png)
 
 &emsp;&emsp;Dragging a partition in **Select** moves its doors and windows in the live preview as well. There is only one visible copy of each opening; their width, flips and settings stay unchanged. Release saves one Undo step. Press **Esc** or Undo while holding to cancel without saving.
 
@@ -851,15 +851,11 @@ lovelace:
 
 &emsp;&emsp;The common dimension renderer shows both jamb offsets on the available wall faces during placement, movement and selection. Values describe the accepted snapped preview, not the raw pointer. See [wall dimensions](#dimensions-on-both-sides-of-a-wall).
 
-### Device height in 3D
-
-&emsp;&emsp;Open **Display on plan → Height above floor (3D only)**. Enter the distance to the bottom of the marker or LED strip. Zero places it on the floor. Leave the field empty to keep the top level with the walls. The field shows the allowed range in your selected units. The flat plan position and lighting stay in place.
-
 ### Independent leaves, shades and sliding openings (#1024)
 
-&emsp;&emsp;Window settings offer 1–4 equal leaves and one common opening side. Open a row to choose its sensor, manual position and left/right/top hinges. The preview follows plan orientation and highlights the selected leaf. In 2.5D, top opening is depicted as a tilted leaf with its lower edge fixed, up to 30°. This is a visual convention, not a measured angle; saved sensors and the Flat symbol stay unchanged.
+&emsp;&emsp;Window settings offer 1–4 equal leaves and one common opening side. Open a row to choose its sensor, manual position and left/right/top hinges. The preview follows plan orientation and highlights the selected leaf. In 3D, top opening is depicted as a tilted leaf with its lower edge fixed, up to 30°. This is a visual convention, not a measured angle; saved sensors and the Flat symbol stay unchanged.
 
-![Window settings: width, opening direction and individual leaves.](images/guide-2026-11/en/opening-settings.png)
+![Window settings: width, opening direction and individual leaves.](images/guide-v2.0.0/en/opening-settings.png)
 
 *Window settings: width, opening direction and individual leaves.*
 
@@ -867,7 +863,7 @@ lovelace:
 
 &emsp;&emsp;Each leaf can have curtains, blinds or shutters with its own source and manual position. Confirmed closed shades block only their share of light; open, partly open and unknown shades allow it. A sun, crossed-out sun or `?` indicates the state. Shades have no physical panels. Glass-leaf position changes only the symbol, not light transmission.
 
-&emsp;&emsp;Use **Position in the opening** in the swing-door properties to choose where the leaf sits in the wall. Flat and 2.5D place it at the face it opens towards by default. Choose either face or the centre to keep the leaf there when the opening direction changes. For a sliding door, the sidebar’s **Placement side** shows which face the panel uses.
+&emsp;&emsp;Use **Position in the opening** in the swing-door properties to choose where the leaf sits in the wall. Flat and 3D place it at the face it opens towards by default. Choose either face or the centre to keep the leaf there when the opening direction changes. For a sliding door, the sidebar’s **Placement side** shows which face the panel uses.
 
 &emsp;&emsp;Doors and gates offer swing or one full-width sliding panel with an axis-local direction. These settings never send commands. Sensor-driven guides use the HA accent; manual guides use the symbol colour. Merely opening or saving an old window does not materialize independent-leaf settings.
 
@@ -930,7 +926,7 @@ lovelace:
 
 ### Thick walls
 
-&emsp;&emsp;Artificial lamp and LED light passes through an internal window between two rooms even when its contact reports closed glass. Jambs, walls, columns and the light radius still limit the beam. No extra setting is needed. Exterior windows and the exterior portion of a mixed aperture remain opaque. View, 2.5D and supported Static Glow use the same rule.
+&emsp;&emsp;Artificial lamp and LED light passes through an internal window between two rooms even when its contact reports closed glass. Jambs, walls, columns and the light radius still limit the beam. No extra setting is needed. Exterior windows and the exterior portion of a mixed aperture remain opaque. View, 3D and supported Static Glow use the same rule.
 
 &emsp;&emsp;At a closed opaque door, artificial light fills the source-side tunnel up to the light barrier and stops there. Swing and sliding doors use the same rule in room walls and partitions, from either side. An exterior closed door lights only its bounded pocket, never the outdoors. Partial opening and **Passes light** retain their existing behavior.
 
@@ -968,7 +964,7 @@ lovelace:
 
 ### CO₂
 
-&emsp;&emsp;Room **CO₂** is an optional fifth value tile in Space settings, after humidity, off by default. It works in the main plan and kiosk (Flat and 2.5D), not the static card. Room Sources offers an average or a selected sensor/device, including one outside the room's HA Area. Only carbon-dioxide sensors (`device_class: carbon_dioxide`) measured in `ppm` qualify.
+&emsp;&emsp;Room **CO₂** is an optional fifth value tile in Space settings, after humidity, off by default. It works in the main plan and kiosk (Flat and 3D), not the static card. Room Sources offers an average or a selected sensor/device, including one outside the room's HA Area. Only carbon-dioxide sensors (`device_class: carbon_dioxide`) measured in `ppm` qualify.
 
 &emsp;&emsp;Each physical device is counted once per room; plan placement overrides their HA Area. An unavailable explicit source hides the reading rather than falling back to the average. Tooltips use the same value independently of the tile; previews follow unsaved choices. Fill colours, thresholds and device actions are unchanged.
 
@@ -980,7 +976,7 @@ lovelace:
 
 &emsp;&emsp;The room dialog is one continuous form: name and optional HA Area, **Fill**, **Sunlight**, **Sensor sources** and **Room caption**. The Area explanation is beside its field; other help belongs to the corresponding card/setting.
 
-![Room settings contain the HA area, fill and reading sources.](images/guide-2026-11/en/room-settings.png)
+![Room settings contain the HA area, fill and reading sources.](images/guide-v2.0.0/en/room-settings.png)
 
 *Room settings contain the HA area, fill and reading sources.*
 
@@ -1014,7 +1010,7 @@ lovelace:
 
 &emsp;&emsp;This does not edit drawn LED geometry.
 
-![Select a device on the plan to see its Properties on the right.](images/guide-2026-11/en/device-editor.png)
+![Select a device on the plan to see its Properties on the right.](images/guide-v2.0.0/en/device-editor.png)
 
 *Select a device on the plan to see its Properties on the right.*
 
@@ -1024,7 +1020,7 @@ lovelace:
   groups reflow when a value or size changes and may separate safely if they
   cannot fit. All-virtual contours are dashed, mixed groups solid; wall-owned
   boundary strokes are omitted. Actions and dragging remain individual.
-  Turning magnets off does not dissolve contacts. 2.5D keeps individual tiles.
+  Turning magnets off does not dissolve contacts. In 3D only neighbours at the same height form a connected outline. Markers with automatic height can form a group with each other.
 
 - drag a marker to save its server-side position. One completed drag creates
   one position-history step; a cancelled, unchanged or failed drag creates
@@ -1151,6 +1147,14 @@ lovelace:
 
 <!-- docs-section: visual-states -->
 
+### Device height in 3D
+
+&emsp;&emsp;Open **Display on plan → Height above floor (3D only)**. Enter the distance from the floor to the underside of the marker or LED strip. Zero places it on the floor. Leave the field empty for automatic placement, with the top at the wall cut. The field shows the allowed range in your selected units. Changing the height of an LED strip also changes its lighting in 3D. Its position and lighting in the flat view stay the same.
+
+![The height field for a device marker in 3D.](images/guide-v2.0.0/en/device-height.png)
+
+*Height is measured from the floor to the underside of the marker.*
+
 ### A practical settings example
 
 &emsp;&emsp;To show a washer’s running state but open its HA control dialog, choose the running entity under **Display on plan → Icon state source**, then choose the HA more-info action and its target under **Actions and links**. Neither setting changes the value source, battery, LQI or light role. Read the resolved target and preview before Save; a pretty icon is not proof of a valid command target.
@@ -1224,9 +1228,9 @@ lovelace:
 
 &emsp;&emsp;The footer keeps **Hide** and **Delete** on the left and **Cancel**/**Save** on the right. Hide preserves configuration and may preserve aggregate room data; Delete removes the marker and its layout after confirmation.
 
-![Device editor with the Home Assistant binding and room selection](images/guide-2026-11/en/device-settings.png)
+![Device editor with the Home Assistant binding and room selection](images/guide-v2.0.0/en/device-settings.png)
 
-![Live preview of the selected device presentation](images/guide-2026-11/en/device-display.png)
+![Live preview of the selected device presentation](images/guide-v2.0.0/en/device-display.png)
 
 ### A “dumb” lamp with a smart switch
 
@@ -1302,7 +1306,7 @@ lovelace:
 | Run | Runs an automation, script or scene | Explicit target; confirmation is optional |
 | Do nothing | Short click/tap, Enter and Space are ignored | No dialog, command, confirmation, toast or press feedback |
 
-![The tap action is configured separately from the device appearance.](images/guide-2026-11/en/device-actions.png)
+![The tap action is configured separately from the device appearance.](images/guide-v2.0.0/en/device-actions.png)
 
 *The tap action is configured separately from the device appearance.*
 
@@ -1328,7 +1332,7 @@ lovelace:
 
 &emsp;&emsp;Only available targets receive the command, and the hint names every skipped target. The controller's own availability remains independent from that aggregate work state.
 
-![House Plan device card with state and safe actions](images/guide-2026-11/en/device-info.png)
+![House Plan device card with state and safe actions](images/guide-v2.0.0/en/device-info.png)
 
 ### Device visual states
 
@@ -1369,7 +1373,7 @@ lovelace:
 
 &emsp;&emsp;Only every own row explicitly reporting `unavailable` fades the whole ordinary marker; a mixture with missing/unknown is not confirmed offline. A virtual controller has no physical offline evidence. Off/idle/standby/ paused remain real available samples, including media players. Explicit own Power Off dims only the inner MDI icon.
 
-&emsp;&emsp;Own unavailable dims the ordinary frame, contact ink, LQI and battery together; its separate 2.5D shadow retains ordinary paint. An LED strip keeps its ordinary inactive shape and fades only badge text when a badge is present. This remains true when the same target was separately removed from the plan: the removed marker is not restored, but it cannot make the controller look offline or make its editor preview disagree with the plan.
+&emsp;&emsp;Own unavailable dims the ordinary frame, contact ink, LQI and battery together; its floor shadow in 3D keeps its usual appearance. An LED strip keeps its ordinary inactive shape and fades only badge text when a badge is present. This remains true when the same target was separately removed from the plan: the removed marker is not restored, but it cannot make the controller look offline or make its editor preview disagree with the plan.
 
 &emsp;&emsp;For a composite appliance with a dedicated Power switch, Power=`on` alone remains neutral. If Home Assistant also exposes a dedicated work-state entity such as Status/Run state/Job state, active values (`start`, `running`, `washing`, `rinse`, and similar work states) make the marker yellow; idle, paused and terminal values remove it.
 
@@ -1506,7 +1510,7 @@ lovelace:
 
 &emsp;&emsp;Enter complete finite numbers with a decimal dot or comma, without units. Text is exact and case/space sensitive; ordered comparisons require a number.
 
-![Add your own warning or alarm conditions in this section.](images/guide-2026-11/en/device-alarms.png)
+![Add your own warning or alarm conditions in this section.](images/guide-v2.0.0/en/device-alarms.png)
 
 *Add your own warning or alarm conditions in this section.*
 
@@ -1625,7 +1629,7 @@ Boiler: {climate.boiler:hvac_action}
 
 &emsp;&emsp;Bookcase and floor shelving show their corrected drawings. A Cactus item on an older saved plan still appears as exercise equipment without changing its saved position, size or styling.
 
-![Choose a category and item in the library, then place it on the plan.](images/guide-2026-11/en/furniture.png)
+![Choose a category and item in the library, then place it on the plan.](images/guide-v2.0.0/en/furniture.png)
 
 *Choose a category and item in the library, then place it on the plan.*
 
@@ -1639,7 +1643,7 @@ Boiler: {climate.boiler:hvac_action}
 
 ### Television on a TV cabinet
 
-&emsp;&emsp;In the Background editor, overlap a TV with stand and a TV cabinet. Select either piece and choose **Place on TV cabinet**. In 2.5D the stand rests on the cabinet surface. The television keeps its size and moves and turns with the cabinet.
+&emsp;&emsp;In the Background editor, overlap a TV with stand and a TV cabinet. Select either piece and choose **Place on TV cabinet**. In 3D the stand rests on the cabinet surface. The television keeps its size and moves and turns with the cabinet.
 
 &emsp;&emsp;Select the cabinet and choose **Remove from TV cabinet** to put the television back on the floor in its current position.
 
@@ -1653,7 +1657,7 @@ Boiler: {climate.boiler:hvac_action}
 
 &emsp;&emsp;A later import shows the existing missing-content confirmation and, once confirmed, keeps the same repairable placeholder instead of rejecting the whole plan.
 
-![Selected line in the Background editor](images/guide-2026-11/en/background-properties.png)
+![Selected line in the Background editor](images/guide-v2.0.0/en/background-properties.png)
 
 <a id="summary"></a>
 
@@ -1665,7 +1669,7 @@ Boiler: {climate.boiler:hvac_action}
 
 &emsp;&emsp;Create a block for the active floor, add an outside-temperature entity and a built-in clean floor-area value, then Save. The values are formatted readings, not formulas or HA cards. The panel’s contents are shared; its local eye/sidebar choice is separate. A profile may request its own visibility without overwriting the ordinary browser preference; see [screens](#screens).
 
-![Combine built-in values and selected HA entities in the summary.](images/guide-2026-11/en/summary.png)
+![Combine built-in values and selected HA entities in the summary.](images/guide-v2.0.0/en/summary.png)
 
 *Combine built-in values and selected HA entities in the summary.*
 
@@ -1720,7 +1724,7 @@ In the full dashboard card editor, set **Plan view** and **Plan rotation** indep
 
 ### External screens: a separate television or tablet view
 
-&emsp;&emsp;Use **General settings → External screens → Create** on a desktop. Choose one/all spaces, auto-advance and idle return globally. Each space has its own rotation, 10–1000% default scale, summary visibility/centering and icon/text scales. A one-space installation uses the shorter form. 100% fits all content into the available area; Reset changes only the selected space's scale.
+&emsp;&emsp;Use **General settings → External screens → Create** on a desktop. Choose one/all spaces, auto-advance and idle return globally. Each space can inherit the general plan view or use Flat or 3D. It also has its own rotation, 10–1000% default scale, summary visibility/centering and icon/text scales. A one-space installation uses the shorter form. 100% fits all content into the available area; Reset changes only the selected space's scale.
 
 &emsp;&emsp;Manual camera changes are temporary; idle return and floor arrival restore its saved view. Kiosks always hide the control buttons over the plan; the summary itself remains available. **OK** changes the outer draft; **Save** applies it and closes with the shared animation. A save failure leaves the form open. Click **Screen N** to edit; deletion never reuses its number.
 
@@ -1754,6 +1758,8 @@ title: House plan
 | `title` | empty | Card title |
 | `default_floor` | first/last opened | Initial/fallback space for an unpinned card |
 | `floor` | not pinned | Keep this card on one stable space ID or zero-based YAML index |
+| `view` | inherit | Use `flat` for 2D or `iso` for 3D |
+| `plan_rotation` | inherit | Set the angle for this card. Use 90° steps in 2D and 45° steps in 3D |
 | `language` | HA language | `auto`, `en`, `ru`, `de` or `fr` |
 | `icon_size` | `2.5` | Base marker size, 1–6% of plan width |
 | `show_temperature` | `true` | Compact temperature and humidity values |
@@ -1858,7 +1864,7 @@ cycle: 0
 
 &emsp;&emsp;Kiosk is useful for a wall screen: it hides setup controls and keeps everyday viewing available. It changes navigation and presentation; Home Assistant permissions stay the same.
 
-![In kiosk, the plan fills the screen without the header or setup controls.](images/guide-2026-11/en/kiosk.png)
+![In kiosk, the plan fills the screen without the header or setup controls.](images/guide-v2.0.0/en/kiosk.png)
 
 *In kiosk, the plan fills the screen without the header or setup controls.*
 
@@ -1917,27 +1923,29 @@ cycle: 30
 | Backdrop image | Space Plan and scale; align it in Background editor | Does not create architectural walls or rooms by itself. |
 | Room fill | Space Room appearance; room Fill override; General colour palettes | Does not control the background or the device’s actual state. |
 
-![The background and 2.5D view are configured separately from room fills.](images/guide-2026-11/en/appearance.png)
+![The background and 3D view are configured separately from room fills.](images/guide-v2.0.0/en/appearance.png)
 
-*The background and 2.5D view are configured separately from room fills.*
+*The background and 3D view are configured separately from room fills.*
 
 &emsp;&emsp;For one differently coloured room, use its own fill. For uniformly coloured captions, change Space **Name color**; a room’s own caption colour remains until returned to inheritance. Glow and sunlight use their physical/source rules, not the visibility of a wall outline.
 
-### 2.5D presentation
+<a id="25d-presentation"></a>
 
-&emsp;&emsp;A user with House Plan editing permission turns the volumetric plan on: **General settings → Appearance and background → Show the plan in 2.5D**. View and kiosk use a 40° viewing elevation. Where rotation controls are available, 2.5D offers eight viewpoints: the four original diagonals and four directly facing the sides. Flat keeps 90° steps. On return to Flat, an intermediate orientation rounds clockwise to the next quarter. Walls have a 140 cm cutaway, windows retain masonry below their sills, and doors and passages have lintels. All 60 library items have matching volumetric forms. Saved dimensions, positions and states remain authoritative; no second 3D plan is stored.
+### 3D view
 
-&emsp;&emsp;Device icons, LED strips, door locks and room names sit level with the top of the walls. Names and their readings are visible over the walls. Icons and labels turn with the view and stay upright. Lights can also illuminate the sides of nearby walls.
+&emsp;&emsp;To enable 3D, open **General settings → Appearance and background → Show the plan in 3D**. You need House Plan editing permission to change the shared default. The panel, full Lovelace cards and external screen profiles can show 3D. It uses eight fixed viewpoints, with 45° rotation steps where the controls are available. The flat view uses 90° steps. Returning to 2D rounds an intermediate angle clockwise to the nearest quarter turn.
 
-&emsp;&emsp;Open **Space settings → Room appearance** to adjust the wall cut and sides separately. **Wall hatching color** sets the top and **Wall fill color** sets the sides. In 2.5D the colours are normally painted over an opaque white base. Turn on **Allow transparent walls in 2.5D** below the fill colour to remove that base from the sides and the top cut. Adjust each surface’s opacity in its own colour field. Soft shading and thin lines distinguish the faces and the floor joint.
+![The same home shown in the WebGL 3D view.](images/guide-v2.0.0/en/view-3d.png)
 
-&emsp;&emsp;**Accent color for 3D windows and doors** tints frames, door panels, reveals and sills. Set white or 0% to restore the original colour. The percentage controls the strength of the tint. Glass, shades and hardware keep their own appearance.
+*The 3D view shows the depth of walls, openings, furniture and devices.*
 
-&emsp;&emsp;Markers keep their plan anchors. Where a foreground wall covers a marker, the covered part is dimmed and the wall hides the shadow. A group has one outline and individual member actions. Windows cast sunlight onto the floor beneath furniture when sun rays and north are configured. Walls retain their colour in both themes. Changing views or entering an editor preserves the physical floor point at the camera centre without editing plan data.
+&emsp;&emsp;Walls are cut at 140 cm. Windows have masonry beneath their sills, and doors and passages have lintels. The scene uses the same saved plan. Device markers and LED strips can have an explicit [height above the floor](#device-height-in-3d). Opaque walls can cover bodies and outlines behind them. Room labels and readings use their own readable overlays.
 
-&emsp;&emsp;Editors are always flat. The option is off by default; turning it off or **Reset** returns the flat plan. There is no separate button on the card.
+&emsp;&emsp;Open **Space settings → Room appearance** to set separate colours for the wall's top cut and sides. **Wall hatching color** sets the top and **Wall fill color** sets the sides. Enable **Allow transparent walls in 3D** to use the opacity selected in those colours. By default the colours are painted over an opaque white base. **Accent color for 3D windows and doors** tints frames, door panels, reveals and sills. White or 0% restores the original colour.
 
-&emsp;&emsp;Hidden wall borders disable volume: furniture, coordinates and hits use the Flat presentation. If the volume registry cannot load or the scene fails to build, House Plan safely displays the complete Flat plan without deleting furniture or clearing the saved preference.
+&emsp;&emsp;Lamps and LED strips can light floors and nearby walls. Sunlight from windows falls on the floor when sun rays are enabled and north is configured. Editors and static space cards use 2D. SVG export from 3D downloads a flat vector plan and leaves the live view on screen.
+
+&emsp;&emsp;3D requires WebGL 2. If it is unavailable or the scene fails, House Plan shows the interactive 2D plan and retains the saved preference. Hiding wall borders also uses 2D. The shared 3D setting is off by default.
 
 ### Room fills and light
 
@@ -2025,7 +2033,7 @@ cycle: 30
 
 &emsp;&emsp;For a terrace or balcony, open **Room settings → Sunlight** and enable **Lets sunlight through**. The marked room receives no window rays of its own; windows into ordinary neighbouring rooms can admit sunlight instead. The terrace needs no exterior window. Access follows a chain of marked rooms sharing a wall, provided at least one has a real exterior wall. An isolated internal group or corner contact creates no solar access.
 
-&emsp;&emsp;The option is off by default, works in Flat and 2.5D, and leaves artificial lighting, walls and room fills unchanged.
+&emsp;&emsp;The option is off by default, works in Flat and 3D, and leaves artificial lighting, walls and room fills unchanged.
 
 &emsp;&emsp;The background has dawn, day, sunset and night. With `sun.sun`, elevation and direction of travel choose the phase; clock fallback uses 05:00–08:00, 08:00–18:00, 18:00–21:00 and 21:00–05:00. Environment transition lasts 1.1 s or is immediate with reduced motion. Only the area around the plan changes; the decorative paper-outline glow has been removed. Rooms, fill, Glow, markers, labels, decor, backdrop, vacuum display, hover highlights and window rays are not recoloured.
 
@@ -2270,9 +2278,9 @@ cycle: 30
 
 ### Download a file for printing: PDF or SVG
 
-&emsp;&emsp;Choose the file format at the top. **PDF - architectural plan** retains the existing architectural sheet. **SVG - current view** saves the displayed View area, projection, colours and opacity without changing the camera. Switch out of an editor before exporting SVG. Live states/animations become a static frame.
+&emsp;&emsp;Choose the file format at the top. **PDF - architectural plan** produces the architectural sheet. **SVG - current view** saves the plan area, colours and opacity. From 3D it builds a flat vector view of that area while leaving the live camera in place. Switch out of an editor before exporting SVG. Live states and animations become a static frame.
 
-![Before downloading, choose the format and what to include in the file.](images/guide-2026-11/en/print.png)
+![Before downloading, choose the format and what to include in the file.](images/guide-v2.0.0/en/print.png)
 
 *Before downloading, choose the format and what to include in the file.*
 
@@ -2286,7 +2294,7 @@ cycle: 30
 
 &emsp;&emsp;House Plan lays out the complete selected content before choosing portrait or landscape and a standard scale, then centres that complete scene on the sheet. Physical walls use a grey base and architectural hatch. Measurements are limited to horizontal and vertical walls, and a matching opposite pair is printed once within its own room or connected outer contour.
 
-&emsp;&emsp;The footer includes a scale bar, a vector compass when north is configured, the date and version; the old architectural-symbol legend is no longer printed. The export is read-only and always uses the flat plan, including while the card is in isometric view. Its dialog remains usable without horizontal scrolling down to a 320 px-wide View area. See [PDF export](PDF-EXPORT.md) for measurement, image-limit and font details.
+&emsp;&emsp;The footer includes a scale bar, a vector compass when north is configured, the date and version; the old architectural-symbol legend is no longer printed. The export is read-only and always uses the flat plan, including while the card is in 3D. Its dialog remains usable without horizontal scrolling down to a 320 px-wide View area. See [PDF export](PDF-EXPORT.md) for measurement, image-limit and font details.
 
 &emsp;&emsp;Rectangular facade steps keep a complete reconstructable dimension chain: both adjacent exterior sections, the height of the step and one copy of its depth remain visible without adding diagonal measurements.
 
@@ -2370,7 +2378,7 @@ cycle: 30
 
 &emsp;&emsp;House Plan never guesses a room/floor or silently runs the geometry optimizer.
 
-![Choose a full backup or the current space. The dialog explains what the file includes.](images/guide-2026-11/en/backup.png)
+![Choose a full backup or the current space. The dialog explains what the file includes.](images/guide-v2.0.0/en/backup.png)
 
 *Choose a full backup or the current space. The dialog explains what the file includes.*
 
@@ -2482,6 +2490,7 @@ cycle: 30
 | Zero-thickness walls cannot host openings | Give the target wall a positive thickness before adding a door, window, gate or passage |
 | Opening bodies are inert in View | Only a separate lock badge is interactive |
 | Editors are desktop-first | Touch editing may be awkward, limited or absent |
+| 3D requires WebGL 2 | If the browser cannot use it, House Plan shows the interactive 2D plan |
 | Room details use hover in View | A touch-only user may need an editor or another visible metric |
 | Sun has no exterior 3D model | It cannot know shadows from trees, awnings or neighbouring structures |
 | Icon rules use regular expressions | First matching rule wins and invalid expressions are rejected |
@@ -2555,7 +2564,7 @@ cycle: 30
 
 &emsp;&emsp;The **Help & feedback** button follows **General settings** in the card header. It is available to users allowed to edit House Plan in View and all editors, but is hidden in kiosk. The dialog contains the current card version, the GitHub and Telegram links, and this guide. Russian UI opens the Russian guide; all other languages open this English guide.
 
-![Describe a problem in the feedback form; diagnostic attachments are enabled separately.](images/guide-2026-11/en/help.png)
+![Describe a problem in the feedback form; diagnostic attachments are enabled separately.](images/guide-v2.0.0/en/help.png)
 
 *Describe a problem in the feedback form; diagnostic attachments are enabled separately.*
 

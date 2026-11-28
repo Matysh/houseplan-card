@@ -60,8 +60,9 @@ deliberate degradation is allowed under `TOUCH-SUPPORT.md`.
   only when the improvement is cheap and does not complicate the desktop model.
 - **Value display**: single current value per device; units/precision follow HA
   formatting only.
-- **Accessibility**: `prefers-reduced-motion` only; no keyboard navigation in
-  editors, no ARIA labelling of the plan.
+- **Accessibility**: reduced motion, focusable and labelled controls, and
+  keyboard actions where documented in [Touch support](TOUCH-SUPPORT.md) and
+  the user guide. Coverage of the graphical editors and plan remains partial.
 - **Docs maintenance**: the [English](USER-GUIDE.md) and
   [Russian](USER-GUIDE.ru.md) guides describe the same verified product snapshot;
   keep their scenarios and limitations in sync when behaviour changes (#1427).

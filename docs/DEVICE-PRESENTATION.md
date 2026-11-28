@@ -1,7 +1,7 @@
 # Отображение маркера устройства: таблица решений
 
 System LQI visibility (#1130) shares `signal-visibility.ts` across full, preview,
-2.5D and static consumers. The resolved value is boolean or `low`; low filters
+3D and static consumers. The resolved value is boolean or `low`; low filters
 only `lqiText` at LQI ≤ 50 without suppressing diagnostic facts in the tooltip,
 configured LQI values/badges, colour bands or room aggregates. Local marker hide
 always wins. Snapshot keys distinguish low from true, and only a configured
@@ -12,15 +12,12 @@ through the existing coherent frame/reuse boundaries.
 In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
 
 
-In 2.5D View, device faces, badge faces, LED tape and lock markers sit on the
-shared 140 cm wall-cut plane. Bodies keep their authored top shape and fixed
-gray sides. Occlusion affects body, badge and contact outline independently.
-The readable axes also apply to values, battery, Zigbee and locks. A value
-capsule and its text turn around the capsule's measured centre. Wall-contact
-offsets apply only to the raised presentation (#1538). The configured device
-glyph angle composes around its own centre.
-Filled floor shadows and visible positions never replace saved layout
-anchors. See [full 2.5D contract](ISOMETRIC.md).
+In 3D, device marker bodies, badges, LED strips and locks use the same physical
+scene as walls and furniture. Marker and strip height can be authored through
+`height_cm`, measured to the underside. Auto places the top at the wall cut.
+Wall depth can obscure the covered part of a body. The projected anchor is
+derived from the saved plan coordinate. Floor shadows are non-interactive.
+See [3D View](ISOMETRIC.md) for height, projection and picking.
 
 ## Effective consumer dependencies (#1093)
 
@@ -40,7 +37,7 @@ Native, threshold and external cause identities are independent of entity_id. Na
 
 External causes (#1001) come from the authenticated HA signal subscription. The integration stores them separately from plan configuration, resolves HA targets to placed bindings and sends a private snapshot. Clients match both the marker ID and current binding. The signal uses the same live-state and display policy as a threshold. External text and time appear in the device card and design preview.
 
-The same confirmed cause projection feeds Flat, 2.5D, reason card and actual preview. An unchanged preview can use the accepted confirmed frame immediately; unsaved/new rules confirm locally without writing. A timer transition invalidates the immutable snapshot and its incremental presentation version even without an HA tick. Static modes and live_states:false create no custom live clock; lifecycle/hidden/offline and existing native policy are preserved.
+The same confirmed cause projection feeds 2D, 3D, reason card and actual preview. An unchanged preview can use the accepted confirmed frame immediately; unsaved/new rules confirm locally without writing. A timer transition invalidates the immutable snapshot and its incremental presentation version even without an HA tick. Static modes and live_states:false create no custom live clock; lifecycle/hidden/offline and existing native policy are preserved.
 
 
 ## Own availability (#1026)
@@ -75,7 +72,7 @@ Alarm authority, reasons and red paint are independent. UI-007 r3 (#1119)
 supersedes the #1026 ordinary content-only appearance: eligible `.unavail`
 dims the whole ordinary marker/circle to 0.35, including its frame, contact ink
 and diagnostics; inner glyph/value/badge remains at opacity 1 for this reason,
-so the fade is not multiplied. The separate 2.5D shadow keeps its ordinary
+so the fade is not multiplied. The separate 3D floor shadow keeps its ordinary
 paint; hit sizes and geometry stay unchanged. Existing confirmed-offline hover policy and
 ordinary actions remain unchanged.
 
@@ -250,7 +247,7 @@ exact `"low"` (#807) — только состояние `low`: резолвер
 в остальных состояниях; поверхности получают режим из одного резолвера.
 `marker.hide_battery:true` сильнее глобального default-on и скрывает батарею
 только этого маркера; отсутствие/false сохраняет общее поведение. Тот же
-предикат используется в View, 2.5D, preview и static space card, поэтому draft
+предикат используется в 2D/3D View, preview и static space card, поэтому draft
 диалога не расходится с сохранённым представлением.
 Батарея намеренно независима от static/live policy (`static_icon`,
 `value_static_icon`, `live_states:false`); прочие diagnostic gates не меняются.
@@ -439,8 +436,8 @@ catalogue the marker stays «On the plan».
 
 Opt-in admin/mouse/View topology includes the same real radio device when its
 icon is replaced by a strip (#1004). The endpoint is halfway along the current
-derived visible SVG path, projected through its own CTM, including 2.5D lift;
-it is independent of the hidden icon slot, value badge and hovered end. A
+derived visible SVG path, projected through its own CTM.
+It is independent of the hidden icon slot, value badge and hovered end. A
 14-CSS-pixel halo stays fixed on screen. The participant's actual top strokes
 are lent to a pointer-transparent layer above the routes, with their original
 alpha/mask/dashes, while its hit/focus/actions remain with the LED renderer.
@@ -451,7 +448,9 @@ point, control, offline style or topology permission is changed.
 
 ## Implementation notes
 
-### Derived contacts in Flat and 2.5D (#866, #1451)
+<a id="derived-contacts-in-flat-and-25d-866-1451"></a>
+
+### Derived contacts in 2D and 3D (#866, #1451, #1608)
 
 #### Contact reflow and contour (#1003)
 
@@ -484,8 +483,8 @@ An unrelated free marker keeps its centre. Growth into a proved neighbouring
 contact can limit that free marker's size.
 
 The same effective positions and diameters drive paint, hit testing and
-occlusion in Flat and floor-aligned 2.5D. This calculation stays local to each
-card or screen. Applicable references are materialised only on explicit edits;
+occlusion in Flat. WebGL 3D uses the effective anchors with physical heights
+and depth. This calculation stays local to each card or screen. Applicable references are materialised only on explicit edits;
 see CONFIG-COMPATIBILITY.md. On a cold legacy load, the full card proves
 contacts from saved centres and current faces at the card's unprofiled size
 and the standard panel size. It keeps a single proof when these disagree.
@@ -515,8 +514,9 @@ not prototype bbox approximations. Each member keeps its own status, alarm,
 activity, focus, tooltip, confirmation and action owner. Passive battery/LQI
 satellites do not enlarge the outline or hit area. Individual own silhouette
 wins before the usual core-centred 44px fallback. Static cards remain passive;
-isolated previews have no neighbours. Floor-aligned 2.5D projects the same
-effective contacts and individual hit shapes onto the raised marker plane.
+isolated previews have no neighbours. In WebGL 3D a contact edge joins only
+neighbours at the same height. Automatic markers can group with other automatic
+markers. The WebGL pick pass retains individual device actions.
 
 Decor-only edits do not invalidate contact walls or the contact graph (#935).
 The wall key excludes only decor from the existing floor-record fingerprint;

@@ -2,8 +2,7 @@
 
 #1165 adds the `external-screen-views` branch: v1 flat profiles are projected
 read-only into v2 per-space views and migrated only by explicit outer Save.
-The first stable publication is pending on the 1.84 line, so no sunset date
-or reader removal is assigned. Proofs: external-screen views, backend validation
+The first stable publication was v1.84.0. No reader removal is assigned. Proofs: external-screen views, backend validation
 and real HA websocket tests; [contract](CONFIG-COMPATIBILITY.md#per-space-presentation-v2-1165).
 
 Historical #1015 provenance: reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
@@ -12,8 +11,8 @@ Current snapshot: **890 individually classified matching lines**, sha256:`9b2263
 
 #1024 adds the optional opening-features v1 reader/materialization branch. The
 three current door/gate type-switch records are current-feature exclusions,
-not new legacy migration permissions. Its first stable publication is pending;
-no implicit-reader removal or invented sunset is authorized.
+not new legacy migration permissions. The first stable publication was v1.85.2.
+No implicit-reader removal is assigned.
 
 #1380 classifies three current graph-write/exact-coordinate safety comments as
 `current-feature` and the first-key-wins historical wall-overlay ABI as
@@ -159,7 +158,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [src/initial-load.ts](../src/initial-load.ts) | 1 | branch:layout-owner-repair |
 | [src/interior-window-light.ts](../src/interior-window-light.ts) | 1 | exclusion:current-feature |
 | [src/iso-openings.ts](../src/iso-openings.ts) | 1 | exclusion:current-feature |
-| [src/iso-scene-render.ts](../src/iso-scene-render.ts) | 2 | branch:marker-value-presentation |
+| [src/iso-scene-render.ts (snapshot)](https://github.com/Matysh/houseplan-card/blob/759ff053090317b430cdee3dca12fba18892de4b/src/iso-scene-render.ts) | 2 | branch:marker-value-presentation |
 | [src/iso-walls.ts](../src/iso-walls.ts) | 1 | exclusion:current-feature |
 | [src/logic.ts](../src/logic.ts) | 1 | branch:content-url |
 | [src/logic.ts](../src/logic.ts) | 2 | branch:decor-live-link |

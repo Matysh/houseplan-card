@@ -66,11 +66,11 @@ rewrite the plan or invent a migration. Keep a compatible backup before
 editing with an older installation. Flat View/editor and PDF retain the
 relationship's meaning through shared source crops; the static space card is
 not given new furniture support. The volume camera/profile and the changed
-2.5D-only depiction of legacy `hinge: top` are presentation contracts in
+3D depiction of legacy `hinge: top` are presentation contracts in
 [ISOMETRIC](ISOMETRIC.md), not migrations of saved window data.
 
-Introduction is #1451; its first published stable and any retirement boundary
-remain pending actual publication. No new minimum released version is assumed.
+Introduced in #1451 and published in stable v1.86.0. This section sets no
+retirement boundary for older data.
 
 ## Television on a TV cabinet (#1511)
 
@@ -114,8 +114,8 @@ remain unchanged. Recovery uses its own typed house_import files+pair intent,
 without saved Zigbee cache or full-backup slots. Finish any pending intent
 before downgrading; a completed imported plan uses the existing saved model.
 
-Introduction is #1464; the first actual stable and package publication remain
-pending #1465. No minimum released version or sunset date is invented here.
+Plan transfer (#1464) shipped in stable v1.86.0. The separately verified website
+editor and core artifacts (#1465) were published with stable v1.86.1.
 
 ## Shared command host (#1460)
 
@@ -188,8 +188,8 @@ the complete TS/Python projection against the trusted original (#1227). No copy
 geometry exemption is widened. Support uses a closed allowlist, scoped leaf
 pseudonyms and shared entity references, never source labels or arbitrary fields.
 
-Introduction is #1024 commit6057dcd21148e9992229e6151f4baa4681ef0052; no published stable or sunset
-is claimed before publication. Retain implicit readers and old-backend refusal.
+Introduced in #1024 at `6057dcd21148e9992229e6151f4baa4681ef0052` and published
+in stable v1.85.2. Implicit readers and old-backend refusal remain supported.
 
 
 ## Exact structural graph, model 11 (#1167)
@@ -379,7 +379,7 @@ update performs no destructive downgrade migration or trail-store reset.
 ## Independent room appearance (#1037)
 
 
-The space may also carry an optional **2.5D opening accent** (#1474) at
+The space may also carry an optional **3D opening accent** (#1474) at
 `space.settings.opening_accent_3d`, with six-digit HEX `c` and finite
 opacity `a` between 0 and 1. The reader treats absence as neutral white at
 strength 1. An older ordinary writer that omits the field preserves a saved
@@ -390,7 +390,7 @@ and sides read `wall_fill`. The coordinates, physical wall cut, masks and
 light profiles require no new persisted representation.
 
 Optional Boolean `space.settings.transparent_walls_3d` (#1518) permits actual
-colour opacity for both kinds of 2.5D masonry. Absent and false preserve the
+colour opacity for both kinds of 3D masonry. Absent and false preserve the
 opaque white backing. Copies and full or plan-only exports retain the switch
 along with the existing colour fields. The setting affects paint only.
 
@@ -751,18 +751,21 @@ privacy-safe support projection preserve the flag; no migration or background
 write is required. Old clients ignore it. Physical ownership, live readings and
 canonical topology representatives are derived at runtime, never persisted.
 
-## 2.5D View setting (#649)
+<a id="25d-view-setting-649"></a>
+
+## 3D View setting (#649, #1514)
 
 `settings.volumetric_view` is an optional global boolean for the whole
 installation — every space, user, device and kiosk. Only exact `true` turns the
-View into 2.5D; absence, `false` or anything else read as Flat. Saving `false`
+View into WebGL 3D on supported surfaces. Before v2.0.0 the same value selected
+SVG 2.5D. Absence, `false` or anything else read as Flat. Saving `false`
 removes the key. The backend accepts only a boolean
 (`vol.Optional("volumetric_view"): bool`), and the privacy-safe support
 projection copies only a validated boolean. There is no migration: the former
 per-device, per-space alpha choice (`houseplan_card_view_v1` in the browser)
 was never part of the config and is no longer read.
 
-An older frontend ignores the field and shows Flat. An older backend preserves
+Frontends predating #649 ignore the field and show Flat. An older backend preserves
 it through the unknown-settings policy. Full backup/import carries `settings`
 whole, so the value survives.
 
@@ -2122,12 +2125,14 @@ one-deep Undo are unchanged; no automatic Optimize or migration runs on read.
 
 ## External screens namespace (#1113)
 
-### Per-space presentation, v2 (#1165)
+<a id="per-space-presentation-v2-1165"></a>
+
+### Per-space presentation, v3 (#1165, #1516)
 
 The current bounded namespace is `{version:3,next_id,screens}`. Profile globals
 are `id`, `space`, `cycle`, `idle`. `default_view` supplies the complete view for
 spaces without an explicit `space_views[stableSpaceId]` record. Version 3 keeps
-v2's zoom, summary, centering and scales, with optional `view: flat|iso`.
+v2's zoom, summary, centering and scales, with optional `view: flat|iso`. On v2.0.0 and later `iso` selects WebGL 3D.
 Rotation is an integer number of degrees, 0–315 in steps of 45, or null
 to inherit the browser's main-plan angle. Explicit Flat allows quarter-turns.
 An inherited view applies the effective projection's nearest angle without

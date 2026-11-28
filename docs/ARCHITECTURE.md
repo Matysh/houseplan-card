@@ -343,8 +343,8 @@ matrices, bounds, inverse input, browser preference and one HTML anchor route.
 `_cameraView` and every camera/mode transition remain canonical; `_viewOr`
 derives the displayed fit without rewriting stored camera numbers. SVG planes
 share the matrix, while HTML device/room/value faces remain screen-facing.
-2.5D retains one physical source/boolean cache with four projected variants;
-wall faces, opening depth and raised overlays use the same fixed quarter camera.
+WebGL 3D uses the shared physical source and eight fixed presets. The
+`plan-3d-host.ts` boundary sends the camera and scene inputs to the 3D runtime.
 Static shares the frame helper and device preference; PDF turns its immutable
 print scene before fitting. No space/layout field or backend write is introduced.
 
@@ -494,7 +494,7 @@ changes, stairs, transforms and legacy/mixed steps retain strict materialization
 Sun-only room access (#1078) is resolved by `sun-access.ts` against the complete
 room geometry before any exclusion. Positive common boundary spans connect
 flagged rooms; actual exterior spans seed the flood. Innermost ownership handles
-nested islands independently of room order. Flat and 2.5D share that access fact,
+nested islands independently of room order. Flat and WebGL 3D share that access fact,
 receiver exclusion and contour-only zero-wall filtering. Independent physical
 obstacles retain their shadows. Canonical masonry, paper, fills and artificial
 lighting are not filtered. A separate room-setting input moves the sunlight key;
@@ -1198,17 +1198,11 @@ and summary-editor entries (#998); it does not pull the editor graph into View.
 Dialog-only native selectors in decor, stairs, physical elements and variable
 insertion use the same wrapper; inline Properties controls retain their contract.
 
-The marker form's `iconPickerKit` Lit directive adapts only that mounted genuine
-HA icon picker. It adopts UI Kit paint in its known nested roots, waits for HA's
-Lit readiness and observes local child changes. Disconnect removes observers
-and adopted sheets; late completion cannot publish into a retired owner. No
-global shadow-root hook or polling is used. HA still selects desktop popover
-versus narrow/low bottom sheet and owns search, custom values and selection.
-The shared dialog shell yields Escape to either open native picker surface.
-After the adaptive sheet's public `picker-closed` event and HA's render, the
-adapter restores focus to the field; its generation/connection guards prevent
-a retired owner or a newly opened picker from taking focus.
-The call uses HA's public field `focus()` delegation across its nested roots.
+The marker form uses House Plan's `hp-icon-picker`. Its own listbox handles
+search, explicit icon IDs, keyboard selection and focus return. In Home Assistant,
+`icon-catalog.ts` loads the installed frontend's icon list, metadata and needed
+glyph chunks. The standalone presentation registers its own bundled MDI catalog.
+Escape closes the picker first and keeps the enclosing settings dialog open.
 
 Space settings (#945) share the same form with onboarding/import through
 `SpaceFormPort`; only the editor injects section navigation, the shared north
@@ -1232,8 +1226,8 @@ cannot be detected. UI navigation state never enters persisted config.
 
 `src/styles.ts` composes `cardStyles = [base, plan, devices, chrome, dialogs,
 isoTiles]` from `src/styles/*.styles.ts`; the order is a cascade contract (the
-golden set is accepted against it; `isoTiles` last so 2.5D tiles beat
-equal-weight Flat marker rules, #649). `base` holds host, variables and rules
+golden set is accepted against it; `isoTiles` owns styles for isometric DOM layers.
+The physical 3D bodies are drawn by WebGL). `base` holds host, variables and rules
 shared by two surfaces; `plan` stage ink, `devices` markers, `chrome`
 toolbars/tabs/menus, `dialogs` dialogs/forms/pickers. `form-kit.styles.ts`
 (#594), `editor-secondary.styles.ts` and the summary-panel sheets live outside
@@ -1259,7 +1253,8 @@ houseplan-card/
 │  ├─ physical-body-gesture.ts           # editor-only body/column gesture owner (13-purpose port)
 │  ├─ backdrop-frame-gesture.ts          # editor-only backdrop gesture/frame owner (14-purpose port)
 │  ├─ houseplan-onboarding-runtime.ts    # lazy first-space/import dialogs, independent of the editor
-│  ├─ iso-*.ts · pdf/ · stairs*.ts · furniture*.ts  # 2.5D, PDF export, stairs, furniture (own docs)
+│  ├─ plan-3d-*.ts · card-plan-3d.ts      # WebGL 3D scene, host, camera and rendering
+│  ├─ iso-*.ts · pdf/ · stairs*.ts · furniture*.ts  # shared view geometry, PDF, stairs and furniture
 │  ├─ devices.ts · rules.ts              # device list from registries; icon rules and exclusions
 │  ├─ ha-binding-status.ts · device-presentation*.ts  # binding authority; marker face decisions
 │  ├─ space-geometry.ts · wall-*.ts · physical-geometry.ts · logic.ts · types.ts  # pure, no Lit/DOM
@@ -1300,7 +1295,7 @@ The panel imports the card chunk by its hashed name, never through the card's
 unversioned facade: entries are served without `Cache-Control`, and a stale
 facade once ran an old card against the current backend (#535). Both roots keep
 the fail-loud stale-load wrapper. View loads only the initial graph; editor,
-onboarding, 2.5D (#649), PDF, locale and furniture-art graphs are lazy, each
+onboarding, WebGL 3D, PDF, locale and furniture-art graphs are lazy, each
 passing the exact-build fingerprint handshake (one cache-busted retry, atomic
 install). The manifest distinguishes these graphs; an editor dependency in the
 initial graph changes the intended loading boundary. The backend serves only
@@ -1397,7 +1392,7 @@ Build mechanics: [DEVELOPMENT.md](DEVELOPMENT.md).
    3500ms deadline; routing does not restart it. Detach cancels pending paint.
 5. **Open passages are negative architecture (#157).** `type=passage` shares
    placement, wall cut and tunnels with other openings but has no leaf, binding
-   or 2.5D panel; static wall fingerprints add only passage cuts, so door/window/
+   or 3D panel; static wall fingerprints add only passage cuts, so door/window/
    gate output is unchanged (`CONFIG-COMPATIBILITY.md` › Open-passage opening
    type).
 6. **One transient-surface contract (#68, #57).** `hp-dialog` keeps a scoped
@@ -1899,7 +1894,7 @@ is one hole-free outline; Split cuts wall-to-wall and the larger part keeps the
 room identity (name, area, devices).
 
 `wallBodiesGeometry()` is the single physical masonry for flat full/static
-rendering, 2.5D, paper, clean floor and Glow/sun occlusion. Its exterior shell
+rendering, 3D, paper, clean floor and Glow/sun occlusion. Its exterior shell
 comes from the union of room centrelines plus surviving `outer` atoms; junctions
 follow the bounded mitre/bevel rules (#249, #271, #272, #275, #288, #302, #309,
 #310); independent bodies join through `physicalBodySet()` while raw quads keep
@@ -2037,7 +2032,7 @@ flip_h?, flip_v?}`. `host` `{kind: wall|partition, id, t}` is authoritative and
 `x/y/angle` its atomically refreshed projection; an absent host is the legacy
 room-wall association, and no host ever falls back to a nearest wall
 (`CONFIG-COMPATIBILITY.md` › #132/#157). One `OpeningWallIndex` feeds symbol,
-cut, tunnel fill, Glow and the 2.5D face (`WALL-THICKNESS.md` §3–4,
+cut, tunnel fill, Glow and the 3D surface (`WALL-THICKNESS.md` §3–4,
 `ISOMETRIC.md`, `LIGHT.md`). The Flat symbol follows easy-floorplan (MIT).
 `openingAmount()` maps contact state to 0..1 — no sensor: door/gate open,
 window closed; `unknown`/`unavailable` keep that default. Contact and lock are
@@ -2047,7 +2042,7 @@ consults marker tombstones. The `.oplock` badge never toggles a lock
 (`resolveToggleIntent` → no-op, `SCOPE.md`); openings are edited only in Plan.
 In View the badge is a named, keyboard-focusable information button; pointer,
 Enter and Space open the same existing card without service dispatch (#849).
-Its focus outline does not change its Flat/2.5D hit geometry. Device-card rows
+Its focus outline does not change its 2D or 3D hit geometry. Device-card rows
 share the exact-entity/security resolver in `device-toggle.ts`, with a captured
 `infoCardRowContextKey` over current binding, controls and row identities;
 state-only HA frames may change direction but never redirect a confirmed row.
@@ -2334,7 +2329,7 @@ ignores `#space=`.
   scheduling is owner-local; `LightBarrierPass` shares revisions only inside
   the main card's synchronous render, never across subsequent edits (#789).
   The retired uniform darkness layer and palette role are absent from full,
-  static and 2.5D consumers (#943); old raw settings remain readable without
+  static and 3D consumers (#943); old raw settings remain readable without
   load-time writes. Diagnostic palette projection follows the active roles.
   **Room fill** —
   `resolveEffectiveRoomFill()` is the single projection for room floors,
@@ -2418,7 +2413,7 @@ override; room names and readings share its colour/alpha, preserving special
 state colours. `room-appearance.ts` and Python `room_appearance.py` own legacy
 projection. The old global wall fill is consumed only when materialising a
 legacy document, never after the local value exists. Main, static/embedded,
-2.5D and live-editor paint consume the same resolved local values; PDF keeps
+3D and live-editor paint consume the same resolved local values; PDF keeps
 its separate printing palette. No geometry cache or HA entity source changes.
 
 ## Schema as the source of truth (#33)
@@ -2695,7 +2690,7 @@ Technical examples and the retained registry inventory:
 
 The shared stripe renderer gives the off core 0.7 stroke opacity (#1043).
 A bounded SVG mask removes the dark body beneath that core, so it reveals the
-actual plan background, including in 2.5D; the rim stays opaque. On/unavailable
+actual plan background, including in 3D; the rim stays opaque. On/unavailable
 appearance is unchanged on live, static and exported plans. No persisted
 setting or resolution input is added.
 
@@ -2719,7 +2714,7 @@ and the device model stays the only owner of state and services. Four modules:
 |---|---|---|
 | `led-strip-gate.ts` | initial | which markers a space shows as a strip, the anchor, the page-wide loaders of both chunks |
 | `led-strip-card.ts` | initial | delegation only: the Devices toolbar button, the device-dialog section, notes, the LED branch of the device history |
-| `led-strip-runtime.ts` (+ `led-strip-geometry.ts`) | lazy `led` | frame, stripe, hit/focus, 2.5D, static card |
+| `led-strip-runtime.ts` (+ `led-strip-geometry.ts`) | lazy `led` | frame, stripe, hit/focus, shared LED inputs, static card |
 | `led-strip-field.ts` | lazy `led-field` | the linear field, loaded by the runtime only for an on strip in a Glow room |
 | `led-strip-editor.ts` (+ `i18n/led`) | lazy `led-editor` | the Devices tool, tray, picker, representation switch, LED history commands |
 

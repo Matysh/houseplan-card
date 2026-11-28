@@ -9,10 +9,10 @@
 Устройство подключения и восстановления: [CUTOVER.md](../process-next/CUTOVER.md).
 
 Плашка **CI** в README показывает подтверждённый результат тестов продукта,
-находящегося в `main`; ссылка плашки открывает непосредственно исходный прогон.
-При смене результата выпуска обновляется и эта ссылка в обеих README: старый
-прогон не подтверждает новую версию. Служебная сводка остаётся отдельно в
-`process-release-state/CI.md`.
+находящегося в `main`. Ссылка в обеих README открывает сводку
+[`process-release-state/CI.md`](https://github.com/Matysh/houseplan-card/blob/process-release-state/CI.md)
+с SHA продукта, выпуском и источником результата. Для локального прогона указан
+ID и контрольная сумма отчёта, для сохранённого результата Actions сводка указывает доступное доказательство.
 Она использует уже выполненный набор опубликованного stable/hotfix, если продукт
 в `main` ему соответствует. Для исходного `v1.83.1` сохранены адреса исторического
 прогона и его обязательных шагов; их успех проверяется по GitHub, а не задаётся
@@ -31,7 +31,7 @@ CodeQL показывается отдельно.
 
 ```bash
 npm ci
-npx playwright install chromium
+node node_modules/playwright/cli.js install --with-deps chromium webkit
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -r tests_backend/requirements.txt pytest-cov

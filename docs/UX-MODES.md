@@ -168,7 +168,7 @@ only an explicit entity's registry parent does not replace that entity target.
 Dispatch alone produces press feedback.
 The lock-information badge is a named, focusable button with Enter/Space parity;
 it never actuates a lock. Its Flat target remains about 15 px by owner choice
-(#849), while the existing 2.5D target remains unchanged.
+(#849). In 3D the projected body participates in the scene pick pass.
 
 Room, device, opening and shared-control hover is a mouse-only transient layer:
 the card enables it per instance after real mouse input on fine/hover hardware,
@@ -435,8 +435,8 @@ layer you cannot see is a layer you cannot edit.
   while editing a plan, device placement or its underlay makes those modes
   visually ambiguous. Their solid/dashed choice still affects light while the
   line itself is hidden.
-- **`show_names: false` means no permanent fallback label.** View (Flat and
-  2.5D), kiosk and `houseplan-space-card` all omit the room name. Plan may
+- **`show_names: false` means no permanent fallback label.** View (2D and
+  3D), kiosk and `houseplan-space-card` all omit the room name. Plan may
   show the same HTML card temporarily so its saved position remains editable;
   returning to View hides it again. Re-enabling names restores the saved
   layout rather than creating a new one.

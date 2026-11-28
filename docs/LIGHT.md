@@ -13,8 +13,8 @@ and falloff. This keeps an existing short-radius ribbon useful without
 requiring users to edit their plan.
 Source colour and intensity reuse the visibility masks. Sunlight retains
 its own footprint and transition. Pan and zoom crop the camera while the
-sources stay in plan coordinates. The prior SVG 2.5D implementation is
-unchanged.
+sources stay in plan coordinates. The earlier SVG 2.5D renderer is documented
+in [3D View](ISOMETRIC.md#prior-25d-implementation).
 
 The floor atlas packs coverage and a signed-distance band in RG8.
 The shader reconstructs artificial floor shadows from the distance channel.
@@ -226,7 +226,7 @@ pass over the layer costs a fifth of one blurred mask per source.
 ## Caching
 
 Window side/host interval proofs run on a structural cache miss, shared by
-Glow and LED in full, static and 2.5D presentations. A static drawing without
+Glow and LED in the full and static render paths. WebGL 3D consumes the shared optical barriers. A static drawing without
 permanent passages can lack a retained opening index; light reuses its window
 proof index for the alternate masonry recut instead of silently skipping cuts.
 Window contact ticks and camera motion do not rebuild these barriers; room,
@@ -459,8 +459,8 @@ cycles and cross-space transfer — `tests_backend/`.
   source on an opaque edge is rejected, the ±π seam cannot cut a wedge from
   the fan, and a corner made by two crossing barriers is lit right up to the
   corner.
-- `test/physical-geometry.test.mjs` plus
-  `test/houseplan-runtime-contract.test.mjs` — the source-placement guard:
+- `test/physical-geometry.test.mjs` and the `demo/smoke_glow.mjs` render witness
+  cover the shared source-placement guard:
   exterior opening masonry, wall bodies, partitions and columns are fail-dark,
   while a real interior passage remains a valid source position; the rendered
   Glow path is pinned to that shared guard.
@@ -488,7 +488,7 @@ legacy `fill_mode: 'glow'` projection is in `CONFIG-COMPATIBILITY.md`. Floor
 order is paper → resolved data room/tunnel fill → decor
 (`DECOR-EDITOR.md` §3.3) → radial pools → sun and interactive layers.
 Since #943 there is no uniform room darkness layer, including opening tunnels
-and the 2.5D light-floor classification. `none`, zero-opacity `custom` and
+and the 3D floor light field. `none`, zero-opacity `custom` and
 missing dynamic data stay empty; visible data fills keep their exact colour
 and alpha. Switching Glow without active sources does not repaint the floor.
 Light pools, LED fields, source brightness/colour/radius, fades, barrier clips
@@ -616,7 +616,7 @@ only the geometry differs:
   combinations are one browser matrix in `smoke_led_strip_glow`).
 - **Room.** The Glow room of a strip is the explicit valid `room_id` of its
   marker, otherwise the room of the half-length anchor (`stripRoom`).
-- **Laziness.** The stripe/hit/2.5D code (`led-strip-runtime`) and the field
+- **Laziness.** The SVG stripe/hit code (`led-strip-runtime`) and the field
   (`led-strip-field`) are separate lazy chunks; the initial graph holds only
   the presence check and the loader (`led-strip-gate`). Caches are bounded per
   space (50 shapes and 50 visibility entries) and released on space change

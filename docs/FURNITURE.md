@@ -159,9 +159,9 @@ binding to later wall edits, and already saved coordinates are never migrated.
 
 ## Desk-mounted computer (#1451)
 
-The accepted 2.5D presentation uses the 60 accompanying volume SVGs as derived
-art, not another stored model. The scene and developer gallery share one
-validated, lazily loaded registry. The ordinary plan artwork above remains
+The WebGL 3D presentation builds volume surfaces from the furniture profiles
+for the same saved plan objects. The volume SVGs remain reference artwork in
+the developer gallery. The ordinary plan artwork above remains
 the source of the Flat editor and PDF. See [ISOMETRIC](ISOMETRIC.md) for the
 camera, materials, layer order and complete Flat failure boundary.
 
@@ -223,7 +223,7 @@ ordinary print options.
 
 The `tv` shape can carry an explicit `tv_cabinet_id` reference to one
 `cabinet_tv` on the same floor. Flat and architectural PDF center the TV over
-the cabinet and apply its rotation and reflections. The 2.5D stand rests at
+the cabinet and apply its rotation and reflections. In 3D the stand rests at
 the height of the cabinet model's `console-top` part. The TV retains its own
 dimensions and style. An overlapping TV with no link still stands on the
 floor.
@@ -259,7 +259,7 @@ blocking; editor ergonomics on touch remain best effort under
 
 The #1451 volume registry is a separate optional lazy resource. Its load,
 fingerprint or construction failure uses the complete Flat scene and the
-ordinary plan artwork, without clearing the saved 2.5D preference or dropping
+ordinary plan artwork, while retaining the saved 3D preference or dropping
 part of a workstation. The older plan-artwork-load failure described above is
 not a reason to leave the scene empty merely because volume art failed.
 New workstation data, portable version selection and the old-client write
