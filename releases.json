@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1694,
+  "revision": 1695,
   "active": "v2.0.0-20261128",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -355030,14 +355030,14 @@
       "kind": "stable",
       "branch": "release/2.0.0-final-20261128",
       "sourceSha": "23cdfa855fc5ad470896290b6c3313905a04ceb4",
-      "sha": "23cdfa855fc5ad470896290b6c3313905a04ceb4",
+      "sha": "d2bdc9108d9eaaef3bd61b572759887590b50180",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v2.0.0",
-        "candidate": "23cdfa855fc5ad470896290b6c3313905a04ceb4",
+        "tag": null,
+        "candidate": "d2bdc9108d9eaaef3bd61b572759887590b50180",
         "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
         "issues": [
           {
@@ -355476,7 +355476,14 @@
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "23cdfa855fc5ad470896290b6c3313905a04ceb4",
+          "to": "d2bdc9108d9eaaef3bd61b572759887590b50180",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": [],
       "shipReview": {
         "sha": "23cdfa855fc5ad470896290b6c3313905a04ceb4",
@@ -362099,7 +362106,8 @@
     "beta-200-5-20261128-final-publication:completion:ffab7c47-d6e1-45a8-abb7-7bc6e169b79b": "b49c4785ef016ac0033c37f2f916b8b176d259160d2216fcaaa9aa4850323cab",
     "beta-200-5-20261128-final-publication:completion:9de8d0f8-b3fe-4fdf-af33-69175357564e": "8774d9c1672f85005bbb019b2c1f42238f8b8d9d38709f547f03261a95b34d13",
     "beta-200-5-20261128-final-publication:completion:3cecc5c8-c7e7-49e0-b56b-adf9aec0c495": "572c3f08bfa3ddd34a4e5804abfd474b8fe005516d8a71c878d2003867716071",
-    "stable-200-20261128-create": "fe8c36a93ed768c092d4d6defbf21baf13153103098fdbcc306fde63ae437770"
+    "stable-200-20261128-create": "fe8c36a93ed768c092d4d6defbf21baf13153103098fdbcc306fde63ae437770",
+    "stable-200-20261128-prepared": "e6efd8a8091dadb574fb415f737e6ccf4c23bfed6e6e9aa68b1052eb89f18355"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
