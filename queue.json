@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30217,
+  "revision": 30218,
   "nextTicket": 807,
   "nextFence": 807,
   "tasks": {
@@ -6323,6 +6323,101 @@
         "at": 1795839402479,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1626,
+        "requestId": "review:1626:1:e4451b853067a2ab9a8322e7436b0bc04e912451:8c44d8e7b2b02bba617512734a3c7d9d87129769",
+        "kind": "code",
+        "base": "8c44d8e7b2b02bba617512734a3c7d9d87129769",
+        "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
+        "patchId": "e4451b853067a2ab9a8322e7436b0bc04e912451",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1626,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1626",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Блокеров нет, принимаю. Служебный возврат опубликованного stable v2.0.0 (49cef71) в dev сделан двумя коммитами. Первый, 81dac6e, — merge опубликованной истории. Второй, 5bd72ce, открывает следующий цикл: меняет только `docs/release-ledger/cycle.json`. Продуктовый код в diff не меняется. Отличия base→head сводятся к трём группам: подъём версии `2.0.0-beta.5` → `2.0.0`, записи changelog и release notes для v2.0.0 и шесть коммитов стабилизации браузерных проверок и планировщика, которые были опубликованы вместе с v2.0.0. Новый цикл имеет вид `baseStable: v2.0.0`, `targetStable: null`, `milestone: null`. Это допустимо по `PROCESS.md:140` и проходит `verifyReleaseCycle`. Есть следствие для процесса: пока владелец не запланирует milestone, release-бухгалтерия новых задач будет в статусе `pending`. Слияние задач это не блокирует.",
+          "understanding": "Проблема. Dev (base 8c44d8e — возврат beta.5) отстаёт от опубликованного тега v2.0.0 (49cef71). Релизная линия после d2bdc91 («Promote the published Houseplan beta.5 to stable 2.0.0») содержит подъём версии, записи changelog и release notes и шесть коммитов с проверками: 655ddbb, ae61f8d, e38dd5f, 8ebfffb, 2d828b7, 49cef71. Задача — вернуть эту историю в dev, не переписывая её, и обновить stable-цикл.\n\nДо: в dev версия `2.0.0-beta.5`, цикл `v1.86.1 → v2.0.0 / milestone 18`.\nПосле: dev содержит опубликованную историю (по `git_log` от head коммит 49cef71 — предок head), версия `2.0.0`, цикл открыт от `v2.0.0` без цели.\n\nЧто разобрано:\n- состав diff по файлам;\n- blame `process-next/lib/catalog.mjs:178-182`: строки атрибутированы опубликованным коммитам e38dd5f и 49cef71, то есть merge перенёс их без ручной правки;\n- содержимое `docs/CHANGELOG.md` и `cycle.json` у 655ddbb, 49cef71 и 81dac6e;\n- история `cycle.json`, включая прошлое открытие цикла 7e85eee;\n- логика `process-next/lib/release-cycle.mjs` (`planStableCycle` и `verifyReleaseCycle`);\n- потребитель цикла `process-next/lib/release-data.mjs`;\n- правило в `PROCESS.md:140`;\n- наличие хелпера `demo/helpers/retained-page-action.mjs`, который импортирует изменённый `smoke_startup_floor.mjs`;\n- история `smoke_summary_camera_motion.mjs` и `smoke_device_battery_performance.mjs`: опубликованная линия эти файлы не меняла, поэтому их отсутствие в diff — не потеря.",
+          "analysis": [
+            {
+              "topic": "Сохранность опубликованной истории и чистота merge",
+              "assessment": "Опубликованный тег вошёл в историю head, а не был пересобран. Изменения релизной линии приходят в dev без ручных отличий: в продуктовых файлах только литералы версии, в демо-проверках и планировщике — ровно правки опубликованных коммитов. Признаков ручного разрешения конфликтов, которое отличало бы dev от тега, я не нашёл. Это укладывается в условие задачи: прежнее ревью можно зачесть только при чистом автоматическом merge.",
+              "evidence": "`git_log` от head: 5bd72ce → 81dac6e → 49cef71 → bc9526a → 2d828b7 → 8ebfffb → e38dd5f → ae61f8d → 655ddbb. В blame `catalog.mjs:178-182` строки атрибутированы 49cef7135 и e38dd5f22. Заголовок `docs/CHANGELOG.md` одинаков у 655ddbb и 49cef71; в head он совпадает с diff. `cycle.json` у 81dac6e совпадает с опубликованным, то есть merge-коммит цикл не трогал."
+            },
+            {
+              "topic": "Обновление stable-цикла (единственное изменение, требующее обычного ревью)",
+              "assessment": "Новое значение `{baseStable: v2.0.0, targetStable: null, milestone: null}` соответствует правилу в `PROCESS.md:140`: если открытого будущего milestone нет, база обновляется, а цель остаётся пустой до планирования. Закрытый milestone 18 корректно не переносится. `verifyReleaseCycle` разрешает пару null/null и требует, чтобы base была не ниже опубликованного тега; это условие выполнено. Следствие: `readTaskReleaseMilestone` для новых задач вернёт `pending` («Release cycle has no explicit base and milestone»), пока владелец не назначит milestone. По комментарию в файле это ожидаемо и merge задач не блокирует.",
+              "evidence": "`process-next/lib/release-cycle.mjs:27-29, 37-42`; `process-next/lib/release-data.mjs:1, 10-11, 29-30`; `PROCESS.md:140`. Прошлый аналог — 7e85eee (после v1.86.1): тогда milestone 18 уже был открыт, поэтому цель была заполнена."
+            },
+            {
+              "topic": "Изменения проверок, пришедшие с релизной линией",
+              "assessment": "Все шесть правок касаются тестов и планировщика: ожидание реального состояния вместо снимка после двух кадров, `page.clock` для двух кликов в rotation retarget, удержание асинхронного монтирования через `evaluateRetainedAction`, ожидание фактического применения feather-фильтра, монтирование через `__hpTest` вместо прямой записи приватных полей, монопольный запуск двух чувствительных к таймингу smoke. Они уже опубликованы в составе v2.0.0. Тест каталога покрывает новые exclusive-шаги и то, что battery-smoke не помечен как diagnostic. Регрессий для dev не вижу.",
+              "evidence": "diff `demo/smoke_*.mjs`, `process-next/lib/catalog.mjs:178-182`, `process-next/test/catalog.test.mjs:231-245`; хелпер есть в head: `demo/helpers/retained-page-action.mjs:10`."
+            },
+            {
+              "topic": "Версии и пользовательские тексты",
+              "assessment": "Версия `2.0.0` согласованно стоит во всех пяти местах: `package.json`, `package-lock.json`, `manifest.json`, `const.py` и `CARD_VERSION` в двух TS-файлах. Записи v2.0.0 в `CHANGELOG.md`/`CHANGELOG.ru.md`, `RELEASE-NOTES.md` и стабильных пользовательских changelog взяты из опубликованного релиза. Секция `Unreleased` осталась сверху и пуста, как и должно быть сразу после stable.",
+              "evidence": "diff соответствующих файлов; у 49cef71 `package.json` содержит `\"version\": \"2.0.0\"`."
+            }
+          ],
+          "blockers": [],
+          "improvements": [],
+          "boundaries": "Анализ сделан только по исходникам и истории Git. Сборку и тесты я не запускал; использован результат S6 «Тесты для задачи #1626 (перед ревью)» на 5bd72ce: статус passed, без сбоев. Родителей merge-коммита 81dac6e инструменты напрямую не показывают. Вывод о том, что 49cef71 — предок head, основан на `git_log` от head, а вывод о чистоте merge — на blame и сверке содержимого файлов. Побайтового сравнения всего дерева head с 49cef71 не было: проверял файлы из diff и связанные с ними. Я не мог проверить, что на момент возврата в GitHub действительно не было открытого milestone с версией выше 2.0.0. Именно от этого зависит, правомерно ли `targetStable: null`; это внешнее состояние."
+        },
+        "usage": {
+          "input_tokens": 24,
+          "cache_creation_input_tokens": 52012,
+          "cache_read_input_tokens": 334985,
+          "output_tokens": 8573,
+          "output_tokens_details": {
+            "thinking_tokens": 3186
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 52012,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 729,
+              "cache_read_input_tokens": 42888,
+              "cache_creation_input_tokens": 9124,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 9124
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокеров нет, принимаю. Служебный возврат опубликованного stable v2.0.0 (49cef71) в dev сделан двумя коммитами. Первый, 81dac6e, — merge опубликованной истории. Второй, 5bd72ce, открывает следующий цикл: меняет только `docs/release-ledger/cycle.json`. Продуктовый код в diff не меняется. Отличия base→head сводятся к трём группам: подъём версии `2.0.0-beta.5` → `2.0.0`, записи changelog и release notes для v2.0.0 и шесть коммитов стабилизации браузерных проверок и планировщика, которые были опубликованы вместе с v2.0.0. Новый цикл имеет вид `baseStable: v2.0.0`, `targetStable: null`, `milestone: null`. Это допустимо по `PROCESS.md:140` и проходит `verifyReleaseCycle`. Есть следствие для процесса: пока владелец не запланирует milestone, release-бухгалтерия новых задач будет в статусе `pending`. Слияние задач это не блокирует.\n\n## Понимание решения\n\nПроблема. Dev (base 8c44d8e — возврат beta.5) отстаёт от опубликованного тега v2.0.0 (49cef71). Релизная линия после d2bdc91 («Promote the published Houseplan beta.5 to stable 2.0.0») содержит подъём версии, записи changelog и release notes и шесть коммитов с проверками: 655ddbb, ae61f8d, e38dd5f, 8ebfffb, 2d828b7, 49cef71. Задача — вернуть эту историю в dev, не переписывая её, и обновить stable-цикл.\n\nДо: в dev версия `2.0.0-beta.5`, цикл `v1.86.1 → v2.0.0 / milestone 18`.\nПосле: dev содержит опубликованную историю (по `git_log` от head коммит 49cef71 — предок head), версия `2.0.0`, цикл открыт от `v2.0.0` без цели.\n\nЧто разобрано:\n- состав diff по файлам;\n- blame `process-next/lib/catalog.mjs:178-182`: строки атрибутированы опубликованным коммитам e38dd5f и 49cef71, то есть merge перенёс их без ручной правки;\n- содержимое `docs/CHANGELOG.md` и `cycle.json` у 655ddbb, 49cef71 и 81dac6e;\n- история `cycle.json`, включая прошлое открытие цикла 7e85eee;\n- логика `process-next/lib/release-cycle.mjs` (`planStableCycle` и `verifyReleaseCycle`);\n- потребитель цикла `process-next/lib/release-data.mjs`;\n- правило в `PROCESS.md:140`;\n- наличие хелпера `demo/helpers/retained-page-action.mjs`, который импортирует изменённый `smoke_startup_floor.mjs`;\n- история `smoke_summary_camera_motion.mjs` и `smoke_device_battery_performance.mjs`: опубликованная линия эти файлы не меняла, поэтому их отсутствие в diff — не потеря.\n\n## Разбор решения\n\n### Сохранность опубликованной истории и чистота merge\n\nОпубликованный тег вошёл в историю head, а не был пересобран. Изменения релизной линии приходят в dev без ручных отличий: в продуктовых файлах только литералы версии, в демо-проверках и планировщике — ровно правки опубликованных коммитов. Признаков ручного разрешения конфликтов, которое отличало бы dev от тега, я не нашёл. Это укладывается в условие задачи: прежнее ревью можно зачесть только при чистом автоматическом merge.\n\nОснование: `git_log` от head: 5bd72ce → 81dac6e → 49cef71 → bc9526a → 2d828b7 → 8ebfffb → e38dd5f → ae61f8d → 655ddbb. В blame `catalog.mjs:178-182` строки атрибутированы 49cef7135 и e38dd5f22. Заголовок `docs/CHANGELOG.md` одинаков у 655ddbb и 49cef71; в head он совпадает с diff. `cycle.json` у 81dac6e совпадает с опубликованным, то есть merge-коммит цикл не трогал.\n\n### Обновление stable-цикла (единственное изменение, требующее обычного ревью)\n\nНовое значение `{baseStable: v2.0.0, targetStable: null, milestone: null}` соответствует правилу в `PROCESS.md:140`: если открытого будущего milestone нет, база обновляется, а цель остаётся пустой до планирования. Закрытый milestone 18 корректно не переносится. `verifyReleaseCycle` разрешает пару null/null и требует, чтобы base была не ниже опубликованного тега; это условие выполнено. Следствие: `readTaskReleaseMilestone` для новых задач вернёт `pending` («Release cycle has no explicit base and milestone»), пока владелец не назначит milestone. По комментарию в файле это ожидаемо и merge задач не блокирует.\n\nОснование: `process-next/lib/release-cycle.mjs:27-29, 37-42`; `process-next/lib/release-data.mjs:1, 10-11, 29-30`; `PROCESS.md:140`. Прошлый аналог — 7e85eee (после v1.86.1): тогда milestone 18 уже был открыт, поэтому цель была заполнена.\n\n### Изменения проверок, пришедшие с релизной линией\n\nВсе шесть правок касаются тестов и планировщика: ожидание реального состояния вместо снимка после двух кадров, `page.clock` для двух кликов в rotation retarget, удержание асинхронного монтирования через `evaluateRetainedAction`, ожидание фактического применения feather-фильтра, монтирование через `__hpTest` вместо прямой записи приватных полей, монопольный запуск двух чувствительных к таймингу smoke. Они уже опубликованы в составе v2.0.0. Тест каталога покрывает новые exclusive-шаги и то, что battery-smoke не помечен как diagnostic. Регрессий для dev не вижу.\n\nОснование: diff `demo/smoke_*.mjs`, `process-next/lib/catalog.mjs:178-182`, `process-next/test/catalog.test.mjs:231-245`; хелпер есть в head: `demo/helpers/retained-page-action.mjs:10`.\n\n### Версии и пользовательские тексты\n\nВерсия `2.0.0` согласованно стоит во всех пяти местах: `package.json`, `package-lock.json`, `manifest.json`, `const.py` и `CARD_VERSION` в двух TS-файлах. Записи v2.0.0 в `CHANGELOG.md`/`CHANGELOG.ru.md`, `RELEASE-NOTES.md` и стабильных пользовательских changelog взяты из опубликованного релиза. Секция `Unreleased` осталась сверху и пуста, как и должно быть сразу после stable.\n\nОснование: diff соответствующих файлов; у 49cef71 `package.json` содержит `\"version\": \"2.0.0\"`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\nНет.\n\n## Границы анализа\n\nАнализ сделан только по исходникам и истории Git. Сборку и тесты я не запускал; использован результат S6 «Тесты для задачи #1626 (перед ревью)» на 5bd72ce: статус passed, без сбоев. Родителей merge-коммита 81dac6e инструменты напрямую не показывают. Вывод о том, что 49cef71 — предок head, основан на `git_log` от head, а вывод о чистоте merge — на blame и сверке содержимого файлов. Побайтового сравнения всего дерева head с 49cef71 не было: проверял файлы из diff и связанные с ними. Я не мог проверить, что на момент возврата в GitHub действительно не было открытого milestone с версией выше 2.0.0. Именно от этого зависит, правомерно ли `targetStable: null`; это внешнее состояние.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 8c44d8e7b2b02bba617512734a3c7d9d87129769 → 5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-28T04:19:19.204Z",
+        "artifactId": 15248350389,
+        "runId": 46106765531,
+        "runAttempt": 1,
+        "completedAt": "2026-11-28T04:19:22Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46106765531",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "8c44d8e7b2b02bba617512734a3c7d9d87129769"
       }
     }
   },
@@ -7085,9 +7180,9 @@
     "fence": 806,
     "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
     "expectedBase": "8c44d8e7b2b02bba617512734a3c7d9d87129769",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1795838673827,
-    "expiresAt": 1795842970237,
+    "expiresAt": 1795843193909,
     "patchId": "e4451b853067a2ab9a8322e7436b0bc04e912451",
     "reviewRequest": "review:1626:1:e4451b853067a2ab9a8322e7436b0bc04e912451:8c44d8e7b2b02bba617512734a3c7d9d87129769"
   },
@@ -7166,6 +7261,10 @@
     },
     "github:46106993264:1:tick:0:review-presentation": {
       "digest": "a49d7b9f49a33398f5ddb618d6748ff2bfc3508b5dc12c4a7f4c5784970534f4",
+      "issue": 1626
+    },
+    "github:46106993264:1:tick:0:review-complete": {
+      "digest": "9a889abdf4aaf2560e3d4eb23a330ca076d94bc15e6a84dc5c7e55208076a405",
       "issue": 1626
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
