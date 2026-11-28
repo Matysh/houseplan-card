@@ -468,10 +468,17 @@ for (const theme of ['light', 'dark']) {
   await blurAll();
   if(native){
     await keyboardFocusUnder();
-    const state=await focusable();
-    focusLayers[`${theme}-focus`]=state;
-    res[`nativeKeyboardFocusAndTooltip_${theme}`]=state.focused===under&&state.focusVisible
-      &&await page.evaluate(()=>!!window.__card.renderRoot.querySelector('[data-hp-live-tip]'));
+    const state = await focusable();
+    const [a, b] = await Promise.all([coreBox(under), coreBox(over)]);
+    const overlap = Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left);
+    const overlapHeight = Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top);
+    focusLayers[`${theme}-focus`] = { ...state, overlap, overlapHeight };
+    res[`nativeKeyboardFocusAndTooltip_${theme}`] = state.focused === under && state.focusVisible
+      && await page.evaluate(() => !!window.__card.renderRoot.querySelector('[data-hp-live-tip]'));
+    // WebGL owns physical depth. The focused DOM face and its outline still
+    // need the promoted layer when the two marker faces overlap.
+    res[`nativeKeyboardFaceAboveNeighbour_${theme}`] = overlap > 4 && overlapHeight > 4
+      && state.z[0] === '5' && state.z[1] === '2' || JSON.stringify(focusLayers[`${theme}-focus`]);
     await blurAll();
     continue;
   }

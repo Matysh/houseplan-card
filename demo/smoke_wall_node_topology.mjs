@@ -326,6 +326,41 @@ await page.waitForTimeout(700); await page.keyboard.press('Escape'); await page.
 assert.deepEqual(await page.evaluate(() => window.__card._serverCfg), legacyBefore);
 assert.deepEqual(server, legacy); assert.equal(writes, legacyWrites);
 await mount(JSON.parse(JSON.stringify(legacy))); assert.deepEqual(server, legacy);
+// Resize the placement during warm editor adoption, at the point where the
+// replacement card hands sizing back to its observer. The fixture changes
+// only the DOM width and delegates the real release without forcing a refit.
+await page.evaluate(() => {
+  const previous = window.__card, host = previous.parentNode;
+  const config = { ...previous._config }, hass = previous.hass;
+  const card = document.createElement('houseplan-card');
+  const release = card._releaseWarmRefit.bind(card);
+  const mismatch = () => {
+    const view = card._view, stage = card._stageEl;
+    return Math.abs(view.h - view.w * stage.clientHeight / stage.clientWidth) * stage.clientWidth / view.w;
+  };
+  card._releaseWarmRefit = request => {
+    if (!request || request !== card._warmModeRequest || request !== card._editorModeRequest
+        || !card._stageEl || !card._view) return release(request);
+    card._releaseWarmRefit = release;
+    const originalWidth = card._stageEl.clientWidth;
+    host.style.width = '940px';
+    const width = card._stageEl.clientWidth, before = mismatch();
+    release(request);
+    window.__hpWarmResize = { originalWidth, width, before, after: mismatch() };
+  };
+  previous.remove();
+  card.setConfig(config); card.hass = hass;
+  host.appendChild(card); window.__card = card;
+});
+const warmResize = await page.waitForFunction(() => window.__hpWarmResize).then(handle => handle.jsonValue());
+assert.notEqual(warmResize.width, warmResize.originalWidth, 'warm placement really changed width');
+assert.ok(warmResize.before >= .5, 'warm editor was about to retain the old aspect');
+assert.ok(warmResize.after < .5, `warm editor release must refit the camera: ${JSON.stringify(warmResize)}`);
+await page.waitForFunction(cameraReady);
+await drag(cycle.point, cycle.target);
+await page.keyboard.press('Escape'); await page.mouse.up();
+assert.deepEqual(server, legacy); assert.equal(writes, legacyWrites);
+
 console.log('unsupported X+branch and legacy preview/cancel/import guards passed');
 await mount(cycle.cfg);
 // Undo during drag cancels the gesture, not the older completed command.
