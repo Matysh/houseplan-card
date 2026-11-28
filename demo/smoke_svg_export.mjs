@@ -105,8 +105,10 @@ const facts = async (xml) => page.evaluate((text) => {
     radar: doc.querySelectorAll('.radar-target,.radar-ranges').length,
     labels: doc.querySelectorAll('.roomlabel').length,
     backdrop: doc.querySelectorAll('.hp-backdrop').length,
-    native: doc.documentElement.querySelectorAll(':scope > svg').length,
-    walls: doc.documentElement.querySelectorAll(':scope > svg .wallbody-fill,:scope > svg .iso-wall-top').length,
+    // Geometry can be inside the clipped camera surface. Assert that walls
+    // still have real SVG path data; a raster fallback must not pass.
+    walls: [...doc.querySelectorAll('path.wallbody-fill')].filter(el =>
+      el.namespaceURI === 'http://www.w3.org/2000/svg' && /^\s*[Mm]/.test(el.getAttribute('d') || '')).length,
     flatGeometry: !!doc.querySelector('.wallbody-fill') && !doc.querySelector('.iso-wall-top,.iso-floor-scene,canvas'),
     safe: !doc.querySelector('script,ha-icon,ha-svg-icon,iframe,object'),
     private: !doc.querySelector('[data-entity],[data-id],[data-area]'),
@@ -129,7 +131,7 @@ const noDevices = await download();
 const noFacts = await facts(noDevices.xml);
 checkAll({ 'valid-default-svg': noFacts.xml, 'default-no-devices': noFacts.devices === 0,
   'default-no-vacuum-led-radar': noFacts.vacuum + noFacts.led + noFacts.radar === 0,
-  'native-vector-architecture': noFacts.native > 0 && noFacts.walls > 0,
+  'native-vector-architecture': noFacts.flatGeometry && noFacts.walls > 0,
   'no-external-refs': !noFacts.external, 'no-ha-elements': noFacts.safe, 'no-private-metadata': noFacts.private });
 
 for (const iso of [false, true]) {

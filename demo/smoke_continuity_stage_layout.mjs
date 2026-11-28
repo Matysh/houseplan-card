@@ -4,6 +4,7 @@ import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 960, height: 820 });
 const report = await page.evaluate(() => {
   const settle = window.__card._settleContinuityFrame;
+  const paintReady = window.__card._continuityPaintReady;
   const out = {}, diagnostics = {};
   const verify = (name, run) => {
     try { run(); out[name] = true; }
@@ -11,10 +12,12 @@ const report = await page.evaluate(() => {
   };
   const expect = (value, message) => { if (!value) throw Error(message); };
   const host = ({ state = 'steady', complete = true, valid = true, assets = true,
-    booting = false, staged = false, refuseGeometryRead = false } = {}) => {
-    const calls = { geometry: 0, assets: 0, complete: [], barriers: [], updates: 0 };
+    projection = 'flat', webglCopied = true, booting = false, staged = false, refuseGeometryRead = false } = {}) => {
+    const calls = { geometry: 0, assets: 0, webgl: 0, complete: [], barriers: [], updates: 0 };
     const value = {
       isConnected: true, _booting: booting, _continuityDataReady: true,
+      _renderProjection: projection,
+      _spatial: { hasCurrentPaint() { calls.webgl++; return webglCopied; } },
       _candidateDeviceSnapshot: staged ? {} : null, _visibleDeviceSnapshot: null, _stagedToken: -1,
       _continuity: {
         state, hasCompleteFrame: complete, token: 7,
@@ -29,17 +32,29 @@ const report = await page.evaluate(() => {
         return valid;
       },
       _continuityAssetsReady() { calls.assets++; return assets; },
+      _continuityPaintReady: paintReady,
       _visualFrameFingerprint() { return 'exact-frame'; },
       requestUpdate() { calls.updates++; },
     };
     return { value, calls };
   };
-  verify('compiledHostMethodAvailable', () => expect(typeof settle === 'function', 'missing actual host method'));
+  verify('compiledHostMethodsAvailable', () => expect(typeof settle === 'function' && typeof paintReady === 'function', 'missing actual host methods'));
   verify('completeSteadyDoesNotMeasureOrPaint', () => {
     const { value, calls } = host({ refuseGeometryRead: true });
     settle.call(value, true);
-    expect(calls.geometry === 0 && calls.assets === 0 && calls.barriers.length === 0
+    expect(calls.geometry === 0 && calls.assets === 0 && calls.webgl === 0 && calls.barriers.length === 0
       && calls.complete.length === 0, 'steady callback did work');
+  });
+  verify('threeDimensionalCompletionWaitsForCurrentWebGLCopy', () => {
+    for (const state of ['steady', 'candidate-ready']) {
+      for (const webglCopied of [false, true]) {
+        const { value, calls } = host({ state, projection: 'iso', complete: false, webglCopied });
+        settle.call(value, true);
+        expect(calls.webgl > 0, state + ': did not check the actual canvas port');
+        expect(calls.complete.length === Number(state === 'steady' && webglCopied), state + ': wrong completed-frame decision');
+        expect(calls.barriers.length === Number(state !== 'steady' && webglCopied), state + ': generic barrier started without a new WebGL frame');
+      }
+    }
   });
   verify('coldCompletionStillRequiresPositiveStageAndAssets', () => {
     for (const valid of [false, true]) for (const assets of [false, true]) {

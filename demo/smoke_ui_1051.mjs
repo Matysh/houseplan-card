@@ -111,8 +111,10 @@ try {
     const disabled=menu.locator('button:disabled').first(),enabled=menu.locator('button:not(:disabled)').first();
     await disabled.hover();await page.waitForTimeout(170);
     out[`menu_disabled_${theme}`]=await disabled.evaluate(el=>{const s=getComputedStyle(el);return s.opacity==='1'&&s.cursor==='not-allowed'&&s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.color.includes('0.4')});
-    await enabled.hover();await page.waitForTimeout(170);
-    out[`menu_hover_${theme}`]=await enabled.evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor.includes('0.12')&&s.color===getComputedStyle(el.parentElement).getPropertyValue('--primary-color').trim()});
+    const idleInk=await enabled.evaluate(el=>getComputedStyle(el).color);
+    await enabled.hover();
+    await enabled.evaluate(el=>Promise.allSettled(el.getAnimations().map(animation=>animation.finished)));
+    out[`menu_hover_${theme}`]=await enabled.evaluate((el,ink)=>{const s=getComputedStyle(el);return s.backgroundColor.includes('0.12')&&s.color===ink;},idleInk);
     await page.keyboard.press('End');
     out[`menu_keyboard_last_${theme}`]=await menu.locator('button').last().evaluate(el=>el.getRootNode().activeElement===el);
   }

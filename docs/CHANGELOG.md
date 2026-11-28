@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## v2.0.0-beta.5 — 2026-11-28
+
 - Do not render a second flat outline under 3D furniture while loading the plan (#1620).
+- Align browser regression assertions and seven reviewed visual baselines with the current 3D and settings UI.
 
 ## v2.0.0-beta.4 — 2026-11-28
 

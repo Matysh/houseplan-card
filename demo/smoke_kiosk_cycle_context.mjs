@@ -44,7 +44,10 @@ checkAll(await page.evaluate((first)=>{
   return { idleFitsBefore90sTick:c._zoom===1&&c._space===first.space,
     idleSavesOnlyCurrentFloor:saved.f1===1&&saved.unrelated===3 };
 },first));
-await page.clock.fastForward(30_000); await page.clock.runFor(300);
+// Keep the Fit animation and the following carousel deadline in separate
+// virtual instants. fastForward collapses pending callbacks onto the same
+// instant, where the carousel correctly refuses to advance a moving camera.
+await page.clock.runFor(30_000); await page.clock.runFor(300);
 checkAll(await page.evaluate(()=>{
   const c=window.__card,saved=JSON.parse(localStorage.getItem('houseplan_card_zoom_v1'));
   return {arrivalIsFitAll:c._space==='garden'&&c._zoom===1,
