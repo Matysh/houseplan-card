@@ -1,0 +1,33 @@
+set_alert:
+  fields:
+    device_id:
+      selector:
+        device:
+    entity_id:
+      selector:
+        entity:
+    level:
+      default: attention
+      selector:
+        select:
+          translation_key: signal_level
+          options:
+            - attention
+            - alarm
+    message:
+      selector:
+        text:
+    key:
+      selector:
+        text:
+clear_alert:
+  fields:
+    device_id:
+      selector:
+        device:
+    entity_id:
+      selector:
+        entity:
+    key:
+      selector:
+        text:
