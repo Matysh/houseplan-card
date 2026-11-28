@@ -175,9 +175,10 @@ const diagnosticTimingSmokes = new Set([
 function smokeStep(smoke) {
   const pythonBacked = pythonBackedTests.has(smoke.file);
   const diagnosticTiming = diagnosticTimingSmokes.has(smoke.file);
-  // These browser checks use real task-duration budgets. Keep them out of
-  // concurrent Chromium/HA workloads without turning them into diagnostics.
+  // Real task-duration budgets and short physical camera frames need a
+  // dedicated browser workload. Keep these required checks out of contention.
   const exclusive = diagnosticTiming || smoke.file === 'demo/smoke_summary_panel.mjs'
+    || smoke.file === 'demo/smoke_summary_camera_motion.mjs'
     || smoke.file === 'demo/smoke_device_battery_performance.mjs';
   return step(`smoke:${smoke.file.replace(/^demo\//, '').replace(/\.mjs$/, '')}`, `Браузер: ${smoke.name || smoke.file.replace('demo/smoke_', '').replace('.mjs', '').replaceAll('_', ' ')}`,
     ['node', smoke.file, ...smoke.args, ...(diagnosticTiming ? ['--diagnostic-timing'] : [])], pythonBacked ? [...browserInputs, ...pythonInputs, '.python-version'] : browserInputs,

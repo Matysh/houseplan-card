@@ -230,9 +230,10 @@ test('timing smoke checks run without competing steps in task and stable plans',
     'selective_invalidation_visible','wall_node_connected'].map(name=>'demo/smoke_'+name+'.mjs');
   const summaryFile = ['demo', 'smoke_summary_panel.mjs'].join('/');
   const batteryFile = 'demo/smoke_device_battery_performance.mjs';
-  const expected = [...files, summaryFile, batteryFile].map(f=>`smoke:${f.replace('demo/','').replace('.mjs','')}`).sort();
+  const summaryMotionFile = 'demo/smoke_summary_camera_motion.mjs';
+  const expected = [...files, summaryFile, summaryMotionFile, batteryFile].map(f=>`smoke:${f.replace('demo/','').replace('.mjs','')}`).sort();
   for(const event of ['task','stable']) {
-    const p=await planProfile({root,event,areaTests:[...files,summaryFile,batteryFile,['demo','smoke_summary_weather.mjs'].join('/')],version:'1.84.0'});
+    const p=await planProfile({root,event,areaTests:[...files,summaryFile,summaryMotionFile,batteryFile,['demo','smoke_summary_weather.mjs'].join('/')],version:'1.84.0'});
     assert.deepEqual(p.steps.filter(s=>s.exclusive && s.id.startsWith('smoke:')).map(s=>s.id).sort(),expected);
     for(const file of files)assert.deepEqual(p.steps.find(s=>s.command?.[1]===file).command,['node',file,'--diagnostic-timing']);
     assert.deepEqual(p.steps.find(s => s.command?.[1] === summaryFile).command, ['node', summaryFile]);
