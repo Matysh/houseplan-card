@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1696,
+  "revision": 1697,
   "active": "v2.0.0-20261128",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -355030,14 +355030,14 @@
       "kind": "stable",
       "branch": "release/2.0.0-final-20261128",
       "sourceSha": "23cdfa855fc5ad470896290b6c3313905a04ceb4",
-      "sha": "655ddbb7e5bdea2346f41805e7fb51cc6937e031",
+      "sha": "ae61f8d339dd33aad05bd3c220fee4c1b0424fed",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "655ddbb7e5bdea2346f41805e7fb51cc6937e031",
+        "candidate": "ae61f8d339dd33aad05bd3c220fee4c1b0424fed",
         "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
         "issues": [
           {
@@ -355486,6 +355486,12 @@
         {
           "from": "d2bdc9108d9eaaef3bd61b572759887590b50180",
           "to": "655ddbb7e5bdea2346f41805e7fb51cc6937e031",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "655ddbb7e5bdea2346f41805e7fb51cc6937e031",
+          "to": "ae61f8d339dd33aad05bd3c220fee4c1b0424fed",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -362114,7 +362120,8 @@
     "beta-200-5-20261128-final-publication:completion:3cecc5c8-c7e7-49e0-b56b-adf9aec0c495": "572c3f08bfa3ddd34a4e5804abfd474b8fe005516d8a71c878d2003867716071",
     "stable-200-20261128-create": "fe8c36a93ed768c092d4d6defbf21baf13153103098fdbcc306fde63ae437770",
     "stable-200-20261128-prepared": "e6efd8a8091dadb574fb415f737e6ccf4c23bfed6e6e9aa68b1052eb89f18355",
-    "stable-200-20261128-pan-witness": "262bd777b0662db3ac27bbbefbc11862ef0084eedd8609a7ca06b3477d5c3afb"
+    "stable-200-20261128-pan-witness": "262bd777b0662db3ac27bbbefbc11862ef0084eedd8609a7ca06b3477d5c3afb",
+    "stable-200-20261128-startup-witness": "84b57d415cfd01fab7fd192882ee38a5f2d82422beccf7aaddfd88565c1fbaa7"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
