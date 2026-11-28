@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30317,
+  "revision": 30318,
   "nextTicket": 808,
   "nextFence": 808,
   "tasks": {
@@ -6246,7 +6246,7 @@
       "ownerDecision": null,
       "ticket": 807,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795848597004,
       "reviewEntry": 1,
       "patchId": "5f33b82033904beb83d5722ca44c74734626f24e",
@@ -6332,7 +6332,8 @@
         "docs/images/guide-v2.0.0/ru/view-3d.png",
         "docs/images/guide-v2.0.0/ru/view.png",
         "process-next/catalog/README.md"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -7113,9 +7114,9 @@
     "fence": 807,
     "materialSha": "fb87187d53f08e89d70fa3755f982e6463c8166c",
     "expectedBase": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795848603665,
-    "expiresAt": 1795848916350,
+    "expiresAt": 1795852223175,
     "patchId": "5f33b82033904beb83d5722ca44c74734626f24e"
   },
   "events": {
@@ -7251,6 +7252,25 @@
         "layer": "docs",
         "materialSha": "fb87187d53f08e89d70fa3755f982e6463c8166c",
         "phase": "sync"
+      }
+    },
+    "finish:ad80187b-7d30-4195-b8ef-c4315ea4a609:finish:3:s6-complete": {
+      "digest": "900e156fb313a8b97b74965ef0c88dcb333fefcc9eae33c1361d30ad21b66057",
+      "issue": 1628,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1628,
+        "at": 1795848623175,
+        "entry": 1,
+        "track": "show",
+        "layer": "docs",
+        "materialSha": "fb87187d53f08e89d70fa3755f982e6463c8166c",
+        "phase": "review",
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Актуализированы оба README, навигация и содержание руководств RU/EN, справочники 3D, высоты и света, совместимость, SVG, стартовый кадр, MDI, панель свойств и инструкции проверок. Датированные changelog, ТЗ, отчёты и прежний комплект иллюстраций сохранены. Селектор SVG-мебели описан в справочнике styling hooks с областью применения. Машинный контракт входит в отпечаток релизного продукта и в эту публикацию документов не входит.\n\nОбе языковые версии сняты на frontend из опубликованного ZIP v2.0.0 с SHA-256 `9ad21221bd5e9fb0d4a26da39b6bd4f08438de21d15fc0f15273fe367f621698`, source `49cef71352d216ef6121e045d877967e414442fb`, Chromium 151.0.7922.34 и синтетическом доме. Новые кадры показывают WebGL 3D и поле высоты. Контрольные суммы 52 PNG, размеры, языковые пары и соответствие ссылкам в руководствах сверены. Происхождение и хеши указаны в `docs/images/guide-v2.0.0/PROVENANCE.md`.\n\nДокументационный слой. Тестовых прогонов S6 нет. Текст и кадры проверены по исходникам и точному пакету. После принятия в dev набор будет перенесён в main по прямому поручению владельца.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
