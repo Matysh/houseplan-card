@@ -128,14 +128,18 @@ const res = await page.evaluate(async () => {
   ));
   // Exactly one blur in the light layer, and only as the penumbra of that one
   // region: a hair on screen, never a soft sector pasted over the plan.
+  // The fade temporarily disables the feather. Its resumption timer schedules
+  // a render, so an expired deadline alone does not imply the SVG was committed.
+  const featherFilter = () => sr().querySelector('.glow-pools-frame')?.getAttribute('filter');
+  const featherDeadline = performance.now() + 1_500;
+  while (featherFilter() !== 'url(#hp-glowfeather)' && performance.now() < featherDeadline) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
   const glowFilters = [...sr().querySelectorAll('defs filter[id^="hp-glow"]')];
   const pools = sr().querySelector('.glow-pools');
-  const frameFilter = sr().querySelector('.glow-pools-frame')?.getAttribute('filter');
-  const featherTemporarilySuspended = frameFilter === null
-    && Date.now() < Number(c._glowFeatherSuspendUntil || 0);
   out.edgeFeatherIsAHair = glowFilters.length === 1
     && glowFilters[0].querySelectorAll('feGaussianBlur').length === 1
-    && (frameFilter === 'url(#hp-glowfeather)' || featherTemporarilySuspended)
+    && featherFilter() === 'url(#hp-glowfeather)'
     && Number(pools?.dataset.featherPx) > 0 && Number(pools?.dataset.featherPx) <= 3
     && [...sr().querySelectorAll('.glowlayer [mask], .glow-pools [filter]')].length === 0;
   // Дверь наружу: свет через неё не выходит — есть проём, но за ним нет пола.

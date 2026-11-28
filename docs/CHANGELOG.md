@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v2.0.0 — 2026-11-28
+
+- Stable release of the new WebGL 3D floor plan, promoted from the published v2.0.0-beta.5 without product changes.
+- The complete release-line changes are listed below.
+
 ## v2.0.0-beta.5 — 2026-11-28
 
 - Do not render a second flat outline under 3D furniture while loading the plan (#1620).

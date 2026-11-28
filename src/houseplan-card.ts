@@ -425,7 +425,7 @@ import {
 } from './iso-floor-shadows';
 import { displayVersion } from './card-version';
 import { ConfigFingerprintPass } from './config-fingerprint-pass';
-const CARD_VERSION = '2.0.0-beta.5';
+const CARD_VERSION = '2.0.0';
 const TOAST_DURATION_MS = 3500;
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const PDF_RETRY_ASSET = '__HOUSEPLAN_PDF_RETRY_ASSET__';

@@ -482,11 +482,16 @@ await page.evaluate(async () => {
   await card.updateComplete;
   await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
 });
-checks.isoEnabled = await page.evaluate(() => {
+// Loading the runtime is not the same as committing the async floor and
+// copying the current WebGL frame. Start the gesture on actual 3D, not on
+// whichever transitional view was visible after two animation frames.
+await page.waitForFunction(() => {
   const card = document.querySelector('houseplan-card');
   return card._effectiveProjection() === 'iso'
-    && card.renderRoot.querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4';
-});
+    && card.renderRoot.querySelector('.stage[data-hp-iso-stage="4"] canvas[data-hp-plan-3d-ready]')
+    && card._continuityPaintReady();
+}, null, { timeout: 12000 });
+checks.isoEnabled = true;
 await runPan({ name: 'isoMouseRightEdge', kind: 'mouse', dx: -65, dy: 0, edge: 'right', parity: true });
 await runTouchZoomOut({ name: 'isoTouchZoomOut' });
 // #1478: budgeted SVG re-anchoring must restore the markers even when the
