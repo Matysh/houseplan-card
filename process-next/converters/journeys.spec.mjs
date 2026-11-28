@@ -104,10 +104,14 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
       await converter.locator('#ifc-catalog input[type=checkbox]').last().uncheck();
       await converter.locator('#ifc-catalog button.primary').click();
     }
-    await expect(converter.locator('#result')).toBeVisible();
-    await expect(converter.locator('.level button.primary')).toHaveCount(1);
+    const result = converter.locator('#result');
+    await expect(result).toBeVisible();
+    // The public site can restyle this control independently of the engine.
+    // Keep the old published markup supported while CDN revisions coexist.
+    const downloadLevel = result.locator('.level button:is(.converter-download, .primary)');
+    await expect(downloadLevel).toHaveCount(1);
     const downloaded = converter.waitForEvent('download');
-    await converter.locator('.level button.primary').click();
+    await downloadLevel.click();
     const download = await downloaded;
     const downloadedPath = testInfo.outputPath(`${fixture.id}.json`);
     await download.saveAs(downloadedPath);
