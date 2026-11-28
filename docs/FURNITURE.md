@@ -160,8 +160,8 @@ binding to later wall edits, and already saved coordinates are never migrated.
 ## Desk-mounted computer (#1451)
 
 The WebGL 3D presentation builds volume surfaces from the furniture profiles
-for the same saved plan objects. The volume SVGs remain reference artwork in
-the developer gallery. The ordinary plan artwork above remains
+for the same saved plan objects. The developer gallery uses the same profiles
+for SVG previews. The ordinary plan artwork above remains
 the source of the Flat editor and PDF. See [ISOMETRIC](ISOMETRIC.md) for the
 camera, materials, layer order and complete Flat failure boundary.
 
@@ -257,10 +257,11 @@ artwork only up to the card's `BOOT_MAX_MS` cap. Touch View/kiosk support is
 blocking; editor ergonomics on touch remain best effort under
 `docs/TOUCH-SUPPORT.md`.
 
-In v2.0.0 WebGL builds furniture bodies from the volume profiles. If the 3D
-scene cannot load or initialize, the card shows the complete Flat scene with
-ordinary plan artwork and retains the saved 3D preference. The #1451 SVG
-volume registry belongs to the preceding renderer and is used by the
-historical furniture gallery.
+In v2.0.0 WebGL builds furniture bodies from the #1451 volume profiles. The
+lazy registry provides those profiles to the plan and to the developer
+gallery, where SVG draws the volume preview. If the registry fails to load,
+belongs to a different build or the 3D scene fails to initialize, the card
+shows the complete Flat scene with ordinary plan artwork and retains the
+saved 3D preference.
 New workstation data, portable version selection and the old-client write
 barrier are documented in [CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md#desk-computer-workstation-1451).
