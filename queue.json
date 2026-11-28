@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30333,
+  "revision": 30334,
   "nextTicket": 809,
   "nextFence": 809,
   "tasks": {
@@ -6246,7 +6246,7 @@
       "ownerDecision": null,
       "ticket": 808,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795849026072,
       "reviewEntry": 2,
       "patchId": "b48a8cef15d26514a98665bdb5c1e0551a5f4078",
@@ -6335,10 +6335,6 @@
       ],
       "s6": null,
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1628:1:5f33b82033904beb83d5722ca44c74734626f24e:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "at": 1795848966461
-      },
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -7110,9 +7106,9 @@
     "fence": 808,
     "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3",
     "expectedBase": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795849032072,
-    "expiresAt": 1795849343612,
+    "expiresAt": 1795852650490,
     "patchId": "b48a8cef15d26514a98665bdb5c1e0551a5f4078"
   },
   "events": {
@@ -7350,6 +7346,25 @@
         "layer": "docs",
         "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3",
         "phase": "sync"
+      }
+    },
+    "finish:2be2276f-0f01-484e-98c7-d7b7fcb315fc:finish:3:s6-complete": {
+      "digest": "a3b04d214b6abbf54cf108361dca42f8ebf69bc85fc716a7baa9adc13ceeeb41",
+      "issue": 1628,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1628,
+        "at": 1795849050490,
+        "entry": 2,
+        "track": "show",
+        "layer": "docs",
+        "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3",
+        "phase": "review",
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Актуализированы оба README, навигация и содержание руководств RU/EN, справочники 3D, высоты и света, совместимость, SVG, стартовый кадр, MDI, панель свойств и инструкции проверок. Датированные changelog, ТЗ, отчёты и прежний комплект иллюстраций сохранены. Селектор SVG-мебели описан в справочнике styling hooks с областью применения. Машинный контракт входит в отпечаток релизного продукта и в эту публикацию документов не входит.\n\nОбе языковые версии сняты на frontend из опубликованного ZIP v2.0.0 с SHA-256 `9ad21221bd5e9fb0d4a26da39b6bd4f08438de21d15fc0f15273fe367f621698`, source `49cef71352d216ef6121e045d877967e414442fb`, Chromium 151.0.7922.34 и синтетическом доме. Новые кадры показывают WebGL 3D и поле высоты. Контрольные суммы 52 PNG, размеры, языковые пары и соответствие ссылкам в руководствах сверены. Происхождение и хеши указаны в `docs/images/guide-v2.0.0/PROVENANCE.md`.\n\nДокументационный слой. Тестовых прогонов S6 нет. Текст и кадры проверены по исходникам и точному пакету. После принятия в dev набор будет перенесён в main по прямому поручению владельца.\n\n### Исправления по предыдущему ревью\n\n- Шапки обоих руководств теперь указывают выпуск v2.0.0 и ссылаются на его публикацию. Устаревшая оговорка о 1.85.x удалена.\n- RU говорит, что общая 3D-обводка соединяет соседние значки на одной высоте, а автоматические высоты совместимы между собой. Формулировка совпадает с EN.\n- В обоих языках прямая лестница вверх и винтовая описаны объёмными до среза стен 140 см, прямая вниз — плоским символом. Сверено с src/stairs-volume.ts на 49cef71.\n- Описание мебели отделяет действующий WebGL и его переход в плоский режим от прежнего SVG-реестра. Уточнена роль isoTiles в архитектуре.\n- Повторно проверены 681 относительная ссылка в 29 Markdown-документах, 52 PNG и сохранность исторических материалов.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
