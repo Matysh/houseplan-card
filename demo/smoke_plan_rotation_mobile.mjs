@@ -75,15 +75,22 @@ try{
   await page.emulateMedia({reducedMotion:'no-preference'});
   const rapidBefore=await snapshot();
   const plan=await (await headerActionTarget(card,'mode-plan')).boundingBox();
+  // Hold the animation clock only for the two real wide-header clicks.
+  // CDP/browser contention must not advance the first transition while the
+  // test locates the second native target. The terminal still uses real time.
+  await page.clock.install();
+  await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
   await page.mouse.click(plan.x+plan.width/2,plan.y+plan.height/2);
-  await page.waitForFunction(()=>window.__card._modeTransitionBusy);
-  const retargetTarget=await headerActionTarget(card,'mode-decor');
+  for(let frame=0;frame<12&&!await page.evaluate(()=>window.__card._modeTransitionBusy);frame++)
+    await page.clock.runFor(16);
+  const retargetTarget=card.locator('.head [data-hp="mode-tab"][data-mode="decor"]');
   assert.ok(await page.evaluate(()=>window.__card._modeTransitionBusy), 'retarget remains in-flight');
   assert.ok(await retargetTarget.evaluate(button=>{const r=button.getBoundingClientRect();
     const hit=button.getRootNode().elementFromPoint(r.x+r.width/2,r.y+r.height/2);
     return hit===button||button.contains(hit);}), 'retarget is a painted native target');
   const retarget=await retargetTarget.boundingBox();
-  await page.mouse.click(retarget.x+retarget.width/2,retarget.y+retarget.height/2);await wait();
+  await page.mouse.click(retarget.x+retarget.width/2,retarget.y+retarget.height/2);
+  await page.clock.resume();await wait();
   assert.equal(await card.locator('ha-card').getAttribute('data-hp-mode'),'decor');
   await clickHeaderAction(card,'mode-view');await wait();
   const rapidAfter=await snapshot();
