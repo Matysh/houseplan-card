@@ -17,18 +17,27 @@ function sample() {
   return page.evaluate(() => {
     const c = window.__card, root = c.renderRoot;
     const svg = root.querySelector('svg.plan-svg');
-    const marker = root.querySelector('[data-hp="device"][data-id="d_light1"]');
-    const ink = svg.querySelector('.iso-floor-scene') ?? svg.firstElementChild;
-    const transform = ink.getScreenCTM();
-    const position = c._pos(c._renderDevices.find(device => device.id === 'd_light1'));
-    const point = new DOMPoint(position.x, position.y).matrixTransform(transform);
+    const markers = root.querySelectorAll('[data-hp="device"][data-id="d_light1"]');
+    const marker = markers[0];
     const box = marker.getBoundingClientRect();
+    const projection = svg.dataset.projection;
+    let anchorError = null;
+    if (projection === 'flat') {
+      // The native 3D SVG only carries interaction targets and can be empty;
+      // its CTM is not the projection of the visible camera.
+      const transform = svg.firstElementChild.getScreenCTM();
+      const position = c._pos(c._renderDevices.find(device => device.id === 'd_light1'));
+      const point = new DOMPoint(position.x, position.y).matrixTransform(transform);
+      anchorError = Math.hypot(box.x + box.width / 2 - point.x, box.y + box.height / 2 - point.y);
+    }
     return {
-      projection: svg.dataset.projection,
+      projection,
       layers: root.querySelectorAll('.zoomwrap .devlayer').length,
       visible: Number(getComputedStyle(root.querySelector('.zoomwrap')).opacity) > .5,
       diameter: box.width,
-      anchorError: Math.hypot(box.x + box.width / 2 - point.x, box.y + box.height / 2 - point.y),
+      anchorError,
+      copies: markers.length,
+      native: marker.hasAttribute('data-hp-3d-native') && !!root.querySelector('[data-hp-plan-3d-ready]'),
     };
   });
 }
@@ -112,16 +121,21 @@ try {
   await card.locator('[data-hp="rotate-left"]').click();
   await page.waitForFunction(() => window.__card._rotation === 0 && !window.__card._rotationMotion.active);
   await page.evaluate(() => window.__hpTest.setVolumetricView(true));
-  await page.waitForFunction(() => window.__card.renderRoot.querySelector('svg.plan-svg')?.dataset.projection === 'iso');
+  await page.waitForFunction(() => {
+    const card = window.__card;
+    return card.renderRoot.querySelector('svg.plan-svg')?.dataset.projection === 'iso'
+      && !card._stageEl?.inert && card._spatial.hasCurrentPaint();
+  });
   for (const editor of ['plan', 'devices', 'decor']) {
     const view = await sample();
     const start = await observe(editor, 'running');
-    check('outgoing-2.5D-' + editor + '-keeps-device-shape',
-      view.projection === 'iso' && start.projection === 'iso' && start.layers === 1 && start.visible
+    check('outgoing-3D-' + editor + '-keeps-device-shape',
+      view.projection === 'iso' && view.copies === 1 && view.native && view.diameter > 0
+      && start.projection === 'iso' && start.layers === 1 && start.copies === 1 && start.visible
       && Math.abs(view.diameter - start.diameter) < .25);
     const end = await observe('view', 'settling');
-    check('incoming-2.5D-' + editor + '-keeps-device-shape',
-      end.projection === 'iso' && end.layers === 1 && end.visible && Math.abs(view.diameter - end.diameter) < .25);
+    check('incoming-3D-' + editor + '-keeps-device-shape',
+      end.projection === 'iso' && end.layers === 1 && end.copies === 1 && end.visible && Math.abs(view.diameter - end.diameter) < .25);
     console.log(JSON.stringify({ editor, view, start, end }));
   }
 } finally {

@@ -16,7 +16,7 @@ const ZOOM = 1.8;
 
 // ---- phase 1: prime the config cache exactly the way production does ------
 const { page, browser } = await launch();
-await page.waitForFunction(() => !!localStorage.getItem('houseplan_card_cfg_v1'), { timeout: 9000 });
+await page.waitForFunction(() => !!localStorage.getItem('houseplan_card_cfg_v1'), null, { timeout: 9000 });
 const cfgCaches = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage)
   .filter(key => key === 'houseplan_card_cfg_v1' || key.startsWith('houseplan_scoped_hint_v1:'))
   .map(key => [key, localStorage.getItem(key)])));
@@ -37,7 +37,7 @@ await ctx.route('**/*', (r) => {
     ? r.fulfill({ status: 200, headers: { 'content-type': CT[p.slice(p.lastIndexOf('.'))] || 'application/octet-stream' }, body: readFileSync(f) })
     : r.fulfill({ status: 404, body: 'nf' });
 });
-await ctx.addInitScript(([caches, zoom]) => {
+await ctx.addInitScript(([caches, zoom, targetW]) => {
   for (const [key, value] of Object.entries(caches)) localStorage.setItem(key, value);
   localStorage.setItem('houseplan_card_zoom_v1', JSON.stringify({ f1: zoom }));
   localStorage.removeItem('houseplan_card_nav_v1');
@@ -68,35 +68,43 @@ await ctx.addInitScript(([caches, zoom]) => {
       });
     }
     // rAF sampling from the first possible moment (before the first paint)
+    let measured = 0, settled = 0;
     const sample = () => {
       const sr = el.shadowRoot || el.renderRoot;
       const stage = sr && sr.querySelector('.stage');
-      const svgEl = stage && stage.querySelector(':scope > .zoomwrap > svg');
+      const svgEl = stage && stage.querySelector('.zoomwrap svg.plan-svg');
       if (stage && svgEl) {
-        const cs = getComputedStyle(stage);
-        const cw = getComputedStyle(svgEl.parentElement);
-        const cv = getComputedStyle(svgEl);
         const r = stage.getBoundingClientRect();
         const vb = (svgEl.getAttribute('viewBox') || '').split(/\s+/).map(Number);
-        const hidden = [cs, cw, cv].some((c) => c.opacity === '0' || c.visibility === 'hidden' || c.display === 'none');
+        let hidden = false;
+        for (let node = svgEl; node && node !== stage.parentElement; node = node.parentElement) {
+          const css = getComputedStyle(node);
+          if (css.opacity === '0' || css.visibility === 'hidden' || css.display === 'none') { hidden = true; break; }
+        }
         const painted = !!svgEl.querySelector('path, polygon, polyline, rect, circle, ellipse, line, image');
-        window.__frames.push({ visible: painted && !hidden && r.width > 1 && r.height > 1, vbW: vb[2] || 0, zoom: el._zoom });
+        const visible = painted && !hidden && r.width > 1 && r.height > 1;
+        window.__frames.push({ visible, vbW: vb[2] || 0, zoom: el._zoom });
+        measured++;
+        settled = visible && Math.abs(vb[2] - targetW) < targetW * .02 ? settled + 1 : 0;
       } else {
         window.__frames.push(null);
+        settled = 0;
       }
-      if (window.__frames.length < 75) requestAnimationFrame(sample);
+      // Keep every frame from creation while the actual boot settles, even on
+      // a loaded runner. Neither hiding the scene nor an empty SVG can PASS.
+      if (window.__frames.length < 360 && (window.__frames.length < 75 || measured <= 30 || settled < 5)) requestAnimationFrame(sample);
       else window.__framesDone = true;
     };
     requestAnimationFrame(sample);
     return el;
   };
-}, [cfgCaches, ZOOM]);
+}, [cfgCaches, ZOOM, defaultFitW / ZOOM]);
 
 // #404: своя подписка печатала EXC2 мимо счётчика — страница считалась
 // проверенной, а её исключения не видел никто. Теперь через общий гард.
 const p2 = watchPage(await ctx.newPage());
 await p2.goto('http://demo.local/demo.html', { waitUntil: 'domcontentloaded' });
-await p2.waitForFunction(() => window.__framesDone === true, { timeout: 15000 });
+await p2.waitForFunction(() => window.__framesDone === true, null, { timeout: 15000 });
 
 const frames = await p2.evaluate(() => window.__frames);
 const targetW = defaultFitW / ZOOM;

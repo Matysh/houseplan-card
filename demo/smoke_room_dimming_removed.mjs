@@ -11,6 +11,9 @@ mkdirSync(output, { recursive: true });
 const { page, browser } = await launch({ width: 1200, height: 900 }, 1);
 const observations = [];
 try {
+  // This compares the settled paint, not the opacity of an entering WebGL
+  // frame. The recovery and transition smokes cover the fade itself.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.evaluate(async () => {
     const c = window.__card;
     const callWS = c.hass.callWS.bind(c.hass);
@@ -49,6 +52,10 @@ try {
     await waitForKioskViewport(page);
   };
   const pixels = async (name, surface = null) => {
+    if (name.startsWith('iso-')) await page.waitForFunction(() => {
+      const card = window.__card;
+      return card._renderProjection === 'iso' && !card._stageEl?.inert && card._spatial.hasCurrentPaint();
+    });
     const points = await page.evaluate(surface => {
       const card = surface ? document.getElementById(surface) : window.__card;
       const room = card.renderRoot.querySelector('[data-hp="room"][data-id="room943"]');
