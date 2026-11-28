@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30218,
+  "revision": 30219,
   "nextTicket": 807,
   "nextFence": 807,
   "tasks": {
@@ -6266,158 +6266,25 @@
     "1626": {
       "issue": 1626,
       "branch": "issue/1626-release-return-49cef71352d2",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "49cef71352d216ef6121e045d877967e414442fb",
-      "releaseTag": "v2.0.0",
-      "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-      "ownerDecision": null,
-      "ticket": 806,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795838668605,
-      "reviewEntry": 1,
-      "patchId": "e4451b853067a2ab9a8322e7436b0bc04e912451",
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "demo/smoke_glow.mjs",
-        "demo/smoke_infinite_canvas.mjs",
-        "demo/smoke_live_pan_coverage.mjs",
-        "demo/smoke_plan_rotation_mobile.mjs",
-        "demo/smoke_startup_floor.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "docs/changelog_user_stable_en.md",
-        "docs/changelog_user_stable_ru.md",
-        "docs/release-ledger/cycle.json",
-        "package-lock.json",
-        "package.json",
-        "process-next/lib/catalog.mjs",
-        "process-next/test/catalog.test.mjs",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "s6": {
-        "id": "20261128T040451409-9d04d5c2",
-        "name": "Тесты для задачи #1626 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261128T040451409-9d04d5c2/report.json",
-        "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "status": "passed",
-        "finishedAt": "2026-11-28T04:16:09.086Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "8c44d8e7b2b02bba617512734a3c7d9d87129769",
+      "mergedSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
+      "mergedAt": 1795839596193,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1626:1:e4451b853067a2ab9a8322e7436b0bc04e912451:8c44d8e7b2b02bba617512734a3c7d9d87129769",
-      "reviewMaterial": {
-        "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "expectedBase": "8c44d8e7b2b02bba617512734a3c7d9d87129769",
-        "patchId": "e4451b853067a2ab9a8322e7436b0bc04e912451"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1626:1:e4451b853067a2ab9a8322e7436b0bc04e912451:8c44d8e7b2b02bba617512734a3c7d9d87129769",
-        "eventId": "github:46106744492:1:tick:0:review-retry",
-        "at": 1795839402479,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1626,
-        "requestId": "review:1626:1:e4451b853067a2ab9a8322e7436b0bc04e912451:8c44d8e7b2b02bba617512734a3c7d9d87129769",
-        "kind": "code",
-        "base": "8c44d8e7b2b02bba617512734a3c7d9d87129769",
-        "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "patchId": "e4451b853067a2ab9a8322e7436b0bc04e912451",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1626,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1626",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокеров нет, принимаю. Служебный возврат опубликованного stable v2.0.0 (49cef71) в dev сделан двумя коммитами. Первый, 81dac6e, — merge опубликованной истории. Второй, 5bd72ce, открывает следующий цикл: меняет только `docs/release-ledger/cycle.json`. Продуктовый код в diff не меняется. Отличия base→head сводятся к трём группам: подъём версии `2.0.0-beta.5` → `2.0.0`, записи changelog и release notes для v2.0.0 и шесть коммитов стабилизации браузерных проверок и планировщика, которые были опубликованы вместе с v2.0.0. Новый цикл имеет вид `baseStable: v2.0.0`, `targetStable: null`, `milestone: null`. Это допустимо по `PROCESS.md:140` и проходит `verifyReleaseCycle`. Есть следствие для процесса: пока владелец не запланирует milestone, release-бухгалтерия новых задач будет в статусе `pending`. Слияние задач это не блокирует.",
-          "understanding": "Проблема. Dev (base 8c44d8e — возврат beta.5) отстаёт от опубликованного тега v2.0.0 (49cef71). Релизная линия после d2bdc91 («Promote the published Houseplan beta.5 to stable 2.0.0») содержит подъём версии, записи changelog и release notes и шесть коммитов с проверками: 655ddbb, ae61f8d, e38dd5f, 8ebfffb, 2d828b7, 49cef71. Задача — вернуть эту историю в dev, не переписывая её, и обновить stable-цикл.\n\nДо: в dev версия `2.0.0-beta.5`, цикл `v1.86.1 → v2.0.0 / milestone 18`.\nПосле: dev содержит опубликованную историю (по `git_log` от head коммит 49cef71 — предок head), версия `2.0.0`, цикл открыт от `v2.0.0` без цели.\n\nЧто разобрано:\n- состав diff по файлам;\n- blame `process-next/lib/catalog.mjs:178-182`: строки атрибутированы опубликованным коммитам e38dd5f и 49cef71, то есть merge перенёс их без ручной правки;\n- содержимое `docs/CHANGELOG.md` и `cycle.json` у 655ddbb, 49cef71 и 81dac6e;\n- история `cycle.json`, включая прошлое открытие цикла 7e85eee;\n- логика `process-next/lib/release-cycle.mjs` (`planStableCycle` и `verifyReleaseCycle`);\n- потребитель цикла `process-next/lib/release-data.mjs`;\n- правило в `PROCESS.md:140`;\n- наличие хелпера `demo/helpers/retained-page-action.mjs`, который импортирует изменённый `smoke_startup_floor.mjs`;\n- история `smoke_summary_camera_motion.mjs` и `smoke_device_battery_performance.mjs`: опубликованная линия эти файлы не меняла, поэтому их отсутствие в diff — не потеря.",
-          "analysis": [
-            {
-              "topic": "Сохранность опубликованной истории и чистота merge",
-              "assessment": "Опубликованный тег вошёл в историю head, а не был пересобран. Изменения релизной линии приходят в dev без ручных отличий: в продуктовых файлах только литералы версии, в демо-проверках и планировщике — ровно правки опубликованных коммитов. Признаков ручного разрешения конфликтов, которое отличало бы dev от тега, я не нашёл. Это укладывается в условие задачи: прежнее ревью можно зачесть только при чистом автоматическом merge.",
-              "evidence": "`git_log` от head: 5bd72ce → 81dac6e → 49cef71 → bc9526a → 2d828b7 → 8ebfffb → e38dd5f → ae61f8d → 655ddbb. В blame `catalog.mjs:178-182` строки атрибутированы 49cef7135 и e38dd5f22. Заголовок `docs/CHANGELOG.md` одинаков у 655ddbb и 49cef71; в head он совпадает с diff. `cycle.json` у 81dac6e совпадает с опубликованным, то есть merge-коммит цикл не трогал."
-            },
-            {
-              "topic": "Обновление stable-цикла (единственное изменение, требующее обычного ревью)",
-              "assessment": "Новое значение `{baseStable: v2.0.0, targetStable: null, milestone: null}` соответствует правилу в `PROCESS.md:140`: если открытого будущего milestone нет, база обновляется, а цель остаётся пустой до планирования. Закрытый milestone 18 корректно не переносится. `verifyReleaseCycle` разрешает пару null/null и требует, чтобы base была не ниже опубликованного тега; это условие выполнено. Следствие: `readTaskReleaseMilestone` для новых задач вернёт `pending` («Release cycle has no explicit base and milestone»), пока владелец не назначит milestone. По комментарию в файле это ожидаемо и merge задач не блокирует.",
-              "evidence": "`process-next/lib/release-cycle.mjs:27-29, 37-42`; `process-next/lib/release-data.mjs:1, 10-11, 29-30`; `PROCESS.md:140`. Прошлый аналог — 7e85eee (после v1.86.1): тогда milestone 18 уже был открыт, поэтому цель была заполнена."
-            },
-            {
-              "topic": "Изменения проверок, пришедшие с релизной линией",
-              "assessment": "Все шесть правок касаются тестов и планировщика: ожидание реального состояния вместо снимка после двух кадров, `page.clock` для двух кликов в rotation retarget, удержание асинхронного монтирования через `evaluateRetainedAction`, ожидание фактического применения feather-фильтра, монтирование через `__hpTest` вместо прямой записи приватных полей, монопольный запуск двух чувствительных к таймингу smoke. Они уже опубликованы в составе v2.0.0. Тест каталога покрывает новые exclusive-шаги и то, что battery-smoke не помечен как diagnostic. Регрессий для dev не вижу.",
-              "evidence": "diff `demo/smoke_*.mjs`, `process-next/lib/catalog.mjs:178-182`, `process-next/test/catalog.test.mjs:231-245`; хелпер есть в head: `demo/helpers/retained-page-action.mjs:10`."
-            },
-            {
-              "topic": "Версии и пользовательские тексты",
-              "assessment": "Версия `2.0.0` согласованно стоит во всех пяти местах: `package.json`, `package-lock.json`, `manifest.json`, `const.py` и `CARD_VERSION` в двух TS-файлах. Записи v2.0.0 в `CHANGELOG.md`/`CHANGELOG.ru.md`, `RELEASE-NOTES.md` и стабильных пользовательских changelog взяты из опубликованного релиза. Секция `Unreleased` осталась сверху и пуста, как и должно быть сразу после stable.",
-              "evidence": "diff соответствующих файлов; у 49cef71 `package.json` содержит `\"version\": \"2.0.0\"`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [],
-          "boundaries": "Анализ сделан только по исходникам и истории Git. Сборку и тесты я не запускал; использован результат S6 «Тесты для задачи #1626 (перед ревью)» на 5bd72ce: статус passed, без сбоев. Родителей merge-коммита 81dac6e инструменты напрямую не показывают. Вывод о том, что 49cef71 — предок head, основан на `git_log` от head, а вывод о чистоте merge — на blame и сверке содержимого файлов. Побайтового сравнения всего дерева head с 49cef71 не было: проверял файлы из diff и связанные с ними. Я не мог проверить, что на момент возврата в GitHub действительно не было открытого milestone с версией выше 2.0.0. Именно от этого зависит, правомерно ли `targetStable: null`; это внешнее состояние."
-        },
-        "usage": {
-          "input_tokens": 24,
-          "cache_creation_input_tokens": 52012,
-          "cache_read_input_tokens": 334985,
-          "output_tokens": 8573,
-          "output_tokens_details": {
-            "thinking_tokens": 3186
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 52012,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 729,
-              "cache_read_input_tokens": 42888,
-              "cache_creation_input_tokens": 9124,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 9124
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокеров нет, принимаю. Служебный возврат опубликованного stable v2.0.0 (49cef71) в dev сделан двумя коммитами. Первый, 81dac6e, — merge опубликованной истории. Второй, 5bd72ce, открывает следующий цикл: меняет только `docs/release-ledger/cycle.json`. Продуктовый код в diff не меняется. Отличия base→head сводятся к трём группам: подъём версии `2.0.0-beta.5` → `2.0.0`, записи changelog и release notes для v2.0.0 и шесть коммитов стабилизации браузерных проверок и планировщика, которые были опубликованы вместе с v2.0.0. Новый цикл имеет вид `baseStable: v2.0.0`, `targetStable: null`, `milestone: null`. Это допустимо по `PROCESS.md:140` и проходит `verifyReleaseCycle`. Есть следствие для процесса: пока владелец не запланирует milestone, release-бухгалтерия новых задач будет в статусе `pending`. Слияние задач это не блокирует.\n\n## Понимание решения\n\nПроблема. Dev (base 8c44d8e — возврат beta.5) отстаёт от опубликованного тега v2.0.0 (49cef71). Релизная линия после d2bdc91 («Promote the published Houseplan beta.5 to stable 2.0.0») содержит подъём версии, записи changelog и release notes и шесть коммитов с проверками: 655ddbb, ae61f8d, e38dd5f, 8ebfffb, 2d828b7, 49cef71. Задача — вернуть эту историю в dev, не переписывая её, и обновить stable-цикл.\n\nДо: в dev версия `2.0.0-beta.5`, цикл `v1.86.1 → v2.0.0 / milestone 18`.\nПосле: dev содержит опубликованную историю (по `git_log` от head коммит 49cef71 — предок head), версия `2.0.0`, цикл открыт от `v2.0.0` без цели.\n\nЧто разобрано:\n- состав diff по файлам;\n- blame `process-next/lib/catalog.mjs:178-182`: строки атрибутированы опубликованным коммитам e38dd5f и 49cef71, то есть merge перенёс их без ручной правки;\n- содержимое `docs/CHANGELOG.md` и `cycle.json` у 655ddbb, 49cef71 и 81dac6e;\n- история `cycle.json`, включая прошлое открытие цикла 7e85eee;\n- логика `process-next/lib/release-cycle.mjs` (`planStableCycle` и `verifyReleaseCycle`);\n- потребитель цикла `process-next/lib/release-data.mjs`;\n- правило в `PROCESS.md:140`;\n- наличие хелпера `demo/helpers/retained-page-action.mjs`, который импортирует изменённый `smoke_startup_floor.mjs`;\n- история `smoke_summary_camera_motion.mjs` и `smoke_device_battery_performance.mjs`: опубликованная линия эти файлы не меняла, поэтому их отсутствие в diff — не потеря.\n\n## Разбор решения\n\n### Сохранность опубликованной истории и чистота merge\n\nОпубликованный тег вошёл в историю head, а не был пересобран. Изменения релизной линии приходят в dev без ручных отличий: в продуктовых файлах только литералы версии, в демо-проверках и планировщике — ровно правки опубликованных коммитов. Признаков ручного разрешения конфликтов, которое отличало бы dev от тега, я не нашёл. Это укладывается в условие задачи: прежнее ревью можно зачесть только при чистом автоматическом merge.\n\nОснование: `git_log` от head: 5bd72ce → 81dac6e → 49cef71 → bc9526a → 2d828b7 → 8ebfffb → e38dd5f → ae61f8d → 655ddbb. В blame `catalog.mjs:178-182` строки атрибутированы 49cef7135 и e38dd5f22. Заголовок `docs/CHANGELOG.md` одинаков у 655ddbb и 49cef71; в head он совпадает с diff. `cycle.json` у 81dac6e совпадает с опубликованным, то есть merge-коммит цикл не трогал.\n\n### Обновление stable-цикла (единственное изменение, требующее обычного ревью)\n\nНовое значение `{baseStable: v2.0.0, targetStable: null, milestone: null}` соответствует правилу в `PROCESS.md:140`: если открытого будущего milestone нет, база обновляется, а цель остаётся пустой до планирования. Закрытый milestone 18 корректно не переносится. `verifyReleaseCycle` разрешает пару null/null и требует, чтобы base была не ниже опубликованного тега; это условие выполнено. Следствие: `readTaskReleaseMilestone` для новых задач вернёт `pending` («Release cycle has no explicit base and milestone»), пока владелец не назначит milestone. По комментарию в файле это ожидаемо и merge задач не блокирует.\n\nОснование: `process-next/lib/release-cycle.mjs:27-29, 37-42`; `process-next/lib/release-data.mjs:1, 10-11, 29-30`; `PROCESS.md:140`. Прошлый аналог — 7e85eee (после v1.86.1): тогда milestone 18 уже был открыт, поэтому цель была заполнена.\n\n### Изменения проверок, пришедшие с релизной линией\n\nВсе шесть правок касаются тестов и планировщика: ожидание реального состояния вместо снимка после двух кадров, `page.clock` для двух кликов в rotation retarget, удержание асинхронного монтирования через `evaluateRetainedAction`, ожидание фактического применения feather-фильтра, монтирование через `__hpTest` вместо прямой записи приватных полей, монопольный запуск двух чувствительных к таймингу smoke. Они уже опубликованы в составе v2.0.0. Тест каталога покрывает новые exclusive-шаги и то, что battery-smoke не помечен как diagnostic. Регрессий для dev не вижу.\n\nОснование: diff `demo/smoke_*.mjs`, `process-next/lib/catalog.mjs:178-182`, `process-next/test/catalog.test.mjs:231-245`; хелпер есть в head: `demo/helpers/retained-page-action.mjs:10`.\n\n### Версии и пользовательские тексты\n\nВерсия `2.0.0` согласованно стоит во всех пяти местах: `package.json`, `package-lock.json`, `manifest.json`, `const.py` и `CARD_VERSION` в двух TS-файлах. Записи v2.0.0 в `CHANGELOG.md`/`CHANGELOG.ru.md`, `RELEASE-NOTES.md` и стабильных пользовательских changelog взяты из опубликованного релиза. Секция `Unreleased` осталась сверху и пуста, как и должно быть сразу после stable.\n\nОснование: diff соответствующих файлов; у 49cef71 `package.json` содержит `\"version\": \"2.0.0\"`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\nНет.\n\n## Границы анализа\n\nАнализ сделан только по исходникам и истории Git. Сборку и тесты я не запускал; использован результат S6 «Тесты для задачи #1626 (перед ревью)» на 5bd72ce: статус passed, без сбоев. Родителей merge-коммита 81dac6e инструменты напрямую не показывают. Вывод о том, что 49cef71 — предок head, основан на `git_log` от head, а вывод о чистоте merge — на blame и сверке содержимого файлов. Побайтового сравнения всего дерева head с 49cef71 не было: проверял файлы из diff и связанные с ними. Я не мог проверить, что на момент возврата в GitHub действительно не было открытого milestone с версией выше 2.0.0. Именно от этого зависит, правомерно ли `targetStable: null`; это внешнее состояние.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 8c44d8e7b2b02bba617512734a3c7d9d87129769 → 5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-28T04:19:19.204Z",
-        "artifactId": 15248350389,
-        "runId": 46106765531,
-        "runAttempt": 1,
-        "completedAt": "2026-11-28T04:19:22Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46106765531",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "8c44d8e7b2b02bba617512734a3c7d9d87129769"
+      "releaseTag": "v2.0.0",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -7173,100 +7040,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1626,
-    "worker": "finish",
-    "token": "806:release-return-finish:059eb388-5749-4284-a70a-fa8188e3a4f4:finish:1:admit",
-    "fence": 806,
-    "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-    "expectedBase": "8c44d8e7b2b02bba617512734a3c7d9d87129769",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795838673827,
-    "expiresAt": 1795843193909,
-    "patchId": "e4451b853067a2ab9a8322e7436b0bc04e912451",
-    "reviewRequest": "review:1626:1:e4451b853067a2ab9a8322e7436b0bc04e912451:8c44d8e7b2b02bba617512734a3c7d9d87129769"
-  },
+  "active": null,
   "events": {
-    "release-return-finish:059eb388-5749-4284-a70a-fa8188e3a4f4:finish:2:synchronized": {
-      "digest": "d7424fbf6687e805aea42a0461f01e468b50f7ae25c0b78c877c6b11378d76f1",
-      "issue": 1626
-    },
-    "finish:f8502e1a-9500-4cc3-9669-482022740738": {
-      "digest": "61e984028416ae1fee6afc08b80fe99a8986ef5d7de1a788c59afee7ed899880",
-      "issue": 1626
-    },
-    "finish:8b87f3f7-b33d-4d1d-bee7-78c5df5a3309": {
-      "digest": "a51dca8f8bc38ca2d31803ef3badddc5338116707883e5c29de8e13a03d3ea90",
-      "issue": 1626
-    },
-    "finish:fc3ac708-082f-4a06-81d3-445b6d965342": {
-      "digest": "935d36ddeb97579ea0b6cb14e5e161f8d90068238c3ba3305a91dbbf6fe1f6aa",
-      "issue": 1626
-    },
-    "finish:fc469c1d-d381-458d-baa4-abcba201cef2": {
-      "digest": "4e4868c67d07aab00dc450efd93c50dcb1c7e01d8eded58bf22dcad0036b68c7",
-      "issue": 1626
-    },
-    "finish:1a506895-01b8-465f-aae7-4bd5f203667a": {
-      "digest": "7331fd025ed0b0344011e22e869b993fe1fdbc6347a9901d333418344e781efa",
-      "issue": 1626
-    },
-    "finish:44e487b8-e029-49a9-b99a-4edba039b607": {
-      "digest": "bf2334bbaf5ac76db76e9d71ba4db980df1916daba287c074023549853b611ee",
-      "issue": 1626
-    },
-    "finish:bccd9c08-fba0-491a-ae5e-88f1a346cf17": {
-      "digest": "d444915cd1d6d8ce08d757a4c464912f3c8a6619c697a633f83c700a0fe8c3b2",
-      "issue": 1626
-    },
-    "finish:1f2c93c1-1ef3-45ed-9366-fd0dcc35752a": {
-      "digest": "fadd71c53ff4a9edc24787e4ef9b1c463644c6f6f9e003678c0ea2f8cb8a65f5",
-      "issue": 1626
-    },
-    "github:46106415539:1:completions:message:73fa3141006aebc1db1202493dfbfb109a3a42b96f6e54f512078497c47db6b1": {
-      "digest": "4ba450390e968a79e75516073a5c0d8a3cff78102e72bc2e1ef146516bb9acaf",
-      "issue": 1626
-    },
-    "github:46106415539:1:completions:message:5a1bb7a5271db5c6ba3e8120d35fdbc1cefa6978d223af4577da5ad2f221c498": {
-      "digest": "687c71d77aaf17e88a234b476a7742eadb77ada019100fb46f4dab90c44aed5f",
-      "issue": 1626
-    },
-    "finish:17e27897-2f31-4f76-9481-e8f466568df8": {
-      "digest": "122dd7c52c34c0b1f2682c8fba15a88f6624289bde4c346d350671b9512aa9ff",
-      "issue": 1626
-    },
-    "finish:f97249da-1214-4da7-8eab-308be36b57f3": {
-      "digest": "b042492ef5d9e5ad21a5abc30c5e6d86826f988fd4025b5a152e2f1bcc89c6c5",
-      "issue": 1626
-    },
-    "finish:7ed6ab3d-431d-4379-87d1-8181844533cb": {
-      "digest": "9774f92d084e7bd45c764385a76b1c0b897bf704fbd90e52fc35feeb15cec304",
-      "issue": 1626
-    },
-    "release-return-finish:059eb388-5749-4284-a70a-fa8188e3a4f4:finish:3:s6-label": {
-      "digest": "6faf7dcd721acce02d514145c3152d2dad823cc267ba5b872675f8e2cb842117",
-      "issue": 1626
-    },
-    "release-return-finish:059eb388-5749-4284-a70a-fa8188e3a4f4:finish:4:review-requested": {
-      "digest": "c2607e1bc9d1096282e6d5866020125f49e989053c461d6b3a14e0ecd2470e08",
-      "issue": 1626
-    },
-    "github:46106744492:1:tick:0:review-retry": {
-      "digest": "f591c150705cd2137c962f6aeb1557278824f4532c6f902bcb6c504cf06c48a5",
-      "issue": 1626
-    },
-    "github:46106744492:1:completions:message:c1c5853f8e7e48c865dce0d7e01086460e5f16c457545efd87f0d3bbd3c15884": {
-      "digest": "c35d7812e06a6f2a5d07097b4c69459871ce441019956d521ddaf2c41c4a749d",
-      "issue": 1626
-    },
-    "github:46106993264:1:tick:0:review-presentation": {
-      "digest": "a49d7b9f49a33398f5ddb618d6748ff2bfc3508b5dc12c4a7f4c5784970534f4",
-      "issue": 1626
-    },
-    "github:46106993264:1:tick:0:review-complete": {
-      "digest": "9a889abdf4aaf2560e3d4eb23a330ca076d94bc15e6a84dc5c7e55208076a405",
-      "issue": 1626
-    },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
       "issue": 1479,
@@ -7293,65 +7068,6 @@
         "layer": "product",
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-return:059eb388-5749-4284-a70a-fa8188e3a4f4": {
-      "digest": "0c9ac4ad844339e65a78948c500a045804ef2b93fb9ebdff71615dd07923aa70",
-      "issue": 1626,
-      "message": {
-        "kind": "queued",
-        "issue": 1626,
-        "at": 1795838668605,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "delivered": true
-      }
-    },
-    "release-return-finish:059eb388-5749-4284-a70a-fa8188e3a4f4:finish:1:admit": {
-      "digest": "c9dcbf0cc8bfd9f43e4c4a9ca8d7b21907a60ca80f08d1f3a193e28063d11054",
-      "issue": 1626,
-      "message": {
-        "kind": "admitted",
-        "issue": 1626,
-        "at": 1795838673827,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-return-finish:059eb388-5749-4284-a70a-fa8188e3a4f4:finish:3:s6-complete": {
-      "digest": "0a31002ab84901eab868c6e9ad7d3d343edb176faf54aa294f4ba1d3484b070d",
-      "issue": 1626,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1626,
-        "at": 1795839370237,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "phase": "review",
-        "evidence": {
-          "id": "20261128T040451409-9d04d5c2",
-          "name": "Тесты для задачи #1626 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1520/.git/process-next/runs/20261128T040451409-9d04d5c2/report.json",
-          "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-          "status": "passed",
-          "finishedAt": "2026-11-28T04:16:09.086Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
