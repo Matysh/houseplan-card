@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30469,
+  "revision": 30470,
   "nextTicket": 811,
   "nextFence": 811,
   "tasks": {
@@ -6241,14 +6241,23 @@
       "ownerDecision": null,
       "ticket": 810,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795865868514,
       "reviewEntry": 1,
       "patchId": "848a63852306aa446620ef0ec2e9bb398a8e58ba",
       "changedFiles": [
         "demo/smoke_iso_tiles.mjs",
         "demo/smoke_wall_node_topology.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261128T113814234-5bfb6968",
+        "name": "Тесты для задачи #1630 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-957-spec-material-retention/.git/process-next/runs/20261128T113814234-5bfb6968/report.json",
+        "materialSha": "71dfabc09f0ba09366007fe4d4b27fefbe1cbf02",
+        "status": "passed",
+        "finishedAt": "2026-11-28T11:40:13.206Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -7024,9 +7033,9 @@
     "fence": 810,
     "materialSha": "71dfabc09f0ba09366007fe4d4b27fefbe1cbf02",
     "expectedBase": "84206bbce58724957c459b3ca332ac97af4d63d2",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795865873445,
-    "expiresAt": 1795866292581,
+    "expiresAt": 1795869614761,
     "patchId": "848a63852306aa446620ef0ec2e9bb398a8e58ba"
   },
   "events": {
@@ -7241,6 +7250,34 @@
         "materialSha": "71dfabc09f0ba09366007fe4d4b27fefbe1cbf02",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:11b0df0a-b050-427d-abf8-b50f73b66c46:finish:3:s6-complete": {
+      "digest": "3ce712e0c7f7927e78713ceb7bd80964516e0c0401bf60a40700f4d36c28410f",
+      "issue": 1630,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1630,
+        "at": 1795866014761,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "71dfabc09f0ba09366007fe4d4b27fefbe1cbf02",
+        "phase": "review",
+        "evidence": {
+          "id": "20261128T113814234-5bfb6968",
+          "name": "Тесты для задачи #1630 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-957-spec-material-retention/.git/process-next/runs/20261128T113814234-5bfb6968/report.json",
+          "materialSha": "71dfabc09f0ba09366007fe4d4b27fefbe1cbf02",
+          "status": "passed",
+          "finishedAt": "2026-11-28T11:40:13.206Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Исправлены два браузерных свидетеля; исходники продукта, определения мутантов, график фоновых проверок и визуальные эталоны не изменены.\n\n- WebGL-ветка теперь требует реального перекрытия двух DOM-значков и проверяет, что фокус от Shift+Tab поднимает значок над соседом в обеих темах. Проверки подсказки и отсутствия побочных действий сохранены. Нативное перекрытие физических тел по глубине остаётся отдельным контрактом WebGL.\n- Проверка камеры повторно создаёт карточку в том же размещении на прежней конфигурации, меняет реальную ширину контейнера при завершении тёплого восстановления редактора и вызывает исходный обработчик. Она требует обнаружить несовпадение до передачи управления, проверить исправление при передаче и затем захватить узел одним нативным нажатием по отрисованной позиции. Отмена оставляет старую конфигурацию и число записей прежними. Fixture не задаёт параметры камеры напрямую.\n- Обычные Chromium-прогоны обоих свидетелей и статические проверки обеих записей прошли. Центральный S6 включает оба изменённых smoke по их собственным путям. Отдельный фоновый прогон `iso-focus-under-neighbour` подтвердил clean PASS и отказ на мутанте. Парное подтверждение камеры выполняется отдельным фоновым прогоном на том же коммите.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
