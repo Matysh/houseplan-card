@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1710,
+  "revision": 1711,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -371748,6 +371748,14 @@
             "milestone": null
           }
         }
+      },
+      "announcement": {
+        "tag": "v2.0.0",
+        "digest": "a656e170e959449ea179d498a39b1f622a185659c8b57e15b9e3c918288c7561",
+        "contentDigest": "7f16bc65bc424be454d33a9068cfc693f46d9b286d43ac93bced6a6f5c82776c",
+        "attempt": 1,
+        "status": "sending",
+        "startedAt": "2026-11-28T04:21:48.959Z"
       }
     }
   },
@@ -377852,7 +377860,8 @@
     "stable-200-20261128-final-publication:completion:868ae842-7d38-4087-acbf-c02a34b6d16f": "9dcbeee9b2c09d1b598b21d39d7e0d75b668ffa02738e6aaece1fe487aa0338f",
     "stable-200-20261128-final-publication:completion:62e1d191-4e49-4609-84bf-098dcdf52c07": "0791c1dcb26f7c13ab43ba6525d1d8cc2fdcdef8260be7e70029c822eca26d77",
     "stable-200-20261128-final-publication:completion:340e4bdc-6001-4da5-a726-35f0b9d3fe4b": "38c74b6756ef0d67b64b4ca4b481987fb1a6220c1c606edde1ac3a943f41bc67",
-    "stable-200-20261128-final-publication:completion:e1b7f195-cc7a-45a3-8630-c106b1187f4c": "8f05a9871904c8e60e45d90982fbe1aa10300e26b179054b10598defab497c1f"
+    "stable-200-20261128-final-publication:completion:e1b7f195-cc7a-45a3-8630-c106b1187f4c": "8f05a9871904c8e60e45d90982fbe1aa10300e26b179054b10598defab497c1f",
+    "github:46107107699:1:complete:completion:520c4dba-87c2-4161-ac30-976db9ed6ee4": "6d327ad091fb8e076e70c5798751bc0899d0e6adc4ab2bd208f29895fcab279a"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
