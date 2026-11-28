@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 30045,
-  "nextTicket": 804,
+  "revision": 30046,
+  "nextTicket": 805,
   "nextFence": 804,
   "tasks": {
     "1001": {
@@ -6265,6 +6265,20 @@
         "status": "published",
         "sourceSha": "c43539d196a5e6ca573edf3612557c1f9cfd27e7"
       }
+    },
+    "1620": {
+      "issue": 1620,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1620-webgl-furniture-ink",
+      "materialSha": "d51726a1ac94d354bf8ec9e528c9b46e948650a4",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 804,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795824447721,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -7004,7 +7018,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1620
+  ],
   "active": null,
   "events": {
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -7034,6 +7050,19 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:382b24f8-5beb-4cdd-a3ca-39f2bf94f4ac": {
+      "digest": "5cf37ad38e6c305ab2530231cd8d1e9f4492e400f0dd8a366d358ee6b4d454a7",
+      "issue": 1620,
+      "message": {
+        "kind": "queued",
+        "issue": 1620,
+        "at": 1795824447721,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d51726a1ac94d354bf8ec9e528c9b46e948650a4"
       }
     }
   },
