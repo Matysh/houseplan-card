@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 30462,
-  "nextTicket": 810,
+  "revision": 30463,
+  "nextTicket": 811,
   "nextFence": 810,
   "tasks": {
     "1001": {
@@ -6230,6 +6230,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1630": {
+      "issue": 1630,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1630-mutation-witnesses",
+      "materialSha": "71dfabc09f0ba09366007fe4d4b27fefbe1cbf02",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 810,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795865868514,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -6997,7 +7011,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1630
+  ],
   "active": null,
   "events": {
     "github:46116303186:1:label:spec-request": {
@@ -7162,6 +7178,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:11b0df0a-b050-427d-abf8-b50f73b66c46": {
+      "digest": "6fdefb4630f8f7dca65ceeafb6ec6a98db919c3405f4f3f70d7823cec6150c0e",
+      "issue": 1630,
+      "message": {
+        "kind": "queued",
+        "issue": 1630,
+        "at": 1795865868514,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "71dfabc09f0ba09366007fe4d4b27fefbe1cbf02"
       }
     }
   },
