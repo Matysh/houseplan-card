@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30368,
+  "revision": 30369,
   "nextTicket": 810,
   "nextFence": 810,
   "tasks": {
@@ -6238,219 +6238,26 @@
     },
     "1628": {
       "issue": 1628,
+      "branch": "codex/1628-docs-v2",
       "track": "show",
       "layer": "docs",
-      "branch": "codex/1628-docs-v2",
-      "materialSha": "84206bbce58724957c459b3ca332ac97af4d63d2",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 809,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795849313740,
-      "reviewEntry": 3,
-      "patchId": "ebdcc4686b321ad94ffee64397527ab7683764cf",
-      "changedFiles": [
-        "README.md",
-        "README.ru.md",
-        "demo/performance/README.md",
-        "docs/ARCHITECTURE.md",
-        "docs/CANVAS.md",
-        "docs/CONFIG-COMPATIBILITY-INVENTORY.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/DECOR-EDITOR.md",
-        "docs/DEVELOPMENT.md",
-        "docs/DEVICE-PRESENTATION.md",
-        "docs/FURNITURE.md",
-        "docs/ISOMETRIC.md",
-        "docs/LIGHT.md",
-        "docs/PDF-EXPORT.md",
-        "docs/SCOPE.md",
-        "docs/STAIRS.md",
-        "docs/STATUS.md",
-        "docs/STYLING-HOOKS.md",
-        "docs/SUN.md",
-        "docs/TESTING.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/UX-MODES.md",
-        "docs/VACUUM.md",
-        "docs/WALL-THICKNESS.md",
-        "docs/WARM-REMOUNT.md",
-        "docs/images/guide-v2.0.0/PROVENANCE.md",
-        "docs/images/guide-v2.0.0/README.md",
-        "docs/images/guide-v2.0.0/en/appearance.png",
-        "docs/images/guide-v2.0.0/en/background-properties.png",
-        "docs/images/guide-v2.0.0/en/backup.png",
-        "docs/images/guide-v2.0.0/en/colour-picker.png",
-        "docs/images/guide-v2.0.0/en/device-actions.png",
-        "docs/images/guide-v2.0.0/en/device-alarms.png",
-        "docs/images/guide-v2.0.0/en/device-display.png",
-        "docs/images/guide-v2.0.0/en/device-editor.png",
-        "docs/images/guide-v2.0.0/en/device-height.png",
-        "docs/images/guide-v2.0.0/en/device-info.png",
-        "docs/images/guide-v2.0.0/en/device-settings.png",
-        "docs/images/guide-v2.0.0/en/furniture.png",
-        "docs/images/guide-v2.0.0/en/general-settings.png",
-        "docs/images/guide-v2.0.0/en/help.png",
-        "docs/images/guide-v2.0.0/en/kiosk.png",
-        "docs/images/guide-v2.0.0/en/opening-settings.png",
-        "docs/images/guide-v2.0.0/en/plan-properties.png",
-        "docs/images/guide-v2.0.0/en/print.png",
-        "docs/images/guide-v2.0.0/en/room-card.png",
-        "docs/images/guide-v2.0.0/en/room-contour.png",
-        "docs/images/guide-v2.0.0/en/room-settings.png",
-        "docs/images/guide-v2.0.0/en/space-create.png",
-        "docs/images/guide-v2.0.0/en/space-settings.png",
-        "docs/images/guide-v2.0.0/en/summary.png",
-        "docs/images/guide-v2.0.0/en/view-3d.png",
-        "docs/images/guide-v2.0.0/en/view.png",
-        "docs/images/guide-v2.0.0/ru/appearance.png",
-        "docs/images/guide-v2.0.0/ru/background-properties.png",
-        "docs/images/guide-v2.0.0/ru/backup.png",
-        "docs/images/guide-v2.0.0/ru/colour-picker.png",
-        "docs/images/guide-v2.0.0/ru/device-actions.png",
-        "docs/images/guide-v2.0.0/ru/device-alarms.png",
-        "docs/images/guide-v2.0.0/ru/device-display.png",
-        "docs/images/guide-v2.0.0/ru/device-editor.png",
-        "docs/images/guide-v2.0.0/ru/device-height.png",
-        "docs/images/guide-v2.0.0/ru/device-info.png",
-        "docs/images/guide-v2.0.0/ru/device-settings.png",
-        "docs/images/guide-v2.0.0/ru/furniture.png",
-        "docs/images/guide-v2.0.0/ru/general-settings.png",
-        "docs/images/guide-v2.0.0/ru/help.png",
-        "docs/images/guide-v2.0.0/ru/kiosk.png",
-        "docs/images/guide-v2.0.0/ru/opening-settings.png",
-        "docs/images/guide-v2.0.0/ru/plan-properties.png",
-        "docs/images/guide-v2.0.0/ru/print.png",
-        "docs/images/guide-v2.0.0/ru/room-card.png",
-        "docs/images/guide-v2.0.0/ru/room-contour.png",
-        "docs/images/guide-v2.0.0/ru/room-settings.png",
-        "docs/images/guide-v2.0.0/ru/space-create.png",
-        "docs/images/guide-v2.0.0/ru/space-settings.png",
-        "docs/images/guide-v2.0.0/ru/summary.png",
-        "docs/images/guide-v2.0.0/ru/view-3d.png",
-        "docs/images/guide-v2.0.0/ru/view.png",
-        "process-next/catalog/README.md"
-      ],
-      "s6": null,
-      "reviewRound": 3,
-      "notice": {
-        "key": "2:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795849262838,
-        "entry": 2,
-        "requestId": "review:1628:2:b48a8cef15d26514a98665bdb5c1e0551a5f4078:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "transitionConfirmed": true
-      },
+      "status": "S8-merged",
+      "expectedBase": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
+      "mergedSha": "84206bbce58724957c459b3ca332ac97af4d63d2",
+      "mergedAt": 1795849580820,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1628:3:ebdcc4686b321ad94ffee64397527ab7683764cf:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-      "reviewMaterial": {
-        "materialSha": "84206bbce58724957c459b3ca332ac97af4d63d2",
-        "expectedBase": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "patchId": "ebdcc4686b321ad94ffee64397527ab7683764cf"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1628:3:ebdcc4686b321ad94ffee64397527ab7683764cf:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "eventId": "github:46119400785:1:tick:0:review-retry",
-        "at": 1795849410274,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1628,
-        "requestId": "review:1628:3:ebdcc4686b321ad94ffee64397527ab7683764cf:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "kind": "code",
-        "base": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-        "materialSha": "84206bbce58724957c459b3ca332ac97af4d63d2",
-        "patchId": "ebdcc4686b321ad94ffee64397527ab7683764cf",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1628,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1628",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Актуализированы оба README, навигация и содержание руководств RU/EN, справочники 3D, высоты и света, совместимость, SVG, стартовый кадр, MDI, панель свойств и инструкции проверок. Датированные changelog, ТЗ, отчёты и прежний комплект иллюстраций сохранены. Селектор SVG-мебели описан в справочнике styling hooks с областью применения. Машинный контракт входит в отпечаток релизного продукта и в эту публикацию документов не входит.\n\nОбе языковые версии сняты на frontend из опубликованного ZIP v2.0.0 с SHA-256 `9ad21221bd5e9fb0d4a26da39b6bd4f08438de21d15fc0f15273fe367f621698`, source `49cef71352d216ef6121e045d877967e414442fb`, Chromium 151.0.7922.34 и синтетическом доме. Новые кадры показывают WebGL 3D и поле высоты. Контрольные суммы 52 PNG, размеры, языковые пары и соответствие ссылкам в руководствах сверены. Происхождение и хеши указаны в `docs/images/guide-v2.0.0/PROVENANCE.md`.\n\nДокументационный слой. Тестовых прогонов S6 нет. Текст и кадры проверены по исходникам и точному пакету. После принятия в dev набор будет перенесён в main по прямому поручению владельца.\n\n### Исправления по предыдущему ревью\n\n- Шапки обоих руководств теперь указывают выпуск v2.0.0 и ссылаются на его публикацию. Устаревшая оговорка о 1.85.x удалена.\n- RU говорит, что общая 3D-обводка соединяет соседние значки на одной высоте, а автоматические высоты совместимы между собой. Формулировка совпадает с EN.\n- В обоих языках прямая лестница вверх и винтовая описаны объёмными до среза стен 140 см, прямая вниз — плоским символом. Сверено с src/stairs-volume.ts на 49cef71.\n- Уточнена роль isoTiles в архитектуре.\n- Повторно проверены 681 относительная ссылка в 29 Markdown-документах, 52 PNG и сохранность исторических материалов.\n\n- Раунд 2 подтвердил исправления версии, контактов и лестниц. По его замечанию исправлен справочник мебели: WebGL и галерея используют общий ленивый реестр #1451 из аннотированных SVG. В v2.0.0 цепочка src/plan-3d-world.ts → src/iso-lab-furniture.ts → src/furniture-volume-runtime.ts подтверждает общий источник, а src/houseplan-card.ts:_effectiveProjection подтверждает полный переход в 2D при сбое с сохранением настройки. Ссылка указывает на действующий 3D-рендерер. Повторная проверка ссылок и 52 PNG прошла."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Единственный блокер раунда 2 устранён, новых существенных проблем нет. Набор можно принимать в dev и затем переносить в main.\n\nВ FURNITURE.md теперь верно описано, как живая WebGL-сцена v2.0.0 связана с ленивым реестром объёмов #1451:\n- WebGL строит тела мебели из профилей #1451;\n- реестр генерируется из аннотированных SVG и общий для плана и галереи разработчика;\n- если загрузка не удалась, отпечаток сборки не совпал или реестр не прошёл валидацию, показывается полная плоская (Flat) сцена, а сохранённое предпочтение 3D не сбрасывается.\n\nЭто совпадает с кодом `FurnitureVolumeRuntime`. Необязательное замечание тоже учтено: отсылка ведёт на действующий раздел `ISOMETRIC.md#current-renderer`, а не на исторический текст о SVG 2.5D.\n\nИсправления раунда 1 (шапки руководств, паритет RU/EN по контактам в 3D, лестницы в 3D) подтверждены в раунде 2. Новые коммиты их не затрагивают.",
-          "understanding": "Задача: привести README, руководства EN/RU и технические справочники к поведению опубликованной v2.0.0 (WebGL 3D вместо SVG 2.5D, высота маркеров и LED, контакты, профили экранов, MDI-пикер, ручная установка, порог панели свойств). Кроме того, нужно переснять кадры руководства на точной сборке релиза и потом перенести в main только документацию.\n\nЭто третий раунд. После прошлого ревью (материал 0f6f45c) добавлены два коммита:\n- 64479fc «Document the shared furniture volume registry used by WebGL»;\n- 84206bb «Clarify the registry fallback and link the current renderer».\n\nОба правят docs/FURNITURE.md:\n- раздел #1451 (строки 162–166): мебель в 3D строится из профилей, галерея использует те же профили, ссылка ведёт на `ISOMETRIC.md#current-renderer`;\n- абзац о границе отказа (строки 260–265).\n\nЧто проверено в этом раунде:\n- текст FURNITURE.md на head сравнён с версией 0f6f45c;\n- утверждения о реестре сверены с src/furniture-volume-runtime.ts;\n- проверено, что якорь `#current-renderer` разрешается в заголовок `## Current renderer` (docs/ISOMETRIC.md:3);\n- описание отказа сверено с ISOMETRIC.md:16-21.",
-          "analysis": [
-            {
-              "topic": "FURNITURE.md: реестр объёмов #1451 и граница отказа (блокер раунда 2)",
-              "assessment": "Устранено. Ошибочная фраза «belongs to the preceding renderer and is used by the historical furniture gallery» удалена. Новый текст прямо говорит, что WebGL строит тела мебели из профилей #1451, а ленивый реестр генерируется из аннотированных SVG и общий для плана и галереи. Три причины отказа перечислены точно так, как они устроены в коде: ошибка загрузки, несовпадение отпечатка, невалидный реестр. Итог описан верно: полная Flat-сцена с обычной плановой графикой, сохранённое предпочтение 3D не сбрасывается. Прежняя инверсия смысла («retaining … or dropping part of a workstation») тоже исчезла. Отдельная фраза о сбое инициализации 3D-сцены согласуется с ISOMETRIC.md: при сбое GPU или рантайма карточка переходит в интерактивный 2D и предлагает восстановление.",
-              "evidence": "docs/FURNITURE.md:260-265 (head 84206bb) против той же части файла на 0f6f45c; src/furniture-volume-runtime.ts:5 («One lazy registry for product View and gallery»), :26 (проверка `FURNITURE_VOLUME_FINGERPRINT`), :28-32 (валидация реестра), :34-35 (`failed=true` → `state()==='fallback'`), :43-44 (ленивый `import('./furniture-volume.generated')`); docs/ISOMETRIC.md:20-21. Цепочку `_effectiveProjection` → Flat при `fallback` разобрал предыдущий раунд (src/houseplan-card.ts:8720-8722), повторно не перечитывал."
-            },
-            {
-              "topic": "Отсылка к описанию 3D-рендерера",
-              "assessment": "Улучшение из раунда 2 учтено. Ссылка `ISOMETRIC.md#current-renderer` ведёт в действующий раздел, а не в «Prior 2.5D implementation». Список того, что там описано, сужен до «camera, materials and layer order», а граница отказа теперь описана прямо в FURNITURE.md. Якорь разрешается: заголовок `## Current renderer` есть в ISOMETRIC.md:3.",
-              "evidence": "docs/FURNITURE.md:165-166; docs/ISOMETRIC.md:3, :122 («## Prior 2.5D implementation»)."
-            },
-            {
-              "topic": "Ранее закрытые замечания и удачные решения",
-              "assessment": "Повторно не открываю. Шапки руководств указывают v2.0.0, RU-описание контактов в 3D совпадает с EN, лестницы описаны по `physicalStairVolume`. Это подтвердил раунд 2, а новые коммиты затрагивают только FURNITURE.md. Стоит сохранить: комплект `guide-v2.0.0` с PROVENANCE; явные `<a id>` для прежних якорей; плашку CI со ссылкой на генерируемый `CI.md` вместо конкретного прогона, который устаревает.",
-              "evidence": "git_log: 64479fc и 84206bb идут после 0f6f45c и относятся к реестру мебели; docs/images/guide-v2.0.0/PROVENANCE.md; README.md:7; docs/DEVELOPMENT.md:11-16."
-            }
-          ],
-          "blockers": [],
-          "improvements": [],
-          "boundaries": "Прогонов S6 нет: задача документационная, и сам я ничего не запускал. PNG не просматривал, поэтому соответствие кадров подписям и хеши в PROVENANCE остаются заявлением автора. Заявленную повторную сверку 681 ссылки и 52 PNG не воспроизводил.\n\nВ этом раунде по исходникам head 84206bb проверены docs/FURNITURE.md, раздел `Current renderer` в docs/ISOMETRIC.md и src/furniture-volume-runtime.ts. Что два новых коммита меняют только FURNITURE.md, заключаю по их сообщениям и содержанию правки; полный построчный diff между 0f6f45c и head не строил. Остальные справочники и руководства повторно не разбирал и опираюсь на раунды 1–2.\n\nПеренос в main и неизменность релиза и тегов — последующие действия, в этом материале их нет."
-        },
-        "usage": {
-          "input_tokens": 12,
-          "cache_creation_input_tokens": 95853,
-          "cache_read_input_tokens": 423439,
-          "output_tokens": 4435,
-          "output_tokens_details": {
-            "thinking_tokens": 818
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 95853,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 553,
-              "cache_read_input_tokens": 92979,
-              "cache_creation_input_tokens": 7078,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 7078
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nЕдинственный блокер раунда 2 устранён, новых существенных проблем нет. Набор можно принимать в dev и затем переносить в main.\n\nВ FURNITURE.md теперь верно описано, как живая WebGL-сцена v2.0.0 связана с ленивым реестром объёмов #1451:\n- WebGL строит тела мебели из профилей #1451;\n- реестр генерируется из аннотированных SVG и общий для плана и галереи разработчика;\n- если загрузка не удалась, отпечаток сборки не совпал или реестр не прошёл валидацию, показывается полная плоская (Flat) сцена, а сохранённое предпочтение 3D не сбрасывается.\n\nЭто совпадает с кодом `FurnitureVolumeRuntime`. Необязательное замечание тоже учтено: отсылка ведёт на действующий раздел `ISOMETRIC.md#current-renderer`, а не на исторический текст о SVG 2.5D.\n\nИсправления раунда 1 (шапки руководств, паритет RU/EN по контактам в 3D, лестницы в 3D) подтверждены в раунде 2. Новые коммиты их не затрагивают.\n\n## Понимание решения\n\nЗадача: привести README, руководства EN/RU и технические справочники к поведению опубликованной v2.0.0 (WebGL 3D вместо SVG 2.5D, высота маркеров и LED, контакты, профили экранов, MDI-пикер, ручная установка, порог панели свойств). Кроме того, нужно переснять кадры руководства на точной сборке релиза и потом перенести в main только документацию.\n\nЭто третий раунд. После прошлого ревью (материал 0f6f45c) добавлены два коммита:\n- 64479fc «Document the shared furniture volume registry used by WebGL»;\n- 84206bb «Clarify the registry fallback and link the current renderer».\n\nОба правят docs/FURNITURE.md:\n- раздел #1451 (строки 162–166): мебель в 3D строится из профилей, галерея использует те же профили, ссылка ведёт на `ISOMETRIC.md#current-renderer`;\n- абзац о границе отказа (строки 260–265).\n\nЧто проверено в этом раунде:\n- текст FURNITURE.md на head сравнён с версией 0f6f45c;\n- утверждения о реестре сверены с src/furniture-volume-runtime.ts;\n- проверено, что якорь `#current-renderer` разрешается в заголовок `## Current renderer` (docs/ISOMETRIC.md:3);\n- описание отказа сверено с ISOMETRIC.md:16-21.\n\n## Разбор решения\n\n### FURNITURE.md: реестр объёмов #1451 и граница отказа (блокер раунда 2)\n\nУстранено. Ошибочная фраза «belongs to the preceding renderer and is used by the historical furniture gallery» удалена. Новый текст прямо говорит, что WebGL строит тела мебели из профилей #1451, а ленивый реестр генерируется из аннотированных SVG и общий для плана и галереи. Три причины отказа перечислены точно так, как они устроены в коде: ошибка загрузки, несовпадение отпечатка, невалидный реестр. Итог описан верно: полная Flat-сцена с обычной плановой графикой, сохранённое предпочтение 3D не сбрасывается. Прежняя инверсия смысла («retaining … or dropping part of a workstation») тоже исчезла. Отдельная фраза о сбое инициализации 3D-сцены согласуется с ISOMETRIC.md: при сбое GPU или рантайма карточка переходит в интерактивный 2D и предлагает восстановление.\n\nОснование: docs/FURNITURE.md:260-265 (head 84206bb) против той же части файла на 0f6f45c; src/furniture-volume-runtime.ts:5 («One lazy registry for product View and gallery»), :26 (проверка `FURNITURE_VOLUME_FINGERPRINT`), :28-32 (валидация реестра), :34-35 (`failed=true` → `state()==='fallback'`), :43-44 (ленивый `import('./furniture-volume.generated')`); docs/ISOMETRIC.md:20-21. Цепочку `_effectiveProjection` → Flat при `fallback` разобрал предыдущий раунд (src/houseplan-card.ts:8720-8722), повторно не перечитывал.\n\n### Отсылка к описанию 3D-рендерера\n\nУлучшение из раунда 2 учтено. Ссылка `ISOMETRIC.md#current-renderer` ведёт в действующий раздел, а не в «Prior 2.5D implementation». Список того, что там описано, сужен до «camera, materials and layer order», а граница отказа теперь описана прямо в FURNITURE.md. Якорь разрешается: заголовок `## Current renderer` есть в ISOMETRIC.md:3.\n\nОснование: docs/FURNITURE.md:165-166; docs/ISOMETRIC.md:3, :122 («## Prior 2.5D implementation»).\n\n### Ранее закрытые замечания и удачные решения\n\nПовторно не открываю. Шапки руководств указывают v2.0.0, RU-описание контактов в 3D совпадает с EN, лестницы описаны по `physicalStairVolume`. Это подтвердил раунд 2, а новые коммиты затрагивают только FURNITURE.md. Стоит сохранить: комплект `guide-v2.0.0` с PROVENANCE; явные `<a id>` для прежних якорей; плашку CI со ссылкой на генерируемый `CI.md` вместо конкретного прогона, который устаревает.\n\nОснование: git_log: 64479fc и 84206bb идут после 0f6f45c и относятся к реестру мебели; docs/images/guide-v2.0.0/PROVENANCE.md; README.md:7; docs/DEVELOPMENT.md:11-16.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\nНет.\n\n## Границы анализа\n\nПрогонов S6 нет: задача документационная, и сам я ничего не запускал. PNG не просматривал, поэтому соответствие кадров подписям и хеши в PROVENANCE остаются заявлением автора. Заявленную повторную сверку 681 ссылки и 52 PNG не воспроизводил.\n\nВ этом раунде по исходникам head 84206bb проверены docs/FURNITURE.md, раздел `Current renderer` в docs/ISOMETRIC.md и src/furniture-volume-runtime.ts. Что два новых коммита меняют только FURNITURE.md, заключаю по их сообщениям и содержанию правки; полный построчный diff между 0f6f45c и head не строил. Остальные справочники и руководства повторно не разбирал и опираюсь на раунды 1–2.\n\nПеренос в main и неизменность релиза и тегов — последующие действия, в этом материале их нет.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd → 84206bbce58724957c459b3ca332ac97af4d63d2\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1628, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nАктуализированы оба README, навигация и содержание руководств RU/EN, справочники 3D, высоты и света, совместимость, SVG, стартовый кадр, MDI, панель свойств и инструкции проверок. Датированные changelog, ТЗ, отчёты и прежний комплект иллюстраций сохранены. Селектор SVG-мебели описан в справочнике styling hooks с областью применения. Машинный контракт входит в отпечаток релизного продукта и в эту публикацию документов не входит.\n\nОбе языковые версии сняты на frontend из опубликованного ZIP v2.0.0 с SHA-256 `9ad21221bd5e9fb0d4a26da39b6bd4f08438de21d15fc0f15273fe367f621698`, source `49cef71352d216ef6121e045d877967e414442fb`, Chromium 151.0.7922.34 и синтетическом доме. Новые кадры показывают WebGL 3D и поле высоты. Контрольные суммы 52 PNG, размеры, языковые пары и соответствие ссылкам в руководствах сверены. Происхождение и хеши указаны в `docs/images/guide-v2.0.0/PROVENANCE.md`.\n\nДокументационный слой. Тестовых прогонов S6 нет. Текст и кадры проверены по исходникам и точному пакету. После принятия в dev набор будет перенесён в main по прямому поручению владельца.\n\n### Исправления по предыдущему ревью\n\n- Шапки обоих руководств теперь указывают выпуск v2.0.0 и ссылаются на его публикацию. Устаревшая оговорка о 1.85.x удалена.\n- RU говорит, что общая 3D-обводка соединяет соседние значки на одной высоте, а автоматические высоты совместимы между собой. Формулировка совпадает с EN.\n- В обоих языках прямая лестница вверх и винтовая описаны объёмными до среза стен 140 см, прямая вниз — плоским символом. Сверено с src/stairs-volume.ts на 49cef71.\n- Уточнена роль isoTiles в архитектуре.\n- Повторно проверены 681 относительная ссылка в 29 Markdown-документах, 52 PNG и сохранность исторических материалов.\n\n- Раунд 2 подтвердил исправления версии, контактов и лестниц. По его замечанию исправлен справочник мебели: WebGL и галерея используют общий ленивый реестр #1451 из аннотированных SVG. В v2.0.0 цепочка src/plan-3d-world.ts → src/iso-lab-furniture.ts → src/furniture-volume-runtime.ts подтверждает общий источник, а src/houseplan-card.ts:_effectiveProjection подтверждает полный переход в 2D при сбое с сохранением настройки. Ссылка указывает на действующий 3D-рендерер. Повторная проверка ссылок и 52 PNG прошла.\n```\n\n</details>\n",
-        "createdAt": "2026-11-28T07:05:47.052Z",
-        "artifactId": 15253012534,
-        "runId": 46119430576,
-        "runAttempt": 1,
-        "completedAt": "2026-11-28T07:05:51Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46119430576",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795849576433,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "not-required"
+      }
     }
   },
   "ownerDecisions": {},
@@ -7219,19 +7026,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1628,
-    "worker": "github-coordinator",
-    "token": "809:github:46119238428:1:tick:0:admit",
-    "fence": 809,
-    "materialSha": "84206bbce58724957c459b3ca332ac97af4d63d2",
-    "expectedBase": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795849334369,
-    "expiresAt": 1795853171976,
-    "patchId": "ebdcc4686b321ad94ffee64397527ab7683764cf",
-    "reviewRequest": "review:1628:3:ebdcc4686b321ad94ffee64397527ab7683764cf:5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd"
-  },
+  "active": null,
   "events": {
     "github:46116303186:1:label:spec-request": {
       "digest": "ecd9e337d6bbbbb2951ab00af57d55224e1f6df8e36858f4d45d0568aaf788d5",
@@ -7277,145 +7072,9 @@
       "digest": "df34c3da8af2cb059100de7ef7634f5bd1ee79e612fed8d34bb078b44b99e656",
       "issue": 1627
     },
-    "finish:ad80187b-7d30-4195-b8ef-c4315ea4a609:finish:2:synchronized": {
-      "digest": "3088c2a67462384f1c69c2ea988baf23d8f4170079dc846a07f08d5627d3a15e",
-      "issue": 1628
-    },
-    "finish:ad80187b-7d30-4195-b8ef-c4315ea4a609:finish:3:s6-label": {
-      "digest": "e3def0f2c8822ce7e38cecddf4b446d7dc179788eb4c018d6e1f36a0ef970092",
-      "issue": 1628
-    },
     "github:46118399393:1:completions:report:f49eb2176c30e5c44febc6220fe5c3320364b99a134dc6a8402cd9a235cb8adb": {
       "digest": "09acbf722daa9eec5dcfc2c673978d4027f628ffd3d7ef0f73bd7fa2b1bbf4d5",
       "issue": 1627
-    },
-    "github:46118399393:1:completions:message:e71bd2afb424a5aaf863daa1870349db92bba9d9d6f7fd32d45ed37957d8f4ad": {
-      "digest": "d5fb3161bf405f5b616a4f84c080bc92b018263eebcec73755d3deaa63d598cf",
-      "issue": 1628
-    },
-    "github:46118399393:1:completions:message:576a60f19e22bdbc1e130e923714c92765cdd05aa3b0fa14400127c76529664c": {
-      "digest": "1b4c97e0429552325f6f7fd57ba6c305fffc5710748a5ffab67574e15b5b9d9b",
-      "issue": 1628
-    },
-    "finish:ad80187b-7d30-4195-b8ef-c4315ea4a609:finish:4:review-requested": {
-      "digest": "847795f46ca5281da0c64d36a0212de99aa51ba67b3cdc5a32bc272d32710dd1",
-      "issue": 1628
-    },
-    "github:46118460697:1:tick:0:review-retry": {
-      "digest": "5136ba57ae2dd90c98f2873ad47918b7d5cdb0ba049081b04cd93ba70c2c5b3d",
-      "issue": 1628
-    },
-    "github:46118460697:1:completions:message:804f5b7245bcfa031e4872f7f615a3d81c33ccc8d2694c0e984b011cd3f4902c": {
-      "digest": "30c12d99239d846bb0be518fa3bc5350ffdccf20c6348d738bcfdb81edef1ac5",
-      "issue": 1628
-    },
-    "finish:ad80187b-7d30-4195-b8ef-c4315ea4a609:finish:8:review-presentation": {
-      "digest": "3843d42e6113ac83f647bd480c04d7d1bd054b7c88f8020ea1ce133a0c6fa6a2",
-      "issue": 1628
-    },
-    "github:46118839761:1:tick:0:return": {
-      "digest": "16b280f54dd2411aeb5d33f371e17f6fd8422dec1fb7d17b48a06aeb2a07c1ab",
-      "issue": 1628
-    },
-    "github:46118839761:1:tick:0:return-label": {
-      "digest": "e74bf1a14fd31c683574f9958fa590fe572bc2ce6734ed17a32eb765a5ea0e3c",
-      "issue": 1628
-    },
-    "github:46118839761:1:completions:report:e07587358528cd1e42d8563a14ea592217e4eb1cdac10178f12ef914a0dcef33": {
-      "digest": "d6ea25a8739d85e4a8574710835718522f70a58c923da7c24a9dcb12a00dad00",
-      "issue": 1628
-    },
-    "github:46118839761:1:completions:metadata:c85cda11-df15-4874-b716-f618957e091d:task-notice:1628::": {
-      "digest": "9c927a6648722c849d36fd7a709d248aa19da7b3d4633910dd20abac0980e88b",
-      "issue": 1628
-    },
-    "finish:2be2276f-0f01-484e-98c7-d7b7fcb315fc:finish:2:synchronized": {
-      "digest": "a111fff3389e5501af985a8f626e619fbd0c6ad5435c797c9d4ebc8be45d651c",
-      "issue": 1628
-    },
-    "finish:2be2276f-0f01-484e-98c7-d7b7fcb315fc:finish:3:s6-label": {
-      "digest": "f4114e36156886a55995c20c6f04ddce3ee8beb9a862ad028032af1f6f1d0a9a",
-      "issue": 1628
-    },
-    "finish:2be2276f-0f01-484e-98c7-d7b7fcb315fc:finish:4:review-requested": {
-      "digest": "94da835fd1b8912507e31fe00b255c1f32bdcc8bb664bf6d991a677fb2c82f7a",
-      "issue": 1628
-    },
-    "github:46118975603:1:tick:0:review-retry": {
-      "digest": "933c2056063f9dfb4d6081a7e6f7e1dc3d793dfa3633e1c4f4183a2a0400a758",
-      "issue": 1628
-    },
-    "github:46118975603:1:completions:message:10bc971b287579ad0e57124a4007672b2b61fc189d1eb90f205eef0dc0061965": {
-      "digest": "2d44cc407d0324fb69d1094075e9fd9b662351251ab2d79312512ce671d26fbe",
-      "issue": 1628
-    },
-    "github:46118975603:1:completions:message:0050c5b6bdb3d625a0d687ab7c41c0f4304204ffadf84012e3f57584cc634388": {
-      "digest": "a75346611dcd85727f8586e9758316fc4101b6e08eda5494eff2af9f87a12f69",
-      "issue": 1628
-    },
-    "github:46118975603:1:completions:message:9622141f8d084334d788959f87b6023138a0b4b35ee29dba46e2effa531633f0": {
-      "digest": "8321b9cab3a26f3ae25996a6f21afdc217114d84b6846e560670dad65553589e",
-      "issue": 1628
-    },
-    "github:46119200604:1:tick:0:review-presentation": {
-      "digest": "4ef19a070e238fd8712de576fa8a9bb9bc4fa2b47e49727d361216003a7738b3",
-      "issue": 1628
-    },
-    "github:46119200604:1:tick:0:return": {
-      "digest": "1ba0375719042617a95a24a617a8211ad595fcd70cd31db8509645b7ba787732",
-      "issue": 1628
-    },
-    "github:46119200604:1:tick:0:return-label": {
-      "digest": "2a3a822a75ef1f7e6bace2ec461092ac337318a8d7e18024d069d1f51f9a084f",
-      "issue": 1628
-    },
-    "github:46119200604:1:completions:report:25e433e416bac1213b8f6e9f0398f96dc68a3e8964b2589bdecb41c0e16a824e": {
-      "digest": "acb00d80162472795df906ce58ac1d66968ea5d01653e4dec76d6fcda65b9680",
-      "issue": 1628
-    },
-    "github:46119200604:1:completions:metadata:a5513bc4-e799-4e2c-9619-24c52cfe118f:task-notice:1628::": {
-      "digest": "6ab532caf3f82b8c76168cf0afe4ca4d78240165c3717dcac63e677598370708",
-      "issue": 1628
-    },
-    "github:46119238428:1:completions:message:b1f6107baf79052394e7df05aeabd4104d871002f04c65535906b93fdecde573": {
-      "digest": "59c61b0bacf3da359e80017ff351c53f742f9c658d6b5cc38a3a4f93ea37f63a",
-      "issue": 1628
-    },
-    "github:46119238428:1:completions:message:25e6d2e3dd1f47f09a1a25b4a2ebbd220e3c9af83e2cc5ae6a5314f3786eb46f": {
-      "digest": "b4c01ad5407651537b02e55614c30f6644bbdc0692f563eabd4682cc952549fe",
-      "issue": 1628
-    },
-    "finish:ca7174c0-75aa-4b24-9ac7-b24ee6d04b76:finish:1:synchronized": {
-      "digest": "d64680450d4fccfd960af2a5bb79730d6cbc256598deb0be98c7e6436dab6cb6",
-      "issue": 1628
-    },
-    "finish:ca7174c0-75aa-4b24-9ac7-b24ee6d04b76:finish:2:s6-label": {
-      "digest": "17230176e97698465dd2e1f220a8b466544131c04864986f7c21771d3d75f219",
-      "issue": 1628
-    },
-    "finish:ca7174c0-75aa-4b24-9ac7-b24ee6d04b76:finish:3:review-requested": {
-      "digest": "bdae0a3ab85ea1b3d5f51a8443a74d448a3c9136ddd21c22f8311efc5139d9fd",
-      "issue": 1628
-    },
-    "github:46119400785:1:tick:0:review-retry": {
-      "digest": "1f7d12a9ab0d555c24d47f2e0c1f9328e29e558cff76f5acc9eddcf5ef95b962",
-      "issue": 1628
-    },
-    "github:46119400785:1:completions:message:dfe91360aca2a7a4b24c6de356c8d0b3d09445ca848730176d7992475978a485": {
-      "digest": "19ee949361ab6e393c570902d90041029b09f513d82307d45d1ae4acd19e256f",
-      "issue": 1628
-    },
-    "finish:ca7174c0-75aa-4b24-9ac7-b24ee6d04b76:finish:5:review-presentation": {
-      "digest": "fe23feb7e82d68ed8596100a3d7733df12d33bc3359eb143319cdb4b41a6f4c8",
-      "issue": 1628
-    },
-    "finish:ca7174c0-75aa-4b24-9ac7-b24ee6d04b76:finish:5:review-complete": {
-      "digest": "64305635129ca78040b289070cf97a3c34568d1be336c0592cc503f5759df13d",
-      "issue": 1628
-    },
-    "github:46119613681:1:tick:0:automation-pending": {
-      "digest": "32554655edcf2136532d5dbf26a4b1acb40df06d6943b7914b946fbd0dc7065f",
-      "issue": 1628
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
       "digest": "f8246ff4bd7d87ef7ac4a870a2cf59720fc4fa8682bc5e1f1618ada24fcf58e0",
@@ -7473,156 +7132,6 @@
         "previousRound": 2,
         "round": 3,
         "reviewChanges": "Владелец согласовал GLB как единственный формат первой итерации. Для размера по вертикали и отступа сохраняются независимые физические значения. Перемещение, поворот и габариты на плане используют обычный редактор декора. Сверены действующие контракты `marker-height.ts`, `plan-3d-world.ts`, `plan-3d-viewport.ts`, подготовка кадра в `houseplan-card.ts` и серверное хранение декора.\n\n### Исправления по предыдущему ревью\n\n- **Высота, срез, устройства.** Выбрана физическая шкала явной высоты устройств. Модели остаются видимыми выше среза и учитываются при вписывании. Узлы модели не закрывают доступ к видимым значкам. Зафиксированы условия показа и наблюдаемые примеры в AC3.\n- **Материалы и прозрачность.** Выбраны базовые материалы и текущая подсветка House Plan. Зафиксированы цвет, текстура, цвет вершин, поддержанные расширения, двусторонность, альфа, контрастный режим и перекрытие стенами. Для `BLEND` по решению владельца сохраняем полупрозрачность из GLB без альфа-порога. Сценарии включены в AC1.\n- **Уточнения.** Описаны список файлов, общая квота, точные серверные габариты, форматы и причины отказа, бюджеты модели и этажа, защита записей у старых клиентов, SVG/PDF, слой пола, нейтральное превью, диагностика и предупреждение о неверных единицах.\n- Фактически проверены контракты исходников и форма ТЗ. Реальный образец SketchUp и измерения GPU оставлены для реализации. Продуктовых прогонов на этом этапе нет. [Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1627#issuecomment-7235341195).\n\n### Изменение по решению владельца после передачи раунда 2\n\nВладелец явно выбрал сохранение полупрозрачности GLB без порога. Уточнены контракт `BLEND`, руководство, риски и AC1. В приёмке проверяем стекло с обеих сторон полупрозрачной стены в противоположных ракурсах. Раунд 2 был отправлен с прежним вариантом по порогу, его материалы остаются в истории. [Запуск раунда 2](https://github.com/Matysh/houseplan-card/actions/runs/46117782461).",
-        "delivered": true
-      }
-    },
-    "finish:ad80187b-7d30-4195-b8ef-c4315ea4a609": {
-      "digest": "1c9e807e9317a4baaa17f14e6a5da7766075e9aa9e2a1901a35e2d50fcbc03d9",
-      "issue": 1628,
-      "message": {
-        "kind": "queued",
-        "issue": 1628,
-        "at": 1795848597004,
-        "entry": 1,
-        "track": "show",
-        "layer": "docs",
-        "materialSha": "fb87187d53f08e89d70fa3755f982e6463c8166c",
-        "delivered": true
-      }
-    },
-    "finish:ad80187b-7d30-4195-b8ef-c4315ea4a609:finish:1:admit": {
-      "digest": "ff70eba0d8a59c66d1a4045fd19fd17508ba7446710911797ed350ac2c0e4fa7",
-      "issue": 1628,
-      "message": {
-        "kind": "admitted",
-        "issue": 1628,
-        "at": 1795848603665,
-        "entry": 1,
-        "track": "show",
-        "layer": "docs",
-        "materialSha": "fb87187d53f08e89d70fa3755f982e6463c8166c",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:ad80187b-7d30-4195-b8ef-c4315ea4a609:finish:3:s6-complete": {
-      "digest": "900e156fb313a8b97b74965ef0c88dcb333fefcc9eae33c1361d30ad21b66057",
-      "issue": 1628,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1628,
-        "at": 1795848623175,
-        "entry": 1,
-        "track": "show",
-        "layer": "docs",
-        "materialSha": "fb87187d53f08e89d70fa3755f982e6463c8166c",
-        "phase": "review",
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Актуализированы оба README, навигация и содержание руководств RU/EN, справочники 3D, высоты и света, совместимость, SVG, стартовый кадр, MDI, панель свойств и инструкции проверок. Датированные changelog, ТЗ, отчёты и прежний комплект иллюстраций сохранены. Селектор SVG-мебели описан в справочнике styling hooks с областью применения. Машинный контракт входит в отпечаток релизного продукта и в эту публикацию документов не входит.\n\nОбе языковые версии сняты на frontend из опубликованного ZIP v2.0.0 с SHA-256 `9ad21221bd5e9fb0d4a26da39b6bd4f08438de21d15fc0f15273fe367f621698`, source `49cef71352d216ef6121e045d877967e414442fb`, Chromium 151.0.7922.34 и синтетическом доме. Новые кадры показывают WebGL 3D и поле высоты. Контрольные суммы 52 PNG, размеры, языковые пары и соответствие ссылкам в руководствах сверены. Происхождение и хеши указаны в `docs/images/guide-v2.0.0/PROVENANCE.md`.\n\nДокументационный слой. Тестовых прогонов S6 нет. Текст и кадры проверены по исходникам и точному пакету. После принятия в dev набор будет перенесён в main по прямому поручению владельца.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:2be2276f-0f01-484e-98c7-d7b7fcb315fc": {
-      "digest": "b62d265526955b92d338891ce6c9461cca084312e3913791bd837691d0f9343f",
-      "issue": 1628,
-      "message": {
-        "kind": "queued",
-        "issue": 1628,
-        "at": 1795849026072,
-        "entry": 2,
-        "track": "show",
-        "layer": "docs",
-        "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3",
-        "delivered": true
-      }
-    },
-    "finish:2be2276f-0f01-484e-98c7-d7b7fcb315fc:finish:1:admit": {
-      "digest": "d8c05a0a985b700c726b6317f416e121926bdb132a440eafdd294ceed290bda9",
-      "issue": 1628,
-      "message": {
-        "kind": "admitted",
-        "issue": 1628,
-        "at": 1795849032072,
-        "entry": 2,
-        "track": "show",
-        "layer": "docs",
-        "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:2be2276f-0f01-484e-98c7-d7b7fcb315fc:finish:3:s6-complete": {
-      "digest": "a3b04d214b6abbf54cf108361dca42f8ebf69bc85fc716a7baa9adc13ceeeb41",
-      "issue": 1628,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1628,
-        "at": 1795849050490,
-        "entry": 2,
-        "track": "show",
-        "layer": "docs",
-        "materialSha": "0f6f45c3f948f583de4dadb7de747ca53eab6db3",
-        "phase": "review",
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "Актуализированы оба README, навигация и содержание руководств RU/EN, справочники 3D, высоты и света, совместимость, SVG, стартовый кадр, MDI, панель свойств и инструкции проверок. Датированные changelog, ТЗ, отчёты и прежний комплект иллюстраций сохранены. Селектор SVG-мебели описан в справочнике styling hooks с областью применения. Машинный контракт входит в отпечаток релизного продукта и в эту публикацию документов не входит.\n\nОбе языковые версии сняты на frontend из опубликованного ZIP v2.0.0 с SHA-256 `9ad21221bd5e9fb0d4a26da39b6bd4f08438de21d15fc0f15273fe367f621698`, source `49cef71352d216ef6121e045d877967e414442fb`, Chromium 151.0.7922.34 и синтетическом доме. Новые кадры показывают WebGL 3D и поле высоты. Контрольные суммы 52 PNG, размеры, языковые пары и соответствие ссылкам в руководствах сверены. Происхождение и хеши указаны в `docs/images/guide-v2.0.0/PROVENANCE.md`.\n\nДокументационный слой. Тестовых прогонов S6 нет. Текст и кадры проверены по исходникам и точному пакету. После принятия в dev набор будет перенесён в main по прямому поручению владельца.\n\n### Исправления по предыдущему ревью\n\n- Шапки обоих руководств теперь указывают выпуск v2.0.0 и ссылаются на его публикацию. Устаревшая оговорка о 1.85.x удалена.\n- RU говорит, что общая 3D-обводка соединяет соседние значки на одной высоте, а автоматические высоты совместимы между собой. Формулировка совпадает с EN.\n- В обоих языках прямая лестница вверх и винтовая описаны объёмными до среза стен 140 см, прямая вниз — плоским символом. Сверено с src/stairs-volume.ts на 49cef71.\n- Описание мебели отделяет действующий WebGL и его переход в плоский режим от прежнего SVG-реестра. Уточнена роль isoTiles в архитектуре.\n- Повторно проверены 681 относительная ссылка в 29 Markdown-документах, 52 PNG и сохранность исторических материалов.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:f896fe1a-a780-4c50-bf24-47eda18b7ea2": {
-      "digest": "1f75fde0055ca4a4c1e33b20d9cd129e1bdc37892c5b89a21b1b395c7e64860e",
-      "issue": 1628,
-      "message": {
-        "kind": "queued",
-        "issue": 1628,
-        "at": 1795849313740,
-        "entry": 3,
-        "track": "show",
-        "layer": "docs",
-        "materialSha": "84206bbce58724957c459b3ca332ac97af4d63d2",
-        "delivered": true
-      }
-    },
-    "github:46119238428:1:tick:0:admit": {
-      "digest": "5158a7c12858217d2b9ee70eafa47a96ea59525d94fc36bf86636d39c13d8510",
-      "issue": 1628,
-      "message": {
-        "kind": "admitted",
-        "issue": 1628,
-        "at": 1795849334369,
-        "entry": 3,
-        "track": "show",
-        "layer": "docs",
-        "materialSha": "84206bbce58724957c459b3ca332ac97af4d63d2",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:ca7174c0-75aa-4b24-9ac7-b24ee6d04b76:finish:2:s6-complete": {
-      "digest": "a81c57a6100abbeb68b85a70fab0e050a8113000d36df3b93c5c6481dc14ee7d",
-      "issue": 1628,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1628,
-        "at": 1795849385215,
-        "entry": 3,
-        "track": "show",
-        "layer": "docs",
-        "materialSha": "84206bbce58724957c459b3ca332ac97af4d63d2",
-        "phase": "review",
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "Актуализированы оба README, навигация и содержание руководств RU/EN, справочники 3D, высоты и света, совместимость, SVG, стартовый кадр, MDI, панель свойств и инструкции проверок. Датированные changelog, ТЗ, отчёты и прежний комплект иллюстраций сохранены. Селектор SVG-мебели описан в справочнике styling hooks с областью применения. Машинный контракт входит в отпечаток релизного продукта и в эту публикацию документов не входит.\n\nОбе языковые версии сняты на frontend из опубликованного ZIP v2.0.0 с SHA-256 `9ad21221bd5e9fb0d4a26da39b6bd4f08438de21d15fc0f15273fe367f621698`, source `49cef71352d216ef6121e045d877967e414442fb`, Chromium 151.0.7922.34 и синтетическом доме. Новые кадры показывают WebGL 3D и поле высоты. Контрольные суммы 52 PNG, размеры, языковые пары и соответствие ссылкам в руководствах сверены. Происхождение и хеши указаны в `docs/images/guide-v2.0.0/PROVENANCE.md`.\n\nДокументационный слой. Тестовых прогонов S6 нет. Текст и кадры проверены по исходникам и точному пакету. После принятия в dev набор будет перенесён в main по прямому поручению владельца.\n\n### Исправления по предыдущему ревью\n\n- Шапки обоих руководств теперь указывают выпуск v2.0.0 и ссылаются на его публикацию. Устаревшая оговорка о 1.85.x удалена.\n- RU говорит, что общая 3D-обводка соединяет соседние значки на одной высоте, а автоматические высоты совместимы между собой. Формулировка совпадает с EN.\n- В обоих языках прямая лестница вверх и винтовая описаны объёмными до среза стен 140 см, прямая вниз — плоским символом. Сверено с src/stairs-volume.ts на 49cef71.\n- Уточнена роль isoTiles в архитектуре.\n- Повторно проверены 681 относительная ссылка в 29 Markdown-документах, 52 PNG и сохранность исторических материалов.\n\n- Раунд 2 подтвердил исправления версии, контактов и лестниц. По его замечанию исправлен справочник мебели: WebGL и галерея используют общий ленивый реестр #1451 из аннотированных SVG. В v2.0.0 цепочка src/plan-3d-world.ts → src/iso-lab-furniture.ts → src/furniture-volume-runtime.ts подтверждает общий источник, а src/houseplan-card.ts:_effectiveProjection подтверждает полный переход в 2D при сбое с сохранением настройки. Ссылка указывает на действующий 3D-рендерер. Повторная проверка ссылок и 52 PNG прошла.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
