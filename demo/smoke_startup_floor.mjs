@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { launchPanelCold, check, finish } from './serve.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
 import { join } from 'node:path';
 
@@ -31,7 +32,15 @@ try {
     server = false, browserMiss = false, serverDelay = false, trace = false, brokenBackdrop = null }) => {
     await page.goto('http://demo.local/demo.html?panel-cold=1', { waitUntil:'domcontentloaded' });
     await page.waitForFunction(() => typeof window.__mkHass === 'function');
-    await page.evaluate(async ({ fixture, projection, surface, user, rev, hold, silent, server, browserMiss, serverDelay, trace, brokenBackdrop }) => {
+    await page.evaluate(args => { window.__startupMountArguments = args; },
+      {fixture:server ? serverFixture : fixture, projection, surface, user, rev, hold, silent,
+        server, browserMiss, serverDelay, trace, brokenBackdrop});
+    // Keep dynamic import/custom-element registration rooted outside CDP
+    // during cold mounting, including the synthetic held snapshot runs.
+    await evaluateRetainedAction(page, async () => {
+      const { fixture, projection, surface, user, rev, hold, silent, server, browserMiss,
+        serverDelay, trace, brokenBackdrop } = window.__startupMountArguments;
+      delete window.__startupMountArguments;
       if (browserMiss) await new Promise((resolve,reject) => {
         const request = indexedDB.deleteDatabase('houseplan-static-view-v1');
         request.onsuccess = resolve;
@@ -183,8 +192,7 @@ try {
         };
         requestAnimationFrame(sample);
       }
-    }, {fixture:server ? serverFixture : fixture, projection, surface, user, rev, hold, silent,
-      server, browserMiss, serverDelay, trace, brokenBackdrop});
+    }, `Mount startup fixture: ${surface}/${projection}/${user}`);
   };
   const ready = (projection, surface) => page.waitForFunction(({projection,surface}) => {
     const c = window.__startupFixture(), root = c?.renderRoot;
