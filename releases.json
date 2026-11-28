@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1697,
+  "revision": 1698,
   "active": "v2.0.0-20261128",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -355030,14 +355030,14 @@
       "kind": "stable",
       "branch": "release/2.0.0-final-20261128",
       "sourceSha": "23cdfa855fc5ad470896290b6c3313905a04ceb4",
-      "sha": "ae61f8d339dd33aad05bd3c220fee4c1b0424fed",
+      "sha": "49cef71352d216ef6121e045d877967e414442fb",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "ae61f8d339dd33aad05bd3c220fee4c1b0424fed",
+        "candidate": "49cef71352d216ef6121e045d877967e414442fb",
         "base": "f175b7e00d8535149c61c2d28a922620a3a70928",
         "issues": [
           {
@@ -355492,6 +355492,12 @@
         {
           "from": "655ddbb7e5bdea2346f41805e7fb51cc6937e031",
           "to": "ae61f8d339dd33aad05bd3c220fee4c1b0424fed",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "ae61f8d339dd33aad05bd3c220fee4c1b0424fed",
+          "to": "49cef71352d216ef6121e045d877967e414442fb",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -362121,7 +362127,8 @@
     "stable-200-20261128-create": "fe8c36a93ed768c092d4d6defbf21baf13153103098fdbcc306fde63ae437770",
     "stable-200-20261128-prepared": "e6efd8a8091dadb574fb415f737e6ccf4c23bfed6e6e9aa68b1052eb89f18355",
     "stable-200-20261128-pan-witness": "262bd777b0662db3ac27bbbefbc11862ef0084eedd8609a7ca06b3477d5c3afb",
-    "stable-200-20261128-startup-witness": "84b57d415cfd01fab7fd192882ee38a5f2d82422beccf7aaddfd88565c1fbaa7"
+    "stable-200-20261128-startup-witness": "84b57d415cfd01fab7fd192882ee38a5f2d82422beccf7aaddfd88565c1fbaa7",
+    "stable-200-20261128-final-witnesses": "81c5251d8802ecc733ed3844393c3248b9eb60d2b8aefaa3d75cbf294f7f7bbe"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
