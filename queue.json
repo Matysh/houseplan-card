@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30303,
+  "revision": 30304,
   "nextTicket": 807,
   "nextFence": 807,
   "tasks": {
@@ -6946,18 +6946,12 @@
       }
     },
     "1627": {
-      "requestId": "spec:1627:06dff135f2513b669dc0f37ae00260ade044edff862ad8bb8f83b775dde5bc53",
-      "contextDigest": "06dff135f2513b669dc0f37ae00260ade044edff862ad8bb8f83b775dde5bc53",
+      "requestId": "spec:1627:dacc3f66c95ed93835d97ff0dd4eb6069b6dc0a6b57625fd036fb779fcf30490",
+      "contextDigest": "dacc3f66c95ed93835d97ff0dd4eb6069b6dc0a6b57625fd036fb779fcf30490",
       "base": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1795847419542,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/46116346979",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1795848076555
     }
   },
   "reviewPublications": {
@@ -6986,6 +6980,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "spec:1627:spec:1627:dacc3f66c95ed93835d97ff0dd4eb6069b6dc0a6b57625fd036fb779fcf30490": {
+      "issue": 1627,
+      "kind": "spec",
+      "requestId": "spec:1627:dacc3f66c95ed93835d97ff0dd4eb6069b6dc0a6b57625fd036fb779fcf30490",
+      "materialSha": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
+      "expectedBase": "5bd72ce3bf920414d44e35d4b3b7a95d6d495cdd",
+      "patchId": "dacc3f66c95ed93835d97ff0dd4eb6069b6dc0a6b57625fd036fb779fcf30490",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-28T06:41:16.555Z"
+      }
     }
   },
   "waiting": [],
@@ -7009,6 +7016,10 @@
     },
     "github:46116862634:1:completions:report:4afb44f1b598a50a26754ee302fc99207a26c8cdef512dee5690993b9cd1df6e": {
       "digest": "1464c06a7a7990f36ad499520f27ac22cf7bcf39e5646d6ad431ef0d993fc4e9",
+      "issue": 1627
+    },
+    "github:46117742911:1:label:spec-request": {
+      "digest": "92f09442c83d59d9407e59984dd12c84cba6f1b9087711a444330a434d7eaafd",
       "issue": 1627
     },
     "release-return:255ff30b-e695-4827-86df-e33fb65e873a": {
@@ -7038,6 +7049,22 @@
         "materialSha": "4302f694b7a79ebe7d76f91743bf126518ebe172",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "github:46117742911:1:label:spec-request:spec-resubmitted:1627": {
+      "digest": "92f09442c83d59d9407e59984dd12c84cba6f1b9087711a444330a434d7eaafd",
+      "issue": 1627,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1627,
+        "at": 1795848076555,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1627:dacc3f66c95ed93835d97ff0dd4eb6069b6dc0a6b57625fd036fb779fcf30490",
+        "reviewChanges": "Владелец согласовал GLB как единственный формат первой итерации. Для размера по вертикали и отступа сохраняются независимые физические значения. Перемещение, поворот и габариты на плане используют обычный редактор декора. Сверены действующие контракты `marker-height.ts`, `plan-3d-world.ts`, `plan-3d-viewport.ts`, подготовка кадра в `houseplan-card.ts` и серверное хранение декора.\n\n### Исправления по предыдущему ревью\n\n- **Высота, срез, устройства.** Выбрана физическая шкала явной высоты устройств. Модели остаются видимыми выше среза и учитываются при вписывании. Узлы модели не закрывают доступ к видимым значкам. Зафиксированы условия показа и наблюдаемые примеры в AC3.\n- **Материалы и прозрачность.** Выбраны базовые материалы и текущая подсветка House Plan. Зафиксированы цвет, текстура, цвет вершин, поддержанные расширения, двусторонность, альфа, контрастный режим и перекрытие стенами. Для `BLEND` описан вырез по порогу и предупреждение об упрощении. Сценарии включены в AC1.\n- **Уточнения.** Описаны список файлов, общая квота, точные серверные габариты, форматы и причины отказа, бюджеты модели и этажа, защита записей у старых клиентов, SVG/PDF, слой пола, нейтральное превью, диагностика и предупреждение о неверных единицах.\n- Фактически проверены контракты исходников и форма ТЗ. Реальный образец SketchUp и измерения GPU оставлены для реализации. Продуктовых прогонов на этом этапе нет. [Первый раунд ревью](https://github.com/Matysh/houseplan-card/issues/1627#issuecomment-7235341195).",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
