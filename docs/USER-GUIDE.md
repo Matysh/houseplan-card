@@ -2,7 +2,7 @@
 
 &emsp;&emsp;With House Plan, your Home Assistant home becomes a shared live map. Draw rooms, place your devices and use the plan from a computer, phone or wall screen. Open **House Plan** in the Home Assistant sidebar, or add an optional dashboard card if that is more convenient: it shows the same data.
 
-&emsp;&emsp;**House Plan 1.85.x development line.** This guide is based on [dev 45faf4e](https://github.com/Matysh/houseplan-card/tree/45faf4e7c16d5feb2e0f30727784d69a52429960). Your installed stable may not contain every described feature yet. This is a source snapshot, not an announcement of a new release. [Русская версия](USER-GUIDE.ru.md).
+&emsp;&emsp;This guide covers [House Plan v2.0.0](https://github.com/Matysh/houseplan-card/releases/tag/v2.0.0). [Русская версия](USER-GUIDE.ru.md).
 
 [Project overview and quick installation](../README.md).
 
@@ -745,7 +745,7 @@ lovelace:
 
 &emsp;&emsp;In View, hovering a stair with a valid target shows "Go to floor …", and a clean activation switches to that target and restores its saved view; gesture tails, broken links and fixed-floor cards do nothing. The target floor is never changed automatically. After stair navigation in View or kiosk, every stair leading back pulses twice in the theme accent over two seconds; reduced motion shows a static highlight.
 
-&emsp;&emsp;There is no extra camera movement, and pan and pinch remain available. Missing or off-screen return stairs produce no extra indicator. In 3D the symbol is flat on the floor. See [Stairs](STAIRS.md).
+&emsp;&emsp;There is no extra camera movement, and pan and pinch remain available. Missing or off-screen return stairs produce no extra indicator. In 3D, straight stairs going up and spiral stairs have treads that rise to the 140 cm wall cut. A straight stair going down stays flat on the floor. See [Stairs](STAIRS.md).
 
 ![Selected partition and its Plan context tray](images/guide-v2.0.0/en/plan-properties.png)
 

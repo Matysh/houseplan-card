@@ -1225,9 +1225,9 @@ discovery. Saved maps/configured topics remain reachable when the integration
 cannot be detected. UI navigation state never enters persisted config.
 
 `src/styles.ts` composes `cardStyles = [base, plan, devices, chrome, dialogs,
-isoTiles]` from `src/styles/*.styles.ts`; the order is a cascade contract (the
-golden set is accepted against it; `isoTiles` owns styles for isometric DOM layers.
-The physical 3D bodies are drawn by WebGL). `base` holds host, variables and rules
+isoTiles]` from `src/styles/*.styles.ts`. The golden set checks the cascade
+order. `isoTiles` owns styles for the 3D DOM overlays, and WebGL draws the
+physical bodies. `base` holds host, variables and rules
 shared by two surfaces; `plan` stage ink, `devices` markers, `chrome`
 toolbars/tabs/menus, `dialogs` dialogs/forms/pickers. `form-kit.styles.ts`
 (#594), `editor-secondary.styles.ts` and the summary-panel sheets live outside

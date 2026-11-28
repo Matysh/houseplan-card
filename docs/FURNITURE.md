@@ -257,10 +257,10 @@ artwork only up to the card's `BOOT_MAX_MS` cap. Touch View/kiosk support is
 blocking; editor ergonomics on touch remain best effort under
 `docs/TOUCH-SUPPORT.md`.
 
-The #1451 volume registry is a separate optional lazy resource. Its load,
-fingerprint or construction failure uses the complete Flat scene and the
-ordinary plan artwork, while retaining the saved 3D preference or dropping
-part of a workstation. The older plan-artwork-load failure described above is
-not a reason to leave the scene empty merely because volume art failed.
+In v2.0.0 WebGL builds furniture bodies from the volume profiles. If the 3D
+scene cannot load or initialize, the card shows the complete Flat scene with
+ordinary plan artwork and retains the saved 3D preference. The #1451 SVG
+volume registry belongs to the preceding renderer and is used by the
+historical furniture gallery.
 New workstation data, portable version selection and the old-client write
 barrier are documented in [CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md#desk-computer-workstation-1451).
